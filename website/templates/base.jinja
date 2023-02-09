@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='energetica.css') }}" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2">
+    <link rel = "icon" href ="{{ url_for('static', filename='images/icon.jpg') }}" type="image/x-icon">
+
+    <title>{% block title %}Home{% endblock %}</title>
+  </head>
+
+  <body class="green">
+    <div class="navbar medium">
+      <a class="navbar_item padding tan_green active" id="home" href="/home">Home</a>
+      <a class="navbar_item padding tan_green" id="network" href="/network">Network</a>
+      <a class="navbar_item padding tan_green" id="energy_buildings" href="/energy_buildings">Energy buildings</a>
+      <a class="navbar_item padding tan_green" id="storage_buildings" href="/storage_buildings">Storage buildings</a>
+      <a class="navbar_item padding tan_green" id="other_buildings" href="/other_buildings">Other buildings</a>
+      <a class="navbar_item padding tan_green" id="technology" href="/technology">Technology</a>
+      <a class="navbar_item padding tan_green" id="logout" href="/logout">Logout</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, message in messages %} {% if category ==
+    'error' %}
+    <div class="alert alert-danger alter-dismissable fade show" role="alert">
+      {{ message }}
+      <button type="button" class="close" data-dismiss="alert">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    {% else %}
+    <div class="alert alert-success alter-dismissable fade show" role="alert">
+      {{ message }}
+      <button type="button" class="close" data-dismiss="alert">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    {% endif %} {% endfor %} {% endif %} {% endwith %}
+
+    <div class="main_container tan_green">{% block content %} {% endblock %}</div>
+
+{% block javascript %}
+{% endblock %}
+  </body>
+</html>

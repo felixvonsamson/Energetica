@@ -1,0 +1,49 @@
+{% extends "base.jinja" %} {% block title %}Home{% endblock %} {% block content
+%}
+<div class="huge" style="text-align:center">{{ user.username }}</div>
+q : {{ user.q }} <br>
+r : {{ user.r }} <br> <br>
+
+money : {{ user.money }} <br>
+coal : {{ user.coal }} <br>
+oil : {{ user.oil }} <br>
+gas : {{ user.gas }} <br>
+uranium : {{ user.uranium }} <br> <br>
+
+biomass_burner : {{ user.biomass_burner }} <br>
+windmill : {{ user.windmill }} <br>
+watermill : {{ user.watermill }} <br>
+coal_burner : {{ user.coal_burner }} <br>
+oil_burner : {{ user.oil_burner }} <br>
+gas_burner : {{ user.gas_burner }} <br>
+shallow_geothermal_plant : {{ user.shallow_geothermal_plant }} <br>
+small_water_dam : {{ user.small_water_dam }} <br>
+small_wind_turbine : {{ user.small_wind_turbine }} <br>
+combined_cycle : {{ user.combined_cycle }} <br>
+deep_geothermal_plant : {{ user.deep_geothermal_plant }} <br>
+nuclear_reactor : {{ user.nuclear_reactor }} <br>
+large_water_dam : {{ user.large_water_dam }} <br>
+CSP_solar : {{ user.CSP_solar }} <br>
+PV_solar : {{ user.PV_solar }} <br>
+large_wind_turbine : {{ user.large_wind_turbine }} <br>
+nuclear_reactor_gen4 : {{ user.nuclear_reactor_gen4 }} <br> <br>
+
+small_pumped_hydro : {{ user.small_pumped_hydro }} <br>
+compressed_air : {{ user.compressed_air }} <br>
+molten_salt : {{ user.molten_salt }} <br>
+large_pumped_hydro : {{ user.large_pumped_hydro }} <br>
+lithium_ion_batteries : {{ user.lithium_ion_batteries }} <br>
+solid_state_batteries : {{ user.solid_state_batteries }} <br> <br>
+
+laboratory : {{ user.laboratory }} <br>
+warehouse : {{ user.warehouse }} <br>
+military_barracks : {{ user.military_barracks }} <br> <br>
+
+mineral_extraction : {{ user.mineral_extraction }} <br>
+civil_engeneering : {{ user.civil_engeneering }} <br>
+physics : {{ user.physics }} <br>
+materials : {{ user.materials }} <br>
+enviromental_science : {{ user.enviromental_science }} <br>
+transport_technology : {{ user.transport_technology }} <br>
+
+{% endblock %}
