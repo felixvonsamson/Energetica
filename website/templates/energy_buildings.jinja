@@ -1,0 +1,32 @@
+{% extends "base.jinja" %} {% block title %}Energy buildings{% endblock %} {% block content
+%}
+
+<div class="huge" style="text-align:center">Energy buildings</div>
+
+<div class="bone margin-small building">
+ <img class="img" src="{{ url_for('static', filename='images/energy_buildings/steam_engine.png') }}"\>
+ <div>This steam engine burns wood to produce energy. </div>
+ <div>
+ <i class="fa fa-money"></i> 20'000 CHF<br>
+ <i class="fa fa-bolt"></i> 25 kW<br>
+ <i class="fa fa-hourglass-half"></i> 2 days<br>
+ <i class="fa "></i> 3 kW<br>
+ <i class="fa Example of truck fa-truck"></i> 100 CHF/h<br>
+ <i class="fa fa-cloud"></i> 494 g/kWh
+ </div>
+</div>
+
+<div class="bone margin-small building">
+ <img class="img" src="{{ url_for('static', filename='images/energy_buildings/windmill.jpg') }}"\>
+ <div>This steam engine burns wood to produce energy. </div>
+ <div>
+ <i class="fa fa-money"></i> 20'000 CHF<br>
+ <i class="fa fa-bolt"></i> 25 kW<br>
+ <i class="fa fa-hourglass-half"></i> 2 days<br>
+ <i class="fa "></i> 3 kW<br>
+ <i class="fa Example of truck fa-truck"></i> 100 CHF/h<br>
+ <i class="fa fa-cloud"></i> 494 g/kWh
+ </div>
+</div>
+
+{% endblock %}

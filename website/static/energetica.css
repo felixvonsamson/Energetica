@@ -1,5 +1,8 @@
 /* CSS document for the project "Energetica" by Felix von Samson */
 
+html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}
+html,body{font-family: 'Baloo 2', cursive; font-size:15px; line-height:1.3; margin:0;}
+
 /* Colors */
 .bone{color:#000;background-color:#e5d9b6}
 .tan_green{color:#000;background-color:#a4be7b}
@@ -11,17 +14,26 @@
 .padding{padding:8px 16px}
 .padding-large{padding:12px 24px}
 
+.margin-small{margin: 8px}
+.margin{margin: 16px}
+.margin-large{margin: 24px}
+
 .small{font-size:min(16px, 3vh)}
 .medium{font-size:min(20px, 3.5vh)}
 .large{font-size:min(30px, 5vh)}
 .huge{font-size:min(42px, 6vh)}
 
-html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}
-html,body{font-family: 'Baloo 2', cursive; font-size:15px; line-height:1.3; margin:0;}
+/* flex */
+
+/* ------- */
 
 .navbar{display: block; width: 200px; position: fixed; height: 100%; overflow: auto;}
 .navbar_item{display: block; text-decoration: none;}
 .navbar_item.active {background-color: #285430; color: #fff;}
 .navbar_item:hover:not(.active) {background-color: #5f8d4e; color: white;}
 
-.main_container{max-width: 1200px; margin:auto;}
+.main_container{max-width: 1000px; margin:auto;}
+
+.img{width:250px}
+
+.building{display: flex; flex-direction: row; justify-content: space-between; align-items: center;}

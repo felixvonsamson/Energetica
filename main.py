@@ -1,3 +1,5 @@
+#!/bin/env python3
+
 from website import create_app
 
 socketio, app = create_app()
