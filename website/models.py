@@ -29,7 +29,7 @@ class User(db.Model, UserMixin):
     uranium = db.Column(db.Integer, default=0)
 
     # Energy buildings :
-    biomass_burner = db.Column(db.Integer, default=0)
+    steam_engine = db.Column(db.Integer, default=0)
     windmill = db.Column(db.Integer, default=0)
     watermill = db.Column(db.Integer, default=0)
     coal_burner = db.Column(db.Integer, default=0)

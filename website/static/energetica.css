@@ -4,6 +4,7 @@ html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}
 html,body{font-family: 'Baloo 2', cursive; font-size:15px; line-height:1.3; margin:0;}
 
 /* Colors */
+.white{color:#285430;background-color:#ffffff}
 .bone{color:#000;background-color:#e5d9b6}
 .tan_green{color:#000;background-color:#a4be7b}
 .green{color:#fff;background-color:#5f8d4e}
@@ -32,8 +33,10 @@ html,body{font-family: 'Baloo 2', cursive; font-size:15px; line-height:1.3; marg
 .navbar_item.active {background-color: #285430; color: #fff;}
 .navbar_item:hover:not(.active) {background-color: #5f8d4e; color: white;}
 
-.main_container{max-width: 1000px; margin:auto;}
+.main_container{max-width: 1200px; margin:auto;}
 
 .img{width:250px}
 
-.building{display: flex; flex-direction: row; justify-content: space-between; align-items: center;}
+.building{display: flex; flex-direction: row; justify-content: space-between;}
+.infotext{flex: 1;}
+.infobox{display: flex; flex-direction: row; align-items: center;}
