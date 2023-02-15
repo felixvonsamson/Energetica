@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, flash, jsonify
 from flask_login import login_required, current_user
 from . import db
+from .data import data
 import json
 
 views = Blueprint('views', __name__)
@@ -23,7 +24,7 @@ def home():
 
     return render_template("home.jinja", user=current_user)
 
-@views.route('/energy_buildings')
+@views.route('/power_buildings')
 @login_required
 def energy_buildings():
-    return render_template("energy_buildings.jinja", user=current_user)
+    return render_template("power_buildings.jinja", user=current_user, data=data["power buildings"])

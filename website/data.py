@@ -1,70 +1,22 @@
-"""
----UNITS---
-price : CHF
-power production : W
-construction time : s
-construction energy : Wh
-consumed ressource : [string]
-amount consumed : [units]/h
-pollution : g/kWh
-"""
+data = {
 
-def display_CHF(price):
-  return '{:,.0f} CHF'.format(price)
-
-def display_W(power):
-  units = ['W', 'kW', 'MW', 'GW', 'TW']
-  unit_index = 0
-  while power >= 1000:
-      power /= 1000
-      unit_index += 1
-      if unit_index == len(units) - 1:
-          break
-  return '{:.0f} {}'.format(power, units[unit_index])
-
-def display_duration(seconds):
-  minutes, seconds = divmod(seconds, 60)
-  hours, minutes = divmod(minutes, 60)
-  days, hours = divmod(hours, 24)
-  duration = []
-  if days > 0:
-      duration.append('{}d'.format(int(days)))
-  if hours > 0:
-      duration.append('{}h'.format(int(hours)))
-  if minutes > 0:
-      duration.append('{}m'.format(int(minutes)))
-  if seconds > 0:
-      duration.append('{}s'.format(int(seconds)))
-  return ' '.join(duration)
-
-def display_Wh(energy):
-  units = ['Wh', 'kWh', 'MWh', 'GWh', 'TWh']
-  unit_index = 0
-  while energy >= 1000:
-      energy /= 1000
-      unit_index += 1
-      if unit_index == len(units) - 1:
-          break
-  return '{:.0f} {}'.format(energy, units[unit_index])
-
-def display_kg(mass):
-  return '{:,.0f} kg/h'.format(mass)
-
-energy_buildings = {
+"power buildings": {
   "steam engine": {
-    "price" : 20000,
-    "power producrion" : 25000,
-    "construction time" : 36000,
-    "construction energy" : 10000,
+    "price" : 20000, #[CHF]
+    "power producrion" : 25000, #[W]
+    "construction time" : 36000, #[s]
+    "construction energy" : 10000, #[Wh]
+    "construction pollution" : 12000, #[kg]
     "consumed ressource" : "money",
     "amount consumed" : 100,
-    "pollution" : 494
+    "pollution" : 494 #[g/kW]
   },
   "windmill": {
     "price" : 15000,
     "power producrion" : 3000,
     "construction time" : 18000,
     "construction energy" : 3000,
+    "construction pollution" : 12000,
     "consumed ressource" : "wind",
     "amount consumed" : 0,
     "pollution" : 0
@@ -74,6 +26,7 @@ energy_buildings = {
     "power producrion" : 10000,
     "construction time" : 36000,
     "construction energy" : 5000,
+    "construction pollution" : 12000,
     "consumed ressource" : "water",
     "amount consumed" : 0,
     "pollution" : 0
@@ -83,6 +36,7 @@ energy_buildings = {
     "power producrion" : 120000000,
     "construction time" : 172800,
     "construction energy" : 17280,
+    "construction pollution" : 12000,
     "consumed ressource" : "coal",
     "amount consumed" : 60000,
     "pollution" : 986
@@ -92,6 +46,7 @@ energy_buildings = {
     "power producrion" : 80000000,
     "construction time" : 172800,
     "construction energy" : 17280,
+    "construction pollution" : 12000,
     "consumed ressource" : "oil",
     "amount consumed" : 21818,
     "pollution" : 777
@@ -101,6 +56,7 @@ energy_buildings = {
     "power producrion" : 100000000,
     "construction time" : 172800,
     "construction energy" : 17280,
+    "construction pollution" : 12000,
     "consumed ressource" : "gas",
     "amount consumed" : 21818,
     "pollution" : 429
@@ -110,6 +66,7 @@ energy_buildings = {
     "power producrion" : 350000,
     "construction time" : 172800,
     "construction energy" : 17280,
+    "construction pollution" : 12000,
     "consumed ressource" : "geothermy",
     "amount consumed" : 0,
     "pollution" : 6
@@ -119,15 +76,17 @@ energy_buildings = {
     "power producrion" : 200000000,
     "construction time" : 172800,
     "construction energy" : 17280,
+    "construction pollution" : 12000,
     "consumed ressource" : "hydropower",
     "amount consumed" : 0,
     "pollution" : 0
   },
-  "small wind turbine": {
+  "wind turbine": {
     "price" : 2000000,
     "power producrion" : 500000,
     "construction time" : 172800,
     "construction energy" : 17280,
+    "construction pollution" : 12000,
     "consumed ressource" : "wind",
     "amount consumed" : 0,
     "pollution" : 0
@@ -137,6 +96,7 @@ energy_buildings = {
     "power producrion" : 530000000,
     "construction time" : 172800,
     "construction energy" : 17280,
+    "construction pollution" : 12000,
     "consumed ressource" : ["gas", "coal"],
     "amount consumed" : [60000, 9000],
     "pollution" : 488
@@ -146,6 +106,7 @@ energy_buildings = {
     "power producrion" : 120000000,
     "construction time" : 172800,
     "construction energy" : 17280,
+    "construction pollution" : 12000,
     "consumed ressource" : "geothermy",
     "amount consumed" : 0,
     "pollution" : 10
@@ -155,15 +116,17 @@ energy_buildings = {
     "power producrion" : 900000000,
     "construction time" : 172800,
     "construction energy" : 17280,
+    "construction pollution" : 12000,
     "consumed ressource" : "uranium",
     "amount consumed" : 360,
     "pollution" : 2
   },
   "large water dam": {
     "price" : 2000000000,
-    "power producrion" : 1200000,
+    "power producrion" : 1200000000,
     "construction time" : 172800,
     "construction energy" : 17280,
+    "construction pollution" : 12000,
     "consumed ressource" : "hydropower",
     "amount consumed" : 0,
     "pollution" : 0
@@ -173,6 +136,7 @@ energy_buildings = {
     "power producrion" : 400000,
     "construction time" : 172800,
     "construction energy" : 17280,
+    "construction pollution" : 12000,
     "consumed ressource" : "irradiation",
     "amount consumed" : 0,
     "pollution" : 0
@@ -182,6 +146,7 @@ energy_buildings = {
     "power producrion" : 900,
     "construction time" : 172800,
     "construction energy" : 17280,
+    "construction pollution" : 12000,
     "consumed ressource" : "irradiation",
     "amount consumed" : 0,
     "pollution" : 0
@@ -191,6 +156,7 @@ energy_buildings = {
     "power producrion" : 2500000,
     "construction time" : 172800,
     "construction energy" : 17280,
+    "construction pollution" : 12000,
     "consumed ressource" : "wind",
     "amount consumed" : 0,
     "pollution" : 0
@@ -200,8 +166,13 @@ energy_buildings = {
     "power producrion" : 2500000000,
     "construction time" : 172800,
     "construction energy" : 17280,
+    "construction pollution" : 12000,
     "consumed ressource" : "uranium",
     "amount consumed" : 3,
     "pollution" : 2
   }
+}
+
+
+
 }

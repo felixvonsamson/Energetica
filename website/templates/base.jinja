@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='energetica.css') }}" type="text/css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2">
     <link rel = "icon" href ="{{ url_for('static', filename='images/icon.jpg') }}" type="image/x-icon">
-
+    <script type="text/javascript" src="{{ url_for('static', filename='display_functions.js') }}" ></script>
     <title>{% block title %}Home{% endblock %}</title>
   </head>
 
@@ -17,7 +17,7 @@
     <nav class="navbar medium">
       <a class="navbar_item padding tan_green" id="home" href="/home">Home</a>
       <a class="navbar_item padding tan_green" id="network" href="/network">Network</a>
-      <a class="navbar_item padding tan_green" id="energy_buildings" href="/energy_buildings">Energy buildings</a>
+      <a class="navbar_item padding tan_green" id="power_buildings" href="/power_buildings">Power buildings</a>
       <a class="navbar_item padding tan_green" id="storage_buildings" href="/storage_buildings">Storage buildings</a>
       <a class="navbar_item padding tan_green" id="other_buildings" href="/other_buildings">Other buildings</a>
       <a class="navbar_item padding tan_green" id="technology" href="/technology">Technology</a>
@@ -44,6 +44,7 @@
 
     <div class="main_container tan_green">{% block content %} {% endblock %}</div>
 
-  <script src="{{ url_for('static', filename='javascript.js') }}" ></script>
+  <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}" ></script>
+  {% block scripts %} {% endblock %}
   </body>
 </html>

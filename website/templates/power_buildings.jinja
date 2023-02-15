@@ -1,0 +1,423 @@
+{% extends "base.jinja" %} {% block title %}Power buildings{% endblock %} {% block content
+%}
+
+<div class="huge" style="text-align:center">Power buildings</div>
+
+{% set building = data["steam engine"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/steam_engine.png') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Steam engine</strong><br>
+  The steam engine burns wood to produce electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_CHF({{building["amount consumed"]}});</script>/h <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["windmill"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/windmill.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Windmill</strong><br>
+  The windmill uses the force of the wind to produce electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["watermill"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/watermill.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Watermill</strong><br>
+  The watermill uses the energy of flowing water to produce electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["coal burner"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/coal_burner.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Coal burner</strong><br>
+  The coal burner burns coal to produce electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount consumed"]}});</script> coal <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["oil burner"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/oil_burner.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Oil burner</strong><br>
+  The oil burner burns oil to produce electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount consumed"]}});</script> oil <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["gas burner"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/gas_burner.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Gas burner</strong><br>
+  The gas burner burns gas to produce electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount consumed"]}});</script> gas <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["shallow geothermal plant"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/shallow_geothermal_plant.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Shallow geothermal plant</strong><br>
+  The shallow geothermal plant uses shallow geothermal heat to produce electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["small water dam"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/small_water_dam.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Small water dam</strong><br>
+  The small water dam uses the potential energy of the water to produce electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["wind turbine"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/wind_turbine.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Wind turbine</strong><br>
+  The wind turbine uses the energy of the wind to produce electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["combined cycle"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/combined_cycle.png') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Combined cycle</strong><br>
+  The combined cycle power plant burns coal and gas to produce electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount consumed"][0]}});</script> gas <br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount consumed"][1]}});</script> coal <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["deep geothermal plant"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/deep_geothermal_plant.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Deep geothermal plant</strong><br>
+  The deep geothermal plant uses eath heat to produce electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["nuclear reactor"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/nuclear_reactor.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Nuclear reactor</strong><br>
+  The nuclear power plant uses controlled nuclear fission to produce a large amount of electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount consumed"]}});</script> uranium <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["large water dam"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/large_water_dam.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Large water dam</strong><br>
+  The large water dam uses the potential energy of water to produce a large amount of electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["CSP solar"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/CSP_solar.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Concentrated solar power</strong><br>
+  The concentrated solar power plant acumulates heat from the irradiation energy of the sun to produce electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["PV solar"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/PV_solar.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Photovoltaics</strong><br>
+  The photovoltaic pannels transform the irradiation energy of the sun into electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["large wind turbine"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/large_wind_turbine.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Large wind turbine</strong><br>
+  The large wind turbine uses the energy of the wind to produce electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% set building = data["nuclear reactor gen4"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/power_buildings/nuclear_reactor_gen4.png') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Nuclear reactor 4th generation</strong><br>
+  The nuclear power plant of the 4th generation uses controlled nuclear fission to produce a large amount of electricity fom a litle quantity of fuel. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount consumed"]}});</script> uranium <br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} g/kWh
+  </div>
+ </div>
+</div>
+
+{% endblock %}
+
