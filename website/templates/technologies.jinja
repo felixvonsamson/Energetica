@@ -1,0 +1,140 @@
+{% extends "base.jinja" %} {% block title %}Technologies{% endblock %} {% block content
+%}
+
+<div class="huge" style="text-align:center">Technologies</div>
+
+{% set building = data["mineral extraction"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/mineral_extraction.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Mineral extraction</strong><br>
+  Mineral extraction improves the process of extracting minerals like coal and uranium.
+ </div>
+ <div class="infobox">
+ <b class="medium white padding">
+    Research
+  </b>
+  <div class="margin">
+    <i class="fa fa-money"></i> <script>display_CHF({{building["initial price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["research time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["research energy"]}});</script> <br>
+  </div>
+ </div>
+</div>
+
+{% set building = data["civil engeneering"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/civil_engeneering.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Civil engeneering</strong><br>
+  Civil engeneering makes the construction of large buildings more efficient.
+ </div>
+ <div class="infobox">
+ <b class="medium white padding">
+    Research
+  </b>
+  <div class="margin">
+    <i class="fa fa-money"></i> <script>display_CHF({{building["initial price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["research time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["research energy"]}});</script> <br>
+  </div>
+ </div>
+</div>
+
+{% set building = data["physics"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/physics.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Physics</strong><br>
+  Physics is the science behind a lot of innovations in the field of energy.
+ </div>
+ <div class="infobox">
+ <b class="medium white padding">
+    Research
+  </b>
+  <div class="margin">
+    <i class="fa fa-money"></i> <script>display_CHF({{building["initial price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["research time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["research energy"]}});</script> <br>
+  </div>
+ </div>
+</div>
+
+{% set building = data["materials"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/materials.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Materials</strong><br>
+  Materials research is necessary for a lot of innovations in the field of energy.
+ </div>
+ <div class="infobox">
+ <b class="medium white padding">
+    Research
+  </b>
+  <div class="margin">
+    <i class="fa fa-money"></i> <script>display_CHF({{building["initial price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["research time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["research energy"]}});</script> <br>
+  </div>
+ </div>
+</div>
+
+{% set building = data["environmental science"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/environmental_sciences.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Environmental sciences</strong><br>
+  Environmental science research can reduce the enviromental impact of energy buildings.
+ </div>
+ <div class="infobox">
+ <b class="medium white padding">
+    Research
+  </b>
+  <div class="margin">
+    <i class="fa fa-money"></i> <script>display_CHF({{building["initial price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["research time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["research energy"]}});</script> <br>
+  </div>
+ </div>
+</div>
+
+{% set building = data["transport technology"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/transport_technology.png') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Transport technology</strong><br>
+  Transport technology can improve the trading of resources.
+ </div>
+ <div class="infobox">
+ <b class="medium white padding">
+    Research
+  </b>
+  <div class="margin">
+    <i class="fa fa-money"></i> <script>display_CHF({{building["initial price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["research time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["research energy"]}});</script> <br>
+  </div>
+ </div>
+</div>
+
+{% set building = data["aerodynamics"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/aerodynamics.png') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Aerodynamics</strong><br>
+  Aerodynamics are essential for the design of wind turbines.
+ </div>
+ <div class="infobox">
+ <b class="medium white padding">
+    Research
+  </b>
+  <div class="margin">
+    <i class="fa fa-money"></i> <script>display_CHF({{building["initial price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["research time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["research energy"]}});</script> <br>
+  </div>
+ </div>
+</div>
+
+{% endblock %}
+

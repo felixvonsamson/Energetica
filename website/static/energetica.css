@@ -24,11 +24,9 @@ html,body{font-family: 'Baloo 2', cursive; font-size:15px; line-height:1.3; marg
 .large{font-size:min(30px, 5vh)}
 .huge{font-size:min(42px, 6vh)}
 
-/* flex */
-
 /* ------- */
 
-.navbar{display: block; width: 200px; position: fixed; height: 100%; overflow: auto;}
+.navbar{display: block; width: 230px; position: fixed; height: 100%; overflow: auto;}
 .navbar_item{display: block; text-decoration: none;}
 .navbar_item.active {background-color: #285430; color: #fff;}
 .navbar_item:hover:not(.active) {background-color: #5f8d4e; color: white;}

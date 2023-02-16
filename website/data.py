@@ -324,7 +324,7 @@ data = {
     "research time" : 36000,
     "research energy" : 10000,
   },
-  "enviromental science": {
+  "environmental science": {
     "initial price" : 40000,
     "price multiplier" : 1.3,
     "research time" : 36000,

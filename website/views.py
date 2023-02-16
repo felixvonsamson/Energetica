@@ -33,3 +33,13 @@ def energy_buildings():
 @login_required
 def storage_buildings():
     return render_template("storage_buildings.jinja", user=current_user, data=data["storage buildings"])
+
+@views.route('/technology')
+@login_required
+def technology():
+    return render_template("technologies.jinja", user=current_user, data=data["technology"])
+
+@views.route('/functional_buildings')
+@login_required
+def functional_buildings():
+    return render_template("functional_buildings.jinja", user=current_user, data=data["functional buildings"])
