@@ -52,6 +52,7 @@ class User(db.Model, UserMixin):
     compressed_air = db.Column(db.Integer, default=0)
     molten_salt = db.Column(db.Integer, default=0)
     large_pumped_hydro = db.Column(db.Integer, default=0)
+    hydrogen_storage = db.Column(db.Integer, default=0)
     lithium_ion_batteries = db.Column(db.Integer, default=0)
     solid_state_batteries = db.Column(db.Integer, default=0)
 

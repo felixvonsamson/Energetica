@@ -28,3 +28,8 @@ def home():
 @login_required
 def energy_buildings():
     return render_template("power_buildings.jinja", user=current_user, data=data["power buildings"])
+
+@views.route('/storage_buildings')
+@login_required
+def storage_buildings():
+    return render_template("storage_buildings.jinja", user=current_user, data=data["storage buildings"])

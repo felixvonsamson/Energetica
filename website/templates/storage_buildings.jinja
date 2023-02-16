@@ -1,0 +1,181 @@
+{% extends "base.jinja" %} {% block title %}Storage buildings{% endblock %} {% block content%}
+
+<div class="huge" style="text-align:center">Storage buildings</div>
+
+{% set building = data["small pumped hydro"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/storage_buildings/small_pumped_hydro.png') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Small pumped hydro</strong><br>
+  The small pumped hydropower storage pumps water to a higher altitude to store energy. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-battery-full"></i> <script>display_Wh({{building["storage capacity"]}});</script> <br>
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-percent"></i> {{(building["efficiency"]*100)|int}} %
+  </div>
+ </div>
+</div>
+
+{% set building = data["compressed air"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/storage_buildings/compressed_air.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Compressed air</strong><br>
+  The compressed air storage plant stores mechanical energy in the form of compressed gas in the ground. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-battery-full"></i> <script>display_Wh({{building["storage capacity"]}});</script> <br>
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-percent"></i> {{(building["efficiency"]*100)|int}} %
+  </div>
+ </div>
+</div>
+
+{% set building = data["molten salt"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/storage_buildings/molten_salt.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">molten salt</strong><br>
+  The Molten salt storage stores molten satl at high temperatures to be used for electricity producion. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-battery-full"></i> <script>display_Wh({{building["storage capacity"]}});</script> <br>
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-percent"></i> {{(building["efficiency"]*100)|int}} %
+  </div>
+ </div>
+</div>
+
+{% set building = data["large pumped hydro"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/storage_buildings/large_pumped_hydro.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Large pumped hydro</strong><br>
+  The large pumped hydropower storage pumps water to a higher altitude to store a large amount of energy. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-battery-full"></i> <script>display_Wh({{building["storage capacity"]}});</script> <br>
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-percent"></i> {{(building["efficiency"]*100)|int}} %
+  </div>
+ </div>
+</div>
+
+{% set building = data["hydrogen storage"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/storage_buildings/hydrogen_storage.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Hydrogen storage</strong><br>
+  The hydrogen storage stores hydrogen that has been generated by electrolysys and can be transformed into electricity. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-battery-full"></i> <script>display_Wh({{building["storage capacity"]}});</script> <br>
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-percent"></i> {{(building["efficiency"]*100)|int}} %
+  </div>
+ </div>
+</div>
+
+{% set building = data["lithium ion batteries"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/storage_buildings/lithium_ion_batteries.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Lithium ion batteries</strong><br>
+  The lithium ion battery storage facility stores electricity with high efficiency. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-battery-full"></i> <script>display_Wh({{building["storage capacity"]}});</script> <br>
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-percent"></i> {{(building["efficiency"]*100)|int}} %
+  </div>
+ </div>
+</div>
+
+{% set building = data["solid state batteries"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/storage_buildings/solid_state_batteries.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Solid state batteries</strong><br>
+  The solid state battery storage facility stores electricity with high efficiency. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-battery-full"></i> <script>display_Wh({{building["storage capacity"]}});</script> <br>
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power producrion"]}});</script> <br>
+    <i class="fa fa-percent"></i> {{(building["efficiency"]*100)|int}} %
+  </div>
+ </div>
+</div>
+
+{% endblock %}
+

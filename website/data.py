@@ -171,8 +171,177 @@ data = {
     "amount consumed" : 3,
     "pollution" : 2
   }
+},
+
+"storage buildings": {
+  "small pumped hydro": {
+    "price" : 400000000, #[CHF]
+    "storage capacity" : 3000000000, #[Wh]
+    "power producrion" : 55000000, #[W]
+    "efficiency" : 0.75,
+    "construction time" : 36000, #[s]
+    "construction energy" : 10000, #[Wh]
+    "construction pollution" : 12000 #[kg]
+  },
+  "compressed air": {
+    "price" : 1200000000,
+    "storage capacity" : 100000000,
+    "power producrion" : 20000000,
+    "efficiency" : 0.60,
+    "construction time" : 36000,
+    "construction energy" : 10000,
+    "construction pollution" : 12000
+  },
+  "molten salt": {
+    "price" : 30000000,
+    "storage capacity" : 600000000,
+    "power producrion" : 240000000,
+    "efficiency" : 0.92,
+    "construction time" : 36000,
+    "construction energy" : 10000,
+    "construction pollution" : 12000
+  },
+  "large pumped hydro": {
+    "price" : 1300000000,
+    "storage capacity" : 16000000000,
+    "power producrion" : 400000000,
+    "efficiency" : 0.8,
+    "construction time" : 36000,
+    "construction energy" : 10000,
+    "construction pollution" : 12000
+  },
+  "hydrogen storage": {
+    "price" : 7000000,
+    "storage capacity" : 80000000000000,
+    "power producrion" : 750000000,
+    "efficiency" : 0.4,
+    "construction time" : 36000,
+    "construction energy" : 10000,
+    "construction pollution" : 12000
+  },
+  "lithium ion batteries": {
+    "price" : 150000000,
+    "storage capacity" : 100000000,
+    "power producrion" : 20000000,
+    "efficiency" : 0.98,
+    "construction time" : 36000,
+    "construction energy" : 10000,
+    "construction pollution" : 12000
+  },
+  "solid state batteries": {
+    "price" : 350000000,
+    "storage capacity" : 140000000,
+    "power producrion" : 30000000,
+    "efficiency" : 0.99,
+    "construction time" : 36000,
+    "construction energy" : 10000,
+    "construction pollution" : 12000
+  }
+},
+
+"functional buildings": {
+  "laboratory": {
+    "price" : 2500000, #[CHF]
+    "construction time" : 36000, #[s]
+    "construction energy" : 10000, #[Wh]
+    "construction pollution" : 12000 #[kg]
+  },
+  "warehouse": {
+    "price" : 400000,
+    "construction time" : 36000,
+    "construction energy" : 10000,
+    "construction pollution" : 12000
+  },
+  "military barracks": {
+    "price" : 80000000,
+    "construction time" : 36000,
+    "construction energy" : 10000,
+    "construction pollution" : 12000
+  },
+},
+
+"extraction plants": {
+  "coal mine": {
+    "price" : 2500000, #[CHF]
+    "construction time" : 36000, #[s]
+    "construction energy" : 10000, #[Wh]
+    "construction pollution" : 12000, #[kg]
+    "amount produced" : 3000, #[kg/h]
+    "energy consumption" : 3000, #[W]
+    "pollution" : 2 #[kg/h]
+  },
+  "oil extracion plant": {
+    "price" : 2500000,
+    "construction time" : 36000,
+    "construction energy" : 10000,
+    "construction pollution" : 12000,
+    "amount produced" : 3000,
+    "energy consumption" : 3000,
+    "pollution" : 2
+  },
+  "gas extracion plant": {
+    "price" : 2500000,
+    "construction time" : 36000,
+    "construction energy" : 10000,
+    "construction pollution" : 12000,
+    "amount produced" : 3000,
+    "energy consumption" : 3000,
+    "pollution" : 2
+  },
+  "uranium mine": {
+    "price" : 2500000,
+    "construction time" : 36000,
+    "construction energy" : 10000,
+    "construction pollution" : 12000,
+    "amount produced" : 3000,
+    "energy consumption" : 3000,
+    "pollution" : 2
+  }
+},
+
+"technology": {
+  "mineral extraction": {
+    "initial price" : 40000, #[CHF]
+    "price multiplier" : 1.3,
+    "research time" : 36000, #[s]
+    "research energy" : 10000, #[Wh]
+  },
+  "civil engeneering": {
+    "initial price" : 40000,
+    "price multiplier" : 1.3,
+    "research time" : 36000,
+    "research energy" : 10000,
+  },
+  "physics": {
+    "initial price" : 40000,
+    "price multiplier" : 1.3,
+    "research time" : 36000,
+    "research energy" : 10000,
+  },
+  "materials": {
+    "initial price" : 40000,
+    "price multiplier" : 1.3,
+    "research time" : 36000,
+    "research energy" : 10000,
+  },
+  "enviromental science": {
+    "initial price" : 40000,
+    "price multiplier" : 1.3,
+    "research time" : 36000,
+    "research energy" : 10000,
+  },
+  "transport technology": {
+    "initial price" : 40000,
+    "price multiplier" : 1.3,
+    "research time" : 36000,
+    "research energy" : 10000,
+  },
+  "aerodynamics": {
+    "initial price" : 40000,
+    "price multiplier" : 1.3,
+    "research time" : 36000,
+    "research energy" : 10000,
+  }
 }
-
-
 
 }
