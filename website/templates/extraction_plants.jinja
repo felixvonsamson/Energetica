@@ -1,0 +1,107 @@
+{% extends "base.jinja" %} {% block title %}Extraction plants{% endblock %} {% block content
+%}
+
+<div class="huge title">Extraction plants</div>
+
+{% set building = data["coal mine"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/extraction_plants/coal_mine.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Coal mine</strong><br>
+  The coal mine produces coal.
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script><br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script><br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script><br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power consumption"]}});</script><br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount produced"]}});</script> coal<br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} kg/h
+  </div>
+ </div>
+</div>
+
+{% set building = data["oil extraction plant"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/extraction_plants/oil_extraction_plant.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">oil extraction plant</strong><br>
+  The oil extraction plant produces oil.
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script><br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script><br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script><br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power consumption"]}});</script><br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount produced"]}});</script> coal<br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} kg/h
+  </div>
+ </div>
+</div>
+
+{% set building = data["gas extraction plant"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/extraction_plants/gas_extraction_plant.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">gas extraction plant</strong><br>
+  The gas extraction plant produces natural gas.
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script><br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script><br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script><br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power consumption"]}});</script><br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount produced"]}});</script> coal<br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} kg/h
+  </div>
+ </div>
+</div>
+
+{% set building = data["uranium mine"] %}
+<div class="bone margin building small">
+ <img class="img" src="{{ url_for('static', filename='images/extraction_plants/uranium_mine.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">Uranium mine</strong><br>
+  The uranium mine produces uranium.
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding">
+    Start construction
+  </b>
+  <div>
+    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script><br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script><br>
+    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script><br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+  </div>
+  <div class="margin tan_green padding">
+    <i class="fa fa-bolt"></i> <script>display_W({{building["power consumption"]}});</script><br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount produced"]}});</script> coal<br>
+    <i class="fa fa-cloud"></i> {{building["pollution"]}} kg/h
+  </div>
+ </div>
+</div>
+
+{% endblock %}
+

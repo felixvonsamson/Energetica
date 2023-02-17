@@ -1,7 +1,7 @@
 /* CSS document for the project "Energetica" by Felix von Samson */
 
 html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}
-html,body{font-family: 'Baloo 2', cursive; font-size:15px; line-height:1.3; margin:0;}
+html,body{font-family: 'Baloo 2', cursive; font-size:15px; line-height:1.3; margin:0; padding: 0;}
 
 /* Colors */
 .white{color:#285430;background-color:#ffffff}
@@ -31,7 +31,9 @@ html,body{font-family: 'Baloo 2', cursive; font-size:15px; line-height:1.3; marg
 .navbar_item.active {background-color: #285430; color: #fff;}
 .navbar_item:hover:not(.active) {background-color: #5f8d4e; color: white;}
 
-.main_container{max-width: 1200px; margin:auto;}
+.main_container{max-width: 1200px; min-height:100vh; margin:auto; overflow:auto}
+
+.title{padding-top:16px; text-align:center}
 
 .img{width:250px}
 

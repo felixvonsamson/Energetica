@@ -267,25 +267,25 @@ data = {
     "construction energy" : 10000, #[Wh]
     "construction pollution" : 12000, #[kg]
     "amount produced" : 3000, #[kg/h]
-    "energy consumption" : 3000, #[W]
+    "power consumption" : 3000, #[W]
     "pollution" : 2 #[kg/h]
   },
-  "oil extracion plant": {
+  "oil extraction plant": {
     "price" : 2500000,
     "construction time" : 36000,
     "construction energy" : 10000,
     "construction pollution" : 12000,
     "amount produced" : 3000,
-    "energy consumption" : 3000,
+    "power consumption" : 3000,
     "pollution" : 2
   },
-  "gas extracion plant": {
+  "gas extraction plant": {
     "price" : 2500000,
     "construction time" : 36000,
     "construction energy" : 10000,
     "construction pollution" : 12000,
     "amount produced" : 3000,
-    "energy consumption" : 3000,
+    "power consumption" : 3000,
     "pollution" : 2
   },
   "uranium mine": {
@@ -294,7 +294,7 @@ data = {
     "construction energy" : 10000,
     "construction pollution" : 12000,
     "amount produced" : 3000,
-    "energy consumption" : 3000,
+    "power consumption" : 3000,
     "pollution" : 2
   }
 },

@@ -43,3 +43,18 @@ def technology():
 @login_required
 def functional_buildings():
     return render_template("functional_buildings.jinja", user=current_user, data=data["functional buildings"])
+
+@views.route('/extraction_plants')
+@login_required
+def extraction_plants():
+    return render_template("extraction_plants.jinja", user=current_user, data=data["extraction plants"])
+
+@views.route('/production_overview')
+@login_required
+def production_overview():
+    return render_template("production_overview.jinja", user=current_user)
+
+@views.route('/network')
+@login_required
+def network():
+    return render_template("network.jinja", user=current_user)
