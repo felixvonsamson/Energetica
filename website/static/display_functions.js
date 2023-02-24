@@ -1,5 +1,5 @@
 function display_CHF(price) {
-    const units = ['CHF', 'k CHF', 'M CHF', 'Md CHF'];
+    const units = [' CHF', 'k CHF', 'M CHF', 'Md CHF'];
     let unit_index = 0;
     while (price >= 10000 && unit_index < units.length - 1) {
         price /= 1000;
@@ -50,10 +50,6 @@ function display_duration(seconds) {
       duration += `${seconds}s`;
     }
     document.write(duration.trim());
-}
-
-function display_kg(mass) {
-    document.write(`${mass.toFixed(0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} kg/h`);
 }
 
 function display_kgh(mass) {

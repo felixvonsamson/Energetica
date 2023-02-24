@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='energetica.css') }}" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2">
+    <link rel = "icon" href ="{{ url_for('static', filename='images/icon.jpg') }}" type="image/x-icon">
+    <script type="text/javascript" src="{{ url_for('static', filename='display_functions.js') }}" ></script>
+    <title>{% block title %}Home{% endblock %}</title>
+  </head>
+
+  <body class="green">
+    <nav class="navbar medium">
+      <a class="navbar_item padding tan_green" id="home" href="/home">Home</a>
+      <a class="navbar_item padding tan_green" id="network" href="/network">Network</a>
+      <a class="navbar_item padding tan_green" id="production_overview" href="/production_overview">Production overview</a>
+      <a class="navbar_item padding tan_green" id="power_buildings" href="/power_buildings">Power buildings</a>
+      <a class="navbar_item padding tan_green" id="storage_buildings" href="/storage_buildings">Storage buildings</a>
+      <a class="navbar_item padding tan_green" id="functional_buildings" href="/functional_buildings">Functional buildings</a>
+      <a class="navbar_item padding tan_green" id="extraction_plants" href="/extraction_plants">Extraction plants</a>
+      <a class="navbar_item padding tan_green" id="technology" href="/technology">Technology</a>
+      <a class="navbar_item padding tan_green" id="logout" href="/logout">Logout</a>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, message in messages %} {% if category ==
+    'error' %}
+    <div class="alert alert-danger alter-dismissable fade show" role="alert">
+      {{ message }}
+      <button type="button" class="close" data-dismiss="alert">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    {% else %}
+    <div class="alert alert-success alter-dismissable fade show" role="alert">
+      {{ message }}
+      <button type="button" class="close" data-dismiss="alert">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    {% endif %} {% endfor %} {% endif %} {% endwith %}
+
+    {% block base %} {% endblock %}
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+  <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}" ></script>
+  <script src="{{ url_for('static', filename='sockets.js') }}" ></script>
+  {% block scripts %} {% endblock %}
+  </body>
+</html>

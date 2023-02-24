@@ -3,7 +3,7 @@ data = {
 "power buildings": {
   "steam engine": {
     "price" : 20000, #[CHF]
-    "power producrion" : 25000, #[W]
+    "power production" : 25000, #[W]
     "construction time" : 36000, #[s]
     "construction energy" : 10000, #[Wh]
     "construction pollution" : 12000, #[kg]
@@ -13,7 +13,7 @@ data = {
   },
   "windmill": {
     "price" : 15000,
-    "power producrion" : 3000,
+    "power production" : 3000,
     "construction time" : 18000,
     "construction energy" : 3000,
     "construction pollution" : 12000,
@@ -23,7 +23,7 @@ data = {
   },
   "watermill": {
     "price" : 50000,
-    "power producrion" : 10000,
+    "power production" : 10000,
     "construction time" : 36000,
     "construction energy" : 5000,
     "construction pollution" : 12000,
@@ -33,7 +33,7 @@ data = {
   },
   "coal burner": {
     "price" : 5000000,
-    "power producrion" : 120000000,
+    "power production" : 120000000,
     "construction time" : 172800,
     "construction energy" : 17280,
     "construction pollution" : 12000,
@@ -43,7 +43,7 @@ data = {
   },
   "oil burner": {
     "price" : 5000000,
-    "power producrion" : 80000000,
+    "power production" : 80000000,
     "construction time" : 172800,
     "construction energy" : 17280,
     "construction pollution" : 12000,
@@ -53,7 +53,7 @@ data = {
   },
   "gas burner": {
     "price" : 5000000,
-    "power producrion" : 100000000,
+    "power production" : 100000000,
     "construction time" : 172800,
     "construction energy" : 17280,
     "construction pollution" : 12000,
@@ -63,7 +63,7 @@ data = {
   },
   "shallow geothermal plant": {
     "price" : 1000000,
-    "power producrion" : 350000,
+    "power production" : 350000,
     "construction time" : 172800,
     "construction energy" : 17280,
     "construction pollution" : 12000,
@@ -73,7 +73,7 @@ data = {
   },
   "small water dam": {
     "price" : 400000000,
-    "power producrion" : 200000000,
+    "power production" : 200000000,
     "construction time" : 172800,
     "construction energy" : 17280,
     "construction pollution" : 12000,
@@ -83,7 +83,7 @@ data = {
   },
   "wind turbine": {
     "price" : 2000000,
-    "power producrion" : 500000,
+    "power production" : 500000,
     "construction time" : 172800,
     "construction energy" : 17280,
     "construction pollution" : 12000,
@@ -93,7 +93,7 @@ data = {
   },
   "combined cycle": {
     "price" : 300000000,
-    "power producrion" : 530000000,
+    "power production" : 530000000,
     "construction time" : 172800,
     "construction energy" : 17280,
     "construction pollution" : 12000,
@@ -103,7 +103,7 @@ data = {
   },
   "deep geothermal plant": {
     "price" : 250000000,
-    "power producrion" : 120000000,
+    "power production" : 120000000,
     "construction time" : 172800,
     "construction energy" : 17280,
     "construction pollution" : 12000,
@@ -113,7 +113,7 @@ data = {
   },
   "nuclear reactor": {
     "price" : 1000000000,
-    "power producrion" : 900000000,
+    "power production" : 900000000,
     "construction time" : 172800,
     "construction energy" : 17280,
     "construction pollution" : 12000,
@@ -123,7 +123,7 @@ data = {
   },
   "large water dam": {
     "price" : 2000000000,
-    "power producrion" : 1200000000,
+    "power production" : 1200000000,
     "construction time" : 172800,
     "construction energy" : 17280,
     "construction pollution" : 12000,
@@ -133,7 +133,7 @@ data = {
   },
   "CSP solar": {
     "price" : 800000000,
-    "power producrion" : 400000,
+    "power production" : 400000,
     "construction time" : 172800,
     "construction energy" : 17280,
     "construction pollution" : 12000,
@@ -143,7 +143,7 @@ data = {
   },
   "PV solar": {
     "price" : 1200,
-    "power producrion" : 900,
+    "power production" : 900,
     "construction time" : 172800,
     "construction energy" : 17280,
     "construction pollution" : 12000,
@@ -153,7 +153,7 @@ data = {
   },
   "large wind turbine": {
     "price" : 7000000,
-    "power producrion" : 2500000,
+    "power production" : 2500000,
     "construction time" : 172800,
     "construction energy" : 17280,
     "construction pollution" : 12000,
@@ -163,7 +163,7 @@ data = {
   },
   "nuclear reactor gen4": {
     "price" : 9000000000,
-    "power producrion" : 2500000000,
+    "power production" : 2500000000,
     "construction time" : 172800,
     "construction energy" : 17280,
     "construction pollution" : 12000,
@@ -177,7 +177,7 @@ data = {
   "small pumped hydro": {
     "price" : 400000000, #[CHF]
     "storage capacity" : 3000000000, #[Wh]
-    "power producrion" : 55000000, #[W]
+    "power production" : 55000000, #[W]
     "efficiency" : 0.75,
     "construction time" : 36000, #[s]
     "construction energy" : 10000, #[Wh]
@@ -186,7 +186,7 @@ data = {
   "compressed air": {
     "price" : 1200000000,
     "storage capacity" : 100000000,
-    "power producrion" : 20000000,
+    "power production" : 20000000,
     "efficiency" : 0.60,
     "construction time" : 36000,
     "construction energy" : 10000,
@@ -195,7 +195,7 @@ data = {
   "molten salt": {
     "price" : 30000000,
     "storage capacity" : 600000000,
-    "power producrion" : 240000000,
+    "power production" : 240000000,
     "efficiency" : 0.92,
     "construction time" : 36000,
     "construction energy" : 10000,
@@ -204,7 +204,7 @@ data = {
   "large pumped hydro": {
     "price" : 1300000000,
     "storage capacity" : 16000000000,
-    "power producrion" : 400000000,
+    "power production" : 400000000,
     "efficiency" : 0.8,
     "construction time" : 36000,
     "construction energy" : 10000,
@@ -213,7 +213,7 @@ data = {
   "hydrogen storage": {
     "price" : 7000000,
     "storage capacity" : 80000000000000,
-    "power producrion" : 750000000,
+    "power production" : 750000000,
     "efficiency" : 0.4,
     "construction time" : 36000,
     "construction energy" : 10000,
@@ -222,7 +222,7 @@ data = {
   "lithium ion batteries": {
     "price" : 150000000,
     "storage capacity" : 100000000,
-    "power producrion" : 20000000,
+    "power production" : 20000000,
     "efficiency" : 0.98,
     "construction time" : 36000,
     "construction energy" : 10000,
@@ -231,7 +231,7 @@ data = {
   "solid state batteries": {
     "price" : 350000000,
     "storage capacity" : 140000000,
-    "power producrion" : 30000000,
+    "power production" : 30000000,
     "efficiency" : 0.99,
     "construction time" : 36000,
     "construction energy" : 10000,

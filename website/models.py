@@ -22,11 +22,11 @@ class User(db.Model, UserMixin):
     r = db.Column(db.Integer)
 
     # Ressources :
-    money = db.Column(db.Integer, default=0)
-    coal = db.Column(db.Integer, default=0)
-    oil = db.Column(db.Integer, default=0)
-    gas = db.Column(db.Integer, default=0)
-    uranium = db.Column(db.Integer, default=0)
+    money = db.Column(db.Integer, default=100000)
+    coal = db.Column(db.Integer, default=1000000)
+    oil = db.Column(db.Integer, default=500000)
+    gas = db.Column(db.Integer, default=700000)
+    uranium = db.Column(db.Integer, default=10000)
 
     # Energy buildings :
     steam_engine = db.Column(db.Integer, default=0)
