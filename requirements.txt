@@ -1,3 +1,7 @@
 flask
+flask-socketio
 Flask-SQLAlchemy
 flask-login
+evenetlet
+apscheduler
+
