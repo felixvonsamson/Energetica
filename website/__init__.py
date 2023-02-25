@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from os import path
+import os
 from flask_login import LoginManager
 from flask_socketio import SocketIO
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -18,7 +18,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     db.init_app(app)
     
-    engine = gameEngine.load_data() if path.isfile("data.pck")  \
+    engine = gameEngine.load_data() if os.path.isfile("data.pck")  \
        else gameEngine()
     app.config["engine"] = engine
 

@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, jsonify
 from flask_login import login_required, current_user
-from .data import data
+from .config import config
 
 views = Blueprint('views', __name__)
 
@@ -25,27 +25,27 @@ def home():
 @views.route('/power_buildings')
 @login_required
 def energy_buildings():
-    return render_template("power_buildings.jinja", user=current_user, data=data["power buildings"])
+    return render_template("power_buildings.jinja", user=current_user, data=config["assets"])
 
 @views.route('/storage_buildings')
 @login_required
 def storage_buildings():
-    return render_template("storage_buildings.jinja", user=current_user, data=data["storage buildings"])
+    return render_template("storage_buildings.jinja", user=current_user, data=config["assets"])
 
 @views.route('/technology')
 @login_required
 def technology():
-    return render_template("technologies.jinja", user=current_user, data=data["technology"])
+    return render_template("technologies.jinja", user=current_user, data=config["assets"])
 
 @views.route('/functional_buildings')
 @login_required
 def functional_buildings():
-    return render_template("functional_buildings.jinja", user=current_user, data=data["functional buildings"])
+    return render_template("functional_buildings.jinja", user=current_user, data=config["assets"])
 
 @views.route('/extraction_plants')
 @login_required
 def extraction_plants():
-    return render_template("extraction_plants.jinja", user=current_user, data=data["extraction plants"])
+    return render_template("extraction_plants.jinja", user=current_user, data=config["assets"])
 
 @views.route('/production_overview')
 @login_required

@@ -3,11 +3,11 @@ import pickle
 import secrets
 import logging
 
-from .data import data
+from .config import config
 class gameEngine(object):
 
   def __init__(engine):
-    engine.data = data
+    engine.config = config
     
     engine.socketio = None
 
