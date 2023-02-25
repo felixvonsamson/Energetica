@@ -75,10 +75,11 @@ class gameEngine(object):
 from .utils import add_asset
 
 def state_update(engine, app):
-  engine.log("update all productions")
+  #engine.log("update all productions")
+  pass
 
 def check_heap(engine, app):
-  engine.log("checking heap")
+  #engine.log("checking heap")
   while heap and heap[0][0] < time.time():
     _,function,args = heapq.heappop(heap)
     with app.app_context():

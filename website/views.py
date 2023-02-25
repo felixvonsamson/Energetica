@@ -5,6 +5,8 @@ views = Blueprint('views', __name__)
 
 @views.before_request
 def check_user():
+    g.engine = current_app.config["engine"]
+    g.config = g.engine.config[session["ID"]]
     def render_template_ctx(page):
         #g.player.last_page = page
         return render_template(page, engine=g.engine, user=current_user, data=g.config["assets"])

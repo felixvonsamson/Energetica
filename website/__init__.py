@@ -22,12 +22,6 @@ def create_app():
     engine = gameEngine.load_data() if os.path.isfile("data.pck")  \
        else gameEngine()
     app.config["engine"] = engine
-    
-    @app.before_request
-    def check_user():
-      g.engine = engine
-      g.config = g.engine.config[session["ID"]]
-    
 
     socketio = SocketIO(app)
     engine.socketio = socketio
