@@ -14,12 +14,12 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
 
-        user = User.query.filter_by(username=username).first()
-        if user:
-            if check_password_hash(user.password, password):
+        player = Player.query.filter_by(username=username).first()
+        if player:
+            if check_password_hash(player.password, password):
                 flash('Logged in successfully!', category='success')
-                login_user(user, remember=True)
-                session["ID"] = user.id
+                login_user(player, remember=True)
+                session["ID"] = player.id
                 return redirect(url_for('views.home'))
             else:
                 flash('Incorrect password, try again.', category='error')
@@ -43,8 +43,8 @@ def sign_up():
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
 
-        user = User.query.filter_by(username=username).first()
-        if user:
+        player = Player.query.filter_by(username=username).first()
+        if player:
             flash('Username already exist', category='error')
         elif len(username) < 4:
             flash('Username must be greater than 3 characters.', category='error')
@@ -53,12 +53,12 @@ def sign_up():
         elif len(password1) < 7:
             flash('Password must be at least 7 characters.', category='error')
         else:
-            new_user = User(username=username, password=generate_password_hash(
+            new_player = Player(username=username, password=generate_password_hash(
                 password1, method='sha256'))
-            db.session.add(new_user)
+            db.session.add(new_player)
             db.session.commit()
-            login_user(new_user, remember=True)
-            session["ID"] = user.id
+            login_user(new_player, remember=True)
+            session["ID"] = new_player.id
             flash('Account created!', category='success')
             return redirect(url_for('views.home'))
 

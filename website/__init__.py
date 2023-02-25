@@ -1,16 +1,17 @@
-from flask import Flask
+from flask import Flask, g, session
 from flask_sqlalchemy import SQLAlchemy
 import os
 from flask_login import LoginManager
 from flask_socketio import SocketIO
-from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
-from website.gameEngine import gameEngine
+from flask_apscheduler import APScheduler
 
 db = SQLAlchemy()
 DB_NAME = "database.db"
 
 heap = []
+
+from website.gameEngine import gameEngine
 
 def create_app():
     app = Flask(__name__)
@@ -21,6 +22,12 @@ def create_app():
     engine = gameEngine.load_data() if os.path.isfile("data.pck")  \
        else gameEngine()
     app.config["engine"] = engine
+    
+    @app.before_request
+    def check_user():
+      g.engine = engine
+      g.config = g.engine.config[session["ID"]]
+    
 
     socketio = SocketIO(app)
     engine.socketio = socketio
@@ -47,12 +54,13 @@ def create_app():
     def load_user(id):
         return Player.query.get(int(id))
     
-    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-        from .main_functions import state_update, check_heap
-        scheduler = BackgroundScheduler()
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        from .gameEngine import state_update, check_heap
+        scheduler = APScheduler()
         engine.log("adding job")
-        scheduler.add_job(func=state_update, args=(engine,), trigger="interval", seconds=60)
-        scheduler.add_job(func=check_heap, args=(engine,), trigger="interval", seconds=1)
+        scheduler.init_app(app)
+        scheduler.add_job(func=state_update, args=(engine, app), id="state_update", trigger="interval", seconds=60)
+        scheduler.add_job(func=check_heap, args=(engine, app), id="check_heap", trigger="interval", seconds=1)
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
 

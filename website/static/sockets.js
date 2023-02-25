@@ -5,5 +5,5 @@ socket.on('connect', function() {
 });
 
 function start_construction(building) {
-    socket.emit('start_construction', family, building);
+    socket.emit('start_construction', building);
 }

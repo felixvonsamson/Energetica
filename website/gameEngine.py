@@ -2,6 +2,9 @@ import datetime
 import pickle
 import secrets
 import logging
+from . import heap
+import time
+import heapq
 
 from .config import config
 class gameEngine(object):
@@ -67,3 +70,16 @@ class gameEngine(object):
       engine = pickle.load(file)
     engine.init_logger()
     return engine
+
+
+from .utils import add_asset
+
+def state_update(engine, app):
+  engine.log("update all productions")
+
+def check_heap(engine, app):
+  engine.log("checking heap")
+  while heap and heap[0][0] < time.time():
+    _,function,args = heapq.heappop(heap)
+    with app.app_context():
+      function(*args)

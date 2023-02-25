@@ -1,9 +1,14 @@
-from flask import Blueprint, render_template, request, flash, jsonify
+from flask import Blueprint, render_template, request, flash, jsonify, session, g, current_app
 from flask_login import login_required, current_user
-from .config import config
 
 views = Blueprint('views', __name__)
 
+@views.before_request
+def check_user():
+    def render_template_ctx(page):
+        #g.player.last_page = page
+        return render_template(page, engine=g.engine, user=current_user, data=g.config["assets"])
+    g.render_template_ctx = render_template_ctx
 
 @views.route('/', methods=['GET', 'POST'])
 @views.route('/home', methods=['GET', 'POST'])
@@ -20,39 +25,39 @@ def home():
 #            db.session.commit()
 #            flash('Note added!', category='success')
 
-    return render_template("home.jinja", user=current_user)
+    return g.render_template_ctx("home.jinja")
 
 @views.route('/power_buildings')
 @login_required
 def energy_buildings():
-    return render_template("power_buildings.jinja", user=current_user, data=config["assets"])
+    return g.render_template_ctx("power_buildings.jinja")
 
 @views.route('/storage_buildings')
 @login_required
 def storage_buildings():
-    return render_template("storage_buildings.jinja", user=current_user, data=config["assets"])
+    return g.render_template_ctx("storage_buildings.jinja")
 
 @views.route('/technology')
 @login_required
 def technology():
-    return render_template("technologies.jinja", user=current_user, data=config["assets"])
+    return g.render_template_ctx("technologies.jinja")
 
 @views.route('/functional_buildings')
 @login_required
 def functional_buildings():
-    return render_template("functional_buildings.jinja", user=current_user, data=config["assets"])
+    return g.render_template_ctx("functional_buildings.jinja")
 
 @views.route('/extraction_plants')
 @login_required
 def extraction_plants():
-    return render_template("extraction_plants.jinja", user=current_user, data=config["assets"])
+    return g.render_template_ctx("extraction_plants.jinja")
 
 @views.route('/production_overview')
 @login_required
 def production_overview():
-    return render_template("production_overview.jinja", user=current_user)
+    return g.render_template_ctx("production_overview.jinja")
 
 @views.route('/network')
 @login_required
 def network():
-    return render_template("network.jinja", user=current_user)
+    return g.render_template_ctx("network.jinja")
