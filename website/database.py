@@ -3,19 +3,18 @@ from flask_login import UserMixin
 from sqlalchemy.sql import func
 
 
-#class Note(db.Model):
-#    id = db.Column(db.Integer, primary_key=True)
-#    data = db.Column(db.String(10000))
-#    date = db.Column(db.DateTime(timezone=True), default=func.now())
-#    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+class Under_construction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50))
+    finish_time = db.Column(db.Integer)
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id'))
 
 
-class User(db.Model, UserMixin):
+class Player(db.Model, UserMixin):
     # Authentification :
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(25), unique=True)
     password = db.Column(db.String(25))
-    #notes = db.relationship('Note')# to be removed
 
     # Position :
     q = db.Column(db.Integer)
@@ -73,6 +72,8 @@ class User(db.Model, UserMixin):
     materials = db.Column(db.Integer, default=0)
     enviromental_science = db.Column(db.Integer, default=0)
     transport_technology = db.Column(db.Integer, default=0)
+
+    under_construction = db.relationship('Under_construction')
     
 
 
