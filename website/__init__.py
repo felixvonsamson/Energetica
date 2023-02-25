@@ -17,7 +17,7 @@ def create_app():
     app.config['SECRET_KEY'] = 'ghdfjfetgftqayööhkh'
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     db.init_app(app)
-
+    
     engine = gameEngine.load_data() if path.isfile("data.pck")  \
        else gameEngine()
     app.config["engine"] = engine
@@ -46,13 +46,14 @@ def create_app():
     @login_manager.user_loader
     def load_user(id):
         return Player.query.get(int(id))
-
-    from .main_functions import state_update, check_heap
-    scheduler = BackgroundScheduler()
-    engine.log("adding job")
-    scheduler.add_job(func=state_update, args=(engine,), trigger="interval", seconds=60)
-    scheduler.add_job(func=check_heap, args=(engine,), trigger="interval", seconds=1)
-    scheduler.start()
-    atexit.register(lambda: scheduler.shutdown())
+    
+    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        from .main_functions import state_update, check_heap
+        scheduler = BackgroundScheduler()
+        engine.log("adding job")
+        scheduler.add_job(func=state_update, args=(engine,), trigger="interval", seconds=60)
+        scheduler.add_job(func=check_heap, args=(engine,), trigger="interval", seconds=1)
+        scheduler.start()
+        atexit.register(lambda: scheduler.shutdown())
 
     return socketio, app
