@@ -9,7 +9,15 @@
   <div class="padding"><script>display_kg({{user.uranium}});</script> <img src="{{ url_for('static', filename='images/ressources/uranium.png') }}" class="icon" alt="uranium"></div>
 </div>
 
-<div class="main_container tan_green">{% block content %} {% endblock %}</div>
+<div class="main_container tan_green">
+{% if user.under_construction %}
+{% for building in user.under_construction %}
+{{building.name}}
+{% endfor %}
+{% endif %}
+{% block content %} {% endblock %}
+</div>
+
 {% endblock %}
 
 {% block scripts %}

@@ -70,7 +70,7 @@ class Player(db.Model, UserMixin):
     civil_engeneering = db.Column(db.Integer, default=0)
     physics = db.Column(db.Integer, default=0)
     materials = db.Column(db.Integer, default=0)
-    enviromental_science = db.Column(db.Integer, default=0)
+    carbon_capture = db.Column(db.Integer, default=0)
     transport_technology = db.Column(db.Integer, default=0)
 
     under_construction = db.relationship('Under_construction')

@@ -4,7 +4,7 @@ full_config = {
     "steam_engine": {
       "price" : 200, #[CHF]
       "power production" : 25000, #[W]
-      "construction time" : 1, #[s]
+      "construction time" : 10, #[s]
       "construction energy" : 10000, #[Wh]
       "construction pollution" : 12000, #[kg]
       "consumed ressource" : "money",

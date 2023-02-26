@@ -3,7 +3,7 @@ import heapq
 from flask import request, session, flash, g, current_app
 from flask_login import current_user
 from . import heap
-from .database import Player
+from .database import Player, Under_construction
 from .utils import add_asset
 from . import db
 
@@ -23,4 +23,8 @@ def add_handlers(socketio, engine):
     else :
       current_user.money -= config["assets"][building]["price"]
       db.session.commit()
-      heapq.heappush(heap, (time.time()+config["assets"][building]["construction time"],add_asset,(session["ID"], building)))
+      finish_time = time.time()+config["assets"][building]["construction time"]
+      heapq.heappush(heap, (finish_time, add_asset, (session["ID"], building)))
+      new_building = Under_construction(name=building, finish_time=finish_time, player_id=session["ID"])
+      db.session.add(new_building)
+      db.session.commit()
