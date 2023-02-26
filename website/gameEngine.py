@@ -42,12 +42,11 @@ class gameEngine(object):
   def force_refresh(engine):
     engine.socketio.emit("refresh", broadcast=True)
 
-  def update_fields(engine, updates, players=None):
+  def update_fields(engine, updates, player=None):
     socketio = engine.socketio
-    if players:
-      for player in players:
-        if player.sid:
-          player.emit("update_data", updates)
+    if player:
+      if player.sid:
+        player.emit("update_data", updates)
     else:
       socketio.emit("update_data", updates, broadcast=True)
 

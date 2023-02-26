@@ -23,6 +23,8 @@ def add_handlers(socketio, engine):
     else :
       current_user.money -= config["assets"][building]["price"]
       db.session.commit()
+      updates = [("money", current_user.money)]
+      engine.update_fields(updates, current_user)
       finish_time = time.time()+config["assets"][building]["construction time"]
       heapq.heappush(heap, (finish_time, add_asset, (session["ID"], building)))
       new_building = Under_construction(name=building, finish_time=finish_time, player_id=session["ID"])

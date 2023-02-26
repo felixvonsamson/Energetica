@@ -26,25 +26,29 @@
       <a class="navbar_item padding tan_green" id="logout" href="/logout">Logout</a>
     </nav>
 
-    {% with messages = get_flashed_messages(with_categories=true) %} {% if
-    messages %} {% for category, message in messages %} {% if category ==
-    'error' %}
-    <div class="alert alert-danger alter-dismissable fade show" role="alert">
-      {{ message }}
-      <button type="button" class="close" data-dismiss="alert">
-        <span aria-hidden="true">&times;</span>
-      </button>
-    </div>
-    {% else %}
-    <div class="alert alert-success alter-dismissable fade show" role="alert">
-      {{ message }}
-      <button type="button" class="close" data-dismiss="alert">
-        <span aria-hidden="true">&times;</span>
-      </button>
-    </div>
-    {% endif %} {% endfor %} {% endif %} {% endwith %}
-
     {% block base %} {% endblock %}
+
+    <!--Toasts-->
+    <div id="messages" class="toast_container">
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+      {% if category == "message" %}
+      <div class="toast message medium">
+        <i class="fa fa-info-circle info-circle"></i>
+        <div class="txt_center">{{ message }}</div>
+        <span onclick="this.parentElement.style.display='none'" class="cross">&times;</span>
+      </div>
+      {% elif category == "error" %}
+      <div class="toast error medium">
+        <i class="fa fa-exclamation-circle exclamation-circle"></i>
+        <div class="txt_center">{{ message }}</div>
+        <span onclick="this.parentElement.style.display='none'" class="cross">&times;</span>
+      </div>  
+      {% endif %}
+    {% endfor %}
+
+    {% block other_messages %} {% endblock %}
+
+    </div>
 
   <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}" ></script>
   {% block scripts %} {% endblock %}

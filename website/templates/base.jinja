@@ -2,11 +2,11 @@
 {% block base%}
 
 <div class="ressources medium tan_green">
-  <div class="padding"><script>display_CHF({{user.money}});</script></div>
-  <div class="padding"><script>display_kg({{user.coal}});</script> <img src="{{ url_for('static', filename='images/ressources/coal.png') }}" class="icon" alt="coal"></div>
-  <div class="padding"><script>display_kg({{user.oil}});</script> <img src="{{ url_for('static', filename='images/ressources/oil.png') }}" class="icon" alt="oil"></div>
-  <div class="padding"><script>display_kg({{user.gas}});</script> <img src="{{ url_for('static', filename='images/ressources/gas.png') }}" class="icon" alt="gas"></div>
-  <div class="padding"><script>display_kg({{user.uranium}});</script> <img src="{{ url_for('static', filename='images/ressources/uranium.png') }}" class="icon" alt="uranium"></div>
+  <div class="padding" id="money"><script>display_CHF({{user.money}});</script></div>
+  <div class="padding" id="coal"><script>display_kg({{user.coal}});</script> <img src="{{ url_for('static', filename='images/ressources/coal.png') }}" class="icon" alt="coal"></div>
+  <div class="padding" id="oil"><script>display_kg({{user.oil}});</script> <img src="{{ url_for('static', filename='images/ressources/oil.png') }}" class="icon" alt="oil"></div>
+  <div class="padding" id="gas"><script>display_kg({{user.gas}});</script> <img src="{{ url_for('static', filename='images/ressources/gas.png') }}" class="icon" alt="gas"></div>
+  <div class="padding" id="uranium"><script>display_kg({{user.uranium}});</script> <img src="{{ url_for('static', filename='images/ressources/uranium.png') }}" class="icon" alt="uranium"></div>
 </div>
 
 <div class="main_container tan_green">
@@ -18,6 +18,24 @@
 {% block content %} {% endblock %}
 </div>
 
+{% endblock %}
+
+{% block other_messages %}
+  {% for message_id, category, message in user.messages_to_show %}
+    {% if category == "message" %}
+    <div class="toast message medium">
+      <i class="fa fa-info-circle info-circle"></i>
+      <div class="txt_center">{{ message }}</div>
+      <span onclick="this.parentElement.style.display='none'; hide_message({{ message_id }});" class="cross">&times;</span>
+    </div>
+    {% elif category == "error" %}
+    <div class="toast error medium" >
+      <i class="fa fa-exclamation-circle exclamation-circle"></i>
+      <div class="txt_center">{{ message }}</div>
+      <span onclick="this.parentElement.style.display='none'; hide_message({{ message_id }});" class="cross">&times;</span>
+    </div>
+    {% endif %}
+  {% endfor %}
 {% endblock %}
 
 {% block scripts %}

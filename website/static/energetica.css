@@ -24,11 +24,21 @@ html,body{font-family: 'Baloo 2', cursive; font-size:15px; line-height:1.3; marg
 .large{font-size:min(30px, 5vh)}
 .huge{font-size:min(42px, 6vh)}
 
+.txt_center{text-align:center}
+
 .icon{width:1em; height: 1em; position:relative; top:0.2em; margin:0 0.2em;}
 
 .button:hover{cursor: pointer; color:#000;background-color:#a4be7b}
 
 /* ------- */
+.toast_container{position:absolute; top:5px; width:100%; margin:auto; display:flex; flex-direction: column; align-items:center;}
+.toast{border-radius:8px; color:#000; display:flex; justify-content:space-between; align-items:center; margin-top:5px; margin-left: 5px; margin-right: 5px; padding:0 8px}
+.toast.message{border:1px solid #4CAF50; background-color:#ddffdd}
+.toast.error{border:1px solid #f44336; background-color:#ffdddd}
+.info-circle{color:#4CAF50; margin-right: 6px;}
+.exclamation-circle{color:#f44336; margin-right: 6px;}
+.cross{text-align:center; width: 25px; position:relative; left:3px; border-radius:8px; font-size:30px}
+.cross:hover{background-color:#9e9e9e}
 
 .navbar{display: block; width: 230px; position: fixed; height: 100%; overflow: auto;}
 .navbar_item{display: block; text-decoration: none;}
