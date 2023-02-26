@@ -46,7 +46,7 @@ class gameEngine(object):
     socketio = engine.socketio
     if player:
       if player.sid:
-        player.emit("update_data", updates)
+        socketio.emit("update_data", updates)
     else:
       socketio.emit("update_data", updates, broadcast=True)
 

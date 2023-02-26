@@ -7,11 +7,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/functional_buildings/laboratory.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Laboratory</strong><br>
+  <strong class="large">{{building["name"]}}</strong><br>
   The laboratory is needed to do research in different domains. 
  </div>
  <div class="infobox">
- <b class="medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('laboratory'); location.reload();">
     Start construction
   </b>
   <div class="margin">
@@ -27,11 +27,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/functional_buildings/warehouse.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Warehouse</strong><br>
+  <strong class="large">{{building["name"]}}</strong><br>
   The warehouse can store physical ressources. 
  </div>
  <div class="infobox">
- <b class="medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('warehouse'); location.reload();">
     Start construction
   </b>
   <div class="margin">
@@ -43,15 +43,15 @@
  </div>
 </div>
 
-{% set building = data["military_barracks"] %}
+{% set building = data["industry"] %}
 <div class="bone margin building small">
- <img class="img" src="{{ url_for('static', filename='images/functional_buildings/military_barracks.jpg') }}"\>
+ <img class="img" src="{{ url_for('static', filename='images/functional_buildings/industry.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Military barracks</strong><br>
-  The military barracks improve your military force. 
+  <strong class="large">{{building["name"]}}</strong><br>
+  The industry generates revenue from energy. 
  </div>
  <div class="infobox">
- <b class="medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('industry'); location.reload();">
     Start construction
   </b>
   <div class="margin">

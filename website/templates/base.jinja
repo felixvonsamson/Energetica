@@ -1,8 +1,20 @@
-{% extends "navbar.jinja" %} 
+{% extends "head.jinja" %} 
 {% block base%}
 
+<nav class="navbar medium">
+  <a class="navbar_item padding tan_green" id="home" href="/home">Home</a>
+  <a class="navbar_item padding tan_green" id="network" href="/network">Network</a>
+  <a class="navbar_item padding tan_green" id="production_overview" href="/production_overview">Production overview</a>
+  <a class="navbar_item padding tan_green" id="power_buildings" href="/power_buildings">Power buildings</a>
+  <a class="navbar_item padding tan_green" id="storage_buildings" href="/storage_buildings">Storage buildings</a>
+  <a class="navbar_item padding tan_green" id="functional_buildings" href="/functional_buildings">Functional buildings</a>
+  <a class="navbar_item padding tan_green" id="extraction_plants" href="/extraction_plants">Extraction plants</a>
+  <a class="navbar_item padding tan_green" id="technology" href="/technology">Technology</a>
+  <a class="navbar_item padding tan_green" id="logout" href="/logout">Logout</a>
+</nav>
+
 <div class="ressources medium tan_green">
-  <div class="padding" id="money"><script>display_CHF({{user.money}});</script></div>
+  <div class="padding" id="money"><script>display_CHF_long({{user.money}});</script></div>
   <div class="padding" id="coal"><script>display_kg({{user.coal}});</script> <img src="{{ url_for('static', filename='images/ressources/coal.png') }}" class="icon" alt="coal"></div>
   <div class="padding" id="oil"><script>display_kg({{user.oil}});</script> <img src="{{ url_for('static', filename='images/ressources/oil.png') }}" class="icon" alt="oil"></div>
   <div class="padding" id="gas"><script>display_kg({{user.gas}});</script> <img src="{{ url_for('static', filename='images/ressources/gas.png') }}" class="icon" alt="gas"></div>
@@ -10,35 +22,13 @@
 </div>
 
 <div class="main_container tan_green">
-{% if user.under_construction %}
-{% for building in user.under_construction %}
-{{building.name}}
-{% endfor %}
-{% endif %}
 {% block content %} {% endblock %}
 </div>
 
 {% endblock %}
 
-{% block other_messages %}
-  {% for message_id, category, message in user.messages_to_show %}
-    {% if category == "message" %}
-    <div class="toast message medium">
-      <i class="fa fa-info-circle info-circle"></i>
-      <div class="txt_center">{{ message }}</div>
-      <span onclick="this.parentElement.style.display='none'; hide_message({{ message_id }});" class="cross">&times;</span>
-    </div>
-    {% elif category == "error" %}
-    <div class="toast error medium" >
-      <i class="fa fa-exclamation-circle exclamation-circle"></i>
-      <div class="txt_center">{{ message }}</div>
-      <span onclick="this.parentElement.style.display='none'; hide_message({{ message_id }});" class="cross">&times;</span>
-    </div>
-    {% endif %}
-  {% endfor %}
-{% endblock %}
-
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='sockets.js') }}" ></script>
+<script src="{{ url_for('static', filename='progress_bar.js') }}" ></script>
 {% endblock %}

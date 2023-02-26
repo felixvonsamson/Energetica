@@ -8,6 +8,10 @@ function display_CHF(price) {
     document.write(`${price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}${units[unit_index]}`);
 }
 
+function display_CHF_long(price) {
+  document.write(`${price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} CHF`);
+}
+
 function display_W(power) {
     const units = ['W', 'kW', 'MW', 'GW', 'TW'];
     let unit_index = 0;
@@ -57,11 +61,11 @@ function display_kgh(mass) {
 }
 
 function display_kg(mass) {
-    if (mass >= 10000) {
-      var tons = (mass / 1000).toFixed(0);
-      document.write( tons + " t");
-    } else {
-      var roundedMass = mass.toFixed(0);
-      document.write(roundedMass.replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " kg");
-    }
+  if (mass >= 10000) {
+    var tons = (mass / 1000).toFixed(0);
+    document.write( tons + " t");
+  } else {
+    var roundedMass = mass.toFixed(0);
+    document.write(roundedMass.replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " kg");
   }
+}

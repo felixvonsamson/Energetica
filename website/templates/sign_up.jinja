@@ -1,35 +1,20 @@
-{% extends "navbar.jinja" %} {% block title %}Sign Up{% endblock %}
+{% extends "head.jinja" %} {% block title %}Sign Up{% endblock %}
 {% block base %}
-<form method="POST" class="login_box tan_green padding">
-  <div class="huge" style="text-align:center">Sign up</div>
-  <div>
-    <label for="username">Username</label>
-    <input
-      type="text"
-      id="username"
-      name="username"
-      placeholder="Enter username"
-    />
-  </div>
-  <div>
-    <label for="password1">Password</label>
-    <input
-      type="password"
-      id="password1"
-      name="password1"
-      placeholder="Enter password"
-    />
-  </div>
-  <div>
-    <label for="password2">Password (Confirm)</label>
-    <input
-      type="password"
-      id="password2"
-      name="password2"
-      placeholder="Confirm password"
-    />
-  </div>
-  <br />
-  <button type="submit" class="btn btn-primary">Submit</button>
-</form>
+
+<div class="login_box">
+  <form method="POST"  class="tan_green padding-large medium">
+    <div class="huge txt_center">Sign up</div>
+      <label for="username">Username</label>
+      <input type="text" class="input medium" id="username" name="username" placeholder="Enter username"/>
+      <label for="password">Password</label>
+      <input type="password" class="input medium" id="password1" name="password1" placeholder="Enter password"/>
+      <label for="password">Password (Confirm)</label>
+      <input type="password" class="input medium" id="password2" name="password2" placeholder="Confirm password"/>
+    <div class="flex-center">
+    <button type="submit" class="white login-button padding medium margin">Submit</button>
+    </div>
+  </form>
+  <div class="margin medium txt_center">- OR -</div>
+  <div class="white login-button padding medium txt_center" onclick="window.location.href = '/login';">Login</div>
+</div>
 {% endblock %}

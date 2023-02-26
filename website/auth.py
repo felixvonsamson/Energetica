@@ -24,7 +24,7 @@ def login():
             else:
                 flash('Incorrect password, try again.', category='error')
         else:
-            flash('Email does not exist.', category='error')
+            flash('Username does not exist.', category='error')
 
     return render_template("login.jinja", user=current_user)
 
@@ -54,7 +54,7 @@ def sign_up():
             flash('Password must be at least 7 characters.', category='error')
         else:
             new_player = Player(username=username, password=generate_password_hash(
-                password1, method='sha256'))
+                password1, method='sha256'), q=0, r=0)
             db.session.add(new_player)
             db.session.commit()
             login_user(new_player, remember=True)

@@ -3,15 +3,23 @@
 
 <div class="huge title">Power buildings</div>
 
+{% if user.under_construction %}
+{% for building in user.under_construction %}
+<div id="progress_bar">
+  The building <b>{{data[building.name]["name"]}}</b> is under construction <i class="time" data-name="{{building.finish_time}}"></i>
+</div>
+{% endfor %}
+{% endif %}
+
 {% set building = data["steam_engine"] %}
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/steam_engine.png') }}"\>
  <div class="infotext padding">
-  <strong class="large">Steam engine</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Steam_engine" target="_blank">{{building["name"]}}</a></strong><br>
   The steam engine burns wood to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('steam_engine');">
+ <b class="margin medium white padding button" onclick="start_construction('steam_engine'); location.reload();">
     Start construction
   </b>
   <div>
@@ -32,11 +40,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/windmill.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Windmill</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Windmill" target="_blank">{{building["name"]}}</a></strong><br>
   The windmill uses the force of the wind to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('windmill'); location.reload();">
     Start construction
   </b>
   <div>
@@ -56,11 +64,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/watermill.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Watermill</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Watermill" target="_blank">{{building["name"]}}</a></strong><br>
   The watermill uses the energy of flowing water to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('watermill'); location.reload();">
     Start construction
   </b>
   <div>
@@ -80,11 +88,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/coal_burner.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Coal burner</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Coal-fired_power_station" target="_blank">{{building["name"]}}</a></strong><br>
   The coal burner burns coal to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('windcoal_burnermill'); location.reload();">
     Start construction
   </b>
   <div>
@@ -105,11 +113,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/oil_burner.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Oil burner</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Fossil_fuel_power_station" target="_blank">{{building["name"]}}</a></strong><br>
   The oil burner burns oil to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('oil_burner'); location.reload();">
     Start construction
   </b>
   <div>
@@ -130,11 +138,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/gas_burner.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Gas burner</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Gas-fired_power_plant" target="_blank">{{building["name"]}}</a></strong><br>
   The gas burner burns gas to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('gas_burner'); location.reload();">
     Start construction
   </b>
   <div>
@@ -155,11 +163,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/shallow_geothermal_plant.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Shallow geothermal plant</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Geothermal_energy" target="_blank">{{building["name"]}}</a></strong><br>
   The shallow geothermal plant uses shallow geothermal heat to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('shallow_geothermal_plant'); location.reload();">
     Start construction
   </b>
   <div>
@@ -179,11 +187,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/small_water_dam.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Small water dam</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydroelectricity" target="_blank">{{building["name"]}}</a></strong><br>
   The small water dam uses the potential energy of the water to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('small_water_dam'); location.reload();">
     Start construction
   </b>
   <div>
@@ -203,11 +211,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/wind_turbine.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Wind turbine</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Wind_turbine" target="_blank">{{building["name"]}}</a></strong><br>
   The wind turbine uses the energy of the wind to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('wind_turbine'); location.reload();">
     Start construction
   </b>
   <div>
@@ -227,11 +235,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/combined_cycle.png') }}"\>
  <div class="infotext padding">
-  <strong class="large">Combined cycle</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Combined_cycle_power_plant" target="_blank">{{building["name"]}}</a></strong><br>
   The combined cycle power plant burns coal and gas to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('combined_cycle'); location.reload();">
     Start construction
   </b>
   <div>
@@ -253,11 +261,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/deep_geothermal_plant.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Deep geothermal plant</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Geothermal_energy" target="_blank">{{building["name"]}}</a></strong><br>
   The deep geothermal plant uses eath heat to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('deep_geothermal_plant'); location.reload();">
     Start construction
   </b>
   <div>
@@ -277,11 +285,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/nuclear_reactor.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Nuclear reactor</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Nuclear_power_plant" target="_blank">{{building["name"]}}</a></strong><br>
   The nuclear power plant uses controlled nuclear fission to produce a large amount of electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('nuclear_reactor'); location.reload();">
     Start construction
   </b>
   <div>
@@ -302,11 +310,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/large_water_dam.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Large water dam</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydroelectricity" target="_blank">{{building["name"]}}</a></strong><br>
   The large water dam uses the potential energy of water to produce a large amount of electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('large_water_dam'); location.reload();">
     Start construction
   </b>
   <div>
@@ -326,11 +334,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/CSP_solar.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Concentrated solar power</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Concentrated_solar_power" target="_blank">{{building["name"]}}</a></strong><br>
   The concentrated solar power plant acumulates heat from the irradiation energy of the sun to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('CSP_solar'); location.reload();">
     Start construction
   </b>
   <div>
@@ -350,11 +358,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/PV_solar.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Photovoltaics</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Photovoltaics" target="_blank">{{building["name"]}}</a></strong><br>
   The photovoltaic pannels transform the irradiation energy of the sun into electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('PV_solar'); location.reload();">
     Start construction
   </b>
   <div>
@@ -374,11 +382,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/large_wind_turbine.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">Large wind turbine</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Wind_turbine" target="_blank">{{building["name"]}}</a></strong><br>
   The large wind turbine uses the energy of the wind to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('large_wind_turbine'); location.reload();">
     Start construction
   </b>
   <div>
@@ -398,11 +406,11 @@
 <div class="bone margin building small">
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/nuclear_reactor_gen4.png') }}"\>
  <div class="infotext padding">
-  <strong class="large">Nuclear reactor 4th generation</strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Generation_IV_reactor" target="_blank">{{building["name"]}}</a></strong><br>
   The nuclear power plant of the 4th generation uses controlled nuclear fission to produce a large amount of electricity fom a litle quantity of fuel. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding">
+ <b class="margin medium white padding button" onclick="start_construction('nuclear_reactor_gen4'); location.reload();">
     Start construction
   </b>
   <div>

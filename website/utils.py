@@ -7,3 +7,6 @@ def add_asset(player_id, building):
     setattr(player, building, getattr(player, building) + 1)
     Under_construction.query.filter(Under_construction.finish_time<time.time()).delete()
     db.session.commit()
+
+def display_CHF(price):
+    return f"{price:,.0f} CHF".replace(",", " ")

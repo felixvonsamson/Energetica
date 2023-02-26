@@ -1,49 +1,89 @@
 {% extends "base.jinja" %} {% block title %}Home{% endblock %} {% block content
 %}
 <div class="huge" style="text-align:center">{{ user.username }}</div>
-q : {{ user.q }} <br>
-r : {{ user.r }} <br> <br>
 
-money : {{ user.money }} <br>
-coal : {{ user.coal }} <br>
-oil : {{ user.oil }} <br>
-gas : {{ user.gas }} <br>
-uranium : {{ user.uranium }} <br> <br>
 
-steam_engine : {{ user.steam_engine }} <br>
-windmill : {{ user.windmill }} <br>
-watermill : {{ user.watermill }} <br>
-coal_burner : {{ user.coal_burner }} <br>
-oil_burner : {{ user.oil_burner }} <br>
-gas_burner : {{ user.gas_burner }} <br>
-shallow_geothermal_plant : {{ user.shallow_geothermal_plant }} <br>
-small_water_dam : {{ user.small_water_dam }} <br>
-small_wind_turbine : {{ user.small_wind_turbine }} <br>
-combined_cycle : {{ user.combined_cycle }} <br>
-deep_geothermal_plant : {{ user.deep_geothermal_plant }} <br>
-nuclear_reactor : {{ user.nuclear_reactor }} <br>
-large_water_dam : {{ user.large_water_dam }} <br>
-CSP_solar : {{ user.CSP_solar }} <br>
-PV_solar : {{ user.PV_solar }} <br>
-large_wind_turbine : {{ user.large_wind_turbine }} <br>
-nuclear_reactor_gen4 : {{ user.nuclear_reactor_gen4 }} <br> <br>
+<div class="flex-col medium">
+<b><a class="no_deco" href="https://www.redblobgames.com/grids/hexagons/#coordinates-cube" target="_blank">Position</a></b>
+<table class="table bone">
+  <tr><td>q</td><td>{{user.q}}</td></tr>
+  <tr><td>r</td><td>{{user.r}}</td></tr>
+  <tr><td>s</td><td>{{-user.r-user.q}}</td></tr>
+</table>
+</div>
 
-small_pumped_hydro : {{ user.small_pumped_hydro }} <br>
-compressed_air : {{ user.compressed_air }} <br>
-molten_salt : {{ user.molten_salt }} <br>
-large_pumped_hydro : {{ user.large_pumped_hydro }} <br>
-lithium_ion_batteries : {{ user.lithium_ion_batteries }} <br>
-solid_state_batteries : {{ user.solid_state_batteries }} <br> <br>
+<div class="medium flex-wrap">
 
-laboratory : {{ user.laboratory }} <br>
-warehouse : {{ user.warehouse }} <br>
-military_barracks : {{ user.military_barracks }} <br> <br>
+<div class="flex-col">
+<b>Power buildings</b>
+<table class="table bone">
+  <tr><td>Steam engine</td><td>{{user.steam_engine}}</td></tr>
+  <tr><td>Windmill</td><td>{{user.windmill}}</td></tr>
+  <tr><td>Watermill</td><td>{{user.watermill}}</td></tr>
+  <tr><td>Coal burner</td><td>{{user.coal_burner}}</td></tr>
+  <tr><td>Oil burner</td><td>{{user.oil_burner}}</td></tr>
+  <tr><td>Gas burner</td><td>{{user.gas_burner}}</td></tr>
+  <tr><td>Shallow geothermal plant</td><td>{{user.shallow_geothermal_plant}}</td></tr>
+  <tr><td>Small water dam</td><td>{{user.small_water_dam}}</td></tr>
+  <tr><td>Wind turbine</td><td>{{user.wind_turbine}}</td></tr>
+  <tr><td>Combined cycle</td><td>{{user.combined_cycle}}</td></tr>
+  <tr><td>Deep geothermal plant</td><td>{{user.deep_geothermal_plant}}</td></tr>
+  <tr><td>Nuclear reactor</td><td>{{user.nuclear_reactor}}</td></tr>
+  <tr><td>Large water dam</td><td>{{user.large_water_dam}}</td></tr>
+  <tr><td>Concentrated solar power</td><td>{{user.CSP_solar}}</td></tr>
+  <tr><td>Photovoltaics</td><td>{{user.PV_solar}}</td></tr>
+  <tr><td>Large wind turbine</td><td>{{user.large_wind_turbine}}</td></tr>
+  <tr><td>4th generation nuclear</td><td>{{user.nuclear_reactor_gen4}}</td></tr>
+</table>
+</div>
 
-mineral_extraction : {{ user.mineral_extraction }} <br>
-civil_engeneering : {{ user.civil_engeneering }} <br>
-physics : {{ user.physics }} <br>
-materials : {{ user.materials }} <br>
-enviromental_science : {{ user.enviromental_science }} <br>
-transport_technology : {{ user.transport_technology }} <br>
+<div class="flex-col">
+<b>Storage buildings</b>
+<table class="table bone">
+  <tr><td>Small pumped hydro</td><td>{{user.small_pumped_hydro}}</td></tr>
+  <tr><td>Compressed air</td><td>{{user.compressed_air}}</td></tr>
+  <tr><td>Molten salt</td><td>{{user.molten_salt}}</td></tr>
+  <tr><td>Large pumped hydro</td><td>{{user.large_pumped_hydro}}</td></tr>
+  <tr><td>Hydrogen hydrolysis</td><td>{{user.hydrogen_storage}}</td></tr>
+  <tr><td>Lithium-ion batteries</td><td>{{user.lithium_ion_batteries}}</td></tr>
+  <tr><td>Solid state batteries</td><td>{{user.solid_state_batteries}}</td></tr>
+</table>
+</div>
+
+<div class="flex-col">
+<b>Functional buildings</b>
+<table class="table bone">
+  <tr><td>Laboratory</td><td>{{user.laboratory}}</td></tr>
+  <tr><td>Warehouse</td><td>{{user.warehouse}}</td></tr>
+  <tr><td>Industry</td><td>{{user.industry}}</td></tr>
+</table>
+</div>
+
+<div class="flex-col">
+<b>Extraction plants</b>
+<table class="table bone">
+  <tr><td>Coal mine</td><td>{{user.coal_mine}}</td></tr>
+  <tr><td>Oil field</td><td>{{user.oil_field}}</td></tr>
+  <tr><td>Gas drilling site</td><td>{{user.gas_drilling_site}}</td></tr>
+  <tr><td>Uranium mine</td><td>{{user.uranium_mine}}</td></tr>
+</table>
+</div>
+
+<div class="flex-col">
+<b>Technology</b>
+<table class="table bone">
+  <tr><td>Mineral extraction</td><td>{{user.mineral_extraction}}</td></tr>
+  <tr><td>Civil engeneering</td><td>{{user.civil_engeneering}}</td></tr>
+  <tr><td>Mechanical engeneering</td><td>{{user.mechanical_engeneering}}</td></tr>
+  <tr><td>Physics</td><td>{{user.physics}}</td></tr>
+  <tr><td>Materials</td><td>{{user.materials}}</td></tr>
+  <tr><td>Carbon capture</td><td>{{user.carbon_capture}}</td></tr>
+  <tr><td>Transport technology</td><td>{{user.transport_technology}}</td></tr>
+  <tr><td>Aerodynamics</td><td>{{user.aerodynamics}}</td></tr>
+  <tr><td>Geology</td><td>{{user.geology}}</td></tr>
+</table>
+</div>
+
+</div>
 
 {% endblock %}
