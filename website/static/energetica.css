@@ -57,6 +57,12 @@ html,body{font-family: 'Baloo 2', cursive; font-size:15px; line-height:1.3; marg
 .navbar_item.active {background-color: #285430; color: #fff;}
 .navbar_item:hover:not(.active) {background-color: #5f8d4e; color: white;}
 
+.logo{
+    height:300px;
+    margin-top:50px;
+    filter:invert(26%) sepia(28%) saturate(805%) hue-rotate(79deg) brightness(93%) contrast(91%);
+}
+
 .ressources{display: block; width: 230px; position:fixed; right:0; top:0; text-align: center;}
 
 .login_box{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); -ms-transform:translate(-50%,-50%)}

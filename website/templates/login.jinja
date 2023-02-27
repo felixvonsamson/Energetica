@@ -1,5 +1,10 @@
 {% extends "head.jinja" %} {% block title %}Login{% endblock %} 
 {% block base%}
+
+<div class="flex-center">
+<img src="{{ url_for('static', filename='images/icon.svg') }}" class="logo"/>
+</div>
+
 <div class="login_box">
   <form method="POST"  class="tan_green padding-large medium">
     <div class="huge txt_center">Login</div>
