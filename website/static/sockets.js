@@ -4,8 +4,8 @@ socket.on('connect', function() {
     socket.emit('give_identity');
 });
 
-function start_construction(building) {
-    socket.emit('start_construction', building);
+function start_construction(building, family) {
+    socket.emit('start_construction', building, family);
 }
 
 socket.on('update_data', function(changes) {

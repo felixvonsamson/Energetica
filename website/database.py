@@ -6,6 +6,7 @@ from sqlalchemy.sql import func
 class Under_construction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
+    family = db.Column(db.String(50))
     start_time = db.Column(db.Integer)
     finish_time = db.Column(db.Integer)
     player_id = db.Column(db.Integer, db.ForeignKey('player.id'))

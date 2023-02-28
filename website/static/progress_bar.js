@@ -27,7 +27,7 @@ const update_countdowns = () => {
     const finish_time = el.dataset.name;
     const now = new Date().getTime();
     if(finish_time*1000<now){
-      document.getElementById("progress_bar").style.display='none';
+      el.parentElement.style.display='none';
     }else{
     const time = formatMilliseconds(finish_time*1000-now);
     el.innerText = `(${time})`;
@@ -35,5 +35,5 @@ const update_countdowns = () => {
   });
 };
 
-
+update_countdowns();
 setInterval(update_countdowns, 1000);

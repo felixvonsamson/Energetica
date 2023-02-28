@@ -5,9 +5,11 @@
 
 {% if user.under_construction %}
 {% for building in user.under_construction %}
-<div id="progress_bar">
+{% if building.family == "power_buildings"%}
+<div class="padding" id="progress_bar">
   The building <b>{{data[building.name]["name"]}}</b> is under construction <i class="time" data-name="{{building.finish_time}}"></i>
 </div>
+{% endif %}
 {% endfor %}
 {% endif %}
 
@@ -19,7 +21,7 @@
   The steam engine burns wood to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('steam_engine'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('steam_engine', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -44,7 +46,7 @@
   The windmill uses the force of the wind to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('windmill'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('windmill', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -68,7 +70,7 @@
   The watermill uses the energy of flowing water to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('watermill'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('watermill', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -92,7 +94,7 @@
   The coal burner burns coal to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('windcoal_burnermill'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('windcoal_burnermill', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -117,7 +119,7 @@
   The oil burner burns oil to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('oil_burner'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('oil_burner', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -142,7 +144,7 @@
   The gas burner burns gas to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('gas_burner'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('gas_burner', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -167,7 +169,7 @@
   The shallow geothermal plant uses shallow geothermal heat to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('shallow_geothermal_plant'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('shallow_geothermal_plant', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -191,7 +193,7 @@
   The small water dam uses the potential energy of the water to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('small_water_dam'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('small_water_dam', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -215,7 +217,7 @@
   The wind turbine uses the energy of the wind to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('wind_turbine'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('wind_turbine', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -239,7 +241,7 @@
   The combined cycle power plant burns coal and gas to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('combined_cycle'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('combined_cycle', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -265,7 +267,7 @@
   The deep geothermal plant uses eath heat to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('deep_geothermal_plant'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('deep_geothermal_plant', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -289,7 +291,7 @@
   The nuclear power plant uses controlled nuclear fission to produce a large amount of electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('nuclear_reactor'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('nuclear_reactor', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -314,7 +316,7 @@
   The large water dam uses the potential energy of water to produce a large amount of electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('large_water_dam'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('large_water_dam', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -338,7 +340,7 @@
   The concentrated solar power plant acumulates heat from the irradiation energy of the sun to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('CSP_solar'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('CSP_solar', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -362,7 +364,7 @@
   The photovoltaic pannels transform the irradiation energy of the sun into electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('PV_solar'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('PV_solar', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -386,7 +388,7 @@
   The large wind turbine uses the energy of the wind to produce electricity. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('large_wind_turbine'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('large_wind_turbine', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>
@@ -410,7 +412,7 @@
   The nuclear power plant of the 4th generation uses controlled nuclear fission to produce a large amount of electricity fom a litle quantity of fuel. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('nuclear_reactor_gen4'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('nuclear_reactor_gen4', 'power_buildings'); location.reload();">
     Start construction
   </b>
   <div>

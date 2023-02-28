@@ -274,7 +274,7 @@ full_config = {
     },
     "industry": {
       "name" : "Industry",
-      "price" : 500000,
+      "price" : 5000,
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000
