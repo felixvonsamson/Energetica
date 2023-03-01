@@ -1,3 +1,4 @@
 .vscode
 instance/database.db
 website/__pycache__
+.DS_Store
