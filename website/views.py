@@ -20,7 +20,6 @@ def check_user():
 
 @views.route('/', methods=['GET', 'POST'])
 @views.route('/home', methods=['GET', 'POST'])
-@login_required
 def home():
 #    if request.method == 'POST': 
 #        note = request.form.get('note')#Gets the note from the HTML 
@@ -36,36 +35,30 @@ def home():
     return g.render_template_ctx("home.jinja")
 
 @views.route('/power_buildings')
-@login_required
 def energy_buildings():
     return g.render_template_ctx("power_buildings.jinja")
 
 @views.route('/storage_buildings')
-@login_required
 def storage_buildings():
     return g.render_template_ctx("storage_buildings.jinja")
 
 @views.route('/technology')
-@login_required
 def technology():
     return g.render_template_ctx("technologies.jinja")
 
 @views.route('/functional_buildings')
-@login_required
 def functional_buildings():
     return g.render_template_ctx("functional_buildings.jinja")
 
 @views.route('/extraction_plants')
-@login_required
 def extraction_plants():
     return g.render_template_ctx("extraction_plants.jinja")
 
 @views.route('/production_overview')
-@login_required
 def production_overview():
     return g.render_template_ctx("production_overview.jinja")
 
 @views.route('/network')
-@login_required
 def network():
     return g.render_template_ctx("network.jinja")
+
