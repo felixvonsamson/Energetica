@@ -3,6 +3,7 @@ from .database import Player
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
+import pandas as pd
 
 
 auth = Blueprint('auth', __name__)
@@ -54,7 +55,9 @@ def sign_up():
             flash('Password must be at least 7 characters.', category='error')
         else:
             new_player = Player(username=username, password=generate_password_hash(
-                password1, method='sha256'), q=0, r=0)
+                password1, method='sha256'), q=0, r=0, production_table_name='data_'+username+'.csv')
+            production_table = pd.DataFrame({'production': [0]*2880, 'demand': [0]*2880})
+            production_table.to_csv('instance/player_prod/data_'+username+'.csv', index=False)
             db.session.add(new_player)
             db.session.commit()
             login_user(new_player, remember=True)

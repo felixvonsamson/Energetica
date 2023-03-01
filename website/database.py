@@ -82,7 +82,8 @@ class Player(db.Model, UserMixin):
     geology = db.Column(db.Integer, default=0)
 
     under_construction = db.relationship('Under_construction')
-    
+
+    production_table_name = db.Column(db.String(50))
 
 
 

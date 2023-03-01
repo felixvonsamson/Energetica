@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, flash, jsonify, session, g, current_app
 from flask_login import login_required, current_user
+import pandas as pd
 
 views = Blueprint('views', __name__)
 
@@ -8,8 +9,12 @@ def check_user():
     g.engine = current_app.config["engine"]
     g.config = g.engine.config[session["ID"]]
     def render_template_ctx(page):
-        #g.player.last_page = page
-        return render_template(page, engine=g.engine, user=current_user, data=g.config["assets"])
+        if page == "production_overview.jinja" :
+            load_table = pd.read_csv('instance/player_prod/'+current_user.production_table_name)
+            prod_table = load_table.to_dict('list')
+            return render_template(page, engine=g.engine, user=current_user, data=g.config["assets"], prod_table=prod_table)
+        else:
+            return render_template(page, engine=g.engine, user=current_user, data=g.config["assets"])
     g.render_template_ctx = render_template_ctx
 
 @views.route('/', methods=['GET', 'POST'])
