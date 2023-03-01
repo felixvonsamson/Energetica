@@ -393,6 +393,34 @@ full_config = {
 
 }
 
+capacity_table = {
+    "steam_engine": "c_fossil",
+    "windmill": "c_wind",
+    "watermill": "c_hydro",
+    "coal_burner": "c_fossil",
+    "oil_burner": "c_fossil",
+    "gas_burner": "c_fossil",
+    "shallow_geothermal_plant": "c_geothermal",
+    "small_water_dam": "c_hydro",
+    "wind_turbine": "c_wind",
+    "combined_cycle": "c_fossil",
+    "deep_geothermal_plant": "c_geothermal",
+    "nuclear_reactor": "c_nuclear",
+    "large_water_dam": "c_hydro",
+    "CSP_solar": "c_solar",
+    "PV_solar": "c_solar",
+    "large_wind_turbine": "c_wind",
+    "nuclear_reactor_gen4": "c_nuclear",
+    "small_pumped_hydro": "c_pumped_hydro" ,
+    "compressed_air": "c_compressed_air",
+    "molten_salt": "c_molten_salt",
+    "large_pumped_hydro": "c_pumped_hydro",
+    "hydrogen_storage": "c_hydrogen",
+    "lithium_ion_batteries": "c_batteries",
+    "solid_state_batteries": "c_batteries"
+}
+
+
 from .database import Player
 class Config(object):
   def __init__(config):

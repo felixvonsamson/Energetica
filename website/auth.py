@@ -95,7 +95,8 @@ def init_table(username):
             "oil" : [0]*168,
             "gas" : [0]*168,
             "uranium" : [0]*168
-        }
+        },
+        "emissions" : [0]*168
     }
     with open('instance/player_prod/data_'+username+'.pck', 'wb') as file:
         pickle.dump(production_table, file)

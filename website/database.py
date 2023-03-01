@@ -81,6 +81,23 @@ class Player(db.Model, UserMixin):
     aerodynamics = db.Column(db.Integer, default=0)
     geology = db.Column(db.Integer, default=0)
 
+    # Capacities :
+    c_fossil = db.Column(db.Integer, default=0)
+    c_wind = db.Column(db.Integer, default=0)
+    c_hydro = db.Column(db.Integer, default=0)
+    c_geothermal = db.Column(db.Integer, default=0)
+    c_nuclear = db.Column(db.Integer, default=0)
+    c_solar = db.Column(db.Integer, default=0)
+    c_pumped_hydro = db.Column(db.Integer, default=0)
+    c_compressed_air = db.Column(db.Integer, default=0)
+    c_molten_salt = db.Column(db.Integer, default=0)
+    c_hydrogen = db.Column(db.Integer, default=0)
+    c_batteries = db.Column(db.Integer, default=0)
+
+    # CO2 emissions :
+    emissions : db.Column(db.Integer, default=0)
+    total_emissions : db.Column(db.Integer, default=0)
+
     under_construction = db.relationship('Under_construction')
 
     production_table_name = db.Column(db.String(50))
