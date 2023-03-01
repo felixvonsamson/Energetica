@@ -5,6 +5,7 @@ import pandas as pd
 views = Blueprint('views', __name__)
 
 @views.before_request
+@login_required
 def check_user():
     g.engine = current_app.config["engine"]
     g.config = g.engine.config[session["ID"]]

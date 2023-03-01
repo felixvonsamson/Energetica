@@ -3,4 +3,4 @@ flask-socketio
 Flask-SQLAlchemy
 flask-login
 flask-apscheduler
-evenetlet
+eventlet
