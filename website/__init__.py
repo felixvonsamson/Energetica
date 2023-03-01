@@ -1,6 +1,7 @@
 from flask import Flask, g, session
 from flask_sqlalchemy import SQLAlchemy
 import os
+from pathlib import Path
 from flask_login import LoginManager
 from flask_socketio import SocketIO
 import atexit
@@ -14,6 +15,8 @@ heap = []
 from website.gameEngine import gameEngine
 
 def create_app():
+    Path("instance/player_prod/").mkdir(parents=True, exist_ok=True)
+
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'ghdfjfetgftqayööhkh'
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
