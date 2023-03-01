@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, jsonify, session, g, current_app
 from flask_login import login_required, current_user
-import pandas as pd
+import pickle
 
 views = Blueprint('views', __name__)
 
@@ -11,8 +11,8 @@ def check_user():
     g.config = g.engine.config[session["ID"]]
     def render_template_ctx(page):
         if page == "production_overview.jinja" :
-            load_table = pd.read_csv('instance/player_prod/'+current_user.production_table_name)
-            prod_table = load_table.to_dict('list')
+            with open('instance/player_prod/'+current_user.production_table_name, "rb") as file:
+                prod_table = pickle.load(file)
             return render_template(page, engine=g.engine, user=current_user, data=g.config["assets"], prod_table=prod_table)
         else:
             return render_template(page, engine=g.engine, user=current_user, data=g.config["assets"])

@@ -3,7 +3,7 @@ from .database import Player
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
-import pandas as pd
+import pickle
 
 
 auth = Blueprint('auth', __name__)
@@ -55,9 +55,8 @@ def sign_up():
             flash('Password must be at least 7 characters.', category='error')
         else:
             new_player = Player(username=username, password=generate_password_hash(
-                password1, method='sha256'), q=0, r=0, production_table_name='data_'+username+'.csv')
-            production_table = pd.DataFrame({'production': [0]*2880, 'demand': [0]*2880})
-            production_table.to_csv('instance/player_prod/data_'+username+'.csv', index=False)
+                password1, method='sha256'), q=0, r=0, production_table_name='data_'+username+'.pck')
+            init_table(username)
             db.session.add(new_player)
             db.session.commit()
             login_user(new_player, remember=True)
@@ -66,3 +65,37 @@ def sign_up():
             return redirect(url_for('views.home'))
 
     return render_template("sign_up.jinja", user=current_user)
+
+def init_table(username):
+    production_table = {
+        "production" : {
+            "fossil" : [0]*2880,
+            "wind" : [0]*2880,
+            "hydro" : [0]*2880,
+            "geothermal" : [0]*2880,
+            "nuclear" : [0]*2880,
+            "solar" : [0]*2880
+        },
+        "demand" : {
+            "industriy" : [0]*2880,
+            "construction" : [0]*2880,
+            "extraction_plants" : [0]*2880,
+            "research" : [0]*2880,
+            "storage" : [0]*2880
+        },
+        "storage" : {
+            "pumped_hydro" : [0]*2880,
+            "compressed_air" : [0]*2880,
+            "molten_salt" : [0]*2880,
+            "hydrogen" : [0]*2880,
+            "batteries" : [0]*2880
+        },
+        "ressources" : {
+            "coal" : [0]*168,
+            "oil" : [0]*168,
+            "gas" : [0]*168,
+            "uranium" : [0]*168
+        }
+    }
+    with open('instance/player_prod/data_'+username+'.pck', 'wb') as file:
+        pickle.dump(production_table, file)
