@@ -95,8 +95,8 @@ class Player(db.Model, UserMixin):
     c_batteries = db.Column(db.Integer, default=0)
 
     # CO2 emissions :
-    emissions : db.Column(db.Integer, default=0)
-    total_emissions : db.Column(db.Integer, default=0)
+    emissions = db.Column(db.Integer, default=0)
+    total_emissions = db.Column(db.Integer, default=0)
 
     under_construction = db.relationship('Under_construction')
 
