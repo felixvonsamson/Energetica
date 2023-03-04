@@ -18,7 +18,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/steam_engine.png') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Steam_engine" target="_blank">{{building["name"]}}</a></strong><br>
-  The steam engine burns wood to produce electricity. 
+  The steam engine burns wood to produce electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('steam_engine', 'power_buildings'); location.reload();">
@@ -43,7 +44,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/windmill.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Windmill" target="_blank">{{building["name"]}}</a></strong><br>
-  The windmill uses the force of the wind to produce electricity. 
+  The windmill uses the force of the wind to produce electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('windmill', 'power_buildings'); location.reload();">
@@ -67,7 +69,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/watermill.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Watermill" target="_blank">{{building["name"]}}</a></strong><br>
-  The watermill uses the energy of flowing water to produce electricity. 
+  The watermill uses the energy of flowing water to produce electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('watermill', 'power_buildings'); location.reload();">
@@ -91,7 +94,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/coal_burner.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Coal-fired_power_station" target="_blank">{{building["name"]}}</a></strong><br>
-  The coal burner burns coal to produce electricity. 
+  The coal burner burns coal to produce electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('windcoal_burnermill', 'power_buildings'); location.reload();">
@@ -116,7 +120,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/oil_burner.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Fossil_fuel_power_station" target="_blank">{{building["name"]}}</a></strong><br>
-  The oil burner burns oil to produce electricity. 
+  The oil burner burns oil to produce electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('oil_burner', 'power_buildings'); location.reload();">
@@ -141,7 +146,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/gas_burner.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Gas-fired_power_plant" target="_blank">{{building["name"]}}</a></strong><br>
-  The gas burner burns gas to produce electricity. 
+  The gas burner burns gas to produce electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('gas_burner', 'power_buildings'); location.reload();">
@@ -166,7 +172,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/shallow_geothermal_plant.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Geothermal_energy" target="_blank">{{building["name"]}}</a></strong><br>
-  The shallow geothermal plant uses shallow geothermal heat to produce electricity. 
+  The shallow geothermal plant uses shallow geothermal heat to produce electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('shallow_geothermal_plant', 'power_buildings'); location.reload();">
@@ -190,7 +197,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/small_water_dam.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydroelectricity" target="_blank">{{building["name"]}}</a></strong><br>
-  The small water dam uses the potential energy of the water to produce electricity. 
+  The small water dam uses the potential energy of the water to produce electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('small_water_dam', 'power_buildings'); location.reload();">
@@ -214,7 +222,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/wind_turbine.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Wind_turbine" target="_blank">{{building["name"]}}</a></strong><br>
-  The wind turbine uses the energy of the wind to produce electricity. 
+  The wind turbine uses the energy of the wind to produce electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('wind_turbine', 'power_buildings'); location.reload();">
@@ -238,7 +247,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/combined_cycle.png') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Combined_cycle_power_plant" target="_blank">{{building["name"]}}</a></strong><br>
-  The combined cycle power plant burns coal and gas to produce electricity. 
+  The combined cycle power plant burns coal and gas to produce electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('combined_cycle', 'power_buildings'); location.reload();">
@@ -264,7 +274,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/deep_geothermal_plant.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Geothermal_energy" target="_blank">{{building["name"]}}</a></strong><br>
-  The deep geothermal plant uses eath heat to produce electricity. 
+  The deep geothermal plant uses eath heat to produce electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('deep_geothermal_plant', 'power_buildings'); location.reload();">
@@ -288,7 +299,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/nuclear_reactor.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Nuclear_power_plant" target="_blank">{{building["name"]}}</a></strong><br>
-  The nuclear power plant uses controlled nuclear fission to produce a large amount of electricity. 
+  The nuclear power plant uses controlled nuclear fission to produce a large amount of electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('nuclear_reactor', 'power_buildings'); location.reload();">
@@ -313,7 +325,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/large_water_dam.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydroelectricity" target="_blank">{{building["name"]}}</a></strong><br>
-  The large water dam uses the potential energy of water to produce a large amount of electricity. 
+  The large water dam uses the potential energy of water to produce a large amount of electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('large_water_dam', 'power_buildings'); location.reload();">
@@ -337,7 +350,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/CSP_solar.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Concentrated_solar_power" target="_blank">{{building["name"]}}</a></strong><br>
-  The concentrated solar power plant acumulates heat from the irradiation energy of the sun to produce electricity. 
+  The concentrated solar power plant acumulates heat from the irradiation energy of the sun to produce electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('CSP_solar', 'power_buildings'); location.reload();">
@@ -361,7 +375,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/PV_solar.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Photovoltaics" target="_blank">{{building["name"]}}</a></strong><br>
-  The photovoltaic pannels transform the irradiation energy of the sun into electricity. 
+  The photovoltaic pannels transform the irradiation energy of the sun into electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('PV_solar', 'power_buildings'); location.reload();">
@@ -385,7 +400,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/large_wind_turbine.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Wind_turbine" target="_blank">{{building["name"]}}</a></strong><br>
-  The large wind turbine uses the energy of the wind to produce electricity. 
+  The large wind turbine uses the energy of the wind to produce electricity. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('large_wind_turbine', 'power_buildings'); location.reload();">
@@ -409,7 +425,8 @@
  <img class="img" src="{{ url_for('static', filename='images/power_buildings/nuclear_reactor_gen4.png') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Generation_IV_reactor" target="_blank">{{building["name"]}}</a></strong><br>
-  The nuclear power plant of the 4th generation uses controlled nuclear fission to produce a large amount of electricity fom a litle quantity of fuel. 
+  The nuclear power plant of the 4th generation uses controlled nuclear fission to produce a large amount of electricity fom a litle quantity of fuel. <br>
+  <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{building["startup time"]}});</script></b>
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('nuclear_reactor_gen4', 'power_buildings'); location.reload();">
