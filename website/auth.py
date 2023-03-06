@@ -55,7 +55,7 @@ def sign_up():
             flash('Password must be at least 7 characters.', category='error')
         else:
             new_player = Player(username=username, password=generate_password_hash(
-                password1, method='sha256'), q=0, r=0, production_table_name='data_'+username+'.pck')
+                password1, method='sha256'), q=0, r=0, production_table_name=f'data_{username}.pck')
             init_table(username)
             db.session.add(new_player)
             db.session.commit()
@@ -67,7 +67,7 @@ def sign_up():
     return render_template("sign_up.jinja", user=current_user)
 
 def init_table(username):
-    production_table = {
+    past_production = {
         "production" : {
             "fossil" : [0]*2880,
             "wind" : [0]*2880,
@@ -98,5 +98,5 @@ def init_table(username):
         },
         "emissions" : [0]*168
     }
-    with open('instance/player_prod/data_'+username+'.pck', 'wb') as file:
-        pickle.dump(production_table, file)
+    with open(f'instance/player_prod/data_{username}.pck', 'wb') as file:
+        pickle.dump(past_production, file)

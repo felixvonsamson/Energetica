@@ -1,6 +1,6 @@
 from . import db
 from flask_login import UserMixin
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func    
 
 
 class Under_construction(db.Model):
@@ -101,6 +101,38 @@ class Player(db.Model, UserMixin):
     under_construction = db.relationship('Under_construction')
 
     production_table_name = db.Column(db.String(50))
+
+    todays_production = {
+        "production" : {
+            "fossil" : [0]*1440,
+            "wind" : [0]*1440,
+            "hydro" : [0]*1440,
+            "geothermal" : [0]*1440,
+            "nuclear" : [0]*1440,
+            "solar" : [0]*1440
+        },
+        "demand" : {
+            "industriy" : [0]*1440,
+            "construction" : [0]*1440,
+            "extraction_plants" : [0]*1440,
+            "research" : [0]*1440,
+            "storage" : [0]*1440
+        },
+        "storage" : {
+            "pumped_hydro" : [0]*1440,
+            "compressed_air" : [0]*1440,
+            "molten_salt" : [0]*1440,
+            "hydrogen" : [0]*1440,
+            "batteries" : [0]*1440
+        },
+        "ressources" : {
+            "coal" : [0]*24,
+            "oil" : [0]*24,
+            "gas" : [0]*24,
+            "uranium" : [0]*24
+        },
+        "emissions" : [0]*24
+    }
 
 
 

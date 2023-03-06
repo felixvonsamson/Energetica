@@ -5,6 +5,7 @@ import logging
 from . import heap
 import time
 import heapq
+from .database import Player
 
 from .config import config
 class gameEngine(object):
@@ -76,6 +77,10 @@ from .utils import add_asset
 def state_update(engine, app):
   #engine.log("update all productions")
   pass
+  players = Player.query.all()
+  for player in players :
+    player.todays_production
+
 
 def check_heap(engine, app):
   #engine.log("checking heap")
