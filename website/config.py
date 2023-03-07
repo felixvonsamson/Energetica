@@ -463,7 +463,6 @@ class Config(object):
   def __init__(config):
     config.for_player = {}
   def update_config_for_user(config, player_id):
-    player = Player.query.get(player_id)
     config.for_player[player_id] = full_config
   def __getitem__(config, player_id):
     if player_id not in config.for_player:
