@@ -1,4 +1,4 @@
 .vscode
-instance/database.db
+instance/*
 website/__pycache__
 .DS_Store
