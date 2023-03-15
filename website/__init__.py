@@ -52,10 +52,11 @@ def create_app():
         return Player.query.get(int(id))
     
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-        from .gameEngine import state_update_h, state_update_m, check_heap
+        from .gameEngine import daily_update, state_update_h, state_update_m, check_heap
         scheduler = APScheduler()
         engine.log("adding job")
         scheduler.init_app(app)
+        scheduler.add_job(func=daily_update, args=(engine, app), id="daily_update", trigger="cron", hour=0)
         scheduler.add_job(func=state_update_h, args=(engine, app), id="state_update_h", trigger="interval", seconds=3600)
         scheduler.add_job(func=state_update_m, args=(engine, app), id="state_update_m", trigger="interval", seconds=60)
         scheduler.add_job(func=check_heap, args=(engine, app), id="check_heap", trigger="interval", seconds=1)

@@ -11,7 +11,7 @@ full_config = {
       "consumed ressource" : "money",
       "amount consumed" : 100,
       "pollution" : 494, #[g/kW]
-      "startup time" : 3000 #[s]
+      "startup time" : 1800 #[s]
     },
     "windmill": {
       "name" : "Windmill",
@@ -23,7 +23,7 @@ full_config = {
       "consumed ressource" : "wind",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 3000
+      "startup time" : 0
     },
     "watermill": {
       "name" : "Watermill",
@@ -35,7 +35,7 @@ full_config = {
       "consumed ressource" : "water",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 3000
+      "startup time" : 0
     },
     "coal_burner": {
       "name" : "Coal burner",
@@ -47,7 +47,7 @@ full_config = {
       "consumed ressource" : "coal",
       "amount consumed" : 60000,
       "pollution" : 986,
-      "startup time" : 3000
+      "startup time" : 3600
     },
     "oil_burner": {
       "name" : "Oil burner",
@@ -59,7 +59,7 @@ full_config = {
       "consumed ressource" : "oil",
       "amount consumed" : 21818,
       "pollution" : 777,
-      "startup time" : 3000
+      "startup time" : 3600
     },
     "gas_burner": {
       "name" : "Gas burner",
@@ -71,7 +71,7 @@ full_config = {
       "consumed ressource" : "gas",
       "amount consumed" : 21818,
       "pollution" : 429,
-      "startup time" : 3000
+      "startup time" : 3600
     },
     "shallow_geothermal_plant": {
       "name" : "Shallow geothermal plant",
@@ -83,7 +83,7 @@ full_config = {
       "consumed ressource" : "geothermy",
       "amount consumed" : 0,
       "pollution" : 6,
-      "startup time" : 3000
+      "startup time" : 7200
     },
     "small_water_dam": {
       "name" : "Small water dam",
@@ -95,7 +95,7 @@ full_config = {
       "consumed ressource" : "hydropower",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 3000
+      "startup time" : 300
     },
     "wind_turbine": {
       "name" : "Wind turbine",
@@ -107,7 +107,7 @@ full_config = {
       "consumed ressource" : "wind",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 3000
+      "startup time" : 0
     },
     "combined_cycle": {
       "name" : "Combined cycle",
@@ -119,7 +119,7 @@ full_config = {
       "consumed ressource" : ["gas", "coal"],
       "amount consumed" : [60000, 9000],
       "pollution" : 488,
-      "startup time" : 3000
+      "startup time" : 7200
     },
     "deep_geothermal_plant": {
       "name" : "Deep geothermal plant",
@@ -131,7 +131,7 @@ full_config = {
       "consumed ressource" : "geothermy",
       "amount consumed" : 0,
       "pollution" : 10,
-      "startup time" : 3000
+      "startup time" : 10800
     },
     "nuclear_reactor": {
       "name" : "Nuclear reactor",
@@ -143,7 +143,7 @@ full_config = {
       "consumed ressource" : "uranium",
       "amount consumed" : 360,
       "pollution" : 2,
-      "startup time" : 3000
+      "startup time" : 259200
     },
     "large_water_dam": {
       "name" : "Large water dam",
@@ -155,7 +155,7 @@ full_config = {
       "consumed ressource" : "hydropower",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 3000
+      "startup time" : 600
     },
     "CSP_solar": {
       "name" : "Concentrated solar power",
@@ -166,7 +166,8 @@ full_config = {
       "construction pollution" : 12000,
       "consumed ressource" : "irradiation",
       "amount consumed" : 0,
-      "pollution" : 0
+      "pollution" : 0,
+      "startup time" : 1800
     },
     "PV_solar": {
       "name" : "Photovoltaics",
@@ -178,7 +179,7 @@ full_config = {
       "consumed ressource" : "irradiation",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 3000
+      "startup time" : 0
     },
     "large_wind_turbine": {
       "name" : "Large wind turbine",
@@ -190,7 +191,7 @@ full_config = {
       "consumed ressource" : "wind",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 3000
+      "startup time" : 0
     },
     "nuclear_reactor_gen4": {
       "name" : "4th generation nuclear",
@@ -202,7 +203,7 @@ full_config = {
       "consumed ressource" : "uranium",
       "amount consumed" : 3,
       "pollution" : 2,
-      "startup time" : 3000
+      "startup time" : 432000
     },
     "small_pumped_hydro": {
       "name" : "Small pumped hydro",
@@ -213,7 +214,7 @@ full_config = {
       "construction time" : 36000, #[s]
       "construction energy" : 10000, #[Wh]
       "construction pollution" : 12000, #[kg]
-      "startup time" : 3000
+      "startup time" : 180
     },
     "compressed_air": {
       "name" : "Compressed air",
@@ -224,7 +225,7 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 3000
+      "startup time" : 180
     },
     "molten_salt": {
       "name" : "Molten salt",
@@ -235,7 +236,7 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 3000
+      "startup time" : 14400
     },
     "large_pumped_hydro": {
       "name" : "Large pumped hydro",
@@ -246,7 +247,7 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 3000
+      "startup time" : 300
     },
     "hydrogen_storage": {
       "name" : "Hydrogen hydrolysis",
@@ -257,7 +258,7 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 3000
+      "startup time" : 72000
     },
     "lithium_ion_batteries": {
       "name" : "Lithium-ion batteries",
@@ -268,7 +269,7 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 3000
+      "startup time" : 30
     },
     "solid_state_batteries": {
       "name" : "Solid state batteries",
@@ -279,7 +280,7 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 3000
+      "startup time" : 30
     },
     "laboratory": {
       "name" : "Laboratory",

@@ -4,5 +4,11 @@
 <div class="medium padding">
 <i>Here I want to integrate some graphs that show the time dependent energy production and consumption aswell as the energy storage management.</i>
 </div>
+<div>
+<h1>Energy production :</h1>
+Fossil : {{user.todays_production["production"]["fossil"]}}
+<h1>Energy demand :</h1>
+Industry : {{user.todays_production["demand"]["industriy"]}}
+</div>
 {% endblock %}
 
