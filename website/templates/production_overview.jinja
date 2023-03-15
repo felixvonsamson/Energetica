@@ -4,11 +4,22 @@
 <div class="medium padding">
 <i>Here I want to integrate some graphs that show the time dependent energy production and consumption aswell as the energy storage management.</i>
 </div>
-<div>
+
+<div class="bone padding">
 <h1>Energy production :</h1>
-Fossil : {{user.todays_production["production"]["fossil"]}}
-<h1>Energy demand :</h1>
-Industry : {{user.todays_production["demand"]["industriy"]}}
+<canvas id="prod_chart" data-name="{{user.todays_production['production']['fossil'][0:t.hour * 60 + t.minute]}}"></canvas>
 </div>
+
+<div class="bone padding">
+<h1>Energy demand :</h1>
+<canvas id="demand_chart" data-name="{{user.todays_production['demand']['industriy'][0:t.hour * 60 + t.minute]}}"></canvas>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='sockets.js') }}" ></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='charts.js') }}" ></script>
 {% endblock %}
 

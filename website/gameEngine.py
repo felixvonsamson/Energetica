@@ -2,6 +2,7 @@ import datetime
 import pickle
 import secrets
 import logging
+from flask import url_for
 from . import heap
 import time
 import heapq
@@ -76,11 +77,11 @@ from .utils import add_asset
 
 def daily_update(engine, app):
   with app.app_context():
-    with open(url_for('static', filename='data/industry_demand.pck'), "rb") as file:
+    with open('website/static/data/industry_demand.pck', "rb") as file:
       industry_demand = pickle.load(file)
     players = Player.query.all()
     for player in players :
-      player.todays_production["demand"]["industriy"] = industry_demand
+      player.todays_production["demand"]["industriy"] = [i*50000 for i in industry_demand]
 
 def state_update_h(engine, app):
   with app.app_context():
@@ -112,7 +113,7 @@ def state_update_m(engine, app):
 
       demand_construction = 0
       for ud in player.under_construction :
-        construction = engine.config["assets"][ud.name]
+        construction = engine.config[player.id].config["assets"][ud.name]
         demand_construction += construction["construction energy"]/construction["construction time"]*60
       player.todays_production["demand"]["construction"][t] = demand_construction
 
