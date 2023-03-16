@@ -56,7 +56,6 @@ def create_app():
         scheduler = APScheduler()
         engine.log("adding job")
         scheduler.init_app(app)
-        daily_update(engine, app)
         scheduler.add_job(func=daily_update, args=(engine, app), id="daily_update", trigger="cron", hour=2)
         scheduler.add_job(func=state_update_h, args=(engine, app), id="state_update_h", trigger="interval", seconds=3600)
         scheduler.add_job(func=state_update_m, args=(engine, app), id="state_update_m", trigger="interval", seconds=60)

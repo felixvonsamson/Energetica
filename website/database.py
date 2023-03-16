@@ -1,6 +1,7 @@
 from . import db
 from flask_login import UserMixin
-from sqlalchemy.sql import func    
+from sqlalchemy.sql import func  
+import pickle  
 
 
 class Under_construction(db.Model):
@@ -102,6 +103,9 @@ class Player(db.Model, UserMixin):
 
     production_table_name = db.Column(db.String(50))
 
+    with open('website/static/data/industry_demand.pck', "rb") as file:
+        industry_demand = pickle.load(file)
+
     todays_production = {
         "production" : {
             "fossil" : [0]*1440,
@@ -112,7 +116,7 @@ class Player(db.Model, UserMixin):
             "solar" : [0]*1440
         },
         "demand" : {
-            "industriy" : [0]*1440,
+            "industriy" : [i*50000 for i in industry_demand],
             "construction" : [0]*1440,
             "extraction_plants" : [0]*1440,
             "research" : [0]*1440,
