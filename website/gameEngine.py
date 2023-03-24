@@ -113,7 +113,7 @@ def state_update_m(engine, app):
 
       demand_construction = 0
       for ud in player.under_construction :
-        construction = engine.config[player.id].config["assets"][ud.name]
+        construction = engine.config[player.id]["assets"][ud.name]
         demand_construction += construction["construction energy"]/construction["construction time"]*60
       player.todays_production["demand"]["construction"][t] = demand_construction
 
