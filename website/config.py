@@ -11,7 +11,8 @@ full_config = {
       "consumed ressource" : "money",
       "amount consumed" : 100,
       "pollution" : 494, #[g/kW]
-      "startup time" : 1800 #[s]
+      "startup time" : 1800, #[s]
+      "inertia" : 40 #[s]
     },
     "windmill": {
       "name" : "Windmill",
@@ -23,7 +24,8 @@ full_config = {
       "consumed ressource" : "wind",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 0
+      "startup time" : 0,
+      "inertia" : 0
     },
     "watermill": {
       "name" : "Watermill",
@@ -35,7 +37,8 @@ full_config = {
       "consumed ressource" : "water",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 0
+      "startup time" : 0,
+      "inertia" : 0
     },
     "coal_burner": {
       "name" : "Coal burner",
@@ -47,7 +50,8 @@ full_config = {
       "consumed ressource" : "coal",
       "amount consumed" : 60000,
       "pollution" : 986,
-      "startup time" : 3600
+      "startup time" : 3600,
+      "inertia" : 40
     },
     "oil_burner": {
       "name" : "Oil burner",
@@ -59,7 +63,8 @@ full_config = {
       "consumed ressource" : "oil",
       "amount consumed" : 21818,
       "pollution" : 777,
-      "startup time" : 3600
+      "startup time" : 3600,
+      "inertia" : 40
     },
     "gas_burner": {
       "name" : "Gas burner",
@@ -71,7 +76,8 @@ full_config = {
       "consumed ressource" : "gas",
       "amount consumed" : 21818,
       "pollution" : 429,
-      "startup time" : 3600
+      "startup time" : 3600,
+      "inertia" : 40
     },
     "shallow_geothermal_plant": {
       "name" : "Shallow geothermal plant",
@@ -83,7 +89,8 @@ full_config = {
       "consumed ressource" : "geothermy",
       "amount consumed" : 0,
       "pollution" : 6,
-      "startup time" : 7200
+      "startup time" : 7200,
+      "inertia" : 40
     },
     "small_water_dam": {
       "name" : "Small water dam",
@@ -95,7 +102,8 @@ full_config = {
       "consumed ressource" : "hydropower",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 300
+      "startup time" : 300,
+      "inertia" : 40
     },
     "wind_turbine": {
       "name" : "Wind turbine",
@@ -107,7 +115,8 @@ full_config = {
       "consumed ressource" : "wind",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 0
+      "startup time" : 0,
+      "inertia" : 0
     },
     "combined_cycle": {
       "name" : "Combined cycle",
@@ -119,7 +128,8 @@ full_config = {
       "consumed ressource" : ["gas", "coal"],
       "amount consumed" : [60000, 9000],
       "pollution" : 488,
-      "startup time" : 7200
+      "startup time" : 7200,
+      "inertia" : 40
     },
     "deep_geothermal_plant": {
       "name" : "Deep geothermal plant",
@@ -131,7 +141,8 @@ full_config = {
       "consumed ressource" : "geothermy",
       "amount consumed" : 0,
       "pollution" : 10,
-      "startup time" : 10800
+      "startup time" : 10800,
+      "inertia" : 40
     },
     "nuclear_reactor": {
       "name" : "Nuclear reactor",
@@ -143,7 +154,8 @@ full_config = {
       "consumed ressource" : "uranium",
       "amount consumed" : 360,
       "pollution" : 2,
-      "startup time" : 259200
+      "startup time" : 259200,
+      "inertia" : 40
     },
     "large_water_dam": {
       "name" : "Large water dam",
@@ -155,7 +167,8 @@ full_config = {
       "consumed ressource" : "hydropower",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 600
+      "startup time" : 600,
+      "inertia" : 40
     },
     "CSP_solar": {
       "name" : "Concentrated solar power",
@@ -167,7 +180,8 @@ full_config = {
       "consumed ressource" : "irradiation",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 1800
+      "startup time" : 1800,
+      "inertia" : 40
     },
     "PV_solar": {
       "name" : "Photovoltaics",
@@ -179,7 +193,8 @@ full_config = {
       "consumed ressource" : "irradiation",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 0
+      "startup time" : 0,
+      "inertia" : 0
     },
     "large_wind_turbine": {
       "name" : "Large wind turbine",
@@ -191,7 +206,8 @@ full_config = {
       "consumed ressource" : "wind",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 0
+      "startup time" : 0,
+      "inertia" : 5
     },
     "nuclear_reactor_gen4": {
       "name" : "4th generation nuclear",
@@ -203,7 +219,8 @@ full_config = {
       "consumed ressource" : "uranium",
       "amount consumed" : 3,
       "pollution" : 2,
-      "startup time" : 432000
+      "startup time" : 432000,
+      "inertia" : 40
     },
     "small_pumped_hydro": {
       "name" : "Small pumped hydro",
@@ -214,7 +231,8 @@ full_config = {
       "construction time" : 36000, #[s]
       "construction energy" : 10000, #[Wh]
       "construction pollution" : 12000, #[kg]
-      "startup time" : 180
+      "startup time" : 180,
+      "inertia" : 40
     },
     "compressed_air": {
       "name" : "Compressed air",
@@ -225,7 +243,8 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 180
+      "startup time" : 180,
+      "inertia" : 40
     },
     "molten_salt": {
       "name" : "Molten salt",
@@ -236,7 +255,8 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 14400
+      "startup time" : 14400,
+      "inertia" : 40
     },
     "large_pumped_hydro": {
       "name" : "Large pumped hydro",
@@ -247,7 +267,8 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 300
+      "startup time" : 300,
+      "inertia" : 40
     },
     "hydrogen_storage": {
       "name" : "Hydrogen hydrolysis",
@@ -258,7 +279,8 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 72000
+      "startup time" : 72000,
+      "inertia" : 40
     },
     "lithium_ion_batteries": {
       "name" : "Lithium-ion batteries",
@@ -269,7 +291,8 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 30
+      "startup time" : 30,
+      "inertia" : 0
     },
     "solid_state_batteries": {
       "name" : "Solid state batteries",
@@ -280,7 +303,8 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 30
+      "startup time" : 30,
+      "inertia" : 0
     },
     "laboratory": {
       "name" : "Laboratory",
