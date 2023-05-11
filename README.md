@@ -11,7 +11,10 @@ git clone <repo-url>
 ```bash
 pip install -r requirements.txt
 ```
-
+or
+```bash
+conda install -c conda-forge --file requirements.txt
+```
 ## Running The App
 
 ```bash

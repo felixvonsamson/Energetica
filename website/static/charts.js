@@ -1,6 +1,14 @@
+const labels = [];
+const start = new Date();
+start.setHours(2, 0, 0, 0); // set start time to midnight
+for (let i = 0; i < 1440; i++) {
+  const date = new Date(start.getTime() + i * 60000); // create new date object for each minute
+  const label = date.toISOString().substr(11, 5); // convert to datetime format
+  labels.push(label);
+}
+
 var ctx = document.getElementById('prod_chart');
 var data = JSON.parse(ctx.dataset.name);
-var labels = Array.from({length: 1440}, (_, i) => i);
 
   new Chart(ctx, {
     type: 'line',
@@ -24,7 +32,6 @@ var labels = Array.from({length: 1440}, (_, i) => i);
 
 ctx = document.getElementById('demand_chart');
 data = JSON.parse(ctx.dataset.name);
-labels = Array.from({length: 1440}, (_, i) => i);
 
   new Chart(ctx, {
     type: 'line',
