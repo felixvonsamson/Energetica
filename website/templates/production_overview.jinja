@@ -7,13 +7,15 @@
 
 <div class="bone padding">
 <h1>Energy production :</h1>
-<canvas id="prod_chart" data-name="{{user.todays_production['production']['fossil'][0:t.hour * 60 + t.minute]}}"></canvas>
+<canvas id="prod_chart" data-name="{{user.todays_production['production']['steam_engine'][0:t.hour * 60 + t.minute]}}"></canvas>
 </div>
+{{user.todays_production['production']['steam_engine'][t.hour * 60 + t.minute-20:t.hour * 60 + t.minute]}}
 
 <div class="bone padding">
 <h1>Energy demand :</h1>
 <canvas id="demand_chart" data-name="{{user.todays_production['demand']['industriy'][0:t.hour * 60 + t.minute]}}"></canvas>
 </div>
+{{user.todays_production['demand']['industriy'][t.hour * 60 + t.minute-20:t.hour * 60 + t.minute]}}
 {% endblock %}
 
 {% block scripts %}

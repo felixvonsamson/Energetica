@@ -11,7 +11,7 @@ full_config = {
       "consumed ressource" : "money",
       "amount consumed" : 100,
       "pollution" : 494, #[g/kW]
-      "startup time" : 1800, #[s]
+      "ramping speed" : 1800, #[W/min]
       "inertia" : 40 #[s]
     },
     "windmill": {
@@ -24,7 +24,7 @@ full_config = {
       "consumed ressource" : "wind",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 0,
+      "ramping speed" : 0,
       "inertia" : 0
     },
     "watermill": {
@@ -37,7 +37,7 @@ full_config = {
       "consumed ressource" : "water",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 0,
+      "ramping speed" : 0,
       "inertia" : 0
     },
     "coal_burner": {
@@ -50,7 +50,7 @@ full_config = {
       "consumed ressource" : "coal",
       "amount consumed" : 60000,
       "pollution" : 986,
-      "startup time" : 3600,
+      "ramping speed" : 3600,
       "inertia" : 40
     },
     "oil_burner": {
@@ -63,7 +63,7 @@ full_config = {
       "consumed ressource" : "oil",
       "amount consumed" : 21818,
       "pollution" : 777,
-      "startup time" : 3600,
+      "ramping speed" : 3600,
       "inertia" : 40
     },
     "gas_burner": {
@@ -76,7 +76,7 @@ full_config = {
       "consumed ressource" : "gas",
       "amount consumed" : 21818,
       "pollution" : 429,
-      "startup time" : 3600,
+      "ramping speed" : 3600,
       "inertia" : 40
     },
     "shallow_geothermal_plant": {
@@ -89,7 +89,7 @@ full_config = {
       "consumed ressource" : "geothermy",
       "amount consumed" : 0,
       "pollution" : 6,
-      "startup time" : 7200,
+      "ramping speed" : 7200,
       "inertia" : 40
     },
     "small_water_dam": {
@@ -102,7 +102,7 @@ full_config = {
       "consumed ressource" : "hydropower",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 300,
+      "ramping speed" : 300,
       "inertia" : 40
     },
     "wind_turbine": {
@@ -115,7 +115,7 @@ full_config = {
       "consumed ressource" : "wind",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 0,
+      "ramping speed" : 0,
       "inertia" : 0
     },
     "combined_cycle": {
@@ -128,7 +128,7 @@ full_config = {
       "consumed ressource" : ["gas", "coal"],
       "amount consumed" : [60000, 9000],
       "pollution" : 488,
-      "startup time" : 7200,
+      "ramping speed" : 7200,
       "inertia" : 40
     },
     "deep_geothermal_plant": {
@@ -141,7 +141,7 @@ full_config = {
       "consumed ressource" : "geothermy",
       "amount consumed" : 0,
       "pollution" : 10,
-      "startup time" : 10800,
+      "ramping speed" : 10800,
       "inertia" : 40
     },
     "nuclear_reactor": {
@@ -154,7 +154,7 @@ full_config = {
       "consumed ressource" : "uranium",
       "amount consumed" : 360,
       "pollution" : 2,
-      "startup time" : 259200,
+      "ramping speed" : 259200,
       "inertia" : 40
     },
     "large_water_dam": {
@@ -167,7 +167,7 @@ full_config = {
       "consumed ressource" : "hydropower",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 600,
+      "ramping speed" : 600,
       "inertia" : 40
     },
     "CSP_solar": {
@@ -180,7 +180,7 @@ full_config = {
       "consumed ressource" : "irradiation",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 1800,
+      "ramping speed" : 1800,
       "inertia" : 40
     },
     "PV_solar": {
@@ -193,7 +193,7 @@ full_config = {
       "consumed ressource" : "irradiation",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 0,
+      "ramping speed" : 0,
       "inertia" : 0
     },
     "large_wind_turbine": {
@@ -206,7 +206,7 @@ full_config = {
       "consumed ressource" : "wind",
       "amount consumed" : 0,
       "pollution" : 0,
-      "startup time" : 0,
+      "ramping speed" : 0,
       "inertia" : 5
     },
     "nuclear_reactor_gen4": {
@@ -219,7 +219,7 @@ full_config = {
       "consumed ressource" : "uranium",
       "amount consumed" : 3,
       "pollution" : 2,
-      "startup time" : 432000,
+      "ramping speed" : 432000,
       "inertia" : 40
     },
     "small_pumped_hydro": {
@@ -231,7 +231,7 @@ full_config = {
       "construction time" : 36000, #[s]
       "construction energy" : 10000, #[Wh]
       "construction pollution" : 12000, #[kg]
-      "startup time" : 180,
+      "ramping speed" : 180, #[W/min]
       "inertia" : 40
     },
     "compressed_air": {
@@ -243,7 +243,7 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 180,
+      "ramping speed" : 180,
       "inertia" : 40
     },
     "molten_salt": {
@@ -255,7 +255,7 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 14400,
+      "ramping speed" : 14400,
       "inertia" : 40
     },
     "large_pumped_hydro": {
@@ -267,7 +267,7 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 300,
+      "ramping speed" : 300,
       "inertia" : 40
     },
     "hydrogen_storage": {
@@ -279,7 +279,7 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 72000,
+      "ramping speed" : 72000,
       "inertia" : 40
     },
     "lithium_ion_batteries": {
@@ -291,7 +291,7 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 30,
+      "ramping speed" : 30,
       "inertia" : 0
     },
     "solid_state_batteries": {
@@ -303,7 +303,7 @@ full_config = {
       "construction time" : 36000,
       "construction energy" : 10000,
       "construction pollution" : 12000,
-      "startup time" : 30,
+      "ramping speed" : 30,
       "inertia" : 0
     },
     "laboratory": {
@@ -441,6 +441,7 @@ full_config = {
 
 }
 
+# currently not used 
 capacity_table = {
     "steam_engine": "c_fossil",
     "windmill": "c_wind",
@@ -468,6 +469,7 @@ capacity_table = {
     "solid_state_batteries": "c_batteries"
 }
 
+# currently not used 
 capacities = [
   "c_fossil",
   "c_wind",

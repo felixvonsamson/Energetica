@@ -15,20 +15,41 @@ def update_electricity(engine):
   t = now.hour * 60 + now.minute
   players = Player.query.all()
   for player in players :
-    player.todays_production["production"]["fossil"][t] = player.c_fossil
-    player.todays_production["production"]["wind"][t] = player.c_wind
-    player.todays_production["production"]["hydro"][t] = player.c_hydro
-    player.todays_production["production"]["geothermal"][t] = player.c_geothermal
-    player.todays_production["production"]["nuclear"][t] = player.c_nuclear
-    player.todays_production["production"]["solar"][t] = player.c_solar
-    player.todays_production["storage"]["pumped_hydro"][t] = player.c_pumped_hydro
-    player.todays_production["storage"]["compressed_air"][t] = player.c_compressed_air
-    player.todays_production["storage"]["molten_salt"][t] = player.c_molten_salt
-    player.todays_production["storage"]["hydrogen"][t] = player.c_hydrogen
-    player.todays_production["storage"]["batteries"][t] = player.c_batteries
 
     demand_construction = 0
     for ud in player.under_construction :
       construction = engine.config[player.id]["assets"][ud.name]
       demand_construction += construction["construction energy"]/construction["construction time"]*60
     player.todays_production["demand"]["construction"][t] = demand_construction
+    total_demand = sum([player.todays_production["demand"][i][t] for i in player.todays_production["demand"]])
+
+    total_production = 0 
+    for plant in ["windmill", "watermill", "small_water_dam", "wind_turbine", "large_water_dam", "CSP_solar", "PV_solar", "large_wind_turbine"]:
+      #update non-controllable producion
+      pass
+
+    controllable_plants = ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "shallow_geothermal_plant", "combined_cycle", "deep_geothermal_plant", "nuclear_reactor", "nuclear_reactor_gen4"]
+    for plant in controllable_plants:
+      player.todays_production["production"][plant][t] = max(0,player.todays_production["production"][plant][t-1]-getattr(player, plant)*engine.config[player.id]["assets"][plant]["ramping speed"])
+      total_production += player.todays_production["production"][plant][t]
+    priority_list = ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "shallow_geothermal_plant", "combined_cycle", "deep_geothermal_plant", "nuclear_reactor", "nuclear_reactor_gen4"]
+    i = 0
+    while total_production < total_demand:
+      plant = priority_list[i]
+      delta_prod = getattr(player, plant)*engine.config[player.id]["assets"][plant]["ramping speed"] + player.todays_production["production"][plant][t-1]-player.todays_production["production"][plant][t]
+      if total_demand-total_production < delta_prod:
+        max_prod = getattr(player, plant)*engine.config[player.id]["assets"][plant]["power production"]
+        if player.todays_production["production"][plant][t] + total_demand-total_production > max_prod:
+          total_production += max_prod - player.todays_production["production"][plant][t]
+          player.todays_production["production"][plant][t] = max_prod
+        else :
+          player.todays_production["production"][plant][t] += total_demand-total_production
+          total_production = total_demand
+      else :
+        total_production += delta_prod
+        player.todays_production["production"][plant][t] += delta_prod
+      i+=1
+      if i >= len(priority_list):
+        break
+
+    

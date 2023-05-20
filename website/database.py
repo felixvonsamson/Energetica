@@ -82,19 +82,6 @@ class Player(db.Model, UserMixin):
     aerodynamics = db.Column(db.Integer, default=0)
     geology = db.Column(db.Integer, default=0)
 
-    # Capacities :
-    c_fossil = db.Column(db.Integer, default=0)
-    c_wind = db.Column(db.Integer, default=0)
-    c_hydro = db.Column(db.Integer, default=0)
-    c_geothermal = db.Column(db.Integer, default=0)
-    c_nuclear = db.Column(db.Integer, default=0)
-    c_solar = db.Column(db.Integer, default=0)
-    c_pumped_hydro = db.Column(db.Integer, default=0)
-    c_compressed_air = db.Column(db.Integer, default=0)
-    c_molten_salt = db.Column(db.Integer, default=0)
-    c_hydrogen = db.Column(db.Integer, default=0)
-    c_batteries = db.Column(db.Integer, default=0)
-
     # CO2 emissions :
     emissions = db.Column(db.Integer, default=0)
     total_emissions = db.Column(db.Integer, default=0)
@@ -107,27 +94,59 @@ class Player(db.Model, UserMixin):
         industry_demand = pickle.load(file)
 
     todays_production = {
+        # Maybe reduce to [fossil, wind, hydro, geothermal, nuclear, solar] to store less data
         "production" : {
-            "fossil" : [0]*1440,
-            "wind" : [0]*1440,
-            "hydro" : [0]*1440,
-            "geothermal" : [0]*1440,
-            "nuclear" : [0]*1440,
-            "solar" : [0]*1440
+            "steam_engine" : [0]*1440,
+            "windmill" : [0]*1440,
+            "watermill" : [0]*1440,
+            "coal_burner" : [0]*1440,
+            "oil_burner" : [0]*1440,
+            "gas_burner" : [0]*1440,
+            "shallow_geothermal_plant" : [0]*1440,
+            "small_water_dam" : [0]*1440,
+            "wind_turbine" : [0]*1440,
+            "combined_cycle" : [0]*1440,
+            "deep_geothermal_plant" : [0]*1440,
+            "nuclear_reactor" : [0]*1440,
+            "large_water_dam" : [0]*1440,
+            "CSP_solar" : [0]*1440,
+            "PV_solar" : [0]*1440,
+            "large_wind_turbine" : [0]*1440,
+            "nuclear_reactor_gen4" : [0]*1440
         },
         "demand" : {
             "industriy" : [i*50000 for i in industry_demand],
             "construction" : [0]*1440,
-            "extraction_plants" : [0]*1440,
+
+            # Maybe group as "extraction_plants"
+            "coal_mine" : [0]*1440,
+            "oil_field" : [0]*1440,
+            "gas_drilling_site" : [0]*1440,
+            "uranium_mine" : [0]*1440,
+
             "research" : [0]*1440,
-            "storage" : [0]*1440
+
+            # Maybe group as "storage"
+            "small_pumped_hydro" : [0]*1440,
+            "compressed_air" : [0]*1440,
+            "molten_salt" : [0]*1440,
+            "large_pumped_hydro" : [0]*1440,
+            "hydrogen_storage" : [0]*1440,
+            "lithium_ion_batteries" : [0]*1440,
+            "solid_state_batteries" : [0]*1440
         },
         "storage" : {
-            "pumped_hydro" : [0]*1440,
+            # Maybe group as "pumped_hydro"
+            "small_pumped_hydro" : [0]*1440,
+            "large_pumped_hydro" : [0]*1440,
+
             "compressed_air" : [0]*1440,
             "molten_salt" : [0]*1440,
             "hydrogen" : [0]*1440,
-            "batteries" : [0]*1440
+
+            # Maybe group as "batteries"
+            "lithium_ion_batteries" : [0]*1440,
+            "solid_state_batteries" : [0]*1440
         },
         "ressources" : {
             "coal" : [0]*24,
