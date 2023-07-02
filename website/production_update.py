@@ -23,6 +23,7 @@ def update_electricity(engine):
     player.todays_production["demand"]["construction"][t] = demand_construction
     total_demand = sum([player.todays_production["demand"][i][t] for i in player.todays_production["demand"]])
 
+    #put this in dayly updates
     total_production = 0 
     for plant in ["windmill", "watermill", "small_water_dam", "wind_turbine", "large_water_dam", "CSP_solar", "PV_solar", "large_wind_turbine"]:
       #update non-controllable producion

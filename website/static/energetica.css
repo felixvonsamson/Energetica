@@ -2,6 +2,7 @@
 
 html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}
 html,body{font-family: 'Baloo 2', cursive; font-size:15px; line-height:1.3; margin:0; padding: 0;}
+canvas {display: block;}  
 
 /* Colors */
 .white{color:#285430;background-color:#ffffff}

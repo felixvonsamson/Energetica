@@ -21,8 +21,8 @@ class Player(db.Model, UserMixin):
     sid = db.Column(db.String(100))
 
     # Position :
-    q = db.Column(db.Integer)
-    r = db.Column(db.Integer)
+    q = db.Column(db.Integer, default=None)
+    r = db.Column(db.Integer, default=None)
 
     # Ressources :
     money = db.Column(db.Integer, default=100000)

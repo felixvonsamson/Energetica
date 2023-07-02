@@ -18,6 +18,8 @@ def check_user():
         else:
             return render_template(page, engine=g.engine, user=current_user, data=g.config["assets"])
     g.render_template_ctx = render_template_ctx
+    if current_user.q == None :
+        return g.render_template_ctx("location_choice.jinja")
 
 @views.route('/', methods=['GET', 'POST'])
 @views.route('/home', methods=['GET', 'POST'])
@@ -31,8 +33,7 @@ def home():
 #            new_note = Note(data=note, user_id=current_user.id)  #providing the schema for the note 
 #            db.session.add(new_note) #adding the note to the database 
 #            db.session.commit()
-#            flash('Note added!', category='success')
-
+#            flash('Note added!', category='success'
     return g.render_template_ctx("home.jinja")
 
 @views.route('/power_buildings')
