@@ -3,6 +3,19 @@ from flask_login import UserMixin
 from sqlalchemy.sql import func  
 import pickle  
 
+class Hex(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    q = db.Column(db.Integer)
+    r = db.Column(db.Integer)
+    solar = db.Column(db.Integer)
+    wind = db.Column(db.Integer)
+    hydro = db.Column(db.Integer)
+    coal = db.Column(db.Integer)
+    oil = db.Column(db.Integer)
+    gas = db.Column(db.Integer)
+    uranium = db.Column(db.Integer)
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id'), default=None)
+
 
 class Under_construction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -21,8 +34,7 @@ class Player(db.Model, UserMixin):
     sid = db.Column(db.String(100))
 
     # Position :
-    q = db.Column(db.Integer, default=None)
-    r = db.Column(db.Integer, default=None)
+    tile = db.relationship('Hex')
 
     # Ressources :
     money = db.Column(db.Integer, default=100000)

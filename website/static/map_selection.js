@@ -1,14 +1,13 @@
+var socket = io();
+
 class Hex{
-    constructor(_q, _r){
+    constructor(_id, _q, _r, _ressources){
+      this.id = _id;
       this.q = _q;
       this.r = _r;
       this.s = - this.q - this.r;
       this.selected = false;
-      this.ressources = [];
-      this.ressources[0] = 0.8*exp(-sq(this.r*3.75/mapsize))+0.2;
-      for(let i = 1; i<8; i++){
-        this.ressources[i] = 0;
-      }
+      this.ressources = _ressources;
     }
     display_tile(){
       if(active_vew>=0){
@@ -32,7 +31,8 @@ class Hex{
         text(round(this.ressources[active_vew],2), 0, 0);
       }else{
         text(str(this.q)+" "+this.r, 0, -5);
-        text(this.s, 0, 10)
+        text(this.s, 0, 10);
+        //text(this.id, 0, 0);
       }
     }
   }
@@ -63,25 +63,29 @@ class Hex{
   let size = 20;
   let mapsize = 21;
   let map = [];
+  let map_data;
   let buttons = [];
-  let button_colors = [59, 186, 239, 0, 320, 275, 109, 28];
+  let validate;
+  let button_colors = [59, 186, 239, 0, 320, 275, 109];
   let directions = [];
   let active_vew = -1;
   let selected_position = null;
   
+  function preload() {
+    map_data = loadTable('../static/data/map.csv', 'csv', 'header');
+  }
+
   function setup(){
     createCanvas(800,800);
     background(255);
     textAlign(CENTER, CENTER);
     colorMode(HSB);
-    //noLoop();
     
-    directions = [createVector(1, 0), createVector(0, 1), createVector(-1, 1), createVector(-1, 0), createVector(0, -1), createVector(1, -1)];
-    
-    let button_names = ["solar", "wind", "hydro", "coal", "oil", "gas", "uranium", "total"];
+    let button_names = ["solar", "wind", "hydro", "coal", "oil", "gas", "uranium"];
     for(let i = 0; i<button_names.length; i++){
       buttons[i] = new Button(button_names[i], i, button_colors[i]);
     }
+    validate = new Button("VALIDATE", 7, 24);
     
     h = 2*size;
     w = sqrt(3)*size;
@@ -90,19 +94,21 @@ class Hex{
     for(let i = 0; i<mapsize; i++){
       map[i] = [];
       for(let j = 0; j<mapsize; j++){
-        if(i+j < mapsize*0.5-1 | i+j > mapsize*1.5-1){
-          map[i][j] = null;
-        }else{
-          map[i][j] = new Hex(i-floor(mapsize*0.5), j-floor(mapsize*0.5));
-        }
+        map[i][j] = null;
       }
     }
-    
-    generate_hydro();
-    generate_coal();
-    generate_oil_gas();
-    generate_uranium();
-    generate_wind();
+    fetch('/get_map')
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    for(let i = 0; i<map_data.getRowCount(); i++){
+      row = map_data.getRow(i);
+      map[row.getNum("q")+floor(mapsize*0.5)][row.getNum("r")+floor(mapsize*0.5)] = new Hex(i, row.getNum("q"), row.getNum("r"), row.arr.slice(-7));
+    }
     newdraw();
   }
   
@@ -149,7 +155,7 @@ class Hex{
     }
     if(selected_position != null){
       let h = map[selected_position.x][selected_position.y];
-      for(let i = 0; i<buttons.length-1; i++){
+      for(let i = 0; i<buttons.length; i++){
         push();
         translate(0, 20*i);
         fill(button_colors[i], 100, 100);
@@ -165,11 +171,19 @@ class Hex{
       buttons[i].display_button();
       pop();
     }
+    translate(7*width/8.0, height-2*size);
+    validate.display_button();
   }
   
   function mousePressed(){
     if(mouseY>height-2*size){
       let i = floor(mouseX*8/width);
+      if(i==7){
+        if(selected_position != null){
+          socket.emit('choose_location', map[selected_position.x][selected_position.y].id);
+        }
+        return;
+      }
       if(buttons[i].active){
         buttons[i].active = false;
         active_vew = -1;

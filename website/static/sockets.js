@@ -16,3 +16,7 @@ socket.on('update_data', function(changes) {
         if (obj != null) { obj.innerHTML = value; }
     }
 });
+
+socket.on('refresh', function() {
+    window.location = window.location;
+});

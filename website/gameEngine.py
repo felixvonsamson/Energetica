@@ -41,8 +41,8 @@ class gameEngine(object):
     engine.nonces.add(nonce)
     return True
   
-  def force_refresh(engine):
-    engine.socketio.emit("refresh", broadcast=True)
+  def refresh(engine):
+    engine.socketio.emit("refresh")
 
   def update_fields(engine, updates, player=None):
     socketio = engine.socketio
@@ -56,21 +56,6 @@ class gameEngine(object):
     log_message = datetime.datetime.now().strftime("%H:%M:%S : ") + message
     engine.logger.info(log_message)
     engine.logs.append(log_message)
-
-
-  def save_data(engine):
-    socketio = engine.socketio
-    engine.socketio = None
-    with open("data.pck", "wb") as file:
-      pickle.dump(engine, file)
-    engine.socketio = socketio
-
-  @staticmethod
-  def load_data():
-    with open("data.pck", "rb") as file:
-      engine = pickle.load(file)
-    engine.init_logger()
-    return engine
 
 
 from .utils import add_asset

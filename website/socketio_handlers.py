@@ -3,7 +3,7 @@ import heapq
 from flask import request, session, flash, g, current_app
 from flask_login import current_user
 from . import heap
-from .database import Player, Under_construction
+from .database import Player, Hex, Under_construction
 from .utils import add_asset, display_CHF
 from . import db
 
@@ -12,9 +12,20 @@ def add_handlers(socketio, engine):
 
   @socketio.on("give_identity")
   def give_identity():
-    player = Player.query.get(int(session["ID"]))
+    player = current_user
     player.sid = request.sid
     db.session.commit()
+
+  @socketio.on("choose_location")
+  def choose_location(id):
+    print("\n", id ,"\n")
+    location = Hex.query.get(id+1)
+    if(location.player_id != None):
+      flash('Location already taken', category='error') # doesn't work
+    else :
+      location.player_id = current_user.id
+      db.session.commit()
+      engine.refresh()
 
   @socketio.on("start_construction")
   def start_construction(building, family):

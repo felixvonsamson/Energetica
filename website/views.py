@@ -9,7 +9,7 @@ views = Blueprint('views', __name__)
 @login_required
 def check_user():
     g.engine = current_app.config["engine"]
-    g.config = g.engine.config[session["ID"]]
+    g.config = g.engine.config[current_user.id]
     def render_template_ctx(page):
         if page == "production_overview.jinja" :
             with open('instance/player_prod/'+current_user.production_table_name, "rb") as file:
@@ -18,7 +18,7 @@ def check_user():
         else:
             return render_template(page, engine=g.engine, user=current_user, data=g.config["assets"])
     g.render_template_ctx = render_template_ctx
-    if current_user.q == None :
+    if len(current_user.tile) == 0 :
         return g.render_template_ctx("location_choice.jinja")
 
 @views.route('/', methods=['GET', 'POST'])
