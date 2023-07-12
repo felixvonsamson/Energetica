@@ -41,15 +41,15 @@ def create_app():
 
     from .database import Player, Hex
     
-    print("\n THIS SHOULD APPEAR ONLY ONE TIME \n")
     with app.app_context():
         db.create_all()
-        with open('website/static/data/map.csv', 'r') as file:
-            csv_reader = csv.DictReader(file)
-            for row in csv_reader:
-                hex = Hex(q=row['q'], r=row['r'], solar=row['solar'], wind=row['wind'], hydro=row['hydro'], coal=row['coal'], oil=row['oil'], gas=row['gas'], uranium=row['uranium'])
-                db.session.add(hex)
-            db.session.commit()
+        if(Hex.query.count() == 0):
+            with open('website/static/data/map.csv', 'r') as file:
+                csv_reader = csv.DictReader(file)
+                for row in csv_reader:
+                    hex = Hex(q=row['q'], r=row['r'], solar=row['solar'], wind=row['wind'], hydro=row['hydro'], coal=row['coal'], oil=row['oil'], gas=row['gas'], uranium=row['uranium'])
+                    db.session.add(hex)
+                db.session.commit()
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
