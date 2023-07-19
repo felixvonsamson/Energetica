@@ -1,8 +1,13 @@
+"""
+Here are defined the classes for the items stored in the database
+"""
+
 from . import db
 from flask_login import UserMixin
-from sqlalchemy.sql import func  
-import pickle  
+from sqlalchemy.sql import func
+import pickle
 
+# class for the tiles that compose the map :
 class Hex(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     q = db.Column(db.Integer)
@@ -14,18 +19,18 @@ class Hex(db.Model):
     oil = db.Column(db.Integer)
     gas = db.Column(db.Integer)
     uranium = db.Column(db.Integer)
-    player_id = db.Column(db.Integer, db.ForeignKey('player.id'), default=None)
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), default=None) # ID of the owner oof the tile
 
-
+# class that stores the things currently under construction :
 class Under_construction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
-    family = db.Column(db.String(50))
+    family = db.Column(db.String(50)) # to assign the thing to the correct page
     start_time = db.Column(db.Integer)
     finish_time = db.Column(db.Integer)
-    player_id = db.Column(db.Integer, db.ForeignKey('player.id'))
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
-
+# class that stores the users :
 class Player(db.Model, UserMixin):
     # Authentification :
     id = db.Column(db.Integer, primary_key=True)
@@ -34,7 +39,7 @@ class Player(db.Model, UserMixin):
     sid = db.Column(db.String(100))
 
     # Position :
-    tile = db.relationship('Hex')
+    tile = db.relationship("Hex")
 
     # Ressources :
     money = db.Column(db.Integer, default=100000)
@@ -77,12 +82,12 @@ class Player(db.Model, UserMixin):
     industry = db.Column(db.Integer, default=0)
     military_barracks = db.Column(db.Integer, default=0)
 
-    # Extraction plants
+    # Extraction plants :
     coal_mine = db.Column(db.Integer, default=0)
     oil_field = db.Column(db.Integer, default=0)
     gas_drilling_site = db.Column(db.Integer, default=0)
     uranium_mine = db.Column(db.Integer, default=0)
-    
+
     # Technology :
     mineral_extraction = db.Column(db.Integer, default=0)
     civil_engeneering = db.Column(db.Integer, default=0)
@@ -98,77 +103,70 @@ class Player(db.Model, UserMixin):
     emissions = db.Column(db.Integer, default=0)
     total_emissions = db.Column(db.Integer, default=0)
 
-    under_construction = db.relationship('Under_construction')
+    under_construction = db.relationship("Under_construction")
 
     production_table_name = db.Column(db.String(50))
 
-    with open('website/static/data/industry_demand.pck', "rb") as file:
+    # TEMPORARY -> GENERATE NEW VALUES FOR EACH DAY 
+    with open("website/static/data/industry_demand.pck", "rb") as file:
         industry_demand = pickle.load(file)
 
+    # Stores the data of the production, demand, ressources and emmisions (past 24h)
     todays_production = {
-        # Maybe reduce to [fossil, wind, hydro, geothermal, nuclear, solar] to store less data
-        "production" : {
-            "steam_engine" : [0]*1440,
-            "windmill" : [0]*1440,
-            "watermill" : [0]*1440,
-            "coal_burner" : [0]*1440,
-            "oil_burner" : [0]*1440,
-            "gas_burner" : [0]*1440,
-            "shallow_geothermal_plant" : [0]*1440,
-            "small_water_dam" : [0]*1440,
-            "wind_turbine" : [0]*1440,
-            "combined_cycle" : [0]*1440,
-            "deep_geothermal_plant" : [0]*1440,
-            "nuclear_reactor" : [0]*1440,
-            "large_water_dam" : [0]*1440,
-            "CSP_solar" : [0]*1440,
-            "PV_solar" : [0]*1440,
-            "large_wind_turbine" : [0]*1440,
-            "nuclear_reactor_gen4" : [0]*1440
+        # MAYBE REDUCE TO [fossil, wind, hydro, geothermal, nuclear, solar] TO REDUCE FILE SIZE
+        "production": {
+            "steam_engine": [0] * 1440,
+            "windmill": [0] * 1440,
+            "watermill": [0] * 1440,
+            "coal_burner": [0] * 1440,
+            "oil_burner": [0] * 1440,
+            "gas_burner": [0] * 1440,
+            "shallow_geothermal_plant": [0] * 1440,
+            "small_water_dam": [0] * 1440,
+            "wind_turbine": [0] * 1440,
+            "combined_cycle": [0] * 1440,
+            "deep_geothermal_plant": [0] * 1440,
+            "nuclear_reactor": [0] * 1440,
+            "large_water_dam": [0] * 1440,
+            "CSP_solar": [0] * 1440,
+            "PV_solar": [0] * 1440,
+            "large_wind_turbine": [0] * 1440,
+            "nuclear_reactor_gen4": [0] * 1440,
         },
-        "demand" : {
-            "industriy" : [i*50000 for i in industry_demand],
-            "construction" : [0]*1440,
-
-            # Maybe group as "extraction_plants"
-            "coal_mine" : [0]*1440,
-            "oil_field" : [0]*1440,
-            "gas_drilling_site" : [0]*1440,
-            "uranium_mine" : [0]*1440,
-
-            "research" : [0]*1440,
-
-            # Maybe group as "storage"
-            "small_pumped_hydro" : [0]*1440,
-            "compressed_air" : [0]*1440,
-            "molten_salt" : [0]*1440,
-            "large_pumped_hydro" : [0]*1440,
-            "hydrogen_storage" : [0]*1440,
-            "lithium_ion_batteries" : [0]*1440,
-            "solid_state_batteries" : [0]*1440
+        "demand": {
+            "industriy": [i * 50000 for i in industry_demand],
+            "construction": [0] * 1440,
+            # MAYBE GROUP AS "extraction_plants"
+            "coal_mine": [0] * 1440,
+            "oil_field": [0] * 1440,
+            "gas_drilling_site": [0] * 1440,
+            "uranium_mine": [0] * 1440,
+            "research": [0] * 1440,
+            # MAYBE GROUP AS "storage"
+            "small_pumped_hydro": [0] * 1440,
+            "compressed_air": [0] * 1440,
+            "molten_salt": [0] * 1440,
+            "large_pumped_hydro": [0] * 1440,
+            "hydrogen_storage": [0] * 1440,
+            "lithium_ion_batteries": [0] * 1440,
+            "solid_state_batteries": [0] * 1440,
         },
-        "storage" : {
-            # Maybe group as "pumped_hydro"
-            "small_pumped_hydro" : [0]*1440,
-            "large_pumped_hydro" : [0]*1440,
-
-            "compressed_air" : [0]*1440,
-            "molten_salt" : [0]*1440,
-            "hydrogen" : [0]*1440,
-
-            # Maybe group as "batteries"
-            "lithium_ion_batteries" : [0]*1440,
-            "solid_state_batteries" : [0]*1440
+        "storage": {
+            # MAYBE GROUP AS "pumped_hydro"
+            "small_pumped_hydro": [0] * 1440,
+            "large_pumped_hydro": [0] * 1440,
+            "compressed_air": [0] * 1440,
+            "molten_salt": [0] * 1440,
+            "hydrogen": [0] * 1440,
+            # MAYBE GROUP AS "batteries"
+            "lithium_ion_batteries": [0] * 1440,
+            "solid_state_batteries": [0] * 1440,
         },
-        "ressources" : {
-            "coal" : [0]*24,
-            "oil" : [0]*24,
-            "gas" : [0]*24,
-            "uranium" : [0]*24
+        "ressources": {
+            "coal": [0] * 24,
+            "oil": [0] * 24,
+            "gas": [0] * 24,
+            "uranium": [0] * 24,
         },
-        "emissions" : [0]*24
+        "emissions": [0] * 24,
     }
-
-
-
-

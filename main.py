@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+'''
+This code launches the game 
+'''
+
 from website import create_app
 
 socketio, app = create_app()

@@ -7,48 +7,52 @@ for (let i = 0; i < 1440; i++) {
   labels.push(label);
 }
 
-var ctx = document.getElementById('prod_chart');
+var ctx = document.getElementById("prod_chart");
 var data = JSON.parse(ctx.dataset.name);
 
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Fossil',
+new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: labels,
+    datasets: [
+      {
+        label: "Fossil",
         data: data,
-        borderColor: 'rgb(224, 52, 101)',
-        tension: 0.1
-      }]
+        borderColor: "rgb(224, 52, 101)",
+        tension: 0.1,
+      },
+    ],
+  },
+  options: {
+    elements: {
+      point: {
+        radius: 0,
+      },
     },
-    options: {
-      elements: {
-        point:{
-          radius: 0
-        }
-      }
-    }
-  });
+  },
+});
 
-ctx = document.getElementById('demand_chart');
+ctx = document.getElementById("demand_chart");
 data = JSON.parse(ctx.dataset.name);
 
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Industry demand',
+new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: labels,
+    datasets: [
+      {
+        label: "Industry demand",
         data: data,
-        borderColor: 'rgb(75, 192, 192)',
-        tension: 0.1
-      }]
+        borderColor: "rgb(75, 192, 192)",
+        tension: 0.1,
+      },
+    ],
+  },
+  options: {
+    elements: {
+      point: {
+        radius: 0,
+      },
     },
-    options: {
-      elements: {
-        point:{
-          radius: 0
-        }
-      }
-    }
-  });
+  },
+});

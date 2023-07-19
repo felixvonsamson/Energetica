@@ -1,3 +1,8 @@
+/* 
+This code generates the progress bars on top of the pages that show the buildings under construction
+*/
+
+//CHANGE TO p5.js
 function formatMilliseconds(milliseconds) {
   const totalSeconds = Math.floor(milliseconds / 1000);
   const days = Math.floor(totalSeconds / (3600 * 24));
