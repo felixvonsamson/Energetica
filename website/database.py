@@ -6,6 +6,13 @@ from . import db
 from flask_login import UserMixin
 from sqlalchemy.sql import func
 import pickle
+from datetime import datetime
+
+# table that links chats to players
+player_chats = db.Table('player_chats',
+                db.Column('player_id', db.Integer, db.ForeignKey('player.id')),
+                db.Column('chat_id', db.Integer, db.ForeignKey('chat.id'))
+                )
 
 # class for the tiles that compose the map :
 class Hex(db.Model):
@@ -39,7 +46,12 @@ class Player(db.Model, UserMixin):
     sid = db.Column(db.String(100))
 
     # Position :
-    tile = db.relationship("Hex")
+    tile = db.relationship("Hex", backref='player')
+
+    # Chats :
+    chats = db.relationship('Chat', secondary=player_chats,
+                            backref='participants')
+    messages = db.relationship('Message', backref='player')
 
     # Ressources :
     money = db.Column(db.Integer, default=100000)
@@ -170,3 +182,21 @@ class Player(db.Model, UserMixin):
         },
         "emissions": [0] * 24,
     }
+
+    # prints out the object as a sting with the players username for debugging
+    def __repr__(self):
+        return f'<Player {self.username}>'
+
+# class that stores chats with 2 or more players :
+class Chat(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50))
+    messages = db.relationship('Message', backref='chat')
+
+# class that stores messages :
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.Text)
+    time = db.Column(db.DateTime, default=datetime.now())
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
+    chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"))

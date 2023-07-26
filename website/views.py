@@ -46,6 +46,14 @@ def check_user():
 def home():
     return g.render_template_ctx("home.jinja")
 
+@views.route("/messages")
+def messages():
+    return g.render_template_ctx("messages.jinja")
+
+@views.route("/network")
+def network():
+    return g.render_template_ctx("network.jinja")
+
 @views.route("/power_buildings")
 def energy_buildings():
     return g.render_template_ctx("power_buildings.jinja")
@@ -69,7 +77,3 @@ def extraction_plants():
 @views.route("/production_overview")
 def production_overview():
     return g.render_template_ctx("production_overview.jinja")
-
-@views.route("/network")
-def network():
-    return g.render_template_ctx("network.jinja")

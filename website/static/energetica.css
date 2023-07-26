@@ -35,6 +35,7 @@ canvas {display: block;}
 /* Flex */
 .flex-center{display:flex; justify-content:center;}
 .flex-col{display:flex; flex-direction:column; align-items:center;}
+.flex-row{display:flex; flex-direction:row;}
 .flex-wrap{display:flex; flex-wrap:wrap; flex-direction:row; gap:16px; justify-content:space-evenly; align-items:center}
 .flex-space-around{display:flex; justify-content:space-around; align-items:center;}
 
@@ -73,6 +74,9 @@ canvas {display: block;}
 .main_container{max-width: 1200px; min-height:100vh; margin:auto; overflow:auto}
 
 .title{padding-top:16px; text-align:center}
+
+.chat_sidebar{width: 230px; min-height:100vh; overflow:auto;}
+.chat_container{flex: 1; overflow:auto}
 
 .img{width:250px}
 

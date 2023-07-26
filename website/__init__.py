@@ -48,7 +48,7 @@ def create_app():
     app.register_blueprint(auth, url_prefix="/")
     app.register_blueprint(api, url_prefix="/")
 
-    from .database import Player, Hex
+    from .database import Player, Hex, Chat, Message, Under_construction
     
     # initialize database :
     with app.app_context():
@@ -94,7 +94,7 @@ def create_app():
             args=(engine, app),
             id="daily_update",
             trigger="cron",
-            hour=24,
+            day=1,
         )
         scheduler.add_job(
             func=state_update_h,

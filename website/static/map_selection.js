@@ -44,7 +44,7 @@ class Hex {
     }// else {
       //text(str(this.q) + " " + this.r, 0, -5);
       //text(this.s, 0, 10);
-      text(this.id, 0, 0);
+      //text(this.id, 0, 0);
     //}
   }
 }
@@ -219,7 +219,7 @@ function mousePressed() {
   // tile pressed : 
   else {
     // APPROXIMATIVE WAY OF LOCATING A TILE :
-    let r = floor((mouseY - width / 2 + 1.75 * s) / (0.75 * h));
+    let r = floor((mouseY - height / 2 + 1.75 * s) / (0.75 * h));
     let q = floor((mouseX - width / 2 + 0.5 * w - 0.5 * w * r) / w);
     let id = coords_to_id(q, r);
     if (id < map.length) {
