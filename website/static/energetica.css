@@ -75,9 +75,11 @@ canvas {display: block;}
 
 .title{padding-top:16px; text-align:center}
 
-.chat_sidebar{width: 230px; min-height:100vh; overflow:auto;}
-.chat_container{flex: 1; overflow:auto}
-
+.chat_sidebar{width: 230px; min-height:100vh; overflow:auto; padding:0 8px}
+.chat_container{flex: 1; overflow:auto; padding:0 16px}
+.proile-icon{height: 42px; width: 42px; display: inline-block; text-align: center;}
+.message_input{padding:8px; border:none; width:80%}
+s
 .img{width:250px}
 
 .building{display: flex; flex-direction: row; justify-content: space-between;}

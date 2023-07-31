@@ -2,15 +2,36 @@
 
 {% block content%}
 
-<div class="huge title">Messages</div>
-
 <div class="medium flex-row">
-    <div class="chat_sidebar bone padding">
-        CHATS
-        
+    <div class="chat_sidebar bone">
+        <div class="txt_center large padding">
+            CHATS
+        </div>
+        {% for i in range(10) %}
+        <div class="margin-small white button">
+            <div class="proile-icon pine large">
+                {{i}}
+            </div>
+            <b class="medium padding test">
+                chat {{i}}
+            </b>
+        </div>
+        {% endfor %}
+        <div class="margin-small pine button txt_center padding">
+            NEW CHAT
+        </div>
     </div>
-    <div class="chat_container padding">
-        MESSAGES
+    <div class="chat_container">
+        <div class="txt_center large padding">
+            MESSAGES
+        </div>
+        {% for i in range(10) %}
+        <div>message {{i}}</div>
+        {% endfor %}
+        <input type="text" class="message_input medium" id="new_message" name="new_message" placeholder="Message">
+        <b class="margin-small pine button txt_center padding-small">
+            send
+        </b>
     </div>
 </div>
 
