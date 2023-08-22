@@ -7,7 +7,7 @@ from flask_login import login_required, current_user
 
 api = Blueprint('api', __name__)
 
-from .database import Hex
+from .database import Hex, Player
 
 # gets the map data from the database and returns it as a array of dictionaries :
 @api.route("/get_map", methods=["GET"])
@@ -31,3 +31,10 @@ def get_map():
     ]
     return jsonify(hex_list)
 
+# gets all the player usernames (except it's own) and returns it as a list :
+@api.route("/get_usernames", methods=["GET"])
+def get_usernames():
+    username_list = Player.query.with_entities(Player.username).all()
+    username_list = [username[0] for username in username_list 
+    if username[0]!=current_user.username]
+    return jsonify(username_list)

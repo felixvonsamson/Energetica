@@ -54,7 +54,7 @@ canvas {display: block;}
 .info-circle{color:#4CAF50; margin-right: 6px;}
 .exclamation-circle{color:#f44336; margin-right: 6px;}
 .cross{text-align:center; width: 25px; position:relative; left:3px; border-radius:8px; font-size:30px}
-.cross:hover{background-color:#9e9e9e}
+.cross:hover{background-color:#9e9e9e; cursor: pointer;}
 
 .table{border-collapse:collapse; border-spacing:0; display:table}
 .table tbody tr:nth-child(even){background-color:#d6c79a}
@@ -75,12 +75,20 @@ canvas {display: block;}
 
 .title{padding-top:16px; text-align:center}
 
+/* messages */
 .chat_sidebar{width: 230px; min-height:100vh; overflow:auto; padding:0 8px}
 .chat_container{flex: 1; overflow:auto; padding:0 16px}
 .proile-icon{height: 42px; width: 42px; display: inline-block; text-align: center;}
 .message_input{padding:8px; border:none; width:80%}
-s
 .img{width:250px}
+.popup{z-index:30; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); -ms-transform:translate(-50%,-50%); transition: all 0.5s;}
+.popup.hidden{visibility: hidden;}
+.create_chat_input{padding:8px; display:block; border:none;}
+.plus{text-align:center; width:39px; margin-left:8px; font-size:30px}
+.plus:hover{background-color:#a4be7b; cursor: pointer;}
+.suggestions{max-height:500px; overflow:auto; list-style: none; width: 100%; background-color: #ffffff;}
+.suggestions-items{padding: 8px 16px;}
+.suggestions-items:hover {background-color: #e5d9b6;}
 
 .building{display: flex; flex-direction: row; justify-content: space-between;}
 .infotext{flex: 1;}

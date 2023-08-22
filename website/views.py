@@ -7,8 +7,13 @@ from flask import g, current_app
 from flask_login import login_required, current_user
 import pickle
 import datetime
+from . import db
+from .database import Chat, Player
+from .utils import check_existing_chats
 
 views = Blueprint("views", __name__)
+
+flash_error = lambda msg: flash(msg, category="error")
 
 # this function is executed once before every request :
 @views.before_request
@@ -32,9 +37,20 @@ def check_user():
                 prod_table=prod_table,
                 t=datetime.datetime.today().time(),
             )
+        elif page == "messages.jinja":
+            chats=Chat.query.filter(Chat.participants.any(id=current_user.id)).all()
+            return render_template(
+                page,
+                engine=g.engine,
+                user=current_user,
+                chats=chats
+            )
         else:
             return render_template(
-                page, engine=g.engine, user=current_user, data=g.config["assets"]
+                page,
+                engine=g.engine,
+                user=current_user,
+                data=g.config["assets"]
             )
 
     g.render_template_ctx = render_template_ctx
@@ -46,8 +62,32 @@ def check_user():
 def home():
     return g.render_template_ctx("home.jinja")
 
-@views.route("/messages")
+@views.route("/messages", methods=["GET", "POST"])
 def messages():
+    if request.method == "POST":
+        # If player is trying to create a chat with one other player
+        if "add_chat_username" in request.form:
+            buddy_username = request.form.get("add_chat_username")
+            if buddy_username == current_user.username:
+                flash_error("Cannot create a chat with yourself")
+                return g.render_template_ctx("messages.jinja")
+            buddy = Player.query.filter_by(username=buddy_username).first()
+            if buddy is None:
+                flash_error("No Player with this username")
+                return g.render_template_ctx("messages.jinja")
+            if check_existing_chats([current_user, buddy]):
+                flash_error("Chat already exists")
+                return g.render_template_ctx("messages.jinja")
+            new_chat = Chat(
+                name=current_user.username+buddy_username,
+                participants=[current_user, buddy]
+                )
+            db.session.add(new_chat)
+            db.session.commit()
+        else:
+            current_user.show_disclamer = False
+            if request.form.get("dont_show_disclaimer") == "on":
+                db.session.commit()
     return g.render_template_ctx("messages.jinja")
 
 @views.route("/network")

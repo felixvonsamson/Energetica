@@ -49,6 +49,7 @@ class Player(db.Model, UserMixin):
     tile = db.relationship("Hex", backref='player')
 
     # Chats :
+    show_disclamer = db.Column(db.Boolean, default=True)
     chats = db.relationship('Chat', secondary=player_chats,
                             backref='participants')
     messages = db.relationship('Message', backref='player')

@@ -6,6 +6,7 @@ import time
 from .database import Player, Under_construction
 from . import db
 from flask import current_app
+from sqlalchemy import func
 
 # this function is executed after an asset is finished building :
 def add_asset(player_id, building):
@@ -24,3 +25,19 @@ def add_asset(player_id, building):
 # format for price display
 def display_CHF(price):
     return f"{price:,.0f} CHF".replace(",", " ")
+
+from .database import Chat
+
+def check_existing_chats(participants):
+    # Get the IDs of the participants
+    participant_ids = [participant.id for participant in participants]
+
+    # Generate the conditions for participants' IDs and count
+    conditions = [Chat.participants.any(id=participant_id) for participant_id in participant_ids]
+
+    # Query the Chat table
+    existing_chats = Chat.query.filter(*conditions)
+    for chat in existing_chats:
+        if len(chat.participants)==len(participants):
+            return True
+    return False
