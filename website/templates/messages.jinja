@@ -28,7 +28,7 @@
         <div style="width:100%;">
             <label for="add_chat_username">Player username</label>
             <input type="text" class="create_chat_input medium" id="add_chat_username" name="add_chat_username" placeholder="Username">
-            <div class="suggestions"></div>
+            <div class="suggestions1"></div>
         </div>
         <button type="submit" class="bone padding medium login-button" style="margin-top:16px">Add chat</button>
     </form>
@@ -47,14 +47,20 @@
             <label for="chat_title">Chat title</label>
             <input type="text" class="create_chat_input medium" id="chat_title" name="chat_title" placeholder="Title">
         </div>
+        Group Members : <br>
+        (click to remove)
+        <div class="group_members"></div>
         <div>
             <label for="add_player">Add player or network</label>
             <div class="flex-row">
-                <input type="text" class="create_chat_input medium" id="add_player" name="add_player" placeholder="Player or Network">
-                <div onclick="" class="plus bone">+</div>
+                <div>
+                    <input type="text" class="create_chat_input medium" id="add_player" name="add_player" placeholder="Player or Network">
+                    <div class="suggestions2"></div>
+                </div>
+                <div onclick="addPlayer()" class="plus bone">+</div>
             </div>
         </div>
-        <button type="submit" class="bone padding medium login-button" style="margin-top:16px">Add group chat</button>
+        <div onclick="createGroupChat()" class="bone padding medium login-button" style="margin-top:16px">Add group chat</div>
     </div>
 </div>
 
@@ -64,8 +70,8 @@
             CHATS
         </div>
         {% for chat in chats %}
-        {% set chat_name = chat.name.replace(user.username,"") %}
-        <div class="margin-small white button">
+        {% set chat_name = chat.name.replace(user.username,"") if chat.participants|length == 2 else chat.name %}
+        <div onclick="openChat({{chat.id}})" class="margin-small white button">
             <div class="proile-icon green large">
                 {{chat_name[0]}}
             </div>
@@ -85,11 +91,9 @@
         <div class="txt_center large padding">
             MESSAGES
         </div>
-        {% for i in range(10) %}
-        <div>message {{i}}</div>
-        {% endfor %}
+        <div id="messages_field"></div>
         <input type="text" class="message_input medium" id="new_message" name="new_message" placeholder="Message">
-        <b class="margin-small pine button txt_center padding-small">
+        <b onclick="sendMessage()" class="margin-small pine button txt_center padding-small">
             send
         </b>
     </div>
@@ -97,5 +101,5 @@
 {% endblock %}
 
 {% block additionnal_script %}
-<script src="{{ url_for('static', filename='autocomplete_suggestions.js') }}"></script>
+<script src="{{ url_for('static', filename='chat_logic.js') }}"></script>
 {% endblock %}

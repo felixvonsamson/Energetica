@@ -7,10 +7,9 @@ import heapq
 from flask import request, session, flash, g, current_app
 from flask_login import current_user
 from . import heap
-from .database import Player, Hex, Under_construction
-from .utils import add_asset, display_CHF
+from .database import Player, Hex, Under_construction, Chat, Message
+from .utils import add_asset, display_CHF, check_existing_chats
 from . import db
-
 
 def add_handlers(socketio, engine):
     # ???
@@ -25,18 +24,44 @@ def add_handlers(socketio, engine):
     def choose_location(id):
         location = Hex.query.get(id + 1)
         if location.player_id != None:
-            flash("Location already taken", category="error")  # doesn't work
+            engine.socketio.emit("errorMessage", "Location already taken")
         else:
             location.player_id = current_user.id
             db.session.commit()
             engine.refresh()
+
+    # this function is executed when a player creates a new group chat
+    @socketio.on("create_group_chat")
+    def create_group_chat(title, group):
+        groupMembers = [current_user]
+        for username in group:
+            groupMembers.append(Player.query.filter_by(username=username).first())
+        if check_existing_chats(groupMembers):
+            engine.socketio.emit("errorMessage", "Chat already exists")
+            return
+        new_chat = Chat(name=title, participants=groupMembers)
+        db.session.add(new_chat)
+        db.session.commit()
+        engine.refresh()
+
+    # this function is executed when a player writes a new message
+    @socketio.on("new_message")
+    def new_message(message, chat_id):
+        chat = Chat.query.filter_by(id=chat_id).first()
+        new_message = Message(
+            text=message, 
+            player_id=current_user.id, 
+            chat_id=chat.id
+        )
+        db.session.add(new_message)
+        db.session.commit()
 
     # this function is executed when a player clicks on 'start construction'
     @socketio.on("start_construction")
     def start_construction(building, family):
         assets = current_app.config["engine"].config[current_user.id]["assets"]
         if current_user.money < assets[building]["price"]:
-            flash("Not enough money", category="error")  # doesn't work
+            engine.socketio.emit("errorMessage", "Not enough money")
         else:
             current_user.money -= assets[building]["price"]
             db.session.commit()

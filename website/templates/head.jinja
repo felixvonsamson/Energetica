@@ -20,7 +20,7 @@
     {% block base %} {% endblock %}
 
     <!--Toasts-->
-    <div id="messages" class="toast_container">
+    <div id="toasts" class="toast_container">
     {% for category, message in get_flashed_messages(with_categories=true) %}
       {% if category == "message" %}
       <div class="toast message medium">
@@ -39,7 +39,9 @@
 
     </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
   <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}" ></script>
+  <script src="{{ url_for('static', filename='toasts.js') }}" ></script>
   {% block scripts %} {% endblock %}
   </body>
 </html>

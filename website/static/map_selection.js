@@ -101,7 +101,6 @@ function preload() {
       newdraw();
     })
     .catch((error) => {
-      console.log(error);
       console.error("Error:", error);
     });
 }

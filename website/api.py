@@ -7,7 +7,7 @@ from flask_login import login_required, current_user
 
 api = Blueprint('api', __name__)
 
-from .database import Hex, Player
+from .database import Hex, Player, Chat
 
 # gets the map data from the database and returns it as a array of dictionaries :
 @api.route("/get_map", methods=["GET"])
@@ -38,3 +38,11 @@ def get_usernames():
     username_list = [username[0] for username in username_list 
     if username[0]!=current_user.username]
     return jsonify(username_list)
+
+# gets the last 20 messages from a chat and returns it as a list :
+@api.route("/get_chat", methods=["GET"])
+def get_chat():
+    chat_id = request.args.get('chatID')
+    messages = Chat.query.filter_by(id=chat_id).first().messages
+    messages_list = [(msg.player.username, msg.text) for msg in messages]
+    return jsonify(messages_list)

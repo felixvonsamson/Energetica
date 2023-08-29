@@ -86,7 +86,7 @@ canvas {display: block;}
 .create_chat_input{padding:8px; display:block; border:none;}
 .plus{text-align:center; width:39px; margin-left:8px; font-size:30px}
 .plus:hover{background-color:#a4be7b; cursor: pointer;}
-.suggestions{max-height:500px; overflow:auto; list-style: none; width: 100%; background-color: #ffffff;}
+.suggestions1,.suggestions2{max-height:500px; overflow:auto; list-style: none; width: 100%; background-color: #ffffff;}
 .suggestions-items{padding: 8px 16px;}
 .suggestions-items:hover {background-color: #e5d9b6;}
 
