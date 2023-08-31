@@ -55,6 +55,8 @@ def add_handlers(socketio, engine):
         )
         db.session.add(new_message)
         db.session.commit()
+        msg = f"<div>{current_user.username} : {message}</div>"
+        engine.display_new_message(msg, chat.participants)
 
     # this function is executed when a player clicks on 'start construction'
     @socketio.on("start_construction")

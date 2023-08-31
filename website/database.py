@@ -39,6 +39,7 @@ class Under_construction(db.Model):
 
 # class that stores the users :
 class Player(db.Model, UserMixin):
+
     # Authentification :
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(25), unique=True)

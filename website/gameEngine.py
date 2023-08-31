@@ -48,13 +48,20 @@ class gameEngine(object):
         engine.socketio.emit("refresh")
 
     # change specific field of the page withour reloading
-    def update_fields(engine, updates, player=None):
-        socketio = engine.socketio
-        if player:
-            if player.sid:
-                socketio.emit("update_data", updates)
+    def update_fields(engine, updates, players=None):
+        if players:
+            for player in players:
+                if player.sid:
+                    player.emit("update_data", updates)
         else:
-            socketio.emit("update_data", updates, broadcast=True)
+            engine.socketio.emit("update_data", updates, broadcast=True)
+
+    def display_new_message(engine, msg, players=None):
+        if players:
+            for player in players:
+                if player.sid:
+                    print(f"emit display_new_message to {player.sid}")
+                    engine.socketio.emit("display_new_message", msg, room=player.sid)
 
     # logs a message with the current time in the terminal and stores it in 'logs'
     def log(engine, message):

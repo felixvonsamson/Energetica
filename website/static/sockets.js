@@ -23,6 +23,12 @@ socket.on('update_data', function(changes) {
     }
 });
 
+socket.on('display_new_message', function(msg) {
+    console.log("recieved emit");
+    var obj = document.getElementById("messages_field");
+    if (obj != null) { obj.innerHTML += msg; }
+});
+
 // reloads the page
 socket.on('refresh', function() {
     window.location = window.location;
