@@ -2,7 +2,6 @@
 This code contains the main functions that communicate with the server (client side)
 */
 
-var socket = io();
 
 socket.on('connect', function() {
     socket.emit('give_identity');

@@ -1,4 +1,3 @@
-var socket = io();
 
 socket.on('infoMessage', function(message) {
     document.getElementById('toasts').innerHTML += `

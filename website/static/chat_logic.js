@@ -2,7 +2,6 @@
 This code creates a list of suggestions when typing names in a field
 */
 
-var socket = io();
 
 let active_chat = 1;
 let sortedNames;
