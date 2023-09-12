@@ -62,7 +62,7 @@ class Player(db.Model, UserMixin):
     gas = db.Column(db.Integer, default=700000)
     uranium = db.Column(db.Integer, default=10000)
 
-    # Energy buildings :
+    # Energy facilities :
     steam_engine = db.Column(db.Integer, default=0)
     windmill = db.Column(db.Integer, default=0)
     watermill = db.Column(db.Integer, default=0)
@@ -81,7 +81,7 @@ class Player(db.Model, UserMixin):
     large_wind_turbine = db.Column(db.Integer, default=0)
     nuclear_reactor_gen4 = db.Column(db.Integer, default=0)
 
-    # Storage buildings :
+    # Storage facilities :
     small_pumped_hydro = db.Column(db.Integer, default=0)
     compressed_air = db.Column(db.Integer, default=0)
     molten_salt = db.Column(db.Integer, default=0)
@@ -90,7 +90,7 @@ class Player(db.Model, UserMixin):
     lithium_ion_batteries = db.Column(db.Integer, default=0)
     solid_state_batteries = db.Column(db.Integer, default=0)
 
-    # Functional buildings :
+    # Functional facilities :
     laboratory = db.Column(db.Integer, default=0)
     warehouse = db.Column(db.Integer, default=0)
     industry = db.Column(db.Integer, default=0)

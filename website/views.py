@@ -94,21 +94,21 @@ def messages():
 def network():
     return g.render_template_ctx("network.jinja")
 
-@views.route("/power_buildings")
-def energy_buildings():
-    return g.render_template_ctx("power_buildings.jinja")
+@views.route("/power_facilities")
+def energy_facilities():
+    return g.render_template_ctx("power_facilities.jinja")
 
-@views.route("/storage_buildings")
-def storage_buildings():
-    return g.render_template_ctx("storage_buildings.jinja")
+@views.route("/storage_facilities")
+def storage_facilities():
+    return g.render_template_ctx("storage_facilities.jinja")
 
 @views.route("/technology")
 def technology():
     return g.render_template_ctx("technologies.jinja")
 
-@views.route("/functional_buildings")
-def functional_buildings():
-    return g.render_template_ctx("functional_buildings.jinja")
+@views.route("/functional_facilities")
+def functional_facilities():
+    return g.render_template_ctx("functional_facilities.jinja")
 
 @views.route("/extraction_plants")
 def extraction_plants():

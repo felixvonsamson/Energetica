@@ -142,7 +142,6 @@ function sendMessage(){
   if(message.length == 0){
     return;
   }
-  document.getElementById('messages_field').innerHTML += `<div>you : ${message}</div>`;
   document.getElementById("new_message").value = "";
   socket.emit('new_message', message, active_chat);
 }

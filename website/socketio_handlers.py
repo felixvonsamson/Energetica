@@ -60,23 +60,23 @@ def add_handlers(socketio, engine):
 
     # this function is executed when a player clicks on 'start construction'
     @socketio.on("start_construction")
-    def start_construction(building, family):
+    def start_construction(facility, family):
         assets = current_app.config["engine"].config[current_user.id]["assets"]
-        if current_user.money < assets[building]["price"]:
+        if current_user.money < assets[facility]["price"]:
             engine.socketio.emit("errorMessage", "Not enough money")
         else:
-            current_user.money -= assets[building]["price"]
+            current_user.money -= assets[facility]["price"]
             db.session.commit()
             updates = [("money", display_CHF(current_user.money))]
             engine.update_fields(updates, current_user)
-            finish_time = time.time() + assets[building]["construction time"]
-            heapq.heappush(heap, (finish_time, add_asset, (current_user.id, building)))
-            new_building = Under_construction(
-                name=building,
+            finish_time = time.time() + assets[facility]["construction time"]
+            heapq.heappush(heap, (finish_time, add_asset, (current_user.id, facility)))
+            new_facility = Under_construction(
+                name=facility,
                 family=family,
                 start_time=time.time(),
                 finish_time=finish_time,
                 player_id=session["ID"],
             )
-            db.session.add(new_building)
+            db.session.add(new_facility)
             db.session.commit()

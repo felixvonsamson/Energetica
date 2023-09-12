@@ -4,20 +4,20 @@
 <div class="huge title">Technologies</div>
 
 {% if user.under_construction %}
-{% for building in user.under_construction %}
-{% if building.family == "technologies"%}
+{% for facility in user.under_construction %}
+{% if facility.family == "technologies"%}
 <div class="padding" id="progress_bar">
-  The building <b>{{data[building.name]["name"]}}</b> is under construction <i class="time" data-name="{{building.finish_time}}"></i>
+  The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
 </div>
 {% endif %}
 {% endfor %}
 {% endif %}
 
-{% set building = data["mineral_extraction"] %}
-<div class="bone margin building small">
+{% set facility = data["mineral_extraction"] %}
+<div class="bone margin facility small">
  <img class="img" src="{{ url_for('static', filename='images/technologies/mineral_extraction.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Mining" target="_blank">{{building["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Mining" target="_blank">{{facility["name"]}}</a></strong><br>
   Mineral extraction improves the process of extracting minerals like coal and uranium.
  </div>
  <div class="infobox">
@@ -25,37 +25,37 @@
     Research
   </b>
   <div class="margin">
-    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
   </div>
  </div>
 </div>
 
-{% set building = data["civil_engeneering"] %}
-<div class="bone margin building small">
+{% set facility = data["civil_engeneering"] %}
+<div class="bone margin facility small">
  <img class="img" src="{{ url_for('static', filename='images/technologies/civil_engeneering.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Civil_engineering" target="_blank">{{building["name"]}}</a></strong><br>
-  Civil engeneering makes the construction of large buildings more efficient.
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Civil_engineering" target="_blank">{{facility["name"]}}</a></strong><br>
+  Civil engeneering makes the construction of large facilities more efficient.
  </div>
  <div class="infobox">
  <b class="margin medium white padding button" onclick="start_construction('civil_engeneering', 'technologies'); location.reload();">
     Research
   </b>
   <div class="margin">
-    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
   </div>
  </div>
 </div>
 
-{% set building = data["physics"] %}
-<div class="bone margin building small">
+{% set facility = data["physics"] %}
+<div class="bone margin facility small">
  <img class="img" src="{{ url_for('static', filename='images/technologies/physics.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Physics" target="_blank">{{building["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Physics" target="_blank">{{facility["name"]}}</a></strong><br>
   Physics is the science behind a lot of innovations in the field of energy.
  </div>
  <div class="infobox">
@@ -63,18 +63,18 @@
     Research
   </b>
   <div class="margin">
-    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
   </div>
  </div>
 </div>
 
-{% set building = data["materials"] %}
-<div class="bone margin building small">
+{% set facility = data["materials"] %}
+<div class="bone margin facility small">
  <img class="img" src="{{ url_for('static', filename='images/technologies/materials.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Materials_science" target="_blank">{{building["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Materials_science" target="_blank">{{facility["name"]}}</a></strong><br>
   Materials construction is necessary for a lot of innovations in the field of energy.
  </div>
  <div class="infobox">
@@ -82,18 +82,18 @@
     Research
   </b>
   <div class="margin">
-    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
   </div>
  </div>
 </div>
 
-{% set building = data["carbon_capture"] %}
-<div class="bone margin building small">
+{% set facility = data["carbon_capture"] %}
+<div class="bone margin facility small">
  <img class="img" src="{{ url_for('static', filename='images/technologies/carbon_capture.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Carbon_capture_and_storage" target="_blank">{{building["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Carbon_capture_and_storage" target="_blank">{{facility["name"]}}</a></strong><br>
   Carbon capture can reduce pollution.
  </div>
  <div class="infobox">
@@ -101,18 +101,18 @@
     Research
   </b>
   <div class="margin">
-    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
   </div>
  </div>
 </div>
 
-{% set building = data["transport_technology"] %}
-<div class="bone margin building small">
+{% set facility = data["transport_technology"] %}
+<div class="bone margin facility small">
  <img class="img" src="{{ url_for('static', filename='images/technologies/transport_technology.png') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/International_trade" target="_blank">{{building["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/International_trade" target="_blank">{{facility["name"]}}</a></strong><br>
   Transport technology can improve the trading of resources.
  </div>
  <div class="infobox">
@@ -120,18 +120,18 @@
     Research
   </b>
   <div class="margin">
-    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
   </div>
  </div>
 </div>
 
-{% set building = data["aerodynamics"] %}
-<div class="bone margin building small">
+{% set facility = data["aerodynamics"] %}
+<div class="bone margin facility small">
  <img class="img" src="{{ url_for('static', filename='images/technologies/aerodynamics.png') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Aerodynamics" target="_blank">{{building["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Aerodynamics" target="_blank">{{facility["name"]}}</a></strong><br>
   Aerodynamics are essential for the design of wind turbines.
  </div>
  <div class="infobox">
@@ -139,9 +139,9 @@
     Research
   </b>
   <div class="margin">
-    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script> <br>
+    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
   </div>
  </div>
 </div>

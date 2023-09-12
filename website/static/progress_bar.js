@@ -1,5 +1,5 @@
 /* 
-This code generates the progress bars on top of the pages that show the buildings under construction
+This code generates the progress bars on top of the pages that show the facilities under construction
 */
 
 //CHANGE TO p5.js

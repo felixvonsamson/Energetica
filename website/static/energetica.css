@@ -90,6 +90,6 @@ canvas {display: block;}
 .suggestions-items{padding: 8px 16px;}
 .suggestions-items:hover {background-color: #e5d9b6;}
 
-.building{display: flex; flex-direction: row; justify-content: space-between;}
+.facility{display: flex; flex-direction: row; justify-content: space-between;}
 .infotext{flex: 1;}
 .infobox{display: flex; flex-direction: row; align-items: center;}

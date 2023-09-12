@@ -4,20 +4,20 @@
 <div class="huge title">Extraction plants</div>
 
 {% if user.under_construction %}
-{% for building in user.under_construction %}
-{% if building.family == "extraction_plants"%}
+{% for facility in user.under_construction %}
+{% if facility.family == "extraction_plants"%}
 <div class="padding" id="progress_bar">
-  The building <b>{{data[building.name]["name"]}}</b> is under construction <i class="time" data-name="{{building.finish_time}}"></i>
+  The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
 </div>
 {% endif %}
 {% endfor %}
 {% endif %}
 
-{% set building = data["coal_mine"] %}
-<div class="bone margin building small">
+{% set facility = data["coal_mine"] %}
+<div class="bone margin facility small">
  <img class="img" src="{{ url_for('static', filename='images/extraction_plants/coal_mine.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Coal_mining" target="_blank">{{building["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Coal_mining" target="_blank">{{facility["name"]}}</a></strong><br>
   The coal mine produces coal.
  </div>
  <div class="infobox">
@@ -25,24 +25,24 @@
     Start construction
   </b>
   <div>
-    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script><br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script><br>
-    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script><br>
-    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script><br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script><br>
+    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script><br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
   </div>
   <div class="margin tan_green padding">
-    <i class="fa fa-bolt"></i> <script>display_W({{building["power consumption"]}});</script><br>
-    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount produced"]}});</script> coal<br>
-    <i class="fa fa-cloud"></i> {{building["pollution"]}} kg/h
+    <i class="fa fa-bolt"></i> <script>display_W({{facility["power consumption"]}});</script><br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{facility["amount produced"]}});</script> coal<br>
+    <i class="fa fa-cloud"></i> {{facility["pollution"]}} kg/h
   </div>
  </div>
 </div>
 
-{% set building = data["oil_field"] %}
-<div class="bone margin building small">
+{% set facility = data["oil_field"] %}
+<div class="bone margin facility small">
  <img class="img" src="{{ url_for('static', filename='images/extraction_plants/oil_extraction_plant.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Extraction_of_petroleum" target="_blank">{{building["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Extraction_of_petroleum" target="_blank">{{facility["name"]}}</a></strong><br>
   The oil extraction plant produces oil.
  </div>
  <div class="infobox">
@@ -50,24 +50,24 @@
     Start construction
   </b>
   <div>
-    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script><br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script><br>
-    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script><br>
-    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script><br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script><br>
+    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script><br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
   </div>
   <div class="margin tan_green padding">
-    <i class="fa fa-bolt"></i> <script>display_W({{building["power consumption"]}});</script><br>
-    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount produced"]}});</script> coal<br>
-    <i class="fa fa-cloud"></i> {{building["pollution"]}} kg/h
+    <i class="fa fa-bolt"></i> <script>display_W({{facility["power consumption"]}});</script><br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{facility["amount produced"]}});</script> coal<br>
+    <i class="fa fa-cloud"></i> {{facility["pollution"]}} kg/h
   </div>
  </div>
 </div>
 
-{% set building = data["gas_drilling_site"] %}
-<div class="bone margin building small">
+{% set facility = data["gas_drilling_site"] %}
+<div class="bone margin facility small">
  <img class="img" src="{{ url_for('static', filename='images/extraction_plants/gas_extraction_plant.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Natural_gas#Sources" target="_blank">{{building["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Natural_gas#Sources" target="_blank">{{facility["name"]}}</a></strong><br>
   The gas extraction plant produces natural gas.
  </div>
  <div class="infobox">
@@ -75,24 +75,24 @@
     Start construction
   </b>
   <div>
-    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script><br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script><br>
-    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script><br>
-    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script><br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script><br>
+    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script><br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
   </div>
   <div class="margin tan_green padding">
-    <i class="fa fa-bolt"></i> <script>display_W({{building["power consumption"]}});</script><br>
-    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount produced"]}});</script> coal<br>
-    <i class="fa fa-cloud"></i> {{building["pollution"]}} kg/h
+    <i class="fa fa-bolt"></i> <script>display_W({{facility["power consumption"]}});</script><br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{facility["amount produced"]}});</script> coal<br>
+    <i class="fa fa-cloud"></i> {{facility["pollution"]}} kg/h
   </div>
  </div>
 </div>
 
-{% set building = data["uranium_mine"] %}
-<div class="bone margin building small">
+{% set facility = data["uranium_mine"] %}
+<div class="bone margin facility small">
  <img class="img" src="{{ url_for('static', filename='images/extraction_plants/uranium_mine.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Uranium_mining" target="_blank">{{building["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Uranium_mining" target="_blank">{{facility["name"]}}</a></strong><br>
   The uranium mine produces uranium.
  </div>
  <div class="infobox">
@@ -100,15 +100,15 @@
     Start construction
   </b>
   <div>
-    <i class="fa fa-money"></i> <script>display_CHF({{building["price"]}});</script><br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{building["construction time"]}});</script><br>
-    <i class="fa "></i> <script>display_Wh({{building["construction energy"]}});</script><br>
-    <i class="fa fa-cloud"></i> <script>display_kg({{building["construction pollution"]}});</script>
+    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script><br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script><br>
+    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script><br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
   </div>
   <div class="margin tan_green padding">
-    <i class="fa fa-bolt"></i> <script>display_W({{building["power consumption"]}});</script><br>
-    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{building["amount produced"]}});</script> coal<br>
-    <i class="fa fa-cloud"></i> {{building["pollution"]}} kg/h
+    <i class="fa fa-bolt"></i> <script>display_W({{facility["power consumption"]}});</script><br>
+    <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{facility["amount produced"]}});</script> coal<br>
+    <i class="fa fa-cloud"></i> {{facility["pollution"]}} kg/h
   </div>
  </div>
 </div>

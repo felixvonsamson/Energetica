@@ -7,9 +7,9 @@ socket.on('connect', function() {
     socket.emit('give_identity');
 });
 
-// information sent to the server when a new building is created
-function start_construction(building, family) {
-    socket.emit('start_construction', building, family);
+// information sent to the server when a new facility is created
+function start_construction(facility, family) {
+    socket.emit('start_construction', facility, family);
 }
 
 // updates specific fields of the page without reloading
@@ -23,7 +23,6 @@ socket.on('update_data', function(changes) {
 });
 
 socket.on('display_new_message', function(msg) {
-    console.log("recieved emit");
     var obj = document.getElementById("messages_field");
     if (obj != null) { obj.innerHTML += msg; }
 });

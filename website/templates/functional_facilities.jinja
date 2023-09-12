@@ -1,0 +1,77 @@
+{% extends "base.jinja" %} {% block title %}Functional facilities{% endblock %} {% block content
+%}
+
+<div class="huge title">Functional facilities</div>
+
+{% if user.under_construction %}
+{% for facility in user.under_construction %}
+{% if facility.family == "functional_facilities"%}
+<div class="padding" id="progress_bar">
+  The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% set facility = data["laboratory"] %}
+<div class="bone margin facility small">
+ <img class="img" src="{{ url_for('static', filename='images/functional_facilities/laboratory.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">{{facility["name"]}}</strong><br>
+  The laboratory is needed to do research in different domains. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding button" onclick="start_construction('laboratory', 'functional_facilities'); location.reload();">
+    Start construction
+  </b>
+  <div class="margin">
+    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
+  </div>
+ </div>
+</div>
+
+{% set facility = data["warehouse"] %}
+<div class="bone margin facility small">
+ <img class="img" src="{{ url_for('static', filename='images/functional_facilities/warehouse.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">{{facility["name"]}}</strong><br>
+  The warehouse can store physical ressources. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding button" onclick="start_construction('warehouse', 'functional_facilities'); location.reload();">
+    Start construction
+  </b>
+  <div class="margin">
+    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
+  </div>
+ </div>
+</div>
+
+{% set facility = data["industry"] %}
+<div class="bone margin facility small">
+ <img class="img" src="{{ url_for('static', filename='images/functional_facilities/industry.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">{{facility["name"]}}</strong><br>
+  The industry generates revenue from energy. 
+ </div>
+ <div class="infobox">
+ <b class="margin medium white padding button" onclick="start_construction('industry', 'functional_facilities'); location.reload();">
+    Start construction
+  </b>
+  <div class="margin">
+    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
+    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
+    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
+    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
+  </div>
+ </div>
+</div>
+
+{% endblock %}
+

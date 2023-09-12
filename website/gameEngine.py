@@ -60,7 +60,6 @@ class gameEngine(object):
         if players:
             for player in players:
                 if player.sid:
-                    print(f"emit display_new_message to {player.sid}")
                     engine.socketio.emit("display_new_message", msg, room=player.sid)
 
     # logs a message with the current time in the terminal and stores it in 'logs'
