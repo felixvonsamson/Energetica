@@ -32,25 +32,25 @@ function display_CHF_long(price) {
 
 // Power :
 function display_W(power) {
-  const units = ["W", "kW", "MW", "GW", "TW"];
+  const units = [" W", " kW", " MW", " GW", " TW"];
   general_format(power, units);
 }
 
 // Energy :
 function display_Wh(energy) {
-  const units = ["Wh", "kWh", "MWh", "GWh", "TWh"];
+  const units = [" Wh", " kWh", " MWh", " GWh", " TWh"];
   general_format(energy, units);
 }
 
 // Mass rate :
 function display_kgh(mass_rate) {
-  const units = ["kg/h", "t/h"];
+  const units = [" kg/h", " t/h"];
   general_format(mass_rate, units);
 }
 
 // Mass
 function display_kg(mass) {
-  const units = ["kg", "t", "kt", "Mt"];
+  const units = [" kg", " t", " kt", " Mt"];
   general_format(mass, units);
 }
 

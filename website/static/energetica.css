@@ -39,11 +39,18 @@ canvas {display: block;}
 .flex-wrap{display:flex; flex-wrap:wrap; flex-direction:row; gap:16px; justify-content:space-evenly; align-items:center}
 .flex-space-around{display:flex; justify-content:space-around; align-items:center;}
 
+/* Popup info */
+.hover_info{position: relative;}
+.hover_info .popup_info{font-weight: normal; visibility: hidden; max-width: 400px; background-color: rgb(206, 206, 206); color: black; text-align: center; border-radius: 6px; padding: 5px; position: absolute; z-index: 1; bottom: 130%; left: 50%; margin-left: -50px;}
+.hover_info .popup_info::after{content: "";position: absolute;top: 100%;left: 50%;margin-left: -5px;border-width: 5px; border-style:solid;border-color: black transparent transparent transparent;}
+.hover_info:hover .popup_info{visibility: visible;}
+
 /* ------- */
 
 .background{height:100vh}
 
 .input{padding:8px; display:block; border:none; border-bottom:1px solid #ccc; margin-bottom:16px}
+.small_input{padding:2px; display:inline-block; border:none; border-bottom:1px solid #ccc; margin:3px; width:70px}
 .login-button{border:none;} 
 .login-button:hover{cursor: pointer; color:#fff;background-color:#285430}
 

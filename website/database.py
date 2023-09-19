@@ -37,8 +37,17 @@ class Under_construction(db.Model):
     finish_time = db.Column(db.Integer)
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
+# class that stores the networks of players :
+class Network(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True)
+    members = db.relationship('Player', backref='network')
+
+
 # class that stores the users :
 class Player(db.Model, UserMixin):
+
+    engine = None
 
     # Authentification :
     id = db.Column(db.Integer, primary_key=True)
@@ -48,6 +57,7 @@ class Player(db.Model, UserMixin):
 
     # Position :
     tile = db.relationship("Hex", backref='player')
+    network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
 
     # Chats :
     show_disclamer = db.Column(db.Boolean, default=True)
@@ -113,77 +123,57 @@ class Player(db.Model, UserMixin):
     aerodynamics = db.Column(db.Integer, default=0)
     geology = db.Column(db.Integer, default=0)
 
+    # Selfconsumption priority list 
+    self_consumption_priority = db.Column(db.Text, default="small_water_dam large_water_dam PV_solar wind_turbine large_wind_turbine CSP_solar windmill watermill")
+    rest_of_priorities = db.Column(db.Text, default="steam_engine shallow_geothermal_plant deep_geothermal_plant nuclear_reactor nuclear_reactor_gen4 combined_cycle gas_burner oil_burner coal_burner")
+
+    # Production capacity prices [CHF/MWh]
+    price_steam_engine = db.Column(db.Float, default=25)
+    price_windmill = db.Column(db.Float, default=10)
+    price_watermill = db.Column(db.Float, default=10)
+    price_coal_burner = db.Column(db.Float, default=120)
+    price_oil_burner = db.Column(db.Float, default=110)
+    price_gas_burner = db.Column(db.Float, default=100)
+    price_shallow_geothermal_plant = db.Column(db.Float, default=40)
+    price_small_water_dam = db.Column(db.Float, default=3)
+    price_wind_turbine = db.Column(db.Float, default=5)
+    price_combined_cycle = db.Column(db.Float, default=90)
+    price_deep_geothermal_plant = db.Column(db.Float, default=45)
+    price_nuclear_reactor = db.Column(db.Float, default=55)
+    price_large_water_dam = db.Column(db.Float, default=3)
+    price_CSP_solar = db.Column(db.Float, default=8)
+    price_PV_solar = db.Column(db.Float, default=4)
+    price_large_wind_turbine = db.Column(db.Float, default=5)
+    price_nuclear_reactor_gen4 = db.Column(db.Float, default=75)
+
+    # Storage capacity prices [CHF/MWh]
+    price_buy_small_pumped_hydro = db.Column(db.Float, default=15)
+    price_sell_small_pumped_hydro = db.Column(db.Float, default=30)
+    price_buy_compressed_air = db.Column(db.Float, default=14)
+    price_sell_compressed_air = db.Column(db.Float, default=22)
+    price_buy_molten_salt = db.Column(db.Float, default=16)
+    price_sell_molten_salt = db.Column(db.Float, default=25)
+    price_buy_large_pumped_hydro = db.Column(db.Float, default=13)
+    price_sell_large_pumped_hydro = db.Column(db.Float, default=20)
+    price_buy_hydrogen_storage = db.Column(db.Float, default=20)
+    price_sell_hydrogen_storage = db.Column(db.Float, default=40)
+    price_buy_lithium_ion_batteries = db.Column(db.Float, default=80)
+    price_sell_lithium_ion_batteries = db.Column(db.Float, default=100)
+    price_buy_solid_state_batteries = db.Column(db.Float, default=35)
+    price_sell_solid_state_batteries = db.Column(db.Float, default=100)
+
     # CO2 emissions :
     emissions = db.Column(db.Integer, default=0)
     total_emissions = db.Column(db.Integer, default=0)
 
     under_construction = db.relationship("Under_construction")
 
-    production_table_name = db.Column(db.String(50))
-
-    # TEMPORARY -> GENERATE NEW VALUES FOR EACH DAY 
-    with open("website/static/data/industry_demand.pck", "rb") as file:
-        industry_demand = pickle.load(file)
-
-    # Stores the data of the production, demand, ressources and emmisions (past 24h)
-    todays_production = {
-        # MAYBE REDUCE TO [fossil, wind, hydro, geothermal, nuclear, solar] TO REDUCE FILE SIZE
-        "production": {
-            "steam_engine": [0] * 1440,
-            "windmill": [0] * 1440,
-            "watermill": [0] * 1440,
-            "coal_burner": [0] * 1440,
-            "oil_burner": [0] * 1440,
-            "gas_burner": [0] * 1440,
-            "shallow_geothermal_plant": [0] * 1440,
-            "small_water_dam": [0] * 1440,
-            "wind_turbine": [0] * 1440,
-            "combined_cycle": [0] * 1440,
-            "deep_geothermal_plant": [0] * 1440,
-            "nuclear_reactor": [0] * 1440,
-            "large_water_dam": [0] * 1440,
-            "CSP_solar": [0] * 1440,
-            "PV_solar": [0] * 1440,
-            "large_wind_turbine": [0] * 1440,
-            "nuclear_reactor_gen4": [0] * 1440,
-        },
-        "demand": {
-            "industriy": [i * 50000 for i in industry_demand],
-            "construction": [0] * 1440,
-            # MAYBE GROUP AS "extraction_plants"
-            "coal_mine": [0] * 1440,
-            "oil_field": [0] * 1440,
-            "gas_drilling_site": [0] * 1440,
-            "uranium_mine": [0] * 1440,
-            "research": [0] * 1440,
-            # MAYBE GROUP AS "storage"
-            "small_pumped_hydro": [0] * 1440,
-            "compressed_air": [0] * 1440,
-            "molten_salt": [0] * 1440,
-            "large_pumped_hydro": [0] * 1440,
-            "hydrogen_storage": [0] * 1440,
-            "lithium_ion_batteries": [0] * 1440,
-            "solid_state_batteries": [0] * 1440,
-        },
-        "storage": {
-            # MAYBE GROUP AS "pumped_hydro"
-            "small_pumped_hydro": [0] * 1440,
-            "large_pumped_hydro": [0] * 1440,
-            "compressed_air": [0] * 1440,
-            "molten_salt": [0] * 1440,
-            "hydrogen": [0] * 1440,
-            # MAYBE GROUP AS "batteries"
-            "lithium_ion_batteries": [0] * 1440,
-            "solid_state_batteries": [0] * 1440,
-        },
-        "ressources": {
-            "coal": [0] * 24,
-            "oil": [0] * 24,
-            "gas": [0] * 24,
-            "uranium": [0] * 24,
-        },
-        "emissions": [0] * 24,
-    }
+    data_table_name = db.Column(db.String(50))
+    
+    def emit(player, *args):
+        if player.sid:
+            socketio = player.engine.socketio
+            socketio.emit(*args, room=player.sid)
 
     # prints out the object as a sting with the players username for debugging
     def __repr__(self):

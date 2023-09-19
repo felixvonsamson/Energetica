@@ -3,7 +3,10 @@ The game states update functions are defined here
 """
 
 import datetime
-from .database import Player
+import pickle
+import pandas as pd
+from .database import Network, Player
+from . import db
 
 # fuction that updates the ressources of all players according to extraction capacity (and trade)
 def update_ressources(engine):
@@ -11,118 +14,235 @@ def update_ressources(engine):
     players = Player.query.all()
     for player in players:
         assets = engine.config[player.id]["assets"]
-        player.todays_production["ressources"]["coal"][t] = (
-            player.coal_mine * assets["coal_mine"]["amount produced"]
-        )
-        player.todays_production["ressources"]["oil"][t] = (
-            player.oil_field * assets["oil_field"]["amount produced"]
-        )
-        player.todays_production["ressources"]["gas"][t] = (
-            player.gas_drilling_site * assets["gas_drilling_site"]["amount produced"]
-        )
-        player.todays_production["ressources"]["uranium"][t] = (
-            player.uranium_mine * assets["uranium_mine"]["amount produced"]
-        )
+        player_data = engine.current_data[player.username]
 
-# function that updates the electricity production and storage status for all players according to capacity and external factors (and trade)
+        coal = player.coal_mine * assets["coal_mine"]["amount produced"]
+        player_data["ressources"]["coal"][t] = coal
+        player.coal += coal
+
+        oil = player.oil_field * assets["oil_field"]["amount produced"]
+        player_data["ressources"]["oil"][t] = oil
+        player.oil += oil
+
+        gas = player.gas_drilling_site * assets["gas_drilling_site"]["amount produced"]
+        player_data["ressources"]["gas"][t] = gas
+        player.gas += gas
+
+        uranium = player.uranium_mine * assets["uranium_mine"]["amount produced"]
+        player_data["ressources"]["uranium"][t] = uranium
+        player.uranium += uranium
+    db.session.commit()
+
+# function that updates the electricity generation and storage status for all players according to capacity and external factors (and trade)
 def update_electricity(engine):
     now = datetime.datetime.today().time()
     t = now.hour * 60 + now.minute
+    networks = Network.query.all()
+    for network in networks:
+        market = {
+            "capacities": pd.DataFrame(
+                {'player': [], 'capacity': [], 'price': [], 'plant': []}),
+            "demands" : pd.DataFrame({'player': [], 'demand': []})
+        }
+        # For each player in the network, calculate the demand and the minimal amount of electricity generation at time t
+        for player in network.members:
+            assets = engine.config[player.id]["assets"]
+            generation = engine.current_data[player.username]["generation"]
+            demand = engine.current_data[player.username]["demand"]
+            total_demand = calculate_demand(assets, demand , player, t)
+            market = calculate_generation_with_market(assets, generation, 
+                market, total_demand, player, t)
+        market_logic(engine, market, t)
+
+    # For players that are not in a network
     players = Player.query.all()
     for player in players:
-        assets = engine.config[player.id]["assets"]
-        production = player.todays_production["production"]
-        # calculate energy demand of assets under construction
-        demand_construction = 0
-        for ud in player.under_construction:
-            construction = assets[ud.name]
-            demand_construction += (
-                construction["construction energy"] / construction["construction time"] * 60
-            )
-        player.todays_production["demand"]["construction"][t] = demand_construction
-        total_demand = sum([player.todays_production["demand"][i][t]
-                for i in player.todays_production["demand"]])
+        if player.network == None:
+            assets = engine.config[player.id]["assets"]
+            generation = engine.current_data[player.username]["generation"]
+            demand = engine.current_data[player.username]["demand"]
+            total_demand = calculate_demand(assets, demand , player, t)
+            calculate_generation_without_market(assets, generation, total_demand, player, t)
+    
+    #save changes 
+    db.session.commit()
+    # temporary for debugging
+    with open("instance/engine_data.pck", "wb") as file:
+        pickle.dump(engine.current_data, file)
 
-        # GENERATE NON CONTROLLABLE VARIABLES AS DAYLY UPDATES, SIMILARLY AS FOR INDUSTRY DEMAND
-        # PUT ONLY UPDATE HERE
-        total_production = 0
-        for plant in [
-            "windmill",
-            "watermill",
-            "small_water_dam",
-            "wind_turbine",
-            "large_water_dam",
-            "CSP_solar",
-            "PV_solar",
-            "large_wind_turbine",
-        ]:
-            # GENERATE NON-CONTROLLABLE GENERATION DATA
-            pass
+# calculates the electricity demand of one player
+def calculate_demand(assets, demand, player, t):
+    # demand form assets under construction
+    demand_construction = 0
+    for ud in player.under_construction:
+        construction = assets[ud.name]
+        demand_construction += (construction["construction energy"] 
+            / construction["construction time"] * 60)
+    demand["construction"][t] = demand_construction
+    return sum([demand[i][t]for i in demand])
 
-        # list of controllable power plants :
-        controllable_plants = [
-            "steam_engine",
-            "coal_burner",
-            "oil_burner",
-            "gas_burner",
-            "shallow_geothermal_plant",
-            "combined_cycle",
-            "deep_geothermal_plant",
-            "nuclear_reactor",
-            "nuclear_reactor_gen4",
-        ]
-        # update production level of controllable power plants :
-        # first : set production to lowest possible value for the next step (max downward power ramp)
-        for plant in controllable_plants:
-            player.todays_production["production"][plant][t] = max(
-                0,
-                production[plant][t - 1]
-                - getattr(player, plant)
+# calculate generation of a player that doesn't belong to a network
+def calculate_generation_without_market(assets, generation, demand, total_demand, player, t):
+    total_generation = 0
+    # priority list of power plants according to SCP and price :
+    priority_list = player.self_consumption_priority.split(' ') 
+    + player.rest_of_priorities.split(' ')
+    for plant in priority_list:
+        # If the plant is not contollable the generation level is given
+        if assets[plant]["ramping speed"] == 0:
+            generation[plant][t] = (generation[plant][t]
+                                * assets[plant]["power generation"]
+                                * getattr(player, plant))
+            total_generation += generation[plant][t]
+        # else the minimal generation level is given by the ramping down constraint
+        else:
+            generation[plant][t] = max(0,
+                generation[plant][t - 1] - getattr(player, plant)
+                * assets[plant]["ramping speed"])
+            total_generation += generation[plant][t]
+        # If the player is not able to use all the min. generated energy, it has to be dumped at a cost of 10 CHF per MWh
+        if total_generation > total_demand:
+            dumping = min(generation[plant][t], total_generation-total_demand)
+            demand["dumping"] = dumping
+            player.money -= dumping * 10 / 1000000
+    # while the produced power is not sufficient for own demand, for each power plant following the priority list,
+    # set the power to the maximum possible value (max upward power ramp). 
+    # For the PP that overshoots the demand, find the equilibirum power generation value.
+    for plant in priority_list:
+        if assets[plant]["ramping speed"] != 0:
+            max_prod = min(generation[plant][t - 1] + getattr(player, plant)
                 * assets[plant]["ramping speed"],
-            )
-            total_production += production[plant][t]
-        # temporary priority list of power plants :
-        priority_list = [
-            "steam_engine",
-            "coal_burner",
-            "oil_burner",
-            "gas_burner",
-            "shallow_geothermal_plant",
-            "combined_cycle",
-            "deep_geothermal_plant",
-            "nuclear_reactor",
-            "nuclear_reactor_gen4",
-        ]
-        i = 0
-        # CHECK THIS LOGIC AGAIN WHEN YOU HAVE FRESH BRAIN CELLS 
-        # while the produced power is not sufficient, for each power plant following the priority list,
-        # set the power to the maximum possible value (max upward power ramp). 
-        # For the PP that overshoots the demand, find the equilibirum power production value.
-        while total_production < total_demand:
-            plant = priority_list[i]
-            delta_prod = (
-                getattr(player, plant)
-                * assets[plant]["ramping speed"]
-                + production[plant][t - 1]
-                - production[plant][t]
-            )
+                getattr(player, plant) * assets[plant]["power generation"])
+            # range of possible power variation
+            delta_prod = max_prod - generation[plant][t]
             # case where the plant is the one that could overshoot the equilibium :
-            if total_demand - total_production < delta_prod:
-                max_prod = (
-                    getattr(player, plant) * assets[plant]["power production"]
-                )
-                # case where the plant is, or will be at max power production :
-                if (production[plant][t] + total_demand - total_production
-                    > max_prod):
-                    total_production += max_prod - production[plant][t]
-                    production[plant][t] = max_prod
-                else:
-                    production[plant][t] += total_demand - total_production
-                    total_production = total_demand
+            if total_demand - total_generation < delta_prod:
+                generation[plant][t] += total_demand - total_generation
+                total_generation = total_demand
             else:
-                total_production += delta_prod
-                production[plant][t] += delta_prod
-            i += 1
-            # case where even with max power ramp on all PP the demand is not reached :
-            if i >= len(priority_list):
+                total_generation += delta_prod
+                generation[plant][t] += delta_prod
+    # if demand is still not met, players industry is leveled down
+    if total_demand > total_generation:
+        player.industry -= 1
+
+# calculates in-house satisfaction and sets the capacity offers and demands on the market
+def calculate_generation_with_market(assets, generation, market, total_demand, 
+                                     player, t):
+    total_generation = 0
+    # priority list of power plants according to SCP and price :
+    priority_list = player.self_consumption_priority.split(' ') 
+    + player.rest_of_priorities.split(' ')
+    # Try to fill minimal generation with own demand 
+    for plant in priority_list:
+        # If the plant is not contollable the generation level is given
+        if assets[plant]["ramping speed"] == 0:
+            generation[plant][t] = (generation[plant][t]
+                                * assets[plant]["power generation"]
+                                * getattr(player, plant))
+            total_generation += generation[plant][t]
+        # else the minimal generation level is given by the ramping down constraint
+        else:
+            generation[plant][t] = max(0,
+                generation[plant][t - 1] - getattr(player, plant)
+                * assets[plant]["ramping speed"])
+            total_generation += generation[plant][t]
+        # If the player is not able to use all the min. generated energy, it is put on the market for -10CHF/MWh
+        if total_generation > total_demand:
+            capacity = min(generation[plant][t], total_generation-total_demand)
+            market = offer(market, player, capacity, -10, plant)
+    # while the produced power is not sufficient for own demand, for each power plant following the priority list,
+    # set the power to the maximum possible value (max upward power ramp). 
+    # For the PP that overshoots the demand, find the equilibirum power generation value.
+    # The additional available generation capacity is put on the market.
+    for plant in priority_list:
+        if assets[plant]["ramping speed"] != 0:
+            max_prod = min(generation[plant][t - 1] + getattr(player, plant)
+                * assets[plant]["ramping speed"],
+                getattr(player, plant) * assets[plant]["power generation"])
+            # range of possible power variation
+            delta_prod = max_prod - generation[plant][t]
+            # case where the plant is the one that could overshoot the equilibium :
+            if total_demand - total_generation < delta_prod:
+                generation[plant][t] += total_demand - total_generation
+                # additional capacity sold on the market
+                capacity = delta_prod - total_demand + total_generation
+                price = getattr(player, "price_" + plant)
+                market = offer(market, player, capacity, price, plant)
+                total_generation = total_demand
+            else:
+                total_generation += delta_prod
+                generation[plant][t] += delta_prod
+    # if demand is still not met, player has to by on the market
+    if total_demand > total_generation:
+        new_row = {'player': player, 'demand': total_demand - total_generation}
+        market["demands"] = market["demands"].append(new_row, ignore_index=True)
+    return market
+        
+# Calculate overall network demand, class all capacity offers in ascending order and find the market price of electricity
+# Sell all capacities that are below market price at market price.
+def market_logic(generation, demand, market, t):
+    market["capacities"].sort_values("price")
+    total_market_capacity = market["capacities"]["capacity"].sum()
+    network_demand = market["demands"]["demand"].sum()
+    if total_market_capacity < network_demand:
+        satisfaction = total_market_capacity/network_demand
+        market_price = market["capacities"]["price"][-1]
+        for row in market["demands"].itertuples(index=False):
+            buy(generation, row, market_price, t, quantity=row.demand 
+                * satisfaction)
+            row.player.industry -= 1
+        for row in market["capacities"].itertuples(index=False):
+            sell(generation, demand, row, market_price, t)
+    else:
+        capacity_cumsum = 0
+        for row in market["capacities"].itertuples():
+            capacity_cumsum += row.capacity
+            if capacity_cumsum >= network_demand:
+                i_max = row.Index
+                market_price = row.price
+                sold_capacity = (row.capacity - capacity_cumsum 
+                                 + network_demand)
+                sell(generation, demand, row, market_price, t, 
+                     quantity=sold_capacity)
+                if market_price < 0:
+                    dumping = capacity_cumsum - network_demand
+                    demand["dumping"] = dumping
+                    market["capacities"]["player"][i].money -= dumping * 10 / 1000000
                 break
+        for row in market["capacities"].itertuples():
+            if row.Index == i_max:
+                break
+            sell(generation, demand, row, market_price, t)
+        for row in market["demands"].itertuples(index=False):
+            buy(generation, row, market_price, t)
+        # Dump electricity that is still on the market with a negative price.
+        if market_price < 0:
+            for i in range(i_max+1, len(market["capacities"])):
+                if market["capacities"]["price"][i] >= 0 :
+                    break
+                dumping = market["capacities"]["capacity"][i]
+                demand["dumping"] = dumping
+                market["capacities"]["player"][i].money -= dumping * 10 / 1000000
+
+
+
+def offer(market, player, capacity, price, plant):
+    new_row = {'player': player, 'capacity': capacity, 'price': price, 
+               'plant': plant}
+    market["capacities"] = market["capacities"].append(new_row, 
+                                                       ignore_index=True)
+    return market
+
+def sell(generation, demand, row, market_price, t, quantity=None):
+    if quantity==None:
+        quantity = row.capacity
+    generation[row.plant][t] += quantity
+    demand["exports"][t] += quantity
+    row.player.money += quantity * market_price / 1000000
+
+def buy(generation, row, market_price, t, quantity=None):
+    if quantity==None:
+        quantity = row.demand
+    generation["imports"][t] += quantity
+    row.player.money -= quantity * market_price / 1000000

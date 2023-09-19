@@ -15,7 +15,7 @@ def add_asset(player_id, facility):
     setattr(player, facility, getattr(player, facility) + 1)
     facility_data = assets[facility]
     player.emissions += (
-        facility_data["pollution"] * facility_data["power production"]
+        facility_data["pollution"] * facility_data["power generation"]
     )  # [kg/h]  -> NOT CORRECT, EMISSIONS ONLY WHEN BUILDING IS PRODUCING
     Under_construction.query.filter(
         Under_construction.finish_time < time.time()

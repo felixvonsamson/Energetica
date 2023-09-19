@@ -2,20 +2,20 @@
 
 <div class="huge title">Production overview</div>
 <div class="medium padding">
-<i>Here I want to integrate some graphs that show the time dependent energy production and consumption aswell as the energy storage management.</i>
+<i>Here I want to integrate some graphs that show the time dependent energy generation and consumption aswell as the energy storage management.</i>
 </div>
 
 <div class="bone padding">
-<h1>Energy production :</h1>
-<canvas id="prod_chart" data-name="{{user.todays_production['production']['steam_engine'][0:t.hour * 60 + t.minute]}}"></canvas>
+<h1>Energy generation :</h1>
+<canvas id="prod_chart" data-name="{{engine.current_data[user.username]['generation']['steam_engine'][0:t.hour * 60 + t.minute]}}"></canvas>
 </div>
-{{user.todays_production['production']['steam_engine'][t.hour * 60 + t.minute-20:t.hour * 60 + t.minute]}}
+{{engine.current_data[user.username]['generation']['steam_engine'][t.hour * 60 + t.minute-20:t.hour * 60 + t.minute]}}
 
 <div class="bone padding">
 <h1>Energy demand :</h1>
-<canvas id="demand_chart" data-name="{{user.todays_production['demand']['industriy'][0:t.hour * 60 + t.minute]}}"></canvas>
+<canvas id="demand_chart" data-name="{{engine.current_data[user.username]['demand']['industriy'][0:t.hour * 60 + t.minute]}}"></canvas>
 </div>
-{{user.todays_production['demand']['industriy'][t.hour * 60 + t.minute-20:t.hour * 60 + t.minute]}}
+{{engine.current_data[user.username]['demand']['industriy'][t.hour * 60 + t.minute-20:t.hour * 60 + t.minute]}}
 {% endblock %}
 
 {% block scripts %}

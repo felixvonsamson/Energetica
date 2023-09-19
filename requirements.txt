@@ -1,7 +1,0 @@
-flask
-flask-socketio
-Flask-SQLAlchemy
-flask-login
-flask-apscheduler
-eventlet
-

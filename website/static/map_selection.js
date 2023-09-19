@@ -3,8 +3,6 @@ This code is the p5.js script that enables the player to choose a location on an
 interactive map just after having registerd to the game.
 */
 
-var socket = io();
-
 // Tile item :
 class Hex {
   constructor(_id, _q, _r, _ressources) {

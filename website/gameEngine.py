@@ -6,6 +6,7 @@ import datetime
 import pickle
 import secrets
 import logging
+import os
 from flask import url_for
 from . import heap
 import time
@@ -24,6 +25,12 @@ class gameEngine(object):
         engine.logs = [] # Dont think that this is still necessary
         engine.nonces = set() # Dont remember what that is
         engine.log("engine created")
+
+        # All data for the current day will be stored here :
+        engine.current_data = {}
+        if os.path.isfile("instance/engine_data.pck"):
+            with open("instance/engine_data.pck", "rb") as file:
+                engine.current_data = pickle.load(file)
 
     def init_logger(engine):
         engine.logger.setLevel(logging.INFO)
@@ -79,7 +86,7 @@ def daily_update(engine, app):
             industry_demand = pickle.load(file)
         players = Player.query.all()
         for player in players:
-            player.todays_production["demand"]["industriy"] = [
+            engine.current_data[player.username]["demand"]["industriy"] = [
                 i * 50000 for i in industry_demand
             ]
 

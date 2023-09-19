@@ -24,7 +24,7 @@ def add_handlers(socketio, engine):
     def choose_location(id):
         location = Hex.query.get(id + 1)
         if location.player_id != None:
-            engine.socketio.emit("errorMessage", "Location already taken")
+            current_user.emit("errorMessage", "Location already taken")
         else:
             location.player_id = current_user.id
             db.session.commit()
@@ -37,7 +37,7 @@ def add_handlers(socketio, engine):
         for username in group:
             groupMembers.append(Player.query.filter_by(username=username).first())
         if check_existing_chats(groupMembers):
-            engine.socketio.emit("errorMessage", "Chat already exists")
+            current_user.emit("errorMessage", "Chat already exists")
             return
         new_chat = Chat(name=title, participants=groupMembers)
         db.session.add(new_chat)
@@ -63,12 +63,12 @@ def add_handlers(socketio, engine):
     def start_construction(facility, family):
         assets = current_app.config["engine"].config[current_user.id]["assets"]
         if current_user.money < assets[facility]["price"]:
-            engine.socketio.emit("errorMessage", "Not enough money")
+            current_user.emit("errorMessage", "Not enough money")
         else:
             current_user.money -= assets[facility]["price"]
             db.session.commit()
             updates = [("money", display_CHF(current_user.money))]
-            engine.update_fields(updates, current_user)
+            engine.update_fields(updates, [current_user])
             finish_time = time.time() + assets[facility]["construction time"]
             heapq.heappush(heap, (finish_time, add_asset, (current_user.id, facility)))
             new_facility = Under_construction(

@@ -79,7 +79,10 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(id):
-        return Player.query.get(int(id))
+        player = Player.query.get(int(id))
+        if player != None:
+            player.engine = engine
+        return player
 
     # initialize the schedulers and add the recurrent functions :
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true": # This function is to run the following omly once, TO REMOVE IF DEBUG MODE IS SET TO FALSE 
