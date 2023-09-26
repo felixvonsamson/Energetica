@@ -24,20 +24,7 @@ def check_user():
 
     def render_template_ctx(page):
         # render template with or without player production data
-        if page == "production_overview.jinja":
-            with open(
-                "instance/player_prod/" + current_user.data_table_name, "rb"
-            ) as file:
-                prod_table = pickle.load(file)
-            return render_template(
-                page,
-                engine=g.engine,
-                user=current_user,
-                data=g.config["assets"],
-                prod_table=prod_table,
-                t=datetime.datetime.today().time(),
-            )
-        elif page == "messages.jinja":
+        if page == "messages.jinja":
             chats=Chat.query.filter(Chat.participants.any(id=current_user.id)).all()
             return render_template(
                 page,
@@ -92,7 +79,7 @@ def messages():
 
 @views.route("/network")
 def network():
-    return g.render_template_ctx("network_prices.jinja")
+    return g.render_template_ctx("network.jinja")
 
 @views.route("/power_facilities")
 def energy_facilities():

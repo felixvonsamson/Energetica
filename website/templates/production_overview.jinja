@@ -7,21 +7,18 @@
 
 <div class="bone padding">
 <h1>Energy generation :</h1>
-<canvas id="prod_chart" data-name="{{engine.current_data[user.username]['generation']['steam_engine'][0:t.hour * 60 + t.minute]}}"></canvas>
+<div id="generation graph"></div>
 </div>
-{{engine.current_data[user.username]['generation']['steam_engine'][t.hour * 60 + t.minute-20:t.hour * 60 + t.minute]}}
 
 <div class="bone padding">
 <h1>Energy demand :</h1>
-<canvas id="demand_chart" data-name="{{engine.current_data[user.username]['demand']['industriy'][0:t.hour * 60 + t.minute]}}"></canvas>
+
 </div>
-{{engine.current_data[user.username]['demand']['industriy'][t.hour * 60 + t.minute-20:t.hour * 60 + t.minute]}}
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='sockets.js') }}" ></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{{ url_for('static', filename='charts.js') }}" ></script>
+<script src="{{ url_for('static', filename='charts.js') }}"></script>
 {% endblock %}
 

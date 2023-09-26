@@ -26,11 +26,23 @@ class gameEngine(object):
         engine.nonces = set() # Dont remember what that is
         engine.log("engine created")
 
+        engine.storage_plants = [
+            "small_pumped_hydro",
+            "compressed_air",
+            "molten_salt",
+            "large_pumped_hydro",
+            "hydrogen_storage",
+            "lithium_ion_batteries",
+            "solid_state_batteries"
+        ]
+
         # All data for the current day will be stored here :
         engine.current_data = {}
+        # temporary
         if os.path.isfile("instance/engine_data.pck"):
             with open("instance/engine_data.pck", "rb") as file:
                 engine.current_data = pickle.load(file)
+                print("loaded engine data")
 
     def init_logger(engine):
         engine.logger.setLevel(logging.INFO)

@@ -15,7 +15,7 @@ full_config = {
             "consumed ressource": "money",
             "amount consumed": 100,
             "pollution": 494,  # [g/kW]
-            "ramping speed": 1800,  # [W/min]
+            "ramping speed": 1800,  # [W/min] (13.8 min)
         },
         "windmill": {
             "name": "Windmill",
@@ -51,7 +51,7 @@ full_config = {
             "consumed ressource": "coal",
             "amount consumed": 60000,
             "pollution": 986,
-            "ramping speed": 3600,
+            "ramping speed": 650000, #(184.6 min)
         },
         "oil_burner": {
             "name": "Oil burner",
@@ -63,7 +63,7 @@ full_config = {
             "consumed ressource": "oil",
             "amount consumed": 21818,
             "pollution": 777,
-            "ramping speed": 3600,
+            "ramping speed": 800000, #(100 min)
         },
         "gas_burner": {
             "name": "Gas burner",
@@ -75,7 +75,7 @@ full_config = {
             "consumed ressource": "gas",
             "amount consumed": 21818,
             "pollution": 429,
-            "ramping speed": 3600,
+            "ramping speed": 3600000, #(27.8 min)
         },
         "shallow_geothermal_plant": {
             "name": "Shallow geothermal plant",
@@ -123,7 +123,7 @@ full_config = {
             "consumed ressource": ["gas", "coal"],
             "amount consumed": [60000, 9000],
             "pollution": 488,
-            "ramping speed": 7200,
+            "ramping speed": 7200000, #(73.6 min)
         },
         "deep_geothermal_plant": {
             "name": "Deep geothermal plant",
@@ -147,7 +147,7 @@ full_config = {
             "consumed ressource": "uranium",
             "amount consumed": 360,
             "pollution": 2,
-            "ramping speed": 259200,
+            "ramping speed": 1000000, #(15 h)
         },
         "large_water_dam": {
             "name": "Large water dam",
@@ -207,7 +207,7 @@ full_config = {
             "consumed ressource": "uranium",
             "amount consumed": 3,
             "pollution": 2,
-            "ramping speed": 432000,
+            "ramping speed": 2000000, #(20.8 h)
         },
         "small_pumped_hydro": {
             "name": "Small pumped hydro",
@@ -218,7 +218,7 @@ full_config = {
             "construction time": 36000,  # [s]
             "construction energy": 10000,  # [Wh]
             "construction pollution": 12000,  # [kg]
-            "ramping speed": 180,  # [W/min]
+            "ramping speed": 11000000,  # [W/min] (5 min)
         },
         "compressed_air": {
             "name": "Compressed air",
@@ -229,7 +229,7 @@ full_config = {
             "construction time": 36000,
             "construction energy": 10000,
             "construction pollution": 12000,
-            "ramping speed": 180,
+            "ramping speed": 10000000, #(2 min) 
         },
         "molten_salt": {
             "name": "Molten salt",
@@ -240,7 +240,7 @@ full_config = {
             "construction time": 36000,
             "construction energy": 10000,
             "construction pollution": 12000,
-            "ramping speed": 14400,
+            "ramping speed": 4000000, #(60 min)
         },
         "large_pumped_hydro": {
             "name": "Large pumped hydro",
@@ -251,7 +251,7 @@ full_config = {
             "construction time": 36000,
             "construction energy": 10000,
             "construction pollution": 12000,
-            "ramping speed": 300,
+            "ramping speed": 40000000, #(10 min)
         },
         "hydrogen_storage": {
             "name": "Hydrogen hydrolysis",
@@ -262,7 +262,7 @@ full_config = {
             "construction time": 36000,
             "construction energy": 10000,
             "construction pollution": 12000,
-            "ramping speed": 72000,
+            "ramping speed": 250000000, #(3 min)
         },
         "lithium_ion_batteries": {
             "name": "Lithium-ion batteries",
@@ -273,7 +273,7 @@ full_config = {
             "construction time": 36000,
             "construction energy": 10000,
             "construction pollution": 12000,
-            "ramping speed": 30,
+            "ramping speed": 20000000, #(1 min)
         },
         "solid_state_batteries": {
             "name": "Solid state batteries",
@@ -284,7 +284,7 @@ full_config = {
             "construction time": 36000,
             "construction energy": 10000,
             "construction pollution": 12000,
-            "ramping speed": 30,
+            "ramping speed": 30000000, #(1 min)
         },
         "laboratory": {
             "name": "Laboratory",
