@@ -36,8 +36,8 @@ def update_ressources(engine):
 
 # function that updates the electricity generation and storage status for all players according to capacity and external factors (and trade)
 def update_electricity(engine):
-    now = datetime.datetime.today().time()
-    t = now.hour * 60 + now.minute
+    t = engine.current_t
+    print(f"t = {t}")
     networks = Network.query.all()
     for network in networks:
         market = {
@@ -79,7 +79,7 @@ def calculate_demand(engine, player, t):
             / construction["construction time"] * 60)
     # ADD DEMAND OF EXTRACTION PLANTS
     demand["construction"][t] = demand_construction
-    return sum([demand[i][t]for i in demand])
+    return sum([demand[i][t] for i in demand])
 
 # calculate generation of a player that doesn't belong to a network
 # CURRENTLY NO STORAGE LOGIC

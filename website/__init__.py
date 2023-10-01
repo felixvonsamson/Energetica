@@ -22,7 +22,7 @@ from website.gameEngine import gameEngine
 
 def create_app():
     # creates the player production repository if it doese not exist :
-    Path("instance/player_prod/").mkdir(parents=True, exist_ok=True)
+    Path("instance/player_prod").mkdir(parents=True, exist_ok=True)
 
     # creates the app :
     app = Flask(__name__)

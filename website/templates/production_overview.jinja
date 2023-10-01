@@ -2,16 +2,17 @@
 
 <div class="huge title">Production overview</div>
 <div class="medium padding">
-<i>Here I want to integrate some graphs that show the time dependent energy generation and consumption aswell as the energy storage management.</i>
+ <b id="Generation" class="margin medium bone padding-large navbar_item txt_center active" style="width:120px; display:inline-block;" onclick="change_view('Generation');">Generation</b>
+ <b id="Demand" class="margin medium bone padding-large navbar_item txt_center" style="width:120px; display:inline-block;" onclick="change_view('Demand');">Demand</b>
+ <b id="Storage" class="margin medium bone padding-large navbar_item txt_center" style="width:120px; display:inline-block;" onclick="change_view('Storage');">Storage</b>
+ <b id="Ressources" class="margin medium bone padding-large navbar_item txt_center" style="width:120px; display:inline-block;" onclick="change_view('Ressources');">Ressources</b>
+ <b id="Emissions" class="margin medium bone padding-large navbar_item txt_center" style="width:120px; display:inline-block;" onclick="change_view('Emissions');">Emissions</b>
 </div>
 
-<div class="bone padding">
-<h1>Energy generation :</h1>
-<div id="generation graph"></div>
+<div class="bone">
+<h1 id="graph_title">Generation</h1>
+<div id="graph" class="bone" style="padding:16px 0;"></div>
 </div>
-
-<div class="bone padding">
-<h1>Energy demand :</h1>
 
 </div>
 {% endblock %}
@@ -19,6 +20,11 @@
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='sockets.js') }}" ></script>
-<script src="{{ url_for('static', filename='charts.js') }}"></script>
+<script src="{{ url_for('static', filename='charts/generation.js') }}"></script>
+<script src="{{ url_for('static', filename='charts/demand.js') }}"></script>
+<script src="{{ url_for('static', filename='charts/storage.js') }}"></script>
+<script src="{{ url_for('static', filename='charts/ressources.js') }}"></script>
+<script src="{{ url_for('static', filename='charts/emissions.js') }}"></script>
+<script src="{{ url_for('static', filename='charts/buttons.js') }}"></script>
 {% endblock %}
 

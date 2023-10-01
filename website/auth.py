@@ -9,6 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
 import pickle
+from pathlib import Path
 
 auth = Blueprint("auth", __name__)
 
@@ -77,113 +78,88 @@ def sign_up():
 
 # initialize data table for new user and stores it as a .pck in the 'player_prod' repo
 def init_table(username):
-    past_data = {
-        "generation": {
-            "fossil": [0] * 2880,
-            "wind": [0] * 2880,
-            "hydro": [0] * 2880,
-            "geothermal": [0] * 2880,
-            "nuclear": [0] * 2880,
-            "solar": [0] * 2880,
-            "storage": [0] * 2880,
-            "imports": [0] * 2880,
-        },
-        "demand": {
-            "industriy": [0] * 2880,
-            "construction": [0] * 2880,
-            "extraction_plants": [0] * 2880,
-            "research": [0] * 2880,
-            "storage": [0] * 2880,
-            "exports": [0] * 2880,
-            "dumping": [0] * 2880,
-        },
-        "storage": {
-            "pumped_hydro": [0] * 2880,
-            "compressed_air": [0] * 2880,
-            "molten_salt": [0] * 2880,
-            "hydrogen": [0] * 2880,
-            "batteries": [0] * 2880,
-        },
-        "ressources": {
-            "coal": [0] * 168,
-            "oil": [0] * 168,
-            "gas": [0] * 168,
-            "uranium": [0] * 168,
-        },
-        "emissions": [0] * 168,
-    }
-    with open(f"instance/player_prod/data_{username}.pck", "wb") as file:
-        pickle.dump(past_data, file)
+    past_data = data_init(1440)
+    Path(f"instance/player_data/{username}").mkdir(parents=True, exist_ok=True)
+    for timescale in ["day", "5_days", "month", "6_months"]:
+        with open(f"instance/player_data/{username}/{timescale}.pck", "wb") as file:
+            pickle.dump(past_data, file)
 
 def add_player_to_data(username):
     engine = current_app.config["engine"]
     # TEMPORARY -> GENERATE NEW VALUES FOR EACH DAY 
     with open("website/static/data/industry_demand.pck", "rb") as file:
         industry_demand = pickle.load(file)
-    engine.current_data[username] = {
+    engine.current_data[username] = data_init(1441)
+    engine.current_data[username]["demand"]["industriy"] = [
+        i * 50000 for i in industry_demand]
+
+def data_init(len):
+    return {
         "generation": {
-            "steam_engine": [0] * 1440,
-            "windmill": [0] * 1440,
-            "watermill": [0] * 1440,
-            "coal_burner": [0] * 1440,
-            "oil_burner": [0] * 1440,
-            "gas_burner": [0] * 1440,
-            "shallow_geothermal_plant": [0] * 1440,
-            "small_water_dam": [0] * 1440,
-            "wind_turbine": [0] * 1440,
-            "combined_cycle": [0] * 1440,
-            "deep_geothermal_plant": [0] * 1440,
-            "nuclear_reactor": [0] * 1440,
-            "large_water_dam": [0] * 1440,
-            "CSP_solar": [0] * 1440,
-            "PV_solar": [0] * 1440,
-            "large_wind_turbine": [0] * 1440,
-            "nuclear_reactor_gen4": [0] * 1440,
+            "steam_engine": [0] * len,
+            "windmill": [0] * len,
+            "watermill": [0] * len,
+            "coal_burner": [0] * len,
+            "oil_burner": [0] * len,
+            "gas_burner": [0] * len,
+            "shallow_geothermal_plant": [0] * len,
+            "small_water_dam": [0] * len,
+            "wind_turbine": [0] * len,
+            "combined_cycle": [0] * len,
+            "deep_geothermal_plant": [0] * len,
+            "nuclear_reactor": [0] * len,
+            "large_water_dam": [0] * len,
+            "CSP_solar": [0] * len,
+            "PV_solar": [0] * len,
+            "large_wind_turbine": [0] * len,
+            "nuclear_reactor_gen4": [0] * len,
 
-            "small_pumped_hydro": [0] * 1440,
-            "compressed_air": [0] * 1440,
-            "molten_salt": [0] * 1440,
-            "large_pumped_hydro": [0] * 1440,
-            "hydrogen_storage": [0] * 1440,
-            "lithium_ion_batteries": [0] * 1440,
-            "solid_state_batteries": [0] * 1440,
+            "small_pumped_hydro": [0] * len,
+            "compressed_air": [0] * len,
+            "molten_salt": [0] * len,
+            "large_pumped_hydro": [0] * len,
+            "hydrogen_storage": [0] * len,
+            "lithium_ion_batteries": [0] * len,
+            "solid_state_batteries": [0] * len,
 
-            "imports": [0] * 1440,
+            "imports": [0] * len,
         },
         "demand": {
-            "industriy": [i * 50000 for i in industry_demand],
-            "construction": [0] * 1440,
-            "coal_mine": [0] * 1440,
-            "oil_field": [0] * 1440,
-            "gas_drilling_site": [0] * 1440,
-            "uranium_mine": [0] * 1440,
-            "research": [0] * 1440,
+            "industriy": [0] * len,
+            "construction": [0] * len,
+            "coal_mine": [0] * len,
+            "oil_field": [0] * len,
+            "gas_drilling_site": [0] * len,
+            "uranium_mine": [0] * len,
+            "research": [0] * len,
 
-            "small_pumped_hydro": [0] * 1440,
-            "compressed_air": [0] * 1440,
-            "molten_salt": [0] * 1440,
-            "large_pumped_hydro": [0] * 1440,
-            "hydrogen_storage": [0] * 1440,
-            "lithium_ion_batteries": [0] * 1440,
-            "solid_state_batteries": [0] * 1440,
+            "small_pumped_hydro": [0] * len,
+            "compressed_air": [0] * len,
+            "molten_salt": [0] * len,
+            "large_pumped_hydro": [0] * len,
+            "hydrogen_storage": [0] * len,
+            "lithium_ion_batteries": [0] * len,
+            "solid_state_batteries": [0] * len,
 
-            "exports": [0] * 1440,
-            "dumping": [0] * 1440,
+            "exports": [0] * len,
+            "dumping": [0] * len,
         },
         "storage": {
-            "small_pumped_hydro": [0] * 1440,
-            "large_pumped_hydro": [0] * 1440,
-            "compressed_air": [0] * 1440,
-            "molten_salt": [0] * 1440,
-            "hydrogen": [0] * 1440,
-            "lithium_ion_batteries": [0] * 1440,
-            "solid_state_batteries": [0] * 1440,
+            "small_pumped_hydro": [0] * len,
+            "large_pumped_hydro": [0] * len,
+            "compressed_air": [0] * len,
+            "molten_salt": [0] * len,
+            "hydrogen": [0] * len,
+            "lithium_ion_batteries": [0] * len,
+            "solid_state_batteries": [0] * len,
         },
         "ressources": {
-            "coal": [0] * 24,
-            "oil": [0] * 24,
-            "gas": [0] * 24,
-            "uranium": [0] * 24,
+            "coal": [1000000] * len,
+            "oil": [500000] * len,
+            "gas": [700000] * len,
+            "uranium": [10000] * len,
         },
-        "emissions": [0] * 24,
+        "emissions": {
+            "CO2": [0] * len,
+        }
     }

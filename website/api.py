@@ -4,6 +4,7 @@ These functions make the link between the website and the database
 
 from flask import Blueprint, request, flash, jsonify, session, g, current_app
 from flask_login import login_required, current_user
+import pickle
 
 api = Blueprint('api', __name__)
 
@@ -46,3 +47,43 @@ def get_chat():
     messages = Chat.query.filter_by(id=chat_id).first().messages
     messages_list = [(msg.player.username, msg.text) for msg in messages]
     return jsonify(messages_list)
+
+@api.route("/get_chart_data", methods=["GET"])
+def get_chart_data():
+    engine = current_app.config["engine"]
+    timescale = request.args.get('timescale')
+    table = request.args.get('table')
+    filename = f"instance/player_data/{current_user.username}/{timescale}.pck"
+    with open(filename, "rb") as file:
+        data = pickle.load(file)
+    if table == "generation" or table == "storage" or table == "ressources":
+        capacities = {}
+        if table == "generation":
+            for facility in ["watermill", "small_water_dam", "large_water_dam", 
+                            "nuclear_reactor", "nuclear_reactor_gen4", 
+                            "shallow_geothermal_plant", "deep_geothermal_plant", 
+                            "steam_engine", "coal_burner", "oil_burner", 
+                            "gas_burner", "combined_cycle", "windmill", 
+                            "wind_turbine", "large_wind_turbine", "CSP_solar",
+                            "PV_solar"]:
+                capacities[facility] = (getattr(current_user, facility) * 
+                        engine.config[current_user.id]["assets"][facility][
+                            "power generation"])
+        elif table == "storage":
+            for facility in ["small_pumped_hydro", "large_pumped_hydro", 
+                             "lithium_ion_batteries", "solid_state_batteries", 
+                             "compressed_air", "molten_salt", 
+                             "hydrogen_storage"]:
+                capacities[facility] = (getattr(current_user, facility) * 
+                        engine.config[current_user.id]["assets"][facility][
+                            "storage capacity"])
+        else:
+            for ressource in ["coal", "oil", "gas", "uranium"]:
+                capacities[ressource] = current_user.warehouse + 1000000
+            capacities["uranium"] = 15000
+        return jsonify(engine.current_t, data[table],
+                       engine.current_data[current_user.username][table],
+                       capacities)
+    else:
+        return jsonify(engine.current_t, data[table],
+                       engine.current_data[current_user.username][table])

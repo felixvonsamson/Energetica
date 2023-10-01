@@ -43,9 +43,9 @@ full_config = {
         },
         "coal_burner": {
             "name": "Coal burner",
-            "price": 5000000,
-            "power generation": 120000000,
-            "construction time": 172800,
+            "price": 500,
+            "power generation": 120000,
+            "construction time": 17,
             "construction energy": 17280,
             "construction pollution": 12000,
             "consumed ressource": "coal",

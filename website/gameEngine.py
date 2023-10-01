@@ -38,6 +38,8 @@ class gameEngine(object):
 
         # All data for the current day will be stored here :
         engine.current_data = {}
+        now = datetime.datetime.today().time()
+        engine.current_t = now.hour * 60 + now.minute + 1 #fist value of current day has to be last value of last day
         # temporary
         if os.path.isfile("instance/engine_data.pck"):
             with open("instance/engine_data.pck", "rb") as file:
@@ -92,6 +94,7 @@ from .utils import add_asset
 
 # function that is executed once every 24 hours :
 def daily_update(engine, app):
+    engine.current_t = 1
     # recalculate industry demand IMPLEMENT CHANGING DATA
     with app.app_context():
         with open("website/static/data/industry_demand.pck", "rb") as file:
@@ -112,6 +115,7 @@ def state_update_h(engine, app):
 
 # function that is executed once every 1 minute :
 def state_update_m(engine, app):
+    engine.current_t += 1
     with app.app_context():
         update_electricity(engine)
 
