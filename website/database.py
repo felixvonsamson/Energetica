@@ -26,7 +26,10 @@ class Hex(db.Model):
     oil = db.Column(db.Integer)
     gas = db.Column(db.Integer)
     uranium = db.Column(db.Integer)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), default=None) # ID of the owner oof the tile
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), default=None) # ID of the owner of the tile
+
+    def __repr__(self):
+        return f'<Tile {self.id} wind {self.wind}>'
 
 # class that stores the things currently under construction :
 class Under_construction(db.Model):

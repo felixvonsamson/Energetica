@@ -93,25 +93,18 @@ def create_app():
         engine.log("adding jobs")
         scheduler.init_app(app)
         scheduler.add_job(
-            func=daily_update,
-            args=(engine, app),
-            id="daily_update",
-            trigger="cron",
-            day=1,
-        )
-        scheduler.add_job(
             func=state_update_h,
             args=(engine, app),
             id="state_update_h",
-            trigger="interval",
-            seconds=3600,
+            trigger="cron",
+            minute="0",
         )
         scheduler.add_job(
             func=state_update_m,
             args=(engine, app),
             id="state_update_m",
-            trigger="interval",
-            seconds=60,
+            trigger="cron",
+            second="0",
         )
         scheduler.add_job(
             func=check_heap,

@@ -38,6 +38,7 @@ class gameEngine(object):
 
         # All data for the current day will be stored here :
         engine.current_data = {}
+        engine.current_CO2 = [0] * 1441
         now = datetime.datetime.today().time()
         engine.current_t = now.hour * 60 + now.minute + 1 #fist value of current day has to be last value of last day
         # temporary
@@ -111,12 +112,15 @@ from .production_update import update_ressources, update_electricity
 # function that is executed once every 1 hour :
 def state_update_h(engine, app):
     with app.app_context():
-        update_ressources(engine)
+        players = Player.query.all()
+        for player in players:
+            engine.config.update_config_for_user(player.id) # update mining productivity every hour
 
 # function that is executed once every 1 minute :
 def state_update_m(engine, app):
     engine.current_t += 1
     with app.app_context():
+        update_ressources(engine)
         update_electricity(engine)
 
 # function that is executed once every 1 second :
