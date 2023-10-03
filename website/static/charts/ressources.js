@@ -200,6 +200,7 @@ function regen_ressources(res){
       textSize(15);
       fill(0);
       text("Coal", 0.5*margin, 14);
+      text("+"+raw_data[4]["coal"]+"kg/h", 0.5*margin, 35)
 
       translate(1.5*margin, 0);
       fill(255);

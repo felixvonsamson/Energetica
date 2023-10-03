@@ -9,29 +9,45 @@ import numpy as np
 from .database import Network, Player
 from . import db
 
+ressource_to_extraction = {
+    "coal": "coal_mine",
+    "oil": "oil_field",
+    "gas": "gas_drilling_site",
+    "uranium": "uranium_mine",
+}
+
 # fuction that updates the ressources of all players according to extraction capacity (and trade)
 def update_ressources(engine):
-    t = datetime.datetime.today().time().hour
+    t = engine.current_t
     players = Player.query.all()
     for player in players:
         assets = engine.config[player.id]["assets"]
-        player_data = engine.current_data[player.username]
+        player_ressources = engine.current_data[player.username]["ressources"]
+        warehouse_caps = engine.config[player.id]["warehouse_capacities"]
 
-        coal = player.coal_mine * assets["coal_mine"]["amount produced"]
-        player_data["ressources"]["coal"][t] = coal
+        max_warehouse = (warehouse_caps["coal"]-player_ressources["coal"][t-1])
+        coal = min(player.coal_mine * assets["coal_mine"]["amount produced"],
+                   max_warehouse)
         player.coal += coal
+        player_ressources["coal"][t] = player.coal
+        player.tile[0].coal = max(0, player.tile[0].coal - coal)
 
-        oil = player.oil_field * assets["oil_field"]["amount produced"]
-        player_data["ressources"]["oil"][t] = oil
+        max_warehouse = (warehouse_caps["oil"]-player_ressources["oil"][t-1])
+        oil = min(player.coal_mine * assets["oil_field"]["amount produced"],
+                   max_warehouse)
         player.oil += oil
+        player_ressources["oil"][t] = player.oil
+        player.tile[0].oil = max(0, player.tile[0].oil - oil)
 
         gas = player.gas_drilling_site * assets["gas_drilling_site"]["amount produced"]
-        player_data["ressources"]["gas"][t] = gas
         player.gas += gas
+        player_ressources["gas"][t] = player.gas
+        player.tile[0].gas = max(0, player.tile[0].gas - gas)
 
         uranium = player.uranium_mine * assets["uranium_mine"]["amount produced"]
-        player_data["ressources"]["uranium"][t] = uranium
         player.uranium += uranium
+        player_ressources["uranium"][t] = player.uranium
+        player.tile[0].uranium = max(0, player.tile[0].uranium - uranium)
     db.session.commit()
 
 # function that updates the electricity generation and storage status for all players according to capacity and external factors (and trade)
@@ -59,6 +75,7 @@ def update_electricity(engine):
         if player.network == None:
             total_demand = calculate_demand(engine , player, t)
             calculate_generation_without_market(engine, total_demand, player, t)
+        ressources_and_pollution(engine, player, t)
     
     #save changes 
     db.session.commit()
@@ -101,9 +118,8 @@ def calculate_generation_without_market(engine, total_demand, player, t):
             total_generation += generation[plant][t]
         # else the minimal generation level is given by the ramping down constraint
         else:
-            generation[plant][t] = max(0,
-                generation[plant][t - 1] - getattr(player, plant)
-                * assets[plant]["ramping speed"])
+            generation[plant][t] = calculate_prod("min", player, assets, plant, 
+                                                  generation, t)
             total_generation += generation[plant][t]
         # If the player is not able to use all the min. generated energy, it has to be dumped at a cost of 10 CHF per MWh
         if total_generation > total_demand:
@@ -115,9 +131,8 @@ def calculate_generation_without_market(engine, total_demand, player, t):
     # For the PP that overshoots the demand, find the equilibirum power generation value.
     for plant in priority_list:
         if assets[plant]["ramping speed"] != 0:
-            max_prod = min(generation[plant][t - 1] + getattr(player, plant)
-                * assets[plant]["ramping speed"],
-                getattr(player, plant) * assets[plant]["power generation"])
+            max_prod = calculate_prod("max", player, assets, plant, 
+                                      generation, t)
             # range of possible power variation
             delta_prod = max_prod - generation[plant][t]
             # case where the plant is the one that could overshoot the equilibium :
@@ -149,9 +164,8 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
             total_generation += generation[plant][t]
         # else the minimal generation level is given by the ramping down constraint
         else:
-            generation[plant][t] = max(0,
-                generation[plant][t - 1] - getattr(player, plant)
-                * assets[plant]["ramping speed"])
+            generation[plant][t] = calculate_prod("min", player, assets, plant, 
+                                                  generation, t)
             total_generation += generation[plant][t]
         # If the player is not able to use all the min. generated energy, it is put on the market for -10CHF/MWh
         if total_generation > total_demand:
@@ -163,9 +177,8 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
     # The additional available generation capacity is put on the market.
     for plant in player.self_consumption_priority.split(' '):
         if assets[plant]["ramping speed"] != 0:
-            max_prod = min(generation[plant][t - 1] + getattr(player, plant)
-                * assets[plant]["ramping speed"],
-                getattr(player, plant) * assets[plant]["power generation"])
+            max_prod = calculate_prod("max", player, assets, plant, 
+                                      generation, t)
             # range of possible power variation
             delta_prod = max_prod - generation[plant][t]
             # case where the plant is the one that could overshoot the equilibium :
@@ -188,9 +201,8 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
     # Sell capacities of remaining plants on the market
     for plant in player.rest_of_priorities.split(' '):
         if assets[plant]["ramping speed"] != 0:
-            max_power = getattr(player, plant) * assets[plant]["power generation"]
-            max_ramping = generation[plant][t - 1] + getattr(player, plant) * assets[plant]["ramping speed"]
-            max_prod = min(max_ramping, max_power)
+            max_prod = calculate_prod("max", player, assets, plant, 
+                                      generation, t)
             price = getattr(player, "price_" + plant)
             capacity = max_prod - generation[plant][t]
             market = offer(market, player, capacity, price, plant)
@@ -289,6 +301,28 @@ def market_optimum(offers_og, demands_og):
             return price, row.cumulative_capacity
     return price_d, row.cumulative_capacity
 
+# Calculates the min or max power production of a plant in at time t considering ramping constraints, ressources constraints and max and min power constraints
+def calculate_prod(minmax, player, assets, plant, generation, t):
+    ressource_factor = 1
+    if plant == "combined_cycle":
+        avalable_gas = getattr(player, assets[plant]["consumed ressource"][0])   
+        needed_gas = assets[plant]["amount consumed"][0]/60                      # * getattr(player, plant)
+        avalable_coal = getattr(player, assets[plant]["consumed ressource"][1])  
+        needed_coal = assets[plant]["amount consumed"][1]/60                     # * getattr(player, plant)
+        ressource_factor = min(avalable_gas/needed_gas, avalable_coal/needed_coal, getattr(player, plant))
+    elif assets[plant]["amount consumed"] != 0 :
+        avalable_ressource = getattr(player, assets[plant]["consumed ressource"])
+        needed_ressource = assets[plant]["amount consumed"]/60                   # * getattr(player, plant)
+        ressource_factor = min(avalable_ressource / needed_ressource, getattr(player, plant))
+
+    max_ressources = ressource_factor * assets[plant]["power generation"]        # / getattr(player, plant)
+    if minmax == "max":
+        max_ramping = generation[plant][t - 1] + getattr(player, plant) * assets[plant]["ramping speed"]
+        return min(max_ressources, max_ramping)
+    else :
+        min_ramping = generation[plant][t - 1] - getattr(player, plant) * assets[plant]["ramping speed"]
+        return max(0,min(max_ressources, min_ramping))
+
 def offer(market, player, capacity, price, plant):
     new_row = {'player': player, 'capacity': capacity, 'price': price, 
                'plant': plant}
@@ -327,3 +361,31 @@ def buy(engine, row, market_price, t, quantity=None):
         demand[row.plant][t] += quantity
     generation["imports"][t] += quantity
     row.player.money -= quantity * market_price / 1000000
+
+def ressources_and_pollution(engine, player, t):
+    assets = engine.config[player.id]["assets"]
+    generation = engine.current_data[player.username]["generation"]
+    # Calculate ressource consumption
+    for plant in ["coal_burner", "oil_burner", "gas_burner", "nuclear_reactor", 
+                  "nuclear_reactor_gen4"]:
+        ressource = assets[plant]["consumed ressource"]
+        power_factor = generation[plant][t] / assets[plant]["power generation"]  # /getattr(player, plant)
+        quantity = power_factor * assets[plant]["amount consumed"]/60            # *getattr(player, plant)
+        setattr(player, ressource, getattr(player, ressource) - quantity)
+    # special case of combined cycle
+    power_factor = generation["combined_cycle"][t] / assets["combined_cycle"][
+        "power generation"]  # /getattr(player, plant)
+    quantity_gas = power_factor * assets["combined_cycle"]["amount consumed"][0]/60  # *getattr(player, plant)
+    quantity_coal = power_factor * assets["combined_cycle"]["amount consumed"][1]/60  # *getattr(player, plant)
+    player.gas -= quantity_gas
+    player.coal -= quantity_coal
+    #POLLUTION
+    emissions = engine.current_data[player.username]["emissions"]
+    for plant in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", 
+                  "shallow_geothermal_plant", "combined_cycle", 
+                  "deep_geothermal_plant", "nuclear_reactor", 
+                  "nuclear_reactor_gen4"]:
+        power_factor = generation[plant][t] / assets[plant]["power generation"]  # /getattr(player, plant)
+        plant_emmissions = power_factor * assets[plant]["pollution"]/60          # *getattr(player, plant)
+        emissions[plant] = plant_emmissions
+        engine.current_CO2[t] = engine.current_CO2[t-1] + plant_emmissions

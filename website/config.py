@@ -13,8 +13,8 @@ full_config = {
             "construction energy": 10000,  # [Wh]
             "construction pollution": 12000,  # [kg]
             "consumed ressource": "money",
-            "amount consumed": 100,
-            "pollution": 494,  # [g/kW]
+            "amount consumed": 100, # [kg/h]
+            "pollution": 494,  # [kg CO2/h]
             "ramping speed": 1800,  # [W/min] (13.8 min)
         },
         "windmill": {
@@ -320,7 +320,7 @@ full_config = {
             "construction time": 36000,  # [s]
             "construction energy": 10000,  # [Wh]
             "construction pollution": 12000,  # [kg]
-            "amount produced": 3000,  # [kg/h]
+            "amount produced": 0.000003,  # [fraction of total stock that can be extracted every minute by one mine]
             "power consumption": 3000,  # [W]
             "pollution": 2,  # [kg/h]
         },
@@ -330,7 +330,7 @@ full_config = {
             "construction time": 36000,
             "construction energy": 10000,
             "construction pollution": 12000,
-            "amount produced": 3000,
+            "amount produced": 0.000005,
             "power consumption": 3000,
             "pollution": 2,
         },
@@ -340,7 +340,7 @@ full_config = {
             "construction time": 36000,
             "construction energy": 10000,
             "construction pollution": 12000,
-            "amount produced": 3000,
+            "amount produced": 0.000004,
             "power consumption": 3000,
             "pollution": 2,
         },
@@ -350,7 +350,7 @@ full_config = {
             "construction time": 36000,
             "construction energy": 10000,
             "construction pollution": 12000,
-            "amount produced": 3000,
+            "amount produced": 0.000002,
             "power consumption": 3000,
             "pollution": 2,
         },
@@ -417,51 +417,14 @@ full_config = {
             "construction time": 36000,
             "construction energy": 10000,
         },
+    },
+    "warehouse_capacities":{
+        "coal": 1000000, #[kg]
+        "oil": 1000000,
+        "gas": 1000000,
+        "uranium": 15000,
     }
 }
-
-# CURRENTLY NOT USED
-capacity_table = {
-    "steam_engine": "c_fossil",
-    "windmill": "c_wind",
-    "watermill": "c_hydro",
-    "coal_burner": "c_fossil",
-    "oil_burner": "c_fossil",
-    "gas_burner": "c_fossil",
-    "shallow_geothermal_plant": "c_geothermal",
-    "small_water_dam": "c_hydro",
-    "wind_turbine": "c_wind",
-    "combined_cycle": "c_fossil",
-    "deep_geothermal_plant": "c_geothermal",
-    "nuclear_reactor": "c_nuclear",
-    "large_water_dam": "c_hydro",
-    "CSP_solar": "c_solar",
-    "PV_solar": "c_solar",
-    "large_wind_turbine": "c_wind",
-    "nuclear_reactor_gen4": "c_nuclear",
-    "small_pumped_hydro": "c_pumped_hydro",
-    "compressed_air": "c_compressed_air",
-    "molten_salt": "c_molten_salt",
-    "large_pumped_hydro": "c_pumped_hydro",
-    "hydrogen_storage": "c_hydrogen",
-    "lithium_ion_batteries": "c_batteries",
-    "solid_state_batteries": "c_batteries",
-}
-
-# CURRENTLY NOT USED
-capacities = [
-    "c_fossil",
-    "c_wind",
-    "c_hydro",
-    "c_geothermal",
-    "c_nuclear",
-    "c_solar",
-    "c_pumped_hydro",
-    "c_compressed_air",
-    "c_molten_salt",
-    "c_hydrogen",
-    "c_batteries",
-]
 
 from .database import Player
 
@@ -472,6 +435,16 @@ class Config(object):
 
     def update_config_for_user(config, player_id):
         config.for_player[player_id] = full_config
+        assets = config.for_player[player_id]["assets"]
+        player = Player.query.get(player_id)
+        assets["coal_mine"]["amount produced"] = assets["coal_mine"]["amount produced"] * player.tile[0].coal
+        assets["oil_field"]["amount produced"] = assets["oil_field"]["amount produced"] * player.tile[0].oil
+        assets["gas_drilling_site"]["amount produced"] = assets["gas_drilling_site"]["amount produced"] * player.tile[0].gas
+        assets["uranium_mine"]["amount produced"] = assets["uranium_mine"]["amount produced"] * player.tile[0].uranium
+
+        max_cap = config.for_player[player_id]["warehouse_capacities"]
+        for ressource in max_cap:
+            max_cap[ressource] = max_cap[ressource]*pow(1.5,player.warehouse)
 
     def __getitem__(config, player_id):
         if player_id not in config.for_player:

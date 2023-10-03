@@ -51,6 +51,7 @@ def get_chat():
 @api.route("/get_chart_data", methods=["GET"])
 def get_chart_data():
     engine = current_app.config["engine"]
+    assets = engine.config[current_user.id]["assets"]
     timescale = request.args.get('timescale')
     table = request.args.get('table')
     filename = f"instance/player_data/{current_user.username}/{timescale}.pck"
@@ -67,20 +68,32 @@ def get_chart_data():
                             "wind_turbine", "large_wind_turbine", "CSP_solar",
                             "PV_solar"]:
                 capacities[facility] = (getattr(current_user, facility) * 
-                        engine.config[current_user.id]["assets"][facility][
-                            "power generation"])
+                        assets[facility]["power generation"])
         elif table == "storage":
             for facility in ["small_pumped_hydro", "large_pumped_hydro", 
                              "lithium_ion_batteries", "solid_state_batteries", 
                              "compressed_air", "molten_salt", 
                              "hydrogen_storage"]:
                 capacities[facility] = (getattr(current_user, facility) * 
-                        engine.config[current_user.id]["assets"][facility][
-                            "storage capacity"])
+                        assets[facility]["storage capacity"])
         else:
+            rates = {}
+            rates["coal"] = current_user.coal_mine * assets["coal_mine"][
+                "amount produced"] * 60
+            rates["oil"] = current_user.coal_mine * assets["oil_field"][
+                "amount produced"] * 60
+            rates["gas"] = current_user.coal_mine * assets["gas_drilling_site"][
+                "amount produced"] * 60
+            rates["uranium"] = current_user.coal_mine * assets["uranium_mine"][
+                "amount produced"] * 60
             for ressource in ["coal", "oil", "gas", "uranium"]:
-                capacities[ressource] = current_user.warehouse + 1000000
+                capacities[ressource] = engine.config[current_user.id][
+                    "warehouse_capacities"][ressource]
             capacities["uranium"] = 15000
+            return jsonify(engine.current_t, data[table],
+                       engine.current_data[current_user.username][table],
+                       capacities, rates)
+            
         return jsonify(engine.current_t, data[table],
                        engine.current_data[current_user.username][table],
                        capacities)
