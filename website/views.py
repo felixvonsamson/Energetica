@@ -20,6 +20,13 @@ flash_error = lambda msg: flash(msg, category="error")
 @login_required
 def check_user():
     g.engine = current_app.config["engine"]
+    if len(current_user.tile) == 0:
+        return render_template(
+                "location_choice.jinja",
+                engine=g.engine,
+                user=current_user
+            )
+    
     g.config = g.engine.config[current_user.id]
 
     def render_template_ctx(page):
@@ -41,8 +48,6 @@ def check_user():
             )
 
     g.render_template_ctx = render_template_ctx
-    if len(current_user.tile) == 0:
-        return g.render_template_ctx("location_choice.jinja")
 
 @views.route("/", methods=["GET", "POST"])
 @views.route("/home", methods=["GET", "POST"])

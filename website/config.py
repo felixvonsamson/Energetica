@@ -316,8 +316,8 @@ full_config = {
         },
         "coal_mine": {
             "name": "Coal mine",
-            "price": 2500000,  # [CHF]
-            "construction time": 36000,  # [s]
+            "price": 2500,  # [CHF]
+            "construction time": 3,  # [s]
             "construction energy": 10000,  # [Wh]
             "construction pollution": 12000,  # [kg]
             "amount produced": 0.000003,  # [fraction of total stock that can be extracted every minute by one mine]
@@ -437,10 +437,11 @@ class Config(object):
         config.for_player[player_id] = full_config
         assets = config.for_player[player_id]["assets"]
         player = Player.query.get(player_id)
-        assets["coal_mine"]["amount produced"] = assets["coal_mine"]["amount produced"] * player.tile[0].coal
-        assets["oil_field"]["amount produced"] = assets["oil_field"]["amount produced"] * player.tile[0].oil
-        assets["gas_drilling_site"]["amount produced"] = assets["gas_drilling_site"]["amount produced"] * player.tile[0].gas
-        assets["uranium_mine"]["amount produced"] = assets["uranium_mine"]["amount produced"] * player.tile[0].uranium
+        print(player.tile)
+        assets["coal_mine"]["amount produced"] = full_config["assets"]["coal_mine"]["amount produced"] * player.tile[0].coal * 100000000
+        assets["oil_field"]["amount produced"] = full_config["assets"]["oil_field"]["amount produced"] * player.tile[0].oil  * 100000000
+        assets["gas_drilling_site"]["amount produced"] = full_config["assets"]["gas_drilling_site"]["amount produced"] * player.tile[0].gas * 100000000
+        assets["uranium_mine"]["amount produced"] = full_config["assets"]["uranium_mine"]["amount produced"] * player.tile[0].uranium * 10000000
 
         max_cap = config.for_player[player_id]["warehouse_capacities"]
         for ressource in max_cap:

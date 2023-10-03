@@ -211,6 +211,11 @@ function display_Wh(energy) {
     return general_format(energy, units);
 }
 
+function display_kgh(mass_rate) {
+    const units = [" kg/h", " t/h"];
+    return general_format(mass_rate, units);
+}
+
 function display_kg(mass) {
     const units = [" kg", " t", " kt", " Mt"];
     return general_format(mass, units);

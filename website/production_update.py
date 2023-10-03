@@ -21,33 +21,31 @@ def update_ressources(engine):
     t = engine.current_t
     players = Player.query.all()
     for player in players:
+        if len(player.tile) == 0:
+            continue
         assets = engine.config[player.id]["assets"]
+        demand = engine.current_data[player.username]["demand"]
         player_ressources = engine.current_data[player.username]["ressources"]
         warehouse_caps = engine.config[player.id]["warehouse_capacities"]
-
-        max_warehouse = (warehouse_caps["coal"]-player_ressources["coal"][t-1])
-        coal = min(player.coal_mine * assets["coal_mine"]["amount produced"],
-                   max_warehouse)
-        player.coal += coal
-        player_ressources["coal"][t] = player.coal
-        player.tile[0].coal = max(0, player.tile[0].coal - coal)
-
-        max_warehouse = (warehouse_caps["oil"]-player_ressources["oil"][t-1])
-        oil = min(player.coal_mine * assets["oil_field"]["amount produced"],
-                   max_warehouse)
-        player.oil += oil
-        player_ressources["oil"][t] = player.oil
-        player.tile[0].oil = max(0, player.tile[0].oil - oil)
-
-        gas = player.gas_drilling_site * assets["gas_drilling_site"]["amount produced"]
-        player.gas += gas
-        player_ressources["gas"][t] = player.gas
-        player.tile[0].gas = max(0, player.tile[0].gas - gas)
-
-        uranium = player.uranium_mine * assets["uranium_mine"]["amount produced"]
-        player.uranium += uranium
-        player_ressources["uranium"][t] = player.uranium
-        player.tile[0].uranium = max(0, player.tile[0].uranium - uranium)
+        for ressource in ressource_to_extraction:
+            facility = ressource_to_extraction[ressource]
+            max_warehouse = (warehouse_caps[ressource] - 
+                             player_ressources[ressource][t-1])
+            max_prod = getattr(player, facility) * assets[facility][
+                "amount produced"]
+            amount_produced = min(max_prod, max_warehouse)
+            setattr(player, ressource, getattr(player, ressource) + 
+                    amount_produced)
+            player_ressources[ressource][t] = getattr(player, ressource)
+            setattr(player.tile[0], ressource, max(0, getattr(player.tile[0], 
+                                                ressource) - amount_produced))
+            energy_demand = assets[facility]["power consumption"] * getattr(
+                player, facility)
+            if max_prod == 0:
+                energy_demand = 0
+            elif amount_produced == max_warehouse :
+                energy_demand = max_warehouse / max_prod * energy_demand
+            demand[facility][t] = energy_demand
     db.session.commit()
 
 # function that updates the electricity generation and storage status for all players according to capacity and external factors (and trade)
@@ -64,6 +62,8 @@ def update_electricity(engine):
         }
         # For each player in the network, calculate the demand and the minimal amount of electricity generation at time t
         for player in network.members:
+            if len(player.tile) == 0:
+                continue
             total_demand = calculate_demand(engine, player, t)
             market = calculate_generation_with_market(engine, market, 
                                                       total_demand, player, t)
@@ -72,6 +72,8 @@ def update_electricity(engine):
     # For players that are not in a network
     players = Player.query.all()
     for player in players:
+        if len(player.tile) == 0:
+            continue
         if player.network == None:
             total_demand = calculate_demand(engine , player, t)
             calculate_generation_without_market(engine, total_demand, player, t)
@@ -94,8 +96,8 @@ def calculate_demand(engine, player, t):
         construction = assets[ud.name]
         demand_construction += (construction["construction energy"] 
             / construction["construction time"] * 60)
-    # ADD DEMAND OF EXTRACTION PLANTS
     demand["construction"][t] = demand_construction
+    # demand of extraction plants is calculated in update_ressources()
     return sum([demand[i][t] for i in demand])
 
 # calculate generation of a player that doesn't belong to a network
@@ -387,5 +389,6 @@ def ressources_and_pollution(engine, player, t):
                   "nuclear_reactor_gen4"]:
         power_factor = generation[plant][t] / assets[plant]["power generation"]  # /getattr(player, plant)
         plant_emmissions = power_factor * assets[plant]["pollution"]/60          # *getattr(player, plant)
-        emissions[plant] = plant_emmissions
+        emissions[plant][t] = plant_emmissions
+        player.emissions += plant_emmissions
         engine.current_CO2[t] = engine.current_CO2[t-1] + plant_emmissions

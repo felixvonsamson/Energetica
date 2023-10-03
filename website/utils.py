@@ -14,9 +14,7 @@ def add_asset(player_id, facility):
     assets = current_app.config["engine"].config[player_id]["assets"]
     setattr(player, facility, getattr(player, facility) + 1)
     facility_data = assets[facility]
-    player.emissions += (
-        facility_data["pollution"] * facility_data["power generation"]
-    )  # [kg/h]  -> NOT CORRECT, EMISSIONS ONLY WHEN BUILDING IS PRODUCING
+    # player.emissions += ??? IMPLEMENT EMMISIONS FROM CONSTRUCTION
     Under_construction.query.filter(
         Under_construction.finish_time < time.time()
     ).delete()
@@ -28,6 +26,7 @@ def display_CHF(price):
 
 from .database import Chat
 
+# checks if a chat with exactly these participants already exists
 def check_existing_chats(participants):
     # Get the IDs of the participants
     participant_ids = [participant.id for participant in participants]

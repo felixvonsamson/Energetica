@@ -1,4 +1,6 @@
-const keys_emissions = ["CO2"];
+const keys_emissions = ["steam_engine", "coal_burner", "oil_burner", 
+  "gas_burner", "shallow_geothermal_plant", "combined_cycle", 
+  "deep_geothermal_plant", "nuclear_reactor", "nuclear_reactor_gen4"];
 
 function draw_emissions() {
   if(graph){
@@ -86,7 +88,7 @@ function regen_emissions(res){
           const array = raw_data[2][key];
           data[key] = reduce(data[key], array, res, raw_data[0]);
         });
-      data_len = data["CO2"].length;
+      data_len = data["steam_engine"].length;
       push();
       translate(1.5*margin, height-2*margin-10);
       noStroke();
