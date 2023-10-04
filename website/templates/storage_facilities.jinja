@@ -3,13 +3,15 @@
 <div class="huge title">Storage facilities</div>
 
 {% if user.under_construction %}
-{% for facility in user.under_construction %}
-{% if facility.family == "storage_facilities"%}
-<div class="padding" id="progress_bar">
-  The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
+<div id="under_construction">
+  {% for facility in user.under_construction %}
+  {% if facility.family == "storage_facilities"%}
+  <div class="padding" id="progress_bar">
+    The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
+  </div>
+  {% endif %}
+  {% endfor %}
 </div>
-{% endif %}
-{% endfor %}
 {% endif %}
 
 {% set facility = data["small_pumped_hydro"] %}
@@ -21,7 +23,7 @@
   <b class="txt-blue">Priority : 1 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('small_pumped_hydro', 'storage_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('small_pumped_hydro', 'storage_facilities');">
     Start construction
   </b>
   <div>
@@ -47,7 +49,7 @@
   <b class="txt-blue">Priority : 1 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('compressed_air', 'storage_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('compressed_air', 'storage_facilities');">
     Start construction
   </b>
   <div>
@@ -73,7 +75,7 @@
   <b class="txt-blue">Priority : 1 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('molten_salt', 'storage_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('molten_salt', 'storage_facilities');">
     Start construction
   </b>
   <div>
@@ -99,7 +101,7 @@
   <b class="txt-blue">Priority : 1 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('large_pumped_hydro', 'storage_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('large_pumped_hydro', 'storage_facilities');">
     Start construction
   </b>
   <div>
@@ -125,7 +127,7 @@
   <b class="txt-blue">Priority : 1 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('hydrogen_storage', 'storage_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('hydrogen_storage', 'storage_facilities');">
     Start construction
   </b>
   <div>
@@ -151,7 +153,7 @@
   <b class="txt-blue">Priority : 2 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('lithium_ion_batteries', 'storage_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('lithium_ion_batteries', 'storage_facilities');">
     Start construction
   </b>
   <div>
@@ -177,7 +179,7 @@
   <b class="txt-blue">Priority : 2 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('solid_state_batteries', 'storage_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('solid_state_batteries', 'storage_facilities');">
     Start construction
   </b>
   <div>

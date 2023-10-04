@@ -172,12 +172,71 @@
 
 <div class="huge title">Network</div>
 
-<div class="medium padding">
-<i>I want to give the players the possiblity to join their electricity grids in a network to facilitate grid stabilisation. On this page the players could comunicate, trade rerssources and organize their network.</i>
+<!--JOIN NETWORK-->
+<div id="join_network" class="popup hidden green">
+    <div class="flex-row margin-small" style="align-items:center;">
+        <div class="large txt_center" style="flex-grow:1">Join Network</div>
+        <div onclick="document.getElementById('join_network').classList.add('hidden');" class="cross pine margin-small" style="width:39px">
+            &times;
+        </div>
+    </div>
+    <form method="POST" autocomplete="off" class="flex-col margin-large" style="margin-top:5px">
+        <div class="flex-col" style="width:100%;">
+            <div id="warning" class="medium toast error txt_center margin" style="width:260px; padding:8px 16px"></div>
+            <label for="choose_network">Network</label>
+            <select id="choose_network" name="choose_network" class="create_chat_input medium">
+              <option value="" disabled selected>select network</option>
+            </select>
+        </div>
+        <button type="submit" class="bone padding medium login-button" style="margin-top:20px">Join Network</button>
+    </form>
 </div>
+
+<!--CREATE NETWORK-->
+<div id="create_network" class="popup hidden green">
+    <div class="flex-row margin-small" style="align-items:center;">
+        <div class="large txt_center" style="flex-grow:1">Create Network</div>
+        <div onclick="document.getElementById('create_network').classList.add('hidden');" class="cross pine margin-small" style="width:39px">
+            &times;
+        </div>
+    </div>
+    <div class="flex-col margin-large">
+        <div style="width:100%; padding-bottom:32px">
+            <label for="chat_title">Chat title</label>
+            <input type="text" class="create_chat_input medium" id="chat_title" name="chat_title" placeholder="Title">
+        </div>
+        Group Members : <br>
+        (click to remove)
+        <div class="group_members"></div>
+        <div>
+            <label for="add_player">Add player or network</label>
+            <div class="flex-row">
+                <div>
+                    <input type="text" class="create_chat_input medium" id="add_player" name="add_player" placeholder="Player or Network">
+                    <div class="suggestions2"></div>
+                </div>
+                <div onclick="addPlayer()" class="plus bone">+</div>
+            </div>
+        </div>
+        <div onclick="createGroupChat()" class="bone padding medium login-button" style="margin-top:16px">Create Network</div>
+    </div>
+</div>
+
+{% if user.network == None %}
+<div class="medium padding txt_center">
+You a currently not part of a Network. Join or create one :
+</div>
+<div class="flex-row" style="justify-content:center;">
+<b class="margin button2" onclick="document.getElementById('join_network').classList.remove('hidden');">Join Network</b>
+<b class="margin button2" onclick="document.getElementById('create_network').classList.remove('hidden');">Create Network</b>
+</div>
+{% else %}
+
+{% endif %}
 
 {% endblock %}
 
 {% block additionnal_script %}
-<script src="{{ url_for('static', filename='price_change.js') }}"></script>
+<script src="{{ url_for('static', filename='network/price_change.js') }}"></script>
+<script src="{{ url_for('static', filename='network/network_logic.js') }}"></script>
 {% endblock %}

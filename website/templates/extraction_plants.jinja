@@ -4,13 +4,15 @@
 <div class="huge title">Extraction plants</div>
 
 {% if user.under_construction %}
-{% for facility in user.under_construction %}
-{% if facility.family == "extraction_plants"%}
-<div class="padding" id="progress_bar">
-  The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
+<div id="under_construction">
+  {% for facility in user.under_construction %}
+  {% if facility.family == "extraction_plants"%}
+  <div class="padding" id="progress_bar">
+    The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
+  </div>
+  {% endif %}
+  {% endfor %}
 </div>
-{% endif %}
-{% endfor %}
 {% endif %}
 
 {% set facility = data["coal_mine"] %}
@@ -21,7 +23,7 @@
   The coal mine produces coal.
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('coal_mine', 'extraction_plants'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('coal_mine', 'extraction_plants');">
     Start construction
   </b>
   <div>
@@ -46,7 +48,7 @@
   The oil extraction plant produces oil.
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('oil_field', 'extraction_plants'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('oil_field', 'extraction_plants');">
     Start construction
   </b>
   <div>
@@ -71,7 +73,7 @@
   The gas extraction plant produces natural gas.
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('gas_drilling_site', 'extraction_plants'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('gas_drilling_site', 'extraction_plants');">
     Start construction
   </b>
   <div>
@@ -96,7 +98,7 @@
   The uranium mine produces uranium.
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('uranium_mine', 'extraction_plants'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('uranium_mine', 'extraction_plants');">
     Start construction
   </b>
   <div>

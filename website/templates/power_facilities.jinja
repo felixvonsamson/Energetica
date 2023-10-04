@@ -4,13 +4,15 @@
 <div class="huge title">Power facilities</div>
 
 {% if user.under_construction %}
-{% for facility in user.under_construction %}
-{% if facility.family == "power_facilities"%}
-<div class="padding" id="progress_bar">
-  The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
+<div id="under_construction">
+  {% for facility in user.under_construction %}
+  {% if facility.family == "power_facilities"%}
+  <div class="padding" id="progress_bar">
+    The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
+  </div>
+  {% endif %}
+  {% endfor %}
 </div>
-{% endif %}
-{% endfor %}
 {% endif %}
 
 {% set facility = data["steam_engine"] %}
@@ -22,7 +24,7 @@
   <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('steam_engine', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('steam_engine', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -48,7 +50,7 @@
   <b class="txt-blue">Shutdown priority : 5 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('windmill', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('windmill', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -73,7 +75,7 @@
   <b class="txt-blue">Shutdown priority : 5 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('watermill', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('watermill', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -98,7 +100,7 @@
   <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('coal_burner', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('coal_burner', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -124,7 +126,7 @@
   <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('oil_burner', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('oil_burner', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -150,7 +152,7 @@
   <b class="txt-blue">Shutdown priority : 1 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('gas_burner', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('gas_burner', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -176,7 +178,7 @@
   <b class="txt-blue">Shutdown priority : 4 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('shallow_geothermal_plant', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('shallow_geothermal_plant', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -201,7 +203,7 @@
   <b class="txt-blue">Shutdown priority : 3 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('small_water_dam', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('small_water_dam', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -226,7 +228,7 @@
   <b class="txt-blue">Shutdown priority : 5 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('wind_turbine', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('wind_turbine', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -251,7 +253,7 @@
   <b class="txt-blue">Shutdown priority : 2 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('combined_cycle', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('combined_cycle', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -278,7 +280,7 @@
   <b class="txt-blue">Shutdown priority : 4 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('deep_geothermal_plant', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('deep_geothermal_plant', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -303,7 +305,7 @@
   <b class="txt-blue">Shutdown priority : 4 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('nuclear_reactor', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('nuclear_reactor', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -329,7 +331,7 @@
   <b class="txt-blue">Shutdown priority : 3 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('large_water_dam', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('large_water_dam', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -354,7 +356,7 @@
   <b class="txt-blue">Shutdown priority : 5 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('CSP_solar', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('CSP_solar', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -379,7 +381,7 @@
   <b class="txt-blue">Shutdown priority : 5 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('PV_solar', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('PV_solar', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -404,7 +406,7 @@
   <b class="txt-blue">Shutdown priority : 5 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('large_wind_turbine', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('large_wind_turbine', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -429,7 +431,7 @@
   <b class="txt-blue">Shutdown priority : 4 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('nuclear_reactor_gen4', 'power_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('nuclear_reactor_gen4', 'power_facilities');">
     Start construction
   </b>
   <div>

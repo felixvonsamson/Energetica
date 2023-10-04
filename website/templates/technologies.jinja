@@ -4,13 +4,15 @@
 <div class="huge title">Technologies</div>
 
 {% if user.under_construction %}
-{% for facility in user.under_construction %}
-{% if facility.family == "technologies"%}
-<div class="padding" id="progress_bar">
-  The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
+<div id="under_construction">
+  {% for facility in user.under_construction %}
+  {% if facility.family == "technologies"%}
+  <div class="padding" id="progress_bar">
+    The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
+  </div>
+  {% endif %}
+  {% endfor %}
 </div>
-{% endif %}
-{% endfor %}
 {% endif %}
 
 {% set facility = data["mineral_extraction"] %}
@@ -21,7 +23,7 @@
   Mineral extraction improves the process of extracting minerals like coal and uranium.
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('mineral_extraction', 'technologies'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('mineral_extraction', 'technologies');">
     Research
   </b>
   <div class="margin">
@@ -40,7 +42,7 @@
   Civil engeneering makes the construction of large facilities more efficient.
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('civil_engeneering', 'technologies'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('civil_engeneering', 'technologies');">
     Research
   </b>
   <div class="margin">
@@ -59,7 +61,7 @@
   Physics is the science behind a lot of innovations in the field of energy.
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('physics', 'technologies'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('physics', 'technologies');">
     Research
   </b>
   <div class="margin">
@@ -78,7 +80,7 @@
   Materials construction is necessary for a lot of innovations in the field of energy.
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('materials', 'technologies'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('materials', 'technologies');">
     Research
   </b>
   <div class="margin">
@@ -97,7 +99,7 @@
   Carbon capture can reduce pollution.
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('carbon_capture', 'technologies'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('carbon_capture', 'technologies');">
     Research
   </b>
   <div class="margin">
@@ -116,7 +118,7 @@
   Transport technology can improve the trading of resources.
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('transport_technology', 'technologies'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('transport_technology', 'technologies');">
     Research
   </b>
   <div class="margin">
@@ -135,7 +137,7 @@
   Aerodynamics are essential for the design of wind turbines.
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('aerodynamics', 'technologies'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('aerodynamics', 'technologies');">
     Research
   </b>
   <div class="margin">

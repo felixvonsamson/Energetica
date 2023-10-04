@@ -4,6 +4,7 @@
 <div class="huge title">Functional facilities</div>
 
 {% if user.under_construction %}
+<div id="under_construction">
 {% for facility in user.under_construction %}
 {% if facility.family == "functional_facilities"%}
 <div class="padding" id="progress_bar">
@@ -11,6 +12,7 @@
 </div>
 {% endif %}
 {% endfor %}
+</div>
 {% endif %}
 
 {% set facility = data["laboratory"] %}
@@ -21,7 +23,7 @@
   The laboratory is needed to do research in different domains. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('laboratory', 'functional_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('laboratory', 'functional_facilities');">
     Start construction
   </b>
   <div class="margin">
@@ -41,7 +43,7 @@
   The warehouse can store physical ressources. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('warehouse', 'functional_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('warehouse', 'functional_facilities');">
     Start construction
   </b>
   <div class="margin">
@@ -61,7 +63,7 @@
   The industry generates revenue from energy. 
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('industry', 'functional_facilities'); location.reload();">
+ <b class="margin medium white padding button" onclick="start_construction('industry', 'functional_facilities');">
     Start construction
   </b>
   <div class="margin">

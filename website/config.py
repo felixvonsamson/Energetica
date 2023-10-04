@@ -437,7 +437,6 @@ class Config(object):
         config.for_player[player_id] = full_config
         assets = config.for_player[player_id]["assets"]
         player = Player.query.get(player_id)
-        print(player.tile)
         assets["coal_mine"]["amount produced"] = full_config["assets"]["coal_mine"]["amount produced"] * player.tile[0].coal * 100000000
         assets["oil_field"]["amount produced"] = full_config["assets"]["oil_field"]["amount produced"] * player.tile[0].oil  * 100000000
         assets["gas_drilling_site"]["amount produced"] = full_config["assets"]["gas_drilling_site"]["amount produced"] * player.tile[0].gas * 100000000

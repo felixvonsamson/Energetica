@@ -80,3 +80,4 @@ def add_handlers(socketio, engine):
             )
             db.session.add(new_facility)
             db.session.commit()
+            current_user.emit("display_under_construction", (facility, finish_time))

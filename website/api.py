@@ -8,7 +8,7 @@ import pickle
 
 api = Blueprint('api', __name__)
 
-from .database import Hex, Player, Chat
+from .database import Hex, Player, Chat, Network
 
 # gets the map data from the database and returns it as a array of dictionaries :
 @api.route("/get_map", methods=["GET"])
@@ -39,6 +39,13 @@ def get_usernames():
     username_list = [username[0] for username in username_list 
     if username[0]!=current_user.username]
     return jsonify(username_list)
+
+# gets all the network names and returns it as a list :
+@api.route("/get_networks", methods=["GET"])
+def get_networks():
+    network_list = Network.query.with_entities(Network.name).all()
+    network_list = [name[0] for name in network_list]
+    return jsonify(network_list)
 
 # gets the last 20 messages from a chat and returns it as a list :
 @api.route("/get_chat", methods=["GET"])
