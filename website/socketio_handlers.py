@@ -7,7 +7,7 @@ import heapq
 from flask import request, session, flash, g, current_app
 from flask_login import current_user
 from . import heap
-from .database import Player, Hex, Under_construction, Chat, Message
+from .database import Player, Network, Hex, Under_construction, Chat, Message
 from .utils import add_asset, display_CHF, check_existing_chats
 from . import db
 
@@ -81,3 +81,17 @@ def add_handlers(socketio, engine):
             db.session.add(new_facility)
             db.session.commit()
             current_user.emit("display_under_construction", (facility, finish_time))
+
+    # this function is executed when a player creates a network
+    @socketio.on("create_network")
+    def create_network(name, invitations):
+        for username in invitations:
+            player = Player.query.filter_by(username=username).first()
+            # INVITE PLAYERS TO JOIN NETWORK
+        if Network.query.filter_by(name=name).first() is not None:
+            current_user.emit("errorMessage", "Network with this name already exists")
+            return
+        new_Network = Network(name=name, members=[current_user])
+        db.session.add(new_Network)
+        db.session.commit()
+        engine.refresh()

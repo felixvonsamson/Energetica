@@ -82,7 +82,7 @@ canvas {display: block;}
 
 .login_box{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); -ms-transform:translate(-50%,-50%)}
 
-.main_container{max-width: 1200px; min-height:100vh; margin:auto; overflow:auto}
+.main_container{max-width: 1200px; min-height:100vh; margin:auto; overflow:hidden;}
 
 .title{padding-top:16px; text-align:center}
 
@@ -92,7 +92,7 @@ canvas {display: block;}
 .proile-icon{height: 42px; width: 42px; display: inline-block; text-align: center;}
 .message_input{padding:8px; border:none; width:80%}
 .img{width:250px}
-.popup{z-index:30; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); -ms-transform:translate(-50%,-50%); transition: all 0.5s;}
+.popup{z-index:30; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); -ms-transform:translate(-50%,-50%); transition: all 0.5s; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);}
 .popup.hidden{visibility: hidden;}
 .create_chat_input{padding:8px; display:block; border:none;}
 .plus{text-align:center; width:39px; margin-left:8px; font-size:30px}

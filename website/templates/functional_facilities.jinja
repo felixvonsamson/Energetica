@@ -3,17 +3,17 @@
 
 <div class="huge title">Functional facilities</div>
 
-{% if user.under_construction %}
 <div id="under_construction">
-{% for facility in user.under_construction %}
-{% if facility.family == "functional_facilities"%}
-<div class="padding" id="progress_bar">
-  The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
+  {% if user.under_construction %}
+  {% for facility in user.under_construction %}
+  {% if facility.family == "functional_facilities"%}
+  <div class="padding" id="progress_bar">
+    The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
+  </div>
+  {% endif %}
+  {% endfor %}
+  {% endif %}
 </div>
-{% endif %}
-{% endfor %}
-</div>
-{% endif %}
 
 {% set facility = data["laboratory"] %}
 <div class="bone margin facility small">

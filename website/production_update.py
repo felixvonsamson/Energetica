@@ -155,8 +155,8 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
     storage = engine.current_data[player.username]["storage"]
     total_generation = 0
     # priority list of power plants according to SCP and price :
-    priority_list = player.self_consumption_priority.split(' ') 
-    + player.rest_of_priorities.split(' ')
+    priority_list = (player.self_consumption_priority.split(' ') 
+        + player.rest_of_priorities.split(' '))
     for plant in priority_list:
         # If the plant is not contollable the generation level is given
         if assets[plant]["ramping speed"] == 0:
@@ -244,7 +244,7 @@ def market_logic(engine, market, t):
         market_price = offers["price"][-1]
         for row in demands.itertuples(index=False):
             if row.plant == None:
-                buy(engine, row, market_price, t, quantity=row.demand 
+                buy(engine, row, market_price, t, quantity=row.capacity 
                     * satisfaction)
                 row.player.industry -= 1
         for row in offers.itertuples(index=False):
@@ -300,8 +300,8 @@ def market_optimum(offers_og, demands_og):
             price = price_d
             if np.isnan(row.index_offer):
                 price = price_o
-            return price, row.cumulative_capacity
-    return price_d, row.cumulative_capacity
+            return price, row.cumul_capacities
+    return price_d, row.cumul_capacities
 
 # Calculates the min or max power production of a plant in at time t considering ramping constraints, ressources constraints and max and min power constraints
 def calculate_prod(minmax, player, assets, plant, generation, t):
@@ -326,16 +326,17 @@ def calculate_prod(minmax, player, assets, plant, generation, t):
         return max(0,min(max_ressources, min_ramping))
 
 def offer(market, player, capacity, price, plant):
-    new_row = {'player': player, 'capacity': capacity, 'price': price, 
-               'plant': plant}
-    market["capacities"] = market["capacities"].append(new_row, 
-                                                       ignore_index=True)
+    new_row = pd.DataFrame({'player': [player], 'capacity': [capacity], 
+                            'price': [price], 'plant': [plant]})
+    market["capacities"] = pd.concat([market["capacities"], new_row], 
+                                     ignore_index=True)
     return market
 
 def bid(market, player, demand, price = np.inf, plant = None):
-    new_row = {'player': player, 'capacity': demand, 'price': price, 
-               'plant': plant}
-    market["demands"] = market["demands"].append(new_row, ignore_index=True)
+    new_row = pd.DataFrame({'player': [player], 'capacity': [demand], 
+                            'price': [price], 'plant': [plant]})
+    market["demands"] = pd.concat([market["demands"],new_row], 
+                                  ignore_index=True)
     return market
 
 def sell(engine, row, market_price, t, quantity=None):
@@ -357,7 +358,7 @@ def buy(engine, row, market_price, t, quantity=None):
     storage = engine.current_data[row.player.username]["storage"]
     demand = engine.current_data[row.player.username]["demand"]
     if quantity == None:
-        quantity = row.demand
+        quantity = row.capacity
     if row.plant != None:
         storage[row.plant][t] += quantity / 60 # Transform W in Wh
         demand[row.plant][t] += quantity

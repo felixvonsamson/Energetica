@@ -434,7 +434,7 @@ class Config(object):
         config.for_player = {}
 
     def update_config_for_user(config, player_id):
-        config.for_player[player_id] = full_config
+        config.for_player[player_id] = full_config.copy()
         assets = config.for_player[player_id]["assets"]
         player = Player.query.get(player_id)
         assets["coal_mine"]["amount produced"] = full_config["assets"]["coal_mine"]["amount produced"] * player.tile[0].coal * 100000000

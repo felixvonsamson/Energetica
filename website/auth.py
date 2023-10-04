@@ -149,7 +149,7 @@ def data_init(length):
             "large_pumped_hydro": [0] * length,
             "compressed_air": [0] * length,
             "molten_salt": [0] * length,
-            "hydrogen": [0] * length,
+            "hydrogen_storage": [0] * length,
             "lithium_ion_batteries": [0] * length,
             "solid_state_batteries": [0] * length,
         },

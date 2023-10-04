@@ -3,8 +3,8 @@
 
 <div class="huge title">Technologies</div>
 
-{% if user.under_construction %}
 <div id="under_construction">
+  {% if user.under_construction %}
   {% for facility in user.under_construction %}
   {% if facility.family == "technologies"%}
   <div class="padding" id="progress_bar">
@@ -12,8 +12,8 @@
   </div>
   {% endif %}
   {% endfor %}
+  {% endif %}
 </div>
-{% endif %}
 
 {% set facility = data["mineral_extraction"] %}
 <div class="bone margin facility small">

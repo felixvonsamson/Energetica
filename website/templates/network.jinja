@@ -170,7 +170,7 @@
 </table>
 </div>
 
-<div class="huge title">Network</div>
+<div class="huge title margin-large" style="margin-top:30px">Network{% if user.network %} : <b>{{user.network.name}}</b>{% endif %} </div>
 
 <!--JOIN NETWORK-->
 <div id="join_network" class="popup hidden green">
@@ -182,7 +182,7 @@
     </div>
     <form method="POST" autocomplete="off" class="flex-col margin-large" style="margin-top:5px">
         <div class="flex-col" style="width:100%;">
-            <div id="warning" class="medium toast error txt_center margin" style="width:260px; padding:8px 16px"></div>
+            <div id="warning" style="width:260px;"></div>
             <label for="choose_network">Network</label>
             <select id="choose_network" name="choose_network" class="create_chat_input medium">
               <option value="" disabled selected>select network</option>
@@ -201,24 +201,24 @@
         </div>
     </div>
     <div class="flex-col margin-large">
-        <div style="width:100%; padding-bottom:32px">
-            <label for="chat_title">Chat title</label>
-            <input type="text" class="create_chat_input medium" id="chat_title" name="chat_title" placeholder="Title">
+        <div style="padding-bottom:32px">
+            <label for="network_name">Network name</label>
+            <input type="text" class="create_chat_input medium" id="network_name" name="network_name" placeholder="Name">
         </div>
-        Group Members : <br>
+        Invited players : <br>
         (click to remove)
-        <div class="group_members"></div>
+        <div class="invited_players"></div>
         <div>
-            <label for="add_player">Add player or network</label>
+            <label for="invite_player">Invite players</label>
             <div class="flex-row">
                 <div>
-                    <input type="text" class="create_chat_input medium" id="add_player" name="add_player" placeholder="Player or Network">
-                    <div class="suggestions2"></div>
+                    <input type="text" class="create_chat_input medium" id="invite_player" name="invite_player" placeholder="Player">
+                    <div class="suggestions"></div>
                 </div>
                 <div onclick="addPlayer()" class="plus bone">+</div>
             </div>
         </div>
-        <div onclick="createGroupChat()" class="bone padding medium login-button" style="margin-top:16px">Create Network</div>
+        <div onclick="createNetwork()" class="bone padding medium login-button" style="margin-top:16px">Create Network</div>
     </div>
 </div>
 
@@ -231,8 +231,22 @@ You a currently not part of a Network. Join or create one :
 <b class="margin button2" onclick="document.getElementById('create_network').classList.remove('hidden');">Create Network</b>
 </div>
 {% else %}
-
+<div class="flex-col medium">
+    <table class="table bone">
+    <tr>
+    <th>Members</th>
+    <th>Tile(coal)</th>
+    </tr>
+    {% for member in user.network.members %}
+        <tr>
+        <td>{{member.username}}</td>
+        <td>{{member.tile[0].coal}}</td>
+        </tr>
+    {% endfor %}
+    </table>
+</div>
 {% endif %}
+<div style="height:300px"></div>
 
 {% endblock %}
 

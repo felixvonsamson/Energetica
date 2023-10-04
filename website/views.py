@@ -8,7 +8,7 @@ from flask_login import login_required, current_user
 import pickle
 import datetime
 from . import db
-from .database import Chat, Player
+from .database import Chat, Player, Network
 from .utils import check_existing_chats
 
 views = Blueprint("views", __name__)
@@ -82,8 +82,18 @@ def messages():
                 db.session.commit()
     return g.render_template_ctx("messages.jinja")
 
-@views.route("/network")
+@views.route("/network", methods=["GET", "POST"])
 def network():
+    if request.method == "POST":
+        # If player is trying to join a network
+        network_name = request.form.get("choose_network")
+        if network_name == None:
+            flash_error("No network was selected")
+        else :
+            network = Network.query.filter_by(name=network_name).first()
+            current_user.network = network
+            db.session.commit()  
+            flash(f"you joined the network {network_name}", category="message")  
     return g.render_template_ctx("network.jinja")
 
 @views.route("/power_facilities")

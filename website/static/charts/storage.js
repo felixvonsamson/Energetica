@@ -1,6 +1,6 @@
 const keys_storage = ["small_pumped_hydro", "large_pumped_hydro", 
   "lithium_ion_batteries", "solid_state_batteries", "compressed_air", 
-  "molten_salt", "hydrogen"];
+  "molten_salt", "hydrogen_storage"];
 
 function draw_storage() {
   if(graph){
