@@ -5,6 +5,8 @@ These functions make the link between the website and the database
 from flask import Blueprint, request, flash, jsonify, session, g, current_app
 from flask_login import login_required, current_user
 import pickle
+from pathlib import Path
+import numpy as np
 
 api = Blueprint('api', __name__)
 
@@ -107,3 +109,20 @@ def get_chart_data():
     else:
         return jsonify(engine.current_t, data[table],
                        engine.current_data[current_user.username][table])
+    
+@api.route("/get_market_data", methods=["GET"])
+def get_market_data():
+    if current_user.network == None:
+        return '', 404
+    filename = f"instance/network_data/{current_user.network.name}/market.pck"
+    if Path(filename).is_file():
+        with open(filename, "rb") as file:
+            market_data = pickle.load(file)
+            market_data["capacities"] = market_data["capacities"].to_dict(orient='list')
+            market_data["capacities"]["player"] = [player.username for player in market_data["capacities"]["player"]]
+            market_data["demands"] = market_data["demands"].to_dict(orient='list')
+            market_data["demands"]["player"] = [player.username for player in market_data["demands"]["player"]]
+            market_data["demands"]["price"] = [None if price == np.inf else price for price in market_data["demands"]["price"]]
+            return jsonify(market_data)
+    else:
+        return '', 404

@@ -2,7 +2,6 @@
 The game states update functions are defined here
 """
 
-import datetime
 import pickle
 import pandas as pd
 import numpy as np
@@ -68,6 +67,8 @@ def update_electricity(engine):
             market = calculate_generation_with_market(engine, market, 
                                                       total_demand, player, t)
         market_logic(engine, market, t)
+        with open(f"instance/network_data/{network.name}/market.pck", "wb") as file:
+            pickle.dump(market, file)
 
     # For players that are not in a network
     players = Player.query.all()
@@ -158,21 +159,22 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
     priority_list = (player.self_consumption_priority.split(' ') 
         + player.rest_of_priorities.split(' '))
     for plant in priority_list:
-        # If the plant is not contollable the generation level is given
-        if assets[plant]["ramping speed"] == 0:
-            generation[plant][t] = (generation[plant][t]
-                                * assets[plant]["power generation"]
-                                * getattr(player, plant))
-            total_generation += generation[plant][t]
-        # else the minimal generation level is given by the ramping down constraint
-        else:
-            generation[plant][t] = calculate_prod("min", player, assets, plant, 
-                                                  generation, t)
-            total_generation += generation[plant][t]
-        # If the player is not able to use all the min. generated energy, it is put on the market for -10CHF/MWh
-        if total_generation > total_demand:
-            capacity = min(generation[plant][t], total_generation-total_demand)
-            market = offer(market, player, capacity, -10, plant)
+        if getattr(player, plant) > 0:
+            # If the plant is not contollable the generation level is given
+            if assets[plant]["ramping speed"] == 0:
+                generation[plant][t] = (generation[plant][t]
+                                    * assets[plant]["power generation"]
+                                    * getattr(player, plant))
+                total_generation += generation[plant][t]
+            # else the minimal generation level is given by the ramping down constraint
+            else:
+                generation[plant][t] = calculate_prod("min", player, assets, plant, 
+                                                    generation, t)
+                total_generation += generation[plant][t]
+            # If the player is not able to use all the min. generated energy, it is put on the market for -10CHF/MWh
+            if total_generation > total_demand:
+                capacity = min(generation[plant][t], total_generation-total_demand)
+                market = offer(market, player, capacity, -10, plant)
     # while the produced power is not sufficient for own demand, for each power plant following the priority list,
     # set the power to the maximum possible value (max upward power ramp). 
     # For the PP that overshoots the demand, find the equilibirum power generation value.
@@ -203,25 +205,27 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
     # Sell capacities of remaining plants on the market
     for plant in player.rest_of_priorities.split(' '):
         if assets[plant]["ramping speed"] != 0:
-            max_prod = calculate_prod("max", player, assets, plant, 
-                                      generation, t)
-            price = getattr(player, "price_" + plant)
-            capacity = max_prod - generation[plant][t]
-            market = offer(market, player, capacity, price, plant)
+            if getattr(player, plant) > 0:
+                max_prod = calculate_prod("max", player, assets, plant, 
+                                        generation, t)
+                price = getattr(player, "price_" + plant)
+                capacity = max_prod - generation[plant][t]
+                market = offer(market, player, capacity, price, plant)
          
     # NO RAMPING SPEED TAKEN INTO ACCOUNT YET 
     for plant in engine.storage_plants :
-        # Storage capacity sold on the market
-        capacity = min(storage[plant][t - 1] * 60, # Transform W in Wh
-                    getattr(player, plant) * assets[plant]["power generation"])
-        price = getattr(player, "price_sell_" + plant)
-        market = offer(market, player, capacity, price, plant)
-        # Demand curve for storage
-        demand = min((assets[plant]["storage capacity"] * 
-                    getattr(player, plant) - storage[plant][t - 1]) * 60,
-                    getattr(player, plant) * assets[plant]["power generation"])
-        price = getattr(player, "price_buy_" + plant)
-        market = bid(market, player, demand, price, plant)
+        if getattr(player, plant) > 0:
+            # Storage capacity sold on the market
+            capacity = min(storage[plant][t - 1] * 60, # Transform W in Wh
+                        getattr(player, plant) * assets[plant]["power generation"])
+            price = getattr(player, "price_sell_" + plant)
+            market = offer(market, player, capacity, price, plant)
+            # Demand curve for storage
+            demand = min((assets[plant]["storage capacity"] * 
+                        getattr(player, plant) - storage[plant][t - 1]) * 60,
+                        getattr(player, plant) * assets[plant]["power generation"])
+            price = getattr(player, "price_buy_" + plant)
+            market = bid(market, player, demand, price, plant)
     return market
         
 # Calculate overall network demand, class all capacity offers in ascending order and find the market price of electricity
@@ -241,7 +245,7 @@ def market_logic(engine, market, t):
     # If network prioritary demand is higher than total supply -> only partial satisfaction of demand and level down of industry.
     if total_market_capacity < network_demand:
         satisfaction = total_market_capacity / network_demand
-        market_price = offers["price"][-1]
+        market_price = offers["price"][len(offers["price"])-1]
         for row in demands.itertuples(index=False):
             if row.plant == None:
                 buy(engine, row, market_price, t, quantity=row.capacity 
@@ -251,6 +255,7 @@ def market_logic(engine, market, t):
             sell(engine, row, market_price, t)
     else:
         market_price, market_quantity = market_optimum(offers, demands)
+        print("market p & q = ", market_price, market_quantity)
         # sell all capacities under market price
         for row in offers.itertuples(index=False):
             if row.cumul_capacities > market_quantity:
@@ -326,17 +331,19 @@ def calculate_prod(minmax, player, assets, plant, generation, t):
         return max(0,min(max_ressources, min_ramping))
 
 def offer(market, player, capacity, price, plant):
-    new_row = pd.DataFrame({'player': [player], 'capacity': [capacity], 
-                            'price': [price], 'plant': [plant]})
-    market["capacities"] = pd.concat([market["capacities"], new_row], 
-                                     ignore_index=True)
+    if capacity>0:
+        new_row = pd.DataFrame({'player': [player], 'capacity': [capacity], 
+                                'price': [price], 'plant': [plant]})
+        market["capacities"] = pd.concat([market["capacities"], new_row], 
+                                        ignore_index=True)
     return market
 
 def bid(market, player, demand, price = np.inf, plant = None):
-    new_row = pd.DataFrame({'player': [player], 'capacity': [demand], 
-                            'price': [price], 'plant': [plant]})
-    market["demands"] = pd.concat([market["demands"],new_row], 
-                                  ignore_index=True)
+    if demand>0:
+        new_row = pd.DataFrame({'player': [player], 'capacity': [demand], 
+                                'price': [price], 'plant': [plant]})
+        market["demands"] = pd.concat([market["demands"],new_row], 
+                                    ignore_index=True)
     return market
 
 def sell(engine, row, market_price, t, quantity=None):

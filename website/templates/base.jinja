@@ -1,6 +1,10 @@
 {% extends "head.jinja" %} 
 {% block base%}
 
+<div class="flex-row logo_container">
+  <img src="{{ url_for('static', filename='images/icon.svg') }}" class="logo small" style="margin-left:7px"/>
+  <span class="logo_txt">Energetica</span>
+</div>
 <nav class="navbar medium">
   <a class="navbar_item padding tan_green" id="home" href="/home">Home</a>
   <a class="navbar_item padding tan_green" id="messages" href="/messages">Messages</a>

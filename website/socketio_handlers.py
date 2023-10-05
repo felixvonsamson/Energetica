@@ -10,6 +10,7 @@ from . import heap
 from .database import Player, Network, Hex, Under_construction, Chat, Message
 from .utils import add_asset, display_CHF, check_existing_chats
 from . import db
+from pathlib import Path
 
 def add_handlers(socketio, engine):
     # ???
@@ -84,14 +85,15 @@ def add_handlers(socketio, engine):
 
     # this function is executed when a player creates a network
     @socketio.on("create_network")
-    def create_network(name, invitations):
+    def create_network(network_name, invitations):
         for username in invitations:
             player = Player.query.filter_by(username=username).first()
             # INVITE PLAYERS TO JOIN NETWORK
-        if Network.query.filter_by(name=name).first() is not None:
+        if Network.query.filter_by(name=network_name).first() is not None:
             current_user.emit("errorMessage", "Network with this name already exists")
             return
-        new_Network = Network(name=name, members=[current_user])
+        new_Network = Network(name=network_name, members=[current_user])
         db.session.add(new_Network)
         db.session.commit()
         engine.refresh()
+        Path(f"instance/network_data/{network_name}").mkdir(parents=True, exist_ok=True)

@@ -232,7 +232,7 @@ You a currently not part of a Network. Join or create one :
 </div>
 {% else %}
 <div class="flex-col medium">
-    <table class="table bone">
+    <table class="table bone margin">
     <tr>
     <th>Members</th>
     <th>Tile(coal)</th>
@@ -246,11 +246,12 @@ You a currently not part of a Network. Join or create one :
     </table>
 </div>
 {% endif %}
-<div style="height:300px"></div>
+<div id="market_graph" class="bone" style="padding-top:30px"></div>
 
 {% endblock %}
 
 {% block additionnal_script %}
 <script src="{{ url_for('static', filename='network/price_change.js') }}"></script>
 <script src="{{ url_for('static', filename='network/network_logic.js') }}"></script>
+<script src="{{ url_for('static', filename='network/market_graph.js') }}"></script>
 {% endblock %}

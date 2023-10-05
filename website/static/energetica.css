@@ -40,7 +40,7 @@ canvas {display: block;}
 .cross{text-align:center; width: 25px; position:relative; left:3px; border-radius:8px; font-size:30px}
 .cross:hover{background-color:#9e9e9e; cursor: pointer;}
 
-.navbar{display: block; width: 230px; position: fixed; height: 100%; overflow: auto;}
+.navbar{display: block; width: 230px; position: fixed; overflow: auto; top:90px;}
 .navbar_item{display: block; text-decoration: none;}
 .navbar_item.active {background-color: #285430; color: #fff;}
 .navbar_item:hover:not(.active) {background-color: #5f8d4e; color: white;}
@@ -76,7 +76,11 @@ canvas {display: block;}
 .table tbody tr:nth-child(even){background-color:#d6c79a}
 .table tbody td{padding:0 12px;}
 
+.logo_container{width: 360px; height:90px; position: fixed; background-color:#a4be7b; align-items:center; z-index: -10;}
 .logo{height:350px; filter:invert(26%) sepia(28%) saturate(805%) hue-rotate(79deg) brightness(93%) contrast(91%);}
+.logo.small{height:80px;}
+.logo_txt{font-family: 'Expletus Sans', cursive; font-size:50px; color:#285430}
+.logo_txt.large{position:fixed; font-size:160px; top:10%; left:50%; transform:translate(-50%,-50%); -ms-transform:translate(-50%,-50%)}
 
 .ressources{display: block; width: 230px; position:fixed; right:0; top:0; text-align: center;}
 
