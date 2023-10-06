@@ -2,6 +2,7 @@ let buttons = [];
 
 let margin = 40;
 let graph_h, graph_w;
+let demand, supply;
 let maxPrice;
 let minPrice;
 let maxCap;
@@ -56,9 +57,42 @@ function draw() {
         stroke(255);
         strokeWeight(2);
         let X = min(graph_w, max(0, mouseX-2*margin));
-        let t = floor(map(X, 0, graph_w, 0, 100));
+        let c = floor(map(X, 0, graph_w, 0, maxCap));
         X += 2*margin;
         line(X, 0, X, graph_h);
+        push();
+        translate(X, 0);
+        let tx = -180;
+        let ty = mouseY;
+        translate(tx, ty);
+        noStroke();
+        fill_alt = 1;
+        for(let i=0; i<supply["price"].length; i++){
+            if(supply["cumul_capacities"][i] > c){
+                alternate_fill();
+                rect(0, 0, 160, 17);
+                fill(0);
+                textStyle(BOLD);
+                text(supply["player"][i],80, 9);
+                textStyle(NORMAL);
+
+                translate(0, 16);
+                alternate_fill();
+                rect(0, 0, 160, 17);
+                fill(0);
+                text("capacity :", 40, 10);
+                text(supply["capacity"][i], 120, 10);
+
+                translate(0, 16);
+                alternate_fill();
+                rect(0, 0, 160, 17);
+                fill(0);
+                text("price :", 40, 10);
+                text(supply["price"][i], 120, 10);
+                break;
+            }
+        }
+        pop();
         pop();
     }
 }

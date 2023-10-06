@@ -70,14 +70,22 @@ def update_electricity(engine):
         with open(f"instance/network_data/{network.name}/market.pck", "wb") as file:
             pickle.dump(market, file)
 
-    # For players that are not in a network
     players = Player.query.all()
     for player in players:
         if len(player.tile) == 0:
             continue
+        # Production update for players that are not in a network
         if player.network == None:
             total_demand = calculate_demand(engine , player, t)
             calculate_generation_without_market(engine, total_demand, player, t)
+        # For players in network, substract the difference between importa and exports to ignore energy that has been bought from themselves
+        else :
+            current_data = engine.current_data[player.username]
+            exp = current_data["demand"]["exports"][t]
+            imp = current_data["generation"]["imports"][t]
+            current_data["demand"]["exports"][t] = max(0, exp-imp)
+            current_data["generation"]["imports"][t] = max(0, imp-exp)
+        # Ressource and pollution update for all players
         ressources_and_pollution(engine, player, t)
     
     #save changes 
@@ -165,12 +173,11 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
                 generation[plant][t] = (generation[plant][t]
                                     * assets[plant]["power generation"]
                                     * getattr(player, plant))
-                total_generation += generation[plant][t]
             # else the minimal generation level is given by the ramping down constraint
             else:
                 generation[plant][t] = calculate_prod("min", player, assets, plant, 
                                                     generation, t)
-                total_generation += generation[plant][t]
+            total_generation += generation[plant][t]
             # If the player is not able to use all the min. generated energy, it is put on the market for -10CHF/MWh
             if total_generation > total_demand:
                 capacity = min(generation[plant][t], total_generation-total_demand)
@@ -255,7 +262,6 @@ def market_logic(engine, market, t):
             sell(engine, row, market_price, t)
     else:
         market_price, market_quantity = market_optimum(offers, demands)
-        print("market p & q = ", market_price, market_quantity)
         # sell all capacities under market price
         for row in offers.itertuples(index=False):
             if row.cumul_capacities > market_quantity:
@@ -355,7 +361,7 @@ def sell(engine, row, market_price, t, quantity=None):
     if row.plant in engine.storage_plants:
         storage[row.plant][t] -= quantity / 60 # Transform W in Wh
         generation[row.plant][t] += quantity
-    else :
+    elif row.price >= 0:
         generation[row.plant][t] += quantity
     demand["exports"][t] += quantity
     row.player.money += quantity * market_price / 1000000
