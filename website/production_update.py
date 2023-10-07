@@ -239,12 +239,15 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
 # Sell all capacities that are below market price at market price.
 def market_logic(engine, market, t):
     offers = market["capacities"]
-    offers.sort_values("price")
+    offers = offers.sort_values("price").reset_index(drop=True)
     offers['cumul_capacities'] = offers['capacity'].cumsum()
 
     demands = market["demands"]
-    demands.sort_values(by="price", ascending=False, inplace=True)
+    demands = demands.sort_values(by="price", ascending=False).reset_index(drop=True)
     demands['cumul_capacities'] = demands['capacity'].cumsum()
+
+    market["capacities"] = offers
+    market["demands"] = demands
 
     total_market_capacity = offers["capacity"].sum()
     network_demand = demands.groupby('price')['capacity'].sum()[np.inf]
@@ -252,7 +255,10 @@ def market_logic(engine, market, t):
     # If network prioritary demand is higher than total supply -> only partial satisfaction of demand and level down of industry.
     if total_market_capacity < network_demand:
         satisfaction = total_market_capacity / network_demand
-        market_price = offers["price"][len(offers["price"])-1]
+        if satisfaction == 0:
+            market_price = 0
+        else :
+            market_price = offers["price"][len(offers["price"])-1]
         for row in demands.itertuples(index=False):
             if row.plant == None:
                 buy(engine, row, market_price, t, quantity=row.capacity 
@@ -262,6 +268,8 @@ def market_logic(engine, market, t):
             sell(engine, row, market_price, t)
     else:
         market_price, market_quantity = market_optimum(offers, demands)
+        market["market_price"] = market_price
+        market["market_quantity"] = market_quantity
         # sell all capacities under market price
         for row in offers.itertuples(index=False):
             if row.cumul_capacities > market_quantity:
@@ -307,12 +315,17 @@ def market_optimum(offers_og, demands_og):
             price_d = row.price
         else:
             price_o = row.price
+        if price_o == np.inf:
+            if price_d == np.inf:
+                price = 2*max(offers_og["price"])
+            else:
+                price = price_d
+            return price, row.cumul_capacities
         if price_d < price_o:
             price = price_d
             if np.isnan(row.index_offer):
                 price = price_o
             return price, row.cumul_capacities
-    return price_d, row.cumul_capacities
 
 # Calculates the min or max power production of a plant in at time t considering ramping constraints, ressources constraints and max and min power constraints
 def calculate_prod(minmax, player, assets, plant, generation, t):

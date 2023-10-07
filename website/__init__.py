@@ -116,4 +116,8 @@ def create_app():
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
 
+        with app.app_context():
+            #Temporary automated player creation for testing
+            from .init_test_players import init_test_players
+            init_test_players(engine)
     return socketio, app

@@ -3,9 +3,11 @@ let buttons = [];
 let margin = 40;
 let graph_h, graph_w;
 let demand, supply;
+let mq, mp;
 let maxPrice;
 let minPrice;
 let maxCap;
+let f;
 let graph;
 let fill_alt = 0;
 
@@ -60,35 +62,139 @@ function draw() {
         let c = floor(map(X, 0, graph_w, 0, maxCap));
         X += 2*margin;
         line(X, 0, X, graph_h);
-        push();
-        translate(X, 0);
-        let tx = -180;
-        let ty = mouseY;
-        translate(tx, ty);
+        translate(X, graph_h*f);
         noStroke();
+        push();
         fill_alt = 1;
         for(let i=0; i<supply["price"].length; i++){
             if(supply["cumul_capacities"][i] > c){
-                alternate_fill();
-                rect(0, 0, 160, 17);
+                fill(255);
+                let h = map(supply["price"][i], 0, maxPrice, 0, graph_h*f)
+                translate(0, -h);
+                ellipse(0, 0, 8, 8);
+
+                let tx = -150;
+                let ty = 4;
+                if(X - 2*margin < 150){
+                    tx = 20;
+                }
+                if(-h+100 > graph_h*(1-f)){
+                    ty = graph_h*(1-f) + h - 120;
+                }
+                translate(tx, ty);
+
+                for(let j=0; j<5; j++){
+                    translate(0, 16);
+                    alternate_fill();
+                    rect(0, 0, 130, 17);
+                }
+                translate(0, -16*4);
                 fill(0);
                 textStyle(BOLD);
-                text(supply["player"][i],80, 9);
+                text("Supply",65, 8);
                 textStyle(NORMAL);
-
+                textAlign(LEFT);
+                let left = ["Player", "Capacity", "Price", "Plant"];
+                for(let j of left){
+                    translate(0, 16);
+                    text(j, 5, 8);
+                }
+                translate(0, -16*3);
+                textAlign(CENTER);
+                textStyle(BOLD);
+                text(supply["player"][i], 90, 8);
+                textStyle(NORMAL);
+                let right = [display_Wh(supply["capacity"][i]), display_CHF(supply["price"][i]), cols_and_names[supply["plant"][i]][1]];
+                for(let j of right){
+                    translate(0, 16);
+                    text(j, 90, 8);
+                }
+                break;
+            }
+        }
+        pop();
+        fill_alt = 1;
+        let ox = map(mq, 0, maxCap, 0, graph_w);
+        let oy = map(mp, 0, maxPrice, 0, graph_h*f);
+        if(abs(X - ox - 2*margin) < 30){
+            push();
+            translate(ox - X + 2*margin - 140, -oy - 74);
+            for(let j=0; j<3; j++){
                 translate(0, 16);
                 alternate_fill();
-                rect(0, 0, 160, 17);
-                fill(0);
-                text("capacity :", 40, 10);
-                text(supply["capacity"][i], 120, 10);
+                rect(0, 0, 130, 17);
+            }
+            translate(0, -2*16);
+            fill(0);
+            textStyle(BOLD);
+            text("Market optimum",65, 8);
+            textStyle(NORMAL);
+            textAlign(LEFT);
+            translate(0, 16);
+            text("Price", 5, 8);
+            translate(0, 16);
+            text("Quantity", 5, 8);
+            textAlign(CENTER);
+            translate(0, -16);
+            text(display_CHF(mp), 90, 8);
+            translate(0, 16);
+            text(display_Wh(mq), 90, 8);
+            pop();
+        }
+        push();
+        fill_alt = 1;
+        for(let i=0; i<demand["price"].length; i++){
+            if(demand["cumul_capacities"][i] > c){
+                fill(255);
+                let h = 2*graph_h;
+                let price = "Infinite";
+                let plant = "Base demand"
+                if (demand["price"][i] != null){
+                    h = map(demand["price"][i], 0, maxPrice, 0, graph_h*f);
+                    price = display_CHF(demand["price"][i]);
+                    plant = cols_and_names[demand["plant"][i]][1];
+                }
+                translate(0, -h);
+                ellipse(0, 0, 8, 8);
 
-                translate(0, 16);
-                alternate_fill();
-                rect(0, 0, 160, 17);
+                let tx = 20;
+                let ty = 4;
+                if(width-X < 150){
+                    tx = -150;
+                }
+                if(-h+100 > graph_h*(1-f)){
+                    ty = graph_h*(1-f) + h - 120;
+                }else if(h > graph_h*f){
+                    ty = h - graph_h*f;
+                }
+                translate(tx, ty);
+
+                for(let j=0; j<5; j++){
+                    translate(0, 16);
+                    alternate_fill();
+                    rect(0, 0, 130, 17);
+                }
+                translate(0, -16*4);
                 fill(0);
-                text("price :", 40, 10);
-                text(supply["price"][i], 120, 10);
+                textStyle(BOLD);
+                text("Demand",65, 8);
+                textStyle(NORMAL);
+                textAlign(LEFT);
+                let left = ["Player", "Capacity", "Price", "Plant"];
+                for(let j of left){
+                    translate(0, 16);
+                    text(j, 5, 8);
+                }
+                translate(0, -16*3);
+                textAlign(CENTER);
+                textStyle(BOLD);
+                text(demand["player"][i], 90, 8);
+                textStyle(NORMAL);
+                let right = [display_Wh(demand["capacity"][i]), price, plant];
+                for(let j of right){
+                    translate(0, 16);
+                    text(j, 90, 8);
+                }
                 break;
             }
         }
@@ -103,11 +209,14 @@ function update_graph(){
     .then((raw_data) => {
         supply = raw_data["capacities"];
         demand = raw_data["demands"];
+        mq = raw_data["market_quantity"];
+        mp = raw_data["market_price"];
+        console.log(mq, mp);
         maxCap = max(supply["cumul_capacities"][supply["cumul_capacities"].length-1],
             demand["cumul_capacities"][demand["cumul_capacities"].length-1], 100);
         maxPrice = max(...supply["price"], ...demand["price"], 1/1.1)*1.1;
         minPrice = min(...supply["price"], ...demand["price"], 0)*1.1;
-        let f = maxPrice/(maxPrice-minPrice);
+        f = maxPrice/(maxPrice-minPrice);
         background(229, 217, 182);
         push();
         translate(2*margin, height-margin-10-graph_h*(1-f));
@@ -117,7 +226,7 @@ function update_graph(){
             let w = map(supply["capacity"][i], 0, maxCap, 0, graph_w);
             let h = map(supply["price"][i], 0, maxPrice, 0, -graph_h*f);
             fill(cols_and_names[supply["plant"][i]][0])
-            rect(0, 0, w, h);
+            rect(0, 0, w-1, h);
             translate(w, 0);
         }
         pop();
@@ -127,16 +236,24 @@ function update_graph(){
         strokeWeight(3);
         for(i = 0; i<demand["capacity"].length; i++){
             let w = map(demand["capacity"][i], 0, maxCap, 0, graph_w);
-            h = calc_h(demand["price"][i], f)
+            h = calc_h(demand["price"][i])
             let h2 = 0;
             if (i+1 < demand["capacity"].length){
-                h2 = calc_h(demand["price"][i+1], f)
+                h2 = calc_h(demand["price"][i+1])
             }
             line(0, h, w, h);
             line(w, h, w, h2);
+            push();
+            strokeWeight(0.3);
+            line(w, h2, w, 0);
+            pop();
             translate(w, 0);
         }
         pop();
+        let ox = map(mq, 0, maxCap, 0, graph_w);
+        let oy = map(mp, 0, maxPrice, 0, graph_h*f);
+        fill(255, 0, 0);
+        ellipse(ox, -oy, 10, 10);
 
         stroke(0);
         line(0, 0, graph_w, 0);
@@ -216,7 +333,7 @@ function units(maxNumber){
     return interval;
 }
 
-function calc_h(price, f){
+function calc_h(price){
     if(price==null){
         return -2*graph_h;
     }else{

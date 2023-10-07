@@ -140,14 +140,14 @@ full_config = {
         "nuclear_reactor": {
             "name": "Nuclear reactor",
             "price": 1000000000,
-            "power generation": 900000000,
+            "power generation": 900000,
             "construction time": 172800,
             "construction energy": 17280,
             "construction pollution": 12000,
             "consumed ressource": "uranium",
             "amount consumed": 360,
             "pollution": 2,
-            "ramping speed": 1000000, #(15 h)
+            "ramping speed": 10000, #(15 h)
         },
         "large_water_dam": {
             "name": "Large water dam",
@@ -213,7 +213,7 @@ full_config = {
             "name": "Small pumped hydro",
             "price": 400000000,  # [CHF]
             "storage capacity": 3000000000,  # [Wh]
-            "power generation": 55000000,  # [W]
+            "power generation": 550000,  # [W]
             "efficiency": 0.75,
             "construction time": 36000,  # [s]
             "construction energy": 10000,  # [Wh]
@@ -224,7 +224,7 @@ full_config = {
             "name": "Compressed air",
             "price": 1200000000,
             "storage capacity": 100000000,
-            "power generation": 20000000,
+            "power generation": 200000,
             "efficiency": 0.60,
             "construction time": 36000,
             "construction energy": 10000,

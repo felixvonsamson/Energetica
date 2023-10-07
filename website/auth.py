@@ -52,8 +52,8 @@ def sign_up():
         player = Player.query.filter_by(username=username).first()
         if player:
             flash("Username already exist", category="error")
-        elif len(username) < 4:
-            flash("Username must be greater than 3 characters.",
+        elif len(username) < 3:
+            flash("Username must have at least 3 characters.",
                   category="error")
         elif password1 != password2:
             flash("Passwords don't match.", category="error")
