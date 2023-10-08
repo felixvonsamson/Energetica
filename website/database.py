@@ -150,8 +150,8 @@ class Player(db.Model, UserMixin):
     price_nuclear_reactor_gen4 = db.Column(db.Float, default=75)
 
     # Storage capacity prices [CHF/MWh]
-    price_buy_small_pumped_hydro = db.Column(db.Float, default=15)
-    price_sell_small_pumped_hydro = db.Column(db.Float, default=30)
+    price_buy_small_pumped_hydro = db.Column(db.Float, default=30)
+    price_sell_small_pumped_hydro = db.Column(db.Float, default=50)
     price_buy_compressed_air = db.Column(db.Float, default=14)
     price_sell_compressed_air = db.Column(db.Float, default=22)
     price_buy_molten_salt = db.Column(db.Float, default=16)

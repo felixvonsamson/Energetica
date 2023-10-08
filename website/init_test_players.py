@@ -7,7 +7,7 @@ from . import db
 def init_test_players(engine):
     members = []
 
-    for i in range(5):
+    for i in range(4):
         members.append(create_player("Player"+str(i), i+1))
 
     network = "Network1"
@@ -28,7 +28,7 @@ def create_player(username, tile_id):
         tile = Hex.query.filter_by(id=tile_id).first()
         new_player = Player(
             username=username,
-            password=generate_password_hash("boissapin", method="sha256"),
+            password=generate_password_hash("password", method="sha256"),
             data_table_name=f"data_{username}.pck",
             tile = [tile],
         )

@@ -104,7 +104,7 @@ def create_app():
             args=(engine, app),
             id="state_update_m",
             trigger="cron",
-            second="0",
+            second="*/5",
         )
         scheduler.add_job(
             func=check_heap,

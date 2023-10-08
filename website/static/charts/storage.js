@@ -77,8 +77,6 @@ function draw_storage() {
       fill_alt = 1;
       push();
       noStroke();
-      const keys = [...keys_storage].reverse();
-      keys.splice(0, 8);
       translate(width-2*margin-170, min(0.8*height, mouseY));
       fill_alt = 0;
       alternate_fill();
@@ -88,7 +86,7 @@ function draw_storage() {
       text("Total storage capacity",80, 8);
       textStyle(NORMAL);
       let total_cap = 0;
-      for (const key of keys) {
+      for(key of keys_storage) {
         if(caps[key]>0){
           alternate_fill();
           translate(0, 16);

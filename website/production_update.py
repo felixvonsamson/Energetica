@@ -63,6 +63,7 @@ def update_electricity(engine):
         for player in network.members:
             if len(player.tile) == 0:
                 continue
+            init_storage(engine, player, t)
             total_demand = calculate_demand(engine, player, t)
             market = calculate_generation_with_market(engine, market, 
                                                       total_demand, player, t)
@@ -76,6 +77,7 @@ def update_electricity(engine):
             continue
         # Production update for players that are not in a network
         if player.network == None:
+            init_storage(engine, player, t)
             total_demand = calculate_demand(engine , player, t)
             calculate_generation_without_market(engine, total_demand, player, t)
         # For players in network, substract the difference between importa and exports to ignore energy that has been bought from themselves
@@ -94,6 +96,13 @@ def update_electricity(engine):
     with open("instance/engine_data.pck", "wb") as file:
         pickle.dump(engine.current_data, file)
         print("saved engine data")
+
+# keep t-1 level of storage at t 
+def init_storage(engine, player, t):
+    storage = engine.current_data[player.username]["storage"]
+    for plant in engine.storage_plants :
+        if getattr(player, plant) > 0:
+            storage[plant][t] = storage[plant][t-1]
 
 # calculates the electricity demand of one player
 def calculate_demand(engine, player, t):
@@ -223,7 +232,7 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
     for plant in engine.storage_plants :
         if getattr(player, plant) > 0:
             # Storage capacity sold on the market
-            capacity = min(storage[plant][t - 1] * 60, # Transform W in Wh
+            capacity = min(storage[plant][t - 1] * 60, # Transform Wh in W
                         getattr(player, plant) * assets[plant]["power generation"])
             price = getattr(player, "price_sell_" + plant)
             market = offer(market, player, capacity, price, plant)
@@ -332,13 +341,13 @@ def calculate_prod(minmax, player, assets, plant, generation, t):
     ressource_factor = 1
     if plant == "combined_cycle":
         avalable_gas = getattr(player, assets[plant]["consumed ressource"][0])   
-        needed_gas = assets[plant]["amount consumed"][0]/60                      # * getattr(player, plant)
+        needed_gas = assets[plant]["amount consumed"][0]                         # * getattr(player, plant)
         avalable_coal = getattr(player, assets[plant]["consumed ressource"][1])  
-        needed_coal = assets[plant]["amount consumed"][1]/60                     # * getattr(player, plant)
+        needed_coal = assets[plant]["amount consumed"][1]                        # * getattr(player, plant)
         ressource_factor = min(avalable_gas/needed_gas, avalable_coal/needed_coal, getattr(player, plant))
     elif assets[plant]["amount consumed"] != 0 :
         avalable_ressource = getattr(player, assets[plant]["consumed ressource"])
-        needed_ressource = assets[plant]["amount consumed"]/60                   # * getattr(player, plant)
+        needed_ressource = assets[plant]["amount consumed"]                      # * getattr(player, plant)
         ressource_factor = min(avalable_ressource / needed_ressource, getattr(player, plant))
 
     max_ressources = ressource_factor * assets[plant]["power generation"]        # / getattr(player, plant)
@@ -399,13 +408,13 @@ def ressources_and_pollution(engine, player, t):
                   "nuclear_reactor_gen4"]:
         ressource = assets[plant]["consumed ressource"]
         power_factor = generation[plant][t] / assets[plant]["power generation"]  # /getattr(player, plant)
-        quantity = power_factor * assets[plant]["amount consumed"]/60            # *getattr(player, plant)
+        quantity = power_factor * assets[plant]["amount consumed"]               # *getattr(player, plant)
         setattr(player, ressource, getattr(player, ressource) - quantity)
     # special case of combined cycle
     power_factor = generation["combined_cycle"][t] / assets["combined_cycle"][
         "power generation"]  # /getattr(player, plant)
-    quantity_gas = power_factor * assets["combined_cycle"]["amount consumed"][0]/60  # *getattr(player, plant)
-    quantity_coal = power_factor * assets["combined_cycle"]["amount consumed"][1]/60  # *getattr(player, plant)
+    quantity_gas = power_factor * assets["combined_cycle"]["amount consumed"][0]  # *getattr(player, plant)
+    quantity_coal = power_factor * assets["combined_cycle"]["amount consumed"][1]  # *getattr(player, plant)
     player.gas -= quantity_gas
     player.coal -= quantity_coal
     #POLLUTION
@@ -415,7 +424,7 @@ def ressources_and_pollution(engine, player, t):
                   "deep_geothermal_plant", "nuclear_reactor", 
                   "nuclear_reactor_gen4"]:
         power_factor = generation[plant][t] / assets[plant]["power generation"]  # /getattr(player, plant)
-        plant_emmissions = power_factor * assets[plant]["pollution"]/60          # *getattr(player, plant)
+        plant_emmissions = power_factor * assets[plant]["pollution"]             # *getattr(player, plant)
         emissions[plant][t] = plant_emmissions
         player.emissions += plant_emmissions
         engine.current_CO2[t] = engine.current_CO2[t-1] + plant_emmissions

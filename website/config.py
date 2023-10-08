@@ -13,8 +13,8 @@ full_config = {
             "construction energy": 10000,  # [Wh]
             "construction pollution": 12000,  # [kg]
             "consumed ressource": "money",
-            "amount consumed": 100, # [kg/h]
-            "pollution": 494,  # [kg CO2/h]
+            "amount consumed": 10, # [kg/min]
+            "pollution": 8,  # [kg CO2/min]
             "ramping speed": 1800,  # [W/min] (13.8 min)
         },
         "windmill": {
@@ -49,8 +49,8 @@ full_config = {
             "construction energy": 17280,
             "construction pollution": 12000,
             "consumed ressource": "coal",
-            "amount consumed": 60000,
-            "pollution": 986,
+            "amount consumed": 1000,
+            "pollution": 16,
             "ramping speed": 650000, #(184.6 min)
         },
         "oil_burner": {
@@ -61,8 +61,8 @@ full_config = {
             "construction energy": 17280,
             "construction pollution": 12000,
             "consumed ressource": "oil",
-            "amount consumed": 21818,
-            "pollution": 777,
+            "amount consumed": 363,
+            "pollution": 13,
             "ramping speed": 800000, #(100 min)
         },
         "gas_burner": {
@@ -73,8 +73,8 @@ full_config = {
             "construction energy": 17280,
             "construction pollution": 12000,
             "consumed ressource": "gas",
-            "amount consumed": 21818,
-            "pollution": 429,
+            "amount consumed": 400,
+            "pollution": 7,
             "ramping speed": 3600000, #(27.8 min)
         },
         "shallow_geothermal_plant": {
@@ -86,7 +86,7 @@ full_config = {
             "construction pollution": 12000,
             "consumed ressource": "geothermy",
             "amount consumed": 0,
-            "pollution": 6,
+            "pollution": 0.1,
             "ramping speed": 0,
         },
         "small_water_dam": {
@@ -121,8 +121,8 @@ full_config = {
             "construction energy": 17280,
             "construction pollution": 12000,
             "consumed ressource": ["gas", "coal"],
-            "amount consumed": [60000, 9000],
-            "pollution": 488,
+            "amount consumed": [1000, 150],
+            "pollution": 8.5,
             "ramping speed": 7200000, #(73.6 min)
         },
         "deep_geothermal_plant": {
@@ -134,7 +134,7 @@ full_config = {
             "construction pollution": 12000,
             "consumed ressource": "geothermy",
             "amount consumed": 0,
-            "pollution": 10,
+            "pollution": 0.17,
             "ramping speed": 0,
         },
         "nuclear_reactor": {
@@ -145,8 +145,8 @@ full_config = {
             "construction energy": 17280,
             "construction pollution": 12000,
             "consumed ressource": "uranium",
-            "amount consumed": 360,
-            "pollution": 2,
+            "amount consumed": 6,
+            "pollution": 0.03,
             "ramping speed": 10000, #(15 h)
         },
         "large_water_dam": {
@@ -205,15 +205,15 @@ full_config = {
             "construction energy": 17280,
             "construction pollution": 12000,
             "consumed ressource": "uranium",
-            "amount consumed": 3,
-            "pollution": 2,
+            "amount consumed": 0.05,
+            "pollution": 0.03,
             "ramping speed": 2000000, #(20.8 h)
         },
         "small_pumped_hydro": {
             "name": "Small pumped hydro",
             "price": 400000000,  # [CHF]
             "storage capacity": 3000000000,  # [Wh]
-            "power generation": 550000,  # [W]
+            "power generation": 200000,  # [W]
             "efficiency": 0.75,
             "construction time": 36000,  # [s]
             "construction energy": 10000,  # [Wh]
@@ -224,7 +224,7 @@ full_config = {
             "name": "Compressed air",
             "price": 1200000000,
             "storage capacity": 100000000,
-            "power generation": 200000,
+            "power generation": 100000,
             "efficiency": 0.60,
             "construction time": 36000,
             "construction energy": 10000,
