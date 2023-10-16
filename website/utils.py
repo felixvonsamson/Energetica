@@ -3,7 +3,7 @@ I dumped all small helpful functions here
 """
 
 import time
-from .database import Player, Under_construction
+from .database import Player, Under_construction, Shipment, Chat
 from . import db
 from flask import current_app
 from sqlalchemy import func
@@ -20,11 +20,24 @@ def add_asset(player_id, facility):
     ).delete()
     db.session.commit()
 
+# this function is executed when a resource shippment arrives :
+def store_import(player_id, resource, quantity):
+    player = Player.query.get(int(player_id))
+    max_cap = current_app.config["engine"].config[player_id][
+        "warehouse_capacities"][resource]
+    if getattr(player, resource) + quantity > max_cap:
+        setattr(player, resource, max_cap)
+        # excess ressources are stored in the ground
+        setattr(player.tile[0], resource, getattr(player.tile[0], resource) + 
+                getattr(player, resource) + quantity - max_cap)
+    else :
+        setattr(player, resource, getattr(player, resource) + quantity)
+    Shipment.query.filter(Shipment.arrival_time < time.time()).delete()
+    db.session.commit()
+
 # format for price display
 def display_CHF(price):
     return f"{price:,.0f} CHF".replace(",", " ")
-
-from .database import Chat
 
 # checks if a chat with exactly these participants already exists
 def check_existing_chats(participants):

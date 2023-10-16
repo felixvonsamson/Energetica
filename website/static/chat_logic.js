@@ -20,7 +20,7 @@ fetch("/get_usernames") // retrieves list of all names using api.py
 let input1 = document.getElementById("add_chat_username");
 let input2 = document.getElementById("add_player");
 
-input1.addEventListener("keyup", (e) => {
+input1.addEventListener("input", (e) => {
   //Initially remove all elements (so if user erases a letter or adds new letter then clean previous outputs)
   removeElements();
   for (let i of sortedNames) {
@@ -41,7 +41,7 @@ input1.addEventListener("keyup", (e) => {
   }
 });
 
-input2.addEventListener("keyup", (e) => {
+input2.addEventListener("input", (e) => {
   //Initially remove all elements (so if user erases a letter or adds new letter then clean previous outputs)
   removeElements();
   for (let i of sortedNames) {

@@ -32,6 +32,7 @@ canvas {display: block;}
 .no_deco{text-decoration: none; color:#000}
 
 /* Buttons */
+.button{border:none;}
 .button:hover{cursor: pointer; color:#000;background-color:#a4be7b}
 .button2{display: block; color:#000; background-color:#e5d9b6; padding:12px 24px; font-size:min(20px, 3.5vh)}
 .button2:hover{background-color: #5f8d4e; color: white; cursor: pointer;}
@@ -110,3 +111,8 @@ canvas {display: block;}
 .facility{display: flex; flex-direction: row; justify-content: space-between;}
 .infotext{flex: 1;}
 .infobox{display: flex; flex-direction: row; align-items: center;}
+
+.resource_market_container{width:100%; display:flex; flex-wrap:wrap; flex-direction:row; gap:32px; justify-content:space-evenly; align-items:center}
+.resource_market_block{width: 250px; cursor: pointer;}
+.hidden-info {max-height: 0; overflow: hidden; transition: max-height 0.3s ease;}
+.expanded-info {max-height: 500px;}

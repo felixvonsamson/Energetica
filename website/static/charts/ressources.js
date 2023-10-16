@@ -1,5 +1,6 @@
 const keys_ressources = ["coal", "oil", "gas", "uranium"];
 let rates = {};
+let on_sale = {};
 
 function draw_ressources() {
   if(graph){
@@ -93,6 +94,14 @@ function show_stored(ressource, x, y, y_fix){
   rect(0, 0, 160, 17);
   textAlign(LEFT, CENTER);
   fill(0);
+  text("On sale", 5, 9);
+  textAlign(CENTER, CENTER);
+  text(display_kg(on_sale[ressource]), 135, 9);
+  translate(0, 16);
+  alternate_fill();
+  rect(0, 0, 160, 17);
+  textAlign(LEFT, CENTER);
+  fill(0);
   text("Storage capacity", 5, 9);
   textAlign(CENTER, CENTER);
   text(display_kg(caps[ressource]), 135, 9);
@@ -124,6 +133,7 @@ function regen_ressources(res){
       background(229, 217, 182);
       caps = raw_data[3];
       rates = raw_data[4];
+      on_sale = raw_data[5];
       data = raw_data[1];
       Object.keys(data).forEach(key => {
           const array = raw_data[2][key];
@@ -196,7 +206,7 @@ function regen_ressources(res){
       translate(width-0.5*margin, 0.5*height);
       rotate(radians(90));
       textSize(15);
-      text("Ressource storage capacity", 0, 0);
+      text("Resource storage capacity", 0, 0);
       pop();
 
       push();
@@ -204,43 +214,55 @@ function regen_ressources(res){
       fill(255);
       rect(0, 0, margin, -0.5*height+60);
       fill(cols_and_names["coal"][0]);
-      let h = data["coal"][data_len-1]/raw_data[3]["coal"]*(0.5*height-60);
+      let h = data["coal"][data_len-1]/caps["coal"]*(0.5*height-60);
+      rect(0, 0, margin, -h);
+      fill(60, 60, 60);
+      h = on_sale["coal"]/caps["coal"]*(0.5*height-60);
       rect(0, 0, margin, -h);
       textStyle(BOLD);
       textSize(15);
       fill(0);
       text("Coal", 0.5*margin, 14);
-      text("+ "+display_kgh(rates["coal"]), 0.5*margin, 35)
+      text("+ "+display_kgh(rates["coal"]), 0.5*margin, 35);
 
       translate(1.5*margin, 0);
       fill(255);
       rect(0, 0, margin, -0.5*height+60);
       fill(cols_and_names["oil"][0]);
-      h = data["oil"][data_len-1]/raw_data[3]["oil"]*(0.5*height-60);
+      h = data["oil"][data_len-1]/caps["oil"]*(0.5*height-60);
+      rect(0, 0, margin, -h);
+      fill(171, 73, 103);
+      h = on_sale["oil"]/caps["oil"]*(0.5*height-60);
       rect(0, 0, margin, -h);
       fill(0);
       text("Oil", 0.5*margin, 14);
-      text("+ "+ display_kgh(rates["oil"]), 0.5*margin, 35)
+      text("+ "+ display_kgh(rates["oil"]), 0.5*margin, 35);
 
       translate(0, 0.5*height);
       fill(255);
       rect(0, 0, margin, -0.5*height+60);
       fill(cols_and_names["uranium"][0]);
-      h = data["uranium"][data_len-1]/raw_data[3]["uranium"]*(0.5*height-60);
+      h = data["uranium"][data_len-1]/caps["uranium"]*(0.5*height-60);
+      rect(0, 0, margin, -h);
+      fill(118, 224, 96);
+      h = on_sale["uranium"]/caps["uranium"]*(0.5*height-60);
       rect(0, 0, margin, -h);
       fill(0);
       text("Uranium", 0.5*margin, 14);
-      text("+ "+ display_kgh(rates["uranium"]), 0.5*margin, 35)
+      text("+ "+ display_kgh(rates["uranium"]), 0.5*margin, 35);
 
       translate(-1.5*margin, 0);
       fill(255);
       rect(0, 0, margin, -0.5*height+60);
       fill(cols_and_names["gas"][0]);
-      h = data["gas"][data_len-1]/raw_data[3]["gas"]*(0.5*height-60);
+      h = data["gas"][data_len-1]/caps["gas"]*(0.5*height-60);
+      rect(0, 0, margin, -h);
+      fill(99, 121, 153);
+      h = on_sale["gas"]/caps["gas"]*(0.5*height-60);
       rect(0, 0, margin, -h);
       fill(0);
       text("Gas", 0.5*margin, 14);
-      text("+ "+ display_kgh(rates["gas"]), 0.5*margin, 35)
+      text("+ "+ display_kgh(rates["gas"]), 0.5*margin, 35);
       pop();
       graph = get();
     })

@@ -16,103 +16,103 @@
   <tr>
   <td>Steam engine</td>
   <td class="txt_center"><script>display_W({{user.steam_engine*assets["steam_engine"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_steam_engine}}" id="price_steam_engine" name="price_steam_engine"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_steam_engine}}" id="price_steam_engine" name="price_steam_engine"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_steam_engine" name="SCP_steam_engine" {% if "steam_engine" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Windmill</td>
   <td class="txt_center"><script>display_W({{user.windmill*assets["windmill"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_windmill}}" id="price_windmill" name="price_windmill"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_windmill}}" id="price_windmill" name="price_windmill"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_windmill" name="SCP_windmill" {% if "windmill" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Watermill</td>
   <td class="txt_center"><script>display_W({{user.watermill*assets["watermill"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_watermill}}" id="price_watermill" name="price_watermill"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_watermill}}" id="price_watermill" name="price_watermill"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_watermill" name="SCP_watermill" {% if "watermill" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Coal burner</td>
   <td class="txt_center"><script>display_W({{user.coal_burner*assets["coal_burner"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_coal_burner}}" id="price_coal_burner" name="price_coal_burner"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_coal_burner}}" id="price_coal_burner" name="price_coal_burner"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_coal_burner" name="SCP_coal_burner" {% if "coal_burner" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Oil burner</td>
   <td class="txt_center"><script>display_W({{user.oil_burner*assets["oil_burner"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_oil_burner}}" id="price_oil_burner" name="price_oil_burner"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_oil_burner}}" id="price_oil_burner" name="price_oil_burner"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_oil_burner" name="SCP_oil_burner" {% if "oil_burner" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Gas burner</td>
   <td class="txt_center"><script>display_W({{user.gas_burner*assets["gas_burner"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_gas_burner}}" id="price_gas_burner" name="price_gas_burner"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_gas_burner}}" id="price_gas_burner" name="price_gas_burner"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_gas_burner" name="SCP_gas_burner" {% if "gas_burner" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Shallow geothermal plant</td>
   <td class="txt_center"><script>display_W({{user.shallow_geothermal_plant*assets["shallow_geothermal_plant"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_shallow_geothermal_plant}}" id="price_shallow_geothermal_plant" name="price_shallow_geothermal_plant"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_shallow_geothermal_plant}}" id="price_shallow_geothermal_plant" name="price_shallow_geothermal_plant"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_shallow_geothermal_plant" name="SCP_shallow_geothermal_plant" {% if "shallow_geothermal_plant" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Small water dam</td>
   <td class="txt_center"><script>display_W({{user.small_water_dam*assets["small_water_dam"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_small_water_dam}}" id="price_small_water_dam" name="price_small_water_dam"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_small_water_dam}}" id="price_small_water_dam" name="price_small_water_dam"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_small_water_dam" name="SCP_small_water_dam" {% if "small_water_dam" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Wind turbine</td>
   <td class="txt_center"><script>display_W({{user.wind_turbine*assets["wind_turbine"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_wind_turbine}}" id="price_wind_turbine" name="price_wind_turbine"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_wind_turbine}}" id="price_wind_turbine" name="price_wind_turbine"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_wind_turbine" name="SCP_wind_turbine" {% if "wind_turbine" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Combined cycle</td>
   <td class="txt_center"><script>display_W({{user.combined_cycle*assets["combined_cycle"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_combined_cycle}}" id="price_combined_cycle" name="price_combined_cycle"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_combined_cycle}}" id="price_combined_cycle" name="price_combined_cycle"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_combined_cycle" name="SCP_combined_cycle" {% if "combined_cycle" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Deep geothermal plant</td>
   <td class="txt_center"><script>display_W({{user.deep_geothermal_plant*assets["deep_geothermal_plant"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_deep_geothermal_plant}}" id="price_deep_geothermal_plant" name="price_deep_geothermal_plant"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_deep_geothermal_plant}}" id="price_deep_geothermal_plant" name="price_deep_geothermal_plant"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_deep_geothermal_plant" name="SCP_deep_geothermal_plant" {% if "deep_geothermal_plant" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Nuclear reactor</td>
   <td class="txt_center"><script>display_W({{user.nuclear_reactor*assets["nuclear_reactor"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_nuclear_reactor}}" id="price_nuclear_reactor" name="price_nuclear_reactor"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_nuclear_reactor}}" id="price_nuclear_reactor" name="price_nuclear_reactor"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_nuclear_reactor" name="SCP_nuclear_reactor" {% if "nuclear_reactor" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Large water dam</td>
   <td class="txt_center"><script>display_W({{user.large_water_dam*assets["large_water_dam"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_large_water_dam}}" id="price_large_water_dam" name="price_large_water_dam"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_large_water_dam}}" id="price_large_water_dam" name="price_large_water_dam"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_large_water_dam" name="SCP_large_water_dam" {% if "large_water_dam" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Concentrated solar power</td>
   <td class="txt_center"><script>display_W({{user.CSP_solar*assets["CSP_solar"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_CSP_solar}}" id="price_CSP_solar" name="price_CSP_solar"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_CSP_solar}}" id="price_CSP_solar" name="price_CSP_solar"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_CSP_solar" name="SCP_CSP_solar" {% if "CSP_solar" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Photovoltaics</td>
   <td class="txt_center"><script>display_W({{user.PV_solar*assets["PV_solar"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_PV_solar}}" id="price_PV_solar" name="price_PV_solar"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_PV_solar}}" id="price_PV_solar" name="price_PV_solar"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_PV_solar" name="SCP_PV_solar" {% if "PV_solar" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Large wind turbine</td>
   <td class="txt_center"><script>display_W({{user.large_wind_turbine*assets["large_wind_turbine"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_large_wind_turbine}}" id="price_large_wind_turbine" name="price_large_wind_turbine"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_large_wind_turbine}}" id="price_large_wind_turbine" name="price_large_wind_turbine"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_large_wind_turbine" name="SCP_large_wind_turbine" {% if "large_wind_turbine" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>4th generation nuclear</td>
   <td class="txt_center"><script>display_W({{user.nuclear_reactor_gen4*assets["nuclear_reactor_gen4"]["power generation"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_nuclear_reactor_gen4}}" id="price_nuclear_reactor_gen4" name="price_nuclear_reactor_gen4"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_nuclear_reactor_gen4}}" id="price_nuclear_reactor_gen4" name="price_nuclear_reactor_gen4"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_nuclear_reactor_gen4" name="SCP_nuclear_reactor_gen4" {% if "nuclear_reactor_gen4" in SCP %} checked {% endif %}></td>
   </tr>
 </table>
@@ -128,44 +128,44 @@
   <tr>
   <td>Small pumped hydro</td>
   <td class="txt_center"><script>display_Wh({{user.small_pumped_hydro*assets["small_pumped_hydro"]["storage capacity"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_sell_small_pumped_hydro}}" id="price_sell_small_pumped_hydro" name="price_sell_small_pumped_hydro"/> CHF/MWh</td>
-  <td></div><input type="text" class="small_input medium txt_center" value="{{user.price_buy_small_pumped_hydro}}" id="price_buy_small_pumped_hydro" name="price_buy_small_pumped_hydro"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_sell_small_pumped_hydro}}" id="price_sell_small_pumped_hydro" name="price_sell_small_pumped_hydro"/> CHF/MWh</td>
+  <td></div><input type="number" class="small_input medium txt_center" value="{{user.price_buy_small_pumped_hydro}}" id="price_buy_small_pumped_hydro" name="price_buy_small_pumped_hydro"/> CHF/MWh</td>
   </tr>
   <tr>
   <td>Compressed air</td>
   <td class="txt_center"><script>display_Wh({{user.compressed_air*assets["compressed_air"]["storage capacity"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_sell_compressed_air}}" id="price_sell_compressed_air" name="price_sell_compressed_air"/> CHF/MWh</td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_buy_compressed_air}}" id="price_buy_compressed_air" name="price_buy_compressed_air"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_sell_compressed_air}}" id="price_sell_compressed_air" name="price_sell_compressed_air"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_compressed_air}}" id="price_buy_compressed_air" name="price_buy_compressed_air"/> CHF/MWh</td>
   </tr>
   <tr>
   <td>Molten salt</td>
   <td class="txt_center"><script>display_Wh({{user.molten_salt*assets["molten_salt"]["storage capacity"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_sell_molten_salt}}" id="price_sell_molten_salt" name="price_sell_molten_salt"/> CHF/MWh</td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_buy_molten_salt}}" id="price_buy_molten_salt" name="price_buy_molten_salt"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_sell_molten_salt}}" id="price_sell_molten_salt" name="price_sell_molten_salt"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_molten_salt}}" id="price_buy_molten_salt" name="price_buy_molten_salt"/> CHF/MWh</td>
   </tr>
   <tr>
   <td>Large pumped hydro</td>
   <td class="txt_center"><script>display_Wh({{user.large_pumped_hydro*assets["large_pumped_hydro"]["storage capacity"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_sell_large_pumped_hydro}}" id="price_sell_large_pumped_hydro" name="price_sell_large_pumped_hydro"/> CHF/MWh</td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_buy_large_pumped_hydro}}" id="price_buy_large_pumped_hydro" name="price_buy_large_pumped_hydro"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_sell_large_pumped_hydro}}" id="price_sell_large_pumped_hydro" name="price_sell_large_pumped_hydro"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_large_pumped_hydro}}" id="price_buy_large_pumped_hydro" name="price_buy_large_pumped_hydro"/> CHF/MWh</td>
   </tr>
   <tr>
   <td>Hydrogen storage</td>
   <td class="txt_center"><script>display_Wh({{user.hydrogen_storage*assets["hydrogen_storage"]["storage capacity"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_sell_hydrogen_storage}}" id="price_sell_hydrogen_storage" name="price_sell_hydrogen_storage"/> CHF/MWh</td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_buy_hydrogen_storage}}" id="price_buy_hydrogen_storage" name="price_buy_hydrogen_storage"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_sell_hydrogen_storage}}" id="price_sell_hydrogen_storage" name="price_sell_hydrogen_storage"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_hydrogen_storage}}" id="price_buy_hydrogen_storage" name="price_buy_hydrogen_storage"/> CHF/MWh</td>
   </tr>
   <tr>
   <td>Lithium ion batteries</td>
   <td class="txt_center"><script>display_Wh({{user.lithium_ion_batteries*assets["lithium_ion_batteries"]["storage capacity"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_sell_lithium_ion_batteries}}" id="price_sell_lithium_ion_batteries" name="price_sell_lithium_ion_batteries"/> CHF/MWh</td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_buy_lithium_ion_batteries}}" id="price_buy_lithium_ion_batteries" name="price_buy_lithium_ion_batteries"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_sell_lithium_ion_batteries}}" id="price_sell_lithium_ion_batteries" name="price_sell_lithium_ion_batteries"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_lithium_ion_batteries}}" id="price_buy_lithium_ion_batteries" name="price_buy_lithium_ion_batteries"/> CHF/MWh</td>
   </tr>
   <tr>
   <td>Solid state batteries</td>
   <td class="txt_center"><script>display_Wh({{user.solid_state_batteries*assets["solid_state_batteries"]["storage capacity"]}});</script></td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_sell_solid_state_batteries}}" id="price_sell_solid_state_batteries" name="price_sell_solid_state_batteries"/> CHF/MWh</td>
-  <td><input type="text" class="small_input medium txt_center" value="{{user.price_buy_solid_state_batteries}}" id="price_buy_solid_state_batteries" name="price_buy_solid_state_batteries"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_sell_solid_state_batteries}}" id="price_sell_solid_state_batteries" name="price_sell_solid_state_batteries"/> CHF/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_solid_state_batteries}}" id="price_buy_solid_state_batteries" name="price_buy_solid_state_batteries"/> CHF/MWh</td>
   </tr>
 </table>
 </div>
@@ -184,7 +184,7 @@
         <div class="flex-col" style="width:100%;">
             <div id="warning" style="width:260px;"></div>
             <label for="choose_network">Network</label>
-            <select id="choose_network" name="choose_network" class="create_chat_input medium">
+            <select id="choose_network" name="choose_network" class="create_chat_input medium" required>
               <option value="" disabled selected>select network</option>
             </select>
         </div>
@@ -203,7 +203,7 @@
     <div class="flex-col margin-large">
         <div style="padding-bottom:32px">
             <label for="network_name">Network name</label>
-            <input type="text" class="create_chat_input medium" id="network_name" name="network_name" placeholder="Name">
+            <input type="text" class="create_chat_input medium" id="network_name" name="network_name" placeholder="Name" required>
         </div>
         Invited players : <br>
         (click to remove)

@@ -62,6 +62,7 @@ function display_duration(seconds) {
   seconds -= hours * 3600;
   const minutes = Math.floor(seconds / 60);
   seconds -= minutes * 60;
+  seconds = Math.round(seconds);
 
   let duration = "";
   if (days > 0) {
@@ -77,4 +78,17 @@ function display_duration(seconds) {
     duration += `${seconds}s`;
   }
   document.write(duration.trim());
+}
+
+function to_string(inputFloat) {
+  var resultString = inputFloat.toString();
+  if (resultString.includes('.')) {
+      resultString = resultString.replace(/(\.[0-9]*[1-9])0+$/, '$1');
+  }
+  document.write(resultString);
+}
+
+function calculate_delivery(delta_q, delta_r, trasport_speed){
+  const dist = Math.sqrt(2 * (Math.pow(delta_q, 2) + Math.pow(delta_r, 2) + delta_q*delta_r));
+  display_duration(dist * trasport_speed);
 }

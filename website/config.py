@@ -51,7 +51,7 @@ full_config = {
             "consumed ressource": "coal",
             "amount consumed": 1000,
             "pollution": 16,
-            "ramping speed": 650000, #(184.6 min)
+            "ramping speed": 100000, #(184.6 min)
         },
         "oil_burner": {
             "name": "Oil burner",
@@ -423,7 +423,8 @@ full_config = {
         "oil": 1000000,
         "gas": 1000000,
         "uranium": 15000,
-    }
+    },
+    "transport_speed": 5000 #[s/distance unit]
 }
 
 from .database import Player
@@ -444,7 +445,9 @@ class Config(object):
 
         max_cap = config.for_player[player_id]["warehouse_capacities"]
         for ressource in max_cap:
-            max_cap[ressource] = max_cap[ressource]*pow(1.5,player.warehouse)
+            max_cap[ressource] *= pow(1.5, player.warehouse)
+
+        config.for_player[player_id]["transport_speed"] *= pow(0.85, player.transport_technology)
 
     def __getitem__(config, player_id):
         if player_id not in config.for_player:

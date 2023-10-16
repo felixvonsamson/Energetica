@@ -36,9 +36,26 @@ class Under_construction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
     family = db.Column(db.String(50)) # to assign the thing to the correct page
-    start_time = db.Column(db.Integer)
-    finish_time = db.Column(db.Integer)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
+    start_time = db.Column(db.Float)
+    finish_time = db.Column(db.Float)
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id")) # can access player directly with .player
+
+# class that stores the ressources shippment on their way :
+class Shipment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    resource = db.Column(db.String(10))
+    quantity = db.Column(db.Float)
+    departure_time = db.Column(db.Float)
+    arrival_time = db.Column(db.Float)
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id")) # can access player directly with .player
+
+class Resource_on_sale(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    resource = db.Column(db.String(10))
+    quantity = db.Column(db.Float)
+    price = db.Column(db.Float)
+    creation_date = db.Column(db.DateTime, default=datetime.now())
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id")) # can access player directly with .player
 
 # class that stores the networks of players :
 class Network(db.Model):
@@ -69,11 +86,16 @@ class Player(db.Model, UserMixin):
     messages = db.relationship('Message', backref='player')
 
     # Ressources :
-    money = db.Column(db.Integer, default=100000)
-    coal = db.Column(db.Integer, default=1000000)
-    oil = db.Column(db.Integer, default=500000)
-    gas = db.Column(db.Integer, default=700000)
-    uranium = db.Column(db.Integer, default=10000)
+    money = db.Column(db.Float, default=100000)
+    coal = db.Column(db.Float, default=1000000)
+    oil = db.Column(db.Float, default=500000)
+    gas = db.Column(db.Float, default=700000)
+    uranium = db.Column(db.Float, default=10000)
+
+    coal_on_sale = db.Column(db.Float, default=0)
+    oil_on_sale = db.Column(db.Float, default=0)
+    gas_on_sale = db.Column(db.Float, default=0)
+    uranium_on_sale = db.Column(db.Float, default=0)
 
     # Energy facilities :
     steam_engine = db.Column(db.Integer, default=0)
@@ -166,9 +188,11 @@ class Player(db.Model, UserMixin):
     price_sell_solid_state_batteries = db.Column(db.Float, default=100)
 
     # CO2 emissions :
-    emissions = db.Column(db.Integer, default=0)
+    emissions = db.Column(db.Float, default=0)
 
     under_construction = db.relationship("Under_construction")
+    resource_on_sale = db.relationship("Resource_on_sale", backref='player')
+    shipments = db.relationship("Shipment", backref='player')
 
     data_table_name = db.Column(db.String(50))
     

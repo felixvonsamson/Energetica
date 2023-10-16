@@ -47,7 +47,7 @@ function setup() {
     graph_w = width-3*margin;
     canvas.parent("market_graph");
     textAlign(CENTER, CENTER);
-    setInterval(update_graph, 5000);
+    setInterval(update_graph, 60000);
     update_graph();
 }
 

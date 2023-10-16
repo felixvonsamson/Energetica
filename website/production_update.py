@@ -340,22 +340,31 @@ def market_optimum(offers_og, demands_og):
 def calculate_prod(minmax, player, assets, plant, generation, t):
     ressource_factor = 1
     if plant == "combined_cycle":
-        avalable_gas = getattr(player, assets[plant]["consumed ressource"][0])   
+        avalable_gas = player.gas - player.gas_on_sale
         needed_gas = assets[plant]["amount consumed"][0]                         # * getattr(player, plant)
-        avalable_coal = getattr(player, assets[plant]["consumed ressource"][1])  
+        avalable_coal = player.coal - player.coal_on_sale
         needed_coal = assets[plant]["amount consumed"][1]                        # * getattr(player, plant)
-        ressource_factor = min(avalable_gas/needed_gas, avalable_coal/needed_coal, getattr(player, plant))
+        ressource_factor = min(avalable_gas/needed_gas, 
+                            avalable_coal/needed_coal, getattr(player, plant))
     elif assets[plant]["amount consumed"] != 0 :
-        avalable_ressource = getattr(player, assets[plant]["consumed ressource"])
+        ressource = assets[plant]["consumed ressource"]
+        if ressource == "money":
+            avalable_ressource = player.money
+        else:
+            avalable_ressource = getattr(player, ressource) - getattr(player, 
+                                                        ressource+"_on_sale")
         needed_ressource = assets[plant]["amount consumed"]                      # * getattr(player, plant)
-        ressource_factor = min(avalable_ressource / needed_ressource, getattr(player, plant))
+        ressource_factor = min(avalable_ressource / needed_ressource, 
+                               getattr(player, plant))
 
     max_ressources = ressource_factor * assets[plant]["power generation"]        # / getattr(player, plant)
     if minmax == "max":
-        max_ramping = generation[plant][t - 1] + getattr(player, plant) * assets[plant]["ramping speed"]
+        max_ramping = (generation[plant][t - 1] + getattr(player, plant) * 
+                       assets[plant]["ramping speed"])
         return min(max_ressources, max_ramping)
     else :
-        min_ramping = generation[plant][t - 1] - getattr(player, plant) * assets[plant]["ramping speed"]
+        min_ramping = (generation[plant][t - 1] - getattr(player, plant) * 
+                       assets[plant]["ramping speed"])
         return max(0,min(max_ressources, min_ramping))
 
 def offer(market, player, capacity, price, plant):

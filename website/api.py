@@ -87,22 +87,23 @@ def get_chart_data():
                         assets[facility]["storage capacity"])
         else:
             rates = {}
-            rates["coal"] = current_user.coal_mine * assets["coal_mine"][
-                "amount produced"] * 60
-            rates["oil"] = current_user.coal_mine * assets["oil_field"][
-                "amount produced"] * 60
-            rates["gas"] = current_user.coal_mine * assets["gas_drilling_site"][
-                "amount produced"] * 60
-            rates["uranium"] = current_user.coal_mine * assets["uranium_mine"][
-                "amount produced"] * 60
+            on_sale = {}
+            resource_to_facility = {
+                "coal" : "coal_mine",
+                "oil" : "oil_field",
+                "gas" : "gas_drilling_site",
+                "uranium" : "uranium_mine"
+            }
             for ressource in ["coal", "oil", "gas", "uranium"]:
                 capacities[ressource] = engine.config[current_user.id][
                     "warehouse_capacities"][ressource]
-            capacities["uranium"] = 15000
+                facility = resource_to_facility[ressource]
+                rates[ressource] = getattr(current_user, facility) * assets[
+                    facility]["amount produced"] * 60
+                on_sale[ressource] = getattr(current_user, ressource+"_on_sale")
             return jsonify(engine.current_t, data[table],
                        engine.current_data[current_user.username][table],
-                       capacities, rates)
-            
+                       capacities, rates, on_sale)
         return jsonify(engine.current_t, data[table],
                        engine.current_data[current_user.username][table],
                        capacities)

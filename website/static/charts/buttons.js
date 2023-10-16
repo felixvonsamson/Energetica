@@ -96,7 +96,7 @@ function setup() {
       buttons[i] = new Button(resolution[i]);
     }
     buttons[1].active = true;
-    setInterval(update_graph, 5000);
+    setInterval(update_graph, 60000);
     update_graph();
 }
 
@@ -107,7 +107,7 @@ function draw() {
         draw_demand();
     }else if(active_view == "Storage"){
         draw_storage();
-    }else if(active_view == "Ressources"){
+    }else if(active_view == "Resources"){
         draw_ressources();
     }else{
         draw_emissions();
@@ -133,7 +133,7 @@ function update_graph(){
         regen_demand(res);
     }else if(active_view == "Storage"){
         regen_storage(res);
-    }else if(active_view == "Ressources"){
+    }else if(active_view == "Resources"){
         regen_ressources(res);
     }else{
         regen_emissions(res);
