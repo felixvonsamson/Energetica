@@ -4,3 +4,5 @@ Flask-SQLAlchemy
 flask-login
 flask-apscheduler
 eventlet
+pandas
+Werkzeug==2.3.0
