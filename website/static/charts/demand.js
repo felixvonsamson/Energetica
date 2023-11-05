@@ -102,6 +102,9 @@ function regen_demand(res){
         maxSum = 100;
       }
       push();
+      for (const key of keys_demand) {
+        console.log(key, data[key][data[key].length-1])
+      }
       for(let t = 0; t < data_len; t++){
         push();
         for (const key of keys_demand) {

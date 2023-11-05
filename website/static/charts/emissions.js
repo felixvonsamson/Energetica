@@ -1,6 +1,5 @@
 const keys_emissions = ["steam_engine", "coal_burner", "oil_burner", 
-  "gas_burner", "shallow_geothermal_plant", "combined_cycle", 
-  "deep_geothermal_plant", "nuclear_reactor", "nuclear_reactor_gen4"];
+  "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"];
 
 function draw_emissions() {
   if(graph){

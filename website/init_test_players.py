@@ -7,8 +7,9 @@ from . import db
 def init_test_players(engine):
     members = []
 
-    for i in range(4):
+    for i in range(3):
         members.append(create_player("Player"+str(i), i+1))
+    members.append(create_player("Player3", 160))
 
     network = "Network1"
     create_network(network, members)
@@ -18,7 +19,11 @@ def init_test_players(engine):
         members[0].coal_burner = 1
         members[0].nuclear_reactor = 1
         members[2].compressed_air = 1
+        members[2].windmill = 1
+        members[2].watermill = 1
+        members[2].PV_solar = 1
         members[3].small_pumped_hydro = 1
+        members[3].onshore_wind_turbine = 1
         db.session.commit()
 
 

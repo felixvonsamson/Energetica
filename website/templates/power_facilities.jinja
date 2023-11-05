@@ -169,31 +169,6 @@
  </div>
 </div>
 
-{% set facility = data["shallow_geothermal_plant"] %}
-<div class="bone margin facility small">
- <img class="img" src="{{ url_for('static', filename='images/power_facilities/shallow_geothermal_plant.jpg') }}"\>
- <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Geothermal_energy" target="_blank">{{facility["name"]}}</a></strong><br>
-  The shallow geothermal plant uses shallow geothermal heat to produce electricity. <br>
-  <b class="txt-blue">Shutdown priority : 4 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
- </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('shallow_geothermal_plant', 'power_facilities');">
-    Start construction
-  </b>
-  <div>
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
-    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
-  </div>
-  <div class="margin tan_green padding">
-    <i class="fa fa-bolt"></i> <script>display_W({{facility["power generation"]}});</script> <br>
-    <i class="fa fa-cloud"></i> {{facility["pollution"]}} g/kWh
-  </div>
- </div>
-</div>
-
 {% set facility = data["small_water_dam"] %}
 <div class="bone margin facility small">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/small_water_dam.jpg') }}"\>
@@ -219,16 +194,16 @@
  </div>
 </div>
 
-{% set facility = data["wind_turbine"] %}
+{% set facility = data["onshore_wind_turbine"] %}
 <div class="bone margin facility small">
- <img class="img" src="{{ url_for('static', filename='images/power_facilities/wind_turbine.jpg') }}"\>
+ <img class="img" src="{{ url_for('static', filename='images/power_facilities/onshore_wind_turbine.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Wind_turbine" target="_blank">{{facility["name"]}}</a></strong><br>
   The wind turbine uses the energy of the wind to produce electricity. <br>
   <b class="txt-blue">Shutdown priority : 5 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('wind_turbine', 'power_facilities');">
+ <b class="margin medium white padding button" onclick="start_construction('onshore_wind_turbine', 'power_facilities');">
     Start construction
   </b>
   <div>
@@ -266,31 +241,6 @@
     <i class="fa fa-bolt"></i> <script>display_W({{facility["power generation"]}});</script> <br>
     <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{facility["amount consumed"][0]}});</script> gas <br>
     <i class="fa Example of truck fa-truck"></i> <script>display_kgh({{facility["amount consumed"][1]}});</script> coal <br>
-    <i class="fa fa-cloud"></i> {{facility["pollution"]}} g/kWh
-  </div>
- </div>
-</div>
-
-{% set facility = data["deep_geothermal_plant"] %}
-<div class="bone margin facility small">
- <img class="img" src="{{ url_for('static', filename='images/power_facilities/deep_geothermal_plant.jpg') }}"\>
- <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Geothermal_energy" target="_blank">{{facility["name"]}}</a></strong><br>
-  The deep geothermal plant uses eath heat to produce electricity. <br>
-  <b class="txt-blue">Shutdown priority : 4 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
- </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('deep_geothermal_plant', 'power_facilities');">
-    Start construction
-  </b>
-  <div>
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
-    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
-  </div>
-  <div class="margin tan_green padding">
-    <i class="fa fa-bolt"></i> <script>display_W({{facility["power generation"]}});</script> <br>
     <i class="fa fa-cloud"></i> {{facility["pollution"]}} g/kWh
   </div>
  </div>
@@ -397,16 +347,16 @@
  </div>
 </div>
 
-{% set facility = data["large_wind_turbine"] %}
+{% set facility = data["offshore_wind_turbine"] %}
 <div class="bone margin facility small">
- <img class="img" src="{{ url_for('static', filename='images/power_facilities/large_wind_turbine.jpg') }}"\>
+ <img class="img" src="{{ url_for('static', filename='images/power_facilities/offshore_wind_turbine.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Wind_turbine" target="_blank">{{facility["name"]}}</a></strong><br>
   The large wind turbine uses the energy of the wind to produce electricity. <br>
   <b class="txt-blue">Shutdown priority : 5 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
  <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('large_wind_turbine', 'power_facilities');">
+ <b class="margin medium white padding button" onclick="start_construction('offshore_wind_turbine', 'power_facilities');">
     Start construction
   </b>
   <div>

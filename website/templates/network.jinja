@@ -50,11 +50,6 @@
   <td><input type="checkbox" id="SCP_gas_burner" name="SCP_gas_burner" {% if "gas_burner" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
-  <td>Shallow geothermal plant</td>
-  <td class="txt_center"><script>display_W({{user.shallow_geothermal_plant*assets["shallow_geothermal_plant"]["power generation"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_shallow_geothermal_plant}}" id="price_shallow_geothermal_plant" name="price_shallow_geothermal_plant"/> CHF/MWh</td>
-  <td><input type="checkbox" id="SCP_shallow_geothermal_plant" name="SCP_shallow_geothermal_plant" {% if "shallow_geothermal_plant" in SCP %} checked {% endif %}></td>
-  </tr>
   <tr>
   <td>Small water dam</td>
   <td class="txt_center"><script>display_W({{user.small_water_dam*assets["small_water_dam"]["power generation"]}});</script></td>
@@ -63,21 +58,15 @@
   </tr>
   <tr>
   <td>Wind turbine</td>
-  <td class="txt_center"><script>display_W({{user.wind_turbine*assets["wind_turbine"]["power generation"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_wind_turbine}}" id="price_wind_turbine" name="price_wind_turbine"/> CHF/MWh</td>
-  <td><input type="checkbox" id="SCP_wind_turbine" name="SCP_wind_turbine" {% if "wind_turbine" in SCP %} checked {% endif %}></td>
+  <td class="txt_center"><script>display_W({{user.onshore_wind_turbine*assets["onshore_wind_turbine"]["power generation"]}});</script></td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_onshore_wind_turbine}}" id="price_onshore_wind_turbine" name="price_onshore_wind_turbine"/> CHF/MWh</td>
+  <td><input type="checkbox" id="SCP_onshore_wind_turbine" name="SCP_onshore_wind_turbine" {% if "onshore_wind_turbine" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Combined cycle</td>
   <td class="txt_center"><script>display_W({{user.combined_cycle*assets["combined_cycle"]["power generation"]}});</script></td>
   <td><input type="number" class="small_input medium txt_center" value="{{user.price_combined_cycle}}" id="price_combined_cycle" name="price_combined_cycle"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_combined_cycle" name="SCP_combined_cycle" {% if "combined_cycle" in SCP %} checked {% endif %}></td>
-  </tr>
-  <tr>
-  <td>Deep geothermal plant</td>
-  <td class="txt_center"><script>display_W({{user.deep_geothermal_plant*assets["deep_geothermal_plant"]["power generation"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_deep_geothermal_plant}}" id="price_deep_geothermal_plant" name="price_deep_geothermal_plant"/> CHF/MWh</td>
-  <td><input type="checkbox" id="SCP_deep_geothermal_plant" name="SCP_deep_geothermal_plant" {% if "deep_geothermal_plant" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Nuclear reactor</td>
@@ -105,9 +94,9 @@
   </tr>
   <tr>
   <td>Large wind turbine</td>
-  <td class="txt_center"><script>display_W({{user.large_wind_turbine*assets["large_wind_turbine"]["power generation"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_large_wind_turbine}}" id="price_large_wind_turbine" name="price_large_wind_turbine"/> CHF/MWh</td>
-  <td><input type="checkbox" id="SCP_large_wind_turbine" name="SCP_large_wind_turbine" {% if "large_wind_turbine" in SCP %} checked {% endif %}></td>
+  <td class="txt_center"><script>display_W({{user.offshore_wind_turbine*assets["offshore_wind_turbine"]["power generation"]}});</script></td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_offshore_wind_turbine}}" id="price_offshore_wind_turbine" name="price_offshore_wind_turbine"/> CHF/MWh</td>
+  <td><input type="checkbox" id="SCP_offshore_wind_turbine" name="SCP_offshore_wind_turbine" {% if "offshore_wind_turbine" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>4th generation nuclear</td>

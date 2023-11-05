@@ -70,11 +70,10 @@ def get_chart_data():
         capacities = {}
         if table == "generation":
             for facility in ["watermill", "small_water_dam", "large_water_dam", 
-                            "nuclear_reactor", "nuclear_reactor_gen4", 
-                            "shallow_geothermal_plant", "deep_geothermal_plant", 
+                            "nuclear_reactor", "nuclear_reactor_gen4",  
                             "steam_engine", "coal_burner", "oil_burner", 
                             "gas_burner", "combined_cycle", "windmill", 
-                            "wind_turbine", "large_wind_turbine", "CSP_solar",
+                            "onshore_wind_turbine", "offshore_wind_turbine", "CSP_solar",
                             "PV_solar"]:
                 capacities[facility] = (getattr(current_user, facility) * 
                         assets[facility]["power generation"])

@@ -3,6 +3,7 @@ The game states update functions are defined here
 """
 
 import pickle
+import math
 import pandas as pd
 import numpy as np
 from .database import Network, Player
@@ -125,43 +126,39 @@ def calculate_generation_without_market(engine, total_demand, player, t):
     generation = engine.current_data[player.username]["generation"]
     demand = engine.current_data[player.username]["demand"]
     storage = engine.current_data[player.username]["storage"]
+    # generation of non controllable plants is calculated from weather data
     total_generation = 0
+    renewables_generation(engine, player, assets, generation, t)
     # priority list of power plants according to SCP and price :
     priority_list = (player.self_consumption_priority.split(' ') 
         + player.rest_of_priorities.split(' '))
     for plant in priority_list:
-        # If the plant is not contollable the generation level is given
-        if assets[plant]["ramping speed"] == 0:
-            generation[plant][t] = (generation[plant][t]
-                                * assets[plant]["power generation"]
-                                * getattr(player, plant))
-            total_generation += generation[plant][t]
-        # else the minimal generation level is given by the ramping down constraint
-        else:
+        if assets[plant]["ramping speed"] != 0 and getattr(player, plant) > 0:
             generation[plant][t] = calculate_prod("min", player, assets, plant, 
                                                   generation, t)
-            total_generation += generation[plant][t]
-        # If the player is not able to use all the min. generated energy, it has to be dumped at a cost of 10 CHF per MWh
-        if total_generation > total_demand:
-            dumping = min(generation[plant][t], total_generation-total_demand)
-            demand["dumping"] = dumping
-            player.money -= dumping * 10 / 1000000
+        total_generation += generation[plant][t]
+    # If the player is not able to use all the min. generated energy, it has to be dumped at a cost of 10 CHF per MWh
+    if total_generation > total_demand:
+        dumping = total_generation-total_demand
+        demand["dumping"][t] = dumping
+        player.money -= dumping * 10 / 1000000
     # while the produced power is not sufficient for own demand, for each power plant following the priority list,
     # set the power to the maximum possible value (max upward power ramp). 
     # For the PP that overshoots the demand, find the equilibirum power generation value.
-    for plant in priority_list:
-        if assets[plant]["ramping speed"] != 0:
-            max_prod = calculate_prod("max", player, assets, plant, 
-                                      generation, t)
-            # range of possible power variation
-            delta_prod = max_prod - generation[plant][t]
-            # case where the plant is the one that could overshoot the equilibium :
-            if total_demand - total_generation < delta_prod:
-                generation[plant][t] += total_demand - total_generation
-                total_generation = total_demand
-            else:
-                total_generation += delta_prod
-                generation[plant][t] += delta_prod
+    if total_demand > total_generation :
+        for plant in priority_list:
+            if assets[plant]["ramping speed"] != 0:
+                max_prod = calculate_prod("max", player, assets, plant, 
+                                        generation, t)
+                # range of possible power variation
+                delta_prod = max_prod - generation[plant][t-1]
+                # case where the plant is the one that could overshoot the equilibium :
+                if total_demand - total_generation < delta_prod:
+                    generation[plant][t] += total_demand - total_generation
+                    total_generation = total_demand
+                else:
+                    total_generation += delta_prod
+                    generation[plant][t] += delta_prod
     # if demand is still not met, players industry is leveled down
     if total_demand > total_generation:
         player.industry -= 1
@@ -171,19 +168,15 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
     assets = engine.config[player.id]["assets"]
     generation = engine.current_data[player.username]["generation"]
     storage = engine.current_data[player.username]["storage"]
+    # generation of non controllable plants is calculated from weather data
     total_generation = 0
+    renewables_generation(engine, player, assets, generation, t)
     # priority list of power plants according to SCP and price :
     priority_list = (player.self_consumption_priority.split(' ') 
         + player.rest_of_priorities.split(' '))
     for plant in priority_list:
         if getattr(player, plant) > 0:
-            # If the plant is not contollable the generation level is given
-            if assets[plant]["ramping speed"] == 0:
-                generation[plant][t] = (generation[plant][t]
-                                    * assets[plant]["power generation"]
-                                    * getattr(player, plant))
-            # else the minimal generation level is given by the ramping down constraint
-            else:
+            if assets[plant]["ramping speed"] != 0:
                 generation[plant][t] = calculate_prod("min", player, assets, plant, 
                                                     generation, t)
             total_generation += generation[plant][t]
@@ -200,7 +193,7 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
             max_prod = calculate_prod("max", player, assets, plant, 
                                       generation, t)
             # range of possible power variation
-            delta_prod = max_prod - generation[plant][t]
+            delta_prod = max_prod - generation[plant][t-1]
             # case where the plant is the one that could overshoot the equilibium :
             if total_demand - total_generation < delta_prod:
                 generation[plant][t] += total_demand - total_generation
@@ -290,7 +283,7 @@ def market_logic(engine, market, t):
                     rest = row.capacity-sold_cap
                     dump_cap = rest if rest>0 else row.capacity
                     demand = engine.current_data[row.player.username]["demand"]
-                    demand["dumping"] = dump_cap
+                    demand["dumping"][t] = dump_cap
                     row.player.money -= dump_cap * 10 / 1000000
                     continue
                 break
@@ -338,7 +331,7 @@ def market_optimum(offers_og, demands_og):
 
 # Calculates the min or max power production of a plant in at time t considering ramping constraints, ressources constraints and max and min power constraints
 def calculate_prod(minmax, player, assets, plant, generation, t):
-    ressource_factor = 1
+    ressource_factor = getattr(player, plant)
     if plant == "combined_cycle":
         avalable_gas = player.gas - player.gas_on_sale
         needed_gas = assets[plant]["amount consumed"][0]                         # * getattr(player, plant)
@@ -365,7 +358,7 @@ def calculate_prod(minmax, player, assets, plant, generation, t):
     else :
         min_ramping = (generation[plant][t - 1] - getattr(player, plant) * 
                        assets[plant]["ramping speed"])
-        return max(0,min(max_ressources, min_ramping))
+        return max(0, min(max_ressources, min_ramping))
 
 def offer(market, player, capacity, price, plant):
     if capacity>0:
@@ -429,11 +422,39 @@ def ressources_and_pollution(engine, player, t):
     #POLLUTION
     emissions = engine.current_data[player.username]["emissions"]
     for plant in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", 
-                  "shallow_geothermal_plant", "combined_cycle", 
-                  "deep_geothermal_plant", "nuclear_reactor", 
+                  "combined_cycle", "nuclear_reactor", 
                   "nuclear_reactor_gen4"]:
         power_factor = generation[plant][t] / assets[plant]["power generation"]  # /getattr(player, plant)
         plant_emmissions = power_factor * assets[plant]["pollution"]             # *getattr(player, plant)
         emissions[plant][t] = plant_emmissions
         player.emissions += plant_emmissions
         engine.current_CO2[t] = engine.current_CO2[t-1] + plant_emmissions
+
+def renewables_generation(engine, player, assets, generation, t):
+    #WIND
+    for plant in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
+        power_factor = interpolate_wind(engine, player, t)
+        generation[plant][t] = (power_factor
+                                * assets[plant]["power generation"]
+                                * getattr(player, plant))
+    #SOLAR
+    for plant in ["CSP_solar", "PV_solar"]:
+        power_factor = engine.current_irradiation[t]/875 * player.tile[0].solar # 875 W/m2 is the maximim irradiation in Zürich
+        generation[plant][t] = (power_factor
+                                * assets[plant]["power generation"]
+                                * getattr(player, plant))
+    #HYDRO
+    for plant in ["watermill", "small_water_dam", "large_water_dam"]:
+        power_factor = engine.current_discharge[t] * player.tile[0].hydro
+        generation[plant][t] = (power_factor
+                                * assets[plant]["power generation"]
+                                * getattr(player, plant))
+
+def interpolate_wind(engine, player, t):
+    if engine.current_windspeed[t] > 100:
+        return 0
+    windspeed = engine.current_windspeed[t] * pow(player.tile[0].wind, 0.333)
+    i = math.floor(windspeed)
+    f = windspeed-i
+    pc = engine.wind_power_curve
+    return pc[i]+(pc[(i+1)%100]-pc[i])*f

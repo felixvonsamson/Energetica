@@ -20,16 +20,14 @@ function setup() {
         "large_water_dam": [color(15, 0, 153), "Water dam (L)"],
         "nuclear_reactor": [color(232, 181, 28), "Nuclear reactor"],
         "nuclear_reactor_gen4": [color(255, 220, 66), "Gen 4 Nuclear"],
-        "shallow_geothermal_plant": [color(227, 66, 149), "Geothermy (S)"],
-        "deep_geothermal_plant": [color(212, 8, 83), "Geothermy (L)"],
         "steam_engine": [color(140, 140, 140), "Steam engine"],
         "coal_burner": [color(0, 0, 0), "Coal burner"],
         "oil_burner": [color(69, 69, 69), "Oil burner"],
         "gas_burner": [color(179, 189, 201), "Gas burner"],
         "combined_cycle": [color(89, 150, 142), "Combined cycle"],
         "windmill": [color(148, 234, 255), "Windmill"],
-        "wind_turbine": [color(44, 239, 242), "Wind turbine"],
-        "large_wind_turbine": [color(0, 196, 199), "Wind turbine (L)"],
+        "onshore_wind_turbine": [color(44, 239, 242), "Wind turbine"],
+        "offshore_wind_turbine": [color(0, 196, 199), "Wind turbine (L)"],
         "CSP_solar": [color(237, 194, 0), "CSP solar"],
         "PV_solar": [color(255, 250, 0), "PV solar"],
         
@@ -47,7 +45,7 @@ function setup() {
     graph_w = width-3*margin;
     canvas.parent("market_graph");
     textAlign(CENTER, CENTER);
-    setInterval(update_graph, 60000);
+    setInterval(update_graph, 5000);
     update_graph();
 }
 

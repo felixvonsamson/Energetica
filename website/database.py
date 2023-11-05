@@ -88,9 +88,9 @@ class Player(db.Model, UserMixin):
     # Ressources :
     money = db.Column(db.Float, default=100000)
     coal = db.Column(db.Float, default=1000000)
-    oil = db.Column(db.Float, default=500000)
+    oil = db.Column(db.Float, default=150000)
     gas = db.Column(db.Float, default=700000)
-    uranium = db.Column(db.Float, default=10000)
+    uranium = db.Column(db.Float, default=1000)
 
     coal_on_sale = db.Column(db.Float, default=0)
     oil_on_sale = db.Column(db.Float, default=0)
@@ -104,16 +104,14 @@ class Player(db.Model, UserMixin):
     coal_burner = db.Column(db.Integer, default=0)
     oil_burner = db.Column(db.Integer, default=0)
     gas_burner = db.Column(db.Integer, default=0)
-    shallow_geothermal_plant = db.Column(db.Integer, default=0)
     small_water_dam = db.Column(db.Integer, default=0)
-    wind_turbine = db.Column(db.Integer, default=0)
+    onshore_wind_turbine = db.Column(db.Integer, default=0)
     combined_cycle = db.Column(db.Integer, default=0)
-    deep_geothermal_plant = db.Column(db.Integer, default=0)
     nuclear_reactor = db.Column(db.Integer, default=0)
     large_water_dam = db.Column(db.Integer, default=0)
     CSP_solar = db.Column(db.Integer, default=0)
     PV_solar = db.Column(db.Integer, default=0)
-    large_wind_turbine = db.Column(db.Integer, default=0)
+    offshore_wind_turbine = db.Column(db.Integer, default=0)
     nuclear_reactor_gen4 = db.Column(db.Integer, default=0)
 
     # Storage facilities :
@@ -149,8 +147,8 @@ class Player(db.Model, UserMixin):
     geology = db.Column(db.Integer, default=0)
 
     # Selfconsumption priority list 
-    self_consumption_priority = db.Column(db.Text, default="small_water_dam large_water_dam PV_solar wind_turbine large_wind_turbine CSP_solar windmill watermill")
-    rest_of_priorities = db.Column(db.Text, default="steam_engine shallow_geothermal_plant deep_geothermal_plant nuclear_reactor nuclear_reactor_gen4 combined_cycle gas_burner oil_burner coal_burner")
+    self_consumption_priority = db.Column(db.Text, default="small_water_dam large_water_dam PV_solar onshore_wind_turbine offshore_wind_turbine CSP_solar windmill watermill")
+    rest_of_priorities = db.Column(db.Text, default="steam_engine nuclear_reactor nuclear_reactor_gen4 combined_cycle gas_burner oil_burner coal_burner")
 
     # Production capacity prices [CHF/MWh]
     price_steam_engine = db.Column(db.Float, default=25)
@@ -159,16 +157,14 @@ class Player(db.Model, UserMixin):
     price_coal_burner = db.Column(db.Float, default=120)
     price_oil_burner = db.Column(db.Float, default=110)
     price_gas_burner = db.Column(db.Float, default=100)
-    price_shallow_geothermal_plant = db.Column(db.Float, default=40)
     price_small_water_dam = db.Column(db.Float, default=3)
-    price_wind_turbine = db.Column(db.Float, default=5)
+    price_onshore_wind_turbine = db.Column(db.Float, default=5)
     price_combined_cycle = db.Column(db.Float, default=90)
-    price_deep_geothermal_plant = db.Column(db.Float, default=45)
     price_nuclear_reactor = db.Column(db.Float, default=55)
     price_large_water_dam = db.Column(db.Float, default=3)
     price_CSP_solar = db.Column(db.Float, default=8)
     price_PV_solar = db.Column(db.Float, default=4)
-    price_large_wind_turbine = db.Column(db.Float, default=5)
+    price_offshore_wind_turbine = db.Column(db.Float, default=5)
     price_nuclear_reactor_gen4 = db.Column(db.Float, default=75)
 
     # Storage capacity prices [CHF/MWh]

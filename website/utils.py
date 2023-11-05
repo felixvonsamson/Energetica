@@ -3,6 +3,10 @@ I dumped all small helpful functions here
 """
 
 import time
+import requests
+import json
+import math
+import numpy as np
 from .database import Player, Under_construction, Shipment, Chat
 from . import db
 from flask import current_app
@@ -53,3 +57,40 @@ def check_existing_chats(participants):
         if len(chat.participants)==len(participants):
             return True
     return False
+
+# This function upddates the windspeed and irradiation data every 10 mminutes by using the meteosuisse api
+def update_weather(engine):
+    url_wind = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min_en.json"
+    url_irr = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-globalstrahlung-10min/ch.meteoschweiz.messwerte-globalstrahlung-10min_en.json"
+    t = engine.current_t
+    try:
+        response = requests.get(url_wind)
+        if response.status_code == 200:
+            windspeed = json.loads(response.content)['features'][107]['properties']['value']
+            interpolation = np.linspace(engine.current_windspeed[t-1], windspeed, 11)
+            engine.current_windspeed[t : t+10] = interpolation[1:]
+        else:
+            print("Failed to fetch the file. Status code:", response.status_code)
+            engine.current_windspeed[t : t+10] = [engine.current_windspeed[t-1]]*10
+    except Exception as e:
+        print("An error occurred:", e)
+        engine.current_windspeed[t : t+10] = [engine.current_windspeed[t-1]]*10
+
+    try:
+        response = requests.get(url_irr)
+        if response.status_code == 200:
+            irradiation = json.loads(response.content)['features'][65]['properties']['value']
+            interpolation = np.linspace(engine.current_irradiation[t-1], irradiation, 11)
+            engine.current_irradiation[t : t+10] = interpolation[1:]
+        else:
+            print("Failed to fetch the file. Status code:", response.status_code)
+            engine.current_irradiation[t : t+10] = [engine.current_irradiation[t-1]]*10
+    except Exception as e:
+        print("An error occurred:", e)
+        engine.current_irradiation[t : t+10] = [engine.current_irradiation[t-1]]*10
+
+    month = math.floor((engine.total_t%60000)/5000)
+    f = (engine.total_t%60000)/5000 - month
+    d = engine.river_discharge
+    power_factor = d[month]+(d[(month+1)%12]-d[month])*f
+    engine.current_discharge[t : t+10] = [power_factor]*10
