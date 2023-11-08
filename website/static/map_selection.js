@@ -3,6 +3,7 @@ This code is the p5.js script that enables the player to choose a location on an
 interactive map just after having registerd to the game.
 */
 
+max_q = [1, 1, 5, 25000000000, 7000000000, 1200000000, 100000000]
 // Tile item :
 class Hex {
   constructor(_id, _q, _r, _ressources) {
@@ -18,7 +19,7 @@ class Hex {
       fill(
         color(
           button_colors[active_vew],
-          this.ressources[active_vew] * (100 - int(active_vew == 7) * 67), // ONLY WORKS FOR RESSOURCES WITH VALUE BETWEEN 0 AND 1
+          this.ressources[active_vew] * 100 / max_q[active_vew], // ONLY WORKS FOR RESSOURCES WITH VALUE BETWEEN 0 AND 1
           100,
         ),
       );
@@ -113,8 +114,8 @@ function setup() {
     "wind",
     "hydro",
     "coal",
-    "oil",
     "gas",
+    "oil",
     "uranium",
   ];
   for (let i = 0; i < button_names.length; i++) {

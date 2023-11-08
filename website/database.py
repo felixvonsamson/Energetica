@@ -86,11 +86,11 @@ class Player(db.Model, UserMixin):
     messages = db.relationship('Message', backref='player')
 
     # Ressources :
-    money = db.Column(db.Float, default=100000)
-    coal = db.Column(db.Float, default=1000000)
-    oil = db.Column(db.Float, default=150000)
-    gas = db.Column(db.Float, default=700000)
-    uranium = db.Column(db.Float, default=1000)
+    money = db.Column(db.Float, default=30000)
+    coal = db.Column(db.Float, default=0)
+    oil = db.Column(db.Float, default=0)
+    gas = db.Column(db.Float, default=0)
+    uranium = db.Column(db.Float, default=0)
 
     coal_on_sale = db.Column(db.Float, default=0)
     oil_on_sale = db.Column(db.Float, default=0)
@@ -98,7 +98,7 @@ class Player(db.Model, UserMixin):
     uranium_on_sale = db.Column(db.Float, default=0)
 
     # Energy facilities :
-    steam_engine = db.Column(db.Integer, default=0)
+    steam_engine = db.Column(db.Integer, default=1)
     windmill = db.Column(db.Integer, default=0)
     watermill = db.Column(db.Integer, default=0)
     coal_burner = db.Column(db.Integer, default=0)
@@ -136,15 +136,18 @@ class Player(db.Model, UserMixin):
     uranium_mine = db.Column(db.Integer, default=0)
 
     # Technology :
-    mineral_extraction = db.Column(db.Integer, default=0)
-    civil_engeneering = db.Column(db.Integer, default=0)
+    mathematics = db.Column(db.Integer, default=0)
     mechanical_engeneering = db.Column(db.Integer, default=0)
+    thermodynamics = db.Column(db.Integer, default=0)
     physics = db.Column(db.Integer, default=0)
-    materials = db.Column(db.Integer, default=0)
-    carbon_capture = db.Column(db.Integer, default=0)
+    building_technology = db.Column(db.Integer, default=0)
+    mineral_extraction = db.Column(db.Integer, default=0)
     transport_technology = db.Column(db.Integer, default=0)
+    materials = db.Column(db.Integer, default=0)
+    civil_engeneering = db.Column(db.Integer, default=0)
     aerodynamics = db.Column(db.Integer, default=0)
-    geology = db.Column(db.Integer, default=0)
+    chemistry = db.Column(db.Integer, default=0)
+    nuclear_engeneering = db.Column(db.Integer, default=0)
 
     # Selfconsumption priority list 
     self_consumption_priority = db.Column(db.Text, default="small_water_dam large_water_dam PV_solar onshore_wind_turbine offshore_wind_turbine CSP_solar windmill watermill")

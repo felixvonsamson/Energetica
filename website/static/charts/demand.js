@@ -1,5 +1,5 @@
 const keys_demand = ["coal_mine", "oil_field", "gas_drilling_site", 
-  "uranium_mine", "industriy", "research", "construction", "small_pumped_hydro", 
+  "uranium_mine", "industry", "research", "construction", "small_pumped_hydro", 
   "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", 
   "compressed_air", "molten_salt", "hydrogen_storage", "exports", "dumping"
 ];
@@ -102,9 +102,6 @@ function regen_demand(res){
         maxSum = 100;
       }
       push();
-      for (const key of keys_demand) {
-        console.log(key, data[key][data[key].length-1])
-      }
       for(let t = 0; t < data_len; t++){
         push();
         for (const key of keys_demand) {

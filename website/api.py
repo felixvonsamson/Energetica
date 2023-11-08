@@ -100,15 +100,15 @@ def get_chart_data():
                 rates[ressource] = getattr(current_user, facility) * assets[
                     facility]["amount produced"] * 60
                 on_sale[ressource] = getattr(current_user, ressource+"_on_sale")
-            return jsonify(engine.current_t, data[table],
-                       engine.current_data[current_user.username][table],
+            return jsonify(engine.data["current_t"], data[table],
+                       engine.data["current_data"][current_user.username][table],
                        capacities, rates, on_sale)
-        return jsonify(engine.current_t, data[table],
-                       engine.current_data[current_user.username][table],
+        return jsonify(engine.data["current_t"], data[table],
+                       engine.data["current_data"][current_user.username][table],
                        capacities)
     else:
-        return jsonify(engine.current_t, data[table],
-                       engine.current_data[current_user.username][table])
+        return jsonify(engine.data["current_t"], data[table],
+                       engine.data["current_data"][current_user.username][table])
     
 @api.route("/get_market_data", methods=["GET"])
 def get_market_data():

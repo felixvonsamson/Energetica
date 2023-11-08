@@ -9,7 +9,7 @@ def init_test_players(engine):
 
     for i in range(3):
         members.append(create_player("Player"+str(i), i+1))
-    members.append(create_player("Player3", 160))
+    members.append(create_player("Player3", 21))
 
     network = "Network1"
     create_network(network, members)

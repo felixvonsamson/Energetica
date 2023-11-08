@@ -97,3 +97,48 @@ def add_handlers(socketio, engine):
         db.session.commit()
         engine.refresh()
         Path(f"instance/network_data/{network_name}").mkdir(parents=True, exist_ok=True)
+
+    # this function is executed when a player changes the value the enegy selling prices
+    @socketio.on("change_price")
+    def change_price(attribute, value):
+        def reorder(priority_list, asset):
+            for i, a in enumerate(priority_list):
+                print(getattr(current_user, "price_"+a), getattr(current_user, "price_"+asset))
+                if getattr(current_user, "price_"+a) >= getattr(current_user, "price_"+asset):
+                    priority_list.insert(i, asset)
+                    return priority_list
+            priority_list.append(asset)
+            return priority_list
+        
+        SCP_list = current_user.self_consumption_priority.split(' ')
+        rest_list = current_user.rest_of_priorities.split(' ')
+        
+        # add or remove to SCP and order 
+        if "SCP" in attribute:
+            asset = attribute[4:]
+            print(value)
+            if value == True:
+                rest_list.remove(asset)
+                SCP_list = reorder(SCP_list, asset)
+            else:
+                SCP_list.remove(asset)
+                rest_list = reorder(rest_list, asset)
+            
+        else:
+            setattr(current_user, attribute, float(value))
+            # reorder priority lists if production plant
+            if "sell" not in attribute and "buy" not in attribute:
+                asset = attribute[6:]
+                if asset in SCP_list:
+                    SCP_list.remove(asset)
+                    SCP_list = reorder(SCP_list, asset)
+                else :
+                    rest_list.remove(asset)
+                    rest_list = reorder(rest_list, asset)
+
+        space = " "
+        current_user.self_consumption_priority = space.join(SCP_list)
+        current_user.rest_of_priorities = space.join(rest_list)
+        print(current_user.self_consumption_priority)
+        print(current_user.rest_of_priorities)
+        db.session.commit()

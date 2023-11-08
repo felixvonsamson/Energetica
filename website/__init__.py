@@ -5,6 +5,7 @@ This code is run once at the start of the game
 from flask import Flask, g, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import os, csv
+import pickle
 from pathlib import Path
 from flask_login import LoginManager
 from flask_socketio import SocketIO
@@ -32,6 +33,10 @@ def create_app():
 
     # creates the engine :
     engine = gameEngine()
+    if os.path.isfile("instance/engine_data.pck"):
+        with open("instance/engine_data.pck", "rb") as file:
+            engine.data = pickle.load(file)
+            print("loaded engine data")
     app.config["engine"] = engine
 
     # initialize socketio :
@@ -86,7 +91,7 @@ def create_app():
 
     # initialize the schedulers and add the recurrent functions :
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true": # This function is to run the following omly once, TO REMOVE IF DEBUG MODE IS SET TO FALSE 
-        from .gameEngine import daily_update, state_update_h, state_update_m
+        from .gameEngine import state_update_h, state_update_m
         from .gameEngine import check_heap
 
         scheduler = APScheduler()
@@ -104,7 +109,7 @@ def create_app():
             args=(engine, app),
             id="state_update_m",
             trigger="cron",
-            second="0", # "*/5" or "0"
+            second="*/5", # "*/5" or "0"
         )
         scheduler.add_job(
             func=check_heap,

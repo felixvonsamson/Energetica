@@ -50,14 +50,13 @@
   <td><input type="checkbox" id="SCP_gas_burner" name="SCP_gas_burner" {% if "gas_burner" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
-  <tr>
   <td>Small water dam</td>
   <td class="txt_center"><script>display_W({{user.small_water_dam*assets["small_water_dam"]["power generation"]}});</script></td>
   <td><input type="number" class="small_input medium txt_center" value="{{user.price_small_water_dam}}" id="price_small_water_dam" name="price_small_water_dam"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_small_water_dam" name="SCP_small_water_dam" {% if "small_water_dam" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
-  <td>Wind turbine</td>
+  <td>Onshore wind turbine</td>
   <td class="txt_center"><script>display_W({{user.onshore_wind_turbine*assets["onshore_wind_turbine"]["power generation"]}});</script></td>
   <td><input type="number" class="small_input medium txt_center" value="{{user.price_onshore_wind_turbine}}" id="price_onshore_wind_turbine" name="price_onshore_wind_turbine"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_onshore_wind_turbine" name="SCP_onshore_wind_turbine" {% if "onshore_wind_turbine" in SCP %} checked {% endif %}></td>
@@ -93,7 +92,7 @@
   <td><input type="checkbox" id="SCP_PV_solar" name="SCP_PV_solar" {% if "PV_solar" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
-  <td>Large wind turbine</td>
+  <td>Offshore wind turbine</td>
   <td class="txt_center"><script>display_W({{user.offshore_wind_turbine*assets["offshore_wind_turbine"]["power generation"]}});</script></td>
   <td><input type="number" class="small_input medium txt_center" value="{{user.price_offshore_wind_turbine}}" id="price_offshore_wind_turbine" name="price_offshore_wind_turbine"/> CHF/MWh</td>
   <td><input type="checkbox" id="SCP_offshore_wind_turbine" name="SCP_offshore_wind_turbine" {% if "offshore_wind_turbine" in SCP %} checked {% endif %}></td>

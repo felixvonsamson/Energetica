@@ -56,8 +56,8 @@ function setup() {
         "gas_burner": [color(179, 189, 201), "Gas burner"],
         "combined_cycle": [color(89, 150, 142), "Combined cycle"],
         "windmill": [color(148, 234, 255), "Windmill"],
-        "onshore_wind_turbine": [color(44, 239, 242), "Wind turbine"],
-        "offshore_wind_turbine": [color(0, 196, 199), "Wind turbine (L)"],
+        "onshore_wind_turbine": [color(44, 239, 242), "Wind onshore"],
+        "offshore_wind_turbine": [color(0, 196, 199), "Wind offshore"],
         "CSP_solar": [color(237, 194, 0), "CSP solar"],
         "PV_solar": [color(255, 250, 0), "PV solar"],
         
@@ -77,7 +77,7 @@ function setup() {
         "oil_field": [color(69, 69, 69), "Oil fields"],
         "gas_drilling_site": [color(179, 189, 201), "Gas fields"],
         "uranium_mine": [color(137, 255, 59), "Uran. mines"],
-        "industriy": [color(73, 95, 196), "Industry"],
+        "industry": [color(73, 95, 196), "Industry"],
         "research": [color(255, 255, 255), "Research"],
         "construction": [color(245, 145, 22), "Constructions"],
 

@@ -26,8 +26,8 @@ function setup() {
         "gas_burner": [color(179, 189, 201), "Gas burner"],
         "combined_cycle": [color(89, 150, 142), "Combined cycle"],
         "windmill": [color(148, 234, 255), "Windmill"],
-        "onshore_wind_turbine": [color(44, 239, 242), "Wind turbine"],
-        "offshore_wind_turbine": [color(0, 196, 199), "Wind turbine (L)"],
+        "onshore_wind_turbine": [color(44, 239, 242), "Wind onshore"],
+        "offshore_wind_turbine": [color(0, 196, 199), "Wind offshore"],
         "CSP_solar": [color(237, 194, 0), "CSP solar"],
         "PV_solar": [color(255, 250, 0), "PV solar"],
         
@@ -102,7 +102,7 @@ function draw() {
                 textStyle(BOLD);
                 text(supply["player"][i], 90, 8);
                 textStyle(NORMAL);
-                let right = [display_Wh(supply["capacity"][i]), display_CHF(supply["price"][i]), cols_and_names[supply["plant"][i]][1]];
+                let right = [display_W(supply["capacity"][i]), display_CHF(supply["price"][i]), cols_and_names[supply["plant"][i]][1]];
                 for(let j of right){
                     translate(0, 16);
                     text(j, 90, 8);
@@ -136,7 +136,7 @@ function draw() {
             translate(0, -16);
             text(display_CHF(mp), 90, 8);
             translate(0, 16);
-            text(display_Wh(mq), 90, 8);
+            text(display_W(mq), 90, 8);
             pop();
         }
         push();
@@ -188,7 +188,7 @@ function draw() {
                 textStyle(BOLD);
                 text(demand["player"][i], 90, 8);
                 textStyle(NORMAL);
-                let right = [display_Wh(demand["capacity"][i]), price, plant];
+                let right = [display_W(demand["capacity"][i]), price, plant];
                 for(let j of right){
                     translate(0, 16);
                     text(j, 90, 8);
@@ -209,7 +209,6 @@ function update_graph(){
         demand = raw_data["demands"];
         mq = raw_data["market_quantity"];
         mp = raw_data["market_price"];
-        console.log(mq, mp);
         maxCap = max(supply["cumul_capacities"][supply["cumul_capacities"].length-1],
             demand["cumul_capacities"][demand["cumul_capacities"].length-1], 100);
         maxPrice = max(...supply["price"], ...demand["price"], 1/1.1)*1.1;
@@ -267,7 +266,7 @@ function update_graph(){
             stroke(0);
             line(i, 0, i, 5);
             noStroke();
-            text(display_Wh(interval*i/x), i, 0.5*margin);
+            text(display_W(interval*i/x), i, 0.4*margin);
         }
         pop();
 
@@ -293,8 +292,8 @@ function update_graph(){
     });
 }
 
-function display_Wh(energy) {
-    const units = [" Wh", " kWh", " MWh", " GWh", " TWh"];
+function display_W(energy) {
+    const units = [" W", " kW", " MW", " GW", " TW"];
     return general_format(energy, units);
 }
 

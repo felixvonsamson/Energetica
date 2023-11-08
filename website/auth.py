@@ -89,9 +89,7 @@ def add_player_to_data(username):
     # TEMPORARY -> GENERATE NEW VALUES FOR EACH DAY 
     with open("website/static/data/industry_demand.pck", "rb") as file:
         industry_demand = pickle.load(file)
-    engine.current_data[username] = data_init(1441)
-    engine.current_data[username]["demand"]["industriy"] = [
-        i * 50000 for i in industry_demand]
+    engine.data["current_data"][username] = data_init(1441)
 
 def data_init(length):
     return {
@@ -123,7 +121,7 @@ def data_init(length):
             "imports": [0] * length,
         },
         "demand": {
-            "industriy": [0] * length,
+            "industry": [0] * length,
             "construction": [0] * length,
             "coal_mine": [0] * length,
             "oil_field": [0] * length,
@@ -152,10 +150,10 @@ def data_init(length):
             "solid_state_batteries": [0] * length,
         },
         "ressources": {
-            "coal": [1000000] * length,
-            "oil": [500000] * length,
-            "gas": [700000] * length,
-            "uranium": [10000] * length,
+            "coal": [0] * length,
+            "oil": [0] * length,
+            "gas": [0] * length,
+            "uranium": [0] * length,
         },
         "emissions": {
             "steam_engine": [0] * length,

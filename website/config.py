@@ -15,16 +15,15 @@ full_config = {
             "O&M cost" : 0.8, # [fraction of price per year]
             "consumed ressource": None,
             "amount consumed": 0, # [kg/MWh]
-            "efficiency" : 0.2,
-            "pollution": 741,  # [kg CO2/MWh]
+            "pollution": 988,  # [kg CO2/MWh]
             "ramping time": 15,  # [min]
         },
         "windmill": {
             "name": "Windmill",
-            "price": 225000,
-            "power generation": 1900000,
+            "price": 378000,
+            "power generation": 3350000,
             "construction time": 21600,
-            "construction energy": 42000000,
+            "construction energy": 72000000,
             "construction pollution": 1600,
             "O&M cost" : 0.054,
             "consumed ressource": "wind",
@@ -54,9 +53,8 @@ full_config = {
             "construction pollution": 1100000,
             "O&M cost" : 0.095,
             "consumed ressource": "coal",
-            "amount consumed": 480,
-            "efficiency" : 0.3,
-            "pollution": 1248,
+            "amount consumed": 640,
+            "pollution": 1664,
             "ramping time": 75,
             "requirements": [("mechanical_engeneering", 1),
                              ("thermodynamics", 1)]
@@ -70,9 +68,8 @@ full_config = {
             "construction pollution": 440000,
             "O&M cost" : 0.1,
             "consumed ressource": "oil",
-            "amount consumed": 281,
-            "efficiency" : 0.27,
-            "pollution": 886,
+            "amount consumed": 375,
+            "pollution": 1181,
             "ramping time": 10,
             "requirements": [("mechanical_engeneering", 1),
                              ("thermodynamics", 1)]
@@ -86,9 +83,8 @@ full_config = {
             "construction pollution": 657000,
             "O&M cost" : 0.117,
             "consumed ressource": "gas",
-            "amount consumed": 265,
-            "efficiency" : 0.27,
-            "pollution": 754,
+            "amount consumed": 353,
+            "pollution": 1006,
             "ramping time": 9,
             "requirements": [("mechanical_engeneering", 1),
                              ("thermodynamics", 1)]
@@ -108,7 +104,7 @@ full_config = {
             "requirements": [("civil_engeneering", 1)]
         },
         "onshore_wind_turbine": {
-            "name": "Wind turbine",
+            "name": "Onshore wind turbine",
             "price": 4100000,
             "power generation": 11000000,
             "construction time": 64800,
@@ -132,9 +128,8 @@ full_config = {
             "construction pollution": 1500000,
             "O&M cost" : 0.102,
             "consumed ressource": ["gas", "coal"],
-            "amount consumed": [158, 57],
-            "efficiency" : 0.38,
-            "pollution": 598,
+            "amount consumed": [210, 76],
+            "pollution": 797,
             "ramping time": 150,
             "requirements": [("thermodynamics", 3),
                              ("mechanical_engeneering", 3)]
@@ -148,7 +143,7 @@ full_config = {
             "construction pollution": 870000,
             "O&M cost" : 0.104,
             "consumed ressource": "uranium",
-            "amount consumed": 0.033,
+            "amount consumed": 0.044,
             "efficiency" : 0.22,
             "pollution": 2,
             "ramping time": 1200,
@@ -200,7 +195,7 @@ full_config = {
                              ("materials", 4)]
         },
         "offshore_wind_turbine": {
-            "name": "Large wind turbine",
+            "name": "Offshore wind turbine",
             "price": 32000000,
             "power generation": 130000000,
             "construction time": 172800,
@@ -224,7 +219,7 @@ full_config = {
             "construction pollution": 2400000,
             "O&M cost" : 0.085,
             "consumed ressource": "uranium",
-            "amount consumed": 0.00043,
+            "amount consumed": 0.00057,
             "efficiency" : 0.3,
             "pollution": 3,
             "ramping time": 800,
@@ -290,7 +285,7 @@ full_config = {
             "price": 1600000,
             "storage capacity": 80000000000,
             "power generation": 15000000,
-            "efficiency": 0.38,
+            "efficiency": 0.33,
             "construction time": 43200,
             "construction energy": 2570000000,
             "construction pollution": 2400000,
@@ -301,7 +296,7 @@ full_config = {
         },
         "lithium_ion_batteries": {
             "name": "Lithium-ion batteries",
-            "price": 8700000,
+            "price": 33000000,
             "storage capacity": 3200000000,
             "power generation": 86000000,
             "efficiency": 0.69,
@@ -315,7 +310,7 @@ full_config = {
         },
         "solid_state_batteries": {
             "name": "Solid state batteries",
-            "price": 14000000,
+            "price": 52000000,
             "storage capacity": 5000000000,
             "power generation": 107000000,
             "efficiency": 0.79,
@@ -334,6 +329,7 @@ full_config = {
             "construction time": 10800,  # [s]
             "construction energy": 1000000000,  # [Wh]
             "construction pollution": 100000,  # [kg]
+            "time factor": 0.85,
         },
         "warehouse": {
             "name": "Warehouse",
@@ -348,6 +344,8 @@ full_config = {
             "construction time": 1800,
             "construction energy": 10000000,
             "construction pollution": 1000,
+            "power consumption": 100000, # [W]
+            "income": 10, # [CHF/day]
         },
         "carbon_capture": {
             "name": "Carbon capture",
@@ -429,8 +427,7 @@ full_config = {
             "price multiplier": 1.3,
             "construction time": 18000,
             "construction energy": 25000000,
-            "prod factor" : 1.25,
-            "efficiency factor" : 0.05,
+            "efficiency factor" : 1.1,
             "requirements": [("laboratory", 1),
                              ("mathematics", 0)]
         },
@@ -550,7 +547,10 @@ full_config = {
         "gas":  1000000,
         "uranium": 5000,
     },
-    "transport_speed": 5000 #[s/distance unit]
+    "transport": {
+        "time" : 5000, #[s/distance unit]
+        "power consumption" : 15000 #[Wh/t/distance unit]
+    }
 }
 
 wind_power_curve = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -570,26 +570,119 @@ class Config(object):
     def __init__(config):
         config.for_player = {}
 
+    # update mining speeds according to reserves depleation
+    def update_resource_extraction(config, player_id):
+        assets = config.for_player[player_id]["assets"]
+        player = Player.query.get(player_id)
+        me_factor = assets["mineral_extraction"]["prod factor"] ** player.mineral_extraction
+        assets["coal_mine"]["amount produced"] = full_config["assets"]["coal_mine"]["amount produced"] * player.tile[0].coal * me_factor
+        assets["oil_field"]["amount produced"] = full_config["assets"]["oil_field"]["amount produced"] * player.tile[0].oil * me_factor
+        assets["gas_drilling_site"]["amount produced"] = full_config["assets"]["gas_drilling_site"]["amount produced"] * player.tile[0].gas * me_factor
+        assets["uranium_mine"]["amount produced"] = full_config["assets"]["uranium_mine"]["amount produced"] * player.tile[0].uranium * me_factor
+
+    # updating the config values according to the players technology level
     def update_config_for_user(config, player_id):
         config.for_player[player_id] = full_config.copy()
         assets = config.for_player[player_id]["assets"]
         player = Player.query.get(player_id)
-        assets["coal_mine"]["amount produced"] = full_config["assets"]["coal_mine"]["amount produced"] * player.tile[0].coal * 100000000
-        assets["oil_field"]["amount produced"] = full_config["assets"]["oil_field"]["amount produced"] * player.tile[0].oil  * 100000000
-        assets["gas_drilling_site"]["amount produced"] = full_config["assets"]["gas_drilling_site"]["amount produced"] * player.tile[0].gas * 100000000
-        assets["uranium_mine"]["amount produced"] = full_config["assets"]["uranium_mine"]["amount produced"] * player.tile[0].uranium * 10000000
+        config.update_resource_extraction(player_id)
+
         for asset in assets:
+            # calculating the ramping speed in W/min from the ramping time
             if "ramping time" in assets[asset]:
                 if assets[asset]["ramping time"] == 0:
                     assets[asset]["ramping speed"] = 0
                 else: 
                     assets[asset]["ramping speed"] = assets[asset]["power generation"]/assets[asset]["ramping time"]
 
+                if asset in ["steam_engine", "watermill", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "compressed_air", "molten_salt"]:
+                    # update price and production (mechanical engeneering)
+                    assets[asset]["price"] *= assets["mechanical_engeneering"]["price factor"] ** player.mechanical_engeneering
+                    assets[asset]["power generation"] *= assets["mechanical_engeneering"]["prod factor"] ** player.mechanical_engeneering
+
+                if asset in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "nuclear_reactor", "nuclear_reactor_gen4"]:
+                    # update ressource consumption and pollution (thermodynamics)
+                    assets[asset]["amount consumed"] /= assets["thermodynamics"]["efficiency factor"] ** player.thermodynamics
+                    assets[asset]["pollution"] /= assets["thermodynamics"]["efficiency factor"] ** player.thermodynamics
+
+                if asset == "combined_cycle":
+                    # special case for combined cycle (thermodynamics)
+                    assets[asset]["amount consumed"][0] /= assets["thermodynamics"]["efficiency factor"] ** player.thermodynamics
+                    assets[asset]["amount consumed"][1] /= assets["thermodynamics"]["efficiency factor"] ** player.thermodynamics
+                    assets[asset]["pollution"] /= assets["thermodynamics"]["efficiency factor"] ** player.thermodynamics
+
+                if asset == "compressed_air":
+                    # special case for compressed air rountrip efficiency (thermodynamics)
+                    assets[asset]["efficiency"] += 0.05 * player.thermodynamics * assets[asset]["efficiency"]
+
+                if asset == "molten_salt":
+                    # special case for molten salt efficiency (thermodynamics)
+                    assets[asset]["efficiency"] = 1 - (1-assets[asset]["efficiency"]) * (0.9**player.thermodynamics)
+
+                if asset in ["PV_solar", "CSP_solar", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"]:
+                    # update price and production (physics)
+                    assets[asset]["price"] *= assets["physics"]["price factor"] ** player.physics
+                    assets[asset]["power generation"] *= assets["physics"]["prod factor"] ** player.physics
+
+                if asset in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"]:
+                    # update price, energy consumption and pollution. production increase is already in update_resource_extraction (mineral extraction)
+                    assets[asset]["price"] *= assets["mineral_extraction"]["price factor"] ** player.mineral_extraction
+                    assets[asset]["power consumption"] *= assets["mineral_extraction"]["energy factor"] ** player.mineral_extraction
+                    assets[asset]["pollution"] *= assets["mineral_extraction"]["pollution factor"] ** player.mineral_extraction
+
+                if asset in ["PV_solar", "onshore_wind_turbine", "offshore_wind_turbine", "lithium_ion_batteries", "solid_state_batteries"]:
+                    # update price (materials)
+                    assets[asset]["price"] *= assets["materials"]["price factor"] ** player.materials
+
+                if asset in ["small_water_dam", "large_water_dam", "small_pumped_hydro", "large_pumped_hydro"]:
+                    # update price and production (civil engeneering)
+                    assets[asset]["price"] *= assets["civil_engeneering"]["price factor"] ** player.civil_engeneering
+                    assets[asset]["power generation"] *= assets["civil_engeneering"]["prod factor"] ** player.civil_engeneering
+                
+                if asset in ["small_pumped_hydro", "large_pumped_hydro"]:
+                    # update capacity (civil engeneering)
+                    assets[asset]["storage capacity"] *= assets["civil_engeneering"]["capacity factor"] ** player.civil_engeneering
+
+                if asset in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
+                    # update price and production (aerodynamics)
+                    assets[asset]["price"] *= assets["aerodynamics"]["price factor"] ** player.aerodynamics
+                    assets[asset]["power generation"] *= assets["aerodynamics"]["prod factor"] ** player.aerodynamics
+
+                if asset in ["lithium_ion_batteries", "solid_state_batteries"]:
+                    # update roundtrip efficiencies (chemistry)
+                    assets[asset]["efficiency"] = 1 - (1-assets[asset]["efficiency"]) * (assets["chemistry"]["efficiency factor"]**player.chemistry)
+
+                if asset == "hydrogen_storage":
+                    # special case for hydrogen storage rountrip efficiency (chemistry)
+                    assets[asset]["efficiency"] += 0.05 * player.chemistry * assets[asset]["efficiency"]
+
+                if asset in ["nuclear_reactor", "nuclear_reactor_gen4"]:
+                    # update price and production (nuclear engeneering)
+                    assets[asset]["price"] *= assets["nuclear_engeneering"]["price factor"] ** player.nuclear_engeneering
+                    assets[asset]["power generation"] *= assets["nuclear_engeneering"]["prod factor"] ** player.nuclear_engeneering
+
+                if asset in ["laboratory", "warehouse", "industry", "carbon_capture", "mathematics", "mechanical_engeneering", "thermodynamics", "physics", "building_technology", "mineral_extraction", "transport_technology", "materials", "civil_engeneering", "aerodynamics", "chemistry", "nuclear_engeneering"]:
+                    # update prices, construction time and construction energy
+                    assets[asset]["price"] *= assets[asset]["price multiplier"] ** getattr(player, asset)
+                    assets[asset]["construction time"] *= assets[asset]["price multiplier"] ** getattr(player, asset)
+                    assets[asset]["construction energy"] *= assets[asset]["price multiplier"] ** getattr(player, asset)
+
+                if asset in ["mathematics", "mechanical_engeneering", "thermodynamics", "physics", "building_technology", "mineral_extraction", "transport_technology", "materials", "civil_engeneering", "aerodynamics", "chemistry", "nuclear_engeneering"]:
+                    # update research time (laboratory)
+                    assets[asset]["construction time"] *= assets["laboratory"]["time factor"] ** player.laboratory
+
+                if asset in ["watermill", "small_water_dam", "large_water_dam", "nuclear_reactor", "nuclear_reactor_gen4", "steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "windmill", "onshore_wind_turbine", "offshore_wind_turbine", "CSP_solar", "PV_solar", "small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"]:
+                    # update construction time (building technology)
+                    assets[asset]["construction time"] *= assets["building_technology"]["time factor"] ** player.building_technology
+
+        # calculating the maximum storage capacity from the warehouse level
         max_cap = config.for_player[player_id]["warehouse_capacities"]
         for ressource in max_cap:
             max_cap[ressource] *= pow(1.5, player.warehouse)
 
-        config.for_player[player_id]["transport_speed"] *= pow(0.85, player.transport_technology)
+        # calculating the transport speed and energy consumption from the level of transport technology
+        config.for_player[player_id]["transport"]["time"] *= assets["transport_technology"]["time factor"] ** player.transport_technology
+        config.for_player[player_id]["transport"]["power consumption"] *= assets["transport_technology"]["energy factor"] ** player.transport_technology
 
     def __getitem__(config, player_id):
         if player_id not in config.for_player:
