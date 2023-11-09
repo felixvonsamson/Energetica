@@ -17,7 +17,9 @@ def init_test_players(engine):
     if members[0] != None:
         members[1].steam_engine = 10
         members[0].coal_burner = 1
+        members[0].coal = 1000000
         members[0].nuclear_reactor = 1
+        members[0].uranium = 3000
         members[2].compressed_air = 1
         members[2].windmill = 1
         members[2].watermill = 1

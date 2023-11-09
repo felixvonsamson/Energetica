@@ -131,7 +131,7 @@ def state_update_h(engine, app):
     with app.app_context():
         players = Player.query.all()
         for player in players:
-            engine.config.update_config_for_user(player.id) # update mining productivity every hour
+            engine.config.update_resource_extraction(player.id) # update mining productivity every hour
 
 # function that is executed once every 1 minute :
 def state_update_m(engine, app):

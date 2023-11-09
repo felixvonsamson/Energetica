@@ -103,7 +103,6 @@ def add_handlers(socketio, engine):
     def change_price(attribute, value):
         def reorder(priority_list, asset):
             for i, a in enumerate(priority_list):
-                print(getattr(current_user, "price_"+a), getattr(current_user, "price_"+asset))
                 if getattr(current_user, "price_"+a) >= getattr(current_user, "price_"+asset):
                     priority_list.insert(i, asset)
                     return priority_list
@@ -116,7 +115,6 @@ def add_handlers(socketio, engine):
         # add or remove to SCP and order 
         if "SCP" in attribute:
             asset = attribute[4:]
-            print(value)
             if value == True:
                 rest_list.remove(asset)
                 SCP_list = reorder(SCP_list, asset)
@@ -139,6 +137,4 @@ def add_handlers(socketio, engine):
         space = " "
         current_user.self_consumption_priority = space.join(SCP_list)
         current_user.rest_of_priorities = space.join(rest_list)
-        print(current_user.self_consumption_priority)
-        print(current_user.rest_of_priorities)
         db.session.commit()

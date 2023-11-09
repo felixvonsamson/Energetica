@@ -266,7 +266,7 @@ function update_graph(){
             stroke(0);
             line(i, 0, i, 5);
             noStroke();
-            text(display_W(interval*i/x), i, 0.4*margin);
+            text(display_W(interval*i/x), i, 0.5*margin);
         }
         pop();
 

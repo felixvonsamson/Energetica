@@ -19,6 +19,8 @@ ressource_to_extraction = {
 # fuction that updates the ressources of all players according to extraction capacity (and trade)
 def update_ressources(engine):
     t = engine.data["current_t"]
+    # keep CO2 values for next t
+    engine.data["current_CO2"][t] = engine.data["current_CO2"][t-1]
     players = Player.query.all()
     for player in players:
         if len(player.tile) == 0:
@@ -89,6 +91,8 @@ def update_electricity(engine):
             current_data["generation"]["imports"][t] = max(0, imp-exp)
         # Ressource and pollution update for all players
         ressources_and_pollution(engine, player, t)
+        # income from industry
+        player.money += engine.config[player.id]["assets"]["industry"]["income"]/1440.0
     
     #save changes 
     db.session.commit()
@@ -107,7 +111,7 @@ def calculate_demand(engine, player, t):
     day = engine.data["total_t"]%73440//1440
     seasonal_factor = (engine.industry_seasonal[day]*(1440-t)+engine.industry_seasonal[(day+1)%51]*t)/1440
     industry_demand = engine.industry_demand[t-1]*seasonal_factor*assets["industry"]["power consumption"]
-    demand["industry"][t] = min(demand["industry"][t-1]+0.1*industry_demand, industry_demand) # for smooth demand changes
+    demand["industry"][t] = min(demand["industry"][t-1]+0.05*industry_demand, industry_demand) # for smooth demand changes
     # demand from assets under construction
     demand_construction = 0
     for ud in player.under_construction:
@@ -161,6 +165,7 @@ def calculate_generation_without_market(engine, total_demand, player, t):
     # if demand is still not met, players industry is leveled down
     if total_demand > total_generation:
         player.industry -= 1
+        engine.config.update_config_for_user(player.id)
 
 # calculates in-house satisfaction and sets the capacity offers and demands on the market
 def calculate_generation_with_market(engine, market, total_demand, player, t):
@@ -223,15 +228,22 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
     # NO RAMPING SPEED TAKEN INTO ACCOUNT YET 
     for plant in engine.storage_plants :
         if getattr(player, plant) > 0:
+            demand = engine.data["current_data"][player.username]["demand"]
             # Storage capacity sold on the market
-            capacity = min(storage[plant][t - 1] * 60, # Transform Wh in W
-                        getattr(player, plant) * assets[plant]["power generation"])
+            max_storage_content = storage[plant][t - 1] * 60 # Transform Wh in W
+            max_power = getattr(player, plant) * assets[plant]["power generation"]
+            max_ramping = (generation[plant][t - 1] + getattr(player, plant) * 
+                       assets[plant]["ramping speed"])
+            capacity = min(max_storage_content, max_power, max_ramping)
             price = getattr(player, "price_sell_" + plant)
             market = offer(market, player, capacity, price, plant)
             # Demand curve for storage
-            demand = min((assets[plant]["storage capacity"] * 
-                        getattr(player, plant) - storage[plant][t - 1]) * 60,
-                        getattr(player, plant) * assets[plant]["power generation"])
+            max_storage_avalability = (assets[plant]["storage capacity"] * 
+                        getattr(player, plant) - storage[plant][t - 1]) * 60
+            max_power = getattr(player, plant) * assets[plant]["power generation"]
+            max_ramping = (demand[plant][t - 1] + getattr(player, plant) * 
+                       assets[plant]["ramping speed"])
+            demand = min(max_storage_avalability, max_power, max_ramping)
             price = getattr(player, "price_buy_" + plant)
             market = bid(market, player, demand, price, plant)
     return market
@@ -251,7 +263,7 @@ def market_logic(engine, market, t):
     market["demands"] = demands
 
     total_market_capacity = offers["capacity"].sum()
-    network_demand = demands.groupby('price')['capacity'].sum()[np.inf]
+    network_demand = demands[demands['price'] == np.inf]['capacity'].sum()
 
     # If network prioritary demand is higher than total supply -> only partial satisfaction of demand and level down of industry.
     if total_market_capacity < network_demand:
@@ -265,6 +277,7 @@ def market_logic(engine, market, t):
                 buy(engine, row, market_price, t, quantity=row.capacity 
                     * satisfaction)
                 row.player.industry -= 1
+                engine.config.update_config_for_user(row.player.id)
         for row in offers.itertuples(index=False):
             sell(engine, row, market_price, t)
     else:
@@ -275,7 +288,7 @@ def market_logic(engine, market, t):
         for row in offers.itertuples(index=False):
             if row.cumul_capacities > market_quantity:
                 sold_cap = row.capacity - row.cumul_capacities + market_quantity
-                if sold_cap > 0:
+                if sold_cap > 0.1:
                     sell(engine, row, market_price, t, quantity=sold_cap)
                 # dumping electricity that is not offered for negative price and not sold
                 if row.price < 0:
@@ -291,7 +304,8 @@ def market_logic(engine, market, t):
         for row in demands.itertuples(index=False):
             if row.cumul_capacities > market_quantity:
                 bought_cap = row.capacity - row.cumul_capacities + market_quantity
-                buy(engine, row, market_price, t, quantity=bought_cap)
+                if bought_cap>1:
+                    buy(engine, row, market_price, t, quantity=bought_cap)
                 break
             buy(engine, row, market_price, t)
 
@@ -330,30 +344,21 @@ def market_optimum(offers_og, demands_og):
 
 # Calculates the min or max power production of a plant in at time t considering ramping constraints, ressources constraints and max and min power constraints
 def calculate_prod(minmax, player, assets, plant, generation, t):
-    ressource_factor = getattr(player, plant)
+    max_ressources = np.inf
     if plant == "combined_cycle":
         avalable_gas = player.gas - player.gas_on_sale
-        needed_gas = assets[plant]["amount consumed"][0]                         # * getattr(player, plant)
         avalable_coal = player.coal - player.coal_on_sale
-        needed_coal = assets[plant]["amount consumed"][1]                        # * getattr(player, plant)
-        ressource_factor = min(avalable_gas/needed_gas, 
-                            avalable_coal/needed_coal, getattr(player, plant))
+        max_ressources = min(avalable_gas / assets[plant]["amount consumed"][0] * 60000000,
+                             avalable_coal / assets[plant]["amount consumed"][1] * 60000000)
     elif assets[plant]["amount consumed"] != 0 :
         ressource = assets[plant]["consumed ressource"]
-        if ressource == "money":
-            avalable_ressource = player.money
-        else:
-            avalable_ressource = getattr(player, ressource) - getattr(player, 
+        avalable_ressource = getattr(player, ressource) - getattr(player, 
                                                         ressource+"_on_sale")
-        needed_ressource = assets[plant]["amount consumed"]                      # * getattr(player, plant)
-        ressource_factor = min(avalable_ressource / needed_ressource, 
-                               getattr(player, plant))
-
-    max_ressources = ressource_factor * assets[plant]["power generation"]        # / getattr(player, plant)
+        max_ressources = avalable_ressource / assets[plant]["amount consumed"] * 60000000
     if minmax == "max":
         max_ramping = (generation[plant][t - 1] + getattr(player, plant) * 
                        assets[plant]["ramping speed"])
-        return min(max_ressources, max_ramping)
+        return min(max_ressources, max_ramping, getattr(player, plant) * assets[plant]["power generation"])
     else :
         min_ramping = (generation[plant][t - 1] - getattr(player, plant) * 
                        assets[plant]["ramping speed"])
@@ -410,14 +415,11 @@ def ressources_and_pollution(engine, player, t):
     for plant in ["coal_burner", "oil_burner", "gas_burner", "nuclear_reactor", 
                   "nuclear_reactor_gen4"]:
         ressource = assets[plant]["consumed ressource"]
-        power_factor = generation[plant][t] / assets[plant]["power generation"]  # /getattr(player, plant)
-        quantity = power_factor * assets[plant]["amount consumed"]               # *getattr(player, plant)
+        quantity = assets[plant]["amount consumed"] * generation[plant][t] / 60000000 
         setattr(player, ressource, getattr(player, ressource) - quantity)
     # special case of combined cycle
-    power_factor = generation["combined_cycle"][t] / assets["combined_cycle"][
-        "power generation"]  # /getattr(player, plant)
-    quantity_gas = power_factor * assets["combined_cycle"]["amount consumed"][0]  # *getattr(player, plant)
-    quantity_coal = power_factor * assets["combined_cycle"]["amount consumed"][1]  # *getattr(player, plant)
+    quantity_gas = assets["combined_cycle"]["amount consumed"][0] * generation["combined_cycle"][t] / 60000000 
+    quantity_coal = assets["combined_cycle"]["amount consumed"][1] * generation["combined_cycle"][t] / 60000000
     player.gas -= quantity_gas
     player.coal -= quantity_coal
     #POLLUTION
@@ -426,10 +428,10 @@ def ressources_and_pollution(engine, player, t):
                   "combined_cycle", "nuclear_reactor", 
                   "nuclear_reactor_gen4"]:
         power_factor = generation[plant][t] / assets[plant]["power generation"]  # /getattr(player, plant)
-        plant_emmissions = power_factor * assets[plant]["pollution"]             # *getattr(player, plant)
+        plant_emmissions = assets[plant]["pollution"] * generation[plant][t] / 60000000
         emissions[plant][t] = plant_emmissions
         player.emissions += plant_emmissions
-        engine.data["current_CO2"][t] = engine.data["current_CO2"][t-1] + plant_emmissions
+        engine.data["current_CO2"][t] += plant_emmissions
 
 def renewables_generation(engine, player, assets, generation, t):
     #WIND
