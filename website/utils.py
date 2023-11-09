@@ -17,10 +17,8 @@ from sqlalchemy import func
 # this function is executed after an asset is finished facility :
 def add_asset(player_id, facility):
     player = Player.query.get(int(player_id))
-    assets = current_app.config["engine"].config[player_id]["assets"]
     setattr(player, facility, getattr(player, facility) + 1)
-    facility_data = assets[facility]
-    # player.emissions += ??? IMPLEMENT EMMISIONS FROM CONSTRUCTION
+    current_app.config["engine"].config.update_config_for_user(player.id)
     Under_construction.query.filter(
         Under_construction.finish_time < time.time()
     ).delete()

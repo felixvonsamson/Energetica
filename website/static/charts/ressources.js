@@ -18,7 +18,7 @@ function draw_ressources() {
     noStroke();
     translate(X, graph_h);
     for (const key of keys_ressources) {
-      let h = -data[key][t]/maxSum*graph_h;
+      let h = -data[key][t]/caps[key]*graph_h;
       ellipse(0, h, 8, 8);
     }
     let tx = -135;
@@ -143,18 +143,14 @@ function regen_ressources(res){
       push();
       translate(1.5*margin, height-2*margin-10);
       noStroke();
-      maxSum = Math.max(...data["coal"], ...data["oil"], ...data["gas"], ...data["uranium"]);
-      if(maxSum == 0){
-        maxSum = 100;
-      }
       push();
       strokeWeight(3);
-      for (const key of keys_ressources) {
+      for (const key of keys_ressources) { 
         stroke(cols_and_names[key][0]);
         push();
         for(let t = 1; t < data_len; t++){
-          let h1 = data[key][t-1]/maxSum*graph_h;
-          let h2 = data[key][t]/maxSum*graph_h;
+          let h1 = data[key][t-1]/caps[key]*graph_h;
+          let h2 = data[key][t]/caps[key]*graph_h;
           line(0, -h1, graph_w/data_len, -h2);
           translate(graph_w/(data_len-1), 0);
         }
@@ -180,17 +176,17 @@ function regen_ressources(res){
       pop();
 
       push();
-      let y_ticks = y_units(maxSum);
+      let y_ticks = y_units(100);
       let interval = y_ticks[1];
       fill(0);
-      let y = map(interval, 0, maxSum, 0, graph_h);
+      let y = map(interval, 0, 100, 0, graph_h);
       for(let i=0; i<y_ticks.length; i++){
         stroke(0, 0, 0, 30);
         line(graph_w, -y*i, 0, -y*i);
         stroke(0);
         line(0, -y*i, -5, -y*i);
         noStroke();
-        text(display_kg(y_ticks[i]),-0.75*margin, -y*i);
+        text(y_ticks[i] + "%",-0.75*margin, -y*i);
       }
       pop();
       pop();

@@ -279,6 +279,10 @@ function display_kg_long(mass) {
     return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} kg`
 }
 
+function display_kgh_long(mass) {
+    return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} kg/h`
+}
+
 function change_view(view){
     graph = null;
     let title = document.getElementById("graph_title");

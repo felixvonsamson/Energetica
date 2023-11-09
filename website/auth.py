@@ -163,5 +163,6 @@ def data_init(length):
             "combined_cycle": [0] * length,
             "nuclear_reactor": [0] * length,
             "nuclear_reactor_gen4": [0] * length,
+            "construction": [0] * length,
         }
     }
