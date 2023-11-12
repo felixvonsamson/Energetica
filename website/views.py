@@ -172,15 +172,15 @@ def resource_market():
                 else :
                     sale.quantity -= quantity
                 current_user.money -= sale.price * quantity
-                updates = [("money", display_CHF(current_user.money))]
-                g.engine.update_fields(updates, [current_user]) # can probably be improved
                 sale.player.money += sale.price * quantity
+                current_user.update_resources()
+                sale.player.update_resources()
                 setattr(sale.player, sale.resource, getattr(sale.player, sale.resource) - quantity)
                 setattr(sale.player, sale.resource+"_on_sale", getattr(sale.player, sale.resource+"_on_sale") - quantity)
                 dq = current_user.tile[0].q - sale.player.tile[0].q
                 dr = current_user.tile[0].r - sale.player.tile[0].r
                 distance = math.sqrt(2 * (dq**2 + dr**2 + dq*dr))
-                shipment_duration = distance * g.config["transport_speed"]
+                shipment_duration = distance * g.config["transport"]["time"]
                 arrival_time = time.time() + shipment_duration
                 heapq.heappush(heap, (arrival_time, store_import, (current_user.id, sale.resource, quantity)))
                 new_shipment = Shipment(

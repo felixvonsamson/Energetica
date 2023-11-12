@@ -556,7 +556,7 @@ full_config = {
     },
     "transport": {
         "time" : 5000, #[s/distance unit]
-        "power consumption" : 15000 #[Wh/t/distance unit]
+        "power consumption" : 5000 #[Wh/t/distance unit]
     }
 }
 
@@ -596,6 +596,8 @@ class Config(object):
         config.update_resource_extraction(player_id)
 
         # --- Temporary to accelerate the game *1000 ---
+        config.for_player[player_id]["transport"]["time"] /= 1000
+        config.for_player[player_id]["transport"]["power consumption"] /= 1000
         for asset in assets:
             assets[asset]["construction time"] /= 1000
             assets[asset]["construction energy"] /= 1000

@@ -123,11 +123,13 @@ def data_init(length):
         "demand": {
             "industry": [0] * length,
             "construction": [0] * length,
+            "research": [0] * length,
+            "transport": [0] * length,
+
             "coal_mine": [0] * length,
             "oil_field": [0] * length,
             "gas_drilling_site": [0] * length,
             "uranium_mine": [0] * length,
-            "research": [0] * length,
 
             "small_pumped_hydro": [0] * length,
             "compressed_air": [0] * length,
@@ -164,5 +166,10 @@ def data_init(length):
             "nuclear_reactor": [0] * length,
             "nuclear_reactor_gen4": [0] * length,
             "construction": [0] * length,
+
+            "coal_mine": [0] * length,
+            "oil_field": [0] * length,
+            "gas_drilling_site": [0] * length,
+            "uranium_mine": [0] * length,
         }
     }

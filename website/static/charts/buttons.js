@@ -80,6 +80,7 @@ function setup() {
         "industry": [color(73, 95, 196), "Industry"],
         "research": [color(255, 255, 255), "Research"],
         "construction": [color(245, 145, 22), "Constructions"],
+        "transport": [color(140, 3, 252), "Transport"],
 
         "coal": [color(0,0,0), "Coal"],
         "oil": [color(184, 33, 78), "Oil"],

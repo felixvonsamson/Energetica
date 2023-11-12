@@ -196,14 +196,10 @@ class Player(db.Model, UserMixin):
     
     def emit(player, *args):
         if player.sid:
-            print("Server emitting to room:", player.sid)
-            print(current_app.config["engine"].socketio)
-            print(args)
             socketio = current_app.config["engine"].socketio
             socketio.emit(*args)
 
     def update_resources(player):
-        print(player.sid)
         if player.sid:
             updates = []
             updates.append(["money", f"{player.money:,.0f} CHF".replace(",", " ")])

@@ -51,7 +51,7 @@
         <div id="infos" class="flex-col medium">
             <span class="large"><script>to_string({{sale.quantity/1000}});</script> t {{sale.resource}}</span>
             <span class="large"><b><script>to_string({{sale.price*1000}});</script></b> CHF/t</span>
-            shipment : <script>calculate_delivery({{user.tile[0].q-sale.player.tile[0].q}}, {{user.tile[0].r-sale.player.tile[0].r}}, {{data["transport_speed"]}});</script>
+            shipment : <script>calculate_delivery({{user.tile[0].q-sale.player.tile[0].q}}, {{user.tile[0].r-sale.player.tile[0].r}}, {{data["transport"]["time"]}});</script>
         </div>
         <form method="POST" autocomplete="off" id="additionalContent" class="hidden-info medium flex-col">
             Seller : {{sale.player.username}}<br><br>

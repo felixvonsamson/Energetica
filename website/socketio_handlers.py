@@ -26,6 +26,8 @@ def add_handlers(socketio, engine):
         location = Hex.query.get(id + 1)
         if location.player_id != None:
             current_user.emit("errorMessage", "Location already taken")
+        elif len(current_user.tile) != 0:
+            current_user.emit("errorMessage", "You already chose a location. Please refresh")
         else:
             location.player_id = current_user.id
             db.session.commit()

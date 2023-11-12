@@ -31,23 +31,26 @@ def update_ressources(engine):
         warehouse_caps = engine.config[player.id]["warehouse_capacities"]
         for ressource in ressource_to_extraction:
             facility = ressource_to_extraction[ressource]
-            max_warehouse = (warehouse_caps[ressource] - 
-                             player_ressources[ressource][t-1])
-            max_prod = getattr(player, facility) * assets[facility][
-                "amount produced"]
-            amount_produced = min(max_prod, max_warehouse)
-            setattr(player, ressource, getattr(player, ressource) + 
-                    amount_produced)
-            player_ressources[ressource][t] = getattr(player, ressource)
-            setattr(player.tile[0], ressource, max(0, getattr(player.tile[0], 
-                                                ressource) - amount_produced))
-            energy_demand = assets[facility]["power consumption"] * getattr(
-                player, facility)
-            if max_prod == 0:
-                energy_demand = 0
-            elif amount_produced == max_warehouse :
-                energy_demand = max_warehouse / max_prod * energy_demand
-            demand[facility][t] = min(demand[facility][t]+0.2*energy_demand, energy_demand) # for smooth demand changes
+            if getattr(player, facility) > 0:
+                max_warehouse = (warehouse_caps[ressource] - 
+                                player_ressources[ressource][t-1])
+                max_prod = getattr(player, facility) * assets[facility][
+                    "amount produced"]
+                amount_produced = min(max_prod, max_warehouse)
+                setattr(player, ressource, getattr(player, ressource) + 
+                        amount_produced)
+                player_ressources[ressource][t] = getattr(player, ressource)
+                setattr(player.tile[0], ressource, max(0, getattr(player.tile[0], 
+                                                    ressource) - amount_produced))
+                energy_demand = assets[facility]["power consumption"] * getattr(
+                    player, facility)
+                if amount_produced == 0:
+                    energy_demand /= 2
+                demand[facility][t] = min(demand[facility][t-1]+0.2*energy_demand, energy_demand) # for smooth demand changes
+                facility_emmissions = assets[facility]["pollution"] * amount_produced / 1000
+                engine.data["current_data"][player.username]["emissions"][facility][t] = facility_emmissions * 60 # emissions in the graph are in kg/h
+                player.emissions += facility_emmissions
+                engine.data["current_CO2"][t] += facility_emmissions
     db.session.commit()
 
 # function that updates the electricity generation and storage status for all players according to capacity and external factors (and trade)
@@ -116,17 +119,29 @@ def calculate_demand(engine, player, t):
     demand["industry"][t] = min(demand["industry"][t-1]+0.05*industry_demand, industry_demand) # for smooth demand changes
     # demand from assets under construction + emissions of construction
     demand_construction = 0
+    demand_research = 0
     emissions_construction = 0
     for ud in player.under_construction:
         construction = assets[ud.name]
-        demand_construction += (construction["construction energy"] 
-            / construction["construction time"] * 60)
-        emissions_construction += (construction["construction pollution"] 
-            / construction["construction time"])
+        if ud.family == "technologies":
+            demand_research += (construction["construction energy"] 
+                / construction["construction time"] * 60)
+        else:
+            demand_construction += (construction["construction energy"] 
+                / construction["construction time"] * 60)
+            emissions_construction += (construction["construction pollution"] 
+                / construction["construction time"])
     demand["construction"][t] = min(demand["construction"][t-1]+0.1*demand_construction, demand_construction) # for smooth demand changes
+    demand["research"][t] = min(demand["research"][t-1]+0.1*demand_research, demand_research) # for smooth demand changes
     engine.data["current_data"][player.username]["emissions"]["construction"][t] = emissions_construction * 60 # emissions in the graph are in kg/h
     player.emissions += emissions_construction
     engine.data["current_CO2"][t] += emissions_construction
+    # demand from shipment of ressources
+    transport = engine.config[player.id]["transport"]
+    demand_transport = 0
+    for shipment in player.shipments:
+        demand_transport += transport["power consumption"] / transport["time"] * shipment.quantity * 3.6
+    demand["transport"][t] = min(demand["transport"][t-1]+0.2*demand_transport, demand_transport) # for smooth demand changes
     # demand of extraction plants is calculated in update_ressources()
     return sum([demand[i][t] for i in demand])
 
@@ -153,6 +168,7 @@ def calculate_generation_without_market(engine, total_demand, player, t):
         dumping = total_generation-total_demand
         demand["dumping"][t] = dumping
         player.money -= dumping * 5 / 1000000
+        return
     # while the produced power is not sufficient for own demand, for each power plant following the priority list,
     # set the power to the maximum possible value (max upward power ramp). 
     # For the PP that overshoots the demand, find the equilibirum power generation value.
@@ -162,7 +178,7 @@ def calculate_generation_without_market(engine, total_demand, player, t):
                 max_prod = calculate_prod("max", player, assets, plant, 
                                         generation, t)
                 # range of possible power variation
-                delta_prod = max_prod - generation[plant][t-1]
+                delta_prod = max_prod - generation[plant][t]
                 # case where the plant is the one that could overshoot the equilibium :
                 if total_demand - total_generation < delta_prod:
                     generation[plant][t] += total_demand - total_generation
@@ -433,11 +449,10 @@ def ressources_and_pollution(engine, player, t):
     quantity_coal = assets["combined_cycle"]["amount consumed"][1] * generation["combined_cycle"][t] / 60000000
     player.gas -= quantity_gas
     player.coal -= quantity_coal
-    #pollution
+    # emissions (emissions of extraction plants are calculated in update_ressources)
     emissions = engine.data["current_data"][player.username]["emissions"]
     for plant in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", 
-                  "combined_cycle", "nuclear_reactor", 
-                  "nuclear_reactor_gen4"]:
+                  "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"]:
         plant_emmissions = assets[plant]["pollution"] * generation[plant][t] / 60000000 
         emissions[plant][t] = plant_emmissions * 60 # emissions in the graph are in kg/h
         player.emissions += plant_emmissions
