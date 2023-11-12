@@ -85,8 +85,6 @@ def create_app():
     @login_manager.user_loader
     def load_user(id):
         player = Player.query.get(int(id))
-        if player != None:
-            player.engine = engine
         return player
 
     # initialize the schedulers and add the recurrent functions :

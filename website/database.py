@@ -4,6 +4,7 @@ Here are defined the classes for the items stored in the database
 
 from . import db
 from flask_login import UserMixin
+from flask import current_app
 from sqlalchemy.sql import func
 import pickle
 from datetime import datetime
@@ -66,8 +67,6 @@ class Network(db.Model):
 
 # class that stores the users :
 class Player(db.Model, UserMixin):
-
-    engine = None
 
     # Authentification :
     id = db.Column(db.Integer, primary_key=True)
@@ -197,8 +196,18 @@ class Player(db.Model, UserMixin):
     
     def emit(player, *args):
         if player.sid:
-            socketio = player.engine.socketio
-            socketio.emit(*args, room=player.sid)
+            print("Server emitting to room:", player.sid)
+            print(current_app.config["engine"].socketio)
+            print(args)
+            socketio = current_app.config["engine"].socketio
+            socketio.emit(*args)
+
+    def update_resources(player):
+        print(player.sid)
+        if player.sid:
+            updates = []
+            updates.append(["money", f"{player.money:,.0f} CHF".replace(",", " ")])
+            player.emit("update_data", updates)
 
     # prints out the object as a sting with the players username for debugging
     def __repr__(self):

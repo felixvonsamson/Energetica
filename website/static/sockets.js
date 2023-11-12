@@ -4,6 +4,7 @@ This code contains the main functions that communicate with the server (client s
 
 
 socket.on('connect', function() {
+    console.log("Connected to server");
     socket.emit('give_identity');
 });
 
@@ -21,6 +22,7 @@ socket.on('display_under_construction', function(facility, finish_time) {
 
 // updates specific fields of the page without reloading
 socket.on('update_data', function(changes) {
+    console.log("Received update_data:", changes);
     for (i = 0; i < changes.length; i++) {
         object_id = changes[i][0];
         value = changes[i][1];
@@ -38,3 +40,10 @@ socket.on('display_new_message', function(msg) {
 socket.on('refresh', function() {
     window.location = window.location;
 });
+
+function logSocket() {
+    console.log(socket); // Replace 'socket' with the actual variable you want to log
+  }
+  
+// Set up an interval to call the logSocket function every 5 seconds (5000 milliseconds)
+setInterval(logSocket, 5000);
