@@ -113,10 +113,10 @@ def save_past_data_threaded(app, new_data):
                         new_5_days = np.mean(new_array.reshape(-1, 5), axis=1)
                         past_data["5_days"][category][element] = past_data["5_days"][category][element][288:]
                         past_data["5_days"][category][element].extend(new_5_days)
-                        new_month = np.mean(new_array.reshape(-1, 6), axis=1)
+                        new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
                         past_data["month"][category][element] = past_data["month"][category][element][48:]
                         past_data["month"][category][element].extend(new_month)
-                        new_6_months = np.mean(new_array.reshape(-1, 6), axis=1)
+                        new_6_months = np.mean(new_month.reshape(-1, 6), axis=1)
                         past_data["6_months"][category][element] = past_data["6_months"][category][element][8:]
                         past_data["6_months"][category][element].extend(new_6_months)
 

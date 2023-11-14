@@ -40,10 +40,3 @@ socket.on('display_new_message', function(msg) {
 socket.on('refresh', function() {
     window.location = window.location;
 });
-
-function logSocket() {
-    console.log(socket); // Replace 'socket' with the actual variable you want to log
-  }
-  
-// Set up an interval to call the logSocket function every 5 seconds (5000 milliseconds)
-setInterval(logSocket, 5000);
