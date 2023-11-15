@@ -10,7 +10,7 @@ full_config = {
             "price": 2600,  # [CHF]
             "power generation": 210000,  # [W]
             "construction time": 3600,  # [s]
-            "construction energy": 8500000,  # [Wh]
+            "construction energy": 850000,  # [Wh]
             "construction pollution": 17520,  # [kg]
             "O&M cost" : 0.8, # [fraction of price per week]
             "consumed ressource": None,
