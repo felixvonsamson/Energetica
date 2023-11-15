@@ -85,7 +85,7 @@ class Player(db.Model, UserMixin):
     messages = db.relationship('Message', backref='player')
 
     # Ressources :
-    money = db.Column(db.Float, default=30000)
+    money = db.Column(db.Float, default=3000)
     coal = db.Column(db.Float, default=0)
     oil = db.Column(db.Float, default=0)
     gas = db.Column(db.Float, default=0)
@@ -125,7 +125,7 @@ class Player(db.Model, UserMixin):
     # Functional facilities :
     laboratory = db.Column(db.Integer, default=0)
     warehouse = db.Column(db.Integer, default=0)
-    industry = db.Column(db.Integer, default=10)
+    industry = db.Column(db.Integer, default=0)
     carbon_capture = db.Column(db.Integer, default=0)
 
     # Extraction plants :

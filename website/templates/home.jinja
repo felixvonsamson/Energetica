@@ -10,17 +10,6 @@
   <tr><td>r</td><td>{{user.tile[0].r}}</td></tr>
   <tr><td>s</td><td>{{-user.tile[0].r-user.tile[0].q}}</td></tr>
 </table>
-
-<b>Natural ressources</b>
-<table class="table bone">
-  <tr><td>solar</td><td>{{user.tile[0].solar}}</td></tr>
-  <tr><td>wind</td><td>{{user.tile[0].wind}}</td></tr>
-  <tr><td>hydro</td><td>{{-user.tile[0].hydro}}</td></tr>
-  <tr><td>coal</td><td>{{-user.tile[0].coal}}</td></tr>
-  <tr><td>oil</td><td>{{-user.tile[0].oil}}</td></tr>
-  <tr><td>gas</td><td>{{-user.tile[0].gas}}</td></tr>
-  <tr><td>uranium</td><td>{{-user.tile[0].uranium}}</td></tr>
-</table>
 </div>
 
 <div class="medium flex-wrap">
@@ -62,9 +51,10 @@
 <div class="flex-col">
 <b>Functional facilities</b>
 <table class="table bone">
+  <tr><td>Industry</td><td>{{user.industry}}</td></tr>
   <tr><td>Laboratory</td><td>{{user.laboratory}}</td></tr>
   <tr><td>Warehouse</td><td>{{user.warehouse}}</td></tr>
-  <tr><td>Industry</td><td>{{user.industry}}</td></tr>
+  <tr><td>Carbon capture</td><td>{{user.carbon_capture}}</td></tr>
 </table>
 </div>
 
@@ -81,15 +71,17 @@
 <div class="flex-col">
 <b>Technology</b>
 <table class="table bone">
-  <tr><td>Mineral extraction</td><td>{{user.mineral_extraction}}</td></tr>
-  <tr><td>Civil engeneering</td><td>{{user.civil_engeneering}}</td></tr>
+  <tr><td>Mathematics</td><td>{{user.mathematics}}</td></tr>
   <tr><td>Mechanical engeneering</td><td>{{user.mechanical_engeneering}}</td></tr>
+  <tr><td>Thermodynamics</td><td>{{user.thermodynamics}}</td></tr>
   <tr><td>Physics</td><td>{{user.physics}}</td></tr>
-  <tr><td>Materials</td><td>{{user.materials}}</td></tr>
-  <tr><td>Carbon capture</td><td>{{user.carbon_capture}}</td></tr>
+  <tr><td>Building Technology</td><td>{{user.building_technology}}</td></tr>
+  <tr><td>Mineral extraction</td><td>{{user.mineral_extraction}}</td></tr>
   <tr><td>Transport technology</td><td>{{user.transport_technology}}</td></tr>
+  <tr><td>Materials</td><td>{{user.materials}}</td></tr>
+  <tr><td>Civil engeneering</td><td>{{user.civil_engeneering}}</td></tr>
   <tr><td>Aerodynamics</td><td>{{user.aerodynamics}}</td></tr>
-  <tr><td>Geology</td><td>{{user.geology}}</td></tr>
+  <tr><td>Chemistry</td><td>{{user.chemistry}}</td></tr>
 </table>
 </div>
 

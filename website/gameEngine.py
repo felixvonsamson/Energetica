@@ -135,10 +135,10 @@ def state_update_h(engine, app):
 
 # function that is executed once every 1 minute :
 def state_update_m(engine, app):
-    total_t = (datetime.datetime.now() - engine.data["start_date"]).total_seconds()/5.0
+    total_t = (datetime.datetime.now() - engine.data["start_date"]).total_seconds()/60.0
     while(engine.data["total_t"] < total_t):
         engine.data["current_t"] += 1
-        print(f"t = {engine.data['current_t']}")
+        # print(f"t = {engine.data['current_t']}")
         engine.data["total_t"] += 1
         if engine.data["current_t"] > 1440:
             daily_update(engine, app)
@@ -150,7 +150,6 @@ def state_update_m(engine, app):
     
         with open("instance/engine_data.pck", "wb") as file:
             pickle.dump(engine.data, file)
-            print("saved engine data")
 
 # function that is executed once every 1 second :
 def check_heap(engine, app):

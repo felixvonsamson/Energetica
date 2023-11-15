@@ -26,6 +26,7 @@ def login():
                 flash("Logged in successfully!", category="success")
                 login_user(player, remember=True)
                 session["ID"] = player.id
+                print(f"{username} logged in")
                 return redirect(url_for("views.home"))
             else:
                 flash("Incorrect password, try again.", category="error")
@@ -39,6 +40,7 @@ def login():
 @login_required
 def logout():
     logout_user()
+    print(f"{current_user.username} logged out")
     return redirect(url_for("auth.login"))
 
 # logic for the sign-up :
@@ -72,6 +74,7 @@ def sign_up():
             login_user(new_player, remember=True)
             session["ID"] = new_player.id
             flash("Account created!", category="success")
+            print(f"{username} created an account")
             return redirect(url_for("views.home"))
 
     return render_template("sign_up.jinja", user=current_user)

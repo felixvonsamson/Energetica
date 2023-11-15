@@ -32,6 +32,7 @@ def add_handlers(socketio, engine):
             location.player_id = current_user.id
             db.session.commit()
             engine.refresh()
+            print(f"{current_user.username} chose the location {location.id}")
 
     # this function is executed when a player creates a new group chat
     @socketio.on("create_group_chat")
@@ -46,6 +47,7 @@ def add_handlers(socketio, engine):
         db.session.add(new_chat)
         db.session.commit()
         engine.refresh()
+        print(f"{current_user.username} created a group chat called {title} with {group}")
 
     # this function is executed when a player writes a new message
     @socketio.on("new_message")
@@ -60,6 +62,7 @@ def add_handlers(socketio, engine):
         db.session.commit()
         msg = f"<div>{current_user.username} : {message}</div>"
         engine.display_new_message(msg, chat.participants)
+        print(f"{current_user.username} sent the message {message} in the chat {chat.name}")
 
     # this function is executed when a player clicks on 'start construction'
     @socketio.on("start_construction")
@@ -84,6 +87,7 @@ def add_handlers(socketio, engine):
             db.session.add(new_facility)
             db.session.commit()
             current_user.emit("display_under_construction", (facility, finish_time))
+            print(f"{current_user.username} started the construction {facility}")
 
     # this function is executed when a player creates a network
     @socketio.on("create_network")
@@ -99,6 +103,7 @@ def add_handlers(socketio, engine):
         db.session.commit()
         engine.refresh()
         Path(f"instance/network_data/{network_name}").mkdir(parents=True, exist_ok=True)
+        print(f"{current_user.username} created the network {network_name}")
 
     # this function is executed when a player changes the value the enegy selling prices
     @socketio.on("change_price")
@@ -120,9 +125,11 @@ def add_handlers(socketio, engine):
             if value == True:
                 rest_list.remove(asset)
                 SCP_list = reorder(SCP_list, asset)
+                print(f"{current_user.username} added {asset} to his SCP list")
             else:
                 SCP_list.remove(asset)
                 rest_list = reorder(rest_list, asset)
+                print(f"{current_user.username} removed {asset} from his SCP list")
             
         else:
             setattr(current_user, attribute, float(value))
@@ -135,6 +142,7 @@ def add_handlers(socketio, engine):
                 else :
                     rest_list.remove(asset)
                     rest_list = reorder(rest_list, asset)
+            print(f"{current_user.username} changed the price of {attribute} to {value}")
 
         space = " "
         current_user.self_consumption_priority = space.join(SCP_list)

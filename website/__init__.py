@@ -109,7 +109,7 @@ def create_app():
             args=(engine, app),
             id="state_update_m",
             trigger="cron",
-            second="*/5", # "*/5" or "0"
+            second="0", # "*/5" or "0"
         )
         scheduler.add_job(
             func=check_heap,
@@ -121,8 +121,8 @@ def create_app():
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
 
-        with app.app_context():
+        #with app.app_context():
             #Temporary automated player creation for testing
-            from .init_test_players import init_test_players
-            init_test_players(engine)
+            #from .init_test_players import init_test_players
+            #init_test_players(engine)
     return socketio, app

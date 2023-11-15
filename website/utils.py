@@ -23,6 +23,7 @@ def add_asset(player_id, facility):
         Under_construction.finish_time < time.time()
     ).delete()
     db.session.commit()
+    print(f"{player.username} has finished the construction of facility {facility}")
 
 # this function is executed when a resource shippment arrives :
 def store_import(player_id, resource, quantity):
@@ -38,6 +39,7 @@ def store_import(player_id, resource, quantity):
         setattr(player, resource, getattr(player, resource) + quantity)
     Shipment.query.filter(Shipment.arrival_time < time.time()).delete()
     db.session.commit()
+    print(f"{player.username} received a shipment of {quantity} kg {resource}")
 
 # format for price display
 def display_CHF(price):
@@ -94,6 +96,7 @@ def update_weather(engine):
     d = engine.river_discharge
     power_factor = d[month]+(d[(month+1)%12]-d[month])*f
     engine.data["current_discharge"][t : t+10] = [power_factor]*10
+    print(f"the current irradiation in Zürich is {engine.data['current_irradiation'][t+9]} W/m2 with a windspeed of {engine.data['current_windspeed'][t+9]} km/h")
 
 # saves the past production data to files every 24h
 def save_past_data_threaded(app, new_data):
@@ -123,6 +126,7 @@ def save_past_data_threaded(app, new_data):
                 for timescale in past_data:
                     with open(f"instance/player_data/{player.username}/{timescale}.pck", "wb") as file:
                         pickle.dump(past_data[timescale], file)
+            print("past 24h data has been saved to files")
 
     thread = threading.Thread(target=save_data)
     thread.start()

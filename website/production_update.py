@@ -446,7 +446,7 @@ def ressources_and_pollution(engine, player, t):
         quantity = assets[plant]["amount consumed"] * generation[plant][t] / 60000000 
         setattr(player, ressource, getattr(player, ressource) - quantity)
     # Special case steam engine costs money and if it is not used it costs half of the maximum 
-    player.money -= player.steam_engine*assets["steam_engine"]["O&M cost"]*(0.5+0.5*generation["steam_engine"][t]/(player.steam_engine*assets["steam_engine"]["power generation"]))
+    player.money -= player.steam_engine*assets["steam_engine"]["O&M cost"]/60*(0.5+0.5*generation["steam_engine"][t]/(player.steam_engine*assets["steam_engine"]["power generation"]))
     # special case of combined cycle
     quantity_gas = assets["combined_cycle"]["amount consumed"][0] * generation["combined_cycle"][t] / 60000000 
     quantity_coal = assets["combined_cycle"]["amount consumed"][1] * generation["combined_cycle"][t] / 60000000

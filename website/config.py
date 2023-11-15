@@ -605,12 +605,12 @@ class Config(object):
         player = Player.query.get(player_id)
         config.update_resource_extraction(player_id)
 
-        # --- Temporary to accelerate the game *1000 ---
-        config.for_player[player_id]["transport"]["time"] /= 1000
-        config.for_player[player_id]["transport"]["power consumption"] /= 1000
+        # --- Temporary to accelerate the game *5 ---
+        config.for_player[player_id]["transport"]["time"] /= 5
+        config.for_player[player_id]["transport"]["power consumption"] /= 5
         for asset in assets:
-            assets[asset]["construction time"] /= 1000
-            assets[asset]["construction energy"] /= 1000
+            assets[asset]["construction time"] /= 5
+            assets[asset]["construction energy"] /= 100  # Energy reqirements were too high
 
         for asset in assets:
             # calculating the ramping speed in W/min from the ramping time
