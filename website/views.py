@@ -57,7 +57,7 @@ def check_user():
                 page,
                 engine=g.engine,
                 user=current_user,
-                data=g.config["assets"]
+                all_data=g.config
             )
 
     g.render_template_ctx = render_template_ctx

@@ -22,7 +22,6 @@ socket.on('display_under_construction', function(facility, finish_time) {
 
 // updates specific fields of the page without reloading
 socket.on('update_data', function(changes) {
-    console.log("Received update_data:", changes);
     for (i = 0; i < changes.length; i++) {
         object_id = changes[i][0];
         value = changes[i][1];

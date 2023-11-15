@@ -41,7 +41,7 @@ canvas {display: block;}
 .cross{text-align:center; width: 25px; position:relative; left:3px; border-radius:8px; font-size:30px}
 .cross:hover{background-color:#9e9e9e; cursor: pointer;}
 
-.navbar{display: block; width: 230px; position: fixed; overflow: auto; top:90px;}
+.navbar{display: block; width: 230px; position: fixed; overflow: auto; top:100px;}
 .navbar_item{display: block; text-decoration: none; align-items:center;}
 .navbar_item.active {background-color: #285430; color: #fff;}
 .navbar_item:hover:not(.active) {background-color: #5f8d4e; color: white;}
@@ -76,10 +76,12 @@ canvas {display: block;}
 .exclamation-circle{color:#f44336; margin-right: 6px;}
 
 .table{border-collapse:collapse; border-spacing:0; display:table}
+.table.tan_green{width:250px; margin:0 20px}
 .table tbody tr:nth-child(even){background-color:#d6c79a}
-.table tbody td{padding:0 12px;}
+.table.tan_green tbody tr:nth-child(even){background-color:#c1cf8b}
+.table tbody td{padding: 5px 8px 2px 8px;}
 
-.logo_container{width: 360px; height:90px; position: fixed; background-color:#a4be7b; align-items:center; z-index: -10;}
+.logo_container{width: 360px; height:100px; position: fixed; background-color:#a4be7b; align-items:center; z-index: -10;}
 .logo{height:350px; filter:invert(26%) sepia(28%) saturate(805%) hue-rotate(79deg) brightness(93%) contrast(91%);}
 .logo.small{height:80px;}
 .logo_txt{font-family: 'Expletus Sans', cursive; font-size:50px; color:#285430}
@@ -92,6 +94,14 @@ canvas {display: block;}
 .main_container{max-width: 1200px; min-height:100vh; margin:auto; overflow:hidden;}
 
 .title{padding-top:16px; text-align:center}
+
+.money_font{font-family: 'Cabin Condensed', sans-serif; font-size:min(23px, 4vh); color:#285430;}
+.money_font.large{font-size:min(25px, 4vh); color:#0d4d19;}
+
+.req_fullfilled{list-style: none; color:#049c20}
+.requirement{list-style: none; color:#990303}
+
+.version{position: fixed; bottom:4px; left:16px; font-family: 'Cabin Condensed', sans-serif;}
 
 /* messages */
 .chat_sidebar{width: 230px; min-height:100vh; overflow:auto; padding:0 8px}
@@ -111,6 +121,8 @@ canvas {display: block;}
 .facility{display: flex; flex-direction: row; justify-content: space-between;}
 .infotext{flex: 1;}
 .infobox{display: flex; flex-direction: row; align-items: center;}
+.infobox.shown{max-width: 500px; transition: max-width 0.3s ease; padding:8px 16px 8px 0;}
+.infobox.hidden{max-width: 0; transition: max-width 0.3s ease; overflow: hidden;}
 
 .resource_market_container{width:100%; display:flex; flex-wrap:wrap; flex-direction:row; gap:32px; justify-content:space-evenly; align-items:center}
 .resource_market_block{width: 250px; cursor: pointer;}

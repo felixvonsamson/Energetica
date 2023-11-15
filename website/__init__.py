@@ -2,6 +2,8 @@
 This code is run once at the start of the game
 """
 
+import eventlet
+eventlet.monkey_patch(thread=True, time=True)
 from flask import Flask, g, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import os, csv

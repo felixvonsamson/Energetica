@@ -12,11 +12,12 @@ full_config = {
             "construction time": 3600,  # [s]
             "construction energy": 8500000,  # [Wh]
             "construction pollution": 17520,  # [kg]
-            "O&M cost" : 0.8, # [fraction of price per year]
+            "O&M cost" : 0.8, # [fraction of price per week]
             "consumed ressource": None,
             "amount consumed": 0, # [kg/MWh]
             "pollution": 988,  # [kg CO2/MWh]
             "ramping time": 15,  # [min]
+            "requirements": [],
         },
         "windmill": {
             "name": "Windmill",
@@ -30,6 +31,7 @@ full_config = {
             "amount consumed": 0,
             "pollution": 0,
             "ramping time": 0,
+            "requirements": [],
         },
         "watermill": {
             "name": "Watermill",
@@ -43,6 +45,7 @@ full_config = {
             "amount consumed": 0,
             "pollution": 0,
             "ramping time": 0,
+            "requirements": [],
         },
         "coal_burner": {
             "name": "Coal burner",
@@ -56,8 +59,8 @@ full_config = {
             "amount consumed": 640,
             "pollution": 1664,
             "ramping time": 75,
-            "requirements": [("mechanical_engeneering", 1),
-                             ("thermodynamics", 1)]
+            "requirements": [["mechanical_engeneering", 1, False],
+                             ["thermodynamics", 1, False]]
         },
         "oil_burner": {
             "name": "Oil burner",
@@ -71,8 +74,8 @@ full_config = {
             "amount consumed": 375,
             "pollution": 1181,
             "ramping time": 10,
-            "requirements": [("mechanical_engeneering", 1),
-                             ("thermodynamics", 1)]
+            "requirements": [["mechanical_engeneering", 1, False],
+                             ["thermodynamics", 1, False]]
         },
         "gas_burner": {
             "name": "Gas burner",
@@ -86,8 +89,8 @@ full_config = {
             "amount consumed": 353,
             "pollution": 1006,
             "ramping time": 9,
-            "requirements": [("mechanical_engeneering", 1),
-                             ("thermodynamics", 1)]
+            "requirements": [["mechanical_engeneering", 1, False],
+                             ["thermodynamics", 1, False]]
         },
         "small_water_dam": {
             "name": "Small water dam",
@@ -101,7 +104,7 @@ full_config = {
             "amount consumed": 0,
             "pollution": 0,
             "ramping time": 0,
-            "requirements": [("civil_engeneering", 1)]
+            "requirements": [["civil_engeneering", 1, False]]
         },
         "onshore_wind_turbine": {
             "name": "Onshore wind turbine",
@@ -115,9 +118,9 @@ full_config = {
             "amount consumed": 0,
             "pollution": 0,
             "ramping time": 0,
-            "requirements": [("aerodynamics", 1),
-                             ("materials", 2),
-                             ("mechanical_engeneering", 3)]
+            "requirements": [["aerodynamics", 1, False],
+                             ["materials", 2, False],
+                             ["mechanical_engeneering", 3, False]]
         },
         "combined_cycle": {
             "name": "Combined cycle",
@@ -131,8 +134,8 @@ full_config = {
             "amount consumed": [210, 76],
             "pollution": 797,
             "ramping time": 150,
-            "requirements": [("thermodynamics", 3),
-                             ("mechanical_engeneering", 3)]
+            "requirements": [["thermodynamics", 3, False],
+                             ["mechanical_engeneering", 3, False]]
         },
         "nuclear_reactor": {
             "name": "Nuclear reactor",
@@ -147,8 +150,8 @@ full_config = {
             "efficiency" : 0.22,
             "pollution": 2,
             "ramping time": 1200,
-            "requirements": [("chemistry", 3),
-                             ("nuclear_engeneering", 1)]
+            "requirements": [["chemistry", 3, False],
+                             ["nuclear_engeneering", 1, False]]
         },
         "large_water_dam": {
             "name": "Large water dam",
@@ -162,7 +165,7 @@ full_config = {
             "amount consumed": 0,
             "pollution": 0,
             "ramping time": 0,
-            "requirements": [("civil_engeneering", 4)]
+            "requirements": [["civil_engeneering", 4, False]]
         },
         "CSP_solar": {
             "name": "Concentrated solar power",
@@ -176,8 +179,8 @@ full_config = {
             "amount consumed": 0,
             "pollution": 0,
             "ramping time": 0,
-            "requirements": [("physics", 5),
-                             ("thermodynamics", 5)]
+            "requirements": [["physics", 5, False],
+                             ["thermodynamics", 5, False]]
         },
         "PV_solar": {
             "name": "Photovoltaics",
@@ -191,8 +194,8 @@ full_config = {
             "amount consumed": 0,
             "pollution": 0,
             "ramping time": 0,
-            "requirements": [("physics", 6),
-                             ("materials", 4)]
+            "requirements": [["physics", 6, False],
+                             ["materials", 4, False]]
         },
         "offshore_wind_turbine": {
             "name": "Offshore wind turbine",
@@ -206,9 +209,9 @@ full_config = {
             "amount consumed": 0,
             "pollution": 0,
             "ramping time": 0,
-            "requirements": [("aerodynamics", 3),
-                             ("materials", 4),
-                             ("mechanical_engeneering", 6)]
+            "requirements": [["aerodynamics", 3, False],
+                             ["materials", 4, False],
+                             ["mechanical_engeneering", 6, False]]
         },
         "nuclear_reactor_gen4": {
             "name": "4th generation nuclear",
@@ -223,8 +226,8 @@ full_config = {
             "efficiency" : 0.3,
             "pollution": 3,
             "ramping time": 800,
-            "requirements": [("chemistry", 5),
-                             ("nuclear_engeneering", 5)]
+            "requirements": [["chemistry", 5, False],
+                             ["nuclear_engeneering", 5, False]]
         },
         "small_pumped_hydro": {
             "name": "Small pumped hydro",
@@ -237,7 +240,7 @@ full_config = {
             "construction pollution": 800000,  # [kg]
             "O&M cost" : 0.088,  # [fraction of price per year]
             "ramping time": 14,  # [min]
-            "requirements": [("civil_engeneering", 1)]
+            "requirements": [["civil_engeneering", 1, False]]
         },
         "compressed_air": {
             "name": "Compressed air",
@@ -250,8 +253,8 @@ full_config = {
             "construction pollution": 570000,
             "O&M cost" : 0.297,
             "ramping time": 5,
-            "requirements": [("mechanical_engeneering", 2),
-                             ("thermodynamics", 2)]
+            "requirements": [["mechanical_engeneering", 2, False],
+                             ["thermodynamics", 2, False]]
         },
         "molten_salt": {
             "name": "Molten salt",
@@ -264,8 +267,8 @@ full_config = {
             "construction pollution": 1200000,
             "O&M cost" : 0.424,
             "ramping time": 60,
-            "requirements": [("mechanical_engeneering", 2),
-                             ("thermodynamics", 3)]
+            "requirements": [["mechanical_engeneering", 2, False],
+                             ["thermodynamics", 3, False]]
         },
         "large_pumped_hydro": {
             "name": "Large pumped hydro",
@@ -278,7 +281,7 @@ full_config = {
             "construction pollution": 3000000,
             "O&M cost" : 0.115,
             "ramping time": 16,
-            "requirements": [("civil_engeneering", 3)]
+            "requirements": [["civil_engeneering", 3, False]]
         },
         "hydrogen_storage": {
             "name": "Hydrogen hydrolysis",
@@ -291,8 +294,8 @@ full_config = {
             "construction pollution": 2400000,
             "O&M cost" : 0.028,
             "ramping time": 8,
-            "requirements": [("chemistry", 3),
-                             ("materials", 3)]
+            "requirements": [["chemistry", 3, False],
+                             ["materials", 3, False]]
         },
         "lithium_ion_batteries": {
             "name": "Lithium-ion batteries",
@@ -305,8 +308,8 @@ full_config = {
             "construction pollution": 8000000,
             "O&M cost" : 0.003,
             "ramping time": 3,
-            "requirements": [("chemistry", 4),
-                             ("materials", 4)]
+            "requirements": [["chemistry", 4, False],
+                             ["materials", 4, False]]
         },
         "solid_state_batteries": {
             "name": "Solid state batteries",
@@ -319,9 +322,9 @@ full_config = {
             "construction pollution": 6000000,
             "O&M cost" : 0.002,
             "ramping time": 3,
-            "requirements": [("chemistry", 6),
-                             ("materials", 5),
-                             ("physics", 6)]
+            "requirements": [["chemistry", 6, False],
+                             ["materials", 5, False],
+                             ["physics", 6, False]]
         },
         "laboratory": {
             "name": "Laboratory",
@@ -359,7 +362,14 @@ full_config = {
             "construction time": 36000,
             "construction energy": 5000000000,
             "construction pollution": 250000,
+            "power consumption": 1000000, # [W]
+            "absorbtion": 200, # [kg/h]
             "price multiplier": 1.5,
+            "absorbtion factor": 1.55,
+            "power factor": 1.5,
+            "requirements": [["mathematics", 3, False],
+                             ["physics", 3, False],
+                             ["chemistry", 3, False]]
         },
         "coal_mine": {
             "name": "Coal mine",
@@ -371,7 +381,7 @@ full_config = {
             "amount produced": 0.0000006,  # [fraction of total stock that can be extracted every minute by one mine]
             "power consumption": 1800000,  # [W]
             "pollution": 65,  # [kg/t extracted]
-            "requirements": [("mineral_extraction", 1)]
+            "requirements": [["mineral_extraction", 1, False]]
         },
         "oil_field": {
             "name": "Oil field",
@@ -383,7 +393,7 @@ full_config = {
             "amount produced": 0.000001,
             "power consumption": 1530000,
             "pollution": 302,
-            "requirements": [("mineral_extraction", 3)]
+            "requirements": [["mineral_extraction", 3, False]]
         },
         "gas_drilling_site": {
             "name": "Gas drilling site",
@@ -395,7 +405,7 @@ full_config = {
             "amount produced": 0.0000008,
             "power consumption": 1110000,
             "pollution": 523,
-            "requirements": [("mineral_extraction", 3)]
+            "requirements": [["mineral_extraction", 3, False]]
         },
         "uranium_mine": {
             "name": "Uranium mine",
@@ -407,7 +417,7 @@ full_config = {
             "amount produced": 0.0000004,
             "power consumption": 3600000,
             "pollution": 230000,
-            "requirements": [("mineral_extraction", 5)]
+            "requirements": [["mineral_extraction", 5, False]]
         },
         "mathematics": {
             "name": "Mathematics",
@@ -415,7 +425,7 @@ full_config = {
             "price multiplier": 1.3,
             "construction time": 18000,  # [s]
             "construction energy": 25000000,  # [Wh]
-            "requirements": [("laboratory", 0)] # level is given relative to the research level 
+            "requirements": [["laboratory", 1, False]] # level is given relative to the research level 
         },
         "mechanical_engeneering": {
             "name": "Mechanical engeneering",
@@ -425,8 +435,8 @@ full_config = {
             "construction energy": 25000000,
             "price factor": 1.2,
             "prod factor" : 1.25,
-            "requirements": [("laboratory", 1),
-                             ("mathematics", 0)]
+            "requirements": [["laboratory", 1, False],
+                             ["mathematics", 1, False]]
         },
         "thermodynamics": {
             "name": "Thermodynamics",
@@ -434,9 +444,9 @@ full_config = {
             "price multiplier": 1.3,
             "construction time": 18000,
             "construction energy": 25000000,
-            "efficiency factor" : 1.1,
-            "requirements": [("laboratory", 1),
-                             ("mathematics", 0)]
+            "efficiency factor" : 0.1,
+            "requirements": [["laboratory", 1, False],
+                             ["mathematics", 1, False]]
         },
         "physics": {
             "name": "Physics",
@@ -446,9 +456,9 @@ full_config = {
             "construction energy": 25000000,
             "price factor": 1.2,
             "prod factor" : 1.25,
-            "requirements": [("laboratory", 1),
-                             ("mathematics", 0),
-                             ("chemistry", -2)]
+            "requirements": [["laboratory", 1, False],
+                             ["mathematics", 1, False],
+                             ["chemistry", -1, False]]
         },
         "building_technology": {
             "name": "Building Technology",
@@ -457,9 +467,9 @@ full_config = {
             "construction time": 28800,
             "construction energy": 80000000,
             "time factor": 0.85,
-            "requirements": [("laboratory", 1),
-                             ("mechanical_engeneering", 0),
-                             ("transport_technology", -2)]
+            "requirements": [["laboratory", 1, False],
+                             ["mechanical_engeneering", 1, False],
+                             ["transport_technology", -1, False]]
         },
         "mineral_extraction": {
             "name": "Mineral extraction",
@@ -471,8 +481,8 @@ full_config = {
             "prod factor" : 1.33,
             "energy factor": 1.28,
             "pollution factor": 0.9,
-            "requirements": [("laboratory", 2),
-                             ("building_technology", 0)]
+            "requirements": [["laboratory", 2, False],
+                             ["building_technology", 1, False]]
         },
         "transport_technology": {
             "name": "Transport technology",
@@ -482,9 +492,9 @@ full_config = {
             "construction energy": 120000000,
             "time factor": 0.85,
             "energy factor": 0.9,
-            "requirements": [("laboratory", 2),
-                             ("mathematics", 1),
-                             ("mechanical_engeneering", 1)]
+            "requirements": [["laboratory", 2, False],
+                             ["mathematics", 2, False],
+                             ["mechanical_engeneering", 2, False]]
         },
         "materials": {
             "name": "Materials",
@@ -493,9 +503,9 @@ full_config = {
             "construction time": 43200,
             "construction energy": 240000000,
             "price factor": 0.8,
-            "requirements": [("laboratory", 2),
-                             ("mathematics", 1),
-                             ("chemistry", 0)]
+            "requirements": [["laboratory", 2, False],
+                             ["mathematics", 2, False],
+                             ["chemistry", 1, False]]
         },
         "civil_engeneering": {
             "name": "Civil engeneering",
@@ -506,9 +516,9 @@ full_config = {
             "price factor": 1.5,
             "prod factor" : 1.4,
             "capacity factor": 1.4,
-            "requirements": [("laboratory", 3),
-                             ("mathematics", 1),
-                             ("building_technology", 2)]
+            "requirements": [["laboratory", 3, False],
+                             ["mathematics", 2, False],
+                             ["building_technology", 3, False]]
         },
         "aerodynamics": {
             "name": "Aerodynamics",
@@ -518,9 +528,9 @@ full_config = {
             "construction energy": 300000000,
             "price factor": 1.3,
             "prod factor" : 1.4,
-            "requirements": [("laboratory", 3),
-                             ("physics", 2),
-                             ("building_technology", 2)]
+            "requirements": [["laboratory", 3, False],
+                             ["physics", 3, False],
+                             ["building_technology", 3, False]]
         },
         "chemistry": {
             "name": "Chemistry",
@@ -530,9 +540,9 @@ full_config = {
             "construction energy": 200000000,
             "price factor": 1.25,
             "efficiency factor" : 0.9,
-            "requirements": [("laboratory", 3),
-                             ("physics", -1),
-                             ("mathematics", 1)]
+            "requirements": [["laboratory", 3, False],
+                             ["physics", 0, False],
+                             ["mathematics", 2, False]]
         },
         "nuclear_engeneering": {
             "name": "Nuclear Engeneering",
@@ -542,10 +552,10 @@ full_config = {
             "construction energy": 540000000,
             "price factor": 1.3,
             "prod factor" : 1.4,
-            "requirements": [("laboratory", 4),
-                             ("physics", 2),
-                             ("building_technology", 2),
-                             ("mechanical_engeneering", 2)]
+            "requirements": [["laboratory", 4, False],
+                             ["physics", 3, False],
+                             ["building_technology", 3, False],
+                             ["mechanical_engeneering", 3, False]]
         },
     },
     "warehouse_capacities":{
@@ -617,14 +627,14 @@ class Config(object):
 
             if asset in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "nuclear_reactor", "nuclear_reactor_gen4"]:
                 # update ressource consumption and pollution (thermodynamics)
-                assets[asset]["amount consumed"] /= assets["thermodynamics"]["efficiency factor"] ** player.thermodynamics
-                assets[asset]["pollution"] /= assets["thermodynamics"]["efficiency factor"] ** player.thermodynamics
+                assets[asset]["amount consumed"] /= 1 + assets["thermodynamics"]["efficiency factor"] * player.thermodynamics
+                assets[asset]["pollution"] /= 1 + assets["thermodynamics"]["efficiency factor"] * player.thermodynamics
 
             if asset == "combined_cycle":
                 # special case for combined cycle (thermodynamics)
-                assets[asset]["amount consumed"][0] /= assets["thermodynamics"]["efficiency factor"] ** player.thermodynamics
-                assets[asset]["amount consumed"][1] /= assets["thermodynamics"]["efficiency factor"] ** player.thermodynamics
-                assets[asset]["pollution"] /= assets["thermodynamics"]["efficiency factor"] ** player.thermodynamics
+                assets[asset]["amount consumed"][0] /= 1 + assets["thermodynamics"]["efficiency factor"] * player.thermodynamics
+                assets[asset]["amount consumed"][1] /= 1 + assets["thermodynamics"]["efficiency factor"] * player.thermodynamics
+                assets[asset]["pollution"] /= 1 + assets["thermodynamics"]["efficiency factor"] * player.thermodynamics
 
             if asset == "compressed_air":
                 # special case for compressed air rountrip efficiency (thermodynamics)
@@ -685,6 +695,15 @@ class Config(object):
             if asset in ["mathematics", "mechanical_engeneering", "thermodynamics", "physics", "building_technology", "mineral_extraction", "transport_technology", "materials", "civil_engeneering", "aerodynamics", "chemistry", "nuclear_engeneering"]:
                 # update research time (laboratory)
                 assets[asset]["construction time"] *= assets["laboratory"]["time factor"] ** player.laboratory
+                # remove fulfilled reqirements
+                assets[asset]["locked"] = False
+                for req in assets[asset]["requirements"]:
+                    if req[1] + getattr(player, asset) < 1:
+                        assets[asset]["requirements"].remove(req)
+                        continue
+                    req[2] = getattr(player, req[0]) >= req[1] + getattr(player, asset)
+                    if not req[2]:
+                        assets[asset]["locked"] = True
 
             if asset in ["watermill", "small_water_dam", "large_water_dam", "nuclear_reactor", "nuclear_reactor_gen4", "steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "windmill", "onshore_wind_turbine", "offshore_wind_turbine", "CSP_solar", "PV_solar", "small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"]:
                 # update construction time (building technology)
@@ -694,6 +713,24 @@ class Config(object):
                 # calculating industry energy consumption and income
                 assets[asset]["power consumption"] *= assets["industry"]["power factor"] ** player.industry
                 assets[asset]["income"] *= assets["industry"]["income factor"] ** player.industry
+
+            if asset in ["watermill", "small_water_dam", "large_water_dam", "nuclear_reactor", "nuclear_reactor_gen4", "steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "windmill", "onshore_wind_turbine", "offshore_wind_turbine", "CSP_solar", "PV_solar", "small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage", "coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"]:
+                # remove fulfilled reqirements
+                assets[asset]["locked"] = False
+                for req in assets[asset]["requirements"]:
+                    req[2] = getattr(player, req[0]) >= req[1]
+                    if not req[2]:
+                        assets[asset]["locked"] = True
+                # calculate O&M cost
+                assets[asset]["O&M cost"] *= assets[asset]["price"]/168
+
+            if asset == "carbon_capture":
+                # remove fulfilled reqirements
+                assets[asset]["locked"] = False
+                for req in assets[asset]["requirements"]:
+                    req[2] = getattr(player, req[0]) >= req[1]
+                    if not req[2]:
+                        assets[asset]["locked"] = True
 
         # calculating the maximum storage capacity from the warehouse level
         max_cap = config.for_player[player_id]["warehouse_capacities"]

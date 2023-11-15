@@ -197,12 +197,12 @@ class Player(db.Model, UserMixin):
     def emit(player, *args):
         if player.sid:
             socketio = current_app.config["engine"].socketio
-            socketio.emit(*args)
+            socketio.emit(*args, room=player.sid)
 
     def update_resources(player):
         if player.sid:
             updates = []
-            updates.append(["money", f"{player.money:,.0f} CHF".replace(",", " ")])
+            updates.append(["money", f"{player.money:,.0f} CHF".replace(",", "'")])
             player.emit("update_data", updates)
 
     # prints out the object as a sting with the players username for debugging

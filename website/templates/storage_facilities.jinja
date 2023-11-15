@@ -1,5 +1,7 @@
 {% extends "base.jinja" %} {% block title %}Storage facilities{% endblock %} {% block content%}
 
+{% set data = all_data["assets"]%}
+
 <div class="huge title">Storage facilities</div>
 
 <div id="under_construction">
@@ -15,186 +17,295 @@
 </div>
 
 {% set facility = data["small_pumped_hydro"] %}
-<div class="bone margin facility small">
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/storage_facilities/small_pumped_hydro.png') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity" target="_blank">{{facility["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
   The small pumped hydropower storage pumps water to a higher altitude to store energy. <br>
-  <b class="txt-blue">Priority : 1 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('small_pumped_hydro', 'storage_facilities');">
-    Start construction
-  </b>
-  <div>
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
-    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Unlock with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]}}</li>
+  {% endfor %}
+  </ul>
   </div>
-  <div class="margin tan_green padding">
-    <i class="fa fa-battery-full"></i> <script>display_Wh({{facility["storage capacity"]}});</script> <br>
-    <i class="fa fa-bolt"></i> <script>display_W({{facility["power generation"]}});</script> <br>
-    <i class="fa fa-percent"></i> {{(facility["efficiency"]*100)|int}} %
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><td>Storage capacity</td><td class="txt_center"><strong><script>display_Wh({{facility["storage capacity"]}});</script></strong></td></tr>
+    <tr><td>Max generation</td><td class="txt_center"><strong><script>display_W({{facility["power generation"]}});</script></strong></td></tr>
+    <tr><td>Efficiency</td><td class="txt_center"><strong>{{(facility["efficiency"]*100)|int}}%</strong></td></tr>
+    <tr><td>Ramping speed</td><td class="txt_center"><strong><script>display_W({{facility["ramping speed"]}});</script>/min</strong></td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('small_pumped_hydro', 'storage_facilities');" style="width:160px">
+      Start construction
+    </b>
   </div>
  </div>
 </div>
 
 {% set facility = data["compressed_air"] %}
-<div class="bone margin facility small">
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/storage_facilities/compressed_air.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Compressed-air_energy_storage" target="_blank">{{facility["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Compressed-air_energy_storage" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
   The compressed air storage plant stores mechanical energy in the form of compressed gas in the ground. <br>
-  <b class="txt-blue">Priority : 1 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('compressed_air', 'storage_facilities');">
-    Start construction
-  </b>
-  <div>
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
-    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Unlock with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]}}</li>
+  {% endfor %}
+  </ul>
   </div>
-  <div class="margin tan_green padding">
-    <i class="fa fa-battery-full"></i> <script>display_Wh({{facility["storage capacity"]}});</script> <br>
-    <i class="fa fa-bolt"></i> <script>display_W({{facility["power generation"]}});</script> <br>
-    <i class="fa fa-percent"></i> {{(facility["efficiency"]*100)|int}} %
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><td>Storage capacity</td><td class="txt_center"><strong><script>display_Wh({{facility["storage capacity"]}});</script></strong></td></tr>
+    <tr><td>Max generation</td><td class="txt_center"><strong><script>display_W({{facility["power generation"]}});</script></strong></td></tr>
+    <tr><td>Efficiency</td><td class="txt_center"><strong>{{(facility["efficiency"]*100)|int}}%</strong></td></tr>
+    <tr><td>Ramping speed</td><td class="txt_center"><strong><script>display_W({{facility["ramping speed"]}});</script>/min</strong></td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('compressed_air', 'storage_facilities');" style="width:160px">
+      Start construction
+    </b>
   </div>
  </div>
 </div>
 
 {% set facility = data["molten_salt"] %}
-<div class="bone margin facility small">
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/storage_facilities/molten_salt.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Thermal_energy_storage" target="_blank">{{facility["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Thermal_energy_storage" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
   The Molten salt storage stores molten satl at high temperatures to be used for electricity producion. <br>
-  <b class="txt-blue">Priority : 1 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('molten_salt', 'storage_facilities');">
-    Start construction
-  </b>
-  <div>
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
-    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Unlock with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]}}</li>
+  {% endfor %}
+  </ul>
   </div>
-  <div class="margin tan_green padding">
-    <i class="fa fa-battery-full"></i> <script>display_Wh({{facility["storage capacity"]}});</script> <br>
-    <i class="fa fa-bolt"></i> <script>display_W({{facility["power generation"]}});</script> <br>
-    <i class="fa fa-percent"></i> {{(facility["efficiency"]*100)|int}} %
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><td>Storage capacity</td><td class="txt_center"><strong><script>display_Wh({{facility["storage capacity"]}});</script></strong></td></tr>
+    <tr><td>Max generation</td><td class="txt_center"><strong><script>display_W({{facility["power generation"]}});</script></strong></td></tr>
+    <tr><td>Efficiency</td><td class="txt_center"><strong>{{(facility["efficiency"]*100)|int}}%</strong></td></tr>
+    <tr><td>Ramping speed</td><td class="txt_center"><strong><script>display_W({{facility["ramping speed"]}});</script>/min</strong></td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('molten_salt', 'storage_facilities');" style="width:160px">
+      Start construction
+    </b>
   </div>
  </div>
 </div>
 
 {% set facility = data["large_pumped_hydro"] %}
-<div class="bone margin facility small">
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/storage_facilities/large_pumped_hydro.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity" target="_blank">{{facility["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
   The large pumped hydropower storage pumps water to a higher altitude to store a large amount of energy. <br>
-  <b class="txt-blue">Priority : 1 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('large_pumped_hydro', 'storage_facilities');">
-    Start construction
-  </b>
-  <div>
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
-    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Unlock with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]}}</li>
+  {% endfor %}
+  </ul>
   </div>
-  <div class="margin tan_green padding">
-    <i class="fa fa-battery-full"></i> <script>display_Wh({{facility["storage capacity"]}});</script> <br>
-    <i class="fa fa-bolt"></i> <script>display_W({{facility["power generation"]}});</script> <br>
-    <i class="fa fa-percent"></i> {{(facility["efficiency"]*100)|int}} %
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><td>Storage capacity</td><td class="txt_center"><strong><script>display_Wh({{facility["storage capacity"]}});</script></strong></td></tr>
+    <tr><td>Max generation</td><td class="txt_center"><strong><script>display_W({{facility["power generation"]}});</script></strong></td></tr>
+    <tr><td>Efficiency</td><td class="txt_center"><strong>{{(facility["efficiency"]*100)|int}}%</strong></td></tr>
+    <tr><td>Ramping speed</td><td class="txt_center"><strong><script>display_W({{facility["ramping speed"]}});</script>/min</strong></td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('large_pumped_hydro', 'storage_facilities');" style="width:160px">
+      Start construction
+    </b>
   </div>
  </div>
 </div>
 
 {% set facility = data["hydrogen_storage"] %}
-<div class="bone margin facility small">
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/storage_facilities/hydrogen_storage.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydrogen_storage" target="_blank">{{facility["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydrogen_storage" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
   The hydrogen storage stores hydrogen that has been generated by electrolysys and can be transformed into electricity. <br>
-  <b class="txt-blue">Priority : 1 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('hydrogen_storage', 'storage_facilities');">
-    Start construction
-  </b>
-  <div>
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
-    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Unlock with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]}}</li>
+  {% endfor %}
+  </ul>
   </div>
-  <div class="margin tan_green padding">
-    <i class="fa fa-battery-full"></i> <script>display_Wh({{facility["storage capacity"]}});</script> <br>
-    <i class="fa fa-bolt"></i> <script>display_W({{facility["power generation"]}});</script> <br>
-    <i class="fa fa-percent"></i> {{(facility["efficiency"]*100)|int}} %
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><td>Storage capacity</td><td class="txt_center"><strong><script>display_Wh({{facility["storage capacity"]}});</script></strong></td></tr>
+    <tr><td>Max generation</td><td class="txt_center"><strong><script>display_W({{facility["power generation"]}});</script></strong></td></tr>
+    <tr><td>Efficiency</td><td class="txt_center"><strong>{{(facility["efficiency"]*100)|int}}%</strong></td></tr>
+    <tr><td>Ramping speed</td><td class="txt_center"><strong><script>display_W({{facility["ramping speed"]}});</script>/min</strong></td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('hydrogen_storage', 'storage_facilities');" style="width:160px">
+      Start construction
+    </b>
   </div>
  </div>
 </div>
 
 {% set facility = data["lithium_ion_batteries"] %}
-<div class="bone margin facility small">
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/storage_facilities/lithium_ion_batteries.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Lithium-ion_battery" target="_blank">{{facility["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Lithium-ion_battery" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
   The lithium ion battery storage facility stores electricity with high efficiency. <br>
-  <b class="txt-blue">Priority : 2 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('lithium_ion_batteries', 'storage_facilities');">
-    Start construction
-  </b>
-  <div>
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
-    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Unlock with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]}}</li>
+  {% endfor %}
+  </ul>
   </div>
-  <div class="margin tan_green padding">
-    <i class="fa fa-battery-full"></i> <script>display_Wh({{facility["storage capacity"]}});</script> <br>
-    <i class="fa fa-bolt"></i> <script>display_W({{facility["power generation"]}});</script> <br>
-    <i class="fa fa-percent"></i> {{(facility["efficiency"]*100)|int}} %
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><td>Storage capacity</td><td class="txt_center"><strong><script>display_Wh({{facility["storage capacity"]}});</script></strong></td></tr>
+    <tr><td>Max generation</td><td class="txt_center"><strong><script>display_W({{facility["power generation"]}});</script></strong></td></tr>
+    <tr><td>Efficiency</td><td class="txt_center"><strong>{{(facility["efficiency"]*100)|int}}%</strong></td></tr>
+    <tr><td>Ramping speed</td><td class="txt_center"><strong><script>display_W({{facility["ramping speed"]}});</script>/min</strong></td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('lithium_ion_batteries', 'storage_facilities');" style="width:160px">
+      Start construction
+    </b>
   </div>
  </div>
 </div>
 
 {% set facility = data["solid_state_batteries"] %}
-<div class="bone margin facility small">
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/storage_facilities/solid_state_batteries.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Solid-state_battery" target="_blank">{{facility["name"]}}</a></strong><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Solid-state_battery" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
   The solid state battery storage facility stores electricity with high efficiency. <br>
-  <b class="txt-blue">Priority : 2 &emsp; Startup time : <script>display_duration({{facility["startup time"]}});</script></b>
  </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('solid_state_batteries', 'storage_facilities');">
-    Start construction
-  </b>
-  <div>
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
-    <i class="fa fa-cloud"></i> <script>display_kg({{facility["construction pollution"]}});</script>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Unlock with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]}}</li>
+  {% endfor %}
+  </ul>
   </div>
-  <div class="margin tan_green padding">
-    <i class="fa fa-battery-full"></i> <script>display_Wh({{facility["storage capacity"]}});</script> <br>
-    <i class="fa fa-bolt"></i> <script>display_W({{facility["power generation"]}});</script> <br>
-    <i class="fa fa-percent"></i> {{(facility["efficiency"]*100)|int}} %
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><td>Storage capacity</td><td class="txt_center"><strong><script>display_Wh({{facility["storage capacity"]}});</script></strong></td></tr>
+    <tr><td>Max generation</td><td class="txt_center"><strong><script>display_W({{facility["power generation"]}});</script></strong></td></tr>
+    <tr><td>Efficiency</td><td class="txt_center"><strong>{{(facility["efficiency"]*100)|int}}%</strong></td></tr>
+    <tr><td>Ramping speed</td><td class="txt_center"><strong><script>display_W({{facility["ramping speed"]}});</script>/min</strong></td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('solid_state_batteries', 'storage_facilities');" style="width:160px">
+      Start construction
+    </b>
   </div>
  </div>
 </div>
 
+{% endblock %}
+
+{% block additionnal_script %}
+<script src="{{ url_for('static', filename='click_construction.js') }}"></script>
 {% endblock %}
 

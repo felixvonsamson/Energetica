@@ -39,7 +39,6 @@ def update_ressources(engine):
                 amount_produced = min(max_prod, max_warehouse)
                 setattr(player, ressource, getattr(player, ressource) + 
                         amount_produced)
-                player_ressources[ressource][t] = getattr(player, ressource)
                 setattr(player.tile[0], ressource, max(0, getattr(player.tile[0], 
                                                     ressource) - amount_produced))
                 energy_demand = assets[facility]["power consumption"] * getattr(
@@ -51,6 +50,8 @@ def update_ressources(engine):
                 engine.data["current_data"][player.username]["emissions"][facility][t] = facility_emmissions * 60 # emissions in the graph are in kg/h
                 player.emissions += facility_emmissions
                 engine.data["current_CO2"][t] += facility_emmissions
+            player_ressources[ressource][t] = getattr(player, ressource)
+
     db.session.commit()
 
 # function that updates the electricity generation and storage status for all players according to capacity and external factors (and trade)
@@ -85,7 +86,7 @@ def update_electricity(engine):
             init_storage(engine, player, t)
             total_demand = calculate_demand(engine , player, t)
             calculate_generation_without_market(engine, total_demand, player, t)
-        # For players in network, substract the difference between importa and exports to ignore energy that has been bought from themselves
+        # For players in network, substract the difference between import and exports to ignore energy that has been bought from themselves
         else :
             current_data = engine.data["current_data"][player.username]
             exp = current_data["demand"]["exports"][t]
@@ -444,6 +445,8 @@ def ressources_and_pollution(engine, player, t):
         ressource = assets[plant]["consumed ressource"]
         quantity = assets[plant]["amount consumed"] * generation[plant][t] / 60000000 
         setattr(player, ressource, getattr(player, ressource) - quantity)
+    # Special case steam engine costs money and if it is not used it costs half of the maximum 
+    player.money -= player.steam_engine*assets["steam_engine"]["O&M cost"]*(0.5+0.5*generation["steam_engine"][t]/(player.steam_engine*assets["steam_engine"]["power generation"]))
     # special case of combined cycle
     quantity_gas = assets["combined_cycle"]["amount consumed"][0] * generation["combined_cycle"][t] / 60000000 
     quantity_coal = assets["combined_cycle"]["amount consumed"][1] * generation["combined_cycle"][t] / 60000000
