@@ -10,7 +10,7 @@ full_config = {
             "price": 2600,  # [CHF]
             "power generation": 210000,  # [W]
             "construction time": 3600,  # [s]
-            "construction energy": 850000,  # [Wh]
+            "construction energy": 8500000,  # [Wh]
             "construction pollution": 17520,  # [kg]
             "O&M cost" : 0.8, # [fraction of price per week]
             "consumed ressource": None,
@@ -610,7 +610,7 @@ class Config(object):
         config.for_player[player_id]["transport"]["power consumption"] /= 5
         for asset in assets:
             assets[asset]["construction time"] /= 5
-            assets[asset]["construction energy"] /= 100  # Energy reqirements were too high
+            assets[asset]["construction energy"] /= 1000  # Energy reqirements were too high
 
         for asset in assets:
             # calculating the ramping speed in W/min from the ramping time
