@@ -4,6 +4,7 @@ Here are defined the classes for the items stored in the database
 
 from . import db
 from flask_login import UserMixin
+from flask import current_app
 from sqlalchemy.sql import func
 import pickle
 from datetime import datetime
@@ -36,9 +37,26 @@ class Under_construction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
     family = db.Column(db.String(50)) # to assign the thing to the correct page
-    start_time = db.Column(db.Integer)
-    finish_time = db.Column(db.Integer)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
+    start_time = db.Column(db.Float)
+    finish_time = db.Column(db.Float)
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id")) # can access player directly with .player
+
+# class that stores the ressources shippment on their way :
+class Shipment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    resource = db.Column(db.String(10))
+    quantity = db.Column(db.Float)
+    departure_time = db.Column(db.Float)
+    arrival_time = db.Column(db.Float)
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id")) # can access player directly with .player
+
+class Resource_on_sale(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    resource = db.Column(db.String(10))
+    quantity = db.Column(db.Float)
+    price = db.Column(db.Float)
+    creation_date = db.Column(db.DateTime, default=datetime.now())
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id")) # can access player directly with .player
 
 # class that stores the networks of players :
 class Network(db.Model):
@@ -49,8 +67,6 @@ class Network(db.Model):
 
 # class that stores the users :
 class Player(db.Model, UserMixin):
-
-    engine = None
 
     # Authentification :
     id = db.Column(db.Integer, primary_key=True)
@@ -69,29 +85,32 @@ class Player(db.Model, UserMixin):
     messages = db.relationship('Message', backref='player')
 
     # Ressources :
-    money = db.Column(db.Integer, default=100000)
-    coal = db.Column(db.Integer, default=1000000)
-    oil = db.Column(db.Integer, default=500000)
-    gas = db.Column(db.Integer, default=700000)
-    uranium = db.Column(db.Integer, default=10000)
+    money = db.Column(db.Float, default=3000)
+    coal = db.Column(db.Float, default=0)
+    oil = db.Column(db.Float, default=0)
+    gas = db.Column(db.Float, default=0)
+    uranium = db.Column(db.Float, default=0)
+
+    coal_on_sale = db.Column(db.Float, default=0)
+    oil_on_sale = db.Column(db.Float, default=0)
+    gas_on_sale = db.Column(db.Float, default=0)
+    uranium_on_sale = db.Column(db.Float, default=0)
 
     # Energy facilities :
-    steam_engine = db.Column(db.Integer, default=0)
+    steam_engine = db.Column(db.Integer, default=1)
     windmill = db.Column(db.Integer, default=0)
     watermill = db.Column(db.Integer, default=0)
     coal_burner = db.Column(db.Integer, default=0)
     oil_burner = db.Column(db.Integer, default=0)
     gas_burner = db.Column(db.Integer, default=0)
-    shallow_geothermal_plant = db.Column(db.Integer, default=0)
     small_water_dam = db.Column(db.Integer, default=0)
-    wind_turbine = db.Column(db.Integer, default=0)
+    onshore_wind_turbine = db.Column(db.Integer, default=0)
     combined_cycle = db.Column(db.Integer, default=0)
-    deep_geothermal_plant = db.Column(db.Integer, default=0)
     nuclear_reactor = db.Column(db.Integer, default=0)
     large_water_dam = db.Column(db.Integer, default=0)
     CSP_solar = db.Column(db.Integer, default=0)
     PV_solar = db.Column(db.Integer, default=0)
-    large_wind_turbine = db.Column(db.Integer, default=0)
+    offshore_wind_turbine = db.Column(db.Integer, default=0)
     nuclear_reactor_gen4 = db.Column(db.Integer, default=0)
 
     # Storage facilities :
@@ -107,7 +126,7 @@ class Player(db.Model, UserMixin):
     laboratory = db.Column(db.Integer, default=0)
     warehouse = db.Column(db.Integer, default=0)
     industry = db.Column(db.Integer, default=0)
-    military_barracks = db.Column(db.Integer, default=0)
+    carbon_capture = db.Column(db.Integer, default=0)
 
     # Extraction plants :
     coal_mine = db.Column(db.Integer, default=0)
@@ -116,67 +135,75 @@ class Player(db.Model, UserMixin):
     uranium_mine = db.Column(db.Integer, default=0)
 
     # Technology :
-    mineral_extraction = db.Column(db.Integer, default=0)
-    civil_engeneering = db.Column(db.Integer, default=0)
+    mathematics = db.Column(db.Integer, default=0)
     mechanical_engeneering = db.Column(db.Integer, default=0)
+    thermodynamics = db.Column(db.Integer, default=0)
     physics = db.Column(db.Integer, default=0)
-    materials = db.Column(db.Integer, default=0)
-    carbon_capture = db.Column(db.Integer, default=0)
+    building_technology = db.Column(db.Integer, default=0)
+    mineral_extraction = db.Column(db.Integer, default=0)
     transport_technology = db.Column(db.Integer, default=0)
+    materials = db.Column(db.Integer, default=0)
+    civil_engeneering = db.Column(db.Integer, default=0)
     aerodynamics = db.Column(db.Integer, default=0)
-    geology = db.Column(db.Integer, default=0)
+    chemistry = db.Column(db.Integer, default=0)
+    nuclear_engeneering = db.Column(db.Integer, default=0)
 
     # Selfconsumption priority list 
-    self_consumption_priority = db.Column(db.Text, default="small_water_dam large_water_dam PV_solar wind_turbine large_wind_turbine CSP_solar windmill watermill")
-    rest_of_priorities = db.Column(db.Text, default="steam_engine shallow_geothermal_plant deep_geothermal_plant nuclear_reactor nuclear_reactor_gen4 combined_cycle gas_burner oil_burner coal_burner")
+    self_consumption_priority = db.Column(db.Text, default="small_water_dam large_water_dam PV_solar onshore_wind_turbine offshore_wind_turbine CSP_solar windmill watermill")
+    rest_of_priorities = db.Column(db.Text, default="steam_engine nuclear_reactor nuclear_reactor_gen4 combined_cycle gas_burner oil_burner coal_burner")
 
     # Production capacity prices [CHF/MWh]
-    price_steam_engine = db.Column(db.Float, default=25)
-    price_windmill = db.Column(db.Float, default=10)
-    price_watermill = db.Column(db.Float, default=10)
-    price_coal_burner = db.Column(db.Float, default=120)
-    price_oil_burner = db.Column(db.Float, default=110)
-    price_gas_burner = db.Column(db.Float, default=100)
-    price_shallow_geothermal_plant = db.Column(db.Float, default=40)
-    price_small_water_dam = db.Column(db.Float, default=3)
-    price_wind_turbine = db.Column(db.Float, default=5)
-    price_combined_cycle = db.Column(db.Float, default=90)
-    price_deep_geothermal_plant = db.Column(db.Float, default=45)
-    price_nuclear_reactor = db.Column(db.Float, default=55)
-    price_large_water_dam = db.Column(db.Float, default=3)
-    price_CSP_solar = db.Column(db.Float, default=8)
-    price_PV_solar = db.Column(db.Float, default=4)
-    price_large_wind_turbine = db.Column(db.Float, default=5)
-    price_nuclear_reactor_gen4 = db.Column(db.Float, default=75)
+    price_steam_engine = db.Column(db.Float, default=125)
+    price_windmill = db.Column(db.Float, default=50)
+    price_watermill = db.Column(db.Float, default=50)
+    price_coal_burner = db.Column(db.Float, default=600)
+    price_oil_burner = db.Column(db.Float, default=550)
+    price_gas_burner = db.Column(db.Float, default=500)
+    price_small_water_dam = db.Column(db.Float, default=15)
+    price_onshore_wind_turbine = db.Column(db.Float, default=25)
+    price_combined_cycle = db.Column(db.Float, default=450)
+    price_nuclear_reactor = db.Column(db.Float, default=275)
+    price_large_water_dam = db.Column(db.Float, default=15)
+    price_CSP_solar = db.Column(db.Float, default=40)
+    price_PV_solar = db.Column(db.Float, default=20)
+    price_offshore_wind_turbine = db.Column(db.Float, default=15)
+    price_nuclear_reactor_gen4 = db.Column(db.Float, default=375)
 
     # Storage capacity prices [CHF/MWh]
-    price_buy_small_pumped_hydro = db.Column(db.Float, default=15)
-    price_sell_small_pumped_hydro = db.Column(db.Float, default=30)
-    price_buy_compressed_air = db.Column(db.Float, default=14)
-    price_sell_compressed_air = db.Column(db.Float, default=22)
-    price_buy_molten_salt = db.Column(db.Float, default=16)
-    price_sell_molten_salt = db.Column(db.Float, default=25)
-    price_buy_large_pumped_hydro = db.Column(db.Float, default=13)
-    price_sell_large_pumped_hydro = db.Column(db.Float, default=20)
-    price_buy_hydrogen_storage = db.Column(db.Float, default=20)
-    price_sell_hydrogen_storage = db.Column(db.Float, default=40)
-    price_buy_lithium_ion_batteries = db.Column(db.Float, default=80)
-    price_sell_lithium_ion_batteries = db.Column(db.Float, default=100)
-    price_buy_solid_state_batteries = db.Column(db.Float, default=35)
-    price_sell_solid_state_batteries = db.Column(db.Float, default=100)
+    price_buy_small_pumped_hydro = db.Column(db.Float, default=150)
+    price_sell_small_pumped_hydro = db.Column(db.Float, default=250)
+    price_buy_compressed_air = db.Column(db.Float, default=70)
+    price_sell_compressed_air = db.Column(db.Float, default=110)
+    price_buy_molten_salt = db.Column(db.Float, default=80)
+    price_sell_molten_salt = db.Column(db.Float, default=125)
+    price_buy_large_pumped_hydro = db.Column(db.Float, default=65)
+    price_sell_large_pumped_hydro = db.Column(db.Float, default=100)
+    price_buy_hydrogen_storage = db.Column(db.Float, default=100)
+    price_sell_hydrogen_storage = db.Column(db.Float, default=200)
+    price_buy_lithium_ion_batteries = db.Column(db.Float, default=400)
+    price_sell_lithium_ion_batteries = db.Column(db.Float, default=500)
+    price_buy_solid_state_batteries = db.Column(db.Float, default=175)
+    price_sell_solid_state_batteries = db.Column(db.Float, default=500)
 
     # CO2 emissions :
-    emissions = db.Column(db.Integer, default=0)
-    total_emissions = db.Column(db.Integer, default=0)
+    emissions = db.Column(db.Float, default=0)
 
     under_construction = db.relationship("Under_construction")
+    resource_on_sale = db.relationship("Resource_on_sale", backref='player')
+    shipments = db.relationship("Shipment", backref='player')
 
     data_table_name = db.Column(db.String(50))
     
     def emit(player, *args):
         if player.sid:
-            socketio = player.engine.socketio
+            socketio = current_app.config["engine"].socketio
             socketio.emit(*args, room=player.sid)
+
+    def update_resources(player):
+        if player.sid:
+            updates = []
+            updates.append(["money", f"{player.money:,.0f} CHF".replace(",", "'")])
+            player.emit("update_data", updates)
 
     # prints out the object as a sting with the players username for debugging
     def __repr__(self):

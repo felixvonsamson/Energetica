@@ -17,6 +17,38 @@ function general_format(value, units){
   );
 }
 
+// Inserts spaces as a thousands separator and the right unit
+function upgrade_format(value, units, factor){
+  let unit_index = 0;
+  let value2 = value*factor;
+  while (value >= 10000 && unit_index < units.length - 1) {
+    value /= 1000;
+    value2 /= 1000;
+    unit_index += 1;
+  }
+  document.write(
+    `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}${units[unit_index][0]} -> ${
+      value2.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}${
+      units[unit_index]
+    }`,
+  );
+}
+
+function display_upgrade_W(price, factor) {
+  const units = [" W", " kW", " MW", " GW", " TW"];
+  upgrade_format(price, units, factor);
+}
+
+function display_upgrade_CHF(price, factor) {
+  const units = [" CHF/day", "k CHF/day", "M CHF/day", "Md CHF/day"];
+  upgrade_format(price, units, factor);
+}
+
+function display_upgrade_kg(price, factor) {
+  const units = [" kg", " t", " kt", " Mt"];
+  upgrade_format(price, units, factor);
+}
+
 // Price :
 function display_CHF(price) {
   const units = [" CHF", "k CHF", "M CHF", "Md CHF"];
@@ -26,7 +58,7 @@ function display_CHF(price) {
 // Prices for balance display :
 function display_CHF_long(price) {
   document.write(
-    `${price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} CHF`,
+    `${price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} CHF`,
   );
 }
 
@@ -62,6 +94,7 @@ function display_duration(seconds) {
   seconds -= hours * 3600;
   const minutes = Math.floor(seconds / 60);
   seconds -= minutes * 60;
+  seconds = Math.round(seconds);
 
   let duration = "";
   if (days > 0) {
@@ -77,4 +110,17 @@ function display_duration(seconds) {
     duration += `${seconds}s`;
   }
   document.write(duration.trim());
+}
+
+function to_string(inputFloat) {
+  var resultString = inputFloat.toString();
+  if (resultString.includes('.')) {
+      resultString = resultString.replace(/(\.[0-9]*[1-9])0+$/, '$1');
+  }
+  document.write(resultString);
+}
+
+function calculate_delivery(delta_q, delta_r, trasport_speed){
+  const dist = Math.sqrt(2 * (Math.pow(delta_q, 2) + Math.pow(delta_r, 2) + delta_q*delta_r));
+  display_duration(dist * trasport_speed);
 }

@@ -1,4 +1,6 @@
-const keys_emissions = ["CO2"];
+const keys_emissions = ["steam_engine", "coal_burner", "oil_burner", 
+  "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4", 
+  "construction", "coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"];
 
 function draw_emissions() {
   if(graph){
@@ -51,7 +53,7 @@ function draw_emissions() {
     fill(0);
     textStyle(BOLD);
     text("TOTAL :", 40, 10);
-    text(display_kg_long(total_power), 120, 10);
+    text(display_kgh_long(total_power), 120, 10);
     textStyle(NORMAL);
     for (const key of keys_emissions) {
       if(data[key][t]>0){
@@ -66,7 +68,7 @@ function draw_emissions() {
         textAlign(LEFT, CENTER);
         text(cols_and_names[key][1], 20, 9);
         textAlign(CENTER, CENTER);
-        text(display_kg(data[key][t]), 135, 9);
+        text(display_kgh(data[key][t]), 135, 9);
         fill(229, 217, 182);
       }
     }
@@ -86,7 +88,7 @@ function regen_emissions(res){
           const array = raw_data[2][key];
           data[key] = reduce(data[key], array, res, raw_data[0]);
         });
-      data_len = data["CO2"].length;
+      data_len = data["steam_engine"].length;
       push();
       translate(1.5*margin, height-2*margin-10);
       noStroke();
@@ -141,7 +143,7 @@ function regen_emissions(res){
         stroke(0);
         line(0, -y*i, -5, -y*i);
         noStroke();
-        text(display_kg(y_ticks[i]),-0.75*margin, -y*i);
+        text(display_kgh(y_ticks[i]),-0.75*margin, -y*i);
       }
       pop();
       pop();

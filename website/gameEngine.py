@@ -7,13 +7,16 @@ import pickle
 import secrets
 import logging
 import os
+import copy
 from flask import url_for
 from . import heap
 import time
 import heapq
 from .database import Player
 
-from .config import config
+from .config import config, wind_power_curve, river_discharge
+
+from .utils import update_weather, save_past_data_threaded
 
 # This is the engine object
 class gameEngine(object):
@@ -22,7 +25,6 @@ class gameEngine(object):
         engine.socketio = None
         engine.logger = logging.getLogger("Energetica") # Not sure what that is 
         engine.init_logger()
-        engine.logs = [] # Dont think that this is still necessary
         engine.nonces = set() # Dont remember what that is
         engine.log("engine created")
 
@@ -36,16 +38,27 @@ class gameEngine(object):
             "solid_state_batteries"
         ]
 
+        engine.wind_power_curve = wind_power_curve
+        engine.river_discharge = river_discharge
+
+        engine.data = {}
         # All data for the current day will be stored here :
-        engine.current_data = {}
-        engine.current_CO2 = [0] * 1441
+        engine.data["current_data"] = {}
+        engine.data["current_windspeed"] = [0] * 1441 # daily windspeed in km/h
+        engine.data["current_irradiation"] = [0] * 1441 # daily irradiation in W/m2
+        engine.data["current_discharge"] = [0] * 1441 # daily river discharge rate factor
+        engine.data["current_CO2"] = [0] * 1441
+        engine.data["total_t"] = 0
         now = datetime.datetime.today().time()
-        engine.current_t = now.hour * 60 + now.minute + 1 #fist value of current day has to be last value of last day
-        # temporary
-        if os.path.isfile("instance/engine_data.pck"):
-            with open("instance/engine_data.pck", "rb") as file:
-                engine.current_data = pickle.load(file)
-                print("loaded engine data")
+        engine.data["current_t"] = now.hour * 60 + now.minute + 1 # +1 bc fist value of current day has to be last value of last day
+        engine.data["start_date"] = datetime.datetime.today() # 0 point of server time
+
+        with open("website/static/data/industry_demand.pck", "rb") as file:
+            engine.industry_demand = pickle.load(file) # array of length 1440 of normalized daily industry demand variations
+        with open("website/static/data/industry_demand_year.pck", "rb") as file:
+            engine.industry_seasonal = pickle.load(file) # array of length 51 of normalized yearly industry demand variations
+
+        update_weather(engine)
 
     def init_logger(engine):
         engine.logger.setLevel(logging.INFO)
@@ -88,23 +101,27 @@ class gameEngine(object):
     def log(engine, message):
         log_message = datetime.datetime.now().strftime("%H:%M:%S : ") + message
         engine.logger.info(log_message)
-        engine.logs.append(log_message)
-
-
-from .utils import add_asset
 
 # function that is executed once every 24 hours :
 def daily_update(engine, app):
-    engine.current_t = 1
-    # recalculate industry demand IMPLEMENT CHANGING DATA
+    engine.data["current_t"] = 1
     with app.app_context():
-        with open("website/static/data/industry_demand.pck", "rb") as file:
-            industry_demand = pickle.load(file)
         players = Player.query.all()
+        past_data = copy.deepcopy(engine.data["current_data"])
+        engine.data["current_windspeed"] = [engine.data["current_windspeed"][-1]] + [0]*1440
+        engine.data["current_irradiation"] = [engine.data["current_irradiation"][-1]] + [0]*1440
+        engine.data["current_discharge"] = [engine.data["current_discharge"][-1]] + [0]*1440
+        engine.data["current_CO2"] = [engine.data["current_CO2"][-1]] + [0]*1440
         for player in players:
-            engine.current_data[player.username]["demand"]["industriy"] = [
-                i * 50000 for i in industry_demand
-            ]
+            for category in engine.data["current_data"][player.username]:
+                for element in engine.data["current_data"][player.username][category]:
+                    past_data[player.username][category][element].pop(0)
+                    data_array = engine.data["current_data"][player.username][category][element]
+                    last_value = data_array[-1]
+                    data_array.clear()
+                    data_array.extend([last_value] + [0]*1440)
+             
+    save_past_data_threaded(app, past_data)
 
 
 from .production_update import update_ressources, update_electricity
@@ -114,14 +131,25 @@ def state_update_h(engine, app):
     with app.app_context():
         players = Player.query.all()
         for player in players:
-            engine.config.update_config_for_user(player.id) # update mining productivity every hour
+            engine.config.update_resource_extraction(player.id) # update mining productivity every hour
 
 # function that is executed once every 1 minute :
 def state_update_m(engine, app):
-    engine.current_t += 1
-    with app.app_context():
-        update_ressources(engine)
-        update_electricity(engine)
+    total_t = (datetime.datetime.now() - engine.data["start_date"]).total_seconds()/60.0
+    while(engine.data["total_t"] < total_t):
+        engine.data["current_t"] += 1
+        # print(f"t = {engine.data['current_t']}")
+        engine.data["total_t"] += 1
+        if engine.data["current_t"] > 1440:
+            daily_update(engine, app)
+        with app.app_context():
+            if engine.data["current_t"] % 10 == 1:
+                update_weather(engine)
+            update_ressources(engine)
+            update_electricity(engine)
+    
+        with open("instance/engine_data.pck", "wb") as file:
+            pickle.dump(engine.data, file)
 
 # function that is executed once every 1 second :
 def check_heap(engine, app):

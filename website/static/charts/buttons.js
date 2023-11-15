@@ -50,16 +50,14 @@ function setup() {
         "large_water_dam": [color(15, 0, 153), "Water dam (L)"],
         "nuclear_reactor": [color(232, 181, 28), "Nuclear reactor"],
         "nuclear_reactor_gen4": [color(255, 220, 66), "Gen 4 Nuclear"],
-        "shallow_geothermal_plant": [color(227, 66, 149), "Geothermy (S)"],
-        "deep_geothermal_plant": [color(212, 8, 83), "Geothermy (L)"],
         "steam_engine": [color(140, 140, 140), "Steam engine"],
         "coal_burner": [color(0, 0, 0), "Coal burner"],
         "oil_burner": [color(69, 69, 69), "Oil burner"],
         "gas_burner": [color(179, 189, 201), "Gas burner"],
         "combined_cycle": [color(89, 150, 142), "Combined cycle"],
         "windmill": [color(148, 234, 255), "Windmill"],
-        "wind_turbine": [color(44, 239, 242), "Wind turbine"],
-        "large_wind_turbine": [color(0, 196, 199), "Wind turbine (L)"],
+        "onshore_wind_turbine": [color(44, 239, 242), "Wind onshore"],
+        "offshore_wind_turbine": [color(0, 196, 199), "Wind offshore"],
         "CSP_solar": [color(237, 194, 0), "CSP solar"],
         "PV_solar": [color(255, 250, 0), "PV solar"],
         
@@ -79,9 +77,10 @@ function setup() {
         "oil_field": [color(69, 69, 69), "Oil fields"],
         "gas_drilling_site": [color(179, 189, 201), "Gas fields"],
         "uranium_mine": [color(137, 255, 59), "Uran. mines"],
-        "industriy": [color(73, 95, 196), "Industry"],
+        "industry": [color(73, 95, 196), "Industry"],
         "research": [color(255, 255, 255), "Research"],
         "construction": [color(245, 145, 22), "Constructions"],
+        "transport": [color(140, 3, 252), "Transport"],
 
         "coal": [color(0,0,0), "Coal"],
         "oil": [color(184, 33, 78), "Oil"],
@@ -96,7 +95,7 @@ function setup() {
       buttons[i] = new Button(resolution[i]);
     }
     buttons[1].active = true;
-    setInterval(update_graph, 60000);
+    setInterval(update_graph, 5000);
     update_graph();
 }
 
@@ -107,7 +106,7 @@ function draw() {
         draw_demand();
     }else if(active_view == "Storage"){
         draw_storage();
-    }else if(active_view == "Ressources"){
+    }else if(active_view == "Resources"){
         draw_ressources();
     }else{
         draw_emissions();
@@ -133,7 +132,7 @@ function update_graph(){
         regen_demand(res);
     }else if(active_view == "Storage"){
         regen_storage(res);
-    }else if(active_view == "Ressources"){
+    }else if(active_view == "Resources"){
         regen_ressources(res);
     }else{
         regen_emissions(res);
@@ -211,6 +210,11 @@ function display_Wh(energy) {
     return general_format(energy, units);
 }
 
+function display_kgh(mass_rate) {
+    const units = [" kg/h", " t/h"];
+    return general_format(mass_rate, units);
+}
+
 function display_kg(mass) {
     const units = [" kg", " t", " kt", " Mt"];
     return general_format(mass, units);
@@ -274,6 +278,10 @@ function display_Wh_long(energy) {
 
 function display_kg_long(mass) {
     return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} kg`
+}
+
+function display_kgh_long(mass) {
+    return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} kg/h`
 }
 
 function change_view(view){

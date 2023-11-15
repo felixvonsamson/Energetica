@@ -7,9 +7,13 @@ from flask import g, current_app
 from flask_login import login_required, current_user
 import pickle
 import datetime
+import math
+import time
+import heapq
 from . import db
-from .database import Chat, Player
-from .utils import check_existing_chats
+from . import heap
+from .database import Chat, Player, Network, Resource_on_sale, Shipment
+from .utils import check_existing_chats, display_CHF, store_import
 
 views = Blueprint("views", __name__)
 
@@ -20,6 +24,13 @@ flash_error = lambda msg: flash(msg, category="error")
 @login_required
 def check_user():
     g.engine = current_app.config["engine"]
+    if len(current_user.tile) == 0:
+        return render_template(
+                "location_choice.jinja",
+                engine=g.engine,
+                user=current_user
+            )
+    
     g.config = g.engine.config[current_user.id]
 
     def render_template_ctx(page):
@@ -32,17 +43,24 @@ def check_user():
                 user=current_user,
                 chats=chats
             )
+        elif page == "resource_market.jinja":
+            on_sale=Resource_on_sale.query.all()
+            return render_template(
+                page,
+                engine=g.engine,
+                user=current_user,
+                on_sale=on_sale,
+                data=g.config
+            )
         else:
             return render_template(
                 page,
                 engine=g.engine,
                 user=current_user,
-                data=g.config["assets"]
+                all_data=g.config
             )
 
     g.render_template_ctx = render_template_ctx
-    if len(current_user.tile) == 0:
-        return g.render_template_ctx("location_choice.jinja")
 
 @views.route("/", methods=["GET", "POST"])
 @views.route("/home", methods=["GET", "POST"])
@@ -77,8 +95,18 @@ def messages():
                 db.session.commit()
     return g.render_template_ctx("messages.jinja")
 
-@views.route("/network")
+@views.route("/network", methods=["GET", "POST"])
 def network():
+    if request.method == "POST":
+        # If player is trying to join a network
+        network_name = request.form.get("choose_network")
+        if len(network_name) < 3 or len(network_name) > 50:
+            flash_error("Network name has to have at least 3 characters and no more than 50")
+        else :
+            network = Network.query.filter_by(name=network_name).first()
+            current_user.network = network
+            db.session.commit()  
+            flash(f"You joined the network {network_name}", category="message")  
     return g.render_template_ctx("network.jinja")
 
 @views.route("/power_facilities")
@@ -104,3 +132,65 @@ def extraction_plants():
 @views.route("/production_overview")
 def production_overview():
     return g.render_template_ctx("production_overview.jinja")
+
+@views.route("/resource_market", methods=["GET", "POST"])
+def resource_market():
+    if request.method == "POST":
+        # If player is trying to put resources on sale
+        if "resource" in request.form:
+            resource = request.form.get("resource")
+            quantity = float(request.form.get("quantity"))*1000
+            price = float(request.form.get("price"))/1000
+            if getattr(current_user, resource)-getattr(current_user, resource+"_on_sale") < quantity:
+                flash_error(f"You have not enough {resource} avalable")
+            else:
+                setattr(current_user, resource+"_on_sale", getattr(current_user, resource+"_on_sale")+quantity)
+                new_sale = Resource_on_sale(resource=resource, 
+                                            quantity=quantity, 
+                                            price=price, 
+                                            player=current_user)
+                db.session.add(new_sale)
+                db.session.commit()  
+                flash(f"You put {quantity/1000}t of {resource} on sale for {price*1000}CHF/t", category="message")
+        else :
+            quantity = float(request.form.get("purchases_quantity"))*1000
+            sale_id = int(request.form.get("sale_id"))
+            sale = Resource_on_sale.query.filter_by(id=sale_id).first()
+            if current_user == sale.player:
+                if quantity == sale.quantity:
+                    Resource_on_sale.query.filter_by(id=sale_id).delete()
+                else :
+                    sale.quantity -= quantity
+                setattr(current_user, sale.resource+"_on_sale", getattr(current_user, sale.resource+"_on_sale")-quantity)
+                db.session.commit()
+                flash(f"You removed {quantity/1000}t of {sale.resource} from the market", category="message")
+            elif sale.price * quantity > current_user.money:
+                flash_error(f"You have not enough money")
+            else:
+                if quantity == sale.quantity:
+                    Resource_on_sale.query.filter_by(id=sale_id).delete()
+                else :
+                    sale.quantity -= quantity
+                current_user.money -= sale.price * quantity
+                sale.player.money += sale.price * quantity
+                current_user.update_resources()
+                sale.player.update_resources()
+                setattr(sale.player, sale.resource, getattr(sale.player, sale.resource) - quantity)
+                setattr(sale.player, sale.resource+"_on_sale", getattr(sale.player, sale.resource+"_on_sale") - quantity)
+                dq = current_user.tile[0].q - sale.player.tile[0].q
+                dr = current_user.tile[0].r - sale.player.tile[0].r
+                distance = math.sqrt(2 * (dq**2 + dr**2 + dq*dr))
+                shipment_duration = distance * g.config["transport"]["time"]
+                arrival_time = time.time() + shipment_duration
+                heapq.heappush(heap, (arrival_time, store_import, (current_user.id, sale.resource, quantity)))
+                new_shipment = Shipment(
+                    resource = sale.resource,
+                    quantity = quantity,
+                    departure_time = time.time(),
+                    arrival_time = arrival_time,
+                    player_id = current_user.id
+                )
+                db.session.add(new_shipment)
+                db.session.commit()
+
+    return g.render_template_ctx("resource_market.jinja")

@@ -26,6 +26,7 @@ def login():
                 flash("Logged in successfully!", category="success")
                 login_user(player, remember=True)
                 session["ID"] = player.id
+                print(f"{username} logged in")
                 return redirect(url_for("views.home"))
             else:
                 flash("Incorrect password, try again.", category="error")
@@ -39,6 +40,7 @@ def login():
 @login_required
 def logout():
     logout_user()
+    print(f"{current_user.username} logged out")
     return redirect(url_for("auth.login"))
 
 # logic for the sign-up :
@@ -52,8 +54,8 @@ def sign_up():
         player = Player.query.filter_by(username=username).first()
         if player:
             flash("Username already exist", category="error")
-        elif len(username) < 4:
-            flash("Username must be greater than 3 characters.",
+        elif len(username) < 3:
+            flash("Username must have at least 3 characters.",
                   category="error")
         elif password1 != password2:
             flash("Passwords don't match.", category="error")
@@ -72,6 +74,7 @@ def sign_up():
             login_user(new_player, remember=True)
             session["ID"] = new_player.id
             flash("Account created!", category="success")
+            print(f"{username} created an account")
             return redirect(url_for("views.home"))
 
     return render_template("sign_up.jinja", user=current_user)
@@ -89,9 +92,7 @@ def add_player_to_data(username):
     # TEMPORARY -> GENERATE NEW VALUES FOR EACH DAY 
     with open("website/static/data/industry_demand.pck", "rb") as file:
         industry_demand = pickle.load(file)
-    engine.current_data[username] = data_init(1441)
-    engine.current_data[username]["demand"]["industriy"] = [
-        i * 50000 for i in industry_demand]
+    engine.data["current_data"][username] = data_init(1441)
 
 def data_init(length):
     return {
@@ -102,16 +103,14 @@ def data_init(length):
             "coal_burner": [0] * length,
             "oil_burner": [0] * length,
             "gas_burner": [0] * length,
-            "shallow_geothermal_plant": [0] * length,
             "small_water_dam": [0] * length,
-            "wind_turbine": [0] * length,
+            "onshore_wind_turbine": [0] * length,
             "combined_cycle": [0] * length,
-            "deep_geothermal_plant": [0] * length,
             "nuclear_reactor": [0] * length,
             "large_water_dam": [0] * length,
             "CSP_solar": [0] * length,
             "PV_solar": [0] * length,
-            "large_wind_turbine": [0] * length,
+            "offshore_wind_turbine": [0] * length,
             "nuclear_reactor_gen4": [0] * length,
 
             "small_pumped_hydro": [0] * length,
@@ -125,13 +124,15 @@ def data_init(length):
             "imports": [0] * length,
         },
         "demand": {
-            "industriy": [0] * length,
+            "industry": [0] * length,
             "construction": [0] * length,
+            "research": [0] * length,
+            "transport": [0] * length,
+
             "coal_mine": [0] * length,
             "oil_field": [0] * length,
             "gas_drilling_site": [0] * length,
             "uranium_mine": [0] * length,
-            "research": [0] * length,
 
             "small_pumped_hydro": [0] * length,
             "compressed_air": [0] * length,
@@ -149,25 +150,29 @@ def data_init(length):
             "large_pumped_hydro": [0] * length,
             "compressed_air": [0] * length,
             "molten_salt": [0] * length,
-            "hydrogen": [0] * length,
+            "hydrogen_storage": [0] * length,
             "lithium_ion_batteries": [0] * length,
             "solid_state_batteries": [0] * length,
         },
         "ressources": {
-            "coal": [1000000] * length,
-            "oil": [500000] * length,
-            "gas": [700000] * length,
-            "uranium": [10000] * length,
+            "coal": [0] * length,
+            "oil": [0] * length,
+            "gas": [0] * length,
+            "uranium": [0] * length,
         },
         "emissions": {
             "steam_engine": [0] * length,
             "coal_burner": [0] * length,
             "oil_burner": [0] * length,
             "gas_burner": [0] * length,
-            "shallow_geothermal_plant": [0] * length,
             "combined_cycle": [0] * length,
-            "deep_geothermal_plant": [0] * length,
             "nuclear_reactor": [0] * length,
             "nuclear_reactor_gen4": [0] * length,
+            "construction": [0] * length,
+
+            "coal_mine": [0] * length,
+            "oil_field": [0] * length,
+            "gas_drilling_site": [0] * length,
+            "uranium_mine": [0] * length,
         }
     }

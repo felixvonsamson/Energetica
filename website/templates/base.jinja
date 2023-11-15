@@ -1,21 +1,61 @@
 {% extends "head.jinja" %} 
 {% block base%}
 
+<div class="flex-row logo_container">
+  <img src="{{ url_for('static', filename='images/icon.svg') }}" class="logo small" style="margin-left:7px"/>
+  <span class="logo_txt">Energetica</span>
+</div>
 <nav class="navbar medium">
-  <a class="navbar_item padding tan_green" id="home" href="/home">Home</a>
-  <a class="navbar_item padding tan_green" id="messages" href="/messages">Messages</a>
-  <a class="navbar_item padding tan_green" id="network" href="/network">Network</a>
-  <a class="navbar_item padding tan_green" id="production_overview" href="/production_overview">Production overview</a>
-  <a class="navbar_item padding tan_green" id="power_facilities" href="/power_facilities">Power facilities</a>
-  <a class="navbar_item padding tan_green" id="storage_facilities" href="/storage_facilities">Storage facilities</a>
-  <a class="navbar_item padding tan_green" id="functional_facilities" href="/functional_facilities">Functional facilities</a>
-  <a class="navbar_item padding tan_green" id="extraction_plants" href="/extraction_plants">Extraction plants</a>
-  <a class="navbar_item padding tan_green" id="technology" href="/technology">Technology</a>
-  <a class="navbar_item padding tan_green" id="logout" href="/logout">Logout</a>
+  <a class="navbar_item tan_green flex-row" id="home" href="/home">
+    <img src="{{ url_for('static', filename='images/icons/home.png') }}" class="navbar_icon margin-small"/>
+    <span style="padding:8px 0">Home</span>
+  </a>
+  <a class="navbar_item tan_green flex-row" id="messages" href="/messages">
+    <img src="{{ url_for('static', filename='images/icons/messages.png') }}" class="navbar_icon margin-small"/>
+    <span style="padding:8px 0">Messages</span>
+  </a>
+  <a class="navbar_item tan_green flex-row" id="network" href="/network">
+    <img src="{{ url_for('static', filename='images/icons/network.png') }}" class="navbar_icon margin-small"/>
+    <span style="padding:8px 0">Network</span>
+  </a>
+  <a class="navbar_item tan_green flex-row" id="production_overview" href="/production_overview">
+    <img src="{{ url_for('static', filename='images/icons/production_overview.png') }}" class="navbar_icon margin-small"/>
+    <span style="padding:8px 0">Production overview</span>
+  </a>
+  <a class="navbar_item tan_green flex-row" id="power_facilities" href="/power_facilities">
+    <img src="{{ url_for('static', filename='images/icons/power_facilities.png') }}" class="navbar_icon margin-small"/>
+    <span style="padding:8px 0">Power facilities</span>
+  </a>
+  <a class="navbar_item tan_green flex-row" id="storage_facilities" href="/storage_facilities">
+    <img src="{{ url_for('static', filename='images/icons/storage_facilities.png') }}" class="navbar_icon margin-small"/>
+    <span style="padding:8px 0">Storage facilities</span>
+  </a>
+  <a class="navbar_item tan_green flex-row" id="extraction_plants" href="/extraction_plants">
+    <img src="{{ url_for('static', filename='images/icons/extraction_plants.png') }}" class="navbar_icon margin-small"/>
+    <span style="padding:8px 0">Extraction plants</span>
+  </a>
+  <a class="navbar_item tan_green flex-row" id="functional_facilities" href="/functional_facilities">
+    <img src="{{ url_for('static', filename='images/icons/functional_facilities.png') }}" class="navbar_icon margin-small"/>
+    <span style="padding:8px 0">Functional facilities</span>
+  </a>
+  <a class="navbar_item tan_green flex-row" id="technology" href="/technology">
+    <img src="{{ url_for('static', filename='images/icons/technology.png') }}" class="navbar_icon margin-small"/>
+    <span style="padding:8px 0">Technology</span>
+  </a>
+  <a class="navbar_item tan_green flex-row" id="resource_market" href="/resource_market">
+    <img src="{{ url_for('static', filename='images/icons/resource_market.png') }}" class="navbar_icon margin-small"/>
+    <span style="padding:8px 0">Resources market</span>
+  </a>
+  <a class="navbar_item tan_green flex-row" id="logout" href="/logout">
+    <img src="{{ url_for('static', filename='images/icons/logout.png') }}" class="navbar_icon margin-small"/>
+    <span style="padding:8px 0">Logout</span>
+  </a>
 </nav>
 
+<div class="version large">Version : alfa 0.1.0</div>
+
 <div class="ressources medium tan_green">
-  <div class="padding" id="money"><script>display_CHF_long({{user.money}});</script></div>
+  <div class="padding money_font large" id="money"><script>display_CHF_long({{user.money}});</script></div>
   <div class="padding" id="coal"><script>display_kg({{user.coal}});</script> <img src="{{ url_for('static', filename='images/ressources/coal.png') }}" class="icon" alt="coal"></div>
   <div class="padding" id="oil"><script>display_kg({{user.oil}});</script> <img src="{{ url_for('static', filename='images/ressources/oil.png') }}" class="icon" alt="oil"></div>
   <div class="padding" id="gas"><script>display_kg({{user.gas}});</script> <img src="{{ url_for('static', filename='images/ressources/gas.png') }}" class="icon" alt="gas"></div>

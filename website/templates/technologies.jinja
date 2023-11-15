@@ -1,150 +1,528 @@
 {% extends "base.jinja" %} {% block title %}Technologies{% endblock %} {% block content
 %}
 
+{% set data = all_data["assets"]%}
+
 <div class="huge title">Technologies</div>
 
-{% if user.under_construction %}
-{% for facility in user.under_construction %}
-{% if facility.family == "technologies"%}
-<div class="padding" id="progress_bar">
-  The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
+<div id="under_construction">
+  {% if user.under_construction %}
+  {% for facility in user.under_construction %}
+  {% if facility.family == "technologies"%}
+  <div class="padding" id="progress_bar">
+    The research on the technology <b>{{data[facility.name]["name"]}}</b> is currently underway. <i class="time" data-name="{{facility.finish_time}}"></i>
+  </div>
+  {% endif %}
+  {% endfor %}
+  {% endif %}
 </div>
-{% endif %}
-{% endfor %}
-{% endif %}
 
-{% set facility = data["mineral_extraction"] %}
-<div class="bone margin facility small">
- <img class="img" src="{{ url_for('static', filename='images/technologies/mineral_extraction.jpg') }}"\>
+{% set facility = data["mathematics"] %}
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/mathematics.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Mining" target="_blank">{{facility["name"]}}</a></strong><br>
-  Mineral extraction improves the process of extracting minerals like coal and uranium.
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.mathematics}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+ Mathematics is the fundamental tool of science. <br>
  </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('mineral_extraction', 'technologies'); location.reload();">
-    Research
-  </b>
-  <div class="margin">
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
+ <div class="infobox" id="reqirements" style="margin-right:200px">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Upgrade with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]+user.mathematics}}</li>
+  {% endfor %}
+  </ul>
+  </div>
+ {% endif %}
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('mathematics', 'functional_facilities');" style="width:160px">
+      Start construction
+    </b>
   </div>
  </div>
 </div>
 
-{% set facility = data["civil_engeneering"] %}
-<div class="bone margin facility small">
- <img class="img" src="{{ url_for('static', filename='images/technologies/civil_engeneering.jpg') }}"\>
+{% set facility = data["mechanical_engeneering"] %}
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/mechanical_engeneering.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Civil_engineering" target="_blank">{{facility["name"]}}</a></strong><br>
-  Civil engeneering makes the construction of large facilities more efficient.
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.mechanical_engeneering}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+ Mechanical engeneering is the science of machines. <br>
+ Affects the facilities : 
+ {% for facility in ["steam_engine", "watermill", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "compressed_air"] %}
+ <em class="txt-blue">{{data[facility].name}}</em> , 
+ {% endfor %} <em class="txt-blue">{{data["molten_salt"].name}}</em>
  </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('civil_engeneering', 'technologies'); location.reload();">
-    Research
-  </b>
-  <div class="margin">
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Upgrade with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]+user.mechanical_engeneering}}</li>
+  {% endfor %}
+  </ul>
+  </div>
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><th>Effects :</th><th class="txt_center">lvl {{user.mechanical_engeneering}} -> lvl {{user.mechanical_engeneering+1}}</th></tr>
+    <tr><td>Power generation</td><td class="txt_center">+{{(facility["prod factor"]*100-100)|int}}%</td></tr>
+    <tr><td>Price</td><td class="txt_center">+{{(facility["price factor"]*100-100)|int}}%</td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('mechanical_engeneering', 'functional_facilities');" style="width:160px">
+      Start construction
+    </b>
+  </div>
+ </div>
+</div>
+
+{% set facility = data["thermodynamics"] %}
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/thermodynamics.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.thermodynamics}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+ Thermodynamics is very boring. <br>
+ Affects the facilities : 
+ {% for facility in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4", "compressed_air"] %}
+ <em class="txt-blue">{{data[facility].name}}</em> , 
+ {% endfor %} <em class="txt-blue">{{data["molten_salt"].name}}</em>
+ </div>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Upgrade with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]+user.thermodynamics}}</li>
+  {% endfor %}
+  </ul>
+  </div>
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><th>Effects :</th><th class="txt_center">lvl {{user.thermodynamics}} -> lvl {{user.thermodynamics+1}}</th></tr>
+    <tr><td>Fuel use</td><td class="txt_center">-{{(facility["efficiency factor"]/(1+user.thermodynamics*facility["efficiency factor"])*100)|int}}%</td></tr>
+    <tr><td>Pollution</td><td class="txt_center">-{{(facility["efficiency factor"]/(1+user.thermodynamics*facility["efficiency factor"])*100)|int}}%</td></tr>
+    <tr><td>Efficiency comp. air</td><td class="txt_center">+5%</td></tr>
+    <tr><td>Efficiency molten salt</td><td class="txt_center">+{{(10/data["molten_salt"]["efficiency"]-10)|int}}%</td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('thermodynamics', 'functional_facilities');" style="width:160px">
+      Start construction
+    </b>
   </div>
  </div>
 </div>
 
 {% set facility = data["physics"] %}
-<div class="bone margin facility small">
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/physics.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Physics" target="_blank">{{facility["name"]}}</a></strong><br>
-  Physics is the science behind a lot of innovations in the field of energy.
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.physics}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+ Physics is the science of experimentation. <br>
+ Affects the facilities : 
+ {% for facility in ["PV_solar", "CSP_solar", "hydrogen_storage", "lithium_ion_batteries"] %}
+ <em class="txt-blue">{{data[facility].name}}</em> , 
+ {% endfor %} <em class="txt-blue">{{data["solid_state_batteries"].name}}</em>
  </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('physics', 'technologies'); location.reload();">
-    Research
-  </b>
-  <div class="margin">
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Upgrade with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]+user.physics}}</li>
+  {% endfor %}
+  </ul>
+  </div>
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><th>Effects :</th><th class="txt_center">lvl {{user.physics}} -> lvl {{user.physics+1}}</th></tr>
+    <tr><td>Power generation</td><td class="txt_center">+{{(facility["prod factor"]*100-100)|int}}%</td></tr>
+    <tr><td>Price</td><td class="txt_center">+{{(facility["price factor"]*100-100)|int}}%</td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('physics', 'functional_facilities');" style="width:160px">
+      Start construction
+    </b>
   </div>
  </div>
 </div>
 
-{% set facility = data["materials"] %}
-<div class="bone margin facility small">
- <img class="img" src="{{ url_for('static', filename='images/technologies/materials.jpg') }}"\>
+{% set facility = data["building_technology"] %}
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/building_technology.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Materials_science" target="_blank">{{facility["name"]}}</a></strong><br>
-  Materials construction is necessary for a lot of innovations in the field of energy.
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.building_technology}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+ Building technology enables more efficient construction of facilites. <br>
+ Affects <em class="txt-blue">all power and storage facilities</em>.
  </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('materials', 'technologies'); location.reload();">
-    Research
-  </b>
-  <div class="margin">
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Upgrade with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]+user.building_technology}}</li>
+  {% endfor %}
+  </ul>
+  </div>
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><th>Effects :</th><th class="txt_center">lvl {{user.building_technology}} -> lvl {{user.building_technology+1}}</th></tr>
+    <tr><td>Construction time</td><td class="txt_center">-{{(100-facility["time factor"]*100)|int}}%</td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('building_technology', 'functional_facilities');" style="width:160px">
+      Start construction
+    </b>
   </div>
  </div>
 </div>
 
-{% set facility = data["carbon_capture"] %}
-<div class="bone margin facility small">
- <img class="img" src="{{ url_for('static', filename='images/technologies/carbon_capture.jpg') }}"\>
+{% set facility = data["mineral_extraction"] %}
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/mineral_extraction.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Carbon_capture_and_storage" target="_blank">{{facility["name"]}}</a></strong><br>
-  Carbon capture can reduce pollution.
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.mineral_extraction}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+ Physics is the science of experimentation. <br>
+ Affects the facilities : 
+ {% for facility in ["coal_mine", "oil_field", "gas_drilling_site"] %}
+ <em class="txt-blue">{{data[facility].name}}</em> , 
+ {% endfor %} <em class="txt-blue">{{data["uranium_mine"].name}}</em>
  </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('carbon_capture', 'technologies'); location.reload();">
-    Research
-  </b>
-  <div class="margin">
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Upgrade with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]+user.mineral_extraction}}</li>
+  {% endfor %}
+  </ul>
+  </div>
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><th>Effects :</th><th class="txt_center">lvl {{user.mineral_extraction}} -> lvl {{user.mineral_extraction+1}}</th></tr>
+    <tr><td>Extraction speed</td><td class="txt_center">+{{(facility["prod factor"]*100-100)|int}}%</td></tr>
+    <tr><td>Price</td><td class="txt_center">+{{(facility["price factor"]*100-100)|int}}%</td></tr>
+    <tr><td>Power consumption</td><td class="txt_center">+{{(facility["energy factor"]*100-100)|int}}%</td></tr>
+    <tr><td>Emissions</td><td class="txt_center">-{{(100-facility["pollution factor"]*100)|int}}%</td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('mineral_extraction', 'functional_facilities');" style="width:160px">
+      Start construction
+    </b>
   </div>
  </div>
 </div>
 
 {% set facility = data["transport_technology"] %}
-<div class="bone margin facility small">
- <img class="img" src="{{ url_for('static', filename='images/technologies/transport_technology.png') }}"\>
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/transport_technology.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/International_trade" target="_blank">{{facility["name"]}}</a></strong><br>
-  Transport technology can improve the trading of resources.
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.transport_technology}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+ Transport technology enables efficient transport of natural resources. <br>
+ Affects the <em class="txt-blue">transport of natural resources</em>.
  </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('transport_technology', 'technologies'); location.reload();">
-    Research
-  </b>
-  <div class="margin">
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Upgrade with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]+user.transport_technology}}</li>
+  {% endfor %}
+  </ul>
+  </div>
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><th>Effects :</th><th class="txt_center">lvl {{user.transport_technology}} -> lvl {{user.transport_technology+1}}</th></tr>
+    <tr><td>Transport speed</td><td class="txt_center">+{{(100-facility["time factor"]*100)|int}}%</td></tr>
+    <tr><td>Power consumption</td><td class="txt_center">-{{(100-facility["energy factor"]*100)|int}}%</td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('transport_technology', 'functional_facilities');" style="width:160px">
+      Start construction
+    </b>
+  </div>
+ </div>
+</div>
+
+{% set facility = data["materials"] %}
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/materials.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.materials}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+ Material sciences are essential to find improved materials. <br>
+ Affects the facilities : 
+ {% for facility in ["PV_solar", "onshore_wind_turbine", "offshore_wind_turbine", "lithium_ion_batteries"] %}
+ <em class="txt-blue">{{data[facility].name}}</em> , 
+ {% endfor %} <em class="txt-blue">{{data["solid_state_batteries"].name}}</em>
+ </div>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Upgrade with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]+user.materials}}</li>
+  {% endfor %}
+  </ul>
+  </div>
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><th>Effects :</th><th class="txt_center">lvl {{user.materials}} -> lvl {{user.materials+1}}</th></tr>
+    <tr><td>Price</td><td class="txt_center">-{{(100-facility["price factor"]*100)|int}}%</td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('materials', 'functional_facilities');" style="width:160px">
+      Start construction
+    </b>
+  </div>
+ </div>
+</div>
+
+{% set facility = data["civil_engeneering"] %}
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/civil_engeneering.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.civil_engeneering}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+ Civil engeneers can build bridges. <br>
+ Affects the facilities : 
+ {% for facility in ["small_water_dam", "large_water_dam", "small_pumped_hydro"] %}
+ <em class="txt-blue">{{data[facility].name}}</em> , 
+ {% endfor %} <em class="txt-blue">{{data["large_pumped_hydro"].name}}</em>
+ </div>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Upgrade with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]+user.civil_engeneering}}</li>
+  {% endfor %}
+  </ul>
+  </div>
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><th>Effects :</th><th class="txt_center">lvl {{user.civil_engeneering}} -> lvl {{user.civil_engeneering+1}}</th></tr>
+    <tr><td>Power generation</td><td class="txt_center">+{{(facility["prod factor"]*100-100)|int}}%</td></tr>
+    <tr><td>Storage capacity</td><td class="txt_center">+{{(facility["capacity factor"]*100-100)|int}}%</td></tr>
+    <tr><td>Price</td><td class="txt_center">+{{(facility["price factor"]*100-100)|int}}%</td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('civil_engeneering', 'functional_facilities');" style="width:160px">
+      Start construction
+    </b>
   </div>
  </div>
 </div>
 
 {% set facility = data["aerodynamics"] %}
-<div class="bone margin facility small">
- <img class="img" src="{{ url_for('static', filename='images/technologies/aerodynamics.png') }}"\>
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/aerodynamics.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Aerodynamics" target="_blank">{{facility["name"]}}</a></strong><br>
-  Aerodynamics are essential for the design of wind turbines.
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.aerodynamics}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+ Aerodynamics is the science of airflow. <br>
+ Affects the facilities : 
+ {% for facility in ["windmill", "onshore_wind_turbine"] %}
+ <em class="txt-blue">{{data[facility].name}}</em> , 
+ {% endfor %} <em class="txt-blue">{{data["offshore_wind_turbine"].name}}</em>
  </div>
- <div class="infobox">
- <b class="margin medium white padding button" onclick="start_construction('aerodynamics', 'technologies'); location.reload();">
-    Research
-  </b>
-  <div class="margin">
-    <i class="fa fa-money"></i> <script>display_CHF({{facility["price"]}});</script> <br>
-    <i class="fa fa-hourglass-half"></i> <script>display_duration({{facility["construction time"]}});</script> <br>
-    <i class="fa "></i> <script>display_Wh({{facility["construction energy"]}});</script> <br>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Upgrade with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]+user.aerodynamics}}</li>
+  {% endfor %}
+  </ul>
+  </div>
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><th>Effects :</th><th class="txt_center">lvl {{user.aerodynamics}} -> lvl {{user.aerodynamics+1}}</th></tr>
+    <tr><td>Power generation</td><td class="txt_center">+{{(facility["prod factor"]*100-100)|int}}%</td></tr>
+    <tr><td>Price</td><td class="txt_center">+{{(facility["price factor"]*100-100)|int}}%</td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('aerodynamics', 'functional_facilities');" style="width:160px">
+      Start construction
+    </b>
   </div>
  </div>
 </div>
 
+{% set facility = data["chemistry"] %}
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/chemistry.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.chemistry}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+ Chemistry is also very boring. <br>
+ Affects the facilities : 
+ {% for facility in ["hydrogen_storage", "lithium_ion_batteries"] %}
+ <em class="txt-blue">{{data[facility].name}}</em> , 
+ {% endfor %} <em class="txt-blue">{{data["solid_state_batteries"].name}}</em>
+ </div>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Upgrade with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]+user.chemistry}}</li>
+  {% endfor %}
+  </ul>
+  </div>
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><th>Effects :</th><th class="txt_center">lvl {{user.chemistry}} -> lvl {{user.chemistry+1}}</th></tr>
+    <tr><td>Efficiency hydrogen</td><td class="txt_center">+5%</td></tr>
+    <tr><td>Efficiency Li-ion</td><td class="txt_center">+{{(10/data["lithium_ion_batteries"]["efficiency"]-10)|int}}%</td></tr>
+    <tr><td>Efficiency solid state</td><td class="txt_center">+{{(10/data["solid_state_batteries"]["efficiency"]-10)|int}}%</td></tr>
+    <tr><td>Price</td><td class="txt_center">+{{(facility["price factor"]*100-100)|int}}%</td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('chemistry', 'functional_facilities');" style="width:160px">
+      Start construction
+    </b>
+  </div>
+ </div>
+</div>
+
+{% set facility = data["nuclear_engeneering"] %}
+<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+ <img class="img" src="{{ url_for('static', filename='images/technologies/nuclear_engeneering.jpg') }}"\>
+ <div class="infotext padding">
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.nuclear_engeneering}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+ Nuclear engeneers are used to improve nuclear power plants. <br>
+ Affects the facilities : 
+ <em class="txt-blue">{{data["nuclear_reactor"].name}}</em> , 
+ <em class="txt-blue">{{data["nuclear_reactor_gen4"].name}}</em>
+ </div>
+ <div class="infobox" id="reqirements">
+ {% if facility["locked"] %}
+ <div>
+  <strong>Upgrade with :</strong><br>
+  <ul style="padding:0; margin:0;">
+  {% for req in facility["requirements"] %}
+    <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}"> - {{data[req[0]]["name"]}} lvl {{req[1]+user.nuclear_engeneering}}</li>
+  {% endfor %}
+  </ul>
+  </div>
+ {% endif %}
+ </div>
+ <div class="infobox" id="infotable">
+  <table class="table tan_green">
+    <tr><th>Effects :</th><th class="txt_center">lvl {{user.nuclear_engeneering}} -> lvl {{user.nuclear_engeneering+1}}</th></tr>
+    <tr><td>Power generation</td><td class="txt_center">+{{(facility["prod factor"]*100-100)|int}}%</td></tr>
+    <tr><td>Price</td><td class="txt_center">+{{(facility["price factor"]*100-100)|int}}%</td></tr>
+  </table>
+ </div>
+ <div id="constructionContent" class="infobox hidden constructionContent">
+  <div class="flex-col">
+    <div class="txt_center margin-small" style="width:180px">
+      Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+    </div>
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('nuclear_engeneering', 'functional_facilities');" style="width:160px">
+      Start construction
+    </b>
+  </div>
+ </div>
+</div>
+
+
 {% endblock %}
 
+{% block additionnal_script %}
+<script src="{{ url_for('static', filename='click_construction.js') }}"></script>
+{% endblock %}

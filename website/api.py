@@ -5,10 +5,12 @@ These functions make the link between the website and the database
 from flask import Blueprint, request, flash, jsonify, session, g, current_app
 from flask_login import login_required, current_user
 import pickle
+from pathlib import Path
+import numpy as np
 
 api = Blueprint('api', __name__)
 
-from .database import Hex, Player, Chat
+from .database import Hex, Player, Chat, Network
 
 # gets the map data from the database and returns it as a array of dictionaries :
 @api.route("/get_map", methods=["GET"])
@@ -26,7 +28,7 @@ def get_map():
             "oil": tile.oil,
             "gas": tile.gas,
             "uranium": tile.uranium,
-            "player_id": tile.player_id,
+            "player": tile.player.username if tile.player else None,
         }
         for tile in hex_map
     ]
@@ -39,6 +41,13 @@ def get_usernames():
     username_list = [username[0] for username in username_list 
     if username[0]!=current_user.username]
     return jsonify(username_list)
+
+# gets all the network names and returns it as a list :
+@api.route("/get_networks", methods=["GET"])
+def get_networks():
+    network_list = Network.query.with_entities(Network.name).all()
+    network_list = [name[0] for name in network_list]
+    return jsonify(network_list)
 
 # gets the last 20 messages from a chat and returns it as a list :
 @api.route("/get_chat", methods=["GET"])
@@ -61,11 +70,10 @@ def get_chart_data():
         capacities = {}
         if table == "generation":
             for facility in ["watermill", "small_water_dam", "large_water_dam", 
-                            "nuclear_reactor", "nuclear_reactor_gen4", 
-                            "shallow_geothermal_plant", "deep_geothermal_plant", 
+                            "nuclear_reactor", "nuclear_reactor_gen4",  
                             "steam_engine", "coal_burner", "oil_burner", 
                             "gas_burner", "combined_cycle", "windmill", 
-                            "wind_turbine", "large_wind_turbine", "CSP_solar",
+                            "onshore_wind_turbine", "offshore_wind_turbine", "CSP_solar",
                             "PV_solar"]:
                 capacities[facility] = (getattr(current_user, facility) * 
                         assets[facility]["power generation"])
@@ -78,25 +86,43 @@ def get_chart_data():
                         assets[facility]["storage capacity"])
         else:
             rates = {}
-            rates["coal"] = current_user.coal_mine * assets["coal_mine"][
-                "amount produced"] * 60
-            rates["oil"] = current_user.coal_mine * assets["oil_field"][
-                "amount produced"] * 60
-            rates["gas"] = current_user.coal_mine * assets["gas_drilling_site"][
-                "amount produced"] * 60
-            rates["uranium"] = current_user.coal_mine * assets["uranium_mine"][
-                "amount produced"] * 60
+            on_sale = {}
+            resource_to_facility = {
+                "coal" : "coal_mine",
+                "oil" : "oil_field",
+                "gas" : "gas_drilling_site",
+                "uranium" : "uranium_mine"
+            }
             for ressource in ["coal", "oil", "gas", "uranium"]:
                 capacities[ressource] = engine.config[current_user.id][
                     "warehouse_capacities"][ressource]
-            capacities["uranium"] = 15000
-            return jsonify(engine.current_t, data[table],
-                       engine.current_data[current_user.username][table],
-                       capacities, rates)
-            
-        return jsonify(engine.current_t, data[table],
-                       engine.current_data[current_user.username][table],
+                facility = resource_to_facility[ressource]
+                rates[ressource] = getattr(current_user, facility) * assets[
+                    facility]["amount produced"] * 60
+                on_sale[ressource] = getattr(current_user, ressource+"_on_sale")
+            return jsonify(engine.data["current_t"], data[table],
+                       engine.data["current_data"][current_user.username][table],
+                       capacities, rates, on_sale)
+        return jsonify(engine.data["current_t"], data[table],
+                       engine.data["current_data"][current_user.username][table],
                        capacities)
     else:
-        return jsonify(engine.current_t, data[table],
-                       engine.current_data[current_user.username][table])
+        return jsonify(engine.data["current_t"], data[table],
+                       engine.data["current_data"][current_user.username][table])
+    
+@api.route("/get_market_data", methods=["GET"])
+def get_market_data():
+    if current_user.network == None:
+        return '', 404
+    filename = f"instance/network_data/{current_user.network.name}/market.pck"
+    if Path(filename).is_file():
+        with open(filename, "rb") as file:
+            market_data = pickle.load(file)
+            market_data["capacities"] = market_data["capacities"].to_dict(orient='list')
+            market_data["capacities"]["player"] = [player.username for player in market_data["capacities"]["player"]]
+            market_data["demands"] = market_data["demands"].to_dict(orient='list')
+            market_data["demands"]["player"] = [player.username for player in market_data["demands"]["player"]]
+            market_data["demands"]["price"] = [None if price == np.inf else price for price in market_data["demands"]["price"]]
+            return jsonify(market_data)
+    else:
+        return '', 404

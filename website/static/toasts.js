@@ -18,3 +18,13 @@ socket.on('errorMessage', function(message) {
         </div>
         `;
 });
+
+function addToast(message) {
+    document.getElementById('toasts').innerHTML += `
+        <div class="toast message medium">
+            <i class="fa fa-info-circle info-circle"></i>
+            <div class="txt_center">${message}</div>
+            <span onclick="this.parentElement.style.display='none'" class="cross">&times;</span>
+        </div>
+        `;
+  }
