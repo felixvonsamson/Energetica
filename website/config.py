@@ -351,7 +351,7 @@ full_config = {
             "construction energy": 10000000,
             "construction pollution": 1000,
             "power consumption": 100000, # [W]
-            "income": 10000, # [CHF/day]   --- TEMPORARY CHANGED FROM 2000 to 10000
+            "income": 40000, # [CHF/day]   --- TEMPORARY CHANGED FROM 2000 to 40000
             "price multiplier": 1.25,
             "power factor" : 1.4,
             "income factor" : 1.35,
