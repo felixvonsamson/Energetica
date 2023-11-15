@@ -126,10 +126,10 @@ def calculate_demand(engine, player, t):
         construction = assets[ud.name]
         if ud.family == "technologies":
             demand_research += (construction["construction energy"] 
-                / construction["construction time"] * 60)
+                / construction["construction time"] * 3600)
         else:
             demand_construction += (construction["construction energy"] 
-                / construction["construction time"] * 60)
+                / construction["construction time"] * 3600)
             emissions_construction += (construction["construction pollution"] 
                 / construction["construction time"])
     demand["construction"][t] = min(demand["construction"][t-1]+0.1*demand_construction, demand_construction) # for smooth demand changes
