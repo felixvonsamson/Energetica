@@ -125,6 +125,10 @@ function calc_size(){
 }
 
 function update_graph(){
+    pop();
+    pop();
+    pop();
+    pop();
     calc_size();
     if(active_view == "Generation"){
         regen_generation(res);

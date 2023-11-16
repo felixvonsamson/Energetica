@@ -85,7 +85,7 @@ class Player(db.Model, UserMixin):
     messages = db.relationship('Message', backref='player')
 
     # Ressources :
-    money = db.Column(db.Float, default=3000)
+    money = db.Column(db.Float, default=30000) # default is 3000
     coal = db.Column(db.Float, default=0)
     oil = db.Column(db.Float, default=0)
     gas = db.Column(db.Float, default=0)
