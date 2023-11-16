@@ -21,7 +21,7 @@ full_config = {
         },
         "windmill": {
             "name": "Windmill",
-            "price": 37800,
+            "price": 22200,
             "power generation": 3350000,
             "construction time": 21600,
             "construction energy": 72000000,
@@ -35,7 +35,7 @@ full_config = {
         },
         "watermill": {
             "name": "Watermill",
-            "price": 22200,
+            "price": 15000,
             "power generation": 2700000,
             "construction time": 18000,
             "construction energy": 49500000,
@@ -94,8 +94,8 @@ full_config = {
         },
         "small_water_dam": {
             "name": "Small water dam",
-            "price": 13200,
-            "power generation": 26500000,
+            "price": 20000,
+            "power generation": 41500000,
             "construction time": 216000,
             "construction energy": 511000000,
             "construction pollution": 876000,
@@ -155,8 +155,8 @@ full_config = {
         },
         "large_water_dam": {
             "name": "Large water dam",
-            "price": 105000,
-            "power generation": 266000000,
+            "price": 160000,
+            "power generation": 410000000,
             "construction time": 302400,
             "construction energy": 5088000000,
             "construction pollution": 8760000,
@@ -231,9 +231,9 @@ full_config = {
         },
         "small_pumped_hydro": {
             "name": "Small pumped hydro",
-            "price": 17500,  # [CHF]
-            "storage capacity": 1062000000,  # [Wh]
-            "power generation": 17000000,  # [W]
+            "price": 26500,  # [CHF]
+            "storage capacity": 1657000000,  # [Wh]
+            "power generation": 26000000,  # [W]
             "efficiency": 0.75,
             "construction time": 187200,  # [s]
             "construction energy": 818000000,  # [Wh]
@@ -272,9 +272,9 @@ full_config = {
         },
         "large_pumped_hydro": {
             "name": "Large pumped hydro",
-            "price": 110000,
-            "storage capacity": 4000000000,
-            "power generation": 159000000,
+            "price": 166000,
+            "storage capacity": 6215000000,
+            "power generation": 249000000,
             "efficiency": 0.8,
             "construction time": 334800,
             "construction energy": 3110000000,
@@ -346,12 +346,12 @@ full_config = {
         },
         "industry": {
             "name": "Industry",
-            "price": 1000,
+            "price": 1000/1.25,
             "construction time": 1800,
             "construction energy": 10000000,
             "construction pollution": 1000,
-            "power consumption": 100000, # [W]
-            "income": 40000, # [CHF/day]   --- TEMPORARY CHANGED FROM 2000 to 40000
+            "power consumption": 100000/1.4, # [W]
+            "income": 40000/1.35, # [CHF/day]   --- TEMPORARY CHANGED FROM 2000 to 40000
             "price multiplier": 1.25,
             "power factor" : 1.4,
             "income factor" : 1.35,
@@ -513,9 +513,9 @@ full_config = {
             "price multiplier": 1.5,
             "construction time": 14400,
             "construction energy": 80000000,
-            "price factor": 1.5,
-            "prod factor" : 1.4,
-            "capacity factor": 1.4,
+            "price factor": 1.4,
+            "prod factor" : 1.3,
+            "capacity factor": 1.3,
             "requirements": [["laboratory", 3, False],
                              ["mathematics", 2, False],
                              ["building_technology", 3, False]]

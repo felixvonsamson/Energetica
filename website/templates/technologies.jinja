@@ -224,7 +224,7 @@
  <img class="img" src="{{ url_for('static', filename='images/technologies/mineral_extraction.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.mineral_extraction}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
- Physics is the science of experimentation. <br>
+ Mineral extraction improves the extraction of natural resources. <br>
  Affects the facilities : 
  {% for facility in ["coal_mine", "oil_field", "gas_drilling_site"] %}
  <em class="txt-blue">{{data[facility].name}}</em> , 

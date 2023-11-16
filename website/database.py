@@ -123,9 +123,9 @@ class Player(db.Model, UserMixin):
     solid_state_batteries = db.Column(db.Integer, default=0)
 
     # Functional facilities :
+    industry = db.Column(db.Integer, default=1)
     laboratory = db.Column(db.Integer, default=0)
     warehouse = db.Column(db.Integer, default=0)
-    industry = db.Column(db.Integer, default=0)
     carbon_capture = db.Column(db.Integer, default=0)
 
     # Extraction plants :

@@ -11,6 +11,9 @@ function handleInputUpdate(event) {
     // Access the input element and its value
     const inputElement = event.target;
     const attribute = inputElement.id;
+    if (attribute == "invite_player" | attribute == "network_name"){
+        return
+    }
     if (inputElement.type == "checkbox"){
         // send change to server to update value
         console.log(attribute, inputElement.checked);
