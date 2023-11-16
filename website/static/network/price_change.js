@@ -16,7 +16,6 @@ function handleInputUpdate(event) {
     }
     if (inputElement.type == "checkbox"){
         // send change to server to update value
-        console.log(attribute, inputElement.checked);
         socket.emit("change_price", attribute, inputElement.checked);
     }else{
         // send change to server to update value

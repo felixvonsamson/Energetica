@@ -203,6 +203,7 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
     # priority list of power plants according to SCP and price :
     priority_list = (player.self_consumption_priority.split(' ') 
         + player.rest_of_priorities.split(' ') + engine.storage_plants)
+    print(priority_list, "\n\n")
     for plant in priority_list:
         if getattr(player, plant) > 0:
             if assets[plant]["ramping speed"] != 0:

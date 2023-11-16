@@ -14,11 +14,8 @@ from flask_socketio import SocketIO
 import atexit
 from flask_apscheduler import APScheduler
 
-# Database initialisation :
-db = SQLAlchemy()
-DB_NAME = "database.db"
-
 heap = []
+db = SQLAlchemy()
 
 from website.gameEngine import gameEngine
 
@@ -30,7 +27,7 @@ def create_app():
     # creates the app :
     app = Flask(__name__)
     app.config["SECRET_KEY"] = "ghdfjfetgftqayööhkh"
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_NAME}"
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///database.db"
     db.init_app(app)
 
     # creates the engine :
@@ -55,11 +52,12 @@ def create_app():
     app.register_blueprint(auth, url_prefix="/")
     app.register_blueprint(api, url_prefix="/")
 
-    from .database import Player, Hex, Chat, Message, Under_construction
+    from .database import Hex, Under_construction, Shipment, Resource_on_sale, Network, Player, Chat, Message
     
     # initialize database :
     with app.app_context():
         db.create_all()
+        print("database created")
         # if map data not already stored in database, read map.csv and store it in database
         if Hex.query.count() == 0:
             with open("website/static/data/map.csv", "r") as file:

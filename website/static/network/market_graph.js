@@ -209,8 +209,8 @@ function update_graph(){
         demand = raw_data["demands"];
         mq = raw_data["market_quantity"];
         mp = raw_data["market_price"];
-        maxCap = max(supply["cumul_capacities"][supply["cumul_capacities"].length-1],
-            demand["cumul_capacities"][demand["cumul_capacities"].length-1], 100);
+        maxCap = max(...supply["cumul_capacities"],
+            ...demand["cumul_capacities"], 100);
         maxPrice = max(...supply["price"], ...demand["price"], 1/1.1)*1.1;
         minPrice = min(...supply["price"], ...demand["price"], 0)*1.1;
         f = maxPrice/(maxPrice-minPrice);
