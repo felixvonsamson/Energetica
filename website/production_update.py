@@ -132,8 +132,8 @@ def calculate_demand(engine, player, t):
                 / construction["construction time"] * 3600)
             emissions_construction += (construction["construction pollution"] 
                 / construction["construction time"])
-    demand["construction"][t] = min(demand["construction"][t-1]+0.1*demand_construction, demand_construction) # for smooth demand changes
-    demand["research"][t] = min(demand["research"][t-1]+0.1*demand_research, demand_research) # for smooth demand changes
+    demand["construction"][t] = min(demand["construction"][t-1]+0.2*demand_construction, demand_construction) # for smooth demand changes
+    demand["research"][t] = min(demand["research"][t-1]+0.2*demand_research, demand_research) # for smooth demand changes
     engine.data["current_data"][player.username]["emissions"]["construction"][t] = emissions_construction * 60 # emissions in the graph are in kg/h
     player.emissions += emissions_construction
     engine.data["current_CO2"][t] += emissions_construction
@@ -339,6 +339,12 @@ def market_optimum(offers_og, demands_og):
     offers = offers_og.copy()
     demands = demands_og.copy()
 
+    if len(demands) == 0 or len(offers) == 0:
+        return 0, 0
+
+    price_d = demands.loc[0, "price"]
+    price_o = offers.loc[0, "price"]
+
     offers["index_offer"] = range(len(offers))
     offers["price"] = offers["price"].shift(-1)
     offers.loc[len(offers) - 1, "price"] = np.inf
@@ -348,8 +354,6 @@ def market_optimum(offers_og, demands_og):
     merged_table = pd.concat([offers, demands], ignore_index=True)
     merged_table = merged_table.sort_values(by="cumul_capacities")
 
-    price_d = np.inf
-    price_o = -5
     for row in merged_table.itertuples(index=False):
         if np.isnan(row.index_offer):
             price_d = row.price

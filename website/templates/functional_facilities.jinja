@@ -27,7 +27,7 @@
  <div class="infobox" id="infotable">
   <table class="table tan_green" style="width:350px">
     <tr><th>Effects :</th><th class="txt_center">lvl {{user.industry}} -> lvl {{user.industry+1}}</th></tr>
-    <tr><td>Average consumption</td><td class="txt_center"><script>display_upgrade_W({{facility["power consumption"]}}, {{facility["power factor"]}});</script></td></tr>
+    <tr><td>Average consumption</td><td class="txt_center"><script>display_W({{facility["power consumption"]}});</script> -> <script>display_W({{facility["power consumption"]*facility["power factor"]}});</script></td></tr>
     <tr><td>Revenue generation</td><td class="txt_center"><script>display_upgrade_CHF({{facility["income"]}}, {{facility["income factor"]}});</script></td></tr>
   </table>
  </div>
@@ -50,7 +50,7 @@
  <img class="img" src="{{ url_for('static', filename='images/functional_facilities/laboratory.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.laboratory}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
- The laboratory is needed to do research in different domains.<br>
+ The laboratory is needed to research <strong class="txt-blue">Technologies</strong>.<br>
  </div>
  <div class="infobox" id="infotable">
   <table class="table tan_green">
@@ -107,7 +107,7 @@
  <img class="img" src="{{ url_for('static', filename='images/functional_facilities/carbon_capture.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.carbon_capture}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
- Carbon capture consumes energy to absorb and store CO2 under ground. <br>
+ Carbon capture consumes energy to absorb and store CO2 underground. <br>
  </div>
  <div class="infobox" id="reqirements">
  {% if facility["locked"] %}

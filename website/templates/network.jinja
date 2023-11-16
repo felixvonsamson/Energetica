@@ -223,12 +223,10 @@ You a currently not part of a Network. Join or create one :
     <table class="table bone margin">
     <tr>
     <th>Members</th>
-    <th>Tile(coal)</th>
     </tr>
     {% for member in user.network.members %}
         <tr>
         <td>{{member.username}}</td>
-        <td>{{member.tile[0].coal}}</td>
         </tr>
     {% endfor %}
     </table>
