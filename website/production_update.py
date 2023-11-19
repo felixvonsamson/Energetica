@@ -273,7 +273,7 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
             market = bid(market, player, demand, price, plant)
     return market
         
-# Calculate overall network demand, class all capacity offers in ascending order and find the market price of electricity
+# Calculate overall network demand, class all capacity offers in ascending order of price and find the market price of electricity
 # Sell all capacities that are below market price at market price.
 def market_logic(engine, market, t):
     offers = market["capacities"]
