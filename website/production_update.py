@@ -47,7 +47,7 @@ def update_ressources(engine):
                     energy_demand /= 2
                 demand[facility][t] = min(demand[facility][t-1]+0.2*energy_demand, energy_demand) # for smooth demand changes
                 facility_emmissions = assets[facility]["pollution"] * amount_produced / 1000
-                engine.data["current_data"][player.username]["emissions"][facility][t] = facility_emmissions * 60 # emissions in the graph are in kg/h
+                engine.data["current_data"][player.username]["emissions"][facility][t] = facility_emmissions
                 player.emissions += facility_emmissions
                 engine.data["current_CO2"][t] += facility_emmissions
             player_ressources[ressource][t] = getattr(player, ressource)
@@ -74,11 +74,14 @@ def update_electricity(engine):
             market = calculate_generation_with_market(engine, market, 
                                                       total_demand, player, t)
         market_logic(engine, market, t)
-        with open(f"instance/network_data/{network.name}/market.pck", "wb") as file:
+        engine.data["network_data"][network.name]["price"][t] = market["market_price"]
+        engine.data["network_data"][network.name]["quantity"][t] = market["market_quantity"]
+        with open(f"instance/network_data/{network.name}/charts/market_t{engine.data['total_t']}.pck", "wb") as file:
             pickle.dump(market, file)
 
     players = Player.query.all()
     for player in players:
+        current_data = engine.data["current_data"][player.username]
         if len(player.tile) == 0:
             continue
         # Production update for players that are not in a network
@@ -86,9 +89,8 @@ def update_electricity(engine):
             init_storage(engine, player, t)
             total_demand = calculate_demand(engine , player, t)
             calculate_generation_without_market(engine, total_demand, player, t)
-        # For players in network, substract the difference between import and exports to ignore energy that has been bought from themselves
+        # For players in network, subtract the difference between import and exports to ignore energy that has been bought from themselves
         else :
-            current_data = engine.data["current_data"][player.username]
             exp = current_data["demand"]["exports"][t]
             imp = current_data["generation"]["imports"][t]
             current_data["demand"]["exports"][t] = max(0, exp-imp)
@@ -96,7 +98,9 @@ def update_electricity(engine):
         # Ressource and pollution update for all players
         ressources_and_pollution(engine, player, t)
         # income from industry
-        player.money += engine.config[player.id]["assets"]["industry"]["income"]/1440.0
+        industry_income = engine.config[player.id]["assets"]["industry"]["income"]/1440.0
+        player.money += industry_income
+        current_data["revenues"]["industry"][t] += industry_income
         # update display of resources and money
         player.update_resources()
 
@@ -134,7 +138,7 @@ def calculate_demand(engine, player, t):
                 / construction["construction time"])
     demand["construction"][t] = min(demand["construction"][t-1]+0.2*demand_construction, demand_construction) # for smooth demand changes
     demand["research"][t] = min(demand["research"][t-1]+0.2*demand_research, demand_research) # for smooth demand changes
-    engine.data["current_data"][player.username]["emissions"]["construction"][t] = emissions_construction * 60 # emissions in the graph are in kg/h
+    engine.data["current_data"][player.username]["emissions"]["construction"][t] = emissions_construction
     player.emissions += emissions_construction
     engine.data["current_CO2"][t] += emissions_construction
     # demand from shipment of ressources
@@ -157,8 +161,8 @@ def calculate_generation_without_market(engine, total_demand, player, t):
     total_generation = 0
     renewables_generation(engine, player, assets, generation, t)
     # priority list of power plants according to SCP and price :
-    priority_list = (player.self_consumption_priority.split(' ') 
-        + player.rest_of_priorities.split(' '))
+    priority_list = (read_priority_list(player.self_consumption_priority) 
+                     + read_priority_list(player.rest_of_priorities))
     for plant in priority_list:
         if assets[plant]["ramping speed"] != 0 and getattr(player, plant) > 0:
             generation[plant][t] = calculate_prod("min", player, assets, plant, 
@@ -169,6 +173,8 @@ def calculate_generation_without_market(engine, total_demand, player, t):
         dumping = total_generation-total_demand
         demand["dumping"][t] = dumping
         player.money -= dumping * 5 / 1000000
+        revenue = engine.data["current_data"][player.username]["revenues"]
+        revenue["dumping"][t] -= dumping * 5 / 1000000
         return
     # while the produced power is not sufficient for own demand, for each power plant following the priority list,
     # set the power to the maximum possible value (max upward power ramp). 
@@ -201,8 +207,8 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
     total_generation = 0
     renewables_generation(engine, player, assets, generation, t)
     # priority list of power plants according to SCP and price :
-    priority_list = (player.self_consumption_priority.split(' ') 
-        + player.rest_of_priorities.split(' ') + engine.storage_plants)
+    priority_list = (read_priority_list(player.self_consumption_priority) 
+        + read_priority_list(player.rest_of_priorities) + engine.storage_plants)
     for plant in priority_list:
         if getattr(player, plant) > 0:
             if assets[plant]["ramping speed"] != 0:
@@ -217,7 +223,7 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
     # set the power to the maximum possible value (max upward power ramp). 
     # For the PP that overshoots the demand, find the equilibirum power generation value.
     # The additional available generation capacity is put on the market.
-    for plant in player.self_consumption_priority.split(' '):
+    for plant in read_priority_list(player.self_consumption_priority):
         if assets[plant]["ramping speed"] != 0:
             max_prod = calculate_prod("max", player, assets, plant, 
                                       generation, t)
@@ -241,7 +247,7 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
         market = bid(market, player, demand)
     
     # Sell capacities of remaining plants on the market
-    for plant in player.rest_of_priorities.split(' '):
+    for plant in read_priority_list(player.rest_of_priorities):
         if assets[plant]["ramping speed"] != 0:
             if getattr(player, plant) > 0:
                 max_prod = calculate_prod("max", player, assets, plant, 
@@ -315,13 +321,15 @@ def market_logic(engine, market, t):
                 sold_cap = row.capacity - row.cumul_capacities + market_quantity
                 if sold_cap > 0.1:
                     sell(engine, row, market_price, t, quantity=sold_cap)
-                # dumping electricity that is not offered for negative price and not sold
+                # dumping electricity that is offered for negative price and not sold
                 if row.price < 0:
-                    rest = row.capacity-sold_cap
-                    dump_cap = rest if rest>0 else row.capacity
+                    rest = max(0, min(row.capacity, row.capacity-sold_cap))
+                    dump_cap = rest
                     demand = engine.data["current_data"][row.player.username]["demand"]
                     demand["dumping"][t] = dump_cap
                     row.player.money -= dump_cap * 5 / 1000000
+                    revenue = engine.data["current_data"][row.player.username]["revenues"]
+                    revenue["dumping"][t] -= dump_cap * 5 / 1000000
                     continue
                 break
             sell(engine, row, market_price, t)
@@ -349,7 +357,7 @@ def market_optimum(offers_og, demands_og):
     offers["price"] = offers["price"].shift(-1)
     offers.loc[len(offers) - 1, "price"] = np.inf
     demands["price"] = demands["price"].shift(-1)
-    demands.loc[len(demands) - 1, "price"] = 0
+    demands.loc[len(demands) - 1, "price"] = -10
 
     merged_table = pd.concat([offers, demands], ignore_index=True)
     merged_table = merged_table.sort_values(by="cumul_capacities")
@@ -416,6 +424,7 @@ def sell(engine, row, market_price, t, quantity=None):
     generation = engine.data["current_data"][row.player.username]["generation"]
     demand = engine.data["current_data"][row.player.username]["demand"]
     storage = engine.data["current_data"][row.player.username]["storage"]
+    revenue = engine.data["current_data"][row.player.username]["revenues"]
     if quantity == None:
         quantity = row.capacity
     if row.plant in engine.storage_plants:
@@ -426,11 +435,13 @@ def sell(engine, row, market_price, t, quantity=None):
         generation[row.plant][t] += quantity
     demand["exports"][t] += quantity
     row.player.money += quantity * market_price / 60000000
+    revenue["exports"][t] += quantity * market_price / 60000000
 
 def buy(engine, row, market_price, t, quantity=None):
     generation = engine.data["current_data"][row.player.username]["generation"]
     storage = engine.data["current_data"][row.player.username]["storage"]
     demand = engine.data["current_data"][row.player.username]["demand"]
+    revenue = engine.data["current_data"][row.player.username]["revenues"]
     if quantity == None:
         quantity = row.capacity
     if row.plant != None:
@@ -439,10 +450,12 @@ def buy(engine, row, market_price, t, quantity=None):
         demand[row.plant][t] += quantity
     generation["imports"][t] += quantity
     row.player.money -= quantity * market_price / 60000000
+    revenue["imports"][t] -= quantity * market_price / 60000000
 
 def ressources_and_pollution(engine, player, t):
     assets = engine.config[player.id]["assets"]
     generation = engine.data["current_data"][player.username]["generation"]
+    revenue = engine.data["current_data"][player.username]["revenues"]
     # Calculate ressource consumption
     for plant in ["coal_burner", "oil_burner", "gas_burner", "nuclear_reactor", 
                   "nuclear_reactor_gen4"]:
@@ -450,7 +463,9 @@ def ressources_and_pollution(engine, player, t):
         quantity = assets[plant]["amount consumed"] * generation[plant][t] / 60000000 
         setattr(player, ressource, getattr(player, ressource) - quantity)
     # Special case steam engine costs money and if it is not used it costs half of the maximum 
-    player.money -= player.steam_engine*assets["steam_engine"]["O&M cost"]/60*(0.5+0.5*generation["steam_engine"][t]/(player.steam_engine*assets["steam_engine"]["power generation"]))
+    steam_engine_cost = player.steam_engine*assets["steam_engine"]["O&M cost"]/60*(0.5+0.5*generation["steam_engine"][t]/(player.steam_engine*assets["steam_engine"]["power generation"]))
+    player.money -= steam_engine_cost
+    revenue["O&M_costs"][t] -= steam_engine_cost
     # special case of combined cycle
     quantity_gas = assets["combined_cycle"]["amount consumed"][0] * generation["combined_cycle"][t] / 60000000 
     quantity_coal = assets["combined_cycle"]["amount consumed"][1] * generation["combined_cycle"][t] / 60000000
@@ -461,7 +476,7 @@ def ressources_and_pollution(engine, player, t):
     for plant in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", 
                   "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"]:
         plant_emmissions = assets[plant]["pollution"] * generation[plant][t] / 60000000 
-        emissions[plant][t] = plant_emmissions * 60 # emissions in the graph are in kg/h
+        emissions[plant][t] = plant_emmissions
         player.emissions += plant_emmissions
         engine.data["current_CO2"][t] += plant_emmissions
 
@@ -479,7 +494,7 @@ def renewables_generation(engine, player, assets, generation, t):
                                 * assets[plant]["power generation"]
                                 * getattr(player, plant))
     #HYDRO
-    power_factor = engine.data["current_discharge"][t] * player.tile[0].hydro
+    power_factor = engine.data["current_discharge"][t]
     for plant in ["watermill", "small_water_dam", "large_water_dam"]:
         generation[plant][t] = (power_factor
                                 * assets[plant]["power generation"]
@@ -493,3 +508,9 @@ def interpolate_wind(engine, player, t):
     f = windspeed-i
     pc = engine.wind_power_curve
     return pc[i]+(pc[(i+1)%100]-pc[i])*f
+
+def read_priority_list(list):
+    if list == "":
+        return []
+    else :
+        return list.split(' ')

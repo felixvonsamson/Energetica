@@ -1,8 +1,7 @@
-const keys_emissions = ["steam_engine", "coal_burner", "oil_burner", 
-  "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4", 
-  "construction", "coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"];
+const keys_revenues = ["industry", "O&M_costs", "exports", "imports", 
+                        "dumping", "resource_selling", "resource_buying"];
 
-function draw_emissions() {
+function draw_revenues() {
   if(graph){
     push();
     fill_alt = 1;
@@ -11,19 +10,31 @@ function draw_emissions() {
     push();
     stroke(255);
     strokeWeight(2);
-    let X = min(graph_w, max(0, mouseX-1.5*margin));
+    let X = min(graph_w, max(0, mouseX-2*margin));
     let t = floor(map(X, 0, graph_w, 0, data_len));
-    X += 1.5*margin;
+    X += 2*margin;
     if(t == data_len){t = data_len-1;}
     line(X, 0, X, graph_h);
     noStroke();
-    translate(X, graph_h);
+    translate(X, graph_h*f);
     let lines = 1;
     let h_max = 0;
     let total_power = 0;
-    for (const key of keys_emissions) {
+    push();
+    for (const key of keys_revenues) {
+      if(data[key][t]<0){
+        let h = -data[key][t]/maxSum*graph_h*f;
+        ellipse(0, h, 8, 8);
+        translate(0, h);
+        lines += 1;
+        h_max -= h;
+        total_power += data[key][t]*60;
+      }
+    }
+    pop();
+    for (const key of keys_revenues) {
       if(data[key][t]>0){
-        let h = -data[key][t]/maxSum*graph_h;
+        let h = -data[key][t]/maxSum*graph_h*f;
         ellipse(0, h, 8, 8);
         translate(0, h);
         lines += 1;
@@ -53,10 +64,10 @@ function draw_emissions() {
     fill(0);
     textStyle(BOLD);
     text("TOTAL :", 40, 10);
-    text(display_kgh_long(total_power), 120, 10);
+    text(display_CHF_long(total_power), 120, 10);
     textStyle(NORMAL);
-    for (const key of keys_emissions) {
-      if(data[key][t]>0){
+    for (const key of keys_revenues) {
+      if(data[key][t]!=0){
         alternate_fill();
         translate(0, -16);
         rect(0, 0, 160, 17);
@@ -68,7 +79,7 @@ function draw_emissions() {
         textAlign(LEFT, CENTER);
         text(cols_and_names[key][1], 20, 9);
         textAlign(CENTER, CENTER);
-        text(display_kgh(data[key][t]*60), 135, 9);
+        text(display_CHF(data[key][t]*60), 135, 9);
         fill(229, 217, 182);
       }
     }
@@ -77,9 +88,9 @@ function draw_emissions() {
   }
 }
 
-function regen_emissions(res){
+function regen_revenues(res){
   file = res_to_data[res][0]
-  fetch(`/get_chart_data?timescale=${file}&table=emissions`) // retrieves data from server
+  fetch(`/get_chart_data?timescale=${file}&table=revenues`) // retrieves data from server
     .then((response) => response.json())
     .then((raw_data) => {
       background(229, 217, 182);
@@ -88,24 +99,43 @@ function regen_emissions(res){
           const array = raw_data[2][key];
           data[key] = reduce(data[key], array, res, raw_data[0]);
         });
-      data_len = data["steam_engine"].length;
+      data_len = data["industry"].length;
       push();
-      translate(1.5*margin, height-2*margin-10);
       noStroke();
-      const sumArray = Array.from({ length: data_len }, (_, i) =>
-        Object.values(data).reduce((acc, arr) => acc + arr[i], 0)
-      );
-      maxSum = Math.max(...sumArray);
+      const sums = Object.values(data).reduce((acc, arr) => {
+        arr.forEach((value, i) => {
+          if (value > 0) {
+            acc.positive[i] = (acc.positive[i] || 0) + value;
+          } else if (value < 0) {
+            acc.negative[i] = (acc.negative[i] || 0) + value;
+          }
+        });
+        return acc;
+      }, { positive: [], negative: [] });
+      maxSum = Math.max(...Object.values(sums.positive));
+      minSum = Math.min(...Object.values(sums.negative));
       if(maxSum == 0){
         maxSum = 100;
       }
+      f = maxSum/(maxSum-minSum);
+      translate(2*margin, height-2*margin-10-graph_h*(1-f));
       push();
       for(let t = 0; t < data_len; t++){
         push();
-        for (const key of keys_emissions) {
+        for (const key of keys_revenues) {
           if(data[key][t]>0){
             fill(cols_and_names[key][0]);
-            let h = data[key][t]/maxSum*graph_h
+            let h = data[key][t]/maxSum*graph_h*f
+            rect(0, 0, graph_w/data_len + 1, -h-1);
+            translate(0, -h);
+          }
+        }
+        pop();
+        push();
+        for (const key of keys_revenues) {
+          if(data[key][t]<0){
+            fill(cols_and_names[key][0]);
+            let h = data[key][t]/maxSum*graph_h*f
             rect(0, 0, graph_w/data_len + 1, -h-1);
             translate(0, -h);
           }
@@ -136,14 +166,22 @@ function regen_emissions(res){
       let y_ticks = y_units(maxSum*60);
       let interval = y_ticks[1];
       fill(0);
-      let y = map(interval, 0, maxSum*60, 0, graph_h);
-      for(let i=0; i<y_ticks.length; i++){
+      let y = map(interval, 0, maxSum*60, 0, graph_h*f);
+      for(let i=0; i<=graph_h*f; i+=y){
         stroke(0, 0, 0, 30);
-        line(graph_w, -y*i, 0, -y*i);
+        line(graph_w, -i, 0, -i);
         stroke(0);
-        line(0, -y*i, -5, -y*i);
+        line(0, -i, -5, -i);
         noStroke();
-        text(display_kgh(y_ticks[i]),-0.75*margin, -y*i);
+        text(display_CHF(interval*i/y),-margin, -i);
+      }
+      for(let i=-y; i>=-graph_h*(1-f); i-=y){
+        stroke(0, 0, 0, 30);
+        line(graph_w, -i, 0, -i);
+        stroke(0);
+        line(0, -i, -5, -i);
+        noStroke();
+        text(display_CHF(interval*i/y),-margin, -i);
       }
       pop();
       pop();

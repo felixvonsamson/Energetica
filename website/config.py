@@ -12,7 +12,7 @@ full_config = {
             "construction time": 3600,  # [s]
             "construction energy": 8500000,  # [Wh]
             "construction pollution": 17520,  # [kg]
-            "O&M cost" : 0.8, # [fraction of price per week]
+            "O&M cost" : 0.8, # [fraction of price per (day)]
             "consumed ressource": None,
             "amount consumed": 0, # [kg/MWh]
             "pollution": 988,  # [kg CO2/MWh]
@@ -231,16 +231,16 @@ full_config = {
         },
         "small_pumped_hydro": {
             "name": "Small pumped hydro",
-            "price": 26500,  # [CHF]
-            "storage capacity": 1657000000,  # [Wh]
-            "power generation": 26000000,  # [W]
+            "price": 19500,  # [CHF]
+            "storage capacity": 165700000,  # [Wh]
+            "power generation": 2600000,  # [W]
             "efficiency": 0.75,
-            "construction time": 187200,  # [s]
-            "construction energy": 818000000,  # [Wh]
-            "construction pollution": 800000,  # [kg]
+            "construction time": 18720,  # [s]
+            "construction energy": 8180000,  # [Wh]
+            "construction pollution": 80000,  # [kg]
             "O&M cost" : 0.088,  # [fraction of price per year]
-            "ramping time": 14,  # [min]
-            "requirements": [["civil_engeneering", 1, False]]
+            "ramping time": 9,  # [min]
+            "requirements": []
         },
         "compressed_air": {
             "name": "Compressed air",
@@ -722,7 +722,7 @@ class Config(object):
                     if not req[2]:
                         assets[asset]["locked"] = True
                 # calculate O&M cost
-                assets[asset]["O&M cost"] *= assets[asset]["price"]/168
+                assets[asset]["O&M cost"] *= assets[asset]["price"]/24
 
             if asset == "carbon_capture":
                 # remove fulfilled reqirements

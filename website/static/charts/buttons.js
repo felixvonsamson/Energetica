@@ -9,9 +9,9 @@ let maxSum;
 let graph;
 let fill_alt = 0;
 
-let active_view = "Generation";
+let active_view = "Revenues";
 const resolution = ["6h", "day", "5 days", "month", "6 months"];
-let res = "day";
+let res = "6h";
 const res_to_data = {
     "6h" : ["day", 1],
     "day" : ["day", 1],
@@ -45,6 +45,10 @@ class Button{
 
 function setup() {
     cols_and_names = {
+        "O&M_costs": [color(163, 0, 0), "O&M costs"],
+        "resource_selling": [color(145, 61, 168), "res. selling"],
+        "resource_buying": [color(86, 44, 130), "res. buying"],
+
         "watermill": [color(40, 145, 201), "Watermill"],
         "small_water_dam": [color(12, 64, 237), "Water dam (S)"],
         "large_water_dam": [color(15, 0, 153), "Water dam (L)"],
@@ -94,13 +98,15 @@ function setup() {
     for (let i = 0; i < resolution.length; i++) {
       buttons[i] = new Button(resolution[i]);
     }
-    buttons[1].active = true;
+    buttons[0].active = true;
     setInterval(update_graph, 5000);
     update_graph();
 }
 
 function draw() {
-    if(active_view == "Generation"){
+    if(active_view == "Revenues"){
+        draw_revenues();
+    }else if(active_view == "Generation"){
         draw_generation();
     }else if(active_view == "Demand"){
         draw_demand();
@@ -125,12 +131,10 @@ function calc_size(){
 }
 
 function update_graph(){
-    pop();
-    pop();
-    pop();
-    pop();
     calc_size();
-    if(active_view == "Generation"){
+    if(active_view == "Revenues"){
+        regen_revenues(res);
+    }else if(active_view == "Generation"){
         regen_generation(res);
     }else if(active_view == "Demand"){
         regen_demand(res);
@@ -144,8 +148,8 @@ function update_graph(){
 }
 
 function mousePressed(){
-    if(mouseY>height-margin-10 & mouseX>margin & mouseX<graph_w+margin){
-        let i = floor((mouseX-margin)*buttons.length/graph_w);
+    if(mouseY>height-margin-10 & mouseX>1.5*margin & mouseX<graph_w+1.5*margin){
+        let i = floor((mouseX-1.5*margin)*buttons.length/graph_w);
         for(let j = 0; j<buttons.length; j++){
             buttons[j].active = false;
         }
@@ -223,6 +227,11 @@ function display_kg(mass) {
     const units = [" kg", " t", " kt", " Mt"];
     return general_format(mass, units);
 }
+
+function display_CHF(amount) {
+    const units = [" CHF/h", "k CHF/h", "M CHF/h"];
+    return general_format(amount, units);
+}
   
 function general_format(value, units){
     let unit_index = 0;
@@ -286,6 +295,10 @@ function display_kg_long(mass) {
 
 function display_kgh_long(mass) {
     return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} kg/h`
+}
+
+function display_CHF_long(amount) {
+    return `${amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} CHF/h`
 }
 
 function change_view(view){

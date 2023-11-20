@@ -4,6 +4,11 @@ from .auth import add_player_to_data, init_table
 from .database import Player, Hex, Network
 from . import db
 
+def edit_database():
+    Sam = Player.query.filter_by(username="123s").first()
+    Sam.money = 30000
+    db.session.commit()
+
 def init_test_players(engine):
     members = []
 

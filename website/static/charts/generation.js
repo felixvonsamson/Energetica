@@ -60,7 +60,7 @@ function draw_generation() {
     text(display_W_long(total_power), 120, 10);
     textStyle(NORMAL);
     for (const key of keys_generation) {
-      if(data[key][t]>0){
+      if(data[key][t]!=0){
         alternate_fill();
         translate(0, -16);
         rect(0, 0, 160, 17);
@@ -148,7 +148,7 @@ function regen_generation(res){
       for(let t = 0; t < data_len; t++){
         push();
         for (const key of keys_generation) {
-          if(data[key][t]>0){
+          if(data[key][t]!=0){
             fill(cols_and_names[key][0]);
             let h = data[key][t]/maxSum*graph_h
             rect(0, 0, graph_w/data_len + 1, -h-1);
