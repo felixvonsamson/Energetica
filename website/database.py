@@ -136,37 +136,29 @@ class Player(db.Model, UserMixin):
 
     # Technology :
     mathematics = db.Column(db.Integer, default=0)
-    mechanical_engeneering = db.Column(db.Integer, default=0)
+    mechanical_engineering = db.Column(db.Integer, default=0)
     thermodynamics = db.Column(db.Integer, default=0)
     physics = db.Column(db.Integer, default=0)
     building_technology = db.Column(db.Integer, default=0)
     mineral_extraction = db.Column(db.Integer, default=0)
     transport_technology = db.Column(db.Integer, default=0)
     materials = db.Column(db.Integer, default=0)
-    civil_engeneering = db.Column(db.Integer, default=0)
+    civil_engineering = db.Column(db.Integer, default=0)
     aerodynamics = db.Column(db.Integer, default=0)
     chemistry = db.Column(db.Integer, default=0)
-    nuclear_engeneering = db.Column(db.Integer, default=0)
+    nuclear_engineering = db.Column(db.Integer, default=0)
 
     # Selfconsumption priority list 
-    self_consumption_priority = db.Column(db.Text, default="small_water_dam large_water_dam PV_solar onshore_wind_turbine offshore_wind_turbine CSP_solar windmill watermill")
+    self_consumption_priority = db.Column(db.Text, default="small_water_dam large_water_dam watermill onshore_wind_turbine offshore_wind_turbine windmill CSP_solar PV_solar")
     rest_of_priorities = db.Column(db.Text, default="steam_engine nuclear_reactor nuclear_reactor_gen4 combined_cycle gas_burner oil_burner coal_burner")
 
     # Production capacity prices [CHF/MWh]
     price_steam_engine = db.Column(db.Float, default=125)
-    price_windmill = db.Column(db.Float, default=50)
-    price_watermill = db.Column(db.Float, default=50)
     price_coal_burner = db.Column(db.Float, default=600)
     price_oil_burner = db.Column(db.Float, default=550)
     price_gas_burner = db.Column(db.Float, default=500)
-    price_small_water_dam = db.Column(db.Float, default=15)
-    price_onshore_wind_turbine = db.Column(db.Float, default=25)
     price_combined_cycle = db.Column(db.Float, default=450)
     price_nuclear_reactor = db.Column(db.Float, default=275)
-    price_large_water_dam = db.Column(db.Float, default=15)
-    price_CSP_solar = db.Column(db.Float, default=40)
-    price_PV_solar = db.Column(db.Float, default=20)
-    price_offshore_wind_turbine = db.Column(db.Float, default=15)
     price_nuclear_reactor_gen4 = db.Column(db.Float, default=375)
 
     # Storage capacity prices [CHF/MWh]

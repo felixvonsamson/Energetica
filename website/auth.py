@@ -39,8 +39,8 @@ def login():
 @auth.route("/logout")
 @login_required
 def logout():
-    logout_user()
     print(f"{current_user.username} logged out")
+    logout_user()
     return redirect(url_for("auth.login"))
 
 # logic for the sign-up :
@@ -89,13 +89,19 @@ def init_table(username):
 
 def add_player_to_data(username):
     engine = current_app.config["engine"]
-    # TEMPORARY -> GENERATE NEW VALUES FOR EACH DAY 
-    with open("website/static/data/industry_demand.pck", "rb") as file:
-        industry_demand = pickle.load(file)
     engine.data["current_data"][username] = data_init(1441)
 
 def data_init(length):
     return {
+        "revenues":{
+            "industry": [0] * length,
+            "O&M_costs": [0] * length,
+            "exports": [0] * length,
+            "imports": [0] * length,
+            "dumping": [0] * length,
+            "resource_selling": [0] * length,
+            "resource_buying": [0] * length,
+        },
         "generation": {
             "steam_engine": [0] * length,
             "windmill": [0] * length,

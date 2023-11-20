@@ -8,8 +8,9 @@ import json
 import math
 import threading
 import pickle
+import os
 import numpy as np
-from .database import Player, Under_construction, Shipment, Chat
+from .database import Player, Network, Under_construction, Shipment, Chat
 from . import db
 from flask import current_app
 from sqlalchemy import func
@@ -98,8 +99,8 @@ def update_weather(engine):
     engine.data["current_discharge"][t : t+10] = [power_factor]*10
     print(f"the current irradiation in Zürich is {engine.data['current_irradiation'][t+9]} W/m2 with a windspeed of {engine.data['current_windspeed'][t+9]} km/h")
 
-# saves the past production data to files every 24h
-def save_past_data_threaded(app, new_data):
+# saves the past production data to files every 24h AND remove network data older than 24h
+def save_past_data_threaded(app, engine, new_data, network_data):
     def save_data():
         with app.app_context():
             players = Player.query.all()
@@ -126,7 +127,46 @@ def save_past_data_threaded(app, new_data):
                 for timescale in past_data:
                     with open(f"instance/player_data/{player.username}/{timescale}.pck", "wb") as file:
                         pickle.dump(past_data[timescale], file)
+
+            # remove old network files AND save past prices
+            networks = Network.query.all()
+            for network in networks:
+                network_dir = f"instance/network_data/{network.name}/charts/"
+                files = os.listdir(network_dir)
+                for filename in files:
+                    t_value = int(filename.split("market_t")[1].split(".pck")[0])
+                    if t_value < engine.data['total_t']-1440:
+                        os.remove(os.path.join(network_dir, filename))
+
+                past_data = {}
+                for timescale in ["5_days", "month", "6_months"]:
+                    with open(f"instance/network_data/{network.name}/prices/{timescale}.pck", "rb") as file:
+                        past_data[timescale] = pickle.load(file)
+                
+                past_data["day"] = network_data[network.name]
+                for element in past_data["5_days"]:
+                    new_array = np.array(network_data[network.name][element])
+                    new_5_days = np.mean(new_array.reshape(-1, 5), axis=1)
+                    past_data["5_days"][element] = past_data["5_days"][element][288:]
+                    past_data["5_days"][element].extend(new_5_days)
+                    new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
+                    past_data["month"][element] = past_data["month"][element][48:]
+                    past_data["month"][element].extend(new_month)
+                    new_6_months = np.mean(new_month.reshape(-1, 6), axis=1)
+                    past_data["6_months"][element] = past_data["6_months"][element][8:]
+                    past_data["6_months"][element].extend(new_6_months)
+
+                for timescale in past_data:
+                    with open(f"instance/network_data/{network.name}/prices/{timescale}.pck", "wb") as file:
+                        pickle.dump(past_data[timescale], file)
+
             print("past 24h data has been saved to files")
 
     thread = threading.Thread(target=save_data)
     thread.start()
+
+def data_init_network(length):
+    return {
+        "price": [0] * length,
+        "quantity": [0] * length,
+        }

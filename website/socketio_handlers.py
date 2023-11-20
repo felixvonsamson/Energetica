@@ -4,11 +4,12 @@ This code contains the main functions that communicate with the server (server s
 
 import time
 import heapq
+import pickle
 from flask import request, session, flash, g, current_app
 from flask_login import current_user
 from . import heap
 from .database import Player, Network, Hex, Under_construction, Chat, Message
-from .utils import add_asset, display_CHF, check_existing_chats
+from .utils import add_asset, display_CHF, check_existing_chats, data_init_network
 from . import db
 from pathlib import Path
 
@@ -70,24 +71,43 @@ def add_handlers(socketio, engine):
         assets = current_app.config["engine"].config[current_user.id]["assets"]
         if current_user.money < assets[facility]["price"]:
             current_user.emit("errorMessage", "Not enough money")
+            return
+        if facility in ["small_water_dam", "large_water_dam", "watermill"]:
+            ud = Under_construction.query.filter_by(name=facility).count()
+            if current_user.tile[0].hydro <= getattr(current_user, facility) + ud:
+                current_user.emit("errorMessage", "No suitable location avalable")
+                return
+        if family in ["functional_facilities", "technologies"]:
+            ud_count = Under_construction.query.filter_by(name=facility, player_id=current_user.id).count()
+            real_price = assets[facility]["price"]*assets[facility]["price multiplier"]**ud_count
+            if current_user.money < real_price:
+                current_user.emit("errorMessage", "Not enough money to queue this upgrade (the price of the next upgrade might be higher than the one indicated)")
+                return
+            current_user.money -= real_price
+            largest_finish_time = Under_construction.query.filter_by(player_id=current_user.id, family=family).order_by(Under_construction.finish_time.desc()).first()
+            if largest_finish_time:
+                start_time = largest_finish_time.finish_time
+            else :
+                start_time = time.time()
+            finish_time = start_time + assets[facility]["construction time"]*assets[facility]["price multiplier"]**ud_count
         else:
             current_user.money -= assets[facility]["price"]
-            db.session.commit()
-            updates = [("money", display_CHF(current_user.money))]
-            engine.update_fields(updates, [current_user])
             finish_time = time.time() + assets[facility]["construction time"]
-            heapq.heappush(heap, (finish_time, add_asset, (current_user.id, facility)))
-            new_facility = Under_construction(
-                name=facility,
-                family=family,
-                start_time=time.time(),
-                finish_time=finish_time,
-                player_id=session["ID"],
-            )
-            db.session.add(new_facility)
-            db.session.commit()
-            current_user.emit("display_under_construction", (facility, finish_time))
-            print(f"{current_user.username} started the construction {facility}")
+            start_time=time.time()
+        updates = [("money", display_CHF(current_user.money))]
+        engine.update_fields(updates, [current_user])
+        heapq.heappush(heap, (finish_time, add_asset, (current_user.id, facility)))
+        new_facility = Under_construction(
+            name=facility,
+            family=family,
+            start_time=start_time,
+            finish_time=finish_time,
+            player_id=current_user.id,
+        )
+        db.session.add(new_facility)
+        db.session.commit()
+        current_user.emit("display_under_construction", (facility, finish_time))
+        print(f"{current_user.username} started the construction {facility}")
 
     # this function is executed when a player creates a network
     @socketio.on("create_network")
@@ -102,22 +122,54 @@ def add_handlers(socketio, engine):
         db.session.add(new_Network)
         db.session.commit()
         engine.refresh()
-        Path(f"instance/network_data/{network_name}").mkdir(parents=True, exist_ok=True)
+        Path(f"instance/network_data/{network_name}/charts").mkdir(parents=True, exist_ok=True)
+        engine.data["network_data"][network_name] = data_init_network(1441)
+        past_data = data_init_network(1440)
+        Path(f"instance/network_data/{network_name}/prices").mkdir(parents=True, exist_ok=True)
+        for timescale in ["day", "5_days", "month", "6_months"]:
+            with open(f"instance/network_data/{network_name}/prices/{timescale}.pck", "wb") as file:
+                pickle.dump(past_data, file)
         print(f"{current_user.username} created the network {network_name}")
+
+    # this function is executed when a player leaves his network
+    @socketio.on("leave_network")
+    def leave_network():
+        network_id = current_user.network_id
+        print(f"{current_user.username} left the network {current_user.network.name}")
+        current_user.network_id = None
+        remaining_members_count = Player.query.filter_by(network_id=network_id).count()
+        # delete network if it is empty
+        if remaining_members_count == 0:
+            network = Network.query.filter_by(id=network_id).first()
+            print(f"The network {network.name} has been deleted because it was empty")
+            db.session.delete(network)
+        db.session.commit()
+        engine.refresh()
 
     # this function is executed when a player changes the value the enegy selling prices
     @socketio.on("change_price")
     def change_price(attribute, value):
         def reorder(priority_list, asset):
+            if asset in engine.renewables:
+                priority_list.insert(0, asset)
+                return priority_list
             for i, a in enumerate(priority_list):
+                if a in engine.renewables:
+                    continue
                 if getattr(current_user, "price_"+a) >= getattr(current_user, "price_"+asset):
                     priority_list.insert(i, asset)
                     return priority_list
             priority_list.append(asset)
             return priority_list
         
-        SCP_list = current_user.self_consumption_priority.split(' ')
-        rest_list = current_user.rest_of_priorities.split(' ')
+        if current_user.self_consumption_priority == "":
+            SCP_list = []
+        else :
+            SCP_list = current_user.self_consumption_priority.split(' ')
+        if current_user.rest_of_priorities == "":
+            rest_list = []
+        else :
+            rest_list = current_user.rest_of_priorities.split(' ')
         
         # add or remove to SCP and order 
         if "SCP" in attribute:

@@ -107,6 +107,7 @@ def network():
             current_user.network = network
             db.session.commit()  
             flash(f"You joined the network {network_name}", category="message")  
+            print(f"{current_user.username} joined the network {current_user.network.name}")
     return g.render_template_ctx("network.jinja")
 
 @views.route("/power_facilities")
@@ -172,7 +173,9 @@ def resource_market():
                 else :
                     sale.quantity -= quantity
                 current_user.money -= sale.price * quantity
+                g.engine.data["current_data"][current_user.username]["revenues"]["industry"][g.engine.data["current_t"]] -= sale.price * quantity
                 sale.player.money += sale.price * quantity
+                g.engine.data["current_data"][sale.player.username]["revenues"]["industry"][g.engine.data["current_t"]] += sale.price * quantity
                 current_user.update_resources()
                 sale.player.update_resources()
                 setattr(sale.player, sale.resource, getattr(sale.player, sale.resource) - quantity)

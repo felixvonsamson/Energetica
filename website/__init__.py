@@ -26,7 +26,7 @@ def create_app():
 
     # creates the app :
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = "ghdfjfetgftqayööhkh"
+    app.config["SECRET_KEY"] = "ghdcjgcfgglkgvou"
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///database.db"
     db.init_app(app)
 
@@ -121,6 +121,7 @@ def create_app():
 
         #with app.app_context():
             #Temporary automated player creation for testing
-            #from .init_test_players import init_test_players
+            #from .init_test_players import edit_database
+            #edit_database()
             #init_test_players(engine)
     return socketio, app

@@ -112,17 +112,24 @@ def get_chart_data():
     
 @api.route("/get_market_data", methods=["GET"])
 def get_market_data():
+    market_data = {}
+    engine = current_app.config["engine"]
     if current_user.network == None:
         return '', 404
-    filename = f"instance/network_data/{current_user.network.name}/market.pck"
-    if Path(filename).is_file():
-        with open(filename, "rb") as file:
+    t = int(request.args.get('t'))
+    filename_state = f"instance/network_data/{current_user.network.name}/charts/market_t{engine.data['total_t']-t}.pck"
+    if Path(filename_state).is_file():
+        with open(filename_state, "rb") as file:
             market_data = pickle.load(file)
             market_data["capacities"] = market_data["capacities"].to_dict(orient='list')
             market_data["capacities"]["player"] = [player.username for player in market_data["capacities"]["player"]]
             market_data["demands"] = market_data["demands"].to_dict(orient='list')
             market_data["demands"]["player"] = [player.username for player in market_data["demands"]["player"]]
             market_data["demands"]["price"] = [None if price == np.inf else price for price in market_data["demands"]["price"]]
-            return jsonify(market_data)
     else:
-        return '', 404
+        market_data = None
+    timescale = request.args.get('timescale')
+    filename_prices = f"instance/network_data/{current_user.network.name}/prices/{timescale}.pck"
+    with open(filename_prices, "rb") as file:
+        prices = pickle.load(file)
+    return jsonify(engine.data["current_t"], market_data, prices, engine.data["network_data"][current_user.network.name])

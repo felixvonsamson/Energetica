@@ -12,7 +12,7 @@ from flask import url_for
 from . import heap
 import time
 import heapq
-from .database import Player
+from .database import Player, Network
 
 from .config import config, wind_power_curve, river_discharge
 
@@ -38,12 +38,24 @@ class gameEngine(object):
             "solid_state_batteries"
         ]
 
+        engine.renewables = [
+            "small_water_dam",
+            "large_water_dam",
+            "watermill",
+            "onshore_wind_turbine",
+            "offshore_wind_turbine",
+            "windmill",
+            "CSP_solar",
+            "PV_solar"
+        ]
+
         engine.wind_power_curve = wind_power_curve
         engine.river_discharge = river_discharge
 
         engine.data = {}
         # All data for the current day will be stored here :
         engine.data["current_data"] = {}
+        engine.data["network_data"] = {}
         engine.data["current_windspeed"] = [0] * 1441 # daily windspeed in km/h
         engine.data["current_irradiation"] = [0] * 1441 # daily irradiation in W/m2
         engine.data["current_discharge"] = [0] * 1441 # daily river discharge rate factor
@@ -105,13 +117,15 @@ class gameEngine(object):
 # function that is executed once every 24 hours :
 def daily_update(engine, app):
     engine.data["current_t"] = 1
+    # reset current data and network data
     with app.app_context():
-        players = Player.query.all()
-        past_data = copy.deepcopy(engine.data["current_data"])
         engine.data["current_windspeed"] = [engine.data["current_windspeed"][-1]] + [0]*1440
         engine.data["current_irradiation"] = [engine.data["current_irradiation"][-1]] + [0]*1440
         engine.data["current_discharge"] = [engine.data["current_discharge"][-1]] + [0]*1440
         engine.data["current_CO2"] = [engine.data["current_CO2"][-1]] + [0]*1440
+
+        players = Player.query.all()
+        past_data = copy.deepcopy(engine.data["current_data"])
         for player in players:
             for category in engine.data["current_data"][player.username]:
                 for element in engine.data["current_data"][player.username][category]:
@@ -120,8 +134,18 @@ def daily_update(engine, app):
                     last_value = data_array[-1]
                     data_array.clear()
                     data_array.extend([last_value] + [0]*1440)
+
+        networks = Network.query.all()
+        network_data = copy.deepcopy(engine.data["network_data"])
+        for network in networks:
+            for element in engine.data["network_data"][network.name]:
+                network_data[network.name][element].pop(0)
+                data_array = engine.data["network_data"][network.name][element]
+                last_value = data_array[-1]
+                data_array.clear()
+                data_array.extend([last_value] + [0]*1440)
              
-    save_past_data_threaded(app, past_data)
+    save_past_data_threaded(app, engine, past_data, network_data)
 
 
 from .production_update import update_ressources, update_electricity
@@ -131,6 +155,8 @@ def state_update_h(engine, app):
     with app.app_context():
         players = Player.query.all()
         for player in players:
+            if len(player.tile) == 0:
+                continue
             engine.config.update_resource_extraction(player.id) # update mining productivity every hour
 
 # function that is executed once every 1 minute :
