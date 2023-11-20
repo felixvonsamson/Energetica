@@ -161,7 +161,7 @@ def state_update_h(engine, app):
 
 # function that is executed once every 1 minute :
 def state_update_m(engine, app):
-    total_t = (datetime.datetime.now() - engine.data["start_date"]).total_seconds()/5.0
+    total_t = (datetime.datetime.now() - engine.data["start_date"]).total_seconds()/60.0
     while(engine.data["total_t"] < total_t):
         engine.data["current_t"] += 1
         # print(f"t = {engine.data['current_t']}")

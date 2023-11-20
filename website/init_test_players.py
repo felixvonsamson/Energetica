@@ -5,8 +5,20 @@ from .database import Player, Hex, Network
 from . import db
 
 def edit_database():
-    Sam = Player.query.filter_by(username="123s").first()
-    Sam.money = 30000
+    Max = create_player("maximilientirard", 20, "kUcmo0-jyjwoc-kugnot")
+    print(Max)
+    Max.money = 75000
+    Max.steam_engine = 23
+    Max.windmill = 1
+    Max.watermill = 3
+    Max.industry = 14
+    Max.laboratory = 4
+    Max.mathematics = 4
+    Max.mechanical_engineering = 4
+    Max.building_technology = 3
+    Max.transport_technology = 1
+    Max.civil_engineering = 1
+    Max.small_water_dam = 2
     db.session.commit()
 
 def init_test_players(engine):
@@ -36,13 +48,13 @@ def init_test_players(engine):
         db.session.commit()
 
 
-def create_player(username, tile_id):
+def create_player(username, tile_id, pw):
     p = Player.query.filter_by(username=username).first()
     if p == None:
         tile = Hex.query.filter_by(id=tile_id).first()
         new_player = Player(
             username=username,
-            password=generate_password_hash("password", method="sha256"),
+            password=generate_password_hash(pw, method="sha256"),
             data_table_name=f"data_{username}.pck",
             tile = [tile],
         )
