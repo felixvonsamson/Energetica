@@ -90,7 +90,7 @@ def add_handlers(socketio, engine):
             else :
                 start_time = time.time()
             finish_time = start_time + assets[facility]["construction time"]*assets[facility]["price multiplier"]**ud_count
-        else:
+        else: # power facitlies, storage facilities, extractions plants
             current_user.money -= assets[facility]["price"]
             finish_time = time.time() + assets[facility]["construction time"]
             start_time=time.time()
