@@ -13,6 +13,10 @@ You a currently not part of a Network. Join or create one :
 <b class="margin button2" onclick="document.getElementById('create_network').classList.remove('hidden');">Create Network</b>
 </div>
 {% else %}
+<div class="flex-row" style="justify-content:center;">
+<b class="margin button2" onclick="leave_network();">Leave Network</b>
+</div>
+<div id="market_graph" class="bone" style="padding:30px 0"></div>
 <div class="flex-col medium">
     <table class="table bone margin">
     <tr>
@@ -26,7 +30,7 @@ You a currently not part of a Network. Join or create one :
     </table>
 </div>
 {% endif %}
-<div id="market_graph" class="bone" style="padding-top:30px"></div>
+
 
 
 <div class="huge title">Prices</div>

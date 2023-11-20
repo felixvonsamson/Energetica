@@ -107,6 +107,7 @@ def network():
             current_user.network = network
             db.session.commit()  
             flash(f"You joined the network {network_name}", category="message")  
+            print(f"{current_user.username} joined the network {current_user.network.name}")
     return g.render_template_ctx("network.jinja")
 
 @views.route("/power_facilities")

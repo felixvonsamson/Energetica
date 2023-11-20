@@ -107,3 +107,7 @@ function createNetwork() {
   }
   socket.emit('create_network', name, invitations);
 }
+
+function leave_network(){
+  socket.emit('leave_network');
+}
