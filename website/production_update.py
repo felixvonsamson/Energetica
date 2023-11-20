@@ -328,7 +328,7 @@ def market_logic(engine, market, t):
                     rest = max(0, min(row.capacity, row.capacity-sold_cap))
                     dump_cap = rest
                     demand = engine.data["current_data"][row.player.username]["demand"]
-                    demand["dumping"][t] = dump_cap
+                    demand["dumping"][t] += dump_cap
                     row.player.money -= dump_cap * 5 / 1000000
                     revenue = engine.data["current_data"][row.player.username]["revenues"]
                     revenue["dumping"][t] -= dump_cap * 5 / 1000000
