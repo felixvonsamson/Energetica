@@ -50,7 +50,7 @@
  <img class="img" src="{{ url_for('static', filename='images/functional_facilities/laboratory.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.laboratory}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
- The laboratory is needed to research <strong><a class="txt-blue" id="technology" href="/technology">Technologies</a></strong>.<br>
+ The laboratory is needed to research <strong><a class="txt-blue" id="technology-link" href="/technology">Technologies</a></strong>.<br>
  </div>
  <div class="infobox" id="infotable">
   <table class="table tan_green">
@@ -77,7 +77,7 @@
  <img class="img" src="{{ url_for('static', filename='images/functional_facilities/warehouse.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.warehouse}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
- The warehouse stores physical ressources. <br>
+ The warehouse stores physical <strong><a class="txt-blue" id="resources-link" href="/extraction_plants">resources</a></strong>. <br>
  </div>
  <div class="infobox" id="infotable">
   <table class="table tan_green">
