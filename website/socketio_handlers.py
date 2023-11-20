@@ -77,16 +77,30 @@ def add_handlers(socketio, engine):
             if current_user.tile[0].hydro <= getattr(current_user, facility) + ud:
                 current_user.emit("errorMessage", "No suitable location avalable")
                 return
-        current_user.money -= assets[facility]["price"]
-        db.session.commit()
+        if family in ["functional_facilities", "technologies"]:
+            ud_count = Under_construction.query.filter_by(name=facility, player_id=current_user.id).count()
+            real_price = assets[facility]["price"]*assets[facility]["price multiplier"]**ud_count
+            if current_user.money < real_price:
+                current_user.emit("errorMessage", "Not enough money to queue this upgrade (the price of the next upgrade might be higher than the one indicated)")
+                return
+            current_user.money -= real_price
+            largest_finish_time = Under_construction.query.filter_by(player_id=current_user.id, family=family).order_by(Under_construction.finish_time.desc()).first()
+            if largest_finish_time:
+                start_time = largest_finish_time.finish_time
+            else :
+                start_time = time.time()
+            finish_time = start_time + assets[facility]["construction time"]*assets[facility]["price multiplier"]**ud_count
+        else:
+            current_user.money -= assets[facility]["price"]
+            finish_time = time.time() + assets[facility]["construction time"]
+            start_time=time.time()
         updates = [("money", display_CHF(current_user.money))]
         engine.update_fields(updates, [current_user])
-        finish_time = time.time() + assets[facility]["construction time"]
         heapq.heappush(heap, (finish_time, add_asset, (current_user.id, facility)))
         new_facility = Under_construction(
             name=facility,
             family=family,
-            start_time=time.time(),
+            start_time=start_time,
             finish_time=finish_time,
             player_id=current_user.id,
         )

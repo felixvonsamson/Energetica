@@ -136,17 +136,17 @@ class Player(db.Model, UserMixin):
 
     # Technology :
     mathematics = db.Column(db.Integer, default=0)
-    mechanical_engeneering = db.Column(db.Integer, default=0)
+    mechanical_engineering = db.Column(db.Integer, default=0)
     thermodynamics = db.Column(db.Integer, default=0)
     physics = db.Column(db.Integer, default=0)
     building_technology = db.Column(db.Integer, default=0)
     mineral_extraction = db.Column(db.Integer, default=0)
     transport_technology = db.Column(db.Integer, default=0)
     materials = db.Column(db.Integer, default=0)
-    civil_engeneering = db.Column(db.Integer, default=0)
+    civil_engineering = db.Column(db.Integer, default=0)
     aerodynamics = db.Column(db.Integer, default=0)
     chemistry = db.Column(db.Integer, default=0)
-    nuclear_engeneering = db.Column(db.Integer, default=0)
+    nuclear_engineering = db.Column(db.Integer, default=0)
 
     # Selfconsumption priority list 
     self_consumption_priority = db.Column(db.Text, default="small_water_dam large_water_dam watermill onshore_wind_turbine offshore_wind_turbine windmill CSP_solar PV_solar")

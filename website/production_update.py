@@ -3,6 +3,7 @@ The game states update functions are defined here
 """
 
 import pickle
+import time
 import math
 import pandas as pd
 import numpy as np
@@ -127,15 +128,16 @@ def calculate_demand(engine, player, t):
     demand_research = 0
     emissions_construction = 0
     for ud in player.under_construction:
-        construction = assets[ud.name]
-        if ud.family == "technologies":
-            demand_research += (construction["construction energy"] 
-                / construction["construction time"] * 3600)
-        else:
-            demand_construction += (construction["construction energy"] 
-                / construction["construction time"] * 3600)
-            emissions_construction += (construction["construction pollution"] 
-                / construction["construction time"])
+        if ud.start_time < time.time():
+            construction = assets[ud.name]
+            if ud.family == "technologies":
+                demand_research += (construction["construction energy"] 
+                    / construction["construction time"] * 3600)
+            else:
+                demand_construction += (construction["construction energy"] 
+                    / construction["construction time"] * 3600)
+                emissions_construction += (construction["construction pollution"] 
+                    / construction["construction time"])
     demand["construction"][t] = min(demand["construction"][t-1]+0.2*demand_construction, demand_construction) # for smooth demand changes
     demand["research"][t] = min(demand["research"][t-1]+0.2*demand_research, demand_research) # for smooth demand changes
     engine.data["current_data"][player.username]["emissions"]["construction"][t] = emissions_construction
