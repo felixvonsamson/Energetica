@@ -9,11 +9,9 @@ import pickle
 import datetime
 import math
 import time
-import heapq
 from . import db
-from . import heap
 from .database import Chat, Player, Network, Resource_on_sale, Shipment
-from .utils import check_existing_chats, display_CHF, store_import
+from .utils import check_existing_chats, display_CHF
 
 views = Blueprint("views", __name__)
 
@@ -185,7 +183,6 @@ def resource_market():
                 distance = math.sqrt(2 * (dq**2 + dr**2 + dq*dr))
                 shipment_duration = distance * g.config["transport"]["time"]
                 arrival_time = time.time() + shipment_duration
-                heapq.heappush(heap, (arrival_time, store_import, (current_user.id, sale.resource, quantity)))
                 new_shipment = Shipment(
                     resource = sale.resource,
                     quantity = quantity,

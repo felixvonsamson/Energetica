@@ -9,14 +9,13 @@ import logging
 import os
 import copy
 from flask import url_for
-from . import heap
 import time
-import heapq
-from .database import Player, Network
+from . import db
+from .database import Player, Network, Under_construction, Shipment
 
 from .config import config, wind_power_curve, river_discharge
 
-from .utils import update_weather, save_past_data_threaded
+from .utils import update_weather, save_past_data_threaded, add_asset, store_import
 
 # This is the engine object
 class gameEngine(object):
@@ -178,9 +177,21 @@ def state_update_m(engine, app):
             pickle.dump(engine.data, file)
 
 # function that is executed once every 1 second :
-def check_heap(engine, app):
-    # check if there is something planned of this second and call the function if there is
-    while heap and heap[0][0] < time.time():
-        _, function, args = heapq.heappop(heap)
-        with app.app_context():
-            function(*args)
+def check_upcoming_actions(engine, app):
+    # check if constructions finished
+    finished_constructions = Under_construction.query.filter(
+        Under_construction.finish_time < time.time()
+    )
+    if finished_constructions:
+        for fc in finished_constructions:
+            add_asset(fc.player_id, fc.name)
+        finished_constructions.delete()
+        db.session.commit()
+
+    # check if shipment arrived
+    arrived_shipments = Shipment.query.filter(Shipment.arrival_time < time.time())
+    if arrived_shipments:
+        for a_s in arrived_shipments:
+            store_import(a_s.player_id, a_s.resource, a_s.quantity)
+        arrived_shipments.delete()
+        db.session.commit()
