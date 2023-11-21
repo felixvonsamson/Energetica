@@ -40,7 +40,10 @@ function display_upgrade_W(price, factor) {
 }
 
 function display_upgrade_money(price, factor) {
-  const units = [" ¤/day", "k ¤/day", "M ¤/day", "Md ¤/day"];
+  const units = ["<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day", 
+  "k<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day",
+  "M<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day",
+  "Md<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day"];
   upgrade_format(price, units, factor);
 }
 
@@ -51,14 +54,17 @@ function display_upgrade_kg(price, factor) {
 
 // Price :
 function display_money(price) {
-  const units = [" ¤", "k ¤", "M ¤", "Md ¤"];
+  const units = ["<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>",
+  "k<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>",
+  "M<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>",
+  "Md<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>"];
   general_format(price, units);
 }
 
 // Prices for balance display :
 function display_money_long(price) {
   document.write(
-    `${price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} ¤`,
+    `${price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}<img src="/static/images/icons/coin.svg" class="coin" alt="coin">`,
   );
 }
 

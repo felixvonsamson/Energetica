@@ -194,7 +194,7 @@ class Player(db.Model, UserMixin):
     def update_resources(player):
         if player.sid:
             updates = []
-            updates.append(["money", f"{player.money:,.0f} ¤".replace(",", "'")])
+            updates.append(["money", f"{player.money:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(",", "'")])
             player.emit("update_data", updates)
 
     # prints out the object as a sting with the players username for debugging

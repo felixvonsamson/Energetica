@@ -29,6 +29,7 @@ canvas {display: block;}
 .txt_center{text-align:center}
 
 .icon{width:1em; height: 1em; position:relative; top:0.2em; margin:0 0.2em;}
+.coin{width:0.9em; height: 0.9em; position:relative; top:0.07em; margin:0 0.2em;}
 .no_deco{text-decoration: none; color:#000}
 
 /* Buttons */
