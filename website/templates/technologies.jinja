@@ -351,7 +351,7 @@
  <img class="img" src="{{ url_for('static', filename='images/technologies/civil_engineering.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.civil_engineering}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
- Civil engeneers can build bridges. <br>
+ Civil engineers can build bridges. <br>
  Affects the facilities : 
  {% for facility in ["small_water_dam", "large_water_dam", "small_pumped_hydro"] %}
  <em class="txt-blue">{{data[facility].name}}</em> , 
@@ -483,7 +483,7 @@
  <img class="img" src="{{ url_for('static', filename='images/technologies/nuclear_engineering.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.nuclear_engineering}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
- Nuclear engeneers are used to improve nuclear power plants. <br>
+ Nuclear engineers are used to improve nuclear power plants. <br>
  Affects the facilities : 
  <em class="txt-blue">{{data["nuclear_reactor"].name}}</em> , 
  <em class="txt-blue">{{data["nuclear_reactor_gen4"].name}}</em>
