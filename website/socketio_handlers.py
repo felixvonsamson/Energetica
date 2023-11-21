@@ -84,7 +84,7 @@ def add_handlers(socketio, engine):
                 current_user.emit("errorMessage", "Not enough money to queue this upgrade (the price of the next upgrade might be higher than the one indicated)")
                 return
             current_user.money -= real_price
-            largest_finish_time = Under_construction.query.filter_by(player_id=current_user.id, family=family).order_by(Under_construction.finish_time.desc()).first()
+            largest_finish_time = Under_construction.query.filter_by(player_id=current_user.id, name=facility).order_by(Under_construction.finish_time.desc()).first()
             if largest_finish_time:
                 start_time = largest_finish_time.finish_time
             else :
