@@ -11,7 +11,7 @@ function general_format(value, units){
     unit_index += 1;
   }
   document.write(
-    `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}${
+    `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
       units[unit_index]
     }`,
   );
@@ -27,8 +27,8 @@ function upgrade_format(value, units, factor){
     unit_index += 1;
   }
   document.write(
-    `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}${units[unit_index][0]} -> ${
-      value2.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}${
+    `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index][0]} -> ${
+      value2.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
       units[unit_index]
     }`,
   );

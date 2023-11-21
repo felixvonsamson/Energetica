@@ -559,10 +559,10 @@ full_config = {
         },
     },
     "warehouse_capacities":{
-        "coal": 3000000, #[kg]
-        "oil":   300000,
-        "gas":  1000000,
-        "uranium": 5000,
+        "coal": 3000000/1.5, #[kg]
+        "oil":   300000/1.5,
+        "gas":  1000000/1.5,
+        "uranium": 5000/1.5,
     },
     "transport": {
         "time" : 5000, #[s/distance unit]
@@ -689,8 +689,10 @@ class Config(object):
             if asset in ["laboratory", "warehouse", "industry", "carbon_capture", "mathematics", "mechanical_engineering", "thermodynamics", "physics", "building_technology", "mineral_extraction", "transport_technology", "materials", "civil_engineering", "aerodynamics", "chemistry", "nuclear_engineering"]:
                 # update prices, construction time and construction energy
                 assets[asset]["price"] *= assets[asset]["price multiplier"] ** getattr(player, asset)
-                assets[asset]["construction time"] *= assets[asset]["price multiplier"] ** getattr(player, asset)
-                assets[asset]["construction energy"] *= assets[asset]["price multiplier"] ** (getattr(player, asset)+0.1)
+                assets[asset]["construction time"] *= assets[asset]["price multiplier"] ** (0.5*getattr(player, asset))
+                assets[asset]["construction energy"] *= assets[asset]["price multiplier"] ** (getattr(player, asset))
+                if asset in ["laboratory", "warehouse", "industry", "carbon_capture"]:
+                    assets[asset]["construction pollution"] *= assets[asset]["price multiplier"] ** (getattr(player, asset))
 
             if asset in ["mathematics", "mechanical_engineering", "thermodynamics", "physics", "building_technology", "mineral_extraction", "transport_technology", "materials", "civil_engineering", "aerodynamics", "chemistry", "nuclear_engineering"]:
                 # update research time (laboratory)
@@ -735,7 +737,10 @@ class Config(object):
         # calculating the maximum storage capacity from the warehouse level
         max_cap = config.for_player[player_id]["warehouse_capacities"]
         for ressource in max_cap:
-            max_cap[ressource] *= assets["warehouse"]["capacity factor"] ** player.warehouse
+            if player.warehouse == 0:
+                max_cap[ressource] = 0
+            else :
+                max_cap[ressource] *= assets["warehouse"]["capacity factor"] ** player.warehouse
 
         # calculating the transport speed and energy consumption from the level of transport technology
         config.for_player[player_id]["transport"]["time"] *= assets["transport_technology"]["time factor"] ** player.transport_technology
