@@ -56,15 +56,15 @@ function draw_revenues() {
     rect(0, 0, 160, 17);
     fill(0);
     textStyle(BOLD);
-    text(display_duration((data_len-t-1)*res_to_data[res][1]),80, 9);
+    text(display_duration((data_len-t-1)*res_to_data[res][1]),80, 5);
     textStyle(NORMAL);
     translate(0, 16*lines);
     alternate_fill();
     rect(0, 0, 160, 17);
     fill(0);
     textStyle(BOLD);
-    text("TOTAL :", 40, 10);
-    text(display_money_long(total_power), 120, 10);
+    text("TOTAL :", 40, 6);
+    display_coin(display_money_long(total_power), 160, 0);
     textStyle(NORMAL);
     for (const key of keys_revenues) {
       if(data[key][t]!=0){
@@ -77,9 +77,9 @@ function draw_revenues() {
         pop();
         fill(0);
         textAlign(LEFT, CENTER);
-        text(cols_and_names[key][1], 20, 9);
+        text(cols_and_names[key][1], 20, 5);
         textAlign(CENTER, CENTER);
-        text(display_money(data[key][t]*60), 135, 9);
+        display_coin(display_money(data[key][t]*60), 160, 0);
         fill(229, 217, 182);
       }
     }
@@ -146,19 +146,19 @@ function regen_revenues(res){
       pop();
       stroke(0);
       line(0, 0, graph_w, 0);
-      line(0, 0, 0, -graph_h);
+      line(0, graph_h*(1-f), 0, -graph_h*f);
       
       push();
       let units = time_unit(res);
       fill(0);
-      for(let i=0; i<units.length; i++){
+      for(let i=1; i<units.length; i++){
         stroke(0, 0, 0, 30);
         let x = i*graph_w/(units.length-1);
         line(x, -graph_h, x, 0);
         stroke(0);
         line(x, 0, x, 5);
         noStroke();
-        text(units[i], x, 0.5*margin);
+        text(units[i], x, 0.3*margin);
       }
       pop();
 
@@ -173,7 +173,7 @@ function regen_revenues(res){
         stroke(0);
         line(0, -i, -5, -i);
         noStroke();
-        text(display_money(interval*i/y),-margin, -i);
+        display_coin(display_money(interval*i/y), -8, -i-10);
       }
       for(let i=-y; i>=-graph_h*(1-f); i-=y){
         stroke(0, 0, 0, 30);
@@ -181,7 +181,7 @@ function regen_revenues(res){
         stroke(0);
         line(0, -i, -5, -i);
         noStroke();
-        text(display_money(interval*i/y),-margin, -i);
+        display_coin(display_money(interval*i/y), -8, -i-10);
       }
       pop();
       pop();
@@ -198,4 +198,13 @@ function regen_revenues(res){
     .catch((error) => {
       console.error("Error:", error);
     });
+}
+
+function display_coin(money, x, y){
+  push();
+  textAlign(RIGHT, CENTER);
+  text(money, x-29, y+6);
+  image(coin, x-26, y+2, 12, 12);
+  text("/h", x-3, y+6);
+  pop();
 }

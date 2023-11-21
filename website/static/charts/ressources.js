@@ -37,7 +37,7 @@ function draw_ressources() {
     rect(0, 0, 115, 17);
     fill(0);
     textStyle(BOLD);
-    text(display_duration((data_len-t-1)*res_to_data[res][1]),57, 9);
+    text(display_duration((data_len-t-1)*res_to_data[res][1]),57, 5);
     textStyle(NORMAL);
     for (const key of keys_ressources) {
       if(data[key][t]>0){
@@ -50,9 +50,9 @@ function draw_ressources() {
         pop();
         fill(0);
         textAlign(LEFT, CENTER);
-        text(cols_and_names[key][1], 20, 9);
+        text(cols_and_names[key][1], 20, 5);
         textAlign(CENTER, CENTER);
-        text(display_kg(data[key][t]), 90, 9);
+        text(display_kg(data[key][t]), 90, 5);
         fill(229, 217, 182);
       }
     }
@@ -79,40 +79,40 @@ function show_stored(ressource, x, y, y_fix){
   rect(0, 0, 160, 17);
   textStyle(BOLD);
   fill(0);
-  text(cols_and_names[ressource][1], 80, 8);
+  text(cols_and_names[ressource][1], 80, 4);
   textStyle(NORMAL);
   alternate_fill();
   translate(0, 16);
   rect(0, 0, 160, 17);
   textAlign(LEFT, CENTER);
   fill(0);
-  text("Stored quantity", 5, 9);
+  text("Stored quantity", 5, 5);
   textAlign(CENTER, CENTER);
-  text(display_kg(data[ressource][data_len-1]), 135, 9);
+  text(display_kg(data[ressource][data_len-1]), 135, 5);
   translate(0, 16);
   alternate_fill();
   rect(0, 0, 160, 17);
   textAlign(LEFT, CENTER);
   fill(0);
-  text("On sale", 5, 9);
+  text("On sale", 5, 5);
   textAlign(CENTER, CENTER);
-  text(display_kg(on_sale[ressource]), 135, 9);
+  text(display_kg(on_sale[ressource]), 135, 5);
   translate(0, 16);
   alternate_fill();
   rect(0, 0, 160, 17);
   textAlign(LEFT, CENTER);
   fill(0);
-  text("Storage capacity", 5, 9);
+  text("Storage capacity", 5, 5);
   textAlign(CENTER, CENTER);
-  text(display_kg(caps[ressource]), 135, 9);
+  text(display_kg(caps[ressource]), 135, 5);
   translate(0, 16);
   alternate_fill();
   rect(0, 0, 160, 17);
   textAlign(LEFT, CENTER);
   fill(0);
-  text("Domestic prod.", 5, 9);
+  text("Domestic prod.", 5, 5);
   textAlign(CENTER, CENTER);
-  text(display_kgh(rates[ressource]), 135, 9);
+  text(display_kgh(rates[ressource]), 135, 5);
   pop();
   push();
   translate(x, y_fix);
@@ -121,7 +121,7 @@ function show_stored(ressource, x, y, y_fix){
   rect(-5, 0, margin+10, 20);
   textStyle(BOLD);
   fill(0);
-  text(round(data[ressource][data_len-1]/caps[ressource]*100) + "%", 0.5*margin, 10);
+  text(round(data[ressource][data_len-1]/caps[ressource]*100) + "%", 0.5*margin, 6);
   pop();
 }
 
@@ -171,7 +171,7 @@ function regen_ressources(res){
         stroke(0);
         line(x, 0, x, 5);
         noStroke();
-        text(units[i], x, 0.5*margin);
+        text(units[i], x, 0.3*margin);
       }
       pop();
 
@@ -186,7 +186,7 @@ function regen_ressources(res){
         stroke(0);
         line(0, -y*i, -5, -y*i);
         noStroke();
-        text(y_ticks[i] + "%",-0.75*margin, -y*i);
+        text(y_ticks[i] + "%",-0.75*margin, -y*i-4);
       }
       pop();
       pop();
@@ -199,7 +199,7 @@ function regen_ressources(res){
       }
       
       push();
-      translate(width-0.5*margin, 0.5*height);
+      translate(width-0.4*margin, 0.5*height);
       rotate(radians(90));
       textSize(15);
       text("Resource storage capacity", 0, 0);
@@ -218,8 +218,8 @@ function regen_ressources(res){
       textStyle(BOLD);
       textSize(15);
       fill(0);
-      text("Coal", 0.5*margin, 14);
-      text("+ "+display_kgh(rates["coal"]), 0.5*margin, 35);
+      text("Coal", 0.5*margin, 10);
+      text("+ "+display_kgh(rates["coal"]), 0.5*margin, 30);
 
       translate(1.5*margin, 0);
       fill(255);
@@ -231,8 +231,8 @@ function regen_ressources(res){
       h = on_sale["oil"]/caps["oil"]*(0.5*height-60);
       rect(0, 0, margin, -h);
       fill(0);
-      text("Oil", 0.5*margin, 14);
-      text("+ "+ display_kgh(rates["oil"]), 0.5*margin, 35);
+      text("Oil", 0.5*margin, 10);
+      text("+ "+ display_kgh(rates["oil"]), 0.5*margin, 30);
 
       translate(0, 0.5*height);
       fill(255);
@@ -244,8 +244,8 @@ function regen_ressources(res){
       h = on_sale["uranium"]/caps["uranium"]*(0.5*height-60);
       rect(0, 0, margin, -h);
       fill(0);
-      text("Uranium", 0.5*margin, 14);
-      text("+ "+ display_kgh(rates["uranium"]), 0.5*margin, 35);
+      text("Uranium", 0.5*margin, 10);
+      text("+ "+ display_kgh(rates["uranium"]), 0.5*margin, 30);
 
       translate(-1.5*margin, 0);
       fill(255);
@@ -257,8 +257,8 @@ function regen_ressources(res){
       h = on_sale["gas"]/caps["gas"]*(0.5*height-60);
       rect(0, 0, margin, -h);
       fill(0);
-      text("Gas", 0.5*margin, 14);
-      text("+ "+ display_kgh(rates["gas"]), 0.5*margin, 35);
+      text("Gas", 0.5*margin, 10);
+      text("+ "+ display_kgh(rates["gas"]), 0.5*margin, 30);
       pop();
       graph = get();
     })

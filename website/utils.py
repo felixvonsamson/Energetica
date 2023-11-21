@@ -38,7 +38,7 @@ def store_import(player_id, resource, quantity):
 
 # format for price display
 def display_money(price):
-    return f"{price:,.0f} ¤".replace(",", " ")
+    return f"{price:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(",", " ")
 
 # checks if a chat with exactly these participants already exists
 def check_existing_chats(participants):

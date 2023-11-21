@@ -38,9 +38,14 @@ class Button{
         fill(0);
         textSize(20);
         textAlign(CENTER, CENTER);
-        text(this.res, 0.5*graph_w/resolution.length, 0.5*margin);
+        text(this.res, 0.5*graph_w/resolution.length, 0.5*margin-5);
         pop();
     }
+}
+
+function preload() {
+    font = loadFont('static/fonts/Baloo2-VariableFont_wght.ttf');
+    coin = loadImage('static/images/icons/coin.svg');
 }
 
 function setup() {
@@ -95,6 +100,7 @@ function setup() {
     let canvas = createCanvas(1200, 720);
     canvas.parent("graph");
     textAlign(CENTER, CENTER);
+    textFont(font);
     for (let i = 0; i < resolution.length; i++) {
       buttons[i] = new Button(resolution[i]);
     }
@@ -229,7 +235,7 @@ function display_kg(mass) {
 }
 
 function display_money(amount) {
-    const units = [" ¤/h", "k ¤/h", "M ¤/h"];
+    const units = ["", "k", "M"];
     return general_format(amount, units);
 }
   
@@ -239,7 +245,7 @@ function general_format(value, units){
         value /= 1000;
         unit_index += 1;
     }
-    return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}${
+    return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
         units[unit_index]}`;
 }
   
@@ -282,23 +288,23 @@ function alternate_fill(){
 }
   
 function display_W_long(power) {
-    return `${power.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} W`
+    return `${power.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} W`
 }
 
 function display_Wh_long(energy) {
-    return `${energy.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} Wh`
+    return `${energy.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} Wh`
 }
 
 function display_kg_long(mass) {
-    return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} kg`
+    return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} kg`
 }
 
 function display_kgh_long(mass) {
-    return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} kg/h`
+    return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} kg/h`
 }
 
 function display_money_long(amount) {
-    return `${amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ¤/h`
+    return `${amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`
 }
 
 function change_view(view){

@@ -45,15 +45,15 @@ function draw_emissions() {
     rect(0, 0, 160, 17);
     fill(0);
     textStyle(BOLD);
-    text(display_duration((data_len-t-1)*res_to_data[res][1]),80, 9);
+    text(display_duration((data_len-t-1)*res_to_data[res][1]),80, 5);
     textStyle(NORMAL);
     translate(0, 16*lines);
     alternate_fill();
     rect(0, 0, 160, 17);
     fill(0);
     textStyle(BOLD);
-    text("TOTAL :", 40, 10);
-    text(display_kgh_long(total_power), 120, 10);
+    text("TOTAL :", 40, 6);
+    text(display_kgh_long(total_power), 120, 6);
     textStyle(NORMAL);
     for (const key of keys_emissions) {
       if(data[key][t]>0){
@@ -66,9 +66,9 @@ function draw_emissions() {
         pop();
         fill(0);
         textAlign(LEFT, CENTER);
-        text(cols_and_names[key][1], 20, 9);
+        text(cols_and_names[key][1], 20, 5);
         textAlign(CENTER, CENTER);
-        text(display_kgh(data[key][t]*60), 135, 9);
+        text(display_kgh(data[key][t]*60), 135, 5);
         fill(229, 217, 182);
       }
     }
@@ -128,7 +128,7 @@ function regen_emissions(res){
         stroke(0);
         line(x, 0, x, 5);
         noStroke();
-        text(units[i], x, 0.5*margin);
+        text(units[i], x, 0.3*margin);
       }
       pop();
 
@@ -143,7 +143,7 @@ function regen_emissions(res){
         stroke(0);
         line(0, -y*i, -5, -y*i);
         noStroke();
-        text(display_kgh(y_ticks[i]),-0.75*margin, -y*i);
+        text(display_kgh(y_ticks[i]),-0.75*margin, -y*i-4);
       }
       pop();
       pop();

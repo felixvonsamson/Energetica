@@ -150,7 +150,7 @@ def resource_market():
                                             player=current_user)
                 db.session.add(new_sale)
                 db.session.commit()  
-                flash(f"You put {quantity/1000}t of {resource} on sale for {price*1000}¤/t", category="message")
+                flash(f"You put {quantity/1000}t of {resource} on sale for {price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t", category="message")
         else :
             quantity = float(request.form.get("purchases_quantity"))*1000
             sale_id = int(request.form.get("sale_id"))

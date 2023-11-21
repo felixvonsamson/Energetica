@@ -27,6 +27,7 @@ let cols_and_names = {};
 
 function preload() {
     font = loadFont('static/fonts/Baloo2-VariableFont_wght.ttf');
+    coin = loadImage('static/images/icons/coin.svg');
 }
 
 function setup() {
@@ -152,10 +153,12 @@ function draw() {
                 fill(0);
                 textAlign(LEFT, CENTER);
                 text(cols_and_names[key][1], 20, 5);
-                textAlign(CENTER, CENTER);
                 if(key == "price"){
-                    text(display_money(data[key][t_view]), 132, 5);
+                    textAlign(RIGHT, CENTER);
+                    text(display_money(data[key][t_view]), 137, 5);
+                    image(coin, 140, 2, 12, 12);
                 }else{
+                    textAlign(CENTER, CENTER);
                     text(display_W(data[key][t_view]), 132, 5);
                 }
                 fill(229, 217, 182);
@@ -214,7 +217,12 @@ function draw() {
                     textStyle(BOLD);
                     text(supply["player"][i], 90, 4);
                     textStyle(NORMAL);
-                    let right = [display_W(supply["capacity"][i]), display_money(supply["price"][i]), cols_and_names[supply["plant"][i]][1]];
+                    push();
+                    textAlign(RIGHT, CENTER);
+                    text(display_money(supply["price"][i]), 97, 32+5);
+                    image(coin, 100, 32+2, 12, 12);
+                    pop();
+                    let right = [display_W(supply["capacity"][i]), "", cols_and_names[supply["plant"][i]][1]];
                     for(let j of right){
                         translate(0, 16);
                         text(j, 90, 4);
@@ -246,7 +254,11 @@ function draw() {
                 text("Quantity", 5, 4);
                 textAlign(CENTER);
                 translate(0, -16);
-                text(display_money(mp), 90, 4);
+                push();
+                textAlign(RIGHT, CENTER);
+                text(display_money(mp), 97, 5);
+                image(coin, 100, 2, 12, 12);
+                pop();
                 translate(0, 16);
                 text(display_W(mq), 90, 4);
                 pop();
@@ -300,7 +312,12 @@ function draw() {
                     textStyle(BOLD);
                     text(demand["player"][i], 90, 4);
                     textStyle(NORMAL);
-                    let right = [display_W(demand["capacity"][i]), price, plant];
+                    push();
+                    textAlign(RIGHT, CENTER);
+                    text(price, 97, 32+5);
+                    image(coin, 100, 32+2, 12, 12);
+                    pop();
+                    let right = [display_W(demand["capacity"][i]), "", plant];
                     for(let j of right){
                         translate(0, 16);
                         text(j, 90, 4);
@@ -407,13 +424,15 @@ function update_graph(){
             interval = y_units_market(maxPrice-minPrice);
             fill(0);
             let y = map(interval, 0, maxPrice, 0, graph_h*f);
+            textAlign(RIGHT, CENTER);
             for(let i=0; i<=graph_h*f; i+=y){
                 stroke(0, 0, 0, 30);
                 line(graph_w, -i, 0, -i);
                 stroke(0);
                 line(0, -i, -5, -i);
                 noStroke();
-                text(display_money(interval*i/y),-0.9*margin, -i-3);
+                image(coin,-25, -i-6,12, 12);
+                text(display_money(interval*i/y),-28, -i-3);
             }
             pop();
             pop();
@@ -436,7 +455,7 @@ function update_graph(){
             });
         data_len = data["price"].length;
         push();
-        translate(1.5*margin, 310);
+        translate(1.5*margin, 300*f+10);
         noStroke();
         push();
         strokeWeight(3);
@@ -449,7 +468,6 @@ function update_graph(){
             "quantity": Math.max(...data["quantity"])
         }
         f = max["price"] / (max["price"]-min["price"])
-        translate(0, -300*(1-f));
         for (const key of ["price", "quantity"]) { 
             stroke(cols_and_names[key][0]);
             push();
@@ -464,8 +482,8 @@ function update_graph(){
         pop();
         stroke(0);
         line(0, 0, graph_w, 0);
-        line(0, 0, 0, -300);
-        line(graph_w, 0, graph_w, -300);
+        line(0, 300*(1-f), 0, -300*f);
+        line(graph_w, 300*(1-f), graph_w, -300*f);
         
         push();
         let units = time_unit(res);
@@ -473,9 +491,9 @@ function update_graph(){
         for(let i=0; i<units.length; i++){
             stroke(0, 0, 0, 30);
             let x = i*graph_w/(units.length-1);
-            line(x, -300, x, 0);
+            line(x, -300*f, x, 300*(1-f));
             stroke(0);
-            line(x, 0, x, 5);
+            line(x, 300*(1-f), x, 300*(1-f)+5);
             noStroke();
             text(units[i], x, 0.5*margin-3);
         }
@@ -486,13 +504,15 @@ function update_graph(){
         let interval2 = y_ticks[1];
         fill(40, 84, 48);
         let y2 = map(interval2, 0, max["price"], 0, 300*f);
+        textAlign(RIGHT, CENTER);
         for(let i=0; i<y_ticks.length; i++){
             stroke(0, 0, 0, 30);
             line(graph_w, -y2*i, 0, -y2*i);
             stroke(40, 84, 48);
             line(0, -y2*i, -5, -y2*i);
             noStroke();
-            text(y_ticks[i] + " ¤",-0.75*margin, -y2*i-3);
+            image(coin,-25, -y2*i-6,12, 12);
+            text(display_money(y_ticks[i]),-28, -y2*i-3);
         }
         pop();
 
@@ -529,7 +549,7 @@ function display_W(energy) {
 }
 
 function display_money(price) {
-    const units = [" ¤", "k ¤", "M ¤", "Md ¤"];
+    const units = ["", "k", "M", "Md"];
     return general_format(price, units);
 }
 
@@ -590,7 +610,7 @@ function general_format(value, units){
         value /= 1000;
         unit_index += 1;
     }
-    return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}${
+    return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
         units[unit_index]}`;
 }
 

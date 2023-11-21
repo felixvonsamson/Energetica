@@ -45,15 +45,15 @@ function draw_storage() {
     rect(0, 0, 160, 17);
     fill(0);
     textStyle(BOLD);
-    text(display_duration((data_len-t-1)*res_to_data[res][1]),80, 9);
+    text(display_duration((data_len-t-1)*res_to_data[res][1]),80, 5);
     textStyle(NORMAL);
     translate(0, 16*lines);
     alternate_fill();
     rect(0, 0, 160, 17);
     fill(0);
     textStyle(BOLD);
-    text("TOTAL :", 40, 10);
-    text(display_Wh_long(total_power), 120, 10);
+    text("TOTAL :", 40, 6);
+    text(display_Wh_long(total_power), 120, 6);
     textStyle(NORMAL);
     for (const key of keys_storage) {
       if(data[key][t]>0){
@@ -66,9 +66,9 @@ function draw_storage() {
         pop();
         fill(0);
         textAlign(LEFT, CENTER);
-        text(cols_and_names[key][1], 20, 9);
+        text(cols_and_names[key][1], 20, 5);
         textAlign(CENTER, CENTER);
-        text(display_Wh(data[key][t]), 135, 9);
+        text(display_Wh(data[key][t]), 135, 5);
         fill(229, 217, 182);
       }
     }
@@ -83,7 +83,7 @@ function draw_storage() {
       rect(0, 0, 160, 17);
       textStyle(BOLD);
       fill(0);
-      text("Total storage capacity",80, 8);
+      text("Total storage capacity",80, 4);
       textStyle(NORMAL);
       let total_cap = 0;
       for(key of keys_storage) {
@@ -97,9 +97,9 @@ function draw_storage() {
           pop();
           textAlign(LEFT, CENTER);
           fill(0);
-          text(cols_and_names[key][1], 20, 9);
+          text(cols_and_names[key][1], 20, 5);
           textAlign(CENTER, CENTER);
-          text(display_Wh(caps[key]), 135, 9);
+          text(display_Wh(caps[key]), 135, 5);
           total_cap += caps[key];
         }
       }
@@ -108,8 +108,8 @@ function draw_storage() {
       rect(0, 0, 160, 17);
       fill(0);
       textStyle(BOLD);
-      text("TOTAL :", 40, 9);
-      text(display_Wh_long(total_cap), 120, 9);
+      text("TOTAL :", 40, 5);
+      text(display_Wh_long(total_cap), 120, 5);
       pop();
     }
     pop();
@@ -168,7 +168,7 @@ function regen_storage(res){
         stroke(0);
         line(x, 0, x, 5);
         noStroke();
-        text(units[i], x, 0.5*margin);
+        text(units[i], x, 0.3*margin);
       }
       pop();
 
@@ -183,7 +183,7 @@ function regen_storage(res){
         stroke(0);
         line(0, -y*i, -5, -y*i);
         noStroke();
-        text(display_Wh(y_ticks[i]),-0.75*margin, -y*i);
+        text(display_Wh(y_ticks[i]),-0.75*margin, -y*i-4);
       }
       pop();
       pop();
@@ -196,7 +196,7 @@ function regen_storage(res){
       }
       
       push();
-      translate(width-0.6*margin, 0.5*height);
+      translate(width-0.5*margin, 0.5*height);
       rotate(radians(90));
       textSize(18);
       text("Total storage capacities", 0, 0);
