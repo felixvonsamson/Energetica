@@ -37,8 +37,8 @@ def store_import(player_id, resource, quantity):
     print(f"{player.username} received a shipment of {quantity} kg {resource}")
 
 # format for price display
-def display_CHF(price):
-    return f"{price:,.0f} CHF".replace(",", " ")
+def display_money(price):
+    return f"{price:,.0f} ¤".replace(",", " ")
 
 # checks if a chat with exactly these participants already exists
 def check_existing_chats(participants):

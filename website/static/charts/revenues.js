@@ -64,7 +64,7 @@ function draw_revenues() {
     fill(0);
     textStyle(BOLD);
     text("TOTAL :", 40, 10);
-    text(display_CHF_long(total_power), 120, 10);
+    text(display_money_long(total_power), 120, 10);
     textStyle(NORMAL);
     for (const key of keys_revenues) {
       if(data[key][t]!=0){
@@ -79,7 +79,7 @@ function draw_revenues() {
         textAlign(LEFT, CENTER);
         text(cols_and_names[key][1], 20, 9);
         textAlign(CENTER, CENTER);
-        text(display_CHF(data[key][t]*60), 135, 9);
+        text(display_money(data[key][t]*60), 135, 9);
         fill(229, 217, 182);
       }
     }
@@ -173,7 +173,7 @@ function regen_revenues(res){
         stroke(0);
         line(0, -i, -5, -i);
         noStroke();
-        text(display_CHF(interval*i/y),-margin, -i);
+        text(display_money(interval*i/y),-margin, -i);
       }
       for(let i=-y; i>=-graph_h*(1-f); i-=y){
         stroke(0, 0, 0, 30);
@@ -181,7 +181,7 @@ function regen_revenues(res){
         stroke(0);
         line(0, -i, -5, -i);
         noStroke();
-        text(display_CHF(interval*i/y),-margin, -i);
+        text(display_money(interval*i/y),-margin, -i);
       }
       pop();
       pop();

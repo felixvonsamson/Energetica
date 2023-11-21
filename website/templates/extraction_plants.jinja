@@ -21,7 +21,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/extraction_plants/coal_mine.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Coal_mining" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Coal_mining" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The coal mine extracts coal from the ground. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of coal : <strong><script>display_kg({{user.tile[0].coal}});</script></strong></em>
  </div>
@@ -62,7 +62,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/extraction_plants/oil_field.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Extraction_of_petroleum" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Extraction_of_petroleum" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The oil field extracts oil from the ground. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of oil : <strong><script>display_kg({{user.tile[0].oil}});</script></strong></em>
  </div>
@@ -103,7 +103,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/extraction_plants/gas_drilling_site.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Natural_gas" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Natural_gas" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The gas drilling site extracts gas from the ground. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of gas : <strong><script>display_kg({{user.tile[0].gas}});</script></strong></em>
  </div>
@@ -144,7 +144,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/extraction_plants/uranium_mine.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Natural_gas" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Natural_gas" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The uranium mine extracts uranium from the ground. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of uranium : <strong><script>display_kg({{user.tile[0].uranium}});</script></strong></em>
  </div>

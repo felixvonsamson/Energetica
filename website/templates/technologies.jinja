@@ -21,7 +21,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/mathematics.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.mathematics}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.mathematics}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Mathematics is the fundamental tool of science. <br>
  </div>
  <div class="infobox" id="reqirements" style="margin-right:200px">
@@ -53,7 +53,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/mechanical_engineering.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.mechanical_engineering}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.mechanical_engineering}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Mechanical engineering is the science of machines. <br>
  Affects the facilities : 
  {% for facility in ["steam_engine", "watermill", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "compressed_air"] %}
@@ -96,7 +96,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/thermodynamics.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.thermodynamics}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.thermodynamics}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Thermodynamics is very boring. <br>
  Affects the facilities : 
  {% for facility in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4", "compressed_air"] %}
@@ -141,7 +141,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/physics.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.physics}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.physics}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Physics is the science of experimentation. <br>
  Affects the facilities : 
  {% for facility in ["PV_solar", "CSP_solar", "hydrogen_storage", "lithium_ion_batteries"] %}
@@ -184,7 +184,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/building_technology.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.building_technology}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.building_technology}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Building technology enables more efficient construction of facilites. <br>
  Affects <em class="txt-blue">all power and storage facilities</em>.
  </div>
@@ -223,7 +223,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/mineral_extraction.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.mineral_extraction}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.mineral_extraction}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Mineral extraction improves the extraction of natural resources. <br>
  Affects the facilities : 
  {% for facility in ["coal_mine", "oil_field", "gas_drilling_site"] %}
@@ -268,7 +268,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/transport_technology.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.transport_technology}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.transport_technology}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Transport technology enables efficient transport of natural resources. <br>
  Affects the <em class="txt-blue">transport of natural resources</em>.
  </div>
@@ -308,7 +308,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/materials.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.materials}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.materials}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Material sciences are essential to find improved materials. <br>
  Affects the facilities : 
  {% for facility in ["PV_solar", "onshore_wind_turbine", "offshore_wind_turbine", "lithium_ion_batteries"] %}
@@ -350,7 +350,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/civil_engineering.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.civil_engineering}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.civil_engineering}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Civil engineers can build bridges. <br>
  Affects the facilities : 
  {% for facility in ["small_water_dam", "large_water_dam", "small_pumped_hydro"] %}
@@ -394,7 +394,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/aerodynamics.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.aerodynamics}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.aerodynamics}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Aerodynamics is the science of airflow. <br>
  Affects the facilities : 
  {% for facility in ["windmill", "onshore_wind_turbine"] %}
@@ -437,7 +437,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/chemistry.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.chemistry}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.chemistry}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Chemistry is also very boring. <br>
  Affects the facilities : 
  {% for facility in ["hydrogen_storage", "lithium_ion_batteries"] %}
@@ -482,7 +482,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/nuclear_engineering.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.nuclear_engineering}}</em>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.nuclear_engineering}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Nuclear engineers are used to improve nuclear power plants. <br>
  Affects the facilities : 
  <em class="txt-blue">{{data["nuclear_reactor"].name}}</em> , 

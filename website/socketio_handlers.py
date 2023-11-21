@@ -7,7 +7,7 @@ import pickle
 from flask import request, session, flash, g, current_app
 from flask_login import current_user
 from .database import Player, Network, Hex, Under_construction, Chat, Message
-from .utils import display_CHF, check_existing_chats, data_init_network
+from .utils import display_money, check_existing_chats, data_init_network
 from . import db
 from pathlib import Path
 
@@ -92,7 +92,7 @@ def add_handlers(socketio, engine):
             current_user.money -= assets[facility]["price"]
             finish_time = time.time() + assets[facility]["construction time"]
             start_time=time.time()
-        updates = [("money", display_CHF(current_user.money))]
+        updates = [("money", display_money(current_user.money))]
         engine.update_fields(updates, [current_user])
         new_facility = Under_construction(
             name=facility,

@@ -11,7 +11,7 @@ import math
 import time
 from . import db
 from .database import Chat, Player, Network, Resource_on_sale, Shipment
-from .utils import check_existing_chats, display_CHF
+from .utils import check_existing_chats, display_money
 
 views = Blueprint("views", __name__)
 
@@ -150,7 +150,7 @@ def resource_market():
                                             player=current_user)
                 db.session.add(new_sale)
                 db.session.commit()  
-                flash(f"You put {quantity/1000}t of {resource} on sale for {price*1000}CHF/t", category="message")
+                flash(f"You put {quantity/1000}t of {resource} on sale for {price*1000}¤/t", category="message")
         else :
             quantity = float(request.form.get("purchases_quantity"))*1000
             sale_id = int(request.form.get("sale_id"))

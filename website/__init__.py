@@ -110,7 +110,7 @@ def create_app():
         )
         scheduler.add_job(
             func=check_upcoming_actions,
-            args=(engine, app),
+            args=[app],
             id="check_upcoming_actions",
             trigger="interval",
             seconds=1,

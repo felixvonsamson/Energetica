@@ -39,8 +39,8 @@ function display_upgrade_W(price, factor) {
   upgrade_format(price, units, factor);
 }
 
-function display_upgrade_CHF(price, factor) {
-  const units = [" CHF/day", "k CHF/day", "M CHF/day", "Md CHF/day"];
+function display_upgrade_money(price, factor) {
+  const units = [" ¤/day", "k ¤/day", "M ¤/day", "Md ¤/day"];
   upgrade_format(price, units, factor);
 }
 
@@ -50,15 +50,15 @@ function display_upgrade_kg(price, factor) {
 }
 
 // Price :
-function display_CHF(price) {
-  const units = [" CHF", "k CHF", "M CHF", "Md CHF"];
+function display_money(price) {
+  const units = [" ¤", "k ¤", "M ¤", "Md ¤"];
   general_format(price, units);
 }
 
 // Prices for balance display :
-function display_CHF_long(price) {
+function display_money_long(price) {
   document.write(
-    `${price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} CHF`,
+    `${price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} ¤`,
   );
 }
 

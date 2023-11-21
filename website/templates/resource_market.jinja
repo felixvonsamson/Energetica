@@ -23,8 +23,8 @@
             </select>
             <label for="quantity">Quantity (in tons)</label>
             <input type="number" class="create_chat_input medium txt_center" style="margin-bottom:10px; width:164px" id="quantity" name="quantity" placeholder="quantity [t]" min="0.01" step="0.01" required>
-            <label for="price">Price (in CHF/ton)</label>
-            <input type="number" class="create_chat_input medium txt_center" style="width:164px" id="price" name="price" placeholder="price [CHF/t]" min="0.01" step="0.01" required>
+            <label for="price">Price (in ¤/ton)</label>
+            <input type="number" class="create_chat_input medium txt_center" style="width:164px" id="price" name="price" placeholder="price [¤/t]" min="0.01" step="0.01" required>
         </div>
         <button type="submit" class="bone padding medium login-button" style="margin-top:20px">Put on sale</button>
     </form>
@@ -50,7 +50,7 @@
         <img class="img" src="{{ url_for('static', filename='images/ressources/'+sale.resource+'_img.jpg') }}"\>
         <div id="infos" class="flex-col medium">
             <span class="large"><script>to_string({{sale.quantity/1000}});</script> t {{sale.resource}}</span>
-            <span class="large"><b><script>to_string({{sale.price*1000}});</script></b> CHF/t</span>
+            <span class="large"><b><script>to_string({{sale.price*1000}});</script></b> ¤/t</span>
             shipment : <script>calculate_delivery({{user.tile[0].q-sale.player.tile[0].q}}, {{user.tile[0].r-sale.player.tile[0].r}}, {{data["transport"]["time"]}});</script>
         </div>
         <form method="POST" autocomplete="off" id="additionalContent" class="hidden-info medium flex-col">
@@ -58,7 +58,7 @@
             <input type="hidden" name="sale_id" value="{{sale.id}}">
             <label for="q_buy_{{sale.id}}" class="small">Purchased quantity (in tons)</label>
             <input type="number" class="create_chat_input medium txt_center" style="width:164px" value="{{sale.quantity/1000}}" id="{{sale.id}}" name="purchases_quantity" placeholder="quantity [t]" min="0.01" step="0.01" max="{{sale.quantity/1000}}" onclick="stopPropagation(event);" oninput="updateToPay({{sale.id}}, {{sale.price}});" required/>
-            <span id="to_pay_{{sale.id}}">(<script>to_string({{sale.quantity*sale.price}});</script> CHF)</span>
+            <span id="to_pay_{{sale.id}}">(<script>to_string({{sale.quantity*sale.price}});</script> ¤)</span>
             <button type="submit" onclick="stopPropagation(event);" class="margin medium white padding button" style="margin-top:8px"><b>Buy</b></button>
         </form>
     </div>

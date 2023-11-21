@@ -22,8 +22,8 @@ function updateToPay(saleId, basePrice) {
     if (!isNaN(quantity)) {
         let totalPrice = basePrice * quantity;
         totalPrice = totalPrice % 1 === 0 ? totalPrice.toFixed(0) : totalPrice.toFixed(2);
-        toPaySpan.textContent = `(${totalPrice} CHF)`;
+        toPaySpan.textContent = `(${totalPrice} ¤)`;
     }else{
-      toPaySpan.textContent = `(0 CHF)`;
+      toPaySpan.textContent = `(0 ¤)`;
     }
 }

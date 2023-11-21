@@ -170,7 +170,7 @@ def calculate_generation_without_market(engine, total_demand, player, t):
             generation[plant][t] = calculate_prod("min", player, assets, plant, 
                                                   generation, t)
         total_generation += generation[plant][t]
-    # If the player is not able to use all the min. generated energy, it has to be dumped at a cost of 5 CHF per MWh
+    # If the player is not able to use all the min. generated energy, it has to be dumped at a cost of 5 ¤ per MWh
     if total_generation > total_demand:
         dumping = total_generation-total_demand
         demand["dumping"][t] = dumping
@@ -217,7 +217,7 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
                 generation[plant][t] = calculate_prod("min", player, assets, plant, 
                         generation, t, storage=storage if plant in engine.storage_plants else None)
             total_generation += generation[plant][t]
-            # If the player is not able to use all the min. generated energy, it is put on the market for -5CHF/MWh
+            # If the player is not able to use all the min. generated energy, it is put on the market for -5¤/MWh
             if total_generation > total_demand:
                 capacity = min(generation[plant][t], total_generation-total_demand)
                 market = offer(market, player, capacity, -5, plant)

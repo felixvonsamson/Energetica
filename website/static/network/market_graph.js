@@ -154,7 +154,7 @@ function draw() {
                 text(cols_and_names[key][1], 20, 5);
                 textAlign(CENTER, CENTER);
                 if(key == "price"){
-                    text(display_CHF(data[key][t_view]), 132, 5);
+                    text(display_money(data[key][t_view]), 132, 5);
                 }else{
                     text(display_W(data[key][t_view]), 132, 5);
                 }
@@ -214,7 +214,7 @@ function draw() {
                     textStyle(BOLD);
                     text(supply["player"][i], 90, 4);
                     textStyle(NORMAL);
-                    let right = [display_W(supply["capacity"][i]), display_CHF(supply["price"][i]), cols_and_names[supply["plant"][i]][1]];
+                    let right = [display_W(supply["capacity"][i]), display_money(supply["price"][i]), cols_and_names[supply["plant"][i]][1]];
                     for(let j of right){
                         translate(0, 16);
                         text(j, 90, 4);
@@ -246,7 +246,7 @@ function draw() {
                 text("Quantity", 5, 4);
                 textAlign(CENTER);
                 translate(0, -16);
-                text(display_CHF(mp), 90, 4);
+                text(display_money(mp), 90, 4);
                 translate(0, 16);
                 text(display_W(mq), 90, 4);
                 pop();
@@ -261,7 +261,7 @@ function draw() {
                     let plant = "Base demand"
                     if (demand["price"][i] != null){
                         h = map(demand["price"][i], 0, maxPrice, 0, graph_h*f);
-                        price = display_CHF(demand["price"][i]);
+                        price = display_money(demand["price"][i]);
                         plant = cols_and_names[demand["plant"][i]][1];
                     }
                     translate(0, -h);
@@ -413,7 +413,7 @@ function update_graph(){
                 stroke(0);
                 line(0, -i, -5, -i);
                 noStroke();
-                text(display_CHF(interval*i/y),-0.9*margin, -i-3);
+                text(display_money(interval*i/y),-0.9*margin, -i-3);
             }
             pop();
             pop();
@@ -492,7 +492,7 @@ function update_graph(){
             stroke(40, 84, 48);
             line(0, -y2*i, -5, -y2*i);
             noStroke();
-            text(y_ticks[i] + " CHF",-0.75*margin, -y2*i-3);
+            text(y_ticks[i] + " ¤",-0.75*margin, -y2*i-3);
         }
         pop();
 
@@ -528,8 +528,8 @@ function display_W(energy) {
     return general_format(energy, units);
 }
 
-function display_CHF(price) {
-    const units = [" CHF", "k CHF", "M CHF", "Md CHF"];
+function display_money(price) {
+    const units = [" ¤", "k ¤", "M ¤", "Md ¤"];
     return general_format(price, units);
 }
 

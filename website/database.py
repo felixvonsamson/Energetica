@@ -152,7 +152,7 @@ class Player(db.Model, UserMixin):
     self_consumption_priority = db.Column(db.Text, default="small_water_dam large_water_dam watermill onshore_wind_turbine offshore_wind_turbine windmill CSP_solar PV_solar")
     rest_of_priorities = db.Column(db.Text, default="steam_engine nuclear_reactor nuclear_reactor_gen4 combined_cycle gas_burner oil_burner coal_burner")
 
-    # Production capacity prices [CHF/MWh]
+    # Production capacity prices [¤/MWh]
     price_steam_engine = db.Column(db.Float, default=125)
     price_coal_burner = db.Column(db.Float, default=600)
     price_oil_burner = db.Column(db.Float, default=550)
@@ -161,7 +161,7 @@ class Player(db.Model, UserMixin):
     price_nuclear_reactor = db.Column(db.Float, default=275)
     price_nuclear_reactor_gen4 = db.Column(db.Float, default=375)
 
-    # Storage capacity prices [CHF/MWh]
+    # Storage capacity prices [¤/MWh]
     price_buy_small_pumped_hydro = db.Column(db.Float, default=150)
     price_sell_small_pumped_hydro = db.Column(db.Float, default=250)
     price_buy_compressed_air = db.Column(db.Float, default=70)
@@ -194,7 +194,7 @@ class Player(db.Model, UserMixin):
     def update_resources(player):
         if player.sid:
             updates = []
-            updates.append(["money", f"{player.money:,.0f} CHF".replace(",", "'")])
+            updates.append(["money", f"{player.money:,.0f} ¤".replace(",", "'")])
             player.emit("update_data", updates)
 
     # prints out the object as a sting with the players username for debugging

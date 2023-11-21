@@ -55,7 +55,7 @@
 <div class="version large">Version : alfa 0.2.0</div>
 
 <div class="ressources medium tan_green">
-  <div class="padding money_font large" id="money"><script>display_CHF_long({{user.money}});</script></div>
+  <div class="padding money_font large" id="money"><script>display_money_long({{user.money}});</script></div>
   <div class="padding" id="coal"><script>display_kg({{user.coal}});</script> <img src="{{ url_for('static', filename='images/ressources/coal.png') }}" class="icon" alt="coal"></div>
   <div class="padding" id="oil"><script>display_kg({{user.oil}});</script> <img src="{{ url_for('static', filename='images/ressources/oil.png') }}" class="icon" alt="oil"></div>
   <div class="padding" id="gas"><script>display_kg({{user.gas}});</script> <img src="{{ url_for('static', filename='images/ressources/gas.png') }}" class="icon" alt="gas"></div>

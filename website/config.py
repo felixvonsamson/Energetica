@@ -7,7 +7,7 @@ full_config = {
     "assets": {
         "steam_engine": {
             "name": "Steam engine",
-            "price": 2600,  # [CHF]
+            "price": 2600,  # [¤]
             "power generation": 210000,  # [W]
             "construction time": 3600,  # [s]
             "construction energy": 8500000,  # [Wh]
@@ -231,7 +231,7 @@ full_config = {
         },
         "small_pumped_hydro": {
             "name": "Small pumped hydro",
-            "price": 19500,  # [CHF]
+            "price": 19500,  # [¤]
             "storage capacity": 165700000,  # [Wh]
             "power generation": 2600000,  # [W]
             "efficiency": 0.75,
@@ -328,7 +328,7 @@ full_config = {
         },
         "laboratory": {
             "name": "Laboratory",
-            "price": 100000,  # [CHF]
+            "price": 100000,  # [¤]
             "construction time": 10800,  # [s]
             "construction energy": 1000000000,  # [Wh]
             "construction pollution": 100000,  # [kg]
@@ -351,7 +351,7 @@ full_config = {
             "construction energy": 10000000,
             "construction pollution": 1000,
             "power consumption": 100000/1.4, # [W]
-            "income": 40000/1.35, # [CHF/day]   --- TEMPORARY CHANGED FROM 2000 to 40000
+            "income": 40000/1.35, # [¤/day]   --- TEMPORARY CHANGED FROM 2000 to 40000
             "price multiplier": 1.25,
             "power factor" : 1.4,
             "income factor" : 1.35,
@@ -373,7 +373,7 @@ full_config = {
         },
         "coal_mine": {
             "name": "Coal mine",
-            "price": 28500,  # [CHF]
+            "price": 28500,  # [¤]
             "construction time": 28800,  # [s]
             "construction energy": 126000000,  # [Wh]
             "construction pollution": 200000,  # [kg]
@@ -421,7 +421,7 @@ full_config = {
         },
         "mathematics": {
             "name": "Mathematics",
-            "price": 180000,  # [CHF]
+            "price": 180000,  # [¤]
             "price multiplier": 1.3,
             "construction time": 18000,  # [s]
             "construction energy": 25000000,  # [Wh]

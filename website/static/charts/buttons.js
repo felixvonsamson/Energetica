@@ -228,8 +228,8 @@ function display_kg(mass) {
     return general_format(mass, units);
 }
 
-function display_CHF(amount) {
-    const units = [" CHF/h", "k CHF/h", "M CHF/h"];
+function display_money(amount) {
+    const units = [" ¤/h", "k ¤/h", "M ¤/h"];
     return general_format(amount, units);
 }
   
@@ -297,8 +297,8 @@ function display_kgh_long(mass) {
     return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} kg/h`
 }
 
-function display_CHF_long(amount) {
-    return `${amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} CHF/h`
+function display_money_long(amount) {
+    return `${amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ¤/h`
 }
 
 function change_view(view){

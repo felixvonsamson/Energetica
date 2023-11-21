@@ -20,7 +20,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/steam_engine.png') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Steam_engine" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Steam_engine" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The steam engine burns wood to produce electricity. <br>
  </div>
  <div class="infobox" id="reqirements">
@@ -38,7 +38,7 @@
  <div class="infobox" id="infotable">
   <table class="table tan_green">
     <tr><td>Max generation</td><td class="txt_center"><strong><script>display_W({{facility["power generation"]}});</script></strong></td></tr>
-    <tr><td>Operation cost</td><td class="txt_center"><strong><script>display_CHF({{facility["O&M cost"]}});</script>/h</strong></td></tr>
+    <tr><td>Operation cost</td><td class="txt_center"><strong><script>display_money({{facility["O&M cost"]}});</script>/h</strong></td></tr>
     <tr><td>Ramping speed</td><td class="txt_center"><strong><script>display_W({{facility["ramping speed"]}});</script>/min</strong></td></tr>
     <tr><td>CO2 emissions</td><td class="txt_center"><strong><script>display_kg({{facility["pollution"]}});</script>/MWh</strong></td></tr>
   </table>
@@ -61,7 +61,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/windmill.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Windmill" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Windmill" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The windmill uses the force of the wind to produce electricity. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Wind potential : <strong>{{(user.tile[0].wind*100)|int}}%</strong></em>
  </div>
@@ -102,7 +102,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/watermill.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Watermill" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Watermill" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The watermill uses the energy of flowing water to produce electricity. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{user.tile[0].hydro - user.watermill}}</strong></em>
  </div>
@@ -143,7 +143,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/coal_burner.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Coal-fired_power_station" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Coal-fired_power_station" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The coal burner burns coal to produce electricity. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Current stock of coal : <strong><script>display_kg({{user.coal}});</script></strong></em>
  </div>
@@ -185,7 +185,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/oil_burner.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Fossil_fuel_power_station" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Fossil_fuel_power_station" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The oil burner burns oil to produce electricity. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Current stock of oil : <strong><script>display_kg({{user.oil}});</script></strong></em>
  </div>
@@ -227,7 +227,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/gas_burner.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Gas-fired_power_plant" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Gas-fired_power_plant" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The gas burner burns gas to produce electricity. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Current stock of gas : <strong><script>display_kg({{user.gas}});</script></strong></em>
  </div>
@@ -269,7 +269,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/small_water_dam.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydroelectricity" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydroelectricity" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The small water dam uses the potential energy of the water to produce electricity. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{user.tile[0].hydro - user.small_water_dam}}</strong></em>
  </div>
@@ -310,7 +310,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/onshore_wind_turbine.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Wind_turbine" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Wind_turbine" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The wind turbine uses the energy of the wind to produce electricity. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Wind potential : <strong>{{(user.tile[0].wind*100)|int}}%</strong></em>
  </div>
@@ -351,7 +351,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/combined_cycle.png') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Combined_cycle_power_plant" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Combined_cycle_power_plant" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The combined cycle power plant burns coal and gas to produce electricity. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Current stock of gas : <strong><script>display_kg({{user.gas}});</script></strong></em><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Current stock of coal : <strong><script>display_kg({{user.oil}});</script></strong></em>
@@ -395,7 +395,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/nuclear_reactor.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Nuclear_power_plant" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Nuclear_power_plant" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The nuclear power plant uses controlled nuclear fission to produce a large amount of electricity. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Current stock of uranium : <strong><script>display_kg({{user.uranium}});</script></strong></em>
  </div>
@@ -437,7 +437,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/large_water_dam.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydroelectricity" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydroelectricity" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The large water dam uses the potential energy of the water to produce a large amount of electricity. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{user.tile[0].hydro - user.small_water_dam}}</strong></em>
  </div>
@@ -478,7 +478,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/CSP_solar.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Concentrated_solar_power" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Concentrated_solar_power" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The concentrated solar power plant acumulates heat from the irradiation energy of the sun to produce electricity. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Solar potential : <strong>{{(user.tile[0].solar*100)|int}}%</strong></em>
  </div>
@@ -519,7 +519,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/PV_solar.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Photovoltaics" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Photovoltaics" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The photovoltaic pannels transform the irradiation energy of the sun into electricity. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Solar potential : <strong>{{(user.tile[0].solar*100)|int}}%</strong></em>
  </div>
@@ -560,7 +560,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/offshore_wind_turbine.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Wind_turbine" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Wind_turbine" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The wind turbine uses the energy of the wind to produce electricity. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Wind potential : <strong>{{(user.tile[0].wind*100)|int}}%</strong></em>
  </div>
@@ -601,7 +601,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/nuclear_reactor_gen4.png') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Generation_IV_reactor" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_CHF_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Generation_IV_reactor" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The nuclear power plant of the 4th generation uses controlled nuclear fission to produce a large amount of electricity fom a litle quantity of fuel. <br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Current stock of uranium : <strong><script>display_kg({{user.uranium}});</script></strong></em>
  </div>
