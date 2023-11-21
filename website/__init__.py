@@ -14,7 +14,6 @@ from flask_socketio import SocketIO
 import atexit
 from flask_apscheduler import APScheduler
 
-heap = []
 db = SQLAlchemy()
 
 from website.gameEngine import gameEngine
@@ -90,7 +89,7 @@ def create_app():
     # initialize the schedulers and add the recurrent functions :
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true": # This function is to run the following omly once, TO REMOVE IF DEBUG MODE IS SET TO FALSE 
         from .gameEngine import state_update_h, state_update_m
-        from .gameEngine import check_heap
+        from .gameEngine import check_upcoming_actions
 
         scheduler = APScheduler()
         engine.log("adding jobs")
@@ -110,9 +109,9 @@ def create_app():
             second="0", # "*/5" or "0"
         )
         scheduler.add_job(
-            func=check_heap,
+            func=check_upcoming_actions,
             args=(engine, app),
-            id="check_heap",
+            id="check_upcoming_actions",
             trigger="interval",
             seconds=1,
         )

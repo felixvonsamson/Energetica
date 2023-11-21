@@ -3,13 +3,11 @@ This code contains the main functions that communicate with the server (server s
 """
 
 import time
-import heapq
 import pickle
 from flask import request, session, flash, g, current_app
 from flask_login import current_user
-from . import heap
 from .database import Player, Network, Hex, Under_construction, Chat, Message
-from .utils import add_asset, display_CHF, check_existing_chats, data_init_network
+from .utils import display_CHF, check_existing_chats, data_init_network
 from . import db
 from pathlib import Path
 
@@ -96,7 +94,6 @@ def add_handlers(socketio, engine):
             start_time=time.time()
         updates = [("money", display_CHF(current_user.money))]
         engine.update_fields(updates, [current_user])
-        heapq.heappush(heap, (finish_time, add_asset, (current_user.id, facility)))
         new_facility = Under_construction(
             name=facility,
             family=family,

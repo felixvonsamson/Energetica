@@ -20,10 +20,6 @@ def add_asset(player_id, facility):
     player = Player.query.get(int(player_id))
     setattr(player, facility, getattr(player, facility) + 1)
     current_app.config["engine"].config.update_config_for_user(player.id)
-    Under_construction.query.filter(
-        Under_construction.finish_time < time.time()
-    ).delete()
-    db.session.commit()
     print(f"{player.username} has finished the construction of facility {facility}")
 
 # this function is executed when a resource shippment arrives :
@@ -38,8 +34,6 @@ def store_import(player_id, resource, quantity):
                 getattr(player, resource) + quantity - max_cap)
     else :
         setattr(player, resource, getattr(player, resource) + quantity)
-    Shipment.query.filter(Shipment.arrival_time < time.time()).delete()
-    db.session.commit()
     print(f"{player.username} received a shipment of {quantity} kg {resource}")
 
 # format for price display

@@ -82,10 +82,17 @@
  <div class="infobox" id="infotable">
   <table class="table tan_green">
     <tr><th>Effects :</th><th class="txt_center">lvl {{user.warehouse}} -> lvl {{user.warehouse+1}}</th></tr>
-    <tr><td>Coal capacity</td><td class="txt_center"><script>display_upgrade_kg({{all_data["warehouse_capacities"]["coal"]}}, {{facility["capacity factor"]}});</script></td></tr>
-    <tr><td>Oil capacity</td><td class="txt_center"><script>display_upgrade_kg({{all_data["warehouse_capacities"]["oil"]}}, {{facility["capacity factor"]}});</script></td></tr>
-    <tr><td>Gas capacity</td><td class="txt_center"><script>display_upgrade_kg({{all_data["warehouse_capacities"]["gas"]}}, {{facility["capacity factor"]}});</script></td></tr>
-    <tr><td>Uranium cap.</td><td class="txt_center"><script>display_upgrade_kg({{all_data["warehouse_capacities"]["uranium"]}}, {{facility["capacity factor"]}});</script></td></tr>
+    {% if user.warehouse == 0 %}
+      <tr><td>Coal capacity</td><td class="txt_center">0 -> 3'000 t</td></tr>
+      <tr><td>Oil capacity</td><td class="txt_center">0 -> 300 t</td></tr>
+      <tr><td>Gas capacity</td><td class="txt_center">0 -> 1'000 t</td></tr>
+      <tr><td>Uranium cap.</td><td class="txt_center">0 -> 5'000 kg</td></tr>
+    {% else %}
+      <tr><td>Coal capacity</td><td class="txt_center"><script>display_upgrade_kg({{all_data["warehouse_capacities"]["coal"]}}, {{facility["capacity factor"]}});</script></td></tr>
+      <tr><td>Oil capacity</td><td class="txt_center"><script>display_upgrade_kg({{all_data["warehouse_capacities"]["oil"]}}, {{facility["capacity factor"]}});</script></td></tr>
+      <tr><td>Gas capacity</td><td class="txt_center"><script>display_upgrade_kg({{all_data["warehouse_capacities"]["gas"]}}, {{facility["capacity factor"]}});</script></td></tr>
+      <tr><td>Uranium cap.</td><td class="txt_center"><script>display_upgrade_kg({{all_data["warehouse_capacities"]["uranium"]}}, {{facility["capacity factor"]}});</script></td></tr>
+    {% endif %}
   </table>
  </div>
  <div id="constructionContent" class="infobox hidden constructionContent">
