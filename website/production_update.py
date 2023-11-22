@@ -262,21 +262,12 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
         if getattr(player, plant) > 0:
             demand = engine.data["current_data"][player.username]["demand"]
             # Storage capacity sold on the market
-            max_storage_content = storage[plant][t - 1] * 60 * (assets[plant]["efficiency"]**0.5) # Transform Wh in W + efficiency
-            max_power = getattr(player, plant) * assets[plant]["power generation"]
-            max_ramping = (generation[plant][t - 1] + getattr(player, plant) * 
-                       assets[plant]["ramping speed"])
-            max_generation = min(max_storage_content, max_power, max_ramping)
-            offer_capacity = max(0, max_generation - generation[plant][t])
+            max_generation = calculate_prod("max", player, assets, plant, generation, t, storage=storage)
+            offer_capacity = max_generation - generation[plant][t]
             price = getattr(player, "price_sell_" + plant)
             market = offer(market, player, offer_capacity, price, plant)
             # Demand curve for storage (no ramping down constraint, only up)
-            max_storage_avalability = (assets[plant]["storage capacity"] * 
-                        getattr(player, plant) - storage[plant][t - 1]) * 60 / (assets[plant]["efficiency"]**0.5)
-            max_power = getattr(player, plant) * assets[plant]["power generation"]
-            max_ramping = (demand[plant][t - 1] + getattr(player, plant) * 
-                       assets[plant]["ramping speed"])
-            demand = min(max_storage_avalability, max_power, max_ramping)
+            demand = calculate_prod("max", player, assets, plant, demand, t, storage=storage, filling=True)
             price = getattr(player, "price_buy_" + plant)
             market = bid(market, player, demand, price, plant)
     return market
@@ -382,7 +373,7 @@ def market_optimum(offers_og, demands_og):
             return price, row.cumul_capacities
 
 # Calculates the min or max power production of a plant in at time t considering ramping constraints, ressources constraints and max and min power constraints
-def calculate_prod(minmax, player, assets, plant, generation, t, storage = None):
+def calculate_prod(minmax, player, assets, plant, generation, t, storage = None, filling = False):
     max_ressources = np.inf
     if storage == None:
         if plant == "combined_cycle":
@@ -396,7 +387,10 @@ def calculate_prod(minmax, player, assets, plant, generation, t, storage = None)
                                                             ressource+"_on_sale")
             max_ressources = avalable_ressource / assets[plant]["amount consumed"] * 60000000
     else:
-        max_ressources = storage[plant][t - 1] * 60 * (assets[plant]["efficiency"]**0.5) # max avalable storge content
+        if filling:
+            max_ressources = (assets[plant]["storage capacity"] * getattr(player, plant) - storage[plant][t - 1]) * 60 * (assets[plant]["efficiency"]**0.5) # max remaining storage space
+        else:
+            max_ressources = storage[plant][t - 1] * 60 * (assets[plant]["efficiency"]**0.5) # max avalable storge content
     if minmax == "max":
         max_ramping = (generation[plant][t - 1] + getattr(player, plant) * 
                        assets[plant]["ramping speed"])
