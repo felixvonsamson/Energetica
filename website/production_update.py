@@ -98,10 +98,8 @@ def update_electricity(engine):
             current_data["generation"]["imports"][t] = max(0, imp-exp)
         # Ressource and pollution update for all players
         ressources_and_pollution(engine, player, t)
-        # income from industry
-        industry_income = engine.config[player.id]["assets"]["industry"]["income"]/1440.0
-        player.money += industry_income
-        current_data["revenues"]["industry"][t] += industry_income
+        # add money from industry income
+        player.money += current_data["revenues"]["industry"][t]
         # update display of resources and money
         player.update_resources()
 
@@ -119,10 +117,14 @@ def init_storage(engine, player, t):
 def calculate_demand(engine, player, t):
     assets = engine.config[player.id]["assets"]
     demand = engine.data["current_data"][player.username]["demand"]
+    revenues = engine.data["current_data"][player.username]["revenues"]
     day = engine.data["total_t"]%73440//1440
     seasonal_factor = (engine.industry_seasonal[day]*(1440-t)+engine.industry_seasonal[(day+1)%51]*t)/1440
     industry_demand = engine.industry_demand[t-1]*seasonal_factor*assets["industry"]["power consumption"]
     demand["industry"][t] = industry_demand
+    # calculate income of industry
+    industry_income = engine.config[player.id]["assets"]["industry"]["income"]/1440.0
+    revenues["industry"][t] = industry_income
     # demand from assets under construction + emissions of construction
     demand_construction = 0
     demand_research = 0
@@ -140,8 +142,11 @@ def calculate_demand(engine, player, t):
                     / construction["construction time"])
             # industry demand ramps up during construction
             if ud.name == "industry":
-                additional_demand = (time.time()-ud.start_time)/(ud.finish_time-ud.start_time)*industry_demand*(assets["industry"]["power factor"]-1)
+                time_fraction = (time.time()-ud.start_time)/(ud.finish_time-ud.start_time)
+                additional_demand = time_fraction*industry_demand*(assets["industry"]["power factor"]-1)
+                additional_revenue = time_fraction*industry_income*(assets["industry"]["income factor"]-1)
                 demand["industry"][t] += additional_demand
+                revenues["industry"][t] += additional_revenue
     demand["construction"][t] = min(demand["construction"][t-1]+0.2*demand_construction, demand_construction) # for smooth demand changes
     demand["research"][t] = min(demand["research"][t-1]+0.2*demand_research, demand_research) # for smooth demand changes
     engine.data["current_data"][player.username]["emissions"]["construction"][t] = emissions_construction
