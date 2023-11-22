@@ -32,6 +32,7 @@ function draw_revenues() {
       }
     }
     pop();
+    push();
     for (const key of keys_revenues) {
       if(data[key][t]>0){
         let h = -data[key][t]/maxSum*graph_h*f;
@@ -42,10 +43,13 @@ function draw_revenues() {
         total_power += data[key][t]*60;
       }
     }
+    pop();
     let tx = -180;
-    let ty = 0;
-    if(h_max<(lines+1)*16){
-      ty = h_max-(lines+1)*16-2;
+    let ty = mouseY-graph_h*f-10;
+    if(ty<-graph_h*f){
+      ty = -graph_h*f;
+    }else if(ty>graph_h*(1-f)-lines*16-16){
+      ty = graph_h*(1-f)-lines*16-16;
     }
     if(t/data_len < 180/graph_w){
       tx = 20;

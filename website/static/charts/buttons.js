@@ -241,7 +241,7 @@ function display_money(amount) {
   
 function general_format(value, units){
     let unit_index = 0;
-    while (value >= 10000 && unit_index < units.length - 1) {
+    while (Math.abs(value) >= 10000 && unit_index < units.length - 1) {
         value /= 1000;
         unit_index += 1;
     }
