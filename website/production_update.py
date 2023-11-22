@@ -292,6 +292,7 @@ def market_logic(engine, market, t):
     # If network prioritary demand is higher than total supply -> only partial satisfaction of demand and level down of industry.
     if total_market_capacity < network_demand:
         satisfaction = total_market_capacity / network_demand
+        market_quantity = total_market_capacity
         if satisfaction == 0:
             market_price = 0
         else :
@@ -306,8 +307,6 @@ def market_logic(engine, market, t):
             sell(engine, row, market_price, t)
     else:
         market_price, market_quantity = market_optimum(offers, demands)
-        market["market_price"] = market_price
-        market["market_quantity"] = market_quantity
         # sell all capacities under market price
         for row in offers.itertuples(index=False):
             if row.cumul_capacities > market_quantity:
@@ -334,6 +333,8 @@ def market_logic(engine, market, t):
                     buy(engine, row, market_price, t, quantity=bought_cap)
                 break
             buy(engine, row, market_price, t)
+    market["market_price"] = market_price
+    market["market_quantity"] = market_quantity
 
 # Finding market price and quantity by finding the intersection of demand and suppply
 def market_optimum(offers_og, demands_og):
