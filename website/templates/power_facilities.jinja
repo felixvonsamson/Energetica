@@ -620,7 +620,7 @@
  <div class="infobox" id="infotable">
   <table class="table tan_green">
     <tr><td>Max generation</td><td class="txt_center"><strong><script>display_W({{facility["power generation"]}});</script></strong></td></tr>
-    <tr><td>Uranium consum.</td><td class="txt_center"><strong>{{(facility["amount consumed"]*1000)}} g/MWh</strong></td></tr>
+    <tr><td>Uranium consum.</td><td class="txt_center"><strong>{{(facility["amount consumed"]*1000)|round(2)}} g/MWh</strong></td></tr>
     <tr><td>Ramping speed</td><td class="txt_center"><strong><script>display_W({{facility["ramping speed"]}});</script>/min</strong></td></tr>
     <tr><td>CO2 emissions</td><td class="txt_center"><strong><script>display_kg({{facility["pollution"]}});</script>/MWh</strong></td></tr>
   </table>
