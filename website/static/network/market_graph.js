@@ -448,17 +448,13 @@ function update_graph(){
         textSize(30);
         text("Market : "+display_time(t), width/2, 450-7)
         pop();
+
         data = raw_data[2];
         Object.keys(data).forEach(key => {
             const array = raw_data[3][key];
             data[key] = reduce(data[key], array, res, raw_data[0]);
             });
         data_len = data["price"].length;
-        push();
-        translate(1.5*margin, 300*f+10);
-        noStroke();
-        push();
-        strokeWeight(3);
         min = {
             "price": Math.min(0, ...data["price"]),
             "quantity": 0
@@ -468,6 +464,11 @@ function update_graph(){
             "quantity": Math.max(...data["quantity"])
         }
         f = max["price"] / (max["price"]-min["price"])
+        push();
+        translate(1.5*margin, 300*f+10);
+        noStroke();
+        push();
+        strokeWeight(3);
         for (const key of ["price", "quantity"]) { 
             stroke(cols_and_names[key][0]);
             push();
