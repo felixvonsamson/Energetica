@@ -216,6 +216,8 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
             if assets[plant]["ramping speed"] != 0:
                 generation[plant][t] = calculate_prod("min", player, assets, plant, 
                         generation, t, storage=storage if plant in engine.storage_plants else None)
+                if plant in engine.storage_plants:
+                    storage[plant][t] -= generation[plant][t] / 60 / (assets[plant]["efficiency"]**0.5) # Transform W in Wh + efficiency loss
             total_generation += generation[plant][t]
             # If the player is not able to use all the min. generated energy, it is put on the market for -5¤/MWh
             if total_generation > total_demand:
@@ -424,12 +426,11 @@ def sell(engine, row, market_price, t, quantity=None):
     revenue = engine.data["current_data"][row.player.username]["revenues"]
     if quantity == None:
         quantity = row.capacity
-    if row.plant in engine.storage_plants:
-        assets = engine.config[row.player.id]["assets"]
-        storage[row.plant][t] -= quantity / 60 / (assets[row.plant]["efficiency"]**0.5) # Transform W in Wh + efficiency loss
+    if row.price >= 0:
         generation[row.plant][t] += quantity
-    elif row.price >= 0:
-        generation[row.plant][t] += quantity
+        if row.plant in engine.storage_plants:
+            assets = engine.config[row.player.id]["assets"]
+            storage[row.plant][t] -= quantity / 60 / (assets[row.plant]["efficiency"]**0.5) # Transform W in Wh + efficiency loss
     demand["exports"][t] += quantity
     row.player.money += quantity * market_price / 60000000
     revenue["exports"][t] += quantity * market_price / 60000000

@@ -308,6 +308,7 @@ function display_money_long(amount) {
 }
 
 function change_view(view){
+    resetMatrix();
     graph = null;
     let title = document.getElementById("graph_title");
     title.innerHTML = view;
