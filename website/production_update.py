@@ -140,7 +140,7 @@ def calculate_demand(engine, player, t):
                     / construction["construction time"])
             # industry demand ramps up during construction
             if ud.name == "industry":
-                additional_demand = (time.time()-ud.start_time)/(ud.finish_time-ud.start_time)*industry_demand*assets["industry"]["power factor"]
+                additional_demand = (time.time()-ud.start_time)/(ud.finish_time-ud.start_time)*industry_demand*(assets["industry"]["power factor"]-1)
                 demand["industry"][t] += additional_demand
     demand["construction"][t] = min(demand["construction"][t-1]+0.2*demand_construction, demand_construction) # for smooth demand changes
     demand["research"][t] = min(demand["research"][t-1]+0.2*demand_research, demand_research) # for smooth demand changes
