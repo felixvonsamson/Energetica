@@ -122,7 +122,7 @@ def calculate_demand(engine, player, t):
     day = engine.data["total_t"]%73440//1440
     seasonal_factor = (engine.industry_seasonal[day]*(1440-t)+engine.industry_seasonal[(day+1)%51]*t)/1440
     industry_demand = engine.industry_demand[t-1]*seasonal_factor*assets["industry"]["power consumption"]
-    demand["industry"][t] = min(demand["industry"][t-1]+0.05*industry_demand, industry_demand) # for smooth demand changes
+    demand["industry"][t] = industry_demand
     # demand from assets under construction + emissions of construction
     demand_construction = 0
     demand_research = 0
@@ -138,6 +138,10 @@ def calculate_demand(engine, player, t):
                     / construction["construction time"] * 3600)
                 emissions_construction += (construction["construction pollution"] 
                     / construction["construction time"])
+            # industry demand ramps up during construction
+            if ud.name == "industry":
+                additional_demand = (time.time()-ud.start_time)/(ud.finish_time-ud.start_time)*industry_demand*0.25
+                demand["industry"][t] += additional_demand
     demand["construction"][t] = min(demand["construction"][t-1]+0.2*demand_construction, demand_construction) # for smooth demand changes
     demand["research"][t] = min(demand["research"][t-1]+0.2*demand_research, demand_research) # for smooth demand changes
     engine.data["current_data"][player.username]["emissions"]["construction"][t] = emissions_construction
