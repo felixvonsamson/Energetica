@@ -25,7 +25,7 @@ def create_app():
 
     # creates the app :
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = "ghdcjgcfgglkgvou"
+    app.config["SECRET_KEY"] = "ghdäwrjeojfjdcfgglkgvou"
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///database.db"
     db.init_app(app)
 
@@ -118,9 +118,9 @@ def create_app():
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
 
-        #with app.app_context():
+        with app.app_context():
             #Temporary automated player creation for testing
-            #from .init_test_players import edit_database, init_test_players
-            #edit_database()
+            from .init_test_players import edit_database, init_test_players
+            edit_database(engine)
             #init_test_players(engine)
     return socketio, app

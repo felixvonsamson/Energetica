@@ -182,9 +182,7 @@ def resource_market():
                 else :
                     sale.quantity -= quantity
                 current_user.money -= sale.price * quantity
-                g.engine.data["current_data"][current_user.username]["revenues"]["industry"][g.engine.data["current_t"]] -= sale.price * quantity
                 sale.player.money += sale.price * quantity
-                g.engine.data["current_data"][sale.player.username]["revenues"]["industry"][g.engine.data["current_t"]] += sale.price * quantity
                 current_user.update_resources()
                 sale.player.update_resources()
                 setattr(sale.player, sale.resource, getattr(sale.player, sale.resource) - quantity)

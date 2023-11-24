@@ -132,7 +132,7 @@ def calculate_demand(engine, player, t):
     day = engine.data["total_t"]//1440
     seasonal_factor = (engine.industry_seasonal[day%51]*(1440-engine.data["total_t"]%1440)+engine.industry_seasonal[(day+1)%51]*engine.data["total_t"]%1440)/1440
     industry_demand = engine.industry_demand[t-1]*seasonal_factor*assets["industry"]["power consumption"]
-    demand["industry"][t] = industry_demand
+    demand["industry"][t] = min(demand["industry"][t-1]+0.05*industry_demand,industry_demand) # progressive demand change in case of restart
     # calculate income of industry
     industry_income = engine.config[player.id]["assets"]["industry"]["income"]/1440.0
     revenues["industry"][t] = industry_income
@@ -305,11 +305,12 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
             delta_prod = max_prod - generation[plant][t]
             # case where the plant is the one that could overshoot the equilibium :
             if total_demand - total_generation < delta_prod:
-                generation[plant][t] += total_demand - total_generation
+                gen_frac = max(0, total_demand - total_generation)
+                generation[plant][t] += gen_frac
                 if plant in engine.storage_plants:
-                    storage[plant][t] -= (total_demand - total_generation) / 60 / (assets[plant]["efficiency"]**0.5) # Transform W in Wh + efficiency loss
+                    storage[plant][t] -= gen_frac / 60 / (assets[plant]["efficiency"]**0.5) # Transform W in Wh + efficiency loss
                 # additional capacity sold on the market
-                capacity = delta_prod - total_demand + total_generation
+                capacity = delta_prod - gen_frac
                 price = getattr(player, "price_" + plant)
                 market = offer(market, player, capacity, price, plant)
                 total_generation = total_demand

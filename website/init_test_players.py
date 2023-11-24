@@ -1,27 +1,54 @@
 from werkzeug.security import generate_password_hash
 from pathlib import Path
 from .auth import add_player_to_data, init_table
-from .database import Player, Hex, Network
+from .database import Player, Hex, Network, Under_construction, Shipment
 from . import db
 import pickle
+import os
 from .socketio_handlers import data_init_network
 
-def edit_database():
-    Max = create_player("maximilientirard", 20, "kUcmo0-jyjwoc-kugnot")
-    print(Max)
-    Max.money = 75000
-    Max.steam_engine = 23
-    Max.windmill = 1
-    Max.watermill = 3
-    Max.industry = 14
-    Max.laboratory = 4
-    Max.mathematics = 4
-    Max.mechanical_engineering = 4
-    Max.building_technology = 3
-    Max.transport_technology = 1
-    Max.civil_engineering = 1
-    Max.small_water_dam = 2
-    db.session.commit()
+def edit_database(engine):
+    with open("retieved_data.pck", "rb") as file:
+            retieved_data = pickle.load(file)
+    for player_id in retieved_data["player"]:
+        player = create_player(engine, retieved_data["player"][player_id]["username"], retieved_data["player"][player_id]["password"])
+        for attribute in retieved_data["player"][player_id]:
+            setattr(player, attribute, retieved_data["player"][player_id][attribute])
+        db.session.commit()
+    
+    for network_id in retieved_data["network"]:
+        create_network(engine, retieved_data["network"][network_id]["name"], [])
+
+    for tile_id in retieved_data["hex"]:
+        tile = Hex.query.filter_by(id=tile_id).first()
+        tile.player_id = retieved_data["hex"][tile_id]["player_id"]
+        db.session.commit()
+
+    for construction_id in retieved_data["under_construction"]:
+        construction = retieved_data["under_construction"][construction_id]
+        new_facility = Under_construction(
+            name=construction["name"],
+            family=construction["family"],
+            start_time=construction["start_time"],
+            finish_time=construction["finish_time"],
+            player_id=construction["player_id"],
+        )
+        db.session.add(new_facility)
+        db.session.commit()
+
+    for shipment_id in retieved_data["shipment"]:
+        shipment = retieved_data["shipment"][shipment_id]
+        new_shipment = Shipment(
+                    resource = shipment["resource"],
+                    quantity = shipment["quantity"],
+                    departure_time = shipment["departure_time"],
+                    arrival_time = shipment["arrival_time"],
+                    player_id = shipment["player_id"]
+                )
+        db.session.add(new_shipment)
+        db.session.commit()
+
+    os.remove("retieved_data.pck")
 
 def init_test_players(engine):
     members = []
@@ -51,15 +78,13 @@ def init_test_players(engine):
         db.session.commit()
 
 
-def create_player(engine, username, tile_id, pw):
+def create_player(engine, username, pw):
     p = Player.query.filter_by(username=username).first()
     if p == None:
-        tile = Hex.query.filter_by(id=tile_id).first()
         new_player = Player(
             username=username,
             password=generate_password_hash(pw, method="sha256"),
             data_table_name=f"data_{username}.pck",
-            tile = [tile],
         )
         add_player_to_data(username)
         init_table(username)

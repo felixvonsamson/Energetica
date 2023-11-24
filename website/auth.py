@@ -96,9 +96,7 @@ def data_init(length):
             "O&M_costs": [0] * length,
             "exports": [0] * length,
             "imports": [0] * length,
-            "dumping": [0] * length,
-            "resource_selling": [0] * length,
-            "resource_buying": [0] * length,
+            "dumping": [0] * length
         },
         "generation": {
             "steam_engine": [0] * length,

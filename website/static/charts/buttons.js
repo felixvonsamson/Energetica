@@ -51,8 +51,6 @@ function preload() {
 function setup() {
     cols_and_names = {
         "O&M_costs": [color(163, 0, 0), "O&M costs"],
-        "resource_selling": [color(145, 61, 168), "res. selling"],
-        "resource_buying": [color(86, 44, 130), "res. buying"],
 
         "watermill": [color(40, 145, 201), "Watermill"],
         "small_water_dam": [color(12, 64, 237), "Water dam (S)"],

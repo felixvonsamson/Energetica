@@ -1,5 +1,5 @@
 const keys_revenues = ["industry", "O&M_costs", "exports", "imports", 
-                        "dumping", "resource_selling", "resource_buying"];
+                        "dumping"];
 
 function draw_revenues() {
   if(graph){
