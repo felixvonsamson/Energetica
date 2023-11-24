@@ -180,4 +180,4 @@ def add_handlers(socketio, engine):
         current_user.demand_priorities = space.join(demand_list)
         db.session.commit()
 
-        print("SCP : ",current_user.self_consumption_priority)
+        flash("Changes saved", category="success")
