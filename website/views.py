@@ -65,6 +65,17 @@ def check_user():
 def home():
     return g.render_template_ctx("home.jinja")
 
+@views.route("/profile")
+def profile():
+    player_name = request.args.get('player_name')
+    player = Player.query.filter_by(username=player_name).first()
+    return render_template(
+                "profile.jinja",
+                engine=g.engine,
+                user=current_user,
+                profile=player
+            )
+
 @views.route("/messages", methods=["GET", "POST"])
 def messages():
     if request.method == "POST":

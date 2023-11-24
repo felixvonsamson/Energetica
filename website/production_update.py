@@ -455,7 +455,8 @@ def market_logic(engine, market, t):
                 row.player.emissions -= emmissions_takeback
                 engine.data["current_CO2"][t] -= emmissions_takeback
                 db.session.commit()
-        buy(engine, row, market_price, t)
+        else:
+            buy(engine, row, market_price, t)
     market["market_price"] = market_price
     market["market_quantity"] = market_quantity
 

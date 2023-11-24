@@ -1,90 +1,11 @@
 {% extends "base.jinja" %} {% block title %}Home{% endblock %} {% block content
 %}
-<div class="huge" style="text-align:center">{{ user.username }}</div>
+<div class="huge" style="text-align:center">Home : {{ user.username }}</div>
 
-<div class="flex-col medium">
-<b><a class="no_deco" href="https://www.redblobgames.com/grids/hexagons/#coordinates-cube" target="_blank">Position</a></b>
-<table class="table bone">
-  <tr><td>id</td><td>{{user.tile[0].id}}</td></tr>
-  <tr><td>q</td><td>{{user.tile[0].q}}</td></tr>
-  <tr><td>r</td><td>{{user.tile[0].r}}</td></tr>
-  <tr><td>s</td><td>{{-user.tile[0].r-user.tile[0].q}}</td></tr>
-</table>
-</div>
+<div id="map_visalisation" style="padding:30px 0"></div>
 
-<div class="medium flex-wrap">
+{% endblock %}
 
-<div class="flex-col">
-<b>Power facilities</b>
-<table class="table bone">
-  <tr><td>Steam engine</td><td>{{user.steam_engine}}</td></tr>
-  <tr><td>Windmill</td><td>{{user.windmill}}</td></tr>
-  <tr><td>Watermill</td><td>{{user.watermill}}</td></tr>
-  <tr><td>Coal burner</td><td>{{user.coal_burner}}</td></tr>
-  <tr><td>Oil burner</td><td>{{user.oil_burner}}</td></tr>
-  <tr><td>Gas burner</td><td>{{user.gas_burner}}</td></tr>
-  <tr><td>Small water dam</td><td>{{user.small_water_dam}}</td></tr>
-  <tr><td>Onshore wind turbine</td><td>{{user.onshore_wind_turbine}}</td></tr>
-  <tr><td>Combined cycle</td><td>{{user.combined_cycle}}</td></tr>
-  <tr><td>Nuclear reactor</td><td>{{user.nuclear_reactor}}</td></tr>
-  <tr><td>Large water dam</td><td>{{user.large_water_dam}}</td></tr>
-  <tr><td>Concentrated solar power</td><td>{{user.CSP_solar}}</td></tr>
-  <tr><td>Photovoltaics</td><td>{{user.PV_solar}}</td></tr>
-  <tr><td>Offshore wind turbine</td><td>{{user.offshore_wind_turbine}}</td></tr>
-  <tr><td>4th generation nuclear</td><td>{{user.nuclear_reactor_gen4}}</td></tr>
-</table>
-</div>
-
-<div class="flex-col">
-<b>Storage facilities</b>
-<table class="table bone">
-  <tr><td>Small pumped hydro</td><td>{{user.small_pumped_hydro}}</td></tr>
-  <tr><td>Compressed air</td><td>{{user.compressed_air}}</td></tr>
-  <tr><td>Molten salt</td><td>{{user.molten_salt}}</td></tr>
-  <tr><td>Large pumped hydro</td><td>{{user.large_pumped_hydro}}</td></tr>
-  <tr><td>Hydrogen hydrolysis</td><td>{{user.hydrogen_storage}}</td></tr>
-  <tr><td>Lithium-ion batteries</td><td>{{user.lithium_ion_batteries}}</td></tr>
-  <tr><td>Solid state batteries</td><td>{{user.solid_state_batteries}}</td></tr>
-</table>
-</div>
-
-<div class="flex-col">
-<b>Functional facilities</b>
-<table class="table bone">
-  <tr><td>Industry</td><td>{{user.industry}}</td></tr>
-  <tr><td>Laboratory</td><td>{{user.laboratory}}</td></tr>
-  <tr><td>Warehouse</td><td>{{user.warehouse}}</td></tr>
-  <tr><td>Carbon capture</td><td>{{user.carbon_capture}}</td></tr>
-</table>
-</div>
-
-<div class="flex-col">
-<b>Extraction plants</b>
-<table class="table bone">
-  <tr><td>Coal mine</td><td>{{user.coal_mine}}</td></tr>
-  <tr><td>Oil field</td><td>{{user.oil_field}}</td></tr>
-  <tr><td>Gas drilling site</td><td>{{user.gas_drilling_site}}</td></tr>
-  <tr><td>Uranium mine</td><td>{{user.uranium_mine}}</td></tr>
-</table>
-</div>
-
-<div class="flex-col">
-<b>Technology</b>
-<table class="table bone">
-  <tr><td>Mathematics</td><td>{{user.mathematics}}</td></tr>
-  <tr><td>Mechanical engineering</td><td>{{user.mechanical_engineering}}</td></tr>
-  <tr><td>Thermodynamics</td><td>{{user.thermodynamics}}</td></tr>
-  <tr><td>Physics</td><td>{{user.physics}}</td></tr>
-  <tr><td>Building Technology</td><td>{{user.building_technology}}</td></tr>
-  <tr><td>Mineral extraction</td><td>{{user.mineral_extraction}}</td></tr>
-  <tr><td>Transport technology</td><td>{{user.transport_technology}}</td></tr>
-  <tr><td>Materials</td><td>{{user.materials}}</td></tr>
-  <tr><td>Civil engineering</td><td>{{user.civil_engineering}}</td></tr>
-  <tr><td>Aerodynamics</td><td>{{user.aerodynamics}}</td></tr>
-  <tr><td>Chemistry</td><td>{{user.chemistry}}</td></tr>
-</table>
-</div>
-
-</div>
-
+{% block additionnal_script %}
+<script src="{{ url_for('static', filename='map_visualisation.js') }}"></script>
 {% endblock %}

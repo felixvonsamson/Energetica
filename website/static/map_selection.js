@@ -344,7 +344,7 @@ function convert_kg(mass) {
 
 function convert_kg_long(mass, resource) {
   mass /= 1000
-  return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} tons of ${resource.toLowerCase()} in the ground`;
+  return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} tons of ${resource.toLowerCase()} in the ground`;
 }
 
 function general_convert(value, units){
@@ -353,7 +353,7 @@ function general_convert(value, units){
     value /= 1000;
     unit_index += 1;
   }
-  return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}${
+  return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
       units[unit_index]
     }`
 }
