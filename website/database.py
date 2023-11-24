@@ -150,7 +150,8 @@ class Player(db.Model, UserMixin):
 
     # Selfconsumption priority list 
     self_consumption_priority = db.Column(db.Text, default="small_water_dam large_water_dam watermill onshore_wind_turbine offshore_wind_turbine windmill CSP_solar PV_solar")
-    rest_of_priorities = db.Column(db.Text, default="steam_engine nuclear_reactor nuclear_reactor_gen4 combined_cycle gas_burner oil_burner coal_burner")
+    rest_of_priorities = db.Column(db.Text, default="steam_engine nuclear_reactor large_pumped_hydro small_pumped_hydro molten_salt nuclear_reactor_gen4 compressed_air combined_cycle hydrogen_storage gas_burner solid_state_batteries lithium_ion_batteries oil_burner coal_burner")
+    demand_priorities = db.Column(db.Text, default="transport industry research construction uranium_mine gas_drilling_site oil_field coal_mine")
 
     # Production capacity prices [¤/MWh]
     price_steam_engine = db.Column(db.Float, default=125)
@@ -162,20 +163,30 @@ class Player(db.Model, UserMixin):
     price_nuclear_reactor_gen4 = db.Column(db.Float, default=375)
 
     # Storage capacity prices [¤/MWh]
-    price_buy_small_pumped_hydro = db.Column(db.Float, default=150)
-    price_sell_small_pumped_hydro = db.Column(db.Float, default=250)
-    price_buy_compressed_air = db.Column(db.Float, default=70)
-    price_sell_compressed_air = db.Column(db.Float, default=110)
-    price_buy_molten_salt = db.Column(db.Float, default=80)
-    price_sell_molten_salt = db.Column(db.Float, default=125)
-    price_buy_large_pumped_hydro = db.Column(db.Float, default=65)
-    price_sell_large_pumped_hydro = db.Column(db.Float, default=100)
-    price_buy_hydrogen_storage = db.Column(db.Float, default=100)
-    price_sell_hydrogen_storage = db.Column(db.Float, default=200)
-    price_buy_lithium_ion_batteries = db.Column(db.Float, default=400)
-    price_sell_lithium_ion_batteries = db.Column(db.Float, default=500)
-    price_buy_solid_state_batteries = db.Column(db.Float, default=175)
-    price_sell_solid_state_batteries = db.Column(db.Float, default=500)
+    price_buy_small_pumped_hydro = db.Column(db.Float, default=210)
+    price_small_pumped_hydro = db.Column(db.Float, default=320)
+    price_buy_compressed_air = db.Column(db.Float, default=270)
+    price_compressed_air = db.Column(db.Float, default=400)
+    price_buy_molten_salt = db.Column(db.Float, default=190)
+    price_molten_salt = db.Column(db.Float, default=350)
+    price_buy_large_pumped_hydro = db.Column(db.Float, default=200)
+    price_large_pumped_hydro = db.Column(db.Float, default=300)
+    price_buy_hydrogen_storage = db.Column(db.Float, default=230)
+    price_hydrogen_storage = db.Column(db.Float, default=460)
+    price_buy_lithium_ion_batteries = db.Column(db.Float, default=425)
+    price_lithium_ion_batteries = db.Column(db.Float, default=520)
+    price_buy_solid_state_batteries = db.Column(db.Float, default=420)
+    price_solid_state_batteries = db.Column(db.Float, default=510)
+
+    # Demand buying prices
+    price_buy_industry = db.Column(db.Float, default=1000)
+    price_buy_construction = db.Column(db.Float, default=800)
+    price_buy_research = db.Column(db.Float, default=820)
+    price_buy_transport = db.Column(db.Float, default=1100)
+    price_buy_coal_mine = db.Column(db.Float, default=750)
+    price_buy_oil_field = db.Column(db.Float, default=760)
+    price_buy_gas_drilling_site = db.Column(db.Float, default=780)
+    price_buy_uranium_mine = db.Column(db.Float, default=790)
 
     # CO2 emissions :
     emissions = db.Column(db.Float, default=0)

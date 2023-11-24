@@ -2,7 +2,7 @@
 These functions make the link between the website and the database
 """
 
-from flask import Blueprint, request, flash, jsonify, session, g, current_app
+from flask import Blueprint, request, flash, jsonify, g, current_app
 from flask_login import login_required, current_user
 import pickle
 from pathlib import Path

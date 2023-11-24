@@ -439,7 +439,7 @@
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydroelectricity" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The large water dam uses the potential energy of the water to produce a large amount of electricity. <br><br>
-  <em class="txt-blue"><i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{user.tile[0].hydro - user.small_water_dam}}</strong></em>
+  <em class="txt-blue"><i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{user.tile[0].hydro - user.large_water_dam}}</strong></em>
  </div>
  <div class="infobox" id="reqirements">
  {% if facility["locked"] %}

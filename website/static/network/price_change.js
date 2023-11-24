@@ -1,24 +1,16 @@
-// Get a NodeList of all input elements
-const inputElements = document.querySelectorAll('input');
-
-// Add an input event listener to each input element
-inputElements.forEach(input => {
-    input.addEventListener('input', handleInputUpdate);
-});
-
-// Define the event handler function
-function handleInputUpdate(event) {
-    // Access the input element and its value
-    const inputElement = event.target;
-    const attribute = inputElement.id;
-    if (attribute == "invite_player" | attribute == "network_name"){
-        return
-    }
-    if (inputElement.type == "checkbox"){
-        // send change to server to update value
-        socket.emit("change_price", attribute, inputElement.checked);
-    }else{
-        // send change to server to update value
-        socket.emit("change_price", attribute, inputElement.value);
-    }
+function change_prices(){
+    const inputElements = document.querySelectorAll('input');
+    let prices = {};
+    let SCPs = {};
+    inputElements.forEach(input => {
+        if (input.id == "invite_player" | input.id == "network_name"){
+            return
+        }
+        if (input.type == "checkbox"){
+            SCPs[input.id] = input.checked;
+        }else{
+            prices[input.id] = input.value;
+        }
+    });
+    socket.emit("change_price", prices, SCPs);
 }

@@ -4,7 +4,7 @@ This code contains the main functions that communicate with the server (server s
 
 import time
 import pickle
-from flask import request, session, flash, g, current_app
+from flask import request, flash, g, current_app
 from flask_login import current_user
 from .database import Player, Network, Hex, Under_construction, Chat, Message
 from .utils import display_money, check_existing_chats, data_init_network
@@ -148,55 +148,34 @@ def add_handlers(socketio, engine):
 
     # this function is executed when a player changes the value the enegy selling prices
     @socketio.on("change_price")
-    def change_price(attribute, value):
-        def reorder(priority_list, asset):
-            if asset in engine.renewables:
-                priority_list.insert(0, asset)
-                return priority_list
-            for i, a in enumerate(priority_list):
-                if a in engine.renewables:
-                    continue
-                if getattr(current_user, "price_"+a) >= getattr(current_user, "price_"+asset):
-                    priority_list.insert(i, asset)
-                    return priority_list
-            priority_list.append(asset)
-            return priority_list
+    def change_price(prices, SCPs):
+        def sort_priority(priority_list, prefix = "price_"):
+            return sorted(priority_list, key=lambda x: getattr(current_user, prefix + x))
         
-        if current_user.self_consumption_priority == "":
-            SCP_list = []
-        else :
-            SCP_list = current_user.self_consumption_priority.split(' ')
-        if current_user.rest_of_priorities == "":
-            rest_list = []
-        else :
-            rest_list = current_user.rest_of_priorities.split(' ')
-        
-        # add or remove to SCP and order 
-        if "SCP" in attribute:
-            asset = attribute[4:]
-            if value == True:
-                rest_list.remove(asset)
-                SCP_list = reorder(SCP_list, asset)
-                print(f"{current_user.username} added {asset} to his SCP list")
+        SCP_list = []
+        rest_list = []
+        demand_list = current_user.demand_priorities.split(' ')
+
+        for SCP in SCPs:
+            facility = SCP[4:]
+            if SCPs[SCP]:
+                SCP_list.append(facility)
             else:
-                SCP_list.remove(asset)
-                rest_list = reorder(rest_list, asset)
-                print(f"{current_user.username} removed {asset} from his SCP list")
-            
-        else:
-            setattr(current_user, attribute, float(value))
-            # reorder priority lists if production plant
-            if "sell" not in attribute and "buy" not in attribute:
-                asset = attribute[6:]
-                if asset in SCP_list:
-                    SCP_list.remove(asset)
-                    SCP_list = reorder(SCP_list, asset)
-                else :
-                    rest_list.remove(asset)
-                    rest_list = reorder(rest_list, asset)
-            print(f"{current_user.username} changed the price of {attribute} to {value}")
+                rest_list.append(facility)
+
+        for price in prices:
+            setattr(current_user, price, prices[price])
+        db.session.commit()
+
+        rest_list = sort_priority(rest_list)
+        SCP_list = engine.renewables + sort_priority(SCP_list)
+        demand_list = sort_priority(demand_list, prefix = "price_buy_")
+        demand_list.reverse()
+
+        print(f"{current_user.username} updated his prices")
 
         space = " "
         current_user.self_consumption_priority = space.join(SCP_list)
         current_user.rest_of_priorities = space.join(rest_list)
+        current_user.demand_priorities = space.join(demand_list)
         db.session.commit()

@@ -4,7 +4,7 @@ This code is run once at the start of the game
 
 import eventlet
 eventlet.monkey_patch(thread=True, time=True)
-from flask import Flask, g, session, jsonify
+from flask import Flask, g, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import os, csv
 import pickle
@@ -120,7 +120,7 @@ def create_app():
 
         #with app.app_context():
             #Temporary automated player creation for testing
-            #from .init_test_players import edit_database
+            #from .init_test_players import edit_database, init_test_players
             #edit_database()
             #init_test_players(engine)
     return socketio, app

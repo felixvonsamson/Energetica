@@ -56,6 +56,15 @@ function setup() {
         "molten_salt": [color(161, 116, 50), "Molten salt"],
         "hydrogen_storage": [color(29, 240, 226), "Hydrolysis"],
 
+        "coal_mine": [color(0, 0, 0), "Coal mines"],
+        "oil_field": [color(69, 69, 69), "Oil fields"],
+        "gas_drilling_site": [color(179, 189, 201), "Gas fields"],
+        "uranium_mine": [color(137, 255, 59), "Uran. mines"],
+        "industry": [color(73, 95, 196), "Industry"],
+        "research": [color(255, 255, 255), "Research"],
+        "construction": [color(245, 145, 22), "Constructions"],
+        "transport": [color(140, 3, 252), "Transport"],
+
         "price": [color(40, 84, 48), "Market price"],
         "quantity": [color(45, 53, 166), "Market quantity"],
     }
@@ -372,6 +381,12 @@ function update_graph(){
             for(i = 0; i<supply["capacity"].length; i++){
                 let w = map(supply["capacity"][i], 0, maxCap, 0, graph_w);
                 let h = map(supply["price"][i], 0, maxPrice, 0, -graph_h*f);
+                if (h<0){
+                    h = Math.min(h, -3);
+                }
+                if (h>0){
+                    h = Math.max(h, 3);
+                }
                 fill(cols_and_names[supply["plant"][i]][0])
                 rect(0, 0, w-1, h);
                 translate(w, 0);

@@ -3,6 +3,8 @@ from pathlib import Path
 from .auth import add_player_to_data, init_table
 from .database import Player, Hex, Network
 from . import db
+import pickle
+from .socketio_handlers import data_init_network
 
 def edit_database():
     Max = create_player("maximilientirard", 20, "kUcmo0-jyjwoc-kugnot")
@@ -25,14 +27,15 @@ def init_test_players(engine):
     members = []
 
     for i in range(3):
-        members.append(create_player("Player"+str(i), i+1))
-    members.append(create_player("Player3", 21))
+        members.append(create_player(engine, "Player"+str(i), i+1, "password"))
+    members.append(create_player(engine, "Player3", 21, "password"))
 
     network = "Network1"
-    create_network(network, members)
+    create_network(engine, network, members)
 
     if members[0] != None:
         members[1].steam_engine = 10
+        members[1].industry = 15
         members[0].gas_burner = 1
         members[0].gas = 100000
         members[0].coal_burner = 1
@@ -48,7 +51,7 @@ def init_test_players(engine):
         db.session.commit()
 
 
-def create_player(username, tile_id, pw):
+def create_player(engine, username, tile_id, pw):
     p = Player.query.filter_by(username=username).first()
     if p == None:
         tile = Hex.query.filter_by(id=tile_id).first()
@@ -64,10 +67,16 @@ def create_player(username, tile_id, pw):
         db.session.commit()
         return new_player
 
-def create_network(name, members):
+def create_network(engine, name, members):
     n = Network.query.filter_by(name=name).first()
     if n == None:
         new_Network = Network(name=name, members=members)
         db.session.add(new_Network)
         db.session.commit()
-        Path(f"instance/network_data/{name}").mkdir(parents=True, exist_ok=True)
+        Path(f"instance/network_data/{name}/charts").mkdir(parents=True, exist_ok=True)
+        engine.data["network_data"][name] = data_init_network(1441)
+        past_data = data_init_network(1440)
+        Path(f"instance/network_data/{name}/prices").mkdir(parents=True, exist_ok=True)
+        for timescale in ["day", "5_days", "month", "6_months"]:
+            with open(f"instance/network_data/{name}/prices/{timescale}.pck", "wb") as file:
+                pickle.dump(past_data, file)

@@ -3,7 +3,7 @@ This file contains the functions for authentification and sign-up of users
 """
 
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from flask import session, current_app
+from flask import current_app
 from .database import Player
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
@@ -25,7 +25,6 @@ def login():
             if check_password_hash(player.password, password):
                 flash("Logged in successfully!", category="success")
                 login_user(player, remember=True)
-                session["ID"] = player.id
                 print(f"{username} logged in")
                 return redirect(url_for("views.home"))
             else:
@@ -72,7 +71,6 @@ def sign_up():
             db.session.add(new_player)
             db.session.commit()
             login_user(new_player, remember=True)
-            session["ID"] = new_player.id
             flash("Account created!", category="success")
             print(f"{username} created an account")
             return redirect(url_for("views.home"))

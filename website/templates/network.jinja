@@ -36,6 +36,50 @@ You a currently not part of a Network. Join or create one :
 <div class="huge title">Prices</div>
 
 <div class="flex-col medium">
+
+<b class="margin large" style="margin-top:24px">Demand prices</b>
+<table class="table bone">
+  <tr>
+  <th>Demand</th>
+  <th>Max buying price</th>
+  </tr>
+  <tr>
+  <td>Industry</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_industry}}" id="price_buy_industry" name="price_buy_industry"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  </tr>
+  <tr>
+  <td>Constructions</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_construction}}" id="price_buy_construction" name="price_buy_construction"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  </tr>
+  <tr>
+  <td>Research</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_research}}" id="price_buy_research" name="price_buy_research"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  </tr>
+  <tr>
+  <td>Shipments</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_transport}}" id="price_buy_transport" name="price_buy_transport"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  </tr>
+  <tr>
+  <td>Coal mines</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_coal_mine}}" id="price_buy_coal_mine" name="price_buy_coal_mine"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  </tr>
+  <tr>
+  <td>Oil fields</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_oil_field}}" id="price_buy_oil_field" name="price_buy_oil_field"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  </tr>
+  <tr>
+  <td>Gas extraction</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_gas_drilling_site}}" id="price_buy_gas_drilling_site" name="price_buy_gas_drilling_site"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  </tr>
+  <tr>
+  <td>Uranium mines</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_uranium_mine}}" id="price_buy_uranium_mine" name="price_buy_uranium_mine"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  </tr>
+</table>
+<div class="flex-row" style="justify-content:center;">
+<b class="margin white button padding" onclick="change_prices();">Save changes</b>
+</div>
+
 <b class="margin large" style="margin-top:24px">Production capacity prices</b>
 <table class="table bone">
   <tr>
@@ -87,6 +131,9 @@ You a currently not part of a Network. Join or create one :
   <td><input type="checkbox" id="SCP_nuclear_reactor_gen4" name="SCP_nuclear_reactor_gen4" {% if "nuclear_reactor_gen4" in SCP %} checked {% endif %}></td>
   </tr>
 </table>
+<div class="flex-row" style="justify-content:center;">
+<b class="margin white button padding" onclick="change_prices();">Save changes</b>
+</div>
 
 <b class="margin large" style="margin-top:24px">Storage capacity prices</b>
 <table class="table bone">
@@ -95,50 +142,62 @@ You a currently not part of a Network. Join or create one :
   <th>Installed capacity</th>
   <th>Min selling price</th>
   <th>Max buying price</th>
+  <th><div class="hover_info">SCP<span class="popup_info small">Self-consumption priority</span></div></th>
   </tr>
   <tr>
   <td>Small pumped hydro</td>
   <td class="txt_center"><script>display_Wh({{user.small_pumped_hydro*assets["small_pumped_hydro"]["storage capacity"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_sell_small_pumped_hydro}}" id="price_sell_small_pumped_hydro" name="price_sell_small_pumped_hydro"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td></div><input type="number" class="small_input medium txt_center" value="{{user.price_buy_small_pumped_hydro}}" id="price_buy_small_pumped_hydro" name="price_buy_small_pumped_hydro"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_small_pumped_hydro}}" id="price_small_pumped_hydro" name="price_small_pumped_hydro"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_small_pumped_hydro}}" id="price_buy_small_pumped_hydro" name="price_buy_small_pumped_hydro"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="checkbox" id="SCP_small_pumped_hydro" name="SCP_small_pumped_hydro" {% if "small_pumped_hydro" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Compressed air</td>
   <td class="txt_center"><script>display_Wh({{user.compressed_air*assets["compressed_air"]["storage capacity"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_sell_compressed_air}}" id="price_sell_compressed_air" name="price_sell_compressed_air"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_compressed_air}}" id="price_compressed_air" name="price_compressed_air"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
   <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_compressed_air}}" id="price_buy_compressed_air" name="price_buy_compressed_air"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="checkbox" id="SCP_compressed_air" name="SCP_compressed_air" {% if "compressed_air" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Molten salt</td>
   <td class="txt_center"><script>display_Wh({{user.molten_salt*assets["molten_salt"]["storage capacity"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_sell_molten_salt}}" id="price_sell_molten_salt" name="price_sell_molten_salt"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_molten_salt}}" id="price_molten_salt" name="price_molten_salt"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
   <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_molten_salt}}" id="price_buy_molten_salt" name="price_buy_molten_salt"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="checkbox" id="SCP_molten_salt" name="SCP_molten_salt" {% if "molten_salt" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Large pumped hydro</td>
   <td class="txt_center"><script>display_Wh({{user.large_pumped_hydro*assets["large_pumped_hydro"]["storage capacity"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_sell_large_pumped_hydro}}" id="price_sell_large_pumped_hydro" name="price_sell_large_pumped_hydro"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_large_pumped_hydro}}" id="price_large_pumped_hydro" name="price_large_pumped_hydro"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
   <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_large_pumped_hydro}}" id="price_buy_large_pumped_hydro" name="price_buy_large_pumped_hydro"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="checkbox" id="SCP_large_pumped_hydro" name="SCP_large_pumped_hydro" {% if "large_pumped_hydro" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Hydrogen storage</td>
   <td class="txt_center"><script>display_Wh({{user.hydrogen_storage*assets["hydrogen_storage"]["storage capacity"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_sell_hydrogen_storage}}" id="price_sell_hydrogen_storage" name="price_sell_hydrogen_storage"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_hydrogen_storage}}" id="price_hydrogen_storage" name="price_hydrogen_storage"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
   <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_hydrogen_storage}}" id="price_buy_hydrogen_storage" name="price_buy_hydrogen_storage"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="checkbox" id="SCP_hydrogen_storage" name="SCP_hydrogen_storage" {% if "hydrogen_storage" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Lithium ion batteries</td>
   <td class="txt_center"><script>display_Wh({{user.lithium_ion_batteries*assets["lithium_ion_batteries"]["storage capacity"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_sell_lithium_ion_batteries}}" id="price_sell_lithium_ion_batteries" name="price_sell_lithium_ion_batteries"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_lithium_ion_batteries}}" id="price_lithium_ion_batteries" name="price_lithium_ion_batteries"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
   <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_lithium_ion_batteries}}" id="price_buy_lithium_ion_batteries" name="price_buy_lithium_ion_batteries"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="checkbox" id="SCP_lithium_ion_batteries" name="SCP_lithium_ion_batteries" {% if "lithium_ion_batteries" in SCP %} checked {% endif %}></td>
   </tr>
   <tr>
   <td>Solid state batteries</td>
   <td class="txt_center"><script>display_Wh({{user.solid_state_batteries*assets["solid_state_batteries"]["storage capacity"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_sell_solid_state_batteries}}" id="price_sell_solid_state_batteries" name="price_sell_solid_state_batteries"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="number" class="small_input medium txt_center" value="{{user.price_solid_state_batteries}}" id="price_solid_state_batteries" name="price_solid_state_batteries"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
   <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_solid_state_batteries}}" id="price_buy_solid_state_batteries" name="price_buy_solid_state_batteries"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
+  <td><input type="checkbox" id="SCP_solid_state_batteries" name="SCP_solid_state_batteries" {% if "solid_state_batteries" in SCP %} checked {% endif %}></td>
   </tr>
 </table>
+<div class="flex-row" style="justify-content:center;">
+<b class="margin white button padding" onclick="change_prices();">Save changes</b>
+</div>
+
 </div>
 <br>
 <br>
