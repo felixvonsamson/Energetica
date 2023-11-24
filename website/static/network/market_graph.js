@@ -9,7 +9,7 @@ let mq, mp;
 let maxPrice;
 let minPrice;
 let maxCap;
-let f;
+let f1, f2;
 let graph;
 let fill_alt = 0;
 
@@ -128,9 +128,9 @@ function draw() {
             X += mar;
             line(X, 0, X, 300);
             noStroke();
-            translate(X, 300*f);
+            translate(X, 300*f1);
             for (const key of ["price", "quantity"]) {
-                let h = -data[key][t_view]/max[key]*300*f;
+                let h = -data[key][t_view]/max[key]*300*f1;
                 ellipse(0, h, 8, 8);
             }
             let tx = -180;
@@ -184,14 +184,14 @@ function draw() {
             let c = floor(map(X, 0, graph_w, 0, maxCap));
             X += mar;
             line(X, 0, X, graph_h);
-            translate(X, graph_h*f);
+            translate(X, graph_h*f2);
             noStroke();
             push();
             fill_alt = 1;
             for(let i=0; i<supply["price"].length; i++){
                 if(supply["cumul_capacities"][i] > c){
                     fill(255);
-                    let h = map(supply["price"][i], 0, maxPrice, 0, graph_h*f)
+                    let h = map(supply["price"][i], 0, maxPrice, 0, graph_h*f2)
                     translate(0, -h);
                     ellipse(0, 0, 8, 8);
 
@@ -200,8 +200,8 @@ function draw() {
                     if(X - 2*margin < 150){
                         tx = 20;
                     }
-                    if(-h+100 > graph_h*(1-f)){
-                        ty = graph_h*(1-f) + h - 120;
+                    if(-h+100 > graph_h*(1-f2)){
+                        ty = graph_h*(1-f2) + h - 120;
                     }
                     translate(tx, ty);
 
@@ -242,7 +242,7 @@ function draw() {
             pop();
             fill_alt = 1;
             let ox = map(mq, 0, maxCap, 0, graph_w);
-            let oy = map(mp, 0, maxPrice, 0, graph_h*f);
+            let oy = map(mp, 0, maxPrice, 0, graph_h*f2);
             if(abs(X - ox - 2*margin) < 30){
                 push();
                 translate(ox - X + 2*margin - 140, -oy - 74);
@@ -281,7 +281,7 @@ function draw() {
                     let price = "Infinite";
                     let plant = "Base demand"
                     if (demand["price"][i] != null){
-                        h = map(demand["price"][i], 0, maxPrice, 0, graph_h*f);
+                        h = map(demand["price"][i], 0, maxPrice, 0, graph_h*f2);
                         price = display_money(demand["price"][i]);
                         plant = cols_and_names[demand["plant"][i]][1];
                     }
@@ -293,10 +293,10 @@ function draw() {
                     if(width-X < 150){
                         tx = -150;
                     }
-                    if(-h+100 > graph_h*(1-f)){
-                        ty = graph_h*(1-f) + h - 120;
-                    }else if(h > graph_h*f){
-                        ty = h - graph_h*f;
+                    if(-h+100 > graph_h*(1-f2)){
+                        ty = graph_h*(1-f2) + h - 120;
+                    }else if(h > graph_h*f2){
+                        ty = h - graph_h*f2;
                     }
                     translate(tx, ty);
 
@@ -373,14 +373,14 @@ function update_graph(){
                 ...demand["cumul_capacities"], 100);
             maxPrice = Math.max(...supply["price"], ...demand["price"], 1/1.1)*1.1;
             minPrice = Math.min(...supply["price"], ...demand["price"], 0)*1.1;
-            f = maxPrice/(maxPrice-minPrice);
+            f2 = maxPrice/(maxPrice-minPrice);
             push();
-            translate(2*margin, height-margin-10-graph_h*(1-f));
+            translate(2*margin, height-margin-10-graph_h*(1-f2));
             noStroke();
             push();
             for(i = 0; i<supply["capacity"].length; i++){
                 let w = map(supply["capacity"][i], 0, maxCap, 0, graph_w);
-                let h = map(supply["price"][i], 0, maxPrice, 0, -graph_h*f);
+                let h = map(supply["price"][i], 0, maxPrice, 0, -graph_h*f2);
                 if (h<0){
                     h = Math.min(h, -3);
                 }
@@ -413,13 +413,13 @@ function update_graph(){
             }
             pop();
             let ox = map(mq, 0, maxCap, 0, graph_w);
-            let oy = map(mp, 0, maxPrice, 0, graph_h*f);
+            let oy = map(mp, 0, maxPrice, 0, graph_h*f2);
             fill(255, 0, 0);
             ellipse(ox, -oy, 10, 10);
 
             stroke(0);
             line(0, 0, graph_w, 0);
-            line(0, (1-f)*graph_h, 0, -graph_h*f);
+            line(0, (1-f2)*graph_h, 0, -graph_h*f2);
 
             push();
             let interval = y_units_market(maxCap);
@@ -427,7 +427,7 @@ function update_graph(){
             let x = map(interval, 0, maxCap, 0, graph_w);
             for(let i=x; i<=graph_w; i+=x){
                 stroke(0, 0, 0, 30);
-                line(i, -graph_h*f, i, (1-f)*graph_h);
+                line(i, -graph_h*f2, i, (1-f2)*graph_h);
                 stroke(0);
                 line(i, 0, i, 5);
                 noStroke();
@@ -438,9 +438,9 @@ function update_graph(){
             push(); 
             interval = y_units_market(maxPrice-minPrice);
             fill(0);
-            let y = map(interval, 0, maxPrice, 0, graph_h*f);
+            let y = map(interval, 0, maxPrice, 0, graph_h*f2);
             textAlign(RIGHT, CENTER);
-            for(let i=0; i<=graph_h*f; i+=y){
+            for(let i=0; i<=graph_h*f2; i+=y){
                 stroke(0, 0, 0, 30);
                 line(graph_w, -i, 0, -i);
                 stroke(0);
@@ -478,9 +478,9 @@ function update_graph(){
             "price": Math.max(...data["price"], -min["price"]),
             "quantity": Math.max(...data["quantity"])
         }
-        f = max["price"] / (max["price"]-min["price"])
+        f1 = max["price"] / (max["price"]-min["price"])
         push();
-        translate(1.5*margin, 300*f+10);
+        translate(1.5*margin, 300*f1+10);
         noStroke();
         push();
         strokeWeight(3);
@@ -488,8 +488,8 @@ function update_graph(){
             stroke(cols_and_names[key][0]);
             push();
             for(let t = 1; t < data_len; t++){
-                let h1 = data[key][t-1]/max[key]*300*f;
-                let h2 = data[key][t]/max[key]*300*f;
+                let h1 = data[key][t-1]/max[key]*300*f1;
+                let h2 = data[key][t]/max[key]*300*f1;
                 line(0, -h1, graph_w/data_len, -h2);
                 translate(graph_w/(data_len-1), 0);
             }
@@ -498,8 +498,8 @@ function update_graph(){
         pop();
         stroke(0);
         line(0, 0, graph_w, 0);
-        line(0, 300*(1-f), 0, -300*f);
-        line(graph_w, 300*(1-f), graph_w, -300*f);
+        line(0, 300*(1-f1), 0, -300*f1);
+        line(graph_w, 300*(1-f1), graph_w, -300*f1);
         
         push();
         let units = time_unit(res);
@@ -507,9 +507,9 @@ function update_graph(){
         for(let i=0; i<units.length; i++){
             stroke(0, 0, 0, 30);
             let x = i*graph_w/(units.length-1);
-            line(x, -300*f, x, 300*(1-f));
+            line(x, -300*f1, x, 300*(1-f1));
             stroke(0);
-            line(x, 300*(1-f), x, 300*(1-f)+5);
+            line(x, 300*(1-f1), x, 300*(1-f1)+5);
             noStroke();
             text(units[i], x, 0.5*margin-3);
         }
@@ -519,7 +519,7 @@ function update_graph(){
         let y_ticks = y_units(max["price"]);
         let interval2 = y_ticks[1];
         fill(40, 84, 48);
-        let y2 = map(interval2, 0, max["price"], 0, 300*f);
+        let y2 = map(interval2, 0, max["price"], 0, 300*f1);
         textAlign(RIGHT, CENTER);
         for(let i=0; i<y_ticks.length; i++){
             stroke(0, 0, 0, 30);
@@ -536,7 +536,7 @@ function update_graph(){
         let y_ticks3 = y_units(max["quantity"]);
         let interval3 = y_ticks3[1];
         fill(45, 53, 166);
-        let y3 = map(interval3, 0, max["quantity"], 0, 300*f);
+        let y3 = map(interval3, 0, max["quantity"], 0, 300*f1);
         for(let i=0; i<y_ticks3.length; i++){
             stroke(45, 53, 166);
             line(graph_w, -y3*i, graph_w+5, -y3*i);
@@ -644,7 +644,7 @@ function calc_h(price){
     if(price==null){
         return -2*graph_h;
     }else{
-        return map(price, 0, maxPrice, 0, -graph_h*f);
+        return map(price, 0, maxPrice, 0, -graph_h*f2);
     }
 }
 

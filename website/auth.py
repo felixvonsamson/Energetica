@@ -23,7 +23,7 @@ def login():
         player = Player.query.filter_by(username=username).first()
         if player:
             if check_password_hash(player.password, password):
-                flash("Logged in successfully!", category="success")
+                flash("Logged in successfully!", category="message")
                 login_user(player, remember=True)
                 print(f"{username} logged in")
                 return redirect(url_for("views.home"))
@@ -71,7 +71,7 @@ def sign_up():
             db.session.add(new_player)
             db.session.commit()
             login_user(new_player, remember=True)
-            flash("Account created!", category="success")
+            flash("Account created!", category="message")
             print(f"{username} created an account")
             return redirect(url_for("views.home"))
 

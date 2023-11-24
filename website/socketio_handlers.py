@@ -106,7 +106,7 @@ def add_handlers(socketio, engine):
         )
         db.session.add(new_facility)
         db.session.commit()
-        current_user.emit("display_under_construction", (facility, finish_time))
+        current_user.emit("display_under_construction", (assets[facility]["name"], finish_time))
         print(f"{current_user.username} started the construction {facility}")
 
     # this function is executed when a player creates a network
@@ -180,4 +180,4 @@ def add_handlers(socketio, engine):
         current_user.demand_priorities = space.join(demand_list)
         db.session.commit()
 
-        flash("Changes saved", category="success")
+        current_user.emit("infoMessage", "Changes saved")

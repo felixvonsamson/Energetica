@@ -115,7 +115,7 @@ def network():
             network = Network.query.filter_by(name=network_name).first()
             current_user.network = network
             db.session.commit()  
-            flash(f"You joined the network {network_name}", category="message")  
+            current_user.emit("infoMessage", f"You joined the network {network_name}") 
             print(f"{current_user.username} joined the network {current_user.network.name}")
     return g.render_template_ctx("network.jinja")
 

@@ -15,9 +15,15 @@ function start_construction(facility, family) {
 
 socket.on('display_under_construction', function(facility, finish_time) {
     var uc = document.getElementById("under_construction");
-    uc.innerHTML += '<div class="padding" id="progress_bar">The facility \
-    <b>' + facility + '</b> is under construction <i class="time" \
-    data-name="' + finish_time + '"></i></div>'
+    if (document.title == "Technologies"){
+        uc.innerHTML += '<div class="padding" id="progress_bar">The research on the technology \
+        <b>' + facility + '</b> is currently underway. <i class="time" \
+        data-name="' + finish_time + '"></i></div>'
+    }else{
+        uc.innerHTML += '<div class="padding" id="progress_bar">The facility \
+        <b>' + facility + '</b> is under construction. <i class="time" \
+        data-name="' + finish_time + '"></i></div>'
+    }
 });
 
 // updates specific fields of the page without reloading
