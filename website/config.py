@@ -613,13 +613,6 @@ class Config(object):
             assets[asset]["construction energy"] /= 1000  # Energy reqirements were too high
 
         for asset in assets:
-            # calculating the ramping speed in W/min from the ramping time
-            if "ramping time" in assets[asset]:
-                if assets[asset]["ramping time"] == 0:
-                    assets[asset]["ramping speed"] = 0
-                else: 
-                    assets[asset]["ramping speed"] = assets[asset]["power generation"]/assets[asset]["ramping time"]
-
             if asset in ["steam_engine", "watermill", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "compressed_air", "molten_salt"]:
                 # update price and production (mechanical engineering)
                 assets[asset]["price"] *= assets["mechanical_engineering"]["price factor"] ** player.mechanical_engineering
@@ -733,6 +726,13 @@ class Config(object):
                     req[2] = getattr(player, req[0]) >= req[1]
                     if not req[2]:
                         assets[asset]["locked"] = True
+
+            # calculating the ramping speed in W/min from the ramping time
+            if "ramping time" in assets[asset]:
+                if assets[asset]["ramping time"] == 0:
+                    assets[asset]["ramping speed"] = 0
+                else: 
+                    assets[asset]["ramping speed"] = assets[asset]["power generation"]/assets[asset]["ramping time"]
 
         # calculating the maximum storage capacity from the warehouse level
         max_cap = config.for_player[player_id]["warehouse_capacities"]
