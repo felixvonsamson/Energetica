@@ -192,7 +192,7 @@ def calculate_generation_without_market(engine, total_demand, player, t):
     for plant in priority_list:
         if assets[plant]["ramping speed"] != 0 and getattr(player, plant) > 0:
             generation[plant][t] = calculate_prod("min", player, assets, plant, 
-                                                  generation, t)
+                                                  generation, t, storage=storage if plant in engine.storage_plants else None)
         total_generation += generation[plant][t]
     # If the player is not able to use all the min. generated energy, it has to be dumped at a cost of 5 ¤ per MWh
     if total_generation > total_demand:
@@ -207,11 +207,9 @@ def calculate_generation_without_market(engine, total_demand, player, t):
     # For the PP that overshoots the demand, find the equilibirum power generation value.
     if total_demand > total_generation :
         for plant in priority_list:
-            if plant in engine.storage_plants:
-                continue
             if assets[plant]["ramping speed"] != 0:
                 max_prod = calculate_prod("max", player, assets, plant, 
-                                        generation, t)
+                                        generation, t, storage=storage if plant in engine.storage_plants else None)
                 # range of possible power variation
                 delta_prod = max_prod - generation[plant][t]
                 # case where the plant is the one that could overshoot the equilibium :
