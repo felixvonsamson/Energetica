@@ -103,8 +103,22 @@ function setup() {
       buttons[i] = new Button(resolution[i]);
     }
     buttons[0].active = true;
-    setInterval(update_graph, 5000);
     update_graph();
+    updateAtFiveSeconds();
+}
+
+function updateAtFiveSeconds() {
+    const now = new Date();
+    const seconds = now.getSeconds();
+    // Calculate the milliseconds until the next '05' seconds
+    let millisecondsUntilNextFive = ((60-seconds+5) % 60) * 1000;
+    if(millisecondsUntilNextFive==0){
+        millisecondsUntilNextFive = 60000;
+    }
+    setTimeout(function () {
+        update_graph();
+        updateAtFiveSeconds();
+    }, millisecondsUntilNextFive);
 }
 
 function draw() {
@@ -136,6 +150,7 @@ function calc_size(){
 
 function update_graph(){
     calc_size();
+    resetMatrix();
     if(active_view == "Revenues"){
         regen_revenues(res);
     }else if(active_view == "Generation"){

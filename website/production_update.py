@@ -105,8 +105,12 @@ def update_electricity(engine):
             current_data["generation"]["imports"][t] = max(0, imp-exp)
             exp_rev = current_data["revenues"]["exports"][t]
             imp_rev = current_data["revenues"]["imports"][t]
-            current_data["revenues"]["exports"][t] = max(0, exp_rev+imp_rev)
-            current_data["revenues"]["imports"][t] = min(0, exp_rev+imp_rev)
+            if exp_rev < 0:
+                current_data["revenues"]["exports"][t] = min(0, exp_rev+imp_rev)
+                current_data["revenues"]["imports"][t] = max(0, exp_rev+imp_rev)
+            else:
+                current_data["revenues"]["exports"][t] = max(0, exp_rev+imp_rev)
+                current_data["revenues"]["imports"][t] = min(0, exp_rev+imp_rev)
         # Ressource and pollution update for all players
         ressources_and_pollution(engine, player, t)
         # add money from industry income
