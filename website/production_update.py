@@ -134,7 +134,7 @@ def calculate_demand(engine, player, t):
     demand = engine.data["current_data"][player.username]["demand"]
     revenues = engine.data["current_data"][player.username]["revenues"]
     day = engine.data["total_t"]//1440
-    seasonal_factor = (engine.industry_seasonal[day%51]*(1440-engine.data["total_t"]%1440)+engine.industry_seasonal[(day+1)%51]*engine.data["total_t"]%1440)/1440
+    seasonal_factor = (engine.industry_seasonal[day%51]*(1440-engine.data["total_t"]%1440)+engine.industry_seasonal[(day+1)%51]*(engine.data["total_t"]%1440))/1440
     industry_demand = engine.industry_demand[t-1]*seasonal_factor*assets["industry"]["power consumption"]
     demand["industry"][t] = min(demand["industry"][t-1]+0.05*industry_demand,industry_demand) # progressive demand change in case of restart
     # calculate income of industry
