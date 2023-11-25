@@ -452,6 +452,7 @@ def market_logic(engine, market, t):
                 q_resource[t] = getattr(row.player, resource_name)
                 assets = engine.config[row.player.id]["assets"]
                 energy_demand = 0.2 * assets[row.plant]["power consumption"] * getattr(row.player, row.plant)
+                demand = engine.data["current_data"][row.player.username]["demand"]
                 demand[row.plant][t] = min(demand[row.plant][t-1]+0.2*energy_demand, energy_demand) # for smooth demand changes
                 emmissions_takeback = engine.data["current_data"][row.player.username]["emissions"][row.plant][t]
                 engine.data["current_data"][row.player.username]["emissions"][row.plant][t] = 0
