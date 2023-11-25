@@ -228,6 +228,7 @@ def calculate_generation_without_market(engine, total_demand, player, t):
                 if demand_type == "industry":
                     player.industry = max(1, player.industry-1)
                     engine.config.update_config_for_user(player.id)
+                    db.session.commit()
                 if demand_type == "construction":
                     last_construction = Under_construction.query.filter(
                         Under_construction.player_id == player.id).filter(
