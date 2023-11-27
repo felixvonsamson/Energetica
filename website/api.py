@@ -12,6 +12,11 @@ api = Blueprint('api', __name__)
 
 from .database import Hex, Player, Chat, Network
 
+@api.before_request
+@login_required
+def check_user():
+    g.engine = current_app.config["engine"]
+
 # gets the map data from the database and returns it as a array of dictionaries :
 @api.route("/get_map", methods=["GET"])
 def get_map():
@@ -63,8 +68,7 @@ def get_chat():
 
 @api.route("/get_chart_data", methods=["GET"])
 def get_chart_data():
-    engine = current_app.config["engine"]
-    assets = engine.config[current_user.id]["assets"]
+    assets = g.engine.config[current_user.id]["assets"]
     timescale = request.args.get('timescale')
     table = request.args.get('table')
     filename = f"instance/player_data/{current_user.username}/{timescale}.pck"
@@ -98,30 +102,29 @@ def get_chart_data():
                 "uranium" : "uranium_mine"
             }
             for ressource in ["coal", "oil", "gas", "uranium"]:
-                capacities[ressource] = engine.config[current_user.id][
+                capacities[ressource] = g.engine.config[current_user.id][
                     "warehouse_capacities"][ressource]
                 facility = resource_to_facility[ressource]
                 rates[ressource] = getattr(current_user, facility) * assets[
                     facility]["amount produced"] * 60
                 on_sale[ressource] = getattr(current_user, ressource+"_on_sale")
-            return jsonify(engine.data["current_t"], data[table],
-                       engine.data["current_data"][current_user.username][table],
+            return jsonify(g.engine.data["current_t"], data[table],
+                       g.engine.data["current_data"][current_user.username][table],
                        capacities, rates, on_sale)
-        return jsonify(engine.data["current_t"], data[table],
-                       engine.data["current_data"][current_user.username][table],
+        return jsonify(g.engine.data["current_t"], data[table],
+                       g.engine.data["current_data"][current_user.username][table],
                        capacities)
     else:
-        return jsonify(engine.data["current_t"], data[table],
-                       engine.data["current_data"][current_user.username][table])
+        return jsonify(g.engine.data["current_t"], data[table],
+                       g.engine.data["current_data"][current_user.username][table])
     
 @api.route("/get_market_data", methods=["GET"])
 def get_market_data():
     market_data = {}
-    engine = current_app.config["engine"]
     if current_user.network == None:
         return '', 404
     t = int(request.args.get('t'))
-    filename_state = f"instance/network_data/{current_user.network.name}/charts/market_t{engine.data['total_t']-t}.pck"
+    filename_state = f"instance/network_data/{current_user.network.name}/charts/market_t{g.engine.data['total_t']-t}.pck"
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
             market_data = pickle.load(file)
@@ -136,4 +139,4 @@ def get_market_data():
     filename_prices = f"instance/network_data/{current_user.network.name}/prices/{timescale}.pck"
     with open(filename_prices, "rb") as file:
         prices = pickle.load(file)
-    return jsonify(engine.data["current_t"], market_data, prices, engine.data["network_data"][current_user.network.name])
+    return jsonify(g.engine.data["current_t"], market_data, prices, g.engine.data["network_data"][current_user.network.name])

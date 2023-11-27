@@ -105,7 +105,7 @@ def update_electricity(engine):
             current_data["generation"]["imports"][t] = max(0, imp-exp)
             exp_rev = current_data["revenues"]["exports"][t]
             imp_rev = current_data["revenues"]["imports"][t]
-            if exp_rev < 0:
+            if exp_rev < 0 or imp_rev > 0:
                 current_data["revenues"]["exports"][t] = min(0, exp_rev+imp_rev)
                 current_data["revenues"]["imports"][t] = max(0, exp_rev+imp_rev)
             else:
