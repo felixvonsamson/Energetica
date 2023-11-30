@@ -44,10 +44,11 @@ def create_app():
     add_handlers(socketio=socketio, engine=engine)
 
     # add blueprints (website repositories) :
-    from .views import views
+    from .views import views, overviews
     from .auth import auth
     from .api import api
     app.register_blueprint(views, url_prefix="/")
+    app.register_blueprint(overviews, url_prefix="/production_overview")
     app.register_blueprint(auth, url_prefix="/")
     app.register_blueprint(api, url_prefix="/")
 

@@ -128,7 +128,7 @@ class Player(db.Model, UserMixin):
     warehouse = db.Column(db.Integer, default=0)
     carbon_capture = db.Column(db.Integer, default=0)
 
-    # Extraction plants :
+    # Extraction facilities :
     coal_mine = db.Column(db.Integer, default=0)
     oil_field = db.Column(db.Integer, default=0)
     gas_drilling_site = db.Column(db.Integer, default=0)

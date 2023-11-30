@@ -88,11 +88,18 @@ function preload() {
 }
 
 function setup() {
-  let canvas = createCanvas(1200, 1000);
+  let canvas_width = 0.7*windowWidth
+  let canvas_height = 0.6*windowWidth
+  if (windowWidth<1000){
+    canvas_width = windowWidth
+    canvas_height = 0.86*windowWidth
+  }
+  let canvas = createCanvas(min(canvas_width, 1200), min(canvas_height, 950));
   canvas.parent("map_visalisation");
   colorMode(HSB);
   textFont(font);
   textAlign(CENTER, CENTER);
+  s = min(280, 0.26*width) / size_param;
   h = 2 * s;
   w = sqrt(3) * s;
 }
@@ -225,8 +232,6 @@ function general_convert(value, units){
 }
 
 function calc_dist(id){
-  console.log(map[id])
-  console.log(map[player_tile_id])
   let dq = map[id].q - map[player_tile_id].q
   let dr = map[id].r - map[player_tile_id].r
   return round(Math.sqrt(dq*dq + dr*dr + dq*dr),2);

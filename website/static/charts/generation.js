@@ -6,7 +6,7 @@ const keys_generation = ["watermill", "small_water_dam", "large_water_dam",
   "compressed_air", "molten_salt", "hydrogen_storage", "imports"
 ];
 
-function draw_generation() {
+function draw() {
   if(graph){
     push();
     fill_alt = 1;
@@ -121,7 +121,7 @@ function draw_generation() {
   }
 }
 
-function regen_generation(res){
+function regen(res){
   file = res_to_data[res][0]
   fetch(`/get_chart_data?timescale=${file}&table=generation`) // retrieves data from server
     .then((response) => response.json())
@@ -224,4 +224,9 @@ function regen_generation(res){
     .catch((error) => {
       console.error("Error:", error);
     });
+}
+
+function calc_size(){
+  graph_h = height-2*margin-20;
+  graph_w = width-4.5*margin;
 }

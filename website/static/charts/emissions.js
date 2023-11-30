@@ -2,7 +2,7 @@ const keys_emissions = ["steam_engine", "coal_burner", "oil_burner",
   "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4", 
   "construction", "coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"];
 
-function draw_emissions() {
+function draw() {
   if(graph){
     push();
     fill_alt = 1;
@@ -77,7 +77,7 @@ function draw_emissions() {
   }
 }
 
-function regen_emissions(res){
+function regen(res){
   file = res_to_data[res][0]
   fetch(`/get_chart_data?timescale=${file}&table=emissions`) // retrieves data from server
     .then((response) => response.json())
@@ -160,4 +160,9 @@ function regen_emissions(res){
     .catch((error) => {
       console.error("Error:", error);
     });
+}
+
+function calc_size(){
+  graph_h = height-2*margin-20;
+  graph_w = width-3*margin; 
 }

@@ -1,0 +1,16 @@
+{% extends "base.jinja" %} {% block title %}Revenues overview{% endblock %} {% block content%}
+
+<div class="huge title">Production overview</div>
+
+<div class="bone">
+<h1 id="graph_title" class="txt_center padding-large" style="margin-bottom:0">Generation</h1>
+<div id="graph" class="bone" style="padding:16px 0;"></div>
+</div>
+
+</div>
+{% endblock %}
+
+{% block additionnal_script %}
+<script src="{{ url_for('static', filename='charts/buttons.js') }}"></script>
+<script src="{{ url_for('static', filename='charts/generation.js') }}"></script>
+{% endblock %}

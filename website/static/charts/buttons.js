@@ -94,8 +94,14 @@ function setup() {
         "gas": [color(64, 119, 201), "Gas"],
         "uranium": [color(30, 179, 0), "Uranium"],
     }
-  
-    let canvas = createCanvas(1200, 720);
+    let canvas_width = 0.7*windowWidth
+    let canvas_height = 0.42*windowWidth
+    if (windowWidth<1000){
+        canvas_width = windowWidth
+        canvas_height = 0.6*windowWidth
+    }
+    let canvas = createCanvas(min(canvas_width, 1200), min(canvas_height, 720));
+    margin = min(40, width/25);
     canvas.parent("graph");
     textAlign(CENTER, CENTER);
     textFont(font);
@@ -121,49 +127,10 @@ function updateAtFiveSeconds() {
     }, millisecondsUntilNextFive);
 }
 
-function draw() {
-    if(active_view == "Revenues"){
-        draw_revenues();
-    }else if(active_view == "Generation"){
-        draw_generation();
-    }else if(active_view == "Demand"){
-        draw_demand();
-    }else if(active_view == "Storage"){
-        draw_storage();
-    }else if(active_view == "Resources"){
-        draw_ressources();
-    }else{
-        draw_emissions();
-    }
-}
-
-function calc_size(){
-    graph_h = height-2*margin-20;
-    if(active_view == "Generation" | active_view == "Storage"){
-        graph_w = width-4.5*margin;
-    }else if(active_view == "Demand" | active_view == "Emissions"){
-        graph_w = width-3*margin;
-    }else{
-        graph_w = width-6*margin;
-    }  
-}
-
 function update_graph(){
     calc_size();
     resetMatrix();
-    if(active_view == "Revenues"){
-        regen_revenues(res);
-    }else if(active_view == "Generation"){
-        regen_generation(res);
-    }else if(active_view == "Demand"){
-        regen_demand(res);
-    }else if(active_view == "Storage"){
-        regen_storage(res);
-    }else if(active_view == "Resources"){
-        regen_ressources(res);
-    }else{
-        regen_emissions(res);
-    }
+    regen(res);
 }
 
 function mousePressed(){
@@ -323,8 +290,6 @@ function display_money_long(amount) {
 function change_view(view){
     resetMatrix();
     graph = null;
-    let title = document.getElementById("graph_title");
-    title.innerHTML = view;
     const boldElements = document.querySelectorAll('b');
     boldElements.forEach(function(boldElement) {
         boldElement.classList.remove('active');});

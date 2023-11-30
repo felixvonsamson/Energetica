@@ -1,14 +1,14 @@
-{% extends "base.jinja" %} {% block title %}Extraction plants{% endblock %} {% block content
+{% extends "base.jinja" %} {% block title %}Extraction facilities{% endblock %} {% block content
 %}
 
 {% set data = all_data["assets"]%}
 
-<div class="huge title">Extraction plants</div>
+<div class="huge title">Extraction facilities</div>
 
 <div id="under_construction">
 {% if user.under_construction %}
   {% for facility in user.under_construction %}
-  {% if facility.family == "extraction_plants"%}
+  {% if facility.family == "extraction_facilities"%}
   <div class="padding" id="progress_bar">
     The facility <b>{{data[facility.name]["name"]}}</b> is under construction <i class="time" data-name="{{facility.finish_time}}"></i>
   </div>
@@ -19,7 +19,7 @@
 
 {% set facility = data["coal_mine"] %}
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
- <img class="img" src="{{ url_for('static', filename='images/extraction_plants/coal_mine.jpg') }}"\>
+ <img class="img" src="{{ url_for('static', filename='images/extraction_facilities/coal_mine.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Coal_mining" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The coal mine extracts coal from the ground. <br><br>
@@ -51,7 +51,7 @@
       Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
       Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
     </div>
-    <b class="padding medium white button margin-small txt_center" onclick="start_construction('coal_mine', 'extraction_plants');" style="width:160px">
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('coal_mine', 'extraction_facilities');" style="width:160px">
       Start construction
     </b>
   </div>
@@ -60,7 +60,7 @@
 
 {% set facility = data["oil_field"] %}
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
- <img class="img" src="{{ url_for('static', filename='images/extraction_plants/oil_field.jpg') }}"\>
+ <img class="img" src="{{ url_for('static', filename='images/extraction_facilities/oil_field.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Extraction_of_petroleum" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The oil field extracts oil from the ground. <br><br>
@@ -92,7 +92,7 @@
       Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
       Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
     </div>
-    <b class="padding medium white button margin-small txt_center" onclick="start_construction('oil_field', 'extraction_plants');" style="width:160px">
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('oil_field', 'extraction_facilities');" style="width:160px">
       Start construction
     </b>
   </div>
@@ -101,7 +101,7 @@
 
 {% set facility = data["gas_drilling_site"] %}
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
- <img class="img" src="{{ url_for('static', filename='images/extraction_plants/gas_drilling_site.jpg') }}"\>
+ <img class="img" src="{{ url_for('static', filename='images/extraction_facilities/gas_drilling_site.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Natural_gas" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The gas drilling site extracts gas from the ground. <br><br>
@@ -133,7 +133,7 @@
       Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
       Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
     </div>
-    <b class="padding medium white button margin-small txt_center" onclick="start_construction('gas_drilling_site', 'extraction_plants');" style="width:160px">
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('gas_drilling_site', 'extraction_facilities');" style="width:160px">
       Start construction
     </b>
   </div>
@@ -142,7 +142,7 @@
 
 {% set facility = data["uranium_mine"] %}
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
- <img class="img" src="{{ url_for('static', filename='images/extraction_plants/uranium_mine.jpg') }}"\>
+ <img class="img" src="{{ url_for('static', filename='images/extraction_facilities/uranium_mine.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Natural_gas" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The uranium mine extracts uranium from the ground. <br><br>
@@ -174,7 +174,7 @@
       Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
       Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
     </div>
-    <b class="padding medium white button margin-small txt_center" onclick="start_construction('uranium_mine', 'extraction_plants');" style="width:160px">
+    <b class="padding medium white button margin-small txt_center" onclick="start_construction('uranium_mine', 'extraction_facilities');" style="width:160px">
       Start construction
     </b>
   </div>

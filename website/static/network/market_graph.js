@@ -68,9 +68,15 @@ function setup() {
         "price": [color(40, 84, 48), "Market price"],
         "quantity": [color(45, 53, 166), "Market quantity"],
     }
-  
-    let canvas = createCanvas(1200, 1150);
-    graph_h = height-margin-500;
+    let canvas_width = 0.7*windowWidth
+    let canvas_height = 0.67*windowWidth
+    if (windowWidth<1000){
+        canvas_width = windowWidth
+        canvas_height = 0.96*windowWidth
+    }
+    let canvas = createCanvas(min(canvas_width, 1200), min(canvas_height, 1150));
+    margin = min(40, width/25);
+    graph_h = 0.63*height-3*margin;
     graph_w = width-3*margin;
     canvas.parent("market_graph");
     textAlign(CENTER, CENTER);
@@ -113,11 +119,11 @@ function draw() {
         stroke(255);
         strokeWeight(2);
         let mar = 2*margin;
-        if (mouseY < 400){
+        if (mouseY < 0.35*height){
             mar = 1.5*margin
         }
         let X = Math.min(graph_w, Math.max(0, mouseX-mar));
-        if(mouseY < 400){
+        if(mouseY < 0.35*height){
             push();
             fill_alt = 1;
             translate(0, 10);
@@ -126,19 +132,19 @@ function draw() {
             strokeWeight(2);
             t_view = floor(map(X, 0, graph_w, 0, data_len-1));
             X += mar;
-            line(X, 0, X, 300);
+            line(X, 0, X, 0.26*height);
             noStroke();
-            translate(X, 300*f1);
+            translate(X, 0.26*height*f1);
             for (const key of ["price", "quantity"]) {
-                let h = -data[key][t_view]/max[key]*300*f1;
+                let h = -data[key][t_view]/max[key]*0.26*height*f1;
                 ellipse(0, h, 8, 8);
             }
             let tx = -180;
-            let ty = 310-mouseY;
-            if(ty<5*16){
-                ty = 5*16+2;
-            }else if(ty>300){
-                ty = graph_h;
+            let ty = 0.27*height-mouseY;
+            if(ty<4*16){
+                ty = 4*16+2;
+            }else if(ty>0.26*height){
+                ty = 0.26*height;
             }
             if(t_view/data_len < 180/graph_w){
                 tx = 20;
@@ -216,7 +222,7 @@ function draw() {
                     text("Supply",65, 4);
                     textStyle(NORMAL);
                     textAlign(LEFT);
-                    let left = ["Player", "Capacity", "Price", "Plant"];
+                    let left = ["Player", "Capacity", "Price", "facility"];
                     for(let j of left){
                         translate(0, 16);
                         text(j, 5, 4);
@@ -231,7 +237,7 @@ function draw() {
                     text(display_money(supply["price"][i]), 97, 32+5);
                     image(coin, 100, 32+2, 12, 12);
                     pop();
-                    let right = [display_W(supply["capacity"][i]), "", cols_and_names[supply["plant"][i]][1]];
+                    let right = [display_W(supply["capacity"][i]), "", cols_and_names[supply["facility"][i]][1]];
                     for(let j of right){
                         translate(0, 16);
                         text(j, 90, 4);
@@ -279,11 +285,11 @@ function draw() {
                     fill(255);
                     let h = 2*graph_h;
                     let price = "Infinite";
-                    let plant = "Base demand"
+                    let facility = "Base demand"
                     if (demand["price"][i] != null){
                         h = map(demand["price"][i], 0, maxPrice, 0, graph_h*f2);
                         price = display_money(demand["price"][i]);
-                        plant = cols_and_names[demand["plant"][i]][1];
+                        facility = cols_and_names[demand["facility"][i]][1];
                     }
                     translate(0, -h);
                     ellipse(0, 0, 8, 8);
@@ -311,7 +317,7 @@ function draw() {
                     text("Demand",65, 4);
                     textStyle(NORMAL);
                     textAlign(LEFT);
-                    let left = ["Player", "Capacity", "Price", "Plant"];
+                    let left = ["Player", "Capacity", "Price", "facility"];
                     for(let j of left){
                         translate(0, 16);
                         text(j, 5, 4);
@@ -326,7 +332,7 @@ function draw() {
                     text(price, 97, 32+5);
                     image(coin, 100, 32+2, 12, 12);
                     pop();
-                    let right = [display_W(demand["capacity"][i]), "", plant];
+                    let right = [display_W(demand["capacity"][i]), "", facility];
                     for(let j of right){
                         translate(0, 16);
                         text(j, 90, 4);
@@ -341,7 +347,7 @@ function draw() {
 }
 
 function mousePressed(){
-    if(mouseY>350 & mouseY<350+margin & mouseX>1.5*margin & mouseX<graph_w+1.5*margin){
+    if(mouseY>0.32*height & mouseY<0.32*height+margin & mouseX>1.5*margin & mouseX<graph_w+1.5*margin){
         let i = floor((mouseX-1.5*margin)*buttons.length/graph_w);
         for(let j = 0; j<buttons.length; j++){
             buttons[j].active = false;
@@ -351,7 +357,7 @@ function mousePressed(){
         update_graph();
         return
     }
-    if (mouseY<350){
+    if (mouseY<0.32*height){
         t = (data_len-t_view-1)*res_to_data[res][1];
         update_graph();
     }
@@ -387,7 +393,7 @@ function update_graph(){
                 if (h>0){
                     h = Math.max(h, 3);
                 }
-                fill(cols_and_names[supply["plant"][i]][0])
+                fill(cols_and_names[supply["facility"][i]][0])
                 rect(0, 0, w-1, h);
                 translate(w, 0);
             }
@@ -458,10 +464,10 @@ function update_graph(){
         push();
         fill(229, 217, 182);
         noStroke();
-        rect(0, 0, width, 480);
+        rect(0, 0, width, 0.4*height);
         fill(0);
         textSize(30);
-        text("Market : "+display_time(t), width/2, 450-7)
+        text("Market : "+display_time(t), width/2, 0.39*height)
         pop();
 
         data = raw_data[2];
@@ -480,7 +486,7 @@ function update_graph(){
         }
         f1 = max["price"] / (max["price"]-min["price"])
         push();
-        translate(1.5*margin, 300*f1+10);
+        translate(1.5*margin, 0.26*height*f1+10);
         noStroke();
         push();
         strokeWeight(3);
@@ -488,8 +494,8 @@ function update_graph(){
             stroke(cols_and_names[key][0]);
             push();
             for(let t = 1; t < data_len; t++){
-                let h1 = data[key][t-1]/max[key]*300*f1;
-                let h2 = data[key][t]/max[key]*300*f1;
+                let h1 = data[key][t-1]/max[key]*0.26*height*f1;
+                let h2 = data[key][t]/max[key]*0.26*height*f1;
                 line(0, -h1, graph_w/data_len, -h2);
                 translate(graph_w/(data_len-1), 0);
             }
@@ -498,8 +504,8 @@ function update_graph(){
         pop();
         stroke(0);
         line(0, 0, graph_w, 0);
-        line(0, 300*(1-f1), 0, -300*f1);
-        line(graph_w, 300*(1-f1), graph_w, -300*f1);
+        line(0, 0.26*height*(1-f1), 0, -0.26*height*f1);
+        line(graph_w, 0.26*height*(1-f1), graph_w, -0.26*height*f1);
         
         push();
         let units = time_unit(res);
@@ -507,9 +513,9 @@ function update_graph(){
         for(let i=0; i<units.length; i++){
             stroke(0, 0, 0, 30);
             let x = i*graph_w/(units.length-1);
-            line(x, -300*f1, x, 300*(1-f1));
+            line(x, -0.26*height*f1, x, 0.26*height*(1-f1));
             stroke(0);
-            line(x, 300*(1-f1), x, 300*(1-f1)+5);
+            line(x, 0.26*height*(1-f1), x, 0.26*height*(1-f1)+5);
             noStroke();
             text(units[i], x, 0.5*margin-3);
         }
@@ -519,7 +525,7 @@ function update_graph(){
         let y_ticks = y_units(max["price"]);
         let interval2 = y_ticks[1];
         fill(40, 84, 48);
-        let y2 = map(interval2, 0, max["price"], 0, 300*f1);
+        let y2 = map(interval2, 0, max["price"], 0, 0.26*height*f1);
         textAlign(RIGHT, CENTER);
         for(let i=0; i<y_ticks.length; i++){
             stroke(0, 0, 0, 30);
@@ -536,7 +542,7 @@ function update_graph(){
         let y_ticks3 = y_units(max["quantity"]);
         let interval3 = y_ticks3[1];
         fill(45, 53, 166);
-        let y3 = map(interval3, 0, max["quantity"], 0, 300*f1);
+        let y3 = map(interval3, 0, max["quantity"], 0, 0.26*height*f1);
         for(let i=0; i<y_ticks3.length; i++){
             stroke(45, 53, 166);
             line(graph_w, -y3*i, graph_w+5, -y3*i);
@@ -548,7 +554,7 @@ function update_graph(){
         pop();
         for(let i = 0; i<buttons.length; i++){
             push();
-            translate(1.5*margin + i*graph_w/buttons.length, 350);
+            translate(1.5*margin + i*graph_w/buttons.length, 0.32*height);
             buttons[i].display_button();
             pop();
         }

@@ -2,7 +2,7 @@ const keys_ressources = ["coal", "oil", "gas", "uranium"];
 let rates = {};
 let on_sale = {};
 
-function draw_ressources() {
+function draw() {
   if(graph){
     push();
     fill_alt = 1;
@@ -125,7 +125,7 @@ function show_stored(ressource, x, y, y_fix){
   pop();
 }
 
-function regen_ressources(res){
+function regen(res){
   file = res_to_data[res][0]
   fetch(`/get_chart_data?timescale=${file}&table=ressources`) // retrieves data from server
     .then((response) => response.json())
@@ -265,4 +265,9 @@ function regen_ressources(res){
     .catch((error) => {
       console.error("Error:", error);
     });
+}
+
+function calc_size(){
+  graph_h = height-2*margin-20;
+  graph_w = width-6*margin;
 }

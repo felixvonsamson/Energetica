@@ -27,7 +27,7 @@ class gameEngine(object):
         engine.nonces = set() # Dont remember what that is
         engine.log("engine created")
 
-        engine.storage_plants = [
+        engine.storage_facilities = [
             "small_pumped_hydro",
             "compressed_air",
             "molten_salt",

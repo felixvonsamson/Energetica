@@ -1,7 +1,7 @@
 const keys_revenues = ["industry", "O&M_costs", "exports", "imports", 
                         "dumping"];
 
-function draw_revenues() {
+function draw() {
   if(graph){
     push();
     fill_alt = 1;
@@ -92,7 +92,7 @@ function draw_revenues() {
   }
 }
 
-function regen_revenues(res){
+function regen(res){
   file = res_to_data[res][0]
   fetch(`/get_chart_data?timescale=${file}&table=revenues`) // retrieves data from server
     .then((response) => response.json())
@@ -211,4 +211,9 @@ function display_coin(money, x, y){
   image(coin, x-26, y+2, 12, 12);
   text("/h", x-3, y+6);
   pop();
+}
+
+function calc_size(){
+  graph_h = height-2*margin-20;
+  graph_w = width-3*margin;
 }

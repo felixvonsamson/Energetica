@@ -4,7 +4,7 @@ const keys_demand = ["coal_mine", "oil_field", "gas_drilling_site",
   "compressed_air", "molten_salt", "hydrogen_storage", "exports", "dumping"
 ];
 
-function draw_demand() {
+function draw() {
   if(graph){
     push();
     fill_alt = 1;
@@ -79,7 +79,7 @@ function draw_demand() {
   }
 }
 
-function regen_demand(res){
+function regen(res){
   file = res_to_data[res][0]
   fetch(`/get_chart_data?timescale=${file}&table=demand`) // retrieves data from server
     .then((response) => response.json())
@@ -161,4 +161,9 @@ function regen_demand(res){
     .catch((error) => {
       console.error("Error:", error);
     });
+}
+
+function calc_size(){
+  graph_h = height-2*margin-20;
+  graph_w = width-3*margin; 
 }

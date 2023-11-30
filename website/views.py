@@ -14,11 +14,13 @@ from .database import Chat, Player, Network, Resource_on_sale, Shipment
 from .utils import check_existing_chats, display_money
 
 views = Blueprint("views", __name__)
+overviews = Blueprint("overviews", __name__,  static_folder='static')
 
 flash_error = lambda msg: flash(msg, category="error")
 
 # this function is executed once before every request :
 @views.before_request
+@overviews.before_request
 @login_required
 def check_user():
     g.engine = current_app.config["engine"]
@@ -135,13 +137,9 @@ def technology():
 def functional_facilities():
     return g.render_template_ctx("functional_facilities.jinja")
 
-@views.route("/extraction_plants")
-def extraction_plants():
-    return g.render_template_ctx("extraction_plants.jinja")
-
-@views.route("/production_overview")
-def production_overview():
-    return g.render_template_ctx("production_overview.jinja")
+@views.route("/extraction_facilities")
+def extraction_facilities():
+    return g.render_template_ctx("extraction_facilities.jinja")
 
 @views.route("/resource_market", methods=["GET", "POST"])
 def resource_market():
@@ -203,3 +201,27 @@ def resource_market():
                 db.session.commit()
 
     return g.render_template_ctx("resource_market.jinja")
+
+@overviews.route("/revenues")
+def revenues():
+    return g.render_template_ctx("overviews/revenues.jinja")
+
+@overviews.route("/generation")
+def generation():
+    return g.render_template_ctx("overviews/generation.jinja")
+
+@overviews.route("/demand")
+def demand():
+    return g.render_template_ctx("overviews/demand.jinja")
+
+@overviews.route("/storage")
+def storage():
+    return g.render_template_ctx("overviews/storage.jinja")
+
+@overviews.route("/resources")
+def resources():
+    return g.render_template_ctx("overviews/resources.jinja")
+
+@overviews.route("/emissions")
+def emissions():
+    return g.render_template_ctx("overviews/emissions.jinja")
