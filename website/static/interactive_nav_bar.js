@@ -8,14 +8,16 @@ const navLinks = document.querySelectorAll("nav a").forEach((link) => {
     link.classList.add("active");
     link.querySelector("img").classList.add("active");
     if (link.href.includes("facilities")){
-      expand_menu('menu-facilities')
+      expand_menu('facilities')
     }else if (link.href.includes("overview")){
-      expand_menu('menu-overview')
+      expand_menu('overview')
     }
   }
 });
 
 function expand_menu(id){
-  let dropdown = document.getElementById(id);
+  let dropdown = document.getElementById("menu-"+id);
+  let dropdown_icon = document.getElementById("dropdown-"+id);
   dropdown.classList.toggle("show");
+  dropdown_icon.classList.toggle("rotate");
 }

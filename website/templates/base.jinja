@@ -3,7 +3,7 @@
 
 <div class="logo_container flex-row">
   <img src="{{ url_for('static', filename='images/icon.svg') }}" class="logo small" style="margin-left:7px"/>
-  <span class="logo_txt">Energetica</span>
+  <span class="logo_txt topleft">Energetica</span>
 </div>
 
 <div class="ressources medium tan_green">
@@ -23,12 +23,12 @@
       <img class="navbar-logo logo" src="{{ url_for('static', filename='images/icon.svg') }}" alt="Logo">
       <span class="logo_txt small">Energetica</span>
     </a>
-    <b onclick="expand_menu('navbarContent')">
-      <span class="navbar-toggler-icon margin"><i class="fa fa-bars"></i></span>
+    <b onclick="expand_menu('navbar')">
+      <span class="navbar-toggler-icon margin"><i class="fa fa-bars"  id="dropdown-navbar"></i></span>
     </b>
   </div>
 
-  <div class="navbar-collapse" id="navbarContent">
+  <div class="navbar-collapse" id="menu-navbar">
     <ul class="navbar-nav">
 
       <li class="nav-item">
@@ -53,41 +53,41 @@
       </li>
 
       <li class="nav-item dropdown">
-        <a class="navbar_item tan_green flex-row" id="production_overview" onclick="expand_menu('menu-overview')">
-          <img src="{{ url_for('static', filename='images/icons/production_overview.png') }}" class="navbar_icon margin-small"/>
+        <a class="navbar_item tan_green flex-row" id="production_overview" onclick="expand_menu('overview')">
+          <img src="{{ url_for('static', filename='images/icons/dropdown.png') }}" class="navbar_icon margin-small" id="dropdown-overview"/>
           <span style="padding:8px 0">Production overview</span>
         </a>
         <div class="dropdown-menu" id="menu-overview">
           <a class="navbar_item bone flex-row" id="production_overview" href="/production_overview/revenues">
-            <img src="{{ url_for('static', filename='images/icons/production_overview.png') }}" class="navbar_icon margin-small"/>
+            <img src="{{ url_for('static', filename='images/icons/revenues.png') }}" class="navbar_icon margin-small"/>
             <span style="padding:8px 0">Revenues</span>
           </a>
           <a class="navbar_item bone flex-row" id="production_overview" href="/production_overview/generation">
-            <img src="{{ url_for('static', filename='images/icons/production_overview.png') }}" class="navbar_icon margin-small"/>
+            <img src="{{ url_for('static', filename='images/icons/generation.png') }}" class="navbar_icon margin-small"/>
             <span style="padding:8px 0">Generation</span>
           </a>
           <a class="navbar_item bone flex-row" id="production_overview" href="/production_overview/demand">
-            <img src="{{ url_for('static', filename='images/icons/production_overview.png') }}" class="navbar_icon margin-small"/>
+            <img src="{{ url_for('static', filename='images/icons/demand.png') }}" class="navbar_icon margin-small"/>
             <span style="padding:8px 0">Demand</span>
           </a>
           <a class="navbar_item bone flex-row" id="production_overview" href="/production_overview/storage">
-            <img src="{{ url_for('static', filename='images/icons/production_overview.png') }}" class="navbar_icon margin-small"/>
+            <img src="{{ url_for('static', filename='images/icons/storage_facilities.png') }}" class="navbar_icon margin-small"/>
             <span style="padding:8px 0">Storage</span>
           </a>
           <a class="navbar_item bone flex-row" id="production_overview" href="/production_overview/resources">
-            <img src="{{ url_for('static', filename='images/icons/production_overview.png') }}" class="navbar_icon margin-small"/>
+            <img src="{{ url_for('static', filename='images/icons/resources.png') }}" class="navbar_icon margin-small"/>
             <span style="padding:8px 0">Resources</span>
           </a>
           <a class="navbar_item bone flex-row" id="production_overview" href="/production_overview/emissions">
-            <img src="{{ url_for('static', filename='images/icons/production_overview.png') }}" class="navbar_icon margin-small"/>
+            <img src="{{ url_for('static', filename='images/icons/emissions.png') }}" class="navbar_icon margin-small"/>
             <span style="padding:8px 0">Emissions</span>
           </a>
         </div>
       </li>
 
       <li class="nav-item dropdown">
-        <a class="navbar_item tan_green flex-row" id="production_overview" onclick="expand_menu('menu-facilities')">
-          <img src="{{ url_for('static', filename='images/icons/production_overview.png') }}" class="navbar_icon margin-small"/>
+        <a class="navbar_item tan_green flex-row" id="production_overview" onclick="expand_menu('facilities')">
+          <img src="{{ url_for('static', filename='images/icons/dropdown.png') }}" class="navbar_icon margin-small" id="dropdown-facilities"/>
           <span style="padding:8px 0">Facilities</span>
         </a>
         <div class="dropdown-menu" id="menu-facilities">

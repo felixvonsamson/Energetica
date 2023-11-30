@@ -96,7 +96,7 @@ function setup() {
     }
     let canvas_width = 0.7*windowWidth
     let canvas_height = 0.42*windowWidth
-    if (windowWidth<1000){
+    if (windowWidth<1200){
         canvas_width = windowWidth
         canvas_height = 0.6*windowWidth
     }
