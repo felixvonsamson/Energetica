@@ -1,7 +1,7 @@
 from werkzeug.security import generate_password_hash
 from pathlib import Path
 from .auth import add_player_to_data, init_table
-from .database import Player, Hex, Network, Under_construction, Shipment
+from .database import Player, Hex, Network, Under_construction, Shipment, Resource_on_sale
 from . import db
 import pickle
 import os
@@ -46,6 +46,18 @@ def edit_database(engine):
                     player_id = shipment["player_id"]
                 )
         db.session.add(new_shipment)
+        db.session.commit()
+
+    for sale_id in retieved_data["resource_on_sale"]:
+        sale = retieved_data["resource_on_sale"][sale_id]
+        new_sale = Resource_on_sale(
+                    resource = sale["resource"],
+                    quantity = sale["quantity"],
+                    price = sale["price"],
+                    creation_date = sale["creation_date"],
+                    player_id = sale["player_id"]
+                )
+        db.session.add(new_sale)
         db.session.commit()
 
     os.remove("retieved_data.pck")
