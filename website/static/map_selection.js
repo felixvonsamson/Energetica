@@ -218,7 +218,7 @@ function newdraw() {
     textSize(35);
     text("INFO", 0.5*mw, 20);
     textSize(20);
-    text("Please choose an avalable location on the map. The menue on the left allows you to see where different natural resources are located on the map. The location choice is DEFINITIVE, you will not be able to change it during the game.", 20, 50, mw-40, 150);
+    text("Please choose an avalable location on the map. The menu on the left allows you to see where different natural resources are located on the map. The location choice is DEFINITIVE, you will not be able to change it during the game.", 20, 50, mw-40, 150);
   }else{
     textSize(35);
     text("RESOURCES", 0.5*mw, 20);
