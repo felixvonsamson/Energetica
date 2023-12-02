@@ -3,6 +3,7 @@ flask-socketio
 Flask-SQLAlchemy
 flask-login
 flask-apscheduler
+flask-httpauth
 eventlet
 pandas
 Werkzeug==2.3.0
