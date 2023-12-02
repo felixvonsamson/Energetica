@@ -23,7 +23,7 @@ def verify_password(username, password):
 def check_user():
     g.engine = current_app.config["engine"]
 
-# gets the map data from the database and returns it as a array of dictionaries :
-@rest_api.route("/rest_test", methods=["GET"])
+# Simply returns success, used on client-side to check auth before proceeding
+@rest_api.route("/rest_auth", methods=["GET"])
 def get_map():
-    return jsonify("Success!")
+    return jsonify("Success")
