@@ -4,9 +4,8 @@ This code is run once at the start of the game
 
 import eventlet
 eventlet.monkey_patch(thread=True, time=True)
-from flask import Flask, g, jsonify, redirect, url_for, request, abort, Response
+from flask import Flask, g, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from http import HTTPStatus
 import os, csv
 import pickle
 from pathlib import Path
@@ -87,19 +86,6 @@ def create_app():
     def load_user(id):
         player = Player.query.get(int(id))
         return player
-    
-    @login_manager.unauthorized_handler
-    def unauthorized():
-        if request.blueprint == 'api':
-            abort(HTTPStatus.UNAUTHORIZED)
-        return redirect(url_for('auth.login'))
-    
-    @app.errorhandler(401)
-    def custom_401(error):
-        return Response(
-            'please login to access api', 
-            401, {'WWW-Authenticate':'Basic realm="Login Required"'}
-            )
 
     # initialize the schedulers and add the recurrent functions :
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true": # This function is to run the following omly once, TO REMOVE IF DEBUG MODE IS SET TO FALSE 
