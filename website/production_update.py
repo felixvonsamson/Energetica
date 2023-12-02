@@ -239,14 +239,10 @@ def calculate_generation_without_market(engine, total_demand, player, t):
                         last_construction.delete()
                         db.session.commit()
                 if demand_type == "research":
-                    last_research = Under_construction.query.filter(
-                        Under_construction.player_id == player.id).filter(
-                        Under_construction.family == "technologies").filter(
-                        Under_construction.start_time < time.time()).order_by(
-                        Under_construction.start_time.desc()).first()
-                    if last_research:
-                        last_research.delete()
-                        db.session.commit()
+                    Under_construction.query.filter(
+                        Under_construction.player_id == row.player.id).filter(
+                        Under_construction.family == "technologies").delete()
+                    db.session.commit()
                 if demand_type == "transport":
                     last_shipment = Shipment.query.filter(
                         Shipment.player_id == player.id).order_by(
@@ -426,14 +422,10 @@ def market_logic(engine, market, t):
                     last_construction.delete()
                     db.session.commit()
             if row.facility == "research":
-                last_research = Under_construction.query.filter(
+                Under_construction.query.filter(
                     Under_construction.player_id == row.player.id).filter(
-                    Under_construction.family == "technologies").filter(
-                    Under_construction.start_time < time.time()).order_by(
-                    Under_construction.start_time.desc()).first()
-                if last_research:
-                    last_research.delete()
-                    db.session.commit()
+                    Under_construction.family == "technologies").delete()
+                db.session.commit()
             if row.facility == "transport":
                 last_shipment = Shipment.query.filter(
                     Shipment.player_id == row.player.id).order_by(

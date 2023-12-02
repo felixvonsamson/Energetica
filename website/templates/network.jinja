@@ -2,7 +2,29 @@
 {% set assets = engine.config[user.id]["assets"] %}
 {% set SCP = user.self_consumption_priority.split(' ') %}
 
-<div class="huge title margin-large" style="margin-top:30px">Network{% if user.network %} : <b>{{user.network.name}}</b>{% endif %} </div>
+<div class="flex-row huge title">Network{% if user.network %} : <b>{{user.network.name}}</b>{% endif %} 
+<div class="pine info_icon_container" onclick="document.getElementById('info_popup').classList.remove('hidden');">
+    <img src="{{ url_for('static', filename='images/icons/wiki.png') }}" class="info_icon padding"/>
+</div>
+</div>
+
+<div id="info_popup" class="popup hidden green">
+    <div class="flex-row margin-small" style="align-items:center;">
+        <div class="large txt_center" style="flex-grow:1">Help : Network</div>
+        <div onclick="document.getElementById('info_popup').classList.add('hidden');" class="cross pine margin-small" style="width:39px">
+            &times;
+        </div>
+    </div>
+    <div class="txt_center margin medium">
+        {% if user.network == None %}
+        <p>Here you can join or create a network. You will also find tables where you can set the prices for the demand and the power and storage facilites. These prices will define the priority lists of facilites for the power generation logic.</p>
+        {% else %}
+        <p>On this page you will find informations about your network and tables where you can set the prices for the demand and the power and storage facilites.</p>
+        <p>The top graph shows the market price and quantity over time and the lower graph shows the current market state with the colored rectangles being the supply and the red saircase curve being the demand. You can click on past timepoints in the top plot to show the market state at this time.</p>
+        {% endif %}
+        <p>For more detailed information about the Network and the prices refer to the <a href="/wiki#Network">Network section in the wiki</a>.</p>
+    </div>
+</div>
 
 {% if user.network == None %}
 <div class="medium padding txt_center">
@@ -13,7 +35,7 @@ You a currently not part of a Network. Join or create one :
 <b class="margin button2" onclick="document.getElementById('create_network').classList.remove('hidden');">Create Network</b>
 </div>
 {% else %}
-<div id="market_graph" class="bone" style="padding:30px 0"></div>
+<div id="market_graph" class="bone" style="padding:30px 0; margin:30px 0;"></div>
 <div class="flex-row" style="justify-content:center;">
 <b class="margin button2" onclick="leave_network();">Leave Network</b>
 </div>
@@ -33,7 +55,7 @@ You a currently not part of a Network. Join or create one :
 
 
 
-<div class="huge title">Prices</div>
+<div class="flex-row huge title">Prices</div>
 
 <div class="flex-col medium">
 

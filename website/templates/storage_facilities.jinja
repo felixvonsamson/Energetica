@@ -2,7 +2,24 @@
 
 {% set data = all_data["assets"]%}
 
-<div class="huge title">Storage facilities</div>
+<div class="flex-row huge title">Storage facilities
+<div class="pine info_icon_container" onclick="document.getElementById('info_popup').classList.remove('hidden');">
+    <img src="{{ url_for('static', filename='images/icons/wiki.png') }}" class="info_icon padding"/>
+</div>
+</div>
+
+<div id="info_popup" class="popup hidden green">
+    <div class="flex-row margin-small" style="align-items:center;">
+        <div class="large txt_center" style="flex-grow:1">Help : Storage facilities</div>
+        <div onclick="document.getElementById('info_popup').classList.add('hidden');" class="cross pine margin-small" style="width:39px">
+            &times;
+        </div>
+    </div>
+    <div class="txt_center margin medium">
+        <p>On this page you will find all the facilities that can store energy.</p>
+        <p>For more information about storage facilites, refer to the <a href="/wiki#Storage_Facilities">Storage facilities section in the wiki</a>.</p>
+    </div>
+</div>
 
 <div id="under_construction">
   {% if user.under_construction %}

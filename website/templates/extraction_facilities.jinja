@@ -3,7 +3,24 @@
 
 {% set data = all_data["assets"]%}
 
-<div class="huge title">Extraction facilities</div>
+<div class="flex-row huge title">Extraction facilities
+<div class="pine info_icon_container" onclick="document.getElementById('info_popup').classList.remove('hidden');">
+    <img src="{{ url_for('static', filename='images/icons/wiki.png') }}" class="info_icon padding"/>
+</div>
+</div>
+
+<div id="info_popup" class="popup hidden green">
+    <div class="flex-row margin-small" style="align-items:center;">
+        <div class="large txt_center" style="flex-grow:1">Help : Extraction facilities</div>
+        <div onclick="document.getElementById('info_popup').classList.add('hidden');" class="cross pine margin-small" style="width:39px">
+            &times;
+        </div>
+    </div>
+    <div class="txt_center margin medium">
+        <p>On this page you will find all the facilities that can extract natural resources from the ground.</p>
+        <p>For more information about Extraction facilities, refer to the <a href="/wiki#Extraction_Facilities">Extraction facilities section in the wiki</a>.</p>
+    </div>
+</div>
 
 <div id="under_construction">
 {% if user.under_construction %}
@@ -144,7 +161,7 @@
 <div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/extraction_facilities/uranium_mine.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Natural_gas" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
+  <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Uranium_mining" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The uranium mine extracts uranium from the ground. <br><br>
   <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of uranium : <strong><script>display_kg({{user.tile[0].uranium}});</script></strong></em>
  </div>

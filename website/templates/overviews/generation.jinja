@@ -1,6 +1,23 @@
-{% extends "base.jinja" %} {% block title %}Revenues overview{% endblock %} {% block content%}
+{% extends "base.jinja" %} {% block title %}Generation overview{% endblock %} {% block content%}
 
-<div class="huge title">Production overview</div>
+<div class="flex-row huge title">Generation overview
+<div class="pine info_icon_container" onclick="document.getElementById('info_popup').classList.remove('hidden');">
+    <img src="{{ url_for('static', filename='images/icons/wiki.png') }}" class="info_icon padding"/>
+</div>
+</div>
+
+<div id="info_popup" class="popup hidden green">
+    <div class="flex-row margin-small" style="align-items:center;">
+        <div class="large txt_center" style="flex-grow:1">Help : Overview</div>
+        <div onclick="document.getElementById('info_popup').classList.add('hidden');" class="cross pine margin-small" style="width:39px">
+            &times;
+        </div>
+    </div>
+    <div class="txt_center margin medium">
+        <p>This is one of the 6 interactive graphs that vusualize your production over time.</p>
+        <p>You can hover on the various elements of the graph to display more informations. You can also adjust the time scale of the graph with the buttons at the bottom.</p>
+    </div>
+</div>
 
 <div class="bone">
 <h1 id="graph_title" class="txt_center padding-large" style="margin-bottom:0">Generation</h1>
