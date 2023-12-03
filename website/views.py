@@ -23,17 +23,15 @@ flash_error = lambda msg: flash(msg, category="error")
 @overviews.before_request
 @login_required
 def check_user():
-    g.engine = current_app.config["engine"]
-    if len(current_user.tile) == 0:
-        return render_template(
-                "location_choice.jinja",
-                engine=g.engine,
-                user=current_user
-            )
-    
+    g.engine = current_app.config["engine"]    
     g.config = g.engine.config[current_user.id]
 
     def render_template_ctx(page):
+        if page  == "wiki.jinja":
+            return render_template("wiki.jinja", user=current_user)
+        # show location choice if player didn't choose yet
+        if len(current_user.tile) == 0:
+            return render_template("location_choice.jinja")
         # render template with or without player production data
         if page == "messages.jinja":
             chats=Chat.query.filter(Chat.participants.any(id=current_user.id)).all()

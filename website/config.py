@@ -590,8 +590,10 @@ class Config(object):
 
     # update mining speeds according to reserves depleation
     def update_resource_extraction(config, player_id):
-        assets = config.for_player[player_id]["assets"]
         player = Player.query.get(player_id)
+        if len(player.tile) == 0:
+            return
+        assets = config.for_player[player_id]["assets"]
         me_factor = assets["mineral_extraction"]["prod factor"] ** player.mineral_extraction
         assets["coal_mine"]["amount produced"] = full_config["assets"]["coal_mine"]["amount produced"] * player.tile[0].coal * me_factor
         assets["oil_field"]["amount produced"] = full_config["assets"]["oil_field"]["amount produced"] * player.tile[0].oil * me_factor

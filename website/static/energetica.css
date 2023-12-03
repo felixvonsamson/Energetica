@@ -21,10 +21,10 @@ canvas {display: block;}
 .margin{margin: 16px}
 .margin-large{margin: 24px}
 
-.small{font-size:min(16px, 3vh)}
-.medium{font-size:min(20px, 3.5vh)}
-.large{font-size:min(30px, 5vh)}
-.huge{font-size:min(42px, 6vh)}
+.small{font-size:min(16px, 2vh)}
+.medium{font-size:min(20px, 2.8vh)}
+.large{font-size:min(30px, 4vh)}
+.huge{font-size:min(42px, 5vh)}
 
 .txt_center{text-align:center}
 
@@ -165,11 +165,15 @@ canvas {display: block;}
 .info_icon_container{display:flex; flex-direction:row; justify-content:center; align-items:center; margin-left:30px; margin-right:-70px; width:1em; height:1em; border-radius:50%; cursor:pointer;}
 #info_popup{max-width:700px; min-width:500px; min-height:300px; top:25%;}
 
+@media only screen and (max-width: 1500px) {
+    .img{display:none;}
+    .title{padding-top:4px;} 
+}
+
 /* If the screen size is 1000px or less (smartphone) */
 @media only screen and (max-width: 1200px) {
     .main_container{width:100%; min-height:0;}
+    .title{padding-top:16px;} 
 }
 
-@media only screen and (max-width: 1500px) {
-    .img{display:none;}
-}
+
