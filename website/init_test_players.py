@@ -95,7 +95,7 @@ def create_player(engine, username, pw):
     if p == None:
         new_player = Player(
             username=username,
-            password=generate_password_hash(pw, method="sha256"),
+            password=generate_password_hash(pw, method="scrypt"),
             data_table_name=f"data_{username}.pck",
         )
         add_player_to_data(username)

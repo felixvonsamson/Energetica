@@ -63,7 +63,7 @@ def sign_up():
         else:
             new_player = Player(
                 username=username,
-                password=generate_password_hash(password1, method="sha256"),
+                password=generate_password_hash(password1, method="scrypt"),
                 data_table_name=f"data_{username}.pck",
             )
             add_player_to_data(username)
