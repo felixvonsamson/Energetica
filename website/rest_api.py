@@ -34,8 +34,6 @@ def rest_get_map():
     hex_list = Hex.query.order_by(Hex.r, Hex.q).all()
     response = {
         "ids": [tile.id for tile in hex_list],
-        "qs": [tile.q for tile in hex_list],
-        "rs": [tile.r for tile in hex_list],
         "solars": [tile.solar for tile in hex_list],
         "winds": [tile.wind for tile in hex_list],
         "hydros": [tile.hydro for tile in hex_list],
