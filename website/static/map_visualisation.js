@@ -20,6 +20,8 @@ class Hex {
     translate(tx, ty);
     if (hover){
       fill(104, 45, 55);
+    }else if(this.id == player_tile_id+1){
+      fill(color(0, 89, 32));
     }else if (this.owner){
       fill(color(131,52, 33));
     }else{

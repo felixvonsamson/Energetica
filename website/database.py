@@ -20,13 +20,13 @@ class Hex(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     q = db.Column(db.Integer)
     r = db.Column(db.Integer)
-    solar = db.Column(db.Integer)
-    wind = db.Column(db.Integer)
+    solar = db.Column(db.Float)
+    wind = db.Column(db.Float)
     hydro = db.Column(db.Integer)
-    coal = db.Column(db.Integer)
-    oil = db.Column(db.Integer)
-    gas = db.Column(db.Integer)
-    uranium = db.Column(db.Integer)
+    coal = db.Column(db.Float)
+    oil = db.Column(db.Float)
+    gas = db.Column(db.Float)
+    uranium = db.Column(db.Float)
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"), default=None) # ID of the owner of the tile
 
     def __repr__(self):

@@ -63,7 +63,7 @@ def check_user():
 @views.route("/", methods=["GET", "POST"])
 @views.route("/home", methods=["GET", "POST"])
 def home():
-    return g.render_template_ctx("home.jinja")
+    return g.render_template_ctx("map.jinja")
 
 @views.route("/profile")
 def profile():

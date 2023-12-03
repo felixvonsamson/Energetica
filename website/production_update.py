@@ -216,6 +216,7 @@ def calculate_generation_without_market(engine, total_demand, player, t):
                 if total_demand - total_generation < delta_prod:
                     generation[facility][t] += total_demand - total_generation
                     total_generation = total_demand
+                    break
                 else:
                     total_generation += delta_prod
                     generation[facility][t] += delta_prod
@@ -279,7 +280,7 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
     renewables_generation(engine, player, assets, generation, t)
     # priority list of power facilities according to SCP and price :
     priority_list = (read_priority_list(player.self_consumption_priority) 
-        + read_priority_list(player.rest_of_priorities) + engine.storage_facilities)
+        + read_priority_list(player.rest_of_priorities))
     for facility in priority_list:
         if getattr(player, facility) > 0:
             if assets[facility]["ramping speed"] != 0:
