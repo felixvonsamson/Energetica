@@ -187,6 +187,7 @@ class Player(db.Model, UserMixin):
     price_buy_oil_field = db.Column(db.Float, default=760)
     price_buy_gas_drilling_site = db.Column(db.Float, default=780)
     price_buy_uranium_mine = db.Column(db.Float, default=790)
+    price_buy_carbon_capture = db.Column(db.Float, default=400)
 
     # CO2 emissions :
     emissions = db.Column(db.Float, default=0)

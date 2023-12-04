@@ -130,6 +130,7 @@ def data_init(length):
             "construction": [0] * length,
             "research": [0] * length,
             "transport": [0] * length,
+            "carbon_capture": [0] * length,
 
             "coal_mine": [0] * length,
             "oil_field": [0] * length,
@@ -176,5 +177,7 @@ def data_init(length):
             "oil_field": [0] * length,
             "gas_drilling_site": [0] * length,
             "uranium_mine": [0] * length,
+
+            "carbon_capture": [0] * length,
         }
     }
