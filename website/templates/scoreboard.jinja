@@ -1,0 +1,36 @@
+{% extends "base.jinja" %} {% block title %}Scoreboard{% endblock %} {% block content
+%}
+<div class="flex-row huge title">Scoreboard 
+<div class="pine info_icon_container" onclick="document.getElementById('info_popup').classList.remove('hidden');">
+    <img src="{{ url_for('static', filename='images/icons/wiki.png') }}" class="info_icon padding"/>
+</div>
+</div>
+
+<div id="info_popup" class="popup hidden green">
+    <div class="flex-row margin-small" style="align-items:center;">
+        <div class="large txt_center" style="flex-grow:1">Help : Scoreboard</div>
+        <div onclick="document.getElementById('info_popup').classList.add('hidden');" class="cross pine margin-small" style="width:39px">
+            &times;
+        </div>
+    </div>
+    <div class="txt_center margin medium">
+        <p>This is a scoreboard of all players on the server.</p>
+    </div>
+</div>
+
+<div class="flex-col medium">
+    <table id="scoreboard" class="table bone margin txt_center">
+        <tr>
+        <th onclick="sortTable(0)">Usernames</th>
+        <th onclick="sortTable(1)">Money</th>
+        <th onclick="sortTable(2)">Revenues</th>
+        <th onclick="sortTable(3)">CO2 emissions</th>
+        </tr>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block additionnal_script %}
+<script src="{{ url_for('static', filename='scoreboard.js') }}"></script>
+{% endblock %}

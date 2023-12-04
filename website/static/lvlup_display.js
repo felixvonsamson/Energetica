@@ -3,7 +3,6 @@ let ud, config, player_lvls, filter;
 retrieve_ud();
 
 function retrieve_ud(){
-    console.log(window.location.pathname)
     filter = "technologies";
     if(window.location.pathname == "/functional_facilities"){
       filter = "functional_facilities";

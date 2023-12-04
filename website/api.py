@@ -164,3 +164,12 @@ def get_ud_and_config():
             }
     player_lvls = current_user.get_technology_values()
     return jsonify(ud, assets, player_lvls)
+
+# gets scoreboard data :
+@api.route("/get_scoreboard", methods=["GET"])
+def get_scoreboard():
+    scoreboard_data = []
+    players = Player.query.all()
+    for player in players:
+        scoreboard_data.append([player.username, player.money, player.average_revenues, player.emissions])
+    return jsonify(scoreboard_data)

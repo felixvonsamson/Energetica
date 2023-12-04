@@ -200,6 +200,10 @@ def resource_market():
 
     return g.render_template_ctx("resource_market.jinja")
 
+@views.route("/scoreboard")
+def scoreboard():
+    return g.render_template_ctx("scoreboard.jinja")
+
 @views.route("/wiki")
 def wiki():
     return g.render_template_ctx("wiki.jinja")

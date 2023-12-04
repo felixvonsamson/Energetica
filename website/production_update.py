@@ -115,6 +115,7 @@ def update_electricity(engine):
         ressources_and_pollution(engine, player, t)
         # add money from industry income
         player.money += current_data["revenues"]["industry"][t]
+        player.average_revenues = (player.average_revenues + 0.03*sum([current_data["revenues"][rev][t] for rev in current_data["revenues"]]))/1.03
         # update display of resources and money
         player.update_resources()
 

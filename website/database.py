@@ -190,6 +190,7 @@ class Player(db.Model, UserMixin):
 
     # CO2 emissions :
     emissions = db.Column(db.Float, default=0)
+    average_revenues = db.Column(db.Float, default=0)
 
     under_construction = db.relationship("Under_construction")
     resource_on_sale = db.relationship("Resource_on_sale", backref='player')

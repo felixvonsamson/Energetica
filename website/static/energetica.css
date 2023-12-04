@@ -118,6 +118,9 @@ canvas {display: block;}
 .table.tan_green tbody tr:nth-child(even){background-color:#c1cf8b}
 .table tbody td{padding: 5px 8px 2px 8px;}
 
+#scoreboard td{padding: 4px 16px;}
+#scoreboard th{padding: 4px 16px;}
+
 .login_box{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); -ms-transform:translate(-50%,-50%)}
 
 .main_container{max-width: 1200px; width:70%; min-height:100vh; margin:auto; overflow:hidden;}
