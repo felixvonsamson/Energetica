@@ -34,7 +34,7 @@
 </div>
 
 {% set facility = data["small_pumped_hydro"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/storage_facilities/small_pumped_hydro.png') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -75,7 +75,7 @@
 </div>
 
 {% set facility = data["compressed_air"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/storage_facilities/compressed_air.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Compressed-air_energy_storage" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -116,7 +116,7 @@
 </div>
 
 {% set facility = data["molten_salt"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/storage_facilities/molten_salt.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Thermal_energy_storage" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -157,7 +157,7 @@
 </div>
 
 {% set facility = data["large_pumped_hydro"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/storage_facilities/large_pumped_hydro.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -198,7 +198,7 @@
 </div>
 
 {% set facility = data["hydrogen_storage"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/storage_facilities/hydrogen_storage.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydrogen_storage" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -239,7 +239,7 @@
 </div>
 
 {% set facility = data["lithium_ion_batteries"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/storage_facilities/lithium_ion_batteries.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Lithium-ion_battery" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -280,7 +280,7 @@
 </div>
 
 {% set facility = data["solid_state_batteries"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/storage_facilities/solid_state_batteries.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Solid-state_battery" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>

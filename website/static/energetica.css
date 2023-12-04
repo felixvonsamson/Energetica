@@ -160,6 +160,8 @@ canvas {display: block;}
 
 .graph-container{display:flex; flex-direction:row; justify-content:space-around;}
 .graph-container img{max-width:600px}
+
+.construction_tile{min-height: 167px;}
   
 .info_icon{width:0.4em; filter:invert(100%);}
 .info_icon_container{display:flex; flex-direction:row; justify-content:center; align-items:center; margin-left:30px; margin-right:-70px; width:1em; height:1em; border-radius:50%; cursor:pointer;}

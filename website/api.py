@@ -10,7 +10,7 @@ import numpy as np
 
 api = Blueprint('api', __name__)
 
-from .database import Hex, Player, Chat, Network
+from .database import Hex, Player, Chat, Network, Under_construction
 
 @api.before_request
 @login_required
@@ -66,6 +66,7 @@ def get_chat():
     messages_list = [(msg.player.username, msg.text) for msg in messages]
     return jsonify(messages_list)
 
+# Gets the data for the overview charts
 @api.route("/get_chart_data", methods=["GET"])
 def get_chart_data():
     assets = g.engine.config[current_user.id]["assets"]
@@ -118,6 +119,7 @@ def get_chart_data():
         return jsonify(g.engine.data["current_t"], data[table],
                        g.engine.data["current_data"][current_user.username][table])
     
+# Gets the data from the market for the market graph 
 @api.route("/get_market_data", methods=["GET"])
 def get_market_data():
     market_data = {}
@@ -140,3 +142,24 @@ def get_market_data():
     with open(filename_prices, "rb") as file:
         prices = pickle.load(file)
     return jsonify(g.engine.data["current_t"], market_data, prices, g.engine.data["network_data"][current_user.network.name])
+
+# Gets list of facilities under construction and config informations to calculate the values to display
+@api.route("/get_ud_and_config", methods=["GET"])
+def get_ud_and_config():
+    family = request.args.get('filter')
+    constructions = Under_construction.query.filter(
+            Under_construction.player_id == current_user.id).filter(
+            Under_construction.family == family)
+    assets = g.engine.config[current_user.id]["assets"]
+    ud = {}
+    for construction in constructions:
+        if construction.name in ud :
+            ud[construction.name]["lvl_future"] += 1
+        else :
+            lvl = getattr(current_user, construction.name)
+            ud[construction.name] = {
+                "name": assets[construction.name]["name"],
+                "lvl_at": lvl,
+                "lvl_future": lvl+1
+            }
+    return jsonify(ud, assets)

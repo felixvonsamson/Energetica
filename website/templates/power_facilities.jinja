@@ -34,7 +34,7 @@
 </div>
 
 {% set facility = data["steam_engine"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/steam_engine.png') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Steam_engine" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -75,7 +75,7 @@
 </div>
 
 {% set facility = data["windmill"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/windmill.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Windmill" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -116,7 +116,7 @@
 </div>
 
 {% set facility = data["watermill"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/watermill.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Watermill" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -157,7 +157,7 @@
 </div>
 
 {% set facility = data["coal_burner"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/coal_burner.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Coal-fired_power_station" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -199,7 +199,7 @@
 </div>
 
 {% set facility = data["oil_burner"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/oil_burner.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Fossil_fuel_power_station" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -241,7 +241,7 @@
 </div>
 
 {% set facility = data["gas_burner"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/gas_burner.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Gas-fired_power_facility" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -283,7 +283,7 @@
 </div>
 
 {% set facility = data["small_water_dam"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/small_water_dam.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydroelectricity" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -324,7 +324,7 @@
 </div>
 
 {% set facility = data["onshore_wind_turbine"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/onshore_wind_turbine.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Wind_turbine" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -365,7 +365,7 @@
 </div>
 
 {% set facility = data["combined_cycle"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/combined_cycle.png') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Combined_cycle_power_facility" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -409,7 +409,7 @@
 </div>
 
 {% set facility = data["nuclear_reactor"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/nuclear_reactor.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Nuclear_power_facility" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -451,7 +451,7 @@
 </div>
 
 {% set facility = data["large_water_dam"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/large_water_dam.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydroelectricity" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -492,7 +492,7 @@
 </div>
 
 {% set facility = data["CSP_solar"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/CSP_solar.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Concentrated_solar_power" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -533,7 +533,7 @@
 </div>
 
 {% set facility = data["PV_solar"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/PV_solar.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Photovoltaics" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -574,7 +574,7 @@
 </div>
 
 {% set facility = data["offshore_wind_turbine"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/offshore_wind_turbine.jpg') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Wind_turbine" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
@@ -615,7 +615,7 @@
 </div>
 
 {% set facility = data["nuclear_reactor_gen4"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/power_facilities/nuclear_reactor_gen4.png') }}"\>
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Generation_IV_reactor" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>

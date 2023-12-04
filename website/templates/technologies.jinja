@@ -35,10 +35,10 @@
 </div>
 
 {% set facility = data["mathematics"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/mathematics.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.mathematics}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em id="lvl" class="large">{{user.mathematics}}</em>&emsp; <span id="price" class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Mathematics is the fundamental tool of science. <br>
  </div>
  <div class="infobox" id="reqirements" style="margin-right:200px">
@@ -67,10 +67,10 @@
 </div>
 
 {% set facility = data["mechanical_engineering"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/mechanical_engineering.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.mechanical_engineering}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em id="lvl" class="large">{{user.mechanical_engineering}}</em>&emsp; <span id="price" class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Mechanical engineering is the science of machines. <br>
  Affects the facilities : 
  {% for facility in ["steam_engine", "watermill", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "compressed_air"] %}
@@ -91,7 +91,7 @@
  </div>
  <div class="infobox" id="infotable">
   <table class="table tan_green">
-    <tr><th>Effects :</th><th class="txt_center">lvl {{user.mechanical_engineering}} -> lvl {{user.mechanical_engineering+1}}</th></tr>
+    <tr><th>Effects :</th><th id="upgrade" class="txt_center">lvl {{user.mechanical_engineering}} -> lvl {{user.mechanical_engineering+1}}</th></tr>
     <tr><td>Power generation</td><td class="txt_center">+{{(facility["prod factor"]*100-100)|int}}%</td></tr>
     <tr><td>Price</td><td class="txt_center">+{{(facility["price factor"]*100-100)|int}}%</td></tr>
   </table>
@@ -110,10 +110,10 @@
 </div>
 
 {% set facility = data["thermodynamics"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/thermodynamics.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.thermodynamics}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em id="lvl" class="large">{{user.thermodynamics}}</em>&emsp; <span id="price" class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Thermodynamics is very boring. <br>
  Affects the facilities : 
  {% for facility in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4", "compressed_air"] %}
@@ -134,11 +134,11 @@
  </div>
  <div class="infobox" id="infotable">
   <table class="table tan_green">
-    <tr><th>Effects :</th><th class="txt_center">lvl {{user.thermodynamics}} -> lvl {{user.thermodynamics+1}}</th></tr>
-    <tr><td>Fuel use</td><td class="txt_center">-{{(facility["efficiency factor"]/(1+user.thermodynamics*facility["efficiency factor"])*100)|int}}%</td></tr>
-    <tr><td>Pollution</td><td class="txt_center">-{{(facility["efficiency factor"]/(1+user.thermodynamics*facility["efficiency factor"])*100)|int}}%</td></tr>
-    <tr><td>Efficiency comp. air</td><td class="txt_center">+5%</td></tr>
-    <tr><td>Efficiency molten salt</td><td class="txt_center">+{{(10/data["molten_salt"]["efficiency"]-10)|int}}%</td></tr>
+    <tr><th>Effects :</th><th id="upgrade" class="txt_center">lvl {{user.thermodynamics}} -> lvl {{user.thermodynamics+1}}</th></tr>
+    <tr><td>Fuel use</td><td id="fuel_use" class="txt_center">-{{(facility["efficiency factor"]/(1+user.thermodynamics*facility["efficiency factor"])*100)|round(1)}}%</td></tr>
+    <tr><td>Pollution</td><td id="pollution" class="txt_center">-{{(facility["efficiency factor"]/(1+user.thermodynamics*facility["efficiency factor"])*100)|round(1)}}%</td></tr>
+    <tr><td>Effic. comp. air</td><td class="txt_center">+2.6%</td></tr>
+    <tr><td>Effic. molten salt</td><td id="Efficiency_MS" class="txt_center">+{{(10/data["molten_salt"]["efficiency"]-10)|round(1)}}%</td></tr>
   </table>
  </div>
  <div id="constructionContent" class="infobox hidden constructionContent">
@@ -155,10 +155,10 @@
 </div>
 
 {% set facility = data["physics"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/physics.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.physics}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em id="lvl" class="large">{{user.physics}}</em>&emsp; <span id="price" class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Physics is the science of experimentation. <br>
  Affects the facilities : 
  {% for facility in ["PV_solar", "CSP_solar", "hydrogen_storage", "lithium_ion_batteries"] %}
@@ -179,7 +179,7 @@
  </div>
  <div class="infobox" id="infotable">
   <table class="table tan_green">
-    <tr><th>Effects :</th><th class="txt_center">lvl {{user.physics}} -> lvl {{user.physics+1}}</th></tr>
+    <tr><th>Effects :</th><th id="upgrade" class="txt_center">lvl {{user.physics}} -> lvl {{user.physics+1}}</th></tr>
     <tr><td>Power generation</td><td class="txt_center">+{{(facility["prod factor"]*100-100)|int}}%</td></tr>
     <tr><td>Price</td><td class="txt_center">+{{(facility["price factor"]*100-100)|int}}%</td></tr>
   </table>
@@ -198,10 +198,10 @@
 </div>
 
 {% set facility = data["building_technology"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/building_technology.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.building_technology}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em id="lvl" class="large">{{user.building_technology}}</em>&emsp; <span id="price" class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Building technology enables more efficient construction of facilities. <br>
  Affects <em class="txt-blue">all power and storage facilities</em>.
  </div>
@@ -219,7 +219,7 @@
  </div>
  <div class="infobox" id="infotable">
   <table class="table tan_green">
-    <tr><th>Effects :</th><th class="txt_center">lvl {{user.building_technology}} -> lvl {{user.building_technology+1}}</th></tr>
+    <tr><th>Effects :</th><th id="upgrade" class="txt_center">lvl {{user.building_technology}} -> lvl {{user.building_technology+1}}</th></tr>
     <tr><td>Construction time</td><td class="txt_center">-{{(100-facility["time factor"]*100)|int}}%</td></tr>
   </table>
  </div>
@@ -237,10 +237,10 @@
 </div>
 
 {% set facility = data["mineral_extraction"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/mineral_extraction.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.mineral_extraction}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em id="lvl" class="large">{{user.mineral_extraction}}</em>&emsp; <span id="price" class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Mineral extraction improves the extraction of natural resources. <br>
  Affects the facilities : 
  {% for facility in ["coal_mine", "oil_field", "gas_drilling_site"] %}
@@ -261,7 +261,7 @@
  </div>
  <div class="infobox" id="infotable">
   <table class="table tan_green">
-    <tr><th>Effects :</th><th class="txt_center">lvl {{user.mineral_extraction}} -> lvl {{user.mineral_extraction+1}}</th></tr>
+    <tr><th>Effects :</th><th id="upgrade" class="txt_center">lvl {{user.mineral_extraction}} -> lvl {{user.mineral_extraction+1}}</th></tr>
     <tr><td>Extraction speed</td><td class="txt_center">+{{(facility["prod factor"]*100-100)|int}}%</td></tr>
     <tr><td>Price</td><td class="txt_center">+{{(facility["price factor"]*100-100)|int}}%</td></tr>
     <tr><td>Power consumption</td><td class="txt_center">+{{(facility["energy factor"]*100-100)|int}}%</td></tr>
@@ -282,10 +282,10 @@
 </div>
 
 {% set facility = data["transport_technology"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/transport_technology.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.transport_technology}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em id="lvl" class="large">{{user.transport_technology}}</em>&emsp; <span id="price" class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Transport technology enables efficient transport of natural resources. <br>
  Affects the <em class="txt-blue">transport of natural resources</em>.
  </div>
@@ -303,7 +303,7 @@
  </div>
  <div class="infobox" id="infotable">
   <table class="table tan_green">
-    <tr><th>Effects :</th><th class="txt_center">lvl {{user.transport_technology}} -> lvl {{user.transport_technology+1}}</th></tr>
+    <tr><th>Effects :</th><th id="upgrade" class="txt_center">lvl {{user.transport_technology}} -> lvl {{user.transport_technology+1}}</th></tr>
     <tr><td>Transport speed</td><td class="txt_center">+{{(100-facility["time factor"]*100)|int}}%</td></tr>
     <tr><td>Power consumption</td><td class="txt_center">-{{(100-facility["energy factor"]*100)|int}}%</td></tr>
   </table>
@@ -322,10 +322,10 @@
 </div>
 
 {% set facility = data["materials"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/materials.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.materials}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em id="lvl" class="large">{{user.materials}}</em>&emsp; <span id="price" class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Material sciences are essential to find improved materials. <br>
  Affects the facilities : 
  {% for facility in ["PV_solar", "onshore_wind_turbine", "offshore_wind_turbine", "lithium_ion_batteries"] %}
@@ -346,7 +346,7 @@
  </div>
  <div class="infobox" id="infotable">
   <table class="table tan_green">
-    <tr><th>Effects :</th><th class="txt_center">lvl {{user.materials}} -> lvl {{user.materials+1}}</th></tr>
+    <tr><th>Effects :</th><th id="upgrade" class="txt_center">lvl {{user.materials}} -> lvl {{user.materials+1}}</th></tr>
     <tr><td>Price</td><td class="txt_center">-{{(100-facility["price factor"]*100)|int}}%</td></tr>
   </table>
  </div>
@@ -364,10 +364,10 @@
 </div>
 
 {% set facility = data["civil_engineering"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/civil_engineering.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.civil_engineering}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em id="lvl" class="large">{{user.civil_engineering}}</em>&emsp; <span id="price" class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Civil engineers can build bridges. <br>
  Affects the facilities : 
  {% for facility in ["small_water_dam", "large_water_dam", "small_pumped_hydro"] %}
@@ -388,7 +388,7 @@
  </div>
  <div class="infobox" id="infotable">
   <table class="table tan_green">
-    <tr><th>Effects :</th><th class="txt_center">lvl {{user.civil_engineering}} -> lvl {{user.civil_engineering+1}}</th></tr>
+    <tr><th>Effects :</th><th id="upgrade" class="txt_center">lvl {{user.civil_engineering}} -> lvl {{user.civil_engineering+1}}</th></tr>
     <tr><td>Power generation</td><td class="txt_center">+{{(facility["prod factor"]*100-100)|int}}%</td></tr>
     <tr><td>Storage capacity</td><td class="txt_center">+{{(facility["capacity factor"]*100-100)|int}}%</td></tr>
     <tr><td>Price</td><td class="txt_center">+{{(facility["price factor"]*100-100)|int}}%</td></tr>
@@ -408,10 +408,10 @@
 </div>
 
 {% set facility = data["aerodynamics"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/aerodynamics.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.aerodynamics}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em id="lvl" class="large">{{user.aerodynamics}}</em>&emsp; <span id="price" class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Aerodynamics is the science of airflow. <br>
  Affects the facilities : 
  {% for facility in ["windmill", "onshore_wind_turbine"] %}
@@ -432,7 +432,7 @@
  </div>
  <div class="infobox" id="infotable">
   <table class="table tan_green">
-    <tr><th>Effects :</th><th class="txt_center">lvl {{user.aerodynamics}} -> lvl {{user.aerodynamics+1}}</th></tr>
+    <tr><th>Effects :</th><th id="upgrade" class="txt_center">lvl {{user.aerodynamics}} -> lvl {{user.aerodynamics+1}}</th></tr>
     <tr><td>Power generation</td><td class="txt_center">+{{(facility["prod factor"]*100-100)|int}}%</td></tr>
     <tr><td>Price</td><td class="txt_center">+{{(facility["price factor"]*100-100)|int}}%</td></tr>
   </table>
@@ -451,10 +451,10 @@
 </div>
 
 {% set facility = data["chemistry"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/chemistry.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.chemistry}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em id="lvl" class="large">{{user.chemistry}}</em>&emsp; <span id="price" class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Chemistry is also very boring. <br>
  Affects the facilities : 
  {% for facility in ["hydrogen_storage", "lithium_ion_batteries"] %}
@@ -475,10 +475,10 @@
  </div>
  <div class="infobox" id="infotable">
   <table class="table tan_green">
-    <tr><th>Effects :</th><th class="txt_center">lvl {{user.chemistry}} -> lvl {{user.chemistry+1}}</th></tr>
+    <tr><th>Effects :</th><th id="upgrade" class="txt_center">lvl {{user.chemistry}} -> lvl {{user.chemistry+1}}</th></tr>
     <tr><td>Efficiency hydrogen</td><td class="txt_center">+1.65%</td></tr>
-    <tr><td>Efficiency Li-ion</td><td class="txt_center">+{{(10/data["lithium_ion_batteries"]["efficiency"]-10)| round(2)}}%</td></tr>
-    <tr><td>Efficiency solid state</td><td class="txt_center">+{{(10/data["solid_state_batteries"]["efficiency"]-10)| round(2)}}%</td></tr>
+    <tr><td>Efficiency Li-ion</td><td id="E_Li_ion" class="txt_center">+{{(10/data["lithium_ion_batteries"]["efficiency"]-10)| round(2)}}%</td></tr>
+    <tr><td>Efficiency solid state</td><td id="E_SS" class="txt_center">+{{(10/data["solid_state_batteries"]["efficiency"]-10)| round(2)}}%</td></tr>
     <tr><td>Price</td><td class="txt_center">+{{(facility["price factor"]*100-100)|int}}%</td></tr>
   </table>
  </div>
@@ -496,10 +496,10 @@
 </div>
 
 {% set facility = data["nuclear_engineering"] %}
-<div id="{{facility['name']}}" class="bone margin facility small" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
+<div id="{{facility['name']}}" class="bone margin facility small construction_tile" onclick="show_construction('{{facility['name']}}', '{{facility['locked']}}');">
  <img class="img" src="{{ url_for('static', filename='images/technologies/nuclear_engineering.jpg') }}"\>
  <div class="infotext padding">
-  <strong class="large">{{facility["name"]}} </strong>lvl <em class="large">{{user.nuclear_engineering}}</em>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
+  <strong class="large">{{facility["name"]}} </strong>lvl <em id="lvl" class="large">{{user.nuclear_engineering}}</em>&emsp; <span id="price" class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
  Nuclear engineers are used to improve nuclear power facilities. <br>
  Affects the facilities : 
  <em class="txt-blue">{{data["nuclear_reactor"].name}}</em> , 
@@ -519,7 +519,7 @@
  </div>
  <div class="infobox" id="infotable">
   <table class="table tan_green">
-    <tr><th>Effects :</th><th class="txt_center">lvl {{user.nuclear_engineering}} -> lvl {{user.nuclear_engineering+1}}</th></tr>
+    <tr><th>Effects :</th><th id="upgrade" class="txt_center">lvl {{user.nuclear_engineering}} -> lvl {{user.nuclear_engineering+1}}</th></tr>
     <tr><td>Power generation</td><td class="txt_center">+{{(facility["prod factor"]*100-100)|int}}%</td></tr>
     <tr><td>Price</td><td class="txt_center">+{{(facility["price factor"]*100-100)|int}}%</td></tr>
   </table>
@@ -542,4 +542,5 @@
 
 {% block additionnal_script %}
 <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
+<script src="{{ url_for('static', filename='lvlup_display.js') }}"></script>
 {% endblock %}

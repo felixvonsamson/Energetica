@@ -241,7 +241,7 @@ def calculate_generation_without_market(engine, total_demand, player, t):
                         db.session.commit()
                 if demand_type == "research":
                     Under_construction.query.filter(
-                        Under_construction.player_id == row.player.id).filter(
+                        Under_construction.player_id == player.id).filter(
                         Under_construction.family == "technologies").delete()
                     db.session.commit()
                 if demand_type == "transport":
