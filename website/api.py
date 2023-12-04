@@ -162,4 +162,5 @@ def get_ud_and_config():
                 "lvl_at": lvl,
                 "lvl_future": lvl+1
             }
-    return jsonify(ud, assets)
+    player_lvls = current_user.get_technology_values()
+    return jsonify(ud, assets, player_lvls)

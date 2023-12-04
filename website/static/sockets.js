@@ -24,6 +24,7 @@ socket.on('display_under_construction', function(facility, finish_time) {
         <b>' + facility + '</b> is under construction. <i class="time" \
         data-name="' + finish_time + '"></i></div>'
     }
+    retrieve_ud();
 });
 
 // updates specific fields of the page without reloading

@@ -1,9 +1,12 @@
 function show_construction(name, locked){
-    if (locked == "True"){
-        addToast("This facility is not unlocked");
-        return;
-    }
     let tile = document.getElementById(name);
+    let requirements = tile.querySelector("#reqirements");
+    if(requirements){
+        if (requirements.innerHTML.trim() != ''){
+            addToast("This facility is not unlocked");
+            return;
+        }
+    }
     let additionalContent = tile.querySelector("#constructionContent");
 
     if (additionalContent.classList.contains("hidden")) {

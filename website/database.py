@@ -196,6 +196,16 @@ class Player(db.Model, UserMixin):
     shipments = db.relationship("Shipment", backref='player')
 
     data_table_name = db.Column(db.String(50))
+
+    def get_technology_values(self):
+        technology_attributes = [
+            'laboratory', 'mathematics', 'mechanical_engineering', 'thermodynamics',
+            'physics', 'building_technology', 'mineral_extraction',
+            'transport_technology', 'materials', 'civil_engineering',
+            'aerodynamics', 'chemistry', 'nuclear_engineering'
+        ]
+        technology_values = {attr: getattr(self, attr) for attr in technology_attributes}
+        return technology_values
     
     def emit(player, *args):
         if player.sid:

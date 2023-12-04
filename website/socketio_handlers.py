@@ -79,7 +79,7 @@ def add_handlers(socketio, engine):
             ud_count = Under_construction.query.filter_by(name=facility, player_id=current_user.id).count()
             real_price = assets[facility]["price"]*assets[facility]["price multiplier"]**ud_count
             if current_user.money < real_price:
-                current_user.emit("errorMessage", "Not enough money to queue this upgrade (the price of the next upgrade might be higher than the one indicated)")
+                current_user.emit("errorMessage", "Not enough money to queue this upgrade")
                 return
             current_user.money -= real_price
             if family == "functional_facilities":
