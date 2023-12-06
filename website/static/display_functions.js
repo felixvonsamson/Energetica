@@ -40,10 +40,9 @@ function display_upgrade_W(price, factor) {
 }
 
 function display_upgrade_money(price, factor) {
-  const units = ["<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day", 
-  "k<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day",
-  "M<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day",
-  "Md<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day"];
+  const units = [" <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day", 
+  "k <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day",
+  "M <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day"];
   upgrade_format(price, units, factor);
 }
 
