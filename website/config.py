@@ -329,8 +329,8 @@ full_config = {
         "laboratory": {
             "name": "Laboratory",
             "price": 100000,  # [¤]
-            "construction time": 10800,  # [s]
-            "construction energy": 1000000000,  # [Wh]
+            "construction time": 5400,  # [s]
+            "construction energy": 750000,  # [Wh]
             "construction pollution": 100000,  # [kg]
             "price multiplier": 1.3,
             "time factor": 0.9,
@@ -347,11 +347,11 @@ full_config = {
         "industry": {
             "name": "Industry",
             "price": 1000/1.25,
-            "construction time": 1800,
-            "construction energy": 20000000,
+            "construction time": 1200,
+            "construction energy": 10000,
             "construction pollution": 1000,
             "power consumption": 50000, # [W]
-            "income": 2000, # [¤/day]   --- TEMPORARY CHANGED FROM 2000 to 40000
+            "income": 2000, # [¤/day]
             "price multiplier": 1.25,
             "power factor" : 1.4,
             "income factor" : 1.35,
