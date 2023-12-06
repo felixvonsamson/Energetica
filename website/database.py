@@ -164,19 +164,19 @@ class Player(db.Model, UserMixin):
 
     # Storage capacity prices [¤/MWh]
     price_buy_small_pumped_hydro = db.Column(db.Float, default=210)
-    price_small_pumped_hydro = db.Column(db.Float, default=320)
+    price_small_pumped_hydro = db.Column(db.Float, default=790)
     price_buy_compressed_air = db.Column(db.Float, default=270)
-    price_compressed_air = db.Column(db.Float, default=400)
+    price_compressed_air = db.Column(db.Float, default=860)
     price_buy_molten_salt = db.Column(db.Float, default=190)
-    price_molten_salt = db.Column(db.Float, default=350)
+    price_molten_salt = db.Column(db.Float, default=830)
     price_buy_large_pumped_hydro = db.Column(db.Float, default=200)
-    price_large_pumped_hydro = db.Column(db.Float, default=300)
+    price_large_pumped_hydro = db.Column(db.Float, default=780)
     price_buy_hydrogen_storage = db.Column(db.Float, default=230)
-    price_hydrogen_storage = db.Column(db.Float, default=460)
+    price_hydrogen_storage = db.Column(db.Float, default=940)
     price_buy_lithium_ion_batteries = db.Column(db.Float, default=425)
-    price_lithium_ion_batteries = db.Column(db.Float, default=520)
+    price_lithium_ion_batteries = db.Column(db.Float, default=1010)
     price_buy_solid_state_batteries = db.Column(db.Float, default=420)
-    price_solid_state_batteries = db.Column(db.Float, default=510)
+    price_solid_state_batteries = db.Column(db.Float, default=990)
 
     # Demand buying prices
     price_buy_industry = db.Column(db.Float, default=1000)
