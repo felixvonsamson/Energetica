@@ -57,7 +57,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('mathematics', 'technologies');" style="width:160px">
       Start construction
@@ -100,7 +100,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('mechanical_engineering', 'technologies');" style="width:160px">
       Start construction
@@ -145,7 +145,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('thermodynamics', 'technologies');" style="width:160px">
       Start construction
@@ -188,7 +188,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('physics', 'technologies');" style="width:160px">
       Start construction
@@ -227,7 +227,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('building_technology', 'technologies');" style="width:160px">
       Start construction
@@ -272,7 +272,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('mineral_extraction', 'technologies');" style="width:160px">
       Start construction
@@ -312,7 +312,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('transport_technology', 'technologies');" style="width:160px">
       Start construction
@@ -348,13 +348,14 @@
   <table class="table tan_green">
     <tr><th>Effects :</th><th id="upgrade" class="txt_center">lvl {{user.materials}} -> lvl {{user.materials+1}}</th></tr>
     <tr><td>Price</td><td class="txt_center">-{{(100-facility["price factor"]*100)|int}}%</td></tr>
+    <tr><td>Construction power</td><td class="txt_center">-{{(100-facility["construction energy factor"]*100)|int}}%</td></tr>
   </table>
  </div>
  <div id="constructionContent" class="infobox hidden constructionContent">
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('materials', 'technologies');" style="width:160px">
       Start construction
@@ -398,7 +399,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('civil_engineering', 'technologies');" style="width:160px">
       Start construction
@@ -441,7 +442,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('aerodynamics', 'technologies');" style="width:160px">
       Start construction
@@ -486,7 +487,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('chemistry', 'technologies');" style="width:160px">
       Start construction
@@ -528,7 +529,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('nuclear_engineering', 'technologies');" style="width:160px">
       Start construction

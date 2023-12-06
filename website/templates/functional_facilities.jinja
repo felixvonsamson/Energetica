@@ -52,7 +52,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
       Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('industry', 'functional_facilities');" style="width:160px">
@@ -79,7 +79,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
       Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('laboratory', 'functional_facilities');" style="width:160px">
@@ -116,7 +116,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
       Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('warehouse', 'functional_facilities');" style="width:160px">
@@ -156,7 +156,7 @@
   <div class="flex-col">
     <div class="txt_center margin-small" style="width:180px">
       Duration : <strong><script>display_duration({{facility["construction time"]}});</script></strong><br>
-      Energy need : <strong><script>display_W({{facility["construction energy"]/facility["construction time"]*3600}});</script></strong><br>
+      Energy need : <strong><script>display_W({{facility["construction power"]}});</script></strong><br>
       Emmissions : <strong><script>display_kg({{facility["construction pollution"]}});</script> CO2</strong>
     </div>
     <b class="padding medium white button margin-small txt_center" onclick="start_construction('carbon_capture', 'functional_facilities');" style="width:160px">

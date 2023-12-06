@@ -10,7 +10,7 @@ full_config = {
             "price": 2600,  # [¤]
             "power generation": 210000,  # [W]
             "construction time": 3600,  # [s]
-            "construction energy": 8500000,  # [Wh]
+            "construction power factor": 0.4,  # fraction of power gen during construction
             "construction pollution": 17520,  # [kg]
             "O&M cost" : 0.8, # [fraction of price per (day)]
             "consumed ressource": None,
@@ -24,7 +24,7 @@ full_config = {
             "price": 22200,
             "power generation": 3350000,
             "construction time": 21600,
-            "construction energy": 72000000,
+            "construction power factor": 0.7,
             "construction pollution": 1600,
             "O&M cost" : 0.054,
             "consumed ressource": "wind",
@@ -38,7 +38,7 @@ full_config = {
             "price": 15000,
             "power generation": 2700000,
             "construction time": 18000,
-            "construction energy": 49500000,
+            "construction power factor": 0.6,
             "construction pollution": 2200,
             "O&M cost" : 0.055,
             "consumed ressource": "water",
@@ -52,7 +52,7 @@ full_config = {
             "price": 53300,
             "power generation": 27000000,
             "construction time": 194400,
-            "construction energy": 557000000,
+            "construction power factor": 0.5,
             "construction pollution": 1100000,
             "O&M cost" : 0.095,
             "consumed ressource": "coal",
@@ -67,7 +67,7 @@ full_config = {
             "price": 25800,
             "power generation": 11000000,
             "construction time": 43200,
-            "construction energy": 227000000,
+            "construction power factor": 1.1,
             "construction pollution": 440000,
             "O&M cost" : 0.1,
             "consumed ressource": "oil",
@@ -82,7 +82,7 @@ full_config = {
             "price": 46500,
             "power generation": 16000000,
             "construction time": 43200,
-            "construction energy": 349000000,
+            "construction power factor": 1.1,
             "construction pollution": 657000,
             "O&M cost" : 0.117,
             "consumed ressource": "gas",
@@ -97,7 +97,7 @@ full_config = {
             "price": 20000,
             "power generation": 41500000,
             "construction time": 216000,
-            "construction energy": 511000000,
+            "construction power factor": 0.2,
             "construction pollution": 876000,
             "O&M cost" : 0.032,
             "consumed ressource": "hydropower",
@@ -111,7 +111,7 @@ full_config = {
             "price": 410000,
             "power generation": 11000000,
             "construction time": 64800,
-            "construction energy": 679000000,
+            "construction power factor": 1.7,
             "construction pollution": 420000,
             "O&M cost" : 0.052,
             "consumed ressource": "wind",
@@ -127,7 +127,7 @@ full_config = {
             "price": 310000,
             "power generation": 54000000,
             "construction time": 108000,
-            "construction energy": 1176000000,
+            "construction power factor": 0.7,
             "construction pollution": 1500000,
             "O&M cost" : 0.102,
             "consumed ressource": ["gas", "coal"],
@@ -142,7 +142,7 @@ full_config = {
             "price": 840000,
             "power generation": 167000000,
             "construction time": 432000,
-            "construction energy": 2830000000,
+            "construction power factor": 0.1,
             "construction pollution": 870000,
             "O&M cost" : 0.104,
             "consumed ressource": "uranium",
@@ -158,7 +158,7 @@ full_config = {
             "price": 160000,
             "power generation": 410000000,
             "construction time": 302400,
-            "construction energy": 5088000000,
+            "construction power factor": 0.15,
             "construction pollution": 8760000,
             "O&M cost" : 0.022,
             "consumed ressource": "hydropower",
@@ -172,7 +172,7 @@ full_config = {
             "price": 61000,
             "power generation": 19000000,
             "construction time": 129600,
-            "construction energy": 525000000,
+            "construction power factor": 0.5,
             "construction pollution": 1260000,
             "O&M cost" : 0.067,
             "consumed ressource": "irradiation",
@@ -187,7 +187,7 @@ full_config = {
             "price": 800000,
             "power generation": 59000000,
             "construction time": 21600,
-            "construction energy": 6580000000,
+            "construction power factor": 10,
             "construction pollution": 24000000,
             "O&M cost" : 0.02,
             "consumed ressource": "irradiation",
@@ -202,7 +202,7 @@ full_config = {
             "price": 3200000,
             "power generation": 130000000,
             "construction time": 172800,
-            "construction energy": 6300000000,
+            "construction power factor": 1.5,
             "construction pollution": 4900000,
             "O&M cost" : 0.065,
             "consumed ressource": "wind",
@@ -218,7 +218,7 @@ full_config = {
             "price": 1800000,
             "power generation": 335000000,
             "construction time": 518400,
-            "construction energy": 6000000000,
+            "construction power factor": 0.08,
             "construction pollution": 2400000,
             "O&M cost" : 0.085,
             "consumed ressource": "uranium",
@@ -236,7 +236,7 @@ full_config = {
             "power generation": 2600000,  # [W]
             "efficiency": 0.75,
             "construction time": 18720,  # [s]
-            "construction energy": 8180000,  # [Wh]
+            "construction power factor": 0.005,  # fraction of capacity demanded during construction
             "construction pollution": 80000,  # [kg]
             "O&M cost" : 0.088,  # [fraction of price per year]
             "ramping time": 9,  # [min]
@@ -249,7 +249,7 @@ full_config = {
             "power generation": 12000000,
             "efficiency": 0.52,
             "construction time": 64800,
-            "construction energy": 638000000,
+            "construction power factor": 0.02,
             "construction pollution": 570000,
             "O&M cost" : 0.297,
             "ramping time": 5,
@@ -263,7 +263,7 @@ full_config = {
             "power generation": 55000000,
             "efficiency": 0.63,
             "construction time": 86400,
-            "construction energy": 1370000000,
+            "construction power factor": 0.03,
             "construction pollution": 1200000,
             "O&M cost" : 0.424,
             "ramping time": 60,
@@ -277,7 +277,7 @@ full_config = {
             "power generation": 249000000,
             "efficiency": 0.8,
             "construction time": 334800,
-            "construction energy": 3110000000,
+            "construction power factor": 0.003,
             "construction pollution": 3000000,
             "O&M cost" : 0.115,
             "ramping time": 16,
@@ -290,7 +290,7 @@ full_config = {
             "power generation": 15000000,
             "efficiency": 0.33,
             "construction time": 43200,
-            "construction energy": 2570000000,
+            "construction power factor": 0.005,
             "construction pollution": 2400000,
             "O&M cost" : 0.028,
             "ramping time": 8,
@@ -304,7 +304,7 @@ full_config = {
             "power generation": 86000000,
             "efficiency": 0.69,
             "construction time": 64800,
-            "construction energy": 8900000000,
+            "construction power factor": 0.4,
             "construction pollution": 8000000,
             "O&M cost" : 0.003,
             "ramping time": 3,
@@ -318,7 +318,7 @@ full_config = {
             "power generation": 107000000,
             "efficiency": 0.79,
             "construction time": 54000,
-            "construction energy": 10000000000,
+            "construction power factor": 0.35,
             "construction pollution": 6000000,
             "O&M cost" : 0.002,
             "ramping time": 3,
@@ -333,13 +333,13 @@ full_config = {
             "construction energy": 1000000000,  # [Wh]
             "construction pollution": 100000,  # [kg]
             "price multiplier": 1.3,
-            "time factor": 0.85,
+            "time factor": 0.9,
         },
         "warehouse": {
             "name": "Warehouse",
             "price": 50000,
             "construction time": 18000,
-            "construction energy": 10000,
+            "construction energy": 100000,
             "construction pollution": 25000,
             "price multiplier": 1.5,
             "capacity factor":1.5,
@@ -348,7 +348,7 @@ full_config = {
             "name": "Industry",
             "price": 1000/1.25,
             "construction time": 1800,
-            "construction energy": 10000000,
+            "construction energy": 20000000,
             "construction pollution": 1000,
             "power consumption": 100000/1.4, # [W]
             "income": 40000/1.35, # [¤/day]   --- TEMPORARY CHANGED FROM 2000 to 40000
@@ -360,10 +360,10 @@ full_config = {
             "name": "Carbon capture",
             "price": 250000,
             "construction time": 36000,
-            "construction energy": 5000000000,
+            "construction energy": 50000000,
             "construction pollution": 250000,
-            "power consumption": 1000000, # [W]
-            "absorbtion": 200, # [kg/h]
+            "power consumption": 10000000, # [W]
+            "absorbtion": 2000, # [kg/h]
             "price multiplier": 1.5,
             "absorbtion factor": 1.55,
             "power factor": 1.5,
@@ -375,47 +375,47 @@ full_config = {
             "name": "Coal mine",
             "price": 28500,  # [¤]
             "construction time": 28800,  # [s]
-            "construction energy": 126000000,  # [Wh]
+            "construction power factor": 3,  # fraction of power consumption during construction
             "construction pollution": 200000,  # [kg]
             "O&M cost" : 0.25, # [fraction of price per year]
-            "amount produced": 0.0000006,  # [fraction of total stock that can be extracted every minute by one mine]
-            "power consumption": 1800000,  # [W]
+            "amount produced": 0.0000001,  # [fraction of total stock that can be extracted every minute by one mine]
+            "power consumption": 3000000,  # [W]
             "pollution": 65,  # [kg/t extracted]
             "requirements": [["mineral_extraction", 1, False]]
         },
         "oil_field": {
             "name": "Oil field",
-            "price": 37000,
+            "price": 370000,
             "construction time": 54000,
-            "construction energy": 230000000,
+            "construction power factor": 5,
             "construction pollution": 400000,
             "O&M cost" : 0.26,
             "amount produced": 0.000001,
-            "power consumption": 1530000,
+            "power consumption": 15300000,
             "pollution": 302,
             "requirements": [["mineral_extraction", 3, False]]
         },
         "gas_drilling_site": {
             "name": "Gas drilling site",
-            "price": 33500,
+            "price": 335000,
             "construction time": 54000,
-            "construction energy": 250000000,
+            "construction power factor": 6,
             "construction pollution": 700000,
             "O&M cost" : 0.26,
             "amount produced": 0.0000008,
-            "power consumption": 1110000,
+            "power consumption": 11100000,
             "pollution": 523,
             "requirements": [["mineral_extraction", 3, False]]
         },
         "uranium_mine": {
             "name": "Uranium mine",
-            "price": 104000,
+            "price": 1040000,
             "construction time": 86400,
-            "construction energy": 540000000,
+            "construction power factor": 4,
             "construction pollution": 500000,
             "O&M cost" : 0.5,
             "amount produced": 0.0000004,
-            "power consumption": 3600000,
+            "power consumption": 36000000,
             "pollution": 230000,
             "requirements": [["mineral_extraction", 5, False]]
         },
@@ -466,7 +466,7 @@ full_config = {
             "price multiplier": 1.3,
             "construction time": 28800,
             "construction energy": 80000000,
-            "time factor": 0.85,
+            "time factor": 0.9,
             "requirements": [["laboratory", 1, False],
                              ["mechanical_engineering", 1, False],
                              ["transport_technology", -1, False]]
@@ -502,7 +502,8 @@ full_config = {
             "price multiplier": 1.4,
             "construction time": 43200,
             "construction energy": 240000000,
-            "price factor": 0.8,
+            "price factor": 0.85,
+            "construction energy factor": 0.9,
             "requirements": [["laboratory", 2, False],
                              ["mathematics", 2, False],
                              ["chemistry", 1, False]]
@@ -607,13 +608,6 @@ class Config(object):
         player = Player.query.get(player_id)
         config.update_resource_extraction(player_id)
 
-        # --- Temporary to accelerate the game *5 ---
-        config.for_player[player_id]["transport"]["time"] /= 5
-        config.for_player[player_id]["transport"]["power consumption"] /= 5
-        for asset in assets:
-            assets[asset]["construction time"] /= 5
-            assets[asset]["construction energy"] /= 1000  # Energy reqirements were too high
-
         for asset in assets:
             if asset in ["steam_engine", "watermill", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "compressed_air", "molten_salt"]:
                 # update price and production (mechanical engineering)
@@ -653,6 +647,7 @@ class Config(object):
             if asset in ["PV_solar", "onshore_wind_turbine", "offshore_wind_turbine", "lithium_ion_batteries", "solid_state_batteries"]:
                 # update price (materials)
                 assets[asset]["price"] *= assets["materials"]["price factor"] ** player.materials
+                assets[asset]["construction power factor"] *= assets["materials"]["construction energy factor"] ** player.materials
 
             if asset in ["small_water_dam", "large_water_dam", "small_pumped_hydro", "large_pumped_hydro"]:
                 # update price and production (civil engineering)
@@ -684,8 +679,8 @@ class Config(object):
             if asset in ["laboratory", "warehouse", "industry", "carbon_capture", "mathematics", "mechanical_engineering", "thermodynamics", "physics", "building_technology", "mineral_extraction", "transport_technology", "materials", "civil_engineering", "aerodynamics", "chemistry", "nuclear_engineering"]:
                 # update prices, construction time and construction energy
                 assets[asset]["price"] *= assets[asset]["price multiplier"] ** getattr(player, asset)
-                assets[asset]["construction time"] *= assets[asset]["price multiplier"] ** (0.5*getattr(player, asset))
-                assets[asset]["construction energy"] *= assets[asset]["price multiplier"] ** (getattr(player, asset))
+                assets[asset]["construction time"] *= assets[asset]["price multiplier"] ** (0.75*getattr(player, asset))
+                assets[asset]["construction energy"] *= assets[asset]["price multiplier"] ** (1.25*getattr(player, asset))
                 if asset in ["laboratory", "warehouse", "industry", "carbon_capture"]:
                     assets[asset]["construction pollution"] *= assets[asset]["price multiplier"] ** (getattr(player, asset))
 
@@ -735,6 +730,16 @@ class Config(object):
                     assets[asset]["ramping speed"] = 0
                 else: 
                     assets[asset]["ramping speed"] = assets[asset]["power generation"]/assets[asset]["ramping time"]
+
+            # calculate energy need : 
+            if asset in ["watermill", "small_water_dam", "large_water_dam", "nuclear_reactor", "nuclear_reactor_gen4", "steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "windmill", "onshore_wind_turbine", "offshore_wind_turbine", "CSP_solar", "PV_solar"]:
+                assets[asset]["construction power"] = assets[asset]["construction power factor"] * assets[asset]["power generation"] / (assets["building_technology"]["time factor"] ** player.building_technology)
+            elif asset in ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"]:
+                assets[asset]["construction power"] = assets[asset]["construction power factor"] * assets[asset]["storage capacity"] / (assets["building_technology"]["time factor"] ** player.building_technology)
+            elif asset in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"]:
+                assets[asset]["construction power"] = assets[asset]["construction power factor"] * assets[asset]["power consumption"]
+            else :
+                assets[asset]["construction power"] = assets[asset]["construction energy"]/assets[asset]["construction time"]*3600
 
         # calculating the maximum storage capacity from the warehouse level
         max_cap = config.for_player[player_id]["warehouse_capacities"]

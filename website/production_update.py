@@ -149,11 +149,9 @@ def calculate_demand(engine, player, t):
         if ud.start_time < time.time():
             construction = assets[ud.name]
             if ud.family == "technologies":
-                demand_research += (construction["construction energy"] 
-                    / construction["construction time"] * 3600)
+                demand_research += construction["construction power"]
             else:
-                demand_construction += (construction["construction energy"] 
-                    / construction["construction time"] * 3600)
+                demand_construction += construction["construction power"] 
                 emissions_construction += (construction["construction pollution"] 
                     / construction["construction time"])
             # industry demand ramps up during construction
@@ -499,6 +497,7 @@ def market_optimum(offers_og, demands_og):
 # Calculates the min or max power production of a facility in at time t considering ramping constraints, ressources constraints and max and min power constraints
 def calculate_prod(minmax, player, assets, facility, generation, t, storage = None, filling = False):
     max_ressources = np.inf
+    ramping_speed = getattr(player, facility)*assets[facility]["ramping speed"]
     if storage == None:
         if facility == "combined_cycle":
             avalable_gas = player.gas - player.gas_on_sale
@@ -512,16 +511,15 @@ def calculate_prod(minmax, player, assets, facility, generation, t, storage = No
             max_ressources = avalable_ressource / assets[facility]["amount consumed"] * 60000000
     else:
         if filling:
-            max_ressources = (assets[facility]["storage capacity"] * getattr(player, facility) - storage[facility][t - 1]) * 60 * (assets[facility]["efficiency"]**0.5) # max remaining storage space
+            E = max(0, assets[facility]["storage capacity"] * getattr(player, facility) - storage[facility][t - 1]) * 60 * (assets[facility]["efficiency"]**0.5) # max remaining storage space
         else:
-            max_ressources = storage[facility][t - 1] * 60 * (assets[facility]["efficiency"]**0.5) # max avalable storge content
+            E = max(0, storage[facility][t - 1] * 60 * (assets[facility]["efficiency"]**0.5)) # max avalable storge content
+        max_ressources = min(E, (2*E*ramping_speed)**0.5 - 0.5*ramping_speed) #ramping down
     if minmax == "max":
-        max_ramping = (generation[facility][t - 1] + getattr(player, facility) * 
-                       assets[facility]["ramping speed"])
+        max_ramping = (generation[facility][t - 1] + ramping_speed)
         return min(max_ressources, max_ramping, getattr(player, facility) * assets[facility]["power generation"])
     else :
-        min_ramping = (generation[facility][t - 1] - getattr(player, facility) * 
-                       assets[facility]["ramping speed"])
+        min_ramping = (generation[facility][t - 1] - ramping_speed)
         return max(0, min(max_ressources, min_ramping))
 
 def offer(market, player, capacity, price, facility):
