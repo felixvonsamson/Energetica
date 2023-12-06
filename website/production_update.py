@@ -161,7 +161,7 @@ def calculate_demand(engine, player, t):
                 additional_revenue = time_fraction*industry_income*(assets["industry"]["income factor"]-1)
                 demand["industry"][t] += additional_demand
                 revenues["industry"][t] += additional_revenue
-    demand["construction"][t] = min(demand["construction"][t-1]+0.2*demand_construction, demand_construction) # for smooth demand changes
+    demand["construction"][t] = min(demand["construction"][t-1]+0.1*demand_construction, demand_construction) # for smooth demand changes
     demand["research"][t] = min(demand["research"][t-1]+0.2*demand_research, demand_research) # for smooth demand changes
     engine.data["current_data"][player.username]["emissions"]["construction"][t] = emissions_construction
     player.emissions += emissions_construction
@@ -236,7 +236,7 @@ def calculate_generation_without_market(engine, total_demand, player, t):
                         Under_construction.start_time < time.time()).order_by(
                         Under_construction.start_time.desc()).first()
                     if last_construction:
-                        last_construction.delete()
+                        db.session.delete(last_construction)
                         db.session.commit()
                 if demand_type == "research":
                     Under_construction.query.filter(
@@ -250,7 +250,7 @@ def calculate_generation_without_market(engine, total_demand, player, t):
                     if last_shipment:
                         random_tile = Hex.query.order_by(func.random()).first()
                         setattr(random_tile, last_shipment.resource, getattr(random_tile, last_shipment.resource)+last_shipment.quantity)
-                        last_shipment.delete()
+                        db.session.delete(last_shipment)
                         db.session.commit()
                 # complicated logic to adjust resource production
                 if demand_type in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"]:
@@ -419,7 +419,7 @@ def market_logic(engine, market, t):
                     Under_construction.start_time < time.time()).order_by(
                     Under_construction.start_time.desc()).first()
                 if last_construction:
-                    last_construction.delete()
+                    db.session.delete(last_construction)
                     db.session.commit()
             if row.facility == "research":
                 Under_construction.query.filter(
@@ -433,7 +433,7 @@ def market_logic(engine, market, t):
                 if last_shipment:
                     random_tile = Hex.query.order_by(func.random()).first()
                     setattr(random_tile, last_shipment.resource, getattr(random_tile, last_shipment.resource)+last_shipment.quantity)
-                    last_shipment.delete()
+                    db.session.delete(last_shipment)
                     db.session.commit()
             # complicated logic to adjust resource production
             if row.facility in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"]:
