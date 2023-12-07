@@ -72,7 +72,7 @@ class Player(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(25), unique=True)
     password = db.Column(db.String(25))
-    sid = db.Column(db.String(100))
+    sid = None
 
     # Position :
     tile = db.relationship("Hex", backref='player')
