@@ -22,6 +22,7 @@ def verify_password(username, password):
 @basic_auth.login_required
 def check_user():
     g.engine = current_app.config["engine"]
+    g.player = Player.query.filter_by(username=basic_auth.current_user()).first()
 
 # Simply returns success, used on client-side to check auth before proceeding
 @rest_api.route("/rest_auth", methods=["GET"])
