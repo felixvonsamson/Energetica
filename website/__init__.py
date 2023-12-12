@@ -11,6 +11,7 @@ import pickle
 from pathlib import Path
 from flask_login import LoginManager
 from flask_socketio import SocketIO
+from flask_sock import Sock
 import atexit
 from flask_apscheduler import APScheduler
 
@@ -42,6 +43,12 @@ def create_app():
     engine.socketio = socketio
     from .socketio_handlers import add_handlers
     add_handlers(socketio=socketio, engine=engine)
+
+    # initialize sock for WebSockets:
+    sock = Sock(app)
+    engine.sock = sock
+    from .sock_handlers import add_sock_handlers
+    add_sock_handlers(sock=sock, engine=engine)
 
     # add blueprints (website repositories) :
     from .views import views, overviews
@@ -126,4 +133,4 @@ def create_app():
             #from .init_test_players import edit_database, init_test_players
             #edit_database(engine)
             #init_test_players(engine)
-    return socketio, app
+    return socketio, sock, app
