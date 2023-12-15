@@ -1,5 +1,6 @@
 flask
 flask-socketio
+flask-sock
 Flask-SQLAlchemy
 flask-login
 flask-apscheduler
