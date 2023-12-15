@@ -55,9 +55,7 @@ def update_ressources(engine):
                     player, facility) * production_factor
                 demand[facility][t] = min(demand[facility][t-1]+0.2*energy_demand, energy_demand) # for smooth demand changes
                 facility_emmissions = assets[facility]["pollution"] * amount_produced / 1000
-                engine.data["current_data"][player.username]["emissions"][facility][t] = facility_emmissions
-                player.emissions += facility_emmissions
-                engine.data["current_CO2"][t] += facility_emmissions
+                add_emissions(engine, player, t, facility, facility_emmissions)
             player_ressources[ressource][t] = getattr(player, ressource)
 
     db.session.commit()
@@ -147,15 +145,20 @@ def calculate_demand(engine, player, t):
     emissions_construction = 0
     for ud in player.under_construction:
         if ud.start_time < time.time():
-            construction = assets[ud.name]
-            if ud.family == "technologies":
-                demand_research += construction["construction power"]
-            else:
-                demand_construction += construction["construction power"] 
-                emissions_construction += (construction["construction pollution"] 
-                    / construction["construction time"])
+            if ud.suspension_time == None:
+                construction = assets[ud.name]
+                if ud.family == "technologies":
+                    demand_research += construction["construction power"]
+                else:
+                    demand_construction += construction["construction power"] 
+                    emissions_construction += (construction["construction pollution"] 
+                        / construction["construction time"])
             # industry demand ramps up during construction
             if ud.name == "industry":
+                if ud.suspension_time == None:
+                    time_fraction = (time.time()-ud.start_time)/(ud.finish_time-ud.start_time)
+                else :
+                    time_fraction = (ud.suspension_time-ud.start_time)/(ud.finish_time-ud.start_time)
                 time_fraction = (time.time()-ud.start_time)/(ud.finish_time-ud.start_time)
                 additional_demand = time_fraction*industry_demand*(assets["industry"]["power factor"]-1)
                 additional_revenue = time_fraction*industry_income*(assets["industry"]["income factor"]-1)
@@ -163,14 +166,13 @@ def calculate_demand(engine, player, t):
                 revenues["industry"][t] += additional_revenue
     demand["construction"][t] = min(demand["construction"][t-1]+0.1*demand_construction, demand_construction) # for smooth demand changes
     demand["research"][t] = min(demand["research"][t-1]+0.2*demand_research, demand_research) # for smooth demand changes
-    engine.data["current_data"][player.username]["emissions"]["construction"][t] = emissions_construction
-    player.emissions += emissions_construction
-    engine.data["current_CO2"][t] += emissions_construction
+    add_emissions(engine, player, t, "construction", emissions_construction)
     # demand from shipment of ressources
     transport = engine.config[player.id]["transport"]
     demand_transport = 0
     for shipment in player.shipments:
-        demand_transport += transport["power consumption"] / transport["time"] * shipment.quantity * 3.6
+        if shipment.suspension_time == None:
+            demand_transport += transport["power consumption"] / transport["time"] * shipment.quantity * 3.6
     demand["transport"][t] = min(demand["transport"][t-1]+0.2*demand_transport, demand_transport) # for smooth demand changes
     # demand of extraction facilities is calculated in update_ressources()
     return sum([demand[i][t] for i in demand])
@@ -225,48 +227,7 @@ def calculate_generation_without_market(engine, total_demand, player, t):
         for demand_type in player.demand_priorities.split(' '):
             cumul_demand += demand[demand_type][t]
             if cumul_demand > total_generation:
-                if demand_type == "industry":
-                    player.industry = max(1, player.industry-1)
-                    engine.config.update_config_for_user(player.id)
-                    db.session.commit()
-                if demand_type == "construction":
-                    last_construction = Under_construction.query.filter(
-                        Under_construction.player_id == player.id).filter(
-                        Under_construction.family != "technologies").filter(
-                        Under_construction.start_time < time.time()).order_by(
-                        Under_construction.start_time.desc()).first()
-                    if last_construction:
-                        db.session.delete(last_construction)
-                        db.session.commit()
-                if demand_type == "research":
-                    Under_construction.query.filter(
-                        Under_construction.player_id == player.id).filter(
-                        Under_construction.family == "technologies").delete()
-                    db.session.commit()
-                if demand_type == "transport":
-                    last_shipment = Shipment.query.filter(
-                        Shipment.player_id == player.id).order_by(
-                        Shipment.start_time.desc()).first()
-                    if last_shipment:
-                        random_tile = Hex.query.order_by(func.random()).first()
-                        setattr(random_tile, last_shipment.resource, getattr(random_tile, last_shipment.resource)+last_shipment.quantity)
-                        db.session.delete(last_shipment)
-                        db.session.commit()
-                # complicated logic to adjust resource production
-                if demand_type in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"]:
-                    resource_name = extraction_to_ressource[demand_type]
-                    q_resource = engine.data["current_data"][player.username]["ressources"][resource_name]
-                    takeback = q_resource[t]-q_resource[t-1]
-                    setattr(player, resource_name, getattr(player, resource_name)-takeback)
-                    setattr(player.tile[0], resource_name, getattr(player.tile[0], resource_name)+takeback)
-                    q_resource[t] = getattr(player, resource_name)
-                    energy_demand = 0.2 * assets[demand_type]["power consumption"] * getattr(player, demand_type)
-                    demand[demand_type][t] = min(demand[demand_type][t-1]+0.2*energy_demand, energy_demand) # for smooth demand changes
-                    emmissions_takeback = engine.data["current_data"][player.username]["emissions"][demand_type][t]
-                    engine.data["current_data"][player.username]["emissions"][demand_type][t] = 0
-                    player.emissions -= emmissions_takeback
-                    engine.data["current_CO2"][t] -= emmissions_takeback
-                    db.session.commit()
+                reduce_demand(engine, demand_type, player, demand, assets, t)
 
 # calculates in-house satisfaction and sets the capacity offers and demands on the market
 def calculate_generation_with_market(engine, market, total_demand, player, t):
@@ -357,6 +318,9 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
 # Calculate overall network demand, class all capacity offers in ascending order of price and find the market price of electricity
 # Sell all capacities that are below market price at market price.
 def market_logic(engine, market, t):
+    demand = engine.data["current_data"][row.player.username]["demand"]
+    assets = engine.config[row.player.id]["assets"]
+
     offers = market["capacities"]
     offers = offers.sort_values("price").reset_index(drop=True)
     offers['cumul_capacities'] = offers['capacity'].cumsum()
@@ -394,7 +358,6 @@ def market_logic(engine, market, t):
             if row.price < 0:
                 rest = max(0, min(row.capacity, row.capacity-sold_cap))
                 dump_cap = rest
-                demand = engine.data["current_data"][row.player.username]["demand"]
                 demand["dumping"][t] += dump_cap
                 row.player.money -= dump_cap * 5 / 1000000
                 revenue = engine.data["current_data"][row.player.username]["revenues"]
@@ -409,49 +372,7 @@ def market_logic(engine, market, t):
             if bought_cap>0.1:
                 buy(engine, row, market_price, t, quantity=bought_cap)
             # if demand is not a storage facility mesures a taken to reduce demand
-            if row.facility == "industry":
-                row.player.industry = max(1, row.player.industry-1)
-                engine.config.update_config_for_user(row.player.id)
-            if row.facility == "construction":
-                last_construction = Under_construction.query.filter(
-                    Under_construction.player_id == row.player.id).filter(
-                    Under_construction.family != "technologies").filter(
-                    Under_construction.start_time < time.time()).order_by(
-                    Under_construction.start_time.desc()).first()
-                if last_construction:
-                    db.session.delete(last_construction)
-                    db.session.commit()
-            if row.facility == "research":
-                Under_construction.query.filter(
-                    Under_construction.player_id == row.player.id).filter(
-                    Under_construction.family == "technologies").delete()
-                db.session.commit()
-            if row.facility == "transport":
-                last_shipment = Shipment.query.filter(
-                    Shipment.player_id == row.player.id).order_by(
-                    Shipment.start_time.desc()).first()
-                if last_shipment:
-                    random_tile = Hex.query.order_by(func.random()).first()
-                    setattr(random_tile, last_shipment.resource, getattr(random_tile, last_shipment.resource)+last_shipment.quantity)
-                    db.session.delete(last_shipment)
-                    db.session.commit()
-            # complicated logic to adjust resource production
-            if row.facility in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"]:
-                resource_name = extraction_to_ressource[row.facility]
-                q_resource = engine.data["current_data"][row.player.username]["ressources"][resource_name]
-                takeback = q_resource[t]-q_resource[t-1]
-                setattr(row.player, resource_name, getattr(row.player, resource_name)-takeback)
-                setattr(row.player.tile[0], resource_name, getattr(row.player.tile[0], resource_name)+takeback)
-                q_resource[t] = getattr(row.player, resource_name)
-                assets = engine.config[row.player.id]["assets"]
-                energy_demand = 0.2 * assets[row.facility]["power consumption"] * getattr(row.player, row.facility)
-                demand = engine.data["current_data"][row.player.username]["demand"]
-                demand[row.facility][t] = min(demand[row.facility][t-1]+0.2*energy_demand, energy_demand) # for smooth demand changes
-                emmissions_takeback = engine.data["current_data"][row.player.username]["emissions"][row.facility][t]
-                engine.data["current_data"][row.player.username]["emissions"][row.facility][t] = 0
-                row.player.emissions -= emmissions_takeback
-                engine.data["current_CO2"][t] -= emmissions_takeback
-                db.session.commit()
+            reduce_demand(engine, row.facility, row.player, demand, assets, t)
         else:
             buy(engine, row, market_price, t)
     market["market_price"] = market_price
@@ -589,13 +510,10 @@ def ressources_and_pollution(engine, player, t):
     player.gas -= quantity_gas
     player.coal -= quantity_coal
     # emissions (emissions of extraction facilities are calculated in update_ressources)
-    emissions = engine.data["current_data"][player.username]["emissions"]
     for facility in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", 
                   "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"]:
         facility_emmissions = assets[facility]["pollution"] * generation[facility][t] / 60000000 
-        emissions[facility][t] = facility_emmissions
-        player.emissions += facility_emmissions
-        engine.data["current_CO2"][t] += facility_emmissions
+        add_emissions(engine, player, t, facility, facility_emmissions)
 
 def renewables_generation(engine, player, assets, generation, t):
     #WIND
@@ -631,3 +549,57 @@ def read_priority_list(list):
         return []
     else :
         return list.split(' ')
+    
+# mesures taken to reduce demand
+def reduce_demand(engine, demand_type, player, demand, assets, t):
+    if demand_type == "industry":
+        player.industry = max(1, player.industry-1)
+        engine.config.update_config_for_user(player.id)
+        db.session.commit()
+    if demand_type == "construction":
+        last_construction = Under_construction.query.filter(
+            Under_construction.player_id == player.id).filter(
+            Under_construction.family != "technologies").filter(
+            Under_construction.start_time < time.time()).filter(
+            Under_construction.suspension_time == None).order_by(
+            Under_construction.start_time.desc()).first()
+        if last_construction:
+            last_construction.suspension_time = time.time()
+            db.session.commit()
+    if demand_type == "research":
+        last_research = Under_construction.query.filter(
+            Under_construction.player_id == player.id).filter(
+            Under_construction.family == "technologies").filter(
+            Under_construction.start_time < time.time()).filter(
+            Under_construction.suspension_time == None).order_by(
+            Under_construction.start_time.desc()).first()
+        if last_research:
+            last_research.suspension_time = time.time()
+            db.session.commit()
+    if demand_type == "transport":
+        last_shipment = Shipment.query.filter(
+            Shipment.player_id == player.id).order_by(
+            Shipment.start_time.desc()).first()
+        if last_shipment:
+            random_tile = Hex.query.order_by(func.random()).first()
+            setattr(random_tile, last_shipment.resource, getattr(random_tile, last_shipment.resource)+last_shipment.quantity)
+            last_shipment.suspension_time = time.time()
+            db.session.commit()
+    # complicated logic to adjust resource production
+    if demand_type in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"]:
+        resource_name = extraction_to_ressource[demand_type]
+        q_resource = engine.data["current_data"][player.username]["ressources"][resource_name]
+        takeback = q_resource[t]-q_resource[t-1]
+        setattr(player, resource_name, getattr(player, resource_name)-takeback)
+        setattr(player.tile[0], resource_name, getattr(player.tile[0], resource_name)+takeback)
+        q_resource[t] = getattr(player, resource_name)
+        energy_demand = 0.2 * assets[demand_type]["power consumption"] * getattr(player, demand_type)
+        demand[demand_type][t] = min(demand[demand_type][t-1]+0.2*energy_demand, energy_demand) # for smooth demand changes
+        emmissions_takeback = engine.data["current_data"][player.username]["emissions"][demand_type][t]
+        add_emissions(engine, player, t, demand_type, -emmissions_takeback)
+        db.session.commit()
+
+def add_emissions(engine, player, t, facility, amount):
+    engine.data["current_data"][player.username]["emissions"][facility][t] += amount
+    player.emissions += amount
+    engine.data["current_CO2"][t] += amount

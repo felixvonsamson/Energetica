@@ -39,6 +39,7 @@ class Under_construction(db.Model):
     family = db.Column(db.String(50)) # to assign the thing to the correct page
     start_time = db.Column(db.Float)
     finish_time = db.Column(db.Float)
+    suspension_time = db.Column(db.Float, default=None) # time at witch the construction has been paused if it has
     player_id = db.Column(db.Integer, db.ForeignKey("player.id")) # can access player directly with .player
 
 # class that stores the ressources shippment on their way :
@@ -48,6 +49,7 @@ class Shipment(db.Model):
     quantity = db.Column(db.Float)
     departure_time = db.Column(db.Float)
     arrival_time = db.Column(db.Float)
+    suspension_time = db.Column(db.Float, default=None) # time at witch the shipment has been paused if it has
     player_id = db.Column(db.Integer, db.ForeignKey("player.id")) # can access player directly with .player
 
 class Resource_on_sale(db.Model):
