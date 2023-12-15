@@ -39,29 +39,13 @@ def add_sock_handlers(sock, engine):
     @sock.route("/rest_ws", bp = rest_api)
     def rest_ws(ws):
         print(f"Received WebSocket connection for player {g.player}")
-        # rest_get_players(ws = ws, current_player = g.player)
         ws.send(rest_get_map())
-        ws.send("Hello there!")
+        ws.send(rest_get_players())
+        ws.send(rest_get_current_player(currentPlayer = g.player))
         while True:
             data = ws.receive()
             print(f"received on websocket: data = {data}")
             ws.send(data)
-    
-    # # Sends the relevant player data
-    # def rest_get_players(ws, current_player):
-    #     player_list = Player.query.all()
-    #     response = {
-    #         "tag": "rest_get_players",
-    #         "data": {
-    #             "players": [
-    #                 {
-    #                     "id": player.id,
-    #                     "username": player.username
-    #                 } 
-    #                 for player in player_list]
-    #         }
-    #     }
-    #     ws.send(json.dumps(response))
 
     # gets the map data from the database and returns it as a dictionary of arrays
     def rest_get_map():
@@ -80,3 +64,25 @@ def add_sock_handlers(sock, engine):
             }
         }
         return json.dumps(response)
+    
+    # Sends the relevant player data
+    def rest_get_players():
+        player_list = Player.query.all()
+        response = {
+            "type": "getPlayers",
+            "data": [
+                {
+                    "id": player.id,
+                    "username": player.username
+                } 
+                for player in player_list]
+        }
+        return json.dumps(response)
+    
+    def rest_get_current_player(currentPlayer):
+        response = {
+            "type": "getCurrentPlayer",
+            "data": currentPlayer.id
+        }
+        return json.dumps(response)
+        
