@@ -73,7 +73,8 @@ def add_sock_handlers(sock, engine):
             "data": [
                 {
                     "id": player.id,
-                    "username": player.username
+                    "username": player.username,
+                    "tile": player.tile if player.tile else None
                 } 
                 for player in player_list]
         }
