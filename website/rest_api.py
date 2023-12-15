@@ -1,7 +1,8 @@
 from flask import Blueprint, g, current_app
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
-from .database import Player
+from .database import Player, Hex
+import json
 
 rest_api = Blueprint('rest_api', __name__)
 
@@ -37,26 +38,45 @@ def add_sock_handlers(sock, engine):
     # Main WebSocket endpoint for Swift client
     @sock.route("/rest_ws", bp = rest_api)
     def rest_ws(ws):
-        print(f"Received WS connection from {g.player}")
-        # print(f"Received WS connection from ???")
+        print(f"Received WebSocket connection for player {g.player}")
+        # rest_get_players(ws = ws, current_player = g.player)
+        ws.send(rest_get_map())
         ws.send("Hello there!")
         while True:
             data = ws.receive()
             print(f"received on websocket: data = {data}")
             ws.send(data)
     
-    # # gets the map data from the database and returns it as a dictionary of arrays
-    # @rest_api.route("/rest_get_map", methods=["GET"])
-    # def rest_get_map():
-    #     hex_list = Hex.query.order_by(Hex.r, Hex.q).all()
+    # # Sends the relevant player data
+    # def rest_get_players(ws, current_player):
+    #     player_list = Player.query.all()
     #     response = {
-    #         "ids": [tile.id for tile in hex_list],
-    #         "solars": [tile.solar for tile in hex_list],
-    #         "winds": [tile.wind for tile in hex_list],
-    #         "hydros": [tile.hydro for tile in hex_list],
-    #         "coals": [tile.coal for tile in hex_list],
-    #         "oils": [tile.oil for tile in hex_list],
-    #         "gases": [tile.gas for tile in hex_list],
-    #         "uraniums": [tile.uranium for tile in hex_list]
+    #         "tag": "rest_get_players",
+    #         "data": {
+    #             "players": [
+    #                 {
+    #                     "id": player.id,
+    #                     "username": player.username
+    #                 } 
+    #                 for player in player_list]
+    #         }
     #     }
-    #     return jsonify(response)
+    #     ws.send(json.dumps(response))
+
+    # gets the map data from the database and returns it as a dictionary of arrays
+    def rest_get_map():
+        hex_list = Hex.query.order_by(Hex.r, Hex.q).all()
+        response = {
+            "type": "getMap",
+            "data": {
+                "ids": [tile.id for tile in hex_list],
+                "solars": [tile.solar for tile in hex_list],
+                "winds": [tile.wind for tile in hex_list],
+                "hydros": [tile.hydro for tile in hex_list],
+                "coals": [tile.coal for tile in hex_list],
+                "oils": [tile.oil for tile in hex_list],
+                "gases": [tile.gas for tile in hex_list],
+                "uraniums": [tile.uranium for tile in hex_list]
+            }
+        }
+        return json.dumps(response)
