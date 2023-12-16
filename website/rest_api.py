@@ -74,7 +74,7 @@ def add_sock_handlers(sock, engine):
                 {
                     "id": player.id,
                     "username": player.username,
-                    "tile": player.tile if player.tile else None
+                    "tile": player.tile[0].id if len(player.tile) > 0 else None
                 } 
                 for player in player_list]
         }
