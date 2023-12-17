@@ -73,7 +73,7 @@ def add_handlers(socketio, engine):
         if facility in ["small_water_dam", "large_water_dam", "watermill"]:
             ud = Under_construction.query.filter_by(name=facility).count()
             if current_user.tile[0].hydro <= getattr(current_user, facility) + ud:
-                current_user.emit("errorMessage", "No suitable location avalable")
+                current_user.emit("errorMessage", "No suitable location available")
                 return
         if family in ["functional_facilities", "technologies"]:
             ud_count = Under_construction.query.filter_by(name=facility, player_id=current_user.id).count()

@@ -148,7 +148,7 @@ def resource_market():
             quantity = float(request.form.get("quantity"))*1000
             price = float(request.form.get("price"))/1000
             if getattr(current_user, resource)-getattr(current_user, resource+"_on_sale") < quantity:
-                flash_error(f"You have not enough {resource} avalable")
+                flash_error(f"You have not enough {resource} available")
             else:
                 setattr(current_user, resource+"_on_sale", getattr(current_user, resource+"_on_sale")+quantity)
                 new_sale = Resource_on_sale(resource=resource, 
