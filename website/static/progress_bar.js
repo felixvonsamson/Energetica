@@ -40,5 +40,5 @@ const update_countdowns = () => {
   });
 };
 
-update_countdowns();
-setInterval(update_countdowns, 1000);
+//update_countdowns();
+//setInterval(update_countdowns, 1000);

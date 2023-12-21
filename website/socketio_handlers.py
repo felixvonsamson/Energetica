@@ -82,31 +82,26 @@ def add_handlers(socketio, engine):
                 current_user.emit("errorMessage", "Not enough money to queue this upgrade")
                 return
             current_user.money -= real_price
+            duration = assets[facility]["construction time"]*assets[facility]["price multiplier"]**ud_count
             if family == "functional_facilities":
-                largest_finish_time = Under_construction.query.filter_by(player_id=current_user.id, name=facility).order_by(Under_construction.finish_time.desc()).first()
-            else:
-                largest_finish_time = Under_construction.query.filter_by(player_id=current_user.id, family=family).order_by(Under_construction.finish_time.desc()).first()
-            if largest_finish_time:
-                start_time = largest_finish_time.finish_time
+                start_time = None if current_user.construction_workers == 0 else time.time()
             else :
-                start_time = time.time()
-            finish_time = start_time + assets[facility]["construction time"]*assets[facility]["price multiplier"]**ud_count
+                start_time = None if current_user.lab_workers == 0 else time.time()
         else: # power facitlies, storage facilities, extractions facilities
             current_user.money -= assets[facility]["price"]
-            finish_time = time.time() + assets[facility]["construction time"]
-            start_time=time.time()
+            duration = assets[facility]["construction time"]
+            start_time = None if current_user.construction_workers == 0 else time.time()
         updates = [("money", display_money(current_user.money))]
         engine.update_fields(updates, [current_user])
         new_facility = Under_construction(
             name=facility,
             family=family,
             start_time=start_time,
-            finish_time=finish_time,
+            duration=duration,
             player_id=current_user.id,
         )
         db.session.add(new_facility)
         db.session.commit()
-        current_user.emit("display_under_construction", (assets[facility]["name"], finish_time))
         print(f"{current_user.username} started the construction {facility}")
 
     # this function is executed when a player creates a network

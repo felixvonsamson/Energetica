@@ -38,7 +38,8 @@ class Under_construction(db.Model):
     name = db.Column(db.String(50))
     family = db.Column(db.String(50)) # to assign the thing to the correct page
     start_time = db.Column(db.Float)
-    finish_time = db.Column(db.Float)
+    duration = db.Column(db.Float)
+    suspension_time = db.Column(db.Float, default=None) # time at witch the construction has been paused if it has
     player_id = db.Column(db.Integer, db.ForeignKey("player.id")) # can access player directly with .player
 
 # class that stores the ressources shippment on their way :
@@ -47,7 +48,8 @@ class Shipment(db.Model):
     resource = db.Column(db.String(10))
     quantity = db.Column(db.Float)
     departure_time = db.Column(db.Float)
-    arrival_time = db.Column(db.Float)
+    duration = db.Column(db.Float)
+    suspension_time = db.Column(db.Float, default=None) # time at witch the shipment has been paused if it has
     player_id = db.Column(db.Integer, db.ForeignKey("player.id")) # can access player directly with .player
 
 class Resource_on_sale(db.Model):
@@ -95,6 +97,10 @@ class Player(db.Model, UserMixin):
     oil_on_sale = db.Column(db.Float, default=0)
     gas_on_sale = db.Column(db.Float, default=0)
     uranium_on_sale = db.Column(db.Float, default=0)
+
+    # Workers :
+    construction_workers = db.Column(db.Integer, default=1)
+    lab_workers = db.Column(db.Integer, default=1)
 
     # Energy facilities :
     steam_engine = db.Column(db.Integer, default=1)
