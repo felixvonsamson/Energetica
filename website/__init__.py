@@ -39,7 +39,7 @@ def create_app():
     app.config["engine"] = engine
 
     # initialize socketio :
-    socketio = SocketIO(app)
+    socketio = SocketIO(app, cors_allowed_origins="*")
     engine.socketio = socketio
     from .socketio_handlers import add_handlers
     add_handlers(socketio=socketio, engine=engine)
