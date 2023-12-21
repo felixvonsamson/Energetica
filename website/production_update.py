@@ -421,20 +421,20 @@ def calculate_prod(minmax, player, assets, facility, generation, t, storage = No
     ramping_speed = getattr(player, facility)*assets[facility]["ramping speed"]
     if storage == None:
         if facility == "combined_cycle":
-            avalable_gas = player.gas - player.gas_on_sale
-            avalable_coal = player.coal - player.coal_on_sale
-            max_ressources = min(avalable_gas / assets[facility]["amount consumed"][0] * 60000000,
-                                    avalable_coal / assets[facility]["amount consumed"][1] * 60000000)
+            available_gas = player.gas - player.gas_on_sale
+            available_coal = player.coal - player.coal_on_sale
+            max_ressources = min(available_gas / assets[facility]["amount consumed"][0] * 60000000,
+                                    available_coal / assets[facility]["amount consumed"][1] * 60000000)
         elif assets[facility]["amount consumed"] != 0 :
             ressource = assets[facility]["consumed ressource"]
-            avalable_ressource = getattr(player, ressource) - getattr(player, 
+            available_ressource = getattr(player, ressource) - getattr(player, 
                                                             ressource+"_on_sale")
-            max_ressources = avalable_ressource / assets[facility]["amount consumed"] * 60000000
+            max_ressources = available_ressource / assets[facility]["amount consumed"] * 60000000
     else:
         if filling:
             E = max(0, assets[facility]["storage capacity"] * getattr(player, facility) - storage[facility][t - 1]) * 60 * (assets[facility]["efficiency"]**0.5) # max remaining storage space
         else:
-            E = max(0, storage[facility][t - 1] * 60 * (assets[facility]["efficiency"]**0.5)) # max avalable storge content
+            E = max(0, storage[facility][t - 1] * 60 * (assets[facility]["efficiency"]**0.5)) # max available storge content
         max_ressources = min(E, (2*E*ramping_speed)**0.5 - 0.5*ramping_speed) #ramping down
     if minmax == "max":
         max_ramping = (generation[facility][t - 1] + ramping_speed)

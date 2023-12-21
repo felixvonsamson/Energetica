@@ -246,7 +246,7 @@ function newdraw_monitor() {
     textSize(width/50);
     text("INFO", 0.5*mw, 20);
     textSize(width/80);
-    text("Please choose an avalable location on the map. The menu on the left allows you to see where different natural resources are located on the map. The location choice is DEFINITIVE, you will not be able to change it during the game.", 20, 50, mw-40, 300);
+    text("Please choose an available location on the map. The menu on the left allows you to see where different natural resources are located on the map. The location choice is DEFINITIVE, you will not be able to change it during the game.", 20, 50, mw-40, 300);
     text("If you need help, click on the book icon next to to title.", 20, 300, mw-40, 200);
   }else{
     textSize(width/50);
@@ -337,7 +337,7 @@ function newdraw_smartphone() {
     textSize(width/17);
     text("INFO", 0.5*width, 15);
     textSize(width/25);
-    text("Please choose an avalable location on the map. The menu on the left allows you to see where different natural resources are located on the map. The location choice is DEFINITIVE, you will not be able to change it during the game.", 15, 40, width-15, 200);
+    text("Please choose an available location on the map. The menu on the left allows you to see where different natural resources are located on the map. The location choice is DEFINITIVE, you will not be able to change it during the game.", 15, 40, width-15, 200);
     text("If you need help, click on the book icon next to to title.", 15, 200, width-15, 200);
   }else{
     textSize(width/16);
