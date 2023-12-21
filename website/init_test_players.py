@@ -30,7 +30,7 @@ def edit_database(engine):
             name=construction["name"],
             family=construction["family"],
             start_time=construction["start_time"],
-            finish_time=construction["finish_time"],
+            duration=construction["duration"],
             player_id=construction["player_id"],
         )
         db.session.add(new_facility)
@@ -42,7 +42,7 @@ def edit_database(engine):
                     resource = shipment["resource"],
                     quantity = shipment["quantity"],
                     departure_time = shipment["departure_time"],
-                    arrival_time = shipment["arrival_time"],
+                    duration = shipment["duration"],
                     player_id = shipment["player_id"]
                 )
         db.session.add(new_shipment)

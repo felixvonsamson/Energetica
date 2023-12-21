@@ -187,12 +187,11 @@ def resource_market():
                 dr = current_user.tile[0].r - sale.player.tile[0].r
                 distance = math.sqrt(2 * (dq**2 + dr**2 + dq*dr))
                 shipment_duration = distance * g.config["transport"]["time"]
-                arrival_time = time.time() + shipment_duration
                 new_shipment = Shipment(
                     resource = sale.resource,
                     quantity = quantity,
                     departure_time = time.time(),
-                    arrival_time = arrival_time,
+                    duration = shipment_duration,
                     player_id = current_user.id
                 )
                 db.session.add(new_shipment)

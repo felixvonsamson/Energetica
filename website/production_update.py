@@ -144,7 +144,7 @@ def calculate_demand(engine, player, t):
     demand_research = 0
     emissions_construction = 0
     for ud in player.under_construction:
-        if ud.start_time < time.time():
+        if ud.start_time != None:
             if ud.suspension_time == None:
                 construction = assets[ud.name]
                 if ud.family == "technologies":
@@ -156,10 +156,10 @@ def calculate_demand(engine, player, t):
             # industry demand ramps up during construction
             if ud.name == "industry":
                 if ud.suspension_time == None:
-                    time_fraction = (time.time()-ud.start_time)/(ud.finish_time-ud.start_time)
+                    time_fraction = (time.time()-ud.start_time)/(ud.duration)
                 else :
-                    time_fraction = (ud.suspension_time-ud.start_time)/(ud.finish_time-ud.start_time)
-                time_fraction = (time.time()-ud.start_time)/(ud.finish_time-ud.start_time)
+                    time_fraction = (ud.suspension_time-ud.start_time)/(ud.duration)
+                time_fraction = (time.time()-ud.start_time)/(ud.duration)
                 additional_demand = time_fraction*industry_demand*(assets["industry"]["power factor"]-1)
                 additional_revenue = time_fraction*industry_income*(assets["industry"]["income factor"]-1)
                 demand["industry"][t] += additional_demand
@@ -560,7 +560,7 @@ def reduce_demand(engine, demand_type, player, demand, assets, t):
         last_construction = Under_construction.query.filter(
             Under_construction.player_id == player.id).filter(
             Under_construction.family != "technologies").filter(
-            Under_construction.start_time < time.time()).filter(
+            Under_construction.start_time != None).filter(
             Under_construction.suspension_time == None).order_by(
             Under_construction.start_time.desc()).first()
         if last_construction:
@@ -570,7 +570,7 @@ def reduce_demand(engine, demand_type, player, demand, assets, t):
         last_research = Under_construction.query.filter(
             Under_construction.player_id == player.id).filter(
             Under_construction.family == "technologies").filter(
-            Under_construction.start_time < time.time()).filter(
+            Under_construction.start_time != None).filter(
             Under_construction.suspension_time == None).order_by(
             Under_construction.start_time.desc()).first()
         if last_research:

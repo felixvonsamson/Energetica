@@ -165,6 +165,13 @@ def get_ud_and_config():
     player_lvls = current_user.get_technology_values()
     return jsonify(ud, assets, player_lvls)
 
+# Gets list of facilities under construction for this player
+@api.route("/get_constructions", methods=["GET"])
+def get_constructions():
+    constructions = Under_construction.query.filter(
+            Under_construction.player_id == current_user.id)
+    return jsonify(constructions)
+
 # gets scoreboard data :
 @api.route("/get_scoreboard", methods=["GET"])
 def get_scoreboard():
