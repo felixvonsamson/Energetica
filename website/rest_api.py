@@ -45,7 +45,6 @@ def add_sock_handlers(sock, engine):
         while True:
             data = ws.receive()
             print(f"received on websocket: data = {data}")
-            ws.send(data)
 
     # gets the map data from the database and returns it as a dictionary of arrays
     def rest_get_map():
