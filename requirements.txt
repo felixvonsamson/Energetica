@@ -6,5 +6,6 @@ flask-login
 flask-apscheduler
 flask-httpauth
 eventlet
+requests
 pandas
 Werkzeug==2.3.0
