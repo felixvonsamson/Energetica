@@ -22,7 +22,7 @@ class gameEngine(object):
     def __init__(engine):
         engine.config = config
         engine.socketio = None
-        engine.wss = {}
+        engine.websocket_dict = {}
         engine.logger = logging.getLogger("Energetica") # Not sure what that is 
         engine.init_logger()
         engine.nonces = set() # Dont remember what that is

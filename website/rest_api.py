@@ -45,9 +45,9 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_map())
         ws.send(rest_get_players())
         ws.send(rest_get_current_player(currentPlayer = g.player))
-        if g.player.id not in engine.wss:
-            engine.wss[g.player.id] = []
-        engine.wss[g.player.id].append(ws)
+        if g.player.id not in engine.websocket_dict:
+            engine.websocket_dict[g.player.id] = []
+        engine.websocket_dict[g.player.id].append(ws)
         while True:
             data = ws.receive()
             print(f"received on websocket: data = {data}")
