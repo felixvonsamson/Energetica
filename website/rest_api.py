@@ -9,6 +9,8 @@ rest_api = Blueprint('rest_api', __name__)
 def add_sock_handlers(sock, engine):
     basic_auth = HTTPBasicAuth()
 
+    # Authentication through HTTP Basic
+
     @basic_auth.verify_password
     def verify_password(username, password):
         player = Player.query.filter_by(username=username).first()
@@ -42,9 +44,16 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_map())
         ws.send(rest_get_players())
         ws.send(rest_get_current_player(currentPlayer = g.player))
+        if g.player.id not in engine.wss:
+            engine.wss[g.player.id] = []
+        engine.wss[g.player.id].append(ws)
         while True:
             data = ws.receive()
             print(f"received on websocket: data = {data}")
+            message = json.loads(data)
+            match message.type:
+                case 'confirmLocation':
+                    rest_confirm_location(ws, data)
 
     # gets the map data from the database and returns it as a dictionary of arrays
     def rest_get_map():
@@ -79,10 +88,69 @@ def add_sock_handlers(sock, engine):
         }
         return json.dumps(response)
     
+    # Sends the client their player id
     def rest_get_current_player(currentPlayer):
         response = {
             "type": "getCurrentPlayer",
             "data": currentPlayer.id
         }
         return json.dumps(response)
-        
+    
+    ## Alerts
+    
+    # Send a string to be shown on the client
+    def rest_server_alert(alert):
+        response = {
+            "type": "sendServerAlert",
+            "data": alert
+        }
+        return json.dumps(response)
+    
+    def rest_server_alert_location_already_taken(byPlayer):
+        alert = {
+            "message": "locationAlreadyTaken",
+            "byPlayer": byPlayer
+        }
+        return rest_server_alert(alert)
+    
+    ## Client Messages
+
+    # Message when client choses a location
+    def rest_confirm_location(ws, data):
+        cellId = data
+        location = Hex.query.get(cellId)
+        if location.player_id != None:
+            # Location already taken
+            existing_player = Player.query.get(location.player_id)
+            ws.send(rest_server_alert_location_already_taken(existing_player))
+            return
+        elif len(current_user.tile) != 0:
+            # Player already has a location
+            # This is an invalid state - on the client side - so disconnect them
+            ws.close()
+            return
+        else:
+            location.player_id = current_user.id
+            db.session.commit()
+            rest_notify_player_location(g.player)
+            engine.refresh()
+            print(f"{current_user.username} chose the location {location.id}")
+    
+    # WebSocket methods, hooked into engine states & events
+
+    # Update player location
+    def rest_add_player_location(player):
+        response = {
+            "type": "updatePlayerLocation",
+            "data": {
+                    "id": player.id,
+                    "tile": player.tile[0].id
+                }
+        }
+        jsondump = json.dumps(response)
+    
+    def rest_notify_player_location(player):
+        payload = rest_add_player_location(player)
+        for (_, wss) in websocket_dict:
+            for ws in wss:
+                ws.send(payload)

@@ -47,6 +47,7 @@ def create_app():
     # initialize sock for WebSockets:
     sock = Sock(app)
     engine.sock = sock
+    engine.wss = {}
     from .rest_api import add_sock_handlers
     add_sock_handlers(sock=sock, engine=engine)
 
@@ -133,4 +134,5 @@ def create_app():
             #from .init_test_players import edit_database, init_test_players
             #edit_database(engine)
             #init_test_players(engine)
+
     return socketio, sock, app
