@@ -2,6 +2,7 @@ from flask import Blueprint, g, current_app
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
 from .database import Player, Hex
+from . import db
 import json
 
 rest_api = Blueprint('rest_api', __name__)
