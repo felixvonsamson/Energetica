@@ -154,6 +154,6 @@ def add_sock_handlers(sock, engine):
     
     def rest_notify_player_location(player):
         payload = rest_add_player_location(player)
-        for (_, wss) in engine.websocket_dict:
+        for _, wss in engine.websocket_dict.items():
             for ws in wss:
                 ws.send(payload)
