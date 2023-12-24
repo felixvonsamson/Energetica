@@ -51,10 +51,11 @@ def add_sock_handlers(sock, engine):
             data = ws.receive()
             print(f"received on websocket: data = {data}")
             message = json.loads(data)
+            message_data = message['data']
             print(f"decoded json message = {message}")
             match message['type']:
                 case 'confirmLocation':
-                    rest_confirm_location(ws, data)
+                    rest_confirm_location(ws, message_data)
 
     # gets the map data from the database and returns it as a dictionary of arrays
     def rest_get_map():
