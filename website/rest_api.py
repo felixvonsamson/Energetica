@@ -51,7 +51,8 @@ def add_sock_handlers(sock, engine):
             data = ws.receive()
             print(f"received on websocket: data = {data}")
             message = json.loads(data)
-            match message.type:
+            print(f"decoded json message = {message}")
+            match message['type']:
                 case 'confirmLocation':
                     rest_confirm_location(ws, data)
 
