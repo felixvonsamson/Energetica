@@ -126,17 +126,17 @@ def add_sock_handlers(sock, engine):
             existing_player = Player.query.get(location.player_id)
             ws.send(rest_server_alert_location_already_taken(existing_player))
             return
-        elif len(current_user.tile) != 0:
+        elif len(g.player.tile) != 0:
             # Player already has a location
             # This is an invalid state - on the client side - so disconnect them
             ws.close()
             return
         else:
-            location.player_id = current_user.id
+            location.player_id = g.player.id
             db.session.commit()
             rest_notify_player_location(g.player)
             engine.refresh()
-            print(f"{current_user.username} chose the location {location.id}")
+            print(f"{g.player.username} chose the location {location.id}")
     
     # WebSocket methods, hooked into engine states & events
 
