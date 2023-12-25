@@ -150,7 +150,7 @@ def add_sock_handlers(sock, engine):
                     "tile": player.tile[0].id
                 }
         }
-        jsondump = json.dumps(response)
+        return json.dumps(response)
     
     def rest_notify_player_location(player):
         payload = rest_add_player_location(player)
