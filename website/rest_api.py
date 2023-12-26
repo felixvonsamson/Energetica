@@ -3,6 +3,7 @@ from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
 from .database import Player, Hex
 from . import db
+import pickle
 import json
 
 rest_api = Blueprint('rest_api', __name__)
@@ -45,6 +46,8 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_map())
         ws.send(rest_get_players())
         ws.send(rest_get_current_player(currentPlayer = g.player))
+        if len(g.player.tile) != 0:
+            rest_init_ws_post_location(ws)
         if g.player.id not in engine.websocket_dict:
             engine.websocket_dict[g.player.id] = []
         engine.websocket_dict[g.player.id].append(ws)
@@ -57,6 +60,9 @@ def add_sock_handlers(sock, engine):
             match message['type']:
                 case 'confirmLocation':
                     rest_confirm_location(ws, message_data)
+    
+    def rest_init_ws_post_location(ws):
+        ws.send(rest_get_charts())
 
     # gets the map data from the database and returns it as a dictionary of arrays
     def rest_get_map():
@@ -98,6 +104,32 @@ def add_sock_handlers(sock, engine):
             "data": currentPlayer.id
         }
         return json.dumps(response)
+
+    def rest_get_charts():
+        current_t = g.engine.data["current_t"]
+        assets = g.engine.config[g.player.id]["assets"]
+        timescale = "day" #request.args.get('timescale')
+        table = "revenues" #request.args.get('table')
+        filename = f"instance/player_data/{g.player.username}/{timescale}.pck"
+        with open(filename, "rb") as file:
+            fileData = pickle.load(file)
+        def combineFileDataAndEngineData(fileData, engineData):
+            print(f"type of engineData: {type(engineData)}")
+            print(engineData)
+            combinedDataUnsliced = fileData + engineData[1 : current_t + 1]
+            return combinedDataUnsliced[0:259200]
+        combinedData = combineFileDataAndEngineData(
+            fileData[table]["industry"], 
+            g.engine.data["current_data"][g.player.username][table]["industry"]
+        )
+        response = {
+            "type": "getCharts",
+            "data": {
+                "revenueIndustry": combinedData
+            }
+        }
+        return json.dumps(response)
+
     
     ## Alerts
     
@@ -138,6 +170,7 @@ def add_sock_handlers(sock, engine):
             rest_notify_player_location(g.player)
             engine.refresh()
             print(f"{g.player.username} chose the location {location.id}")
+            rest_init_ws_post_location(ws)
     
     # WebSocket methods, hooked into engine states & events
 
