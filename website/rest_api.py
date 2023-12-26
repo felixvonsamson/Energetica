@@ -114,24 +114,19 @@ def add_sock_handlers(sock, engine):
         with open(filename, "rb") as file:
             fileData = pickle.load(file)
         def combineFileDataAndEngineData(fileData, engineData):
-            print(f"type of engineData: {type(engineData)}")
-            print(engineData)
             combinedDataUnsliced = fileData + engineData[1 : current_t + 1]
             return combinedDataUnsliced[0:259200]
-        combinedData = combineFileDataAndEngineData(
-            fileData[table]["industry"], 
-            g.engine.data["current_data"][g.player.username][table]["industry"]
-        )
-        # def industryDataFor(key):
-        #     return combineFileDataAndEngineData(
-        #         fileData[table]["industry"], 
-        #         g.engine.data["current_data"][g.player.username][table]["industry"]
-        #     )
+        def industryDataFor(category):
+            return combineFileDataAndEngineData(
+                fileData[table][category], 
+                g.engine.data["current_data"][g.player.username][table][category]
+            )
         response = {
             "type": "getCharts",
             "data": {
                 "revenue": {
-                    "industry": combinedData
+                    category: industryDataFor(category)
+                    for category in ["industry", "imports", "exports", "dumping", "O&M_costs"]
                 }
             }
         }
