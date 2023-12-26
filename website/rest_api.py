@@ -122,10 +122,17 @@ def add_sock_handlers(sock, engine):
             fileData[table]["industry"], 
             g.engine.data["current_data"][g.player.username][table]["industry"]
         )
+        # def industryDataFor(key):
+        #     return combineFileDataAndEngineData(
+        #         fileData[table]["industry"], 
+        #         g.engine.data["current_data"][g.player.username][table]["industry"]
+        #     )
         response = {
             "type": "getCharts",
             "data": {
-                "revenueIndustry": combinedData
+                "revenue": {
+                    "industry": combinedData
+                }
             }
         }
         return json.dumps(response)
