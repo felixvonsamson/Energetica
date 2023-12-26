@@ -123,26 +123,33 @@ def add_sock_handlers(sock, engine):
             )
 
         subcategories = {
-            "revenues": ["industry", "imports", "exports", "dumping", "O&M_costs"]
-            # ,
-            # "generation": [
-            #     "watermill",
-            #     "small_water_dam",
-            #     "large_water_dam",
-            #     "nuclear_reactor",
-            #     "nuclear_reactor_gen4",
-            #     "steam_engine",
-            #     "coal_burner",
-            #     "oil_burner",
-            #     "gas_burner",
-            #     "combined_cycle",
-            #     "windmill",
-            #     "onshore_wind_turbine",
-            #     "offshore_wind_turbine",
-            #     "CSP_solar",
-            #     "PV_solar",
-            # ],
-            # "storage": [],
+            "revenues": ["industry", "imports", "exports", "dumping", "O&M_costs"],
+            "generation": [
+                "watermill",
+                "small_water_dam",
+                "large_water_dam",
+                "nuclear_reactor",
+                "nuclear_reactor_gen4",
+                "steam_engine",
+                "coal_burner",
+                "oil_burner",
+                "gas_burner",
+                "combined_cycle",
+                "windmill",
+                "onshore_wind_turbine",
+                "offshore_wind_turbine",
+                "CSP_solar",
+                "PV_solar",
+            ],
+            "storage": [
+                "small_pumped_hydro",
+                "large_pumped_hydro",
+                "lithium_ion_batteries",
+                "solid_state_batteries",
+                "compressed_air",
+                "molten_salt",
+                "hydrogen_storage",
+            ],
         }
         response = {
             "type": "getCharts",
@@ -173,7 +180,7 @@ def add_sock_handlers(sock, engine):
     def rest_confirm_location(ws, data):
         cellId = data
         location = Hex.query.get(cellId)
-        if location.player_id != None:
+        if location.player_id is not None:
             # Location already taken
             existing_player = Player.query.get(location.player_id)
             ws.send(rest_server_alert_location_already_taken(existing_player))
