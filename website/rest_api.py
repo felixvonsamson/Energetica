@@ -6,7 +6,8 @@ from . import db
 import pickle
 import json
 
-rest_api = Blueprint('rest_api', __name__)
+rest_api = Blueprint("rest_api", __name__)
+
 
 def add_sock_handlers(sock, engine):
     basic_auth = HTTPBasicAuth()
@@ -40,12 +41,12 @@ def add_sock_handlers(sock, engine):
                 print(f"{username} failed to log in via HTTP Basic")
 
     # Main WebSocket endpoint for Swift client
-    @sock.route("/rest_ws", bp = rest_api)
+    @sock.route("/rest_ws", bp=rest_api)
     def rest_ws(ws):
         print(f"Received WebSocket connection for player {g.player}")
         ws.send(rest_get_map())
         ws.send(rest_get_players())
-        ws.send(rest_get_current_player(currentPlayer = g.player))
+        ws.send(rest_get_current_player(currentPlayer=g.player))
         if len(g.player.tile) != 0:
             rest_init_ws_post_location(ws)
         if g.player.id not in engine.websocket_dict:
@@ -55,12 +56,12 @@ def add_sock_handlers(sock, engine):
             data = ws.receive()
             print(f"received on websocket: data = {data}")
             message = json.loads(data)
-            message_data = message['data']
+            message_data = message["data"]
             print(f"decoded json message = {message}")
-            match message['type']:
-                case 'confirmLocation':
+            match message["type"]:
+                case "confirmLocation":
                     rest_confirm_location(ws, message_data)
-    
+
     def rest_init_ws_post_location(ws):
         ws.send(rest_get_charts())
 
@@ -77,11 +78,11 @@ def add_sock_handlers(sock, engine):
                 "coals": [tile.coal for tile in hex_list],
                 "oils": [tile.oil for tile in hex_list],
                 "gases": [tile.gas for tile in hex_list],
-                "uraniums": [tile.uranium for tile in hex_list]
-            }
+                "uraniums": [tile.uranium for tile in hex_list],
+            },
         }
         return json.dumps(response)
-    
+
     # Sends the relevant player data
     def rest_get_players():
         player_list = Player.query.all()
@@ -91,65 +92,81 @@ def add_sock_handlers(sock, engine):
                 {
                     "id": player.id,
                     "username": player.username,
-                    "tile": player.tile[0].id if len(player.tile) > 0 else None
-                } 
-                for player in player_list]
+                    "tile": player.tile[0].id if len(player.tile) > 0 else None,
+                }
+                for player in player_list
+            ],
         }
         return json.dumps(response)
-    
+
     # Sends the client their player id
     def rest_get_current_player(currentPlayer):
-        response = {
-            "type": "getCurrentPlayer",
-            "data": currentPlayer.id
-        }
+        response = {"type": "getCurrentPlayer", "data": currentPlayer.id}
         return json.dumps(response)
 
     def rest_get_charts():
         current_t = g.engine.data["current_t"]
         assets = g.engine.config[g.player.id]["assets"]
-        timescale = "day" #request.args.get('timescale')
-        table = "revenues" #request.args.get('table')
+        timescale = "day"  # request.args.get('timescale')
         filename = f"instance/player_data/{g.player.username}/{timescale}.pck"
         with open(filename, "rb") as file:
             fileData = pickle.load(file)
+
         def combineFileDataAndEngineData(fileData, engineData):
             combinedDataUnsliced = fileData + engineData[1 : current_t + 1]
             return combinedDataUnsliced[0:259200]
-        def industryDataFor(category):
+
+        def industryDataFor(category, subcategory):
             return combineFileDataAndEngineData(
-                fileData[table][category], 
-                g.engine.data["current_data"][g.player.username][table][category]
+                fileData[category][subcategory],
+                g.engine.data["current_data"][g.player.username][category][subcategory],
             )
+
+        subcategories = {
+            "revenues": ["industry", "imports", "exports", "dumping", "O&M_costs"]
+            # ,
+            # "generation": [
+            #     "watermill",
+            #     "small_water_dam",
+            #     "large_water_dam",
+            #     "nuclear_reactor",
+            #     "nuclear_reactor_gen4",
+            #     "steam_engine",
+            #     "coal_burner",
+            #     "oil_burner",
+            #     "gas_burner",
+            #     "combined_cycle",
+            #     "windmill",
+            #     "onshore_wind_turbine",
+            #     "offshore_wind_turbine",
+            #     "CSP_solar",
+            #     "PV_solar",
+            # ],
+            # "storage": [],
+        }
         response = {
             "type": "getCharts",
             "data": {
-                "revenue": {
-                    category: industryDataFor(category)
-                    for category in ["industry", "imports", "exports", "dumping", "O&M_costs"]
+                category: {
+                    subcategory: industryDataFor(category, subcategory)
+                    for subcategory in subcategories[category]
                 }
-            }
+                for category in ["revenues"]
+            },
         }
         return json.dumps(response)
 
-    
     ## Alerts
-    
+
     # Send a string to be shown on the client
     def rest_server_alert(alert):
-        response = {
-            "type": "sendServerAlert",
-            "data": alert
-        }
+        response = {"type": "sendServerAlert", "data": alert}
         return json.dumps(response)
-    
+
     def rest_server_alert_location_already_taken(byPlayer):
-        alert = {
-            "message": "locationAlreadyTaken",
-            "byPlayer": byPlayer
-        }
+        alert = {"message": "locationAlreadyTaken", "byPlayer": byPlayer}
         return rest_server_alert(alert)
-    
+
     ## Client Messages
 
     # Message when client choses a location
@@ -173,20 +190,17 @@ def add_sock_handlers(sock, engine):
             engine.refresh()
             print(f"{g.player.username} chose the location {location.id}")
             rest_init_ws_post_location(ws)
-    
+
     # WebSocket methods, hooked into engine states & events
 
     # Update player location
     def rest_add_player_location(player):
         response = {
             "type": "updatePlayerLocation",
-            "data": {
-                    "id": player.id,
-                    "tile": player.tile[0].id
-                }
+            "data": {"id": player.id, "tile": player.tile[0].id},
         }
         return json.dumps(response)
-    
+
     def rest_notify_player_location(player):
         payload = rest_add_player_location(player)
         for _, wss in engine.websocket_dict.items():
