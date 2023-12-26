@@ -140,6 +140,14 @@ def add_sock_handlers(sock, engine):
                 "offshore_wind_turbine",
                 "CSP_solar",
                 "PV_solar",
+                # storages I guess go here too
+                "small_pumped_hydro",
+                "large_pumped_hydro",
+                "lithium_ion_batteries",
+                "solid_state_batteries",
+                "compressed_air",
+                "molten_salt",
+                "hydrogen_storage",
             ],
             "storage": [
                 "small_pumped_hydro",
@@ -158,7 +166,7 @@ def add_sock_handlers(sock, engine):
                     subcategory: industryDataFor(category, subcategory)
                     for subcategory in subcategories[category]
                 }
-                for category in ["revenues"]
+                for category in ["revenues", "generation"]
             },
         }
         return json.dumps(response)
