@@ -98,7 +98,7 @@ def create_app():
         return player
 
     # initialize the schedulers and add the recurrent functions :
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true": # This function is to run the following omly once, TO REMOVE IF DEBUG MODE IS SET TO FALSE 
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true": # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE 
         from .gameEngine import state_update_h, state_update_m
         from .gameEngine import check_upcoming_actions
 
