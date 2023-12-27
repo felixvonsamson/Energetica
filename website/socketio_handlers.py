@@ -34,7 +34,7 @@ def add_handlers(socketio, engine):
         else:
             location.player_id = current_user.id
             db.session.commit()
-            rest_notify_player_location(g.player)
+            rest_notify_player_location(engine, current_user)
             engine.refresh()
             print(f"{current_user.username} chose the location {location.id}")
 

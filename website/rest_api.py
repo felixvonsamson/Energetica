@@ -60,7 +60,7 @@ def add_sock_handlers(sock, engine):
             print(f"decoded json message = {message}")
             match message["type"]:
                 case "confirmLocation":
-                    rest_confirm_location(ws, message_data)
+                    rest_confirm_location(engine, ws, message_data)
 
 
 def rest_init_ws_post_location(ws):
@@ -195,7 +195,7 @@ def rest_server_alert_location_already_taken(byPlayer):
 
 
 # Message when client choses a location
-def rest_confirm_location(ws, data):
+def rest_confirm_location(engine, ws, data):
     cellId = data
     location = Hex.query.get(cellId)
     if location.player_id is not None:
@@ -211,7 +211,7 @@ def rest_confirm_location(ws, data):
     else:
         location.player_id = g.player.id
         db.session.commit()
-        rest_notify_player_location(g.player)
+        rest_notify_player_location(engine, g.player)
         engine.refresh()
         print(f"{g.player.username} chose the location {location.id}")
         rest_init_ws_post_location(ws)
@@ -229,7 +229,7 @@ def rest_add_player_location(player):
     return json.dumps(response)
 
 
-def rest_notify_player_location(player):
+def rest_notify_player_location(engine, player):
     payload = rest_add_player_location(player)
     for _, wss in engine.websocket_dict.items():
         for ws in wss:
