@@ -30,16 +30,6 @@ def add_sock_handlers(sock, engine):
         g.engine = current_app.config["engine"]
         g.player = Player.query.filter_by(username=basic_auth.current_user()).first()
 
-    @basic_auth.verify_password
-    def verify_password(username, password):
-        player = Player.query.filter_by(username=username).first()
-        if player:
-            if check_password_hash(player.password, password):
-                print(f"{username} logged in via HTTP Basic")
-                return username
-            else:
-                print(f"{username} failed to log in via HTTP Basic")
-
     # Main WebSocket endpoint for Swift client
     @sock.route("/rest_ws", bp=rest_api)
     def rest_ws(ws):
