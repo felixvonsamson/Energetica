@@ -10,6 +10,7 @@ from .database import Player, Network, Hex, Under_construction, Chat, Message
 from .utils import display_money, check_existing_chats, data_init_network
 from . import db
 from pathlib import Path
+from .rest_api import rest_notify_player_location
 
 
 def add_handlers(socketio, engine):
@@ -33,7 +34,7 @@ def add_handlers(socketio, engine):
         else:
             location.player_id = current_user.id
             db.session.commit()
-            rest_notify_player_location(player)
+            rest_notify_player_location(g.player)
             engine.refresh()
             print(f"{current_user.username} chose the location {location.id}")
 
