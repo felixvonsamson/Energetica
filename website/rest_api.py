@@ -1,21 +1,27 @@
-from flask import Blueprint, g, current_app
+"""Code providing API access using WebSockets and HTTP Basic Auth"""
+import json
+import pickle
+
+from flask import Blueprint, current_app, g
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
-from .database import Player, Hex
+
 from . import db
-import pickle
-import json
+from .database import Hex, Player
 
 rest_api = Blueprint("rest_api", __name__)
 
 
 def add_sock_handlers(sock, engine):
+    """Adds flask-sock endpoints and other various setup methods. Called by
+    __init__.py."""
     basic_auth = HTTPBasicAuth()
 
     # Authentication through HTTP Basic
 
     @basic_auth.verify_password
     def verify_password(username, password):
+        """Called by flask-HTTPAUth to verify credentials."""
         player = Player.query.filter_by(username=username).first()
         if player:
             if check_password_hash(player.password, password):
@@ -27,12 +33,14 @@ def add_sock_handlers(sock, engine):
     @rest_api.before_request
     @basic_auth.login_required
     def check_user():
+        """Sets up variables used by endpoints."""
         g.engine = current_app.config["engine"]
         g.player = Player.query.filter_by(username=basic_auth.current_user()).first()
 
     # Main WebSocket endpoint for Swift client
     @sock.route("/rest_ws", bp=rest_api)
     def rest_ws(ws):
+        """Main WebSocket endpoint for API."""
         print(f"Received WebSocket connection for player {g.player}")
         ws.send(rest_get_map())
         ws.send(rest_get_players())
@@ -54,11 +62,14 @@ def add_sock_handlers(sock, engine):
 
 
 def rest_init_ws_post_location(ws):
+    """Called once the player has selected a location, or immediately after
+    logging in if location was already selected."""
     ws.send(rest_get_charts())
 
 
-# gets the map data from the database and returns it as a dictionary of arrays
 def rest_get_map():
+    """Gets the map data from the database and returns it as a JSON string as a
+    dictionary of arrays."""
     hex_list = Hex.query.order_by(Hex.r, Hex.q).all()
     response = {
         "type": "getMap",
@@ -76,8 +87,8 @@ def rest_get_map():
     return json.dumps(response)
 
 
-# Sends the relevant player data
 def rest_get_players():
+    """Gets all player data and returns it as a JSON string."""
     player_list = Player.query.all()
     response = {
         "type": "getPlayers",
@@ -93,15 +104,15 @@ def rest_get_players():
     return json.dumps(response)
 
 
-# Sends the client their player id
 def rest_get_current_player(currentPlayer):
+    """Gets the current player's id and returns it as a JSON string."""
     response = {"type": "getCurrentPlayer", "data": currentPlayer.id}
     return json.dumps(response)
 
 
 def rest_get_charts():
+    """Gets the player's chart data and returns it as a JSON string."""
     current_t = g.engine.data["current_t"]
-    assets = g.engine.config[g.player.id]["assets"]
     timescale = "day"  # request.args.get('timescale')
     filename = f"instance/player_data/{g.player.username}/{timescale}.pck"
     with open(filename, "rb") as file:
@@ -170,13 +181,15 @@ def rest_get_charts():
 ## Alerts
 
 
-# Send a string to be shown on the client
 def rest_server_alert(alert):
+    """Creates a JSON string from the alert argument which once sent will make
+    the client show an alert on screen."""
     response = {"type": "sendServerAlert", "data": alert}
     return json.dumps(response)
 
 
 def rest_server_alert_location_already_taken(byPlayer):
+    """Creates an alert to be shown on the client."""
     alert = {"message": "locationAlreadyTaken", "byPlayer": byPlayer}
     return rest_server_alert(alert)
 
@@ -184,8 +197,8 @@ def rest_server_alert_location_already_taken(byPlayer):
 ## Client Messages
 
 
-# Message when client choses a location
 def rest_confirm_location(engine, ws, data):
+    """Interpret message sent from a client when they chose a location."""
     cellId = data
     location = Hex.query.get(cellId)
     if location.player_id is not None:
@@ -210,8 +223,9 @@ def rest_confirm_location(engine, ws, data):
 # WebSocket methods, hooked into engine states & events
 
 
-# Update player location
 def rest_add_player_location(player):
+    """Informs the client that a player has chosen a location, packaged as a
+    JSON string."""
     response = {
         "type": "updatePlayerLocation",
         "data": {"id": player.id, "tile": player.tile[0].id},
@@ -220,6 +234,9 @@ def rest_add_player_location(player):
 
 
 def rest_notify_player_location(engine, player):
+    """This mehtod is called when player (argument) has chosen a location. This
+    information needs to be relayed to clients, and this methods returns a JSON
+    string with this information."""
     payload = rest_add_player_location(player)
     for _, wss in engine.websocket_dict.items():
         for ws in wss:
