@@ -44,7 +44,7 @@ def add_sock_handlers(sock, engine):
         print(f"Received WebSocket connection for player {g.player}")
         ws.send(rest_get_map())
         ws.send(rest_get_players())
-        ws.send(rest_get_current_player(currentPlayer=g.player))
+        ws.send(rest_get_current_player(current_player=g.player))
         if len(g.player.tile) != 0:
             rest_init_ws_post_location(ws)
         if g.player.id not in engine.websocket_dict:
@@ -104,9 +104,9 @@ def rest_get_players():
     return json.dumps(response)
 
 
-def rest_get_current_player(currentPlayer):
+def rest_get_current_player(current_player):
     """Gets the current player's id and returns it as a JSON string."""
-    response = {"type": "getCurrentPlayer", "data": currentPlayer.id}
+    response = {"type": "getCurrentPlayer", "data": current_player.id}
     return json.dumps(response)
 
 
@@ -116,15 +116,15 @@ def rest_get_charts():
     timescale = "day"  # request.args.get('timescale')
     filename = f"instance/player_data/{g.player.username}/{timescale}.pck"
     with open(filename, "rb") as file:
-        fileData = pickle.load(file)
+        file_data = pickle.load(file)
 
-    def combineFileDataAndEngineData(fileData, engineData):
-        combinedDataUnsliced = fileData + engineData[1 : current_t + 1]
-        return combinedDataUnsliced[0:259200]
+    def combine_file_data_and_engine_data(file_data, engine_data):
+        combined_data_unsliced = file_data + engine_data[1 : current_t + 1]
+        return combined_data_unsliced[0:259200]
 
-    def industryDataFor(category, subcategory):
-        return combineFileDataAndEngineData(
-            fileData[category][subcategory],
+    def industry_data_for(category, subcategory):
+        return combine_file_data_and_engine_data(
+            file_data[category][subcategory],
             g.engine.data["current_data"][g.player.username][category][subcategory],
         )
 
@@ -169,7 +169,7 @@ def rest_get_charts():
         "type": "getCharts",
         "data": {
             category: {
-                subcategory: industryDataFor(category, subcategory)
+                subcategory: industry_data_for(category, subcategory)
                 for subcategory in subcategories[category]
             }
             for category in ["revenues", "generation"]
@@ -188,9 +188,9 @@ def rest_server_alert(alert):
     return json.dumps(response)
 
 
-def rest_server_alert_location_already_taken(byPlayer):
+def rest_server_alert_location_already_taken(by_player):
     """Creates an alert to be shown on the client."""
-    alert = {"message": "locationAlreadyTaken", "byPlayer": byPlayer}
+    alert = {"message": "locationAlreadyTaken", "by_player": by_player}
     return rest_server_alert(alert)
 
 
@@ -199,8 +199,8 @@ def rest_server_alert_location_already_taken(byPlayer):
 
 def rest_confirm_location(engine, ws, data):
     """Interpret message sent from a client when they chose a location."""
-    cellId = data
-    location = Hex.query.get(cellId)
+    cell_id = data
+    location = Hex.query.get(cell_id)
     if location.player_id is not None:
         # Location already taken
         existing_player = Player.query.get(location.player_id)
