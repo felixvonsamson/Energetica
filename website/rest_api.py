@@ -120,7 +120,7 @@ def rest_get_charts():
 
     def combine_file_data_and_engine_data(file_data, engine_data):
         combined_data_unsliced = file_data + engine_data[1 : current_t + 1]
-        return combined_data_unsliced[0:259200]
+        return combined_data_unsliced[-1440:]
 
     def industry_data_for(category, subcategory):
         return combine_file_data_and_engine_data(
@@ -155,6 +155,25 @@ def rest_get_charts():
             "molten_salt",
             "hydrogen_storage",
         ],
+        "demand": [
+            "coal_mine",
+            "oil_field",
+            "gas_drilling_site",
+            "uranium_mine",
+            "research",
+            "construction",
+            "transport",
+            "industry",
+            "exports",
+            "dumping",
+            "small_pumped_hydro",
+            "large_pumped_hydro",
+            "lithium_ion_batteries",
+            "solid_state_batteries",
+            "compressed_air",
+            "molten_salt",
+            "hydrogen_storage",
+        ],
         "storage": [
             "small_pumped_hydro",
             "large_pumped_hydro",
@@ -172,7 +191,7 @@ def rest_get_charts():
                 subcategory: industry_data_for(category, subcategory)
                 for subcategory in subcategories[category]
             }
-            for category in ["revenues", "generation"]
+            for category in ["revenues", "generation", "demand"]
         },
     }
     return json.dumps(response)
