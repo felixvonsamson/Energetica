@@ -65,6 +65,7 @@ def rest_init_ws_post_location(ws):
     """Called once the player has selected a location, or immediately after
     logging in if location was already selected."""
     ws.send(rest_get_charts())
+    ws.send(rest_get_power_facilities())
 
 
 def rest_get_map():
@@ -193,6 +194,41 @@ def rest_get_charts():
             }
             for category in ["revenues", "generation", "demand"]
         },
+    }
+    return json.dumps(response)
+
+
+def rest_get_power_facilities():
+    """Gets player's facilities data and returns it as a JSON string"""
+    power_facilities_info = g.engine.config[g.player.id]["assets"]
+    property_keys = ["price", "power generation", "locked"]
+    power_facilities = [
+        "steam_engine",
+        "windmill",
+        "watermill",
+        "coal_burner",
+        "oil_burner",
+        "gas_burner",
+        "small_water_dam",
+        "onshore_wind_turbine",
+        "combined_cycle",
+        "nuclear_reactor",
+        "large_water_dam",
+        "CSP_solar",
+        "PV_solar",
+        "offshore_wind_turbine",
+        "nuclear_reactor_gen4",
+    ]
+    response = {
+        "type": "getPowerFacilities",
+        "data": [
+            {"name": facility}
+            | {
+                property_key: power_facilities_info[facility][property_key]
+                for property_key in property_keys
+            }
+            for facility in power_facilities
+        ],
     }
     return json.dumps(response)
 
