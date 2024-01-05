@@ -682,7 +682,7 @@ function y_units(maxNumber) {
 }
 
 function reduce(arr1, arr2, res, t) {
-    arr2 = arr2.slice(1, t+1); //first value form today is last value from yesterday
+    arr2 = arr2.slice(1, t+1); //first value from today is last value from yesterday
     let result;
     let factor = res_to_data[res][1]
     if(factor != 1){

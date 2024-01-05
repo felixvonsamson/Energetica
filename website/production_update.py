@@ -318,9 +318,6 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
 # Calculate overall network demand, class all capacity offers in ascending order of price and find the market price of electricity
 # Sell all capacities that are below market price at market price.
 def market_logic(engine, market, t):
-    demand = engine.data["current_data"][row.player.username]["demand"]
-    assets = engine.config[row.player.id]["assets"]
-
     offers = market["capacities"]
     offers = offers.sort_values("price").reset_index(drop=True)
     offers['cumul_capacities'] = offers['capacity'].cumsum()
@@ -358,6 +355,7 @@ def market_logic(engine, market, t):
             if row.price < 0:
                 rest = max(0, min(row.capacity, row.capacity-sold_cap))
                 dump_cap = rest
+                demand = engine.data["current_data"][row.player.username]["demand"]
                 demand["dumping"][t] += dump_cap
                 row.player.money -= dump_cap * 5 / 1000000
                 revenue = engine.data["current_data"][row.player.username]["revenues"]
@@ -372,6 +370,7 @@ def market_logic(engine, market, t):
             if bought_cap>0.1:
                 buy(engine, row, market_price, t, quantity=bought_cap)
             # if demand is not a storage facility mesures a taken to reduce demand
+            assets = engine.config[row.player.id]["assets"]
             reduce_demand(engine, row.facility, row.player, demand, assets, t)
         else:
             buy(engine, row, market_price, t)

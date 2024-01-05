@@ -10,6 +10,8 @@ from .database import Player, Network, Hex, Under_construction, Chat, Message
 from .utils import display_money, check_existing_chats, data_init_network
 from . import db
 from pathlib import Path
+from .rest_api import rest_notify_player_location
+
 
 def add_handlers(socketio, engine):
     # ???
@@ -26,10 +28,13 @@ def add_handlers(socketio, engine):
         if location.player_id != None:
             current_user.emit("errorMessage", "Location already taken")
         elif len(current_user.tile) != 0:
-            current_user.emit("errorMessage", "You already chose a location. Please refresh")
+            current_user.emit(
+                "errorMessage", "You already chose a location. Please refresh"
+            )
         else:
             location.player_id = current_user.id
             db.session.commit()
+            rest_notify_player_location(engine, current_user)
             engine.refresh()
             print(f"{current_user.username} chose the location {location.id}")
 
@@ -46,22 +51,22 @@ def add_handlers(socketio, engine):
         db.session.add(new_chat)
         db.session.commit()
         engine.refresh()
-        print(f"{current_user.username} created a group chat called {title} with {group}")
+        print(
+            f"{current_user.username} created a group chat called {title} with {group}"
+        )
 
     # this function is executed when a player writes a new message
     @socketio.on("new_message")
     def new_message(message, chat_id):
         chat = Chat.query.filter_by(id=chat_id).first()
-        new_message = Message(
-            text=message, 
-            player_id=current_user.id, 
-            chat_id=chat.id
-        )
+        new_message = Message(text=message, player_id=current_user.id, chat_id=chat.id)
         db.session.add(new_message)
         db.session.commit()
         msg = f"<div>{current_user.username} : {message}</div>"
         engine.display_new_message(msg, chat.participants)
-        print(f"{current_user.username} sent the message {message} in the chat {chat.name}")
+        print(
+            f"{current_user.username} sent the message {message} in the chat {chat.name}"
+        )
 
     # this function is executed when a player clicks on 'start construction'
     @socketio.on("start_construction")
@@ -76,18 +81,30 @@ def add_handlers(socketio, engine):
                 current_user.emit("errorMessage", "No suitable location available")
                 return
         if family in ["functional_facilities", "technologies"]:
-            ud_count = Under_construction.query.filter_by(name=facility, player_id=current_user.id).count()
-            real_price = assets[facility]["price"]*assets[facility]["price multiplier"]**ud_count
+            ud_count = Under_construction.query.filter_by(
+                name=facility, player_id=current_user.id
+            ).count()
+            real_price = (
+                assets[facility]["price"]
+                * assets[facility]["price multiplier"] ** ud_count
+            )
             if current_user.money < real_price:
-                current_user.emit("errorMessage", "Not enough money to queue this upgrade")
+                current_user.emit(
+                    "errorMessage", "Not enough money to queue this upgrade"
+                )
                 return
             current_user.money -= real_price
-            duration = assets[facility]["construction time"]*assets[facility]["price multiplier"]**ud_count
+            duration = (
+                assets[facility]["construction time"]
+                * assets[facility]["price multiplier"] ** ud_count
+            )
             if family == "functional_facilities":
-                start_time = None if current_user.construction_workers == 0 else time.time()
-            else :
+                start_time = (
+                    None if current_user.construction_workers == 0 else time.time()
+                )
+            else:
                 start_time = None if current_user.lab_workers == 0 else time.time()
-        else: # power facitlies, storage facilities, extractions facilities
+        else:  # power facitlies, storage facilities, extractions facilities
             current_user.money -= assets[facility]["price"]
             duration = assets[facility]["construction time"]
             start_time = None if current_user.construction_workers == 0 else time.time()
@@ -117,12 +134,18 @@ def add_handlers(socketio, engine):
         db.session.add(new_Network)
         db.session.commit()
         engine.refresh()
-        Path(f"instance/network_data/{network_name}/charts").mkdir(parents=True, exist_ok=True)
+        Path(f"instance/network_data/{network_name}/charts").mkdir(
+            parents=True, exist_ok=True
+        )
         engine.data["network_data"][network_name] = data_init_network(1441)
         past_data = data_init_network(1440)
-        Path(f"instance/network_data/{network_name}/prices").mkdir(parents=True, exist_ok=True)
+        Path(f"instance/network_data/{network_name}/prices").mkdir(
+            parents=True, exist_ok=True
+        )
         for timescale in ["day", "5_days", "month", "6_months"]:
-            with open(f"instance/network_data/{network_name}/prices/{timescale}.pck", "wb") as file:
+            with open(
+                f"instance/network_data/{network_name}/prices/{timescale}.pck", "wb"
+            ) as file:
                 pickle.dump(past_data, file)
         print(f"{current_user.username} created the network {network_name}")
 
@@ -144,12 +167,14 @@ def add_handlers(socketio, engine):
     # this function is executed when a player changes the value the enegy selling prices
     @socketio.on("change_price")
     def change_price(prices, SCPs):
-        def sort_priority(priority_list, prefix = "price_"):
-            return sorted(priority_list, key=lambda x: getattr(current_user, prefix + x))
-        
+        def sort_priority(priority_list, prefix="price_"):
+            return sorted(
+                priority_list, key=lambda x: getattr(current_user, prefix + x)
+            )
+
         SCP_list = []
         rest_list = []
-        demand_list = current_user.demand_priorities.split(' ')
+        demand_list = current_user.demand_priorities.split(" ")
 
         for SCP in SCPs:
             facility = SCP[4:]
@@ -164,7 +189,7 @@ def add_handlers(socketio, engine):
 
         rest_list = sort_priority(rest_list)
         SCP_list = engine.renewables + sort_priority(SCP_list)
-        demand_list = sort_priority(demand_list, prefix = "price_buy_")
+        demand_list = sort_priority(demand_list, prefix="price_buy_")
         demand_list.reverse()
 
         print(f"{current_user.username} updated his prices")
