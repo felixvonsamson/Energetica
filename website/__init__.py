@@ -21,16 +21,13 @@ from website.gameEngine import gameEngine
 
 
 def create_app():
-    # creates the player production repository if it doese not exist :
-    Path("instance/player_prod").mkdir(parents=True, exist_ok=True)
-
     # creates the app :
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = "ghdäwrjeojfjdcfgglkgvou"
+    app.config["SECRET_KEY"] = "ghdäwrjennddsfjdcfgglkgvou"
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///database.db"
     db.init_app(app)
 
-    # creates the engine :
+    # creates the engine (ad loading the sava if it exists)
     engine = gameEngine()
     if os.path.isfile("instance/engine_data.pck"):
         with open("instance/engine_data.pck", "rb") as file:
@@ -39,7 +36,7 @@ def create_app():
     app.config["engine"] = engine
 
     # initialize socketio :
-    socketio = SocketIO(app, cors_allowed_origins="*")
+    socketio = SocketIO(app, cors_allowed_origins="*", engineio_logger=True)
     engine.socketio = socketio
     from .socketio_handlers import add_handlers
     add_handlers(socketio=socketio, engine=engine)
@@ -62,7 +59,7 @@ def create_app():
     app.register_blueprint(api, url_prefix="/")
     app.register_blueprint(rest_api, url_prefix="/")
 
-    from .database import Hex, Under_construction, Shipment, Resource_on_sale, Network, Player, Chat, Message
+    from .database import Hex, Player
     
     # initialize database :
     with app.app_context():
@@ -87,7 +84,7 @@ def create_app():
                     db.session.add(hex)
                 db.session.commit()
 
-    # initialize login manager ???
+    # initialize login manager
     login_manager = LoginManager()
     login_manager.login_view = "auth.login"
     login_manager.init_app(app)
@@ -99,19 +96,12 @@ def create_app():
 
     # initialize the schedulers and add the recurrent functions :
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true": # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE 
-        from .gameEngine import state_update_h, state_update_m
+        from .gameEngine import state_update_m
         from .gameEngine import check_upcoming_actions
 
         scheduler = APScheduler()
-        engine.log("adding jobs")
         scheduler.init_app(app)
-        scheduler.add_job(
-            func=state_update_h,
-            args=(engine, app),
-            id="state_update_h",
-            trigger="cron",
-            minute="0",
-        )
+
         scheduler.add_job(
             func=state_update_m,
             args=(engine, app),
