@@ -77,7 +77,7 @@ def sign_up():
 
     return render_template("sign_up.jinja", user=current_user)
 
-# initialize data table for new user and stores it as a .pck in the 'player_prod' repo
+# initialize data table for new user and stores it as a .pck in the 'player_data' repo
 def init_table(username):
     past_data = data_init(1440)
     Path(f"instance/player_data/{username}").mkdir(parents=True, exist_ok=True)

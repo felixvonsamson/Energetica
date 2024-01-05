@@ -601,6 +601,12 @@ class Config(object):
         assets["gas_drilling_site"]["amount produced"] = full_config["assets"]["gas_drilling_site"]["amount produced"] * player.tile[0].gas * me_factor
         assets["uranium_mine"]["amount produced"] = full_config["assets"]["uranium_mine"]["amount produced"] * player.tile[0].uranium * me_factor
 
+    # regularly update minimg productivity for all players (mineral depletion)
+    def update_mining_productivity(config):
+        players = Player.query.all()
+        for player in players:
+            config.update_resource_extraction(player.id)
+
     # updating the config values according to the players technology level
     def update_config_for_user(config, player_id):
         config.for_player[player_id] = copy.deepcopy(full_config)

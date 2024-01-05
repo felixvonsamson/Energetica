@@ -24,7 +24,6 @@ class gameEngine(object):
         engine.socketio = None
         engine.logger = logging.getLogger("Energetica") # Not sure what that is 
         engine.init_logger()
-        engine.nonces = set() # Dont remember what that is
         engine.log("engine created")
 
         engine.storage_facilities = [
@@ -77,19 +76,7 @@ class gameEngine(object):
         s_handler.setLevel(logging.INFO)
         engine.logger.addHandler(s_handler)
 
-    def get_nonce(engine):
-        while True:
-            nonce = secrets.token_hex(16)
-            if nonce not in engine.nonces:
-                return nonce
-
-    def use_nonce(engine, nonce):
-        if nonce in engine.nonces:
-            return False
-        engine.nonces.add(nonce)
-        return True
-
-    # reload page
+    # reload page for all users
     def refresh(engine):
         engine.socketio.emit("refresh")
 
@@ -147,16 +134,7 @@ def daily_update(engine, app):
     save_past_data_threaded(app, engine, past_data, network_data)
 
 
-from .production_update import update_ressources, update_electricity
-
-# function that is executed once every 1 hour :
-def state_update_h(engine, app):
-    with app.app_context():
-        players = Player.query.all()
-        for player in players:
-            if len(player.tile) == 0:
-                continue
-            engine.config.update_resource_extraction(player.id) # update mining productivity every hour
+from .production_update import update_ressources, update_resource_extraction, update_electricity
 
 # function that is executed once every 1 minute :
 def state_update_m(engine, app):
@@ -169,10 +147,12 @@ def state_update_m(engine, app):
             daily_update(engine, app)
         with app.app_context():
             if engine.data["current_t"] % 10 == 1:
+                engine.config.update_mining_productivity(config)
                 update_weather(engine)
             update_ressources(engine)
             update_electricity(engine)
-    
+
+        # save engine every minute in case of server crash
         with open("instance/engine_data.pck", "wb") as file:
             pickle.dump(engine.data, file)
 
@@ -186,7 +166,7 @@ def check_upcoming_actions(app):
             Under_construction.start_time + Under_construction.duration < time.time())
         if finished_constructions:
             for fc in finished_constructions:
-                add_asset(fc.player_id, fc.name)
+                add_asset(fc.player, fc.name)
             finished_constructions.delete()
             db.session.commit()
 
@@ -197,6 +177,6 @@ def check_upcoming_actions(app):
             Shipment.departure_time + Shipment.duration < time.time())
         if arrived_shipments:
             for a_s in arrived_shipments:
-                store_import(a_s.player_id, a_s.resource, a_s.quantity)
+                store_import(a_s.player, a_s.resource, a_s.quantity)
             arrived_shipments.delete()
             db.session.commit()
