@@ -160,6 +160,7 @@ def data_init_network(length):
         }
 
 def put_resource_on_market(player, resource, quantity, price):
+    """Put an offer on the resource market"""
     if getattr(player, resource)-getattr(player, resource+"_on_sale") < quantity:
         flash_error(f"You have not enough {resource} available")
     else:
