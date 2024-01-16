@@ -121,21 +121,6 @@ def add_handlers(socketio, engine):
         db.session.commit()
         print(f"{current_user.username} started the construction {facility}")
 
-    # this function is executed when a player leaves his network
-    @socketio.on("leave_network")
-    def leave_network():
-        network_id = current_user.network_id
-        print(f"{current_user.username} left the network {current_user.network.name}")
-        current_user.network_id = None
-        remaining_members_count = Player.query.filter_by(network_id=network_id).count()
-        # delete network if it is empty
-        if remaining_members_count == 0:
-            network = Network.query.filter_by(id=network_id).first()
-            print(f"The network {network.name} has been deleted because it was empty")
-            db.session.delete(network)
-        db.session.commit()
-        engine.refresh()
-
     # this function is executed when a player changes the value the enegy selling prices
     @socketio.on("change_price")
     def change_price(prices, SCPs):

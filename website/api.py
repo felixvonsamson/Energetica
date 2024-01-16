@@ -219,12 +219,10 @@ def create_network():
     """This endpoint is used when a player creates a network"""
     network_name = request.form.get("network_name")
     if len(network_name) < 3 or len(network_name) > 40:
-        print("Network name must be between 3 and 40 characters")
         flash("Network name must be between 3 and 40 characters", category="error")
         return redirect("/network", code=303)
     if Network.query.filter_by(name=network_name).first() is not None:
-        print("Network with this name already exists")
-        flash("Network with this name already exists", category="error")
+        flash("A network with this name already exists", category="error")
         return redirect("/network", code=303)
     new_Network = Network(name=network_name, members=[current_user])
     db.session.add(new_Network)
@@ -244,3 +242,18 @@ def create_network():
             pickle.dump(past_data, file)
     print(f"{current_user.username} created the network {network_name}")
     return redirect("/network", code=303)
+
+@api.route("leave_network", methods=["POST"])
+def leave_network():
+    """this function is executed when a player leaves his network"""
+    flash(f"You left network {current_user.network.name}", category="message")
+    print(f"{current_user.username} left the network {current_user.network.name}")
+    network = current_user.network
+    current_user.network_id = None
+    remaining_members_count = Player.query.filter_by(network_id=network.id).count()
+    # delete network if it is empty
+    if remaining_members_count == 0:
+        print(f"The network {network.name} has been deleted because it was empty")
+        db.session.delete(network)
+    db.session.commit()
+    return redirect("/network", code=303) 

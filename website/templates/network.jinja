@@ -45,9 +45,9 @@
 </div>
 {% else %}
 <div id="market_graph" class="bone" style="padding:30px 0; margin:30px 0;"></div>
-<div class="flex-row" style="justify-content:center;">
-    <b class="margin button2" onclick="leave_network();">Leave Network</b>
-</div>
+<form action="/leave_network" method="POST" class="flex-row" style="justify-content:center;">
+    <button type="submit" class="bone padding medium login-button">Leave Network</button>
+</form>
 <div class="flex-col medium">
     <table class="table bone margin">
         <tr>

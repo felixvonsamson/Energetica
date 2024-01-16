@@ -100,7 +100,3 @@ function removePlayer(name) {
   invitations = invitations.filter(i => i != name);
   document.getElementById("groupMember_" + name).remove();
 }
-
-function leave_network() {
-  socket.emit('leave_network');
-}
