@@ -8,6 +8,8 @@ import pickle
 from pathlib import Path
 import numpy as np
 from .utils import put_resource_on_market, buy_resource_from_market
+from . import db
+from .database import Network
 
 api = Blueprint('api', __name__)
 
@@ -200,3 +202,14 @@ def buy_resource():
     sale_id = int(request.form.get("sale_id"))
     buy_resource_from_market(current_user, quantity, sale_id)
     return redirect("/resource_market", code=303)
+
+@api.route("join_network", methods=["POST"])
+def join_network():
+    """player is trying to join a network"""
+    network_name = request.form.get("choose_network")
+    network = Network.query.filter_by(name=network_name).first()
+    current_user.network = network
+    db.session.commit()  
+    current_user.emit("infoMessage", f"You joined the network {network_name}") 
+    print(f"{current_user.username} joined the network {current_user.network.name}")
+    return redirect("/network", code=303)

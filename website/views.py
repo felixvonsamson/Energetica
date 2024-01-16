@@ -100,19 +100,8 @@ def messages():
                 db.session.commit()
     return g.render_template_ctx("messages.jinja")
 
-@views.route("/network", methods=["GET", "POST"])
+@views.route("/network")
 def network():
-    if request.method == "POST":
-        # If player is trying to join a network
-        network_name = request.form.get("choose_network")
-        if len(network_name) < 3 or len(network_name) > 50:
-            flash_error("Network name has to have at least 3 characters and no more than 50")
-        else :
-            network = Network.query.filter_by(name=network_name).first()
-            current_user.network = network
-            db.session.commit()  
-            current_user.emit("infoMessage", f"You joined the network {network_name}") 
-            print(f"{current_user.username} joined the network {current_user.network.name}")
     return g.render_template_ctx("network.jinja")
 
 @views.route("/power_facilities")
