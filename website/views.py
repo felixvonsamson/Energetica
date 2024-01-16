@@ -11,7 +11,7 @@ import math
 import time
 from . import db
 from .database import Chat, Player, Network, Resource_on_sale, Shipment
-from .utils import check_existing_chats, display_money, put_resource_on_market
+from .utils import check_existing_chats, display_money, put_resource_on_market, buy_resource_from_market
 
 views = Blueprint("views", __name__)
 overviews = Blueprint("overviews", __name__,  static_folder='static')
@@ -142,7 +142,6 @@ def extraction_facilities():
 @views.route("/resource_market", methods=["GET", "POST"])
 def resource_market():
     if request.method == "POST":
-        # If player is trying to put resources on sale
         if "resource" in request.form:
             # Player is trying to put resources on sale
             resource = request.form.get("resource")
@@ -153,46 +152,7 @@ def resource_market():
             # Player is trying buy resources
             quantity = float(request.form.get("purchases_quantity"))*1000
             sale_id = int(request.form.get("sale_id"))
-            sale = Resource_on_sale.query.filter_by(id=sale_id).first()
-            # buy_resource_from_market(current_user, quantity, sale)
-            if current_user == sale.player:
-                # Player is buying their own resource
-                if quantity == sale.quantity:
-                    Resource_on_sale.query.filter_by(id=sale_id).delete()
-                else :
-                    sale.quantity -= quantity
-                setattr(current_user, sale.resource+"_on_sale", getattr(current_user, sale.resource+"_on_sale")-quantity)
-                db.session.commit()
-                flash(f"You removed {quantity/1000}t of {sale.resource} from the market", category="message")
-            elif sale.price * quantity > current_user.money:
-                flash_error(f"You have not enough money")
-            else:
-                # Player can purchased from different player
-                if quantity == sale.quantity:
-                    # Player is purchasing all available quantity
-                    Resource_on_sale.query.filter_by(id=sale_id).delete()
-                else :
-                    # Some resources remain after transaction
-                    sale.quantity -= quantity
-                current_user.money -= sale.price * quantity
-                sale.player.money += sale.price * quantity
-                current_user.update_resources()
-                sale.player.update_resources()
-                setattr(sale.player, sale.resource, getattr(sale.player, sale.resource) - quantity)
-                setattr(sale.player, sale.resource+"_on_sale", getattr(sale.player, sale.resource+"_on_sale") - quantity)
-                dq = current_user.tile[0].q - sale.player.tile[0].q
-                dr = current_user.tile[0].r - sale.player.tile[0].r
-                distance = math.sqrt(2 * (dq**2 + dr**2 + dq*dr))
-                shipment_duration = distance * g.config["transport"]["time"]
-                new_shipment = Shipment(
-                    resource = sale.resource,
-                    quantity = quantity,
-                    departure_time = time.time(),
-                    duration = shipment_duration,
-                    player_id = current_user.id
-                )
-                db.session.add(new_shipment)
-                db.session.commit()
+            buy_resource_from_market(current_user, quantity, sale_id)
 
     return g.render_template_ctx("resource_market.jinja")
 

@@ -8,6 +8,7 @@ import math
 import threading
 import pickle
 import os
+import time
 import numpy as np
 from .database import Player, Network, Resource_on_sale, Under_construction, Shipment, Chat
 from . import db
@@ -172,3 +173,45 @@ def put_resource_on_market(player, resource, quantity, price):
         db.session.add(new_sale)
         db.session.commit()  
         flash(f"You put {quantity/1000}t of {resource} on sale for {price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t", category="message")
+
+def buy_resource_from_market(player, quantity, sale_id):
+    """Buy an offer from the resource market"""
+    sale = Resource_on_sale.query.filter_by(id=sale_id).first()
+    if player == sale.player:
+        # Player is buying their own resource
+        if quantity == sale.quantity:
+            Resource_on_sale.query.filter_by(id=sale_id).delete()
+        else :
+            sale.quantity -= quantity
+        setattr(player, sale.resource+"_on_sale", getattr(player, sale.resource+"_on_sale")-quantity)
+        db.session.commit()
+        flash(f"You removed {quantity/1000}t of {sale.resource} from the market", category="message")
+    elif sale.price * quantity > player.money:
+        flash_error(f"You have not enough money")
+    else:
+        # Player can purchased from different player
+        if quantity == sale.quantity:
+            # Player is purchasing all available quantity
+            Resource_on_sale.query.filter_by(id=sale_id).delete()
+        else :
+            # Some resources remain after transaction
+            sale.quantity -= quantity
+        player.money -= sale.price * quantity
+        sale.player.money += sale.price * quantity
+        player.update_resources()
+        sale.player.update_resources()
+        setattr(sale.player, sale.resource, getattr(sale.player, sale.resource) - quantity)
+        setattr(sale.player, sale.resource+"_on_sale", getattr(sale.player, sale.resource+"_on_sale") - quantity)
+        dq = player.tile[0].q - sale.player.tile[0].q
+        dr = player.tile[0].r - sale.player.tile[0].r
+        distance = math.sqrt(2 * (dq**2 + dr**2 + dq*dr))
+        shipment_duration = distance * current_app.config["engine"].config["transport"]["time"]
+        new_shipment = Shipment(
+            resource = sale.resource,
+            quantity = quantity,
+            departure_time = time.time(),
+            duration = shipment_duration,
+            player_id = player.id
+        )
+        db.session.add(new_shipment)
+        db.session.commit()
