@@ -10,10 +10,9 @@ import pickle
 import os
 import time
 import numpy as np
-from .database import Player, Network, Resource_on_sale, Under_construction, Shipment, Chat
+from .database import Player, Network, Resource_on_sale, Shipment, Chat
 from . import db
 from flask import current_app, flash
-from sqlalchemy import func
 
 flash_error = lambda msg: flash(msg, category="error")
 

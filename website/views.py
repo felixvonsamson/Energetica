@@ -2,16 +2,12 @@
 In this file, the main routes of the website are managed
 """
 
-from flask import Blueprint, render_template, request, flash, jsonify
+from flask import Blueprint, render_template, request, flash
 from flask import g, current_app
 from flask_login import login_required, current_user
-import pickle
-import datetime
-import math
-import time
 from . import db
-from .database import Chat, Player, Network, Resource_on_sale, Shipment
-from .utils import check_existing_chats, display_money, put_resource_on_market, buy_resource_from_market
+from .database import Chat, Player, Network, Resource_on_sale
+from .utils import check_existing_chats, put_resource_on_market, buy_resource_from_market
 
 views = Blueprint("views", __name__)
 overviews = Blueprint("overviews", __name__,  static_folder='static')
