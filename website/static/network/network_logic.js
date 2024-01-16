@@ -9,6 +9,8 @@ fetch("/get_networks") // retrieves list of all networks using api.py
         warning.innerHTML = '<div class="medium toast error txt_center margin" \
         style="padding:8px 16px">No network has been created yet, \
         please create one.</div>';
+        var joinNetworkForm = document.getElementById("join_network_form");
+        joinNetworkForm.style.display = "none";
     }
     var selectElement = document.getElementById("choose_network");
     for(network of sortedNetworks){
