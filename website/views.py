@@ -11,7 +11,7 @@ import math
 import time
 from . import db
 from .database import Chat, Player, Network, Resource_on_sale, Shipment
-from .utils import check_existing_chats, display_money
+from .utils import check_existing_chats, display_money, put_resource_on_market
 
 views = Blueprint("views", __name__)
 overviews = Blueprint("overviews", __name__,  static_folder='static')
@@ -147,17 +147,7 @@ def resource_market():
             resource = request.form.get("resource")
             quantity = float(request.form.get("quantity"))*1000
             price = float(request.form.get("price"))/1000
-            if getattr(current_user, resource)-getattr(current_user, resource+"_on_sale") < quantity:
-                flash_error(f"You have not enough {resource} available")
-            else:
-                setattr(current_user, resource+"_on_sale", getattr(current_user, resource+"_on_sale")+quantity)
-                new_sale = Resource_on_sale(resource=resource, 
-                                            quantity=quantity, 
-                                            price=price, 
-                                            player=current_user)
-                db.session.add(new_sale)
-                db.session.commit()  
-                flash(f"You put {quantity/1000}t of {resource} on sale for {price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t", category="message")
+            put_resource_on_market(current_user, resource, quantity, price)
         else :
             quantity = float(request.form.get("purchases_quantity"))*1000
             sale_id = int(request.form.get("sale_id"))

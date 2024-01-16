@@ -9,10 +9,12 @@ import threading
 import pickle
 import os
 import numpy as np
-from .database import Player, Network, Under_construction, Shipment, Chat
+from .database import Player, Network, Resource_on_sale, Under_construction, Shipment, Chat
 from . import db
-from flask import current_app
+from flask import current_app, flash
 from sqlalchemy import func
+
+flash_error = lambda msg: flash(msg, category="error")
 
 # this function is executed after an asset is finished facility :
 def add_asset(player, facility):
@@ -156,3 +158,16 @@ def data_init_network(length):
         "price": [0] * length,
         "quantity": [0] * length,
         }
+
+def put_resource_on_market(player, resource, quantity, price):
+    if getattr(player, resource)-getattr(player, resource+"_on_sale") < quantity:
+        flash_error(f"You have not enough {resource} available")
+    else:
+        setattr(player, resource+"_on_sale", getattr(player, resource+"_on_sale")+quantity)
+        new_sale = Resource_on_sale(resource=resource, 
+                                    quantity=quantity, 
+                                    price=price, 
+                                    player=player)
+        db.session.add(new_sale)
+        db.session.commit()  
+        flash(f"You put {quantity/1000}t of {resource} on sale for {price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t", category="message")
