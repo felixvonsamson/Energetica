@@ -7,7 +7,7 @@ from flask_login import login_required, current_user
 import pickle
 from pathlib import Path
 import numpy as np
-from .utils import put_resource_on_market, buy_resource_from_market
+from .utils import put_resource_on_market, buy_resource_from_market, data_init_network
 from . import db
 from .database import Network
 
@@ -210,6 +210,37 @@ def join_network():
     network = Network.query.filter_by(name=network_name).first()
     current_user.network = network
     db.session.commit()  
-    current_user.emit("infoMessage", f"You joined the network {network_name}") 
+    flash(f"You joined the network {network_name}", category="message")
     print(f"{current_user.username} joined the network {current_user.network.name}")
+    return redirect("/network", code=303)
+
+@api.route("create_network", methods=["POST"])
+def create_network():
+    """This endpoint is used when a player creates a network"""
+    network_name = request.form.get("network_name")
+    if len(network_name) < 3 or len(network_name) > 40:
+        print("Network name must be between 3 and 40 characters")
+        flash("Network name must be between 3 and 40 characters", category="error")
+        return redirect("/network", code=303)
+    if Network.query.filter_by(name=network_name).first() is not None:
+        print("Network with this name already exists")
+        flash("Network with this name already exists", category="error")
+        return redirect("/network", code=303)
+    new_Network = Network(name=network_name, members=[current_user])
+    db.session.add(new_Network)
+    db.session.commit()
+    Path(f"instance/network_data/{network_name}/charts").mkdir(
+        parents=True, exist_ok=True
+    )
+    g.engine.data["network_data"][network_name] = data_init_network(1441)
+    past_data = data_init_network(1440)
+    Path(f"instance/network_data/{network_name}/prices").mkdir(
+        parents=True, exist_ok=True
+    )
+    for timescale in ["day", "5_days", "month", "6_months"]:
+        with open(
+            f"instance/network_data/{network_name}/prices/{timescale}.pck", "wb"
+        ) as file:
+            pickle.dump(past_data, file)
+    print(f"{current_user.username} created the network {network_name}")
     return redirect("/network", code=303)

@@ -415,16 +415,16 @@
             &times;
         </div>
     </div>
-    <div class="flex-col margin-large">
+    <form action="/create_network" method="POST" autocomplete="off" class="flex-col margin-large">
         <div style="padding-bottom:32px">
             <label for="network_name">Network name</label>
             <input type="text" class="create_chat_input medium" id="network_name" name="network_name" placeholder="Name"
                 required>
         </div>
-        Invited players : <br>
-        (click to remove)
-        <div class="invited_players"></div>
-        <div>
+        {# Invited players : <br>
+        (click to remove) #}
+        {# <div class="invited_players"></div> #}
+        {# <div>
             <label for="invite_player">Invite players</label>
             <div class="flex-row">
                 <div>
@@ -434,10 +434,9 @@
                 </div>
                 <div onclick="addPlayer()" class="plus bone">+</div>
             </div>
-        </div>
-        <div onclick="createNetwork()" class="bone padding medium login-button" style="margin-top:16px">Create Network
-        </div>
-    </div>
+        </div> #}
+        <button type="submit" class="bone padding medium login-button" style="margin-top:16px">Create Network</button>
+    </form>
 </div>
 
 {% endblock %}

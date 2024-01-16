@@ -7,7 +7,7 @@ import pickle
 from flask import request, flash, g, current_app
 from flask_login import current_user
 from .database import Player, Network, Hex, Under_construction, Chat, Message
-from .utils import display_money, check_existing_chats, data_init_network
+from .utils import display_money, check_existing_chats
 from . import db
 from pathlib import Path
 from .rest_api import rest_notify_player_location
@@ -120,34 +120,6 @@ def add_handlers(socketio, engine):
         db.session.add(new_facility)
         db.session.commit()
         print(f"{current_user.username} started the construction {facility}")
-
-    # this function is executed when a player creates a network
-    @socketio.on("create_network")
-    def create_network(network_name, invitations):
-        for username in invitations:
-            player = Player.query.filter_by(username=username).first()
-            # INVITE PLAYERS TO JOIN NETWORK
-        if Network.query.filter_by(name=network_name).first() is not None:
-            current_user.emit("errorMessage", "Network with this name already exists")
-            return
-        new_Network = Network(name=network_name, members=[current_user])
-        db.session.add(new_Network)
-        db.session.commit()
-        engine.refresh()
-        Path(f"instance/network_data/{network_name}/charts").mkdir(
-            parents=True, exist_ok=True
-        )
-        engine.data["network_data"][network_name] = data_init_network(1441)
-        past_data = data_init_network(1440)
-        Path(f"instance/network_data/{network_name}/prices").mkdir(
-            parents=True, exist_ok=True
-        )
-        for timescale in ["day", "5_days", "month", "6_months"]:
-            with open(
-                f"instance/network_data/{network_name}/prices/{timescale}.pck", "wb"
-            ) as file:
-                pickle.dump(past_data, file)
-        print(f"{current_user.username} created the network {network_name}")
 
     # this function is executed when a player leaves his network
     @socketio.on("leave_network")

@@ -101,15 +101,6 @@ function removePlayer(name) {
   document.getElementById("groupMember_" + name).remove();
 }
 
-function createNetwork() {
-  let name = document.getElementById("network_name").value;
-  if (name.length < 3 || name.length > 40) {
-    alert("The network name has to have between 3 and 40 characters");
-    return;
-  }
-  socket.emit('create_network', name, invitations);
-}
-
 function leave_network() {
   socket.emit('leave_network');
 }
