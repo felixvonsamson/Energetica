@@ -186,15 +186,17 @@ def get_scoreboard():
 
 @api.route("/put_resource_on_sale", methods=["POST"])
 def put_resource_on_sale():
-    if "resource" in request.form:
-        # Player is trying to put resources on sale
-        resource = request.form.get("resource")
-        quantity = float(request.form.get("quantity"))*1000
-        price = float(request.form.get("price"))/1000
-        put_resource_on_market(current_user, resource, quantity, price)
-    else :
-        # Player is trying buy resources
-        quantity = float(request.form.get("purchases_quantity"))*1000
-        sale_id = int(request.form.get("sale_id"))
-        buy_resource_from_market(current_user, quantity, sale_id)
+    """Parse the HTTP form for selling resources"""
+    resource = request.form.get("resource")
+    quantity = float(request.form.get("quantity"))*1000
+    price = float(request.form.get("price"))/1000
+    put_resource_on_market(current_user, resource, quantity, price)
+    return redirect("/resource_market", code=303)
+
+@api.route("/buy_resource", methods=["POST"])
+def buy_resource():
+    """Parse the HTTP form for buying resources"""
+    quantity = float(request.form.get("purchases_quantity"))*1000
+    sale_id = int(request.form.get("sale_id"))
+    buy_resource_from_market(current_user, quantity, sale_id)
     return redirect("/resource_market", code=303)
