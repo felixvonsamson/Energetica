@@ -144,15 +144,19 @@ def resource_market():
     if request.method == "POST":
         # If player is trying to put resources on sale
         if "resource" in request.form:
+            # Player is trying to put resources on sale
             resource = request.form.get("resource")
             quantity = float(request.form.get("quantity"))*1000
             price = float(request.form.get("price"))/1000
             put_resource_on_market(current_user, resource, quantity, price)
         else :
+            # Player is trying buy resources
             quantity = float(request.form.get("purchases_quantity"))*1000
             sale_id = int(request.form.get("sale_id"))
             sale = Resource_on_sale.query.filter_by(id=sale_id).first()
+            # buy_resource_from_market(current_user, quantity, sale)
             if current_user == sale.player:
+                # Player is buying their own resource
                 if quantity == sale.quantity:
                     Resource_on_sale.query.filter_by(id=sale_id).delete()
                 else :
@@ -163,9 +167,12 @@ def resource_market():
             elif sale.price * quantity > current_user.money:
                 flash_error(f"You have not enough money")
             else:
+                # Player can purchased from different player
                 if quantity == sale.quantity:
+                    # Player is purchasing all available quantity
                     Resource_on_sale.query.filter_by(id=sale_id).delete()
                 else :
+                    # Some resources remain after transaction
                     sale.quantity -= quantity
                 current_user.money -= sale.price * quantity
                 sale.player.money += sale.price * quantity
