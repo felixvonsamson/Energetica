@@ -25,11 +25,13 @@ extraction_to_ressource = {
     "uranium_mine": "uranium",
 }
 
-# fuction that updates the ressources of all players according to extraction capacity (and trade)
+# fuction that updates the ressources of all players according to extraction capacity
 def update_ressources(engine):
     t = engine.data["current_t"]
     # keep CO2 values for next t
     engine.data["current_CO2"][t] = engine.data["current_CO2"][t-1]
+
+    # DO THIS AT THE END !
     players = Player.query.all()
     for player in players:
         if len(player.tile) == 0:

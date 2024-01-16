@@ -2,7 +2,6 @@
 I dumped all small helpful functions here
 """
 
-import time
 import requests
 import json
 import math
@@ -16,16 +15,14 @@ from flask import current_app
 from sqlalchemy import func
 
 # this function is executed after an asset is finished facility :
-def add_asset(player_id, facility):
-    player = Player.query.get(int(player_id))
+def add_asset(player, facility):
     setattr(player, facility, getattr(player, facility) + 1)
     current_app.config["engine"].config.update_config_for_user(player.id)
     print(f"{player.username} has finished the construction of facility {facility}")
 
 # this function is executed when a resource shippment arrives :
-def store_import(player_id, resource, quantity):
-    player = Player.query.get(int(player_id))
-    max_cap = current_app.config["engine"].config[player_id][
+def store_import(player, resource, quantity):
+    max_cap = current_app.config["engine"].config[player.id][
         "warehouse_capacities"][resource]
     if getattr(player, resource) + quantity > max_cap:
         setattr(player, resource, max_cap)
@@ -38,17 +35,12 @@ def store_import(player_id, resource, quantity):
 
 # format for price display
 def display_money(price):
-    return f"{price:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(",", " ")
+    return f"{price:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(",", "'")
 
 # checks if a chat with exactly these participants already exists
 def check_existing_chats(participants):
-    # Get the IDs of the participants
     participant_ids = [participant.id for participant in participants]
-
-    # Generate the conditions for participants' IDs and count
     conditions = [Chat.participants.any(id=participant_id) for participant_id in participant_ids]
-
-    # Query the Chat table
     existing_chats = Chat.query.filter(*conditions)
     for chat in existing_chats:
         if len(chat.participants)==len(participants):
