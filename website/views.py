@@ -7,7 +7,7 @@ from flask import g, current_app
 from flask_login import login_required, current_user
 from . import db
 from .database import Chat, Player, Network, Resource_on_sale
-from .utils import check_existing_chats, put_resource_on_market, buy_resource_from_market
+from .utils import check_existing_chats
 
 views = Blueprint("views", __name__)
 overviews = Blueprint("overviews", __name__,  static_folder='static')
@@ -135,21 +135,8 @@ def functional_facilities():
 def extraction_facilities():
     return g.render_template_ctx("extraction_facilities.jinja")
 
-@views.route("/resource_market", methods=["GET", "POST"])
+@views.route("/resource_market", methods=["GET"])
 def resource_market():
-    if request.method == "POST":
-        if "resource" in request.form:
-            # Player is trying to put resources on sale
-            resource = request.form.get("resource")
-            quantity = float(request.form.get("quantity"))*1000
-            price = float(request.form.get("price"))/1000
-            put_resource_on_market(current_user, resource, quantity, price)
-        else :
-            # Player is trying buy resources
-            quantity = float(request.form.get("purchases_quantity"))*1000
-            sale_id = int(request.form.get("sale_id"))
-            buy_resource_from_market(current_user, quantity, sale_id)
-
     return g.render_template_ctx("resource_market.jinja")
 
 @views.route("/scoreboard")

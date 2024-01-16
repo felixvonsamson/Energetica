@@ -2,11 +2,12 @@
 These functions make the link between the website and the database
 """
 
-from flask import Blueprint, request, flash, jsonify, g, current_app
+from flask import Blueprint, request, flash, jsonify, g, current_app, redirect
 from flask_login import login_required, current_user
 import pickle
 from pathlib import Path
 import numpy as np
+from .utils import put_resource_on_market, buy_resource_from_market
 
 api = Blueprint('api', __name__)
 
@@ -182,3 +183,18 @@ def get_scoreboard():
     for player in players:
         scoreboard_data.append([player.username, player.money, player.average_revenues, player.emissions])
     return jsonify(scoreboard_data)
+
+@api.route("/put_resource_on_sale", methods=["POST"])
+def put_resource_on_sale():
+    if "resource" in request.form:
+        # Player is trying to put resources on sale
+        resource = request.form.get("resource")
+        quantity = float(request.form.get("quantity"))*1000
+        price = float(request.form.get("price"))/1000
+        put_resource_on_market(current_user, resource, quantity, price)
+    else :
+        # Player is trying buy resources
+        quantity = float(request.form.get("purchases_quantity"))*1000
+        sale_id = int(request.form.get("sale_id"))
+        buy_resource_from_market(current_user, quantity, sale_id)
+    return redirect("/resource_market", code=303)

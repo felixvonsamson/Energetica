@@ -28,7 +28,7 @@
             &times;
         </div>
     </div>
-    <form method="POST" autocomplete="off" class="flex-col margin-large" style="margin-top:5px; width:200px">
+    <form action="/put_resource_on_sale" method="POST" autocomplete="off" class="flex-col margin-large" style="margin-top:5px; width:200px">
         <div class="flex-col" style="width:100%;">
             <label for="resource">Resource</label>
             <select id="resource" name="resource" class="create_chat_input medium txt_center" style="margin-bottom:10px; width:180px" required>
@@ -70,7 +70,7 @@
             <span class="large"><b><script>to_string({{sale.price*1000}});</script></b><img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t</span>
             shipment : <script>calculate_delivery({{user.tile[0].q-sale.player.tile[0].q}}, {{user.tile[0].r-sale.player.tile[0].r}}, {{data["transport"]["time"]}});</script>
         </div>
-        <form method="POST" autocomplete="off" id="additionalContent" class="hidden-info medium flex-col">
+        <form action="/put_resource_on_sale" method="POST" autocomplete="off" id="additionalContent" class="hidden-info medium flex-col">
             Seller : {{sale.player.username}}<br><br>
             <input type="hidden" name="sale_id" value="{{sale.id}}">
             <label for="q_buy_{{sale.id}}" class="small">Purchased quantity (in tons)</label>
