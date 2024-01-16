@@ -135,7 +135,7 @@ def daily_update(engine, app):
     save_past_data_threaded(app, engine, past_data, network_data)
 
 
-from .production_update import update_ressources, update_resource_extraction, update_electricity
+from .production_update import update_ressources, update_electricity
 
 # function that is executed once every 1 minute :
 def state_update_m(engine, app):
