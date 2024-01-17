@@ -40,6 +40,7 @@ def update_ressources(engine):
         demand = engine.data["current_data"][player.username]["demand"]
         player_ressources = engine.data["current_data"][player.username]["ressources"]
         warehouse_caps = engine.config[player.id]["warehouse_capacities"]
+        extraction_facility_demand(engine, player, t, assets, demand)
         for ressource in ressource_to_extraction:
             facility = ressource_to_extraction[ressource]
             if getattr(player, facility) > 0:
@@ -52,10 +53,6 @@ def update_ressources(engine):
                         amount_produced)
                 setattr(player.tile, ressource, max(0, getattr(player.tile, 
                                                     ressource) - amount_produced))
-                production_factor = 0.2 + 0.8*amount_produced/max_prod
-                energy_demand = assets[facility]["power consumption"] * getattr(
-                    player, facility) * production_factor
-                demand[facility][t] = min(demand[facility][t-1]+0.2*energy_demand, energy_demand) # for smooth demand changes
                 facility_emmissions = assets[facility]["pollution"] * amount_produced / 1000
                 add_emissions(engine, player, t, facility, facility_emmissions)
             player_ressources[ressource][t] = getattr(player, ressource)
