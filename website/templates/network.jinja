@@ -45,7 +45,7 @@
 </div>
 {% else %}
 <div id="market_graph" class="bone" style="padding:30px 0; margin:30px 0;"></div>
-<form action="/leave_network" method="POST" class="flex-row" style="justify-content:center;">
+<form action="/leave_network" method="post" class="flex-row" style="justify-content:center;">
     <button type="submit" class="bone padding medium login-button">Leave Network</button>
 </form>
 <div class="flex-col medium">
@@ -394,7 +394,7 @@
         </div>
     </div>
     <div id="warning" style="width:260px;" class="margin-large"></div>
-    <form action="/join_network" id="join_network_form" method="POST" autocomplete="off" class="flex-col margin-large"
+    <form action="/join_network" id="join_network_form" method="post" autocomplete="off" class="flex-col margin-large"
         style="margin-top:5px">
         <div class="flex-col" style="width:100%;">
             <label for="choose_network">Network</label>
@@ -415,7 +415,7 @@
             &times;
         </div>
     </div>
-    <form action="/create_network" method="POST" autocomplete="off" class="flex-col margin-large">
+    <form action="/create_network" method="post" autocomplete="off" class="flex-col margin-large">
         <div style="padding-bottom:32px">
             <label for="network_name">Network name</label>
             <input type="text" class="create_chat_input medium" id="network_name" name="network_name" placeholder="Name"
