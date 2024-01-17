@@ -1,5 +1,7 @@
 {% extends "base.jinja" %}
-{% block title %}Demand overview{% endblock %}
+{% block title %}
+    Demand overview
+{% endblock title %}
 {% block content %}
     <div class="flex-row huge title">
         Demand overview
@@ -30,7 +32,6 @@
             style="margin-bottom:0">Demand</h1>
         <div id="graph" class="bone" style="padding:16px 0;"></div>
     </div>
-</div>
 {% endblock content %}
 {% block additionnal_script %}
     <script src="{{ url_for('static', filename='charts/buttons.js') }}"></script>

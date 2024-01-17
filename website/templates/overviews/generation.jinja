@@ -1,5 +1,7 @@
 {% extends "base.jinja" %}
-{% block title %}Generation overview{% endblock %}
+{% block title %}
+    Generation overview
+{% endblock title %}
 {% block content %}
     <div class="flex-row huge title">
         Generation overview
@@ -31,8 +33,8 @@
         <div id="graph" class="bone" style="padding:16px 0;"></div>
     </div>
 </div>
-{% endblock %}
+{% endblock content %}
 {% block additionnal_script %}
     <script src="{{ url_for('static', filename='charts/buttons.js') }}"></script>
     <script src="{{ url_for('static', filename='charts/generation.js') }}"></script>
-{% endblock %}
+{% endblock additionnal_script %}

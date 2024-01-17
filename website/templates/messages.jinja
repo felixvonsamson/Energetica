@@ -1,5 +1,7 @@
 {% extends "base.jinja" %}
-{% block title %}Messages{% endblock %}
+{% block title %}
+    Messages
+{% endblock title %}
 {% block content %}
     <!--DISCLAIMER-->
     <div id="disclamer"
@@ -116,5 +118,7 @@
             </b>
         </div>
     </div>
-{% endblock %}
-{% block additionnal_script %}<script src="{{ url_for('static', filename='chat_logic.js') }}"></script>{% endblock %}
+{% endblock content %}
+{% block additionnal_script %}
+    <script src="{{ url_for('static', filename='chat_logic.js') }}"></script>
+{% endblock additionnal_script %}

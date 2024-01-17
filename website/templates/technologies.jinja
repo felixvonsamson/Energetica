@@ -1,4 +1,4 @@
-{% extends "base.jinja" %} {% block title %}Technologies{% endblock %} {% block content
+{% extends "base.jinja" %} {% block title %}Technologies{% endblock title %} {% block content
 %}
 
 {% set data = all_data["assets"]%}
@@ -786,9 +786,9 @@
 </div>
 
 
-{% endblock %}
+{% endblock content %}
 
 {% block additionnal_script %}
 <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
 <script src="{{ url_for('static', filename='lvlup_display.js') }}"></script>
-{% endblock %}
+{% endblock additionnal_script %}

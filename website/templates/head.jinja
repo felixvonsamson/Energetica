@@ -20,11 +20,14 @@
             src="{{ url_for('static', filename='display_functions.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
     <title>
-      {% block title %}Home{% endblock %}
+      {% block title %}
+        Home
+      {% endblock title %}
     </title>
   </head>
   <body class="green">
-    {% block base %}{% endblock %}
+    {% block base %}
+    {% endblock base %}
     <!--Toasts-->
     <div id="toasts" class="toast_container">
       {% for category, message in get_flashed_messages(with_categories=true) %}
@@ -50,6 +53,6 @@
     <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}"></script>
     <script src="{{ url_for('static', filename='toasts.js') }}"></script>
     {% block scripts %}
-    {% endblock %}
+    {% endblock scripts %}
   </body>
 </html>
