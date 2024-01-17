@@ -6,13 +6,14 @@ from flask import Blueprint, render_template, request, flash
 from flask import g, current_app
 from flask_login import login_required, current_user
 from . import db
-from .database import Chat, Player, Network, Resource_on_sale
+from .database import Chat, Player, Resource_on_sale
 from .utils import check_existing_chats
 
 views = Blueprint("views", __name__)
 overviews = Blueprint("overviews", __name__,  static_folder='static')
 
-flash_error = lambda msg: flash(msg, category="error")
+def flash_error(msg):
+    return flash(msg, category="error")
 
 # this function is executed once before every request :
 @views.before_request
