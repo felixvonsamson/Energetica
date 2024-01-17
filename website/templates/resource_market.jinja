@@ -1,111 +1,162 @@
-{% extends "base.jinja" %} {% block title %}Resource market{% endblock %}
+{% extends "base.jinja" %}
+{% block title %}
+    Resource market
+{% endblock title %}
 {% block content %}
-
-<div class="flex-row huge title">Resource market
-    <div class="pine info_icon_container" onclick="document.getElementById('info_popup').classList.remove('hidden');">
-        <img src="{{ url_for('static', filename='images/icons/wiki.png') }}" class="info_icon padding" />
-    </div>
-</div>
-
-<div id="info_popup" class="popup hidden green">
-    <div class="flex-row margin-small" style="align-items:center;">
-        <div class="large txt_center" style="flex-grow:1">Help : Resource market</div>
-        <div onclick="document.getElementById('info_popup').classList.add('hidden');" class="cross pine margin-small"
-            style="width:39px">
-            &times;
+    <div class="flex-row huge title">
+        Resource market
+        <div class="pine info_icon_container"
+             onclick="document.getElementById('info_popup').classList.remove('hidden');">
+            <img src="{{ url_for('static', filename='images/icons/wiki.png') }}"
+                 class="info_icon padding" />
         </div>
     </div>
-    <div class="txt_center margin medium">
-        <p>Here you can sell and buy natural resources to/from other players.</p>
-        <p>For more information about the resource market, refer to the <a href="/wiki#Resource_Market">Resource market
-                section in the wiki</a>.</p>
-    </div>
-</div>
-
-<!--PUT ON SALE-->
-<div id="put_on_sale" class="popup hidden green">
-    <div class="flex-row margin-small" style="align-items:center;">
-        <div class="large txt_center" style="flex-grow:1">Put on sale</div>
-        <div onclick="document.getElementById('put_on_sale').classList.add('hidden');" class="cross pine margin-small"
-            style="width:39px">
-            &times;
+    <div id="info_popup" class="popup hidden green">
+        <div class="flex-row margin-small" style="align-items:center;">
+            <div class="large txt_center" style="flex-grow:1">Help : Resource market</div>
+            <div onclick="document.getElementById('info_popup').classList.add('hidden');"
+                 class="cross pine margin-small"
+                 style="width:39px">&times;</div>
+        </div>
+        <div class="txt_center margin medium">
+            <p>Here you can sell and buy natural resources to/from other players.</p>
+            <p>
+                For more information about the resource market, refer to the <a href="/wiki#Resource_Market">Resource market
+                section in the wiki</a>.
+            </p>
         </div>
     </div>
-    <form action="/put_resource_on_sale" method="POST" autocomplete="off" class="flex-col margin-large"
-        style="margin-top:5px; width:200px">
-        <div class="flex-col" style="width:100%;">
-            <label for="resource">Resource</label>
-            <select id="resource" name="resource" class="create_chat_input medium txt_center"
-                style="margin-bottom:10px; width:180px" required>
-                <option value="" disabled selected>select resource</option>
-                <option value="coal">Coal</option>
-                <option value="oil">Oil</option>
-                <option value="gas">Gas</option>
-                <option value="uranium">Uranium</option>
-            </select>
-            <label for="quantity">Quantity (in tons)</label>
-            <input type="number" class="create_chat_input medium txt_center" style="margin-bottom:10px; width:164px"
-                id="quantity" name="quantity" placeholder="quantity [t]" min="0.01" step="0.01" required>
-            <label for="price">Price (in<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/ton)</label>
-            <input type="number" class="create_chat_input medium txt_center" style="width:164px" id="price" name="price"
-                placeholder="price per ton" min="0.01" step="0.01" required>
+    <!--PUT ON SALE-->
+    <div id="put_on_sale" class="popup hidden green">
+        <div class="flex-row margin-small" style="align-items:center;">
+            <div class="large txt_center" style="flex-grow:1">Put on sale</div>
+            <div onclick="document.getElementById('put_on_sale').classList.add('hidden');"
+                 class="cross pine margin-small"
+                 style="width:39px">&times;</div>
         </div>
-        <button type="submit" class="bone padding medium login-button" style="margin-top:20px">Put on sale</button>
-    </form>
-</div>
-
-<div class="flex-row" style="justify-content:center;">
-    <b class="margin button2" onclick="document.getElementById('put_on_sale').classList.remove('hidden');">Put on
-        sale</b>
-</div>
-
-<div id="shipments">
-    {% if user.shipments %}
-    {% for shipment in user.shipments %}
-    <div class="padding" id="progress_bar">
-        <b>{{shipment.quantity/1000}} t</b> of <b>{{shipment.resource}}</b> will arrive in <i class="time"
-            data-name="{{shipment.arrival_time}}"></i>
-    </div>
-    {% endfor %}
-    {% endif %}
-</div>
-
-<div class="resource_market_container">
-    {% for sale in on_sale %}
-    <div id="tile{{sale.id}}" onclick="expand_tile('tile{{sale.id}}');" class="resource_market_block bone txt_center">
-        <img class="img" src="{{ url_for('static', filename='images/ressources/'+sale.resource+'_img.jpg') }}" \>
-        <div id="infos" class="flex-col medium">
-            <span class="large">
-                <script>to_string({{ sale.quantity / 1000 }});</script> t {{sale.resource}}
-            </span>
-            <span class="large"><b>
-                    <script>to_string({{ sale.price * 1000 }});</script>
-                </b><img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t</span>
-            shipment :
-            <script>calculate_delivery({{ user.tile.q - sale.player.tile.q }}, {{ user.tile.r - sale.player.tile.r }}, {{ data["transport"]["time"] }});</script>
-        </div>
-        <form action="/buy_resource" method="POST" autocomplete="off" id="additionalContent"
-            class="hidden-info medium flex-col">
-            Seller : {{sale.player.username}}<br><br>
-            <input type="hidden" name="sale_id" value="{{sale.id}}">
-            <label for="q_buy_{{sale.id}}" class="small">Purchased quantity (in tons)</label>
-            <input type="number" class="create_chat_input medium txt_center" style="width:164px"
-                value="{{sale.quantity/1000}}" id="{{sale.id}}" name="purchases_quantity" placeholder="quantity [t]"
-                min="0.01" step="0.01" max="{{sale.quantity/1000}}" onclick="stopPropagation(event);"
-                oninput="updateToPay({{sale.id}}, {{sale.price}});" required />
-            <span id="to_pay_{{sale.id}}">(
-                <script>to_string({{ sale.quantity * sale.price }});</script><img src='/static/images/icons/coin.svg'
-                    class='coin' alt='coin'>)
-            </span>
-            <button type="submit" onclick="stopPropagation(event);" class="margin medium white padding button"
-                style="margin-top:8px"><b>Buy</b></button>
+        <form action="/put_resource_on_sale"
+              method="post"
+              autocomplete="off"
+              class="flex-col margin-large"
+              style="margin-top:5px;
+                     width:200px">
+            <div class="flex-col" style="width:100%;">
+                <label for="resource">Resource</label>
+                <select id="resource"
+                        name="resource"
+                        class="create_chat_input medium txt_center"
+                        style="margin-bottom:10px;
+                               width:180px"
+                        required>
+                    <option value="" disabled selected>select resource</option>
+                    <option value="coal">Coal</option>
+                    <option value="oil">Oil</option>
+                    <option value="gas">Gas</option>
+                    <option value="uranium">Uranium</option>
+                </select>
+                <label for="quantity">Quantity (in tons)</label>
+                <input type="number"
+                       class="create_chat_input medium txt_center"
+                       style="margin-bottom:10px;
+                              width:164px"
+                       id="quantity"
+                       name="quantity"
+                       placeholder="quantity [t]"
+                       min="0.01"
+                       step="0.01"
+                       required>
+                <label for="price">
+                    Price (in
+                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                    /ton)
+                </label>
+                <input type="number"
+                       class="create_chat_input medium txt_center"
+                       style="width:164px"
+                       id="price"
+                       name="price"
+                       placeholder="price per ton"
+                       min="0.01"
+                       step="0.01"
+                       required>
+            </div>
+            <button type="submit"
+                    class="bone padding medium login-button"
+                    style="margin-top:20px">Put on sale</button>
         </form>
     </div>
+    <div class="flex-row" style="justify-content:center;">
+        <b class="margin button2"
+           onclick="document.getElementById('put_on_sale').classList.remove('hidden');">Put on
+        sale</b>
+    </div>
+    <div id="shipments">
+        {% if user.shipments %}
+            {% for shipment in user.shipments %}
+                <div class="padding" id="progress_bar">
+                    <b>{{ shipment.quantity/1000 }} t</b> of <b>{{ shipment.resource }}</b> will arrive in <i class="time" data-name="{{ shipment.arrival_time }}"></i>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+    <div class="resource_market_container">
+        {% for sale in on_sale %}
+            <div id="tile{{ sale.id }}"
+                 onclick="expand_tile('tile{{ sale.id }}');"
+                 class="resource_market_block bone txt_center">
+                <img class="img"
+                     src="{{ url_for('static', filename='images/ressources/'+sale.resource+'_img.jpg') }}">
+                <div id="infos" class="flex-col medium">
+                    <span class="large">
+                        <script>to_string({{ sale.quantity / 1000 }});</script> t {{ sale.resource }}
+                    </span>
+                    <span class="large"><b>
+                        <script>to_string({{ sale.price * 1000 }});</script>
+                    </b>
+                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                /t</span>
+                shipment :
+                <script>calculate_delivery({{ user.tile[0].q - sale.player.tile[0].q }}, {{ user.tile[0].r - sale.player.tile[0].r }}, {{ data["transport"]["time"] }});</script>
+            </div>
+            <form action="/buy_resource"
+                  method="post"
+                  autocomplete="off"
+                  id="additionalContent"
+                  class="hidden-info medium flex-col">
+                Seller : {{ sale.player.username }}
+                <br>
+                <br>
+                <input type="hidden" name="sale_id" value="{{ sale.id }}">
+                <label for="q_buy_{{ sale.id }}" class="small">Purchased quantity (in tons)</label>
+                <input type="number"
+                       class="create_chat_input medium txt_center"
+                       style="width:164px"
+                       value="{{ sale.quantity/1000 }}"
+                       id="{{ sale.id }}"
+                       name="purchases_quantity"
+                       placeholder="quantity [t]"
+                       min="0.01"
+                       step="0.01"
+                       max="{{ sale.quantity/1000 }}"
+                       onclick="stopPropagation(event);"
+                       oninput="updateToPay({{ sale.id }}, {{ sale.price }});"
+                       required />
+                <span id="to_pay_{{ sale.id }}">(
+                    <script>to_string({{ sale.quantity * sale.price }});</script>
+                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                    )
+                </span>
+                <button type="submit"
+                        onclick="stopPropagation(event);"
+                        class="margin medium white padding button"
+                        style="margin-top:8px">
+                    <b>Buy</b>
+                </button>
+            </form>
+        </div>
     {% endfor %}
 </div>
-
-{% endblock %}
-
+{% endblock content %}
 {% block additionnal_script %}
-<script src="{{ url_for('static', filename='resource_market.js') }}"></script>
-{% endblock %}
+    <script src="{{ url_for('static', filename='resource_market.js') }}"></script>
+{% endblock additionnal_script %}

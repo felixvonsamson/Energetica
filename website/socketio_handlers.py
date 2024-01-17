@@ -3,13 +3,11 @@ This code contains the main functions that communicate with the server (server s
 """
 
 import time
-import pickle
-from flask import request, flash, g, current_app
+from flask import request, current_app
 from flask_login import current_user
-from .database import Player, Network, Hex, Under_construction, Chat, Message
+from .database import Player, Hex, Under_construction, Chat, Message
 from .utils import display_money, check_existing_chats
 from . import db
-from pathlib import Path
 from .rest_api import rest_notify_player_location
 
 
@@ -25,7 +23,7 @@ def add_handlers(socketio, engine):
     @socketio.on("choose_location")
     def choose_location(id):
         location = Hex.query.get(id + 1)
-        if location.player_id != None:
+        if location.player_id is not None:
             current_user.emit("errorMessage", "Location already taken")
         elif current_user.tile is not None:
             current_user.emit(

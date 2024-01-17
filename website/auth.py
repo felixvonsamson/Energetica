@@ -13,6 +13,7 @@ from pathlib import Path
 
 auth = Blueprint("auth", __name__)
 
+
 # logic for the login :
 @auth.route("/login", methods=["GET", "POST"])
 def login():
@@ -34,6 +35,7 @@ def login():
 
     return render_template("login.jinja", user=current_user)
 
+
 # logic for the logout :
 @auth.route("/logout")
 @login_required
@@ -41,6 +43,7 @@ def logout():
     print(f"{current_user.username} logged out")
     logout_user()
     return redirect(url_for("auth.login"))
+
 
 # logic for the sign-up :
 @auth.route("/sign-up", methods=["GET", "POST"])
@@ -54,8 +57,7 @@ def sign_up():
         if player:
             flash("Username already exist", category="error")
         elif len(username) < 3:
-            flash("Username must have at least 3 characters.",
-                  category="error")
+            flash("Username must have at least 3 characters.", category="error")
         elif password1 != password2:
             flash("Passwords don't match.", category="error")
         elif len(password1) < 7:
@@ -77,6 +79,7 @@ def sign_up():
 
     return render_template("sign_up.jinja", user=current_user)
 
+
 # initialize data table for new user and stores it as a .pck in the 'player_data' repo
 def init_table(username):
     past_data = data_init(1440)
@@ -85,18 +88,20 @@ def init_table(username):
         with open(f"instance/player_data/{username}/{timescale}.pck", "wb") as file:
             pickle.dump(past_data, file)
 
+
 def add_player_to_data(username):
     engine = current_app.config["engine"]
     engine.data["current_data"][username] = data_init(1441)
 
+
 def data_init(length):
     return {
-        "revenues":{
+        "revenues": {
             "industry": [0] * length,
             "O&M_costs": [0] * length,
             "exports": [0] * length,
             "imports": [0] * length,
-            "dumping": [0] * length
+            "dumping": [0] * length,
         },
         "generation": {
             "steam_engine": [0] * length,
@@ -114,7 +119,6 @@ def data_init(length):
             "PV_solar": [0] * length,
             "offshore_wind_turbine": [0] * length,
             "nuclear_reactor_gen4": [0] * length,
-
             "small_pumped_hydro": [0] * length,
             "compressed_air": [0] * length,
             "molten_salt": [0] * length,
@@ -122,7 +126,6 @@ def data_init(length):
             "hydrogen_storage": [0] * length,
             "lithium_ion_batteries": [0] * length,
             "solid_state_batteries": [0] * length,
-
             "imports": [0] * length,
         },
         "demand": {
@@ -131,12 +134,10 @@ def data_init(length):
             "research": [0] * length,
             "transport": [0] * length,
             "carbon_capture": [0] * length,
-
             "coal_mine": [0] * length,
             "oil_field": [0] * length,
             "gas_drilling_site": [0] * length,
             "uranium_mine": [0] * length,
-
             "small_pumped_hydro": [0] * length,
             "compressed_air": [0] * length,
             "molten_salt": [0] * length,
@@ -144,7 +145,6 @@ def data_init(length):
             "hydrogen_storage": [0] * length,
             "lithium_ion_batteries": [0] * length,
             "solid_state_batteries": [0] * length,
-
             "exports": [0] * length,
             "dumping": [0] * length,
         },
@@ -172,12 +172,10 @@ def data_init(length):
             "nuclear_reactor": [0] * length,
             "nuclear_reactor_gen4": [0] * length,
             "construction": [0] * length,
-
             "coal_mine": [0] * length,
             "oil_field": [0] * length,
             "gas_drilling_site": [0] * length,
             "uranium_mine": [0] * length,
-
             "carbon_capture": [0] * length,
-        }
+        },
     }

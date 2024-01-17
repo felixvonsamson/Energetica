@@ -5,15 +5,15 @@ Here are defined the classes for the items stored in the database
 from . import db
 from flask_login import UserMixin
 from flask import current_app
-from sqlalchemy.sql import func
-import pickle
 from datetime import datetime
 
 # table that links chats to players
-player_chats = db.Table('player_chats',
-                db.Column('player_id', db.Integer, db.ForeignKey('player.id')),
-                db.Column('chat_id', db.Integer, db.ForeignKey('chat.id'))
-                )
+player_chats = db.Table(
+    "player_chats",
+    db.Column("player_id", db.Integer, db.ForeignKey("player.id")),
+    db.Column("chat_id", db.Integer, db.ForeignKey("chat.id")),
+)
+
 
 # class for the tiles that compose the map :
 class Hex(db.Model):
@@ -30,17 +30,23 @@ class Hex(db.Model):
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"), unique=True, nullable=True) # ID of the owner of the tile
 
     def __repr__(self):
-        return f'<Tile {self.id} wind {self.wind}>'
+        return f"<Tile {self.id} wind {self.wind}>"
+
 
 # class that stores the things currently under construction :
 class Under_construction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
-    family = db.Column(db.String(50)) # to assign the thing to the correct page
+    family = db.Column(db.String(50))  # to assign the thing to the correct page
     start_time = db.Column(db.Float)
     duration = db.Column(db.Float)
-    suspension_time = db.Column(db.Float, default=None) # time at witch the construction has been paused if it has
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id")) # can access player directly with .player
+    suspension_time = db.Column(
+        db.Float, default=None
+    )  # time at witch the construction has been paused if it has
+    player_id = db.Column(
+        db.Integer, db.ForeignKey("player.id")
+    )  # can access player directly with .player
+
 
 # class that stores the ressources shippment on their way :
 class Shipment(db.Model):
@@ -49,8 +55,13 @@ class Shipment(db.Model):
     quantity = db.Column(db.Float)
     departure_time = db.Column(db.Float)
     duration = db.Column(db.Float)
-    suspension_time = db.Column(db.Float, default=None) # time at witch the shipment has been paused if it has
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id")) # can access player directly with .player
+    suspension_time = db.Column(
+        db.Float, default=None
+    )  # time at witch the shipment has been paused if it has
+    player_id = db.Column(
+        db.Integer, db.ForeignKey("player.id")
+    )  # can access player directly with .player
+
 
 class Resource_on_sale(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -58,18 +69,20 @@ class Resource_on_sale(db.Model):
     quantity = db.Column(db.Float)
     price = db.Column(db.Float)
     creation_date = db.Column(db.DateTime, default=datetime.now())
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id")) # can access player directly with .player
+    player_id = db.Column(
+        db.Integer, db.ForeignKey("player.id")
+    )  # can access player directly with .player
+
 
 # class that stores the networks of players :
 class Network(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True)
-    members = db.relationship('Player', backref='network')
+    members = db.relationship("Player", backref="network")
 
 
 # class that stores the users :
 class Player(db.Model, UserMixin):
-
     # Authentification :
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(25), unique=True)
@@ -82,12 +95,11 @@ class Player(db.Model, UserMixin):
 
     # Chats :
     show_disclamer = db.Column(db.Boolean, default=True)
-    chats = db.relationship('Chat', secondary=player_chats,
-                            backref='participants')
-    messages = db.relationship('Message', backref='player')
+    chats = db.relationship("Chat", secondary=player_chats, backref="participants")
+    messages = db.relationship("Message", backref="player")
 
     # Ressources :
-    money = db.Column(db.Float, default=5000) # default is 5000
+    money = db.Column(db.Float, default=5000)  # default is 5000
     coal = db.Column(db.Float, default=0)
     oil = db.Column(db.Float, default=0)
     gas = db.Column(db.Float, default=0)
@@ -154,10 +166,19 @@ class Player(db.Model, UserMixin):
     chemistry = db.Column(db.Integer, default=0)
     nuclear_engineering = db.Column(db.Integer, default=0)
 
-    # Selfconsumption priority list 
-    self_consumption_priority = db.Column(db.Text, default="small_water_dam large_water_dam watermill onshore_wind_turbine offshore_wind_turbine windmill CSP_solar PV_solar")
-    rest_of_priorities = db.Column(db.Text, default="steam_engine nuclear_reactor large_pumped_hydro small_pumped_hydro molten_salt nuclear_reactor_gen4 compressed_air combined_cycle hydrogen_storage gas_burner solid_state_batteries lithium_ion_batteries oil_burner coal_burner")
-    demand_priorities = db.Column(db.Text, default="transport industry research construction uranium_mine gas_drilling_site oil_field coal_mine")
+    # Selfconsumption priority list
+    self_consumption_priority = db.Column(
+        db.Text,
+        default="small_water_dam large_water_dam watermill onshore_wind_turbine offshore_wind_turbine windmill CSP_solar PV_solar",
+    )
+    rest_of_priorities = db.Column(
+        db.Text,
+        default="steam_engine nuclear_reactor large_pumped_hydro small_pumped_hydro molten_salt nuclear_reactor_gen4 compressed_air combined_cycle hydrogen_storage gas_burner solid_state_batteries lithium_ion_batteries oil_burner coal_burner",
+    )
+    demand_priorities = db.Column(
+        db.Text,
+        default="transport industry research construction uranium_mine gas_drilling_site oil_field coal_mine",
+    )
 
     # Production capacity prices [¤/MWh]
     price_steam_engine = db.Column(db.Float, default=125)
@@ -200,21 +221,32 @@ class Player(db.Model, UserMixin):
     average_revenues = db.Column(db.Float, default=0)
 
     under_construction = db.relationship("Under_construction")
-    resource_on_sale = db.relationship("Resource_on_sale", backref='player')
-    shipments = db.relationship("Shipment", backref='player')
+    resource_on_sale = db.relationship("Resource_on_sale", backref="player")
+    shipments = db.relationship("Shipment", backref="player")
 
     data_table_name = db.Column(db.String(50))
 
     def get_technology_values(self):
         technology_attributes = [
-            'laboratory', 'mathematics', 'mechanical_engineering', 'thermodynamics',
-            'physics', 'building_technology', 'mineral_extraction',
-            'transport_technology', 'materials', 'civil_engineering',
-            'aerodynamics', 'chemistry', 'nuclear_engineering'
+            "laboratory",
+            "mathematics",
+            "mechanical_engineering",
+            "thermodynamics",
+            "physics",
+            "building_technology",
+            "mineral_extraction",
+            "transport_technology",
+            "materials",
+            "civil_engineering",
+            "aerodynamics",
+            "chemistry",
+            "nuclear_engineering",
         ]
-        technology_values = {attr: getattr(self, attr) for attr in technology_attributes}
+        technology_values = {
+            attr: getattr(self, attr) for attr in technology_attributes
+        }
         return technology_values
-    
+
     def emit(player, *args):
         if player.sid:
             socketio = current_app.config["engine"].socketio
@@ -223,18 +255,27 @@ class Player(db.Model, UserMixin):
     def update_resources(player):
         if player.sid:
             updates = []
-            updates.append(["money", f"{player.money:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(",", "'")])
+            updates.append(
+                [
+                    "money",
+                    f"{player.money:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(
+                        ",", "'"
+                    ),
+                ]
+            )
             player.emit("update_data", updates)
 
     # prints out the object as a sting with the players username for debugging
     def __repr__(self):
-        return f'<Player {self.username}>'
+        return f"<Player {self.username}>"
+
 
 # class that stores chats with 2 or more players :
 class Chat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
-    messages = db.relationship('Message', backref='chat')
+    messages = db.relationship("Message", backref="chat")
+
 
 # class that stores messages :
 class Message(db.Model):
