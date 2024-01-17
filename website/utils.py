@@ -29,7 +29,7 @@ def store_import(player, resource, quantity):
     if getattr(player, resource) + quantity > max_cap:
         setattr(player, resource, max_cap)
         # excess ressources are stored in the ground
-        setattr(player.tile[0], resource, getattr(player.tile[0], resource) + 
+        setattr(player.tile, resource, getattr(player.tile, resource) + 
                 getattr(player, resource) + quantity - max_cap)
     else :
         setattr(player, resource, getattr(player, resource) + quantity)
@@ -201,8 +201,8 @@ def buy_resource_from_market(player, quantity, sale_id):
         sale.player.update_resources()
         setattr(sale.player, sale.resource, getattr(sale.player, sale.resource) - quantity)
         setattr(sale.player, sale.resource+"_on_sale", getattr(sale.player, sale.resource+"_on_sale") - quantity)
-        dq = player.tile[0].q - sale.player.tile[0].q
-        dr = player.tile[0].r - sale.player.tile[0].r
+        dq = player.tile.q - sale.player.tile.q
+        dr = player.tile.r - sale.player.tile.r
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq*dr))
         shipment_duration = distance * current_app.config["engine"].config["transport"]["time"]
         new_shipment = Shipment(

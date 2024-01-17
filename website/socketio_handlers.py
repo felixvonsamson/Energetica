@@ -27,7 +27,7 @@ def add_handlers(socketio, engine):
         location = Hex.query.get(id + 1)
         if location.player_id != None:
             current_user.emit("errorMessage", "Location already taken")
-        elif len(current_user.tile) != 0:
+        elif current_user.tile is not None:
             current_user.emit(
                 "errorMessage", "You already chose a location. Please refresh"
             )
@@ -77,7 +77,7 @@ def add_handlers(socketio, engine):
             return
         if facility in ["small_water_dam", "large_water_dam", "watermill"]:
             ud = Under_construction.query.filter_by(name=facility).count()
-            if current_user.tile[0].hydro <= getattr(current_user, facility) + ud:
+            if current_user.tile.hydro <= getattr(current_user, facility) + ud:
                 current_user.emit("errorMessage", "No suitable location available")
                 return
         if family in ["functional_facilities", "technologies"]:

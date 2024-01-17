@@ -40,7 +40,7 @@
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Coal_mining" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The coal mine extracts coal from the ground. <br><br>
-  <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of coal : <strong><script>display_kg({{user.tile[0].coal}});</script></strong></em>
+  <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of coal : <strong><script>display_kg({{user.tile.coal}});</script></strong></em>
  </div>
  <div class="infobox" id="reqirements">
  {% if facility["locked"] %}
@@ -81,7 +81,7 @@
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Extraction_of_petroleum" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The oil field extracts oil from the ground. <br><br>
-  <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of oil : <strong><script>display_kg({{user.tile[0].oil}});</script></strong></em>
+  <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of oil : <strong><script>display_kg({{user.tile.oil}});</script></strong></em>
  </div>
  <div class="infobox" id="reqirements">
  {% if facility["locked"] %}
@@ -122,7 +122,7 @@
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Natural_gas" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The gas drilling site extracts gas from the ground. <br><br>
-  <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of gas : <strong><script>display_kg({{user.tile[0].gas}});</script></strong></em>
+  <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of gas : <strong><script>display_kg({{user.tile.gas}});</script></strong></em>
  </div>
  <div class="infobox" id="reqirements">
  {% if facility["locked"] %}
@@ -163,7 +163,7 @@
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Uranium_mining" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The uranium mine extracts uranium from the ground. <br><br>
-  <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of uranium : <strong><script>display_kg({{user.tile[0].uranium}});</script></strong></em>
+  <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of uranium : <strong><script>display_kg({{user.tile.uranium}});</script></strong></em>
  </div>
  <div class="infobox" id="reqirements">
  {% if facility["locked"] %}

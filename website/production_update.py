@@ -34,7 +34,7 @@ def update_ressources(engine):
     # DO THIS AT THE END !
     players = Player.query.all()
     for player in players:
-        if len(player.tile) == 0:
+        if player.tile is None:
             continue
         assets = engine.config[player.id]["assets"]
         demand = engine.data["current_data"][player.username]["demand"]
@@ -50,7 +50,7 @@ def update_ressources(engine):
                 amount_produced = min(max_prod, max_warehouse)
                 setattr(player, ressource, getattr(player, ressource) + 
                         amount_produced)
-                setattr(player.tile[0], ressource, max(0, getattr(player.tile[0], 
+                setattr(player.tile, ressource, max(0, getattr(player.tile, 
                                                     ressource) - amount_produced))
                 production_factor = 0.2 + 0.8*amount_produced/max_prod
                 energy_demand = assets[facility]["power consumption"] * getattr(
@@ -62,7 +62,7 @@ def update_ressources(engine):
 
     db.session.commit()
 
-# function that updates the electricity generation and storage status for all players according to capacity and external factors (and trade)
+# function that updates the electricity generation and storage status for all players according to capacity and external factors
 def update_electricity(engine):
     t = engine.data["current_t"]
     networks = Network.query.all()
@@ -75,7 +75,7 @@ def update_electricity(engine):
         }
         # For each player in the network, calculate the demand and the minimal amount of electricity generation at time t
         for player in network.members:
-            if len(player.tile) == 0:
+            if player.tile is None:
                 continue
             init_storage(engine, player, t)
             total_demand = calculate_demand(engine, player, t)
@@ -90,7 +90,7 @@ def update_electricity(engine):
     players = Player.query.all()
     for player in players:
         current_data = engine.data["current_data"][player.username]
-        if len(player.tile) == 0:
+        if player.tile is None:
             continue
         # Production update for players that are not in a network
         if player.network == None:
@@ -524,7 +524,7 @@ def renewables_generation(engine, player, assets, generation, t):
                                 * assets[facility]["power generation"]
                                 * getattr(player, facility))
     #SOLAR
-    power_factor = engine.data["current_irradiation"][t]/875 * player.tile[0].solar # 875 W/m2 is the maximim irradiation in Zürich
+    power_factor = engine.data["current_irradiation"][t]/875 * player.tile.solar # 875 W/m2 is the maximim irradiation in Zürich
     for facility in ["CSP_solar", "PV_solar"]:
         generation[facility][t] = (power_factor
                                 * assets[facility]["power generation"]
@@ -539,7 +539,7 @@ def renewables_generation(engine, player, assets, generation, t):
 def interpolate_wind(engine, player, t):
     if engine.data["current_windspeed"][t] > 100:
         return 0
-    windspeed = engine.data["current_windspeed"][t] * pow(player.tile[0].wind, 0.5)
+    windspeed = engine.data["current_windspeed"][t] * pow(player.tile.wind, 0.5)
     i = math.floor(windspeed)
     f = windspeed-i
     pc = engine.wind_power_curve
@@ -592,7 +592,7 @@ def reduce_demand(engine, demand_type, player, demand, assets, t):
         q_resource = engine.data["current_data"][player.username]["ressources"][resource_name]
         takeback = q_resource[t]-q_resource[t-1]
         setattr(player, resource_name, getattr(player, resource_name)-takeback)
-        setattr(player.tile[0], resource_name, getattr(player.tile[0], resource_name)+takeback)
+        setattr(player.tile, resource_name, getattr(player.tile, resource_name)+takeback)
         q_resource[t] = getattr(player, resource_name)
         energy_demand = 0.2 * assets[demand_type]["power consumption"] * getattr(player, demand_type)
         demand[demand_type][t] = min(demand[demand_type][t-1]+0.2*energy_demand, energy_demand) # for smooth demand changes

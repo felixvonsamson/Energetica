@@ -90,7 +90,7 @@
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Windmill" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The windmill uses the force of the wind to produce electricity. <br><br>
-  <em class="txt-blue"><i class="fa fa-info-circle"></i> Wind potential : <strong>{{(user.tile[0].wind*100)|int}}%</strong></em>
+  <em class="txt-blue"><i class="fa fa-info-circle"></i> Wind potential : <strong>{{(user.tile.wind*100)|int}}%</strong></em>
  </div>
  <div class="infobox" id="reqirements">
  {% if facility["locked"] %}
@@ -131,7 +131,7 @@
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Watermill" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The watermill uses the energy of flowing water to produce electricity. <br><br>
-  <em class="txt-blue"><i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{user.tile[0].hydro - user.watermill}}</strong></em>
+  <em class="txt-blue"><i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{user.tile.hydro - user.watermill}}</strong></em>
  </div>
  <div class="infobox" id="reqirements">
  {% if facility["locked"] %}
@@ -298,7 +298,7 @@
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydroelectricity" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The small water dam uses the potential energy of the water to produce electricity. <br><br>
-  <em class="txt-blue"><i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{user.tile[0].hydro - user.small_water_dam}}</strong></em>
+  <em class="txt-blue"><i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{user.tile.hydro - user.small_water_dam}}</strong></em>
  </div>
  <div class="infobox" id="reqirements">
  {% if facility["locked"] %}
@@ -339,7 +339,7 @@
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Wind_turbine" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The wind turbine uses the energy of the wind to produce electricity. <br><br>
-  <em class="txt-blue"><i class="fa fa-info-circle"></i> Wind potential : <strong>{{(user.tile[0].wind*100)|int}}%</strong></em>
+  <em class="txt-blue"><i class="fa fa-info-circle"></i> Wind potential : <strong>{{(user.tile.wind*100)|int}}%</strong></em>
  </div>
  <div class="infobox" id="reqirements">
  {% if facility["locked"] %}
@@ -466,7 +466,7 @@
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Hydroelectricity" target="_blank">{{facility["name"]}}</a></strong> &emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The large water dam uses the potential energy of the water to produce a large amount of electricity. <br><br>
-  <em class="txt-blue"><i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{user.tile[0].hydro - user.large_water_dam}}</strong></em>
+  <em class="txt-blue"><i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{user.tile.hydro - user.large_water_dam}}</strong></em>
  </div>
  <div class="infobox" id="reqirements">
  {% if facility["locked"] %}
@@ -507,7 +507,7 @@
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Concentrated_solar_power" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The concentrated solar power facility acumulates heat from the irradiation energy of the sun to produce electricity. <br><br>
-  <em class="txt-blue"><i class="fa fa-info-circle"></i> Solar potential : <strong>{{(user.tile[0].solar*100)|int}}%</strong></em>
+  <em class="txt-blue"><i class="fa fa-info-circle"></i> Solar potential : <strong>{{(user.tile.solar*100)|int}}%</strong></em>
  </div>
  <div class="infobox" id="reqirements">
  {% if facility["locked"] %}
@@ -548,7 +548,7 @@
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Photovoltaics" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The photovoltaic pannels transform the irradiation energy of the sun into electricity. <br><br>
-  <em class="txt-blue"><i class="fa fa-info-circle"></i> Solar potential : <strong>{{(user.tile[0].solar*100)|int}}%</strong></em>
+  <em class="txt-blue"><i class="fa fa-info-circle"></i> Solar potential : <strong>{{(user.tile.solar*100)|int}}%</strong></em>
  </div>
  <div class="infobox" id="reqirements">
  {% if facility["locked"] %}
@@ -589,7 +589,7 @@
  <div class="infotext padding">
   <strong class="large"><a class="no_deco" href="https://en.wikipedia.org/wiki/Wind_turbine" target="_blank">{{facility["name"]}}</a></strong>&emsp; <span class="money_font"><script>display_money_long({{facility["price"]}});</script></span><br>
   The wind turbine uses the energy of the wind to produce electricity. <br><br>
-  <em class="txt-blue"><i class="fa fa-info-circle"></i> Wind potential : <strong>{{(user.tile[0].wind*100)|int}}%</strong></em>
+  <em class="txt-blue"><i class="fa fa-info-circle"></i> Wind potential : <strong>{{(user.tile.wind*100)|int}}%</strong></em>
  </div>
  <div class="infobox" id="reqirements">
  {% if facility["locked"] %}

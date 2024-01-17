@@ -27,7 +27,7 @@ class Hex(db.Model):
     oil = db.Column(db.Float)
     gas = db.Column(db.Float)
     uranium = db.Column(db.Float)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), default=None) # ID of the owner of the tile
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), unique=True, nullable=True) # ID of the owner of the tile
 
     def __repr__(self):
         return f'<Tile {self.id} wind {self.wind}>'
@@ -77,7 +77,7 @@ class Player(db.Model, UserMixin):
     sid = None
 
     # Position :
-    tile = db.relationship("Hex", backref='player')
+    tile = db.relationship("Hex", uselist=False, backref='player')
     network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
 
     # Chats :

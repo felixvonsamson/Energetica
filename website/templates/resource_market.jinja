@@ -82,7 +82,7 @@
                     <script>to_string({{ sale.price * 1000 }});</script>
                 </b><img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t</span>
             shipment :
-            <script>calculate_delivery({{ user.tile[0].q - sale.player.tile[0].q }}, {{ user.tile[0].r - sale.player.tile[0].r }}, {{ data["transport"]["time"] }});</script>
+            <script>calculate_delivery({{ user.tile.q - sale.player.tile.q }}, {{ user.tile.r - sale.player.tile.r }}, {{ data["transport"]["time"] }});</script>
         </div>
         <form action="/buy_resource" method="POST" autocomplete="off" id="additionalContent"
             class="hidden-info medium flex-col">

@@ -26,7 +26,7 @@ def check_user():
         if page  == "wiki.jinja":
             return render_template("wiki.jinja", user=current_user)
         # show location choice if player didn't choose yet
-        if len(current_user.tile) == 0:
+        if current_user.tile is None:
             return render_template("location_choice.jinja")
         # render template with or without player production data
         if page == "messages.jinja":
