@@ -58,17 +58,6 @@ def update_ressources(engine):
             player_ressources[ressource][t] = getattr(player, ressource)
 
     db.session.commit()
-
-def extraction_facility_demand(engine, player, t, assets, demand):
-    player_ressources = engine.data["current_data"][player.username]["ressources"]
-    warehouse_caps = engine.config[player.id]["warehouse_capacities"]
-    for ressource in ressource_to_extraction:
-        facility = ressource_to_extraction[ressource]
-        if getattr(player, facility) > 0:
-            max_warehouse = (warehouse_caps[ressource] - player_ressources[ressource][t-1])
-            max_prod = getattr(player, facility) * assets[facility]["amount produced"]
-            power_factor = 0.2 + 0.8 * min(1, max_warehouse/max_prod)
-            demand[facility][t] = assets[facility]["power consumption"] * getattr(player, facility) * power_factor
     
 
 # function that updates the electricity generation and storage status for all players according to capacity and external factors
@@ -131,18 +120,29 @@ def update_electricity(engine):
     #save changes 
     db.session.commit()
 
-# keep t-1 level of storage at t 
 def init_storage(engine, player, t):
+    """Keep t-1 level of storage at t"""
     storage = engine.data["current_data"][player.username]["storage"]
     for facility in engine.storage_facilities :
         if getattr(player, facility) > 0:
             storage[facility][t] = storage[facility][t-1]
 
-# calculates the electricity demand of one player
-def calculate_demand(engine, player, t):
-    assets = engine.config[player.id]["assets"]
-    demand = engine.data["current_data"][player.username]["demand"]
-    revenues = engine.data["current_data"][player.username]["revenues"]
+
+def extraction_facility_demand(engine, player, t, assets, demand):
+    """Calculate power consumption of extraction facilites"""
+    player_ressources = engine.data["current_data"][player.username]["ressources"]
+    warehouse_caps = engine.config[player.id]["warehouse_capacities"]
+    for ressource in ressource_to_extraction:
+        facility = ressource_to_extraction[ressource]
+        if getattr(player, facility) > 0:
+            max_warehouse = (warehouse_caps[ressource] - player_ressources[ressource][t-1])
+            max_prod = getattr(player, facility) * assets[facility]["amount produced"]
+            power_factor = 0.2 + 0.8 * min(1, max_warehouse/max_prod)
+            demand[facility][t] = assets[facility]["power consumption"] * getattr(player, facility) * power_factor
+
+def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
+    """calculate power consumption and revenues from industry"""
+    # interpolating seasonal factor on the day
     day = engine.data["total_t"]//1440
     seasonal_factor = (engine.industry_seasonal[day%51]*(1440-engine.data["total_t"]%1440)+engine.industry_seasonal[(day+1)%51]*(engine.data["total_t"]%1440))/1440
     industry_demand = engine.industry_demand[t-1]*seasonal_factor*assets["industry"]["power consumption"]
@@ -150,20 +150,8 @@ def calculate_demand(engine, player, t):
     # calculate income of industry
     industry_income = engine.config[player.id]["assets"]["industry"]["income"]/1440.0
     revenues["industry"][t] = industry_income
-    # demand from assets under construction + emissions of construction
-    demand_construction = 0
-    demand_research = 0
-    emissions_construction = 0
     for ud in player.under_construction:
-        if ud.start_time != None:
-            if ud.suspension_time == None:
-                construction = assets[ud.name]
-                if ud.family == "technologies":
-                    demand_research += construction["construction power"]
-                else:
-                    demand_construction += construction["construction power"] 
-                    emissions_construction += (construction["construction pollution"] 
-                        / construction["construction time"])
+        if ud.start_time is not None:
             # industry demand ramps up during construction
             if ud.name == "industry":
                 if ud.suspension_time == None:
@@ -175,17 +163,45 @@ def calculate_demand(engine, player, t):
                 additional_revenue = time_fraction*industry_income*(assets["industry"]["income factor"]-1)
                 demand["industry"][t] += additional_demand
                 revenues["industry"][t] += additional_revenue
-    demand["construction"][t] = min(demand["construction"][t-1]+0.1*demand_construction, demand_construction) # for smooth demand changes
-    demand["research"][t] = min(demand["research"][t-1]+0.2*demand_research, demand_research) # for smooth demand changes
+
+def construction_demand(player, t, assets, demand):
+    """calculate power consumption for facilites under construction"""
+    for ud in player.under_construction:
+        if ud.start_time is not None:
+            if ud.suspension_time is None:
+                construction = assets[ud.name]
+                if ud.family == "technologies":
+                    demand["research"][t] += construction["construction power"]
+                else:
+                    demand["construction"][t] += construction["construction power"] 
+
+
+def construction_emissions(engine, player, t, assets):
+    """calculate emissions of facilites under construction"""       
+    emissions_construction = 0
+    for ud in player.under_construction:
+        if ud.start_time is not None:
+            if ud.suspension_time is None and ud.family != "technologies":
+                construction = assets[ud.name]
+                emissions_construction += construction["construction pollution"] / construction["construction time"]
     add_emissions(engine, player, t, "construction", emissions_construction)
-    # demand from shipment of ressources
+
+def shipment_demand(engine, player, t, demand):
+    """calculate the power consumption for shipments"""
     transport = engine.config[player.id]["transport"]
-    demand_transport = 0
     for shipment in player.shipments:
         if shipment.suspension_time == None:
-            demand_transport += transport["power consumption"] / transport["time"] * shipment.quantity * 3.6
-    demand["transport"][t] = min(demand["transport"][t-1]+0.2*demand_transport, demand_transport) # for smooth demand changes
-    # demand of extraction facilities is calculated in update_ressources()
+            demand["transport"][t] += transport["power consumption"] / transport["time"] * shipment.quantity * 3.6
+
+# calculates the electricity demand of one player
+def calculate_demand(engine, player, t):
+    assets = engine.config[player.id]["assets"]
+    demand = engine.data["current_data"][player.username]["demand"]
+    revenues = engine.data["current_data"][player.username]["revenues"]
+    extraction_facility_demand(engine, player, t, assets, demand)
+    industry_demand_and_revenues(engine, player, t, assets, demand, revenues)
+    construction_demand(player, t, assets, demand)
+    shipment_demand(engine, player, t, demand)
     return sum([demand[i][t] for i in demand])
 
 # calculate generation of a player that doesn't belong to a network
