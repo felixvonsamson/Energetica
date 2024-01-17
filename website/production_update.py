@@ -62,6 +62,18 @@ def update_ressources(engine):
 
     db.session.commit()
 
+def extraction_facility_demand(engine, player, t, assets, demand):
+    player_ressources = engine.data["current_data"][player.username]["ressources"]
+    warehouse_caps = engine.config[player.id]["warehouse_capacities"]
+    for ressource in ressource_to_extraction:
+        facility = ressource_to_extraction[ressource]
+        if getattr(player, facility) > 0:
+            max_warehouse = (warehouse_caps[ressource] - player_ressources[ressource][t-1])
+            max_prod = getattr(player, facility) * assets[facility]["amount produced"]
+            power_factor = 0.2 + 0.8 * min(1, max_warehouse/max_prod)
+            demand[facility][t] = assets[facility]["power consumption"] * getattr(player, facility) * power_factor
+    
+
 # function that updates the electricity generation and storage status for all players according to capacity and external factors
 def update_electricity(engine):
     t = engine.data["current_t"]
