@@ -47,6 +47,7 @@ def get_map():
         return jsonify(hex_list, current_user.tile.id)
 
 
+
 # gets all the player usernames (except it's own) and returns it as a list :
 @api.route("/get_usernames", methods=["GET"])
 def get_usernames():
