@@ -45,7 +45,7 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_map())
         ws.send(rest_get_players())
         ws.send(rest_get_current_player(current_player=g.player))
-        if len(g.player.tile) != 0:
+        if g.player.tile is not None:
             rest_init_ws_post_location(ws)
         if g.player.id not in engine.websocket_dict:
             engine.websocket_dict[g.player.id] = []
@@ -97,7 +97,7 @@ def rest_get_players():
             {
                 "id": player.id,
                 "username": player.username,
-                "tile": player.tile[0].id if len(player.tile) > 0 else None,
+                "tile": player.tile.id if player.tile else None,
             }
             for player in player_list
         ],
@@ -261,7 +261,7 @@ def rest_confirm_location(engine, ws, data):
         existing_player = Player.query.get(location.player_id)
         ws.send(rest_server_alert_location_already_taken(existing_player))
         return
-    elif len(g.player.tile) != 0:
+    elif g.player.tile is not None:
         # Player already has a location
         # This is an invalid state - on the client side - so disconnect them
         ws.close()
@@ -283,7 +283,7 @@ def rest_add_player_location(player):
     JSON string."""
     response = {
         "type": "updatePlayerLocation",
-        "data": {"id": player.id, "tile": player.tile[0].id},
+        "data": {"id": player.id, "tile": player.tile.id},
     }
     return json.dumps(response)
 

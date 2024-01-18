@@ -739,7 +739,7 @@ class Config(object):
     # update mining speeds according to reserves depleation
     def update_resource_extraction(config, player_id):
         player = Player.query.get(player_id)
-        if len(player.tile) == 0:
+        if player.tile is None:
             return
         assets = config.for_player[player_id]["assets"]
         me_factor = (
