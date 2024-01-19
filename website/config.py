@@ -747,22 +747,22 @@ class Config(object):
         )
         assets["coal_mine"]["amount produced"] = (
             full_config["assets"]["coal_mine"]["amount produced"]
-            * player.tile[0].coal
+            * player.tile.coal
             * me_factor
         )
         assets["oil_field"]["amount produced"] = (
             full_config["assets"]["oil_field"]["amount produced"]
-            * player.tile[0].oil
+            * player.tile.oil
             * me_factor
         )
         assets["gas_drilling_site"]["amount produced"] = (
             full_config["assets"]["gas_drilling_site"]["amount produced"]
-            * player.tile[0].gas
+            * player.tile.gas
             * me_factor
         )
         assets["uranium_mine"]["amount produced"] = (
             full_config["assets"]["uranium_mine"]["amount produced"]
-            * player.tile[0].uranium
+            * player.tile.uranium
             * me_factor
         )
 
