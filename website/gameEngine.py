@@ -166,7 +166,7 @@ def state_update_m(engine, app):
             daily_update(engine, app)
         with app.app_context():
             if engine.data["current_t"] % 10 == 1:
-                engine.config.update_mining_productivity()
+                engine.config.update_mining_productivity(config)
                 update_weather(engine)
             update_ressources(engine)
             update_electricity(engine)

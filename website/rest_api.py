@@ -97,7 +97,7 @@ def rest_get_players():
             {
                 "id": player.id,
                 "username": player.username,
-                "tile": player.tile.id if player.tile else None,
+                "tile": player.tile.id if player.tile is not None else None,
             }
             for player in player_list
         ],
