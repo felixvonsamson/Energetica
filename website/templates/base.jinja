@@ -212,12 +212,14 @@
   </nav>
   <div class="version medium">Version : beta 0.6.0</div>
   <div class="main_container tan_green">
-    {% block content %}{% endblock content %}
+    {% block content %}
+    {% endblock content %}
   </div>
 {% endblock base %}
 {% block scripts %}
   <script src="{{ url_for('static', filename='sockets.js') }}"></script>
   <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
   <script src="{{ url_for('static', filename='frontend_data.js') }}"></script>
-  {% block additionnal_script %}{% endblock additionnal_script %}
+  {% block additionnal_script %}
+  {% endblock additionnal_script %}
 {% endblock scripts %}
