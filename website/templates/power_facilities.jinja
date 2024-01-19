@@ -8,7 +8,7 @@
   <div class="flex-row huge title">
     Power facilities
     <div class="pine info_icon_container"
-         onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage }}</div>
+         onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
   </div>
   <div id="info_popup" class="popup hidden green">
     <div class="flex-row margin-small" style="align-items:center;">
@@ -39,7 +39,9 @@
             </div>
             <b class="progressbar-icon">
               {% if facility.suspension_time %}
-                <i class="fa fa-play"></i> {% else %} <i class="fa fa-pause"></i>
+                <i class="fa fa-play"></i>
+              {% else %}
+                <i class="fa fa-pause"></i>
               {% endif %}
             </b>
             <b class="progressbar-icon"><i class="fa fa-times"></i></b>
