@@ -35,13 +35,13 @@
           <div class="toast message medium">
             <i class="fa fa-info-circle info-circle"></i>
             <div class="txt_center">{{ message }}</div>
-            <span onclick="this.parentElement.style.display='none'" class="cross">&times;</span>
+            <span onclick="this.parentElement.style.display='none'" class="cross">×</span>
           </div>
         {% elif category == "error" %}
           <div class="toast error medium">
             <i class="fa fa-exclamation-circle exclamation-circle"></i>
             <div class="txt_center">{{ message }}</div>
-            <span onclick="this.parentElement.style.display='none'" class="cross">&times;</span>
+            <span onclick="this.parentElement.style.display='none'" class="cross">×</span>
           </div>
         {% endif %}
       {% endfor %}
