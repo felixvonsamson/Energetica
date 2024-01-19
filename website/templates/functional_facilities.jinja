@@ -1,15 +1,14 @@
 {% extends "base.jinja" %}
-{% block title %}Functional facilities{% endblock title %}
+{% block title %}
+  Functional facilities
+{% endblock title %}
 {% block content
   %}
   {% set data = all_data["assets"] %}
   <div class="flex-row huge title">
     Functional facilities
     <div class="pine info_icon_container"
-         onclick="document.getElementById('info_popup').classList.remove('hidden');">
-      <img src="{{ url_for('static', filename='images/icons/wiki.png') }}"
-           class="info_icon padding" />
-    </div>
+         onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage }}</div>
   </div>
   <div id="info_popup" class="popup hidden green">
     <div class="flex-row margin-small" style="align-items:center;">
