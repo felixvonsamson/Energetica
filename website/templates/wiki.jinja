@@ -357,7 +357,7 @@
   <p>\(es_i = er_i \times q_i \times 1.4^{ME} \times n_{ef,i} \)</p>
   <p>
     where \(es\) is the extraction speed in tons/h, \(er\) is the extraction rate in 1/h, \(q_i\) is the amount of the
-    resource i in the ground on the players tile, \(ME\) is the level of the technology <a href="/technology#Mineral extraction">mineral extraction</a> and \(n_{ef,i}\) is the number of extraction
+    resource i in the ground on the players tile, \(ME\) is the level of the technology <a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">mineral extraction</a> and \(n_{ef,i}\) is the number of extraction
     facilities for the resource i owned by the player.
   </p>
   <p>
@@ -384,7 +384,7 @@
   </p>
   <p>\( D = D_{base} \times dv(t) \times sv(t) \)</p>
   <p>
-    with \(D_{base}\) the base demand as indicated on the page <a href="/functional_facilities">Functional
+    with \(D_{base}\) the base demand as indicated on the page <a href="{{ url_for('views.functional_facilities') }}">Functional
     facilities</a>, \(dv()\) the daily variations shown in the following graph, \(sv()\) the seasonal variations shown
     in the following graph and \(t\) the in-game date and time.
   </p>
@@ -431,7 +431,7 @@
   <p>
     To add an offer for a specific quantity of a resource at a chosen price, users can click on the "Put on sale"
     button on the market. This offer will be displayed as a new tile on the page. The amount put up for sale is stored
-    in your warehouse but cannot be consumed until sold (visible as "on sale" in the <a href="/production_overview/resources">resource graph</a>).
+    in your warehouse but cannot be consumed until sold (visible as "on sale" in the <a href="{{ url_for('overviews.resources') }}">resource graph</a>).
   </p>
   <p>
     Once another player buys a portion of your offer, you receive the money, and the sold amount is shipped. To remove
@@ -454,7 +454,7 @@
   </p>
   <p>
     where \(t_{ship}\) is the shipment duration in hours, \(t_{base}\) is the base value of shipment duration : 1.39
-    h/tile, \(dist\) is the distance between buyer and seller, \(TT\) is the level of <a href="/technology#Transport technology">transport technology</a>, \(P_{ship}\) is the energy consumed for shipping
+    h/tile, \(dist\) is the distance between buyer and seller, \(TT\) is the level of <a href="{{ url_for('views.technology', _anchor='Transport technology') }}">transport technology</a>, \(P_{ship}\) is the energy consumed for shipping
     in Wh, \(E_{base}\) is the base energy need of shipments : 5 kWh/ton/tile and \(q_{ship}\) is the quantity of
     shipped resources.
   </p>
@@ -573,7 +573,7 @@
     </li>
     <li>
       <strong>Find Market Equilibrium:</strong> Determine the point where the supply and demand curves intersect to
-      find the market quantity and price (red dot on the <a href="/network">market graph</a>).
+      find the market quantity and price (red dot on the <a href="{{ url_for('views.network') }}">market graph</a>).
     </li>
     <li>
       <strong>Transaction:</strong> Capacities below the market price are sold at market price, while demands above
