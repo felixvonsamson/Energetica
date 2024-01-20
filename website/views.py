@@ -100,7 +100,7 @@ def network():
 
 
 @views.route("/power_facilities")
-def energy_facilities():
+def power_facilities():
     return g.render_template_ctx("power_facilities.jinja")
 
 
