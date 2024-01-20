@@ -1,3 +1,9 @@
+{% macro wikiImage() -%}
+  <img src="{{ url_for('static', filename='images/icons/wiki.png') }}"
+       class="info_icon padding"
+       width="91"
+       height="96" />
+{%- endmacro %}
 <!DOCTYPE html>
 <html>
   <head>

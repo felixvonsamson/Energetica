@@ -1,10 +1,4 @@
 {% extends "head.jinja" %}
-{% macro wikiImage() -%}
-  <img src="{{ url_for('static', filename='images/icons/wiki.png') }}"
-       class="info_icon padding"
-       width="91"
-       height="96" />
-{%- endmacro %}
 {% block base %}
   <div class="logo_container flex-row">
     <img src="{{ url_for('static', filename='images/icon.svg') }}"
