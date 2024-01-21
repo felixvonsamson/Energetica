@@ -467,7 +467,7 @@ full_config = {
             "price multiplier": 1.3,
             "construction time": 18000,
             "construction energy": 25000000,
-            "efficiency factor": 0.1,
+            "efficiency_factor": 0.1,
             "requirements": [["laboratory", 1, False], ["mathematics", 1, False]],
         },
         "physics": {
@@ -576,7 +576,7 @@ full_config = {
             "construction time": 28800,
             "construction energy": 200000000,
             "price factor": 1.25,
-            "efficiency factor": 0.9,
+            "efficiency_factor": 0.9,
             "requirements": [
                 ["laboratory", 3, False],
                 ["physics", 0, False],
@@ -811,12 +811,12 @@ class Config(object):
                 # update ressource consumption and pollution (thermodynamics)
                 assets[asset]["amount consumed"] /= (
                     1
-                    + assets["thermodynamics"]["efficiency factor"]
+                    + assets["thermodynamics"]["efficiency_factor"]
                     * player.thermodynamics
                 )
                 assets[asset]["pollution"] /= (
                     1
-                    + assets["thermodynamics"]["efficiency factor"]
+                    + assets["thermodynamics"]["efficiency_factor"]
                     * player.thermodynamics
                 )
 
@@ -824,17 +824,17 @@ class Config(object):
                 # special case for combined cycle (thermodynamics)
                 assets[asset]["amount consumed"][0] /= (
                     1
-                    + assets["thermodynamics"]["efficiency factor"]
+                    + assets["thermodynamics"]["efficiency_factor"]
                     * player.thermodynamics
                 )
                 assets[asset]["amount consumed"][1] /= (
                     1
-                    + assets["thermodynamics"]["efficiency factor"]
+                    + assets["thermodynamics"]["efficiency_factor"]
                     * player.thermodynamics
                 )
                 assets[asset]["pollution"] /= (
                     1
-                    + assets["thermodynamics"]["efficiency factor"]
+                    + assets["thermodynamics"]["efficiency_factor"]
                     * player.thermodynamics
                 )
 
@@ -931,7 +931,7 @@ class Config(object):
             if asset in ["lithium_ion_batteries", "solid_state_batteries"]:
                 # update roundtrip efficiencies (chemistry)
                 assets[asset]["efficiency"] = 1 - (1 - assets[asset]["efficiency"]) * (
-                    assets["chemistry"]["efficiency factor"] ** player.chemistry
+                    assets["chemistry"]["efficiency_factor"] ** player.chemistry
                 )
 
             if asset == "hydrogen_storage":

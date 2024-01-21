@@ -65,7 +65,7 @@ function change_info(name) {
     let fuel_use = tile.querySelector("#fuel_use");
     let pollution = tile.querySelector("#pollution");
     let Efficiency_MS = tile.querySelector("#Efficiency_MS");
-    let reduction = config[name]["efficiency factor"] / (1 + config[name]["efficiency factor"] * ud[name]["lvl_future"]) * 100;
+    let reduction = config[name]["efficiency_factor"] / (1 + config[name]["efficiency_factor"] * ud[name]["lvl_future"]) * 100;
     fuel_use.innerHTML = "-" + reduction.toFixed(1) + "%";
     pollution.innerHTML = "-" + reduction.toFixed(1) + "%";
     let old_E_MS = 1 - (1 - config["molten_salt"]["efficiency"]) * 0.9 ** (ud[name]["lvl_future"] - ud[name]["lvl_at"]);
@@ -75,10 +75,10 @@ function change_info(name) {
   else if (name == "chemistry") {
     let E_Li_ion = tile.querySelector("#E_Li_ion");
     let E_SS = tile.querySelector("#E_SS");
-    let old_E_Li_ion = 1 - (1 - config["lithium_ion_batteries"]["efficiency"]) * config[name]["efficiency factor"] ** (ud[name]["lvl_future"] - ud[name]["lvl_at"]);
+    let old_E_Li_ion = 1 - (1 - config["lithium_ion_batteries"]["efficiency"]) * config[name]["efficiency_factor"] ** (ud[name]["lvl_future"] - ud[name]["lvl_at"]);
     let new_E_Li_ion = 10 / old_E_Li_ion - 10;
     E_Li_ion.innerHTML = "+" + new_E_Li_ion.toFixed(2) + "%";
-    let old_E_SS = 1 - (1 - config["solid_state_batteries"]["efficiency"]) * config[name]["efficiency factor"] ** (ud[name]["lvl_future"] - ud[name]["lvl_at"]);
+    let old_E_SS = 1 - (1 - config["solid_state_batteries"]["efficiency"]) * config[name]["efficiency_factor"] ** (ud[name]["lvl_future"] - ud[name]["lvl_at"]);
     let new_E_SS = 10 / old_E_SS - 10;
     E_SS.innerHTML = "+" + new_E_SS.toFixed(2) + "%";
   }
