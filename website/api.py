@@ -269,7 +269,8 @@ def get_scoreboard():
 @api.route("choose_location", methods=["POST"])
 def choose_location():
     """this function is executed when a player choses a location"""
-    selected_id = int(request.args.get("selected_id"))
+    json = request.get_json()
+    selected_id = json["selected_id"]
     location = Hex.query.get(selected_id + 1)
     confirm_location_response = confirm_location(
         engine=g.engine, player=current_user, location=location

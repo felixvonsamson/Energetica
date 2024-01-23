@@ -537,9 +537,7 @@ function mousePressed_monitor() {
     ) {
         if (validate.is_clicked()) {
             if (selected_id != null) {
-                fetch(`/choose_location?selected_id=${selected_id}`, {
-                    method: "POST",
-                })
+                send_form("/choose_location", { selected_id: selected_id })
                     .then((response) => {
                         response.json().then((raw_data) => {
                             if (raw_data["response"] == "locationOccupied") {

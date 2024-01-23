@@ -12,16 +12,9 @@ function change_prices() {
             prices[input.id] = float(input.value);
         }
     });
-    fetch("/change_network_prices", {
-        method: "POST",
-        headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            prices: prices,
-            SCPs: SCPs,
-        }),
+    send_form("/change_network_prices", {
+        prices: prices,
+        SCPs: SCPs,
     })
         .then((response) => {
             response.json().then((raw_data) => {

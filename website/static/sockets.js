@@ -2,6 +2,17 @@
 This code contains the main functions that communicate with the server (client side)
 */
 
+function send_form(endpoint, body) {
+    return fetch(endpoint, {
+        method: "POST",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+    });
+}
+
 socket.on("connect", function () {
     console.log("Connected to server");
     socket.emit("give_identity");
