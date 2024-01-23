@@ -340,6 +340,5 @@ def confirm_location(engine, player, location):
     location.player_id = player.id
     db.session.commit()
     rest_notify_player_location(engine, player)
-    engine.refresh()
     print(f"{player.username} chose the location {location.id}")
     return {"response": "success"}

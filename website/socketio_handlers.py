@@ -22,8 +22,9 @@ def add_handlers(socketio, engine):
     @socketio.on("choose_location")
     def choose_location(id):
         location = Hex.query.get(id + 1)
-        player = current_user
-        confirm_location_response = confirm_location(engine, player, location)
+        confirm_location_response = confirm_location(
+            engine=engine, player=current_user, location=location
+        )
         if confirm_location_response["response"] == "locationOccupied":
             existing_player = Player.query.get(location.player_id)
             current_user.emit(
