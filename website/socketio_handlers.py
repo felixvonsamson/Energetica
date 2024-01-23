@@ -26,21 +26,25 @@ def add_handlers(socketio, engine):
         confirm_location_response = confirm_location(engine, player, location)
         if confirm_location_response["response"] == "locationOccupied":
             existing_player = Player.query.get(location.player_id)
-            current_user.emit("errorMessage", f"Location already taken by {existing_player.username}")
+            current_user.emit(
+                "errorMessage",
+                f"Location already taken by {existing_player.username}",
+            )
             return
         if confirm_location_response["response"] == "choiceUnmodifiable":
             current_user.emit(
                 "errorMessage", "You already chose a location. Please refresh"
             )
             return
-        
 
     # this function is executed when a player creates a new group chat
     @socketio.on("create_group_chat")
     def create_group_chat(title, group):
         groupMembers = [current_user]
         for username in group:
-            groupMembers.append(Player.query.filter_by(username=username).first())
+            groupMembers.append(
+                Player.query.filter_by(username=username).first()
+            )
         if check_existing_chats(groupMembers):
             current_user.emit("errorMessage", "Chat already exists")
             return
@@ -56,7 +60,9 @@ def add_handlers(socketio, engine):
     @socketio.on("new_message")
     def new_message(message, chat_id):
         chat = Chat.query.filter_by(id=chat_id).first()
-        new_message = Message(text=message, player_id=current_user.id, chat_id=chat.id)
+        new_message = Message(
+            text=message, player_id=current_user.id, chat_id=chat.id
+        )
         db.session.add(new_message)
         db.session.commit()
         msg = f"<div>{current_user.username} : {message}</div>"
@@ -75,7 +81,9 @@ def add_handlers(socketio, engine):
         if facility in ["small_water_dam", "large_water_dam", "watermill"]:
             ud = Under_construction.query.filter_by(name=facility).count()
             if current_user.tile.hydro <= getattr(current_user, facility) + ud:
-                current_user.emit("errorMessage", "No suitable location available")
+                current_user.emit(
+                    "errorMessage", "No suitable location available"
+                )
                 return
         if family in ["functional_facilities", "technologies"]:
             ud_count = Under_construction.query.filter_by(
@@ -97,14 +105,20 @@ def add_handlers(socketio, engine):
             )
             if family == "functional_facilities":
                 start_time = (
-                    None if current_user.construction_workers == 0 else time.time()
+                    None
+                    if current_user.construction_workers == 0
+                    else time.time()
                 )
             else:
-                start_time = None if current_user.lab_workers == 0 else time.time()
+                start_time = (
+                    None if current_user.lab_workers == 0 else time.time()
+                )
         else:  # power facitlies, storage facilities, extractions facilities
             current_user.money -= assets[facility]["price"]
             duration = assets[facility]["construction time"]
-            start_time = None if current_user.construction_workers == 0 else time.time()
+            start_time = (
+                None if current_user.construction_workers == 0 else time.time()
+            )
         updates = [("money", display_money(current_user.money))]
         engine.update_fields(updates, [current_user])
         new_facility = Under_construction(

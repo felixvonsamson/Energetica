@@ -7,7 +7,11 @@ from flask_login import login_required, current_user
 import pickle
 from pathlib import Path
 import numpy as np
-from .utils import put_resource_on_market, buy_resource_from_market, data_init_network
+from .utils import (
+    put_resource_on_market,
+    buy_resource_from_market,
+    data_init_network,
+)
 from . import db
 from .database import Hex, Player, Chat, Network, Under_construction
 
@@ -45,7 +49,6 @@ def get_map():
         return jsonify(hex_list)
     else:
         return jsonify(hex_list, current_user.tile.id)
-
 
 
 # gets all the player usernames (except it's own) and returns it as a list :
@@ -145,7 +148,9 @@ def get_chart_data():
                     * assets[facility]["amount produced"]
                     * 60
                 )
-                on_sale[ressource] = getattr(current_user, ressource + "_on_sale")
+                on_sale[ressource] = getattr(
+                    current_user, ressource + "_on_sale"
+                )
             return jsonify(
                 g.engine.data["current_t"],
                 data[table],
@@ -179,11 +184,16 @@ def get_market_data():
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
             market_data = pickle.load(file)
-            market_data["capacities"] = market_data["capacities"].to_dict(orient="list")
+            market_data["capacities"] = market_data["capacities"].to_dict(
+                orient="list"
+            )
             market_data["capacities"]["player"] = [
-                player.username for player in market_data["capacities"]["player"]
+                player.username
+                for player in market_data["capacities"]["player"]
             ]
-            market_data["demands"] = market_data["demands"].to_dict(orient="list")
+            market_data["demands"] = market_data["demands"].to_dict(
+                orient="list"
+            )
             market_data["demands"]["player"] = [
                 player.username for player in market_data["demands"]["player"]
             ]
@@ -194,9 +204,7 @@ def get_market_data():
     else:
         market_data = None
     timescale = request.args.get("timescale")
-    filename_prices = (
-        f"instance/network_data/{current_user.network.name}/prices/{timescale}.pck"
-    )
+    filename_prices = f"instance/network_data/{current_user.network.name}/prices/{timescale}.pck"
     with open(filename_prices, "rb") as file:
         prices = pickle.load(file)
     return jsonify(
@@ -246,7 +254,12 @@ def get_scoreboard():
     players = Player.query.all()
     for player in players:
         scoreboard_data.append(
-            [player.username, player.money, player.average_revenues, player.emissions]
+            [
+                player.username,
+                player.money,
+                player.average_revenues,
+                player.emissions,
+            ]
         )
     return jsonify(scoreboard_data)
 
@@ -278,7 +291,9 @@ def join_network():
     current_user.network = network
     db.session.commit()
     flash(f"You joined the network {network_name}", category="message")
-    print(f"{current_user.username} joined the network {current_user.network.name}")
+    print(
+        f"{current_user.username} joined the network {current_user.network.name}"
+    )
     return redirect("/network", code=303)
 
 
@@ -287,7 +302,9 @@ def create_network():
     """This endpoint is used when a player creates a network"""
     network_name = request.form.get("network_name")
     if len(network_name) < 3 or len(network_name) > 40:
-        flash("Network name must be between 3 and 40 characters", category="error")
+        flash(
+            "Network name must be between 3 and 40 characters", category="error"
+        )
         return redirect("/network", code=303)
     if Network.query.filter_by(name=network_name).first() is not None:
         flash("A network with this name already exists", category="error")
@@ -316,13 +333,19 @@ def create_network():
 def leave_network():
     """this function is executed when a player leaves his network"""
     flash(f"You left network {current_user.network.name}", category="message")
-    print(f"{current_user.username} left the network {current_user.network.name}")
+    print(
+        f"{current_user.username} left the network {current_user.network.name}"
+    )
     network = current_user.network
     current_user.network_id = None
-    remaining_members_count = Player.query.filter_by(network_id=network.id).count()
+    remaining_members_count = Player.query.filter_by(
+        network_id=network.id
+    ).count()
     # delete network if it is empty
     if remaining_members_count == 0:
-        print(f"The network {network.name} has been deleted because it was empty")
+        print(
+            f"The network {network.name} has been deleted because it was empty"
+        )
         db.session.delete(network)
     db.session.commit()
     return redirect("/network", code=303)
