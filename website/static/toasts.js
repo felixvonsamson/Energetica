@@ -1,23 +1,7 @@
 
-socket.on('infoMessage', function(message) {
-    document.getElementById('toasts').innerHTML += `
-        <div class="toast message medium">
-            <i class="fa fa-info-circle info-circle"></i>
-            <div class="txt_center">${message}</div>
-            <span onclick="this.parentElement.style.display='none'" class="cross">&times;</span>
-        </div>
-        `;
-});
+socket.on('infoMessage', addToast);
 
-socket.on('errorMessage', function(message) {
-    document.getElementById('toasts').innerHTML += `
-        <div class="toast error medium">
-            <i class="fa fa-exclamation-circle exclamation-circle"></i>
-            <div class="txt_center">${message}</div>
-            <span onclick="this.parentElement.style.display='none'" class="cross">&times;</span>
-        </div>
-        `;
-});
+socket.on('errorMessage', addError);
 
 function addToast(message) {
     document.getElementById('toasts').innerHTML += `
@@ -27,4 +11,14 @@ function addToast(message) {
             <span onclick="this.parentElement.style.display='none'" class="cross">&times;</span>
         </div>
         `;
-  }
+}
+
+function addError(message) {
+    document.getElementById('toasts').innerHTML += `
+        <div class="toast error medium">
+            <i class="fa fa-exclamation-circle exclamation-circle"></i>
+            <div class="txt_center">${message}</div>
+            <span onclick="this.parentElement.style.display='none'" class="cross">&times;</span>
+        </div>
+        `;
+}

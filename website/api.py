@@ -11,6 +11,7 @@ from .utils import (
     put_resource_on_market,
     buy_resource_from_market,
     data_init_network,
+    confirm_location,
 )
 from . import db
 from .database import Hex, Player, Chat, Network, Under_construction
@@ -262,6 +263,17 @@ def get_scoreboard():
             ]
         )
     return jsonify(scoreboard_data)
+
+
+@api.route("choose_location", methods=["POST"])
+def choose_location():
+    """this function is executed when a player choses a location"""
+    selected_id = int(request.args.get("selected_id"))
+    location = Hex.query.get(selected_id + 1)
+    confirm_location_response = confirm_location(
+        engine=g.engine, player=current_user, location=location
+    )
+    return jsonify(confirm_location_response)
 
 
 @api.route("/put_resource_on_sale", methods=["POST"])

@@ -419,9 +419,27 @@ function mousePressed_monitor() {
   if (mouseX > width / 2 + w * (size_param + 0.5) | mouseX < width / 2 - w * (size_param + 0.5)) {
     if (validate.is_clicked()) {
       if (selected_id != null) {
-        socket.emit("choose_location", selected_id);
+        fetch(`/choose_location?selected_id=${selected_id}`, { method: "POST" })
+          .then((response) => {
+            response.json()
+              .then((raw_data) => {
+                console.log(raw_data);
+                if (raw_data["response"] == "locationOccupied") {
+                  addError("This location is already occupied!");
+                  setTimeout(function () {
+                    location.reload();
+                  }, 1000);
+                } else {
+                  // success or choiceUnmodifiable
+                  window.location.href = "/home";
+                }
+              })
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
       } else {
-        alert("No location has been selected");
+        addError("No location has been selected");
       }
     }
     for (let i = 0; i < buttons.length; i++) {
@@ -471,7 +489,7 @@ function mousePressed_smartphone() {
       if (selected_id != null) {
         socket.emit("choose_location", selected_id);
       } else {
-        alert("No location has been selected");
+        addError("No location has been selected!");
       }
     }
     for (let i = 0; i < buttons.length; i++) {

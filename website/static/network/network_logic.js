@@ -91,7 +91,7 @@ function addPlayer() {
     document.querySelector(".invited_players").appendChild(groupMember);
     input.value = "";
   } else {
-    alert("This player is already in the list or doesn't exist");
+    addError("This player is already in the list or doesn't exist");
   }
 }
 

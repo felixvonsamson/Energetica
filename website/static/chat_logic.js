@@ -5,7 +5,7 @@ This code creates a list of suggestions when typing names in a field
 
 let active_chat = 1;
 let sortedNames;
-let group=[];
+let group = [];
 
 fetch("/get_usernames") // retrieves list of all names using api.py
   .then((response) => response.json())
@@ -46,7 +46,7 @@ input2.addEventListener("input", (e) => {
   removeElements();
   for (let i of sortedNames) {
     //convert input to lowercase and compare with each string
-    if (group.includes(i)){
+    if (group.includes(i)) {
       continue;
     }
     if (
@@ -86,18 +86,18 @@ function removeElements() {
 function addPlayer() {
   let player = input2.value;
   //add player to the goup members only if they actually exist
-  if(sortedNames.includes(player) && !group.includes(player)){
+  if (sortedNames.includes(player) && !group.includes(player)) {
     group.push(player);
     let groupMember = document.createElement("li");
     groupMember.classList.add("group_member");
     groupMember.style.cursor = "pointer";
-    groupMember.setAttribute("id","groupMember_" + player); //so that they can be removed afretwards
+    groupMember.setAttribute("id", "groupMember_" + player); //so that they can be removed afretwards
     groupMember.setAttribute("onclick", "removePlayer('" + player + "')");
     groupMember.innerHTML = player;
     document.querySelector(".group_members").appendChild(groupMember);
     input2.value = "";
-  }else{
-    alert("This player is already in the list or doesn't exist");
+  } else {
+    addError("This player is already in the list or doesn't exist");
   }
 }
 
@@ -109,24 +109,24 @@ function removePlayer(name) {
 
 function createGroupChat() {
   let title = document.getElementById("chat_title").value;
-  if (title.length == 0 || title.length>25){
-    alert("The chat title cannot be empty and cannot have more than 25 characters");
+  if (title.length == 0 || title.length > 25) {
+    addError("The chat title cannot be empty and cannot have more than 25 characters");
     return;
   }
-  if (group.length == 0){
-    alert("The chat has to have at least 2 members");
+  if (group.length == 0) {
+    addError("The chat has to have at least 2 members");
     return;
   }
   socket.emit('create_group_chat', title, group);
 }
 
-function openChat(chatID){
+function openChat(chatID) {
   active_chat = chatID;
   let html = ``;
-  fetch(`/get_chat?chatID=${chatID}`) 
+  fetch(`/get_chat?chatID=${chatID}`)
     .then((response) => response.json())
     .then((data) => {
-      for(let i=0; i<Math.min(25,data.length); i++){
+      for (let i = 0; i < Math.min(25, data.length); i++) {
         html += `<div>${data[i][0]} : ${data[i][1]}</div>`;
       }
       document.getElementById('messages_field').innerHTML = html;
@@ -134,12 +134,12 @@ function openChat(chatID){
     .catch((error) => {
       console.log(error);
       console.error("Error:", error);
-  });
+    });
 }
 
-function sendMessage(){
+function sendMessage() {
   let message = document.getElementById("new_message").value;
-  if(message.length == 0){
+  if (message.length == 0) {
     return;
   }
   document.getElementById("new_message").value = "";
