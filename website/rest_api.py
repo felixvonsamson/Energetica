@@ -68,6 +68,11 @@ def rest_init_ws_post_location(ws):
     ws.send(rest_get_power_facilities())
 
 
+# The following methods generate messages to be sent over websocket connections.
+# These are returned in the form of JSON formatted strings. See the
+# `ServerMessage` enum in the Xcode project.
+
+
 def rest_get_map():
     """Gets the map data from the database and returns it as a JSON string as a
     dictionary of arrays."""
@@ -108,6 +113,16 @@ def rest_get_players():
 def rest_get_current_player(current_player):
     """Gets the current player's id and returns it as a JSON string."""
     response = {"type": "getCurrentPlayer", "data": current_player.id}
+    return json.dumps(response)
+
+
+def rest_add_player_location(player):
+    """Informs the client that a player has chosen a location, packaged as a
+    JSON string."""
+    response = {
+        "type": "updatePlayerLocation",
+        "data": {"id": player.id, "tile": player.tile.id},
+    }
     return json.dumps(response)
 
 
@@ -276,16 +291,6 @@ def rest_confirm_location(engine, ws, data):
 
 
 # WebSocket methods, hooked into engine states & events
-
-
-def rest_add_player_location(player):
-    """Informs the client that a player has chosen a location, packaged as a
-    JSON string."""
-    response = {
-        "type": "updatePlayerLocation",
-        "data": {"id": player.id, "tile": player.tile.id},
-    }
-    return json.dumps(response)
 
 
 def rest_notify_player_location(engine, player):
