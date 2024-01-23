@@ -18,26 +18,6 @@ def add_handlers(socketio, engine):
         player.sid = request.sid
         db.session.commit()
 
-    # this function is executed when a player choses a tile
-    @socketio.on("choose_location")
-    def choose_location(id):
-        location = Hex.query.get(id + 1)
-        confirm_location_response = confirm_location(
-            engine=engine, player=current_user, location=location
-        )
-        if confirm_location_response["response"] == "locationOccupied":
-            existing_player = Player.query.get(location.player_id)
-            current_user.emit(
-                "errorMessage",
-                f"Location already taken by {existing_player.username}",
-            )
-            return
-        if confirm_location_response["response"] == "choiceUnmodifiable":
-            current_user.emit(
-                "errorMessage", "You already chose a location. Please refresh"
-            )
-            return
-
     # this function is executed when a player creates a new group chat
     @socketio.on("create_group_chat")
     def create_group_chat(title, group):
