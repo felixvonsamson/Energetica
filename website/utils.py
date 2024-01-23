@@ -23,14 +23,16 @@ def flash_error(msg):
 def add_asset(player, facility):
     setattr(player, facility, getattr(player, facility) + 1)
     current_app.config["engine"].config.update_config_for_user(player.id)
-    print(f"{player.username} has finished the construction of facility {facility}")
+    print(
+        f"{player.username} has finished the construction of facility {facility}"
+    )
 
 
 # this function is executed when a resource shippment arrives :
 def store_import(player, resource, quantity):
-    max_cap = current_app.config["engine"].config[player.id]["warehouse_capacities"][
-        resource
-    ]
+    max_cap = current_app.config["engine"].config[player.id][
+        "warehouse_capacities"
+    ][resource]
     if getattr(player, resource) + quantity > max_cap:
         setattr(player, resource, max_cap)
         # excess ressources are stored in the ground
@@ -58,7 +60,8 @@ def display_money(price):
 def check_existing_chats(participants):
     participant_ids = [participant.id for participant in participants]
     conditions = [
-        Chat.participants.any(id=participant_id) for participant_id in participant_ids
+        Chat.participants.any(id=participant_id)
+        for participant_id in participant_ids
     ]
     existing_chats = Chat.query.filter(*conditions)
     for chat in existing_chats:
@@ -75,15 +78,17 @@ def update_weather(engine):
     try:
         response = requests.get(url_wind)
         if response.status_code == 200:
-            windspeed = json.loads(response.content)["features"][107]["properties"][
-                "value"
-            ]
+            windspeed = json.loads(response.content)["features"][107][
+                "properties"
+            ]["value"]
             interpolation = np.linspace(
                 engine.data["current_windspeed"][t - 1], windspeed, 11
             )
             engine.data["current_windspeed"][t : t + 10] = interpolation[1:]
         else:
-            print("Failed to fetch the file. Status code:", response.status_code)
+            print(
+                "Failed to fetch the file. Status code:", response.status_code
+            )
             engine.data["current_windspeed"][t : t + 10] = [
                 engine.data["current_windspeed"][t - 1]
             ] * 10
@@ -96,15 +101,17 @@ def update_weather(engine):
     try:
         response = requests.get(url_irr)
         if response.status_code == 200:
-            irradiation = json.loads(response.content)["features"][65]["properties"][
-                "value"
-            ]
+            irradiation = json.loads(response.content)["features"][65][
+                "properties"
+            ]["value"]
             interpolation = np.linspace(
                 engine.data["current_irradiation"][t - 1], irradiation, 11
             )
             engine.data["current_irradiation"][t : t + 10] = interpolation[1:]
         else:
-            print("Failed to fetch the file. Status code:", response.status_code)
+            print(
+                "Failed to fetch the file. Status code:", response.status_code
+            )
             engine.data["current_irradiation"][t : t + 10] = [
                 engine.data["current_irradiation"][t - 1]
             ] * 10
@@ -135,7 +142,8 @@ def save_past_data_threaded(app, engine, new_data, network_data):
                 past_data = {}
                 for timescale in ["5_days", "month", "6_months"]:
                     with open(
-                        f"instance/player_data/{player.username}/{timescale}.pck", "rb"
+                        f"instance/player_data/{player.username}/{timescale}.pck",
+                        "rb",
                     ) as file:
                         past_data[timescale] = pickle.load(file)
 
@@ -146,24 +154,29 @@ def save_past_data_threaded(app, engine, new_data, network_data):
                             new_data[player.username][category][element]
                         )
                         new_5_days = np.mean(new_array.reshape(-1, 5), axis=1)
-                        past_data["5_days"][category][element] = past_data["5_days"][
-                            category
-                        ][element][288:]
-                        past_data["5_days"][category][element].extend(new_5_days)
+                        past_data["5_days"][category][element] = past_data[
+                            "5_days"
+                        ][category][element][288:]
+                        past_data["5_days"][category][element].extend(
+                            new_5_days
+                        )
                         new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
-                        past_data["month"][category][element] = past_data["month"][
-                            category
-                        ][element][48:]
+                        past_data["month"][category][element] = past_data[
+                            "month"
+                        ][category][element][48:]
                         past_data["month"][category][element].extend(new_month)
                         new_6_months = np.mean(new_month.reshape(-1, 6), axis=1)
                         past_data["6_months"][category][element] = past_data[
                             "6_months"
                         ][category][element][8:]
-                        past_data["6_months"][category][element].extend(new_6_months)
+                        past_data["6_months"][category][element].extend(
+                            new_6_months
+                        )
 
                 for timescale in past_data:
                     with open(
-                        f"instance/player_data/{player.username}/{timescale}.pck", "wb"
+                        f"instance/player_data/{player.username}/{timescale}.pck",
+                        "wb",
                     ) as file:
                         pickle.dump(past_data[timescale], file)
 
@@ -173,7 +186,9 @@ def save_past_data_threaded(app, engine, new_data, network_data):
                 network_dir = f"instance/network_data/{network.name}/charts/"
                 files = os.listdir(network_dir)
                 for filename in files:
-                    t_value = int(filename.split("market_t")[1].split(".pck")[0])
+                    t_value = int(
+                        filename.split("market_t")[1].split(".pck")[0]
+                    )
                     if t_value < engine.data["total_t"] - 1440:
                         os.remove(os.path.join(network_dir, filename))
 
@@ -189,13 +204,19 @@ def save_past_data_threaded(app, engine, new_data, network_data):
                 for element in past_data["5_days"]:
                     new_array = np.array(network_data[network.name][element])
                     new_5_days = np.mean(new_array.reshape(-1, 5), axis=1)
-                    past_data["5_days"][element] = past_data["5_days"][element][288:]
+                    past_data["5_days"][element] = past_data["5_days"][element][
+                        288:
+                    ]
                     past_data["5_days"][element].extend(new_5_days)
                     new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
-                    past_data["month"][element] = past_data["month"][element][48:]
+                    past_data["month"][element] = past_data["month"][element][
+                        48:
+                    ]
                     past_data["month"][element].extend(new_month)
                     new_6_months = np.mean(new_month.reshape(-1, 6), axis=1)
-                    past_data["6_months"][element] = past_data["6_months"][element][8:]
+                    past_data["6_months"][element] = past_data["6_months"][
+                        element
+                    ][8:]
                     past_data["6_months"][element].extend(new_6_months)
 
                 for timescale in past_data:
@@ -220,7 +241,10 @@ def data_init_network(length):
 
 def put_resource_on_market(player, resource, quantity, price):
     """Put an offer on the resource market"""
-    if getattr(player, resource) - getattr(player, resource + "_on_sale") < quantity:
+    if (
+        getattr(player, resource) - getattr(player, resource + "_on_sale")
+        < quantity
+    ):
         flash_error(f"You have not enough {resource} available")
     else:
         setattr(
@@ -273,7 +297,9 @@ def buy_resource_from_market(player, quantity, sale_id):
         player.update_resources()
         sale.player.update_resources()
         setattr(
-            sale.player, sale.resource, getattr(sale.player, sale.resource) - quantity
+            sale.player,
+            sale.resource,
+            getattr(sale.player, sale.resource) - quantity,
         )
         setattr(
             sale.player,

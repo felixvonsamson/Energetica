@@ -35,7 +35,9 @@ def add_sock_handlers(sock, engine):
     def check_user():
         """Sets up variables used by endpoints."""
         g.engine = current_app.config["engine"]
-        g.player = Player.query.filter_by(username=basic_auth.current_user()).first()
+        g.player = Player.query.filter_by(
+            username=basic_auth.current_user()
+        ).first()
 
     # Main WebSocket endpoint for Swift client
     @sock.route("/rest_ws", bp=rest_api)
@@ -141,7 +143,9 @@ def rest_get_charts():
     def industry_data_for(category, subcategory):
         return combine_file_data_and_engine_data(
             file_data[category][subcategory],
-            g.engine.data["current_data"][g.player.username][category][subcategory],
+            g.engine.data["current_data"][g.player.username][category][
+                subcategory
+            ],
         )
 
     subcategories = {
