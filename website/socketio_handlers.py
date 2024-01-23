@@ -2,11 +2,10 @@
 This code contains the main functions that communicate with the server (server side)
 """
 
-import time
-from flask import request, current_app
+from flask import request
 from flask_login import current_user
-from .database import Player, Hex, Under_construction, Chat, Message
-from .utils import confirm_location, display_money, check_existing_chats
+from .database import Player, Chat, Message
+from .utils import check_existing_chats
 from . import db
 
 
