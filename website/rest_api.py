@@ -6,7 +6,7 @@ from flask import Blueprint, current_app, g
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
 
-from website.utils import confirm_location
+import website.utils
 
 from .database import Hex, Player
 
@@ -268,7 +268,7 @@ def rest_notify_confirm_location_response(confirm_location_response):
 def rest_confirm_location(engine, ws, data):
     """Interpret message sent from a client when they chose a location."""
     cell_id = data
-    confirm_location_response = confirm_location(
+    confirm_location_response = website.utils.confirm_location(
         engine=g.engine, player=g.player, location=Hex.query.get(cell_id)
     )
     ws.send(rest_notify_confirm_location_response(confirm_location_response))

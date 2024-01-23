@@ -11,7 +11,7 @@ import os
 import time
 import numpy as np
 
-from website.rest_api import rest_notify_player_location
+from .rest_api import rest_notify_player_location
 from .database import Player, Network, Resource_on_sale, Shipment, Chat
 from . import db
 from flask import current_app, flash
