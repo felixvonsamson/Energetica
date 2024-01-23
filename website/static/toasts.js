@@ -1,10 +1,9 @@
+socket.on("infoMessage", addToast);
 
-socket.on('infoMessage', addToast);
-
-socket.on('errorMessage', addError);
+socket.on("errorMessage", addError);
 
 function addToast(message) {
-    document.getElementById('toasts').innerHTML += `
+    document.getElementById("toasts").innerHTML += `
         <div class="toast message medium">
             <i class="fa fa-info-circle info-circle"></i>
             <div class="txt_center">${message}</div>
@@ -14,7 +13,7 @@ function addToast(message) {
 }
 
 function addError(message) {
-    document.getElementById('toasts').innerHTML += `
+    document.getElementById("toasts").innerHTML += `
         <div class="toast error medium">
             <i class="fa fa-exclamation-circle exclamation-circle"></i>
             <div class="txt_center">${message}</div>
