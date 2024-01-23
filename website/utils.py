@@ -10,6 +10,8 @@ import pickle
 import os
 import time
 import numpy as np
+
+from website.rest_api import rest_notify_player_location
 from .database import Player, Network, Resource_on_sale, Shipment, Chat
 from . import db
 from flask import current_app, flash
@@ -321,3 +323,23 @@ def buy_resource_from_market(player, quantity, sale_id):
         )
         db.session.add(new_shipment)
         db.session.commit()
+
+
+def confirm_location(engine, player, location):
+    """This function is calle when a player choses a location. It returns either
+    success or an explanatory error message in the form of a dictionary.
+    It is called when a web client uses the choose_location socket.io endpoint,
+    or the REST websocket API."""
+    if location.player_id is not None:
+        # Location already taken
+        return {"response": "locationOccupied", "by": location.player_id}
+    if player.tile is not None:
+        # Player has already chosen a location and cannot chose again
+        return {"response": "choiceUnmodifiable"}
+    # Checks have succeeded, proceed
+    location.player_id = player.id
+    db.session.commit()
+    rest_notify_player_location(engine, player)
+    engine.refresh()
+    print(f"{player.username} chose the location {location.id}")
+    return {"response": "success"}

@@ -6,9 +6,8 @@ import time
 from flask import request, current_app
 from flask_login import current_user
 from .database import Player, Hex, Under_construction, Chat, Message
-from .utils import display_money, check_existing_chats
+from .utils import confirm_location, display_money, check_existing_chats
 from . import db
-from .rest_api import rest_notify_player_location
 
 
 def add_handlers(socketio, engine):
@@ -23,18 +22,18 @@ def add_handlers(socketio, engine):
     @socketio.on("choose_location")
     def choose_location(id):
         location = Hex.query.get(id + 1)
-        if location.player_id is not None:
-            current_user.emit("errorMessage", "Location already taken")
-        elif current_user.tile is not None:
+        player = current_user
+        confirm_location_response = confirm_location(engine, player, location)
+        if confirm_location_response["response"] == "locationOccupied":
+            existing_player = Player.query.get(location.player_id)
+            current_user.emit("errorMessage", f"Location already taken by {existing_player.username}")
+            return
+        if confirm_location_response["response"] == "choiceUnmodifiable":
             current_user.emit(
                 "errorMessage", "You already chose a location. Please refresh"
             )
-        else:
-            location.player_id = current_user.id
-            db.session.commit()
-            rest_notify_player_location(engine, current_user)
-            engine.refresh()
-            print(f"{current_user.username} chose the location {location.id}")
+            return
+        
 
     # this function is executed when a player creates a new group chat
     @socketio.on("create_group_chat")

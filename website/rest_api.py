@@ -6,7 +6,8 @@ from flask import Blueprint, current_app, g
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
 
-from . import db
+from website.utils import confirm_location
+
 from .database import Hex, Player
 
 rest_api = Blueprint("rest_api", __name__)
@@ -252,20 +253,13 @@ def rest_get_power_facilities():
     return json.dumps(response)
 
 
-## Alerts
-
-
-def rest_server_alert(alert):
-    """Creates a JSON string from the alert argument which once sent will make
-    the client show an alert on screen."""
-    response = {"type": "sendServerAlert", "data": alert}
+def rest_notify_confirm_location_response(confirm_location_response):
+    """Informs the client of the result of them confirming map location."""
+    response = {
+        "type": "notifyConfirmLocationResponse",
+        "data": confirm_location_response,
+    }
     return json.dumps(response)
-
-
-def rest_server_alert_location_already_taken(by_player):
-    """Creates an alert to be shown on the client."""
-    alert = {"message": "locationAlreadyTaken", "by_player": by_player}
-    return rest_server_alert(alert)
 
 
 ## Client Messages
@@ -274,23 +268,11 @@ def rest_server_alert_location_already_taken(by_player):
 def rest_confirm_location(engine, ws, data):
     """Interpret message sent from a client when they chose a location."""
     cell_id = data
-    location = Hex.query.get(cell_id)
-    if location.player_id is not None:
-        # Location already taken
-        existing_player = Player.query.get(location.player_id)
-        ws.send(rest_server_alert_location_already_taken(existing_player))
-        return
-    elif g.player.tile is not None:
-        # Player already has a location
-        # This is an invalid state - on the client side - so disconnect them
-        ws.close()
-        return
-    else:
-        location.player_id = g.player.id
-        db.session.commit()
-        rest_notify_player_location(engine, g.player)
-        engine.refresh()
-        print(f"{g.player.username} chose the location {location.id}")
+    confirm_location_response = confirm_location(
+        engine=g.engine, player=g.player, location=Hex.query.get(cell_id)
+    )
+    ws.send(rest_notify_confirm_location_response(confirm_location_response))
+    if confirm_location_response["response"] == "success":
         rest_init_ws_post_location(ws)
 
 
