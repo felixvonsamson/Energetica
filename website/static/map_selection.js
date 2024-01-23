@@ -17,12 +17,12 @@ class Hex {
   }
   display_tile() {
     let ts1, ts2;
-    if(width<1200){
-      ts1 = width/70;
-      ts2 = width/45;
-    }else{
-      ts1 = width/115;
-      ts2 = width/90;
+    if (width < 1200) {
+      ts1 = width / 70;
+      ts2 = width / 45;
+    } else {
+      ts1 = width / 115;
+      ts2 = width / 90;
     }
     if (active_vew >= 0) {
       fill(
@@ -32,9 +32,9 @@ class Hex {
           100,
         ),
       );
-    } else if (this.owner){
-      fill(color(131,52, 33));
-    }else{
+    } else if (this.owner) {
+      fill(color(131, 52, 33));
+    } else {
       fill(color(45, 21, 90));
     }
     if (this.selected == true) {
@@ -51,15 +51,15 @@ class Hex {
     fill(0);
     if (active_vew >= 0) {
       textSize(ts1);
-      if (active_vew == 0 | active_vew == 1){
-        text(round(this.ressources[active_vew]*100)+"%", 0, -3);
-      }else if (active_vew == 2){
+      if (active_vew == 0 | active_vew == 1) {
+        text(round(this.ressources[active_vew] * 100) + "%", 0, -3);
+      } else if (active_vew == 2) {
         textSize(ts2);
         text(this.ressources[active_vew], 0, -4);
-      }else{
+      } else {
         text(convert_kg(this.ressources[active_vew]), 0, -3);
       }
-    } else if (this.owner){
+    } else if (this.owner) {
       textSize(ts2);
       fill(255);
       text(this.owner.slice(0, 3), 0, -4);
@@ -68,7 +68,7 @@ class Hex {
 }
 
 class Button {
-  constructor(_name, _id, hue, x, y, sx=200, sy=60) {
+  constructor(_name, _id, hue, x, y, sx = 200, sy = 60) {
     this.name = _name;
     this.id = _id;
     this.c = color(hue, 55, 255);
@@ -76,38 +76,38 @@ class Button {
     this.position = createVector(x, y);
     this.size = createVector(sx, sy);
   }
-  change_values(x, y, sx, sy){
+  change_values(x, y, sx, sy) {
     this.position = createVector(x, y);
     this.size = createVector(sx, sy);
   }
-  is_clicked(){
-    return mouseX>this.position.x & mouseX<this.position.x+this.size.x & mouseY>this.position.y & mouseY<this.position.y+this.size.y;
+  is_clicked() {
+    return mouseX > this.position.x & mouseX < this.position.x + this.size.x & mouseY > this.position.y & mouseY < this.position.y + this.size.y;
   }
-  display_button(hover=false) {
+  display_button(hover = false) {
     push();
     if (this.active) {
       fill(this.c);
       strokeWeight(4);
-    } else if(hover){
-      if(this.name == "Choose this location"){
+    } else if (hover) {
+      if (this.name == "Choose this location") {
         fill(255);
-      }else{
+      } else {
         fill(color(83, 35, 75));
       }
       noStroke();
-    }else{
+    } else {
       fill(color(45, 21, 90));
       noStroke();
     }
     translate(this.position.x, this.position.y);
     rect(0, 0, this.size.x, this.size.y);
     fill(0);
-    if(width<1200){
-      textSize(width/20);
-    }else{
-      textSize(width/55);
+    if (width < 1200) {
+      textSize(width / 20);
+    } else {
+      textSize(width / 55);
     }
-    text(this.name, 0.5*this.size.x, 0.38*this.size.y);
+    text(this.name, 0.5 * this.size.x, 0.38 * this.size.y);
     pop();
   }
 }
@@ -165,36 +165,36 @@ function setup() {
   textFont(font);
   textAlign(CENTER, CENTER);
   for (let i = 0; i < button_names.length; i++) {
-    buttons[i] = new Button(button_names[i], i, button_colors[i], 0.11*width-100, 0.1*height*(i+2), sx=0.1*width, sy=0.07*height);
+    buttons[i] = new Button(button_names[i], i, button_colors[i], 0.11 * width - 100, 0.1 * height * (i + 2), sx = 0.1 * width, sy = 0.07 * height);
   }
-  validate = new Button("Choose this location", 7, 24, 0.8*width, 0.93*height-0.02*width, sx=0.18*width, sy=0.07*height);
+  validate = new Button("Choose this location", 7, 24, 0.8 * width, 0.93 * height - 0.02 * width, sx = 0.18 * width, sy = 0.07 * height);
   newdraw();
 }
 
 function draw() {
   for (let i = 0; i < buttons.length; i++) {
-    if(buttons[i].is_clicked()){
-      buttons[i].display_button(hover=true);
-    }else{
+    if (buttons[i].is_clicked()) {
+      buttons[i].display_button(hover = true);
+    } else {
       buttons[i].display_button();
     }
   }
-  if(selected_id != null){
-    if (map[selected_id].owner){
+  if (selected_id != null) {
+    if (map[selected_id].owner) {
       return;
     }
-    if(validate.is_clicked()){
-      validate.display_button(hover=true);
-    }else{
+    if (validate.is_clicked()) {
+      validate.display_button(hover = true);
+    } else {
       validate.display_button();
     }
   }
 }
 
 function newdraw() {
-  if(width<1200){
+  if (width < 1200) {
     newdraw_smartphone()
-  }else{
+  } else {
     newdraw_monitor()
   }
 }
@@ -210,7 +210,7 @@ function newdraw_monitor() {
   rect(0, 0, 390, 100);
   image(logo, 25, 10, 82, 80);
   textFont(font_logo, 50);
-  fill(color(131,52, 33));
+  fill(color(131, 52, 33));
   text("Energetica", 230, 40);
   pop();
   push();
@@ -225,7 +225,7 @@ function newdraw_monitor() {
     h.display_tile();
     pop();
   }
-  if(selected_id != null){
+  if (selected_id != null) {
     let h = map[selected_id]
     let tx = w * h.q + 0.5 * w * h.r;
     let ty = 1.5 * s * h.r;
@@ -237,48 +237,48 @@ function newdraw_monitor() {
   pop();
   push();
   mw = 0.22 * width;
-  translate(width-mw, 0);
+  translate(width - mw, 0);
   noStroke();
   fill(color(83, 35, 75))
   rect(0, 0, mw, height);
   fill(0);
-  if(selected_id == null){
-    textSize(width/50);
-    text("INFO", 0.5*mw, 20);
-    textSize(width/80);
-    text("Please choose an available location on the map. The menu on the left allows you to see where different natural resources are located on the map. The location choice is DEFINITIVE, you will not be able to change it during the game.", 20, 50, mw-40, 300);
-    text("If you need help, click on the book icon next to to title.", 20, 300, mw-40, 200);
-  }else{
-    textSize(width/50);
-    text("RESOURCES", 0.5*mw, 20);
+  if (selected_id == null) {
+    textSize(width / 50);
+    text("INFO", 0.5 * mw, 20);
+    textSize(width / 80);
+    text("Please choose an available location on the map. The menu on the left allows you to see where different natural resources are located on the map. The location choice is DEFINITIVE, you will not be able to change it during the game.", 20, 50, mw - 40, 300);
+    text("If you need help, click on the book icon next to to title.", 20, 300, mw - 40, 200);
+  } else {
+    textSize(width / 50);
+    text("RESOURCES", 0.5 * mw, 20);
     for (let i = 0; i < buttons.length; i++) {
       textAlign(LEFT);
       fill(0);
-      textSize(width/80);
-      text(buttons[i].name, 20, height/10 + height/10*i);
-      if(i>2){
+      textSize(width / 80);
+      text(buttons[i].name, 20, height / 10 + height / 10 * i);
+      if (i > 2) {
         textAlign(RIGHT);
-        textSize(width/115);
-        text(convert_kg_long(map[selected_id].ressources[i], buttons[i].name), mw-20, height/9.5 + height/10*i);
+        textSize(width / 115);
+        text(convert_kg_long(map[selected_id].ressources[i], buttons[i].name), mw - 20, height / 9.5 + height / 10 * i);
       }
       fill(255);
-      rect(20, height/8.2 + height/10*i, mw-40, height/20);
-      let amount = map[selected_id].ressources[i] * (mw-40) / max_q[i];
+      rect(20, height / 8.2 + height / 10 * i, mw - 40, height / 20);
+      let amount = map[selected_id].ressources[i] * (mw - 40) / max_q[i];
       fill(color(button_colors[i], 95, 95));
-      rect(20, height/8.2 + height/10*i, amount, height/20);
+      rect(20, height / 8.2 + height / 10 * i, amount, height / 20);
     }
     textAlign(RIGHT);
-    textSize(width/115);
+    textSize(width / 115);
     fill(0);
-    text(round(map[selected_id].ressources[0]*1000) + " W/m² irradiation", mw-20, height/9.5);
-    text(round(pow(map[selected_id].ressources[1], 0.5)*50) + " km/h windspeed", mw-20, height/9.5+0.1*height);
-    text(map[selected_id].ressources[2] + " suitable locations", mw-20, height/9.5+0.2*height);
+    text(round(map[selected_id].ressources[0] * 1000) + " W/m² irradiation", mw - 20, height / 9.5);
+    text(round(pow(map[selected_id].ressources[1], 0.5) * 50) + " km/h windspeed", mw - 20, height / 9.5 + 0.1 * height);
+    text(map[selected_id].ressources[2] + " suitable locations", mw - 20, height / 9.5 + 0.2 * height);
     textAlign(CENTER);
-    if (map[selected_id].owner){
-      textSize(width/80);
+    if (map[selected_id].owner) {
+      textSize(width / 80);
       fill(0, 99, 66);
-      text("This tile is already occupied by " + map[selected_id].owner + " !", 0.5*mw, 0.92*height);
-    }else{
+      text("This tile is already occupied by " + map[selected_id].owner + " !", 0.5 * mw, 0.92 * height);
+    } else {
       validate.display_button();
     }
   }
@@ -294,9 +294,9 @@ function newdraw_smartphone() {
   h = 2 * s;
   w = sqrt(3) * s;
   for (let i = 0; i < button_names.length; i++) {
-    buttons[i].change_values(width*((i%4)*0.25+0.04+0.125*floor(i/4)), (height-width)*(0.15+0.12*floor(i/4)), width/5, 0.09*(height-width));
+    buttons[i].change_values(width * ((i % 4) * 0.25 + 0.04 + 0.125 * floor(i / 4)), (height - width) * (0.15 + 0.12 * floor(i / 4)), width / 5, 0.09 * (height - width));
   }
-  validate.change_values(width*0.15, height-0.12*(height-width), width*0.7, 0.09*(height-width));
+  validate.change_values(width * 0.15, height - 0.12 * (height - width), width * 0.7, 0.09 * (height - width));
   background(104, 45, 55);
   push();
   fill(color(83, 35, 75));
@@ -305,7 +305,7 @@ function newdraw_smartphone() {
   image(logo, 4, 5, 72, 70);
   pop();
   push();
-  translate(0.5 * width, 0.2*width+0.3*height);
+  translate(0.5 * width, 0.2 * width + 0.3 * height);
   // display tiles :
   for (let i = 0; i < map.length; i++) {
     let h = map[i];
@@ -316,7 +316,7 @@ function newdraw_smartphone() {
     h.display_tile();
     pop();
   }
-  if(selected_id != null){
+  if (selected_id != null) {
     let h = map[selected_id]
     let tx = w * h.q + 0.5 * w * h.r;
     let ty = 1.5 * s * h.r;
@@ -327,48 +327,48 @@ function newdraw_smartphone() {
   }
   pop();
   push();
-  mh = 0.75 * (height-width);
-  translate(0, height-mh);
+  mh = 0.75 * (height - width);
+  translate(0, height - mh);
   noStroke();
   fill(color(83, 35, 75))
   rect(0, 0, width, mh);
   fill(0);
-  if(selected_id == null){
-    textSize(width/17);
-    text("INFO", 0.5*width, 15);
-    textSize(width/25);
-    text("Please choose an available location on the map. The menu on the left allows you to see where different natural resources are located on the map. The location choice is DEFINITIVE, you will not be able to change it during the game.", 15, 40, width-15, 200);
-    text("If you need help, click on the book icon next to to title.", 15, 200, width-15, 200);
-  }else{
-    textSize(width/16);
-    text("RESOURCES", 0.5*width, 15);
+  if (selected_id == null) {
+    textSize(width / 17);
+    text("INFO", 0.5 * width, 15);
+    textSize(width / 25);
+    text("Please choose an available location on the map. The menu on the left allows you to see where different natural resources are located on the map. The location choice is DEFINITIVE, you will not be able to change it during the game.", 15, 40, width - 15, 200);
+    text("If you need help, click on the book icon next to to title.", 15, 200, width - 15, 200);
+  } else {
+    textSize(width / 16);
+    text("RESOURCES", 0.5 * width, 15);
     for (let i = 0; i < buttons.length; i++) {
       textAlign(RIGHT);
       fill(0);
-      textSize(width/20);
-      text(buttons[i].name, 0.22*width, mh/7+mh/10*i);
-      if(i>2){
-        textSize(width/35);
-        text(convert_kg_long(map[selected_id].ressources[i], buttons[i].name), width-15, mh/7.5 + mh/10*i);
+      textSize(width / 20);
+      text(buttons[i].name, 0.22 * width, mh / 7 + mh / 10 * i);
+      if (i > 2) {
+        textSize(width / 35);
+        text(convert_kg_long(map[selected_id].ressources[i], buttons[i].name), width - 15, mh / 7.5 + mh / 10 * i);
       }
       fill(255);
-      rect(0.25*width, mh/6 + mh/10*i, 0.75*width-15, mh/75);
-      let amount = map[selected_id].ressources[i] * (0.75*width-15) / max_q[i];
+      rect(0.25 * width, mh / 6 + mh / 10 * i, 0.75 * width - 15, mh / 75);
+      let amount = map[selected_id].ressources[i] * (0.75 * width - 15) / max_q[i];
       fill(color(button_colors[i], 95, 95));
-      rect(0.25*width, mh/6 + mh/10*i, amount, mh/75);
+      rect(0.25 * width, mh / 6 + mh / 10 * i, amount, mh / 75);
     }
     textAlign(RIGHT);
-    textSize(width/35);
+    textSize(width / 35);
     fill(0);
-    text(round(map[selected_id].ressources[0]*1000) + " W/m² irradiation", width-15, mh/7.5);
-    text(round(pow(map[selected_id].ressources[1], 0.5)*50) + " km/h windspeed", width-15, mh/7.5+0.1*mh);
-    text(map[selected_id].ressources[2] + " suitable locations", width-15, mh/7.5+0.2*mh);
+    text(round(map[selected_id].ressources[0] * 1000) + " W/m² irradiation", width - 15, mh / 7.5);
+    text(round(pow(map[selected_id].ressources[1], 0.5) * 50) + " km/h windspeed", width - 15, mh / 7.5 + 0.1 * mh);
+    text(map[selected_id].ressources[2] + " suitable locations", width - 15, mh / 7.5 + 0.2 * mh);
     textAlign(CENTER);
-    if (map[selected_id].owner){
-      textSize(width/25);
+    if (map[selected_id].owner) {
+      textSize(width / 25);
       fill(0, 99, 66);
-      text("This tile is already occupied by " + map[selected_id].owner + " !", 0.5*width, 0.9*mh);
-    }else{
+      text("This tile is already occupied by " + map[selected_id].owner + " !", 0.5 * width, 0.9 * mh);
+    } else {
       validate.display_button();
     }
   }
@@ -405,28 +405,28 @@ function coords_to_id(q, r) {
 }
 
 function mousePressed() {
-  if(width<1200){
-    if(touches.length == 0){
+  if (width < 1200) {
+    if (touches.length == 0) {
       mousePressed_smartphone();
     }
-  }else{
+  } else {
     mousePressed_monitor();
   }
 }
 
 function mousePressed_monitor() {
   // button pressed : 
-  if (mouseX > width/2 + w*(size_param+0.5) | mouseX < width/2 - w*(size_param+0.5)) {
-    if (validate.is_clicked()){
+  if (mouseX > width / 2 + w * (size_param + 0.5) | mouseX < width / 2 - w * (size_param + 0.5)) {
+    if (validate.is_clicked()) {
       if (selected_id != null) {
         socket.emit("choose_location", selected_id);
-      }else{
+      } else {
         alert("No location has been selected");
       }
     }
     for (let i = 0; i < buttons.length; i++) {
-      if(buttons[i].is_clicked()){
-        if(buttons[i].active) {
+      if (buttons[i].is_clicked()) {
+        if (buttons[i].active) {
           buttons[i].active = false;
           active_vew = -1;
         } else {
@@ -440,7 +440,7 @@ function mousePressed_monitor() {
         return;
       }
     }
-  } 
+  }
   // tile pressed : 
   else {
     // APPROXIMATIVE WAY OF LOCATING A TILE :
@@ -466,17 +466,17 @@ function mousePressed_monitor() {
 
 function mousePressed_smartphone() {
   // button pressed : 
-  if (mouseY > height-0.75*(height-width) | mouseY < 0.36*(height-width)) {
-    if (validate.is_clicked()){
+  if (mouseY > height - 0.75 * (height - width) | mouseY < 0.36 * (height - width)) {
+    if (validate.is_clicked()) {
       if (selected_id != null) {
         socket.emit("choose_location", selected_id);
-      }else{
+      } else {
         alert("No location has been selected");
       }
     }
     for (let i = 0; i < buttons.length; i++) {
-      if(buttons[i].is_clicked()){
-        if(buttons[i].active) {
+      if (buttons[i].is_clicked()) {
+        if (buttons[i].active) {
           buttons[i].active = false;
           console.log("desactivating buttion")
           active_vew = -1;
@@ -492,11 +492,11 @@ function mousePressed_smartphone() {
         return;
       }
     }
-  } 
+  }
   // tile pressed : 
   else {
     // APPROXIMATIVE WAY OF LOCATING A TILE :
-    let r = floor((mouseY - 0.2*width - 0.3*height + 0.75 * s) / (0.75 * h));
+    let r = floor((mouseY - 0.2 * width - 0.3 * height + 0.75 * s) / (0.75 * h));
     let q = floor((mouseX - width / 2 + 0.5 * w - 0.5 * w * r) / w);
     let id = coords_to_id(q, r);
     if (id < map.length) {
@@ -517,7 +517,7 @@ function mousePressed_smartphone() {
 }
 
 function convert_kg(mass) {
-  if(mass ==0){
+  if (mass == 0) {
     return 0;
   }
   const units = [" kg", " t", " kt", " Mt"];
@@ -529,13 +529,12 @@ function convert_kg_long(mass, resource) {
   return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} tons of ${resource.toLowerCase()} in the ground`;
 }
 
-function general_convert(value, units){
+function general_convert(value, units) {
   let unit_index = 0;
   while (value >= 1000 && unit_index < units.length - 1) {
     value /= 1000;
     unit_index += 1;
   }
-  return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
-      units[unit_index]
+  return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]
     }`
 }
