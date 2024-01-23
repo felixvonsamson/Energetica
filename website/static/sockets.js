@@ -20,7 +20,28 @@ socket.on("connect", function () {
 
 // information sent to the server when a new facility is created
 function start_construction(facility, family) {
-    socket.emit("start_construction", facility, family);
+    send_form("/request_start_project", {
+        facility: facility,
+        family: family,
+    })
+        .then((response) => {
+            response.json().then((raw_data) => {
+                console.log(raw_data);
+                let response = raw_data["response"];
+                if (response == "success") {
+                    addToast("Received response");
+                } else if (response == "noSuitableLocationAvailable") {
+                    addError("No suitable locations");
+                } else if (response == "notEnoughMoneyError") {
+                    addError("Not enough money");
+                } else if (response == "locked") {
+                    addError("Facility is locked! Nice try 😉");
+                }
+            });
+        })
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
 }
 
 socket.on("display_under_construction", function (facility, finish_time) {

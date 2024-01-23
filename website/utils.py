@@ -12,7 +12,14 @@ import time
 import numpy as np
 
 from .rest_api import rest_notify_player_location
-from .database import Player, Network, Resource_on_sale, Shipment, Chat
+from .database import (
+    Player,
+    Network,
+    Resource_on_sale,
+    Shipment,
+    Chat,
+    Under_construction,
+)
 from . import db
 from flask import current_app, flash
 
@@ -376,3 +383,51 @@ def set_network_prices(engine, player, prices, SCPs):
     player.rest_of_priorities = space.join(rest_list)
     player.demand_priorities = space.join(demand_list)
     db.session.commit()
+
+
+def start_project(engine, player, facility, family):
+    """this function is executed when a player clicks on 'start construction'"""
+    assets = current_app.config["engine"].config[player.id]["assets"]
+
+    if family in ["functional_facilities", "technologies"]:
+        ud_count = Under_construction.query.filter_by(
+            name=facility, player_id=player.id
+        ).count()
+        real_price = (
+            assets[facility]["price"]
+            * assets[facility]["price multiplier"] ** ud_count
+        )
+        duration = (
+            assets[facility]["construction time"]
+            * assets[facility]["price multiplier"] ** ud_count
+        )
+    else:  # power facitlies, storage facilities, extractions facilities
+        real_price = assets[facility]["price"]
+        duration = assets[facility]["construction time"]
+
+    if family == "technologies":
+        start_time = None if player.lab_workers == 0 else time.time()
+    else:
+        start_time = None if player.construction_workers == 0 else time.time()
+
+    if assets[facility]["locked"]:
+        return {"response": "locked"}
+    if facility in ["small_water_dam", "large_water_dam", "watermill"]:
+        ud = Under_construction.query.filter_by(name=facility).count()
+        if player.tile.hydro <= getattr(player, facility) + ud:
+            return {"response": "noSuitableLocationAvailable"}
+    if player.money < real_price:
+        return {"response": "notEnoughMoneyError"}
+
+    player.money -= real_price
+    new_facility = Under_construction(
+        name=facility,
+        family=family,
+        start_time=start_time,
+        duration=duration,
+        player_id=player.id,
+    )
+    db.session.add(new_facility)
+    db.session.commit()
+    print(f"{player.username} started the construction {facility}")
+    return {"response": "success", "money": display_money(player.money)}

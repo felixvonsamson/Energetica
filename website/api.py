@@ -13,6 +13,7 @@ from .utils import (
     data_init_network,
     confirm_location,
     set_network_prices,
+    start_project,
 )
 from . import db
 from .database import Hex, Player, Chat, Network, Under_construction
@@ -278,7 +279,23 @@ def choose_location():
     return jsonify(confirm_location_response)
 
 
-@api.route("change_network_prices", methods=["POST"])
+@api.route("/request_start_project", methods=["POST"])
+def request_start_project():
+    """
+    this function is executed when a player does any of the following:
+    * initiates the construction or upgrades a building or facility
+    * starts a technology research
+    """
+    json = request.get_json()
+    facility = json["facility"]
+    family = json["family"]
+    response = start_project(
+        engine=g.engine, player=current_user, facility=facility, family=family
+    )
+    return jsonify(response)
+
+
+@api.route("/change_network_prices", methods=["POST"])
 def change_network_prices():
     """this function is executed when a player changes the prices for anything
     on the network"""
