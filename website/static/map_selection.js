@@ -542,7 +542,6 @@ function mousePressed_monitor() {
                 })
                     .then((response) => {
                         response.json().then((raw_data) => {
-                            console.log(raw_data);
                             if (raw_data["response"] == "locationOccupied") {
                                 addError("This location is already occupied!");
                                 setTimeout(function () {
