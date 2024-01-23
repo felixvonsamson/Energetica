@@ -430,4 +430,4 @@ def start_project(engine, player, facility, family):
     db.session.add(new_facility)
     db.session.commit()
     print(f"{player.username} started the construction {facility}")
-    return {"response": "success", "money": display_money(player.money)}
+    return {"response": "success", "money": player.money}

@@ -29,7 +29,10 @@ function start_construction(facility, family) {
                 console.log(raw_data);
                 let response = raw_data["response"];
                 if (response == "success") {
-                    addToast("Received response");
+                    let money = raw_data["money"];
+                    var obj = document.getElementById("money");
+                    obj.innerHTML = formatted_money(money);
+                    addToast("Construction started");
                 } else if (response == "noSuitableLocationAvailable") {
                     addError("No suitable locations");
                 } else if (response == "notEnoughMoneyError") {

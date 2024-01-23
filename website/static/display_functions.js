@@ -68,13 +68,15 @@ function display_money(price) {
 // Prices for balance display :
 function display_money_long(price) {
     document.write(
-        `${price
+        `<span id="money">${price
             .toFixed(0)
-            .replace(
-                /\B(?=(\d{3})+(?!\d))/g,
-                "'"
-            )}<img src="/static/images/icons/coin.svg" class="coin" alt="coin">`
+            .replace(/\B(?=(\d{3})+(?!\d))/g, "'")}</span>
+            <img src="/static/images/icons/coin.svg" class="coin" alt="coin">`
     );
+}
+
+function formatted_money(amount) {
+    return `${amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`;
 }
 
 // Power :

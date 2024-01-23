@@ -292,10 +292,6 @@ function display_kgh_long(mass) {
     return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} kg/h`;
 }
 
-function display_money_long(amount) {
-    return `${amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`;
-}
-
 function change_view(view) {
     resetMatrix();
     graph = null;

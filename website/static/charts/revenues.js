@@ -75,7 +75,7 @@ function draw() {
         fill(0);
         textStyle(BOLD);
         text("TOTAL :", 40, 6);
-        display_coin(display_money_long(total_power), 160, 0);
+        display_coin(formatted_money(total_power), 160, 0);
         textStyle(NORMAL);
         for (const key of keys_revenues) {
             if (data[key][t] != 0) {
