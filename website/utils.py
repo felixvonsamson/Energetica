@@ -342,3 +342,37 @@ def confirm_location(engine, player, location):
     rest_notify_player_location(engine, player)
     print(f"{player.username} chose the location {location.id}")
     return {"response": "success"}
+
+
+def set_network_prices(engine, player, prices, SCPs):
+    """this function is executed when a player changes the value the enegy selling prices"""
+
+    def sort_priority(priority_list, prefix="price_"):
+        return sorted(priority_list, key=lambda x: getattr(player, prefix + x))
+
+    SCP_list = []
+    rest_list = []
+    demand_list = player.demand_priorities.split(" ")
+
+    for SCP in SCPs:
+        facility = SCP[4:]
+        if SCPs[SCP]:
+            SCP_list.append(facility)
+        else:
+            rest_list.append(facility)
+
+    for price in prices:
+        setattr(player, price, prices[price])
+
+    rest_list = sort_priority(rest_list)
+    SCP_list = engine.renewables + sort_priority(SCP_list)
+    demand_list = sort_priority(demand_list, prefix="price_buy_")
+    demand_list.reverse()
+
+    print(f"{player.username} updated their prices")
+
+    space = " "
+    player.self_consumption_priority = space.join(SCP_list)
+    player.rest_of_priorities = space.join(rest_list)
+    player.demand_priorities = space.join(demand_list)
+    db.session.commit()

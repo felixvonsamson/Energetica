@@ -12,6 +12,7 @@ from .utils import (
     buy_resource_from_market,
     data_init_network,
     confirm_location,
+    set_network_prices,
 )
 from . import db
 from .database import Hex, Player, Chat, Network, Under_construction
@@ -274,6 +275,19 @@ def choose_location():
         engine=g.engine, player=current_user, location=location
     )
     return jsonify(confirm_location_response)
+
+
+@api.route("change_network_prices", methods=["POST"])
+def change_network_prices():
+    """this function is executed when a player changes the prices for anything
+    on the network"""
+    json = request.get_json()
+    prices = json["prices"]
+    SCPs = json["SCPs"]
+    set_network_prices(
+        engine=g.engine, player=current_user, prices=prices, SCPs=SCPs
+    )
+    return jsonify("success")
 
 
 @api.route("/put_resource_on_sale", methods=["POST"])

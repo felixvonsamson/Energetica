@@ -9,8 +9,26 @@ function change_prices() {
         if (input.type == "checkbox") {
             SCPs[input.id] = input.checked;
         } else {
-            prices[input.id] = input.value;
+            prices[input.id] = float(input.value);
         }
     });
-    socket.emit("change_price", prices, SCPs);
+    fetch("/change_network_prices", {
+        method: "POST",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            prices: prices,
+            SCPs: SCPs,
+        }),
+    })
+        .then((response) => {
+            response.json().then((raw_data) => {
+                addToast("Changes saved");
+            });
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
 }
