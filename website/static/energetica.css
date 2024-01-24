@@ -196,10 +196,6 @@ canvas {
     align-items: center;
 }
 
-.align-items-center {
-    align-items:center;
-}
-
 /* Navbar */
 .navbar {
     display: block;
