@@ -11,7 +11,8 @@
          onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
   </div>
   <div id="info_popup" class="popup hidden green">
-    <div class="flex-row margin-small" style="align-items:center;">
+    <div class="flex-row margin-small align-items-center"
+         style="align-items:center">
       <div class="large txt_center" style="flex-grow:1">Help : Functional facilities</div>
       <div onclick="document.getElementById('info_popup').classList.add('hidden');"
            class="cross pine margin-small"
@@ -20,7 +21,7 @@
     <div class="txt_center margin medium">
       <p>On this page you will find 4 facilities with unique abilites.</p>
       <p>
-        For more information about Functional facilities, refer to the <a href="{{ url_for('views.wiki', _anchor='Functional_Facilities')}}">Functional
+        For more information about Functional facilities, refer to the <a href="{{ url_for('views.wiki', _anchor='Functional_Facilities') }}">Functional
         facilities section in the wiki</a>.
       </p>
     </div>
