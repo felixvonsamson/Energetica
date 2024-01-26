@@ -184,146 +184,40 @@
                     </div>
                 </th>
             </tr>
-            {% if user.steam_engine > 0 %}
-                <tr>
-                    <td>Steam engine</td>
-                    <td class="txt_center">
-                        <script>display_W({{ user.steam_engine * assets["steam_engine"]["power generation"] }});</script>
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_steam_engine }}"
-                               id="price_steam_engine"
-                               name="price_steam_engine" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="checkbox" id="SCP_steam_engine" name="SCP_steam_engine" {{ 'checked' if "steam_engine" in SCP else '' }}>
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.coal_burner > 0 %}
-                <tr>
-                    <td>Coal burner</td>
-                    <td class="txt_center">
-                        <script>display_W({{ user.coal_burner * assets["coal_burner"]["power generation"] }});</script>
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_coal_burner }}"
-                               id="price_coal_burner"
-                               name="price_coal_burner" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="checkbox" id="SCP_coal_burner" name="SCP_coal_burner" {{ 'checked' if "coal_burner" in SCP else '' }}>
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.oil_burner > 0 %}
-                <tr>
-                    <td>Oil burner</td>
-                    <td class="txt_center">
-                        <script>display_W({{ user.oil_burner * assets["oil_burner"]["power generation"] }});</script>
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_oil_burner }}"
-                               id="price_oil_burner"
-                               name="price_oil_burner" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="checkbox" id="SCP_oil_burner" name="SCP_oil_burner" {{ 'checked' if "oil_burner" in SCP else '' }}>
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.gas_burner > 0 %}
-                <tr>
-                    <td>Gas burner</td>
-                    <td class="txt_center">
-                        <script>display_W({{ user.gas_burner * assets["gas_burner"]["power generation"] }});</script>
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_gas_burner }}"
-                               id="price_gas_burner"
-                               name="price_gas_burner" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="checkbox" id="SCP_gas_burner" name="SCP_gas_burner" {{ 'checked' if "gas_burner" in SCP else '' }}>
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.combined_cycle > 0 %}
-                <tr>
-                    <td>Combined cycle</td>
-                    <td class="txt_center">
-                        <script>display_W({{ user.combined_cycle * assets["combined_cycle"]["power generation"] }});</script>
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_combined_cycle }}"
-                               id="price_combined_cycle"
-                               name="price_combined_cycle" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="checkbox" id="SCP_combined_cycle" name="SCP_combined_cycle" {{ 'checked' if "combined_cycle" in SCP else '' }}>
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.nuclear_reactor > 0 %}
-                <tr>
-                    <td>Nuclear reactor</td>
-                    <td class="txt_center">
-                        <script>display_W({{ user.nuclear_reactor * assets["nuclear_reactor"]["power generation"] }});</script>
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_nuclear_reactor }}"
-                               id="price_nuclear_reactor"
-                               name="price_nuclear_reactor" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="checkbox" id="SCP_nuclear_reactor" name="SCP_nuclear_reactor" {{ 'checked' if "nuclear_reactor" in SCP else '' }}>
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.nuclear_reactor_gen4 > 0 %}
-                <tr>
-                    <td>4th generation nuclear</td>
-                    <td class="txt_center">
-                        <script>display_W({{ user.nuclear_reactor_gen4 * assets["nuclear_reactor_gen4"]["power generation"] }});</script>
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_nuclear_reactor_gen4 }}"
-                               id="price_nuclear_reactor_gen4"
-                               name="price_nuclear_reactor_gen4" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="checkbox" id="SCP_nuclear_reactor_gen4" name="SCP_nuclear_reactor_gen4" {{ 'checked' if "nuclear_reactor_gen4" in SCP else '' }}>
-                    </td>
-                </tr>
-            {% endif %}
+            {% macro power_facility_display_name(power_facility) -%}
+                {{ {"steam_engine": "Steam engine", "coal_burner": "Coal burner", "oil_burner": "Oil burner", "gas_burner": "Gas burner", "combined_cycle": "Combined cycle", "nuclear_reactor": "Nuclear reactor", "nuclear_reactor_gen4": "4th generation nuclear"}[power_facility] }}
+            {%- endmacro %}
+            {% macro power_facility_price(power_facility) -%}
+                {{ 'price_'+power_facility }}
+            {%- endmacro %}
+            {% macro power_facility_price_value(power_facility) -%}
+                {{ user[power_facility_price(power_facility) ] }}
+            {%- endmacro %}
+            {% macro power_facility_SCP(power_facility) -%}
+                {{ 'SCP_'+power_facility }}
+            {%- endmacro %}
+            {% for power_facility in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
+                {% if user[power_facility] %}
+                    <tr>
+                        <td>{{ power_facility_display_name(power_facility) }}</td>
+                        <td class="txt_center">
+                            <script>display_W({{ user[power_facility] * assets[power_facility]["power generation"] }});</script>
+                        </td>
+                        <td>
+                            <input type="number"
+                                   class="small_input medium txt_center"
+                                   value="{{ power_facility_price_value(power_facility) }}"
+                                   id="{{ power_facility_price(power_facility) }}"
+                                   name="{{ power_facility_price(power_facility) }}" />
+                            <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                            /MWh
+                        </td>
+                        <td>
+                            <input type="checkbox" id="{{ power_facility_SCP(power_facility) }}" name="{{ power_facility_SCP(power_facility) }}" {{ 'checked' if power_facility in SCP else '' }}>
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
         </table>
         <div class="flex-row" style="justify-content:center;">
             <b class="margin white button padding" onclick="change_prices();">Save changes</b>
