@@ -235,209 +235,49 @@
                     </div>
                 </th>
             </tr>
-            {% if user.small_pumped_hydro > 0 %}
-                <tr>
-                    <td>Small pumped hydro</td>
-                    <td class="txt_center">
-                        <script>display_Wh({{ user.small_pumped_hydro * assets["small_pumped_hydro"]["storage capacity"] }});</script>
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_small_pumped_hydro }}"
-                               id="price_small_pumped_hydro"
-                               name="price_small_pumped_hydro" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_buy_small_pumped_hydro }}"
-                               id="price_buy_small_pumped_hydro"
-                               name="price_buy_small_pumped_hydro" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="checkbox" id="SCP_small_pumped_hydro" name="SCP_small_pumped_hydro" {{ 'checked' if "small_pumped_hydro" in SCP else '' }}>
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.compressed_air > 0 %}
-                <tr>
-                    <td>Compressed air</td>
-                    <td class="txt_center">
-                        <script>display_Wh({{ user.compressed_air * assets["compressed_air"]["storage capacity"] }});</script>
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_compressed_air }}"
-                               id="price_compressed_air"
-                               name="price_compressed_air" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_buy_compressed_air }}"
-                               id="price_buy_compressed_air"
-                               name="price_buy_compressed_air" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="checkbox" id="SCP_compressed_air" name="SCP_compressed_air" {{ 'checked' if "compressed_air" in SCP else '' }}>
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.molten_salt > 0 %}
-                <tr>
-                    <td>Molten salt</td>
-                    <td class="txt_center">
-                        <script>display_Wh({{ user.molten_salt * assets["molten_salt"]["storage capacity"] }});</script>
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_molten_salt }}"
-                               id="price_molten_salt"
-                               name="price_molten_salt" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_buy_molten_salt }}"
-                               id="price_buy_molten_salt"
-                               name="price_buy_molten_salt" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="checkbox" id="SCP_molten_salt" name="SCP_molten_salt" {{ 'checked' if "molten_salt" in SCP else '' }}>
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.large_pumped_hydro > 0 %}
-                <tr>
-                    <td>Large pumped hydro</td>
-                    <td class="txt_center">
-                        <script>display_Wh({{ user.large_pumped_hydro * assets["large_pumped_hydro"]["storage capacity"] }});</script>
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_large_pumped_hydro }}"
-                               id="price_large_pumped_hydro"
-                               name="price_large_pumped_hydro" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_buy_large_pumped_hydro }}"
-                               id="price_buy_large_pumped_hydro"
-                               name="price_buy_large_pumped_hydro" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="checkbox" id="SCP_large_pumped_hydro" name="SCP_large_pumped_hydro" {{ 'checked' if "large_pumped_hydro" in SCP else '' }}>
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.hydrogen_storage > 0 %}
-                <tr>
-                    <td>Hydrogen storage</td>
-                    <td class="txt_center">
-                        <script>display_Wh({{ user.hydrogen_storage * assets["hydrogen_storage"]["storage capacity"] }});</script>
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_hydrogen_storage }}"
-                               id="price_hydrogen_storage"
-                               name="price_hydrogen_storage" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_buy_hydrogen_storage }}"
-                               id="price_buy_hydrogen_storage"
-                               name="price_buy_hydrogen_storage" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="checkbox" id="SCP_hydrogen_storage" name="SCP_hydrogen_storage" {{ 'checked' if "hydrogen_storage" in SCP else '' }}>
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.lithium_ion_batteries > 0 %}
-                <tr>
-                    <td>Lithium ion batteries</td>
-                    <td class="txt_center">
-                        <script>display_Wh({{ user.lithium_ion_batteries * assets["lithium_ion_batteries"]["storage capacity"] }});</script>
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_lithium_ion_batteries }}"
-                               id="price_lithium_ion_batteries"
-                               name="price_lithium_ion_batteries" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_buy_lithium_ion_batteries }}"
-                               id="price_buy_lithium_ion_batteries"
-                               name="price_buy_lithium_ion_batteries" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="checkbox" id="SCP_lithium_ion_batteries" name="SCP_lithium_ion_batteries" {{ 'checked' if "lithium_ion_batteries" in SCP else '' }}>
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.solid_state_batteries > 0 %}
-                <tr>
-                    <td>Solid state batteries</td>
-                    <td class="txt_center">
-                        <script>display_Wh({{ user.solid_state_batteries * assets["solid_state_batteries"]["storage capacity"] }});</script>
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_solid_state_batteries }}"
-                               id="price_solid_state_batteries"
-                               name="price_solid_state_batteries" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_buy_solid_state_batteries }}"
-                               id="price_buy_solid_state_batteries"
-                               name="price_buy_solid_state_batteries" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                    <td>
-                        <input type="checkbox" id="SCP_solid_state_batteries" name="SCP_solid_state_batteries" {{ 'checked' if "solid_state_batteries" in SCP else '' }}>
-                    </td>
-                </tr>
-            {% endif %}
+            {% macro storage_facility_display_name(storage_facility) -%}
+                {{ {"small_pumped_hydro": "Small pumped hydro", "compressed_air": "Compressed air", "molten_salt": "Molten salt", "large_pumped_hydro": "Large pumped hydro", "hydrogen_storage": "Hydrogen storage", "lithium_ion_batteries": "Lithium ion batteries", "solid_state_batteries": "Solid state batteries"}[storage_facility] }}
+            {%- endmacro %}
+            {% macro storage_facility_price(storage_facility) -%}
+                {{ 'price_'+storage_facility }}
+            {%- endmacro %}
+            {% macro storage_facility_price_buy(storage_facility) -%}
+                {{ 'price_buy_'+storage_facility }}
+            {%- endmacro %}
+            {% macro storage_facility_SCP(storage_facility) -%}
+                {{ 'SCP_'+storage_facility }}
+            {%- endmacro %}
+            {% for storage_facility in ["small_pumped_hydro", "compressed_air", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
+                {% if user[storage_facility] > 0 %}
+                    <tr>
+                        <td>{{ storage_facility_display_name(storage_facility) }}</td>
+                        <td class="txt_center">
+                            <script>display_Wh({{ user[storage_facility] * assets[storage_facility]["storage capacity"] }});</script>
+                        </td>
+                        <td>
+                            <input type="number"
+                                class="small_input medium txt_center"
+                                value="{{ user[storage_facility_price(storage_facility)] }}"
+                                id="{{ storage_facility_price(storage_facility) }}"
+                                name="{{ storage_facility_price(storage_facility) }}" />
+                            <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                            /MWh
+                        </td>
+                        <td>
+                            <input type="number"
+                                class="small_input medium txt_center"
+                                value="{{ user[storage_facility_price_buy(storage_facility)] }}"
+                                id="{{ storage_facility_price_buy(storage_facility) }}"
+                                name="{{ storage_facility_price_buy(storage_facility) }}" />
+                            <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                            /MWh
+                        </td>
+                        <td>
+                            <input type="checkbox" id="{{ storage_facility_SCP(storage_facility) }}" name="{{ storage_facility_SCP(storage_facility) }}" {{ 'checked' if storage_facility in SCP else '' }}>
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
         </table>
         <div class="flex-row" style="justify-content:center;">
             <b class="margin white button padding" onclick="change_prices();">Save changes</b>
