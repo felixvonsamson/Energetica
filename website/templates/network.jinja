@@ -129,62 +129,31 @@
                     /MWh
                 </td>
             </tr>
-            {% if user.coal_mine > 0 %}
-                <tr>
-                    <td>Coal mines</td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_buy_coal_mine }}"
-                               id="price_buy_coal_mine"
-                               name="price_buy_coal_mine" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.oil_field > 0 %}
-                <tr>
-                    <td>Oil fields</td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_buy_oil_field }}"
-                               id="price_buy_oil_field"
-                               name="price_buy_oil_field" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.gas_drilling_site > 0 %}
-                <tr>
-                    <td>Gas extraction</td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_buy_gas_drilling_site }}"
-                               id="price_buy_gas_drilling_site"
-                               name="price_buy_gas_drilling_site" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                </tr>
-            {% endif %}
-            {% if user.uranium_mine > 0 %}
-                <tr>
-                    <td>Uranium mines</td>
-                    <td>
-                        <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_buy_uranium_mine }}"
-                               id="price_buy_uranium_mine"
-                               name="price_buy_uranium_mine" />
-                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                        /MWh
-                    </td>
-                </tr>
-            {% endif %}
+            {% macro extraction_facility_display_name(extraction_facility) -%}
+                {{ {"coal_mine": "Coal mines", "oil_field": "Oil fields", "gas_drilling_site": "Gas extraction", "uranium_mine": "Uranium mines"}[extraction_facility] }}
+            {%- endmacro %}
+            {% macro extraction_facility_price_buy(extraction_facility) -%}
+                {{ 'price_buy_'+extraction_facility }}
+            {%- endmacro %}
+            {% macro extraction_facility_price_buy_value(extraction_facility) -%}
+                {{ user[extraction_facility_price_buy(extraction_facility) ] }}
+            {%- endmacro %}
+            {% for extraction_facility in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"] %}
+                {% if user[extraction_facility] > 0 %}
+                    <tr>
+                        <td>{{ extraction_facility_display_name(extraction_facility) }}</td>
+                        <td>
+                            <input type="number"
+                                   class="small_input medium txt_center"
+                                   value="{{ extraction_facility_price_buy_value(extraction_facility) }}"
+                                   id="{{ extraction_facility_price_buy(extraction_facility) }}"
+                                   name="{{ extraction_facility_price_buy(extraction_facility) }}" />
+                            <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                            /MWh
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
             {% if user.carbon_capture > 0 %}
                 <tr>
                     <td>Carbon capture</td>
