@@ -232,9 +232,6 @@
                     </div>
                 </th>
             </tr>
-            {% macro storage_facility_display_name(storage_facility) -%}
-                {{ {"small_pumped_hydro": "Small pumped hydro", "compressed_air": "Compressed air", "molten_salt": "Molten salt", "large_pumped_hydro": "Large pumped hydro", "hydrogen_storage": "Hydrogen storage", "lithium_ion_batteries": "Lithium ion batteries", "solid_state_batteries": "Solid state batteries"}[storage_facility] }}
-            {%- endmacro %}
             {% macro storage_facility_price(storage_facility) -%}
                 {{ 'price_'+storage_facility }}
             {%- endmacro %}
@@ -247,25 +244,25 @@
             {% for storage_facility in ["small_pumped_hydro", "compressed_air", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
                 {% if user[storage_facility] > 0 %}
                     <tr>
-                        <td>{{ storage_facility_display_name(storage_facility) }}</td>
+                        <td>{{ assets[storage_facility].name }}</td>
                         <td class="txt_center">
                             <script>display_Wh({{ user[storage_facility] * assets[storage_facility]["storage capacity"] }});</script>
                         </td>
                         <td>
                             <input type="number"
-                                class="small_input medium txt_center"
-                                value="{{ user[storage_facility_price(storage_facility)] }}"
-                                id="{{ storage_facility_price(storage_facility) }}"
-                                name="{{ storage_facility_price(storage_facility) }}" />
+                                   class="small_input medium txt_center"
+                                   value="{{ user[storage_facility_price(storage_facility)] }}"
+                                   id="{{ storage_facility_price(storage_facility) }}"
+                                   name="{{ storage_facility_price(storage_facility) }}" />
                             <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                             /MWh
                         </td>
                         <td>
                             <input type="number"
-                                class="small_input medium txt_center"
-                                value="{{ user[storage_facility_price_buy(storage_facility)] }}"
-                                id="{{ storage_facility_price_buy(storage_facility) }}"
-                                name="{{ storage_facility_price_buy(storage_facility) }}" />
+                                   class="small_input medium txt_center"
+                                   value="{{ user[storage_facility_price_buy(storage_facility)] }}"
+                                   id="{{ storage_facility_price_buy(storage_facility) }}"
+                                   name="{{ storage_facility_price_buy(storage_facility) }}" />
                             <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                             /MWh
                         </td>
