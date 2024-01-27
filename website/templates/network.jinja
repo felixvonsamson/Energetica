@@ -184,9 +184,6 @@
                     </div>
                 </th>
             </tr>
-            {% macro power_facility_display_name(power_facility) -%}
-                {{ {"steam_engine": "Steam engine", "coal_burner": "Coal burner", "oil_burner": "Oil burner", "gas_burner": "Gas burner", "combined_cycle": "Combined cycle", "nuclear_reactor": "Nuclear reactor", "nuclear_reactor_gen4": "4th generation nuclear"}[power_facility] }}
-            {%- endmacro %}
             {% macro power_facility_price(power_facility) -%}
                 {{ 'price_'+power_facility }}
             {%- endmacro %}
@@ -199,7 +196,7 @@
             {% for power_facility in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
                 {% if user[power_facility] %}
                     <tr>
-                        <td>{{ power_facility_display_name(power_facility) }}</td>
+                        <td>{{ assets[power_facility].name }}</td>
                         <td class="txt_center">
                             <script>display_W({{ user[power_facility] * assets[power_facility]["power generation"] }});</script>
                         </td>
