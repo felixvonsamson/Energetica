@@ -85,10 +85,13 @@ class Network(db.Model):
 
 # class that stores the users :
 class Player(db.Model, UserMixin):
-    # Authentification :
     id = db.Column(db.Integer, primary_key=True)
+
+    # Authentification :
     username = db.Column(db.String(25), unique=True)
-    password = db.Column(db.String(25))
+    pwhash = db.Column(db.String(25))
+
+    # Socket.io
     sid = None
 
     # Position :

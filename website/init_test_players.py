@@ -22,7 +22,7 @@ def edit_database(engine):
         player = create_player(
             engine,
             retieved_data["player"][player_id]["username"],
-            retieved_data["player"][player_id]["password"],
+            retieved_data["player"][player_id]["pwhash"],
         )
         for attribute in retieved_data["player"][player_id]:
             setattr(player, attribute, retieved_data["player"][player_id][attribute])
@@ -108,7 +108,7 @@ def create_player(engine, username, pw):
     if p is None:
         new_player = Player(
             username=username,
-            password=generate_password_hash(pw, method="scrypt"),
+            pwhash=generate_password_hash(password, method="scrypt"),
             data_table_name=f"data_{username}.pck",
         )
         add_player_to_data(username)

@@ -23,7 +23,7 @@ def login():
 
         player = Player.query.filter_by(username=username).first()
         if player:
-            if check_password_hash(player.password, password):
+            if check_password_hash(player.pwhash, password):
                 flash("Logged in successfully!", category="message")
                 login_user(player, remember=True)
                 print(f"{username} logged in")
@@ -65,7 +65,7 @@ def sign_up():
         else:
             new_player = Player(
                 username=username,
-                password=generate_password_hash(password1, method="scrypt"),
+                pwhash=generate_password_hash(password1, method="scrypt"),
                 data_table_name=f"data_{username}.pck",
             )
             add_player_to_data(username)
