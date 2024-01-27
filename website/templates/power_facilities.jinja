@@ -136,6 +136,38 @@
           </ul>
         </div>
       {% endif %}
+
+      {# Power Facility Data #}
+      <div class="infobox" id="infotable">
+        <table class="table tan_green">
+          <tr>
+            <td>Max generation</td>
+            <td class="txt_center">
+              <strong><script>display_W({{data[facility]["power generation"]}});</script></strong>
+            </td>
+          </tr>
+          {% if "O&M cost" in data[facility] %}
+          <tr>
+            <td>Operation cost</td>
+            <td class="txt_center">
+              <strong><script>display_money({{data[facility]["O&M cost"]}});</script>/h</strong>
+            </td>
+          </tr>
+          {% endif %}
+          {# <tr>
+            <td>Ramping speed</td>
+            <td class="txt_center">
+              <strong><script>display_W({{facility["ramping speed"]}});</script>/min</strong>
+            </td>
+          </tr>
+          <tr>
+            <td>CO2 emissions</td>
+            <td class="txt_center">
+              <strong><script>display_kg({{facility["pollution"]}});</script>/MWh</strong>
+            </td>
+          </tr> #}
+        </table>
+      </div>
   </div>
   {% endfor %}
   {% set facility = data["steam_engine"] %}
