@@ -193,7 +193,10 @@ full_config = {
             "amount consumed": 0,
             "pollution": 0,
             "ramping time": 0,
-            "requirements": [["physics", 5, False], ["thermodynamics", 5, False]],
+            "requirements": [
+                ["physics", 5, False],
+                ["thermodynamics", 5, False],
+            ],
         },
         "PV_solar": {
             "name": "Photovoltaics",
@@ -459,7 +462,10 @@ full_config = {
             "construction energy": 25000000,
             "price factor": 1.2,
             "prod factor": 1.25,
-            "requirements": [["laboratory", 1, False], ["mathematics", 1, False]],
+            "requirements": [
+                ["laboratory", 1, False],
+                ["mathematics", 1, False],
+            ],
         },
         "thermodynamics": {
             "name": "Thermodynamics",
@@ -468,7 +474,10 @@ full_config = {
             "construction time": 18000,
             "construction energy": 25000000,
             "efficiency_factor": 0.1,
-            "requirements": [["laboratory", 1, False], ["mathematics", 1, False]],
+            "requirements": [
+                ["laboratory", 1, False],
+                ["mathematics", 1, False],
+            ],
         },
         "physics": {
             "name": "Physics",
@@ -743,7 +752,8 @@ class Config(object):
             return
         assets = config.for_player[player_id]["assets"]
         me_factor = (
-            assets["mineral_extraction"]["prod factor"] ** player.mineral_extraction
+            assets["mineral_extraction"]["prod factor"]
+            ** player.mineral_extraction
         )
         assets["coal_mine"]["amount produced"] = (
             full_config["assets"]["coal_mine"]["amount produced"]
@@ -846,9 +856,9 @@ class Config(object):
 
             if asset == "molten_salt":
                 # special case for molten salt efficiency (thermodynamics)
-                assets[asset]["efficiency"] = 1 - (1 - assets[asset]["efficiency"]) * (
-                    0.9**player.thermodynamics
-                )
+                assets[asset]["efficiency"] = 1 - (
+                    1 - assets[asset]["efficiency"]
+                ) * (0.9**player.thermodynamics)
 
             if asset in [
                 "PV_solar",
@@ -865,7 +875,12 @@ class Config(object):
                     assets["physics"]["prod factor"] ** player.physics
                 )
 
-            if asset in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"]:
+            if asset in [
+                "coal_mine",
+                "oil_field",
+                "gas_drilling_site",
+                "uranium_mine",
+            ]:
                 # update price, energy consumption and pollution. production increase is already in update_resource_extraction (mineral extraction)
                 assets[asset]["price"] *= (
                     assets["mineral_extraction"]["price factor"]
@@ -919,10 +934,15 @@ class Config(object):
                     ** player.civil_engineering
                 )
 
-            if asset in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
+            if asset in [
+                "windmill",
+                "onshore_wind_turbine",
+                "offshore_wind_turbine",
+            ]:
                 # update price and production (aerodynamics)
                 assets[asset]["price"] *= (
-                    assets["aerodynamics"]["price factor"] ** player.aerodynamics
+                    assets["aerodynamics"]["price factor"]
+                    ** player.aerodynamics
                 )
                 assets[asset]["power generation"] *= (
                     assets["aerodynamics"]["prod factor"] ** player.aerodynamics
@@ -930,7 +950,9 @@ class Config(object):
 
             if asset in ["lithium_ion_batteries", "solid_state_batteries"]:
                 # update roundtrip efficiencies (chemistry)
-                assets[asset]["efficiency"] = 1 - (1 - assets[asset]["efficiency"]) * (
+                assets[asset]["efficiency"] = 1 - (
+                    1 - assets[asset]["efficiency"]
+                ) * (
                     assets["chemistry"]["efficiency_factor"] ** player.chemistry
                 )
 
@@ -970,16 +992,21 @@ class Config(object):
                 "nuclear_engineering",
             ]:
                 # update prices, construction time and construction energy
-                assets[asset]["price"] *= assets[asset]["price multiplier"] ** getattr(
-                    player, asset
-                )
+                assets[asset]["price"] *= assets[asset][
+                    "price multiplier"
+                ] ** getattr(player, asset)
                 assets[asset]["construction time"] *= assets[asset][
                     "price multiplier"
                 ] ** (0.75 * getattr(player, asset))
                 assets[asset]["construction energy"] *= assets[asset][
                     "price multiplier"
                 ] ** (1.25 * getattr(player, asset))
-                if asset in ["laboratory", "warehouse", "industry", "carbon_capture"]:
+                if asset in [
+                    "laboratory",
+                    "warehouse",
+                    "industry",
+                    "carbon_capture",
+                ]:
                     assets[asset]["construction pollution"] *= assets[asset][
                         "price multiplier"
                     ] ** (getattr(player, asset))
@@ -1008,7 +1035,9 @@ class Config(object):
                     if req[1] + getattr(player, asset) < 1:
                         assets[asset]["requirements"].remove(req)
                         continue
-                    req[2] = getattr(player, req[0]) >= req[1] + getattr(player, asset)
+                    req[2] = getattr(player, req[0]) >= req[1] + getattr(
+                        player, asset
+                    )
                     if not req[2]:
                         assets[asset]["locked"] = True
 
@@ -1178,7 +1207,8 @@ class Config(object):
 
         # calculating the transport speed and energy consumption from the level of transport technology
         config.for_player[player_id]["transport"]["time"] *= (
-            assets["transport_technology"]["time factor"] ** player.transport_technology
+            assets["transport_technology"]["time factor"]
+            ** player.transport_technology
         )
         config.for_player[player_id]["transport"]["power consumption"] *= (
             assets["transport_technology"]["energy factor"]
