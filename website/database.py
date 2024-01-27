@@ -276,7 +276,7 @@ class Player(db.Model, UserMixin):
 
     # prints out the object as a sting with the players username for debugging
     def __repr__(self):
-        return f"<Player {self.id} '{self.username}>'"
+        return f"<Player {self.id} '{self.username}'>"
 
 
 # class that stores chats with 2 or more players :
