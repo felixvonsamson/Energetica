@@ -20,6 +20,10 @@ full_config = {
             "pollution": 988,  # [kg CO2/MWh]
             "ramping time": 15,  # [min]
             "requirements": [],
+            "image_extension": "png",
+            "description": "The steam engine burns wood to produce electricity.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Steam_engine",
+            "O&M_description": "The O&M costs of the steam engine are composed of 20% fixed costs and 80% variable costs.",
         },
         "windmill": {
             "name": "Windmill",
@@ -34,6 +38,9 @@ full_config = {
             "pollution": 0,
             "ramping time": 0,
             "requirements": [],
+            "image_extension": "jpg",
+            "description": "The windmill uses the force of the wind to produce electricity.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Windmill",
         },
         "watermill": {
             "name": "Watermill",
@@ -48,6 +55,9 @@ full_config = {
             "pollution": 0,
             "ramping time": 0,
             "requirements": [],
+            "image_extension": "jpg",
+            "description": "The watermill uses the energy of flowing water to produce electricity.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Watermill",
         },
         "coal_burner": {
             "name": "Coal burner",
@@ -65,6 +75,9 @@ full_config = {
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
             ],
+            "image_extension": "jpg",
+            "description": "The coal burner burns coal to produce electricity.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Coal-fired_power_station",
         },
         "oil_burner": {
             "name": "Oil burner",
@@ -82,6 +95,9 @@ full_config = {
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
             ],
+            "image_extension": "jpg",
+            "description": "The oil burner burns oil to produce electricity.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Fossil_fuel_power_station",
         },
         "gas_burner": {
             "name": "Gas burner",
@@ -99,6 +115,9 @@ full_config = {
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
             ],
+            "image_extension": "jpg",
+            "description": "The gas burner burns gas to produce electricity.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Gas-fired_power_facility",
         },
         "small_water_dam": {
             "name": "Small water dam",
@@ -113,6 +132,9 @@ full_config = {
             "pollution": 0,
             "ramping time": 0,
             "requirements": [["civil_engineering", 1, False]],
+            "image_extension": "jpg",
+            "description": "The small water dam uses the potential energy of the water to produce electricity.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
         },
         "onshore_wind_turbine": {
             "name": "Onshore wind turbine",
@@ -131,6 +153,9 @@ full_config = {
                 ["materials", 2, False],
                 ["mechanical_engineering", 3, False],
             ],
+            "image_extension": "jpg",
+            "description": "The wind turbine uses the energy of the wind to produce electricity.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
         },
         "combined_cycle": {
             "name": "Combined cycle",
@@ -148,6 +173,9 @@ full_config = {
                 ["thermodynamics", 3, False],
                 ["mechanical_engineering", 3, False],
             ],
+            "image_extension": "png",
+            "description": "The combined cycle power facility burns coal and gas to produce electricity.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Combined_cycle_power_facility",
         },
         "nuclear_reactor": {
             "name": "Nuclear reactor",
@@ -166,6 +194,9 @@ full_config = {
                 ["chemistry", 3, False],
                 ["nuclear_engineering", 1, False],
             ],
+            "image_extension": "jpg",
+            "description": "The nuclear power facility uses controlled nuclear fission to produce a large amount of electricity.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Nuclear_power_facility",
         },
         "large_water_dam": {
             "name": "Large water dam",
@@ -180,6 +211,9 @@ full_config = {
             "pollution": 0,
             "ramping time": 0,
             "requirements": [["civil_engineering", 4, False]],
+            "image_extension": "jpg",
+            "description": "The large water dam uses the potential energy of the water to produce a large amount of electricity.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
         },
         "CSP_solar": {
             "name": "Concentrated solar power",
@@ -197,6 +231,9 @@ full_config = {
                 ["physics", 5, False],
                 ["thermodynamics", 5, False],
             ],
+            "image_extension": "jpg",
+            "description": "The concentrated solar power facility acumulates heat from the irradiation energy of the sun to produce electricity.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Concentrated_solar_power",
         },
         "PV_solar": {
             "name": "Photovoltaics",
@@ -211,6 +248,9 @@ full_config = {
             "pollution": 0,
             "ramping time": 0,
             "requirements": [["physics", 6, False], ["materials", 4, False]],
+            "image_extension": "jpg",
+            "description": "The photovoltaic pannels transform the irradiation energy of the sun into electricity.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Photovoltaics",
         },
         "offshore_wind_turbine": {
             "name": "Offshore wind turbine",
@@ -229,6 +269,9 @@ full_config = {
                 ["materials", 4, False],
                 ["mechanical_engineering", 6, False],
             ],
+            "image_extension": "jpg",
+            "description": "The wind turbine uses the energy of the wind to produce electricity.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
         },
         "nuclear_reactor_gen4": {
             "name": "4th generation nuclear",
@@ -247,6 +290,9 @@ full_config = {
                 ["chemistry", 5, False],
                 ["nuclear_engineering", 5, False],
             ],
+            "image_extension": "png",
+            "description": "The nuclear power facility of the 4th generation uses controlled nuclear fission to produce a large amount of electricity fom a litle quantity of fuel.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Generation_IV_reactor",
         },
         "small_pumped_hydro": {
             "name": "Small pumped hydro",
