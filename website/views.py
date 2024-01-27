@@ -33,14 +33,20 @@ def check_user():
             return render_template("location_choice.jinja")
         # render template with or without player production data
         if page == "messages.jinja":
-            chats = Chat.query.filter(Chat.participants.any(id=current_user.id)).all()
+            chats = Chat.query.filter(
+                Chat.participants.any(id=current_user.id)
+            ).all()
             return render_template(
                 page, engine=g.engine, user=current_user, chats=chats
             )
         elif page == "resource_market.jinja":
             on_sale = Resource_on_sale.query.all()
             return render_template(
-                page, engine=g.engine, user=current_user, on_sale=on_sale, data=g.config
+                page,
+                engine=g.engine,
+                user=current_user,
+                on_sale=on_sale,
+                data=g.config,
             )
         else:
             return render_template(

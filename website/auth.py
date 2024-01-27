@@ -85,7 +85,9 @@ def init_table(username):
     past_data = data_init(1440)
     Path(f"instance/player_data/{username}").mkdir(parents=True, exist_ok=True)
     for timescale in ["day", "5_days", "month", "6_months"]:
-        with open(f"instance/player_data/{username}/{timescale}.pck", "wb") as file:
+        with open(
+            f"instance/player_data/{username}/{timescale}.pck", "wb"
+        ) as file:
             pickle.dump(past_data, file)
 
 
