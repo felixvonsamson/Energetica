@@ -27,7 +27,9 @@ class Hex(db.Model):
     oil = db.Column(db.Float)
     gas = db.Column(db.Float)
     uranium = db.Column(db.Float)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), unique=True, nullable=True) # ID of the owner of the tile
+    player_id = db.Column(
+        db.Integer, db.ForeignKey("player.id"), unique=True, nullable=True
+    )  # ID of the owner of the tile
 
     def __repr__(self):
         return f"<Tile {self.id} wind {self.wind}>"
@@ -90,12 +92,16 @@ class Player(db.Model, UserMixin):
     sid = None
 
     # Position :
-    tile = db.relationship("Hex", uselist=False, backref='player')
-    network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
+    tile = db.relationship("Hex", uselist=False, backref="player")
+    network_id = db.Column(
+        db.Integer, db.ForeignKey("network.id"), default=None
+    )
 
     # Chats :
     show_disclamer = db.Column(db.Boolean, default=True)
-    chats = db.relationship("Chat", secondary=player_chats, backref="participants")
+    chats = db.relationship(
+        "Chat", secondary=player_chats, backref="participants"
+    )
     messages = db.relationship("Message", backref="player")
 
     # Ressources :
@@ -267,7 +273,7 @@ class Player(db.Model, UserMixin):
 
     # prints out the object as a sting with the players username for debugging
     def __repr__(self):
-        return f"<Player {self.username}>"
+        return f"<Player {self.id} '{self.username}>'"
 
 
 # class that stores chats with 2 or more players :
