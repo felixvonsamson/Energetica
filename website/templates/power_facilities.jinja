@@ -154,13 +154,19 @@
             </td>
           </tr>
           {% endif %}
-          {# <tr>
+          <tr>
             <td>Ramping speed</td>
             <td class="txt_center">
-              <strong><script>display_W({{facility["ramping speed"]}});</script>/min</strong>
+              <strong>
+                {% if data[facility]["ramping speed"] == 0 %}
+                -
+                {% else %}
+                <script>display_W({{data[facility]["ramping speed"]}});</script>/min
+                {% endif %}
+              </strong>
             </td>
           </tr>
-          <tr>
+          {# <tr>
             <td>CO2 emissions</td>
             <td class="txt_center">
               <strong><script>display_kg({{facility["pollution"]}});</script>/MWh</strong>
