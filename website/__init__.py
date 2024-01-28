@@ -127,9 +127,10 @@ def create_app():
         atexit.register(lambda: scheduler.shutdown())
 
         # with app.app_context():
-        # Temporary automated player creation for testing
-        # from .init_test_players import edit_database, init_test_players
-        # edit_database(engine)
-        # init_test_players(engine)
+        #     # Temporary automated player creation for testing
+        #     from .init_test_players import init_test_players
+
+        #     # edit_database(engine)
+        #     init_test_players(engine)
 
     return socketio, sock, app
