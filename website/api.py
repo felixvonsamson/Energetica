@@ -90,11 +90,11 @@ def get_chart_data():
     timescale = request.args.get("timescale")
     # values for `timescale` are in ["6h", "day", "5_days", "month", "6_months"]
     table = request.args.get("table")
-    # values for `table` are in ["demand", "emissions", "generation", "ressources", "revenues", "storage"]
+    # values for `table` are in ["demand", "emissions", "generation", "resources", "revenues", "storage"]
     filename = f"instance/player_data/{current_user.username}/{timescale}.pck"
     with open(filename, "rb") as file:
         data = pickle.load(file)
-    if table == "generation" or table == "storage" or table == "ressources":
+    if table == "generation" or table == "storage" or table == "resources":
         capacities = {}
         if table == "generation":
             for facility in [
@@ -141,18 +141,18 @@ def get_chart_data():
                 "gas": "gas_drilling_site",
                 "uranium": "uranium_mine",
             }
-            for ressource in ["coal", "oil", "gas", "uranium"]:
-                capacities[ressource] = g.engine.config[current_user.id][
+            for resource in ["coal", "oil", "gas", "uranium"]:
+                capacities[resource] = g.engine.config[current_user.id][
                     "warehouse_capacities"
-                ][ressource]
-                facility = resource_to_facility[ressource]
-                rates[ressource] = (
+                ][resource]
+                facility = resource_to_facility[resource]
+                rates[resource] = (
                     getattr(current_user, facility)
                     * assets[facility]["amount produced"]
                     * 60
                 )
-                on_sale[ressource] = getattr(
-                    current_user, ressource + "_on_sale"
+                on_sale[resource] = getattr(
+                    current_user, resource + "_on_sale"
                 )
             return jsonify(
                 g.engine.data["current_t"],

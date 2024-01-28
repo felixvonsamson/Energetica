@@ -6,13 +6,13 @@ interactive map just after having registerd to the game.
 max_q = [1, 1, 5, 25000000000, 7000000000, 1200000000, 100000000];
 // Tile item :
 class Hex {
-    constructor(_id, _q, _r, _ressources, player) {
+    constructor(_id, _q, _r, _resources, player) {
         this.id = _id; // Tile id
         this.q = _q; // q coordinate
         this.r = _r; // r coordinate
         this.s = -this.q - this.r; // s coordinate
         this.selected = false; // true if tile is selected
-        this.ressources = _ressources; // array with amount of ressources on the tile. Format : [solar, wind, hydro, coal, oil, gas, uranium]
+        this.resources = _resources; // array with amount of resources on the tile. Format : [solar, wind, hydro, coal, oil, gas, uranium]
         this.owner = player;
     }
     display_tile() {
@@ -28,7 +28,7 @@ class Hex {
             fill(
                 color(
                     button_colors[active_vew],
-                    (this.ressources[active_vew] * 100) / max_q[active_vew],
+                    (this.resources[active_vew] * 100) / max_q[active_vew],
                     100
                 )
             );
@@ -52,12 +52,12 @@ class Hex {
         if (active_vew >= 0) {
             textSize(ts1);
             if ((active_vew == 0) | (active_vew == 1)) {
-                text(round(this.ressources[active_vew] * 100) + "%", 0, -3);
+                text(round(this.resources[active_vew] * 100) + "%", 0, -3);
             } else if (active_vew == 2) {
                 textSize(ts2);
-                text(this.ressources[active_vew], 0, -4);
+                text(this.resources[active_vew], 0, -4);
             } else {
-                text(convert_kg(this.ressources[active_vew]), 0, -3);
+                text(convert_kg(this.resources[active_vew]), 0, -3);
             }
         } else if (this.owner) {
             textSize(ts2);
@@ -294,7 +294,7 @@ function newdraw_monitor() {
                 textSize(width / 115);
                 text(
                     convert_kg_long(
-                        map[selected_id].ressources[i],
+                        map[selected_id].resources[i],
                         buttons[i].name
                     ),
                     mw - 20,
@@ -304,7 +304,7 @@ function newdraw_monitor() {
             fill(255);
             rect(20, height / 8.2 + (height / 10) * i, mw - 40, height / 20);
             let amount =
-                (map[selected_id].ressources[i] * (mw - 40)) / max_q[i];
+                (map[selected_id].resources[i] * (mw - 40)) / max_q[i];
             fill(color(button_colors[i], 95, 95));
             rect(20, height / 8.2 + (height / 10) * i, amount, height / 20);
         }
@@ -312,18 +312,18 @@ function newdraw_monitor() {
         textSize(width / 115);
         fill(0);
         text(
-            round(map[selected_id].ressources[0] * 1000) + " W/m² irradiation",
+            round(map[selected_id].resources[0] * 1000) + " W/m² irradiation",
             mw - 20,
             height / 9.5
         );
         text(
-            round(pow(map[selected_id].ressources[1], 0.5) * 50) +
+            round(pow(map[selected_id].resources[1], 0.5) * 50) +
                 " km/h windspeed",
             mw - 20,
             height / 9.5 + 0.1 * height
         );
         text(
-            map[selected_id].ressources[2] + " suitable locations",
+            map[selected_id].resources[2] + " suitable locations",
             mw - 20,
             height / 9.5 + 0.2 * height
         );
@@ -433,7 +433,7 @@ function newdraw_smartphone() {
                 textSize(width / 35);
                 text(
                     convert_kg_long(
-                        map[selected_id].ressources[i],
+                        map[selected_id].resources[i],
                         buttons[i].name
                     ),
                     width - 15,
@@ -448,7 +448,7 @@ function newdraw_smartphone() {
                 mh / 75
             );
             let amount =
-                (map[selected_id].ressources[i] * (0.75 * width - 15)) /
+                (map[selected_id].resources[i] * (0.75 * width - 15)) /
                 max_q[i];
             fill(color(button_colors[i], 95, 95));
             rect(0.25 * width, mh / 6 + (mh / 10) * i, amount, mh / 75);
@@ -457,18 +457,18 @@ function newdraw_smartphone() {
         textSize(width / 35);
         fill(0);
         text(
-            round(map[selected_id].ressources[0] * 1000) + " W/m² irradiation",
+            round(map[selected_id].resources[0] * 1000) + " W/m² irradiation",
             width - 15,
             mh / 7.5
         );
         text(
-            round(pow(map[selected_id].ressources[1], 0.5) * 50) +
+            round(pow(map[selected_id].resources[1], 0.5) * 50) +
                 " km/h windspeed",
             width - 15,
             mh / 7.5 + 0.1 * mh
         );
         text(
-            map[selected_id].ressources[2] + " suitable locations",
+            map[selected_id].resources[2] + " suitable locations",
             width - 15,
             mh / 7.5 + 0.2 * mh
         );

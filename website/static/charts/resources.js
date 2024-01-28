@@ -1,4 +1,4 @@
-const keys_ressources = ["coal", "oil", "gas", "uranium"];
+const keys_resources = ["coal", "oil", "gas", "uranium"];
 let rates = {};
 let on_sale = {};
 
@@ -17,7 +17,7 @@ function draw() {
         line(X, 0, X, graph_h);
         noStroke();
         translate(X, graph_h);
-        for (const key of keys_ressources) {
+        for (const key of keys_resources) {
             let h = (-data[key][t] / caps[key]) * graph_h;
             ellipse(0, h, 8, 8);
         }
@@ -39,7 +39,7 @@ function draw() {
         textStyle(BOLD);
         text(display_duration((data_len - t - 1) * res_to_data[res][1]), 57, 5);
         textStyle(NORMAL);
-        for (const key of keys_ressources) {
+        for (const key of keys_resources) {
             if (data[key][t] > 0) {
                 alternate_fill();
                 translate(0, 16);
@@ -105,7 +105,7 @@ function draw() {
     }
 }
 
-function show_stored(ressource, x, y, y_fix) {
+function show_stored(resource, x, y, y_fix) {
     push();
     noStroke();
     translate(x - 170, y);
@@ -114,7 +114,7 @@ function show_stored(ressource, x, y, y_fix) {
     rect(0, 0, 160, 17);
     textStyle(BOLD);
     fill(0);
-    text(cols_and_names[ressource][1], 80, 4);
+    text(cols_and_names[resource][1], 80, 4);
     textStyle(NORMAL);
     alternate_fill();
     translate(0, 16);
@@ -123,7 +123,7 @@ function show_stored(ressource, x, y, y_fix) {
     fill(0);
     text("Stored quantity", 5, 5);
     textAlign(CENTER, CENTER);
-    text(display_kg(data[ressource][data_len - 1]), 135, 5);
+    text(display_kg(data[resource][data_len - 1]), 135, 5);
     translate(0, 16);
     alternate_fill();
     rect(0, 0, 160, 17);
@@ -131,7 +131,7 @@ function show_stored(ressource, x, y, y_fix) {
     fill(0);
     text("On sale", 5, 5);
     textAlign(CENTER, CENTER);
-    text(display_kg(on_sale[ressource]), 135, 5);
+    text(display_kg(on_sale[resource]), 135, 5);
     translate(0, 16);
     alternate_fill();
     rect(0, 0, 160, 17);
@@ -139,7 +139,7 @@ function show_stored(ressource, x, y, y_fix) {
     fill(0);
     text("Storage capacity", 5, 5);
     textAlign(CENTER, CENTER);
-    text(display_kg(caps[ressource]), 135, 5);
+    text(display_kg(caps[resource]), 135, 5);
     translate(0, 16);
     alternate_fill();
     rect(0, 0, 160, 17);
@@ -147,7 +147,7 @@ function show_stored(ressource, x, y, y_fix) {
     fill(0);
     text("Domestic prod.", 5, 5);
     textAlign(CENTER, CENTER);
-    text(display_kgh(rates[ressource]), 135, 5);
+    text(display_kgh(rates[resource]), 135, 5);
     pop();
     push();
     translate(x, y_fix);
@@ -157,7 +157,7 @@ function show_stored(ressource, x, y, y_fix) {
     textStyle(BOLD);
     fill(0);
     text(
-        round((data[ressource][data_len - 1] / caps[ressource]) * 100) + "%",
+        round((data[resource][data_len - 1] / caps[resource]) * 100) + "%",
         0.5 * margin,
         6
     );
@@ -166,7 +166,7 @@ function show_stored(ressource, x, y, y_fix) {
 
 function regen(res) {
     file = res_to_data[res][0];
-    fetch(`/get_chart_data?timescale=${file}&table=ressources`) // retrieves data from server
+    fetch(`/get_chart_data?timescale=${file}&table=resources`) // retrieves data from server
         .then((response) => response.json())
         .then((raw_data) => {
             background(229, 217, 182);
@@ -184,7 +184,7 @@ function regen(res) {
             noStroke();
             push();
             strokeWeight(3);
-            for (const key of keys_ressources) {
+            for (const key of keys_resources) {
                 stroke(cols_and_names[key][0]);
                 push();
                 for (let t = 1; t < data_len; t++) {

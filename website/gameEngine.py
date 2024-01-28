@@ -150,7 +150,7 @@ def daily_update(engine, app):
     save_past_data_threaded(app, engine, past_data, network_data)
 
 
-from .production_update import update_ressources, update_electricity  # noqa: E402
+from .production_update import update_resources, update_electricity  # noqa: E402
 
 
 # function that is executed once every 1 minute :
@@ -168,7 +168,7 @@ def state_update_m(engine, app):
             if engine.data["current_t"] % 10 == 1:
                 engine.config.update_mining_productivity()
                 update_weather(engine)
-            update_ressources(engine)
+            update_resources(engine)
             update_electricity(engine)
 
         # save engine every minute in case of server crash

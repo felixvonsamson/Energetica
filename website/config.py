@@ -15,7 +15,7 @@ full_config = {
             "construction power factor": 0.4,  # fraction of power gen during construction
             "construction pollution": 17520,  # [kg]
             "O&M cost": 0.8,  # [fraction of price per (day)]
-            "consumed ressource": {}, # [kg/MWh]
+            "consumed resource": {}, # [kg/MWh]
             "pollution": 988,  # [kg CO2/MWh]
             "ramping time": 15,  # [min]
             "requirements": [],
@@ -32,7 +32,7 @@ full_config = {
             "construction power factor": 0.7,
             "construction pollution": 1600,
             "O&M cost": 0.054,
-            "consumed ressource": {"wind":0},
+            "consumed resource": {"wind":0},
             "pollution": 0,
             "ramping time": 0,
             "requirements": [],
@@ -48,7 +48,7 @@ full_config = {
             "construction power factor": 0.6,
             "construction pollution": 2200,
             "O&M cost": 0.055,
-            "consumed ressource": {"water":0},
+            "consumed resource": {"water":0},
             "pollution": 0,
             "ramping time": 0,
             "requirements": [],
@@ -64,7 +64,7 @@ full_config = {
             "construction power factor": 0.5,
             "construction pollution": 1100000,
             "O&M cost": 0.095,
-            "consumed ressource": {"coal":640},
+            "consumed resource": {"coal":640},
             "pollution": 1664,
             "ramping time": 75,
             "requirements": [
@@ -83,7 +83,7 @@ full_config = {
             "construction power factor": 1.1,
             "construction pollution": 440000,
             "O&M cost": 0.1,
-            "consumed ressource": {"oil":375},
+            "consumed resource": {"oil":375},
             "pollution": 1181,
             "ramping time": 10,
             "requirements": [
@@ -102,7 +102,7 @@ full_config = {
             "construction power factor": 1.1,
             "construction pollution": 657000,
             "O&M cost": 0.117,
-            "consumed ressource": {"gas":353},
+            "consumed resource": {"gas":353},
             "pollution": 1006,
             "ramping time": 9,
             "requirements": [
@@ -121,7 +121,7 @@ full_config = {
             "construction power factor": 0.2,
             "construction pollution": 876000,
             "O&M cost": 0.032,
-            "consumed ressource": {"hydropower":0},
+            "consumed resource": {"hydropower":0},
             "pollution": 0,
             "ramping time": 0,
             "requirements": [["civil_engineering", 1, False]],
@@ -137,7 +137,7 @@ full_config = {
             "construction power factor": 1.7,
             "construction pollution": 420000,
             "O&M cost": 0.052,
-            "consumed ressource": {"wind":0},
+            "consumed resource": {"wind":0},
             "pollution": 0,
             "ramping time": 0,
             "requirements": [
@@ -157,7 +157,7 @@ full_config = {
             "construction power factor": 0.7,
             "construction pollution": 1500000,
             "O&M cost": 0.102,
-            "consumed ressource": {"gas":210, "coal":76},
+            "consumed resource": {"gas":210, "coal":76},
             "pollution": 797,
             "ramping time": 150,
             "requirements": [
@@ -176,7 +176,7 @@ full_config = {
             "construction power factor": 0.1,
             "construction pollution": 870000,
             "O&M cost": 0.104,
-            "consumed ressource": {"uranium":0.044},
+            "consumed resource": {"uranium":0.044},
             "efficiency": 0.22,
             "pollution": 2,
             "ramping time": 1200,
@@ -196,7 +196,7 @@ full_config = {
             "construction power factor": 0.15,
             "construction pollution": 8760000,
             "O&M cost": 0.022,
-            "consumed ressource": {"hydropower":0},
+            "consumed resource": {"hydropower":0},
             "pollution": 0,
             "ramping time": 0,
             "requirements": [["civil_engineering", 4, False]],
@@ -212,7 +212,7 @@ full_config = {
             "construction power factor": 0.5,
             "construction pollution": 1260000,
             "O&M cost": 0.067,
-            "consumed ressource": {"irradiation":0},
+            "consumed resource": {"irradiation":0},
             "pollution": 0,
             "ramping time": 0,
             "requirements": [
@@ -231,7 +231,7 @@ full_config = {
             "construction power factor": 10,
             "construction pollution": 24000000,
             "O&M cost": 0.02,
-            "consumed ressource": {"irradiation":0},
+            "consumed resource": {"irradiation":0},
             "pollution": 0,
             "ramping time": 0,
             "requirements": [["physics", 6, False], ["materials", 4, False]],
@@ -247,7 +247,7 @@ full_config = {
             "construction power factor": 1.5,
             "construction pollution": 4900000,
             "O&M cost": 0.065,
-            "consumed ressource": {"wind":0},
+            "consumed resource": {"wind":0},
             "pollution": 0,
             "ramping time": 0,
             "requirements": [
@@ -267,7 +267,7 @@ full_config = {
             "construction power factor": 0.08,
             "construction pollution": 2400000,
             "O&M cost": 0.085,
-            "consumed ressource": {"uranium":0.00057},
+            "consumed resource": {"uranium":0.00057},
             "efficiency": 0.3,
             "pollution": 3,
             "ramping time": 800,
@@ -850,9 +850,9 @@ class Config(object):
                 "nuclear_reactor",
                 "nuclear_reactor_gen4",
             ]:
-                # update ressource consumption and pollution (thermodynamics)
-                for resource in assets[asset]["consumed ressource"]:
-                    assets[asset]["consumed ressource"][resource] /= (
+                # update resource consumption and pollution (thermodynamics)
+                for resource in assets[asset]["consumed resource"]:
+                    assets[asset]["consumed resource"][resource] /= (
                         1
                         + assets["thermodynamics"]["efficiency_factor"]
                         * player.thermodynamics
@@ -1212,11 +1212,11 @@ class Config(object):
 
         # calculating the maximum storage capacity from the warehouse level
         max_cap = config.for_player[player_id]["warehouse_capacities"]
-        for ressource in max_cap:
+        for resource in max_cap:
             if player.warehouse == 0:
-                max_cap[ressource] = 0
+                max_cap[resource] = 0
             else:
-                max_cap[ressource] *= (
+                max_cap[resource] *= (
                     assets["warehouse"]["capacity factor"] ** player.warehouse
                 )
 

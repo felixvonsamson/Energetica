@@ -159,7 +159,7 @@ def data_init(length):
             "lithium_ion_batteries": [0] * length,
             "solid_state_batteries": [0] * length,
         },
-        "ressources": {
+        "resources": {
             "coal": [0] * length,
             "oil": [0] * length,
             "gas": [0] * length,

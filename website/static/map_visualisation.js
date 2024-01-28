@@ -5,12 +5,12 @@ This code is the p5.js script that eshows the map in the home screen
 max_q = [1, 1, 5, 25000000000, 7000000000, 1200000000, 100000000];
 // Tile item :
 class Hex {
-    constructor(_id, _q, _r, _ressources, player) {
+    constructor(_id, _q, _r, _resources, player) {
         this.id = _id; // Tile id
         this.q = _q; // q coordinate
         this.r = _r; // r coordinate
         this.s = -this.q - this.r; // s coordinate
-        this.ressources = _ressources; // array with amount of ressources on the tile. Format : [solar, wind, hydro, coal, oil, gas, uranium]
+        this.resources = _resources; // array with amount of resources on the tile. Format : [solar, wind, hydro, coal, oil, gas, uranium]
         this.owner = player;
     }
     display_tile(hover = false) {
@@ -150,23 +150,23 @@ function draw() {
                 textAlign(RIGHT);
                 textSize(15);
                 text(
-                    convert_kg_long(map[id].ressources[i], resources[i]),
+                    convert_kg_long(map[id].resources[i], resources[i]),
                     190,
                     45 + 32 * i
                 );
             }
             fill(83, 35, 75);
             rect(10, 59 + 32 * i, 180, 5);
-            let amount = (map[id].ressources[i] * 180) / max_q[i];
+            let amount = (map[id].resources[i] * 180) / max_q[i];
             fill(color(resource_colors[i], 95, 95));
             rect(10, 59 + 32 * i, amount, 5);
         }
         textAlign(RIGHT);
         textSize(15);
         fill(255);
-        text(round(map[id].ressources[0] * 1000) + " W/m²", 190, 45);
-        text(round(pow(map[id].ressources[1], 0.5) * 50) + " km/h", 190, 77);
-        text(map[id].ressources[2] + " locations", 190, 109);
+        text(round(map[id].resources[0] * 1000) + " W/m²", 190, 45);
+        text(round(pow(map[id].resources[1], 0.5) * 50) + " km/h", 190, 77);
+        text(map[id].resources[2] + " locations", 190, 109);
         textAlign(CENTER);
         textSize(18);
         text("Distance : " + calc_dist(id) + " tiles", 100, 275);

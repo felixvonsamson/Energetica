@@ -102,7 +102,7 @@
                  onclick="expand_tile('tile{{ sale.id }}');"
                  class="resource_market_block bone txt_center">
                 <img class="img"
-                     src="{{ url_for('static', filename='images/ressources/'+sale.resource+'_img.jpg') }}">
+                     src="{{ url_for('static', filename='images/resources/'+sale.resource+'_img.jpg') }}">
                 <div id="infos" class="flex-col medium">
                     <span class="large">
                         <script>to_string({{ sale.quantity / 1000 }});</script> t {{ sale.resource }}
