@@ -150,7 +150,7 @@ def daily_update(engine, app):
     save_past_data_threaded(app, engine, past_data, network_data)
 
 
-from .production_update import update_ressources, update_electricity  # noqa: E402
+from .production_update import update_resources, update_electricity  # noqa: E402
 
 
 # function that is executed once every 1 minute :
@@ -168,7 +168,7 @@ def state_update_m(engine, app):
             if engine.data["current_t"] % 10 == 1:
                 engine.config.update_mining_productivity()
                 update_weather(engine)
-            update_ressources(engine)
+            update_resources(engine)
             update_electricity(engine)
 
         # save engine every minute in case of server crash
@@ -181,8 +181,8 @@ def check_upcoming_actions(app):
     with app.app_context():
         # check if constructions finished
         finished_constructions = (
-            Under_construction.query.filter(Under_construction.start_time is not None)
-            .filter(Under_construction.suspension_time is None)
+            Under_construction.query.filter(Under_construction.start_time != None)
+            .filter(Under_construction.suspension_time == None)
             .filter(
                 Under_construction.start_time + Under_construction.duration
                 < time.time()
@@ -196,8 +196,8 @@ def check_upcoming_actions(app):
 
         # check if shipment arrived
         arrived_shipments = (
-            Shipment.query.filter(Shipment.departure_time is not None)
-            .filter(Shipment.suspension_time is None)
+            Shipment.query.filter(Shipment.departure_time != None)
+            .filter(Shipment.suspension_time == None)
             .filter(Shipment.departure_time + Shipment.duration < time.time())
         )
         if arrived_shipments:

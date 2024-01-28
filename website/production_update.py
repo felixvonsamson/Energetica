@@ -11,14 +11,14 @@ from sqlalchemy.sql.expression import func
 from .database import Network, Player, Under_construction, Shipment, Hex
 from . import db
 
-ressource_to_extraction = {
+resource_to_extraction = {
     "coal": "coal_mine",
     "oil": "oil_field",
     "gas": "gas_drilling_site",
     "uranium": "uranium_mine",
 }
 
-extraction_to_ressource = {
+extraction_to_resource = {
     "coal_mine": "coal",
     "oil_field": "oil",
     "gas_drilling_site": "gas",
@@ -26,8 +26,8 @@ extraction_to_ressource = {
 }
 
 
-# fuction that updates the ressources of all players according to extraction capacity
-def update_ressources(engine):
+# fuction that updates the resources of all players according to extraction capacity
+def update_resources(engine):
     t = engine.data["current_t"]
     # keep CO2 values for next t
     engine.data["current_CO2"][t] = engine.data["current_CO2"][t - 1]
@@ -39,30 +39,30 @@ def update_ressources(engine):
             continue
         assets = engine.config[player.id]["assets"]
         demand = engine.data["current_data"][player.username]["demand"]
-        player_ressources = engine.data["current_data"][player.username]["ressources"]
+        player_resources = engine.data["current_data"][player.username]["resources"]
         warehouse_caps = engine.config[player.id]["warehouse_capacities"]
         extraction_facility_demand(engine, player, t, assets, demand)
-        for ressource in ressource_to_extraction:
-            facility = ressource_to_extraction[ressource]
+        for resource in resource_to_extraction:
+            facility = resource_to_extraction[resource]
             if getattr(player, facility) > 0:
                 max_warehouse = (
-                    warehouse_caps[ressource] - player_ressources[ressource][t - 1]
+                    warehouse_caps[resource] - player_resources[resource][t - 1]
                 )
                 max_prod = (
                     getattr(player, facility) * assets[facility]["amount produced"]
                 )
                 amount_produced = min(max_prod, max_warehouse)
-                setattr(player, ressource, getattr(player, ressource) + amount_produced)
+                setattr(player, resource, getattr(player, resource) + amount_produced)
                 setattr(
                     player.tile,
-                    ressource,
-                    max(0, getattr(player.tile, ressource) - amount_produced),
+                    resource,
+                    max(0, getattr(player.tile, resource) - amount_produced),
                 )
                 facility_emmissions = (
                     assets[facility]["pollution"] * amount_produced / 1000
                 )
                 add_emissions(engine, player, t, facility, facility_emmissions)
-            player_ressources[ressource][t] = getattr(player, ressource)
+            player_resources[resource][t] = getattr(player, resource)
 
     db.session.commit()
 
@@ -124,8 +124,8 @@ def update_electricity(engine):
             else:
                 current_data["revenues"]["exports"][t] = max(0, exp_rev + imp_rev)
                 current_data["revenues"]["imports"][t] = min(0, exp_rev + imp_rev)
-        # Ressource and pollution update for all players
-        ressources_and_pollution(engine, player, t)
+        # resource and pollution update for all players
+        resources_and_pollution(engine, player, t)
         # add money from industry income
         player.money += current_data["revenues"]["industry"][t]
         player.average_revenues = (
@@ -153,13 +153,13 @@ def init_storage(engine, player, t):
 
 def extraction_facility_demand(engine, player, t, assets, demand):
     """Calculate power consumption of extraction facilites"""
-    player_ressources = engine.data["current_data"][player.username]["ressources"]
+    player_resources = engine.data["current_data"][player.username]["resources"]
     warehouse_caps = engine.config[player.id]["warehouse_capacities"]
-    for ressource in ressource_to_extraction:
-        facility = ressource_to_extraction[ressource]
+    for resource in resource_to_extraction:
+        facility = resource_to_extraction[resource]
         if getattr(player, facility) > 0:
             max_warehouse = (
-                warehouse_caps[ressource] - player_ressources[ressource][t - 1]
+                warehouse_caps[resource] - player_resources[resource][t - 1]
             )
             max_prod = getattr(player, facility) * assets[facility]["amount produced"]
             power_factor = 0.2 + 0.8 * min(1, max_warehouse / max_prod)
@@ -591,28 +591,20 @@ def market_optimum(offers_og, demands_og):
             return price, row.cumul_capacities
 
 
-# Calculates the min or max power production of a facility in at time t considering ramping constraints, ressources constraints and max and min power constraints
+# Calculates the min or max power production of a facility at time t considering ramping constraints, resources constraints and max and min power constraints
+# only for controllable plants
 def calculate_prod(
     minmax, player, assets, facility, generation, t, storage=None, filling=False
 ):
-    max_ressources = np.inf
+    max_resources = np.inf
     ramping_speed = getattr(player, facility) * assets[facility]["ramping speed"]
     if storage is None:
-        if facility == "combined_cycle":
-            available_gas = player.gas - player.gas_on_sale
-            available_coal = player.coal - player.coal_on_sale
-            max_ressources = min(
-                available_gas / assets[facility]["amount consumed"][0] * 60000000,
-                available_coal / assets[facility]["amount consumed"][1] * 60000000,
+        for resource, amount in assets[facility]["consumed resource"].items():
+            available_resource = getattr(player, resource) - getattr(
+                player, resource + "_on_sale"
             )
-        elif assets[facility]["amount consumed"] != 0:
-            ressource = assets[facility]["consumed ressource"]
-            available_ressource = getattr(player, ressource) - getattr(
-                player, ressource + "_on_sale"
-            )
-            max_ressources = (
-                available_ressource / assets[facility]["amount consumed"] * 60000000
-            )
+            P_max_resources = available_resource / amount * 60000000
+            max_resources = min(P_max_resources, max_resources)
     else:
         if filling:
             E = (
@@ -629,19 +621,19 @@ def calculate_prod(
                 0,
                 storage[facility][t - 1] * 60 * (assets[facility]["efficiency"] ** 0.5),
             )  # max available storge content
-        max_ressources = min(
+        max_resources = min(
             E, (2 * E * ramping_speed) ** 0.5 - 0.5 * ramping_speed
         )  # ramping down
     if minmax == "max":
         max_ramping = generation[facility][t - 1] + ramping_speed
         return min(
-            max_ressources,
+            max_resources,
             max_ramping,
             getattr(player, facility) * assets[facility]["power generation"],
         )
     else:
         min_ramping = generation[facility][t - 1] - ramping_speed
-        return max(0, min(max_ressources, min_ramping))
+        return max(0, min(max_resources, min_ramping))
 
 
 def offer(market, player, capacity, price, facility):
@@ -711,24 +703,26 @@ def buy(engine, row, market_price, t, quantity=None):
     revenue["imports"][t] -= quantity * market_price / 60000000
 
 
-def ressources_and_pollution(engine, player, t):
+def resources_and_pollution(engine, player, t):
     assets = engine.config[player.id]["assets"]
     generation = engine.data["current_data"][player.username]["generation"]
     revenue = engine.data["current_data"][player.username]["revenues"]
-    # Calculate ressource consumption
+    # Calculate resource consumption
     for facility in [
         "coal_burner",
         "oil_burner",
         "gas_burner",
+        "combined_cycle",
         "nuclear_reactor",
         "nuclear_reactor_gen4",
     ]:
-        ressource = assets[facility]["consumed ressource"]
-        quantity = (
-            assets[facility]["amount consumed"] * generation[facility][t] / 60000000
-        )
-        setattr(player, ressource, getattr(player, ressource) - quantity)
-    # Special case steam engine costs money and if it is not used it costs half of the maximum
+        if getattr(player, facility) > 0:
+            for resource, amount in assets[facility]["consumed resource"].items():
+                quantity = amount * generation[facility][t] / 60000000
+                setattr(player, resource, getattr(player, resource) - quantity)
+    
+    # O&M costs, currently only for steam engine
+    # Special case steam engine costs money and if it is not used it costs 20% of the maximum
     steam_engine_cost = (
         player.steam_engine
         * assets["steam_engine"]["O&M cost"]
@@ -742,20 +736,8 @@ def ressources_and_pollution(engine, player, t):
     )
     player.money -= steam_engine_cost
     revenue["O&M_costs"][t] -= steam_engine_cost
-    # special case of combined cycle
-    quantity_gas = (
-        assets["combined_cycle"]["amount consumed"][0]
-        * generation["combined_cycle"][t]
-        / 60000000
-    )
-    quantity_coal = (
-        assets["combined_cycle"]["amount consumed"][1]
-        * generation["combined_cycle"][t]
-        / 60000000
-    )
-    player.gas -= quantity_gas
-    player.coal -= quantity_coal
-    # emissions (emissions of extraction facilities are calculated in update_ressources)
+
+    # emissions (emissions of extraction facilities are calculated in update_resources)
     for facility in [
         "steam_engine",
         "coal_burner",
@@ -827,8 +809,8 @@ def reduce_demand(engine, demand_type, player, demand, assets, t):
         last_construction = (
             Under_construction.query.filter(Under_construction.player_id == player.id)
             .filter(Under_construction.family != "technologies")
-            .filter(Under_construction.start_time is not None)
-            .filter(Under_construction.suspension_time is None)
+            .filter(Under_construction.start_time != None)
+            .filter(Under_construction.suspension_time == None)
             .order_by(Under_construction.start_time.desc())
             .first()
         )
@@ -839,8 +821,8 @@ def reduce_demand(engine, demand_type, player, demand, assets, t):
         last_research = (
             Under_construction.query.filter(Under_construction.player_id == player.id)
             .filter(Under_construction.family == "technologies")
-            .filter(Under_construction.start_time is not None)
-            .filter(Under_construction.suspension_time is None)
+            .filter(Under_construction.start_time != None)
+            .filter(Under_construction.suspension_time == None)
             .order_by(Under_construction.start_time.desc())
             .first()
         )
@@ -864,8 +846,8 @@ def reduce_demand(engine, demand_type, player, demand, assets, t):
             db.session.commit()
     # complicated logic to adjust resource production
     if demand_type in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"]:
-        resource_name = extraction_to_ressource[demand_type]
-        q_resource = engine.data["current_data"][player.username]["ressources"][
+        resource_name = extraction_to_resource[demand_type]
+        q_resource = engine.data["current_data"][player.username]["resources"][
             resource_name
         ]
         takeback = q_resource[t] - q_resource[t - 1]

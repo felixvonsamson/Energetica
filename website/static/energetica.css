@@ -305,7 +305,7 @@ canvas {
     -ms-transform: translate(-50%, -50%)
 }
 
-.ressources {
+.resources {
     display: block;
     max-width: 230px;
     width: 15%;
@@ -357,7 +357,7 @@ canvas {
         overflow: scroll;
     }
 
-    .ressources {
+    .resources {
         max-width: 100%;
         width: 100%;
         position: static;

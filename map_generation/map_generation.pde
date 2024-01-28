@@ -55,9 +55,9 @@ void redraw(){
       if(h != null){
         if(active_vew >= 0){
           if(active_vew == 7){
-            bars[min(10,floor((h.ressources[active_vew]-1)*6))] ++;
+            bars[min(10,floor((h.resources[active_vew]-1)*6))] ++;
           }else{
-            bars[floor(h.ressources[active_vew]*10)] ++;
+            bars[floor(h.resources[active_vew]*10)] ++;
           }
         }
         pushMatrix();

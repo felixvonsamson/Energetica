@@ -44,7 +44,7 @@ def store_import(player, resource, quantity):
     ][resource]
     if getattr(player, resource) + quantity > max_cap:
         setattr(player, resource, max_cap)
-        # excess ressources are stored in the ground
+        # excess resources are stored in the ground
         setattr(
             player.tile,
             resource,

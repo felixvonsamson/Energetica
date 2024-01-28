@@ -40,7 +40,7 @@ class Grow_tile_coal{
   void add_coal(){
     Hex h = map[round(position.x)][round(position.y)];
     float value = max(0,min(1,random(max_value-0.4,max_value*0.9)));
-    h.ressources[3] = value;
+    h.resources[3] = value;
   }
   void create_children(){
     for(int i = 0; i<directions.length; i++){
@@ -62,7 +62,7 @@ class Grow_tile_coal{
     if(h == null){
       return false;
     }
-    if(h.ressources[3] != 0){
+    if(h.resources[3] != 0){
       return false;
     }
     for(int i = 0; i<growing_patches_coal.size(); i++){

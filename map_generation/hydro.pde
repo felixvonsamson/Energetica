@@ -13,7 +13,7 @@ void generate_hydro(){
       neighbours = neighbours(new PVector(randx, randy));
       seedTile = map[randx][randy];
     }
-    seedTile.ressources[2] = 1;
+    seedTile.resources[2] = 1;
     water_tile++;
     int rand_dir = floor(random(6));
     PVector dir1 = new PVector(randx + directions[rand_dir].x, randy + directions[rand_dir].y);
@@ -51,7 +51,7 @@ class Flow_tile{
     int deviation = floor(random(3))-1;
     int new_dir = (dir + deviation + 6)%6;
     Hex h = map[round(position.x)][round(position.y)];
-    h.ressources[2] = age;
+    h.resources[2] = age;
     Flow_tile child_flow = new Flow_tile(new_dir, position.copy().add(directions[new_dir]), age-0.02);
     if (child_flow.inBounds()){
       current_flows.add(child_flow);
@@ -94,7 +94,7 @@ int neighbours(PVector position){
     if(neighbour == null){
       continue;
     }
-    if(neighbour.ressources[2]!=0){
+    if(neighbour.resources[2]!=0){
       count++;
     }
   }

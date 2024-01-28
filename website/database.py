@@ -50,7 +50,7 @@ class Under_construction(db.Model):
     )  # can access player directly with .player
 
 
-# class that stores the ressources shippment on their way :
+# class that stores the resources shippment on their way :
 class Shipment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     resource = db.Column(db.String(10))
@@ -107,7 +107,7 @@ class Player(db.Model, UserMixin):
     )
     messages = db.relationship("Message", backref="player")
 
-    # Ressources :
+    # resources :
     money = db.Column(db.Float, default=5000)  # default is 5000
     coal = db.Column(db.Float, default=0)
     oil = db.Column(db.Float, default=0)
