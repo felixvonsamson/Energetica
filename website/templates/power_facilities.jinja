@@ -161,11 +161,26 @@
           {% endif %}
 
           {# Resource Consumption #}
-          {# {% for resource in ["gas", "coal", "oil", "uranium"] %}
+          {% for resource in ["gas", "coal", "oil", "uranium"] %}
             {% if resource in data[facility]["consumed resource"] %}
-
+              <tr>
+                <td>{{ resource[0]|upper|upper + resource[1:] }} consumption</td>
+                <td class="txt_center">
+                  <strong>
+                    {% if resource == "uranium" %}
+                      {% if facility == "nuclear_reactor"%}  
+                      {{(data[facility]["consumed resource"][resource]*1000)|int}} g/MWh
+                      {% else %}
+                      {{ (data[facility]["consumed resource"]["uranium"]*1000)|round(2) }} g/MWh
+                      {% endif %}
+                    {% else %}
+                    <script>display_kg({{ data[facility]["consumed resource"][resource] }});</script>/MWh
+                    {% endif %}
+                  </strong>
+                </td>
+              </tr>
             {% endif %}
-          {% endfor %} #}
+          {% endfor %}
 
           {# Ramping Speed #}
           <tr>
