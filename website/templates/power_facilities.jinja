@@ -50,6 +50,7 @@
       {% endfor %}
     {% endif %}
   </div>
+  
   {% for facility in ["steam_engine", "windmill", "watermill", "coal_burner", "oil_burner", "gas_burner", "small_water_dam", "onshore_wind_turbine", "combined_cycle", "nuclear_reactor", "large_water_dam", "CSP_solar", "PV_solar", "offshore_wind_turbine", "nuclear_reactor_gen4"] %}
   <div id="{{ facility }}"
        class="bone margin facility small construction_tile"
@@ -403,7 +404,7 @@
         <tr>
           <td>Coal consumption</td>
           <td class="txt_center">
-            <strong><script>display_kg({{facility["amount consumed"]}});</script>/MWh</strong>
+            <strong><script>display_kg({{facility["consumed ressource"]["coal"]}});</script>/MWh</strong>
           </td>
         </tr>
         <tr>
@@ -481,7 +482,7 @@
         <tr>
           <td>Oil consumption</td>
           <td class="txt_center">
-            <strong><script>display_kg({{facility["amount consumed"]}});</script>/MWh</strong>
+            <strong><script>display_kg({{facility["consumed ressource"]["oil"]}});</script>/MWh</strong>
           </td>
         </tr>
         <tr>
@@ -559,7 +560,7 @@
         <tr>
           <td>Gas consumption</td>
           <td class="txt_center">
-            <strong><script>display_kg({{facility["amount consumed"]}});</script>/MWh</strong>
+            <strong><script>display_kg({{facility["consumed ressource"]["gas"]}});</script>/MWh</strong>
           </td>
         </tr>
         <tr>
@@ -783,13 +784,13 @@
         <tr>
           <td>Gas consumption</td>
           <td class="txt_center">
-            <strong><script>display_kg({{facility["amount consumed"][0]}});</script>/MWh</strong>
+            <strong><script>display_kg({{facility["consumed ressource"]["gas"]}});</script>/MWh</strong>
           </td>
         </tr>
         <tr>
           <td>Coal consumption</td>
           <td class="txt_center">
-            <strong><script>display_kg({{facility["amount consumed"][1]}});</script>/MWh</strong>
+            <strong><script>display_kg({{facility["consumed ressource"]["coal"]}});</script>/MWh</strong>
           </td>
         </tr>
         <tr>
@@ -867,7 +868,7 @@
         <tr>
           <td>Uranium consum.</td>
           <td class="txt_center">
-            <strong>{{(facility["amount consumed"]*1000)|int}} g/MWh</strong>
+            <strong>{{(facility["consumed ressource"]["uranium"]*1000)|int}} g/MWh</strong>
           </td>
         </tr>
         <tr>
@@ -1232,7 +1233,7 @@
         <tr>
           <td>Uranium consum.</td>
           <td class="txt_center">
-            <strong>{{ (facility["amount consumed"]*1000)|round(2) }} g/MWh</strong>
+            <strong>{{ (facility["consumed ressource"]["uranium"]*1000)|round(2) }} g/MWh</strong>
           </td>
         </tr>
         <tr>

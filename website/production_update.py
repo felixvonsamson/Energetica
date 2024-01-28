@@ -591,28 +591,20 @@ def market_optimum(offers_og, demands_og):
             return price, row.cumul_capacities
 
 
-# Calculates the min or max power production of a facility in at time t considering ramping constraints, ressources constraints and max and min power constraints
+# Calculates the min or max power production of a facility at time t considering ramping constraints, ressources constraints and max and min power constraints
+# only for controllable plants
 def calculate_prod(
     minmax, player, assets, facility, generation, t, storage=None, filling=False
 ):
     max_ressources = np.inf
     ramping_speed = getattr(player, facility) * assets[facility]["ramping speed"]
     if storage is None:
-        if facility == "combined_cycle":
-            available_gas = player.gas - player.gas_on_sale
-            available_coal = player.coal - player.coal_on_sale
-            max_ressources = min(
-                available_gas / assets[facility]["amount consumed"][0] * 60000000,
-                available_coal / assets[facility]["amount consumed"][1] * 60000000,
+        for resource, amount in assets[facility]["consumed ressource"].items():
+            available_ressource = getattr(player, resource) - getattr(
+                player, resource + "_on_sale"
             )
-        elif assets[facility]["amount consumed"] != 0:
-            ressource = assets[facility]["consumed ressource"]
-            available_ressource = getattr(player, ressource) - getattr(
-                player, ressource + "_on_sale"
-            )
-            max_ressources = (
-                available_ressource / assets[facility]["amount consumed"] * 60000000
-            )
+            P_max_resources = available_ressource / amount * 60000000
+            max_ressources = min(P_max_resources, max_ressources)
     else:
         if filling:
             E = (
@@ -720,15 +712,17 @@ def ressources_and_pollution(engine, player, t):
         "coal_burner",
         "oil_burner",
         "gas_burner",
+        "combined_cycle",
         "nuclear_reactor",
         "nuclear_reactor_gen4",
     ]:
-        ressource = assets[facility]["consumed ressource"]
-        quantity = (
-            assets[facility]["amount consumed"] * generation[facility][t] / 60000000
-        )
-        setattr(player, ressource, getattr(player, ressource) - quantity)
-    # Special case steam engine costs money and if it is not used it costs half of the maximum
+        if getattr(player, facility) > 0:
+            for resource, amount in assets[facility]["consumed ressource"].items():
+                quantity = amount * generation[facility][t] / 60000000
+                setattr(player, resource, getattr(player, resource) - quantity)
+    
+    # O&M costs, currently only for steam engine
+    # Special case steam engine costs money and if it is not used it costs 20% of the maximum
     steam_engine_cost = (
         player.steam_engine
         * assets["steam_engine"]["O&M cost"]
@@ -742,19 +736,7 @@ def ressources_and_pollution(engine, player, t):
     )
     player.money -= steam_engine_cost
     revenue["O&M_costs"][t] -= steam_engine_cost
-    # special case of combined cycle
-    quantity_gas = (
-        assets["combined_cycle"]["amount consumed"][0]
-        * generation["combined_cycle"][t]
-        / 60000000
-    )
-    quantity_coal = (
-        assets["combined_cycle"]["amount consumed"][1]
-        * generation["combined_cycle"][t]
-        / 60000000
-    )
-    player.gas -= quantity_gas
-    player.coal -= quantity_coal
+
     # emissions (emissions of extraction facilities are calculated in update_ressources)
     for facility in [
         "steam_engine",
@@ -827,8 +809,8 @@ def reduce_demand(engine, demand_type, player, demand, assets, t):
         last_construction = (
             Under_construction.query.filter(Under_construction.player_id == player.id)
             .filter(Under_construction.family != "technologies")
-            .filter(Under_construction.start_time is not None)
-            .filter(Under_construction.suspension_time is None)
+            .filter(Under_construction.start_time != None)
+            .filter(Under_construction.suspension_time == None)
             .order_by(Under_construction.start_time.desc())
             .first()
         )
@@ -839,8 +821,8 @@ def reduce_demand(engine, demand_type, player, demand, assets, t):
         last_research = (
             Under_construction.query.filter(Under_construction.player_id == player.id)
             .filter(Under_construction.family == "technologies")
-            .filter(Under_construction.start_time is not None)
-            .filter(Under_construction.suspension_time is None)
+            .filter(Under_construction.start_time != None)
+            .filter(Under_construction.suspension_time == None)
             .order_by(Under_construction.start_time.desc())
             .first()
         )
