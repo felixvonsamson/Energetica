@@ -53,11 +53,12 @@
   {% for facility in ["steam_engine", "windmill", "watermill", "coal_burner", "oil_burner", "gas_burner", "small_water_dam", "onshore_wind_turbine", "combined_cycle", "nuclear_reactor", "large_water_dam", "CSP_solar", "PV_solar", "offshore_wind_turbine", "nuclear_reactor_gen4"] %}
     <div id="{{ facility }}"
          class="bone margin facility small construction_tile"
-         onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
+         onclick="show_construction('{{ data[facility]['name'] }}', '{{ data[facility]['locked'] }}');">
       <img class="img"
            src="{{ url_for('static', filename='images/power_facilities/'+facility+'.'+data[facility].image_extension) }}"
            width="250"
-           height="167">
+           height="167"
+           alt="{{ data[facility]['name'] }} power plant">
       <div class="infotext padding">
         <strong class="large">
           <a class="no_deco"
