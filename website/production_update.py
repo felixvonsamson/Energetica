@@ -39,7 +39,9 @@ def update_resources(engine):
             continue
         assets = engine.config[player.id]["assets"]
         demand = engine.data["current_data"][player.username]["demand"]
-        player_resources = engine.data["current_data"][player.username]["resources"]
+        player_resources = engine.data["current_data"][player.username][
+            "resources"
+        ]
         warehouse_caps = engine.config[player.id]["warehouse_capacities"]
         extraction_facility_demand(engine, player, t, assets, demand)
         for resource in resource_to_extraction:
@@ -49,10 +51,15 @@ def update_resources(engine):
                     warehouse_caps[resource] - player_resources[resource][t - 1]
                 )
                 max_prod = (
-                    getattr(player, facility) * assets[facility]["amount produced"]
+                    getattr(player, facility)
+                    * assets[facility]["amount produced"]
                 )
                 amount_produced = min(max_prod, max_warehouse)
-                setattr(player, resource, getattr(player, resource) + amount_produced)
+                setattr(
+                    player,
+                    resource,
+                    getattr(player, resource) + amount_produced,
+                )
                 setattr(
                     player.tile,
                     resource,
@@ -90,12 +97,14 @@ def update_electricity(engine):
                 engine, market, total_demand, player, t
             )
         market_logic(engine, market, t)
-        engine.data["network_data"][network.name]["price"][t] = market["market_price"]
+        engine.data["network_data"][network.name]["price"][t] = market[
+            "market_price"
+        ]
         engine.data["network_data"][network.name]["quantity"][t] = market[
             "market_quantity"
         ]
         with open(
-            f"instance/network_data/{network.name}/charts/market_t{engine.data['total_t']}.pck",
+            f"instance/network_data/{network.id}/charts/market_t{engine.data['total_t']}.pck",
             "wb",
         ) as file:
             pickle.dump(market, file)
@@ -119,11 +128,19 @@ def update_electricity(engine):
             exp_rev = current_data["revenues"]["exports"][t]
             imp_rev = current_data["revenues"]["imports"][t]
             if exp_rev < 0 or imp_rev > 0:
-                current_data["revenues"]["exports"][t] = min(0, exp_rev + imp_rev)
-                current_data["revenues"]["imports"][t] = max(0, exp_rev + imp_rev)
+                current_data["revenues"]["exports"][t] = min(
+                    0, exp_rev + imp_rev
+                )
+                current_data["revenues"]["imports"][t] = max(
+                    0, exp_rev + imp_rev
+                )
             else:
-                current_data["revenues"]["exports"][t] = max(0, exp_rev + imp_rev)
-                current_data["revenues"]["imports"][t] = min(0, exp_rev + imp_rev)
+                current_data["revenues"]["exports"][t] = max(
+                    0, exp_rev + imp_rev
+                )
+                current_data["revenues"]["imports"][t] = min(
+                    0, exp_rev + imp_rev
+                )
         # resource and pollution update for all players
         resources_and_pollution(engine, player, t)
         # add money from industry income
@@ -133,7 +150,10 @@ def update_electricity(engine):
             + 60
             * 0.03
             * sum(
-                [current_data["revenues"][rev][t] for rev in current_data["revenues"]]
+                [
+                    current_data["revenues"][rev][t]
+                    for rev in current_data["revenues"]
+                ]
             )
         ) / 1.03
         # update display of resources and money
@@ -161,7 +181,9 @@ def extraction_facility_demand(engine, player, t, assets, demand):
             max_warehouse = (
                 warehouse_caps[resource] - player_resources[resource][t - 1]
             )
-            max_prod = getattr(player, facility) * assets[facility]["amount produced"]
+            max_prod = (
+                getattr(player, facility) * assets[facility]["amount produced"]
+            )
             power_factor = 0.2 + 0.8 * min(1, max_warehouse / max_prod)
             demand[facility][t] = (
                 assets[facility]["power consumption"]
@@ -175,8 +197,10 @@ def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
     # interpolating seasonal factor on the day
     day = engine.data["total_t"] // 1440
     seasonal_factor = (
-        engine.industry_seasonal[day % 51] * (1440 - engine.data["total_t"] % 1440)
-        + engine.industry_seasonal[(day + 1) % 51] * (engine.data["total_t"] % 1440)
+        engine.industry_seasonal[day % 51]
+        * (1440 - engine.data["total_t"] % 1440)
+        + engine.industry_seasonal[(day + 1) % 51]
+        * (engine.data["total_t"] % 1440)
     ) / 1440
     industry_demand = (
         engine.industry_demand[t - 1]
@@ -187,16 +211,22 @@ def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
         demand["industry"][t - 1] + 0.05 * industry_demand, industry_demand
     )  # progressive demand change in case of restart
     # calculate income of industry
-    industry_income = engine.config[player.id]["assets"]["industry"]["income"] / 1440.0
+    industry_income = (
+        engine.config[player.id]["assets"]["industry"]["income"] / 1440.0
+    )
     revenues["industry"][t] = industry_income
     for ud in player.under_construction:
         if ud.start_time is not None:
             # industry demand ramps up during construction
             if ud.name == "industry":
                 if ud.suspension_time is None:
-                    time_fraction = (time.time() - ud.start_time) / (ud.duration)
+                    time_fraction = (time.time() - ud.start_time) / (
+                        ud.duration
+                    )
                 else:
-                    time_fraction = (ud.suspension_time - ud.start_time) / (ud.duration)
+                    time_fraction = (ud.suspension_time - ud.start_time) / (
+                        ud.duration
+                    )
                 time_fraction = (time.time() - ud.start_time) / (ud.duration)
                 additional_demand = (
                     time_fraction
@@ -221,7 +251,9 @@ def construction_demand(player, t, assets, demand):
                 if ud.family == "technologies":
                     demand["research"][t] += construction["construction power"]
                 else:
-                    demand["construction"][t] += construction["construction power"]
+                    demand["construction"][t] += construction[
+                        "construction power"
+                    ]
 
 
 def construction_emissions(engine, player, t, assets):
@@ -278,7 +310,10 @@ def calculate_generation_without_market(engine, total_demand, player, t):
         player.self_consumption_priority
     ) + read_priority_list(player.rest_of_priorities)
     for facility in priority_list:
-        if assets[facility]["ramping speed"] != 0 and getattr(player, facility) > 0:
+        if (
+            assets[facility]["ramping speed"] != 0
+            and getattr(player, facility) > 0
+        ):
             generation[facility][t] = calculate_prod(
                 "min",
                 player,
@@ -286,7 +321,9 @@ def calculate_generation_without_market(engine, total_demand, player, t):
                 facility,
                 generation,
                 t,
-                storage=storage if facility in engine.storage_facilities else None,
+                storage=storage
+                if facility in engine.storage_facilities
+                else None,
             )
         total_generation += generation[facility][t]
     # If the player is not able to use all the min. generated energy, it has to be dumped at a cost of 5 ¤ per MWh
@@ -310,7 +347,9 @@ def calculate_generation_without_market(engine, total_demand, player, t):
                     facility,
                     generation,
                     t,
-                    storage=storage if facility in engine.storage_facilities else None,
+                    storage=storage
+                    if facility in engine.storage_facilities
+                    else None,
                 )
                 # range of possible power variation
                 delta_prod = max_prod - generation[facility][t]
@@ -364,7 +403,9 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
                     facility,
                     generation,
                     t,
-                    storage=storage if facility in engine.storage_facilities else None,
+                    storage=storage
+                    if facility in engine.storage_facilities
+                    else None,
                 )
                 if facility in engine.storage_facilities:
                     storage[facility][t] -= (
@@ -375,7 +416,9 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
             total_generation += generation[facility][t]
             # If the player is not able to use all the min. generated energy, it is put on the market for -5¤/MWh
             if total_generation > total_demand:
-                capacity = min(generation[facility][t], total_generation - total_demand)
+                capacity = min(
+                    generation[facility][t], total_generation - total_demand
+                )
                 market = offer(market, player, capacity, -5, facility)
     # while the produced power is not sufficient for own demand, for each power facility following the priority list,
     # set the power to the maximum possible value (max upward power ramp).
@@ -390,7 +433,9 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
                 facility,
                 generation,
                 t,
-                storage=storage if facility in engine.storage_facilities else None,
+                storage=storage
+                if facility in engine.storage_facilities
+                else None,
             )
             # range of possible power variation
             delta_prod = max_prod - generation[facility][t]
@@ -412,7 +457,9 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
                 generation[facility][t] += delta_prod
                 if facility in engine.storage_facilities:
                     storage[facility][t] -= (
-                        delta_prod / 60 / (assets[facility]["efficiency"] ** 0.5)
+                        delta_prod
+                        / 60
+                        / (assets[facility]["efficiency"] ** 0.5)
                     )  # Transform W in Wh + efficiency loss
 
     # if demand is still not met, player has to bid on the market at the set prices
@@ -449,7 +496,9 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
                         * getattr(player, demand_type),
                     )
                 else:
-                    bid_q = min(cumul_demand - total_generation, demand[demand_type][t])
+                    bid_q = min(
+                        cumul_demand - total_generation, demand[demand_type][t]
+                    )
                 price = getattr(player, "price_buy_" + demand_type)
                 market = bid(market, player, bid_q, price, demand_type)
 
@@ -464,7 +513,9 @@ def calculate_generation_with_market(engine, market, total_demand, player, t):
                     facility,
                     generation,
                     t,
-                    storage=storage if facility in engine.storage_facilities else None,
+                    storage=storage
+                    if facility in engine.storage_facilities
+                    else None,
                 )
                 price = getattr(player, "price_" + facility)
                 capacity = max_prod - generation[facility][t]
@@ -496,7 +547,9 @@ def market_logic(engine, market, t):
     offers["cumul_capacities"] = offers["capacity"].cumsum()
 
     demands = market["demands"]
-    demands = demands.sort_values(by="price", ascending=False).reset_index(drop=True)
+    demands = demands.sort_values(by="price", ascending=False).reset_index(
+        drop=True
+    )
     demands["cumul_capacities"] = demands["capacity"].cumsum()
 
     market["capacities"] = offers
@@ -517,7 +570,9 @@ def market_logic(engine, market, t):
         demand_price = demand_price.iloc[0]
     if demand_price > max_supply_price:
         market_quantity = total_market_capacity
-        market_price = demand_price if demand_price != np.inf else max_supply_price
+        market_price = (
+            demand_price if demand_price != np.inf else max_supply_price
+        )
     else:
         market_price, market_quantity = market_optimum(offers, demands)
     # sell all capacities under market price
@@ -530,10 +585,14 @@ def market_logic(engine, market, t):
             if row.price < 0:
                 rest = max(0, min(row.capacity, row.capacity - sold_cap))
                 dump_cap = rest
-                demand = engine.data["current_data"][row.player.username]["demand"]
+                demand = engine.data["current_data"][row.player.username][
+                    "demand"
+                ]
                 demand["dumping"][t] += dump_cap
                 row.player.money -= dump_cap * 5 / 1000000
-                revenue = engine.data["current_data"][row.player.username]["revenues"]
+                revenue = engine.data["current_data"][row.player.username][
+                    "revenues"
+                ]
                 revenue["dumping"][t] -= dump_cap * 5 / 1000000
                 continue
             break
@@ -597,7 +656,9 @@ def calculate_prod(
     minmax, player, assets, facility, generation, t, storage=None, filling=False
 ):
     max_resources = np.inf
-    ramping_speed = getattr(player, facility) * assets[facility]["ramping speed"]
+    ramping_speed = (
+        getattr(player, facility) * assets[facility]["ramping speed"]
+    )
     if storage is None:
         for resource, amount in assets[facility]["consumed resource"].items():
             available_resource = getattr(player, resource) - getattr(
@@ -610,7 +671,8 @@ def calculate_prod(
             E = (
                 max(
                     0,
-                    assets[facility]["storage capacity"] * getattr(player, facility)
+                    assets[facility]["storage capacity"]
+                    * getattr(player, facility)
                     - storage[facility][t - 1],
                 )
                 * 60
@@ -619,7 +681,9 @@ def calculate_prod(
         else:
             E = max(
                 0,
-                storage[facility][t - 1] * 60 * (assets[facility]["efficiency"] ** 0.5),
+                storage[facility][t - 1]
+                * 60
+                * (assets[facility]["efficiency"] ** 0.5),
             )  # max available storge content
         max_resources = min(
             E, (2 * E * ramping_speed) ** 0.5 - 0.5 * ramping_speed
@@ -662,7 +726,9 @@ def bid(market, player, demand, price=np.inf, facility=None):
                 "facility": [facility],
             }
         )
-        market["demands"] = pd.concat([market["demands"], new_row], ignore_index=True)
+        market["demands"] = pd.concat(
+            [market["demands"], new_row], ignore_index=True
+        )
     return market
 
 
@@ -717,10 +783,12 @@ def resources_and_pollution(engine, player, t):
         "nuclear_reactor_gen4",
     ]:
         if getattr(player, facility) > 0:
-            for resource, amount in assets[facility]["consumed resource"].items():
+            for resource, amount in assets[facility][
+                "consumed resource"
+            ].items():
                 quantity = amount * generation[facility][t] / 60000000
                 setattr(player, resource, getattr(player, resource) - quantity)
-    
+
     # O&M costs, currently only for steam engine
     # Special case steam engine costs money and if it is not used it costs 20% of the maximum
     steam_engine_cost = (
@@ -756,7 +824,11 @@ def resources_and_pollution(engine, player, t):
 def renewables_generation(engine, player, assets, generation, t):
     # WIND
     power_factor = interpolate_wind(engine, player, t)
-    for facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
+    for facility in [
+        "windmill",
+        "onshore_wind_turbine",
+        "offshore_wind_turbine",
+    ]:
         generation[facility][t] = (
             power_factor
             * assets[facility]["power generation"]
@@ -807,7 +879,9 @@ def reduce_demand(engine, demand_type, player, demand, assets, t):
         db.session.commit()
     if demand_type == "construction":
         last_construction = (
-            Under_construction.query.filter(Under_construction.player_id == player.id)
+            Under_construction.query.filter(
+                Under_construction.player_id == player.id
+            )
             .filter(Under_construction.family != "technologies")
             .filter(Under_construction.start_time != None)
             .filter(Under_construction.suspension_time == None)
@@ -819,7 +893,9 @@ def reduce_demand(engine, demand_type, player, demand, assets, t):
             db.session.commit()
     if demand_type == "research":
         last_research = (
-            Under_construction.query.filter(Under_construction.player_id == player.id)
+            Under_construction.query.filter(
+                Under_construction.player_id == player.id
+            )
             .filter(Under_construction.family == "technologies")
             .filter(Under_construction.start_time != None)
             .filter(Under_construction.suspension_time == None)
@@ -840,20 +916,30 @@ def reduce_demand(engine, demand_type, player, demand, assets, t):
             setattr(
                 random_tile,
                 last_shipment.resource,
-                getattr(random_tile, last_shipment.resource) + last_shipment.quantity,
+                getattr(random_tile, last_shipment.resource)
+                + last_shipment.quantity,
             )
             last_shipment.suspension_time = time.time()
             db.session.commit()
     # complicated logic to adjust resource production
-    if demand_type in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"]:
+    if demand_type in [
+        "coal_mine",
+        "oil_field",
+        "gas_drilling_site",
+        "uranium_mine",
+    ]:
         resource_name = extraction_to_resource[demand_type]
         q_resource = engine.data["current_data"][player.username]["resources"][
             resource_name
         ]
         takeback = q_resource[t] - q_resource[t - 1]
-        setattr(player, resource_name, getattr(player, resource_name) - takeback)
         setattr(
-            player.tile, resource_name, getattr(player.tile, resource_name) + takeback
+            player, resource_name, getattr(player, resource_name) - takeback
+        )
+        setattr(
+            player.tile,
+            resource_name,
+            getattr(player.tile, resource_name) + takeback,
         )
         q_resource[t] = getattr(player, resource_name)
         energy_demand = (
@@ -864,14 +950,16 @@ def reduce_demand(engine, demand_type, player, demand, assets, t):
         demand[demand_type][t] = min(
             demand[demand_type][t - 1] + 0.2 * energy_demand, energy_demand
         )  # for smooth demand changes
-        emmissions_takeback = engine.data["current_data"][player.username]["emissions"][
-            demand_type
-        ][t]
+        emmissions_takeback = engine.data["current_data"][player.username][
+            "emissions"
+        ][demand_type][t]
         add_emissions(engine, player, t, demand_type, -emmissions_takeback)
         db.session.commit()
 
 
 def add_emissions(engine, player, t, facility, amount):
-    engine.data["current_data"][player.username]["emissions"][facility][t] += amount
+    engine.data["current_data"][player.username]["emissions"][facility][
+        t
+    ] += amount
     player.emissions += amount
     engine.data["current_CO2"][t] += amount

@@ -192,7 +192,7 @@ def save_past_data_threaded(app, engine, new_data, network_data):
             # remove old network files AND save past prices
             networks = Network.query.all()
             for network in networks:
-                network_dir = f"instance/network_data/{network.name}/charts/"
+                network_dir = f"instance/network_data/{network.id}/charts/"
                 files = os.listdir(network_dir)
                 for filename in files:
                     t_value = int(
@@ -204,7 +204,7 @@ def save_past_data_threaded(app, engine, new_data, network_data):
                 past_data = {}
                 for timescale in ["5_days", "month", "6_months"]:
                     with open(
-                        f"instance/network_data/{network.name}/prices/{timescale}.pck",
+                        f"instance/network_data/{network.id}/prices/{timescale}.pck",
                         "rb",
                     ) as file:
                         past_data[timescale] = pickle.load(file)
@@ -230,7 +230,7 @@ def save_past_data_threaded(app, engine, new_data, network_data):
 
                 for timescale in past_data:
                     with open(
-                        f"instance/network_data/{network.name}/prices/{timescale}.pck",
+                        f"instance/network_data/{network.id}/prices/{timescale}.pck",
                         "wb",
                     ) as file:
                         pickle.dump(past_data[timescale], file)
