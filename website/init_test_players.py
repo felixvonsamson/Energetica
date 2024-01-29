@@ -124,8 +124,9 @@ def create_player(engine, username, password):
             data_table_name=f"data_{username}.pck",
         )
         add_player_to_data(username)
-        init_table(username)
         db.session.add(new_player)
+        db.session.commit()
+        init_table(new_player)
         db.session.commit()
         return new_player
     print(f"create_player: player {username} already exists")

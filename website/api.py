@@ -91,7 +91,7 @@ def get_chart_data():
     # values for `timescale` are in ["6h", "day", "5_days", "month", "6_months"]
     table = request.args.get("table")
     # values for `table` are in ["demand", "emissions", "generation", "resources", "revenues", "storage"]
-    filename = f"instance/player_data/{current_user.username}/{timescale}.pck"
+    filename = f"instance/player_data/{current_user.id}/{timescale}.pck"
     with open(filename, "rb") as file:
         data = pickle.load(file)
     if table == "generation" or table == "storage" or table == "resources":
@@ -151,9 +151,7 @@ def get_chart_data():
                     * assets[facility]["amount produced"]
                     * 60
                 )
-                on_sale[resource] = getattr(
-                    current_user, resource + "_on_sale"
-                )
+                on_sale[resource] = getattr(current_user, resource + "_on_sale")
             return jsonify(
                 g.engine.data["current_t"],
                 data[table],

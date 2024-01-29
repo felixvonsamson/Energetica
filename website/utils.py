@@ -151,7 +151,7 @@ def save_past_data_threaded(app, engine, new_data, network_data):
                 past_data = {}
                 for timescale in ["5_days", "month", "6_months"]:
                     with open(
-                        f"instance/player_data/{player.username}/{timescale}.pck",
+                        f"instance/player_data/{player.id}/{timescale}.pck",
                         "rb",
                     ) as file:
                         past_data[timescale] = pickle.load(file)
@@ -184,7 +184,7 @@ def save_past_data_threaded(app, engine, new_data, network_data):
 
                 for timescale in past_data:
                     with open(
-                        f"instance/player_data/{player.username}/{timescale}.pck",
+                        f"instance/player_data/{player.id}/{timescale}.pck",
                         "wb",
                     ) as file:
                         pickle.dump(past_data[timescale], file)
