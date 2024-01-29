@@ -60,14 +60,12 @@
            height="167"
            alt="{{ data[facility]['name'] }} power plant">
       <div class="infotext padding">
-        <strong class="large">
-          {{ data[facility]["name"] }}
-        </strong>
+        <strong class="large">{{ data[facility]["name"] }}</strong>
         &ensp;
         <a class="white wikipedia_icon_container no_deco"
-            href="{{ data[facility].wikipedia_link }}"
-            target="_blank">
-         <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
+           href="{{ data[facility].wikipedia_link }}"
+           target="_blank">
+          <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
         </a>
         &emsp;
         {# Construction Cost #}
@@ -117,7 +115,7 @@
           </div>
           {# Requirements #}
           {% if data[facility]["locked"] %}
-            <div class="infobox reqirements" id="reqirements">
+            <div class="infobox requirements" id="requirements">
               <div>
                 <strong>Unlock with :</strong>
                 <br>
@@ -207,8 +205,8 @@
             Emmissions : <strong><script>display_kg({{data[facility]["construction pollution"]}});</script> CO2</strong>
           </div>
           <b class="padding medium white button margin-small txt_center"
-            onclick="start_construction('steam_engine', 'power_facilities');"
-            style="width:160px">
+             onclick="start_construction('steam_engine', 'power_facilities');"
+             style="width:160px">
             Start construction
           </b>
         </div>

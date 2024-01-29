@@ -1,6 +1,6 @@
 function show_construction(name, locked) {
     let tile = document.getElementById(name);
-    let requirements = tile.querySelector("#reqirements");
+    let requirements = tile.querySelector("#requirements");
     if (requirements) {
         if (requirements.innerHTML.trim() != "") {
             addToast("This facility is not unlocked");
