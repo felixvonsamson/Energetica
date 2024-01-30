@@ -439,6 +439,8 @@ full_config = {
             "power consumption": 3000000,  # [W]
             "pollution": 65,  # [kg/t extracted]
             "requirements": [["mineral_extraction", 1, False]],
+            "description": "The coal mine extracts coal from the ground.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Coal_mining",
         },
         "oil_field": {
             "name": "Oil field",
@@ -451,6 +453,8 @@ full_config = {
             "power consumption": 15300000,
             "pollution": 302,
             "requirements": [["mineral_extraction", 3, False]],
+            "description": "The oil field extracts oil from the ground.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Extraction_of_petroleum",
         },
         "gas_drilling_site": {
             "name": "Gas drilling site",
@@ -463,6 +467,8 @@ full_config = {
             "power consumption": 11100000,
             "pollution": 523,
             "requirements": [["mineral_extraction", 3, False]],
+            "description": "The gas drilling site extracts gas from the ground.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Natural_gas",
         },
         "uranium_mine": {
             "name": "Uranium mine",
@@ -475,6 +481,8 @@ full_config = {
             "power consumption": 36000000,
             "pollution": 230000,
             "requirements": [["mineral_extraction", 5, False]],
+            "description": "The uranium mine extracts uranium from the ground.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Uranium_mining",
         },
         "mathematics": {
             "name": "Mathematics",
