@@ -88,6 +88,7 @@ def init_test_players(engine):
     # player.small_pumped_hydro = 1
     # player.hydrogen_storage = 1
     player.mineral_extraction = 5
+    player.money = 1000000
     create_network(engine, "network", [player])
 
     # for i in range(3):
