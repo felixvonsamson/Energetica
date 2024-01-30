@@ -47,7 +47,15 @@
            height="167"
            alt="{{ facility_data.name }}">
       <div class="infotext padding">
-        <strong class="large"><a class="no_deco" href={{ facility_data.wikipedia_link }} target="_blank">{{ facility_data.name }}</a></strong> &emsp; <span class="money_font">
+        <strong class="large">{{ facility_data.name }}</strong>
+        &ensp;
+        <a class="white wikipedia_icon_container no_deco"
+           href="{{ facility_data.wikipedia_link }}"
+           target="_blank">
+          <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
+        </a>
+        &emsp;
+        <span class="money_font">
           <script>display_money_long({{ facility_data.price }});</script>
         </span>
         <br>
