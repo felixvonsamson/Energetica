@@ -1,23 +1,23 @@
 class Hex{
   int q, r, s;
   //float solar, wind, hydro, coal, oil, gas, uranium, total;
-  float[] ressources = {0, 0, 0, 0, 0, 0, 0, 0};
+  float[] resources = {0, 0, 0, 0, 0, 0, 0, 0};
   Hex(int _q, int _r){
     q = _q;
     r = _r;
     s = - q - r;
-    ressources[0] = 0.8*exp(-sq(r*3.75/mapsize))+0.2;
+    resources[0] = 0.8*exp(-sq(r*3.75/mapsize))+0.2;
   }
   void display_tile(){
     if(active_vew>=0){
-      hexagon.setFill(color(button_colors[active_vew], ressources[active_vew]*(255-int(active_vew==7)*155), 255));
+      hexagon.setFill(color(button_colors[active_vew], resources[active_vew]*(255-int(active_vew==7)*155), 255));
     }else{
       hexagon.setFill(color(180));
     }
     shape(hexagon, 0, 0);
     fill(0);
     if(active_vew>=0){
-      text(ressources[active_vew], 0, 0);
+      text(resources[active_vew], 0, 0);
     }else{
       text(str(q)+", "+r+", "+s, 0, 0);
     }

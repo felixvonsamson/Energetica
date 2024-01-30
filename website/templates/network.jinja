@@ -1,326 +1,359 @@
-{% extends "base.jinja" %} {% block title %}Network{% endblock %} {% block content%}
-{% set assets = engine.config[user.id]["assets"] %}
-{% set SCP = user.self_consumption_priority.split(' ') %}
-
-<div class="flex-row huge title">Network{% if user.network %} : <b>{{user.network.name}}</b>{% endif %} 
-<div class="pine info_icon_container" onclick="document.getElementById('info_popup').classList.remove('hidden');">
-    <img src="{{ url_for('static', filename='images/icons/wiki.png') }}" class="info_icon padding"/>
-</div>
-</div>
-
-<div id="info_popup" class="popup hidden green">
-    <div class="flex-row margin-small" style="align-items:center;">
-        <div class="large txt_center" style="flex-grow:1">Help : Network</div>
-        <div onclick="document.getElementById('info_popup').classList.add('hidden');" class="cross pine margin-small" style="width:39px">
-            &times;
+{% extends "base.jinja" %}
+{% block title %}
+    Network
+{% endblock title %}
+{% block content %}
+    {% set assets = engine.config[user.id]["assets"] %}
+    {% set SCP = user.self_consumption_priority.split(' ') %}
+    <div class="flex-row huge title">
+        Network
+        {% if user.network %}: <b>{{ user.network.name }}</b>{% endif %}
+        <div class="pine info_icon_container"
+             onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
+    </div>
+    <div id="info_popup" class="popup hidden green">
+        <div class="flex-row margin-small align-items-center">
+            <div class="large txt_center flex-grow-1">Help : Network</div>
+            <div onclick="document.getElementById('info_popup').classList.add('hidden');"
+                 class="cross pine margin-small"
+                 style="width:39px">×</div>
+        </div>
+        <div class="txt_center margin medium">
+            {% if user.network == None %}
+                <p>
+                    Here you can join or create a network. You will also find tables where you can set the prices for the demand
+                    and the power and storage facilites. These prices will define the priority lists of facilites for the power
+                    generation logic.
+                </p>
+            {% else %}
+                <p>
+                    On this page you will find informations about your network and tables where you can set the prices for the
+                    demand and the power and storage facilites.
+                </p>
+                <p>
+                    The top graph shows the market price and quantity over time and the lower graph shows the current market
+                    state with the colored rectangles being the supply and the red saircase curve being the demand. You can
+                    click on past timepoints in the top plot to show the market state at this time.
+                </p>
+            {% endif %}
+            <p>
+                For more detailed information about the Network and the prices refer to the <a href="{{ url_for('views.wiki',_anchor='Network') }}">Network
+                section in the wiki</a>.
+            </p>
         </div>
     </div>
-    <div class="txt_center margin medium">
-        {% if user.network == None %}
-        <p>Here you can join or create a network. You will also find tables where you can set the prices for the demand and the power and storage facilites. These prices will define the priority lists of facilites for the power generation logic.</p>
-        {% else %}
-        <p>On this page you will find informations about your network and tables where you can set the prices for the demand and the power and storage facilites.</p>
-        <p>The top graph shows the market price and quantity over time and the lower graph shows the current market state with the colored rectangles being the supply and the red saircase curve being the demand. You can click on past timepoints in the top plot to show the market state at this time.</p>
+    {% if user.network == None %}
+        <div class="medium padding txt_center">You a currently not part of a Network. Join or create one :</div>
+        <div class="flex-row" style="justify-content:center;">
+            <b class="margin button2"
+               onclick="document.getElementById('join_network').classList.remove('hidden');">Join
+            Network</b>
+            <b class="margin button2"
+               onclick="document.getElementById('create_network').classList.remove('hidden');">Create
+            Network</b>
+        </div>
+    {% else %}
+        <div id="market_graph" class="bone" style="padding:30px 0; margin:30px 0;"></div>
+        <form action="/leave_network"
+              method="post"
+              class="flex-row"
+              style="justify-content:center">
+            <button type="submit" class="bone padding medium login-button">Leave Network</button>
+        </form>
+        <div class="flex-col medium">
+            <table class="table bone margin">
+                <tr>
+                    <th>Members</th>
+                </tr>
+                {% for member in user.network.members %}
+                    <tr>
+                        <td>{{ member.username }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    {% endif %}
+    <div class="flex-row huge title">Prices</div>
+    <div class="flex-col medium">
+        <b class="margin large" style="margin-top:24px">Demand prices</b>
+        <table class="table bone">
+            <tr>
+                <th>Demand</th>
+                <th>Max buying price</th>
+            </tr>
+            <tr>
+                <td>Industry</td>
+                <td>
+                    <input type="number"
+                           class="small_input medium txt_center"
+                           value="{{ user.price_buy_industry }}"
+                           id="price_buy_industry"
+                           name="price_buy_industry" />
+                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                    /MWh
+                </td>
+            </tr>
+            <tr>
+                <td>Constructions</td>
+                <td>
+                    <input type="number"
+                           class="small_input medium txt_center"
+                           value="{{ user.price_buy_construction }}"
+                           id="price_buy_construction"
+                           name="price_buy_construction" />
+                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                    /MWh
+                </td>
+            </tr>
+            <tr>
+                <td>Research</td>
+                <td>
+                    <input type="number"
+                           class="small_input medium txt_center"
+                           value="{{ user.price_buy_research }}"
+                           id="price_buy_research"
+                           name="price_buy_research" />
+                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                    /MWh
+                </td>
+            </tr>
+            <tr>
+                <td>Shipments</td>
+                <td>
+                    <input type="number"
+                           class="small_input medium txt_center"
+                           value="{{ user.price_buy_transport }}"
+                           id="price_buy_transport"
+                           name="price_buy_transport" />
+                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                    /MWh
+                </td>
+            </tr>
+            {% macro extraction_facility_display_name(extraction_facility) -%}
+                {{ {"coal_mine": "Coal mines", "oil_field": "Oil fields", "gas_drilling_site": "Gas extraction", "uranium_mine": "Uranium mines"}[extraction_facility] }}
+            {%- endmacro %}
+            {% macro extraction_facility_price_buy(extraction_facility) -%}
+                {{ 'price_buy_'+extraction_facility }}
+            {%- endmacro %}
+            {% macro extraction_facility_price_buy_value(extraction_facility) -%}
+                {{ user[extraction_facility_price_buy(extraction_facility) ] }}
+            {%- endmacro %}
+            {% for extraction_facility in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"] %}
+                {% if user[extraction_facility] > 0 %}
+                    <tr>
+                        <td>{{ extraction_facility_display_name(extraction_facility) }}</td>
+                        <td>
+                            <input type="number"
+                                   class="small_input medium txt_center"
+                                   value="{{ extraction_facility_price_buy_value(extraction_facility) }}"
+                                   id="{{ extraction_facility_price_buy(extraction_facility) }}"
+                                   name="{{ extraction_facility_price_buy(extraction_facility) }}" />
+                            <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                            /MWh
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            {% if user.carbon_capture > 0 %}
+                <tr>
+                    <td>Carbon capture</td>
+                    <td>
+                        <input type="number"
+                               class="small_input medium txt_center"
+                               value="{{ user.price_buy_carbon_capture }}"
+                               id="price_buy_carbon_capture"
+                               name="price_buy_carbon_capture" />
+                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                        /MWh
+                    </td>
+                </tr>
+            {% endif %}
+        </table>
+        <div class="flex-row" style="justify-content:center;">
+            <b class="margin white button padding" onclick="change_prices();">Save changes</b>
+        </div>
+        <b class="margin large" style="margin-top:24px">Production capacity prices</b>
+        <table class="table bone">
+            <tr>
+                <th>Power facility</th>
+                <th>Installed capacity</th>
+                <th>Min selling price</th>
+                <th>
+                    <div class="hover_info">
+                        SCP<span class="popup_info small">Self-consumption priority</span>
+                    </div>
+                </th>
+            </tr>
+            {% macro power_facility_price(power_facility) -%}
+                {{ 'price_'+power_facility }}
+            {%- endmacro %}
+            {% macro power_facility_price_value(power_facility) -%}
+                {{ user[power_facility_price(power_facility) ] }}
+            {%- endmacro %}
+            {% macro power_facility_SCP(power_facility) -%}
+                {{ 'SCP_'+power_facility }}
+            {%- endmacro %}
+            {% for power_facility in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
+                {% if user[power_facility] %}
+                    <tr>
+                        <td>{{ assets[power_facility].name }}</td>
+                        <td class="txt_center">
+                            <script>display_W({{ user[power_facility] * assets[power_facility]["power generation"] }});</script>
+                        </td>
+                        <td>
+                            <input type="number"
+                                   class="small_input medium txt_center"
+                                   value="{{ power_facility_price_value(power_facility) }}"
+                                   id="{{ power_facility_price(power_facility) }}"
+                                   name="{{ power_facility_price(power_facility) }}" />
+                            <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                            /MWh
+                        </td>
+                        <td>
+                            <input type="checkbox" id="{{ power_facility_SCP(power_facility) }}" name="{{ power_facility_SCP(power_facility) }}" {{ 'checked' if power_facility in SCP else '' }}>
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </table>
+        <div class="flex-row" style="justify-content:center;">
+            <b class="margin white button padding" onclick="change_prices();">Save changes</b>
+        </div>
+        {% if user["small_pumped_hydro"] > 0 or user["compressed_air"] > 0 or user["molten_salt"] > 0 or user["large_pumped_hydro"] > 0 or user["hydrogen_storage"] > 0 or user["lithium_ion_batteries"] > 0 or user["solid_state_batteries"] > 0 %}
+            <b class="margin large" style="margin-top:24px">Storage capacity prices</b>
+            <table class="table bone">
+                <tr>
+                    <th>Storage facility</th>
+                    <th>Installed capacity</th>
+                    <th>Min selling price</th>
+                    <th>Max buying price</th>
+                    <th>
+                        <div class="hover_info">
+                            SCP<span class="popup_info small">Self-consumption priority</span>
+                        </div>
+                    </th>
+                </tr>
+                {% macro storage_facility_price(storage_facility) -%}
+                    {{ 'price_'+storage_facility }}
+                {%- endmacro %}
+                {% macro storage_facility_price_buy(storage_facility) -%}
+                    {{ 'price_buy_'+storage_facility }}
+                {%- endmacro %}
+                {% macro storage_facility_SCP(storage_facility) -%}
+                    {{ 'SCP_'+storage_facility }}
+                {%- endmacro %}
+                {% for storage_facility in ["small_pumped_hydro", "compressed_air", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
+                    {% if user[storage_facility] > 0 %}
+                        <tr>
+                            <td>{{ assets[storage_facility].name }}</td>
+                            <td class="txt_center">
+                                <script>display_Wh({{ user[storage_facility] * assets[storage_facility]["storage capacity"] }});</script>
+                            </td>
+                            <td>
+                                <input type="number"
+                                       class="small_input medium txt_center"
+                                       value="{{ user[storage_facility_price(storage_facility) ] }}"
+                                       id="{{ storage_facility_price(storage_facility) }}"
+                                       name="{{ storage_facility_price(storage_facility) }}" />
+                                <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                                /MWh
+                            </td>
+                            <td>
+                                <input type="number"
+                                       class="small_input medium txt_center"
+                                       value="{{ user[storage_facility_price_buy(storage_facility) ] }}"
+                                       id="{{ storage_facility_price_buy(storage_facility) }}"
+                                       name="{{ storage_facility_price_buy(storage_facility) }}" />
+                                <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                                /MWh
+                            </td>
+                            <td>
+                                <input type="checkbox" id="{{ storage_facility_SCP(storage_facility) }}" name="{{ storage_facility_SCP(storage_facility) }}" {{ 'checked' if storage_facility in SCP else '' }}>
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </table>
+            <div class="flex-row" style="justify-content:center;">
+                <b class="margin white button padding" onclick="change_prices();">Save changes</b>
+            </div>
         {% endif %}
-        <p>For more detailed information about the Network and the prices refer to the <a href="/wiki#Network">Network section in the wiki</a>.</p>
     </div>
-</div>
-
-{% if user.network == None %}
-<div class="medium padding txt_center">
-You a currently not part of a Network. Join or create one :
-</div>
-<div class="flex-row" style="justify-content:center;">
-<b class="margin button2" onclick="document.getElementById('join_network').classList.remove('hidden');">Join Network</b>
-<b class="margin button2" onclick="document.getElementById('create_network').classList.remove('hidden');">Create Network</b>
-</div>
-{% else %}
-<div id="market_graph" class="bone" style="padding:30px 0; margin:30px 0;"></div>
-<div class="flex-row" style="justify-content:center;">
-<b class="margin button2" onclick="leave_network();">Leave Network</b>
-</div>
-<div class="flex-col medium">
-    <table class="table bone margin">
-    <tr>
-    <th>Members</th>
-    </tr>
-    {% for member in user.network.members %}
-        <tr>
-        <td>{{member.username}}</td>
-        </tr>
-    {% endfor %}
-    </table>
-</div>
-{% endif %}
-
-
-
-<div class="flex-row huge title">Prices</div>
-
-<div class="flex-col medium">
-
-<b class="margin large" style="margin-top:24px">Demand prices</b>
-<table class="table bone">
-  <tr>
-  <th>Demand</th>
-  <th>Max buying price</th>
-  </tr>
-  <tr>
-  <td>Industry</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_industry}}" id="price_buy_industry" name="price_buy_industry"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  </tr>
-  <tr>
-  <td>Constructions</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_construction}}" id="price_buy_construction" name="price_buy_construction"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  </tr>
-  <tr>
-  <td>Research</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_research}}" id="price_buy_research" name="price_buy_research"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  </tr>
-  <tr>
-  <td>Shipments</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_transport}}" id="price_buy_transport" name="price_buy_transport"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  </tr>
-  {% if user.coal_mine > 0 %}
-  <tr>
-  <td>Coal mines</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_coal_mine}}" id="price_buy_coal_mine" name="price_buy_coal_mine"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  </tr>
-  {% endif %}
-  {% if user.oil_field > 0 %}
-  <tr>
-  <td>Oil fields</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_oil_field}}" id="price_buy_oil_field" name="price_buy_oil_field"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  </tr>
-  {% endif %}
-  {% if user.gas_drilling_site > 0 %}
-  <tr>
-  <td>Gas extraction</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_gas_drilling_site}}" id="price_buy_gas_drilling_site" name="price_buy_gas_drilling_site"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  </tr>
-  {% endif %}
-  {% if user.uranium_mine > 0 %}
-  <tr>
-  <td>Uranium mines</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_uranium_mine}}" id="price_buy_uranium_mine" name="price_buy_uranium_mine"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  </tr>
-  {% endif %}
-  {% if user.carbon_capture > 0 %}
-  <tr>
-  <td>Carbon capture</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_carbon_capture}}" id="price_buy_carbon_capture" name="price_buy_carbon_capture"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  </tr>
-  {% endif %}
-</table>
-<div class="flex-row" style="justify-content:center;">
-<b class="margin white button padding" onclick="change_prices();">Save changes</b>
-</div>
-
-<b class="margin large" style="margin-top:24px">Production capacity prices</b>
-<table class="table bone">
-  <tr>
-  <th>Power facility</th>
-  <th>Installed capacity</th>
-  <th>Min selling price</th>
-  <th><div class="hover_info">SCP<span class="popup_info small">Self-consumption priority</span></div></th>
-  </tr>
-  {% if user.steam_engine > 0 %}
-  <tr>
-  <td>Steam engine</td>
-  <td class="txt_center"><script>display_W({{user.steam_engine*assets["steam_engine"]["power generation"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_steam_engine}}" id="price_steam_engine" name="price_steam_engine"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="checkbox" id="SCP_steam_engine" name="SCP_steam_engine" {% if "steam_engine" in SCP %} checked {% endif %}></td>
-  </tr>
-  {% endif %}
-  {% if user.coal_burner > 0 %}
-  <tr>
-  <td>Coal burner</td>
-  <td class="txt_center"><script>display_W({{user.coal_burner*assets["coal_burner"]["power generation"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_coal_burner}}" id="price_coal_burner" name="price_coal_burner"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="checkbox" id="SCP_coal_burner" name="SCP_coal_burner" {% if "coal_burner" in SCP %} checked {% endif %}></td>
-  </tr>
-  {% endif %}
-  {% if user.oil_burner > 0 %}
-  <tr>
-  <td>Oil burner</td>
-  <td class="txt_center"><script>display_W({{user.oil_burner*assets["oil_burner"]["power generation"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_oil_burner}}" id="price_oil_burner" name="price_oil_burner"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="checkbox" id="SCP_oil_burner" name="SCP_oil_burner" {% if "oil_burner" in SCP %} checked {% endif %}></td>
-  </tr>
-  {% endif %}
-  {% if user.gas_burner > 0 %}
-  <tr>
-  <td>Gas burner</td>
-  <td class="txt_center"><script>display_W({{user.gas_burner*assets["gas_burner"]["power generation"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_gas_burner}}" id="price_gas_burner" name="price_gas_burner"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="checkbox" id="SCP_gas_burner" name="SCP_gas_burner" {% if "gas_burner" in SCP %} checked {% endif %}></td>
-  </tr>
-  {% endif %}
-  {% if user.combined_cycle > 0 %}
-  <tr>
-  <td>Combined cycle</td>
-  <td class="txt_center"><script>display_W({{user.combined_cycle*assets["combined_cycle"]["power generation"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_combined_cycle}}" id="price_combined_cycle" name="price_combined_cycle"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="checkbox" id="SCP_combined_cycle" name="SCP_combined_cycle" {% if "combined_cycle" in SCP %} checked {% endif %}></td>
-  </tr>
-  {% endif %}
-  {% if user.nuclear_reactor > 0 %}
-  <tr>
-  <td>Nuclear reactor</td>
-  <td class="txt_center"><script>display_W({{user.nuclear_reactor*assets["nuclear_reactor"]["power generation"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_nuclear_reactor}}" id="price_nuclear_reactor" name="price_nuclear_reactor"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="checkbox" id="SCP_nuclear_reactor" name="SCP_nuclear_reactor" {% if "nuclear_reactor" in SCP %} checked {% endif %}></td>
-  </tr>
-  {% endif %}
-  {% if user.nuclear_reactor_gen4 > 0 %}
-  <tr>
-  <td>4th generation nuclear</td>
-  <td class="txt_center"><script>display_W({{user.nuclear_reactor_gen4*assets["nuclear_reactor_gen4"]["power generation"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_nuclear_reactor_gen4}}" id="price_nuclear_reactor_gen4" name="price_nuclear_reactor_gen4"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="checkbox" id="SCP_nuclear_reactor_gen4" name="SCP_nuclear_reactor_gen4" {% if "nuclear_reactor_gen4" in SCP %} checked {% endif %}></td>
-  </tr>
-  {% endif %}
-</table>
-<div class="flex-row" style="justify-content:center;">
-<b class="margin white button padding" onclick="change_prices();">Save changes</b>
-</div>
-
-<b class="margin large" style="margin-top:24px">Storage capacity prices</b>
-<table class="table bone">
-  <tr>
-  <th>Storage facility</th>
-  <th>Installed capacity</th>
-  <th>Min selling price</th>
-  <th>Max buying price</th>
-  <th><div class="hover_info">SCP<span class="popup_info small">Self-consumption priority</span></div></th>
-  </tr>
-  {% if user.small_pumped_hydro > 0 %}
-  <tr>
-  <td>Small pumped hydro</td>
-  <td class="txt_center"><script>display_Wh({{user.small_pumped_hydro*assets["small_pumped_hydro"]["storage capacity"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_small_pumped_hydro}}" id="price_small_pumped_hydro" name="price_small_pumped_hydro"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_small_pumped_hydro}}" id="price_buy_small_pumped_hydro" name="price_buy_small_pumped_hydro"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="checkbox" id="SCP_small_pumped_hydro" name="SCP_small_pumped_hydro" {% if "small_pumped_hydro" in SCP %} checked {% endif %}></td>
-  </tr>
-  {% endif %}
-  {% if user.compressed_air > 0 %}
-  <tr>
-  <td>Compressed air</td>
-  <td class="txt_center"><script>display_Wh({{user.compressed_air*assets["compressed_air"]["storage capacity"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_compressed_air}}" id="price_compressed_air" name="price_compressed_air"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_compressed_air}}" id="price_buy_compressed_air" name="price_buy_compressed_air"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="checkbox" id="SCP_compressed_air" name="SCP_compressed_air" {% if "compressed_air" in SCP %} checked {% endif %}></td>
-  </tr>
-  {% endif %}
-  {% if user.molten_salt > 0 %}
-  <tr>
-  <td>Molten salt</td>
-  <td class="txt_center"><script>display_Wh({{user.molten_salt*assets["molten_salt"]["storage capacity"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_molten_salt}}" id="price_molten_salt" name="price_molten_salt"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_molten_salt}}" id="price_buy_molten_salt" name="price_buy_molten_salt"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="checkbox" id="SCP_molten_salt" name="SCP_molten_salt" {% if "molten_salt" in SCP %} checked {% endif %}></td>
-  </tr>
-  {% endif %}
-  {% if user.large_pumped_hydro > 0 %}
-  <tr>
-  <td>Large pumped hydro</td>
-  <td class="txt_center"><script>display_Wh({{user.large_pumped_hydro*assets["large_pumped_hydro"]["storage capacity"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_large_pumped_hydro}}" id="price_large_pumped_hydro" name="price_large_pumped_hydro"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_large_pumped_hydro}}" id="price_buy_large_pumped_hydro" name="price_buy_large_pumped_hydro"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="checkbox" id="SCP_large_pumped_hydro" name="SCP_large_pumped_hydro" {% if "large_pumped_hydro" in SCP %} checked {% endif %}></td>
-  </tr>
-  {% endif %}
-  {% if user.hydrogen_storage > 0 %}
-  <tr>
-  <td>Hydrogen storage</td>
-  <td class="txt_center"><script>display_Wh({{user.hydrogen_storage*assets["hydrogen_storage"]["storage capacity"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_hydrogen_storage}}" id="price_hydrogen_storage" name="price_hydrogen_storage"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_hydrogen_storage}}" id="price_buy_hydrogen_storage" name="price_buy_hydrogen_storage"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="checkbox" id="SCP_hydrogen_storage" name="SCP_hydrogen_storage" {% if "hydrogen_storage" in SCP %} checked {% endif %}></td>
-  </tr>
-  {% endif %}
-  {% if user.lithium_ion_batteries > 0 %}
-  <tr>
-  <td>Lithium ion batteries</td>
-  <td class="txt_center"><script>display_Wh({{user.lithium_ion_batteries*assets["lithium_ion_batteries"]["storage capacity"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_lithium_ion_batteries}}" id="price_lithium_ion_batteries" name="price_lithium_ion_batteries"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_lithium_ion_batteries}}" id="price_buy_lithium_ion_batteries" name="price_buy_lithium_ion_batteries"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="checkbox" id="SCP_lithium_ion_batteries" name="SCP_lithium_ion_batteries" {% if "lithium_ion_batteries" in SCP %} checked {% endif %}></td>
-  </tr>
-  {% endif %}
-  {% if user.solid_state_batteries > 0 %}
-  <tr>
-  <td>Solid state batteries</td>
-  <td class="txt_center"><script>display_Wh({{user.solid_state_batteries*assets["solid_state_batteries"]["storage capacity"]}});</script></td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_solid_state_batteries}}" id="price_solid_state_batteries" name="price_solid_state_batteries"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="number" class="small_input medium txt_center" value="{{user.price_buy_solid_state_batteries}}" id="price_buy_solid_state_batteries" name="price_buy_solid_state_batteries"/> <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh</td>
-  <td><input type="checkbox" id="SCP_solid_state_batteries" name="SCP_solid_state_batteries" {% if "solid_state_batteries" in SCP %} checked {% endif %}></td>
-  </tr>
-  {% endif %}
-</table>
-<div class="flex-row" style="justify-content:center;">
-<b class="margin white button padding" onclick="change_prices();">Save changes</b>
-</div>
-
-</div>
-<br>
-<br>
-<br>
-
-<!--JOIN NETWORK-->
-<div id="join_network" class="popup hidden green">
-    <div class="flex-row margin-small" style="align-items:center;">
-        <div class="large txt_center" style="flex-grow:1">Join Network</div>
-        <div onclick="document.getElementById('join_network').classList.add('hidden');" class="cross pine margin-small" style="width:39px">
-            &times;
+    <br>
+    <br>
+    <br>
+    <!--JOIN NETWORK-->
+    <div id="join_network" class="popup hidden green">
+        <div class="flex-row margin-small align-items-center">
+            <div class="large txt_center flex-grow-1">Join Network</div>
+            <div onclick="document.getElementById('join_network').classList.add('hidden');"
+                 class="cross pine margin-small"
+                 style="width:39px">×</div>
         </div>
+        <div id="warning" style="width:260px;" class="margin-large"></div>
+        <form action="/join_network"
+              id="join_network_form"
+              method="post"
+              autocomplete="off"
+              class="flex-col margin-large"
+              style="margin-top:5px">
+            <div class="flex-col" style="width:100%;">
+                <label for="choose_network">Network</label>
+                <select id="choose_network"
+                        name="choose_network"
+                        class="create_chat_input medium"
+                        required>
+                    <option value="" disabled selected>select network</option>
+                </select>
+            </div>
+            <button type="submit"
+                    class="bone padding medium login-button"
+                    style="margin-top:20px">Join Network</button>
+        </form>
     </div>
-    <form method="POST" autocomplete="off" class="flex-col margin-large" style="margin-top:5px">
-        <div class="flex-col" style="width:100%;">
-            <div id="warning" style="width:260px;"></div>
-            <label for="choose_network">Network</label>
-            <select id="choose_network" name="choose_network" class="create_chat_input medium" required>
-              <option value="" disabled selected>select network</option>
-            </select>
+    <!--CREATE NETWORK-->
+    <div id="create_network" class="popup hidden green">
+        <div class="flex-row margin-small align-items-center">
+            <div class="large txt_center flex-grow-1">Create Network</div>
+            <div onclick="document.getElementById('create_network').classList.add('hidden');"
+                 class="cross pine margin-small"
+                 style="width:39px">×</div>
         </div>
-        <button type="submit" class="bone padding medium login-button" style="margin-top:20px">Join Network</button>
-    </form>
-</div>
-
-<!--CREATE NETWORK-->
-<div id="create_network" class="popup hidden green">
-    <div class="flex-row margin-small" style="align-items:center;">
-        <div class="large txt_center" style="flex-grow:1">Create Network</div>
-        <div onclick="document.getElementById('create_network').classList.add('hidden');" class="cross pine margin-small" style="width:39px">
-            &times;
-        </div>
-    </div>
-    <div class="flex-col margin-large">
-        <div style="padding-bottom:32px">
-            <label for="network_name">Network name</label>
-            <input type="text" class="create_chat_input medium" id="network_name" name="network_name" placeholder="Name" required>
-        </div>
-        Invited players : <br>
-        (click to remove)
-        <div class="invited_players"></div>
-        <div>
+        <form action="/create_network"
+              method="post"
+              autocomplete="off"
+              class="flex-col margin-large">
+            <div style="padding-bottom:32px">
+                <label for="network_name">Network name</label>
+                <input type="text"
+                       class="create_chat_input medium"
+                       id="network_name"
+                       name="network_name"
+                       placeholder="Name"
+                       required>
+            </div>
+            {# Invited players : <br>
+        (click to remove) #}
+            {# <div class="invited_players"></div> #}
+            {# <div>
             <label for="invite_player">Invite players</label>
             <div class="flex-row">
                 <div>
-                    <input type="text" class="create_chat_input medium" id="invite_player" name="invite_player" placeholder="Player">
+                    <input type="text" class="create_chat_input medium" id="invite_player" name="invite_player"
+                        placeholder="Player">
                     <div class="suggestions"></div>
                 </div>
                 <div onclick="addPlayer()" class="plus bone">+</div>
             </div>
-        </div>
-        <div onclick="createNetwork()" class="bone padding medium login-button" style="margin-top:16px">Create Network</div>
+        </div> #}
+            <button type="submit"
+                    class="bone padding medium login-button"
+                    style="margin-top:16px">Create Network</button>
+        </form>
     </div>
-</div>
-
-{% endblock %}
-
+{% endblock content %}
 {% block additionnal_script %}
-<script src="{{ url_for('static', filename='network/price_change.js') }}"></script>
-<script src="{{ url_for('static', filename='network/network_logic.js') }}"></script>
-<script src="{{ url_for('static', filename='network/market_graph.js') }}"></script>
-{% endblock %}
+    <script src="{{ url_for('static', filename='network/price_change.js') }}"></script>
+    <script src="{{ url_for('static', filename='network/network_logic.js') }}"></script>
+    <script src="{{ url_for('static', filename='network/market_graph.js') }}"></script>
+{% endblock additionnal_script %}

@@ -1,105 +1,124 @@
-{% extends "base.jinja" %} {% block title %}Messages{% endblock %} 
-
-{% block content%}
-
-<!--DISCLAIMER-->
-<div id="disclamer" class="popup {% if user.show_disclamer == False %}hidden{% endif %} green" style="max-width:500px">
-    <form method="POST" class="flex-col margin medium">
-        <div class="txt_center margin">
-            This is a disclamier that tells you that the chat is not censored and that any message can be read by the adminitrator.
-        </div>
-        <div>
-            <label for="dont_show_disclaimer">Dont show again</label>
-            <input type="checkbox" id="dont_show_disclaimer" name="dont_show_disclaimer" class="margin">
-        </div>
-        <button type="submit" onclick="console.log('Button clicked!'); document.getElementById('disclamer').classList.add('hidden');" class="bone padding margin medium login-button">OK</button>
-    </form>
-</div>
-
-<!--ADD CHAT-->
-<div id="add_chat" class="popup hidden green">
-    <div class="flex-row margin-small" style="align-items:center;">
-        <div class="large txt_center" style="flex-grow:1">Write to player</div>
-        <div onclick="document.getElementById('add_chat').classList.add('hidden');" class="cross pine margin-small" style="width:39px">
-            &times;
-        </div>
+{% extends "base.jinja" %}
+{% block title %}
+    Messages
+{% endblock title %}
+{% block content %}
+    <!--DISCLAIMER-->
+    <div id="disclamer"
+         class="popup {% if user.show_disclamer == False %}hidden{% endif %} green"
+         style="max-width:500px">
+        <form method="post" class="flex-col margin medium">
+            <div class="txt_center margin">
+                This is a disclamier that tells you that the chat is not censored and that any message can be read by the
+                adminitrator.
+            </div>
+            <div>
+                <label for="dont_show_disclaimer">Dont show again</label>
+                <input type="checkbox"
+                       id="dont_show_disclaimer"
+                       name="dont_show_disclaimer"
+                       class="margin">
+            </div>
+            <button type="submit"
+                    onclick="console.log('Button clicked!'); document.getElementById('disclamer').classList.add('hidden');"
+                    class="bone padding margin medium login-button">OK</button>
+        </form>
     </div>
-    <form method="POST" autocomplete="off" class="flex-col margin-large">
-        <div style="width:100%;">
-            <label for="add_chat_username">Player username</label>
-            <input type="text" class="create_chat_input medium" id="add_chat_username" name="add_chat_username" placeholder="Username">
-            <div class="suggestions1"></div>
+    <!--ADD CHAT-->
+    <div id="add_chat" class="popup hidden green">
+        <div class="flex-row margin-small align-items-center">
+            <div class="large txt_center flex-grow-1">Write to player</div>
+            <div onclick="document.getElementById('add_chat').classList.add('hidden');"
+                 class="cross pine margin-small"
+                 style="width:39px">×</div>
         </div>
-        <button type="submit" class="bone padding medium login-button" style="margin-top:16px">Add chat</button>
-    </form>
-</div>
-
-<!--ADD GROUP CHAT-->
-<div id="add_group_chat" class="popup hidden green">
-    <div class="flex-row margin-small" style="align-items:center;">
-        <div class="large txt_center" style="flex-grow:1">Create group chat</div>
-        <div onclick="document.getElementById('add_group_chat').classList.add('hidden');" class="cross pine margin-small" style="width:39px">
-            &times;
-        </div>
+        <form method="post" autocomplete="off" class="flex-col margin-large">
+            <div style="width:100%;">
+                <label for="add_chat_username">Player username</label>
+                <input type="text"
+                       class="create_chat_input medium"
+                       id="add_chat_username"
+                       name="add_chat_username"
+                       placeholder="Username">
+                <div class="suggestions1"></div>
+            </div>
+            <button type="submit"
+                    class="bone padding medium login-button"
+                    style="margin-top:16px">Add chat</button>
+        </form>
     </div>
-    <div class="flex-col margin-large">
-        <div style="width:100%; padding-bottom:32px">
-            <label for="chat_title">Chat title</label>
-            <input type="text" class="create_chat_input medium" id="chat_title" name="chat_title" placeholder="Title">
+    <!--ADD GROUP CHAT-->
+    <div id="add_group_chat" class="popup hidden green">
+        <div class="flex-row margin-small align-items-center">
+            <div class="large txt_center flex-grow-1">Create group chat</div>
+            <div onclick="document.getElementById('add_group_chat').classList.add('hidden');"
+                 class="cross pine margin-small"
+                 style="width:39px">×</div>
         </div>
-        Group Members : <br>
-        (click to remove)
-        <div class="group_members"></div>
-        <div>
-            <label for="add_player">Add player or network</label>
-            <div class="flex-row">
-                <div>
-                    <input type="text" class="create_chat_input medium" id="add_player" name="add_player" placeholder="Player or Network">
-                    <div class="suggestions2"></div>
+        <div class="flex-col margin-large">
+            <div style="width:100%; padding-bottom:32px">
+                <label for="chat_title">Chat title</label>
+                <input type="text"
+                       class="create_chat_input medium"
+                       id="chat_title"
+                       name="chat_title"
+                       placeholder="Title">
+            </div>
+            Group Members :
+            <br>
+            (click to remove)
+            <div class="group_members"></div>
+            <div>
+                <label for="add_player">Add player or network</label>
+                <div class="flex-row">
+                    <div>
+                        <input type="text"
+                               class="create_chat_input medium"
+                               id="add_player"
+                               name="add_player"
+                               placeholder="Player or Network">
+                        <div class="suggestions2"></div>
+                    </div>
+                    <div onclick="addPlayer()" class="plus bone">+</div>
                 </div>
-                <div onclick="addPlayer()" class="plus bone">+</div>
             </div>
+            <div onclick="createGroupChat()"
+                 class="bone padding medium login-button"
+                 style="margin-top:16px">Add group chat</div>
         </div>
-        <div onclick="createGroupChat()" class="bone padding medium login-button" style="margin-top:16px">Add group chat</div>
     </div>
-</div>
-
-<div class="medium flex-row">
-    <div class="chat_sidebar bone">
-        <div class="txt_center large padding">
-            CHATS
+    <div class="medium flex-row">
+        <div class="chat_sidebar bone">
+            <div class="txt_center large padding">CHATS</div>
+            {% for chat in chats %}
+                {% set chat_name = chat.name.replace(user.username,"") if chat.participants|length == 2 else chat.name %}
+                <div onclick="openChat({{ chat.id }})" class="margin-small white button">
+                    <div class="proile-icon green large">{{ chat_name[0] }}</div>
+                    <b class="medium padding test">
+                        {{ chat_name }}
+                    </b>
+                </div>
+            {% endfor %}
+            <div onclick="document.getElementById('add_chat').classList.remove('hidden');"
+                 class="margin-small pine button txt_center padding">Write to player</div>
+            <div onclick="document.getElementById('add_group_chat').classList.remove('hidden');"
+                 class="margin-small pine button txt_center padding">Create goup chat</div>
         </div>
-        {% for chat in chats %}
-        {% set chat_name = chat.name.replace(user.username,"") if chat.participants|length == 2 else chat.name %}
-        <div onclick="openChat({{chat.id}})" class="margin-small white button">
-            <div class="proile-icon green large">
-                {{chat_name[0]}}
-            </div>
-            <b class="medium padding test">
-                {{chat_name}}
+        <div class="chat_container">
+            <div class="txt_center large padding">MESSAGES</div>
+            <div id="messages_field"></div>
+            <input type="text"
+                   class="message_input medium"
+                   id="new_message"
+                   name="new_message"
+                   placeholder="Message">
+            <b onclick="sendMessage()"
+               class="margin-small pine button txt_center padding-small">
+                send
             </b>
         </div>
-        {% endfor %}
-        <div onclick="document.getElementById('add_chat').classList.remove('hidden');" class="margin-small pine button txt_center padding">
-            Write to player
-        </div>
-        <div onclick="document.getElementById('add_group_chat').classList.remove('hidden');" class="margin-small pine button txt_center padding">
-            Create goup chat
-        </div>
     </div>
-    <div class="chat_container">
-        <div class="txt_center large padding">
-            MESSAGES
-        </div>
-        <div id="messages_field"></div>
-        <input type="text" class="message_input medium" id="new_message" name="new_message" placeholder="Message">
-        <b onclick="sendMessage()" class="margin-small pine button txt_center padding-small">
-            send
-        </b>
-    </div>
-</div>
-{% endblock %}
-
+{% endblock content %}
 {% block additionnal_script %}
-<script src="{{ url_for('static', filename='chat_logic.js') }}"></script>
-{% endblock %}
+    <script src="{{ url_for('static', filename='chat_logic.js') }}"></script>
+{% endblock additionnal_script %}

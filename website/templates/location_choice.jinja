@@ -1,31 +1,39 @@
-{% extends "head.jinja" %} 
-{% block base%}
-<div style="position:fixed; justify-content:center; align-items:center; width:100%">
-    <div class="flex-row huge title">Location choice
-    <div class="pine info_icon_container" onclick="document.getElementById('info_popup').classList.remove('hidden');">
-        <img src="{{ url_for('static', filename='images/icons/wiki.png') }}" class="info_icon padding"/>
-    </div>
-    </div>
-
-    <div id="info_popup" class="popup hidden tan_green">
-        <div class="flex-row margin-small" style="align-items:center;">
-            <div class="large txt_center" style="flex-grow:1">Help : Location choice</div>
-            <div onclick="document.getElementById('info_popup').classList.add('hidden');" class="cross pine margin-small" style="width:39px">
-                &times;
+{% extends "head.jinja" %}
+{% block base %}
+    <div style="position:fixed;
+                justify-content:center;
+                align-items:center;
+                width:100%">
+        <div class="flex-row huge title">
+            Location choice
+            <div class="pine info_icon_container"
+                 onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
+        </div>
+        <div id="info_popup" class="popup hidden tan_green">
+            <div class="flex-row margin-small align-items-center">
+                <div class="large txt_center flex-grow-1">Help : Location choice</div>
+                <div onclick="document.getElementById('info_popup').classList.add('hidden');"
+                     class="cross pine margin-small"
+                     style="width:39px">×</div>
+            </div>
+            <div class="txt_center margin medium">
+                <p>
+                    The first decisions you have to make in the game is to choose an available location on the map. The menu
+                    on the left allows you to see where different natural resources are located.
+                </p>
+                <p>
+                    The location choice is <strong>definitive</strong>, you will not be able to change it during the game so
+                    choose wisely.
+                </p>
+                <p>
+                    For more detailed information about the map and the resources you can find on it, refer to the <a href="{{ url_for('views.wiki', _anchor='Map') }}">Map section in the wiki</a>.
+                </p>
             </div>
         </div>
-        <div class="txt_center margin medium">
-            <p>The first decisions you have to make in the game is to choose an available location on the map. The menu on the left allows you to see where different natural resources are located.</p>
-            <p>The location choice is <strong>definitive</strong>, you will not be able to change it during the game so choose wisely.</p>
-            <p>For more detailed information about the map and the resources you can find on it, refer to the <a href="/wiki#Map">Map section in the wiki</a>.</p>
-        </div>
     </div>
-</div>
-
-{% endblock %}
-
+{% endblock base %}
 {% block scripts %}
-<script src="{{ url_for('static', filename='sockets.js') }}" ></script>
-<script src="{{ url_for('static', filename='progress_bar.js') }}" ></script>
-<script src="{{ url_for('static', filename='map_selection.js') }}"></script>
-{% endblock %}
+    <script src="{{ url_for('static', filename='sockets.js') }}"></script>
+    <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
+    <script src="{{ url_for('static', filename='map_selection.js') }}"></script>
+{% endblock scripts %}

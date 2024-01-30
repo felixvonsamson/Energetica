@@ -9,12 +9,12 @@ void generate_uranium(){
       randy = floor(random(mapsize));
       seedTile = map[randx][randy];
     }
-    float[] r = seedTile.ressources;
+    float[] r = seedTile.resources;
     if(r[0]+r[2]+r[3]+r[4]+r[5]>1.7){
       continue;
     }
     float min_value = 0.8;
-    seedTile.ressources[6] = min(1,random(0.7,1.1));
+    seedTile.resources[6] = min(1,random(0.7,1.1));
     uranium_tile++;
     while(random(2)<1){
       min_value -= 0.2;
@@ -28,14 +28,14 @@ void generate_uranium(){
       if(new_tile == null){
         break;
       }
-      if(new_tile.ressources[6] != 0){
+      if(new_tile.resources[6] != 0){
         continue;
       }
-      r = new_tile.ressources;
+      r = new_tile.resources;
       if(r[0]+r[2]+r[3]+r[4]+r[5]>1.7){
         continue;
       }
-      new_tile.ressources[6] = max(0,min(1,random(min_value,1.1)));
+      new_tile.resources[6] = max(0,min(1,random(min_value,1.1)));
       uranium_tile++;
     }
   }

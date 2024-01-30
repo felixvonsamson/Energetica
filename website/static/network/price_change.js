@@ -1,16 +1,27 @@
-function change_prices(){
-    const inputElements = document.querySelectorAll('input');
+function change_prices() {
+    const inputElements = document.querySelectorAll("input");
     let prices = {};
     let SCPs = {};
-    inputElements.forEach(input => {
-        if (input.id == "invite_player" | input.id == "network_name"){
-            return
+    inputElements.forEach((input) => {
+        if ((input.id == "invite_player") | (input.id == "network_name")) {
+            return;
         }
-        if (input.type == "checkbox"){
+        if (input.type == "checkbox") {
             SCPs[input.id] = input.checked;
-        }else{
-            prices[input.id] = input.value;
+        } else {
+            prices[input.id] = float(input.value);
         }
     });
-    socket.emit("change_price", prices, SCPs);
+    send_form("/change_network_prices", {
+        prices: prices,
+        SCPs: SCPs,
+    })
+        .then((response) => {
+            response.json().then((raw_data) => {
+                addToast("Changes saved");
+            });
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
 }

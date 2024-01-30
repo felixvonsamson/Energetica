@@ -44,18 +44,18 @@ void generate_oil_gas(){
         if(neighbour == null){
           continue;
         }
-        if(neighbour.ressources[4]!=0){
+        if(neighbour.resources[4]!=0){
           count++;
         }
       }
       if(count >0){
-        float a = count*(1-0.2*count*h.ressources[4]);
-        if(a>2 | random(2)<1 | h.ressources[4]!=0){
-          h.ressources[5] = max(0,min(1,random(a/10, a/3)));
+        float a = count*(1-0.2*count*h.resources[4]);
+        if(a>2 | random(2)<1 | h.resources[4]!=0){
+          h.resources[5] = max(0,min(1,random(a/10, a/3)));
         }
       }
-      if(h.ressources[4]==1){
-        h.ressources[4] = min(1,random(count*0.1, sqrt(count)*0.6));
+      if(h.resources[4]==1){
+        h.resources[4] = min(1,random(count*0.1, sqrt(count)*0.6));
       }
     }
   }
@@ -69,7 +69,7 @@ class Grow_tile_oil{
   void add_oil(){
     Hex h = map[round(position.x)][round(position.y)];
     float value = 1;
-    h.ressources[4] = value;
+    h.resources[4] = value;
   }
   void create_children(){
     for(int i = 0; i<directions.length; i++){
@@ -90,7 +90,7 @@ class Grow_tile_oil{
     if(h == null){
       return false;
     }
-    if(h.ressources[4] != 0){
+    if(h.resources[4] != 0){
       return false;
     }
     for(int i = 0; i<growing_patches_oil.size(); i++){
@@ -111,11 +111,11 @@ class Grow_tile_oil{
       if(h == null){
         continue;
       }
-      if(h.ressources[4]!=0){
+      if(h.resources[4]!=0){
         count++;
       }
     }
-    float[] r = map[round(position.x)][round(position.y)].ressources;
+    float[] r = map[round(position.x)][round(position.y)].resources;
     float a = r[0]+r[2]+r[3];
     if(count == 2 & random(20*a)<1){
       return true;

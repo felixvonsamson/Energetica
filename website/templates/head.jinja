@@ -1,47 +1,64 @@
+{% macro wikiImage() -%}
+  <img class="info_icon padding"
+       src="{{ url_for('static', filename='images/icons/wiki.png') }}"
+       width="91"
+       height="96" />
+{%- endmacro %}
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=0.6" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='energetica.css') }}" type="text/css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2&family=Expletus+Sans:wght@600&family=Cabin+Condensed">
-    <link rel = "icon" href ="{{ url_for('static', filename='images/icon.svg') }}" type="image/x-icon">
-    <script type="text/javascript" src="{{ url_for('static', filename='display_functions.js') }}" ></script>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='energetica.css') }}"
+          type="text/css">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Baloo+2&family=Expletus+Sans:wght@600&family=Cabin+Condensed">
+    <link rel="icon"
+          href="{{ url_for('static', filename='images/icon.svg') }}"
+          type="image/x-icon">
+    <script type="text/javascript"
+            src="{{ url_for('static', filename='display_functions.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
-    <title>{% block title %}Home{% endblock %}</title>
+    <title>
+      {% block title %}
+        Home
+      {% endblock title %}
+    </title>
   </head>
-
   <body class="green">
-    
-    {% block base %} {% endblock %}
-
+    {% block base %}
+    {% endblock base %}
     <!--Toasts-->
     <div id="toasts" class="toast_container">
-    {% for category, message in get_flashed_messages(with_categories=true) %}
-      {% if category == "message" %}
-      <div class="toast message medium">
-        <i class="fa fa-info-circle info-circle"></i>
-        <div class="txt_center">{{ message }}</div>
-        <span onclick="this.parentElement.style.display='none'" class="cross">&times;</span>
-      </div>
-      {% elif category == "error" %}
-      <div class="toast error medium">
-        <i class="fa fa-exclamation-circle exclamation-circle"></i>
-        <div class="txt_center">{{ message }}</div>
-        <span onclick="this.parentElement.style.display='none'" class="cross">&times;</span>
-      </div>  
-      {% endif %}
-    {% endfor %}
-
+      {% for category, message in get_flashed_messages(with_categories=true) %}
+        {% if category == "message" %}
+          <div class="toast message medium">
+            <i class="fa fa-info-circle info-circle"></i>
+            <div class="txt_center">{{ message }}</div>
+            <span onclick="this.parentElement.style.display='none'" class="cross">×</span>
+          </div>
+        {% elif category == "error" %}
+          <div class="toast error medium">
+            <i class="fa fa-exclamation-circle exclamation-circle"></i>
+            <div class="txt_center">{{ message }}</div>
+            <span onclick="this.parentElement.style.display='none'" class="cross">×</span>
+          </div>
+        {% endif %}
+      {% endfor %}
     </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
-  <script>var socket = io();</script>
-  <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}" ></script>
-  <script src="{{ url_for('static', filename='toasts.js') }}" ></script>
-  {% block scripts %} {% endblock %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+            integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+            crossorigin="anonymous"></script>
+    <script>var socket = io();</script>
+    <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}"></script>
+    <script src="{{ url_for('static', filename='toasts.js') }}"></script>
+    {% block scripts %}
+    {% endblock scripts %}
   </body>
 </html>

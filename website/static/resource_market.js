@@ -1,4 +1,4 @@
-function expand_tile(tile_id){
+function expand_tile(tile_id) {
     let tile = document.getElementById(tile_id);
     let additionalContent = tile.querySelector("#additionalContent");
 
@@ -7,7 +7,8 @@ function expand_tile(tile_id){
         additionalContent.style.maxHeight = null;
     } else {
         additionalContent.classList.add("expanded-info");
-        additionalContent.style.maxHeight = additionalContent.scrollHeight + "px";
+        additionalContent.style.maxHeight =
+            additionalContent.scrollHeight + "px";
     }
 }
 
@@ -18,12 +19,15 @@ function stopPropagation(event) {
 function updateToPay(saleId, basePrice) {
     const quantityInput = document.getElementById(saleId);
     const toPaySpan = document.getElementById("to_pay_" + saleId);
-    const quantity = parseFloat(quantityInput.value)*1000;
+    const quantity = parseFloat(quantityInput.value) * 1000;
     if (!isNaN(quantity)) {
         let totalPrice = basePrice * quantity;
-        totalPrice = totalPrice % 1 === 0 ? totalPrice.toFixed(0) : totalPrice.toFixed(2);
+        totalPrice =
+            totalPrice % 1 === 0
+                ? totalPrice.toFixed(0)
+                : totalPrice.toFixed(2);
         toPaySpan.textContent = `(${totalPrice}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>)`;
-    }else{
-      toPaySpan.textContent = `(0<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>)`;
+    } else {
+        toPaySpan.textContent = `(0<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>)`;
     }
 }

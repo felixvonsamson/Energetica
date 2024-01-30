@@ -1,29 +1,30 @@
-{% extends "base.jinja" %} {% block title %}Home{% endblock %} {% block content
-%}
-<div class="flex-row huge title">Map 
-<div class="pine info_icon_container" onclick="document.getElementById('info_popup').classList.remove('hidden');">
-    <img src="{{ url_for('static', filename='images/icons/wiki.png') }}" class="info_icon padding"/>
-</div>
-</div>
-
-<div id="info_popup" class="popup hidden green">
-    <div class="flex-row margin-small" style="align-items:center;">
-        <div class="large txt_center" style="flex-grow:1">Help : Map</div>
-        <div onclick="document.getElementById('info_popup').classList.add('hidden');" class="cross pine margin-small" style="width:39px">
-            &times;
+{% extends "base.jinja" %}
+{% block title %}
+    Home
+{% endblock title %}
+{% block content %}
+    <div class="flex-row huge title">
+        Map
+        <div class="pine info_icon_container"
+             onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
+    </div>
+    <div id="info_popup" class="popup hidden green">
+        <div class="flex-row margin-small align-items-center">
+            <div class="large txt_center flex-grow-1">Help : Map</div>
+            <div onclick="document.getElementById('info_popup').classList.add('hidden');"
+                 class="cross pine margin-small"
+                 style="width:39px">×</div>
+        </div>
+        <div class="txt_center margin medium">
+            <p>On this page you can see the map and the other players on the server.</p>
+            <p>If you click on the tile of a player you will see their profile.</p>
+            <p>
+                For more detailed information about the map and the resources you can find on it refer to the <a href="{{ url_for('views.wiki', _anchor='Map') }}">Map section in the wiki</a>.
+            </p>
         </div>
     </div>
-    <div class="txt_center margin medium">
-        <p>On this page you can see the map and the other players on the server.</p>
-        <p>If you click on the tile of a player you will see his profile.</p>
-        <p>For more detailed information about the map and the resources you can find on it refer to the <a href="/wiki#Map">Map section in the wiki</a>.</p>
-    </div>
-</div>
-
-<div id="map_visalisation"></div>
-
-{% endblock %}
-
+    <div id="map_visalisation"></div>
+{% endblock content %}
 {% block additionnal_script %}
-<script src="{{ url_for('static', filename='map_visualisation.js') }}"></script>
-{% endblock %}
+    <script src="{{ url_for('static', filename='map_visualisation.js') }}"></script>
+{% endblock additionnal_script %}

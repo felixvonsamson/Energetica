@@ -6,7 +6,8 @@ from flask import Blueprint, current_app, g
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
 
-from . import db
+import website.utils
+
 from .database import Hex, Player
 
 rest_api = Blueprint("rest_api", __name__)
@@ -24,7 +25,7 @@ def add_sock_handlers(sock, engine):
         """Called by flask-HTTPAUth to verify credentials."""
         player = Player.query.filter_by(username=username).first()
         if player:
-            if check_password_hash(player.password, password):
+            if check_password_hash(player.pwhash, password):
                 print(f"{username} logged in via HTTP Basic")
                 return username
             else:
@@ -35,7 +36,9 @@ def add_sock_handlers(sock, engine):
     def check_user():
         """Sets up variables used by endpoints."""
         g.engine = current_app.config["engine"]
-        g.player = Player.query.filter_by(username=basic_auth.current_user()).first()
+        g.player = Player.query.filter_by(
+            username=basic_auth.current_user()
+        ).first()
 
     # Main WebSocket endpoint for Swift client
     @sock.route("/rest_ws", bp=rest_api)
@@ -45,7 +48,7 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_map())
         ws.send(rest_get_players())
         ws.send(rest_get_current_player(current_player=g.player))
-        if len(g.player.tile) != 0:
+        if g.player.tile is not None:
             rest_init_ws_post_location(ws)
         if g.player.id not in engine.websocket_dict:
             engine.websocket_dict[g.player.id] = []
@@ -66,6 +69,11 @@ def rest_init_ws_post_location(ws):
     logging in if location was already selected."""
     ws.send(rest_get_charts())
     ws.send(rest_get_power_facilities())
+
+
+# The following methods generate messages to be sent over websocket connections.
+# These are returned in the form of JSON formatted strings. See the
+# `ServerMessage` enum in the Xcode project.
 
 
 def rest_get_map():
@@ -97,7 +105,7 @@ def rest_get_players():
             {
                 "id": player.id,
                 "username": player.username,
-                "tile": player.tile[0].id if len(player.tile) > 0 else None,
+                "tile": player.tile.id if player.tile is not None else None,
             }
             for player in player_list
         ],
@@ -111,11 +119,21 @@ def rest_get_current_player(current_player):
     return json.dumps(response)
 
 
+def rest_add_player_location(player):
+    """Informs the client that a player has chosen a location, packaged as a
+    JSON string."""
+    response = {
+        "type": "updatePlayerLocation",
+        "data": {"id": player.id, "tile": player.tile.id},
+    }
+    return json.dumps(response)
+
+
 def rest_get_charts():
     """Gets the player's chart data and returns it as a JSON string."""
     current_t = g.engine.data["current_t"]
     timescale = "day"  # request.args.get('timescale')
-    filename = f"instance/player_data/{g.player.username}/{timescale}.pck"
+    filename = f"instance/player_data/{g.player.id}/{timescale}.pck"
     with open(filename, "rb") as file:
         file_data = pickle.load(file)
 
@@ -126,7 +144,9 @@ def rest_get_charts():
     def industry_data_for(category, subcategory):
         return combine_file_data_and_engine_data(
             file_data[category][subcategory],
-            g.engine.data["current_data"][g.player.username][category][subcategory],
+            g.engine.data["current_data"][g.player.username][category][
+                subcategory
+            ],
         )
 
     subcategories = {
@@ -233,20 +253,13 @@ def rest_get_power_facilities():
     return json.dumps(response)
 
 
-## Alerts
-
-
-def rest_server_alert(alert):
-    """Creates a JSON string from the alert argument which once sent will make
-    the client show an alert on screen."""
-    response = {"type": "sendServerAlert", "data": alert}
+def rest_notify_confirm_location_response(confirm_location_response):
+    """Informs the client of the result of them confirming map location."""
+    response = {
+        "type": "notifyConfirmLocationResponse",
+        "data": confirm_location_response,
+    }
     return json.dumps(response)
-
-
-def rest_server_alert_location_already_taken(by_player):
-    """Creates an alert to be shown on the client."""
-    alert = {"message": "locationAlreadyTaken", "by_player": by_player}
-    return rest_server_alert(alert)
 
 
 ## Client Messages
@@ -255,37 +268,15 @@ def rest_server_alert_location_already_taken(by_player):
 def rest_confirm_location(engine, ws, data):
     """Interpret message sent from a client when they chose a location."""
     cell_id = data
-    location = Hex.query.get(cell_id)
-    if location.player_id is not None:
-        # Location already taken
-        existing_player = Player.query.get(location.player_id)
-        ws.send(rest_server_alert_location_already_taken(existing_player))
-        return
-    elif len(g.player.tile) != 0:
-        # Player already has a location
-        # This is an invalid state - on the client side - so disconnect them
-        ws.close()
-        return
-    else:
-        location.player_id = g.player.id
-        db.session.commit()
-        rest_notify_player_location(engine, g.player)
-        engine.refresh()
-        print(f"{g.player.username} chose the location {location.id}")
+    confirm_location_response = website.utils.confirm_location(
+        engine=g.engine, player=g.player, location=Hex.query.get(cell_id)
+    )
+    ws.send(rest_notify_confirm_location_response(confirm_location_response))
+    if confirm_location_response["response"] == "success":
         rest_init_ws_post_location(ws)
 
 
 # WebSocket methods, hooked into engine states & events
-
-
-def rest_add_player_location(player):
-    """Informs the client that a player has chosen a location, packaged as a
-    JSON string."""
-    response = {
-        "type": "updatePlayerLocation",
-        "data": {"id": player.id, "tile": player.tile[0].id},
-    }
-    return json.dumps(response)
 
 
 def rest_notify_player_location(engine, player):

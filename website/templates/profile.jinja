@@ -1,88 +1,212 @@
-{% extends "base.jinja" %} {% block title %}Home{% endblock %} {% block content
-%}
-
-<div class="flex-row huge title">{{ profile.username }}</div>
-
-<div class="medium flex-space-around">
-
-<div class="flex-col">
-<b>Power facilities</b>
-<table class="table bone">
-  <tr><td>Steam engine</td><td>{{profile.steam_engine}}</td></tr>
-  <tr><td>Windmill</td><td>{{profile.windmill}}</td></tr>
-  <tr><td>Watermill</td><td>{{profile.watermill}}</td></tr>
-  <tr><td>Coal burner</td><td>{{profile.coal_burner}}</td></tr>
-  <tr><td>Oil burner</td><td>{{profile.oil_burner}}</td></tr>
-  <tr><td>Gas burner</td><td>{{profile.gas_burner}}</td></tr>
-  <tr><td>Small water dam</td><td>{{profile.small_water_dam}}</td></tr>
-  <tr><td>Onshore wind turbine</td><td>{{profile.onshore_wind_turbine}}</td></tr>
-  <tr><td>Combined cycle</td><td>{{profile.combined_cycle}}</td></tr>
-  <tr><td>Nuclear reactor</td><td>{{profile.nuclear_reactor}}</td></tr>
-  <tr><td>Large water dam</td><td>{{profile.large_water_dam}}</td></tr>
-  <tr><td>Concentrated solar power</td><td>{{profile.CSP_solar}}</td></tr>
-  <tr><td>Photovoltaics</td><td>{{profile.PV_solar}}</td></tr>
-  <tr><td>Offshore wind turbine</td><td>{{profile.offshore_wind_turbine}}</td></tr>
-  <tr><td>4th generation nuclear</td><td>{{profile.nuclear_reactor_gen4}}</td></tr>
-</table>
-</div>
-
-<div class="flex-col">
-<b>Storage facilities</b>
-<table class="table bone">
-  <tr><td>Small pumped hydro</td><td>{{profile.small_pumped_hydro}}</td></tr>
-  <tr><td>Compressed air</td><td>{{profile.compressed_air}}</td></tr>
-  <tr><td>Molten salt</td><td>{{profile.molten_salt}}</td></tr>
-  <tr><td>Large pumped hydro</td><td>{{profile.large_pumped_hydro}}</td></tr>
-  <tr><td>Hydrogen hydrolysis</td><td>{{profile.hydrogen_storage}}</td></tr>
-  <tr><td>Lithium-ion batteries</td><td>{{profile.lithium_ion_batteries}}</td></tr>
-  <tr><td>Solid state batteries</td><td>{{profile.solid_state_batteries}}</td></tr>
-</table>
-</div>
-
-<div class="flex-col">
-<b>Functional facilities</b>
-<table class="table bone">
-  <tr><td>Industry</td><td>{{profile.industry}}</td></tr>
-  <tr><td>Laboratory</td><td>{{profile.laboratory}}</td></tr>
-  <tr><td>Warehouse</td><td>{{profile.warehouse}}</td></tr>
-  <tr><td>Carbon capture</td><td>{{profile.carbon_capture}}</td></tr>
-</table>
-<br>
-<br>
-<b>Extraction facilities</b>
-<table class="table bone">
-  <tr><td>Coal mine</td><td>{{profile.coal_mine}}</td></tr>
-  <tr><td>Oil field</td><td>{{profile.oil_field}}</td></tr>
-  <tr><td>Gas drilling site</td><td>{{profile.gas_drilling_site}}</td></tr>
-  <tr><td>Uranium mine</td><td>{{profile.uranium_mine}}</td></tr>
-</table>
-</div>
-
-<div class="flex-col">
-<b>Technologies</b>
-<table class="table bone">
-  <tr><td>Mathematics</td><td>{{profile.mathematics}}</td></tr>
-  <tr><td>Mechanical engineering</td><td>{{profile.mechanical_engineering}}</td></tr>
-  <tr><td>Thermodynamics</td><td>{{profile.thermodynamics}}</td></tr>
-  <tr><td>Physics</td><td>{{profile.physics}}</td></tr>
-  <tr><td>Building Technology</td><td>{{profile.building_technology}}</td></tr>
-  <tr><td>Mineral extraction</td><td>{{profile.mineral_extraction}}</td></tr>
-  <tr><td>Transport technology</td><td>{{profile.transport_technology}}</td></tr>
-  <tr><td>Materials</td><td>{{profile.materials}}</td></tr>
-  <tr><td>Civil engineering</td><td>{{profile.civil_engineering}}</td></tr>
-  <tr><td>Aerodynamics</td><td>{{profile.aerodynamics}}</td></tr>
-  <tr><td>Chemistry</td><td>{{profile.chemistry}}</td></tr>
-  <tr><td>Nuclear engineering</td><td>{{profile.nuclear_engineering}}</td></tr>
-</table>
-</div>
-
-</div>
-
-<div class="flex-col medium">
-<b>Other informations</b>
-<table class="table bone">
-  <tr><td>Emissions</td><td>{{profile.emissions|int}}</td></tr>
-</table>
-</div>
-
-{% endblock %}
+{% extends "base.jinja" %}
+{% block title %}
+  Home
+{% endblock title %}
+{% block content
+  %}
+  <div class="flex-row huge title">{{ profile.username }}</div>
+  <div class="medium flex-space-around">
+    <div class="flex-col">
+      <b>Power facilities</b>
+      <table class="table bone">
+        <tr>
+          <td>Steam engine</td>
+          <td>{{ profile.steam_engine }}</td>
+        </tr>
+        <tr>
+          <td>Windmill</td>
+          <td>{{ profile.windmill }}</td>
+        </tr>
+        <tr>
+          <td>Watermill</td>
+          <td>{{ profile.watermill }}</td>
+        </tr>
+        <tr>
+          <td>Coal burner</td>
+          <td>{{ profile.coal_burner }}</td>
+        </tr>
+        <tr>
+          <td>Oil burner</td>
+          <td>{{ profile.oil_burner }}</td>
+        </tr>
+        <tr>
+          <td>Gas burner</td>
+          <td>{{ profile.gas_burner }}</td>
+        </tr>
+        <tr>
+          <td>Small water dam</td>
+          <td>{{ profile.small_water_dam }}</td>
+        </tr>
+        <tr>
+          <td>Onshore wind turbine</td>
+          <td>{{ profile.onshore_wind_turbine }}</td>
+        </tr>
+        <tr>
+          <td>Combined cycle</td>
+          <td>{{ profile.combined_cycle }}</td>
+        </tr>
+        <tr>
+          <td>Nuclear reactor</td>
+          <td>{{ profile.nuclear_reactor }}</td>
+        </tr>
+        <tr>
+          <td>Large water dam</td>
+          <td>{{ profile.large_water_dam }}</td>
+        </tr>
+        <tr>
+          <td>Concentrated solar power</td>
+          <td>{{ profile.CSP_solar }}</td>
+        </tr>
+        <tr>
+          <td>Photovoltaics</td>
+          <td>{{ profile.PV_solar }}</td>
+        </tr>
+        <tr>
+          <td>Offshore wind turbine</td>
+          <td>{{ profile.offshore_wind_turbine }}</td>
+        </tr>
+        <tr>
+          <td>4th generation nuclear</td>
+          <td>{{ profile.nuclear_reactor_gen4 }}</td>
+        </tr>
+      </table>
+    </div>
+    <div class="flex-col">
+      <b>Storage facilities</b>
+      <table class="table bone">
+        <tr>
+          <td>Small pumped hydro</td>
+          <td>{{ profile.small_pumped_hydro }}</td>
+        </tr>
+        <tr>
+          <td>Compressed air</td>
+          <td>{{ profile.compressed_air }}</td>
+        </tr>
+        <tr>
+          <td>Molten salt</td>
+          <td>{{ profile.molten_salt }}</td>
+        </tr>
+        <tr>
+          <td>Large pumped hydro</td>
+          <td>{{ profile.large_pumped_hydro }}</td>
+        </tr>
+        <tr>
+          <td>Hydrogen hydrolysis</td>
+          <td>{{ profile.hydrogen_storage }}</td>
+        </tr>
+        <tr>
+          <td>Lithium-ion batteries</td>
+          <td>{{ profile.lithium_ion_batteries }}</td>
+        </tr>
+        <tr>
+          <td>Solid state batteries</td>
+          <td>{{ profile.solid_state_batteries }}</td>
+        </tr>
+      </table>
+    </div>
+    <div class="flex-col">
+      <b>Functional facilities</b>
+      <table class="table bone">
+        <tr>
+          <td>Industry</td>
+          <td>{{ profile.industry }}</td>
+        </tr>
+        <tr>
+          <td>Laboratory</td>
+          <td>{{ profile.laboratory }}</td>
+        </tr>
+        <tr>
+          <td>Warehouse</td>
+          <td>{{ profile.warehouse }}</td>
+        </tr>
+        <tr>
+          <td>Carbon capture</td>
+          <td>{{ profile.carbon_capture }}</td>
+        </tr>
+      </table>
+      <br>
+      <br>
+      <b>Extraction facilities</b>
+      <table class="table bone">
+        <tr>
+          <td>Coal mine</td>
+          <td>{{ profile.coal_mine }}</td>
+        </tr>
+        <tr>
+          <td>Oil field</td>
+          <td>{{ profile.oil_field }}</td>
+        </tr>
+        <tr>
+          <td>Gas drilling site</td>
+          <td>{{ profile.gas_drilling_site }}</td>
+        </tr>
+        <tr>
+          <td>Uranium mine</td>
+          <td>{{ profile.uranium_mine }}</td>
+        </tr>
+      </table>
+    </div>
+    <div class="flex-col">
+      <b>Technologies</b>
+      <table class="table bone">
+        <tr>
+          <td>Mathematics</td>
+          <td>{{ profile.mathematics }}</td>
+        </tr>
+        <tr>
+          <td>Mechanical engineering</td>
+          <td>{{ profile.mechanical_engineering }}</td>
+        </tr>
+        <tr>
+          <td>Thermodynamics</td>
+          <td>{{ profile.thermodynamics }}</td>
+        </tr>
+        <tr>
+          <td>Physics</td>
+          <td>{{ profile.physics }}</td>
+        </tr>
+        <tr>
+          <td>Building Technology</td>
+          <td>{{ profile.building_technology }}</td>
+        </tr>
+        <tr>
+          <td>Mineral extraction</td>
+          <td>{{ profile.mineral_extraction }}</td>
+        </tr>
+        <tr>
+          <td>Transport technology</td>
+          <td>{{ profile.transport_technology }}</td>
+        </tr>
+        <tr>
+          <td>Materials</td>
+          <td>{{ profile.materials }}</td>
+        </tr>
+        <tr>
+          <td>Civil engineering</td>
+          <td>{{ profile.civil_engineering }}</td>
+        </tr>
+        <tr>
+          <td>Aerodynamics</td>
+          <td>{{ profile.aerodynamics }}</td>
+        </tr>
+        <tr>
+          <td>Chemistry</td>
+          <td>{{ profile.chemistry }}</td>
+        </tr>
+        <tr>
+          <td>Nuclear engineering</td>
+          <td>{{ profile.nuclear_engineering }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="flex-col medium">
+    <b>Other informations</b>
+    <table class="table bone">
+      <tr>
+        <td>Emissions</td>
+        <td>{{ profile.emissions|int }}</td>
+      </tr>
+    </table>
+  </div>
+{% endblock content %}

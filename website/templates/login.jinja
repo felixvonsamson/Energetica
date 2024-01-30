@@ -1,27 +1,36 @@
-{% extends "head.jinja" %} {% block title %}Login{% endblock %} 
-{% block base%}
-<div class="logo_txt large">
-Energetica
-</div>
-
-<div class="flex-space-around background">
-<img src="{{ url_for('static', filename='images/icon.svg') }}" class="logo"/>
-<img src="{{ url_for('static', filename='images/icon.svg') }}" class="logo"/>
-</div>
-
-<div class="login_box">
-  <form method="POST"  class="tan_green padding-large medium">
-    <div class="huge txt_center">Login</div>
+{% extends "head.jinja" %}
+{% block title %}
+  Login
+{% endblock title %}
+{% block base %}
+  <div class="logo_txt large">Energetica</div>
+  <div class="flex-space-around background">
+    <img src="{{ url_for('static', filename='images/icon.svg') }}"
+         class="logo" />
+    <img src="{{ url_for('static', filename='images/icon.svg') }}"
+         class="logo" />
+  </div>
+  <div class="login_box">
+    <form method="post" class="tan_green padding-large medium">
+      <div class="huge txt_center">Login</div>
       <label for="username">Username</label>
-      <input type="text" class="input medium" id="username" name="username" placeholder="Enter username"/>
+      <input type="text"
+             class="input medium"
+             id="username"
+             name="username"
+             placeholder="Enter username" />
       <label for="password">Password</label>
-      <input type="password" class="input medium" id="password" name="password" placeholder="Enter password"/>
-    <div class="flex-center">
-    <button type="submit" class="white login-button padding medium margin">Login</button>
-    </div>
-  </form>
-  <div class="margin medium txt_center">- OR -</div>
-  <div class="white login-button padding medium txt_center" onclick="window.location.href = '/sign-up';">Create account</div>
-</div>
-
-{% endblock %}
+      <input type="password"
+             class="input medium"
+             id="password"
+             name="password"
+             placeholder="Enter password" />
+      <div class="flex-center">
+        <button type="submit" class="white login-button padding medium margin">Login</button>
+      </div>
+    </form>
+    <div class="margin medium txt_center">- OR -</div>
+    <div class="white login-button padding medium txt_center"
+         onclick="window.location.href = '/sign-up';">Create account</div>
+  </div>
+{% endblock base %}
