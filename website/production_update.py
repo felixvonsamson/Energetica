@@ -76,10 +76,6 @@ def update_electricity(engine):
                     current_data["revenues"][rev][t]
                     for rev in current_data["revenues"]
                 ]
-                [
-                    current_data["revenues"][rev][t]
-                    for rev in current_data["revenues"]
-                ]
             )
         ) / 1.03
         # update display of resources and money
@@ -169,10 +165,6 @@ def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
         * (1440 - engine.data["total_t"] % 1440)
         + engine.industry_seasonal[(day + 1) % 51]
         * (engine.data["total_t"] % 1440)
-        engine.industry_seasonal[day % 51]
-        * (1440 - engine.data["total_t"] % 1440)
-        + engine.industry_seasonal[(day + 1) % 51]
-        * (engine.data["total_t"] % 1440)
     ) / 1440
     industry_demand = (
         engine.industry_demand[t - 1]
@@ -186,9 +178,6 @@ def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
     industry_income = (
         engine.config[player.id]["assets"]["industry"]["income"] / 1440.0
     )
-    industry_income = (
-        engine.config[player.id]["assets"]["industry"]["income"] / 1440.0
-    )
     revenues["industry"][t] = industry_income
     for ud in player.under_construction:
         if ud.start_time is not None:
@@ -198,17 +187,10 @@ def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
                     time_fraction = (time.time() - ud.start_time) / (
                         ud.duration
                     )
-                    time_fraction = (time.time() - ud.start_time) / (
-                        ud.duration
-                    )
                 else:
                     time_fraction = (ud.suspension_time - ud.start_time) / (
                         ud.duration
                     )
-                    time_fraction = (ud.suspension_time - ud.start_time) / (
-                        ud.duration
-                    )
-                time_fraction = (time.time() - ud.start_time) / (ud.duration)
                 additional_demand = (
                     time_fraction
                     * industry_demand
@@ -431,9 +413,6 @@ def calculate_generation_with_market(
                     storage=storage
                     if facility in engine.storage_facilities
                     else None,
-                    storage=storage
-                    if facility in engine.storage_facilities
-                    else None,
                 )
                 price = getattr(player, "price_" + facility)
                 capacity = max_prod - generation[facility][t]
@@ -470,9 +449,6 @@ def market_logic(engine, market, t):
     demands = demands.sort_values(by="price", ascending=False).reset_index(
         drop=True
     )
-    demands = demands.sort_values(by="price", ascending=False).reset_index(
-        drop=True
-    )
     demands["cumul_capacities"] = demands["capacity"].cumsum()
 
     market["capacities"] = offers
@@ -496,9 +472,6 @@ def market_logic(engine, market, t):
         market_price = (
             demand_price if demand_price != np.inf else max_supply_price
         )
-        market_price = (
-            demand_price if demand_price != np.inf else max_supply_price
-        )
     else:
         market_price, market_quantity = market_optimum(offers, demands)
     # sell all capacities under market price
@@ -514,14 +487,8 @@ def market_logic(engine, market, t):
                 demand = engine.data["current_data"][row.player.username][
                     "demand"
                 ]
-                demand = engine.data["current_data"][row.player.username][
-                    "demand"
-                ]
                 demand["dumping"][t] += dump_cap
                 row.player.money -= dump_cap * 5 / 1000000
-                revenue = engine.data["current_data"][row.player.username][
-                    "revenues"
-                ]
                 revenue = engine.data["current_data"][row.player.username][
                     "revenues"
                 ]
@@ -638,9 +605,6 @@ def calculate_prod(
     ramping_speed = (
         getattr(player, facility) * assets[facility]["ramping speed"]
     )
-    ramping_speed = (
-        getattr(player, facility) * assets[facility]["ramping speed"]
-    )
     if storage is None:
         for resource, amount in assets[facility]["consumed resource"].items():
             available_resource = getattr(player, resource) - getattr(
@@ -655,8 +619,6 @@ def calculate_prod(
                     0,
                     assets[facility]["storage capacity"]
                     * getattr(player, facility)
-                    assets[facility]["storage capacity"]
-                    * getattr(player, facility)
                     - storage[facility][t - 1],
                 )
                 * 60
@@ -665,9 +627,6 @@ def calculate_prod(
         else:
             E = max(
                 0,
-                storage[facility][t - 1]
-                * 60
-                * (assets[facility]["efficiency"] ** 0.5),
                 storage[facility][t - 1]
                 * 60
                 * (assets[facility]["efficiency"] ** 0.5),
@@ -735,9 +694,6 @@ def bid(market, player, demand, price, facility):
         market["demands"] = pd.concat(
             [market["demands"], new_row], ignore_index=True
         )
-        market["demands"] = pd.concat(
-            [market["demands"], new_row], ignore_index=True
-        )
     return market
 
 
@@ -795,9 +751,6 @@ def resources_and_pollution(engine, player, t):
         "nuclear_reactor_gen4",
     ]:
         if getattr(player, facility) > 0:
-            for resource, amount in assets[facility][
-                "consumed resource"
-            ].items():
             for resource, amount in assets[facility][
                 "consumed resource"
             ].items():
@@ -901,9 +854,6 @@ def reduce_demand(engine, demand_type, player, t, satisfaction):
             Under_construction.query.filter(
                 Under_construction.player_id == player.id
             )
-            Under_construction.query.filter(
-                Under_construction.player_id == player.id
-            )
             .filter(Under_construction.family != "technologies")
             .filter(Under_construction.start_time != None)
             .filter(Under_construction.suspension_time == None)
@@ -915,9 +865,6 @@ def reduce_demand(engine, demand_type, player, t, satisfaction):
             db.session.commit()
     if demand_type == "research":
         last_research = (
-            Under_construction.query.filter(
-                Under_construction.player_id == player.id
-            )
             Under_construction.query.filter(
                 Under_construction.player_id == player.id
             )
@@ -949,9 +896,6 @@ def reduce_demand(engine, demand_type, player, t, satisfaction):
 
 
 def add_emissions(engine, player, t, facility, amount):
-    engine.data["current_data"][player.username]["emissions"][facility][
-        t
-    ] += amount
     engine.data["current_data"][player.username]["emissions"][facility][
         t
     ] += amount
