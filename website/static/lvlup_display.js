@@ -48,7 +48,7 @@ function change_info(name) {
         (ud[name]["lvl_future"] + 1);
 
     if ("requirements" in config[name]) {
-        let reqirements = tile.querySelector("#reqirements");
+        let requirements = tile.querySelector("#requirements");
         let unfullfilled = [];
         for (let i in config[name]["requirements"]) {
             req = config[name]["requirements"][i][0];
@@ -79,7 +79,7 @@ function change_info(name) {
                     "</li>";
             }
             html += " </ul></div>";
-            reqirements.innerHTML = html;
+            requirements.innerHTML = html;
         }
     }
 

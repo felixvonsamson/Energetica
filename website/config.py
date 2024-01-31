@@ -1046,7 +1046,7 @@ class Config(object):
                 assets[asset]["construction time"] *= (
                     assets["laboratory"]["time factor"] ** player.laboratory
                 )
-                # remove fulfilled reqirements
+                # remove fulfilled requirements
                 assets[asset]["locked"] = False
                 for req in assets[asset]["requirements"]:
                     if req[1] + getattr(player, asset) < 1:
@@ -1125,7 +1125,7 @@ class Config(object):
                 "gas_drilling_site",
                 "uranium_mine",
             ]:
-                # remove fulfilled reqirements
+                # remove fulfilled requirements
                 assets[asset]["locked"] = False
                 for req in assets[asset]["requirements"]:
                     req[2] = getattr(player, req[0]) >= req[1]
@@ -1137,7 +1137,7 @@ class Config(object):
                 assets[asset]["O&M cost"] *= assets[asset]["price"] / 24
 
             if asset == "carbon_capture":
-                # remove fulfilled reqirements
+                # remove fulfilled requirements
                 assets[asset]["locked"] = False
                 for req in assets[asset]["requirements"]:
                     req[2] = getattr(player, req[0]) >= req[1]

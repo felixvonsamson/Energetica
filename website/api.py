@@ -91,7 +91,7 @@ def get_chart_data():
     # values for `timescale` are in ["6h", "day", "5_days", "month", "6_months"]
     table = request.args.get("table")
     # values for `table` are in ["demand", "emissions", "generation", "resources", "revenues", "storage"]
-    filename = f"instance/player_data/{current_user.username}/{timescale}.pck"
+    filename = f"instance/player_data/{current_user.id}/{timescale}.pck"
     with open(filename, "rb") as file:
         data = pickle.load(file)
     if table == "generation" or table == "storage" or table == "resources":
@@ -151,9 +151,7 @@ def get_chart_data():
                     * assets[facility]["amount produced"]
                     * 60
                 )
-                on_sale[resource] = getattr(
-                    current_user, resource + "_on_sale"
-                )
+                on_sale[resource] = getattr(current_user, resource + "_on_sale")
             return jsonify(
                 g.engine.data["current_t"],
                 data[table],
@@ -183,7 +181,7 @@ def get_market_data():
     if current_user.network is None:
         return "", 404
     t = int(request.args.get("t"))
-    filename_state = f"instance/network_data/{current_user.network.name}/charts/market_t{g.engine.data['total_t']-t}.pck"
+    filename_state = f"instance/network_data/{current_user.network.id}/charts/market_t{g.engine.data['total_t']-t}.pck"
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
             market_data = pickle.load(file)
@@ -207,7 +205,7 @@ def get_market_data():
     else:
         market_data = None
     timescale = request.args.get("timescale")
-    filename_prices = f"instance/network_data/{current_user.network.name}/prices/{timescale}.pck"
+    filename_prices = f"instance/network_data/{current_user.network.id}/prices/{timescale}.pck"
     with open(filename_prices, "rb") as file:
         prices = pickle.load(file)
     return jsonify(
@@ -353,20 +351,21 @@ def create_network():
     if Network.query.filter_by(name=network_name).first() is not None:
         flash("A network with this name already exists", category="error")
         return redirect("/network", code=303)
-    new_Network = Network(name=network_name, members=[current_user])
-    db.session.add(new_Network)
+    new_network = Network(name=network_name, members=[current_user])
+    db.session.add(new_network)
     db.session.commit()
-    Path(f"instance/network_data/{network_name}/charts").mkdir(
+    Path(f"instance/network_data/{new_network.id}/charts").mkdir(
         parents=True, exist_ok=True
     )
     g.engine.data["network_data"][network_name] = data_init_network(1441)
     past_data = data_init_network(1440)
-    Path(f"instance/network_data/{network_name}/prices").mkdir(
+    Path(f"instance/network_data/{new_network.id}/prices").mkdir(
         parents=True, exist_ok=True
     )
     for timescale in ["day", "5_days", "month", "6_months"]:
         with open(
-            f"instance/network_data/{network_name}/prices/{timescale}.pck", "wb"
+            f"instance/network_data/{new_network.id}/prices/{timescale}.pck",
+            "wb",
         ) as file:
             pickle.dump(past_data, file)
     print(f"{current_user.username} created the network {network_name}")

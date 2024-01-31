@@ -69,8 +69,9 @@ def sign_up():
                 data_table_name=f"data_{username}.pck",
             )
             add_player_to_data(username)
-            init_table(username)
             db.session.add(new_player)
+            db.session.commit()
+            init_table(new_player)
             db.session.commit()
             login_user(new_player, remember=True)
             flash("Account created!", category="message")
@@ -81,12 +82,14 @@ def sign_up():
 
 
 # initialize data table for new user and stores it as a .pck in the 'player_data' repo
-def init_table(username):
+def init_table(player):
+    if player.id is None:
+        raise ValueError("init_table: player.id is None")
     past_data = data_init(1440)
-    Path(f"instance/player_data/{username}").mkdir(parents=True, exist_ok=True)
+    Path(f"instance/player_data/{player.id}").mkdir(parents=True, exist_ok=True)
     for timescale in ["day", "5_days", "month", "6_months"]:
         with open(
-            f"instance/player_data/{username}/{timescale}.pck", "wb"
+            f"instance/player_data/{player.id}/{timescale}.pck", "wb"
         ) as file:
             pickle.dump(past_data, file)
 

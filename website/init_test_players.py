@@ -130,8 +130,9 @@ def create_player(engine, username, password):
             data_table_name=f"data_{username}.pck",
         )
         add_player_to_data(username)
-        init_table(username)
         db.session.add(new_player)
+        db.session.commit()
+        init_table(new_player)
         db.session.commit()
         return new_player
     print(f"create_player: player {username} already exists")
@@ -141,19 +142,20 @@ def create_player(engine, username, password):
 def create_network(engine, name, members):
     n = Network.query.filter_by(name=name).first()
     if n is None:
-        new_Network = Network(name=name, members=members)
-        db.session.add(new_Network)
+        new_network = Network(name=name, members=members)
+        db.session.add(new_network)
         db.session.commit()
-        Path(f"instance/network_data/{name}/charts").mkdir(
+        Path(f"instance/network_data/{new_network.id}/charts").mkdir(
             parents=True, exist_ok=True
         )
         engine.data["network_data"][name] = data_init_network(1441)
         past_data = data_init_network(1440)
-        Path(f"instance/network_data/{name}/prices").mkdir(
+        Path(f"instance/network_data/{new_network.id}/prices").mkdir(
             parents=True, exist_ok=True
         )
         for timescale in ["day", "5_days", "month", "6_months"]:
             with open(
-                f"instance/network_data/{name}/prices/{timescale}.pck", "wb"
+                f"instance/network_data/{new_network.id}/prices/{timescale}.pck",
+                "wb",
             ) as file:
                 pickle.dump(past_data, file)
