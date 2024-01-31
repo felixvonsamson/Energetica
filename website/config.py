@@ -437,7 +437,7 @@ full_config = {
             "O&M cost": 0.25,  # [fraction of price per year]
             "amount produced": 0.0000001,  # [fraction of total stock that can be extracted every minute by one mine]
             "power consumption": 3000000,  # [W]
-            "pollution": 65,  # [kg/t extracted]
+            "pollution": 0.065,  # [kg/kg extracted]
             "requirements": [["mineral_extraction", 1, False]],
         },
         "oil_field": {
@@ -449,7 +449,7 @@ full_config = {
             "O&M cost": 0.26,
             "amount produced": 0.000001,
             "power consumption": 15300000,
-            "pollution": 302,
+            "pollution": 0.302,
             "requirements": [["mineral_extraction", 3, False]],
         },
         "gas_drilling_site": {
@@ -461,7 +461,7 @@ full_config = {
             "O&M cost": 0.26,
             "amount produced": 0.0000008,
             "power consumption": 11100000,
-            "pollution": 523,
+            "pollution": 0.523,
             "requirements": [["mineral_extraction", 3, False]],
         },
         "uranium_mine": {
@@ -473,7 +473,7 @@ full_config = {
             "O&M cost": 0.5,
             "amount produced": 0.0000004,
             "power consumption": 36000000,
-            "pollution": 230000,
+            "pollution": 230,
             "requirements": [["mineral_extraction", 5, False]],
         },
         "mathematics": {
@@ -812,7 +812,8 @@ class Config(object):
     def update_mining_productivity(config):
         players = Player.query.all()
         for player in players:
-            config.update_resource_extraction(player.id)
+            if player in config.for_player:
+                config.update_resource_extraction(player.id)
 
     # updating the config values according to the players technology level
     def update_config_for_user(config, player_id):

@@ -38,7 +38,7 @@ def create_app():
     app.config["engine"] = engine
 
     # initialize socketio :
-    socketio = SocketIO(app, cors_allowed_origins="*", engineio_logger=True)
+    socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
     engine.socketio = socketio
     from .socketio_handlers import add_handlers
 
@@ -114,7 +114,7 @@ def create_app():
             args=(engine, app),
             id="state_update_m",
             trigger="cron",
-            second="0",  # "*/5" or "0"
+            second="*/5",  # "*/5" or "0"
         )
         scheduler.add_job(
             func=check_upcoming_actions,
@@ -126,11 +126,11 @@ def create_app():
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
 
-        # with app.app_context():
-        #     # Temporary automated player creation for testing
-        #     from .init_test_players import init_test_players
+        with app.app_context():
+            # Temporary automated player creation for testing
+            from .init_test_players import init_test_players
 
-        #     # edit_database(engine)
-        #     init_test_players(engine)
+            # edit_database(engine)
+            init_test_players(engine)
 
     return socketio, sock, app

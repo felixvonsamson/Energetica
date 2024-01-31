@@ -83,12 +83,18 @@ def init_test_players(engine):
     player = create_player(engine, "user", "password")
     print(player)
     Hex.query.filter_by(id=83).first().player_id = player.id
+    player.industry = 15
     player.coal_mine = 1
+    player.coal_burner = 2
+    player.gas_burner = 3
+    player.gas = 5000
     player.uranium_mine = 1
     player.small_pumped_hydro = 1
     player.hydrogen_storage = 1
+    player.warehouse = 1
+    db.session.commit()
 
-    create_network(engine, "network", [player])
+    # create_network(engine, "network", [player])
 
     # for i in range(3):
     #     members.append(create_player(engine, "Player" + str(i), i + 1, "password"))
