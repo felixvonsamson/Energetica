@@ -26,25 +26,25 @@
   </div>
   <div id="under_construction">
     {% if user.under_construction %}
-      {% for facility in user.under_construction %}
-        {% if facility.family == "power_facilities" %}
+      {% for construction in user.under_construction %}
+        {% if construction.family == "power_facilities" %}
           <div class="progressbar-container">
             <div class="progressbar-arrowcontainer">
-              <b class="progressbar-arrow"><i class="fa fa-caret-up"></i></b>
-              <b class="progressbar-arrow"><i class="fa fa-caret-down"></i></b>
+              <button class="progressbar-arrow button"><i class="fa fa-caret-up"></i></button>
+              <button class="progressbar-arrow button"><i class="fa fa-caret-down"></i></button>
             </div>
-            <div class="progressbar-name medium margin-small">{{ data[facility.name]['name'] }}</div>
+            <div class="progressbar-name medium margin-small">{{ data[construction.name]['name'] }}</div>
             <div class="progressbar-background">
               <div class="progressbar-bar" style="width:0"></div>
             </div>
-            <b class="progressbar-icon">
-              {% if facility.suspension_time %}
+            <button class="progressbar-icon button">
+              {% if construction.suspension_time %}
                 <i class="fa fa-play"></i>
               {% else %}
                 <i class="fa fa-pause"></i>
               {% endif %}
-            </b>
-            <b class="progressbar-icon"><i class="fa fa-times"></i></b>
+            </button>
+            <button class="progressbar-icon button" onclick="cancel_construction('{{ construction.id }}')"><i class="fa fa-times"></i></button>
           </div>
         {% endif %}
       {% endfor %}

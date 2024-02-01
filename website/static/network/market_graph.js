@@ -13,13 +13,14 @@ let f1, f2;
 let graph;
 let fill_alt = 0;
 
-const resolution = ["6h", "day", "5 days", "month", "6 months"];
-let res = "6h";
+const resolution = ["2h", "6h", "day", "5 days", "month", "6 months"];
+let res = "2h";
 const res_to_data = {
+    "2h": ["day", 1],
     "6h": ["day", 1],
-    day: ["day", 1],
+    "day": ["day", 1],
     "5 days": ["5_days", 5],
-    month: ["month", 30],
+    "month": ["month", 30],
     "6 months": ["6_months", 180],
 };
 
@@ -27,6 +28,7 @@ let cols_and_names = {};
 
 function preload() {
     font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
+    balooBold = loadFont("static/fonts/Baloo2-SemiBold.ttf");
     coin = loadImage("static/images/icons/coin.svg");
 }
 
@@ -721,7 +723,9 @@ function calc_h(price) {
 }
 
 function time_unit(res) {
-    if (res == "6h") {
+    if (res == "2h") {
+        return ["2h", "1h40", "1h20", "1h", "40min", "20min", "now"];
+    } else if (res == "6h") {
         return ["6h", "5h", "4h", "3h", "2h", "1h", "now"];
     } else if (res == "day") {
         return ["24h", "20h", "16h", "12h", "8h", "4h", "now"];
@@ -764,7 +768,9 @@ function reduce(arr1, arr2, res, t) {
     } else {
         result = arr1.concat(arr2);
     }
-    if (res == "6h") {
+    if (res == "2h") {
+        result = result.slice(-120);
+    } else if(res == "6h") {
         result = result.slice(-360);
     } else {
         result = result.slice(-1440);

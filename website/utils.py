@@ -385,7 +385,7 @@ def set_network_prices(engine, player, prices, SCPs):
     db.session.commit()
 
 
-def start_project(engine, player, facility, family):
+def start_project(player, facility, family):
     """this function is executed when a player clicks on 'start construction'"""
     assets = current_app.config["engine"].config[player.id]["assets"]
 
@@ -430,4 +430,39 @@ def start_project(engine, player, facility, family):
     db.session.add(new_facility)
     db.session.commit()
     print(f"{player.username} started the construction {facility}")
+    return {"response": "success", "money": player.money}
+
+
+def cancel_project(player, construction_id):
+    """this function is executed when a player cancels an ongoing construction"""
+    assets = current_app.config["engine"].config[player.id]["assets"]
+    construction = Under_construction.query.get(int(construction_id))
+
+    if construction.family in ["functional_facilities", "technologies"]:
+        ud_count = (
+            Under_construction.query.filter_by(
+                name=construction.name, player_id=player.id
+            ).count()
+            - 1
+        )
+        real_price = (
+            assets[construction.name]["price"]
+            * assets[construction.name]["price multiplier"] ** ud_count
+        )
+    else:  # power facitlies, storage facilities, extractions facilities
+        real_price = assets[construction.name]["price"]
+
+    if construction.suspension_time is None:
+        time_fraction = (time.time() - construction.start_time) / (
+            construction.duration
+        )
+    else:
+        time_fraction = (
+            construction.suspension_time - construction.start_time
+        ) / (construction.duration)
+
+    refund = 0.8 * real_price * (1 - time_fraction)
+    player.money += refund
+    db.session.delete(construction)
+    db.session.commit()
     return {"response": "success", "money": player.money}

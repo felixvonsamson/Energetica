@@ -118,6 +118,7 @@ canvas {
 /* Buttons */
 .button {
     border: none;
+    background-color: #0000;
 }
 
 .button:hover {
@@ -449,12 +450,10 @@ canvas {
 
 .progressbar-arrow {
     margin: -0.2em 0.5em;
-    cursor: pointer
 }
 
 .progressbar-icon {
     padding: 0.5em;
-    cursor: pointer;
 }
 
 .progressbar-name {

@@ -533,7 +533,7 @@ def market_optimum(offers_og, demands_og):
     offers["price"] = offers["price"].shift(-1)
     offers.loc[len(offers) - 1, "price"] = np.inf
     demands["price"] = demands["price"].shift(-1)
-    demands.loc[len(demands) - 1, "price"] = -5
+    demands.loc[len(demands) - 1, "price"] = -6
 
     merged_table = pd.concat([offers, demands], ignore_index=True)
     merged_table = merged_table.sort_values(by="cumul_capacities")

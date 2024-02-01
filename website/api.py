@@ -14,6 +14,7 @@ from .utils import (
     confirm_location,
     set_network_prices,
     start_project,
+    cancel_project,
 )
 from . import db
 from .database import Hex, Player, Chat, Network, Under_construction
@@ -288,7 +289,20 @@ def request_start_project():
     facility = json["facility"]
     family = json["family"]
     response = start_project(
-        engine=g.engine, player=current_user, facility=facility, family=family
+        player=current_user, facility=facility, family=family
+    )
+    return jsonify(response)
+
+
+@api.route("/request_cancel_project", methods=["POST"])
+def request_cancel_project():
+    """
+    this function is executed when a player cancels an ongoing construction or upgrade
+    """
+    json = request.get_json()
+    construction_id = json["id"]
+    response = cancel_project(
+        player=current_user, construction_id=construction_id
     )
     return jsonify(response)
 

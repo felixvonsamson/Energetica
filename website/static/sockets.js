@@ -26,7 +26,6 @@ function start_construction(facility, family) {
     })
         .then((response) => {
             response.json().then((raw_data) => {
-                console.log(raw_data);
                 let response = raw_data["response"];
                 if (response == "success") {
                     let money = raw_data["money"];

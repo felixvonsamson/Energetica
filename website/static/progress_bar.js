@@ -41,3 +41,23 @@ const update_countdowns = () => {
 
 //update_countdowns();
 //setInterval(update_countdowns, 1000);
+
+function cancel_construction(construction_id){
+    send_form("/request_cancel_project", {
+        id: construction_id
+    })
+    .then((response) => {
+        response.json().then((raw_data) => {
+            let response = raw_data["response"];
+            if (response == "success") {
+                let money = raw_data["money"];
+                var obj = document.getElementById("money");
+                obj.innerHTML = formatted_money(money);
+                addToast("Construction cancelled");
+            }
+        });
+    })
+    .catch((error) => {
+        console.error(`caught error ${error}`);
+        });
+}
