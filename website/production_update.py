@@ -178,7 +178,12 @@ def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
     industry_income = (
         engine.config[player.id]["assets"]["industry"]["income"] / 1440.0
     )
-    revenues["industry"][t] = industry_income
+    if demand["industry"][t] < industry_demand:
+        revenues["industry"][t] = (
+            industry_income * demand["industry"][t] / industry_demand
+        )
+    else:
+        revenues["industry"][t] = industry_income
     for ud in player.under_construction:
         if ud.start_time is not None:
             # industry demand ramps up during construction
