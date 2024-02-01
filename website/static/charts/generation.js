@@ -46,7 +46,7 @@ function draw() {
         let h_max = 0;
         let total_power = 0;
         for (const key of keys_generation) {
-            if (data[key][t] > 0) {
+            if (data[key][t] > 1) {
                 let h = (-data[key][t] / maxSum) * graph_h;
                 ellipse(0, h, 8, 8);
                 translate(0, h);
@@ -80,7 +80,7 @@ function draw() {
         text(display_W_long(total_power), 120, 6);
         textStyle(NORMAL);
         for (const key of keys_generation) {
-            if (data[key][t] != 0) {
+            if (data[key][t] > 1) {
                 alternate_fill();
                 translate(0, -16);
                 rect(0, 0, 160, 17);
@@ -168,7 +168,7 @@ function regen(res) {
             for (let t = 0; t < data_len; t++) {
                 push();
                 for (const key of keys_generation) {
-                    if (data[key][t] != 0) {
+                    if (data[key][t] > 1) {
                         fill(cols_and_names[key][0]);
                         let h = (data[key][t] / maxSum) * graph_h;
                         rect(0, 0, graph_w / data_len + 1, -h - 1);

@@ -35,354 +35,99 @@
       {% endfor %}
     {% endif %}
   </div>
-  {% set facility = data["coal_mine"] %}
-  <div id="{{ facility['name'] }}"
-       class="bone margin facility small construction_tile"
-       onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
-    <img class="img"
-         src="{{ url_for('static', filename='images/extraction_facilities/coal_mine.jpg') }}">
-    <div class="infotext padding">
-      <strong class="large"><a class="no_deco"
-   href="https://en.wikipedia.org/wiki/Coal_mining"
-   target="_blank">{{ facility["name"] }}</a></strong> &emsp; <span class="money_font">
-        <script>display_money_long({{ facility["price"]}});</script>
-      </span>
-      <br>
-      The coal mine extracts coal from the ground.
-      <br>
-      <br>
-      <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of coal : <strong>
-        <script>display_kg({{ user.tile.coal }});</script>
-      </strong></em>
-    </div>
-    <div class="infobox" id="requirements">
-      {% if facility["locked"] %}
-        <div>
-          <strong>Unlock with :</strong>
-          <br>
-          <ul style="padding:0; margin:0;">
-            {% for req in facility["requirements"] %}
-              <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
-                -
-                {{ data[req[0]]["name"] }} lvl {{ req[1] }}
-              </li>
-            {% endfor %}
-          </ul>
+  {% for extraction_facility in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"] %}
+    {% set facility_data = data[extraction_facility] %}
+    {% set resource = {"coal_mine": "coal", "oil_field": "oil", "gas_drilling_site": "gas", "uranium_mine": "uranium"}[extraction_facility] %}
+    <div id="{{ facility_data.name }}"
+         class="bone margin facility small construction_tile"
+         onclick="show_construction('{{ facility_data.name }}', '{{ facility_data.locked }}');">
+      <img class="img"
+           src="{{ url_for('static', filename='images/extraction_facilities/'+extraction_facility+'.jpg') }}"
+           width="250"
+           height="167"
+           alt="{{ facility_data.name }}">
+      <div class="infotext padding">
+        <strong class="large">{{ facility_data.name }}</strong>
+        &ensp;
+        <a class="white wikipedia_icon_container no_deco"
+           href="{{ facility_data.wikipedia_link }}"
+           target="_blank">
+          <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
+        </a>
+        &emsp;
+        <span class="money_font">
+          <script>display_money_long({{ facility_data.price }});</script>
+        </span>
+        <br>
+        {{ facility_data.description }}
+        <br>
+        <br>
+        <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of {{ resource }} : <strong>
+          <script>display_kg({{ user.tile[resource] }});</script>
+        </strong></em>
+      </div>
+      <div class="infobox" id="requirements">
+        {% if facility_data.locked %}
+          <div>
+            <strong>Unlock with :</strong>
+            <br>
+            <ul style="padding:0; margin:0;">
+              {% for req in facility_data.requirements %}
+                <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
+                  -
+                  {{ data[req[0]]["name"] }} lvl {{ req[1] }}
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      </div>
+      <div class="infobox" id="infotable">
+        <table class="table tan_green">
+          <tr>
+            <td>Power consumption</td>
+            <td class="txt_center">
+              <strong>
+                <script>display_W({{ facility_data["power consumption"]}});</script>
+              </strong>
+            </td>
+          </tr>
+          <tr>
+            <td>{{ resource[0]|upper + resource[1:] }} production</td>
+            <td class="txt_center">
+              <strong>
+                <script>display_kg({{ facility_data["amount produced"]* 60 }});</script>/h
+              </strong>
+            </td>
+          </tr>
+          <tr>
+            <td>CO2 emissions</td>
+            <td class="txt_center">
+              <strong>
+                <script>display_kg({{ facility_data["pollution"]*1000}});</script>/t
+              </strong>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div id="constructionContent" class="infobox hidden constructionContent">
+        <div class="flex-col">
+          <div class="txt_center margin-small" style="width:180px">
+            Duration : <strong><script>display_duration({{ facility_data["construction time"]}});</script></strong>
+            <br>
+            Energy need : <strong><script>display_W({{ facility_data["construction power"]}});</script></strong>
+            <br>
+            Emmissions : <strong><script>display_kg({{ facility_data["construction pollution"]}});</script> CO2</strong>
+            <button class="padding medium white button margin-small txt_center"
+                    onclick="start_construction('{{ extraction_facility }}', 'extraction_facilities');"
+                    style="width:160px">
+              <b>Start construction</b>
+            </button>
+          </div>
         </div>
-      {% endif %}
+      </div>
     </div>
-    <div class="infobox" id="infotable">
-      <table class="table tan_green">
-        <tr>
-          <td>Power consumption</td>
-          <td class="txt_center">
-            <strong>
-              <script>display_W({{ facility["power consumption"]}});</script>
-            </strong>
-          </td>
-        </tr>
-        <tr>
-          <td>Coal production</td>
-          <td class="txt_center">
-            <strong>
-              <script>display_kg({{ facility["amount produced"]* 60 }});</script>/h
-            </strong>
-          </td>
-        </tr>
-        <tr>
-          <td>CO2 emissions</td>
-          <td class="txt_center">
-            <strong>
-              <script>display_kg({{ facility["pollution"]}});</script>/t
-            </strong>
-          </td>
-        </tr>
-      </table>
-    </div>
-    <div id="constructionContent" class="infobox hidden constructionContent">
-      <div class="flex-col">
-        <div class="txt_center margin-small" style="width:180px">
-          Duration : <strong>
-          <script>display_duration({{ facility["construction time"]}});</script>
-        </strong>
-        <br>
-        Energy need : <strong>
-        <script>display_W({{ facility["construction power"]}});</script>
-      </strong>
-      <br>
-      Emmissions : <strong>
-      <script>display_kg({{ facility["construction pollution"]}});</script> CO2
-    </strong>
-  </div>
-  <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('coal_mine', 'extraction_facilities');"
-     style="width:160px">
-    Start construction
-  </b>
-</div>
-</div>
-</div>
-{% set facility = data["oil_field"] %}
-<div id="{{ facility['name'] }}"
-     class="bone margin facility small construction_tile"
-     onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
-  <img class="img"
-       src="{{ url_for('static', filename='images/extraction_facilities/oil_field.jpg') }}">
-  <div class="infotext padding">
-    <strong class="large"><a class="no_deco"
-   href="https://en.wikipedia.org/wiki/Extraction_of_petroleum"
-   target="_blank">{{ facility["name"] }}</a></strong> &emsp; <span class="money_font">
-      <script>display_money_long({{ facility["price"]}});</script>
-    </span>
-    <br>
-    The oil field extracts oil from the ground.
-    <br>
-    <br>
-    <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of oil : <strong>
-      <script>display_kg({{ user.tile.oil }});</script>
-    </strong></em>
-  </div>
-  <div class="infobox" id="requirements">
-    {% if facility["locked"] %}
-      <div>
-        <strong>Unlock with :</strong>
-        <br>
-        <ul style="padding:0; margin:0;">
-          {% for req in facility["requirements"] %}
-            <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
-              -
-              {{ data[req[0]]["name"] }} lvl {{ req[1] }}
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-    {% endif %}
-  </div>
-  <div class="infobox" id="infotable">
-    <table class="table tan_green">
-      <tr>
-        <td>Power consumption</td>
-        <td class="txt_center">
-          <strong>
-            <script>display_W({{ facility["power consumption"]}});</script>
-          </strong>
-        </td>
-      </tr>
-      <tr>
-        <td>Oil production</td>
-        <td class="txt_center">
-          <strong>
-            <script>display_kg({{ facility["amount produced"]* 60 }});</script>/h
-          </strong>
-        </td>
-      </tr>
-      <tr>
-        <td>CO2 emissions</td>
-        <td class="txt_center">
-          <strong>
-            <script>display_kg({{ facility["pollution"]}});</script>/t
-          </strong>
-        </td>
-      </tr>
-    </table>
-  </div>
-  <div id="constructionContent" class="infobox hidden constructionContent">
-    <div class="flex-col">
-      <div class="txt_center margin-small" style="width:180px">
-        Duration : <strong>
-        <script>display_duration({{ facility["construction time"]}});</script>
-      </strong>
-      <br>
-      Energy need : <strong>
-      <script>display_W({{ facility["construction power"]}});</script>
-    </strong>
-    <br>
-    Emmissions : <strong>
-    <script>display_kg({{ facility["construction pollution"]}});</script> CO2
-  </strong>
-</div>
-<b class="padding medium white button margin-small txt_center"
-   onclick="start_construction('oil_field', 'extraction_facilities');"
-   style="width:160px">
-  Start construction
-</b>
-</div>
-</div>
-</div>
-{% set facility = data["gas_drilling_site"] %}
-<div id="{{ facility['name'] }}"
-     class="bone margin facility small construction_tile"
-     onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
-  <img class="img"
-       src="{{ url_for('static', filename='images/extraction_facilities/gas_drilling_site.jpg') }}">
-  <div class="infotext padding">
-    <strong class="large"><a class="no_deco"
-   href="https://en.wikipedia.org/wiki/Natural_gas"
-   target="_blank">{{ facility["name"] }}</a></strong> &emsp; <span class="money_font">
-      <script>display_money_long({{ facility["price"]}});</script>
-    </span>
-    <br>
-    The gas drilling site extracts gas from the ground.
-    <br>
-    <br>
-    <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of gas : <strong>
-      <script>display_kg({{ user.tile.gas }});</script>
-    </strong></em>
-  </div>
-  <div class="infobox" id="requirements">
-    {% if facility["locked"] %}
-      <div>
-        <strong>Unlock with :</strong>
-        <br>
-        <ul style="padding:0; margin:0;">
-          {% for req in facility["requirements"] %}
-            <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
-              -
-              {{ data[req[0]]["name"] }} lvl {{ req[1] }}
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-    {% endif %}
-  </div>
-  <div class="infobox" id="infotable">
-    <table class="table tan_green">
-      <tr>
-        <td>Power consumption</td>
-        <td class="txt_center">
-          <strong>
-            <script>display_W({{ facility["power consumption"]}});</script>
-          </strong>
-        </td>
-      </tr>
-      <tr>
-        <td>Gas production</td>
-        <td class="txt_center">
-          <strong>
-            <script>display_kg({{ facility["amount produced"]* 60 }});</script>/h
-          </strong>
-        </td>
-      </tr>
-      <tr>
-        <td>CO2 emissions</td>
-        <td class="txt_center">
-          <strong>
-            <script>display_kg({{ facility["pollution"]}});</script>/t
-          </strong>
-        </td>
-      </tr>
-    </table>
-  </div>
-  <div id="constructionContent" class="infobox hidden constructionContent">
-    <div class="flex-col">
-      <div class="txt_center margin-small" style="width:180px">
-        Duration : <strong>
-        <script>display_duration({{ facility["construction time"]}});</script>
-      </strong>
-      <br>
-      Energy need : <strong>
-      <script>display_W({{ facility["construction power"]}});</script>
-    </strong>
-    <br>
-    Emmissions : <strong>
-    <script>display_kg({{ facility["construction pollution"]}});</script> CO2
-  </strong>
-</div>
-<b class="padding medium white button margin-small txt_center"
-   onclick="start_construction('gas_drilling_site', 'extraction_facilities');"
-   style="width:160px">
-  Start construction
-</b>
-</div>
-</div>
-</div>
-{% set facility = data["uranium_mine"] %}
-<div id="{{ facility['name'] }}"
-     class="bone margin facility small construction_tile"
-     onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
-  <img class="img"
-       src="{{ url_for('static', filename='images/extraction_facilities/uranium_mine.jpg') }}">
-  <div class="infotext padding">
-    <strong class="large"><a class="no_deco"
-   href="https://en.wikipedia.org/wiki/Uranium_mining"
-   target="_blank">{{ facility["name"] }}</a></strong> &emsp; <span class="money_font">
-      <script>display_money_long({{ facility["price"]}});</script>
-    </span>
-    <br>
-    The uranium mine extracts uranium from the ground.
-    <br>
-    <br>
-    <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of uranium : <strong>
-      <script>display_kg({{ user.tile.uranium }});</script>
-    </strong></em>
-  </div>
-  <div class="infobox" id="requirements">
-    {% if facility["locked"] %}
-      <div>
-        <strong>Unlock with :</strong>
-        <br>
-        <ul style="padding:0; margin:0;">
-          {% for req in facility["requirements"] %}
-            <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
-              -
-              {{ data[req[0]]["name"] }} lvl {{ req[1] }}
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-    {% endif %}
-  </div>
-  <div class="infobox" id="infotable">
-    <table class="table tan_green">
-      <tr>
-        <td>Power consumption</td>
-        <td class="txt_center">
-          <strong>
-            <script>display_W({{ facility["power consumption"]}});</script>
-          </strong>
-        </td>
-      </tr>
-      <tr>
-        <td>Uranium production</td>
-        <td class="txt_center">
-          <strong>
-            <script>display_kg({{ facility["amount produced"]* 60 }});</script>/h
-          </strong>
-        </td>
-      </tr>
-      <tr>
-        <td>CO2 emissions</td>
-        <td class="txt_center">
-          <strong>
-            <script>display_kg({{ facility["pollution"]}});</script>/t
-          </strong>
-        </td>
-      </tr>
-    </table>
-  </div>
-  <div id="constructionContent" class="infobox hidden constructionContent">
-    <div class="flex-col">
-      <div class="txt_center margin-small" style="width:180px">
-        Duration : <strong>
-        <script>display_duration({{ facility["construction time"]}});</script>
-      </strong>
-      <br>
-      Energy need : <strong>
-      <script>display_W({{ facility["construction power"]}});</script>
-    </strong>
-    <br>
-    Emmissions : <strong>
-    <script>display_kg({{ facility["construction pollution"]}});</script> CO2
-  </strong>
-</div>
-<b class="padding medium white button margin-small txt_center"
-   onclick="start_construction('uranium_mine', 'extraction_facilities');"
-   style="width:160px">
-  Start construction
-</b>
-</div>
-</div>
-</div>
+  {% endfor %}
 {% endblock content %}
 {% block additionnal_script %}
   <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
