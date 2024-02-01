@@ -158,13 +158,13 @@ function draw() {
             fill_alt = 0;
             rect(0, 0, 160, 17);
             fill(0);
-            textStyle(BOLD);
+            textFont(balooBold);
             text(
                 display_duration((data_len - t_view - 1) * res_to_data[res][1]),
                 80,
                 5
             );
-            textStyle(NORMAL);
+            textFont(font);
             for (const key of ["price", "quantity"]) {
                 alternate_fill();
                 translate(0, 16);
@@ -232,9 +232,9 @@ function draw() {
                     }
                     translate(0, -16 * 4);
                     fill(0);
-                    textStyle(BOLD);
+                    textFont(balooBold);
                     text("Supply", 65, 4);
-                    textStyle(NORMAL);
+                    textFont(font);
                     textAlign(LEFT);
                     let left = ["Player", "Capacity", "Price", "facility"];
                     for (let j of left) {
@@ -243,9 +243,9 @@ function draw() {
                     }
                     translate(0, -16 * 3);
                     textAlign(CENTER);
-                    textStyle(BOLD);
+                    textFont(balooBold);
                     text(supply["player"][i], 90, 4);
-                    textStyle(NORMAL);
+                    textFont(font);
                     push();
                     textAlign(RIGHT, CENTER);
                     text(display_money(supply["price"][i]), 97, 32 + 5);
@@ -277,9 +277,9 @@ function draw() {
                 }
                 translate(0, -2 * 16);
                 fill(0);
-                textStyle(BOLD);
+                textFont(balooBold);
                 text("Market optimum", 65, 4);
-                textStyle(NORMAL);
+                textFont(font);
                 textAlign(LEFT);
                 translate(0, 16);
                 text("Price", 5, 4);
@@ -337,9 +337,9 @@ function draw() {
                     }
                     translate(0, -16 * 4);
                     fill(0);
-                    textStyle(BOLD);
+                    textFont(balooBold);
                     text("Demand", 65, 4);
-                    textStyle(NORMAL);
+                    textFont(font);
                     textAlign(LEFT);
                     let left = ["Player", "Capacity", "Price", "facility"];
                     for (let j of left) {
@@ -348,9 +348,9 @@ function draw() {
                     }
                     translate(0, -16 * 3);
                     textAlign(CENTER);
-                    textStyle(BOLD);
+                    textFont(balooBold);
                     text(demand["player"][i], 90, 4);
-                    textStyle(NORMAL);
+                    textFont(font);
                     push();
                     textAlign(RIGHT, CENTER);
                     text(price, 97, 32 + 5);

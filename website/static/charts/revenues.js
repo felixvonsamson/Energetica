@@ -66,17 +66,17 @@ function draw() {
         fill_alt = 1 - (lines % 2);
         rect(0, 0, 160, 17);
         fill(0);
-        textStyle(BOLD);
+        textFont(balooBold);
         text(display_duration((data_len - t - 1) * res_to_data[res][1]), 80, 5);
-        textStyle(NORMAL);
+        textFont(font);
         translate(0, 16 * lines);
         alternate_fill();
         rect(0, 0, 160, 17);
         fill(0);
-        textStyle(BOLD);
+        textFont(balooBold);
         text("TOTAL :", 40, 6);
         display_coin(formatted_money(total_power), 160, 0);
-        textStyle(NORMAL);
+        textFont(font);
         for (const key of keys_revenues) {
             if (data[key][t]*60 < -1 | data[key][t]*60 > 1) {
                 alternate_fill();
@@ -147,7 +147,7 @@ function regen(res) {
                 pop();
                 push();
                 for (const key of keys_revenues) {
-                    if (data[key][t]*60 < 1) {
+                    if (data[key][t]*60 < -1) {
                         fill(cols_and_names[key][0]);
                         let h = (data[key][t] / maxSum) * graph_h * f;
                         rect(0, 0, graph_w / data_len + 1, -h - 1);

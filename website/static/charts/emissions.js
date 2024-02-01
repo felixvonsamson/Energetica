@@ -57,17 +57,17 @@ function draw() {
         fill_alt = 1 - (lines % 2);
         rect(0, 0, 160, 17);
         fill(0);
-        textStyle(BOLD);
+        textFont(balooBold);
         text(display_duration((data_len - t - 1) * res_to_data[res][1]), 80, 5);
-        textStyle(NORMAL);
+        textFont(font);
         translate(0, 16 * lines);
         alternate_fill();
         rect(0, 0, 160, 17);
         fill(0);
-        textStyle(BOLD);
+        textFont(balooBold);
         text("TOTAL :", 40, 6);
         text(display_kgh_long(total_power), 120, 6);
-        textStyle(NORMAL);
+        textFont(font);
         for (const key of keys_emissions) {
             if (data[key][t] > 0) {
                 alternate_fill();

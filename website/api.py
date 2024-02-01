@@ -88,7 +88,7 @@ def get_chat():
 def get_chart_data():
     assets = g.engine.config[current_user.id]["assets"]
     timescale = request.args.get("timescale")
-    # values for `timescale` are in ["6h", "day", "5_days", "month", "6_months"]
+    # values for `timescale` are in ["day", "5_days", "month", "6_months"]
     table = request.args.get("table")
     # values for `table` are in ["demand", "emissions", "generation", "resources", "revenues", "storage"]
     filename = f"instance/player_data/{current_user.id}/{timescale}.pck"

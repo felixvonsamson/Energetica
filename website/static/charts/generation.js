@@ -68,17 +68,17 @@ function draw() {
         fill_alt = 1 - (lines % 2);
         rect(0, 0, 160, 17);
         fill(0);
-        textStyle(BOLD);
+        textFont(balooBold);
         text(display_duration((data_len - t - 1) * res_to_data[res][1]), 80, 5);
-        textStyle(NORMAL);
+        textFont(font);
         translate(0, 16 * lines);
         alternate_fill();
         rect(0, 0, 160, 17);
         fill(0);
-        textStyle(BOLD);
+        textFont(balooBold);
         text("TOTAL :", 40, 6);
         text(display_W_long(total_power), 120, 6);
-        textStyle(NORMAL);
+        textFont(font);
         for (const key of keys_generation) {
             if (data[key][t] > 1) {
                 alternate_fill();
@@ -106,10 +106,10 @@ function draw() {
             translate(width - 2 * margin - 170, min(0.8 * height, mouseY));
             alternate_fill();
             rect(0, 0, 160, 17);
-            textStyle(BOLD);
+            textFont(balooBold);
             fill(0);
             text("Total generation capacity", 80, 4);
-            textStyle(NORMAL);
+            textFont(font);
             let total_cap = 0;
             for (const key of keys) {
                 if (caps[key] > 0) {
@@ -132,7 +132,7 @@ function draw() {
             alternate_fill();
             rect(0, 0, 160, 17);
             fill(0);
-            textStyle(BOLD);
+            textFont(balooBold);
             text("TOTAL :", 40, 5);
             text(display_W_long(total_cap), 120, 5);
             pop();

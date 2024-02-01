@@ -150,14 +150,9 @@ def revenues():
     return g.render_template_ctx("overviews/revenues.jinja")
 
 
-@overviews.route("/generation")
-def generation():
-    return g.render_template_ctx("overviews/generation.jinja")
-
-
-@overviews.route("/demand")
-def demand():
-    return g.render_template_ctx("overviews/demand.jinja")
+@overviews.route("/electricity")
+def electricity():
+    return g.render_template_ctx("overviews/electricity.jinja")
 
 
 @overviews.route("/storage")
