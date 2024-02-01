@@ -29,7 +29,7 @@ function draw() {
         let total_power = 0;
         push();
         for (const key of keys_revenues) {
-            if (data[key][t]*60 < 1) {
+            if (data[key][t]*60 < -1) {
                 let h = (-data[key][t] / maxSum) * graph_h * f;
                 ellipse(0, h, 8, 8);
                 translate(0, h);
@@ -78,7 +78,7 @@ function draw() {
         display_coin(formatted_money(total_power), 160, 0);
         textStyle(NORMAL);
         for (const key of keys_revenues) {
-            if (data[key][t]*60 < 1 | data[key][t]*60 > 1) {
+            if (data[key][t]*60 < -1 | data[key][t]*60 > 1) {
                 alternate_fill();
                 translate(0, -16);
                 rect(0, 0, 160, 17);
