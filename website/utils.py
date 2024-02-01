@@ -29,7 +29,8 @@ def flash_error(msg):
 
 
 # this function is executed after an asset is finished facility :
-def add_asset(player, facility):
+def add_asset(player_id, facility):
+    player = Player.query.get(player_id)
     setattr(player, facility, getattr(player, facility) + 1)
     current_app.config["engine"].config.update_config_for_user(player.id)
     print(

@@ -30,21 +30,21 @@
         {% if construction.family == "power_facilities" %}
           <div class="progressbar-container">
             <div class="progressbar-arrowcontainer">
-              <button class="progressbar-arrow button"><i class="fa fa-caret-up"></i></button>
-              <button class="progressbar-arrow button"><i class="fa fa-caret-down"></i></button>
+              <button class="progressbar-arrow progressbar-button"><i class="fa fa-caret-up"></i></button>
+              <button class="progressbar-arrow progressbar-button"><i class="fa fa-caret-down"></i></button>
             </div>
             <div class="progressbar-name medium margin-small">{{ data[construction.name]['name'] }}</div>
             <div class="progressbar-background">
               <div class="progressbar-bar" style="width:0"></div>
             </div>
-            <button class="progressbar-icon button">
+            <button class="progressbar-icon progressbar-button">
               {% if construction.suspension_time %}
                 <i class="fa fa-play"></i>
               {% else %}
                 <i class="fa fa-pause"></i>
               {% endif %}
             </button>
-            <button class="progressbar-icon button" onclick="cancel_construction('{{ construction.id }}')"><i class="fa fa-times"></i></button>
+            <button class="progressbar-icon progressbar-button" onclick="cancel_construction('{{ construction.id }}')"><i class="fa fa-times"></i></button>
           </div>
         {% endif %}
       {% endfor %}
@@ -204,7 +204,7 @@
             <br>
             Emmissions : <strong><script>display_kg({{data[facility]["construction pollution"]}});</script> CO2</strong>
           </div>
-          <b class="padding medium white button margin-small txt_center"
+          <b class="padding medium button margin-small txt_center white"
              onclick="start_construction('steam_engine', 'power_facilities');"
              style="width:160px">
             Start construction

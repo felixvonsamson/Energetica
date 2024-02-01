@@ -118,7 +118,6 @@ canvas {
 /* Buttons */
 .button {
     border: none;
-    background-color: #0000;
 }
 
 .button:hover {
@@ -139,6 +138,17 @@ canvas {
     background-color: #5f8d4e;
     color: white;
     cursor: pointer;
+}
+
+.progressbar-button{
+    background-color: #0000;
+    border: none;
+}
+
+.progressbar-button:hover{
+    cursor: pointer;
+    color: white;
+    background-color: #5f8d4e;
 }
 
 .login-button {
