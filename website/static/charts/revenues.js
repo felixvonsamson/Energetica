@@ -29,7 +29,7 @@ function draw() {
         let total_power = 0;
         push();
         for (const key of keys_revenues) {
-            if (data[key][t] < 0) {
+            if (data[key][t]*60 < 1) {
                 let h = (-data[key][t] / maxSum) * graph_h * f;
                 ellipse(0, h, 8, 8);
                 translate(0, h);
@@ -41,7 +41,7 @@ function draw() {
         pop();
         push();
         for (const key of keys_revenues) {
-            if (data[key][t] > 0) {
+            if (data[key][t]*60 > 1) {
                 let h = (-data[key][t] / maxSum) * graph_h * f;
                 ellipse(0, h, 8, 8);
                 translate(0, h);
@@ -78,7 +78,7 @@ function draw() {
         display_coin(formatted_money(total_power), 160, 0);
         textStyle(NORMAL);
         for (const key of keys_revenues) {
-            if (data[key][t] != 0) {
+            if (data[key][t]*60 < 1 | data[key][t]*60 > 1) {
                 alternate_fill();
                 translate(0, -16);
                 rect(0, 0, 160, 17);
@@ -137,7 +137,7 @@ function regen(res) {
             for (let t = 0; t < data_len; t++) {
                 push();
                 for (const key of keys_revenues) {
-                    if (data[key][t] > 0) {
+                    if (data[key][t]*60 > 1) {
                         fill(cols_and_names[key][0]);
                         let h = (data[key][t] / maxSum) * graph_h * f;
                         rect(0, 0, graph_w / data_len + 1, -h - 1);
@@ -147,7 +147,7 @@ function regen(res) {
                 pop();
                 push();
                 for (const key of keys_revenues) {
-                    if (data[key][t] < 0) {
+                    if (data[key][t]*60 < 1) {
                         fill(cols_and_names[key][0]);
                         let h = (data[key][t] / maxSum) * graph_h * f;
                         rect(0, 0, graph_w / data_len + 1, -h - 1);

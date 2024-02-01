@@ -12,7 +12,12 @@ from .database import Player, Network, Under_construction, Shipment
 
 from .config import config, wind_power_curve, river_discharge
 
-from .utils import update_weather, save_past_data_threaded, add_asset, store_import
+from .utils import (
+    update_weather,
+    save_past_data_threaded,
+    add_asset,
+    store_import,
+)
 
 
 # This is the engine object
@@ -35,6 +40,16 @@ class gameEngine(object):
             "solid_state_batteries",
         ]
 
+        engine.controllable_facilities = [
+            "steam_engine",
+            "nuclear_reactor",
+            "nuclear_reactor_gen4",
+            "combined_cycle",
+            "gas_burner",
+            "oil_burner",
+            "coal_burner",
+        ]
+
         engine.renewables = [
             "small_water_dam",
             "large_water_dam",
@@ -54,7 +69,9 @@ class gameEngine(object):
         engine.data["current_data"] = {}
         engine.data["network_data"] = {}
         engine.data["current_windspeed"] = [0] * 1441  # daily windspeed in km/h
-        engine.data["current_irradiation"] = [0] * 1441  # daily irradiation in W/m2
+        engine.data["current_irradiation"] = [
+            0
+        ] * 1441  # daily irradiation in W/m2
         engine.data["current_discharge"] = [
             0
         ] * 1441  # daily river discharge rate factor
@@ -64,7 +81,9 @@ class gameEngine(object):
         engine.data["current_t"] = (
             now.hour * 60 + now.minute + 1
         )  # +1 bc fist value of current day has to be last value of last day
-        engine.data["start_date"] = datetime.datetime.today()  # 0 point of server time
+        engine.data[
+            "start_date"
+        ] = datetime.datetime.today()  # 0 point of server time
 
         with open("website/static/data/industry_demand.pck", "rb") as file:
             engine.industry_demand = pickle.load(
@@ -100,7 +119,9 @@ class gameEngine(object):
         if players:
             for player in players:
                 if player.sid:
-                    engine.socketio.emit("display_new_message", msg, room=player.sid)
+                    engine.socketio.emit(
+                        "display_new_message", msg, room=player.sid
+                    )
 
     # logs a message with the current time in the terminal and stores it in 'logs'
     def log(engine, message):
@@ -113,26 +134,30 @@ def daily_update(engine, app):
     engine.data["current_t"] = 1
     # reset current data and network data
     with app.app_context():
-        engine.data["current_windspeed"] = [engine.data["current_windspeed"][-1]] + [
-            0
-        ] * 1440
+        engine.data["current_windspeed"] = [
+            engine.data["current_windspeed"][-1]
+        ] + [0] * 1440
         engine.data["current_irradiation"] = [
             engine.data["current_irradiation"][-1]
         ] + [0] * 1440
-        engine.data["current_discharge"] = [engine.data["current_discharge"][-1]] + [
+        engine.data["current_discharge"] = [
+            engine.data["current_discharge"][-1]
+        ] + [0] * 1440
+        engine.data["current_CO2"] = [engine.data["current_CO2"][-1]] + [
             0
         ] * 1440
-        engine.data["current_CO2"] = [engine.data["current_CO2"][-1]] + [0] * 1440
 
         players = Player.query.all()
         past_data = copy.deepcopy(engine.data["current_data"])
         for player in players:
             for category in engine.data["current_data"][player.username]:
-                for element in engine.data["current_data"][player.username][category]:
+                for element in engine.data["current_data"][player.username][
+                    category
+                ]:
                     past_data[player.username][category][element].pop(0)
-                    data_array = engine.data["current_data"][player.username][category][
-                        element
-                    ]
+                    data_array = engine.data["current_data"][player.username][
+                        category
+                    ][element]
                     last_value = data_array[-1]
                     data_array.clear()
                     data_array.extend([last_value] + [0] * 1440)
@@ -150,14 +175,14 @@ def daily_update(engine, app):
     save_past_data_threaded(app, engine, past_data, network_data)
 
 
-from .production_update import update_resources, update_electricity  # noqa: E402
+from .production_update import update_electricity  # noqa: E402
 
 
 # function that is executed once every 1 minute :
 def state_update_m(engine, app):
     total_t = (
         datetime.datetime.now() - engine.data["start_date"]
-    ).total_seconds() / 60.0
+    ).total_seconds() / 5.0  # 60.0 or 5.0
     while engine.data["total_t"] < total_t:
         engine.data["current_t"] += 1
         # print(f"t = {engine.data['current_t']}")
@@ -168,7 +193,6 @@ def state_update_m(engine, app):
             if engine.data["current_t"] % 10 == 1:
                 engine.config.update_mining_productivity()
                 update_weather(engine)
-            update_resources(engine)
             update_electricity(engine)
 
         # save engine every minute in case of server crash
@@ -181,7 +205,9 @@ def check_upcoming_actions(app):
     with app.app_context():
         # check if constructions finished
         finished_constructions = (
-            Under_construction.query.filter(Under_construction.start_time != None)
+            Under_construction.query.filter(
+                Under_construction.start_time != None
+            )
             .filter(Under_construction.suspension_time == None)
             .filter(
                 Under_construction.start_time + Under_construction.duration
