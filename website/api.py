@@ -156,7 +156,7 @@ def get_chart_data():
             return jsonify(
                 g.engine.data["current_t"],
                 data[table],
-                g.engine.data["current_data"][current_user.username][table],
+                g.engine.data["current_data"][current_user.id][table],
                 capacities,
                 rates,
                 on_sale,
@@ -164,14 +164,14 @@ def get_chart_data():
         return jsonify(
             g.engine.data["current_t"],
             data[table],
-            g.engine.data["current_data"][current_user.username][table],
+            g.engine.data["current_data"][current_user.id][table],
             capacities,
         )
     else:
         return jsonify(
             g.engine.data["current_t"],
             data[table],
-            g.engine.data["current_data"][current_user.username][table],
+            g.engine.data["current_data"][current_user.id][table],
         )
 
 

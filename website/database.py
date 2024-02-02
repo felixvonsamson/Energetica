@@ -236,8 +236,6 @@ class Player(db.Model, UserMixin):
     resource_on_sale = db.relationship("Resource_on_sale", backref="player")
     shipments = db.relationship("Shipment", backref="player")
 
-    data_table_name = db.Column(db.String(50))
-
     def get_technology_values(self):
         technology_attributes = [
             "laboratory",

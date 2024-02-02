@@ -150,12 +150,12 @@ def daily_update(engine, app):
         players = Player.query.all()
         past_data = copy.deepcopy(engine.data["current_data"])
         for player in players:
-            for category in engine.data["current_data"][player.username]:
-                for element in engine.data["current_data"][player.username][
+            for category in engine.data["current_data"][player.id]:
+                for element in engine.data["current_data"][player.id][
                     category
                 ]:
-                    past_data[player.username][category][element].pop(0)
-                    data_array = engine.data["current_data"][player.username][
+                    past_data[player.id][category][element].pop(0)
+                    data_array = engine.data["current_data"][player.id][
                         category
                     ][element]
                     last_value = data_array[-1]

@@ -157,11 +157,11 @@ def save_past_data_threaded(app, engine, new_data, network_data):
                     ) as file:
                         past_data[timescale] = pickle.load(file)
 
-                past_data["day"] = new_data[player.username]
+                past_data["day"] = new_data[player.id]
                 for category in past_data["5_days"]:
                     for element in past_data["5_days"][category]:
                         new_array = np.array(
-                            new_data[player.username][category][element]
+                            new_data[player.id][category][element]
                         )
                         new_5_days = np.mean(new_array.reshape(-1, 5), axis=1)
                         past_data["5_days"][category][element] = past_data[

@@ -144,7 +144,7 @@ def rest_get_charts():
     def industry_data_for(category, subcategory):
         return combine_file_data_and_engine_data(
             file_data[category][subcategory],
-            g.engine.data["current_data"][g.player.username][category][
+            g.engine.data["current_data"][g.player.id][category][
                 subcategory
             ],
         )

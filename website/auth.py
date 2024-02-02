@@ -65,10 +65,9 @@ def sign_up():
         else:
             new_player = Player(
                 username=username,
-                pwhash=generate_password_hash(password1, method="scrypt"),
-                data_table_name=f"data_{username}.pck",
+                pwhash=generate_password_hash(password1, method="scrypt")
             )
-            add_player_to_data(username)
+            add_player_to_data(new_player.id)
             db.session.add(new_player)
             db.session.commit()
             init_table(new_player)
@@ -94,9 +93,9 @@ def init_table(player):
             pickle.dump(past_data, file)
 
 
-def add_player_to_data(username):
+def add_player_to_data(user_id):
     engine = current_app.config["engine"]
-    engine.data["current_data"][username] = data_init(1441)
+    engine.data["current_data"][user_id] = data_init(1441)
 
 
 def data_init(length):
