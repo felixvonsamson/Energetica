@@ -67,9 +67,9 @@ def sign_up():
                 username=username,
                 pwhash=generate_password_hash(password1, method="scrypt")
             )
-            add_player_to_data(new_player.id)
             db.session.add(new_player)
             db.session.commit()
+            add_player_to_data(new_player.id)
             init_table(new_player)
             db.session.commit()
             login_user(new_player, remember=True)

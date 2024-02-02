@@ -123,9 +123,9 @@ def create_player(engine, username, password):
             username=username,
             pwhash=generate_password_hash(password, method="scrypt"),
         )
-        add_player_to_data(new_player.id)
         db.session.add(new_player)
         db.session.commit()
+        add_player_to_data(new_player.id)
         init_table(new_player)
         db.session.commit()
         return new_player
