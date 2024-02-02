@@ -847,8 +847,8 @@ def reduce_demand(engine, demand_type, player, t, satisfaction):
     if demand_type == "extraction_facilities":
         return
     demand = engine.data["current_data"][player.username]["demand"]
+    demand[demand_type][t] = satisfaction
     if satisfaction > 1.05 * demand[demand_type][t - 1]:
-        demand[demand_type][t] = satisfaction
         return
     if demand_type == "industry":
         player.industry = max(1, player.industry - 1)
