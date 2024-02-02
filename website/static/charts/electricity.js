@@ -72,7 +72,7 @@ function draw() {
       let total_power = 0;
       for (const key of keys_generation) {
           if (data_gen[key][t] > 1) {
-              let h = (-data_gen[key][t] / maxSum) * graph_h;
+              let h = (-data_gen[key][t] / maxSum_gen) * graph_h;
               ellipse(0, h, 8, 8);
               translate(0, h);
               lines += 1;
@@ -194,7 +194,7 @@ function draw() {
     let total_power = 0;
     for (const key of keys_demand) {
         if (data_demand[key][t] > 1) {
-            let h = (-data_demand[key][t] / maxSum) * graph_h;
+            let h = (-data_demand[key][t] / maxSum_demand) * graph_h;
             ellipse(0, h, 8, 8);
             translate(0, h);
             lines += 1;
@@ -267,9 +267,9 @@ function regen(res) {
           const sumArray = Array.from({ length: data_len }, (_, i) =>
               Object.values(data_gen).reduce((acc, arr) => acc + arr[i], 0)
           );
-          maxSum = Math.max(...sumArray);
-          if (maxSum == 0) {
-              maxSum = 100;
+          maxSum_gen = Math.max(...sumArray);
+          if (maxSum_gen == 0) {
+            maxSum_gen = 100;
           }
           push();
           for (let t = 0; t < data_len; t++) {
@@ -277,7 +277,7 @@ function regen(res) {
               for (const key of keys_generation) {
                   if (data_gen[key][t] > 1) {
                       fill(cols_and_names[key][0]);
-                      let h = (data_gen[key][t] / maxSum) * graph_h;
+                      let h = (data_gen[key][t] / maxSum_gen) * graph_h;
                       rect(0, 0, graph_w / data_len + 1, -h - 1);
                       translate(0, -h);
                   }
@@ -305,10 +305,10 @@ function regen(res) {
           pop();
 
           push();
-          let y_ticks = y_units(maxSum);
+          let y_ticks = y_units(maxSum_gen);
           let interval = y_ticks[1];
           fill(0);
-          let y = map(interval, 0, maxSum, 0, graph_h);
+          let y = map(interval, 0, maxSum_gen, 0, graph_h);
           for (let i = 0; i < y_ticks.length; i++) {
               stroke(0, 0, 0, 30);
               line(graph_w, -y * i, 0, -y * i);
@@ -364,9 +364,9 @@ function regen(res) {
         const sumArray = Array.from({ length: data_len }, (_, i) =>
             Object.values(data_demand).reduce((acc, arr) => acc + arr[i], 0)
         );
-        maxSum = Math.max(...sumArray);
-        if (maxSum == 0) {
-            maxSum = 100;
+        maxSum_demand = Math.max(...sumArray);
+        if (maxSum_demand == 0) {
+            maxSum_demand = 100;
         }
         push();
         for (let t = 0; t < data_len; t++) {
@@ -374,7 +374,7 @@ function regen(res) {
             for (const key of keys_demand) {
                 if (data_demand[key][t] > 1) {
                     fill(cols_and_names[key][0]);
-                    let h = (data_demand[key][t] / maxSum) * graph_h;
+                    let h = (data_demand[key][t] / maxSum_demand) * graph_h;
                     rect(0, 0, graph_w / data_len + 1, -h - 1);
                     translate(0, -h);
                 }
@@ -402,10 +402,10 @@ function regen(res) {
         pop();
 
         push();
-        let y_ticks = y_units(maxSum);
+        let y_ticks = y_units(maxSum_demand);
         let interval = y_ticks[1];
         fill(0);
-        let y = map(interval, 0, maxSum, 0, graph_h);
+        let y = map(interval, 0, maxSum_demand, 0, graph_h);
         for (let i = 0; i < y_ticks.length; i++) {
             stroke(0, 0, 0, 30);
             line(graph_w, -y * i, 0, -y * i);
