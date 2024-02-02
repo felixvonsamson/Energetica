@@ -246,7 +246,7 @@ function draw() {
                     translate(0, -16 * 3);
                     textAlign(CENTER);
                     textFont(balooBold);
-                    text(supply["player"][i], 90, 4);
+                    text(supply["player_id"][i], 90, 4);
                     textFont(font);
                     push();
                     textAlign(RIGHT, CENTER);
@@ -351,7 +351,7 @@ function draw() {
                     translate(0, -16 * 3);
                     textAlign(CENTER);
                     textFont(balooBold);
-                    text(demand["player"][i], 90, 4);
+                    text(demand["player_id"][i], 90, 4);
                     textFont(font);
                     push();
                     textAlign(RIGHT, CENTER);

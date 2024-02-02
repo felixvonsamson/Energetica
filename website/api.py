@@ -186,23 +186,8 @@ def get_market_data():
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
             market_data = pickle.load(file)
-            market_data["capacities"] = market_data["capacities"].to_dict(
-                orient="list"
-            )
-            market_data["capacities"]["player"] = [
-                player.username
-                for player in market_data["capacities"]["player"]
-            ]
-            market_data["demands"] = market_data["demands"].to_dict(
-                orient="list"
-            )
-            market_data["demands"]["player"] = [
-                player.username for player in market_data["demands"]["player"]
-            ]
-            market_data["demands"]["price"] = [
-                None if price == np.inf else price
-                for price in market_data["demands"]["price"]
-            ]
+            market_data["capacities"] = market_data["capacities"].to_dict(orient='list')
+            market_data["demands"] = market_data["demands"].to_dict(orient='list')
     else:
         market_data = None
     timescale = request.args.get("timescale")

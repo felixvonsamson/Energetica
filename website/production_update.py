@@ -89,10 +89,10 @@ def init_market():
     """Initialize an empty market"""
     return {
         "capacities": pd.DataFrame(
-            {"player": [], "capacity": [], "price": [], "facility": []}
+            {"player_id": [], "capacity": [], "price": [], "facility": []}
         ),
         "demands": pd.DataFrame(
-            {"player": [], "capacity": [], "price": [], "facility": []}
+            {"player_id": [], "capacity": [], "price": [], "facility": []}
         ),
     }
 
@@ -271,14 +271,14 @@ def calculate_generation_without_market(engine, player, t):
     for facility in facilities:
         if getattr(player, facility) > 0:
             internal_market = offer(
-                internal_market, player, generation[facility][t], -5, facility
+                internal_market, player.id, generation[facility][t], -5, facility
             )
 
     # demands are demanded on the internal market
     for demand_type in player.demand_priorities.split(" "):
         price = getattr(player, "price_buy_" + demand_type)
         internal_market = bid(
-            internal_market, player, demand[demand_type][t], price, demand_type
+            internal_market, player.id, demand[demand_type][t], price, demand_type
         )
 
     # Sell capacities of facilities on the internal market
@@ -298,7 +298,7 @@ def calculate_generation_without_market(engine, player, t):
             price = getattr(player, "price_" + facility)
             capacity = max_prod - generation[facility][t]
             internal_market = offer(
-                internal_market, player, capacity, price, facility
+                internal_market, player.id, capacity, price, facility
             )
 
     # Demand curve for storage (no ramping down constraint, only up)
@@ -316,7 +316,7 @@ def calculate_generation_without_market(engine, player, t):
             )
             price = getattr(player, "price_buy_" + facility)
             internal_market = bid(
-                internal_market, player, demand_q, price, facility
+                internal_market, player.id, demand_q, price, facility
             )
     market_logic(engine, internal_market, t)
 
@@ -349,11 +349,11 @@ def calculate_generation_with_market(
                 # If generation overshoots demand, put it on the market at -5¤/MWh
                 if remaining_demand == 0:
                     capacity = generation[facility][t] - internal_satisfaction
-                    market = offer(market, player, capacity, -5, facility)
+                    market = offer(market, player.id, capacity, -5, facility)
             else:
                 excess_generation += generation[facility][t]
                 market = offer(
-                    market, player, generation[facility][t], -5, facility
+                    market, player.id, generation[facility][t], -5, facility
                 )
     # # while the produced power is not sufficient for own demand, for each power facility following the priority list,
     # # set the power to the maximum possible value (max upward power ramp).
@@ -380,7 +380,7 @@ def calculate_generation_with_market(
     #             # additional capacity sold on the market
     #             capacity = delta_prod - remaining_demand
     #             price = getattr(player, "price_" + facility)
-    #             market = offer(market, player, capacity, price, facility)
+    #             market = offer(market, player.id, capacity, price, facility)
     #             remaining_demand = 0
     #         else:
     #             remaining_demand -= delta_prod
@@ -400,7 +400,7 @@ def calculate_generation_with_market(
                 bid_q = demand[demand_type][t]
                 remaining_demand -= demand[demand_type][t]
             price = getattr(player, "price_buy_" + demand_type)
-            market = bid(market, player, bid_q, price, demand_type)
+            market = bid(market, player.id, bid_q, price, demand_type)
 
     # Sell capacities of remaining facilities on the market
     for facility in read_priority_list(
@@ -421,7 +421,7 @@ def calculate_generation_with_market(
                 )
                 price = getattr(player, "price_" + facility)
                 capacity = max_prod - generation[facility][t]
-                market = offer(market, player, capacity, price, facility)
+                market = offer(market, player.id, capacity, price, facility)
 
     # Demand curve for storage (no ramping down constraint, only up)
     for facility in engine.storage_facilities:
@@ -437,7 +437,7 @@ def calculate_generation_with_market(
                 filling=True,
             )
             price = getattr(player, "price_buy_" + facility)
-            market = bid(market, player, demand_q, price, facility)
+            market = bid(market, player.id, demand_q, price, facility)
     return market
 
 
@@ -489,12 +489,13 @@ def market_logic(engine, market, t):
             if row.price < 0:
                 rest = max(0, min(row.capacity, row.capacity - sold_cap))
                 dump_cap = rest
-                demand = engine.data["current_data"][row.player.username][
+                player = Player.query.get(row.player_id)
+                demand = engine.data["current_data"][player.username][
                     "demand"
                 ]
                 demand["dumping"][t] += dump_cap
-                row.player.money -= dump_cap * 5 / 1000000
-                revenue = engine.data["current_data"][row.player.username][
+                player.money -= dump_cap * 5 / 1000000
+                revenue = engine.data["current_data"][player.username][
                     "revenues"
                 ]
                 revenue["dumping"][t] -= dump_cap * 5 / 1000000
@@ -510,7 +511,7 @@ def market_logic(engine, market, t):
             # if demand is not a storage facility mesures a taken to reduce demand
             if row.facility not in engine.storage_facilities:
                 reduce_demand(
-                    engine, row.facility, row.player, t, max(0, bought_cap)
+                    engine, row.facility, row.player_id, t, max(0, bought_cap)
                 )
         else:
             buy(engine, row, market_price, t)
@@ -670,11 +671,11 @@ def minimal_generation(engine, player, assets, generation, t, storage):
     return total_generation
 
 
-def offer(market, player, capacity, price, facility):
+def offer(market, player_id, capacity, price, facility):
     if capacity > 0:
         new_row = pd.DataFrame(
             {
-                "player": [player],
+                "player_id": [player_id],
                 "capacity": [capacity],
                 "price": [price],
                 "facility": [facility],
@@ -686,11 +687,11 @@ def offer(market, player, capacity, price, facility):
     return market
 
 
-def bid(market, player, demand, price, facility):
+def bid(market, player_id, demand, price, facility):
     if demand > 0:
         new_row = pd.DataFrame(
             {
-                "player": [player],
+                "player_id": [player_id],
                 "capacity": [demand],
                 "price": [price],
                 "facility": [facility],
@@ -703,39 +704,41 @@ def bid(market, player, demand, price, facility):
 
 
 def sell(engine, row, market_price, t, quantity=None):
-    generation = engine.data["current_data"][row.player.username]["generation"]
-    demand = engine.data["current_data"][row.player.username]["demand"]
-    storage = engine.data["current_data"][row.player.username]["storage"]
-    revenue = engine.data["current_data"][row.player.username]["revenues"]
+    player = Player.query.get(row.player_id)
+    generation = engine.data["current_data"][player.username]["generation"]
+    demand = engine.data["current_data"][player.username]["demand"]
+    storage = engine.data["current_data"][player.username]["storage"]
+    revenue = engine.data["current_data"][player.username]["revenues"]
     if quantity is None:
         quantity = row.capacity
     if row.price >= 0:
         generation[row.facility][t] += quantity
         if row.facility in engine.storage_facilities:
-            assets = engine.config[row.player.id]["assets"]
+            assets = engine.config[player.id]["assets"]
             storage[row.facility][t] -= (
                 quantity / 60 / (assets[row.facility]["efficiency"] ** 0.5)
             )  # Transform W in Wh + efficiency loss
     demand["exports"][t] += quantity
-    row.player.money += quantity * market_price / 60000000
+    player.money += quantity * market_price / 60000000
     revenue["exports"][t] += quantity * market_price / 60000000
 
 
 def buy(engine, row, market_price, t, quantity=None):
-    generation = engine.data["current_data"][row.player.username]["generation"]
-    storage = engine.data["current_data"][row.player.username]["storage"]
-    demand = engine.data["current_data"][row.player.username]["demand"]
-    revenue = engine.data["current_data"][row.player.username]["revenues"]
+    player = Player.query.get(row.player_id)
+    generation = engine.data["current_data"][player.username]["generation"]
+    storage = engine.data["current_data"][player.username]["storage"]
+    demand = engine.data["current_data"][player.username]["demand"]
+    revenue = engine.data["current_data"][player.username]["revenues"]
     if quantity is None:
         quantity = row.capacity
     if row.facility in engine.storage_facilities:
-        assets = engine.config[row.player.id]["assets"]
+        assets = engine.config[player.id]["assets"]
         storage[row.facility][t] += (
             quantity / 60 * (assets[row.facility]["efficiency"] ** 0.5)
         )  # Transform W in Wh + efficiency loss
         demand[row.facility][t] += quantity
     generation["imports"][t] += quantity
-    row.player.money -= quantity * market_price / 60000000
+    player.money -= quantity * market_price / 60000000
     revenue["imports"][t] -= quantity * market_price / 60000000
 
 
@@ -842,10 +845,11 @@ def read_priority_list(list):
         return list.split(" ")
 
 
-def reduce_demand(engine, demand_type, player, t, satisfaction):
+def reduce_demand(engine, demand_type, player_id, t, satisfaction):
     """Mesures taken to reduce demand"""
     if demand_type == "extraction_facilities":
         return
+    player = Player.query.get(player_id)
     demand = engine.data["current_data"][player.username]["demand"]
     demand[demand_type][t] = satisfaction
     if satisfaction > 1.05 * demand[demand_type][t - 1]:
@@ -854,6 +858,7 @@ def reduce_demand(engine, demand_type, player, t, satisfaction):
         player.industry = max(1, player.industry - 1)
         engine.config.update_config_for_user(player.id)
         db.session.commit()
+        return
     if demand_type == "construction":
         last_construction = (
             Under_construction.query.filter(
@@ -868,6 +873,7 @@ def reduce_demand(engine, demand_type, player, t, satisfaction):
         if last_construction:
             last_construction.suspension_time = time.time()
             db.session.commit()
+        return
     if demand_type == "research":
         last_research = (
             Under_construction.query.filter(
@@ -882,6 +888,7 @@ def reduce_demand(engine, demand_type, player, t, satisfaction):
         if last_research:
             last_research.suspension_time = time.time()
             db.session.commit()
+        return
     if demand_type == "transport":
         last_shipment = (
             Shipment.query.filter(Shipment.player_id == player.id)
@@ -891,6 +898,7 @@ def reduce_demand(engine, demand_type, player, t, satisfaction):
         if last_shipment:
             last_shipment.suspension_time = time.time()
             db.session.commit()
+        return
     if demand_type in [
         "coal_mine",
         "oil_field",
