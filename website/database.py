@@ -45,6 +45,9 @@ class Under_construction(db.Model):
     suspension_time = db.Column(
         db.Float, default=None
     )  # time at witch the construction has been paused if it has
+    original_price = db.Column(
+        db.Float
+    )  # Price of the construction on the time of start of construction
     player_id = db.Column(
         db.Integer, db.ForeignKey("player.id")
     )  # can access player directly with .player

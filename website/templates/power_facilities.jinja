@@ -35,7 +35,7 @@
             </div>
             <div class="progressbar-name medium margin-small">{{ data[construction.name]['name'] }}</div>
             <div class="progressbar-background">
-              <div class="progressbar-bar" style="width:0"></div>
+              <div id="{{construction.id}}" class="progressbar-bar pine"></div>
             </div>
             <button class="progressbar-icon progressbar-button">
               {% if construction.suspension_time %}

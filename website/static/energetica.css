@@ -475,6 +475,7 @@ canvas {
     background-color: #e5d9b6;
     height: 1.2em;
     margin: 0 0.5em;
+    text-align: right;
 }
 
 .progressbar-bar {
@@ -482,7 +483,8 @@ canvas {
     height: 100%;
     width: calc(var(--width, 0) * 1%);
     max-width: 100%;
-    background-color: #285430;
+    padding-left:4px;
+    white-space: nowrap;
 }
 
 /* ------- */

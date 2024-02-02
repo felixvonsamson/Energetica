@@ -2,9 +2,7 @@
 This code generates the progress bars on top of the pages that show the facilities under construction
 */
 
-//CHANGE TO p5.js
-function formatMilliseconds(milliseconds) {
-    const totalSeconds = Math.floor(milliseconds / 1000);
+function formatMilliseconds(totalSeconds) {
     const days = Math.floor(totalSeconds / (3600 * 24));
     const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -25,23 +23,6 @@ function formatMilliseconds(milliseconds) {
     return formattedTime.trim();
 }
 
-const update_countdowns = () => {
-    const matches = document.querySelectorAll(".time");
-    matches.forEach((el) => {
-        const finish_time = el.dataset.name;
-        const now = new Date().getTime();
-        if (finish_time * 1000 < now) {
-            el.parentElement.style.display = "none";
-        } else {
-            const time = formatMilliseconds(finish_time * 1000 - now);
-            el.innerText = `(${time})`;
-        }
-    });
-};
-
-//update_countdowns();
-//setInterval(update_countdowns, 1000);
-
 function cancel_construction(construction_id){
     send_form("/request_cancel_project", {
         id: construction_id
@@ -61,3 +42,27 @@ function cancel_construction(construction_id){
         console.error(`caught error ${error}`);
         });
 }
+
+
+const progressBars = document.getElementsByClassName('progressbar-bar')
+let constructions = load_constructions()
+console.log(constructions)
+setInterval(() => {
+    for(const progressBar of progressBars){
+        const id = progressBar.id;
+        const construction = constructions[id];
+        const now = new Date().getTime()/1000;
+        let new_width;
+        let time_remaining
+        if (construction["suspension_time"]){
+            new_width = (construction["suspension_time"] - construction["start_time"]) / construction["duration"] * 100;
+            time_remaining = construction["duration"] + construction["start_time"] - construction["suspension_time"];
+        }else{
+            new_width = (now - construction["start_time"]) / construction["duration"] * 100;
+            time_remaining = construction["duration"] + construction["start_time"] - now;
+        }
+        progressBar.style.setProperty('--width', new_width);
+        const time = formatMilliseconds(time_remaining);
+        progressBar.innerText = time;
+    }
+}, 50)

@@ -426,6 +426,7 @@ def start_project(player, facility, family):
         family=family,
         start_time=start_time,
         duration=duration,
+        original_price=real_price,
         player_id=player.id,
     )
     db.session.add(new_facility)
@@ -436,22 +437,7 @@ def start_project(player, facility, family):
 
 def cancel_project(player, construction_id):
     """this function is executed when a player cancels an ongoing construction"""
-    assets = current_app.config["engine"].config[player.id]["assets"]
     construction = Under_construction.query.get(int(construction_id))
-
-    if construction.family in ["functional_facilities", "technologies"]:
-        ud_count = (
-            Under_construction.query.filter_by(
-                name=construction.name, player_id=player.id
-            ).count()
-            - 1
-        )
-        real_price = (
-            assets[construction.name]["price"]
-            * assets[construction.name]["price multiplier"] ** ud_count
-        )
-    else:  # power facitlies, storage facilities, extractions facilities
-        real_price = assets[construction.name]["price"]
 
     if construction.suspension_time is None:
         time_fraction = (time.time() - construction.start_time) / (
@@ -462,7 +448,7 @@ def cancel_project(player, construction_id):
             construction.suspension_time - construction.start_time
         ) / (construction.duration)
 
-    refund = 0.8 * real_price * (1 - time_fraction)
+    refund = 0.8 * construction.original_price * (1 - time_fraction)
     player.money += refund
     db.session.delete(construction)
     db.session.commit()
