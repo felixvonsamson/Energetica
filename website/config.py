@@ -614,6 +614,7 @@ full_config = {
             "construction energy": 120000000,
             "time factor": 0.85,
             "energy factor": 0.9,
+            "affected_facilities": [],
             "requirements": [
                 ["laboratory", 2, False],
                 ["mathematics", 2, False],
@@ -938,24 +939,22 @@ class Config(object):
                     assets[facility]["price"] *= (
                         assets[technology]["price factor"] ** level
                     )
+            # Update production levels for affected facilities
+            if "prod factor" in assets[technology]:
+                for facility in assets[technology]["affected_facilities"]:
+                    # Update power generating affected facilities
+                    if "power generation" in assets[facility]:
+                        assets[facility]["power generation"] *= (
+                            assets[technology]["prod factor"] ** level
+                        )
+            if "energy factor" in assets[technology]:
+                for facility in assets[technology]["affected_facilities"]:
+                    # Update power consuming affected facilities
+                    assets[facility]["power consumption"] *= (
+                        assets[technology]["energy factor"] ** level
+                    )
 
         for asset in assets:
-            if asset in [
-                "steam_engine",
-                "watermill",
-                "coal_burner",
-                "oil_burner",
-                "gas_burner",
-                "combined_cycle",
-                "compressed_air",
-                "molten_salt",
-            ]:
-                # update production (mechanical engineering)
-                assets[asset]["power generation"] *= (
-                    assets["mechanical_engineering"]["prod factor"]
-                    ** player.mechanical_engineering
-                )
-
             if asset in [
                 "steam_engine",
                 "coal_burner",
@@ -991,28 +990,12 @@ class Config(object):
                 ) * (0.9**player.thermodynamics)
 
             if asset in [
-                "PV_solar",
-                "CSP_solar",
-                "hydrogen_storage",
-                "lithium_ion_batteries",
-                "solid_state_batteries",
-            ]:
-                # update production (physics)
-                assets[asset]["power generation"] *= (
-                    assets["physics"]["prod factor"] ** player.physics
-                )
-
-            if asset in [
                 "coal_mine",
                 "oil_field",
                 "gas_drilling_site",
                 "uranium_mine",
             ]:
-                # update energy consumption and pollution. production increase is already in update_resource_extraction (mineral extraction)
-                assets[asset]["power consumption"] *= (
-                    assets["mineral_extraction"]["energy factor"]
-                    ** player.mineral_extraction
-                )
+                # update pollution. production increase is already in update_resource_extraction (mineral extraction)
                 assets[asset]["pollution"] *= (
                     assets["mineral_extraction"]["pollution factor"]
                     ** player.mineral_extraction
@@ -1031,33 +1014,11 @@ class Config(object):
                     ** player.materials
                 )
 
-            if asset in [
-                "small_water_dam",
-                "large_water_dam",
-                "small_pumped_hydro",
-                "large_pumped_hydro",
-            ]:
-                # update production (civil engineering)
-                assets[asset]["power generation"] *= (
-                    assets["civil_engineering"]["prod factor"]
-                    ** player.civil_engineering
-                )
-
             if asset in ["small_pumped_hydro", "large_pumped_hydro"]:
                 # update capacity (civil engineering)
                 assets[asset]["storage capacity"] *= (
                     assets["civil_engineering"]["capacity factor"]
                     ** player.civil_engineering
-                )
-
-            if asset in [
-                "windmill",
-                "onshore_wind_turbine",
-                "offshore_wind_turbine",
-            ]:
-                # update production (aerodynamics)
-                assets[asset]["power generation"] *= (
-                    assets["aerodynamics"]["prod factor"] ** player.aerodynamics
                 )
 
             if asset in ["lithium_ion_batteries", "solid_state_batteries"]:
@@ -1072,13 +1033,6 @@ class Config(object):
                 # special case for hydrogen storage rountrip efficiency (chemistry)
                 assets[asset]["efficiency"] += (
                     0.05 * player.chemistry * assets[asset]["efficiency"]
-                )
-
-            if asset in ["nuclear_reactor", "nuclear_reactor_gen4"]:
-                # update production (nuclear engineering)
-                assets[asset]["power generation"] *= (
-                    assets["nuclear_engineering"]["prod factor"]
-                    ** player.nuclear_engineering
                 )
 
             if asset in [
