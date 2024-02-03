@@ -144,9 +144,7 @@ def rest_get_charts():
     def industry_data_for(category, subcategory):
         return combine_file_data_and_engine_data(
             file_data[category][subcategory],
-            g.engine.data["current_data"][g.player.id][category][
-                subcategory
-            ],
+            g.engine.data["current_data"][g.player.id][category][subcategory],
         )
 
     subcategories = {
@@ -222,23 +220,6 @@ def rest_get_power_facilities():
     """Gets player's facilities data and returns it as a JSON string"""
     power_facilities_info = g.engine.config[g.player.id]["assets"]
     property_keys = ["price", "power generation", "locked"]
-    power_facilities = [
-        "steam_engine",
-        "windmill",
-        "watermill",
-        "coal_burner",
-        "oil_burner",
-        "gas_burner",
-        "small_water_dam",
-        "onshore_wind_turbine",
-        "combined_cycle",
-        "nuclear_reactor",
-        "large_water_dam",
-        "CSP_solar",
-        "PV_solar",
-        "offshore_wind_turbine",
-        "nuclear_reactor_gen4",
-    ]
     response = {
         "type": "getPowerFacilities",
         "data": [
@@ -247,7 +228,7 @@ def rest_get_power_facilities():
                 property_key: power_facilities_info[facility][property_key]
                 for property_key in property_keys
             }
-            for facility in power_facilities
+            for facility in g.engine.config.power_facilities
         ],
     }
     return json.dumps(response)
