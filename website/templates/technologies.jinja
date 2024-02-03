@@ -28,15 +28,7 @@
     </div>
   </div>
   <div id="under_construction">
-    {% if user.under_construction %}
-      {% for facility in user.under_construction %}
-        {% if facility.family == "technologies" %}
-          <div class="padding" id="progress_bar">
-            The research on the technology <b>{{ data[facility.name]["name"] }}</b> is currently underway. <i class="time" data-name="{{ facility.finish_time }}"></i>
-          </div>
-        {% endif %}
-      {% endfor %}
-    {% endif %}
+    {# Facilites under construction will show here #}
   </div>
   {% set facility = data["mathematics"] %}
   <div id="{{ facility['name'] }}"
@@ -82,7 +74,7 @@
       <br>
     </div>
     <b class="padding medium white button margin-small txt_center"
-       onclick="start_construction('mathematics', 'technologies');"
+       onclick="start_construction('mathematics', 'Technologies');"
        style="width:160px">
       Start construction
     </b>
@@ -156,7 +148,7 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('mechanical_engineering', 'technologies');"
+     onclick="start_construction('mechanical_engineering', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
@@ -240,7 +232,7 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('thermodynamics', 'technologies');"
+     onclick="start_construction('thermodynamics', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
@@ -311,7 +303,7 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('physics', 'technologies');"
+     onclick="start_construction('physics', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
@@ -374,7 +366,7 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('building_technology', 'technologies');"
+     onclick="start_construction('building_technology', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
@@ -453,7 +445,7 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('mineral_extraction', 'technologies');"
+     onclick="start_construction('mineral_extraction', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
@@ -520,7 +512,7 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('transport_technology', 'technologies');"
+     onclick="start_construction('transport_technology', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
@@ -592,7 +584,7 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('materials', 'technologies');"
+     onclick="start_construction('materials', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
@@ -667,7 +659,7 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('civil_engineering', 'technologies');"
+     onclick="start_construction('civil_engineering', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
@@ -739,7 +731,7 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('aerodynamics', 'technologies');"
+     onclick="start_construction('aerodynamics', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
@@ -819,7 +811,7 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('chemistry', 'technologies');"
+     onclick="start_construction('chemistry', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
@@ -888,7 +880,7 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('nuclear_engineering', 'technologies');"
+     onclick="start_construction('nuclear_engineering', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
@@ -899,4 +891,5 @@
 {% block additionnal_script %}
   <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
   <script src="{{ url_for('static', filename='lvlup_display.js') }}"></script>
+  <script>refresh_progressBar()</script>
 {% endblock additionnal_script %}

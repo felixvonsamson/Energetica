@@ -217,7 +217,7 @@ def construction_demand(player, t, assets, demand):
         if ud.start_time is not None:
             if ud.suspension_time is None:
                 construction = assets[ud.name]
-                if ud.family == "technologies":
+                if ud.family == "Technologies":
                     demand["research"][t] += construction["construction power"]
                 else:
                     demand["construction"][t] += construction[
@@ -271,14 +271,22 @@ def calculate_generation_without_market(engine, player, t):
     for facility in facilities:
         if getattr(player, facility) > 0:
             internal_market = offer(
-                internal_market, player.id, generation[facility][t], -5, facility
+                internal_market,
+                player.id,
+                generation[facility][t],
+                -5,
+                facility,
             )
 
     # demands are demanded on the internal market
     for demand_type in player.demand_priorities.split(" "):
         price = getattr(player, "price_buy_" + demand_type)
         internal_market = bid(
-            internal_market, player.id, demand[demand_type][t], price, demand_type
+            internal_market,
+            player.id,
+            demand[demand_type][t],
+            price,
+            demand_type,
         )
 
     # Sell capacities of facilities on the internal market
@@ -490,14 +498,10 @@ def market_logic(engine, market, t):
                 rest = max(0, min(row.capacity, row.capacity - sold_cap))
                 dump_cap = rest
                 player = Player.query.get(row.player_id)
-                demand = engine.data["current_data"][player.id][
-                    "demand"
-                ]
+                demand = engine.data["current_data"][player.id]["demand"]
                 demand["dumping"][t] += dump_cap
                 player.money -= dump_cap * 5 / 1000000
-                revenue = engine.data["current_data"][player.id][
-                    "revenues"
-                ]
+                revenue = engine.data["current_data"][player.id]["revenues"]
                 revenue["dumping"][t] -= dump_cap * 5 / 1000000
                 continue
             break
@@ -829,7 +833,7 @@ def construction_emissions(engine, player, t, assets):
     emissions_construction = 0
     for ud in player.under_construction:
         if ud.start_time is not None:
-            if ud.suspension_time is None and ud.family != "technologies":
+            if ud.suspension_time is None and ud.family != "Technologies":
                 construction = assets[ud.name]
                 emissions_construction += (
                     construction["construction pollution"]
@@ -864,7 +868,7 @@ def reduce_demand(engine, demand_type, player_id, t, satisfaction):
             Under_construction.query.filter(
                 Under_construction.player_id == player.id
             )
-            .filter(Under_construction.family != "technologies")
+            .filter(Under_construction.family != "Technologies")
             .filter(Under_construction.start_time != None)
             .filter(Under_construction.suspension_time == None)
             .order_by(Under_construction.start_time.desc())
@@ -879,7 +883,7 @@ def reduce_demand(engine, demand_type, player_id, t, satisfaction):
             Under_construction.query.filter(
                 Under_construction.player_id == player.id
             )
-            .filter(Under_construction.family == "technologies")
+            .filter(Under_construction.family == "Technologies")
             .filter(Under_construction.start_time != None)
             .filter(Under_construction.suspension_time == None)
             .order_by(Under_construction.start_time.desc())
@@ -909,8 +913,6 @@ def reduce_demand(engine, demand_type, player_id, t, satisfaction):
 
 
 def add_emissions(engine, player, t, facility, amount):
-    engine.data["current_data"][player.id]["emissions"][facility][
-        t
-    ] += amount
+    engine.data["current_data"][player.id]["emissions"][facility][t] += amount
     player.emissions += amount
     engine.data["current_CO2"][t] += amount

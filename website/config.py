@@ -403,6 +403,7 @@ full_config = {
             "construction pollution": 100000,  # [kg]
             "price multiplier": 1.3,
             "time factor": 0.9,
+            "requirements": [],
             "description": "",
             "wikipedia_link": "",
         },
@@ -414,6 +415,7 @@ full_config = {
             "construction pollution": 25000,
             "price multiplier": 1.5,
             "capacity factor": 1.5,
+            "requirements": [],
             "description": "",
             "wikipedia_link": "",
         },
@@ -428,6 +430,7 @@ full_config = {
             "price multiplier": 1.25,
             "power factor": 1.4,
             "income factor": 1.35,
+            "requirements": [],
             "description": "",
             "wikipedia_link": "",
         },
@@ -853,6 +856,18 @@ class Config(object):
         config.update_resource_extraction(player_id)
 
         for asset in assets:
+            # remove fulfilled requirements
+            assets[asset]["locked"] = False
+            for req in assets[asset]["requirements"]:
+                if req[1] + getattr(player, asset) < 1:
+                    assets[asset]["requirements"].remove(req)
+                    continue
+                req[2] = getattr(player, req[0]) >= req[1] + getattr(
+                    player, asset
+                )
+                if not req[2]:
+                    assets[asset]["locked"] = True
+
             if asset in [
                 "steam_engine",
                 "watermill",
@@ -1076,17 +1091,6 @@ class Config(object):
                 assets[asset]["construction time"] *= (
                     assets["laboratory"]["time factor"] ** player.laboratory
                 )
-                # remove fulfilled requirements
-                assets[asset]["locked"] = False
-                for req in assets[asset]["requirements"]:
-                    if req[1] + getattr(player, asset) < 1:
-                        assets[asset]["requirements"].remove(req)
-                        continue
-                    req[2] = getattr(player, req[0]) >= req[1] + getattr(
-                        player, asset
-                    )
-                    if not req[2]:
-                        assets[asset]["locked"] = True
 
             if asset in [
                 "watermill",

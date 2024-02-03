@@ -35,6 +35,24 @@ function cancel_construction(construction_id){
                 var obj = document.getElementById("money");
                 obj.innerHTML = formatted_money(money);
                 addToast("Construction cancelled");
+                refresh_progressBar();
+            }
+        });
+    })
+    .catch((error) => {
+        console.error(`caught error ${error}`);
+        });
+}
+
+function pause_construction(construction_id){
+    send_form("/request_pause_project", {
+        id: construction_id
+    })
+    .then((response) => {
+        response.json().then((raw_data) => {
+            let response = raw_data["response"];
+            if (response == "success") {
+                refresh_progressBar();
             }
         });
     })
@@ -46,14 +64,14 @@ function cancel_construction(construction_id){
 
 const progressBars = document.getElementsByClassName('progressbar-bar')
 let constructions = load_constructions()
-console.log(constructions)
 setInterval(() => {
+    //const constructions = load_constructions()
     for(const progressBar of progressBars){
         const id = progressBar.id;
         const construction = constructions[id];
         const now = new Date().getTime()/1000;
         let new_width;
-        let time_remaining
+        let time_remaining;
         if (construction["suspension_time"]){
             new_width = (construction["suspension_time"] - construction["start_time"]) / construction["duration"] * 100;
             time_remaining = construction["duration"] + construction["start_time"] - construction["suspension_time"];
@@ -66,3 +84,39 @@ setInterval(() => {
         progressBar.innerText = time;
     }
 }, 50)
+
+function refresh_progressBar(){
+    const uc = document.getElementById("under_construction");
+    uc.innerHTML = ''
+    retrieve_constructions().then((construction_list) => {
+        constructions = construction_list;
+        for (const [c_id, construction] of Object.entries(construction_list)){
+            if (construction["family"] == document.title){
+                let play_pause_logo = "fa-pause"
+                if (construction["suspension_time"]){
+                    play_pause_logo = "fa-play"
+                }
+                uc.innerHTML += '<div class="progressbar-container">\
+                    <div class="progressbar-arrowcontainer">\
+                    <button class="progressbar-arrow progressbar-button">\
+                        <i class="fa fa-caret-up"></i>\
+                    </button>\
+                    <button class="progressbar-arrow progressbar-button">\
+                        <i class="fa fa-caret-down"></i>\
+                    </button>\
+                    </div>\
+                    <div class="progressbar-name medium margin-small">' + construction["name"] + '</div>\
+                    <div class="progressbar-background">\
+                    <div id="' + c_id + '" class="progressbar-bar pine"></div>\
+                    </div>\
+                    <button class="progressbar-icon progressbar-button" onclick="pause_construction(' + c_id + ')">\
+                        <i class="fa ' + play_pause_logo + '"></i>\
+                    </button>\
+                    <button class="progressbar-icon progressbar-button" onclick="cancel_construction(' + c_id + ')">\
+                        <i class="fa fa-times"></i>\
+                    </button>\
+                </div>'
+            }
+        }
+      });
+}

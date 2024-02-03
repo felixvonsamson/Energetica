@@ -25,30 +25,7 @@
     </div>
   </div>
   <div id="under_construction">
-    {% if user.under_construction %}
-      {% for construction in user.under_construction %}
-        {% if construction.family == "power_facilities" %}
-          <div class="progressbar-container">
-            <div class="progressbar-arrowcontainer">
-              <button class="progressbar-arrow progressbar-button"><i class="fa fa-caret-up"></i></button>
-              <button class="progressbar-arrow progressbar-button"><i class="fa fa-caret-down"></i></button>
-            </div>
-            <div class="progressbar-name medium margin-small">{{ data[construction.name]['name'] }}</div>
-            <div class="progressbar-background">
-              <div id="{{construction.id}}" class="progressbar-bar pine"></div>
-            </div>
-            <button class="progressbar-icon progressbar-button">
-              {% if construction.suspension_time %}
-                <i class="fa fa-play"></i>
-              {% else %}
-                <i class="fa fa-pause"></i>
-              {% endif %}
-            </button>
-            <button class="progressbar-icon progressbar-button" onclick="cancel_construction('{{ construction.id }}')"><i class="fa fa-times"></i></button>
-          </div>
-        {% endif %}
-      {% endfor %}
-    {% endif %}
+    {# Facilites under construction will show here #}
   </div>
   {% for facility in ["steam_engine", "windmill", "watermill", "coal_burner", "oil_burner", "gas_burner", "small_water_dam", "onshore_wind_turbine", "combined_cycle", "nuclear_reactor", "large_water_dam", "CSP_solar", "PV_solar", "offshore_wind_turbine", "nuclear_reactor_gen4"] %}
     <div id="{{ facility }}"
@@ -205,7 +182,7 @@
             Emmissions : <strong><script>display_kg({{data[facility]["construction pollution"]}});</script> CO2</strong>
           </div>
           <b class="padding medium button margin-small txt_center white"
-             onclick="start_construction('{{facility}}', 'power_facilities');"
+             onclick="start_construction('{{facility}}', 'Power facilities');"
              style="width:160px">
             Start construction
           </b>
@@ -216,4 +193,5 @@
 {% endblock content %}
 {% block additionnal_script %}
   <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
+  <script>refresh_progressBar()</script>
 {% endblock additionnal_script %}

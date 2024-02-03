@@ -15,6 +15,7 @@ from .utils import (
     set_network_prices,
     start_project,
     cancel_project,
+    pause_project,
 )
 from . import db
 from .database import Hex, Player, Chat, Network, Under_construction
@@ -186,8 +187,12 @@ def get_market_data():
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
             market_data = pickle.load(file)
-            market_data["capacities"] = market_data["capacities"].to_dict(orient='list')
-            market_data["demands"] = market_data["demands"].to_dict(orient='list')
+            market_data["capacities"] = market_data["capacities"].to_dict(
+                orient="list"
+            )
+            market_data["demands"] = market_data["demands"].to_dict(
+                orient="list"
+            )
     else:
         market_data = None
     timescale = request.args.get("timescale")
@@ -297,6 +302,19 @@ def request_cancel_project():
     json = request.get_json()
     construction_id = json["id"]
     response = cancel_project(
+        player=current_user, construction_id=construction_id
+    )
+    return jsonify(response)
+
+
+@api.route("/request_pause_project", methods=["POST"])
+def request_pause_project():
+    """
+    this function is executed when a player pauses or unpauses an ongoing construction or upgrade
+    """
+    json = request.get_json()
+    construction_id = json["id"]
+    response = pause_project(
         player=current_user, construction_id=construction_id
     )
     return jsonify(response)

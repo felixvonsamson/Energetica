@@ -25,15 +25,7 @@
     </div>
   </div>
   <div id="under_construction">
-    {% if user.under_construction %}
-      {% for facility in user.under_construction %}
-        {% if facility.family == "storage_facilities" %}
-          <div class="padding" id="progress_bar">
-            The facility <b>{{ data[facility.name]["name"] }}</b> is under construction <i class="time" data-name="{{ facility.finish_time }}"></i>
-          </div>
-        {% endif %}
-      {% endfor %}
-    {% endif %}
+    {# Facilites under construction will show here #}
   </div>
   {% for storage_facility in ["small_pumped_hydro", "compressed_air", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
     {% set facility_data = data[storage_facility] %}
@@ -135,7 +127,7 @@
             </strong>
           </div>
           <b class="padding medium white button margin-small txt_center"
-             onclick="start_construction('{{ storage_facility }}', 'storage_facilities');"
+             onclick="start_construction('{{ storage_facility }}', 'Storage facilities');"
              style="width:160px">
             Start construction
           </b>
@@ -146,4 +138,5 @@
 {% endblock content %}
 {% block additionnal_script %}
   <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
+  <script>refresh_progressBar()</script>
 {% endblock additionnal_script %}

@@ -25,15 +25,7 @@
     </div>
   </div>
   <div id="under_construction">
-    {% if user.under_construction %}
-      {% for facility in user.under_construction %}
-        {% if facility.family == "extraction_facilities" %}
-          <div class="padding" id="progress_bar">
-            The facility <b>{{ data[facility.name]["name"] }}</b> is under construction <i class="time" data-name="{{ facility.finish_time }}"></i>
-          </div>
-        {% endif %}
-      {% endfor %}
-    {% endif %}
+    {# Facilites under construction will show here #}
   </div>
   {% for extraction_facility in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"] %}
     {% set facility_data = data[extraction_facility] %}
@@ -118,9 +110,9 @@
             Energy need : <strong><script>display_W({{ facility_data["construction power"]}});</script></strong>
             <br>
             Emmissions : <strong><script>display_kg({{ facility_data["construction pollution"]}});</script> CO2</strong>
-            <button class="padding medium white button margin-small txt_center"
-                    onclick="start_construction('{{ extraction_facility }}', 'extraction_facilities');"
-                    style="width:160px">
+            <button class="padding medium white button txt_center"
+                    onclick="start_construction('{{ extraction_facility }}', 'Extraction facilities');"
+                    style="width:192px; margin-top:8px;">
               <b>Start construction</b>
             </button>
           </div>
@@ -131,4 +123,5 @@
 {% endblock content %}
 {% block additionnal_script %}
   <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
+  <script>refresh_progressBar()</script>
 {% endblock additionnal_script %}

@@ -390,7 +390,7 @@ def start_project(player, facility, family):
     """this function is executed when a player clicks on 'start construction'"""
     assets = current_app.config["engine"].config[player.id]["assets"]
 
-    if family in ["functional_facilities", "technologies"]:
+    if family in ["Functional facilities", "Technologies"]:
         ud_count = Under_construction.query.filter_by(
             name=facility, player_id=player.id
         ).count()
@@ -406,7 +406,7 @@ def start_project(player, facility, family):
         real_price = assets[facility]["price"]
         duration = assets[facility]["construction time"]
 
-    if family == "technologies":
+    if family == "Technologies":
         start_time = None if player.lab_workers == 0 else time.time()
     else:
         start_time = None if player.construction_workers == 0 else time.time()
@@ -453,3 +453,16 @@ def cancel_project(player, construction_id):
     db.session.delete(construction)
     db.session.commit()
     return {"response": "success", "money": player.money}
+
+
+def pause_project(player, construction_id):
+    """this function is executed when a player pauses or unpauses an ongoing construction"""
+    construction = Under_construction.query.get(int(construction_id))
+
+    if construction.suspension_time is None:
+        construction.suspension_time = time.time()
+    else:
+        construction.start_time += time.time() - construction.suspension_time
+        construction.suspension_time = None
+    db.session.commit()
+    return {"response": "success"}
