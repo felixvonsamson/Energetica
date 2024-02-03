@@ -902,6 +902,43 @@ class Config(object):
         player = Player.query.get(player_id)
         config.update_resource_extraction(player_id)
 
+        # Iterate through all technologies to apply their respective effects
+        for technology in [
+            "mathematics",
+            "mechanical_engineering",
+            "thermodynamics",
+            "physics",
+            "building_technology",
+            "mineral_extraction",
+            "transport_technology",
+            "materials",
+            "civil_engineering",
+            "aerodynamics",
+            "chemistry",
+            "nuclear_engineering",
+        ]:
+            # Retrieve the player's research level for the specific technology
+            level = {
+                "mathematics": player.mathematics,
+                "mechanical_engineering": player.mechanical_engineering,
+                "thermodynamics": player.thermodynamics,
+                "physics": player.physics,
+                "building_technology": player.building_technology,
+                "mineral_extraction": player.mineral_extraction,
+                "transport_technology": player.transport_technology,
+                "materials": player.materials,
+                "civil_engineering": player.civil_engineering,
+                "aerodynamics": player.aerodynamics,
+                "chemistry": player.chemistry,
+                "nuclear_engineering": player.nuclear_engineering,
+            }[technology]
+            # Update price for affected facilities
+            if "price factor" in assets[technology]:
+                for facility in assets[technology]["affected_facilities"]:
+                    assets[facility]["price"] *= (
+                        assets[technology]["price factor"] ** level
+                    )
+
         for asset in assets:
             if asset in [
                 "steam_engine",
@@ -913,11 +950,7 @@ class Config(object):
                 "compressed_air",
                 "molten_salt",
             ]:
-                # update price and production (mechanical engineering)
-                assets[asset]["price"] *= (
-                    assets["mechanical_engineering"]["price factor"]
-                    ** player.mechanical_engineering
-                )
+                # update production (mechanical engineering)
                 assets[asset]["power generation"] *= (
                     assets["mechanical_engineering"]["prod factor"]
                     ** player.mechanical_engineering
@@ -964,10 +997,7 @@ class Config(object):
                 "lithium_ion_batteries",
                 "solid_state_batteries",
             ]:
-                # update price and production (physics)
-                assets[asset]["price"] *= (
-                    assets["physics"]["price factor"] ** player.physics
-                )
+                # update production (physics)
                 assets[asset]["power generation"] *= (
                     assets["physics"]["prod factor"] ** player.physics
                 )
@@ -978,11 +1008,7 @@ class Config(object):
                 "gas_drilling_site",
                 "uranium_mine",
             ]:
-                # update price, energy consumption and pollution. production increase is already in update_resource_extraction (mineral extraction)
-                assets[asset]["price"] *= (
-                    assets["mineral_extraction"]["price factor"]
-                    ** player.mineral_extraction
-                )
+                # update energy consumption and pollution. production increase is already in update_resource_extraction (mineral extraction)
                 assets[asset]["power consumption"] *= (
                     assets["mineral_extraction"]["energy factor"]
                     ** player.mineral_extraction
@@ -999,10 +1025,7 @@ class Config(object):
                 "lithium_ion_batteries",
                 "solid_state_batteries",
             ]:
-                # update price (materials)
-                assets[asset]["price"] *= (
-                    assets["materials"]["price factor"] ** player.materials
-                )
+                # update construction power (materials)
                 assets[asset]["construction power factor"] *= (
                     assets["materials"]["construction energy factor"]
                     ** player.materials
@@ -1014,11 +1037,7 @@ class Config(object):
                 "small_pumped_hydro",
                 "large_pumped_hydro",
             ]:
-                # update price and production (civil engineering)
-                assets[asset]["price"] *= (
-                    assets["civil_engineering"]["price factor"]
-                    ** player.civil_engineering
-                )
+                # update production (civil engineering)
                 assets[asset]["power generation"] *= (
                     assets["civil_engineering"]["prod factor"]
                     ** player.civil_engineering
@@ -1036,11 +1055,7 @@ class Config(object):
                 "onshore_wind_turbine",
                 "offshore_wind_turbine",
             ]:
-                # update price and production (aerodynamics)
-                assets[asset]["price"] *= (
-                    assets["aerodynamics"]["price factor"]
-                    ** player.aerodynamics
-                )
+                # update production (aerodynamics)
                 assets[asset]["power generation"] *= (
                     assets["aerodynamics"]["prod factor"] ** player.aerodynamics
                 )
@@ -1060,11 +1075,7 @@ class Config(object):
                 )
 
             if asset in ["nuclear_reactor", "nuclear_reactor_gen4"]:
-                # update price and production (nuclear engineering)
-                assets[asset]["price"] *= (
-                    assets["nuclear_engineering"]["price factor"]
-                    ** player.nuclear_engineering
-                )
+                # update production (nuclear engineering)
                 assets[asset]["power generation"] *= (
                     assets["nuclear_engineering"]["prod factor"]
                     ** player.nuclear_engineering

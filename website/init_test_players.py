@@ -87,8 +87,19 @@ def init_test_players(engine):
     # player.uranium_mine = 1
     # player.small_pumped_hydro = 1
     # player.hydrogen_storage = 1
-    player.mineral_extraction = 5
     player.money = 1000000
+    player.mathematics = 23
+    player.mechanical_engineering = 23
+    player.thermodynamics = 15
+    player.physics = 20
+    player.building_technology = 21
+    player.mineral_extraction = 8
+    player.transport_technology = 20
+    player.materials = 15
+    player.civil_engineering = 19
+    player.aerodynamics = 0
+    player.chemistry = 18
+    player.nuclear_engineering = 10
     create_network(engine, "network", [player])
 
     # for i in range(3):
