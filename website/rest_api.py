@@ -228,7 +228,7 @@ def rest_get_power_facilities():
                 property_key: power_facilities_info[facility][property_key]
                 for property_key in property_keys
             }
-            for facility in g.engine.config.power_facilities
+            for facility in g.engine.power_facilities
         ],
     }
     return json.dumps(response)
