@@ -614,7 +614,6 @@ full_config = {
             "construction energy": 120000000,
             "time factor": 0.85,
             "energy factor": 0.9,
-            "affected_facilities": [],
             "requirements": [
                 ["laboratory", 2, False],
                 ["mathematics", 2, False],
@@ -911,7 +910,6 @@ class Config(object):
             "physics",
             "building_technology",
             "mineral_extraction",
-            "transport_technology",
             "materials",
             "civil_engineering",
             "aerodynamics",
