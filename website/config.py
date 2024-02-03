@@ -524,6 +524,16 @@ full_config = {
             "construction energy": 25000000,
             "price factor": 1.2,
             "prod factor": 1.25,
+            "affected_facilities": [
+                "steam_engine",
+                "watermill",
+                "coal_burner",
+                "oil_burner",
+                "gas_burner",
+                "combined_cycle",
+                "compressed_air",
+                "molten_salt",
+            ],
             "requirements": [
                 ["laboratory", 1, False],
                 ["mathematics", 1, False],
@@ -549,6 +559,13 @@ full_config = {
             "construction energy": 25000000,
             "price factor": 1.2,
             "prod factor": 1.25,
+            "affected_facilities": [
+                "PV_solar",
+                "CSP_solar",
+                "hydrogen_storage",
+                "lithium_ion_batteries",
+                "solid_state_batteries",
+            ],
             "requirements": [
                 ["laboratory", 1, False],
                 ["mathematics", 1, False],
@@ -578,6 +595,12 @@ full_config = {
             "prod factor": 1.33,
             "energy factor": 1.28,
             "pollution factor": 0.9,
+            "affected_facilities": [
+                "coal_mine",
+                "oil_field",
+                "gas_drilling_site",
+                "uranium_mine",
+            ],
             "requirements": [
                 ["laboratory", 2, False],
                 ["building_technology", 1, False],
@@ -605,6 +628,13 @@ full_config = {
             "construction energy": 240000000,
             "price factor": 0.85,
             "construction energy factor": 0.9,
+            "affected_facilities": [
+                "PV_solar",
+                "onshore_wind_turbine",
+                "offshore_wind_turbine",
+                "lithium_ion_batteries",
+                "solid_state_batteries",
+            ],
             "requirements": [
                 ["laboratory", 2, False],
                 ["mathematics", 2, False],
@@ -620,6 +650,12 @@ full_config = {
             "price factor": 1.4,
             "prod factor": 1.3,
             "capacity factor": 1.3,
+            "affected_facilities": [
+                "small_water_dam",
+                "large_water_dam",
+                "small_pumped_hydro",
+                "large_pumped_hydro",
+            ],
             "requirements": [
                 ["laboratory", 3, False],
                 ["mathematics", 2, False],
@@ -634,6 +670,11 @@ full_config = {
             "construction energy": 300000000,
             "price factor": 1.3,
             "prod factor": 1.4,
+            "affected_facilities": [
+                "windmill",
+                "onshore_wind_turbine",
+                "offshore_wind_turbine",
+            ],
             "requirements": [
                 ["laboratory", 3, False],
                 ["physics", 3, False],
@@ -648,6 +689,11 @@ full_config = {
             "construction energy": 200000000,
             "price factor": 1.25,
             "efficiency_factor": 0.9,
+            "affected_facilities": [
+                "hydrogen_storage",
+                "lithium_ion_batteries",
+                "solid_state_batteries",
+            ],
             "requirements": [
                 ["laboratory", 3, False],
                 ["physics", 0, False],
@@ -662,6 +708,10 @@ full_config = {
             "construction energy": 540000000,
             "price factor": 1.3,
             "prod factor": 1.4,
+            "affected_facilities": [
+                "nuclear_reactor",
+                "nuclear_reactor_gen4",
+            ],
             "requirements": [
                 ["laboratory", 4, False],
                 ["physics", 3, False],
