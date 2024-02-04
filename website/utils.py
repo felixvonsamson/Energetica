@@ -432,7 +432,12 @@ def start_project(player, facility, family):
     db.session.add(new_facility)
     db.session.commit()
     print(f"{player.username} started the construction {facility}")
-    return {"response": "success", "money": player.money}
+    constructions = players_constructions(player)
+    return {
+        "response": "success",
+        "money": player.money,
+        "constructions": constructions,
+    }
 
 
 def cancel_project(player, construction_id):
@@ -452,7 +457,13 @@ def cancel_project(player, construction_id):
     player.money += refund
     db.session.delete(construction)
     db.session.commit()
-    return {"response": "success", "money": player.money}
+    print(f"{player.username} cancelled the construction {construction.name}")
+    constructions = players_constructions(player)
+    return {
+        "response": "success",
+        "money": player.money,
+        "constructions": constructions,
+    }
 
 
 def pause_project(player, construction_id):
@@ -465,4 +476,22 @@ def pause_project(player, construction_id):
         construction.start_time += time.time() - construction.suspension_time
         construction.suspension_time = None
     db.session.commit()
-    return {"response": "success"}
+    constructions = players_constructions(player)
+    return {"response": "success", "constructions": constructions}
+
+
+def players_constructions(player):
+    constructions = Under_construction.query.filter_by(
+        player_id=player.id
+    ).all()
+    construction_list = {
+        construction.id: {
+            "name": construction.name,
+            "family": construction.family,
+            "start_time": construction.start_time,
+            "duration": construction.duration,
+            "suspension_time": construction.suspension_time,
+        }
+        for construction in constructions
+    }
+    return construction_list

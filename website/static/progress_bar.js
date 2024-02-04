@@ -35,6 +35,7 @@ function cancel_construction(construction_id){
                 var obj = document.getElementById("money");
                 obj.innerHTML = formatted_money(money);
                 addToast("Construction cancelled");
+                sessionStorage.setItem("constructions", JSON.stringify(raw_data["constructions"]));
                 refresh_progressBar();
             }
         });
@@ -52,6 +53,7 @@ function pause_construction(construction_id){
         response.json().then((raw_data) => {
             let response = raw_data["response"];
             if (response == "success") {
+                sessionStorage.setItem("constructions", JSON.stringify(raw_data["constructions"]));
                 refresh_progressBar();
             }
         });
@@ -88,7 +90,7 @@ setInterval(() => {
 function refresh_progressBar(){
     const uc = document.getElementById("under_construction");
     uc.innerHTML = ''
-    retrieve_constructions().then((construction_list) => {
+    load_constructions().then((construction_list) => {
         constructions = construction_list;
         for (const [c_id, construction] of Object.entries(construction_list)){
             if (construction["family"] == document.title){

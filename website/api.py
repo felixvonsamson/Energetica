@@ -16,6 +16,7 @@ from .utils import (
     start_project,
     cancel_project,
     pause_project,
+    players_constructions,
 )
 from . import db
 from .database import Hex, Player, Chat, Network, Under_construction
@@ -233,20 +234,8 @@ def get_ud_and_config():
 # Gets list of facilities under construction for this player
 @api.route("/get_constructions", methods=["GET"])
 def get_constructions():
-    constructions = Under_construction.query.filter_by(
-        player_id=current_user.id
-    ).all()
-    construction_list = {
-        construction.id: {
-            "name": construction.name,
-            "family": construction.family,
-            "start_time": construction.start_time,
-            "duration": construction.duration,
-            "suspension_time": construction.suspension_time,
-        }
-        for construction in constructions
-    }
-    return jsonify(construction_list)
+    constructions = players_constructions(current_user)
+    return jsonify(constructions)
 
 
 # gets scoreboard data :
