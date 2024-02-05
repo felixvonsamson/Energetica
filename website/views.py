@@ -59,6 +59,11 @@ def check_user():
 @views.route("/", methods=["GET", "POST"])
 @views.route("/home", methods=["GET", "POST"])
 def home():
+    return g.render_template_ctx("home.jinja")
+
+
+@views.route("/map", methods=["GET", "POST"])
+def map():
     return g.render_template_ctx("map.jinja")
 
 

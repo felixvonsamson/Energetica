@@ -1,10 +1,10 @@
 {% extends "base.jinja" %}
 {% block title %}
-    Map
+    Home
 {% endblock title %}
 {% block content %}
     <div class="flex-row huge title">
-        Map
+        Home
         <div class="pine info_icon_container"
              onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
     </div>
@@ -16,15 +16,9 @@
                  style="width:39px">×</div>
         </div>
         <div class="txt_center margin medium">
-            <p>On this page you can see the map and the other players on the server.</p>
-            <p>If you click on the tile of a player you will see their profile.</p>
-            <p>
-                For more detailed information about the map and the resources you can find on it refer to the <a href="{{ url_for('views.wiki', _anchor='Map') }}">Map section in the wiki</a>.
-            </p>
+            <p>This page is an overview of your profile.</p>
         </div>
     </div>
-    <div id="map_visalisation"></div>
 {% endblock content %}
 {% block additionnal_script %}
-    <script src="{{ url_for('static', filename='map_visualisation.js') }}"></script>
 {% endblock additionnal_script %}
