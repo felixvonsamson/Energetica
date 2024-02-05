@@ -43,7 +43,7 @@ class Under_construction(db.Model):
     start_time = db.Column(db.Float)
     duration = db.Column(db.Float)
     suspension_time = db.Column(
-        db.Float, default=None
+        db.Float
     )  # time at witch the construction has been paused if it has
     original_price = db.Column(
         db.Float
@@ -235,6 +235,28 @@ class Player(db.Model, UserMixin):
     under_construction = db.relationship("Under_construction")
     resource_on_sale = db.relationship("Resource_on_sale", backref="player")
     shipments = db.relationship("Shipment", backref="player")
+
+    def available_construction_workers(self):
+        occupied_workers = (
+            Under_construction.query.filter(
+                Under_construction.player_id == self.id
+            )
+            .filter(Under_construction.family != "Technologies")
+            .filter(Under_construction.suspension_time.is_(None))
+            .count()
+        )
+        return self.construction_workers - occupied_workers
+
+    def available_lab_workers(self):
+        occupied_workers = (
+            Under_construction.query.filter(
+                Under_construction.player_id == self.id
+            )
+            .filter(Under_construction.family == "Technologies")
+            .filter(Under_construction.suspension_time.is_(None))
+            .count()
+        )
+        return self.lab_workers - occupied_workers
 
     def get_technology_values(self):
         technology_attributes = [

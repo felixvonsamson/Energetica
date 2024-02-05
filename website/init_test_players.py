@@ -89,11 +89,11 @@ def init_test_players(engine):
     # player.hydrogen_storage = 1
     player.mineral_extraction = 2
     player.money = 1000000
-    player.coal = 450000
-    player.oil = 100000
-    player.gas = 800000
-    player.uranium = 4500
-    player.warehouse = 1
+    # player.coal = 450000
+    # player.oil = 100000
+    # player.gas = 800000
+    # player.uranium = 4500
+    # player.warehouse = 1
     create_network(engine, "network", [player])
 
     # for i in range(3):

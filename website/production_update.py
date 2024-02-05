@@ -185,44 +185,38 @@ def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
     else:
         revenues["industry"][t] = industry_income
     for ud in player.under_construction:
-        if ud.start_time is not None:
-            # industry demand ramps up during construction
-            if ud.name == "industry":
-                if ud.suspension_time is None:
-                    time_fraction = (time.time() - ud.start_time) / (
-                        ud.duration
-                    )
-                else:
-                    time_fraction = (ud.suspension_time - ud.start_time) / (
-                        ud.duration
-                    )
-                additional_demand = (
-                    time_fraction
-                    * industry_demand
-                    * (assets["industry"]["power factor"] - 1)
+        # industry demand ramps up during construction
+        if ud.name == "industry":
+            if ud.suspension_time is None:
+                time_fraction = (time.time() - ud.start_time) / (ud.duration)
+            else:
+                time_fraction = (ud.suspension_time - ud.start_time) / (
+                    ud.duration
                 )
-                additional_revenue = (
-                    time_fraction
-                    * industry_income
-                    * (assets["industry"]["income factor"] - 1)
-                )
-                demand["industry"][t] += additional_demand
-                revenues["industry"][t] += additional_revenue
+            additional_demand = (
+                time_fraction
+                * industry_demand
+                * (assets["industry"]["power factor"] - 1)
+            )
+            additional_revenue = (
+                time_fraction
+                * industry_income
+                * (assets["industry"]["income factor"] - 1)
+            )
+            demand["industry"][t] += additional_demand
+            revenues["industry"][t] += additional_revenue
     player.money += revenues["industry"][t]
 
 
 def construction_demand(player, t, assets, demand):
     """calculate power consumption for facilites under construction"""
     for ud in player.under_construction:
-        if ud.start_time is not None:
-            if ud.suspension_time is None:
-                construction = assets[ud.name]
-                if ud.family == "Technologies":
-                    demand["research"][t] += construction["construction power"]
-                else:
-                    demand["construction"][t] += construction[
-                        "construction power"
-                    ]
+        if ud.suspension_time is None:
+            construction = assets[ud.name]
+            if ud.family == "Technologies":
+                demand["research"][t] += construction["construction power"]
+            else:
+                demand["construction"][t] += construction["construction power"]
 
 
 def shipment_demand(engine, player, t, demand):
@@ -869,8 +863,7 @@ def reduce_demand(engine, demand_type, player_id, t, satisfaction):
                 Under_construction.player_id == player.id
             )
             .filter(Under_construction.family != "Technologies")
-            .filter(Under_construction.start_time != None)
-            .filter(Under_construction.suspension_time == None)
+            .filter(Under_construction.suspension_time.is_(None))
             .order_by(Under_construction.start_time.desc())
             .first()
         )
@@ -884,8 +877,7 @@ def reduce_demand(engine, demand_type, player_id, t, satisfaction):
                 Under_construction.player_id == player.id
             )
             .filter(Under_construction.family == "Technologies")
-            .filter(Under_construction.start_time != None)
-            .filter(Under_construction.suspension_time == None)
+            .filter(Under_construction.suspension_time.is_(None))
             .order_by(Under_construction.start_time.desc())
             .first()
         )

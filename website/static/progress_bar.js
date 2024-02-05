@@ -82,8 +82,11 @@ setInterval(() => {
             time_remaining = construction["duration"] + construction["start_time"] - now;
         }
         progressBar.style.setProperty('--width', new_width);
+        if(new_width > 0.01){
+            progressBar.classList.add('pine');
+        }
         const time = formatMilliseconds(time_remaining);
-        progressBar.innerText = time;
+        progressBar.innerHTML = "&nbsp; " + time;
     }
 }, 50)
 
@@ -109,7 +112,7 @@ function refresh_progressBar(){
                     </div>\
                     <div class="progressbar-name medium margin-small">' + construction["name"] + '</div>\
                     <div class="progressbar-background">\
-                    <div id="' + c_id + '" class="progressbar-bar pine"></div>\
+                    <div id="' + c_id + '" class="progressbar-bar"></div>\
                     </div>\
                     <button class="progressbar-icon progressbar-button" onclick="pause_construction(' + c_id + ')">\
                         <i class="fa ' + play_pause_logo + '"></i>\

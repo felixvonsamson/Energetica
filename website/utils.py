@@ -390,6 +390,16 @@ def start_project(player, facility, family):
     """this function is executed when a player clicks on 'start construction'"""
     assets = current_app.config["engine"].config[player.id]["assets"]
 
+    if assets[facility]["locked"]:
+        return {"response": "locked"}
+
+    if facility in ["small_water_dam", "large_water_dam", "watermill"]:
+        ud = Under_construction.query.filter_by(
+            name=facility, player_id=player.id
+        ).count()
+        if player.tile.hydro <= getattr(player, facility) + ud:
+            return {"response": "noSuitableLocationAvailable"}
+
     if family in ["Functional facilities", "Technologies"]:
         ud_count = Under_construction.query.filter_by(
             name=facility, player_id=player.id
@@ -406,26 +416,27 @@ def start_project(player, facility, family):
         real_price = assets[facility]["price"]
         duration = assets[facility]["construction time"]
 
-    if family == "Technologies":
-        start_time = None if player.lab_workers == 0 else time.time()
-    else:
-        start_time = None if player.construction_workers == 0 else time.time()
-
-    if assets[facility]["locked"]:
-        return {"response": "locked"}
-    if facility in ["small_water_dam", "large_water_dam", "watermill"]:
-        ud = Under_construction.query.filter_by(name=facility).count()
-        if player.tile.hydro <= getattr(player, facility) + ud:
-            return {"response": "noSuitableLocationAvailable"}
     if player.money < real_price:
         return {"response": "notEnoughMoneyError"}
+
+    if family == "Technologies":
+        suspension_time = (
+            time.time() if player.available_lab_workers() == 0 else None
+        )
+    else:
+        suspension_time = (
+            time.time()
+            if player.available_construction_workers() == 0
+            else None
+        )
 
     player.money -= real_price
     new_facility = Under_construction(
         name=facility,
         family=family,
-        start_time=start_time,
+        start_time=time.time(),
         duration=duration,
+        suspension_time=suspension_time,
         original_price=real_price,
         player_id=player.id,
     )
@@ -481,9 +492,7 @@ def pause_project(player, construction_id):
 
 
 def players_constructions(player):
-    constructions = Under_construction.query.filter_by(
-        player_id=player.id
-    ).all()
+    constructions = player.under_construction
     construction_list = {
         construction.id: {
             "name": construction.name,

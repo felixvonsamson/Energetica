@@ -212,9 +212,9 @@ def get_market_data():
 @api.route("/get_ud_and_config", methods=["GET"])
 def get_ud_and_config():
     family = request.args.get("filter")
-    constructions = Under_construction.query.filter(
-        Under_construction.player_id == current_user.id
-    ).filter(Under_construction.family == family)
+    constructions = Under_construction.query.filter_by(
+        player_id=current_user.id, family=family
+    ).all()
     assets = g.engine.config[current_user.id]["assets"]
     ud = {}
     for construction in constructions:
