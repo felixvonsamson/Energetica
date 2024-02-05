@@ -7,7 +7,7 @@
     <span class="logo_txt topleft">Energetica</span>
   </div>
   <div class="resources medium tan_green">
-    <div class="padding money_font large money">
+    <div class="money_font large money">
       <script>display_money_long({{ user.money }});</script>
     </div>
     {% if all_data.warehouse_capacities.coal > 0 %}
@@ -42,6 +42,18 @@
       </div>
     </div>
     {% endif %}
+    <div class="workers_container">
+      <div class="flex-space-around hover_info">1/4 
+        <img src="{{ url_for('static', filename='images/icons/construction.png') }}"
+          class="navbar_icon padding-small" />
+        <span class="popup_info small">Construction workers</span>
+      </div>
+      <div class="flex-space-around hover_info">1/2
+        <img src="{{ url_for('static', filename='images/icons/technology.png') }}"
+          class="navbar_icon padding-small" />
+        <span class="popup_info small">Lab workers</span>
+      </div>
+    </div>
   </div>
 
 

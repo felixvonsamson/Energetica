@@ -344,6 +344,7 @@ canvas {
     right: 0;
     top: 0;
     text-align: center;
+    padding:8px 0;
 }
 
 .resource_container {
@@ -351,7 +352,6 @@ canvas {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0.5em 0;
 }
 
 .resourceJauge-background {
@@ -372,6 +372,13 @@ canvas {
     width: 100%;
     position: relative;
     transform: translate(0, -100%);
+}
+
+.workers_container {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    margin: 6px 0;
 }
 
 @media only screen and (max-width: 1200px) {
@@ -414,13 +421,13 @@ canvas {
         max-width: 100%;
         width: 100%;
         position: static;
+        padding:0;
     }
 
     .resource_container {
         display: flex;
         flex-direction: row;
         align-items: center;
-        margin:0;
     }
 
     .resourceJauge-background {
@@ -430,8 +437,17 @@ canvas {
         margin: 0.5em 2%;
     }
 
+    .workers_container {
+        position: absolute;
+        width:30%;
+        padding: 3px 0;
+        top:0;
+        right:0;
+    }
+
     .money {
-        background-color: #e5d9b6
+        background-color: #e5d9b6;
+        padding: 6px 23% 6px 0;
     }
 
     .navbar-toggler-icon {
@@ -460,7 +476,6 @@ canvas {
 }
 
 .hover_info .popup_info {
-    font-weight: normal;
     visibility: hidden;
     max-width: 400px;
     background-color: rgb(206, 206, 206);
