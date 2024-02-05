@@ -346,7 +346,7 @@ canvas {
     text-align: center;
 }
 
-.resoure_container {
+.resource_container {
     width:100%;
     display: flex;
     flex-direction: column;
@@ -416,14 +416,18 @@ canvas {
         position: static;
     }
 
-    .resoure_container {
+    .resource_container {
         display: flex;
         flex-direction: row;
         align-items: center;
+        margin:0;
     }
 
-    .resource {
-        width: 25%;
+    .resourceJauge-background {
+        width:21%;
+        background-color: #e5d9b6;
+        height: 1.3em;
+        margin: 0.5em 2%;
     }
 
     .money {
@@ -468,7 +472,7 @@ canvas {
     z-index: 1;
     bottom: 130%;
     left: 50%;
-    margin-left: -50px;
+    transform: translate(-50%, 0);
 }
 
 .hover_info .popup_info::after {

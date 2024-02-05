@@ -11,35 +11,39 @@
       <script>display_money_long({{ user.money }});</script>
     </div>
     {% if all_data.warehouse_capacities.coal > 0 %}
-    <div class="resoure_container">
-      <div class="resourceJauge-background">
+    <div class="resource_container">
+      <div class="resourceJauge-background hover_info">
         <div class="resourceJauge coal" style="--width:{{user.coal / all_data.warehouse_capacities.coal}}"></div>
-        <div id="coal" class="resource" style="color:#555">
-          <b><script>display_kg({{ user.coal }});</script></b>
+        <div id="coal" class="resource" style="color:#666">
+          <script>display_kg({{ user.coal }});</script>
         </div>
+        <span class="popup_info small">Coal stock</span>
       </div>
-      <div class="resourceJauge-background">
+      <div class="resourceJauge-background hover_info">
         <div class="resourceJauge oil" style="--width:{{user.oil / all_data.warehouse_capacities.oil}}"></div>
         <div id="oil" class="resource">
-          <b><script>display_kg({{ user.oil }});</script></b>
+          <script>display_kg({{ user.oil }});</script>
         </div>
+        <span class="popup_info small">Oil stock</span>
       </div>
-      <div class="resourceJauge-background">
+      <div class="resourceJauge-background hover_info">
         <div class="resourceJauge gas" style="--width:{{user.gas / all_data.warehouse_capacities.gas}}"></div>
         <div id="gas" class="resource">
-          <b><script>display_kg({{ user.gas }});</script></b>
+          <script>display_kg({{ user.gas }});</script>
         </div>
+        <span class="popup_info small">Gas stock</span>
       </div>
-      <div class="resourceJauge-background">
+      <div class="resourceJauge-background hover_info">
         <div class="resourceJauge uranium" style="--width:{{user.uranium / all_data.warehouse_capacities.uranium}}"></div>
         <div id="uranium" class="resource">
-          <b><script>display_kg({{ user.uranium }});</script></b>
+          <script>display_kg({{ user.uranium }});</script>
         </div>
+        <span class="popup_info small">Uranium stock</span>
       </div>
     </div>
     {% endif %}
   </div>
-  
+
 
   <nav class="navbar medium">
 
