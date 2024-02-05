@@ -35,7 +35,8 @@ function cancel_construction(construction_id){
                 var obj = document.getElementById("money");
                 obj.innerHTML = formatted_money(money);
                 addToast("Construction cancelled");
-                sessionStorage.setItem("constructions", JSON.stringify(raw_data["constructions"]));
+                sessionStorage.setItem("constructions", 
+                JSON.stringify(raw_data["constructions"]));
                 refresh_progressBar();
             }
         });
@@ -53,7 +54,8 @@ function pause_construction(construction_id){
         response.json().then((raw_data) => {
             let response = raw_data["response"];
             if (response == "success") {
-                sessionStorage.setItem("constructions", JSON.stringify(raw_data["constructions"]));
+                sessionStorage.setItem("constructions", 
+                JSON.stringify(raw_data["constructions"]));
                 refresh_progressBar();
             }
         });
@@ -63,53 +65,79 @@ function pause_construction(construction_id){
         });
 }
 
+function increase_construction_priority(construction_id){
+    send_form("/request_increase_project_priority", {
+        id: construction_id
+    })
+    .then((response) => {
+        response.json().then((raw_data) => {
+            let response = raw_data["response"];
+            if (response == "success") {
+                sessionStorage.setItem("constructions", 
+                JSON.stringify(raw_data["constructions"]));
+                refresh_progressBar();
+            }
+        });
+    })
+    .catch((error) => {
+        console.error(`caught error ${error}`);
+        });
+}
 
 const progressBars = document.getElementsByClassName('progressbar-bar')
-let constructions = load_constructions()
-setInterval(() => {
-    //const constructions = load_constructions()
-    for(const progressBar of progressBars){
-        const id = progressBar.id;
-        const construction = constructions[id];
-        const now = new Date().getTime()/1000;
-        let new_width;
-        let time_remaining;
-        if (construction["suspension_time"]){
-            new_width = (construction["suspension_time"] - construction["start_time"]) / construction["duration"] * 100;
-            time_remaining = construction["duration"] + construction["start_time"] - construction["suspension_time"];
-        }else{
-            new_width = (now - construction["start_time"]) / construction["duration"] * 100;
-            time_remaining = construction["duration"] + construction["start_time"] - now;
+let constructions_data
+load_constructions().then((constructions) => {
+    constructions_data = constructions
+    setInterval(() => {
+        for(const progressBar of progressBars){
+            const id = progressBar.id;
+            const construction = constructions_data[0][id];
+            const now = new Date().getTime()/1000;
+            let new_width;
+            let time_remaining;
+            if (construction["suspension_time"]){
+                new_width = (construction["suspension_time"] - construction["start_time"]) / construction["duration"] * 100;
+                time_remaining = construction["duration"] + construction["start_time"] - construction["suspension_time"];
+            }else{
+                new_width = (now - construction["start_time"]) / construction["duration"] * 100;
+                time_remaining = construction["duration"] + construction["start_time"] - now;
+            }
+            progressBar.style.setProperty('--width', new_width);
+            if(new_width > 0.01){
+                progressBar.classList.add('pine');
+            }
+            const time = formatMilliseconds(time_remaining);
+            progressBar.innerHTML = "&nbsp; " + time;
         }
-        progressBar.style.setProperty('--width', new_width);
-        if(new_width > 0.01){
-            progressBar.classList.add('pine');
-        }
-        const time = formatMilliseconds(time_remaining);
-        progressBar.innerHTML = "&nbsp; " + time;
-    }
-}, 50)
+    }, 50);
+});
 
 function refresh_progressBar(){
     const uc = document.getElementById("under_construction");
     uc.innerHTML = ''
     load_constructions().then((construction_list) => {
-        constructions = construction_list;
-        for (const [c_id, construction] of Object.entries(construction_list)){
+        constructions_data = construction_list
+        construction_priority = construction_list[1];
+        for (const [index, c_id] of construction_priority.entries()){
+            construction = construction_list[0][c_id]
             if (construction["family"] == document.title | document.title == "Home"){
                 let play_pause_logo = "fa-pause"
                 if (construction["suspension_time"]){
                     play_pause_logo = "fa-play"
                 }
-                uc.innerHTML += '<div class="progressbar-container">\
-                    <div class="progressbar-arrowcontainer">\
-                    <button class="progressbar-arrow progressbar-button">\
+                let html = '<div class="progressbar-container">\
+                    <div class="progressbar-arrowcontainer">'
+                if (index > 0){
+                    html += '<button class="progressbar-arrow progressbar-button" onclick="increase_construction_priority(' + c_id + ')">\
                         <i class="fa fa-caret-up"></i>\
-                    </button>\
-                    <button class="progressbar-arrow progressbar-button">\
+                    </button>'
+                }
+                if (index+1 != construction_priority.length){
+                    html += '<button class="progressbar-arrow progressbar-button" onclick="increase_construction_priority(' + construction_priority[index+1] + ')">\
                         <i class="fa fa-caret-down"></i>\
-                    </button>\
-                    </div>\
+                    </button>'
+                }
+                html += '</div>\
                     <div class="progressbar-name medium margin-small">' + construction["name"] + '</div>\
                     <div class="progressbar-background">\
                     <div id="' + c_id + '" class="progressbar-bar"></div>\
@@ -121,6 +149,7 @@ function refresh_progressBar(){
                         <i class="fa fa-times"></i>\
                     </button>\
                 </div>'
+                uc.innerHTML += html
             }
         }
       });

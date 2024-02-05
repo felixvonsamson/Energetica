@@ -431,7 +431,7 @@ def start_project(player, facility, family):
         )
 
     player.money -= real_price
-    new_facility = Under_construction(
+    new_construction = Under_construction(
         name=facility,
         family=family,
         start_time=time.time(),
@@ -440,14 +440,15 @@ def start_project(player, facility, family):
         original_price=real_price,
         player_id=player.id,
     )
-    db.session.add(new_facility)
+    db.session.add(new_construction)
     db.session.commit()
     print(f"{player.username} started the construction {facility}")
-    constructions = players_constructions(player)
+    prioirty = player.add_construction_priority(new_construction.id)
+    constructions = player.get_constructions()
     return {
         "response": "success",
         "money": player.money,
-        "constructions": constructions,
+        "constructions": {0: constructions, 1: prioirty},
     }
 
 
@@ -469,11 +470,12 @@ def cancel_project(player, construction_id):
     db.session.delete(construction)
     db.session.commit()
     print(f"{player.username} cancelled the construction {construction.name}")
-    constructions = players_constructions(player)
+    prioirty = player.remove_construction_priority(construction_id)
+    constructions = player.get_constructions()
     return {
         "response": "success",
         "money": player.money,
-        "constructions": constructions,
+        "constructions": {0: constructions, 1: prioirty},
     }
 
 
@@ -487,20 +489,19 @@ def pause_project(player, construction_id):
         construction.start_time += time.time() - construction.suspension_time
         construction.suspension_time = None
     db.session.commit()
-    constructions = players_constructions(player)
-    return {"response": "success", "constructions": constructions}
-
-
-def players_constructions(player):
-    constructions = player.under_construction
-    construction_list = {
-        construction.id: {
-            "name": construction.name,
-            "family": construction.family,
-            "start_time": construction.start_time,
-            "duration": construction.duration,
-            "suspension_time": construction.suspension_time,
-        }
-        for construction in constructions
+    prioirty = player.read_construction_priority()
+    constructions = player.get_constructions()
+    return {
+        "response": "success",
+        "constructions": {0: constructions, 1: prioirty},
     }
-    return construction_list
+
+
+def increase_project_priority(player, construction_id):
+    """this function is executed when a player changes the order of ongoing constructions"""
+    prioirty = player.increase_construction_priority(int(construction_id))
+    constructions = player.get_constructions()
+    return {
+        "response": "success",
+        "constructions": {0: constructions, 1: prioirty},
+    }

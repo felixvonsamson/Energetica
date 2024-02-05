@@ -178,7 +178,7 @@ class Player(db.Model, UserMixin):
     chemistry = db.Column(db.Integer, default=0)
     nuclear_engineering = db.Column(db.Integer, default=0)
 
-    # Selfconsumption priority list
+    # Priority lists
     self_consumption_priority = db.Column(
         db.Text,
         default="small_water_dam large_water_dam watermill onshore_wind_turbine offshore_wind_turbine windmill CSP_solar PV_solar",
@@ -191,6 +191,7 @@ class Player(db.Model, UserMixin):
         db.Text,
         default="transport industry research construction uranium_mine gas_drilling_site oil_field coal_mine",
     )
+    construction_priorities = db.Column(db.Text, default="")
 
     # Production capacity prices [¤/MWh]
     price_steam_engine = db.Column(db.Float, default=125)
@@ -257,6 +258,54 @@ class Player(db.Model, UserMixin):
             .count()
         )
         return self.lab_workers - occupied_workers
+
+    def read_construction_priority(self):
+        if self.construction_priorities == "":
+            return []
+        priority_list = self.construction_priorities.split(",")
+        return list(map(int, priority_list))
+
+    def add_construction_priority(self, id):
+        if self.construction_priorities == "":
+            self.construction_priorities = str(id)
+        else:
+            self.construction_priorities += f",{id}"
+        db.session.commit()
+        return self.read_construction_priority()
+
+    def remove_construction_priority(self, id):
+        id_list = self.construction_priorities.split(",")
+        id_list.remove(str(id))
+        self.construction_priorities = ",".join(id_list)
+        db.session.commit()
+        return self.read_construction_priority()
+
+    def increase_construction_priority(self, id):
+        """the construction with the coresponding id will move one spot up in the priority list"""
+        id_list = self.construction_priorities.split(",")
+        index = id_list.index(str(id))
+        if index > 0 and index < len(id_list):
+            id_list[index], id_list[index - 1] = (
+                id_list[index - 1],
+                id_list[index],
+            )
+        self.construction_priorities = ",".join(id_list)
+        db.session.commit()
+        return self.read_construction_priority()
+
+    def get_constructions(self):
+        constructions = self.under_construction
+        construction_list = {
+            construction.id: {
+                "name": construction.name,
+                "family": construction.family,
+                "start_time": construction.start_time,
+                "duration": construction.duration,
+                "suspension_time": construction.suspension_time,
+            }
+            for construction in constructions
+        }
+        return construction_list
 
     def get_technology_values(self):
         technology_attributes = [

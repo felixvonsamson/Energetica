@@ -16,7 +16,7 @@ from .utils import (
     start_project,
     cancel_project,
     pause_project,
-    players_constructions,
+    increase_project_priority,
 )
 from . import db
 from .database import Hex, Player, Chat, Network, Under_construction
@@ -234,8 +234,9 @@ def get_ud_and_config():
 # Gets list of facilities under construction for this player
 @api.route("/get_constructions", methods=["GET"])
 def get_constructions():
-    constructions = players_constructions(current_user)
-    return jsonify(constructions)
+    constructions = current_user.get_constructions()
+    priorities = current_user.read_construction_priority()
+    return jsonify(constructions, priorities)
 
 
 # gets scoreboard data :
@@ -304,6 +305,19 @@ def request_pause_project():
     json = request.get_json()
     construction_id = json["id"]
     response = pause_project(
+        player=current_user, construction_id=construction_id
+    )
+    return jsonify(response)
+
+
+@api.route("/request_increase_project_priority", methods=["POST"])
+def request_increase_project_priority():
+    """
+    this function is executed when a player changes the order of ongoing constructions or upgrades
+    """
+    json = request.get_json()
+    construction_id = json["id"]
+    response = increase_project_priority(
         player=current_user, construction_id=construction_id
     )
     return jsonify(response)
