@@ -93,7 +93,7 @@ function refresh_progressBar(){
     load_constructions().then((construction_list) => {
         constructions = construction_list;
         for (const [c_id, construction] of Object.entries(construction_list)){
-            if (construction["family"] == document.title){
+            if (construction["family"] == document.title | document.title == "Home"){
                 let play_pause_logo = "fa-pause"
                 if (construction["suspension_time"]){
                     play_pause_logo = "fa-play"

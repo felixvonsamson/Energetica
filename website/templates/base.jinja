@@ -10,34 +10,36 @@
     <div class="padding money_font large money">
       <script>display_money_long({{ user.money }});</script>
     </div>
+    {% if all_data.warehouse_capacities.coal > 0 %}
     <div class="resoure_container">
-      <div class="padding resource" id="coal">
-        <script>display_kg({{ user.coal }});</script>
-        <img src="{{ url_for('static', filename='images/resources/coal.png') }}"
-             class="icon"
-             alt="coal">
+      <div class="resourceJauge-background">
+        <div class="resourceJauge coal" style="--width:{{user.coal / all_data.warehouse_capacities.coal}}"></div>
+        <div id="coal" class="resource" style="color:#555">
+          <b><script>display_kg({{ user.coal }});</script></b>
+        </div>
       </div>
-      <div class="padding resource" id="oil">
-        <script>display_kg({{ user.oil }});</script>
-        <img src="{{ url_for('static', filename='images/resources/oil.png') }}"
-             class="icon"
-             alt="oil">
+      <div class="resourceJauge-background">
+        <div class="resourceJauge oil" style="--width:{{user.oil / all_data.warehouse_capacities.oil}}"></div>
+        <div id="oil" class="resource">
+          <b><script>display_kg({{ user.oil }});</script></b>
+        </div>
       </div>
-      <div class="padding resource" id="gas">
-        <script>display_kg({{ user.gas }});</script>
-        <img src="{{ url_for('static', filename='images/resources/gas.png') }}"
-             class="icon"
-             alt="gas">
+      <div class="resourceJauge-background">
+        <div class="resourceJauge gas" style="--width:{{user.gas / all_data.warehouse_capacities.gas}}"></div>
+        <div id="gas" class="resource">
+          <b><script>display_kg({{ user.gas }});</script></b>
+        </div>
       </div>
-      <div class="padding resource" id="uranium">
-        <script>display_kg({{ user.uranium }});</script>
-        <img src="{{ url_for('static', filename='images/resources/uranium.png') }}"
-             class="icon"
-             alt="uranium">
+      <div class="resourceJauge-background">
+        <div class="resourceJauge uranium" style="--width:{{user.uranium / all_data.warehouse_capacities.uranium}}"></div>
+        <div id="uranium" class="resource">
+          <b><script>display_kg({{ user.uranium }});</script></b>
+        </div>
       </div>
     </div>
+    {% endif %}
   </div>
-
+  
 
   <nav class="navbar medium">
 

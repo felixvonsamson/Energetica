@@ -19,6 +19,11 @@
             <p>This page is an overview of your profile.</p>
         </div>
     </div>
+    <div id="under_construction">
+      {# Facilites under construction will show here #}
+    </div>
 {% endblock content %}
 {% block additionnal_script %}
+  <script>retrieve_constructions()</script>
+  <script>refresh_progressBar()</script>
 {% endblock additionnal_script %}

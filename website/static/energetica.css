@@ -45,6 +45,26 @@ canvas {
     background-color: #285430
 }
 
+.coal {
+    color: #fff;
+    background-color: #000000
+}
+
+.oil {
+    color: #000000;
+    background-color: rgb(166, 99, 204)
+}
+
+.gas {
+    color: #000000;
+    background-color: rgb(171, 196, 255)
+}
+
+.uranium {
+    color: #000000;
+    background-color: rgb(191, 210, 0)
+}
+
 .txt-blue {
     color: #1226bc
 }
@@ -327,9 +347,31 @@ canvas {
 }
 
 .resoure_container {
+    width:100%;
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin: 0.5em 0;
+}
+
+.resourceJauge-background {
+    width:85%;
+    background-color: #e5d9b6;
+    height: 1.3em;
+    margin: 0.5em 0;
+}
+
+.resourceJauge {
+    display: flex;
+    height: 100%;
+    width: calc(var(--width, 0) * 100%);
+    max-width: 100%;
+}
+
+.resource {
+    width: 100%;
+    position: relative;
+    transform: translate(0, -100%);
 }
 
 @media only screen and (max-width: 1200px) {
@@ -483,7 +525,7 @@ canvas {
     height: 100%;
     width: calc(var(--width, 0) * 1%);
     max-width: 100%;
-    padding-left:4px;
+    padding-left: 4px;
     white-space: nowrap;
 }
 
