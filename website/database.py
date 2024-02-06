@@ -14,6 +14,13 @@ player_chats = db.Table(
     db.Column("chat_id", db.Integer, db.ForeignKey("chat.id")),
 )
 
+# table that links notifications to players
+player_notifications = db.Table(
+    "player_notifications",
+    db.Column("player_id", db.Integer, db.ForeignKey("player.id")),
+    db.Column("notification_id", db.Integer, db.ForeignKey("notification.id")),
+)
+
 
 # class for the tiles that compose the map :
 class Hex(db.Model):
@@ -109,6 +116,9 @@ class Player(db.Model, UserMixin):
         "Chat", secondary=player_chats, backref="participants"
     )
     messages = db.relationship("Message", backref="player")
+    notifications = db.relationship(
+        "Notification", secondary=player_notifications, backref="players"
+    )
 
     # resources :
     money = db.Column(db.Float, default=5000)  # default is 5000
@@ -314,6 +324,14 @@ class Player(db.Model, UserMixin):
         }
         return construction_list
 
+    def delete_notification(self, notification_id):
+        notification = Notification.query.get(notification_id)
+        if notification in self.notifications:
+            self.notifications.remove(notification)
+            if not notification.players:
+                db.session.delete(notification)
+            db.session.commit()
+
     def get_technology_values(self):
         technology_attributes = [
             "laboratory",
@@ -372,3 +390,10 @@ class Message(db.Model):
     time = db.Column(db.DateTime, default=datetime.now())
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
     chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"))
+
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(50))
+    content = db.Column(db.Text)
+    time = db.Column(db.DateTime, default=datetime.now())
