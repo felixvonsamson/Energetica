@@ -29,12 +29,21 @@ def flash_error(msg):
 
 
 # this function is executed after an asset is finished facility :
-def add_asset(player_id, facility):
+def add_asset(player_id, construction_id):
     player = Player.query.get(player_id)
-    setattr(player, facility, getattr(player, facility) + 1)
+    construction = Under_construction.query.get(construction_id)
+    setattr(player, construction.name, getattr(player, construction.name) + 1)
+    construction_priorities = player.remove_construction_priority(
+        construction_id
+    )
+    for id in construction_priorities:
+        construction = Under_construction.query.get(id)
+        if construction.suspension_time is not None:
+            pause_project(player, id)
+            break
     current_app.config["engine"].config.update_config_for_user(player.id)
     print(
-        f"{player.username} has finished the construction of facility {facility}"
+        f"{player.username} has finished the construction of facility {construction.name}"
     )
 
 

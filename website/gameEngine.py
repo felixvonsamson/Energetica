@@ -210,7 +210,7 @@ def check_upcoming_actions(app):
         )
         if finished_constructions:
             for fc in finished_constructions:
-                add_asset(fc.player_id, fc.name)
+                add_asset(fc.player_id, fc.id)
             finished_constructions.delete()
             db.session.commit()
 
