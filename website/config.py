@@ -24,6 +24,7 @@ full_config = {
             "description": "The steam engine burns wood to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Steam_engine",
             "O&M_description": "The O&M costs of the steam engine are composed of 20% fixed costs and 80% variable costs.",
+            "danger_description": "Risk of steam explosion",
         },
         "windmill": {
             "name": "Windmill",
@@ -41,6 +42,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The windmill uses the force of the wind to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Windmill",
+            "danger_description": "Risk of structural failure in high winds",
         },
         "watermill": {
             "name": "Watermill",
@@ -57,6 +59,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The watermill uses the energy of flowing water to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Watermill",
+            "danger_description": "Risk of structural failure due to floods",
         },
         "coal_burner": {
             "name": "Coal burner",
@@ -114,6 +117,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The gas burner burns gas to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Gas-fired_power_facility",
+            "danger_description": "Risk of gas leaks",
         },
         "small_water_dam": {
             "name": "Small water dam",
@@ -130,6 +134,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The small water dam uses the potential energy of the water to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
+            "danger_description": "Risk of structural failure due to floods",
         },
         "onshore_wind_turbine": {
             "name": "Onshore wind turbine",
@@ -150,6 +155,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The wind turbine uses the energy of the wind to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
+            "danger_description": "Risk of structural failure in high winds",
         },
         "combined_cycle": {
             "name": "Combined cycle",
@@ -169,6 +175,7 @@ full_config = {
             "image_extension": "png",
             "description": "The combined cycle power facility burns coal and gas to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Combined_cycle_power_facility",
+            "danger_description": "Risk of gas leaks",
         },
         "nuclear_reactor": {
             "name": "Nuclear reactor",
@@ -189,6 +196,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The nuclear power facility uses controlled nuclear fission to produce a large amount of electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Nuclear_power_facility",
+            "danger_description": "Risk of reactor meltdown",
         },
         "large_water_dam": {
             "name": "Large water dam",
@@ -205,6 +213,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The large water dam uses the potential energy of the water to produce a large amount of electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
+            "danger_description": "Risk of structural failure due to floods",
         },
         "CSP_solar": {
             "name": "Concentrated solar power",
@@ -260,6 +269,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The wind turbine uses the energy of the wind to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
+            "danger_description": "Risk of structural failure due to storms",
         },
         "nuclear_reactor_gen4": {
             "name": "4th generation nuclear",
@@ -280,6 +290,7 @@ full_config = {
             "image_extension": "png",
             "description": "The nuclear power facility of the 4th generation uses controlled nuclear fission to produce a large amount of electricity fom a litle quantity of fuel.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Generation_IV_reactor",
+            "danger_description": "Risk of reactor meltdown",
         },
         "small_pumped_hydro": {
             "name": "Small pumped hydro",
