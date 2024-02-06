@@ -6,7 +6,6 @@ from flask import Blueprint, request, flash, jsonify, g, current_app, redirect
 from flask_login import login_required, current_user
 import pickle
 from pathlib import Path
-import numpy as np
 from .utils import (
     put_resource_on_market,
     buy_resource_from_market,

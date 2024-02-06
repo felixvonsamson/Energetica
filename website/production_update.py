@@ -857,33 +857,32 @@ def reduce_demand(engine, demand_type, player_id, t, satisfaction):
         engine.config.update_config_for_user(player.id)
         db.session.commit()
         return
+    assets = engine.config[player.id]["assets"]
     if demand_type == "construction":
-        last_construction = (
-            Under_construction.query.filter(
-                Under_construction.player_id == player.id
-            )
-            .filter(Under_construction.family != "Technologies")
-            .filter(Under_construction.suspension_time.is_(None))
-            .order_by(Under_construction.start_time.desc())
-            .first()
+        construction_priorities = player.read_project_priority(
+            "construction_priorities"
         )
-        if last_construction:
-            last_construction.suspension_time = time.time()
-            db.session.commit()
+        cumul_demand = 0
+        for i in range(player.construction_workers):
+            construction_id = construction_priorities[i]
+            construction = Under_construction.query.get(construction_id)
+            cumul_demand += assets[construction.name]["construction power"]
+            if cumul_demand > satisfaction:
+                construction.suspension_time = time.time()
+        db.session.commit()
         return
     if demand_type == "research":
-        last_research = (
-            Under_construction.query.filter(
-                Under_construction.player_id == player.id
-            )
-            .filter(Under_construction.family == "Technologies")
-            .filter(Under_construction.suspension_time.is_(None))
-            .order_by(Under_construction.start_time.desc())
-            .first()
+        research_priorities = player.read_project_priority(
+            "research_priorities"
         )
-        if last_research:
-            last_research.suspension_time = time.time()
-            db.session.commit()
+        cumul_demand = 0
+        for i in range(player.lab_workers):
+            construction_id = research_priorities[i]
+            construction = Under_construction.query.get(construction_id)
+            cumul_demand += assets[construction.name]["construction power"]
+            if cumul_demand > satisfaction:
+                construction.suspension_time = time.time()
+        db.session.commit()
         return
     if demand_type == "transport":
         last_shipment = (
