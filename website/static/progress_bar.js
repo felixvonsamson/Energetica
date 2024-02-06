@@ -90,8 +90,8 @@ function increase_project_priority(construction_id) {
         });
 }
 
-const progressBars = document.getElementsByClassName("progressbar-bar");
 let constructions_data;
+let progressBars = document.getElementsByClassName("progressbar-bar");
 load_constructions().then((constructions) => {
     constructions_data = constructions;
     setInterval(() => {
@@ -123,72 +123,85 @@ load_constructions().then((constructions) => {
             if (new_width > 0.01) {
                 progressBar.classList.add("pine");
             }
+            if (time_remaining < 0){
+                progressBar.parentElement.parentElement.remove();
+                setTimeout(() => {
+                    retrieve_constructions().then((construction_list) => {
+                        constructions_data = construction_list;
+                        display_progressBars(constructions_data);
+                    });
+                }, 1000);
+            }
             const time = formatMilliseconds(time_remaining);
             progressBar.innerHTML = "&nbsp; " + time;
         }
-    }, 50);
+    }, 100);
 });
 
 function refresh_progressBar() {
-    const uc = document.getElementById("under_construction");
-    uc.innerHTML = "";
     load_constructions().then((construction_list) => {
         constructions_data = construction_list;
-        construction_priority = construction_list[1];
-        for (const [index, c_id] of construction_priority.entries()) {
-            construction = construction_list[0][c_id];
-            if (
-                (construction["family"] == document.title) |
-                (document.title == "Home")
-            ) {
-                let play_pause_logo = "fa-pause";
-                if (construction["suspension_time"]) {
-                    play_pause_logo = "fa-play";
-                }
-                let html =
-                    '<div class="progressbar-container">\
-                    <div class="progressbar-arrowcontainer">';
-                if (index > 0) {
-                    html +=
-                        '<button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(' +
-                        c_id +
-                        ')">\
-                        <i class="fa fa-caret-up"></i>\
-                    </button>';
-                }
-                if (index + 1 != construction_priority.length) {
-                    html +=
-                        '<button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(' +
-                        construction_priority[index + 1] +
-                        ')">\
-                        <i class="fa fa-caret-down"></i>\
-                    </button>';
-                }
-                html +=
-                    '</div>\
-                    <div class="progressbar-name medium margin-small">' +
-                    construction["name"] +
-                    '</div>\
-                    <div class="progressbar-background">\
-                    <div id="' +
-                    c_id +
-                    '" class="progressbar-bar"></div>\
-                    </div>\
-                    <button class="progressbar-icon progressbar-button" onclick="pause_construction(' +
-                    c_id +
-                    ')">\
-                        <i class="fa ' +
-                    play_pause_logo +
-                    '"></i>\
-                    </button>\
-                    <button class="progressbar-icon progressbar-button" onclick="cancel_construction(' +
-                    c_id +
-                    ')">\
-                        <i class="fa fa-times"></i>\
-                    </button>\
-                </div>';
-                uc.innerHTML += html;
-            }
-        }
+        display_progressBars(constructions_data);
     });
+}
+
+const uc = document.getElementById("under_construction");
+function display_progressBars(data){
+    uc.innerHTML = "";
+    construction_priority = data[1];
+    for (const [index, c_id] of construction_priority.entries()) {
+        construction = data[0][c_id];
+        if (
+            (construction["family"] == document.title) |
+            (document.title == "Home")
+        ) {
+            let play_pause_logo = "fa-pause";
+            if (construction["suspension_time"]) {
+                play_pause_logo = "fa-play";
+            }
+            let html =
+                '<div class="progressbar-container">\
+                <div class="progressbar-arrowcontainer">';
+            if (index > 0) {
+                html +=
+                    '<button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(' +
+                    c_id +
+                    ')">\
+                    <i class="fa fa-caret-up"></i>\
+                </button>';
+            }
+            if (index + 1 != construction_priority.length) {
+                html +=
+                    '<button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(' +
+                    construction_priority[index + 1] +
+                    ')">\
+                    <i class="fa fa-caret-down"></i>\
+                </button>';
+            }
+            html +=
+                '</div>\
+                <div class="progressbar-name medium margin-small">' +
+                construction["name"] +
+                '</div>\
+                <div class="progressbar-background">\
+                <div id="' +
+                c_id +
+                '" class="progressbar-bar"></div>\
+                </div>\
+                <button class="progressbar-icon progressbar-button" onclick="pause_construction(' +
+                c_id +
+                ')">\
+                    <i class="fa ' +
+                play_pause_logo +
+                '"></i>\
+                </button>\
+                <button class="progressbar-icon progressbar-button" onclick="cancel_construction(' +
+                c_id +
+                ')">\
+                    <i class="fa fa-times"></i>\
+                </button>\
+            </div>';
+            uc.innerHTML += html;
+        }
+    }
 }

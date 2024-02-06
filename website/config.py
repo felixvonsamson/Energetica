@@ -857,8 +857,6 @@ class Config(object):
         config.update_resource_extraction(player_id)
 
         for asset in assets:
-            assets[asset]["construction time"] *= 0.01
-
             # remove fulfilled requirements
             assets[asset]["locked"] = False
             for req in assets[asset]["requirements"]:
