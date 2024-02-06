@@ -24,9 +24,7 @@
       </p>
     </div>
   </div>
-  <div id="under_construction">
-    {# Facilites under construction will show here #}
-  </div>
+  <div id="under_construction">{# Facilites under construction will show here #}</div>
   {% for facility in ["steam_engine", "windmill", "watermill", "coal_burner", "oil_burner", "gas_burner", "small_water_dam", "onshore_wind_turbine", "combined_cycle", "nuclear_reactor", "large_water_dam", "CSP_solar", "PV_solar", "offshore_wind_turbine", "nuclear_reactor_gen4"] %}
     <div id="{{ facility }}"
          class="bone margin facility small construction_tile"
@@ -89,6 +87,13 @@
                 </em>
               {% endif %}
             {% endfor %}
+            {# Danger Indicator #}
+            {% if "danger_description" in data[facility] %}
+              <br>
+              <em class="txt-red">
+                <i class="fa fa-exclamation-triangle"></i> {{ data[facility]["danger_description"] }}
+              </em>
+            {% endif %}
           </div>
           {# Requirements #}
           {% if data[facility]["locked"] %}
@@ -182,7 +187,7 @@
             Emmissions : <strong><script>display_kg({{data[facility]["construction pollution"]}});</script> CO2</strong>
           </div>
           <b class="padding medium button margin-small txt_center white"
-             onclick="start_construction('{{facility}}', 'Power facilities');"
+             onclick="start_construction('{{ facility }}', 'Power facilities');"
              style="width:160px">
             Start construction
           </b>
