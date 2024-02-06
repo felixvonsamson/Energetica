@@ -13,13 +13,14 @@ let f1, f2;
 let graph;
 let fill_alt = 0;
 
-const resolution = ["6h", "day", "5 days", "month", "6 months"];
-let res = "6h";
+const resolution = ["2h", "6h", "day", "5 days", "month", "6 months"];
+let res = "2h";
 const res_to_data = {
+    "2h": ["day", 1],
     "6h": ["day", 1],
-    day: ["day", 1],
+    "day": ["day", 1],
     "5 days": ["5_days", 5],
-    month: ["month", 30],
+    "month": ["month", 30],
     "6 months": ["6_months", 180],
 };
 
@@ -27,6 +28,7 @@ let cols_and_names = {};
 
 function preload() {
     font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
+    balooBold = loadFont("static/fonts/Baloo2-SemiBold.ttf");
     coin = loadImage("static/images/icons/coin.svg");
 }
 
@@ -158,13 +160,13 @@ function draw() {
             fill_alt = 0;
             rect(0, 0, 160, 17);
             fill(0);
-            textStyle(BOLD);
+            textFont(balooBold);
             text(
                 display_duration((data_len - t_view - 1) * res_to_data[res][1]),
                 80,
                 5
             );
-            textStyle(NORMAL);
+            textFont(font);
             for (const key of ["price", "quantity"]) {
                 alternate_fill();
                 translate(0, 16);
@@ -232,9 +234,9 @@ function draw() {
                     }
                     translate(0, -16 * 4);
                     fill(0);
-                    textStyle(BOLD);
+                    textFont(balooBold);
                     text("Supply", 65, 4);
-                    textStyle(NORMAL);
+                    textFont(font);
                     textAlign(LEFT);
                     let left = ["Player", "Capacity", "Price", "facility"];
                     for (let j of left) {
@@ -243,9 +245,9 @@ function draw() {
                     }
                     translate(0, -16 * 3);
                     textAlign(CENTER);
-                    textStyle(BOLD);
-                    text(supply["player"][i], 90, 4);
-                    textStyle(NORMAL);
+                    textFont(balooBold);
+                    text(supply["player_id"][i], 90, 4);
+                    textFont(font);
                     push();
                     textAlign(RIGHT, CENTER);
                     text(display_money(supply["price"][i]), 97, 32 + 5);
@@ -277,9 +279,9 @@ function draw() {
                 }
                 translate(0, -2 * 16);
                 fill(0);
-                textStyle(BOLD);
+                textFont(balooBold);
                 text("Market optimum", 65, 4);
-                textStyle(NORMAL);
+                textFont(font);
                 textAlign(LEFT);
                 translate(0, 16);
                 text("Price", 5, 4);
@@ -337,9 +339,9 @@ function draw() {
                     }
                     translate(0, -16 * 4);
                     fill(0);
-                    textStyle(BOLD);
+                    textFont(balooBold);
                     text("Demand", 65, 4);
-                    textStyle(NORMAL);
+                    textFont(font);
                     textAlign(LEFT);
                     let left = ["Player", "Capacity", "Price", "facility"];
                     for (let j of left) {
@@ -348,9 +350,9 @@ function draw() {
                     }
                     translate(0, -16 * 3);
                     textAlign(CENTER);
-                    textStyle(BOLD);
-                    text(demand["player"][i], 90, 4);
-                    textStyle(NORMAL);
+                    textFont(balooBold);
+                    text(demand["player_id"][i], 90, 4);
+                    textFont(font);
                     push();
                     textAlign(RIGHT, CENTER);
                     text(price, 97, 32 + 5);
@@ -721,7 +723,9 @@ function calc_h(price) {
 }
 
 function time_unit(res) {
-    if (res == "6h") {
+    if (res == "2h") {
+        return ["2h", "1h40", "1h20", "1h", "40min", "20min", "now"];
+    } else if (res == "6h") {
         return ["6h", "5h", "4h", "3h", "2h", "1h", "now"];
     } else if (res == "day") {
         return ["24h", "20h", "16h", "12h", "8h", "4h", "now"];
@@ -764,7 +768,9 @@ function reduce(arr1, arr2, res, t) {
     } else {
         result = arr1.concat(arr2);
     }
-    if (res == "6h") {
+    if (res == "2h") {
+        result = result.slice(-120);
+    } else if(res == "6h") {
         result = result.slice(-360);
     } else {
         result = result.slice(-1440);

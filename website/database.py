@@ -14,6 +14,13 @@ player_chats = db.Table(
     db.Column("chat_id", db.Integer, db.ForeignKey("chat.id")),
 )
 
+# table that links notifications to players
+player_notifications = db.Table(
+    "player_notifications",
+    db.Column("player_id", db.Integer, db.ForeignKey("player.id")),
+    db.Column("notification_id", db.Integer, db.ForeignKey("notification.id")),
+)
+
 
 # class for the tiles that compose the map :
 class Hex(db.Model):
@@ -43,8 +50,11 @@ class Under_construction(db.Model):
     start_time = db.Column(db.Float)
     duration = db.Column(db.Float)
     suspension_time = db.Column(
-        db.Float, default=None
+        db.Float
     )  # time at witch the construction has been paused if it has
+    original_price = db.Column(
+        db.Float
+    )  # Price of the construction on the time of start of construction
     player_id = db.Column(
         db.Integer, db.ForeignKey("player.id")
     )  # can access player directly with .player
@@ -106,6 +116,9 @@ class Player(db.Model, UserMixin):
         "Chat", secondary=player_chats, backref="participants"
     )
     messages = db.relationship("Message", backref="player")
+    notifications = db.relationship(
+        "Notification", secondary=player_notifications, backref="players"
+    )
 
     # resources :
     money = db.Column(db.Float, default=5000)  # default is 5000
@@ -175,7 +188,7 @@ class Player(db.Model, UserMixin):
     chemistry = db.Column(db.Integer, default=0)
     nuclear_engineering = db.Column(db.Integer, default=0)
 
-    # Selfconsumption priority list
+    # Priority lists
     self_consumption_priority = db.Column(
         db.Text,
         default="small_water_dam large_water_dam watermill onshore_wind_turbine offshore_wind_turbine windmill CSP_solar PV_solar",
@@ -188,6 +201,8 @@ class Player(db.Model, UserMixin):
         db.Text,
         default="transport industry research construction uranium_mine gas_drilling_site oil_field coal_mine",
     )
+    construction_priorities = db.Column(db.Text, default="")
+    research_priorities = db.Column(db.Text, default="")
 
     # Production capacity prices [¤/MWh]
     price_steam_engine = db.Column(db.Float, default=125)
@@ -233,7 +248,89 @@ class Player(db.Model, UserMixin):
     resource_on_sale = db.relationship("Resource_on_sale", backref="player")
     shipments = db.relationship("Shipment", backref="player")
 
-    data_table_name = db.Column(db.String(50))
+    def available_construction_workers(self):
+        occupied_workers = (
+            Under_construction.query.filter(
+                Under_construction.player_id == self.id
+            )
+            .filter(Under_construction.family != "Technologies")
+            .filter(Under_construction.suspension_time.is_(None))
+            .count()
+        )
+        return self.construction_workers - occupied_workers
+
+    def available_lab_workers(self):
+        occupied_workers = (
+            Under_construction.query.filter(
+                Under_construction.player_id == self.id
+            )
+            .filter(Under_construction.family == "Technologies")
+            .filter(Under_construction.suspension_time.is_(None))
+            .count()
+        )
+        return self.lab_workers - occupied_workers
+
+    def read_project_priority(self, attr):
+        if getattr(self, attr) == "":
+            return []
+        priority_list = getattr(self, attr).split(",")
+        return list(map(int, priority_list))
+
+    def add_project_priority(self, attr, id):
+        if getattr(self, attr) == "":
+            setattr(self, attr, str(id))
+        else:
+            setattr(self, attr, getattr(self, attr) + f",{id}")
+        db.session.commit()
+
+    def remove_project_priority(self, attr, id):
+        id_list = getattr(self, attr).split(",")
+        id_list.remove(str(id))
+        setattr(self, attr, ",".join(id_list))
+        db.session.commit()
+
+    def increase_project_priority(self, attr, id):
+        """the project with the coresponding id will move one spot up in the priority list"""
+        id_list = getattr(self, attr).split(",")
+        index = id_list.index(str(id))
+        if index > 0 and index < len(id_list):
+            id_list[index], id_list[index - 1] = (
+                id_list[index - 1],
+                id_list[index],
+            )
+        setattr(self, attr, ",".join(id_list))
+        db.session.commit()
+
+    def project_max_priority(self, attr, id):
+        """the project with the corresponding id will be moved to the top of the prioirty list"""
+        self.remove_project_priority(attr, id)
+        if getattr(self, attr) == "":
+            setattr(self, attr, str(id))
+        else:
+            setattr(self, attr, f"{id}," + getattr(self, attr))
+        db.session.commit()
+
+    def get_constructions(self):
+        constructions = self.under_construction
+        construction_list = {
+            construction.id: {
+                "name": construction.name,
+                "family": construction.family,
+                "start_time": construction.start_time,
+                "duration": construction.duration,
+                "suspension_time": construction.suspension_time,
+            }
+            for construction in constructions
+        }
+        return construction_list
+
+    def delete_notification(self, notification_id):
+        notification = Notification.query.get(notification_id)
+        if notification in self.notifications:
+            self.notifications.remove(notification)
+            if not notification.players:
+                db.session.delete(notification)
+            db.session.commit()
 
     def get_technology_values(self):
         technology_attributes = [
@@ -293,3 +390,10 @@ class Message(db.Model):
     time = db.Column(db.DateTime, default=datetime.now())
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
     chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"))
+
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(50))
+    content = db.Column(db.Text)
+    time = db.Column(db.DateTime, default=datetime.now())

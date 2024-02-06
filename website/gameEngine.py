@@ -150,12 +150,10 @@ def daily_update(engine, app):
         players = Player.query.all()
         past_data = copy.deepcopy(engine.data["current_data"])
         for player in players:
-            for category in engine.data["current_data"][player.username]:
-                for element in engine.data["current_data"][player.username][
-                    category
-                ]:
-                    past_data[player.username][category][element].pop(0)
-                    data_array = engine.data["current_data"][player.username][
+            for category in engine.data["current_data"][player.id]:
+                for element in engine.data["current_data"][player.id][category]:
+                    past_data[player.id][category][element].pop(0)
+                    data_array = engine.data["current_data"][player.id][
                         category
                     ][element]
                     last_value = data_array[-1]
@@ -204,26 +202,22 @@ def state_update_m(engine, app):
 def check_upcoming_actions(app):
     with app.app_context():
         # check if constructions finished
-        finished_constructions = (
-            Under_construction.query.filter(
-                Under_construction.start_time != None
-            )
-            .filter(Under_construction.suspension_time == None)
-            .filter(
-                Under_construction.start_time + Under_construction.duration
-                < time.time()
-            )
+        finished_constructions = Under_construction.query.filter(
+            Under_construction.suspension_time.is_(None)
+        ).filter(
+            Under_construction.start_time + Under_construction.duration
+            < time.time()
         )
         if finished_constructions:
             for fc in finished_constructions:
-                add_asset(fc.player, fc.name)
+                add_asset(fc.player_id, fc.id)
             finished_constructions.delete()
             db.session.commit()
 
         # check if shipment arrived
         arrived_shipments = (
-            Shipment.query.filter(Shipment.departure_time != None)
-            .filter(Shipment.suspension_time == None)
+            Shipment.query.filter(Shipment.departure_time.isnot(None))
+            .filter(Shipment.suspension_time.is_(None))
             .filter(Shipment.departure_time + Shipment.duration < time.time())
         )
         if arrived_shipments:

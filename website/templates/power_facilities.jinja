@@ -4,7 +4,7 @@
 {% endblock title %}
 {% block content
   %}
-  {% set data = all_data["assets"] %}
+  {% set assets = data["assets"] %}
   <div class="flex-row huge title">
     Power facilities
     <div class="pine info_icon_container"
@@ -24,61 +24,36 @@
       </p>
     </div>
   </div>
-  <div id="under_construction">
-    {% if user.under_construction %}
-      {% for facility in user.under_construction %}
-        {% if facility.family == "power_facilities" %}
-          <div class="progressbar-container">
-            <div class="progressbar-arrowcontainer">
-              <b class="progressbar-arrow"><i class="fa fa-caret-up"></i></b>
-              <b class="progressbar-arrow"><i class="fa fa-caret-down"></i></b>
-            </div>
-            <div class="progressbar-name medium margin-small">{{ data[facility.name]['name'] }}</div>
-            <div class="progressbar-background">
-              <div class="progressbar-bar" style="width:0"></div>
-            </div>
-            <b class="progressbar-icon">
-              {% if facility.suspension_time %}
-                <i class="fa fa-play"></i>
-              {% else %}
-                <i class="fa fa-pause"></i>
-              {% endif %}
-            </b>
-            <b class="progressbar-icon"><i class="fa fa-times"></i></b>
-          </div>
-        {% endif %}
-      {% endfor %}
-    {% endif %}
-  </div>
+  <div id="under_construction">{# Facilites under construction will show here #}</div>
   {% for facility in ["steam_engine", "windmill", "watermill", "coal_burner", "oil_burner", "gas_burner", "small_water_dam", "onshore_wind_turbine", "combined_cycle", "nuclear_reactor", "large_water_dam", "CSP_solar", "PV_solar", "offshore_wind_turbine", "nuclear_reactor_gen4"] %}
     <div id="{{ facility }}"
          class="bone margin facility small construction_tile"
-         onclick="show_construction('{{ facility }}', '{{ data[facility]['locked'] }}');">
+         onclick="show_construction('{{ facility }}', '{{ assets[facility]['locked'] }}');">
       <img class="img"
-           src="{{ url_for('static', filename='images/power_facilities/'+facility+'.'+data[facility].image_extension) }}"
+           src="{{ url_for('static', filename='images/power_facilities/'+facility+'.'+assets[facility].image_extension) }}"
            width="250"
            height="167"
-           alt="{{ data[facility]['name'] }} power plant">
+           alt="{{ assets[facility]['name'] }} power plant">
       <div class="infotext padding">
-        <strong class="large">{{ data[facility]["name"] }}</strong>
+        <strong class="large">{{ assets[facility]["name"] }}</strong>
         &ensp;
         <a class="white wikipedia_icon_container no_deco"
-           href="{{ data[facility].wikipedia_link }}"
+           href="{{ assets[facility].wikipedia_link }}"
            target="_blank">
           <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
         </a>
         &emsp;
         {# Construction Cost #}
         <span class="money_font">
-          <script>display_money_long({{ data[facility]["price"] }});</script>
+          <script>display_money_long({{ assets[facility]["price"] }});</script>
         </span>
         <div class="infobox">
           <div class="infotext">
-            {{ data[facility].description }}
+            {{ assets[facility].description }}
             {# O&M Text Description #}
-            {% if "O&M_description" in data[facility] %}
+            {% if "O&M_description" in assets[facility] %}
               <br>
-              {{ data[facility]["O&M_description"] }}
+              {{ assets[facility]["O&M_description"] }}
             {% endif %}
             {# Wind Indicator #}
             <br>
@@ -112,19 +87,26 @@
                 </em>
               {% endif %}
             {% endfor %}
+            {# Danger Indicator #}
+            {% if "danger_description" in data[facility] %}
+              <br>
+              <em class="txt-red">
+                <i class="fa fa-exclamation-triangle"></i> {{ data[facility]["danger_description"] }}
+              </em>
+            {% endif %}
           </div>
           {# Requirements #}
-          {% if data[facility]["locked"] %}
+          {% if assets[facility]["locked"] %}
             <div class="infobox requirements" id="requirements">
               <div>
                 <strong>Unlock with :</strong>
                 <br>
                 <ul class="navbar-nav">
-                  {% for req in data[facility]["requirements"] %}
+                  {% for req in assets[facility]["requirements"] %}
                     {% if req[2] %}
-                      <li class="padding-small req_fullfilled">- {{ data[req[0]]["name"] }} lvl {{ req[1] }}</li>
+                      <li class="padding-small req_fullfilled">- {{ assets[req[0]]["name"] }} lvl {{ req[1] }}</li>
                     {% else %}
-                      <li class="padding-small requirement">- {{ data[req[0]]["name"] }} lvl {{ req[1] }}</li>
+                      <li class="padding-small requirement">- {{ assets[req[0]]["name"] }} lvl {{ req[1] }}</li>
                     {% endif %}
                   {% endfor %}
                 </ul>
@@ -140,33 +122,33 @@
           <tr>
             <td>Max generation</td>
             <td class="txt_center">
-              <strong><script>display_W({{data[facility]["power generation"]}});</script></strong>
+              <strong><script>display_W({{assets[facility]["power generation"]}});</script></strong>
             </td>
           </tr>
           {# O&M Costs #}
-          {% if "O&M cost" in data[facility] %}
+          {% if "O&M cost" in assets[facility] %}
             <tr>
               <td>Operation cost</td>
               <td class="txt_center">
-                <strong><script>display_money({{data[facility]["O&M cost"]}});</script>/h</strong>
+                <strong><script>display_money({{assets[facility]["O&M cost"]}});</script>/h</strong>
               </td>
             </tr>
           {% endif %}
           {# Resource Consumption #}
           {% for resource in ["gas", "coal", "oil", "uranium"] %}
-            {% if resource in data[facility]["consumed resource"] %}
+            {% if resource in assets[facility]["consumed resource"] %}
               <tr>
                 <td>{{ resource[0]|upper|upper + resource[1:] }} consumption</td>
                 <td class="txt_center">
                   <strong>
                     {% if resource == "uranium" %}
                       {% if facility == "nuclear_reactor" %}
-                        {{ (data[facility]["consumed resource"][resource]*1000)|int }} g/MWh
+                        {{ (assets[facility]["consumed resource"][resource]*1000)|int }} g/MWh
                       {% else %}
-                        {{ (data[facility]["consumed resource"]["uranium"]*1000)|round(2) }} g/MWh
+                        {{ (assets[facility]["consumed resource"]["uranium"]*1000)|round(2) }} g/MWh
                       {% endif %}
                     {% else %}
-                      <script>display_kg({{ data[facility]["consumed resource"][resource] }});</script>/MWh
+                      <script>display_kg({{ assets[facility]["consumed resource"][resource] }});</script>/MWh
                     {% endif %}
                   </strong>
                 </td>
@@ -178,10 +160,10 @@
             <td>Ramping speed</td>
             <td class="txt_center">
               <strong>
-                {% if data[facility]["ramping speed"] == 0 %}
+                {% if assets[facility]["ramping speed"] == 0 %}
                   -
                 {% else %}
-                  <script>display_W({{data[facility]["ramping speed"]}});</script>/min
+                  <script>display_W({{assets[facility]["ramping speed"]}});</script>/min
                 {% endif %}
               </strong>
             </td>
@@ -190,7 +172,7 @@
           <tr>
             <td>CO2 emissions</td>
             <td class="txt_center">
-              <strong><script>display_kg({{data[facility]["pollution"]}});</script>/MWh</strong>
+              <strong><script>display_kg({{assets[facility]["pollution"]}});</script>/MWh</strong>
             </td>
           </tr>
         </table>
@@ -198,14 +180,14 @@
       <div id="constructionContent" class="infobox hidden constructionContent">
         <div class="flex-col">
           <div class="txt_center margin-small" style="width:180px">
-            Duration : <strong><script>display_duration({{data[facility]["construction time"]}});</script></strong>
+            Duration : <strong><script>display_duration({{assets[facility]["construction time"]}});</script></strong>
             <br>
-            Energy need : <strong><script>display_W({{data[facility]["construction power"]}});</script></strong>
+            Energy need : <strong><script>display_W({{assets[facility]["construction power"]}});</script></strong>
             <br>
-            Emmissions : <strong><script>display_kg({{data[facility]["construction pollution"]}});</script> CO2</strong>
+            Emmissions : <strong><script>display_kg({{assets[facility]["construction pollution"]}});</script> CO2</strong>
           </div>
-          <b class="padding medium white button margin-small txt_center"
-             onclick="start_construction('steam_engine', 'power_facilities');"
+          <b class="padding medium button margin-small txt_center white"
+             onclick="start_construction('{{ facility }}', 'Power facilities');"
              style="width:160px">
             Start construction
           </b>
@@ -216,4 +198,6 @@
 {% endblock content %}
 {% block additionnal_script %}
   <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
+  <script>retrieve_constructions()</script>
+  <script>refresh_progressBar()</script>
 {% endblock additionnal_script %}

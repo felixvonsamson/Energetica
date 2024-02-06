@@ -45,8 +45,32 @@ canvas {
     background-color: #285430
 }
 
+.coal {
+    color: #fff;
+    background-color: #000000
+}
+
+.oil {
+    color: #000000;
+    background-color: rgb(166, 99, 204)
+}
+
+.gas {
+    color: #000000;
+    background-color: rgb(171, 196, 255)
+}
+
+.uranium {
+    color: #000000;
+    background-color: rgb(191, 210, 0)
+}
+
 .txt-blue {
     color: #1226bc
+}
+
+.txt-red {
+    color: #f71717
 }
 
 /* Generic */
@@ -138,6 +162,17 @@ canvas {
     background-color: #5f8d4e;
     color: white;
     cursor: pointer;
+}
+
+.progressbar-button{
+    background-color: #0000;
+    border: none;
+}
+
+.progressbar-button:hover{
+    cursor: pointer;
+    color: white;
+    background-color: #5f8d4e;
 }
 
 .login-button {
@@ -313,12 +348,41 @@ canvas {
     right: 0;
     top: 0;
     text-align: center;
+    padding:8px 0;
 }
 
-.resoure_container {
+.resource_container {
+    width:100%;
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+.resourceJauge-background {
+    width:85%;
+    background-color: #e5d9b6;
+    height: 1.3em;
+    margin: 0.5em 0;
+}
+
+.resourceJauge {
+    display: flex;
+    height: 100%;
+    width: calc(var(--width, 0) * 100%);
+    max-width: 100%;
+}
+
+.resource {
+    width: 100%;
+    position: relative;
+    transform: translate(0, -100%);
+}
+
+.workers_container {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    margin: 6px 0;
 }
 
 @media only screen and (max-width: 1200px) {
@@ -361,20 +425,33 @@ canvas {
         max-width: 100%;
         width: 100%;
         position: static;
+        padding:0;
     }
 
-    .resoure_container {
+    .resource_container {
         display: flex;
         flex-direction: row;
         align-items: center;
     }
 
-    .resource {
-        width: 25%;
+    .resourceJauge-background {
+        width:21%;
+        background-color: #e5d9b6;
+        height: 1.3em;
+        margin: 0.5em 2%;
+    }
+
+    .workers_container {
+        position: absolute;
+        width:30%;
+        padding: 3px 0;
+        top:0;
+        right:0;
     }
 
     .money {
-        background-color: #e5d9b6
+        background-color: #e5d9b6;
+        padding: 6px 23% 6px 0;
     }
 
     .navbar-toggler-icon {
@@ -403,7 +480,6 @@ canvas {
 }
 
 .hover_info .popup_info {
-    font-weight: normal;
     visibility: hidden;
     max-width: 400px;
     background-color: rgb(206, 206, 206);
@@ -415,7 +491,7 @@ canvas {
     z-index: 1;
     bottom: 130%;
     left: 50%;
-    margin-left: -50px;
+    transform: translate(-50%, 0);
 }
 
 .hover_info .popup_info::after {
@@ -436,7 +512,6 @@ canvas {
 /* Progress bar */
 .progressbar-container {
     margin: 8px 16px;
-    width: 1168px;
     display: flex;
     align-items: center;
 }
@@ -449,12 +524,10 @@ canvas {
 
 .progressbar-arrow {
     margin: -0.2em 0.5em;
-    cursor: pointer
 }
 
 .progressbar-icon {
     padding: 0.5em;
-    cursor: pointer;
 }
 
 .progressbar-name {
@@ -466,6 +539,7 @@ canvas {
     background-color: #e5d9b6;
     height: 1.2em;
     margin: 0 0.5em;
+    text-align: right;
 }
 
 .progressbar-bar {
@@ -473,7 +547,7 @@ canvas {
     height: 100%;
     width: calc(var(--width, 0) * 1%);
     max-width: 100%;
-    background-color: #285430;
+    white-space: nowrap;
 }
 
 /* ------- */
@@ -507,6 +581,7 @@ canvas {
     display: flex;
     flex-direction: column;
     align-items: center;
+    pointer-events: none;
 }
 
 .toast {
@@ -518,7 +593,8 @@ canvas {
     margin-top: 5px;
     margin-left: 5px;
     margin-right: 5px;
-    padding: 0 8px
+    padding: 0 8px;
+    pointer-events: all;
 }
 
 .toast.message {

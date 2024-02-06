@@ -50,7 +50,7 @@ def check_user():
             )
         else:
             return render_template(
-                page, engine=g.engine, user=current_user, all_data=g.config
+                page, engine=g.engine, user=current_user, data=g.config
             )
 
     g.render_template_ctx = render_template_ctx
@@ -59,6 +59,11 @@ def check_user():
 @views.route("/", methods=["GET", "POST"])
 @views.route("/home", methods=["GET", "POST"])
 def home():
+    return g.render_template_ctx("home.jinja")
+
+
+@views.route("/map", methods=["GET", "POST"])
+def map():
     return g.render_template_ctx("map.jinja")
 
 
@@ -150,14 +155,9 @@ def revenues():
     return g.render_template_ctx("overviews/revenues.jinja")
 
 
-@overviews.route("/generation")
-def generation():
-    return g.render_template_ctx("overviews/generation.jinja")
-
-
-@overviews.route("/demand")
-def demand():
-    return g.render_template_ctx("overviews/demand.jinja")
+@overviews.route("/electricity")
+def electricity():
+    return g.render_template_ctx("overviews/electricity.jinja")
 
 
 @overviews.route("/storage")

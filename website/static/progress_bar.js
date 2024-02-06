@@ -2,9 +2,7 @@
 This code generates the progress bars on top of the pages that show the facilities under construction
 */
 
-//CHANGE TO p5.js
-function formatMilliseconds(milliseconds) {
-    const totalSeconds = Math.floor(milliseconds / 1000);
+function formatMilliseconds(totalSeconds) {
     const days = Math.floor(totalSeconds / (3600 * 24));
     const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -25,19 +23,185 @@ function formatMilliseconds(milliseconds) {
     return formattedTime.trim();
 }
 
-const update_countdowns = () => {
-    const matches = document.querySelectorAll(".time");
-    matches.forEach((el) => {
-        const finish_time = el.dataset.name;
-        const now = new Date().getTime();
-        if (finish_time * 1000 < now) {
-            el.parentElement.style.display = "none";
-        } else {
-            const time = formatMilliseconds(finish_time * 1000 - now);
-            el.innerText = `(${time})`;
-        }
-    });
-};
+function cancel_construction(construction_id) {
+    send_form("/request_cancel_project", {
+        id: construction_id,
+    })
+        .then((response) => {
+            response.json().then((raw_data) => {
+                let response = raw_data["response"];
+                if (response == "success") {
+                    let money = raw_data["money"];
+                    var obj = document.getElementById("money");
+                    obj.innerHTML = formatted_money(money);
+                    addToast("Construction cancelled");
+                    sessionStorage.setItem(
+                        "constructions",
+                        JSON.stringify(raw_data["constructions"])
+                    );
+                    refresh_progressBar();
+                }
+            });
+        })
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
+}
 
-//update_countdowns();
-//setInterval(update_countdowns, 1000);
+function pause_construction(construction_id) {
+    send_form("/request_pause_project", {
+        id: construction_id,
+    })
+        .then((response) => {
+            response.json().then((raw_data) => {
+                let response = raw_data["response"];
+                if (response == "success") {
+                    sessionStorage.setItem(
+                        "constructions",
+                        JSON.stringify(raw_data["constructions"])
+                    );
+                    refresh_progressBar();
+                }
+            });
+        })
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
+}
+
+function increase_project_priority(construction_id) {
+    send_form("/request_increase_project_priority", {
+        id: construction_id,
+    })
+        .then((response) => {
+            response.json().then((raw_data) => {
+                let response = raw_data["response"];
+                if (response == "success") {
+                    sessionStorage.setItem(
+                        "constructions",
+                        JSON.stringify(raw_data["constructions"])
+                    );
+                    refresh_progressBar();
+                }
+            });
+        })
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
+}
+
+let constructions_data;
+let progressBars = document.getElementsByClassName("progressbar-bar");
+load_constructions().then((constructions) => {
+    constructions_data = constructions;
+    setInterval(() => {
+        for (const progressBar of progressBars) {
+            const id = progressBar.id;
+            const construction = constructions_data[0][id];
+            const now = new Date().getTime() / 1000;
+            let new_width;
+            let time_remaining;
+            if (construction["suspension_time"]) {
+                new_width =
+                    ((construction["suspension_time"] -
+                        construction["start_time"]) /
+                        construction["duration"]) *
+                    100;
+                time_remaining =
+                    construction["duration"] +
+                    construction["start_time"] -
+                    construction["suspension_time"];
+            } else {
+                new_width =
+                    ((now - construction["start_time"]) /
+                        construction["duration"]) *
+                    100;
+                time_remaining =
+                    construction["duration"] + construction["start_time"] - now;
+            }
+            progressBar.style.setProperty("--width", new_width);
+            if (new_width > 0.01) {
+                progressBar.classList.add("pine");
+            }
+            if (time_remaining < 0){
+                progressBar.parentElement.parentElement.remove();
+                setTimeout(() => {
+                    retrieve_constructions().then((construction_list) => {
+                        constructions_data = construction_list;
+                        display_progressBars(constructions_data);
+                    });
+                }, 1000);
+            }
+            const time = formatMilliseconds(time_remaining);
+            progressBar.innerHTML = "&nbsp; " + time;
+        }
+    }, 100);
+});
+
+function refresh_progressBar() {
+    load_constructions().then((construction_list) => {
+        constructions_data = construction_list;
+        display_progressBars(constructions_data);
+    });
+}
+
+const uc = document.getElementById("under_construction");
+function display_progressBars(data){
+    uc.innerHTML = "";
+    construction_priority = data[1];
+    for (const [index, c_id] of construction_priority.entries()) {
+        construction = data[0][c_id];
+        if (
+            (construction["family"] == document.title) |
+            (document.title == "Home")
+        ) {
+            let play_pause_logo = "fa-pause";
+            if (construction["suspension_time"]) {
+                play_pause_logo = "fa-play";
+            }
+            let html =
+                '<div class="progressbar-container">\
+                <div class="progressbar-arrowcontainer">';
+            if (index > 0) {
+                html +=
+                    '<button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(' +
+                    c_id +
+                    ')">\
+                    <i class="fa fa-caret-up"></i>\
+                </button>';
+            }
+            if (index + 1 != construction_priority.length) {
+                html +=
+                    '<button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(' +
+                    construction_priority[index + 1] +
+                    ')">\
+                    <i class="fa fa-caret-down"></i>\
+                </button>';
+            }
+            html +=
+                '</div>\
+                <div class="progressbar-name medium margin-small">' +
+                construction["name"] +
+                '</div>\
+                <div class="progressbar-background">\
+                <div id="' +
+                c_id +
+                '" class="progressbar-bar"></div>\
+                </div>\
+                <button class="progressbar-icon progressbar-button" onclick="pause_construction(' +
+                c_id +
+                ')">\
+                    <i class="fa ' +
+                play_pause_logo +
+                '"></i>\
+                </button>\
+                <button class="progressbar-icon progressbar-button" onclick="cancel_construction(' +
+                c_id +
+                ')">\
+                    <i class="fa fa-times"></i>\
+                </button>\
+            </div>';
+            uc.innerHTML += html;
+        }
+    }
+}

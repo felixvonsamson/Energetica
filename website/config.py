@@ -3,6 +3,7 @@ This file contains all the data needed for the game
 """
 from .database import Player
 import copy
+import math
 
 # raw data : (these are the initial values of the game)
 full_config = {
@@ -23,6 +24,7 @@ full_config = {
             "description": "The steam engine burns wood to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Steam_engine",
             "O&M_description": "The O&M costs of the steam engine are composed of 20% fixed costs and 80% variable costs.",
+            "danger_description": "Risk of steam explosion",
         },
         "windmill": {
             "name": "Windmill",
@@ -40,6 +42,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The windmill uses the force of the wind to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Windmill",
+            "danger_description": "Risk of structural failure in high winds",
         },
         "watermill": {
             "name": "Watermill",
@@ -56,6 +59,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The watermill uses the energy of flowing water to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Watermill",
+            "danger_description": "Risk of structural failure due to floods",
         },
         "coal_burner": {
             "name": "Coal burner",
@@ -113,6 +117,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The gas burner burns gas to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Gas-fired_power_facility",
+            "danger_description": "Risk of gas leaks",
         },
         "small_water_dam": {
             "name": "Small water dam",
@@ -129,6 +134,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The small water dam uses the potential energy of the water to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
+            "danger_description": "Risk of structural failure due to floods",
         },
         "onshore_wind_turbine": {
             "name": "Onshore wind turbine",
@@ -149,6 +155,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The wind turbine uses the energy of the wind to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
+            "danger_description": "Risk of structural failure in high winds",
         },
         "combined_cycle": {
             "name": "Combined cycle",
@@ -168,6 +175,7 @@ full_config = {
             "image_extension": "png",
             "description": "The combined cycle power facility burns coal and gas to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Combined_cycle_power_facility",
+            "danger_description": "Risk of gas leaks",
         },
         "nuclear_reactor": {
             "name": "Nuclear reactor",
@@ -188,6 +196,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The nuclear power facility uses controlled nuclear fission to produce a large amount of electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Nuclear_power_facility",
+            "danger_description": "Risk of reactor meltdown",
         },
         "large_water_dam": {
             "name": "Large water dam",
@@ -204,6 +213,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The large water dam uses the potential energy of the water to produce a large amount of electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
+            "danger_description": "Risk of structural failure due to floods",
         },
         "CSP_solar": {
             "name": "Concentrated solar power",
@@ -259,6 +269,7 @@ full_config = {
             "image_extension": "jpg",
             "description": "The wind turbine uses the energy of the wind to produce electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
+            "danger_description": "Risk of structural failure due to storms",
         },
         "nuclear_reactor_gen4": {
             "name": "4th generation nuclear",
@@ -279,6 +290,7 @@ full_config = {
             "image_extension": "png",
             "description": "The nuclear power facility of the 4th generation uses controlled nuclear fission to produce a large amount of electricity fom a litle quantity of fuel.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Generation_IV_reactor",
+            "danger_description": "Risk of reactor meltdown",
         },
         "small_pumped_hydro": {
             "name": "Small pumped hydro",
@@ -403,6 +415,7 @@ full_config = {
             "construction pollution": 100000,  # [kg]
             "price multiplier": 1.3,
             "time factor": 0.9,
+            "requirements": [],
             "description": "",
             "wikipedia_link": "",
         },
@@ -414,6 +427,7 @@ full_config = {
             "construction pollution": 25000,
             "price multiplier": 1.5,
             "capacity factor": 1.5,
+            "requirements": [],
             "description": "",
             "wikipedia_link": "",
         },
@@ -428,6 +442,7 @@ full_config = {
             "price multiplier": 1.25,
             "power factor": 1.4,
             "income factor": 1.35,
+            "requirements": [],
             "description": "",
             "wikipedia_link": "",
         },
@@ -853,6 +868,18 @@ class Config(object):
         config.update_resource_extraction(player_id)
 
         for asset in assets:
+            # remove fulfilled requirements
+            assets[asset]["locked"] = False
+            for req in assets[asset]["requirements"]:
+                if req[1] + getattr(player, asset) < 1:
+                    assets[asset]["requirements"].remove(req)
+                    continue
+                req[2] = getattr(player, req[0]) >= req[1] + getattr(
+                    player, asset
+                )
+                if not req[2]:
+                    assets[asset]["locked"] = True
+
             if asset in [
                 "steam_engine",
                 "watermill",
@@ -1076,17 +1103,6 @@ class Config(object):
                 assets[asset]["construction time"] *= (
                     assets["laboratory"]["time factor"] ** player.laboratory
                 )
-                # remove fulfilled requirements
-                assets[asset]["locked"] = False
-                for req in assets[asset]["requirements"]:
-                    if req[1] + getattr(player, asset) < 1:
-                        assets[asset]["requirements"].remove(req)
-                        continue
-                    req[2] = getattr(player, req[0]) >= req[1] + getattr(
-                        player, asset
-                    )
-                    if not req[2]:
-                        assets[asset]["locked"] = True
 
             if asset in [
                 "watermill",
@@ -1263,6 +1279,10 @@ class Config(object):
             assets["transport_technology"]["energy factor"]
             ** player.transport_technology
         )
+
+        # setting the number of workers
+        player.construction_workers = player.building_technology + 1
+        player.lab_workers = math.floor(player.laboratory / 3) + 1
 
     def __getitem__(config, player_id):
         if player_id not in config.for_player:

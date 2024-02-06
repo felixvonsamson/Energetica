@@ -16,7 +16,7 @@
                  style="width:39px">×</div>
         </div>
         <div class="txt_center margin medium">
-            <p>This is one of the 6 interactive graphs that vusualize your production over time.</p>
+            <p>This graph shows your revenues and expenses.</p>
             <p>
                 You can hover on the various elements of the graph to display more informations. You can also adjust the time
                 scale of the graph with the buttons at the bottom.
@@ -31,6 +31,7 @@
     </div>
 {% endblock content %}
 {% block additionnal_script %}
+    <script>let ratio = 0.6;</script>
     <script src="{{ url_for('static', filename='charts/buttons.js') }}"></script>
     <script src="{{ url_for('static', filename='charts/revenues.js') }}"></script>
 {% endblock additionnal_script %}

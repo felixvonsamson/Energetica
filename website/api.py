@@ -6,7 +6,6 @@ from flask import Blueprint, request, flash, jsonify, g, current_app, redirect
 from flask_login import login_required, current_user
 import pickle
 from pathlib import Path
-import numpy as np
 from .utils import (
     put_resource_on_market,
     buy_resource_from_market,
@@ -14,6 +13,9 @@ from .utils import (
     confirm_location,
     set_network_prices,
     start_project,
+    cancel_project,
+    pause_project,
+    increase_project_priority,
 )
 from . import db
 from .database import Hex, Player, Chat, Network, Under_construction
@@ -88,7 +90,7 @@ def get_chat():
 def get_chart_data():
     assets = g.engine.config[current_user.id]["assets"]
     timescale = request.args.get("timescale")
-    # values for `timescale` are in ["6h", "day", "5_days", "month", "6_months"]
+    # values for `timescale` are in ["day", "5_days", "month", "6_months"]
     table = request.args.get("table")
     # values for `table` are in ["demand", "emissions", "generation", "resources", "revenues", "storage"]
     filename = f"instance/player_data/{current_user.id}/{timescale}.pck"
@@ -155,7 +157,7 @@ def get_chart_data():
             return jsonify(
                 g.engine.data["current_t"],
                 data[table],
-                g.engine.data["current_data"][current_user.username][table],
+                g.engine.data["current_data"][current_user.id][table],
                 capacities,
                 rates,
                 on_sale,
@@ -163,14 +165,14 @@ def get_chart_data():
         return jsonify(
             g.engine.data["current_t"],
             data[table],
-            g.engine.data["current_data"][current_user.username][table],
+            g.engine.data["current_data"][current_user.id][table],
             capacities,
         )
     else:
         return jsonify(
             g.engine.data["current_t"],
             data[table],
-            g.engine.data["current_data"][current_user.username][table],
+            g.engine.data["current_data"][current_user.id][table],
         )
 
 
@@ -188,20 +190,9 @@ def get_market_data():
             market_data["capacities"] = market_data["capacities"].to_dict(
                 orient="list"
             )
-            market_data["capacities"]["player"] = [
-                player.username
-                for player in market_data["capacities"]["player"]
-            ]
             market_data["demands"] = market_data["demands"].to_dict(
                 orient="list"
             )
-            market_data["demands"]["player"] = [
-                player.username for player in market_data["demands"]["player"]
-            ]
-            market_data["demands"]["price"] = [
-                None if price == np.inf else price
-                for price in market_data["demands"]["price"]
-            ]
     else:
         market_data = None
     timescale = request.args.get("timescale")
@@ -220,9 +211,9 @@ def get_market_data():
 @api.route("/get_ud_and_config", methods=["GET"])
 def get_ud_and_config():
     family = request.args.get("filter")
-    constructions = Under_construction.query.filter(
-        Under_construction.player_id == current_user.id
-    ).filter(Under_construction.family == family)
+    constructions = Under_construction.query.filter_by(
+        player_id=current_user.id, family=family
+    ).all()
     assets = g.engine.config[current_user.id]["assets"]
     ud = {}
     for construction in constructions:
@@ -242,10 +233,14 @@ def get_ud_and_config():
 # Gets list of facilities under construction for this player
 @api.route("/get_constructions", methods=["GET"])
 def get_constructions():
-    constructions = Under_construction.query.filter(
-        Under_construction.player_id == current_user.id
+    projects = current_user.get_constructions()
+    construction_priorities = current_user.read_project_priority(
+        "construction_priorities"
     )
-    return jsonify(constructions)
+    research_priorities = current_user.read_project_priority(
+        "research_priorities"
+    )
+    return jsonify(projects, construction_priorities, research_priorities)
 
 
 # gets scoreboard data :
@@ -288,7 +283,46 @@ def request_start_project():
     facility = json["facility"]
     family = json["family"]
     response = start_project(
-        engine=g.engine, player=current_user, facility=facility, family=family
+        player=current_user, facility=facility, family=family
+    )
+    return jsonify(response)
+
+
+@api.route("/request_cancel_project", methods=["POST"])
+def request_cancel_project():
+    """
+    this function is executed when a player cancels an ongoing construction or upgrade
+    """
+    json = request.get_json()
+    construction_id = json["id"]
+    response = cancel_project(
+        player=current_user, construction_id=construction_id
+    )
+    return jsonify(response)
+
+
+@api.route("/request_pause_project", methods=["POST"])
+def request_pause_project():
+    """
+    this function is executed when a player pauses or unpauses an ongoing construction or upgrade
+    """
+    json = request.get_json()
+    construction_id = json["id"]
+    response = pause_project(
+        player=current_user, construction_id=construction_id
+    )
+    return jsonify(response)
+
+
+@api.route("/request_increase_project_priority", methods=["POST"])
+def request_increase_project_priority():
+    """
+    this function is executed when a player changes the order of ongoing constructions or upgrades
+    """
+    json = request.get_json()
+    construction_id = json["id"]
+    response = increase_project_priority(
+        player=current_user, construction_id=construction_id
     )
     return jsonify(response)
 

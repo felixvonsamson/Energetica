@@ -4,7 +4,7 @@
 {% endblock title %}
 {% block content
   %}
-  {% set data = all_data["assets"] %}
+  {% set assets = data["assets"] %}
   <div class="flex-row huge title">
     Functional facilities
     <div class="pine info_icon_container"
@@ -26,17 +26,9 @@
     </div>
   </div>
   <div id="under_construction">
-    {% if user.under_construction %}
-      {% for facility in user.under_construction %}
-        {% if facility.family == "functional_facilities" %}
-          <div class="padding" id="progress_bar">
-            The facility <b>{{ data[facility.name]["name"] }}</b> is under construction <i class="time" data-name="{{ facility.finish_time }}"></i>
-          </div>
-        {% endif %}
-      {% endfor %}
-    {% endif %}
+    {# Facilites under construction will show here #}
   </div>
-  {% set facility = data["industry"] %}
+  {% set facility = assets["industry"] %}
   <div id="{{ facility['name'] }}"
        class="bone margin facility small construction_tile"
        onclick="show_construction('{{ facility['name'] }}', 'False');">
@@ -88,14 +80,14 @@
     </strong>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('industry', 'functional_facilities');"
+     onclick="start_construction('industry', 'Functional facilities');"
      style="width:160px">
     Start construction
   </b>
 </div>
 </div>
 </div>
-{% set facility = data["laboratory"] %}
+{% set facility = assets["laboratory"] %}
 <div id="{{ facility['name'] }}"
      class="bone margin facility small construction_tile"
      onclick="show_construction('{{ facility['name'] }}', 'False');">
@@ -138,14 +130,14 @@
   </strong>
 </div>
 <b class="padding medium white button margin-small txt_center"
-   onclick="start_construction('laboratory', 'functional_facilities');"
+   onclick="start_construction('laboratory', 'Functional facilities');"
    style="width:160px">
   Start construction
 </b>
 </div>
 </div>
 </div>
-{% set facility = data["warehouse"] %}
+{% set facility = assets["warehouse"] %}
 <div id="{{ facility['name'] }}"
      class="bone margin facility small construction_tile"
      onclick="show_construction('{{ facility['name'] }}', 'False');">
@@ -187,25 +179,25 @@
         <tr>
           <td>Coal capacity</td>
           <td class="txt_center">
-            <script>display_upgrade_kg({{ all_data["warehouse_capacities"]["coal"] }}, {{ facility["capacity factor"]}});</script>
+            <script>display_upgrade_kg({{ data["warehouse_capacities"]["coal"] }}, {{ facility["capacity factor"]}});</script>
           </td>
         </tr>
         <tr>
           <td>Oil capacity</td>
           <td class="txt_center">
-            <script>display_upgrade_kg({{ all_data["warehouse_capacities"]["oil"] }}, {{ facility["capacity factor"]}});</script>
+            <script>display_upgrade_kg({{ data["warehouse_capacities"]["oil"] }}, {{ facility["capacity factor"]}});</script>
           </td>
         </tr>
         <tr>
           <td>Gas capacity</td>
           <td class="txt_center">
-            <script>display_upgrade_kg({{ all_data["warehouse_capacities"]["gas"] }}, {{ facility["capacity factor"]}});</script>
+            <script>display_upgrade_kg({{ data["warehouse_capacities"]["gas"] }}, {{ facility["capacity factor"]}});</script>
           </td>
         </tr>
         <tr>
           <td>Uranium cap.</td>
           <td class="txt_center">
-            <script>display_upgrade_kg({{ all_data["warehouse_capacities"]["uranium"] }}, {{ facility["capacity factor"]}});</script>
+            <script>display_upgrade_kg({{ data["warehouse_capacities"]["uranium"] }}, {{ facility["capacity factor"]}});</script>
           </td>
         </tr>
       {% endif %}
@@ -227,14 +219,14 @@
   </strong>
 </div>
 <b class="padding medium white button margin-small txt_center"
-   onclick="start_construction('warehouse', 'functional_facilities');"
+   onclick="start_construction('warehouse', 'Functional facilities');"
    style="width:160px">
   Start construction
 </b>
 </div>
 </div>
 </div>
-{% set facility = data["carbon_capture"] %}
+{% set facility = assets["carbon_capture"] %}
 <div id="{{ facility['name'] }}"
      class="bone margin facility small construction_tile"
      onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
@@ -257,7 +249,7 @@
           {% for req in facility["requirements"] %}
             <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
               -
-              {{ data[req[0]]["name"] }} lvl {{ req[1] }}
+              {{ assets[req[0]]["name"] }} lvl {{ req[1] }}
             </li>
           {% endfor %}
         </ul>
@@ -300,7 +292,7 @@
   </strong>
 </div>
 <b class="padding medium white button margin-small txt_center"
-   onclick="start_construction('carbon_capture', 'functional_facilities');"
+   onclick="start_construction('carbon_capture', 'Functional facilities');"
    style="width:160px">
   Start construction
 </b>
@@ -311,4 +303,6 @@
 {% block additionnal_script %}
   <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
   <script src="{{ url_for('static', filename='lvlup_display.js') }}"></script>
+  <script>retrieve_constructions()</script>
+  <script>refresh_progressBar()</script>
 {% endblock additionnal_script %}

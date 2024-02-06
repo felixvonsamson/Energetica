@@ -3,7 +3,7 @@
   Technologies
 {% endblock title %}
 {% block content %}
-  {% set data = all_data["assets"] %}
+  {% set assets = data["assets"] %}
   <div class="flex-row huge title">
     Technologies
     <div class="pine info_icon_container"
@@ -28,17 +28,9 @@
     </div>
   </div>
   <div id="under_construction">
-    {% if user.under_construction %}
-      {% for facility in user.under_construction %}
-        {% if facility.family == "technologies" %}
-          <div class="padding" id="progress_bar">
-            The research on the technology <b>{{ data[facility.name]["name"] }}</b> is currently underway. <i class="time" data-name="{{ facility.finish_time }}"></i>
-          </div>
-        {% endif %}
-      {% endfor %}
-    {% endif %}
+    {# Facilites under construction will show here #}
   </div>
-  {% set facility = data["mathematics"] %}
+  {% set facility = assets["mathematics"] %}
   <div id="{{ facility['name'] }}"
        class="bone margin facility small construction_tile"
        onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
@@ -62,7 +54,7 @@
             {% for req in facility["requirements"] %}
               <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
                 -
-                {{ data[req[0]]["name"] }} lvl {{ req[1]+user.mathematics }}
+                {{ assets[req[0]]["name"] }} lvl {{ req[1]+user.mathematics }}
               </li>
             {% endfor %}
           </ul>
@@ -82,14 +74,14 @@
       <br>
     </div>
     <b class="padding medium white button margin-small txt_center"
-       onclick="start_construction('mathematics', 'technologies');"
+       onclick="start_construction('mathematics', 'Technologies');"
        style="width:160px">
       Start construction
     </b>
   </div>
 </div>
 </div>
-{% set facility = data["mechanical_engineering"] %}
+{% set facility = assets["mechanical_engineering"] %}
 <div id="{{ facility['name'] }}"
      class="bone margin facility small construction_tile"
      onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
@@ -105,9 +97,9 @@
     Affects the facilities :
     {% for facility in ["steam_engine", "watermill", "coal_burner", "oil_burner", "gas_burner", "combined_cycle",
       "compressed_air"] %}
-      <em class="txt-blue">{{ data[facility].name }}</em> ,
+      <em class="txt-blue">{{ assets[facility].name }}</em> ,
     {% endfor %}
-    <em class="txt-blue">{{ data["molten_salt"].name }}</em>
+    <em class="txt-blue">{{ assets["molten_salt"].name }}</em>
   </div>
   <div class="infobox" id="requirements">
     {% if facility["locked"] %}
@@ -118,7 +110,7 @@
           {% for req in facility["requirements"] %}
             <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
               -
-              {{ data[req[0]]["name"] }} lvl {{ req[1]+user.mechanical_engineering }}
+              {{ assets[req[0]]["name"] }} lvl {{ req[1]+user.mechanical_engineering }}
             </li>
           {% endfor %}
         </ul>
@@ -156,14 +148,14 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('mechanical_engineering', 'technologies');"
+     onclick="start_construction('mechanical_engineering', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
 </div>
 </div>
 </div>
-{% set facility = data["thermodynamics"] %}
+{% set facility = assets["thermodynamics"] %}
 <div id="{{ facility['name'] }}"
      class="bone margin facility small construction_tile"
      onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
@@ -179,9 +171,9 @@
     Affects the facilities :
     {% for facility in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "nuclear_reactor",
       "nuclear_reactor_gen4", "compressed_air"] %}
-      <em class="txt-blue">{{ data[facility].name }}</em> ,
+      <em class="txt-blue">{{ assets[facility].name }}</em> ,
     {% endfor %}
-    <em class="txt-blue">{{ data["molten_salt"].name }}</em>
+    <em class="txt-blue">{{ assets["molten_salt"].name }}</em>
   </div>
   <div class="infobox" id="requirements">
     {% if facility["locked"] %}
@@ -192,7 +184,7 @@
           {% for req in facility["requirements"] %}
             <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
               -
-              {{ data[req[0]]["name"] }} lvl {{ req[1]+user.thermodynamics }}
+              {{ assets[req[0]]["name"] }} lvl {{ req[1]+user.thermodynamics }}
             </li>
           {% endfor %}
         </ul>
@@ -223,7 +215,7 @@
       </tr>
       <tr>
         <td>Effic. molten salt</td>
-        <td id="Efficiency_MS" class="txt_center">+{{ (10/data["molten_salt"]["efficiency"]-10)|round(1) }}%</td>
+        <td id="Efficiency_MS" class="txt_center">+{{ (10/assets["molten_salt"]["efficiency"]-10)|round(1) }}%</td>
       </tr>
     </table>
   </div>
@@ -240,14 +232,14 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('thermodynamics', 'technologies');"
+     onclick="start_construction('thermodynamics', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
 </div>
 </div>
 </div>
-{% set facility = data["physics"] %}
+{% set facility = assets["physics"] %}
 <div id="{{ facility['name'] }}"
      class="bone margin facility small construction_tile"
      onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
@@ -262,9 +254,9 @@
     <br>
     Affects the facilities :
     {% for facility in ["PV_solar", "CSP_solar", "hydrogen_storage", "lithium_ion_batteries"] %}
-      <em class="txt-blue">{{ data[facility].name }}</em> ,
+      <em class="txt-blue">{{ assets[facility].name }}</em> ,
     {% endfor %}
-    <em class="txt-blue">{{ data["solid_state_batteries"].name }}</em>
+    <em class="txt-blue">{{ assets["solid_state_batteries"].name }}</em>
   </div>
   <div class="infobox" id="requirements">
     {% if facility["locked"] %}
@@ -275,7 +267,7 @@
           {% for req in facility["requirements"] %}
             <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
               -
-              {{ data[req[0]]["name"] }} lvl {{ req[1]+user.physics }}
+              {{ assets[req[0]]["name"] }} lvl {{ req[1]+user.physics }}
             </li>
           {% endfor %}
         </ul>
@@ -311,14 +303,14 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('physics', 'technologies');"
+     onclick="start_construction('physics', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
 </div>
 </div>
 </div>
-{% set facility = data["building_technology"] %}
+{% set facility = assets["building_technology"] %}
 <div id="{{ facility['name'] }}"
      class="bone margin facility small construction_tile"
      onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
@@ -342,7 +334,7 @@
           {% for req in facility["requirements"] %}
             <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
               -
-              {{ data[req[0]]["name"] }} lvl {{ req[1]+user.building_technology }}
+              {{ assets[req[0]]["name"] }} lvl {{ req[1]+user.building_technology }}
             </li>
           {% endfor %}
         </ul>
@@ -374,14 +366,14 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('building_technology', 'technologies');"
+     onclick="start_construction('building_technology', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
 </div>
 </div>
 </div>
-{% set facility = data["mineral_extraction"] %}
+{% set facility = assets["mineral_extraction"] %}
 <div id="{{ facility['name'] }}"
      class="bone margin facility small construction_tile"
      onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
@@ -396,9 +388,9 @@
     <br>
     Affects the facilities :
     {% for facility in ["coal_mine", "oil_field", "gas_drilling_site"] %}
-      <em class="txt-blue">{{ data[facility].name }}</em> ,
+      <em class="txt-blue">{{ assets[facility].name }}</em> ,
     {% endfor %}
-    <em class="txt-blue">{{ data["uranium_mine"].name }}</em>
+    <em class="txt-blue">{{ assets["uranium_mine"].name }}</em>
   </div>
   <div class="infobox" id="requirements">
     {% if facility["locked"] %}
@@ -409,7 +401,7 @@
           {% for req in facility["requirements"] %}
             <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
               -
-              {{ data[req[0]]["name"] }} lvl {{ req[1]+user.mineral_extraction }}
+              {{ assets[req[0]]["name"] }} lvl {{ req[1]+user.mineral_extraction }}
             </li>
           {% endfor %}
         </ul>
@@ -453,14 +445,14 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('mineral_extraction', 'technologies');"
+     onclick="start_construction('mineral_extraction', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
 </div>
 </div>
 </div>
-{% set facility = data["transport_technology"] %}
+{% set facility = assets["transport_technology"] %}
 <div id="{{ facility['name'] }}"
      class="bone margin facility small construction_tile"
      onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
@@ -484,7 +476,7 @@
           {% for req in facility["requirements"] %}
             <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
               -
-              {{ data[req[0]]["name"] }} lvl {{ req[1]+user.transport_technology }}
+              {{ assets[req[0]]["name"] }} lvl {{ req[1]+user.transport_technology }}
             </li>
           {% endfor %}
         </ul>
@@ -520,14 +512,14 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('transport_technology', 'technologies');"
+     onclick="start_construction('transport_technology', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
 </div>
 </div>
 </div>
-{% set facility = data["materials"] %}
+{% set facility = assets["materials"] %}
 <div id="{{ facility['name'] }}"
      class="bone margin facility small construction_tile"
      onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
@@ -543,9 +535,9 @@
     <br>
     Affects the facilities :
     {% for facility in ["PV_solar", "onshore_wind_turbine", "offshore_wind_turbine", "lithium_ion_batteries"] %}
-      <em class="txt-blue">{{ data[facility].name }}</em> ,
+      <em class="txt-blue">{{ assets[facility].name }}</em> ,
     {% endfor %}
-    <em class="txt-blue">{{ data["solid_state_batteries"].name }}</em>
+    <em class="txt-blue">{{ assets["solid_state_batteries"].name }}</em>
   </div>
   <div class="infobox" id="requirements">
     {% if facility["locked"] %}
@@ -556,7 +548,7 @@
           {% for req in facility["requirements"] %}
             <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
               -
-              {{ data[req[0]]["name"] }} lvl {{ req[1]+user.materials }}
+              {{ assets[req[0]]["name"] }} lvl {{ req[1]+user.materials }}
             </li>
           {% endfor %}
         </ul>
@@ -592,14 +584,14 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('materials', 'technologies');"
+     onclick="start_construction('materials', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
 </div>
 </div>
 </div>
-{% set facility = data["civil_engineering"] %}
+{% set facility = assets["civil_engineering"] %}
 <div id="{{ facility['name'] }}"
      class="bone margin facility small construction_tile"
      onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
@@ -614,9 +606,9 @@
     <br>
     Affects the facilities :
     {% for facility in ["small_water_dam", "large_water_dam", "small_pumped_hydro"] %}
-      <em class="txt-blue">{{ data[facility].name }}</em> ,
+      <em class="txt-blue">{{ assets[facility].name }}</em> ,
     {% endfor %}
-    <em class="txt-blue">{{ data["large_pumped_hydro"].name }}</em>
+    <em class="txt-blue">{{ assets["large_pumped_hydro"].name }}</em>
   </div>
   <div class="infobox" id="requirements">
     {% if facility["locked"] %}
@@ -627,7 +619,7 @@
           {% for req in facility["requirements"] %}
             <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
               -
-              {{ data[req[0]]["name"] }} lvl {{ req[1]+user.civil_engineering }}
+              {{ assets[req[0]]["name"] }} lvl {{ req[1]+user.civil_engineering }}
             </li>
           {% endfor %}
         </ul>
@@ -667,14 +659,14 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('civil_engineering', 'technologies');"
+     onclick="start_construction('civil_engineering', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
 </div>
 </div>
 </div>
-{% set facility = data["aerodynamics"] %}
+{% set facility = assets["aerodynamics"] %}
 <div id="{{ facility['name'] }}"
      class="bone margin facility small construction_tile"
      onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
@@ -690,9 +682,9 @@
     <br>
     Affects the facilities :
     {% for facility in ["windmill", "onshore_wind_turbine"] %}
-      <em class="txt-blue">{{ data[facility].name }}</em> ,
+      <em class="txt-blue">{{ assets[facility].name }}</em> ,
     {% endfor %}
-    <em class="txt-blue">{{ data["offshore_wind_turbine"].name }}</em>
+    <em class="txt-blue">{{ assets["offshore_wind_turbine"].name }}</em>
   </div>
   <div class="infobox" id="requirements">
     {% if facility["locked"] %}
@@ -703,7 +695,7 @@
           {% for req in facility["requirements"] %}
             <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
               -
-              {{ data[req[0]]["name"] }} lvl {{ req[1]+user.aerodynamics }}
+              {{ assets[req[0]]["name"] }} lvl {{ req[1]+user.aerodynamics }}
             </li>
           {% endfor %}
         </ul>
@@ -739,14 +731,14 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('aerodynamics', 'technologies');"
+     onclick="start_construction('aerodynamics', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
 </div>
 </div>
 </div>
-{% set facility = data["chemistry"] %}
+{% set facility = assets["chemistry"] %}
 <div id="{{ facility['name'] }}"
      class="bone margin facility small construction_tile"
      onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
@@ -762,9 +754,9 @@
     <br>
     Affects the facilities :
     {% for facility in ["hydrogen_storage", "lithium_ion_batteries"] %}
-      <em class="txt-blue">{{ data[facility].name }}</em> ,
+      <em class="txt-blue">{{ assets[facility].name }}</em> ,
     {% endfor %}
-    <em class="txt-blue">{{ data["solid_state_batteries"].name }}</em>
+    <em class="txt-blue">{{ assets["solid_state_batteries"].name }}</em>
   </div>
   <div class="infobox" id="requirements">
     {% if facility["locked"] %}
@@ -775,7 +767,7 @@
           {% for req in facility["requirements"] %}
             <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
               -
-              {{ data[req[0]]["name"] }} lvl {{ req[1]+user.chemistry }}
+              {{ assets[req[0]]["name"] }} lvl {{ req[1]+user.chemistry }}
             </li>
           {% endfor %}
         </ul>
@@ -794,11 +786,11 @@
       </tr>
       <tr>
         <td>Efficiency Li-ion</td>
-        <td id="E_Li_ion" class="txt_center">+{{ (10/data["lithium_ion_batteries"]["efficiency"]-10)| round(2) }}%</td>
+        <td id="E_Li_ion" class="txt_center">+{{ (10/assets["lithium_ion_batteries"]["efficiency"]-10)| round(2) }}%</td>
       </tr>
       <tr>
         <td>Efficiency solid state</td>
-        <td id="E_SS" class="txt_center">+{{ (10/data["solid_state_batteries"]["efficiency"]-10)| round(2) }}%</td>
+        <td id="E_SS" class="txt_center">+{{ (10/assets["solid_state_batteries"]["efficiency"]-10)| round(2) }}%</td>
       </tr>
       <tr>
         <td>Price</td>
@@ -819,14 +811,14 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('chemistry', 'technologies');"
+     onclick="start_construction('chemistry', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
 </div>
 </div>
 </div>
-{% set facility = data["nuclear_engineering"] %}
+{% set facility = assets["nuclear_engineering"] %}
 <div id="{{ facility['name'] }}"
      class="bone margin facility small construction_tile"
      onclick="show_construction('{{ facility['name'] }}', '{{ facility['locked'] }}');">
@@ -840,8 +832,8 @@
     Nuclear engineers are used to improve nuclear power facilities.
     <br>
     Affects the facilities :
-    <em class="txt-blue">{{ data["nuclear_reactor"].name }}</em> ,
-    <em class="txt-blue">{{ data["nuclear_reactor_gen4"].name }}</em>
+    <em class="txt-blue">{{ assets["nuclear_reactor"].name }}</em> ,
+    <em class="txt-blue">{{ assets["nuclear_reactor_gen4"].name }}</em>
   </div>
   <div class="infobox" id="requirements">
     {% if facility["locked"] %}
@@ -852,7 +844,7 @@
           {% for req in facility["requirements"] %}
             <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
               -
-              {{ data[req[0]]["name"] }} lvl {{ req[1]+user.nuclear_engineering }}
+              {{ assets[req[0]]["name"] }} lvl {{ req[1]+user.nuclear_engineering }}
             </li>
           {% endfor %}
         </ul>
@@ -888,7 +880,7 @@
     <br>
   </div>
   <b class="padding medium white button margin-small txt_center"
-     onclick="start_construction('nuclear_engineering', 'technologies');"
+     onclick="start_construction('nuclear_engineering', 'Technologies');"
      style="width:160px">
     Start construction
   </b>
@@ -899,4 +891,6 @@
 {% block additionnal_script %}
   <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
   <script src="{{ url_for('static', filename='lvlup_display.js') }}"></script>
+  <script>retrieve_constructions()</script>
+  <script>refresh_progressBar()</script>
 {% endblock additionnal_script %}

@@ -9,14 +9,14 @@ let maxSum;
 let graph;
 let fill_alt = 0;
 
-let active_view = "Revenues";
-const resolution = ["6h", "day", "5 days", "month", "6 months"];
-let res = "6h";
+const resolution = ["2h", "6h", "day", "5 days", "month", "6 months"];
+let res = "2h";
 const res_to_data = {
+    "2h": ["day", 1],
     "6h": ["day", 1],
-    day: ["day", 1],
+    "day": ["day", 1],
     "5 days": ["5_days", 5],
-    month: ["month", 30],
+    "month": ["month", 30],
     "6 months": ["6_months", 180],
 };
 
@@ -45,6 +45,7 @@ class Button {
 
 function preload() {
     font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
+    balooBold = loadFont("static/fonts/Baloo2-SemiBold.ttf");
     coin = loadImage("static/images/icons/coin.svg");
 }
 
@@ -96,12 +97,12 @@ function setup() {
         uranium: [color(191, 210, 0), "Uranium"],
     };
     let canvas_width = 0.7 * windowWidth;
-    let canvas_height = 0.42 * windowWidth;
+    let canvas_height = 0.7 * ratio * windowWidth;
     if (windowWidth < 1200) {
         canvas_width = windowWidth;
-        canvas_height = 0.6 * windowWidth;
+        canvas_height = ratio * windowWidth;
     }
-    let canvas = createCanvas(min(canvas_width, 1200), min(canvas_height, 720));
+    let canvas = createCanvas(min(canvas_width, 1200), min(canvas_height, ratio*1200));
     margin = min(40, width / 25);
     canvas.parent("graph");
     textAlign(CENTER, CENTER);
@@ -168,16 +169,20 @@ function reduce(arr1, arr2, res, t) {
     } else {
         result = arr1.concat(arr2);
     }
-    if (res == "6h") {
+    if (res == "2h") {
+        result = result.slice(-120);
+    }else if(res == "6h"){
         result = result.slice(-360);
-    } else {
+    }else {
         result = result.slice(-1440);
     }
     return result;
 }
 
 function time_unit(res) {
-    if (res == "6h") {
+    if (res == "2h") {
+        return ["2h", "1h40", "1h20", "1h", "40min", "20min", "now"];
+    } else if (res == "6h") {
         return ["6h", "5h", "4h", "3h", "2h", "1h", "now"];
     } else if (res == "day") {
         return ["24h", "20h", "16h", "12h", "8h", "4h", "now"];
@@ -290,17 +295,4 @@ function display_kg_long(mass) {
 
 function display_kgh_long(mass) {
     return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} kg/h`;
-}
-
-function change_view(view) {
-    resetMatrix();
-    graph = null;
-    const boldElements = document.querySelectorAll("b");
-    boldElements.forEach(function (boldElement) {
-        boldElement.classList.remove("active");
-    });
-    let button = document.getElementById(view);
-    button.classList.add("active");
-    active_view = view;
-    update_graph();
 }

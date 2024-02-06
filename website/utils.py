@@ -29,11 +29,29 @@ def flash_error(msg):
 
 
 # this function is executed after an asset is finished facility :
-def add_asset(player, facility):
-    setattr(player, facility, getattr(player, facility) + 1)
+def add_asset(player_id, construction_id):
+    player = Player.query.get(player_id)
+    construction = Under_construction.query.get(construction_id)
+    setattr(player, construction.name, getattr(player, construction.name) + 1)
+    priority_list_name = "construction_priorities"
+    if construction.family == "Technologies":
+        priority_list_name = "research_priorities"
+    player.remove_project_priority(priority_list_name, construction_id)
+    construction_priorities = player.read_project_priority(
+        "construction_priorities"
+    )
+    for id in construction_priorities:
+        construction = Under_construction.query.get(id)
+        if construction.suspension_time is not None:
+            construction.start_time += (
+                time.time() - construction.suspension_time
+            )
+            construction.suspension_time = None
+            db.session.commit()
+            break
     current_app.config["engine"].config.update_config_for_user(player.id)
     print(
-        f"{player.username} has finished the construction of facility {facility}"
+        f"{player.username} has finished the construction of facility {construction.name}"
     )
 
 
@@ -156,11 +174,11 @@ def save_past_data_threaded(app, engine, new_data, network_data):
                     ) as file:
                         past_data[timescale] = pickle.load(file)
 
-                past_data["day"] = new_data[player.username]
+                past_data["day"] = new_data[player.id]
                 for category in past_data["5_days"]:
                     for element in past_data["5_days"][category]:
                         new_array = np.array(
-                            new_data[player.username][category][element]
+                            new_data[player.id][category][element]
                         )
                         new_5_days = np.mean(new_array.reshape(-1, 5), axis=1)
                         past_data["5_days"][category][element] = past_data[
@@ -385,11 +403,21 @@ def set_network_prices(engine, player, prices, SCPs):
     db.session.commit()
 
 
-def start_project(engine, player, facility, family):
+def start_project(player, facility, family):
     """this function is executed when a player clicks on 'start construction'"""
     assets = current_app.config["engine"].config[player.id]["assets"]
 
-    if family in ["functional_facilities", "technologies"]:
+    if assets[facility]["locked"]:
+        return {"response": "locked"}
+
+    if facility in ["small_water_dam", "large_water_dam", "watermill"]:
+        ud = Under_construction.query.filter_by(
+            name=facility, player_id=player.id
+        ).count()
+        if player.tile.hydro <= getattr(player, facility) + ud:
+            return {"response": "noSuitableLocationAvailable"}
+
+    if family in ["Functional facilities", "Technologies"]:
         ud_count = Under_construction.query.filter_by(
             name=facility, player_id=player.id
         ).count()
@@ -405,29 +433,135 @@ def start_project(engine, player, facility, family):
         real_price = assets[facility]["price"]
         duration = assets[facility]["construction time"]
 
-    if family == "technologies":
-        start_time = None if player.lab_workers == 0 else time.time()
-    else:
-        start_time = None if player.construction_workers == 0 else time.time()
-
-    if assets[facility]["locked"]:
-        return {"response": "locked"}
-    if facility in ["small_water_dam", "large_water_dam", "watermill"]:
-        ud = Under_construction.query.filter_by(name=facility).count()
-        if player.tile.hydro <= getattr(player, facility) + ud:
-            return {"response": "noSuitableLocationAvailable"}
     if player.money < real_price:
         return {"response": "notEnoughMoneyError"}
 
+    priority_list_name = "construction_priorities"
+    suspension_time = time.time()
+    if family == "Technologies":
+        priority_list_name = "research_priorities"
+        if player.available_lab_workers() > 0:
+            suspension_time = None
+    else:
+        if player.available_construction_workers() > 0:
+            suspension_time = None
+
     player.money -= real_price
-    new_facility = Under_construction(
+    new_construction = Under_construction(
         name=facility,
         family=family,
-        start_time=start_time,
+        start_time=time.time(),
         duration=duration,
+        suspension_time=suspension_time,
+        original_price=real_price,
         player_id=player.id,
     )
-    db.session.add(new_facility)
+    db.session.add(new_construction)
     db.session.commit()
     print(f"{player.username} started the construction {facility}")
-    return {"response": "success", "money": player.money}
+    player.add_project_priority(priority_list_name, new_construction.id)
+    if suspension_time is None:
+        player.project_max_priority(priority_list_name, new_construction.id)
+    return {
+        "response": "success",
+        "money": player.money,
+        "constructions": get_construction_data(player),
+    }
+
+
+def cancel_project(player, construction_id):
+    """this function is executed when a player cancels an ongoing construction"""
+    construction = Under_construction.query.get(int(construction_id))
+
+    priority_list_name = "construction_priorities"
+    if construction.family == "Technologies":
+        priority_list_name = "research_priorities"
+
+    if construction.suspension_time is None:
+        time_fraction = (time.time() - construction.start_time) / (
+            construction.duration
+        )
+    else:
+        time_fraction = (
+            construction.suspension_time - construction.start_time
+        ) / (construction.duration)
+
+    refund = 0.8 * construction.original_price * (1 - time_fraction)
+    player.money += refund
+    db.session.delete(construction)
+    db.session.commit()
+    print(f"{player.username} cancelled the construction {construction.name}")
+    player.remove_project_priority(priority_list_name, construction_id)
+    return {
+        "response": "success",
+        "money": player.money,
+        "constructions": get_construction_data(player),
+    }
+
+
+def pause_project(player, construction_id):
+    """this function is executed when a player pauses or unpauses an ongoing construction"""
+    construction = Under_construction.query.get(int(construction_id))
+
+    if construction.suspension_time is None:
+        construction.suspension_time = time.time()
+    else:
+        if construction.family == "Technologies":
+            player.project_max_priority(
+                "research_priorities", int(construction_id)
+            )
+            if player.available_lab_workers() == 0:
+                research_priorities = player.read_project_priority(
+                    "research_priorities"
+                )
+                project_to_pause = Under_construction.query.get(
+                    research_priorities[player.lab_workers]
+                )
+                project_to_pause.suspension_time = time.time()
+        else:
+            player.project_max_priority(
+                "construction_priorities", int(construction_id)
+            )
+            if player.available_construction_workers() == 0:
+                construction_priorities = player.read_project_priority(
+                    "construction_priorities"
+                )
+                project_to_pause = Under_construction.query.get(
+                    construction_priorities[player.construction_workers]
+                )
+                project_to_pause.suspension_time = time.time()
+        construction.start_time += time.time() - construction.suspension_time
+        construction.suspension_time = None
+    db.session.commit()
+    return {
+        "response": "success",
+        "constructions": get_construction_data(player),
+    }
+
+
+def increase_project_priority(player, construction_id):
+    """this function is executed when a player changes the order of ongoing constructions"""
+    construction = Under_construction.query.get(int(construction_id))
+
+    if construction.family == "Technologies":
+        player.increase_project_priority(
+            "research_priorities", int(construction_id)
+        )
+    else:
+        player.increase_project_priority(
+            "construction_priorities", int(construction_id)
+        )
+
+    return {
+        "response": "success",
+        "constructions": get_construction_data(player),
+    }
+
+
+def get_construction_data(player):
+    projects = player.get_constructions()
+    construction_priorities = player.read_project_priority(
+        "construction_priorities"
+    )
+    research_priorities = player.read_project_priority("research_priorities")
+    return {0: projects, 1: construction_priorities, 2: research_priorities}

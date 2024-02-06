@@ -36,9 +36,9 @@ function draw() {
         fill_alt = 0;
         rect(0, 0, 115, 17);
         fill(0);
-        textStyle(BOLD);
+        textFont(balooBold);
         text(display_duration((data_len - t - 1) * res_to_data[res][1]), 57, 5);
-        textStyle(NORMAL);
+        textFont(font);
         for (const key of keys_resources) {
             if (data[key][t] > 0) {
                 alternate_fill();
@@ -112,10 +112,10 @@ function show_stored(resource, x, y, y_fix) {
     fill_alt = 1;
     alternate_fill();
     rect(0, 0, 160, 17);
-    textStyle(BOLD);
+    textFont(balooBold);
     fill(0);
     text(cols_and_names[resource][1], 80, 4);
-    textStyle(NORMAL);
+    textFont(font);
     alternate_fill();
     translate(0, 16);
     rect(0, 0, 160, 17);
@@ -154,7 +154,7 @@ function show_stored(resource, x, y, y_fix) {
     fill(229, 217, 182);
     noStroke();
     rect(-5, 0, margin + 10, 20);
-    textStyle(BOLD);
+    textFont(balooBold);
     fill(0);
     text(
         round((data[resource][data_len - 1] / caps[resource]) * 100) + "%",
@@ -259,7 +259,7 @@ function regen(res) {
             fill(60, 60, 60);
             h = (on_sale["coal"] / caps["coal"]) * (0.5 * height - 60);
             rect(0, 0, margin, -h);
-            textStyle(BOLD);
+            textFont(balooBold);
             textSize(15);
             fill(0);
             text("Coal", 0.5 * margin, 10);

@@ -87,8 +87,14 @@ def init_test_players(engine):
     # player.uranium_mine = 1
     # player.small_pumped_hydro = 1
     # player.hydrogen_storage = 1
-    player.mineral_extraction = 5
+    player.mineral_extraction = 2
     player.money = 1000000
+    player.building_technology = 1
+    # player.coal = 450000
+    # player.oil = 100000
+    # player.gas = 800000
+    # player.uranium = 4500
+    # player.warehouse = 1
     create_network(engine, "network", [player])
 
     # for i in range(3):
@@ -122,11 +128,10 @@ def create_player(engine, username, password):
         new_player = Player(
             username=username,
             pwhash=generate_password_hash(password, method="scrypt"),
-            data_table_name=f"data_{username}.pck",
         )
-        add_player_to_data(username)
         db.session.add(new_player)
         db.session.commit()
+        add_player_to_data(new_player.id)
         init_table(new_player)
         db.session.commit()
         return new_player

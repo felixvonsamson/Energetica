@@ -7,37 +7,58 @@
     <span class="logo_txt topleft">Energetica</span>
   </div>
   <div class="resources medium tan_green">
-    <div class="padding money_font large money">
+    <div class="money_font large money">
       <script>display_money_long({{ user.money }});</script>
     </div>
-    <div class="resoure_container">
-      <div class="padding resource" id="coal">
-        <script>display_kg({{ user.coal }});</script>
-        <img src="{{ url_for('static', filename='images/resources/coal.png') }}"
-             class="icon"
-             alt="coal">
+    {% if user.warehouse > 0 %}
+    <div class="resource_container">
+      <div class="resourceJauge-background hover_info">
+        <div class="resourceJauge coal" style="--width:{{user.coal / data.warehouse_capacities.coal}}"></div>
+        <div id="coal" class="resource" style="color:#666">
+          <script>display_kg({{ user.coal }});</script>
+        </div>
+        <span class="popup_info small">Coal stock</span>
       </div>
-      <div class="padding resource" id="oil">
-        <script>display_kg({{ user.oil }});</script>
-        <img src="{{ url_for('static', filename='images/resources/oil.png') }}"
-             class="icon"
-             alt="oil">
+      <div class="resourceJauge-background hover_info">
+        <div class="resourceJauge oil" style="--width:{{user.oil / data.warehouse_capacities.oil}}"></div>
+        <div id="oil" class="resource">
+          <script>display_kg({{ user.oil }});</script>
+        </div>
+        <span class="popup_info small">Oil stock</span>
       </div>
-      <div class="padding resource" id="gas">
-        <script>display_kg({{ user.gas }});</script>
-        <img src="{{ url_for('static', filename='images/resources/gas.png') }}"
-             class="icon"
-             alt="gas">
+      <div class="resourceJauge-background hover_info">
+        <div class="resourceJauge gas" style="--width:{{user.gas / data.warehouse_capacities.gas}}"></div>
+        <div id="gas" class="resource">
+          <script>display_kg({{ user.gas }});</script>
+        </div>
+        <span class="popup_info small">Gas stock</span>
       </div>
-      <div class="padding resource" id="uranium">
-        <script>display_kg({{ user.uranium }});</script>
-        <img src="{{ url_for('static', filename='images/resources/uranium.png') }}"
-             class="icon"
-             alt="uranium">
+      <div class="resourceJauge-background hover_info">
+        <div class="resourceJauge uranium" style="--width:{{user.uranium / data.warehouse_capacities.uranium}}"></div>
+        <div id="uranium" class="resource">
+          <script>display_kg({{ user.uranium }});</script>
+        </div>
+        <span class="popup_info small">Uranium stock</span>
+      </div>
+    </div>
+    {% endif %}
+    <div class="workers_container">
+      <div class="flex-space-around hover_info">{{user.available_construction_workers()}}/{{user.construction_workers}} 
+        <img src="{{ url_for('static', filename='images/icons/construction.png') }}"
+          class="navbar_icon padding-small" />
+        <span class="popup_info small">Construction workers</span>
+      </div>
+      <div class="flex-space-around hover_info">{{user.available_lab_workers()}}/{{user.lab_workers}} 
+        <img src="{{ url_for('static', filename='images/icons/technology.png') }}"
+          class="navbar_icon padding-small" />
+        <span class="popup_info small">Lab workers</span>
       </div>
     </div>
   </div>
+
+
   <nav class="navbar medium">
+
     <div class="tan_green flex-row main_dropdown">
       <a class="flex-row no_deco"
          href="{{ url_for('views.home') }}"
@@ -51,15 +72,18 @@
         <span class="navbar-toggler-icon margin"><i class="fa fa-bars" id="dropdown-navbar"></i></span>
       </b>
     </div>
+
     <div class="navbar-collapse" id="menu-navbar">
       <ul class="navbar-nav">
+
         <li class="nav-item">
           <a class="navbar_item tan_green flex-row" id="home" href="{{ url_for('views.home') }}">
-            <img src="{{ url_for('static', filename='images/icons/map.png') }}"
+            <img src="{{ url_for('static', filename='images/icons/home.png') }}"
                  class="navbar_icon margin-small" />
-            <span style="padding:8px 0">Map</span>
+            <span style="padding:8px 0">Home</span>
           </a>
         </li>
+
         <li class="nav-item">
           <a class="navbar_item tan_green flex-row" id="messages" href="{{ url_for('views.messages') }}">
             <img src="{{ url_for('static', filename='images/icons/messages.png') }}"
@@ -67,13 +91,7 @@
             <span style="padding:8px 0">Messages</span>
           </a>
         </li>
-        <li class="nav-item">
-          <a class="navbar_item tan_green flex-row" id="network" href="{{ url_for('views.network') }}">
-            <img src="{{ url_for('static', filename='images/icons/network.png') }}"
-                 class="navbar_icon margin-small" />
-            <span style="padding:8px 0">Network</span>
-          </a>
-        </li>
+
         <li class="nav-item dropdown">
           <a class="navbar_item tan_green flex-row"
              id="production_overview"
@@ -84,6 +102,7 @@
             <span style="padding:8px 0">Production overview</span>
           </a>
           <div class="dropdown-menu" id="menu-overview">
+
             <a class="navbar_item bone flex-row"
                id="production_overview"
                href="{{ url_for('overviews.revenues') }}">
@@ -91,20 +110,15 @@
                    class="navbar_icon margin-small" />
               <span style="padding:8px 0">Revenues</span>
             </a>
+
             <a class="navbar_item bone flex-row"
                id="production_overview"
-               href="{{ url_for('overviews.generation') }}">
-              <img src="{{ url_for('static', filename='images/icons/generation.png') }}"
+               href="{{ url_for('overviews.electricity') }}">
+              <img src="{{ url_for('static', filename='images/icons/power_facilities.png') }}"
                    class="navbar_icon margin-small" />
-              <span style="padding:8px 0">Generation</span>
+              <span style="padding:8px 0">Electricity</span>
             </a>
-            <a class="navbar_item bone flex-row"
-               id="production_overview"
-               href="{{ url_for('overviews.demand') }}">
-              <img src="{{ url_for('static', filename='images/icons/demand.png') }}"
-                   class="navbar_icon margin-small" />
-              <span style="padding:8px 0">Demand</span>
-            </a>
+
             <a class="navbar_item bone flex-row"
                id="production_overview"
                href="{{ url_for('overviews.storage') }}">
@@ -112,6 +126,7 @@
                    class="navbar_icon margin-small" />
               <span style="padding:8px 0">Storage</span>
             </a>
+
             <a class="navbar_item bone flex-row"
                id="production_overview"
                href="{{ url_for('overviews.resources') }}">
@@ -119,6 +134,7 @@
                    class="navbar_icon margin-small" />
               <span style="padding:8px 0">Resources</span>
             </a>
+
             <a class="navbar_item bone flex-row"
                id="production_overview"
                href="{{ url_for('overviews.emissions') }}">
@@ -126,8 +142,10 @@
                    class="navbar_icon margin-small" />
               <span style="padding:8px 0">Emissions</span>
             </a>
+
           </div>
         </li>
+
         <li class="nav-item dropdown">
           <a class="navbar_item tan_green flex-row"
              id="production_overview"
@@ -138,6 +156,7 @@
             <span style="padding:8px 0">Facilities</span>
           </a>
           <div class="dropdown-menu" id="menu-facilities">
+
             <a class="navbar_item bone flex-row"
                id="power_facilities"
                href="{{ url_for('views.power_facilities') }}">
@@ -145,6 +164,7 @@
                    class="navbar_icon margin-small" />
               <span style="padding:8px 0">Power facilities</span>
             </a>
+
             <a class="navbar_item bone flex-row"
                id="storage_facilities"
                href="{{ url_for('views.storage_facilities') }}">
@@ -152,6 +172,7 @@
                    class="navbar_icon margin-small" />
               <span style="padding:8px 0">Storage facilities</span>
             </a>
+            
             <a class="navbar_item bone flex-row"
                id="extraction_facilities"
                href="{{ url_for('views.extraction_facilities') }}">
@@ -159,6 +180,7 @@
                    class="navbar_icon margin-small" />
               <span style="padding:8px 0">Extraction facilities</span>
             </a>
+
             <a class="navbar_item bone flex-row"
                id="functional_facilities"
                href="{{ url_for('views.functional_facilities') }}">
@@ -166,8 +188,44 @@
                    class="navbar_icon margin-small" />
               <span style="padding:8px 0">Functional facilities</span>
             </a>
+
           </div>
         </li>
+
+        <li class="nav-item dropdown">
+          <a class="navbar_item tan_green flex-row"
+             id="comunity"
+             onclick="expand_menu('comunity')">
+            <img src="{{ url_for('static', filename='images/icons/dropdown.png') }}"
+                 class="navbar_icon margin-small"
+                 id="dropdown-comunity" />
+            <span style="padding:8px 0">Comunity</span>
+          </a>
+          <div class="dropdown-menu" id="menu-comunity">
+          
+            <a class="navbar_item bone flex-row" id="network" href="{{ url_for('views.network') }}">
+              <img src="{{ url_for('static', filename='images/icons/network.png') }}"
+                  class="navbar_icon margin-small" />
+              <span style="padding:8px 0">Network</span>
+            </a>
+
+            <a class="navbar_item bone flex-row" id="map" href="{{ url_for('views.map') }}">
+              <img src="{{ url_for('static', filename='images/icons/map.png') }}"
+                  class="navbar_icon margin-small" />
+              <span style="padding:8px 0">Map</span>
+            </a>
+
+            <a class="navbar_item bone flex-row"
+              id="resource_market"
+              href="{{ url_for('views.scoreboard') }}">
+              <img src="{{ url_for('static', filename='images/icons/scoreboard.png') }}"
+                  class="navbar_icon margin-small" />
+              <span style="padding:8px 0">Scoreboard</span>
+            </a>
+
+          </div>
+        </li>
+
         <li class="nav-item">
           <a class="navbar_item tan_green flex-row"
              id="technology"
@@ -177,6 +235,7 @@
             <span style="padding:8px 0">Technology</span>
           </a>
         </li>
+
         <li class="nav-item">
           <a class="navbar_item tan_green flex-row"
              id="resource_market"
@@ -186,15 +245,7 @@
             <span style="padding:8px 0">Resources market</span>
           </a>
         </li>
-        <li class="nav-item">
-          <a class="navbar_item tan_green flex-row"
-             id="resource_market"
-             href="{{ url_for('views.scoreboard') }}">
-            <img src="{{ url_for('static', filename='images/icons/scoreboard.png') }}"
-                 class="navbar_icon margin-small" />
-            <span style="padding:8px 0">Scoreboard</span>
-          </a>
-        </li>
+
         <li class="nav-item">
           <a class="navbar_item tan_green flex-row" id="wiki" href="{{ url_for('views.wiki') }}">
             <img src="{{ url_for('static', filename='images/icons/wiki.png') }}"
@@ -202,6 +253,7 @@
             <span style="padding:8px 0">Energetica wiki</span>
           </a>
         </li>
+
         <li class="nav-item">
           <a class="navbar_item tan_green flex-row" id="logout" href="{{ url_for('auth.logout') }}">
             <img src="{{ url_for('static', filename='images/icons/logout.png') }}"
@@ -209,6 +261,7 @@
             <span style="padding:8px 0">Logout</span>
           </a>
         </li>
+
       </ul>
     </div>
   </nav>
