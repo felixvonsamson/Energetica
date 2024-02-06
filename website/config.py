@@ -3,6 +3,7 @@ This file contains all the data needed for the game
 """
 from .database import Player
 import copy
+import math
 
 # raw data : (these are the initial values of the game)
 full_config = {
@@ -1267,6 +1268,10 @@ class Config(object):
             assets["transport_technology"]["energy factor"]
             ** player.transport_technology
         )
+
+        # setting the number of workers
+        player.construction_workers = player.building_technology + 1
+        player.lab_workers = math.floor(player.laboratory / 3) + 1
 
     def __getitem__(config, player_id):
         if player_id not in config.for_player:
