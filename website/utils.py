@@ -33,9 +33,7 @@ def add_asset(player_id, construction_id):
     player = Player.query.get(player_id)
     construction = Under_construction.query.get(construction_id)
     setattr(player, construction.name, getattr(player, construction.name) + 1)
-    construction_priorities = player.remove_construction_priority(
-        construction_id
-    )
+    construction_priorities = player.remove_project_priority(construction_id)
     for id in construction_priorities:
         construction = Under_construction.query.get(id)
         if construction.suspension_time is not None:
@@ -428,10 +426,12 @@ def start_project(player, facility, family):
     if player.money < real_price:
         return {"response": "notEnoughMoneyError"}
 
+    priority_list_name = "construction_priorities"
     if family == "Technologies":
         suspension_time = (
             time.time() if player.available_lab_workers() == 0 else None
         )
+        priority_list_name = "research_priorities"
     else:
         suspension_time = (
             time.time()
@@ -452,18 +452,21 @@ def start_project(player, facility, family):
     db.session.add(new_construction)
     db.session.commit()
     print(f"{player.username} started the construction {facility}")
-    prioirty = player.add_construction_priority(new_construction.id)
-    constructions = player.get_constructions()
+    player.add_project_priority(priority_list_name, new_construction.id)
     return {
         "response": "success",
         "money": player.money,
-        "constructions": {0: constructions, 1: prioirty},
+        "constructions": get_construction_data(player),
     }
 
 
 def cancel_project(player, construction_id):
     """this function is executed when a player cancels an ongoing construction"""
     construction = Under_construction.query.get(int(construction_id))
+
+    priority_list_name = "construction_priorities"
+    if construction.family == "Technologies":
+        priority_list_name = "research_priorities"
 
     if construction.suspension_time is None:
         time_fraction = (time.time() - construction.start_time) / (
@@ -479,12 +482,11 @@ def cancel_project(player, construction_id):
     db.session.delete(construction)
     db.session.commit()
     print(f"{player.username} cancelled the construction {construction.name}")
-    prioirty = player.remove_construction_priority(construction_id)
-    constructions = player.get_constructions()
+    player.remove_project_priority(priority_list_name, construction_id)
     return {
         "response": "success",
         "money": player.money,
-        "constructions": {0: constructions, 1: prioirty},
+        "constructions": get_construction_data(player),
     }
 
 
@@ -498,19 +500,35 @@ def pause_project(player, construction_id):
         construction.start_time += time.time() - construction.suspension_time
         construction.suspension_time = None
     db.session.commit()
-    prioirty = player.read_construction_priority()
-    constructions = player.get_constructions()
     return {
         "response": "success",
-        "constructions": {0: constructions, 1: prioirty},
+        "constructions": get_construction_data(player),
     }
 
 
 def increase_project_priority(player, construction_id):
     """this function is executed when a player changes the order of ongoing constructions"""
-    prioirty = player.increase_construction_priority(int(construction_id))
-    constructions = player.get_constructions()
+    construction = Under_construction.query.get(int(construction_id))
+
+    if construction.family == "Technologies":
+        player.increase_project_priority(
+            "research_priorities", int(construction_id)
+        )
+    else:
+        player.increase_project_priority(
+            "construction_priorities", int(construction_id)
+        )
+
     return {
         "response": "success",
-        "constructions": {0: constructions, 1: prioirty},
+        "constructions": get_construction_data(player),
     }
+
+
+def get_construction_data(player):
+    projects = player.get_constructions()
+    construction_priorities = player.read_project_priority(
+        "construction_priorities"
+    )
+    research_priorities = player.read_project_priority("research_priorities")
+    return {0: projects, 1: construction_priorities, 2: research_priorities}

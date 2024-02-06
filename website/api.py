@@ -234,9 +234,14 @@ def get_ud_and_config():
 # Gets list of facilities under construction for this player
 @api.route("/get_constructions", methods=["GET"])
 def get_constructions():
-    constructions = current_user.get_constructions()
-    priorities = current_user.read_construction_priority()
-    return jsonify(constructions, priorities)
+    projects = current_user.get_constructions()
+    construction_priorities = current_user.read_project_priority(
+        "construction_priorities"
+    )
+    research_priorities = current_user.read_project_priority(
+        "research_priorities"
+    )
+    return jsonify(projects, construction_priorities, research_priorities)
 
 
 # gets scoreboard data :

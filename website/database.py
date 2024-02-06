@@ -192,6 +192,7 @@ class Player(db.Model, UserMixin):
         default="transport industry research construction uranium_mine gas_drilling_site oil_field coal_mine",
     )
     construction_priorities = db.Column(db.Text, default="")
+    research_priorities = db.Column(db.Text, default="")
 
     # Production capacity prices [¤/MWh]
     price_steam_engine = db.Column(db.Float, default=125)
@@ -259,39 +260,36 @@ class Player(db.Model, UserMixin):
         )
         return self.lab_workers - occupied_workers
 
-    def read_construction_priority(self):
-        if self.construction_priorities == "":
+    def read_project_priority(self, attr):
+        if getattr(self, attr) == "":
             return []
-        priority_list = self.construction_priorities.split(",")
+        priority_list = getattr(self, attr).split(",")
         return list(map(int, priority_list))
 
-    def add_construction_priority(self, id):
-        if self.construction_priorities == "":
-            self.construction_priorities = str(id)
+    def add_project_priority(self, attr, id):
+        if getattr(self, attr) == "":
+            setattr(self, attr, str(id))
         else:
-            self.construction_priorities += f",{id}"
+            setattr(self, attr, getattr(self, attr) + f",{id}")
         db.session.commit()
-        return self.read_construction_priority()
 
-    def remove_construction_priority(self, id):
-        id_list = self.construction_priorities.split(",")
+    def remove_project_priority(self, attr, id):
+        id_list = getattr(self, attr).split(",")
         id_list.remove(str(id))
-        self.construction_priorities = ",".join(id_list)
+        setattr(self, attr, ",".join(id_list))
         db.session.commit()
-        return self.read_construction_priority()
 
-    def increase_construction_priority(self, id):
+    def increase_project_priority(self, attr, id):
         """the construction with the coresponding id will move one spot up in the priority list"""
-        id_list = self.construction_priorities.split(",")
+        id_list = getattr(self, attr).split(",")
         index = id_list.index(str(id))
         if index > 0 and index < len(id_list):
             id_list[index], id_list[index - 1] = (
                 id_list[index - 1],
                 id_list[index],
             )
-        self.construction_priorities = ",".join(id_list)
+        setattr(self, attr, ",".join(id_list))
         db.session.commit()
-        return self.read_construction_priority()
 
     def get_constructions(self):
         constructions = self.under_construction
