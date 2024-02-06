@@ -3,7 +3,7 @@
   Extraction facilities
 {% endblock title %}
 {% block content %}
-  {% set data = all_data["assets"] %}
+  {% set assets = data["assets"] %}
   <div class="flex-row huge title">
     Extraction facilities
     <div class="pine info_icon_container"
@@ -28,7 +28,7 @@
     {# Facilites under construction will show here #}
   </div>
   {% for extraction_facility in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"] %}
-    {% set facility_data = data[extraction_facility] %}
+    {% set facility_data = assets[extraction_facility] %}
     {% set resource = {"coal_mine": "coal", "oil_field": "oil", "gas_drilling_site": "gas", "uranium_mine": "uranium"}[extraction_facility] %}
     <div id="{{ facility_data.name }}"
          class="bone margin facility small construction_tile"
@@ -67,7 +67,7 @@
               {% for req in facility_data.requirements %}
                 <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
                   -
-                  {{ data[req[0]]["name"] }} lvl {{ req[1] }}
+                  {{ assets[req[0]]["name"] }} lvl {{ req[1] }}
                 </li>
               {% endfor %}
             </ul>

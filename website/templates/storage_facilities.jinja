@@ -3,7 +3,7 @@
   Storage facilities
 {% endblock title %}
 {% block content %}
-  {% set data = all_data["assets"] %}
+  {% set assets = data["assets"] %}
   <div class="flex-row huge title">
     Storage facilities
     <div class="pine info_icon_container"
@@ -67,7 +67,7 @@
               {% for req in facility_data.requirements %}
                 <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
                   -
-                  {{ data[req[0]]["name"] }} lvl {{ req[1] }}
+                  {{ assets[req[0]]["name"] }} lvl {{ req[1] }}
                 </li>
               {% endfor %}
             </ul>

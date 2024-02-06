@@ -10,31 +10,31 @@
     <div class="money_font large money">
       <script>display_money_long({{ user.money }});</script>
     </div>
-    {% if all_data.warehouse_capacities.coal > 0 %}
+    {% if user.warehouse > 0 %}
     <div class="resource_container">
       <div class="resourceJauge-background hover_info">
-        <div class="resourceJauge coal" style="--width:{{user.coal / all_data.warehouse_capacities.coal}}"></div>
+        <div class="resourceJauge coal" style="--width:{{user.coal / data.warehouse_capacities.coal}}"></div>
         <div id="coal" class="resource" style="color:#666">
           <script>display_kg({{ user.coal }});</script>
         </div>
         <span class="popup_info small">Coal stock</span>
       </div>
       <div class="resourceJauge-background hover_info">
-        <div class="resourceJauge oil" style="--width:{{user.oil / all_data.warehouse_capacities.oil}}"></div>
+        <div class="resourceJauge oil" style="--width:{{user.oil / data.warehouse_capacities.oil}}"></div>
         <div id="oil" class="resource">
           <script>display_kg({{ user.oil }});</script>
         </div>
         <span class="popup_info small">Oil stock</span>
       </div>
       <div class="resourceJauge-background hover_info">
-        <div class="resourceJauge gas" style="--width:{{user.gas / all_data.warehouse_capacities.gas}}"></div>
+        <div class="resourceJauge gas" style="--width:{{user.gas / data.warehouse_capacities.gas}}"></div>
         <div id="gas" class="resource">
           <script>display_kg({{ user.gas }});</script>
         </div>
         <span class="popup_info small">Gas stock</span>
       </div>
       <div class="resourceJauge-background hover_info">
-        <div class="resourceJauge uranium" style="--width:{{user.uranium / all_data.warehouse_capacities.uranium}}"></div>
+        <div class="resourceJauge uranium" style="--width:{{user.uranium / data.warehouse_capacities.uranium}}"></div>
         <div id="uranium" class="resource">
           <script>display_kg({{ user.uranium }});</script>
         </div>

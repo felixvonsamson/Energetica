@@ -50,7 +50,7 @@ def check_user():
             )
         else:
             return render_template(
-                page, engine=g.engine, user=current_user, all_data=g.config
+                page, engine=g.engine, user=current_user, data=g.config
             )
 
     g.render_template_ctx = render_template_ctx

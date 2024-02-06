@@ -33,11 +33,21 @@ def add_asset(player_id, construction_id):
     player = Player.query.get(player_id)
     construction = Under_construction.query.get(construction_id)
     setattr(player, construction.name, getattr(player, construction.name) + 1)
-    construction_priorities = player.remove_project_priority(construction_id)
+    priority_list_name = "construction_priorities"
+    if construction.family == "Technologies":
+        priority_list_name = "research_priorities"
+    player.remove_project_priority(priority_list_name, construction_id)
+    construction_priorities = player.read_project_priority(
+        "construction_priorities"
+    )
     for id in construction_priorities:
         construction = Under_construction.query.get(id)
         if construction.suspension_time is not None:
-            pause_project(player, id)
+            construction.start_time += (
+                time.time() - construction.suspension_time
+            )
+            construction.suspension_time = None
+            db.session.commit()
             break
     current_app.config["engine"].config.update_config_for_user(player.id)
     print(
