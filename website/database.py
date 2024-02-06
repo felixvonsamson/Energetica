@@ -293,7 +293,7 @@ class Player(db.Model, UserMixin):
 
     def project_max_priority(self, attr, id):
         """the project with the corresponding id will be moved to the top of the prioirty list"""
-        self.remove_project_priority(self, attr, id)
+        self.remove_project_priority(attr, id)
         if getattr(self, attr) == "":
             setattr(self, attr, str(id))
         else:

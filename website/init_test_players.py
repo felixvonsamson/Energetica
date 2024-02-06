@@ -89,6 +89,7 @@ def init_test_players(engine):
     # player.hydrogen_storage = 1
     player.mineral_extraction = 2
     player.money = 1000000
+    player.building_technology = 1
     # player.coal = 450000
     # player.oil = 100000
     # player.gas = 800000

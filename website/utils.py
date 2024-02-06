@@ -498,7 +498,9 @@ def pause_project(player, construction_id):
         construction.suspension_time = time.time()
     else:
         if construction.family == "Technologies":
-            player.project_max_priority("research_priorities", id)
+            player.project_max_priority(
+                "research_priorities", int(construction_id)
+            )
             if player.available_lab_workers() == 0:
                 research_priorities = player.read_project_priority(
                     "research_priorities"
@@ -508,7 +510,9 @@ def pause_project(player, construction_id):
                 )
                 project_to_pause.suspension_time = time.time()
         else:
-            player.project_max_priority("construction_priorities", id)
+            player.project_max_priority(
+                "construction_priorities", int(construction_id)
+            )
             if player.available_construction_workers() == 0:
                 construction_priorities = player.read_project_priority(
                     "construction_priorities"
