@@ -427,17 +427,14 @@ def start_project(player, facility, family):
         return {"response": "notEnoughMoneyError"}
 
     priority_list_name = "construction_priorities"
+    suspension_time = time.time()
     if family == "Technologies":
-        suspension_time = (
-            time.time() if player.available_lab_workers() == 0 else None
-        )
         priority_list_name = "research_priorities"
+        if player.available_lab_workers() > 0:
+            suspension_time = None
     else:
-        suspension_time = (
-            time.time()
-            if player.available_construction_workers() == 0
-            else None
-        )
+        if player.available_construction_workers() > 0:
+            suspension_time = None
 
     player.money -= real_price
     new_construction = Under_construction(
@@ -453,6 +450,8 @@ def start_project(player, facility, family):
     db.session.commit()
     print(f"{player.username} started the construction {facility}")
     player.add_project_priority(priority_list_name, new_construction.id)
+    if suspension_time is None:
+        player.project_max_priority(priority_list_name, new_construction.id)
     return {
         "response": "success",
         "money": player.money,
