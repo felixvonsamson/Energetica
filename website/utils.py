@@ -497,6 +497,26 @@ def pause_project(player, construction_id):
     if construction.suspension_time is None:
         construction.suspension_time = time.time()
     else:
+        if construction.family == "Technologies":
+            player.project_max_priority("research_priorities", id)
+            if player.available_lab_workers() == 0:
+                research_priorities = player.read_project_priority(
+                    "research_priorities"
+                )
+                project_to_pause = Under_construction.query.get(
+                    research_priorities[player.lab_workers]
+                )
+                project_to_pause.suspension_time = time.time()
+        else:
+            player.project_max_priority("construction_priorities", id)
+            if player.available_construction_workers() == 0:
+                construction_priorities = player.read_project_priority(
+                    "construction_priorities"
+                )
+                project_to_pause = Under_construction.query.get(
+                    construction_priorities[player.construction_workers]
+                )
+                project_to_pause.suspension_time = time.time()
         construction.start_time += time.time() - construction.suspension_time
         construction.suspension_time = None
     db.session.commit()

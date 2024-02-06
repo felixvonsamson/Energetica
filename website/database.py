@@ -280,7 +280,7 @@ class Player(db.Model, UserMixin):
         db.session.commit()
 
     def increase_project_priority(self, attr, id):
-        """the construction with the coresponding id will move one spot up in the priority list"""
+        """the project with the coresponding id will move one spot up in the priority list"""
         id_list = getattr(self, attr).split(",")
         index = id_list.index(str(id))
         if index > 0 and index < len(id_list):
@@ -289,6 +289,15 @@ class Player(db.Model, UserMixin):
                 id_list[index],
             )
         setattr(self, attr, ",".join(id_list))
+        db.session.commit()
+
+    def project_max_priority(self, attr, id):
+        """the project with the corresponding id will be moved to the top of the prioirty list"""
+        self.remove_project_priority(self, attr, id)
+        if getattr(self, attr) == "":
+            setattr(self, attr, str(id))
+        else:
+            setattr(self, attr, f"{id}," + getattr(self, attr))
         db.session.commit()
 
     def get_constructions(self):
