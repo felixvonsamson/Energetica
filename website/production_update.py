@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from .database import Network, Player, Under_construction, Shipment
 from . import db
+from .utils import notify
 
 resource_to_extraction = {
     "coal": "coal_mine",
@@ -853,6 +854,12 @@ def reduce_demand(engine, demand_type, player_id, t, satisfaction):
     if satisfaction > 1.05 * demand[demand_type][t - 1]:
         return
     if demand_type == "industry":
+        if player.industry > 1:
+            notify(
+                "Energy shortage",
+                f"Your industry has been downgraded to level {player.industry-1} because of a lack of electricity.",
+                [player],
+            )
         player.industry = max(1, player.industry - 1)
         engine.config.update_config_for_user(player.id)
         db.session.commit()
@@ -869,6 +876,11 @@ def reduce_demand(engine, demand_type, player_id, t, satisfaction):
             cumul_demand += assets[construction.name]["construction power"]
             if cumul_demand > satisfaction:
                 construction.suspension_time = time.time()
+                notify(
+                    "Energy shortage",
+                    f"The construction of the facility {construction.name} has been suspended because of a lack of electricity.",
+                    [player],
+                )
         db.session.commit()
         return
     if demand_type == "research":
@@ -882,6 +894,11 @@ def reduce_demand(engine, demand_type, player_id, t, satisfaction):
             cumul_demand += assets[construction.name]["construction power"]
             if cumul_demand > satisfaction:
                 construction.suspension_time = time.time()
+                notify(
+                    "Energy shortage",
+                    f"The research of the technology {construction.name} has been suspended because of a lack of electricity.",
+                    [player],
+                )
         db.session.commit()
         return
     if demand_type == "transport":
@@ -892,6 +909,11 @@ def reduce_demand(engine, demand_type, player_id, t, satisfaction):
         )
         if last_shipment:
             last_shipment.suspension_time = time.time()
+            notify(
+                "Energy shortage",
+                f"The shipment of {last_shipment.resource} has been suspended because of a lack of electricity.",
+                [player],
+            )
             db.session.commit()
         return
     if demand_type in [

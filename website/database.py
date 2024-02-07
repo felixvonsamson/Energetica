@@ -332,6 +332,13 @@ class Player(db.Model, UserMixin):
                 db.session.delete(notification)
             db.session.commit()
 
+    def unread_notifications(self):
+        return [
+            notification
+            for notification in self.notifications
+            if not notification.read
+        ]
+
     def get_technology_values(self):
         technology_attributes = [
             "laboratory",
@@ -397,3 +404,8 @@ class Notification(db.Model):
     title = db.Column(db.String(50))
     content = db.Column(db.Text)
     time = db.Column(db.DateTime, default=datetime.now())
+    read = db.Column(db.Boolean, default=False)
+
+    def seen(self):
+        self.read = True
+        db.session.commit()

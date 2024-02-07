@@ -19,6 +19,7 @@ from .database import (
     Shipment,
     Chat,
     Under_construction,
+    Notification,
 )
 from . import db
 from flask import current_app, flash
@@ -26,6 +27,18 @@ from flask import current_app, flash
 
 def flash_error(msg):
     return flash(msg, category="error")
+
+
+def notify(title, message, players):
+    """creates a new notification"""
+    new_notification = Notification(
+        title=title,
+        content=message,
+    )
+    db.session.add(new_notification)
+    for player in players:
+        player.notifications.append(new_notification)
+    db.session.commit()
 
 
 # this function is executed after an asset is finished facility :
@@ -50,9 +63,24 @@ def add_asset(player_id, construction_id):
             db.session.commit()
             break
     current_app.config["engine"].config.update_config_for_user(player.id)
-    print(
-        f"{player.username} has finished the construction of facility {construction.name}"
-    )
+    if construction.family == "Technologies":
+        notify(
+            "Constructions",
+            f"The construction of the facility {construction.name} has finished.",
+            [player],
+        )
+        print(
+            f"{player.username} has finished the construction of facility {construction.name}"
+        )
+    else:
+        notify(
+            "Technologies",
+            f"The research of the technology {construction.name} has finished.",
+            [player],
+        )
+        print(
+            f"{player.username} has finished the research of technology {construction.name}"
+        )
 
 
 # this function is executed when a resource shippment arrives :
@@ -71,9 +99,24 @@ def store_import(player, resource, quantity):
             + quantity
             - max_cap,
         )
+        notify(
+            "Shipments",
+            f"A shipment of {format_mass(quantity)} {resource} arrived, but only {format_mass(max_cap - getattr(player, resource))} could be stored in your warehouse.",
+            [player],
+        )
+        print(
+            f"{player.username} received a shipment of {format_mass(quantity)} {resource}, but could only store {format_mass(max_cap - getattr(player, resource))} in their warehouse."
+        )
     else:
         setattr(player, resource, getattr(player, resource) + quantity)
-    print(f"{player.username} received a shipment of {quantity} kg {resource}")
+        notify(
+            "Shipments",
+            f"A shipment of {format_mass(quantity)} {resource} arrived.",
+            [player],
+        )
+        print(
+            f"{player.username} received a shipment of {format_mass(quantity)} {resource}."
+        )
 
 
 # format for price display
@@ -81,6 +124,15 @@ def display_money(price):
     return f"{price:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(
         ",", "'"
     )
+
+
+def format_mass(mass):
+    """Formats mass in kg into a string with corresponding unit."""
+    if mass < 50000:
+        formatted_mass = f"{int(mass):,d}".replace(",", "'") + " kg"
+    else:
+        formatted_mass = f"{mass / 1000:,.0f}".replace(",", "'") + " t"
+    return formatted_mass
 
 
 # checks if a chat with exactly these participants already exists
@@ -108,6 +160,8 @@ def update_weather(engine):
             windspeed = json.loads(response.content)["features"][107][
                 "properties"
             ]["value"]
+            if windspeed > 2000:
+                windspeed = engine.data["current_windspeed"][t - 1]
             interpolation = np.linspace(
                 engine.data["current_windspeed"][t - 1], windspeed, 11
             )
@@ -131,6 +185,8 @@ def update_weather(engine):
             irradiation = json.loads(response.content)["features"][65][
                 "properties"
             ]["value"]
+            if irradiation > 2000:
+                irradiation = engine.data["current_irradiation"][t - 1]
             interpolation = np.linspace(
                 engine.data["current_irradiation"][t - 1], irradiation, 11
             )
@@ -293,6 +349,7 @@ def put_resource_on_market(player, resource, quantity, price):
 def buy_resource_from_market(player, quantity, sale_id):
     """Buy an offer from the resource market"""
     sale = Resource_on_sale.query.filter_by(id=sale_id).first()
+    total_price = sale.price * quantity
     if player == sale.player:
         # Player is buying their own resource
         if quantity == sale.quantity:
@@ -306,21 +363,16 @@ def buy_resource_from_market(player, quantity, sale_id):
         )
         db.session.commit()
         flash(
-            f"You removed {quantity/1000}t of {sale.resource} from the market",
+            f"You removed {format_mass(quantity)} of {sale.resource} from the market",
             category="message",
         )
-    elif sale.price * quantity > player.money:
+    elif total_price > player.money:
         flash_error("You have not enough money")
     else:
-        # Player can purchased from different player
-        if quantity == sale.quantity:
-            # Player is purchasing all available quantity
-            Resource_on_sale.query.filter_by(id=sale_id).delete()
-        else:
-            # Some resources remain after transaction
-            sale.quantity -= quantity
-        player.money -= sale.price * quantity
-        sale.player.money += sale.price * quantity
+        # Player buys form another player
+        sale.quantity -= quantity
+        player.money -= total_price
+        sale.player.money += total_price
         player.update_resources()
         sale.player.update_resources()
         setattr(
@@ -347,6 +399,21 @@ def buy_resource_from_market(player, quantity, sale_id):
             player_id=player.id,
         )
         db.session.add(new_shipment)
+        notify(
+            "Resource transaction",
+            f"{player} bougth {format_mass(quantity)} of {sale.resource} for a total cost of {display_money(total_price)}.",
+            [sale.player],
+        )
+        flash(
+            f"You bougth {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}.",
+            category="message",
+        )
+        print(
+            f"{player} bougth {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}."
+        )
+        if sale.quantity == 0:
+            # Player is purchasing all available quantity
+            Resource_on_sale.query.filter_by(id=sale_id).delete()
         db.session.commit()
 
 
