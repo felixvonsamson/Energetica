@@ -1280,9 +1280,11 @@ class Config(object):
             ** player.transport_technology
         )
 
+        print(player.username, player.construction_workers, player.lab_workers)
         # setting the number of workers
         player.construction_workers = player.building_technology + 1
         player.lab_workers = math.floor(player.laboratory / 3) + 1
+        print("-> ", player.construction_workers, player.lab_workers)
 
     def __getitem__(config, player_id):
         if player_id not in config.for_player:

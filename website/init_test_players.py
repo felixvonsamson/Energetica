@@ -95,6 +95,8 @@ def init_test_players(engine):
     player.gas = 800000
     player.uranium = 4500
     player.warehouse = 1
+    player.laboratory = 5
+    player.mathematics = 1
     create_network(engine, "network", [player])
 
     # for i in range(3):

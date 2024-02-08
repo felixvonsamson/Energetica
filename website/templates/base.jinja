@@ -64,7 +64,7 @@
   </button>
   <div id="notification_list-small" class="notification_list notification_list-small">
     {% for notification in user.unread_notifications()|reverse %}
-      <div id="notification_{{ notification.id }}" class="{% if notification.read %}read{% endif %} notification padding-small margin-small">
+      <div id="notification_{{ notification.id }}" class="notification padding-small margin-small">
         <b>{{ notification.title }}</b><br>
         {{ notification.content }}
       </div>
@@ -85,7 +85,7 @@
     <div id="notification_{{ notification.id }}" class="{% if notification.read %}read{% endif %} notification padding medium margin-large">
      <div class="small notification_time"><script>formatDateTime("{{ notification.time }}");</script></div>
       <div class="flex-row align-items-center notification_head">
-        <b>{{ notification.title }}</b>
+        <b>{{ notification.title }}{% if not notification.read %}<i class="fa fa-circle small padding"></i>{% endif %}</b>
         <span onclick="delete_notification(this, {{ notification.id }});" class="cross">×</span></div>
       {{ notification.content }}
     </div>

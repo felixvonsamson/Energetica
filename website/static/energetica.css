@@ -678,7 +678,6 @@ canvas {
 
 .notification.read{
     background-color: #a4be7b;
-    border: 0;
 }
 
 .notification_time{
@@ -695,7 +694,11 @@ canvas {
     position: absolute;
     top: -0.5em;
     right: -0.9em;
-  }
+}
+
+.fa-circle{
+    color:#285430;
+}
 
 .table {
     border-collapse: collapse;
