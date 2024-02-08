@@ -967,6 +967,46 @@ canvas {
     top: 25%;
 }
 
+.year-background {
+    width: 100%;
+    height: 8px;
+    background-color: white;
+    position: relative;
+}
+
+.current-date-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #285430;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.weather_info_container{
+    max-width: 250px;
+}
+
+.weather_level{
+    height:100%;
+    position: absolute;
+    left:0;
+    top:0;
+}
+
+.weather_level.solar{
+    background-color: #f2ee0c;
+}
+
+.weather_level.wind{
+    background-color: #0cdbf2;
+}
+
+.weather_level.water{
+    background-color: #0c10f2;
+}
+
 @media only screen and (max-width: 1500px) {
     .img {
         display: none;
