@@ -145,63 +145,71 @@ function refresh_progressBar() {
     });
 }
 
-const uc = document.getElementById("under_construction");
 function display_progressBars(data){
-    uc.innerHTML = "";
-    construction_priority = data[1];
-    for (const [index, c_id] of construction_priority.entries()) {
-        construction = data[0][c_id];
-        if (
-            (construction["family"] == document.title) |
-            (document.title == "Home")
-        ) {
-            let play_pause_logo = "fa-pause";
-            if (construction["suspension_time"]) {
-                play_pause_logo = "fa-play";
-            }
-            let html =
-                '<div class="progressbar-container">\
-                <div class="progressbar-arrowcontainer">';
-            if (index > 0) {
+    if (document.title == "Home"){
+        const uc = document.getElementById("under_construction");
+        const ur = document.getElementById("under_research");
+        uc.innerHTML = "";
+        ur.innerHTML = "";
+        construction_priority = data[1];
+    }else{
+        const uc = document.getElementById("under_construction");
+        uc.innerHTML = "";
+        construction_priority = data[1];
+        for (const [index, c_id] of construction_priority.entries()) {
+            construction = data[0][c_id];
+            if (
+                (construction["family"] == document.title) |
+                (document.title == "Home")
+            ) {
+                let play_pause_logo = "fa-pause";
+                if (construction["suspension_time"]) {
+                    play_pause_logo = "fa-play";
+                }
+                let html =
+                    '<div class="progressbar-container">\
+                    <div class="progressbar-arrowcontainer">';
+                if (index > 0) {
+                    html +=
+                        '<button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(' +
+                        c_id +
+                        ')">\
+                        <i class="fa fa-caret-up"></i>\
+                    </button>';
+                }
+                if (index + 1 != construction_priority.length) {
+                    html +=
+                        '<button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(' +
+                        construction_priority[index + 1] +
+                        ')">\
+                        <i class="fa fa-caret-down"></i>\
+                    </button>';
+                }
                 html +=
-                    '<button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(' +
+                    '</div>\
+                    <div class="progressbar-name medium margin-small">' +
+                    construction["name"] +
+                    '</div>\
+                    <div class="progressbar-background">\
+                    <div id="' +
+                    c_id +
+                    '" class="progressbar-bar"></div>\
+                    </div>\
+                    <button class="progressbar-icon progressbar-button" onclick="pause_construction(' +
                     c_id +
                     ')">\
-                    <i class="fa fa-caret-up"></i>\
-                </button>';
-            }
-            if (index + 1 != construction_priority.length) {
-                html +=
-                    '<button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(' +
-                    construction_priority[index + 1] +
+                        <i class="fa ' +
+                    play_pause_logo +
+                    '"></i>\
+                    </button>\
+                    <button class="progressbar-icon progressbar-button" onclick="cancel_construction(' +
+                    c_id +
                     ')">\
-                    <i class="fa fa-caret-down"></i>\
-                </button>';
+                        <i class="fa fa-times"></i>\
+                    </button>\
+                </div>';
+                uc.innerHTML += html;
             }
-            html +=
-                '</div>\
-                <div class="progressbar-name medium margin-small">' +
-                construction["name"] +
-                '</div>\
-                <div class="progressbar-background">\
-                <div id="' +
-                c_id +
-                '" class="progressbar-bar"></div>\
-                </div>\
-                <button class="progressbar-icon progressbar-button" onclick="pause_construction(' +
-                c_id +
-                ')">\
-                    <i class="fa ' +
-                play_pause_logo +
-                '"></i>\
-                </button>\
-                <button class="progressbar-icon progressbar-button" onclick="cancel_construction(' +
-                c_id +
-                ')">\
-                    <i class="fa fa-times"></i>\
-                </button>\
-            </div>';
-            uc.innerHTML += html;
         }
     }
 }

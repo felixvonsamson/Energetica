@@ -10,6 +10,7 @@ import pickle
 import os
 import time
 import numpy as np
+from datetime import datetime
 
 from .rest_api import rest_notify_player_location
 from .database import (
@@ -32,8 +33,7 @@ def flash_error(msg):
 def notify(title, message, players):
     """creates a new notification"""
     new_notification = Notification(
-        title=title,
-        content=message,
+        title=title, content=message, time=datetime.now()
     )
     db.session.add(new_notification)
     for player in players:
@@ -43,6 +43,7 @@ def notify(title, message, players):
 
 # this function is executed after an asset is finished facility :
 def add_asset(player_id, construction_id):
+    assets = current_app.config["engine"].config[player_id]["assets"]
     player = Player.query.get(player_id)
     construction = Under_construction.query.get(construction_id)
     setattr(player, construction.name, getattr(player, construction.name) + 1)
@@ -54,32 +55,32 @@ def add_asset(player_id, construction_id):
         "construction_priorities"
     )
     for id in construction_priorities:
-        construction = Under_construction.query.get(id)
-        if construction.suspension_time is not None:
-            construction.start_time += (
-                time.time() - construction.suspension_time
+        next_construction = Under_construction.query.get(id)
+        if next_construction.suspension_time is not None:
+            next_construction.start_time += (
+                time.time() - next_construction.suspension_time
             )
-            construction.suspension_time = None
+            next_construction.suspension_time = None
             db.session.commit()
             break
     current_app.config["engine"].config.update_config_for_user(player.id)
     if construction.family == "Technologies":
         notify(
             "Constructions",
-            f"The construction of the facility {construction.name} has finished.",
+            f"The construction of the facility {assets[construction.name]['name']} has finished.",
             [player],
         )
         print(
-            f"{player.username} has finished the construction of facility {construction.name}"
+            f"{player.username} has finished the construction of facility {assets[construction.name]['name']}"
         )
     else:
         notify(
             "Technologies",
-            f"The research of the technology {construction.name} has finished.",
+            f"The research of the technology {assets[construction.name]['name']} has finished.",
             [player],
         )
         print(
-            f"{player.username} has finished the research of technology {construction.name}"
+            f"{player.username} has finished the research of technology {assets[construction.name]['name']}"
         )
 
 
@@ -336,7 +337,11 @@ def put_resource_on_market(player, resource, quantity, price):
             getattr(player, resource + "_on_sale") + quantity,
         )
         new_sale = Resource_on_sale(
-            resource=resource, quantity=quantity, price=price, player=player
+            resource=resource,
+            quantity=quantity,
+            price=price,
+            creation_date=datetime.now(),
+            player=player,
         )
         db.session.add(new_sale)
         db.session.commit()
@@ -611,13 +616,27 @@ def increase_project_priority(player, construction_id):
     construction = Under_construction.query.get(int(construction_id))
 
     if construction.family == "Technologies":
-        player.increase_project_priority(
-            "research_priorities", int(construction_id)
-        )
+        attr = "research_priorities"
     else:
-        player.increase_project_priority(
-            "construction_priorities", int(construction_id)
+        attr = "construction_priorities"
+
+    id_list = player.read_project_priority(attr)
+    index = id_list.index(construction_id)
+    if index > 0 and index < len(id_list):
+        construction_1 = Under_construction.query.get(id_list[index - 1])
+        construction_2 = Under_construction.query.get(id_list[index])
+        if (
+            construction_1.suspension_time is None
+            and construction_2.suspension_time is not None
+        ):
+            pause_project(player, id_list[index - 1])
+            pause_project(player, id_list[index])
+        id_list[index], id_list[index - 1] = (
+            id_list[index - 1],
+            id_list[index],
         )
+        setattr(player, attr, ",".join(map(str, id_list)))
+        db.session.commit()
 
     return {
         "response": "success",

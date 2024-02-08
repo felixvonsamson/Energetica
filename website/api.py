@@ -29,6 +29,26 @@ def check_user():
     g.engine = current_app.config["engine"]
 
 
+@api.route("/request_delete_notification", methods=["POST"])
+def request_delete_notification():
+    """
+    this function is executed when a player deletes a notification
+    """
+    json = request.get_json()
+    notification_id = json["id"]
+    current_user.delete_notification(notification_id)
+    return jsonify({"response": "success"})
+
+
+@api.route("/request_marked_as_read", methods=["GET"])
+def request_marked_as_read():
+    """
+    this function is executed when a player read the notifications
+    """
+    current_user.notifications_read()
+    return jsonify({"response": "success"})
+
+
 # gets the map data from the database and returns it as a array of dictionaries :
 @api.route("/get_map", methods=["GET"])
 def get_map():

@@ -37,7 +37,11 @@ def check_user():
                 Chat.participants.any(id=current_user.id)
             ).all()
             return render_template(
-                page, engine=g.engine, user=current_user, chats=chats
+                page,
+                engine=g.engine,
+                user=current_user,
+                chats=chats,
+                data=g.config,
             )
         elif page == "resource_market.jinja":
             on_sale = Resource_on_sale.query.all()
@@ -72,7 +76,11 @@ def profile():
     player_name = request.args.get("player_name")
     player = Player.query.filter_by(username=player_name).first()
     return render_template(
-        "profile.jinja", engine=g.engine, user=current_user, profile=player
+        "profile.jinja",
+        engine=g.engine,
+        user=current_user,
+        profile=player,
+        data=g.config,
     )
 
 

@@ -28,7 +28,7 @@
     {# Facilites under construction will show here #}
   </div>
   {% for storage_facility in ["small_pumped_hydro", "compressed_air", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
-    {% set facility_data = data[storage_facility] %}
+    {% set facility_data = assets[storage_facility] %}
     <div id="{{ facility_data.name }}"
          class="bone margin facility small construction_tile"
          onclick="show_construction('{{ facility_data.name }}', '{{ facility_data.name.locked }}');">

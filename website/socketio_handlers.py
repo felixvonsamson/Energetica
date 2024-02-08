@@ -7,6 +7,7 @@ from flask_login import current_user
 from .database import Player, Chat, Message
 from .utils import check_existing_chats
 from . import db
+from datetime import datetime
 
 
 def add_handlers(socketio, engine):
@@ -41,7 +42,10 @@ def add_handlers(socketio, engine):
     def new_message(message, chat_id):
         chat = Chat.query.filter_by(id=chat_id).first()
         new_message = Message(
-            text=message, player_id=current_user.id, chat_id=chat.id
+            text=message,
+            time=datetime.now(),
+            player_id=current_user.id,
+            chat_id=chat.id,
         )
         db.session.add(new_message)
         db.session.commit()

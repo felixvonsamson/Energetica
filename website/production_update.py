@@ -878,7 +878,7 @@ def reduce_demand(engine, demand_type, player_id, t, satisfaction):
                 construction.suspension_time = time.time()
                 notify(
                     "Energy shortage",
-                    f"The construction of the facility {construction.name} has been suspended because of a lack of electricity.",
+                    f"The construction of the facility {assets[construction.name]['name']} has been suspended because of a lack of electricity.",
                     [player],
                 )
         db.session.commit()
@@ -896,7 +896,7 @@ def reduce_demand(engine, demand_type, player_id, t, satisfaction):
                 construction.suspension_time = time.time()
                 notify(
                     "Energy shortage",
-                    f"The research of the technology {construction.name} has been suspended because of a lack of electricity.",
+                    f"The research of the technology {assets[construction.name]['name']} has been suspended because of a lack of electricity.",
                     [player],
                 )
         db.session.commit()

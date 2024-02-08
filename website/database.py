@@ -5,7 +5,6 @@ Here are defined the classes for the items stored in the database
 from . import db
 from flask_login import UserMixin
 from flask import current_app
-from datetime import datetime
 
 # table that links chats to players
 player_chats = db.Table(
@@ -80,7 +79,7 @@ class Resource_on_sale(db.Model):
     resource = db.Column(db.String(10))
     quantity = db.Column(db.Float)
     price = db.Column(db.Float)
-    creation_date = db.Column(db.DateTime, default=datetime.now())
+    creation_date = db.Column(db.DateTime)
     player_id = db.Column(
         db.Integer, db.ForeignKey("player.id")
     )  # can access player directly with .player
@@ -289,18 +288,6 @@ class Player(db.Model, UserMixin):
         setattr(self, attr, ",".join(id_list))
         db.session.commit()
 
-    def increase_project_priority(self, attr, id):
-        """the project with the coresponding id will move one spot up in the priority list"""
-        id_list = getattr(self, attr).split(",")
-        index = id_list.index(str(id))
-        if index > 0 and index < len(id_list):
-            id_list[index], id_list[index - 1] = (
-                id_list[index - 1],
-                id_list[index],
-            )
-        setattr(self, attr, ",".join(id_list))
-        db.session.commit()
-
     def project_max_priority(self, attr, id):
         """the project with the corresponding id will be moved to the top of the prioirty list"""
         self.remove_project_priority(attr, id)
@@ -331,6 +318,11 @@ class Player(db.Model, UserMixin):
             if not notification.players:
                 db.session.delete(notification)
             db.session.commit()
+
+    def notifications_read(self):
+        for notification in self.unread_notifications():
+            notification.read = True
+        db.session.commit()
 
     def unread_notifications(self):
         return [
@@ -394,7 +386,7 @@ class Chat(db.Model):
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text)
-    time = db.Column(db.DateTime, default=datetime.now())
+    time = db.Column(db.DateTime)
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
     chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"))
 
@@ -403,9 +395,5 @@ class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(50))
     content = db.Column(db.Text)
-    time = db.Column(db.DateTime, default=datetime.now())
+    time = db.Column(db.DateTime)
     read = db.Column(db.Boolean, default=False)
-
-    def seen(self):
-        self.read = True
-        db.session.commit()
