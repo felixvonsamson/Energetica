@@ -30,6 +30,13 @@ class gameEngine(object):
         engine.init_logger()
         engine.log("engine created")
 
+        engine.extraction_facilities = [
+            "coal_mine",
+            "oil_field",
+            "gas_drilling_site",
+            "uranium_mine",
+        ]
+
         engine.storage_facilities = [
             "small_pumped_hydro",
             "compressed_air",
@@ -163,9 +170,9 @@ def daily_update(engine, app):
         networks = Network.query.all()
         network_data = copy.deepcopy(engine.data["network_data"])
         for network in networks:
-            for element in engine.data["network_data"][network.name]:
-                network_data[network.name][element].pop(0)
-                data_array = engine.data["network_data"][network.name][element]
+            for element in engine.data["network_data"][network.id]:
+                network_data[network.id][element].pop(0)
+                data_array = engine.data["network_data"][network.id][element]
                 last_value = data_array[-1]
                 data_array.clear()
                 data_array.extend([last_value] + [0] * 1440)

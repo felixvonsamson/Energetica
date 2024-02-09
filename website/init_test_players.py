@@ -133,6 +133,7 @@ def create_player(engine, username, password):
         )
         db.session.add(new_player)
         db.session.commit()
+        ### DOES NOT WORK ! because I changed the data structure
         add_player_to_data(new_player.id)
         init_table(new_player)
         db.session.commit()

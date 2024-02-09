@@ -43,9 +43,44 @@ def notify(title, message, players):
 
 # this function is executed after an asset is finished facility :
 def add_asset(player_id, construction_id):
-    assets = current_app.config["engine"].config[player_id]["assets"]
+    engine = current_app.config["engine"]
+    assets = engine.config[player_id]["assets"]
     player = Player.query.get(player_id)
     construction = Under_construction.query.get(construction_id)
+    if getattr(player, construction.name) == 0:
+        # initialize array for facility if it is the first one built
+        current_data = engine.data["current_data"][player.id]
+        if (
+            construction.name
+            in engine.storage_facilities
+            + engine.controllable_facilities
+            + engine.renewables
+        ):
+            if construction.name not in current_data["generation"]:
+                current_data["generation"][construction.name] = [0] * 1441
+        if (
+            construction.name
+            in engine.storage_facilities
+            + engine.extraction_facilities
+            + ["carbon_capture"]
+        ):
+            if construction.name not in current_data["demand"]:
+                current_data["demand"][construction.name] = [0] * 1441
+        if construction.name in engine.storage_facilities:
+            if construction.name not in current_data["storage"]:
+                current_data["storage"][construction.name] = [0] * 1441
+        if (
+            construction.name
+            in engine.controllable_facilities
+            + engine.extraction_facilities
+            + ["carbon_capture"]
+        ):
+            if construction.name not in current_data["emissions"]:
+                current_data["emissions"][construction.name] = [0] * 1441
+        if construction.name == "warehouse":
+            if "coal" not in current_data["resources"]:
+                for resource in ["coal", "oil", "gas", "uranium"]:
+                    current_data["resources"][resource] = [0] * 1441
     setattr(player, construction.name, getattr(player, construction.name) + 1)
     priority_list_name = "construction_priorities"
     if construction.family == "Technologies":
@@ -63,7 +98,7 @@ def add_asset(player_id, construction_id):
             next_construction.suspension_time = None
             db.session.commit()
             break
-    current_app.config["engine"].config.update_config_for_user(player.id)
+    engine.config.update_config_for_user(player.id)
     if construction.family == "Technologies":
         notify(
             "Constructions",
@@ -217,52 +252,34 @@ def update_weather(engine):
     )
 
 
-# saves the past production data to files every 24h AND remove network data older than 24h
 def save_past_data_threaded(app, engine, new_data, network_data):
+    """Saves the past production data to files every 24h AND remove network data older than 24h"""
+
     def save_data():
         with app.app_context():
             players = Player.query.all()
             for player in players:
                 past_data = {}
-                for timescale in ["5_days", "month", "6_months"]:
-                    with open(
-                        f"instance/player_data/{player.id}/{timescale}.pck",
-                        "rb",
-                    ) as file:
-                        past_data[timescale] = pickle.load(file)
+                with open(
+                    f"instance/player_data/player_{player.id}.pck",
+                    "rb",
+                ) as file:
+                    past_data = pickle.load(file)
 
-                past_data["day"] = new_data[player.id]
-                for category in past_data["5_days"]:
-                    for element in past_data["5_days"][category]:
-                        new_array = np.array(
-                            new_data[player.id][category][element]
-                        )
-                        new_5_days = np.mean(new_array.reshape(-1, 5), axis=1)
-                        past_data["5_days"][category][element] = past_data[
-                            "5_days"
-                        ][category][element][288:]
-                        past_data["5_days"][category][element].extend(
-                            new_5_days
-                        )
-                        new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
-                        past_data["month"][category][element] = past_data[
-                            "month"
-                        ][category][element][48:]
-                        past_data["month"][category][element].extend(new_month)
-                        new_6_months = np.mean(new_month.reshape(-1, 6), axis=1)
-                        past_data["6_months"][category][element] = past_data[
-                            "6_months"
-                        ][category][element][8:]
-                        past_data["6_months"][category][element].extend(
-                            new_6_months
-                        )
+                for category in new_data[player.id]:
+                    for element in new_data[player.id][category]:
+                        new_el_data = new_data[player.id][category][element]
+                        if element not in past_data[category]:
+                            # if facility didn't exist in past data, initialize it
+                            past_data[category][element] = [[0] * 1440] * 4
+                        past_el_data = past_data[category][element]
+                        reduce_resolution(past_el_data, np.array(new_el_data))
 
-                for timescale in past_data:
-                    with open(
-                        f"instance/player_data/{player.id}/{timescale}.pck",
-                        "wb",
-                    ) as file:
-                        pickle.dump(past_data[timescale], file)
+                with open(
+                    f"instance/player_data/player_{player.id}.pck",
+                    "wb",
+                ) as file:
+                    pickle.dump(past_data, file)
 
             # remove old network files AND save past prices
             networks = Network.query.all()
@@ -277,40 +294,34 @@ def save_past_data_threaded(app, engine, new_data, network_data):
                         os.remove(os.path.join(network_dir, filename))
 
                 past_data = {}
-                for timescale in ["5_days", "month", "6_months"]:
-                    with open(
-                        f"instance/network_data/{network.id}/prices/{timescale}.pck",
-                        "rb",
-                    ) as file:
-                        past_data[timescale] = pickle.load(file)
+                with open(
+                    f"instance/network_data/{network.id}/time_series.pck",
+                    "rb",
+                ) as file:
+                    past_data = pickle.load(file)
 
-                past_data["day"] = network_data[network.name]
-                for element in past_data["5_days"]:
-                    new_array = np.array(network_data[network.name][element])
-                    new_5_days = np.mean(new_array.reshape(-1, 5), axis=1)
-                    past_data["5_days"][element] = past_data["5_days"][element][
-                        288:
-                    ]
-                    past_data["5_days"][element].extend(new_5_days)
-                    new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
-                    past_data["month"][element] = past_data["month"][element][
-                        48:
-                    ]
-                    past_data["month"][element].extend(new_month)
-                    new_6_months = np.mean(new_month.reshape(-1, 6), axis=1)
-                    past_data["6_months"][element] = past_data["6_months"][
-                        element
-                    ][8:]
-                    past_data["6_months"][element].extend(new_6_months)
+                for element in network_data[network.id]:
+                    new_el_data = network_data[network.id][element]
+                    past_el_data = past_data[element]
+                    reduce_resolution(past_el_data, np.array(new_el_data))
 
-                for timescale in past_data:
-                    with open(
-                        f"instance/network_data/{network.id}/prices/{timescale}.pck",
-                        "wb",
-                    ) as file:
-                        pickle.dump(past_data[timescale], file)
+                with open(
+                    f"instance/network_data/{network.id}/time_series.pck",
+                    "wb",
+                ) as file:
+                    pickle.dump(past_data, file)
 
             print("past 24h data has been saved to files")
+
+    def reduce_resolution(array, new_day):
+        """reduces resolution of new day data to 5min, 30min, and 3h"""
+        array[0] = new_day  # past day
+        new_5_days = np.mean(new_day.reshape(-1, 5), axis=1)
+        array[1] = array[1][len(new_5_days) :].extend(new_5_days)
+        new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
+        array[2] = array[2][len(new_month) :].extend(new_month)
+        new_6_month = np.mean(new_month.reshape(-1, 6), axis=1)
+        array[3] = array[3][len(new_6_month) :].extend(new_6_month)
 
     thread = threading.Thread(target=save_data)
     thread.start()

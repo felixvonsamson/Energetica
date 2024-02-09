@@ -43,10 +43,10 @@ def update_electricity(engine):
             )
         market_logic(engine, market, t)
         # Save market data
-        engine.data["network_data"][network.name]["price"][t] = market[
+        engine.data["network_data"][network.id]["price"][t] = market[
             "market_price"
         ]
-        engine.data["network_data"][network.name]["quantity"][t] = market[
+        engine.data["network_data"][network.id]["quantity"][t] = market[
             "market_quantity"
         ]
         with open(
@@ -275,14 +275,15 @@ def calculate_generation_without_market(engine, player, t):
 
     # demands are demanded on the internal market
     for demand_type in player.demand_priorities.split(" "):
-        price = getattr(player, "price_buy_" + demand_type)
-        internal_market = bid(
-            internal_market,
-            player.id,
-            demand[demand_type][t],
-            price,
-            demand_type,
-        )
+        if demand_type in demand:
+            price = getattr(player, "price_buy_" + demand_type)
+            internal_market = bid(
+                internal_market,
+                player.id,
+                demand[demand_type][t],
+                price,
+                demand_type,
+            )
 
     # Sell capacities of facilities on the internal market
     for facility in engine.storage_facilities + engine.controllable_facilities:
@@ -561,29 +562,32 @@ def renewables_generation(engine, player, assets, generation, t):
         "onshore_wind_turbine",
         "offshore_wind_turbine",
     ]:
-        generation[facility][t] = (
-            power_factor
-            * assets[facility]["power generation"]
-            * getattr(player, facility)
-        )
+        if getattr(player, facility) > 0:
+            generation[facility][t] = (
+                power_factor
+                * assets[facility]["power generation"]
+                * getattr(player, facility)
+            )
     # SOLAR
     power_factor = (
         engine.data["current_irradiation"][t] / 875 * player.tile.solar
     )  # 875 W/m2 is the maximim irradiation in Zürich
     for facility in ["CSP_solar", "PV_solar"]:
-        generation[facility][t] = (
-            power_factor
-            * assets[facility]["power generation"]
-            * getattr(player, facility)
-        )
+        if getattr(player, facility) > 0:
+            generation[facility][t] = (
+                power_factor
+                * assets[facility]["power generation"]
+                * getattr(player, facility)
+            )
     # HYDRO
     power_factor = engine.data["current_discharge"][t]
     for facility in ["watermill", "small_water_dam", "large_water_dam"]:
-        generation[facility][t] = (
-            power_factor
-            * assets[facility]["power generation"]
-            * getattr(player, facility)
-        )
+        if getattr(player, facility) > 0:
+            generation[facility][t] = (
+                power_factor
+                * assets[facility]["power generation"]
+                * getattr(player, facility)
+            )
 
 
 def interpolate_wind(engine, player, t):
@@ -652,7 +656,6 @@ def calculate_prod(
 
 
 def minimal_generation(engine, player, assets, generation, t, storage):
-    total_generation = 0
     for facility in engine.controllable_facilities + engine.storage_facilities:
         if getattr(player, facility) > 0:
             generation[facility][t] = calculate_prod(
@@ -666,8 +669,6 @@ def minimal_generation(engine, player, assets, generation, t, storage):
                 if facility in engine.storage_facilities
                 else None,
             )
-        total_generation += generation[facility][t]
-    return total_generation
 
 
 def offer(market, player_id, capacity, price, facility):
@@ -770,39 +771,43 @@ def resources_and_pollution(engine, player, t):
                 )
                 add_emissions(engine, player, t, facility, facility_emmissions)
 
-    for extraction_facility in [
-        "coal_mine",
-        "oil_field",
-        "gas_drilling_site",
-        "uranium_mine",
-    ]:
-        resource = extraction_to_resource[extraction_facility]
-        if getattr(player, extraction_facility) > 0:
-            max_demand = assets[extraction_facility][
-                "power consumption"
-            ] * getattr(player, extraction_facility)
-            production_factor = demand[extraction_facility][t] / max_demand
-            extracted_quantity = (
-                production_factor
-                * getattr(player, extraction_facility)
-                * assets[extraction_facility]["amount produced"]
-            )
-            setattr(
-                player.tile,
-                resource,
-                getattr(player.tile, resource) - extracted_quantity,
-            )
-            setattr(
-                player, resource, getattr(player, resource) + extracted_quantity
-            )
-            db.session.commit()
-            emissions = (
-                extracted_quantity * assets[extraction_facility]["pollution"]
-            )
-            add_emissions(engine, player, t, extraction_facility, emissions)
-        engine.data["current_data"][player.id]["resources"][resource][
-            t
-        ] = getattr(player, resource)
+    if player.warehouse > 0:
+        for extraction_facility in [
+            "coal_mine",
+            "oil_field",
+            "gas_drilling_site",
+            "uranium_mine",
+        ]:
+            resource = extraction_to_resource[extraction_facility]
+            if getattr(player, extraction_facility) > 0:
+                max_demand = assets[extraction_facility][
+                    "power consumption"
+                ] * getattr(player, extraction_facility)
+                production_factor = demand[extraction_facility][t] / max_demand
+                extracted_quantity = (
+                    production_factor
+                    * getattr(player, extraction_facility)
+                    * assets[extraction_facility]["amount produced"]
+                )
+                setattr(
+                    player.tile,
+                    resource,
+                    getattr(player.tile, resource) - extracted_quantity,
+                )
+                setattr(
+                    player,
+                    resource,
+                    getattr(player, resource) + extracted_quantity,
+                )
+                db.session.commit()
+                emissions = (
+                    extracted_quantity
+                    * assets[extraction_facility]["pollution"]
+                )
+                add_emissions(engine, player, t, extraction_facility, emissions)
+            engine.data["current_data"][player.id]["resources"][resource][
+                t
+            ] = getattr(player, resource)
 
     construction_emissions(engine, player, t, assets)
 

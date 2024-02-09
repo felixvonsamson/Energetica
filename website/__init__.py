@@ -16,6 +16,7 @@ from flask_socketio import SocketIO  # noqa: E402
 from flask_sock import Sock  # noqa: E402
 import atexit  # noqa: E402
 from flask_apscheduler import APScheduler  # noqa: E402
+from pathlib import Path
 
 db = SQLAlchemy()
 
@@ -31,6 +32,7 @@ def create_app():
 
     # creates the engine (ad loading the sava if it exists)
     engine = gameEngine()
+    Path("instance/player_data").mkdir(parents=True, exist_ok=True)
     if os.path.isfile("instance/engine_data.pck"):
         with open("instance/engine_data.pck", "rb") as file:
             engine.data = pickle.load(file)
@@ -126,11 +128,11 @@ def create_app():
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
 
-        with app.app_context():
-            # Temporary automated player creation for testing
-            from .init_test_players import init_test_players
+        # with app.app_context():
+        #     # Temporary automated player creation for testing
+        #     from .init_test_players import init_test_players
 
-            # edit_database(engine)
-            init_test_players(engine)
+        #     # edit_database(engine)
+        #     init_test_players(engine)
 
     return socketio, sock, app
