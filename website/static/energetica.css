@@ -1034,11 +1034,21 @@ canvas {
 
     .notification_button{
         position: absolute;
+        right:100px;
         transform: translate(0, 33%);
         -ms-transform: translate(0, 33%)
     }
 
+    .notification_txt{
+        display: none;
+    }
+
     .notification_container{
         margin:0;
+    }
+
+    .weather_info_container{
+        font-size: min(16px, 2vh);
+        padding: 4px 8px
     }
 }
