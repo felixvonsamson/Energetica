@@ -32,7 +32,7 @@ function start_construction(facility, family) {
                     var obj = document.getElementById("money");
                     obj.innerHTML = formatted_money(money);
                     addToast("Construction started");
-                    sessionStorage.setItem("constructions", 
+                    localStorage.setItem("constructions", 
                     JSON.stringify(raw_data["constructions"]));
                     refresh_progressBar();
                 } else if (response == "noSuitableLocationAvailable") {
