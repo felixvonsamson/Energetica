@@ -60,8 +60,10 @@ def add_sock_handlers(sock, engine):
             message_data = message["data"]
             print(f"decoded json message = {message}")
             match message["type"]:
-                case "confirmLocation":
-                    rest_confirm_location(engine, ws, message_data)
+                # case "confirmLocation":
+                #     rest_confirm_location(engine, ws, message_data)
+                case "request":
+                    rest_parse_request(engine, ws, message_data)
 
 
 def rest_init_ws_post_location(ws):
@@ -144,9 +146,7 @@ def rest_get_charts():
     def industry_data_for(category, subcategory):
         return combine_file_data_and_engine_data(
             file_data[category][subcategory],
-            g.engine.data["current_data"][g.player.id][category][
-                subcategory
-            ],
+            g.engine.data["current_data"][g.player.id][category][subcategory],
         )
 
     subcategories = {
@@ -265,7 +265,16 @@ def rest_notify_confirm_location_response(confirm_location_response):
 ## Client Messages
 
 
-def rest_confirm_location(engine, ws, data):
+def rest_parse_request(engine, ws, data):
+    """Interpret a request sent from a REST client"""
+    endpoint = data["endpoint"]
+    body = data["body"]
+    match endpoint:
+        case "confirmLocation":
+            rest_endpoint_confirmLocation(engine, ws, body)
+
+
+def rest_endpoint_confirmLocation(engine, ws, data):
     """Interpret message sent from a client when they chose a location."""
     cell_id = data
     confirm_location_response = website.utils.confirm_location(
