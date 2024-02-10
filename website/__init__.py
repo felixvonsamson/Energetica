@@ -123,7 +123,7 @@ def create_app():
             trigger="interval",
             seconds=1,
         )
-        scheduler.start()
+        # scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
 
         with app.app_context():

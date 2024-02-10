@@ -82,7 +82,7 @@ def init_test_players(engine):
 
     player = create_player(engine, "user", "password")
     print(player)
-    Hex.query.filter_by(id=83).first().player_id = player.id
+    # Hex.query.filter_by(id=83).first().player_id = player.id
     # player.coal_mine = 1
     # player.uranium_mine = 1
     # player.small_pumped_hydro = 1
