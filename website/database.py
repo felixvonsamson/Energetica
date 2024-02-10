@@ -352,23 +352,23 @@ class Player(db.Model, UserMixin):
         }
         return technology_values
 
-    def emit(player, *args):
-        if player.sid:
+    def emit(self, *args):
+        if self.sid:
             socketio = current_app.config["engine"].socketio
-            socketio.emit(*args, room=player.sid)
+            socketio.emit(*args, room=self.sid)
 
-    def update_resources(player):
-        if player.sid:
+    def update_resources(self):
+        if self.sid:
             updates = []
             updates.append(
                 [
                     "money",
-                    f"{player.money:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(
+                    f"{self.money:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(
                         ",", "'"
                     ),
                 ]
             )
-            player.emit("update_data", updates)
+            self.emit("update_data", updates)
 
     # prints out the object as a sting with the players username for debugging
     def __repr__(self):
