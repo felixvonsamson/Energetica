@@ -606,7 +606,23 @@ function mousePressed_smartphone() {
     ) {
         if (validate.is_clicked()) {
             if (selected_id != null) {
-                socket.emit("choose_location", selected_id);
+                send_form("/choose_location", { selected_id: selected_id })
+                    .then((response) => {
+                        response.json().then((raw_data) => {
+                            if (raw_data["response"] == "locationOccupied") {
+                                addError("This location is already occupied!");
+                                setTimeout(function () {
+                                    location.reload();
+                                }, 1000);
+                            } else {
+                                // success or choiceUnmodifiable
+                                window.location.href = "/home";
+                            }
+                        });
+                    })
+                    .catch((error) => {
+                        console.error("Error:", error);
+                    });
             } else {
                 addError("No location has been selected!");
             }

@@ -42,6 +42,7 @@ def create_app():
     # initialize socketio :
     socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
     engine.socketio = socketio
+    engine.socketio_dict = {}
     from .socketio_handlers import add_handlers
 
     add_handlers(socketio=socketio, engine=engine)

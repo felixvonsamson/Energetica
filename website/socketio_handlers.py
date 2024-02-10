@@ -11,12 +11,20 @@ from datetime import datetime
 
 
 def add_handlers(socketio, engine):
-    # ???
-    @socketio.on("give_identity")
-    def give_identity():
+
+    @socketio.on('connect')
+    def handle_connect():
         player = current_user
         player.sid = request.sid
         db.session.commit()
+        # Store client's sid when connected
+        engine.socketio_dict[request.sid] = player
+        print(f"Client connected: {request.sid}")
+
+    @socketio.on('disconnect')
+    def handle_disconnect():
+        # Remove client's sid when disconnected
+        engine.socketio_dict.pop(request.sid, None)
 
     # this function is executed when a player creates a new group chat
     @socketio.on("create_group_chat")
