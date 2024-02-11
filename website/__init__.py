@@ -42,7 +42,6 @@ def create_app():
     # initialize socketio :
     socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
     engine.socketio = socketio
-    engine.socketio_dict = {}
     from .socketio_handlers import add_handlers
 
     add_handlers(socketio=socketio, engine=engine)
@@ -50,7 +49,6 @@ def create_app():
     # initialize sock for WebSockets:
     sock = Sock(app)
     engine.sock = sock
-    engine.websocket_dict = {}
     from .rest_api import add_sock_handlers
 
     add_sock_handlers(sock=sock, engine=engine)

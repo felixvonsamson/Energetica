@@ -353,8 +353,9 @@ class Player(db.Model, UserMixin):
         return technology_values
 
     def emit(self, *args):
-        if self.sid:
-            socketio = current_app.config["engine"].socketio
+        engine = current_app.config["engine"]
+        if self.sid in engine.socketio_dict:
+            socketio = engine.socketio
             socketio.emit(*args, room=self.sid)
 
     def update_resources(self):
