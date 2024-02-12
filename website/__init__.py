@@ -49,7 +49,6 @@ def create_app():
     # initialize sock for WebSockets:
     sock = Sock(app)
     engine.sock = sock
-    engine.websocket_dict = {}
     from .rest_api import add_sock_handlers
 
     add_sock_handlers(sock=sock, engine=engine)

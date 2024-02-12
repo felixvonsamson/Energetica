@@ -13,11 +13,6 @@ function send_form(endpoint, body) {
     });
 }
 
-socket.on("connect", function () {
-    console.log("Connected to server");
-    socket.emit("give_identity");
-});
-
 // information sent to the server when a new facility is created
 function start_construction(facility, family) {
     send_form("/request_start_project", {
