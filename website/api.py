@@ -5,6 +5,7 @@ These functions make the link between the website and the database
 from flask import Blueprint, request, flash, jsonify, g, current_app, redirect
 from flask_login import login_required, current_user
 import pickle
+import copy
 from pathlib import Path
 from .utils import (
     put_resource_on_market,
@@ -106,49 +107,55 @@ def get_chat():
 
 
 # Gets the data for the overview charts
-@api.route("/get_chart_data", methods=["GET"])
+@api.route("/get_chart_data", methods=["POST"])
 def get_chart_data():
-    def slice_arrays(input_dict, length, end=g.engine.data["current_t"]):
-        sliced_dict = {}
-        for key, value in input_dict.items():
-            sliced_dict[key] = {}
+    def slice_arrays(output_dict, length, end=g.engine.data["current_t"]):
+        for key, value in output_dict.items():
             for sub_key, array in value.items():
-                sliced_dict[key][sub_key] = array[end - length : end]
-        return sliced_dict
+                output_dict[key][sub_key] = [
+                    array[end - length : end],
+                    [],
+                    [],
+                    [],
+                ]
 
-    def concat_slices(dict1, dict2, a):
+    def concat_slices(dict1, dict2, a, missing_days):
         end = g.engine.data["current_t"]
-        concatenated_dict = {}
         for key, value in dict1.items():
-            concatenated_dict[key] = {}
             for sub_key, array in value.items():
                 concatenated_array = array[0][-a:] + dict2[key][sub_key][1:end]
-                concatenated_dict[key][sub_key] = concatenated_array
-        return concatenated_dict
+                dict1[key][sub_key][0] = concatenated_array
+                dict1[key][sub_key][1] = dict1[key][sub_key][1][
+                    -min(1440, missing_days * 288) :
+                ]
+                dict1[key][sub_key][2] = dict1[key][sub_key][2][
+                    -min(1440, missing_days * 48) :
+                ]
+                dict1[key][sub_key][3] = dict1[key][sub_key][3][
+                    -min(1440, missing_days * 8) :
+                ]
 
-    last_value = request.args.get("last_value")
+    last_value = request.get_json()["last_value"]
+    print(last_value)
     # indicates the total_t timestamp of the last known value of the client
     t = g.engine.data["current_t"]
     total_t = g.engine.data["total_t"]
     current_data = g.engine.data["current_data"][current_user.id]
+    filename = f"instance/player_data/player_{current_user.id}.pck"
     if last_value == 0:
-        filename = f"instance/player_data/player_{current_user.id}.pck"
         with open(filename, "rb") as file:
             data = pickle.load(file)
-        data[0] = concat_slices(data, current_data, 1440)
+        concat_slices(data, current_data, 1440, 1000)
         return jsonify({"total_t": total_t, "data": data})
     if total_t - last_value < t:
-        data = slice_arrays(current_data, total_t - last_value)
+        data = copy.deepcopy(current_data)
+        slice_arrays(data, total_t - last_value)
         return jsonify({"total_t": total_t, "data": data})
-    filename = f"instance/player_data/player_{current_user.id}.pck"
     with open(filename, "rb") as file:
         data = pickle.load(file)
     day_before_values = min(1440, total_t - last_value - (t - 1))
-    data[0] = concat_slices(data, current_data, day_before_values)
     missing_days = total_t // 1440 - last_value // 1440
-    data[1] = slice_arrays(data[1], min(1440, missing_days * 288), end=1440)
-    data[2] = slice_arrays(data[2], min(1440, missing_days * 48), end=1440)
-    data[3] = slice_arrays(data[3], min(1440, missing_days * 8), end=1440)
+    concat_slices(data, current_data, day_before_values, missing_days)
     return jsonify({"total_t": total_t, "data": data})
 
 

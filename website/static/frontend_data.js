@@ -29,24 +29,49 @@ function load_chart_data() {
     if (typeof(Storage) !== "undefined") {
         const chart_data = localStorage.getItem("chart_data");
         if (chart_data) {
+            const last_value = JSON.parse(localStorage.getItem("last_value"));
+            var currentDate = new Date();
+            var last_date = new Date(last_value["time"]);
+            if (currentDate.getTime() - last_date.getTime() > 180000){
+                return retrieve_chart_data(last_value["total_t"], chart_data);
+            }
             return Promise.resolve(JSON.parse(chart_data));
         }
     }
-    return retrieve_chart_data();
+    return retrieve_chart_data(0, false);
 }
  
-function retrieve_chart_data() {
-    const last_value = localStorage.getItem("last_value");
-    if (last_value == null){
-        last_value = 0
-    }
+function retrieve_chart_data(total_t, chart_data) {
     return send_form("/get_chart_data", {
-        last_value: last_value,
+        last_value: total_t,
     })
         .then((response) => {
             response.json().then((raw_data) => {
-                localStorage.setItem("chart_data", JSON.stringify(raw_data));
-                return raw_data;
+                var currentDate = new Date();
+                localStorage.setItem("last_value", JSON.stringify({"total_t" : raw_data["total_t"], "time": currentDate}));
+                if (chart_data){
+                    let data = JSON.parse(chart_data);
+                    new_data = raw_data["data"];
+                    for(var key in new_data){
+                        for(var subkey in new_data[key]){
+                            if (!(subkey in data[key])){
+                                data[key][subkey] = [];
+                                for (var i = 0; i < 4; i++) {
+                                    data[key][subkey].push(Array(1440).fill(0));
+                                }
+                            }
+                            for (var i = 0; i < 4; i++) {
+                                data[key][subkey][i].splice(0, new_data[key][subkey][i].length);
+                                data[key][subkey][i].push(...new_data[key][subkey][i]);
+                            }
+                        }
+                    }
+                    localStorage.setItem("chart_data", JSON.stringify(data));
+                    return data;
+                }else{
+                    localStorage.setItem("chart_data", JSON.stringify(raw_data["data"]));
+                    return raw_data["data"];
+                }
             });
         })
         .catch((error) => {

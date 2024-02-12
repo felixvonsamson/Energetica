@@ -250,9 +250,10 @@ function draw() {
 
 function regen(res) {
   file = res_to_data[res][0];
-  fetch(`/get_chart_data?timescale=${file}&table=generation`) // retrieves data from server
+  load_chart_data()
       .then((response) => response.json())
       .then((raw_data) => {
+        console.log(raw_data);
           background(229, 217, 182);
           caps = raw_data[3];
           data_gen = raw_data[1];
