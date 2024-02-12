@@ -530,6 +530,7 @@ full_config = {
             "requirements": [
                 ["laboratory", 1, False]
             ],  # level is given relative to the research level
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173657&",
         },
         "mechanical_engineering": {
             "name": "Mechanical engineering",
@@ -543,6 +544,7 @@ full_config = {
                 ["laboratory", 1, False],
                 ["mathematics", 1, False],
             ],
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172711&",
         },
         "thermodynamics": {
             "name": "Thermodynamics",
@@ -555,6 +557,7 @@ full_config = {
                 ["laboratory", 1, False],
                 ["mathematics", 1, False],
             ],
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173159&",
         },
         "physics": {
             "name": "Physics",
@@ -569,6 +572,7 @@ full_config = {
                 ["mathematics", 1, False],
                 ["chemistry", -1, False],
             ],
+            "wikipedia_link":"https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2024S&ansicht=ALLE&lerneinheitId=177068&",
         },
         "building_technology": {
             "name": "Building Technology",
@@ -582,6 +586,7 @@ full_config = {
                 ["mechanical_engineering", 1, False],
                 ["transport_technology", -1, False],
             ],
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172899&",
         },
         "mineral_extraction": {
             "name": "Mineral extraction",
@@ -597,6 +602,7 @@ full_config = {
                 ["laboratory", 2, False],
                 ["building_technology", 1, False],
             ],
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173723&",
         },
         "transport_technology": {
             "name": "Transport technology",
@@ -611,6 +617,7 @@ full_config = {
                 ["mathematics", 2, False],
                 ["mechanical_engineering", 2, False],
             ],
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172788&",
         },
         "materials": {
             "name": "Materials",
@@ -625,6 +632,7 @@ full_config = {
                 ["mathematics", 2, False],
                 ["chemistry", 1, False],
             ],
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2024S&ansicht=ALLE&lerneinheitId=178386&",
         },
         "civil_engineering": {
             "name": "Civil engineering",
@@ -640,6 +648,7 @@ full_config = {
                 ["mathematics", 2, False],
                 ["building_technology", 3, False],
             ],
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173564&",
         },
         "aerodynamics": {
             "name": "Aerodynamics",
@@ -654,6 +663,7 @@ full_config = {
                 ["physics", 3, False],
                 ["building_technology", 3, False],
             ],
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172719&",
         },
         "chemistry": {
             "name": "Chemistry",
@@ -668,6 +678,7 @@ full_config = {
                 ["physics", 0, False],
                 ["mathematics", 2, False],
             ],
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=174071&",
         },
         "nuclear_engineering": {
             "name": "Nuclear engineering",
@@ -683,6 +694,7 @@ full_config = {
                 ["building_technology", 3, False],
                 ["mechanical_engineering", 3, False],
             ],
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172874&",
         },
     },
     "warehouse_capacities": {
