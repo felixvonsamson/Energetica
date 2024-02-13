@@ -56,31 +56,26 @@ def add_asset(player_id, construction_id):
             + engine.controllable_facilities
             + engine.renewables
         ):
-            if construction.name not in current_data["generation"]:
-                current_data["generation"][construction.name] = [0.0] * 1441
+            current_data.new_subcategory("generation", construction.name)
         if (
             construction.name
             in engine.storage_facilities
             + engine.extraction_facilities
             + ["carbon_capture"]
         ):
-            if construction.name not in current_data["demand"]:
-                current_data["demand"][construction.name] = [0.0] * 1441
+            current_data.new_subcategory("demand", construction.name)
         if construction.name in engine.storage_facilities:
-            if construction.name not in current_data["storage"]:
-                current_data["storage"][construction.name] = [0.0] * 1441
+            current_data.new_subcategory("storage", construction.name)
         if (
             construction.name
             in engine.controllable_facilities
             + engine.extraction_facilities
             + ["carbon_capture"]
         ):
-            if construction.name not in current_data["emissions"]:
-                current_data["emissions"][construction.name] = [0.0] * 1441
+            current_data.new_subcategory("emissions", construction.name)
         if construction.name == "warehouse":
-            if "coal" not in current_data["resources"]:
-                for resource in ["coal", "oil", "gas", "uranium"]:
-                    current_data["resources"][resource] = [0.0] * 1441
+            for resource in ["coal", "oil", "gas", "uranium"]:
+                current_data.new_subcategory("resources", resource)
     setattr(player, construction.name, getattr(player, construction.name) + 1)
     priority_list_name = "construction_priorities"
     if construction.family == "Technologies":
@@ -265,13 +260,13 @@ def save_past_data_threaded(app, engine):
                     "rb",
                 ) as file:
                     past_data = pickle.load(file)
-                current_data = engine.data["current_data"][player.id]
-                for category in current_data:
-                    for element in current_data[category]:
-                        new_el_data = current_data[category][element]
+                new_data = engine.data["current_data"][player.id].get_data()
+                for category in new_data:
+                    for element in new_data[category]:
+                        new_el_data = new_data[category][element]
                         if element not in past_data[category]:
                             # if facility didn't exist in past data, initialize it
-                            past_data[category][element] = [[0] * 1440] * 4
+                            past_data[category][element] = [[0.0] * 1440] * 4
                         past_el_data = past_data[category][element]
                         reduce_resolution(past_el_data, np.array(new_el_data))
 
@@ -316,13 +311,17 @@ def save_past_data_threaded(app, engine):
 
     def reduce_resolution(array, new_day):
         """reduces resolution of new day data to 5min, 30min, and 3h"""
-        array[0] = array[0][len(new_day) :].extend(new_day)
+        array[0] = array[0][len(new_day) :]
+        array[0].extend(new_day)
         new_5_days = np.mean(new_day.reshape(-1, 5), axis=1)
-        array[1] = array[1][len(new_5_days) :].extend(new_5_days)
+        array[1] = array[1][len(new_5_days) :]
+        array[1].extend(new_5_days)
         new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
-        array[2] = array[2][len(new_month) :].extend(new_month)
+        array[2] = array[2][len(new_month) :]
+        array[2].extend(new_month)
         if engine.data["current_t"] % 180 == 0:
-            array[3] = array[3][1:].extend(np.mean(array[2][-6:]))
+            array[3] = array[3][1:]
+            array[3].extend(np.mean(array[2][-6:]))
 
     thread = threading.Thread(target=save_data)
     thread.start()

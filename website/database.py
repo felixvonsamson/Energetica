@@ -405,29 +405,63 @@ class CircularBufferPlayer:
     """Class that stores the active data of a player"""
 
     def __init__(self):
-        self._data = defaultdict(
-            lambda: defaultdict(
-                lambda: defaultdict(deque([0] * 120, maxlen=120))
-            )
-        )
+        self._data = {
+            "revenues": {
+                "industry": deque([0.0] * 120, maxlen=120),
+                "O&M_costs": deque([0.0] * 120, maxlen=120),
+                "exports": deque([0.0] * 120, maxlen=120),
+                "imports": deque([0.0] * 120, maxlen=120),
+                "dumping": deque([0.0] * 120, maxlen=120),
+            },
+            "generation": {
+                "steam_engine": deque([0.0] * 120, maxlen=120),
+                "imports": deque([0.0] * 120, maxlen=120),
+            },
+            "demand": {
+                "industry": deque([0.0] * 120, maxlen=120),
+                "construction": deque([0.0] * 120, maxlen=120),
+                "research": deque([0.0] * 120, maxlen=120),
+                "transport": deque([0.0] * 120, maxlen=120),
+                "exports": deque([0.0] * 120, maxlen=120),
+                "dumping": deque([0.0] * 120, maxlen=120),
+            },
+            "storage": {},
+            "resources": {},
+            "emissions": {
+                "steam_engine": deque([0.0] * 120, maxlen=120),
+                "construction": deque([0.0] * 120, maxlen=120),
+            },
+        }
 
     def append_value(self, new_value):
         for category, subcategories in new_value.items():
             for subcategory, value in subcategories.items():
-                if subcategory not in self._data[category]:
-                    self._data[category][subcategory] = deque(
-                        [0] * 120, maxlen=120
-                    )
                 self._data[category][subcategory].append(value)
 
-    def get_data(self, n=60):
+    def new_subcategory(self, category, subcategory):
+        if subcategory not in self._data[category]:
+            self._data[category][subcategory] = deque([0.0] * 120, maxlen=120)
+
+    def get_data(self, t=60):
         result = defaultdict(lambda: defaultdict(dict))
         for category, subcategories in self._data.items():
             for subcategory, buffer in subcategories.items():
-                result[category][subcategory] = list(buffer)[-n:]
+                result[category][subcategory] = list(buffer)[-t:]
         return result
 
     def get_last_data(self, category, subcategory):
         if category in self._data and subcategory in self._data[category]:
             return self._data[category][subcategory][-1]
         return 0
+
+    def init_new_data(self):
+        """returns a dict with the same structure as the data with 0 and with the last value for the storage and resources"""
+        result = {}
+        for category, subcategories in self._data.items():
+            result[category] = {}
+            for subcategory, buffer in subcategories.items():
+                if category in ["storage", "resources"]:
+                    result[category][subcategory] = buffer[-1]
+                else:
+                    result[category][subcategory] = 0.0
+        return result

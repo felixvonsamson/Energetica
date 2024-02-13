@@ -4,7 +4,7 @@ This file contains the functions for authentification and sign-up of users
 
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask import current_app
-from .database import Player
+from .database import Player, CircularBufferPlayer
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
@@ -88,40 +88,37 @@ def init_table(player):
 
 def add_player_to_data(user_id):
     engine = current_app.config["engine"]
-    engine.data["current_data"][user_id] = data_init(current_data=True)
+    engine.data["current_data"][user_id] = CircularBufferPlayer()
 
 
-def data_init(current_data=False):
-    def init_array(current_data):
-        if current_data:
-            return [0.0] * 1441
-        else:
-            return [[0.0] * 1440] * 4
+def data_init():
+    def init_array():
+        return [[0.0] * 1440] * 4
 
     return {
         "revenues": {
-            "industry": init_array(current_data),
-            "O&M_costs": init_array(current_data),
-            "exports": init_array(current_data),
-            "imports": init_array(current_data),
-            "dumping": init_array(current_data),
+            "industry": init_array(),
+            "O&M_costs": init_array(),
+            "exports": init_array(),
+            "imports": init_array(),
+            "dumping": init_array(),
         },
         "generation": {
-            "steam_engine": init_array(current_data),
-            "imports": init_array(current_data),
+            "steam_engine": init_array(),
+            "imports": init_array(),
         },
         "demand": {
-            "industry": init_array(current_data),
-            "construction": init_array(current_data),
-            "research": init_array(current_data),
-            "transport": init_array(current_data),
-            "exports": init_array(current_data),
-            "dumping": init_array(current_data),
+            "industry": init_array(),
+            "construction": init_array(),
+            "research": init_array(),
+            "transport": init_array(),
+            "exports": init_array(),
+            "dumping": init_array(),
         },
         "storage": {},
         "resources": {},
         "emissions": {
-            "steam_engine": init_array(current_data),
-            "construction": init_array(current_data),
+            "steam_engine": init_array(),
+            "construction": init_array(),
         },
     }

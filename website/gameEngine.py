@@ -153,19 +153,6 @@ def clear_current_data(engine, app):
             0
         ] * 1440
 
-        players = Player.query.all()
-        past_data = copy.deepcopy(engine.data["current_data"])
-        for player in players:
-            for category in engine.data["current_data"][player.id]:
-                for element in engine.data["current_data"][player.id][category]:
-                    past_data[player.id][category][element].pop(0)
-                    data_array = engine.data["current_data"][player.id][
-                        category
-                    ][element]
-                    last_value = data_array[-1]
-                    data_array.clear()
-                    data_array.extend([last_value] + [0] * 1440)
-
         networks = Network.query.all()
         network_data = copy.deepcopy(engine.data["network_data"])
         for network in networks:
@@ -189,8 +176,8 @@ def state_update_m(engine, app):
         engine.data["current_t"] += 1
         # print(f"t = {engine.data['current_t']}")
         engine.data["total_t"] += 1
-        if engine.data["current_t"] > 60:
-            save_past_data_threaded(app, engine, past_data, network_data)
+        if engine.data["current_t"] % 60 == 0:
+            save_past_data_threaded(app, engine)
         if engine.data["current_t"] > 1440:
             engine.data["current_t"] = 1
             clear_current_data(engine, app)

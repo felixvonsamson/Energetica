@@ -6,6 +6,7 @@ from flask import Blueprint, request, flash, jsonify, g, current_app, redirect
 from flask_login import login_required, current_user
 import pickle
 import copy
+import numpy as np
 from pathlib import Path
 from .utils import (
     put_resource_on_market,
@@ -107,59 +108,46 @@ def get_chat():
 
 
 # Gets the data for the overview charts
-@api.route("/get_chart_data", methods=["POST"])
+@api.route("/get_chart_data", methods=["GET"])
 def get_chart_data():
-    def slice_arrays(output_dict, length, end=g.engine.data["current_t"]):
-        for key, value in output_dict.items():
-            for sub_key, array in value.items():
-                output_dict[key][sub_key] = [
-                    array[end - length : end],
-                    [],
-                    [],
-                    [],
-                ]
+    def calculate_mean_subarrays(array, x):
+        return [np.mean(array[i : i + x]) for i in range(0, len(array), x)]
 
-    def concat_slices(dict1, dict2, a, missing_days):
-        end = g.engine.data["current_t"]
+    def concat_slices(dict1, dict2):
         for key, value in dict1.items():
             for sub_key, array in value.items():
-                concatenated_array = (
-                    list(array[0][-a:]) + dict2[key][sub_key][1:end]
-                )
-                dict1[key][sub_key][0] = concatenated_array
-                if dict1[key][sub_key][1]:
-                    dict1[key][sub_key][1] = dict1[key][sub_key][1][
-                        -min(1440, missing_days * 288) :
-                    ]
-                if dict1[key][sub_key][2]:
-                    dict1[key][sub_key][2] = dict1[key][sub_key][2][
-                        -min(1440, missing_days * 48) :
-                    ]
-                if dict1[key][sub_key][3]:
-                    dict1[key][sub_key][3] = dict1[key][sub_key][3][
-                        -min(1440, missing_days * 8) :
-                    ]
+                concatenated_array = list(array[0]) + dict2[key][sub_key]
+                dict1[key][sub_key][0] = concatenated_array[-1440:]
+                new_5days = calculate_mean_subarrays(dict2[key][sub_key], 5)
+                dict1[key][sub_key][1] = dict1[key][sub_key][1][
+                    len(new_5days) :
+                ]
+                dict1[key][sub_key][1].extend(new_5days)
+                new_month = calculate_mean_subarrays(new_5days, 6)
+                l2v = dict1[key][sub_key][2][-2:]
+                dict1[key][sub_key][2] = dict1[key][sub_key][2][
+                    len(new_month) :
+                ]
+                dict1[key][sub_key][2].extend(new_month)
+                new_6month = calculate_mean_subarrays(new_month, 6)
+                if total_t % 180 >= 120:
+                    new_6month[0] = new_6month[0] / 3 + l2v[0] / 3 + l2v[1] / 3
+                elif total_t % 180 >= 60:
+                    new_6month[0] = new_6month[0] / 2 + l2v[1] / 2
+                dict1[key][sub_key][3] = dict1[key][sub_key][3][
+                    len(new_6month) :
+                ]
+                dict1[key][sub_key][2].extend(new_6month)
 
-    last_value = request.get_json()["last_value"]
-    # indicates the total_t timestamp of the last known value of the client
-    t = g.engine.data["current_t"]
     total_t = g.engine.data["total_t"]
-    current_data = g.engine.data["current_data"][current_user.id]
+    current_data = g.engine.data["current_data"][current_user.id].get_data(
+        t=total_t % 60
+    )
     filename = f"instance/player_data/player_{current_user.id}.pck"
-    if last_value == 0:
-        with open(filename, "rb") as file:
-            data = pickle.load(file)
-        concat_slices(data, current_data, 1440, 1000)
-        return jsonify({"total_t": total_t, "data": data})
-    if total_t - last_value < t:
-        data = copy.deepcopy(current_data)
-        slice_arrays(data, total_t - last_value)
-        return jsonify({"total_t": total_t, "data": data})
     with open(filename, "rb") as file:
         data = pickle.load(file)
-    day_before_values = min(1440, total_t - last_value - (t - 1))
-    missing_days = total_t // 1440 - last_value // 1440
-    concat_slices(data, current_data, day_before_values, missing_days)
+    concat_slices(data, current_data)
+    print(data)
     return jsonify({"total_t": total_t, "data": data})
 
 

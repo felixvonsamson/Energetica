@@ -16,7 +16,7 @@ from flask_socketio import SocketIO  # noqa: E402
 from flask_sock import Sock  # noqa: E402
 import atexit  # noqa: E402
 from flask_apscheduler import APScheduler  # noqa: E402
-from pathlib import Path
+from pathlib import Path  # noqa: E402
 
 db = SQLAlchemy()
 
