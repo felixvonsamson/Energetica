@@ -5,6 +5,7 @@ Here are defined the classes for the items stored in the database
 from . import db
 from flask_login import UserMixin
 from flask import current_app
+from collections import defaultdict, deque
 
 # table that links chats to players
 player_chats = db.Table(
@@ -398,3 +399,35 @@ class Notification(db.Model):
     content = db.Column(db.Text)
     time = db.Column(db.DateTime)
     read = db.Column(db.Boolean, default=False)
+
+
+class CircularBufferPlayer:
+    """Class that stores the active data of a player"""
+
+    def __init__(self):
+        self._data = defaultdict(
+            lambda: defaultdict(
+                lambda: defaultdict(deque([0] * 120, maxlen=120))
+            )
+        )
+
+    def append_value(self, new_value):
+        for category, subcategories in new_value.items():
+            for subcategory, value in subcategories.items():
+                if subcategory not in self._data[category]:
+                    self._data[category][subcategory] = deque(
+                        [0] * 120, maxlen=120
+                    )
+                self._data[category][subcategory].append(value)
+
+    def get_data(self, n=60):
+        result = defaultdict(lambda: defaultdict(dict))
+        for category, subcategories in self._data.items():
+            for subcategory, buffer in subcategories.items():
+                result[category][subcategory] = list(buffer)[-n:]
+        return result
+
+    def get_last_data(self, category, subcategory):
+        if category in self._data and subcategory in self._data[category]:
+            return self._data[category][subcategory][-1]
+        return 0
