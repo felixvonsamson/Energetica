@@ -97,7 +97,7 @@ function draw() {
       rect(0, 0, 160, 17);
       fill(0);
       textFont(balooBold);
-      text(display_duration((data_len - t - 1) * res_to_data[res][1]), 80, 5);
+      text(display_duration((data_len - t - 1) * res_to_factor[res]), 80, 5);
       textFont(font);
       translate(0, 16 * lines);
       alternate_fill();
@@ -258,10 +258,8 @@ function draw() {
 }
 
 function regen(res) {
-  file = res_to_data[res][0];
   load_chart_data()
       .then((raw_data) => {
-        console.log(raw_data);
         background(229, 217, 182);
         Object.keys(raw_data["generation"]).forEach((key) => {
             data_gen[key] = reduce(raw_data["generation"][key], res);

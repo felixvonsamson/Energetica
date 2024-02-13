@@ -18,8 +18,10 @@ function draw() {
         noStroke();
         translate(X, graph_h);
         for (const key of keys_resources) {
-            let h = (-data[key][t] / caps[key]) * graph_h;
-            ellipse(0, h, 8, 8);
+            if (key in data){
+                let h = (-data[key][t] / caps[key]) * graph_h;
+                ellipse(0, h, 8, 8);
+            }
         }
         let tx = -135;
         let ty = graph_h + 10 - mouseY;
@@ -37,23 +39,25 @@ function draw() {
         rect(0, 0, 115, 17);
         fill(0);
         textFont(balooBold);
-        text(display_duration((data_len - t - 1) * res_to_data[res][1]), 57, 5);
+        text(display_duration((data_len - t - 1) * res_to_factor[res]), 57, 5);
         textFont(font);
         for (const key of keys_resources) {
-            if (data[key][t] > 0) {
-                alternate_fill();
-                translate(0, 16);
-                rect(0, 0, 115, 17);
-                push();
-                fill(cols_and_names[key][0]);
-                rect(0, 0, 16, 17);
-                pop();
-                fill(0);
-                textAlign(LEFT, CENTER);
-                text(cols_and_names[key][1], 20, 5);
-                textAlign(CENTER, CENTER);
-                text(display_kg(data[key][t]), 90, 5);
-                fill(229, 217, 182);
+            if (key in data){
+                if (data[key][t] > 0) {
+                    alternate_fill();
+                    translate(0, 16);
+                    rect(0, 0, 115, 17);
+                    push();
+                    fill(cols_and_names[key][0]);
+                    rect(0, 0, 16, 17);
+                    pop();
+                    fill(0);
+                    textAlign(LEFT, CENTER);
+                    text(cols_and_names[key][1], 20, 5);
+                    textAlign(CENTER, CENTER);
+                    text(display_kg(data[key][t]), 90, 5);
+                    fill(229, 217, 182);
+                }
             }
         }
         pop();
@@ -165,35 +169,33 @@ function show_stored(resource, x, y, y_fix) {
 }
 
 function regen(res) {
-    file = res_to_data[res][0];
-    fetch(`/get_chart_data?timescale=${file}&table=resources`) // retrieves data from server
-        .then((response) => response.json())
+    load_chart_data()
         .then((raw_data) => {
             background(229, 217, 182);
-            caps = raw_data[3];
-            rates = raw_data[4];
-            on_sale = raw_data[5];
-            data = raw_data[1];
-            Object.keys(data).forEach((key) => {
-                const array = raw_data[2][key];
-                data[key] = reduce(data[key], array, res, raw_data[0]);
+            Object.keys(raw_data["resources"]).forEach((key) => {
+                data[key] = reduce(raw_data["resources"][key], res);
+                data_len = data[key].length;
             });
-            data_len = data["coal"].length;
+            if (Object.keys(data).length == 0){
+                return
+            }
             push();
             translate(1.5 * margin, height - 2 * margin - 10);
             noStroke();
             push();
             strokeWeight(3);
             for (const key of keys_resources) {
-                stroke(cols_and_names[key][0]);
-                push();
-                for (let t = 1; t < data_len; t++) {
-                    let h1 = (data[key][t - 1] / caps[key]) * graph_h;
-                    let h2 = (data[key][t] / caps[key]) * graph_h;
-                    line(0, -h1, graph_w / data_len, -h2);
-                    translate(graph_w / (data_len - 1), 0);
+                if (key in data){
+                    stroke(cols_and_names[key][0]);
+                    push();
+                    for (let t = 1; t < data_len; t++) {
+                        let h1 = (data[key][t - 1] / caps[key]) * graph_h;
+                        let h2 = (data[key][t] / caps[key]) * graph_h;
+                        line(0, -h1, graph_w / data_len, -h2);
+                        translate(graph_w / (data_len - 1), 0);
+                    }
+                    pop();
                 }
-                pop();
             }
             pop();
             stroke(0);
@@ -247,65 +249,65 @@ function regen(res) {
             text("Resource storage capacity", 0, 0);
             pop();
 
-            push();
-            translate(width - 3.5 * margin, 0.5 * height - 50);
-            fill(255);
-            rect(0, 0, margin, -0.5 * height + 60);
-            fill(cols_and_names["coal"][0]);
-            let h =
-                (data["coal"][data_len - 1] / caps["coal"]) *
-                (0.5 * height - 60);
-            rect(0, 0, margin, -h);
-            fill(60, 60, 60);
-            h = (on_sale["coal"] / caps["coal"]) * (0.5 * height - 60);
-            rect(0, 0, margin, -h);
-            textFont(balooBold);
-            textSize(15);
-            fill(0);
-            text("Coal", 0.5 * margin, 10);
-            text("+ " + display_kgh(rates["coal"]), 0.5 * margin, 30);
+            // push();
+            // translate(width - 3.5 * margin, 0.5 * height - 50);
+            // fill(255);
+            // rect(0, 0, margin, -0.5 * height + 60);
+            // fill(cols_and_names["coal"][0]);
+            // let h =
+            //     (data["coal"][data_len - 1] / caps["coal"]) *
+            //     (0.5 * height - 60);
+            // rect(0, 0, margin, -h);
+            // fill(60, 60, 60);
+            // h = (on_sale["coal"] / caps["coal"]) * (0.5 * height - 60);
+            // rect(0, 0, margin, -h);
+            // textFont(balooBold);
+            // textSize(15);
+            // fill(0);
+            // text("Coal", 0.5 * margin, 10);
+            // text("+ " + display_kgh(rates["coal"]), 0.5 * margin, 30);
 
-            translate(1.5 * margin, 0);
-            fill(255);
-            rect(0, 0, margin, -0.5 * height + 60);
-            fill(cols_and_names["oil"][0]);
-            h = (data["oil"][data_len - 1] / caps["oil"]) * (0.5 * height - 60);
-            rect(0, 0, margin, -h);
-            fill(171, 73, 103);
-            h = (on_sale["oil"] / caps["oil"]) * (0.5 * height - 60);
-            rect(0, 0, margin, -h);
-            fill(0);
-            text("Oil", 0.5 * margin, 10);
-            text("+ " + display_kgh(rates["oil"]), 0.5 * margin, 30);
+            // translate(1.5 * margin, 0);
+            // fill(255);
+            // rect(0, 0, margin, -0.5 * height + 60);
+            // fill(cols_and_names["oil"][0]);
+            // h = (data["oil"][data_len - 1] / caps["oil"]) * (0.5 * height - 60);
+            // rect(0, 0, margin, -h);
+            // fill(171, 73, 103);
+            // h = (on_sale["oil"] / caps["oil"]) * (0.5 * height - 60);
+            // rect(0, 0, margin, -h);
+            // fill(0);
+            // text("Oil", 0.5 * margin, 10);
+            // text("+ " + display_kgh(rates["oil"]), 0.5 * margin, 30);
 
-            translate(0, 0.5 * height);
-            fill(255);
-            rect(0, 0, margin, -0.5 * height + 60);
-            fill(cols_and_names["uranium"][0]);
-            h =
-                (data["uranium"][data_len - 1] / caps["uranium"]) *
-                (0.5 * height - 60);
-            rect(0, 0, margin, -h);
-            fill(118, 224, 96);
-            h = (on_sale["uranium"] / caps["uranium"]) * (0.5 * height - 60);
-            rect(0, 0, margin, -h);
-            fill(0);
-            text("Uranium", 0.5 * margin, 10);
-            text("+ " + display_kgh(rates["uranium"]), 0.5 * margin, 30);
+            // translate(0, 0.5 * height);
+            // fill(255);
+            // rect(0, 0, margin, -0.5 * height + 60);
+            // fill(cols_and_names["uranium"][0]);
+            // h =
+            //     (data["uranium"][data_len - 1] / caps["uranium"]) *
+            //     (0.5 * height - 60);
+            // rect(0, 0, margin, -h);
+            // fill(118, 224, 96);
+            // h = (on_sale["uranium"] / caps["uranium"]) * (0.5 * height - 60);
+            // rect(0, 0, margin, -h);
+            // fill(0);
+            // text("Uranium", 0.5 * margin, 10);
+            // text("+ " + display_kgh(rates["uranium"]), 0.5 * margin, 30);
 
-            translate(-1.5 * margin, 0);
-            fill(255);
-            rect(0, 0, margin, -0.5 * height + 60);
-            fill(cols_and_names["gas"][0]);
-            h = (data["gas"][data_len - 1] / caps["gas"]) * (0.5 * height - 60);
-            rect(0, 0, margin, -h);
-            fill(99, 121, 153);
-            h = (on_sale["gas"] / caps["gas"]) * (0.5 * height - 60);
-            rect(0, 0, margin, -h);
-            fill(0);
-            text("Gas", 0.5 * margin, 10);
-            text("+ " + display_kgh(rates["gas"]), 0.5 * margin, 30);
-            pop();
+            // translate(-1.5 * margin, 0);
+            // fill(255);
+            // rect(0, 0, margin, -0.5 * height + 60);
+            // fill(cols_and_names["gas"][0]);
+            // h = (data["gas"][data_len - 1] / caps["gas"]) * (0.5 * height - 60);
+            // rect(0, 0, margin, -h);
+            // fill(99, 121, 153);
+            // h = (on_sale["gas"] / caps["gas"]) * (0.5 * height - 60);
+            // rect(0, 0, margin, -h);
+            // fill(0);
+            // text("Gas", 0.5 * margin, 10);
+            // text("+ " + display_kgh(rates["gas"]), 0.5 * margin, 30);
+            // pop();
             graph = get();
         })
         .catch((error) => {

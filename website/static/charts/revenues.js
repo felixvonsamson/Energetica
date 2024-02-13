@@ -67,7 +67,7 @@ function draw() {
         rect(0, 0, 160, 17);
         fill(0);
         textFont(balooBold);
-        text(display_duration((data_len - t - 1) * res_to_data[res][1]), 80, 5);
+        text(display_duration((data_len - t - 1) * res_to_factor[res]), 80, 5);
         textFont(font);
         translate(0, 16 * lines);
         alternate_fill();
@@ -100,15 +100,11 @@ function draw() {
 }
 
 function regen(res) {
-    file = res_to_data[res][0];
-    fetch(`/get_chart_data?timescale=${file}&table=revenues`) // retrieves data from server
-        .then((response) => response.json())
+    load_chart_data()
         .then((raw_data) => {
             background(229, 217, 182);
-            data = raw_data[1];
-            Object.keys(data).forEach((key) => {
-                const array = raw_data[2][key];
-                data[key] = reduce(data[key], array, res, raw_data[0]);
+            Object.keys(raw_data["revenues"]).forEach((key) => {
+                data[key] = reduce(raw_data["revenues"][key], res);
             });
             data_len = data["industry"].length;
             push();

@@ -11,13 +11,13 @@ let fill_alt = 0;
 
 const resolution = ["2h", "6h", "day", "5 days", "month", "6 months"];
 let res = "2h";
-const res_to_data = {
-    "2h": ["day", 1],
-    "6h": ["day", 1],
-    "day": ["day", 1],
-    "5 days": ["5_days", 5],
-    "month": ["month", 30],
-    "6 months": ["6_months", 180],
+const res_to_factor = {
+    "2h": 1,
+    "6h": 1,
+    "day": 1,
+    "5 days": 5,
+    "month": 30,
+    "6 months": 180,
 };
 
 let cols_and_names = {};
