@@ -252,8 +252,8 @@ def update_weather(engine):
     )
 
 
-def save_past_data_threaded(app, engine, new_data, network_data):
-    """Saves the past production data to files every 24h AND remove network data older than 24h"""
+def save_past_data_threaded(app, engine):
+    """Saves the past production data to files every hour AND remove network data older than 24h"""
 
     def save_data():
         with app.app_context():
@@ -265,10 +265,10 @@ def save_past_data_threaded(app, engine, new_data, network_data):
                     "rb",
                 ) as file:
                     past_data = pickle.load(file)
-
-                for category in new_data[player.id]:
-                    for element in new_data[player.id][category]:
-                        new_el_data = new_data[player.id][category][element]
+                current_data = engine.data["current_data"][player.id]
+                for category in current_data:
+                    for element in current_data[category]:
+                        new_el_data = current_data[category][element]
                         if element not in past_data[category]:
                             # if facility didn't exist in past data, initialize it
                             past_data[category][element] = [[0] * 1440] * 4
@@ -300,8 +300,9 @@ def save_past_data_threaded(app, engine, new_data, network_data):
                 ) as file:
                     past_data = pickle.load(file)
 
-                for element in network_data[network.id]:
-                    new_el_data = network_data[network.id][element]
+                network_data = engine.data["network_data"][network.id]
+                for element in network_data:
+                    new_el_data = network_data[element]
                     past_el_data = past_data[element]
                     reduce_resolution(past_el_data, np.array(new_el_data))
 
@@ -311,17 +312,17 @@ def save_past_data_threaded(app, engine, new_data, network_data):
                 ) as file:
                     pickle.dump(past_data, file)
 
-            print("past 24h data has been saved to files")
+            print("past hour data has been saved to files")
 
     def reduce_resolution(array, new_day):
         """reduces resolution of new day data to 5min, 30min, and 3h"""
-        array[0] = new_day  # past day
+        array[0] = array[0][len(new_day) :].extend(new_day)
         new_5_days = np.mean(new_day.reshape(-1, 5), axis=1)
         array[1] = array[1][len(new_5_days) :].extend(new_5_days)
         new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
         array[2] = array[2][len(new_month) :].extend(new_month)
-        new_6_month = np.mean(new_month.reshape(-1, 6), axis=1)
-        array[3] = array[3][len(new_6_month) :].extend(new_6_month)
+        if engine.data["current_t"] % 180 == 0:
+            array[3] = array[3][1:].extend(np.mean(array[2][-6:]))
 
     thread = threading.Thread(target=save_data)
     thread.start()

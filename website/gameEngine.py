@@ -137,10 +137,8 @@ class gameEngine(object):
         engine.logger.info(log_message)
 
 
-# function that is executed once every 24 hours :
-def daily_update(engine, app):
-    engine.data["current_t"] = 1
-    # reset current data and network data
+def clear_current_data(engine, app):
+    """reset current data and network data"""
     with app.app_context():
         engine.data["current_windspeed"] = [
             engine.data["current_windspeed"][-1]
@@ -178,8 +176,6 @@ def daily_update(engine, app):
                 data_array.clear()
                 data_array.extend([last_value] + [0] * 1440)
 
-    save_past_data_threaded(app, engine, past_data, network_data)
-
 
 from .production_update import update_electricity  # noqa: E402
 
@@ -193,8 +189,11 @@ def state_update_m(engine, app):
         engine.data["current_t"] += 1
         # print(f"t = {engine.data['current_t']}")
         engine.data["total_t"] += 1
+        if engine.data["current_t"] > 60:
+            save_past_data_threaded(app, engine, past_data, network_data)
         if engine.data["current_t"] > 1440:
-            daily_update(engine, app)
+            engine.data["current_t"] = 1
+            clear_current_data(engine, app)
         with app.app_context():
             if engine.data["current_t"] % 10 == 1:
                 engine.config.update_mining_productivity()
