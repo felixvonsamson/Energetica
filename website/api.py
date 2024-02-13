@@ -146,24 +146,20 @@ def get_chart_data():
     total_t = g.engine.data["total_t"]
     current_data = g.engine.data["current_data"][current_user.id]
     filename = f"instance/player_data/player_{current_user.id}.pck"
-    print(f"last value : {last_value}")
     if last_value == 0:
         with open(filename, "rb") as file:
             data = pickle.load(file)
         concat_slices(data, current_data, 1440, 1000)
-        print(data)
         return jsonify({"total_t": total_t, "data": data})
     if total_t - last_value < t:
         data = copy.deepcopy(current_data)
         slice_arrays(data, total_t - last_value)
-        print(data)
         return jsonify({"total_t": total_t, "data": data})
     with open(filename, "rb") as file:
         data = pickle.load(file)
     day_before_values = min(1440, total_t - last_value - (t - 1))
     missing_days = total_t // 1440 - last_value // 1440
     concat_slices(data, current_data, day_before_values, missing_days)
-    print(data)
     return jsonify({"total_t": total_t, "data": data})
 
 

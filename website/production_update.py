@@ -325,7 +325,6 @@ def calculate_generation_without_market(engine, player, t):
     market_logic(engine, internal_market, t)
 
 
-# calculates in-house satisfaction and sets the capacity offers and demands on the market
 def calculate_generation_with_market(
     engine, market, remaining_demand, player, t
 ):
@@ -764,12 +763,12 @@ def resources_and_pollution(engine, player, t):
             ].items():
                 quantity = amount * generation[facility][t] / 60000000
                 setattr(player, resource, getattr(player, resource) - quantity)
-                facility_emmissions = (
-                    assets[facility]["pollution"]
-                    * generation[facility][t]
-                    / 60000000
-                )
-                add_emissions(engine, player, t, facility, facility_emmissions)
+            facility_emmissions = (
+                assets[facility]["pollution"]
+                * generation[facility][t]
+                / 60000000
+            )
+            add_emissions(engine, player, t, facility, facility_emmissions)
 
     if player.warehouse > 0:
         for extraction_facility in [
