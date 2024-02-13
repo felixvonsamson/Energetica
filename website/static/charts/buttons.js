@@ -151,32 +151,23 @@ function mousePressed() {
     }
 }
 
-function reduce(arr1, arr2, res, t) {
-    arr2 = arr2.slice(1, t + 1); //first value form today is last value from yesterday
-    let result;
-    let factor = res_to_data[res][1];
-    if (factor != 1) {
-        result = arr1;
-        for (let i = 0; i < arr2.length; i += factor) {
-            const slice = arr2.slice(i, i + factor);
-            const sum = slice.reduce(
-                (acc, currentValue) => acc + currentValue,
-                0
-            );
-            const average = sum / slice.length;
-            result.push(average);
-        }
-    } else {
-        result = arr1.concat(arr2);
-    }
+function reduce(arr, res) {
     if (res == "2h") {
-        result = result.slice(-120);
-    }else if(res == "6h"){
-        result = result.slice(-360);
-    }else {
-        result = result.slice(-1440);
+        return arr[0].slice(-120);
     }
-    return result;
+    if(res == "6h"){
+        return arr[0].slice(-360);
+    }
+    if(res == "day"){
+        return arr[0].slice(-1440);
+    }
+    if(res == "5 days"){
+        return arr[1];
+    }
+    if(res == "month"){
+        return arr[2];
+    }
+    return arr[3];
 }
 
 function time_unit(res) {

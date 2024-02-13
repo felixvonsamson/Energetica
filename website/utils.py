@@ -57,7 +57,7 @@ def add_asset(player_id, construction_id):
             + engine.renewables
         ):
             if construction.name not in current_data["generation"]:
-                current_data["generation"][construction.name] = [0] * 1441
+                current_data["generation"][construction.name] = [0.0] * 1441
         if (
             construction.name
             in engine.storage_facilities
@@ -65,10 +65,10 @@ def add_asset(player_id, construction_id):
             + ["carbon_capture"]
         ):
             if construction.name not in current_data["demand"]:
-                current_data["demand"][construction.name] = [0] * 1441
+                current_data["demand"][construction.name] = [0.0] * 1441
         if construction.name in engine.storage_facilities:
             if construction.name not in current_data["storage"]:
-                current_data["storage"][construction.name] = [0] * 1441
+                current_data["storage"][construction.name] = [0.0] * 1441
         if (
             construction.name
             in engine.controllable_facilities
@@ -76,11 +76,11 @@ def add_asset(player_id, construction_id):
             + ["carbon_capture"]
         ):
             if construction.name not in current_data["emissions"]:
-                current_data["emissions"][construction.name] = [0] * 1441
+                current_data["emissions"][construction.name] = [0.0] * 1441
         if construction.name == "warehouse":
             if "coal" not in current_data["resources"]:
                 for resource in ["coal", "oil", "gas", "uranium"]:
-                    current_data["resources"][resource] = [0] * 1441
+                    current_data["resources"][resource] = [0.0] * 1441
     setattr(player, construction.name, getattr(player, construction.name) + 1)
     priority_list_name = "construction_priorities"
     if construction.family == "Technologies":

@@ -3,6 +3,7 @@ let data_demand = {};
 let graph_gen;
 let graph_demand;
 
+//The following lists are just too set the order in witch the elements are displayed on top of each other.
 const keys_generation = [
   "watermill",
   "small_water_dam",
@@ -71,6 +72,7 @@ function draw() {
       let h_max = 0;
       let total_power = 0;
       for (const key of keys_generation) {
+        if(key in data_gen){
           if (data_gen[key][t] > 1) {
               let h = (-data_gen[key][t] / maxSum_gen) * graph_h;
               ellipse(0, h, 8, 8);
@@ -79,6 +81,7 @@ function draw() {
               h_max -= h;
               total_power += data_gen[key][t];
           }
+        }
       }
       let tx = -180;
       let ty = 0;
@@ -105,6 +108,7 @@ function draw() {
       text(display_W_long(total_power), 120, 6);
       textFont(font);
       for (const key of keys_generation) {
+        if (key in data_gen){
           if (data_gen[key][t] > 1) {
               alternate_fill();
               translate(0, -16);
@@ -120,6 +124,7 @@ function draw() {
               text(display_W(data_gen[key][t]), 135, 5);
               fill(229, 217, 182);
           }
+        }
       }
       pop();
       if (mouseY<20+graph_h){
@@ -193,13 +198,15 @@ function draw() {
     let h_max = 0;
     let total_power = 0;
     for (const key of keys_demand) {
-        if (data_demand[key][t] > 1) {
-            let h = (-data_demand[key][t] / maxSum_demand) * graph_h;
-            ellipse(0, h, 8, 8);
-            translate(0, h);
-            lines += 1;
-            h_max -= h;
-            total_power += data_demand[key][t];
+        if (key in data_demand){
+            if (data_demand[key][t] > 1) {
+                let h = (-data_demand[key][t] / maxSum_demand) * graph_h;
+                ellipse(0, h, 8, 8);
+                translate(0, h);
+                lines += 1;
+                h_max -= h;
+                total_power += data_demand[key][t];
+            }
         }
     }
     let tx = -180;
@@ -227,20 +234,22 @@ function draw() {
     text(display_W_long(total_power), 120, 6);
     textFont(font);
     for (const key of keys_demand) {
-        if (data_demand[key][t] > 1) {
-            alternate_fill();
-            translate(0, -16);
-            rect(0, 0, 160, 17);
-            push();
-            fill(cols_and_names[key][0]);
-            rect(0, 0, 16, 17);
-            pop();
-            fill(0);
-            textAlign(LEFT, CENTER);
-            text(cols_and_names[key][1], 20, 5);
-            textAlign(CENTER, CENTER);
-            text(display_W(data_demand[key][t]), 135, 5);
-            fill(229, 217, 182);
+        if (key in data_demand){
+            if (data_demand[key][t] > 1) {
+                alternate_fill();
+                translate(0, -16);
+                rect(0, 0, 160, 17);
+                push();
+                fill(cols_and_names[key][0]);
+                rect(0, 0, 16, 17);
+                pop();
+                fill(0);
+                textAlign(LEFT, CENTER);
+                text(cols_and_names[key][1], 20, 5);
+                textAlign(CENTER, CENTER);
+                text(display_W(data_demand[key][t]), 135, 5);
+                fill(229, 217, 182);
+            }
         }
     }
     pop();
@@ -251,133 +260,34 @@ function draw() {
 function regen(res) {
   file = res_to_data[res][0];
   load_chart_data()
-      .then((response) => response.json())
       .then((raw_data) => {
         console.log(raw_data);
-          background(229, 217, 182);
-          caps = raw_data[3];
-          data_gen = raw_data[1];
-          Object.keys(data_gen).forEach((key) => {
-              const array = raw_data[2][key];
-              data_gen[key] = reduce(data_gen[key], array, res, raw_data[0]);
-          });
-          data_len = data_gen["imports"].length;
-          push();
-          translate(1.5 * margin, 0.5*height - 2 * margin - 10);
-          noStroke();
-          const sumArray = Array.from({ length: data_len }, (_, i) =>
-              Object.values(data_gen).reduce((acc, arr) => acc + arr[i], 0)
-          );
-          maxSum_gen = Math.max(...sumArray);
-          if (maxSum_gen == 0) {
-            maxSum_gen = 100;
-          }
-          push();
-          for (let t = 0; t < data_len; t++) {
-              push();
-              for (const key of keys_generation) {
-                  if (data_gen[key][t] > 1) {
-                      fill(cols_and_names[key][0]);
-                      let h = (data_gen[key][t] / maxSum_gen) * graph_h;
-                      rect(0, 0, graph_w / data_len + 1, -h - 1);
-                      translate(0, -h);
-                  }
-              }
-              pop();
-              translate(graph_w / data_len, 0);
-          }
-          pop();
-          stroke(0);
-          line(0, 0, graph_w, 0);
-          line(0, 0, 0, -graph_h);
-
-          push();
-          let units = time_unit(res);
-          fill(0);
-          for (let i = 0; i < units.length; i++) {
-              stroke(0, 0, 0, 30);
-              let x = (i * graph_w) / (units.length - 1);
-              line(x, -graph_h, x, 0);
-              stroke(0);
-              line(x, 0, x, 5);
-              noStroke();
-              text(units[i], x, 0.3 * margin);
-          }
-          pop();
-
-          push();
-          let y_ticks = y_units(maxSum_gen);
-          let interval = y_ticks[1];
-          fill(0);
-          let y = map(interval, 0, maxSum_gen, 0, graph_h);
-          for (let i = 0; i < y_ticks.length; i++) {
-              stroke(0, 0, 0, 30);
-              line(graph_w, -y * i, 0, -y * i);
-              stroke(0);
-              line(0, -y * i, -5, -y * i);
-              noStroke();
-              text(display_W(y_ticks[i]), -0.75 * margin, -y * i - 4);
-          }
-          pop();
-          pop();
-
-          push();
-          translate(width - 0.3 * margin, 0.5 * graph_h+10);
-          rotate(radians(90));
-          textSize(18);
-          text("Total generation capacities (storage not included)", 0, 0);
-          pop();
-          push();
-          translate(width - 1.75 * margin, graph_h+10);
-          noStroke();
-          const sum = Object.values(raw_data[3]).reduce(
-              (acc, currentValue) => acc + currentValue,
-              0
-          );
-          for (const key of keys_generation) {
-              if (raw_data[3][key] > 0) {
-                  fill(cols_and_names[key][0]);
-                  let h = (raw_data[3][key] / sum) * graph_h;
-                  rect(0, 0, margin*0.9, -h - 1);
-                  translate(0, -h);
-              }
-          }
-          pop();
-          graph_gen = get();
-      })
-      .catch((error) => {
-          console.error("Error:", error);
-      });
-
-  fetch(`/get_chart_data?timescale=${file}&table=demand`) // retrieves data from server
-    .then((response) => response.json())
-    .then((raw_data) => {
         background(229, 217, 182);
-        data_demand = raw_data[1];
-        Object.keys(data_demand).forEach((key) => {
-            const array = raw_data[2][key];
-            data_demand[key] = reduce(data_demand[key], array, res, raw_data[0]);
+        Object.keys(raw_data["generation"]).forEach((key) => {
+            data_gen[key] = reduce(raw_data["generation"][key], res);
         });
-        data_len = data_demand["exports"].length;
+        data_len = data_gen["imports"].length;
         push();
         translate(1.5 * margin, 0.5*height - 2 * margin - 10);
         noStroke();
-        const sumArray = Array.from({ length: data_len }, (_, i) =>
-            Object.values(data_demand).reduce((acc, arr) => acc + arr[i], 0)
+        const sumArray_gen = Array.from({ length: data_len }, (_, i) =>
+            Object.values(data_gen).reduce((acc, arr) => acc + arr[i], 0)
         );
-        maxSum_demand = Math.max(...sumArray);
-        if (maxSum_demand == 0) {
-            maxSum_demand = 100;
+        maxSum_gen = Math.max(...sumArray_gen);
+        if (maxSum_gen == 0) {
+        maxSum_gen = 100;
         }
         push();
         for (let t = 0; t < data_len; t++) {
             push();
-            for (const key of keys_demand) {
-                if (data_demand[key][t] > 1) {
-                    fill(cols_and_names[key][0]);
-                    let h = (data_demand[key][t] / maxSum_demand) * graph_h;
-                    rect(0, 0, graph_w / data_len + 1, -h - 1);
-                    translate(0, -h);
+            for (const key of keys_generation) {
+                if(key in data_gen){
+                    if (data_gen[key][t] > 1) {
+                        fill(cols_and_names[key][0]);
+                        let h = (data_gen[key][t] / maxSum_gen) * graph_h;
+                        rect(0, 0, graph_w / data_len + 1, -h - 1);
+                        translate(0, -h);
+                    }
                 }
             }
             pop();
@@ -403,10 +313,100 @@ function regen(res) {
         pop();
 
         push();
-        let y_ticks = y_units(maxSum_demand);
+        let y_ticks = y_units(maxSum_gen);
         let interval = y_ticks[1];
         fill(0);
-        let y = map(interval, 0, maxSum_demand, 0, graph_h);
+        let y = map(interval, 0, maxSum_gen, 0, graph_h);
+        for (let i = 0; i < y_ticks.length; i++) {
+            stroke(0, 0, 0, 30);
+            line(graph_w, -y * i, 0, -y * i);
+            stroke(0);
+            line(0, -y * i, -5, -y * i);
+            noStroke();
+            text(display_W(y_ticks[i]), -0.75 * margin, -y * i - 4);
+        }
+        pop();
+        pop();
+
+        push();
+        translate(width - 0.3 * margin, 0.5 * graph_h+10);
+        rotate(radians(90));
+        textSize(18);
+        text("Total generation capacities (storage not included)", 0, 0);
+        pop();
+        push();
+        translate(width - 1.75 * margin, graph_h+10);
+        noStroke();
+        // const sum = Object.values(raw_data[3]).reduce(
+        //     (acc, currentValue) => acc + currentValue,
+        //     0
+        // );
+        // for (const key of keys_generation) {
+        //     if (raw_data[3][key] > 0) {
+        //         fill(cols_and_names[key][0]);
+        //         let h = (raw_data[3][key] / sum) * graph_h;
+        //         rect(0, 0, margin*0.9, -h - 1);
+        //         translate(0, -h);
+        //     }
+        // }
+        pop();
+        graph_gen = get();
+
+        background(229, 217, 182);
+        Object.keys(raw_data["demand"]).forEach((key) => {
+            data_demand[key] = reduce(raw_data["demand"][key], res);
+        });
+        data_len = data_demand["exports"].length;
+        push();
+        translate(1.5 * margin, 0.5*height - 2 * margin - 10);
+        noStroke();
+        const sumArray_demand = Array.from({ length: data_len }, (_, i) =>
+            Object.values(data_demand).reduce((acc, arr) => acc + arr[i], 0)
+        );
+        maxSum_demand = Math.max(...sumArray_demand);
+        if (maxSum_demand == 0) {
+            maxSum_demand = 100;
+        }
+        push();
+        for (let t = 0; t < data_len; t++) {
+            push();
+            for (const key of keys_demand) {
+                if (key in data_demand){
+                    if (data_demand[key][t] > 1) {
+                        fill(cols_and_names[key][0]);
+                        let h = (data_demand[key][t] / maxSum_demand) * graph_h;
+                        rect(0, 0, graph_w / data_len + 1, -h - 1);
+                        translate(0, -h);
+                    }
+                }
+            }
+            pop();
+            translate(graph_w / data_len, 0);
+        }
+        pop();
+        stroke(0);
+        line(0, 0, graph_w, 0);
+        line(0, 0, 0, -graph_h);
+
+        push();
+        units = time_unit(res);
+        fill(0);
+        for (let i = 0; i < units.length; i++) {
+            stroke(0, 0, 0, 30);
+            let x = (i * graph_w) / (units.length - 1);
+            line(x, -graph_h, x, 0);
+            stroke(0);
+            line(x, 0, x, 5);
+            noStroke();
+            text(units[i], x, 0.3 * margin);
+        }
+        pop();
+
+        push();
+        y_ticks = y_units(maxSum_demand);
+        interval = y_ticks[1];
+        fill(0);
+        y = map(interval, 0, maxSum_demand, 0, graph_h);
         for (let i = 0; i < y_ticks.length; i++) {
             stroke(0, 0, 0, 30);
             line(graph_w, -y * i, 0, -y * i);

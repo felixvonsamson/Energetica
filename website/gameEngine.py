@@ -144,13 +144,13 @@ def daily_update(engine, app):
     with app.app_context():
         engine.data["current_windspeed"] = [
             engine.data["current_windspeed"][-1]
-        ] + [0] * 1440
+        ] + [0.0] * 1440
         engine.data["current_irradiation"] = [
             engine.data["current_irradiation"][-1]
-        ] + [0] * 1440
+        ] + [0.0] * 1440
         engine.data["current_discharge"] = [
             engine.data["current_discharge"][-1]
-        ] + [0] * 1440
+        ] + [0.0] * 1440
         engine.data["current_CO2"] = [engine.data["current_CO2"][-1]] + [
             0
         ] * 1440

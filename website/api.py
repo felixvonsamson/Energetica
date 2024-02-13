@@ -123,39 +123,47 @@ def get_chart_data():
         end = g.engine.data["current_t"]
         for key, value in dict1.items():
             for sub_key, array in value.items():
-                concatenated_array = array[0][-a:] + dict2[key][sub_key][1:end]
+                concatenated_array = (
+                    list(array[0][-a:]) + dict2[key][sub_key][1:end]
+                )
                 dict1[key][sub_key][0] = concatenated_array
-                dict1[key][sub_key][1] = dict1[key][sub_key][1][
-                    -min(1440, missing_days * 288) :
-                ]
-                dict1[key][sub_key][2] = dict1[key][sub_key][2][
-                    -min(1440, missing_days * 48) :
-                ]
-                dict1[key][sub_key][3] = dict1[key][sub_key][3][
-                    -min(1440, missing_days * 8) :
-                ]
+                if dict1[key][sub_key][1]:
+                    dict1[key][sub_key][1] = dict1[key][sub_key][1][
+                        -min(1440, missing_days * 288) :
+                    ]
+                if dict1[key][sub_key][2]:
+                    dict1[key][sub_key][2] = dict1[key][sub_key][2][
+                        -min(1440, missing_days * 48) :
+                    ]
+                if dict1[key][sub_key][3]:
+                    dict1[key][sub_key][3] = dict1[key][sub_key][3][
+                        -min(1440, missing_days * 8) :
+                    ]
 
     last_value = request.get_json()["last_value"]
-    print(last_value)
     # indicates the total_t timestamp of the last known value of the client
     t = g.engine.data["current_t"]
     total_t = g.engine.data["total_t"]
     current_data = g.engine.data["current_data"][current_user.id]
     filename = f"instance/player_data/player_{current_user.id}.pck"
+    print(f"last value : {last_value}")
     if last_value == 0:
         with open(filename, "rb") as file:
             data = pickle.load(file)
         concat_slices(data, current_data, 1440, 1000)
+        print(data)
         return jsonify({"total_t": total_t, "data": data})
     if total_t - last_value < t:
         data = copy.deepcopy(current_data)
         slice_arrays(data, total_t - last_value)
+        print(data)
         return jsonify({"total_t": total_t, "data": data})
     with open(filename, "rb") as file:
         data = pickle.load(file)
     day_before_values = min(1440, total_t - last_value - (t - 1))
     missing_days = total_t // 1440 - last_value // 1440
     concat_slices(data, current_data, day_before_values, missing_days)
+    print(data)
     return jsonify({"total_t": total_t, "data": data})
 
 

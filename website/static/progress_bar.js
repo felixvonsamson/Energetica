@@ -80,7 +80,7 @@ function cancel_construction(construction_id) {
                     var obj = document.getElementById("money");
                     obj.innerHTML = formatted_money(money);
                     addToast("Construction cancelled");
-                    localStorage.setItem(
+                    sessionStorage.setItem(
                         "constructions",
                         JSON.stringify(raw_data["constructions"])
                     );
@@ -101,7 +101,7 @@ function pause_construction(construction_id) {
             response.json().then((raw_data) => {
                 let response = raw_data["response"];
                 if (response == "success") {
-                    localStorage.setItem(
+                    sessionStorage.setItem(
                         "constructions",
                         JSON.stringify(raw_data["constructions"])
                     );
@@ -122,7 +122,7 @@ function increase_project_priority(construction_id) {
             response.json().then((raw_data) => {
                 let response = raw_data["response"];
                 if (response == "success") {
-                    localStorage.setItem(
+                    sessionStorage.setItem(
                         "constructions",
                         JSON.stringify(raw_data["constructions"])
                     );

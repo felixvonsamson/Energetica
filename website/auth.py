@@ -94,9 +94,9 @@ def add_player_to_data(user_id):
 def data_init(current_data=False):
     def init_array(current_data):
         if current_data:
-            return [0] * 1441
+            return [0.0] * 1441
         else:
-            return [[0] * 1440] * 4
+            return [[0.0] * 1440] * 4
 
     return {
         "revenues": {
