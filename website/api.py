@@ -147,7 +147,6 @@ def get_chart_data():
     with open(filename, "rb") as file:
         data = pickle.load(file)
     concat_slices(data, current_data)
-    print(data)
     return jsonify({"total_t": total_t, "data": data})
 
 

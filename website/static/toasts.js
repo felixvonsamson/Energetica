@@ -1,7 +1,3 @@
-socket.on("infoMessage", addToast);
-
-socket.on("errorMessage", addError);
-
 function addToast(message) {
     document.getElementById("toasts").innerHTML += `
         <div class="toast message medium">

@@ -101,9 +101,6 @@ class Player(db.Model, UserMixin):
     username = db.Column(db.String(25), unique=True)
     pwhash = db.Column(db.String(25))
 
-    # Socket.io
-    sid = None
-
     # Position :
     tile = db.relationship("Hex", uselist=False, backref="player")
     network_id = db.Column(
@@ -355,12 +352,14 @@ class Player(db.Model, UserMixin):
 
     def emit(self, *args):
         engine = current_app.config["engine"]
-        if self.sid in engine.socketio_dict:
+        if self.id in engine.clients:
             socketio = engine.socketio
-            socketio.emit(*args, room=self.sid)
+            for sid in engine.clients[self.id]:
+                socketio.emit(*args, room=sid)
 
     def update_resources(self):
-        if self.sid:
+        engine = current_app.config["engine"]
+        if self.id in engine.clients:
             updates = []
             updates.append(
                 [

@@ -25,7 +25,7 @@ class gameEngine(object):
     def __init__(engine):
         engine.config = config
         engine.socketio = None
-        engine.socketio_dict = {}
+        engine.clients = {}
         engine.websocket_dict = {}
         engine.logger = logging.getLogger("Energetica")  # Not sure what that is
         engine.init_logger()
@@ -118,18 +118,14 @@ class gameEngine(object):
     def update_fields(engine, updates, players=None):
         if players:
             for player in players:
-                if player.sid:
-                    player.emit("update_data", updates)
+                player.emit("update_data", updates)
         else:
             engine.socketio.emit("update_data", updates, broadcast=True)
 
     def display_new_message(engine, msg, players=None):
         if players:
             for player in players:
-                if player.sid:
-                    engine.socketio.emit(
-                        "display_new_message", msg, room=player.sid
-                    )
+                player.emit("display_new_message", msg)
 
     # logs a message with the current time in the terminal and stores it in 'logs'
     def log(engine, message):

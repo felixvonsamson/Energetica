@@ -1,6 +1,9 @@
 /* 
 This code contains the main functions that communicate with the server (client side)
 */
+socket.on("infoMessage", addToast);
+
+socket.on("errorMessage", addError);
 
 function send_form(endpoint, body) {
     return fetch(endpoint, {
