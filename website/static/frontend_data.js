@@ -32,7 +32,7 @@ function load_chart_data() {
             const last_value = JSON.parse(sessionStorage.getItem("last_value"));
             var currentDate = new Date();
             var last_date = new Date(last_value["time"]);
-            if (currentDate.getTime() - last_date.getTime() > 120000){
+            if (currentDate.getTime() - last_date.getTime() > 12000){
                 return retrieve_chart_data();
             }
             return Promise.resolve(JSON.parse(chart_data));

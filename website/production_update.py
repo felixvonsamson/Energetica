@@ -86,8 +86,8 @@ def update_electricity(engine):
                 ]
             )
         ) / 1.03
-        # update display of resources and money
-        player.update_resources()
+        # send new data to clients
+        player.send_new_data(new_values[player.id])
 
     # save changes
     db.session.commit()
@@ -131,8 +131,8 @@ def calculate_net_import(new_values, network):
     exports to ignore energy that has been bought from themselves"""
     exp = new_values["demand"]["exports"]
     imp = new_values["generation"]["imports"]
-    new_values["demand"]["exports"] = max(0, exp - imp)
-    new_values["generation"]["imports"] = max(0, imp - exp)
+    new_values["demand"]["exports"] = max(0.0, exp - imp)
+    new_values["generation"]["imports"] = max(0.0, imp - exp)
     exp_rev = new_values["revenues"]["exports"]
     imp_rev = new_values["revenues"]["imports"]
     if exp_rev < 0 or imp_rev > 0:
@@ -180,7 +180,11 @@ def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
         * assets["industry"]["power consumption"]
     )
     demand["industry"] = min(
-        demand["industry"] + 0.05 * industry_demand, industry_demand
+        engine.data["current_data"][player.id].get_last_data(
+            "demand", "industry"
+        )
+        + 0.05 * industry_demand,
+        industry_demand,
     )  # progressive demand change in case of restart
     # calculate income of industry
     industry_income = (
@@ -258,7 +262,6 @@ def calculate_generation_without_market(engine, new_values, player, t):
     assets = engine.config[player.id]["assets"]
     generation = new_values[player.id]["generation"]
     demand = new_values[player.id]["demand"]
-    storage = new_values[player.id]["storage"]
     # generation of non controllable facilities is calculated from weather data
     renewables_generation(engine, player, assets, generation, t)
     minimal_generation(engine, player, assets, generation)
@@ -459,7 +462,6 @@ def market_logic(engine, new_values, market, t):
                     engine.data["current_data"][row.player_id],
                     row.facility,
                     row.player_id,
-                    t,
                     max(0, bought_cap),
                 )
         else:

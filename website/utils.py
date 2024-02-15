@@ -321,7 +321,7 @@ def save_past_data_threaded(app, engine):
         array[2].extend(new_month)
         if engine.data["current_t"] % 180 == 0:
             array[3] = array[3][1:]
-            array[3].extend(np.mean(array[2][-6:]))
+            array[3].append(np.mean(array[2][-6:]))
 
     thread = threading.Thread(target=save_data)
     thread.start()

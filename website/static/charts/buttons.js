@@ -116,17 +116,10 @@ function setup() {
 }
 
 function updateAtFiveSeconds() {
-    const now = new Date();
-    const seconds = now.getSeconds();
-    // Calculate the milliseconds until the next '05' seconds
-    let millisecondsUntilNextFive = ((60 - seconds + 5) % 60) * 1000;
-    if (millisecondsUntilNextFive == 0) {
-        millisecondsUntilNextFive = 60000;
-    }
     setTimeout(function () {
         update_graph();
         updateAtFiveSeconds();
-    }, millisecondsUntilNextFive);
+    }, 5000);
 }
 
 function update_graph() {

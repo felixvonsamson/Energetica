@@ -49,12 +49,10 @@ function start_construction(facility, family) {
 
 // updates specific fields of the page without reloading
 socket.on("update_data", function (changes) {
-    for (i = 0; i < changes.length; i++) {
-        object_id = changes[i][0];
-        value = changes[i][1];
-        var obj = document.getElementById(object_id);
+    for (var field_id in changes) {
+        var obj = document.getElementById(field_id);
         if (obj != null) {
-            obj.innerHTML = value;
+            obj.innerHTML = changes[field_id];
         }
     }
 });

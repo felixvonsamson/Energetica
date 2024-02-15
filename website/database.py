@@ -357,19 +357,16 @@ class Player(db.Model, UserMixin):
             for sid in engine.clients[self.id]:
                 socketio.emit(*args, room=sid)
 
-    def update_resources(self):
+    def send_new_data(self, new_values):
         engine = current_app.config["engine"]
-        if self.id in engine.clients:
-            updates = []
-            updates.append(
-                [
-                    "money",
-                    f"{self.money:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(
-                        ",", "'"
-                    ),
-                ]
-            )
-            self.emit("update_data", updates)
+        self.emit(
+            "new_values",
+            {
+                "total_t": engine.data["total_t"],
+                "chart_values": new_values,
+                "money": "{:,.0f}".format(self.money).replace(",", "'"),
+            },
+        )
 
     # prints out the object as a sting with the players username for debugging
     def __repr__(self):

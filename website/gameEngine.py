@@ -84,8 +84,8 @@ class gameEngine(object):
             0
         ] * 1441  # daily river discharge rate factor
         engine.data["current_CO2"] = [0] * 1441
-        engine.data["total_t"] = 0
         now = datetime.datetime.today().time()
+        engine.data["total_t"] = 0
         engine.data["current_t"] = (
             now.hour * 60 + now.minute + 1
         )  # +1 bc fist value of current day has to be last value of last day
@@ -172,7 +172,7 @@ def state_update_m(engine, app):
         engine.data["current_t"] += 1
         # print(f"t = {engine.data['current_t']}")
         engine.data["total_t"] += 1
-        if engine.data["current_t"] % 60 == 0:
+        if engine.data["total_t"] % 60 == 0:
             save_past_data_threaded(app, engine)
         if engine.data["current_t"] > 1440:
             engine.data["current_t"] = 1
