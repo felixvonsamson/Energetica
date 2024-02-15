@@ -39,7 +39,7 @@ def add_handlers(socketio, engine):
         db.session.add(new_chat)
         db.session.commit()
         engine.refresh()
-        print(
+        engine.log(
             f"{current_user.username} created a group chat called {title} with {group}"
         )
 
@@ -57,6 +57,6 @@ def add_handlers(socketio, engine):
         db.session.commit()
         msg = f"<div>{current_user.username} : {message}</div>"
         engine.display_new_message(msg, chat.participants)
-        print(
+        engine.log(
             f"{current_user.username} sent the message {message} in the chat {chat.name}"
         )

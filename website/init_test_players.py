@@ -138,7 +138,7 @@ def create_player(engine, username, password):
         init_table(new_player)
         db.session.commit()
         return new_player
-    print(f"create_player: player {username} already exists")
+    engine.log(f"create_player: player {username} already exists")
     return p
 
 

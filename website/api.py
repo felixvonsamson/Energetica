@@ -341,7 +341,7 @@ def join_network():
     current_user.network = network
     db.session.commit()
     flash(f"You joined the network {network_name}", category="message")
-    print(
+    g.engine.log(
         f"{current_user.username} joined the network {current_user.network.name}"
     )
     return redirect("/network", code=303)
@@ -376,7 +376,7 @@ def create_network():
             "wb",
         ) as file:
             pickle.dump(past_data, file)
-    print(f"{current_user.username} created the network {network_name}")
+    g.engine.log(f"{current_user.username} created the network {network_name}")
     return redirect("/network", code=303)
 
 
@@ -384,7 +384,7 @@ def create_network():
 def leave_network():
     """this function is executed when a player leaves his network"""
     flash(f"You left network {current_user.network.name}", category="message")
-    print(
+    g.engine.log(
         f"{current_user.username} left the network {current_user.network.name}"
     )
     network = current_user.network
@@ -394,7 +394,7 @@ def leave_network():
     ).count()
     # delete network if it is empty
     if remaining_members_count == 0:
-        print(
+        g.engine.log(
             f"The network {network.name} has been deleted because it was empty"
         )
         db.session.delete(network)

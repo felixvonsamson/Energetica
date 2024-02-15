@@ -2,7 +2,15 @@
 This file contains the functions for authentification and sign-up of users
 """
 
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    flash,
+    redirect,
+    url_for,
+    g,
+)
 from flask import current_app
 from .database import Player, CircularBufferPlayer
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11,6 +19,11 @@ from flask_login import login_user, login_required, logout_user, current_user
 import pickle
 
 auth = Blueprint("auth", __name__)
+
+
+@auth.before_request
+def check_user():
+    g.engine = current_app.config["engine"]
 
 
 # logic for the login :
@@ -25,7 +38,7 @@ def login():
             if check_password_hash(player.pwhash, password):
                 flash("Logged in successfully!", category="message")
                 login_user(player, remember=True)
-                print(f"{username} logged in")
+                g.engine.log(f"{username} logged in")
                 return redirect(url_for("views.home"))
             else:
                 flash("Incorrect password, try again.", category="error")
@@ -39,7 +52,7 @@ def login():
 @auth.route("/logout")
 @login_required
 def logout():
-    print(f"{current_user.username} logged out")
+    g.engine.log(f"{current_user.username} logged out")
     logout_user()
     return redirect(url_for("auth.login"))
 
@@ -73,7 +86,7 @@ def sign_up():
             db.session.commit()
             login_user(new_player, remember=True)
             flash("Account created!", category="message")
-            print(f"{username} created an account")
+            g.engine.log(f"{username} created an account")
             return redirect(url_for("views.home"))
 
     return render_template("sign_up.jinja", user=current_user)
@@ -87,8 +100,7 @@ def init_table(player):
 
 
 def add_player_to_data(user_id):
-    engine = current_app.config["engine"]
-    engine.data["current_data"][user_id] = CircularBufferPlayer()
+    g.engine.data["current_data"][user_id] = CircularBufferPlayer()
 
 
 def data_init():
