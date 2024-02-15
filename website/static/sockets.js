@@ -73,22 +73,28 @@ socket.on("new_values", function (changes) {
                 array[0].shift()
                 array[0].push(value);
                 let mod5 = total_t % 5
-                array[1][array.length - 1] = array[0].slice(-mod5).reduce((acc, val) => acc + val, 0) / mod5
-                if (mod5 == 0){
+                if (mod5 != 0){
+                    array[1][1439] = array[0].slice(-mod5).reduce((acc, val) => acc + val, 0) / mod5
+                }else{
                     array[1].shift()
-                    array[1].push(array[array[1].length - 1]);
+                    let new_val = (4*array[1][1438] + array[0][1439])/5
+                    array[1].push(new_val);
                 }
                 let mod30 = total_t % 30
-                array[2][array.length - 1] = array[0].slice(-mod30).reduce((acc, val) => acc + val, 0) / mod30
-                if (mod30 == 0){
+                if (mod30 != 0){
+                    array[2][1439] = array[0].slice(-mod30).reduce((acc, val) => acc + val, 0) / mod30
+                }else{
                     array[2].shift()
-                    array[2].push(array[array[2].length - 1]);
+                    let new_val = (29*array[1][1438] + array[0][1439])/30
+                    array[2].push(new_val);
                 }
                 let mod180 = total_t % 180
-                array[3][array.length - 1] = array[0].slice(-mod180).reduce((acc, val) => acc + val, 0) / mod180
                 if (mod180 == 0){
+                    array[3][1439] = array[0].slice(-mod180).reduce((acc, val) => acc + val, 0) / mod180
+                }else{
                     array[3].shift()
-                    array[3].push(array[array[3].length - 1]);
+                    let new_val = (179*array[1][1438] + array[0][1439])/180
+                    array[3].push(new_val);
                 }
             }
         }
