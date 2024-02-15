@@ -313,9 +313,9 @@
           integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
           crossorigin="anonymous"></script>
   <script>var socket = io();</script>
+  <script src="{{ url_for('static', filename='frontend_data.js') }}"></script>
   <script src="{{ url_for('static', filename='sockets.js') }}"></script>
   <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
-  <script src="{{ url_for('static', filename='frontend_data.js') }}"></script>
   <script src="{{ url_for('static', filename='notifications.js') }}"></script>
   {% block additionnal_script %}
   {% endblock additionnal_script %}

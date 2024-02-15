@@ -102,7 +102,6 @@ function draw() {
 function regen(res) {
     load_chart_data()
         .then((raw_data) => {
-            console.log(raw_data["revenues"])
             background(229, 217, 182);
             Object.keys(raw_data["revenues"]).forEach((key) => {
                 data[key] = reduce(raw_data["revenues"][key], res);

@@ -13,6 +13,7 @@ function load_constructions() {
 }
 
 function retrieve_constructions() {
+    console.log("Feching construction data from the server")
     return fetch("/get_constructions")
         .then((response) => response.json())
         .then((raw_data) => {
@@ -32,7 +33,7 @@ function load_chart_data() {
             const last_value = JSON.parse(sessionStorage.getItem("last_value"));
             var currentDate = new Date();
             var last_date = new Date(last_value["time"]);
-            if (currentDate.getTime() - last_date.getTime() > 12000){
+            if (currentDate.getTime() - last_date.getTime() > 120000){
                 return retrieve_chart_data();
             }
             return Promise.resolve(JSON.parse(chart_data));
@@ -42,6 +43,7 @@ function load_chart_data() {
 }
  
 function retrieve_chart_data() {
+    console.log("Feching chart data from the server")
     return fetch("/get_chart_data")
         .then((response) => response.json())
         .then((raw_data) => {

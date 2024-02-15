@@ -47,10 +47,62 @@ function start_construction(facility, family) {
         });
 }
 
+// receive new values from the server
+socket.on("new_values", function (changes) {
+    let money = document.getElementById("money");
+    if (money != null) {
+        money.innerHTML = changes["money"];
+    }
+    let total_t = changes["total_t"];
+    console.log("received new values : " + total_t);
+    const last_value = JSON.parse(sessionStorage.getItem("last_value"));
+    if (last_value["total_t"] + 1 != total_t){
+        retrieve_chart_data();
+    }else{
+        const currentDate = new Date();
+        sessionStorage.setItem("last_value", JSON.stringify({"total_t" : total_t, "time": currentDate}));
+        let chart_data = JSON.parse(sessionStorage.getItem("chart_data"));
+        for (var category in changes["chart_values"]) {
+            var subcategories = changes["chart_values"][category];
+            for (var subcategory in subcategories) {
+                if (!chart_data[category].hasOwnProperty(subcategory)) {
+                    chart_data[category][subcategory] = Array.from({ length: 4 }, () => Array(1440).fill(0));
+                }
+                var value = subcategories[subcategory];
+                var array = chart_data[category][subcategory]
+                array[0].shift()
+                array[0].push(value);
+                let mod5 = total_t % 5
+                array[1][array.length - 1] = array[0].slice(-mod5).reduce((acc, val) => acc + val, 0) / mod5
+                if (mod5 == 0){
+                    array[1].shift()
+                    array[1].push(array[array[1].length - 1]);
+                }
+                let mod30 = total_t % 30
+                array[2][array.length - 1] = array[0].slice(-mod30).reduce((acc, val) => acc + val, 0) / mod30
+                if (mod30 == 0){
+                    array[2].shift()
+                    array[2].push(array[array[2].length - 1]);
+                }
+                let mod180 = total_t % 180
+                array[3][array.length - 1] = array[0].slice(-mod180).reduce((acc, val) => acc + val, 0) / mod180
+                if (mod180 == 0){
+                    array[3].shift()
+                    array[3].push(array[array[3].length - 1]);
+                }
+            }
+        }
+        sessionStorage.setItem("chart_data", JSON.stringify(chart_data));
+        if (typeof update_graph === 'function') {
+            update_graph();
+        }
+    }
+});
+
 // updates specific fields of the page without reloading
 socket.on("update_data", function (changes) {
-    for (var field_id in changes) {
-        var obj = document.getElementById(field_id);
+    for (let field_id in changes) {
+        let obj = document.getElementById(field_id);
         if (obj != null) {
             obj.innerHTML = changes[field_id];
         }
@@ -58,7 +110,7 @@ socket.on("update_data", function (changes) {
 });
 
 socket.on("display_new_message", function (msg) {
-    var obj = document.getElementById("messages_field");
+    let obj = document.getElementById("messages_field");
     if (obj != null) {
         obj.innerHTML += msg;
     }

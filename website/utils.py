@@ -96,21 +96,21 @@ def add_asset(player_id, construction_id):
     engine.config.update_config_for_user(player.id)
     if construction.family == "Technologies":
         notify(
-            "Constructions",
-            f"The construction of the facility {assets[construction.name]['name']} has finished.",
-            [player],
-        )
-        engine.log(
-            f"{player.username} has finished the construction of facility {assets[construction.name]['name']}"
-        )
-    else:
-        notify(
             "Technologies",
             f"The research of the technology {assets[construction.name]['name']} has finished.",
             [player],
         )
         engine.log(
             f"{player.username} has finished the research of technology {assets[construction.name]['name']}"
+        )
+    else:
+        notify(
+            "Constructions",
+            f"The construction of the facility {assets[construction.name]['name']} has finished.",
+            [player],
+        )
+        engine.log(
+            f"{player.username} has finished the construction of facility {assets[construction.name]['name']}"
         )
 
 

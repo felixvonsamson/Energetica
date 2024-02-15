@@ -112,14 +112,6 @@ function setup() {
     }
     buttons[0].active = true;
     update_graph();
-    updateAtFiveSeconds();
-}
-
-function updateAtFiveSeconds() {
-    setTimeout(function () {
-        update_graph();
-        updateAtFiveSeconds();
-    }, 5000);
 }
 
 function update_graph() {
