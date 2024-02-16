@@ -57,7 +57,7 @@
     </div>
   </div>
   <div class="notification_container txt_center">
-  <button class="bone button padding medium notification_button" 
+  <button id="notification_button" class="bone button padding medium notification_button" 
   onclick="document.getElementById('notification_popup').classList.remove('hidden');">
     <i class="fa fa-bell"></i><span class="notification_txt"> Notifications</span>
     {% if user.unread_notifications()|length > 0 %}<span id="unread_badge" class="unread_badge small pine padding-small">{{ user.unread_notifications()|length }}</span>{% endif %}

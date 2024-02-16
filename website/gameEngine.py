@@ -114,14 +114,6 @@ class gameEngine(object):
     def refresh(engine):
         engine.socketio.emit("refresh")
 
-    # change specific field of the page withour reloading
-    def update_fields(engine, updates, players=None):
-        if players:
-            for player in players:
-                player.emit("update_data", updates)
-        else:
-            engine.socketio.emit("update_data", updates, broadcast=True)
-
     def display_new_message(engine, msg, players=None):
         if players:
             for player in players:

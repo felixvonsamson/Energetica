@@ -118,7 +118,7 @@ class Player(db.Model, UserMixin):
     )
 
     # resources :
-    money = db.Column(db.Float, default=5000)  # default is 5000
+    money = db.Column(db.Float, default=500000)  # default is 5000
     coal = db.Column(db.Float, default=0)
     oil = db.Column(db.Float, default=0)
     gas = db.Column(db.Float, default=0)

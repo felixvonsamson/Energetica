@@ -106,11 +106,31 @@ socket.on("new_values", function (changes) {
 });
 
 // updates specific fields of the page without reloading
-socket.on("update_data", function (changes) {
-    for (let field_id in changes) {
-        let obj = document.getElementById(field_id);
-        if (obj != null) {
-            obj.innerHTML = changes[field_id];
+socket.on("new_notification", function (notification) {
+    let notification_list = document.getElementById("notification_list-small");
+    if (notification_list != null) {
+        notification_list.innerHTML += `<div id="notification_${notification["id"]}" class="notification padding-small margin-small">
+        <b>${notification["title"]}</b><br>
+        ${notification["content"]}
+      </div>`;
+    }
+    notification_list = document.getElementById("notification_list");
+    if (notification_list != null) {
+        notification_list.innerHTML += `<div id="notification_${notification["id"]}" class="notification padding medium margin-large">
+        <div class="small notification_time"><script>formatDateTime("${notification["time"]}");</script></div>
+         <div class="flex-row align-items-center notification_head">
+           <b>${notification["title"]}<i class="fa fa-circle small padding"></i></b>
+           <span onclick="delete_notification(this, ${notification["id"]});" class="cross">×</span></div>
+           ${notification["content"]}
+       </div>`;
+    }
+    let notification_button = document.getElementById("notification_button");
+    if (notification_button != null) {
+        let unread_badge = document.getElementById("unread_badge");
+        if (unread_badge != null) {
+            unread_badge.innerHTML = int(unread_badge.innerHTML) + 1;
+        }else{
+            notification_button.innerHTML += '<span id="unread_badge" class="unread_badge small pine padding-small">1</span>';
         }
     }
 });

@@ -38,6 +38,15 @@ def notify(title, message, players):
     db.session.add(new_notification)
     for player in players:
         player.notifications.append(new_notification)
+        player.emit(
+            "new_notification",
+            {
+                "id": new_notification.id,
+                "time": str(new_notification.time),
+                "title": new_notification.title,
+                "content": new_notification.content,
+            },
+        )
     db.session.commit()
 
 
