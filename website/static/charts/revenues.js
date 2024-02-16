@@ -1,9 +1,35 @@
 const keys_revenues = [
     "industry",
-    "O&M_costs",
     "exports",
     "imports",
     "dumping",
+    // O&M costs
+    "watermill",
+    "small_water_dam",
+    "large_water_dam",
+    "nuclear_reactor",
+    "nuclear_reactor_gen4",
+    "steam_engine",
+    "coal_burner",
+    "oil_burner",
+    "gas_burner",
+    "combined_cycle",
+    "windmill",
+    "onshore_wind_turbine",
+    "offshore_wind_turbine",
+    "CSP_solar",
+    "PV_solar",
+    "small_pumped_hydro",
+    "large_pumped_hydro",
+    "lithium_ion_batteries",
+    "solid_state_batteries",
+    "compressed_air",
+    "molten_salt",
+    "hydrogen_storage",
+    "coal_mine",
+    "oil_field",
+    "gas_drilling_site",
+    "uranium_mine",
 ];
 
 function draw() {
@@ -29,25 +55,29 @@ function draw() {
         let total_power = 0;
         push();
         for (const key of keys_revenues) {
-            if (data[key][t]*60 < -1) {
-                let h = (-data[key][t] / maxSum) * graph_h * f;
-                ellipse(0, h, 8, 8);
-                translate(0, h);
-                lines += 1;
-                h_max -= h;
-                total_power += data[key][t] * 60;
+            if (key in data){
+                if (data[key][t]*60 < -1) {
+                    let h = (-data[key][t] / maxSum) * graph_h * f;
+                    ellipse(0, h, 8, 8);
+                    translate(0, h);
+                    lines += 1;
+                    h_max -= h;
+                    total_power += data[key][t] * 60;
+                }
             }
         }
         pop();
         push();
         for (const key of keys_revenues) {
-            if (data[key][t]*60 > 1) {
-                let h = (-data[key][t] / maxSum) * graph_h * f;
-                ellipse(0, h, 8, 8);
-                translate(0, h);
-                lines += 1;
-                h_max -= h;
-                total_power += data[key][t] * 60;
+            if (key in data){
+                if (data[key][t]*60 > 1) {
+                    let h = (-data[key][t] / maxSum) * graph_h * f;
+                    ellipse(0, h, 8, 8);
+                    translate(0, h);
+                    lines += 1;
+                    h_max -= h;
+                    total_power += data[key][t] * 60;
+                }
             }
         }
         pop();
@@ -78,20 +108,22 @@ function draw() {
         display_coin(formatted_money(total_power), 160, 0);
         textFont(font);
         for (const key of keys_revenues) {
-            if (data[key][t]*60 < -1 | data[key][t]*60 > 1) {
-                alternate_fill();
-                translate(0, -16);
-                rect(0, 0, 160, 17);
-                push();
-                fill(cols_and_names[key][0]);
-                rect(0, 0, 16, 17);
-                pop();
-                fill(0);
-                textAlign(LEFT, CENTER);
-                text(cols_and_names[key][1], 20, 5);
-                textAlign(CENTER, CENTER);
-                display_coin(display_money(data[key][t] * 60), 160, 0);
-                fill(229, 217, 182);
+            if (key in data){
+                if (data[key][t]*60 < -1 | data[key][t]*60 > 1) {
+                    alternate_fill();
+                    translate(0, -16);
+                    rect(0, 0, 160, 17);
+                    push();
+                    fill(cols_and_names[key][0]);
+                    rect(0, 0, 16, 17);
+                    pop();
+                    fill(0);
+                    textAlign(LEFT, CENTER);
+                    text(cols_and_names[key][1], 20, 5);
+                    textAlign(CENTER, CENTER);
+                    display_coin(display_money(data[key][t] * 60), 160, 0);
+                    fill(229, 217, 182);
+                }
             }
         }
         pop();
@@ -105,6 +137,9 @@ function regen(res) {
             background(229, 217, 182);
             Object.keys(raw_data["revenues"]).forEach((key) => {
                 data[key] = reduce(raw_data["revenues"][key], res);
+            });
+            Object.keys(raw_data["op_costs"]).forEach((key) => {
+                data[key] = reduce(raw_data["op_costs"][key], res);
             });
             data_len = data["industry"].length;
             push();
@@ -133,21 +168,25 @@ function regen(res) {
             for (let t = 0; t < data_len; t++) {
                 push();
                 for (const key of keys_revenues) {
-                    if (data[key][t]*60 > 1) {
-                        fill(cols_and_names[key][0]);
-                        let h = (data[key][t] / maxSum) * graph_h * f;
-                        rect(0, 0, graph_w / data_len + (data_len>1000), -h);
-                        translate(0, -h);
+                    if (key in data){
+                        if (data[key][t]*60 > 1) {
+                            fill(cols_and_names[key][0]);
+                            let h = (data[key][t] / maxSum) * graph_h * f;
+                            rect(0, 0, graph_w / data_len + (data_len>1000), -h);
+                            translate(0, -h);
+                        }
                     }
                 }
                 pop();
                 push();
                 for (const key of keys_revenues) {
-                    if (data[key][t]*60 < -1) {
-                        fill(cols_and_names[key][0]);
-                        let h = (data[key][t] / maxSum) * graph_h * f;
-                        rect(0, 0, graph_w / data_len + (data_len>1000), -h);
-                        translate(0, -h);
+                    if (key in data){
+                        if (data[key][t]*60 < -1) {
+                            fill(cols_and_names[key][0]);
+                            let h = (data[key][t] / maxSum) * graph_h * f;
+                            rect(0, 0, graph_w / data_len + (data_len>1000), -h);
+                            translate(0, -h);
+                        }
                     }
                 }
                 pop();

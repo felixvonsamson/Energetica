@@ -5,7 +5,6 @@ These functions make the link between the website and the database
 from flask import Blueprint, request, flash, jsonify, g, current_app, redirect
 from flask_login import login_required, current_user
 import pickle
-import copy
 import numpy as np
 from pathlib import Path
 from .utils import (

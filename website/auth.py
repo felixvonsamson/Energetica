@@ -110,10 +110,12 @@ def data_init():
     return {
         "revenues": {
             "industry": init_array(),
-            "O&M_costs": init_array(),
             "exports": init_array(),
             "imports": init_array(),
             "dumping": init_array(),
+        },
+        "op_costs": {
+            "steam_engine": init_array(),
         },
         "generation": {
             "steam_engine": init_array(),

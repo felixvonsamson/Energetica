@@ -148,7 +148,8 @@ def rest_get_charts():
         )
 
     subcategories = {
-        "revenues": ["industry", "imports", "exports", "dumping", "O&M_costs"],
+        "revenues": ["industry", "imports", "exports", "dumping"],
+        "op_costs": ["steam_engine"],
         "generation": [
             "watermill",
             "small_water_dam",

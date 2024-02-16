@@ -4,6 +4,7 @@ This file contains all the data needed for the game
 from .database import Player
 import copy
 import math
+from flask import current_app
 
 # raw data : (these are the initial values of the game)
 full_config = {
@@ -19,6 +20,7 @@ full_config = {
             "consumed resource": {},  # [kg/MWh]
             "pollution": 988,  # [kg CO2/MWh]
             "ramping time": 15,  # [min]
+            "lifetime": 1209600,  # [s]
             "requirements": [],
             "image_extension": "png",
             "description": "The steam engine burns wood to produce electricity.",
@@ -33,11 +35,11 @@ full_config = {
             "construction time": 21600,
             "construction power factor": 0.7,
             "construction pollution": 1600,
-            # "O&M cost": 0.054,
+            "O&M cost": 0.054,
             "consumed resource": {"wind": 0},
-            "amount consumed": 0,
             "pollution": 0,
             "ramping time": 0,
+            "lifetime": 2419200,
             "requirements": [],
             "image_extension": "jpg",
             "description": "The windmill uses the force of the wind to produce electricity.",
@@ -51,10 +53,11 @@ full_config = {
             "construction time": 18000,
             "construction power factor": 0.6,
             "construction pollution": 2200,
-            # "O&M cost": 0.055,
+            "O&M cost": 0.055,
             "consumed resource": {"water": 0},
             "pollution": 0,
             "ramping time": 0,
+            "lifetime": 3024000,
             "requirements": [],
             "image_extension": "jpg",
             "description": "The watermill uses the energy of flowing water to produce electricity.",
@@ -68,10 +71,11 @@ full_config = {
             "construction time": 194400,
             "construction power factor": 0.5,
             "construction pollution": 1100000,
-            # "O&M cost": 0.095,
+            "O&M cost": 0.095,
             "consumed resource": {"coal": 640},
             "pollution": 1664,
             "ramping time": 75,
+            "lifetime": 3628800,
             "requirements": [
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
@@ -87,10 +91,11 @@ full_config = {
             "construction time": 43200,
             "construction power factor": 1.1,
             "construction pollution": 440000,
-            # "O&M cost": 0.1,
+            "O&M cost": 0.1,
             "consumed resource": {"oil": 375},
             "pollution": 1181,
             "ramping time": 10,
+            "lifetime": 2419200,
             "requirements": [
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
@@ -106,10 +111,11 @@ full_config = {
             "construction time": 43200,
             "construction power factor": 1.1,
             "construction pollution": 657000,
-            # "O&M cost": 0.117,
+            "O&M cost": 0.117,
             "consumed resource": {"gas": 353},
             "pollution": 1006,
             "ramping time": 9,
+            "lifetime": 2419200,
             "requirements": [
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
@@ -126,10 +132,11 @@ full_config = {
             "construction time": 216000,
             "construction power factor": 0.2,
             "construction pollution": 876000,
-            # "O&M cost": 0.032,
+            "O&M cost": 0.032,
             "consumed resource": {"hydropower": 0},
             "pollution": 0,
             "ramping time": 0,
+            "lifetime": 9072000,
             "requirements": [["civil_engineering", 1, False]],
             "image_extension": "jpg",
             "description": "The small water dam uses the potential energy of the water to produce electricity.",
@@ -143,10 +150,11 @@ full_config = {
             "construction time": 64800,
             "construction power factor": 1.7,
             "construction pollution": 420000,
-            # "O&M cost": 0.052,
+            "O&M cost": 0.052,
             "consumed resource": {"wind": 0},
             "pollution": 0,
             "ramping time": 0,
+            "lifetime": 3870720,
             "requirements": [
                 ["aerodynamics", 1, False],
                 ["materials", 2, False],
@@ -164,10 +172,11 @@ full_config = {
             "construction time": 108000,
             "construction power factor": 0.7,
             "construction pollution": 1500000,
-            # "O&M cost": 0.102,
+            "O&M cost": 0.102,
             "consumed resource": {"gas": 210, "coal": 76},
             "pollution": 797,
             "ramping time": 150,
+            "lifetime": 4233600,
             "requirements": [
                 ["thermodynamics", 3, False],
                 ["mechanical_engineering", 3, False],
@@ -184,11 +193,12 @@ full_config = {
             "construction time": 432000,
             "construction power factor": 0.1,
             "construction pollution": 870000,
-            # "O&M cost": 0.104,
+            "O&M cost": 0.104,
             "consumed resource": {"uranium": 0.044},
             "efficiency": 0.22,
             "pollution": 2,
             "ramping time": 1200,
+            "lifetime": 6048000,
             "requirements": [
                 ["chemistry", 3, False],
                 ["nuclear_engineering", 1, False],
@@ -205,10 +215,11 @@ full_config = {
             "construction time": 302400,
             "construction power factor": 0.15,
             "construction pollution": 8760000,
-            # "O&M cost": 0.022,
+            "O&M cost": 0.022,
             "consumed resource": {"hydropower": 0},
             "pollution": 0,
             "ramping time": 0,
+            "lifetime": 12096000,
             "requirements": [["civil_engineering", 4, False]],
             "image_extension": "jpg",
             "description": "The large water dam uses the potential energy of the water to produce a large amount of electricity.",
@@ -222,10 +233,11 @@ full_config = {
             "construction time": 129600,
             "construction power factor": 0.5,
             "construction pollution": 1260000,
-            # "O&M cost": 0.067,
+            "O&M cost": 0.067,
             "consumed resource": {"irradiation": 0},
             "pollution": 0,
             "ramping time": 0,
+            "lifetime": 2782080,
             "requirements": [
                 ["physics", 5, False],
                 ["thermodynamics", 5, False],
@@ -241,10 +253,11 @@ full_config = {
             "construction time": 21600,
             "construction power factor": 10,
             "construction pollution": 24000000,
-            # "O&M cost": 0.02,
+            "O&M cost": 0.02,
             "consumed resource": {"irradiation": 0},
             "pollution": 0,
             "ramping time": 0,
+            "lifetime": 2177280,
             "requirements": [["physics", 6, False], ["materials", 4, False]],
             "image_extension": "jpg",
             "description": "The photovoltaic pannels transform the irradiation energy of the sun into electricity.",
@@ -257,10 +270,11 @@ full_config = {
             "construction time": 172800,
             "construction power factor": 1.5,
             "construction pollution": 4900000,
-            # "O&M cost": 0.065,
+            "O&M cost": 0.065,
             "consumed resource": {"wind": 0},
             "pollution": 0,
             "ramping time": 0,
+            "lifetime": 4596480,
             "requirements": [
                 ["aerodynamics", 3, False],
                 ["materials", 4, False],
@@ -278,11 +292,12 @@ full_config = {
             "construction time": 518400,
             "construction power factor": 0.08,
             "construction pollution": 2400000,
-            # "O&M cost": 0.085,
+            "O&M cost": 0.085,
             "consumed resource": {"uranium": 0.00057},
             "efficiency": 0.3,
             "pollution": 3,
             "ramping time": 800,
+            "lifetime": 8467200,
             "requirements": [
                 ["chemistry", 5, False],
                 ["nuclear_engineering", 5, False],
@@ -303,6 +318,7 @@ full_config = {
             "construction pollution": 80000,  # [kg]
             "O&M cost": 0.088,  # [fraction of price per year]
             "ramping time": 9,  # [min]
+            "lifetime": 9072000,  # [s]
             "requirements": [],
             "description": "The small pumped hydropower storage pumps water to a higher altitude to store energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity",
@@ -318,6 +334,7 @@ full_config = {
             "construction pollution": 570000,
             "O&M cost": 0.297,
             "ramping time": 5,
+            "lifetime": 3265920,
             "requirements": [
                 ["mechanical_engineering", 2, False],
                 ["thermodynamics", 2, False],
@@ -336,6 +353,7 @@ full_config = {
             "construction pollution": 1200000,
             "O&M cost": 0.424,
             "ramping time": 60,
+            "lifetime": 1814400,
             "requirements": [
                 ["mechanical_engineering", 2, False],
                 ["thermodynamics", 3, False],
@@ -354,21 +372,23 @@ full_config = {
             "construction pollution": 3000000,
             "O&M cost": 0.115,
             "ramping time": 16,
+            "lifetime": 10886400,
             "requirements": [["civil_engineering", 3, False]],
             "description": "The large pumped hydropower storage pumps water to a higher altitude to store a large amount of energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity",
         },
         "hydrogen_storage": {
             "name": "Hydrogen hydrolysis",
-            "price": 160000,
+            "price": 420000,
             "storage capacity": 80000000000,
-            "power generation": 15000000,
+            "power generation": 90000000,
             "efficiency": 0.33,
             "construction time": 43200,
             "construction power factor": 0.005,
             "construction pollution": 2400000,
             "O&M cost": 0.028,
             "ramping time": 8,
+            "lifetime": 5443200,
             "requirements": [["chemistry", 3, False], ["materials", 3, False]],
             "description": "The hydrogen storage stores hydrogen that has been generated by electrolysys and can be transformed into electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydrogen_storage",
@@ -384,6 +404,7 @@ full_config = {
             "construction pollution": 8000000,
             "O&M cost": 0.003,
             "ramping time": 3,
+            "lifetime": 967680,
             "requirements": [["chemistry", 4, False], ["materials", 4, False]],
             "description": "The lithium ion battery storage facility stores electricity with high efficiency.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Lithium-ion_battery",
@@ -399,6 +420,7 @@ full_config = {
             "construction pollution": 6000000,
             "O&M cost": 0.002,
             "ramping time": 3,
+            "lifetime": 1814400,
             "requirements": [
                 ["chemistry", 6, False],
                 ["materials", 5, False],
@@ -475,6 +497,7 @@ full_config = {
             "amount produced": 0.0000001,  # [fraction of total stock that can be extracted every minute by one mine]
             "power consumption": 3000000,  # [W]
             "pollution": 0.065,  # [kg/kg extracted]
+            "lifetime": 2782080,  # [s]
             "requirements": [["mineral_extraction", 1, False]],
             "description": "The coal mine extracts coal from the ground.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Coal_mining",
@@ -489,6 +512,7 @@ full_config = {
             "amount produced": 0.000001,
             "power consumption": 15300000,
             "pollution": 0.302,
+            "lifetime": 1451520,
             "requirements": [["mineral_extraction", 3, False]],
             "description": "The oil field extracts oil from the ground.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Extraction_of_petroleum",
@@ -503,6 +527,7 @@ full_config = {
             "amount produced": 0.0000008,
             "power consumption": 11100000,
             "pollution": 0.523,
+            "lifetime": 1209600,
             "requirements": [["mineral_extraction", 3, False]],
             "description": "The gas drilling site extracts gas from the ground.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Natural_gas",
@@ -517,6 +542,7 @@ full_config = {
             "amount produced": 0.0000004,
             "power consumption": 36000000,
             "pollution": 230,
+            "lifetime": 2177280,
             "requirements": [["mineral_extraction", 5, False]],
             "description": "The uranium mine extracts uranium from the ground.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Uranium_mining",
@@ -572,7 +598,7 @@ full_config = {
                 ["mathematics", 1, False],
                 ["chemistry", -1, False],
             ],
-            "wikipedia_link":"https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2024S&ansicht=ALLE&lerneinheitId=177068&",
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2024S&ansicht=ALLE&lerneinheitId=177068&",
         },
         "building_technology": {
             "name": "Building Technology",
@@ -874,24 +900,13 @@ class Config(object):
 
     # updating the config values according to the players technology level
     def update_config_for_user(config, player_id):
+        engine = current_app.config["engine"]
         config.for_player[player_id] = copy.deepcopy(full_config)
         assets = config.for_player[player_id]["assets"]
         player = Player.query.get(player_id)
         config.update_resource_extraction(player_id)
 
         for asset in assets:
-            # remove fulfilled requirements
-            assets[asset]["locked"] = False
-            for req in assets[asset]["requirements"]:
-                if req[1] + getattr(player, asset) < 1:
-                    assets[asset]["requirements"].remove(req)
-                    continue
-                req[2] = getattr(player, req[0]) >= req[1] + getattr(
-                    player, asset
-                )
-                if not req[2]:
-                    assets[asset]["locked"] = True
-
             if asset in [
                 "steam_engine",
                 "watermill",
@@ -1059,24 +1074,7 @@ class Config(object):
                     ** player.nuclear_engineering
                 )
 
-            if asset in [
-                "laboratory",
-                "warehouse",
-                "industry",
-                "carbon_capture",
-                "mathematics",
-                "mechanical_engineering",
-                "thermodynamics",
-                "physics",
-                "building_technology",
-                "mineral_extraction",
-                "transport_technology",
-                "materials",
-                "civil_engineering",
-                "aerodynamics",
-                "chemistry",
-                "nuclear_engineering",
-            ]:
+            if asset in engine.functional_facilities + engine.technologies:
                 # update prices, construction time and construction energy
                 assets[asset]["price"] *= assets[asset][
                     "price multiplier"
@@ -1097,49 +1095,29 @@ class Config(object):
                         "price multiplier"
                     ] ** (getattr(player, asset))
 
-            if asset in [
-                "mathematics",
-                "mechanical_engineering",
-                "thermodynamics",
-                "physics",
-                "building_technology",
-                "mineral_extraction",
-                "transport_technology",
-                "materials",
-                "civil_engineering",
-                "aerodynamics",
-                "chemistry",
-                "nuclear_engineering",
-            ]:
+            if asset in engine.technologies:
                 # update research time (laboratory)
                 assets[asset]["construction time"] *= (
                     assets["laboratory"]["time factor"] ** player.laboratory
                 )
+                # remove fulfilled requirements
+                assets[asset]["locked"] = False
+                for req in assets[asset]["requirements"]:
+                    if req[1] + getattr(player, asset) < 1:
+                        assets[asset]["requirements"].remove(req)
+                        continue
+                    req[2] = getattr(player, req[0]) >= req[1] + getattr(
+                        player, asset
+                    )
+                    if not req[2]:
+                        assets[asset]["locked"] = True
 
-            if asset in [
-                "watermill",
-                "small_water_dam",
-                "large_water_dam",
-                "nuclear_reactor",
-                "nuclear_reactor_gen4",
-                "steam_engine",
-                "coal_burner",
-                "oil_burner",
-                "gas_burner",
-                "combined_cycle",
-                "windmill",
-                "onshore_wind_turbine",
-                "offshore_wind_turbine",
-                "CSP_solar",
-                "PV_solar",
-                "small_pumped_hydro",
-                "large_pumped_hydro",
-                "lithium_ion_batteries",
-                "solid_state_batteries",
-                "compressed_air",
-                "molten_salt",
-                "hydrogen_storage",
-            ]:
+            if (
+                asset
+                in engine.storage_facilities
+                + engine.controllable_facilities
+                + engine.renewables
+            ):
                 # update construction time (building technology)
                 assets[asset]["construction time"] *= (
                     assets["building_technology"]["time factor"]
@@ -1155,34 +1133,13 @@ class Config(object):
                     assets["industry"]["income factor"] ** player.industry
                 )
 
-            if asset in [
-                "watermill",
-                "small_water_dam",
-                "large_water_dam",
-                "nuclear_reactor",
-                "nuclear_reactor_gen4",
-                "steam_engine",
-                "coal_burner",
-                "oil_burner",
-                "gas_burner",
-                "combined_cycle",
-                "windmill",
-                "onshore_wind_turbine",
-                "offshore_wind_turbine",
-                "CSP_solar",
-                "PV_solar",
-                "small_pumped_hydro",
-                "large_pumped_hydro",
-                "lithium_ion_batteries",
-                "solid_state_batteries",
-                "compressed_air",
-                "molten_salt",
-                "hydrogen_storage",
-                "coal_mine",
-                "oil_field",
-                "gas_drilling_site",
-                "uranium_mine",
-            ]:
+            if (
+                asset
+                in engine.storage_facilities
+                + engine.controllable_facilities
+                + engine.renewables
+                + engine.extraction_facilities
+            ):
                 # remove fulfilled requirements
                 assets[asset]["locked"] = False
                 for req in assets[asset]["requirements"]:
@@ -1190,9 +1147,8 @@ class Config(object):
                     if not req[2]:
                         assets[asset]["locked"] = True
 
-            if asset in ["steam_engine"]:
                 # calculate O&M cost
-                assets[asset]["O&M cost"] *= assets[asset]["price"] / 24
+                assets[asset]["O&M cost"] *= assets[asset]["price"] / 1440
 
             if asset == "carbon_capture":
                 # remove fulfilled requirements
@@ -1213,23 +1169,7 @@ class Config(object):
                     )
 
             # calculate energy need :
-            if asset in [
-                "watermill",
-                "small_water_dam",
-                "large_water_dam",
-                "nuclear_reactor",
-                "nuclear_reactor_gen4",
-                "steam_engine",
-                "coal_burner",
-                "oil_burner",
-                "gas_burner",
-                "combined_cycle",
-                "windmill",
-                "onshore_wind_turbine",
-                "offshore_wind_turbine",
-                "CSP_solar",
-                "PV_solar",
-            ]:
+            if asset in engine.controllable_facilities + engine.renewables:
                 assets[asset]["construction power"] = (
                     assets[asset]["construction power factor"]
                     * assets[asset]["power generation"]
@@ -1238,15 +1178,7 @@ class Config(object):
                         ** player.building_technology
                     )
                 )
-            elif asset in [
-                "small_pumped_hydro",
-                "large_pumped_hydro",
-                "lithium_ion_batteries",
-                "solid_state_batteries",
-                "compressed_air",
-                "molten_salt",
-                "hydrogen_storage",
-            ]:
+            elif asset in engine.storage_facilities:
                 assets[asset]["construction power"] = (
                     assets[asset]["construction power factor"]
                     * assets[asset]["storage capacity"]
@@ -1255,12 +1187,7 @@ class Config(object):
                         ** player.building_technology
                     )
                 )
-            elif asset in [
-                "coal_mine",
-                "oil_field",
-                "gas_drilling_site",
-                "uranium_mine",
-            ]:
+            elif asset in engine.extraction_facilities:
                 assets[asset]["construction power"] = (
                     assets[asset]["construction power factor"]
                     * assets[asset]["power consumption"]

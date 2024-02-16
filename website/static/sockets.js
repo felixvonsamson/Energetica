@@ -89,7 +89,7 @@ socket.on("new_values", function (changes) {
                     array[2].push(new_val);
                 }
                 let mod180 = total_t % 180
-                if (mod180 == 0){
+                if (mod180 != 0){
                     array[3][1439] = array[0].slice(-mod180).reduce((acc, val) => acc + val, 0) / mod180
                 }else{
                     array[3].shift()

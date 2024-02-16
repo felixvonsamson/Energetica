@@ -84,6 +84,10 @@ def update_electricity(engine):
                     new_values[player.id]["revenues"][rev]
                     for rev in new_values[player.id]["revenues"]
                 ]
+                + [
+                    new_values[player.id]["op_costs"][rev]
+                    for rev in new_values[player.id]["op_costs"]
+                ]
             )
         ) / 1.03
         # send new data to clients
@@ -704,18 +708,10 @@ def resources_and_pollution(engine, new_values, player, t):
     """Calculate resource use and production, O&M costs and emissions"""
     assets = engine.config[player.id]["assets"]
     generation = new_values["generation"]
-    revenue = new_values["revenues"]
+    op_costs = new_values["op_costs"]
     demand = new_values["demand"]
     # Calculate resource consumption and pollution of generation facilities
-    for facility in [
-        "steam_engine",
-        "coal_burner",
-        "oil_burner",
-        "gas_burner",
-        "combined_cycle",
-        "nuclear_reactor",
-        "nuclear_reactor_gen4",
-    ]:
+    for facility in engine.controllable_facilities:
         if getattr(player, facility) > 0:
             for resource, amount in assets[facility][
                 "consumed resource"
@@ -730,12 +726,7 @@ def resources_and_pollution(engine, new_values, player, t):
             )
 
     if player.warehouse > 0:
-        for extraction_facility in [
-            "coal_mine",
-            "oil_field",
-            "gas_drilling_site",
-            "uranium_mine",
-        ]:
+        for extraction_facility in engine.extraction_facilities:
             resource = extraction_to_resource[extraction_facility]
             if getattr(player, extraction_facility) > 0:
                 max_demand = assets[extraction_facility][
@@ -774,21 +765,42 @@ def resources_and_pollution(engine, new_values, player, t):
 
     construction_emissions(engine, new_values, player, t, assets)
 
-    # O&M costs, currently only for steam engine
-    # Special case steam engine costs money and if it is not used it costs 20% of the maximum
-    steam_engine_cost = (
-        player.steam_engine
-        * assets["steam_engine"]["O&M cost"]
-        / 60
-        * (
-            0.2
-            + 0.8
-            * generation["steam_engine"]
-            / (player.steam_engine * assets["steam_engine"]["power generation"])
-        )
-    )
-    player.money -= steam_engine_cost
-    revenue["O&M_costs"] -= steam_engine_cost
+    # O&M costs
+    for facility in (
+        engine.controllable_facilities
+        + engine.renewables
+        + engine.storage_facilities
+        + engine.extraction_facilities
+    ):
+        if getattr(player, facility) > 0:
+            # the proportion of fixed cost is 100% for renewable and storage facilites, 50% for nuclear reactors and 20% for the rest
+            operational_cost = (
+                getattr(player, facility) * assets[facility]["O&M cost"]
+            )
+            if (
+                facility
+                in engine.controllable_facilities + engine.extraction_facilities
+            ):
+                fc = 0.2
+                if facility in ["nuclear_reactor", "nuclear_reactor_gen4"]:
+                    fc = 0.5
+                if facility in engine.extraction_facilities:
+                    capacity = demand[facility] / (
+                        getattr(player, facility)
+                        * assets[facility]["power consumption"]
+                    )
+                else:
+                    capacity = generation[facility] / (
+                        getattr(player, facility)
+                        * assets[facility]["power generation"]
+                    )
+                operational_cost = (
+                    getattr(player, facility)
+                    * assets[facility]["O&M cost"]
+                    * (fc + (1 - fc) * capacity)
+                )
+            player.money -= operational_cost
+            op_costs[facility] -= operational_cost
 
 
 def construction_emissions(engine, new_values, player, t, assets):

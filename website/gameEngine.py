@@ -8,7 +8,7 @@ import logging
 import copy
 import time
 from . import db
-from .database import Player, Network, Under_construction, Shipment
+from .database import Network, Under_construction, Shipment
 
 from .config import config, wind_power_curve, river_discharge
 
@@ -67,6 +67,28 @@ class gameEngine(object):
             "windmill",
             "CSP_solar",
             "PV_solar",
+        ]
+
+        engine.functional_facilities = [
+            "laboratory",
+            "warehouse",
+            "industry",
+            "carbon_capture",
+        ]
+
+        engine.technologies = [
+            "mathematics",
+            "mechanical_engineering",
+            "thermodynamics",
+            "physics",
+            "building_technology",
+            "mineral_extraction",
+            "transport_technology",
+            "materials",
+            "civil_engineering",
+            "aerodynamics",
+            "chemistry",
+            "nuclear_engineering",
         ]
 
         engine.wind_power_curve = wind_power_curve

@@ -409,6 +409,9 @@ class CircularBufferPlayer:
                 "imports": deque([0.0] * 120, maxlen=120),
                 "dumping": deque([0.0] * 120, maxlen=120),
             },
+            "op_costs": {
+                "steam_engine": deque([0.0] * 120, maxlen=120),
+            },
             "generation": {
                 "steam_engine": deque([0.0] * 120, maxlen=120),
                 "imports": deque([0.0] * 120, maxlen=120),
