@@ -848,6 +848,13 @@ def reduce_demand(
             cumul_demand += assets[construction.name]["construction power"]
             if cumul_demand > satisfaction:
                 construction.suspension_time = time.time()
+                player.emit(
+                    "pause_construction",
+                    {
+                        "construction_id": construction_id,
+                        "suspension_time": time.time(),
+                    },
+                )
                 notify(
                     "Energy shortage",
                     f"The construction of the facility {assets[construction.name]['name']} has been suspended because of a lack of electricity.",
@@ -866,6 +873,13 @@ def reduce_demand(
             cumul_demand += assets[construction.name]["construction power"]
             if cumul_demand > satisfaction:
                 construction.suspension_time = time.time()
+                player.emit(
+                    "pause_construction",
+                    {
+                        "construction_id": construction_id,
+                        "suspension_time": time.time(),
+                    },
+                )
                 notify(
                     "Energy shortage",
                     f"The research of the technology {assets[construction.name]['name']} has been suspended because of a lack of electricity.",

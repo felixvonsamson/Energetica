@@ -214,16 +214,18 @@ function display_progressBars(data){
         }
     }else{
         const uc = document.getElementById("under_construction");
-        uc.innerHTML = "";
-        if(document.title == "Technologies"){
-            project_priority = data[2];
-        }else{
-            project_priority = data[1];
-        }
-        for (const [index, c_id] of project_priority.entries()) {
-            construction = data[0][c_id];
-            if (construction["family"] == document.title){
-                uc.innerHTML += html_for_progressBar(c_id, index, project_priority, construction);
+        if(uc != null){
+            uc.innerHTML = "";
+            if(document.title == "Technologies"){
+                project_priority = data[2];
+            }else{
+                project_priority = data[1];
+            }
+            for (const [index, c_id] of project_priority.entries()) {
+                construction = data[0][c_id];
+                if (construction["family"] == document.title){
+                    uc.innerHTML += html_for_progressBar(c_id, index, project_priority, construction);
+                }
             }
         }
     }

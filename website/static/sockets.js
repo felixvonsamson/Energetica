@@ -135,6 +135,18 @@ socket.on("new_notification", function (notification) {
     }
 });
 
+socket.on("pause_construction", function (info) {
+    load_constructions().then((construction_list) => {
+        console.log(construction_list);
+        construction_list[0][info["construction_id"]]["suspension_time"] = info["suspension_time"]
+        sessionStorage.setItem(
+            "constructions",
+            JSON.stringify(construction_list)
+        );
+        display_progressBars(construction_list);
+    });
+});
+
 socket.on("display_new_message", function (msg) {
     let obj = document.getElementById("messages_field");
     if (obj != null) {
