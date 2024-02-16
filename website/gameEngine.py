@@ -8,7 +8,7 @@ import logging
 import copy
 import time
 from . import db
-from .database import Network, Under_construction, Shipment
+from .database import Network, Under_construction, Shipment, Active_facilites
 
 from .config import config, wind_power_curve, river_discharge
 
@@ -17,6 +17,7 @@ from .utils import (
     save_past_data_threaded,
     add_asset,
     store_import,
+    remove_asset,
 )
 
 
@@ -202,8 +203,8 @@ def state_update_m(engine, app):
             pickle.dump(engine.data, file)
 
 
-# function that is executed once every 1 second :
 def check_upcoming_actions(app):
+    """function that is executed once every 1 second"""
     with app.app_context():
         # check if constructions finished
         finished_constructions = Under_construction.query.filter(
@@ -228,4 +229,14 @@ def check_upcoming_actions(app):
             for a_s in arrived_shipments:
                 store_import(a_s.player, a_s.resource, a_s.quantity)
             arrived_shipments.delete()
+            db.session.commit()
+
+        # check end of lifetime of facilites
+        eolt_facilities = Active_facilites.query.filter(
+            Active_facilites.end_of_life < time.time()
+        )
+        if eolt_facilities:
+            for facility in eolt_facilities:
+                remove_asset(facility.player_id, facility.facility)
+            eolt_facilities.delete()
             db.session.commit()

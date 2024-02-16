@@ -21,6 +21,7 @@ from .database import (
     Chat,
     Under_construction,
     Notification,
+    Active_facilites,
 )
 from . import db
 from flask import current_app, flash
@@ -50,8 +51,8 @@ def notify(title, message, players):
     db.session.commit()
 
 
-# this function is executed after an asset is finished facility :
 def add_asset(player_id, construction_id):
+    """this function is executed when a construction of research project has finished"""
     engine = current_app.config["engine"]
     assets = engine.config[player_id]["assets"]
     player = Player.query.get(player_id)
@@ -121,10 +122,37 @@ def add_asset(player_id, construction_id):
         engine.log(
             f"{player.username} has finished the construction of facility {assets[construction.name]['name']}"
         )
+    new_facility = Active_facilites(
+        facility=construction.name,
+        end_of_life=time.time() + assets[construction.name]["lifetime"],
+        player_id=player.id,
+    )
+    db.session.add(new_facility)
+    db.session.commit()
 
 
-# this function is executed when a resource shippment arrives :
+def remove_asset(player_id, facility, decommissioning=True):
+    """this function is executed when a facility is decomissioned"""
+    engine = current_app.config["engine"]
+    assets = engine.config[player_id]["assets"]
+    player = Player.query.get(player_id)
+    setattr(player, facility, getattr(player, facility) - 1)
+    # The cost of decommissioning is 20% of the building cost.
+    cost = 0.2 * assets[facility]["price"]
+    player.money -= cost
+    if decommissioning:
+        notify(
+            "Decommissioning",
+            f"The facility {assets[facility]['name']} reached the end of its operational lifespan and had to be decommissioned. The cost of this operation was {cost}.",
+            [player],
+        )
+    engine.log(
+        f"The facility {assets[facility]['name']} from {player.username} has been decommissioned."
+    )
+
+
 def store_import(player, resource, quantity):
+    """This function is executed when a resource shippment arrives"""
     engine = current_app.config["engine"]
     max_cap = engine.config[player.id]["warehouse_capacities"][resource]
     if getattr(player, resource) + quantity > max_cap:
