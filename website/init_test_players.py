@@ -81,8 +81,11 @@ def init_test_players(engine):
     # members = []
 
     player = create_player(engine, "user", "password")
+    player2 = create_player(engine, "user2", "password")
     print(player)
-    # Hex.query.filter_by(id=83).first().player_id = player.id
+    print(player2)
+    Hex.query.filter_by(id=83).first().player_id = player.id
+    Hex.query.filter_by(id=84).first().player_id = player2.id
     # player.coal_mine = 1
     # player.uranium_mine = 1
     # player.small_pumped_hydro = 1
@@ -95,7 +98,7 @@ def init_test_players(engine):
     # player.gas = 800000
     # player.uranium = 4500
     # player.warehouse = 1
-    create_network(engine, "network", [player])
+    create_network(engine, "network", [player2])
 
     # for i in range(3):
     #     members.append(create_player(engine, "Player" + str(i), i + 1, "password"))
