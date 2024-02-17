@@ -6,7 +6,7 @@ from flask import Blueprint, current_app, g
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
 
-import website.utils
+from website import utils
 
 from .database import Hex, Player
 
@@ -280,7 +280,7 @@ def rest_parse_request(engine, ws, uuid, data):
 def rest_parse_request_confirmLocation(engine, ws, uuid, data):
     """Interpret message sent from a client when they chose a location."""
     cell_id = data
-    confirm_location_response = website.utils.confirm_location(
+    confirm_location_response = utils.confirm_location(
         engine=g.engine, player=g.player, location=Hex.query.get(cell_id)
     )
     print(f"ws is {ws} and we're sending rest_respond_confirmLocation")

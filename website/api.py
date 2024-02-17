@@ -6,17 +6,7 @@ from flask import Blueprint, request, flash, jsonify, g, current_app, redirect
 from flask_login import login_required, current_user
 import pickle
 from pathlib import Path
-from .utils import (
-    put_resource_on_market,
-    buy_resource_from_market,
-    data_init_network,
-    confirm_location,
-    set_network_prices,
-    start_project,
-    cancel_project,
-    pause_project,
-    increase_project_priority,
-)
+from website import utils
 from . import db
 from .database import Hex, Player, Chat, Network, Under_construction
 
@@ -266,7 +256,7 @@ def choose_location():
     json = request.get_json()
     selected_id = json["selected_id"]
     location = Hex.query.get(selected_id + 1)
-    confirm_location_response = confirm_location(
+    confirm_location_response = utils.confirm_location(
         engine=g.engine, player=current_user, location=location
     )
     return jsonify(confirm_location_response)
@@ -282,7 +272,7 @@ def request_start_project():
     json = request.get_json()
     facility = json["facility"]
     family = json["family"]
-    response = start_project(
+    response = utils.start_project(
         player=current_user, facility=facility, family=family
     )
     return jsonify(response)
@@ -295,7 +285,7 @@ def request_cancel_project():
     """
     json = request.get_json()
     construction_id = json["id"]
-    response = cancel_project(
+    response = utils.cancel_project(
         player=current_user, construction_id=construction_id
     )
     return jsonify(response)
@@ -308,7 +298,7 @@ def request_pause_project():
     """
     json = request.get_json()
     construction_id = json["id"]
-    response = pause_project(
+    response = utils.pause_project(
         player=current_user, construction_id=construction_id
     )
     return jsonify(response)
@@ -321,7 +311,7 @@ def request_increase_project_priority():
     """
     json = request.get_json()
     construction_id = json["id"]
-    response = increase_project_priority(
+    response = utils.increase_project_priority(
         player=current_user, construction_id=construction_id
     )
     return jsonify(response)
@@ -334,7 +324,7 @@ def change_network_prices():
     json = request.get_json()
     prices = json["prices"]
     SCPs = json["SCPs"]
-    set_network_prices(
+    utils.set_network_prices(
         engine=g.engine, player=current_user, prices=prices, SCPs=SCPs
     )
     return jsonify("success")
@@ -346,7 +336,7 @@ def put_resource_on_sale():
     resource = request.form.get("resource")
     quantity = float(request.form.get("quantity")) * 1000
     price = float(request.form.get("price")) / 1000
-    put_resource_on_market(current_user, resource, quantity, price)
+    utils.put_resource_on_market(current_user, resource, quantity, price)
     return redirect("/resource_market", code=303)
 
 
@@ -355,7 +345,7 @@ def buy_resource():
     """Parse the HTTP form for buying resources"""
     quantity = float(request.form.get("purchases_quantity")) * 1000
     sale_id = int(request.form.get("sale_id"))
-    buy_resource_from_market(current_user, quantity, sale_id)
+    utils.buy_resource_from_market(current_user, quantity, sale_id)
     return redirect("/resource_market", code=303)
 
 
@@ -391,8 +381,8 @@ def create_network():
     Path(f"instance/network_data/{new_network.id}/charts").mkdir(
         parents=True, exist_ok=True
     )
-    g.engine.data["network_data"][network_name] = data_init_network(1441)
-    past_data = data_init_network(1440)
+    g.engine.data["network_data"][network_name] = utils.data_init_network(1441)
+    past_data = utils.data_init_network(1440)
     Path(f"instance/network_data/{new_network.id}/prices").mkdir(
         parents=True, exist_ok=True
     )
