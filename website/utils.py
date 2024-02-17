@@ -351,8 +351,8 @@ def buy_resource_from_market(player, quantity, sale_id):
 
 
 def confirm_location(engine, player, location):
-    """This function is calle when a player choses a location. It returns either
-    success or an explanatory error message in the form of a dictionary.
+    """This function is called when a player choses a location. It returns
+    either success or an explanatory error message in the form of a dictionary.
     It is called when a web client uses the choose_location socket.io endpoint,
     or the REST websocket API."""
     if location.player_id is not None:
@@ -367,6 +367,13 @@ def confirm_location(engine, player, location):
     rest_notify_player_location(engine, player)
     print(f"{player.username} chose the location {location.id}")
     return {"response": "success"}
+
+
+def join_network(engine, player, network):
+    """shared API method to join a network. Always succeeds"""
+    player.network = network
+    db.session.commit()
+    print(f"{player.username} joined the network {player.network.name}")
 
 
 def set_network_prices(engine, player, prices, SCPs):

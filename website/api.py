@@ -354,12 +354,8 @@ def join_network():
     """player is trying to join a network"""
     network_name = request.form.get("choose_network")
     network = Network.query.filter_by(name=network_name).first()
-    current_user.network = network
-    db.session.commit()
+    utils.join_network(g.engine, current_user, network)
     flash(f"You joined the network {network_name}", category="message")
-    print(
-        f"{current_user.username} joined the network {current_user.network.name}"
-    )
     return redirect("/network", code=303)
 
 
