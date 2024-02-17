@@ -105,6 +105,11 @@ def add_asset(player_id, construction_id):
             break
     engine.config.update_config_for_user(player.id)
     if construction.family == "Technologies":
+        server_tech = engine.technologie_lvls[construction.name]
+        if len(server_tech) < getattr(player, construction.name):
+            server_tech.append(1)
+        else:
+            server_tech[getattr(player, construction.name)-1] += 1
         notify(
             "Technologies",
             f"The research of the technology {assets[construction.name]['name']} has finished.",
@@ -122,13 +127,14 @@ def add_asset(player_id, construction_id):
         engine.log(
             f"{player.username} has finished the construction of facility {assets[construction.name]['name']}"
         )
-    new_facility = Active_facilites(
-        facility=construction.name,
-        end_of_life=time.time() + assets[construction.name]["lifetime"],
-        player_id=player.id,
-    )
-    db.session.add(new_facility)
-    db.session.commit()
+    if construction.family in ["Extraction facilities", "Power facilities", "Storage facilities"]:
+        new_facility = Active_facilites(
+            facility=construction.name,
+            end_of_life=time.time() + assets[construction.name]["lifetime"],
+            player_id=player.id,
+        )
+        db.session.add(new_facility)
+        db.session.commit()
 
 
 def remove_asset(player_id, facility, decommissioning=True):

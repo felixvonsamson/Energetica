@@ -1096,6 +1096,8 @@ class Config(object):
                     ] ** (getattr(player, asset))
 
             if asset in engine.technologies:
+                # update price (knowledge spilling)
+                assets[asset]["price"] *= 0.95**engine.technologie_lvls[asset][getattr(player, asset)]
                 # update research time (laboratory)
                 assets[asset]["construction time"] *= (
                     assets["laboratory"]["time factor"] ** player.laboratory

@@ -92,6 +92,23 @@ class gameEngine(object):
             "nuclear_engineering",
         ]
 
+        #stored the levels of technology of the server 
+        #for each tech an array stores [# players with lvl 1, # players with lvl 2, ...]
+        engine.technologie_lvls = {
+            "mathematics": [],
+            "mechanical_engineering": [],
+            "thermodynamics": [],
+            "physics": [],
+            "building_technology": [],
+            "mineral_extraction": [],
+            "transport_technology": [],
+            "materials": [],
+            "civil_engineering": [],
+            "aerodynamics": [],
+            "chemistry": [],
+            "nuclear_engineering": [],
+        }
+
         engine.wind_power_curve = wind_power_curve
         engine.river_discharge = river_discharge
 
