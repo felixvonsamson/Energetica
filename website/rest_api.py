@@ -63,14 +63,15 @@ def add_sock_handlers(sock, engine):
                 # case "confirmLocation":
                 #     rest_confirm_location(engine, ws, message_data)
                 case "request":
-                    rest_parse_request(engine, ws, message_data)
+                    uuid = message["uuid"]
+                    rest_parse_request(engine, ws, uuid, message_data)
 
 
 def rest_init_ws_post_location(ws):
     """Called once the player has selected a location, or immediately after
     logging in if location was already selected."""
-    ws.send(rest_get_charts())
-    ws.send(rest_get_power_facilities())
+    # ws.send(rest_get_charts())
+    # ws.send(rest_get_power_facilities())
 
 
 # The following methods generate messages to be sent over websocket connections.
@@ -253,10 +254,12 @@ def rest_get_power_facilities():
     return json.dumps(response)
 
 
-def rest_notify_confirm_location_response(confirm_location_response):
+def rest_respond_confirmLocation(uuid, confirm_location_response):
     """Informs the client of the result of them confirming map location."""
     response = {
-        "type": "notifyConfirmLocationResponse",
+        "type": "requestResponse",
+        "uuid": uuid,
+        "request_response": "confirmLocationResponse",
         "data": confirm_location_response,
     }
     return json.dumps(response)
@@ -265,22 +268,23 @@ def rest_notify_confirm_location_response(confirm_location_response):
 ## Client Messages
 
 
-def rest_parse_request(engine, ws, data):
+def rest_parse_request(engine, ws, uuid, data):
     """Interpret a request sent from a REST client"""
     endpoint = data["endpoint"]
     body = data["body"]
     match endpoint:
         case "confirmLocation":
-            rest_endpoint_confirmLocation(engine, ws, body)
+            rest_parse_request_confirmLocation(engine, ws, uuid, body)
 
 
-def rest_endpoint_confirmLocation(engine, ws, data):
+def rest_parse_request_confirmLocation(engine, ws, uuid, data):
     """Interpret message sent from a client when they chose a location."""
     cell_id = data
     confirm_location_response = website.utils.confirm_location(
         engine=g.engine, player=g.player, location=Hex.query.get(cell_id)
     )
-    ws.send(rest_notify_confirm_location_response(confirm_location_response))
+    print(f"ws is {ws} and we're sending rest_respond_confirmLocation")
+    ws.send(rest_respond_confirmLocation(uuid, confirm_location_response))
     if confirm_location_response["response"] == "success":
         rest_init_ws_post_location(ws)
 
