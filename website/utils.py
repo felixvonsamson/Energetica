@@ -65,6 +65,14 @@ def add_asset(player_id, construction_id):
             in engine.storage_facilities
             + engine.controllable_facilities
             + engine.renewables
+            + engine.extraction_facilities
+        ):
+            current_data.new_subcategory("op_costs", construction.name)
+        if (
+            construction.name
+            in engine.storage_facilities
+            + engine.controllable_facilities
+            + engine.renewables
         ):
             current_data.new_subcategory("generation", construction.name)
         if (
@@ -103,13 +111,11 @@ def add_asset(player_id, construction_id):
             next_construction.suspension_time = None
             db.session.commit()
             break
-    engine.config.update_config_for_user(player.id)
     if construction.family == "Technologies":
         server_tech = engine.technologie_lvls[construction.name]
-        if len(server_tech) < getattr(player, construction.name):
-            server_tech.append(1)
-        else:
-            server_tech[getattr(player, construction.name)-1] += 1
+        if len(server_tech) <= getattr(player, construction.name):
+            server_tech.append(0)
+        server_tech[getattr(player, construction.name) - 1] += 1
         notify(
             "Technologies",
             f"The research of the technology {assets[construction.name]['name']} has finished.",
@@ -127,7 +133,11 @@ def add_asset(player_id, construction_id):
         engine.log(
             f"{player.username} has finished the construction of facility {assets[construction.name]['name']}"
         )
-    if construction.family in ["Extraction facilities", "Power facilities", "Storage facilities"]:
+    if construction.family in [
+        "Extraction facilities",
+        "Power facilities",
+        "Storage facilities",
+    ]:
         new_facility = Active_facilites(
             facility=construction.name,
             end_of_life=time.time() + assets[construction.name]["lifetime"],
@@ -135,6 +145,7 @@ def add_asset(player_id, construction_id):
         )
         db.session.add(new_facility)
         db.session.commit()
+    engine.config.update_config_for_user(player.id)
 
 
 def remove_asset(player_id, facility, decommissioning=True):

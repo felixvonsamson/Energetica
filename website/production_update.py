@@ -835,6 +835,12 @@ def reduce_demand(
     player = Player.query.get(player_id)
     demand = new_values[player.id]["demand"]
     demand[demand_type] = satisfaction
+    if demand_type == "industry":
+        print(
+            satisfaction,
+            past_data.get_last_data("demand", demand_type),
+            satisfaction / past_data.get_last_data("demand", demand_type),
+        )
     if satisfaction > 1.05 * past_data.get_last_data("demand", demand_type):
         return
     if demand_type == "industry":
