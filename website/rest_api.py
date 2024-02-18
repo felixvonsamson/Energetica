@@ -8,7 +8,7 @@ from werkzeug.security import check_password_hash
 
 from website import utils
 
-from .database import Hex, Player
+from .database import Hex, Player, Network
 
 rest_api = Blueprint("rest_api", __name__)
 
@@ -48,6 +48,7 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_map())
         ws.send(rest_get_players())
         ws.send(rest_get_current_player(current_player=g.player))
+        ws.send(rest_get_networks())
         if g.player.tile is not None:
             rest_init_ws_post_location(ws)
         if g.player.id not in engine.websocket_dict:
@@ -119,6 +120,22 @@ def rest_get_players():
 def rest_get_current_player(current_player):
     """Gets the current player's id and returns it as a JSON string."""
     response = {"type": "getCurrentPlayer", "data": current_player.id}
+    return json.dumps(response)
+
+
+def rest_get_networks():
+    """Gets all player data and returns it as a JSON string."""
+    network_list = Network.query.all()
+    response = {
+        "type": "getNetworks",
+        "data": [
+            {
+                "id": network.id,
+                "members": [player.id for player in network.members],
+            }
+            for network in network_list
+        ],
+    }
     return json.dumps(response)
 
 
