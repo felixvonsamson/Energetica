@@ -131,6 +131,7 @@ def rest_get_networks():
         "data": [
             {
                 "id": network.id,
+                "name": network.name,
                 "members": [player.id for player in network.members],
             }
             for network in network_list
