@@ -212,12 +212,12 @@ def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
             additional_demand = (
                 time_fraction
                 * industry_demand
-                * (assets["industry"]["power factor"] - 1)
+                * (engine.const_config["industry"]["power factor"] - 1)
             )
             additional_revenue = (
                 time_fraction
                 * industry_income
-                * (assets["industry"]["income factor"] - 1)
+                * (engine.const_config["industry"]["income factor"] - 1)
             )
             demand["industry"] += additional_demand
             revenues["industry"] += additional_revenue
@@ -617,7 +617,7 @@ def calculate_prod(
         min_ramping = (
             past_values.get_last_data("generation", facility) - ramping_speed
         )
-        return max(0, min(max_resources, min_ramping))
+        return max(0.0, min(max_resources, min_ramping))
 
 
 def minimal_generation(engine, player, assets, generation):
@@ -875,7 +875,7 @@ def reduce_demand(
                 )
                 notify(
                     "Energy shortage",
-                    f"The construction of the facility {assets[construction.name]['name']} has been suspended because of a lack of electricity.",
+                    f"The construction of the facility {engine.const_config[construction.name]['name']} has been suspended because of a lack of electricity.",
                     [player],
                 )
         db.session.commit()
@@ -900,7 +900,7 @@ def reduce_demand(
                 )
                 notify(
                     "Energy shortage",
-                    f"The research of the technology {assets[construction.name]['name']} has been suspended because of a lack of electricity.",
+                    f"The research of the technology {engine.const_config[construction.name]['name']} has been suspended because of a lack of electricity.",
                     [player],
                 )
         db.session.commit()

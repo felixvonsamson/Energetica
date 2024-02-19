@@ -29,9 +29,10 @@
   </div>
   {% for storage_facility in ["small_pumped_hydro", "compressed_air", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
     {% set facility_data = assets[storage_facility] %}
-    <div id="{{ facility_data.name }}"
+    {% set const_data = engine.const_config[storage_facility] %}
+    <div id="{{ const_data.name }}"
          class="bone margin facility small construction_tile"
-         onclick="show_construction('{{ facility_data.name }}', '{{ facility_data.name.locked }}');">
+         onclick="show_construction('{{ const_data.name }}', '{{ facility_data.locked }}');">
       {% if storage_facility == "small_pumped_hydro" %}
         {% set filename = "small_pumped_hydro.png" %}
       {% else %}
@@ -41,12 +42,12 @@
            src="{{ url_for('static', filename='images/storage_facilities/'+filename) }}"
            width="250"
            height="167"
-           alt="{{ facility_data.name+' storage facility' }}">
+           alt="{{ const_data.name+' storage facility' }}">
       <div class="infotext padding">
-        <strong class="large">{{ facility_data.name }}</strong>
+        <strong class="large">{{ const_data.name }}</strong>
         &ensp;
         <a class="white wikipedia_icon_container no_deco"
-           href="{{ facility_data.wikipedia_link }}"
+           href="{{ const_data.wikipedia_link }}"
            target="_blank">
           <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
         </a>
@@ -55,7 +56,7 @@
           <script>display_money_long({{ facility_data.price }});</script>
         </span>
         <br>
-        {{ facility_data.description }}
+        {{ const_data.description }}
         <br>
       </div>
       <div class="infobox" id="requirements">
@@ -67,7 +68,7 @@
               {% for req in facility_data.requirements %}
                 <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
                   -
-                  {{ assets[req[0]]["name"] }} lvl {{ req[1] }}
+                  {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}
                 </li>
               {% endfor %}
             </ul>

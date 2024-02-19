@@ -118,20 +118,20 @@ def add_asset(player_id, construction_id):
         server_tech[getattr(player, construction.name) - 1] += 1
         notify(
             "Technologies",
-            f"The research of the technology {assets[construction.name]['name']} has finished.",
+            f"The research of the technology {engine.const_config[construction.name]['name']} has finished.",
             [player],
         )
         engine.log(
-            f"{player.username} has finished the research of technology {assets[construction.name]['name']}"
+            f"{player.username} has finished the research of technology {engine.const_config[construction.name]['name']}"
         )
     else:
         notify(
             "Constructions",
-            f"The construction of the facility {assets[construction.name]['name']} has finished.",
+            f"The construction of the facility {engine.const_config[construction.name]['name']} has finished.",
             [player],
         )
         engine.log(
-            f"{player.username} has finished the construction of facility {assets[construction.name]['name']}"
+            f"{player.username} has finished the construction of facility {engine.const_config[construction.name]['name']}"
         )
     if construction.family in [
         "Extraction facilities",
@@ -160,11 +160,11 @@ def remove_asset(player_id, facility, decommissioning=True):
     if decommissioning:
         notify(
             "Decommissioning",
-            f"The facility {assets[facility]['name']} reached the end of its operational lifespan and had to be decommissioned. The cost of this operation was {cost}.",
+            f"The facility {engine.const_config[facility]['name']} reached the end of its operational lifespan and had to be decommissioned. The cost of this operation was {round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>.",
             [player],
         )
     engine.log(
-        f"The facility {assets[facility]['name']} from {player.username} has been decommissioned."
+        f"The facility {engine.const_config[facility]['name']} from {player.username} has been decommissioned."
     )
 
 
@@ -559,11 +559,11 @@ def start_project(player, facility, family):
         ).count()
         real_price = (
             assets[facility]["price"]
-            * assets[facility]["price multiplier"] ** ud_count
+            * engine.const_config[facility]["price multiplier"] ** ud_count
         )
         duration = (
             assets[facility]["construction time"]
-            * assets[facility]["price multiplier"] ** ud_count
+            * engine.const_config[facility]["price multiplier"] ** ud_count
         )
     else:  # power facitlies, storage facilities, extractions facilities
         real_price = assets[facility]["price"]

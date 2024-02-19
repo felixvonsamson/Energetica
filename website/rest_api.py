@@ -219,7 +219,11 @@ def rest_get_charts():
 
 def rest_get_power_facilities():
     """Gets player's facilities data and returns it as a JSON string"""
-    power_facilities_info = g.engine.config[g.player.id]["assets"]
+    power_facilities_info = g.engine.config[
+        g.player.id
+    ][
+        "assets"
+    ]  # the contents of this are now distributed in a constant and a variable part
     property_keys = ["price", "power generation", "locked"]
     power_facilities = [
         "steam_engine",

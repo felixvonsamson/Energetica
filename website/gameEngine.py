@@ -10,7 +10,7 @@ import time
 from . import db
 from .database import Network, Under_construction, Shipment, Active_facilites
 
-from .config import config, wind_power_curve, river_discharge
+from .config import config, wind_power_curve, river_discharge, const_config
 
 from .utils import (
     update_weather,
@@ -25,6 +25,7 @@ from .utils import (
 class gameEngine(object):
     def __init__(engine):
         engine.config = config
+        engine.const_config = const_config["assets"]
         engine.socketio = None
         engine.clients = {}
         engine.websocket_dict = {}
