@@ -92,23 +92,6 @@ class gameEngine(object):
             "nuclear_engineering",
         ]
 
-        # stored the levels of technology of the server
-        # for each tech an array stores [# players with lvl 1, # players with lvl 2, ...]
-        engine.technologie_lvls = {
-            "mathematics": [0],
-            "mechanical_engineering": [0],
-            "thermodynamics": [0],
-            "physics": [0],
-            "building_technology": [0],
-            "mineral_extraction": [0],
-            "transport_technology": [0],
-            "materials": [0],
-            "civil_engineering": [0],
-            "aerodynamics": [0],
-            "chemistry": [0],
-            "nuclear_engineering": [0],
-        }
-
         engine.wind_power_curve = wind_power_curve
         engine.river_discharge = river_discharge
 
@@ -132,6 +115,23 @@ class gameEngine(object):
         engine.data[
             "start_date"
         ] = datetime.datetime.today()  # 0 point of server time
+
+        # stored the levels of technology of the server
+        # for each tech an array stores [# players with lvl 1, # players with lvl 2, ...]
+        engine.data["technologie_lvls"] = {
+            "mathematics": [0],
+            "mechanical_engineering": [0],
+            "thermodynamics": [0],
+            "physics": [0],
+            "building_technology": [0],
+            "mineral_extraction": [0],
+            "transport_technology": [0],
+            "materials": [0],
+            "civil_engineering": [0],
+            "aerodynamics": [0],
+            "chemistry": [0],
+            "nuclear_engineering": [0],
+        }
 
         with open("website/static/data/industry_demand.pck", "rb") as file:
             engine.industry_demand = pickle.load(

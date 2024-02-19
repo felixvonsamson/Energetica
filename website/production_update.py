@@ -187,7 +187,7 @@ def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
         engine.data["current_data"][player.id].get_last_data(
             "demand", "industry"
         )
-        + 0.05 * industry_demand,
+        + 0.07 * industry_demand,
         industry_demand,
     )  # progressive demand change in case of restart
     # calculate income of industry
@@ -586,7 +586,7 @@ def calculate_prod(
         if filling:
             E = (
                 max(
-                    0,
+                    0.0,
                     assets[facility]["storage capacity"]
                     * getattr(player, facility)
                     - past_values.get_last_data("storage", facility),
@@ -596,7 +596,7 @@ def calculate_prod(
             )  # max remaining storage space
         else:
             E = max(
-                0,
+                0.0,
                 past_values.get_last_data("storage", facility)
                 * 60
                 * (assets[facility]["efficiency"] ** 0.5),
@@ -805,7 +805,7 @@ def resources_and_pollution(engine, new_values, player, t):
 
 def construction_emissions(engine, new_values, player, t, assets):
     """calculate emissions of facilites under construction"""
-    emissions_construction = 0
+    emissions_construction = 0.0
     for ud in player.under_construction:
         if ud.start_time is not None:
             if ud.suspension_time is None and ud.family != "Technologies":
@@ -859,7 +859,7 @@ def reduce_demand(
         construction_priorities = player.read_project_priority(
             "construction_priorities"
         )
-        cumul_demand = 0
+        cumul_demand = 0.0
         for i in range(player.construction_workers):
             construction_id = construction_priorities[i]
             construction = Under_construction.query.get(construction_id)
@@ -884,7 +884,7 @@ def reduce_demand(
         research_priorities = player.read_project_priority(
             "research_priorities"
         )
-        cumul_demand = 0
+        cumul_demand = 0.0
         for i in range(player.lab_workers):
             construction_id = research_priorities[i]
             construction = Under_construction.query.get(construction_id)

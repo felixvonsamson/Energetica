@@ -105,6 +105,7 @@ def init_test_players(engine):
         # add_asset(player, "offshore_wind_turbine", 2)
         add_asset(player, "nuclear_reactor_gen4", 1)
         add_asset(player, "combined_cycle", 1)
+        add_asset(player, "gas_burner", 3)
         db.session.commit()
 
 

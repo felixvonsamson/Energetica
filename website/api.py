@@ -113,11 +113,14 @@ def get_chart_data():
         return [np.mean(array[i : i + x]) for i in range(0, len(array), x)]
 
     def concat_slices(dict1, dict2):
-        for key, value in dict1.items():
-            for sub_key, array in value.items():
-                concatenated_array = list(array[0]) + dict2[key][sub_key]
+        for key, value in dict2.items():
+            for sub_key, array2 in value.items():
+                if sub_key not in dict1[key]:
+                    dict1[key][sub_key] = [[0.0] * 1440] * 4
+                array = dict1[key][sub_key]
+                concatenated_array = list(array[0]) + array2
                 dict1[key][sub_key][0] = concatenated_array[-1440:]
-                new_5days = calculate_mean_subarrays(dict2[key][sub_key], 5)
+                new_5days = calculate_mean_subarrays(array2, 5)
                 dict1[key][sub_key][1] = dict1[key][sub_key][1][
                     len(new_5days) :
                 ]
