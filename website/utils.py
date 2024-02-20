@@ -10,6 +10,7 @@ import pickle
 import os
 import time
 import numpy as np
+from datetime import datetime
 
 from .rest_api import rest_notify_player_location
 from .database import (
@@ -19,6 +20,8 @@ from .database import (
     Shipment,
     Chat,
     Under_construction,
+    Notification,
+    Active_facilites,
 )
 from . import db
 from flask import current_app, flash
@@ -28,10 +31,69 @@ def flash_error(msg):
     return flash(msg, category="error")
 
 
-# this function is executed after an asset is finished facility :
+def notify(title, message, players):
+    """creates a new notification"""
+    new_notification = Notification(
+        title=title, content=message, time=datetime.now()
+    )
+    db.session.add(new_notification)
+    for player in players:
+        player.notifications.append(new_notification)
+        player.emit(
+            "new_notification",
+            {
+                "id": new_notification.id,
+                "time": str(new_notification.time),
+                "title": new_notification.title,
+                "content": new_notification.content,
+            },
+        )
+    db.session.commit()
+
+
 def add_asset(player_id, construction_id):
+    """this function is executed when a construction of research project has finished"""
+    engine = current_app.config["engine"]
+    assets = engine.config[player_id]["assets"]
     player = Player.query.get(player_id)
     construction = Under_construction.query.get(construction_id)
+    if getattr(player, construction.name) == 0:
+        # initialize array for facility if it is the first one built
+        current_data = engine.data["current_data"][player.id]
+        if (
+            construction.name
+            in engine.storage_facilities
+            + engine.controllable_facilities
+            + engine.renewables
+            + engine.extraction_facilities
+        ):
+            current_data.new_subcategory("op_costs", construction.name)
+        if (
+            construction.name
+            in engine.storage_facilities
+            + engine.controllable_facilities
+            + engine.renewables
+        ):
+            current_data.new_subcategory("generation", construction.name)
+        if (
+            construction.name
+            in engine.storage_facilities
+            + engine.extraction_facilities
+            + ["carbon_capture"]
+        ):
+            current_data.new_subcategory("demand", construction.name)
+        if construction.name in engine.storage_facilities:
+            current_data.new_subcategory("storage", construction.name)
+        if (
+            construction.name
+            in engine.controllable_facilities
+            + engine.extraction_facilities
+            + ["carbon_capture"]
+        ):
+            current_data.new_subcategory("emissions", construction.name)
+        if construction.name == "warehouse":
+            for resource in ["coal", "oil", "gas", "uranium"]:
+                current_data.new_subcategory("resources", resource)
     setattr(player, construction.name, getattr(player, construction.name) + 1)
     priority_list_name = "construction_priorities"
     if construction.family == "Technologies":
@@ -41,25 +103,75 @@ def add_asset(player_id, construction_id):
         "construction_priorities"
     )
     for id in construction_priorities:
-        construction = Under_construction.query.get(id)
-        if construction.suspension_time is not None:
-            construction.start_time += (
-                time.time() - construction.suspension_time
+        next_construction = Under_construction.query.get(id)
+        if next_construction.suspension_time is not None:
+            next_construction.start_time += (
+                time.time() - next_construction.suspension_time
             )
-            construction.suspension_time = None
+            next_construction.suspension_time = None
             db.session.commit()
             break
-    current_app.config["engine"].config.update_config_for_user(player.id)
-    print(
-        f"{player.username} has finished the construction of facility {construction.name}"
+    if construction.family == "Technologies":
+        server_tech = engine.data["technologie_lvls"][construction.name]
+        if len(server_tech) <= getattr(player, construction.name):
+            server_tech.append(0)
+        server_tech[getattr(player, construction.name) - 1] += 1
+        notify(
+            "Technologies",
+            f"The research of the technology {engine.const_config[construction.name]['name']} has finished.",
+            [player],
+        )
+        engine.log(
+            f"{player.username} has finished the research of technology {engine.const_config[construction.name]['name']}"
+        )
+    else:
+        notify(
+            "Constructions",
+            f"The construction of the facility {engine.const_config[construction.name]['name']} has finished.",
+            [player],
+        )
+        engine.log(
+            f"{player.username} has finished the construction of facility {engine.const_config[construction.name]['name']}"
+        )
+    if construction.family in [
+        "Extraction facilities",
+        "Power facilities",
+        "Storage facilities",
+    ]:
+        new_facility = Active_facilites(
+            facility=construction.name,
+            end_of_life=time.time() + assets[construction.name]["lifetime"],
+            player_id=player.id,
+        )
+        db.session.add(new_facility)
+        db.session.commit()
+    engine.config.update_config_for_user(player.id)
+
+
+def remove_asset(player_id, facility, decommissioning=True):
+    """this function is executed when a facility is decomissioned"""
+    engine = current_app.config["engine"]
+    assets = engine.config[player_id]["assets"]
+    player = Player.query.get(player_id)
+    setattr(player, facility, getattr(player, facility) - 1)
+    # The cost of decommissioning is 20% of the building cost.
+    cost = 0.2 * assets[facility]["price"]
+    player.money -= cost
+    if decommissioning:
+        notify(
+            "Decommissioning",
+            f"The facility {engine.const_config[facility]['name']} reached the end of its operational lifespan and had to be decommissioned. The cost of this operation was {round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>.",
+            [player],
+        )
+    engine.log(
+        f"The facility {engine.const_config[facility]['name']} from {player.username} has been decommissioned."
     )
 
 
-# this function is executed when a resource shippment arrives :
 def store_import(player, resource, quantity):
-    max_cap = current_app.config["engine"].config[player.id][
-        "warehouse_capacities"
-    ][resource]
+    """This function is executed when a resource shippment arrives"""
+    engine = current_app.config["engine"]
+    max_cap = engine.config[player.id]["warehouse_capacities"][resource]
     if getattr(player, resource) + quantity > max_cap:
         setattr(player, resource, max_cap)
         # excess resources are stored in the ground
@@ -71,9 +183,24 @@ def store_import(player, resource, quantity):
             + quantity
             - max_cap,
         )
+        notify(
+            "Shipments",
+            f"A shipment of {format_mass(quantity)} {resource} arrived, but only {format_mass(max_cap - getattr(player, resource))} could be stored in your warehouse.",
+            [player],
+        )
+        engine.log(
+            f"{player.username} received a shipment of {format_mass(quantity)} {resource}, but could only store {format_mass(max_cap - getattr(player, resource))} in their warehouse."
+        )
     else:
         setattr(player, resource, getattr(player, resource) + quantity)
-    print(f"{player.username} received a shipment of {quantity} kg {resource}")
+        notify(
+            "Shipments",
+            f"A shipment of {format_mass(quantity)} {resource} arrived.",
+            [player],
+        )
+        engine.log(
+            f"{player.username} received a shipment of {format_mass(quantity)} {resource}."
+        )
 
 
 # format for price display
@@ -81,6 +208,15 @@ def display_money(price):
     return f"{price:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(
         ",", "'"
     )
+
+
+def format_mass(mass):
+    """Formats mass in kg into a string with corresponding unit."""
+    if mass < 50000:
+        formatted_mass = f"{int(mass):,d}".replace(",", "'") + " kg"
+    else:
+        formatted_mass = f"{mass / 1000:,.0f}".replace(",", "'") + " t"
+    return formatted_mass
 
 
 # checks if a chat with exactly these participants already exists
@@ -108,19 +244,21 @@ def update_weather(engine):
             windspeed = json.loads(response.content)["features"][107][
                 "properties"
             ]["value"]
+            if windspeed > 2000:
+                windspeed = engine.data["current_windspeed"][t - 1]
             interpolation = np.linspace(
                 engine.data["current_windspeed"][t - 1], windspeed, 11
             )
             engine.data["current_windspeed"][t : t + 10] = interpolation[1:]
         else:
-            print(
+            engine.log(
                 "Failed to fetch the file. Status code:", response.status_code
             )
             engine.data["current_windspeed"][t : t + 10] = [
                 engine.data["current_windspeed"][t - 1]
             ] * 10
     except Exception as e:
-        print("An error occurred:", e)
+        engine.log("An error occurred:", e)
         engine.data["current_windspeed"][t : t + 10] = [
             engine.data["current_windspeed"][t - 1]
         ] * 10
@@ -131,19 +269,21 @@ def update_weather(engine):
             irradiation = json.loads(response.content)["features"][65][
                 "properties"
             ]["value"]
+            if irradiation > 2000:
+                irradiation = engine.data["current_irradiation"][t - 1]
             interpolation = np.linspace(
                 engine.data["current_irradiation"][t - 1], irradiation, 11
             )
             engine.data["current_irradiation"][t : t + 10] = interpolation[1:]
         else:
-            print(
+            engine.log(
                 "Failed to fetch the file. Status code:", response.status_code
             )
             engine.data["current_irradiation"][t : t + 10] = [
                 engine.data["current_irradiation"][t - 1]
             ] * 10
     except Exception as e:
-        print("An error occurred:", e)
+        engine.log("An error occurred:", e)
         engine.data["current_irradiation"][t : t + 10] = [
             engine.data["current_irradiation"][t - 1]
         ] * 10
@@ -155,57 +295,39 @@ def update_weather(engine):
     d = engine.river_discharge
     power_factor = d[month] + (d[(month + 1) % 12] - d[month]) * f
     engine.data["current_discharge"][t : t + 10] = [power_factor] * 10
-    print(
+    engine.log(
         f"the current irradiation in Zürich is {engine.data['current_irradiation'][t+9]} W/m2 with a windspeed of {engine.data['current_windspeed'][t+9]} km/h"
     )
 
 
-# saves the past production data to files every 24h AND remove network data older than 24h
-def save_past_data_threaded(app, engine, new_data, network_data):
+def save_past_data_threaded(app, engine):
+    """Saves the past production data to files every hour AND remove network data older than 24h"""
+
     def save_data():
         with app.app_context():
             players = Player.query.all()
             for player in players:
                 past_data = {}
-                for timescale in ["5_days", "month", "6_months"]:
-                    with open(
-                        f"instance/player_data/{player.id}/{timescale}.pck",
-                        "rb",
-                    ) as file:
-                        past_data[timescale] = pickle.load(file)
+                with open(
+                    f"instance/player_data/player_{player.id}.pck",
+                    "rb",
+                ) as file:
+                    past_data = pickle.load(file)
+                new_data = engine.data["current_data"][player.id].get_data()
+                for category in new_data:
+                    for element in new_data[category]:
+                        new_el_data = new_data[category][element]
+                        if element not in past_data[category]:
+                            # if facility didn't exist in past data, initialize it
+                            past_data[category][element] = [[0.0] * 1440] * 4
+                        past_el_data = past_data[category][element]
+                        reduce_resolution(past_el_data, np.array(new_el_data))
 
-                past_data["day"] = new_data[player.id]
-                for category in past_data["5_days"]:
-                    for element in past_data["5_days"][category]:
-                        new_array = np.array(
-                            new_data[player.id][category][element]
-                        )
-                        new_5_days = np.mean(new_array.reshape(-1, 5), axis=1)
-                        past_data["5_days"][category][element] = past_data[
-                            "5_days"
-                        ][category][element][288:]
-                        past_data["5_days"][category][element].extend(
-                            new_5_days
-                        )
-                        new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
-                        past_data["month"][category][element] = past_data[
-                            "month"
-                        ][category][element][48:]
-                        past_data["month"][category][element].extend(new_month)
-                        new_6_months = np.mean(new_month.reshape(-1, 6), axis=1)
-                        past_data["6_months"][category][element] = past_data[
-                            "6_months"
-                        ][category][element][8:]
-                        past_data["6_months"][category][element].extend(
-                            new_6_months
-                        )
-
-                for timescale in past_data:
-                    with open(
-                        f"instance/player_data/{player.id}/{timescale}.pck",
-                        "wb",
-                    ) as file:
-                        pickle.dump(past_data[timescale], file)
+                with open(
+                    f"instance/player_data/player_{player.id}.pck",
+                    "wb",
+                ) as file:
+                    pickle.dump(past_data, file)
 
             # remove old network files AND save past prices
             networks = Network.query.all()
@@ -220,40 +342,39 @@ def save_past_data_threaded(app, engine, new_data, network_data):
                         os.remove(os.path.join(network_dir, filename))
 
                 past_data = {}
-                for timescale in ["5_days", "month", "6_months"]:
-                    with open(
-                        f"instance/network_data/{network.id}/prices/{timescale}.pck",
-                        "rb",
-                    ) as file:
-                        past_data[timescale] = pickle.load(file)
+                with open(
+                    f"instance/network_data/{network.id}/time_series.pck",
+                    "rb",
+                ) as file:
+                    past_data = pickle.load(file)
 
-                past_data["day"] = network_data[network.name]
-                for element in past_data["5_days"]:
-                    new_array = np.array(network_data[network.name][element])
-                    new_5_days = np.mean(new_array.reshape(-1, 5), axis=1)
-                    past_data["5_days"][element] = past_data["5_days"][element][
-                        288:
-                    ]
-                    past_data["5_days"][element].extend(new_5_days)
-                    new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
-                    past_data["month"][element] = past_data["month"][element][
-                        48:
-                    ]
-                    past_data["month"][element].extend(new_month)
-                    new_6_months = np.mean(new_month.reshape(-1, 6), axis=1)
-                    past_data["6_months"][element] = past_data["6_months"][
-                        element
-                    ][8:]
-                    past_data["6_months"][element].extend(new_6_months)
+                network_data = engine.data["network_data"][network.id]
+                for element in network_data:
+                    new_el_data = network_data[element]
+                    past_el_data = past_data[element]
+                    reduce_resolution(past_el_data, np.array(new_el_data))
 
-                for timescale in past_data:
-                    with open(
-                        f"instance/network_data/{network.id}/prices/{timescale}.pck",
-                        "wb",
-                    ) as file:
-                        pickle.dump(past_data[timescale], file)
+                with open(
+                    f"instance/network_data/{network.id}/time_series.pck",
+                    "wb",
+                ) as file:
+                    pickle.dump(past_data, file)
 
-            print("past 24h data has been saved to files")
+            engine.log("past hour data has been saved to files")
+
+    def reduce_resolution(array, new_day):
+        """reduces resolution of new day data to 5min, 30min, and 3h"""
+        array[0] = array[0][len(new_day) :]
+        array[0].extend(new_day)
+        new_5_days = np.mean(new_day.reshape(-1, 5), axis=1)
+        array[1] = array[1][len(new_5_days) :]
+        array[1].extend(new_5_days)
+        new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
+        array[2] = array[2][len(new_month) :]
+        array[2].extend(new_month)
+        if engine.data["current_t"] % 180 == 0:
+            array[3] = array[3][1:]
+            array[3].append(np.mean(array[2][-6:]))
 
     thread = threading.Thread(target=save_data)
     thread.start()
@@ -280,7 +401,11 @@ def put_resource_on_market(player, resource, quantity, price):
             getattr(player, resource + "_on_sale") + quantity,
         )
         new_sale = Resource_on_sale(
-            resource=resource, quantity=quantity, price=price, player=player
+            resource=resource,
+            quantity=quantity,
+            price=price,
+            creation_date=datetime.now(),
+            player=player,
         )
         db.session.add(new_sale)
         db.session.commit()
@@ -292,7 +417,9 @@ def put_resource_on_market(player, resource, quantity, price):
 
 def buy_resource_from_market(player, quantity, sale_id):
     """Buy an offer from the resource market"""
+    engine = current_app.config["engine"]
     sale = Resource_on_sale.query.filter_by(id=sale_id).first()
+    total_price = sale.price * quantity
     if player == sale.player:
         # Player is buying their own resource
         if quantity == sale.quantity:
@@ -306,21 +433,16 @@ def buy_resource_from_market(player, quantity, sale_id):
         )
         db.session.commit()
         flash(
-            f"You removed {quantity/1000}t of {sale.resource} from the market",
+            f"You removed {format_mass(quantity)} of {sale.resource} from the market",
             category="message",
         )
-    elif sale.price * quantity > player.money:
+    elif total_price > player.money:
         flash_error("You have not enough money")
     else:
-        # Player can purchased from different player
-        if quantity == sale.quantity:
-            # Player is purchasing all available quantity
-            Resource_on_sale.query.filter_by(id=sale_id).delete()
-        else:
-            # Some resources remain after transaction
-            sale.quantity -= quantity
-        player.money -= sale.price * quantity
-        sale.player.money += sale.price * quantity
+        # Player buys form another player
+        sale.quantity -= quantity
+        player.money -= total_price
+        sale.player.money += total_price
         player.update_resources()
         sale.player.update_resources()
         setattr(
@@ -336,9 +458,7 @@ def buy_resource_from_market(player, quantity, sale_id):
         dq = player.tile.q - sale.player.tile.q
         dr = player.tile.r - sale.player.tile.r
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
-        shipment_duration = (
-            distance * current_app.config["engine"].config["transport"]["time"]
-        )
+        shipment_duration = distance * engine.config["transport"]["time"]
         new_shipment = Shipment(
             resource=sale.resource,
             quantity=quantity,
@@ -347,6 +467,21 @@ def buy_resource_from_market(player, quantity, sale_id):
             player_id=player.id,
         )
         db.session.add(new_shipment)
+        notify(
+            "Resource transaction",
+            f"{player} bougth {format_mass(quantity)} of {sale.resource} for a total cost of {display_money(total_price)}.",
+            [sale.player],
+        )
+        flash(
+            f"You bougth {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}.",
+            category="message",
+        )
+        engine.log(
+            f"{player} bougth {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}."
+        )
+        if sale.quantity == 0:
+            # Player is purchasing all available quantity
+            Resource_on_sale.query.filter_by(id=sale_id).delete()
         db.session.commit()
 
 
@@ -365,7 +500,7 @@ def confirm_location(engine, player, location):
     location.player_id = player.id
     db.session.commit()
     rest_notify_player_location(engine, player)
-    print(f"{player.username} chose the location {location.id}")
+    engine.log(f"{player.username} chose the location {location.id}")
     return {"response": "success"}
 
 
@@ -394,7 +529,7 @@ def set_network_prices(engine, player, prices, SCPs):
     demand_list = sort_priority(demand_list, prefix="price_buy_")
     demand_list.reverse()
 
-    print(f"{player.username} updated their prices")
+    engine.log(f"{player.username} updated their prices")
 
     space = " "
     player.self_consumption_priority = space.join(SCP_list)
@@ -405,7 +540,8 @@ def set_network_prices(engine, player, prices, SCPs):
 
 def start_project(player, facility, family):
     """this function is executed when a player clicks on 'start construction'"""
-    assets = current_app.config["engine"].config[player.id]["assets"]
+    engine = current_app.config["engine"]
+    assets = engine.config[player.id]["assets"]
 
     if assets[facility]["locked"]:
         return {"response": "locked"}
@@ -423,11 +559,11 @@ def start_project(player, facility, family):
         ).count()
         real_price = (
             assets[facility]["price"]
-            * assets[facility]["price multiplier"] ** ud_count
+            * engine.const_config[facility]["price multiplier"] ** ud_count
         )
         duration = (
             assets[facility]["construction time"]
-            * assets[facility]["price multiplier"] ** ud_count
+            * engine.const_config[facility]["price multiplier"] ** ud_count
         )
     else:  # power facitlies, storage facilities, extractions facilities
         real_price = assets[facility]["price"]
@@ -458,7 +594,7 @@ def start_project(player, facility, family):
     )
     db.session.add(new_construction)
     db.session.commit()
-    print(f"{player.username} started the construction {facility}")
+    engine.log(f"{player.username} started the construction {facility}")
     player.add_project_priority(priority_list_name, new_construction.id)
     if suspension_time is None:
         player.project_max_priority(priority_list_name, new_construction.id)
@@ -471,6 +607,7 @@ def start_project(player, facility, family):
 
 def cancel_project(player, construction_id):
     """this function is executed when a player cancels an ongoing construction"""
+    engine = current_app.config["engine"]
     construction = Under_construction.query.get(int(construction_id))
 
     priority_list_name = "construction_priorities"
@@ -490,7 +627,9 @@ def cancel_project(player, construction_id):
     player.money += refund
     db.session.delete(construction)
     db.session.commit()
-    print(f"{player.username} cancelled the construction {construction.name}")
+    engine.log(
+        f"{player.username} cancelled the construction {construction.name}"
+    )
     player.remove_project_priority(priority_list_name, construction_id)
     return {
         "response": "success",
@@ -544,13 +683,27 @@ def increase_project_priority(player, construction_id):
     construction = Under_construction.query.get(int(construction_id))
 
     if construction.family == "Technologies":
-        player.increase_project_priority(
-            "research_priorities", int(construction_id)
-        )
+        attr = "research_priorities"
     else:
-        player.increase_project_priority(
-            "construction_priorities", int(construction_id)
+        attr = "construction_priorities"
+
+    id_list = player.read_project_priority(attr)
+    index = id_list.index(construction_id)
+    if index > 0 and index < len(id_list):
+        construction_1 = Under_construction.query.get(id_list[index - 1])
+        construction_2 = Under_construction.query.get(id_list[index])
+        if (
+            construction_1.suspension_time is None
+            and construction_2.suspension_time is not None
+        ):
+            pause_project(player, id_list[index - 1])
+            pause_project(player, id_list[index])
+        id_list[index], id_list[index - 1] = (
+            id_list[index - 1],
+            id_list[index],
         )
+        setattr(player, attr, ",".join(map(str, id_list)))
+        db.session.commit()
 
     return {
         "response": "success",

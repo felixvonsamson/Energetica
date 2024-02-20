@@ -2,16 +2,28 @@
 This file contains the functions for authentification and sign-up of users
 """
 
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    flash,
+    redirect,
+    url_for,
+    g,
+)
 from flask import current_app
-from .database import Player
+from .database import Player, CircularBufferPlayer
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
 import pickle
-from pathlib import Path
 
 auth = Blueprint("auth", __name__)
+
+
+@auth.before_request
+def check_user():
+    g.engine = current_app.config["engine"]
 
 
 # logic for the login :
@@ -26,7 +38,7 @@ def login():
             if check_password_hash(player.pwhash, password):
                 flash("Logged in successfully!", category="message")
                 login_user(player, remember=True)
-                print(f"{username} logged in")
+                g.engine.log(f"{username} logged in")
                 return redirect(url_for("views.home"))
             else:
                 flash("Incorrect password, try again.", category="error")
@@ -40,7 +52,7 @@ def login():
 @auth.route("/logout")
 @login_required
 def logout():
-    print(f"{current_user.username} logged out")
+    g.engine.log(f"{current_user.username} logged out")
     logout_user()
     return redirect(url_for("auth.login"))
 
@@ -65,7 +77,7 @@ def sign_up():
         else:
             new_player = Player(
                 username=username,
-                pwhash=generate_password_hash(password1, method="scrypt")
+                pwhash=generate_password_hash(password1, method="scrypt"),
             )
             db.session.add(new_player)
             db.session.commit()
@@ -74,7 +86,7 @@ def sign_up():
             db.session.commit()
             login_user(new_player, remember=True)
             flash("Account created!", category="message")
-            print(f"{username} created an account")
+            g.engine.log(f"{username} created an account")
             return redirect(url_for("views.home"))
 
     return render_template("sign_up.jinja", user=current_user)
@@ -82,104 +94,45 @@ def sign_up():
 
 # initialize data table for new user and stores it as a .pck in the 'player_data' repo
 def init_table(player):
-    if player.id is None:
-        raise ValueError("init_table: player.id is None")
-    past_data = data_init(1440)
-    Path(f"instance/player_data/{player.id}").mkdir(parents=True, exist_ok=True)
-    for timescale in ["day", "5_days", "month", "6_months"]:
-        with open(
-            f"instance/player_data/{player.id}/{timescale}.pck", "wb"
-        ) as file:
-            pickle.dump(past_data, file)
+    past_data = data_init()
+    with open(f"instance/player_data/player_{player.id}.pck", "wb") as file:
+        pickle.dump(past_data, file)
 
 
 def add_player_to_data(user_id):
-    engine = current_app.config["engine"]
-    engine.data["current_data"][user_id] = data_init(1441)
+    g.engine.data["current_data"][user_id] = CircularBufferPlayer()
 
 
-def data_init(length):
+def data_init():
+    def init_array():
+        return [[0.0] * 1440] * 4
+
     return {
         "revenues": {
-            "industry": [0] * length,
-            "O&M_costs": [0] * length,
-            "exports": [0] * length,
-            "imports": [0] * length,
-            "dumping": [0] * length,
+            "industry": init_array(),
+            "exports": init_array(),
+            "imports": init_array(),
+            "dumping": init_array(),
+        },
+        "op_costs": {
+            "steam_engine": init_array(),
         },
         "generation": {
-            "steam_engine": [0] * length,
-            "windmill": [0] * length,
-            "watermill": [0] * length,
-            "coal_burner": [0] * length,
-            "oil_burner": [0] * length,
-            "gas_burner": [0] * length,
-            "small_water_dam": [0] * length,
-            "onshore_wind_turbine": [0] * length,
-            "combined_cycle": [0] * length,
-            "nuclear_reactor": [0] * length,
-            "large_water_dam": [0] * length,
-            "CSP_solar": [0] * length,
-            "PV_solar": [0] * length,
-            "offshore_wind_turbine": [0] * length,
-            "nuclear_reactor_gen4": [0] * length,
-            "small_pumped_hydro": [0] * length,
-            "compressed_air": [0] * length,
-            "molten_salt": [0] * length,
-            "large_pumped_hydro": [0] * length,
-            "hydrogen_storage": [0] * length,
-            "lithium_ion_batteries": [0] * length,
-            "solid_state_batteries": [0] * length,
-            "imports": [0] * length,
+            "steam_engine": init_array(),
+            "imports": init_array(),
         },
         "demand": {
-            "industry": [0] * length,
-            "construction": [0] * length,
-            "research": [0] * length,
-            "transport": [0] * length,
-            "carbon_capture": [0] * length,
-            "coal_mine": [0] * length,
-            "oil_field": [0] * length,
-            "gas_drilling_site": [0] * length,
-            "uranium_mine": [0] * length,
-            "small_pumped_hydro": [0] * length,
-            "compressed_air": [0] * length,
-            "molten_salt": [0] * length,
-            "large_pumped_hydro": [0] * length,
-            "hydrogen_storage": [0] * length,
-            "lithium_ion_batteries": [0] * length,
-            "solid_state_batteries": [0] * length,
-            "exports": [0] * length,
-            "dumping": [0] * length,
+            "industry": init_array(),
+            "construction": init_array(),
+            "research": init_array(),
+            "transport": init_array(),
+            "exports": init_array(),
+            "dumping": init_array(),
         },
-        "storage": {
-            "small_pumped_hydro": [0] * length,
-            "large_pumped_hydro": [0] * length,
-            "compressed_air": [0] * length,
-            "molten_salt": [0] * length,
-            "hydrogen_storage": [0] * length,
-            "lithium_ion_batteries": [0] * length,
-            "solid_state_batteries": [0] * length,
-        },
-        "resources": {
-            "coal": [0] * length,
-            "oil": [0] * length,
-            "gas": [0] * length,
-            "uranium": [0] * length,
-        },
+        "storage": {},
+        "resources": {},
         "emissions": {
-            "steam_engine": [0] * length,
-            "coal_burner": [0] * length,
-            "oil_burner": [0] * length,
-            "gas_burner": [0] * length,
-            "combined_cycle": [0] * length,
-            "nuclear_reactor": [0] * length,
-            "nuclear_reactor_gen4": [0] * length,
-            "construction": [0] * length,
-            "coal_mine": [0] * length,
-            "oil_field": [0] * length,
-            "gas_drilling_site": [0] * length,
-            "uranium_mine": [0] * length,
-            "carbon_capture": [0] * length,
+            "steam_engine": init_array(),
+            "construction": init_array(),
         },
     }

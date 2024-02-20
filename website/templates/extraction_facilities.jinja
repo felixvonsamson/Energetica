@@ -29,20 +29,21 @@
   </div>
   {% for extraction_facility in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"] %}
     {% set facility_data = assets[extraction_facility] %}
+    {% set const_data = engine.const_config[extraction_facility] %}
     {% set resource = {"coal_mine": "coal", "oil_field": "oil", "gas_drilling_site": "gas", "uranium_mine": "uranium"}[extraction_facility] %}
-    <div id="{{ facility_data.name }}"
+    <div id="{{ const_data.name }}"
          class="bone margin facility small construction_tile"
-         onclick="show_construction('{{ facility_data.name }}', '{{ facility_data.locked }}');">
+         onclick="show_construction('{{ const_data.name }}', '{{ facility_data.locked }}');">
       <img class="img"
            src="{{ url_for('static', filename='images/extraction_facilities/'+extraction_facility+'.jpg') }}"
            width="250"
            height="167"
-           alt="{{ facility_data.name }}">
+           alt="{{ const_data.name }}">
       <div class="infotext padding">
-        <strong class="large">{{ facility_data.name }}</strong>
+        <strong class="large">{{ const_data.name }}</strong>
         &ensp;
         <a class="white wikipedia_icon_container no_deco"
-           href="{{ facility_data.wikipedia_link }}"
+           href="{{ const_data.wikipedia_link }}"
            target="_blank">
           <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
         </a>
@@ -51,7 +52,7 @@
           <script>display_money_long({{ facility_data.price }});</script>
         </span>
         <br>
-        {{ facility_data.description }}
+        {{ const_data.description }}
         <br>
         <br>
         <em class="txt-blue"><i class="fa fa-info-circle"></i> Underground reserves of {{ resource }} : <strong>
@@ -67,7 +68,7 @@
               {% for req in facility_data.requirements %}
                 <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
                   -
-                  {{ assets[req[0]]["name"] }} lvl {{ req[1] }}
+                  {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}
                 </li>
               {% endfor %}
             </ul>
@@ -123,6 +124,5 @@
 {% endblock content %}
 {% block additionnal_script %}
   <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
-  <script>retrieve_constructions()</script>
   <script>refresh_progressBar()</script>
 {% endblock additionnal_script %}

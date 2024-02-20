@@ -5,6 +5,7 @@ These functions make the link between the website and the database
 from flask import Blueprint, request, flash, jsonify, g, current_app, redirect
 from flask_login import login_required, current_user
 import pickle
+import numpy as np
 from pathlib import Path
 from .utils import (
     put_resource_on_market,
@@ -27,6 +28,26 @@ api = Blueprint("api", __name__)
 @login_required
 def check_user():
     g.engine = current_app.config["engine"]
+
+
+@api.route("/request_delete_notification", methods=["POST"])
+def request_delete_notification():
+    """
+    this function is executed when a player deletes a notification
+    """
+    json = request.get_json()
+    notification_id = json["id"]
+    current_user.delete_notification(notification_id)
+    return jsonify({"response": "success"})
+
+
+@api.route("/request_marked_as_read", methods=["GET"])
+def request_marked_as_read():
+    """
+    this function is executed when a player read the notifications
+    """
+    current_user.notifications_read()
+    return jsonify({"response": "success"})
 
 
 # gets the map data from the database and returns it as a array of dictionaries :
@@ -88,92 +109,54 @@ def get_chat():
 # Gets the data for the overview charts
 @api.route("/get_chart_data", methods=["GET"])
 def get_chart_data():
-    assets = g.engine.config[current_user.id]["assets"]
-    timescale = request.args.get("timescale")
-    # values for `timescale` are in ["day", "5_days", "month", "6_months"]
-    table = request.args.get("table")
-    # values for `table` are in ["demand", "emissions", "generation", "resources", "revenues", "storage"]
-    filename = f"instance/player_data/{current_user.id}/{timescale}.pck"
+    def calculate_mean_subarrays(array, x):
+        return [np.mean(array[i : i + x]) for i in range(0, len(array), x)]
+
+    def concat_slices(dict1, dict2):
+        for key, value in dict2.items():
+            for sub_key, array2 in value.items():
+                if sub_key not in dict1[key]:
+                    dict1[key][sub_key] = [[0.0] * 1440] * 4
+                array = dict1[key][sub_key]
+                concatenated_array = list(array[0]) + array2
+                dict1[key][sub_key][0] = concatenated_array[-1440:]
+                new_5days = calculate_mean_subarrays(array2, 5)
+                dict1[key][sub_key][1] = dict1[key][sub_key][1][
+                    len(new_5days) :
+                ]
+                dict1[key][sub_key][1].extend(new_5days)
+                new_month = calculate_mean_subarrays(new_5days, 6)
+                l2v = dict1[key][sub_key][2][-2:]
+                dict1[key][sub_key][2] = dict1[key][sub_key][2][
+                    len(new_month) :
+                ]
+                dict1[key][sub_key][2].extend(new_month)
+                new_6month = calculate_mean_subarrays(new_month, 6)
+                if total_t % 180 >= 120:
+                    new_6month[0] = new_6month[0] / 3 + l2v[0] / 3 + l2v[1] / 3
+                elif total_t % 180 >= 60:
+                    new_6month[0] = new_6month[0] / 2 + l2v[1] / 2
+                dict1[key][sub_key][3] = dict1[key][sub_key][3][
+                    len(new_6month) :
+                ]
+                dict1[key][sub_key][2].extend(new_6month)
+
+    total_t = g.engine.data["total_t"]
+    current_data = g.engine.data["current_data"][current_user.id].get_data(
+        t=total_t % 60 + 1
+    )
+    filename = f"instance/player_data/player_{current_user.id}.pck"
     with open(filename, "rb") as file:
         data = pickle.load(file)
-    if table == "generation" or table == "storage" or table == "resources":
-        capacities = {}
-        if table == "generation":
-            for facility in [
-                "watermill",
-                "small_water_dam",
-                "large_water_dam",
-                "nuclear_reactor",
-                "nuclear_reactor_gen4",
-                "steam_engine",
-                "coal_burner",
-                "oil_burner",
-                "gas_burner",
-                "combined_cycle",
-                "windmill",
-                "onshore_wind_turbine",
-                "offshore_wind_turbine",
-                "CSP_solar",
-                "PV_solar",
-            ]:
-                capacities[facility] = (
-                    getattr(current_user, facility)
-                    * assets[facility]["power generation"]
-                )
-        elif table == "storage":
-            for facility in [
-                "small_pumped_hydro",
-                "large_pumped_hydro",
-                "lithium_ion_batteries",
-                "solid_state_batteries",
-                "compressed_air",
-                "molten_salt",
-                "hydrogen_storage",
-            ]:
-                capacities[facility] = (
-                    getattr(current_user, facility)
-                    * assets[facility]["storage capacity"]
-                )
-        else:
-            rates = {}
-            on_sale = {}
-            resource_to_facility = {
-                "coal": "coal_mine",
-                "oil": "oil_field",
-                "gas": "gas_drilling_site",
-                "uranium": "uranium_mine",
-            }
-            for resource in ["coal", "oil", "gas", "uranium"]:
-                capacities[resource] = g.engine.config[current_user.id][
-                    "warehouse_capacities"
-                ][resource]
-                facility = resource_to_facility[resource]
-                rates[resource] = (
-                    getattr(current_user, facility)
-                    * assets[facility]["amount produced"]
-                    * 60
-                )
-                on_sale[resource] = getattr(current_user, resource + "_on_sale")
-            return jsonify(
-                g.engine.data["current_t"],
-                data[table],
-                g.engine.data["current_data"][current_user.id][table],
-                capacities,
-                rates,
-                on_sale,
-            )
-        return jsonify(
-            g.engine.data["current_t"],
-            data[table],
-            g.engine.data["current_data"][current_user.id][table],
-            capacities,
-        )
-    else:
-        return jsonify(
-            g.engine.data["current_t"],
-            data[table],
-            g.engine.data["current_data"][current_user.id][table],
-        )
+    concat_slices(data, current_data)
+    for category in data:
+        for subcategory in data[category]:
+            for i in range(4):
+                for j in range(len(data[category][subcategory][i])):
+                    if isinstance(data[category][subcategory][i][j], int):
+                        print(category, subcategory, i, j)
+                        print(data[category][subcategory][i])
+    return jsonify({"total_t": total_t, "data": data})
 
 
 # Gets the data from the market for the market graph
@@ -203,7 +186,7 @@ def get_market_data():
         g.engine.data["current_t"],
         market_data,
         prices,
-        g.engine.data["network_data"][current_user.network.name],
+        g.engine.data["network_data"][current_user.network.id],
     )
 
 
@@ -367,7 +350,7 @@ def join_network():
     current_user.network = network
     db.session.commit()
     flash(f"You joined the network {network_name}", category="message")
-    print(
+    g.engine.log(
         f"{current_user.username} joined the network {current_user.network.name}"
     )
     return redirect("/network", code=303)
@@ -402,7 +385,7 @@ def create_network():
             "wb",
         ) as file:
             pickle.dump(past_data, file)
-    print(f"{current_user.username} created the network {network_name}")
+    g.engine.log(f"{current_user.username} created the network {network_name}")
     return redirect("/network", code=303)
 
 
@@ -410,7 +393,7 @@ def create_network():
 def leave_network():
     """this function is executed when a player leaves his network"""
     flash(f"You left network {current_user.network.name}", category="message")
-    print(
+    g.engine.log(
         f"{current_user.username} left the network {current_user.network.name}"
     )
     network = current_user.network
@@ -420,7 +403,7 @@ def leave_network():
     ).count()
     # delete network if it is empty
     if remaining_members_count == 0:
-        print(
+        g.engine.log(
             f"The network {network.name} has been deleted because it was empty"
         )
         db.session.delete(network)

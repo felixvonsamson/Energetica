@@ -7,15 +7,22 @@ from flask_login import current_user
 from .database import Player, Chat, Message
 from .utils import check_existing_chats
 from . import db
+from datetime import datetime
 
 
 def add_handlers(socketio, engine):
-    # ???
-    @socketio.on("give_identity")
-    def give_identity():
-        player = current_user
-        player.sid = request.sid
+    @socketio.on("connect")
+    def handle_connect():
         db.session.commit()
+        # Store client's sid when connected
+        if current_user.id not in engine.clients:
+            engine.clients[current_user.id] = []
+        engine.clients[current_user.id].append(request.sid)
+
+    @socketio.on("disconnect")
+    def handle_disconnect():
+        # Remove client's sid when disconnected
+        engine.clients[current_user.id].remove(request.sid)
 
     # this function is executed when a player creates a new group chat
     @socketio.on("create_group_chat")
@@ -32,7 +39,7 @@ def add_handlers(socketio, engine):
         db.session.add(new_chat)
         db.session.commit()
         engine.refresh()
-        print(
+        engine.log(
             f"{current_user.username} created a group chat called {title} with {group}"
         )
 
@@ -41,12 +48,15 @@ def add_handlers(socketio, engine):
     def new_message(message, chat_id):
         chat = Chat.query.filter_by(id=chat_id).first()
         new_message = Message(
-            text=message, player_id=current_user.id, chat_id=chat.id
+            text=message,
+            time=datetime.now(),
+            player_id=current_user.id,
+            chat_id=chat.id,
         )
         db.session.add(new_message)
         db.session.commit()
         msg = f"<div>{current_user.username} : {message}</div>"
         engine.display_new_message(msg, chat.participants)
-        print(
+        engine.log(
             f"{current_user.username} sent the message {message} in the chat {chat.name}"
         )

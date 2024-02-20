@@ -8,15 +8,16 @@ import logging
 import copy
 import time
 from . import db
-from .database import Player, Network, Under_construction, Shipment
+from .database import Network, Under_construction, Shipment, Active_facilites
 
-from .config import config, wind_power_curve, river_discharge
+from .config import config, wind_power_curve, river_discharge, const_config
 
 from .utils import (
     update_weather,
     save_past_data_threaded,
     add_asset,
     store_import,
+    remove_asset,
 )
 
 
@@ -24,11 +25,20 @@ from .utils import (
 class gameEngine(object):
     def __init__(engine):
         engine.config = config
+        engine.const_config = const_config["assets"]
         engine.socketio = None
+        engine.clients = {}
         engine.websocket_dict = {}
         engine.logger = logging.getLogger("Energetica")  # Not sure what that is
         engine.init_logger()
         engine.log("engine created")
+
+        engine.extraction_facilities = [
+            "coal_mine",
+            "oil_field",
+            "gas_drilling_site",
+            "uranium_mine",
+        ]
 
         engine.storage_facilities = [
             "small_pumped_hydro",
@@ -61,6 +71,28 @@ class gameEngine(object):
             "PV_solar",
         ]
 
+        engine.functional_facilities = [
+            "laboratory",
+            "warehouse",
+            "industry",
+            "carbon_capture",
+        ]
+
+        engine.technologies = [
+            "mathematics",
+            "mechanical_engineering",
+            "thermodynamics",
+            "physics",
+            "building_technology",
+            "mineral_extraction",
+            "transport_technology",
+            "materials",
+            "civil_engineering",
+            "aerodynamics",
+            "chemistry",
+            "nuclear_engineering",
+        ]
+
         engine.wind_power_curve = wind_power_curve
         engine.river_discharge = river_discharge
 
@@ -76,14 +108,31 @@ class gameEngine(object):
             0
         ] * 1441  # daily river discharge rate factor
         engine.data["current_CO2"] = [0] * 1441
-        engine.data["total_t"] = 0
         now = datetime.datetime.today().time()
+        engine.data["total_t"] = 0
         engine.data["current_t"] = (
             now.hour * 60 + now.minute + 1
         )  # +1 bc fist value of current day has to be last value of last day
         engine.data[
             "start_date"
         ] = datetime.datetime.today()  # 0 point of server time
+
+        # stored the levels of technology of the server
+        # for each tech an array stores [# players with lvl 1, # players with lvl 2, ...]
+        engine.data["technologie_lvls"] = {
+            "mathematics": [0],
+            "mechanical_engineering": [0],
+            "thermodynamics": [0],
+            "physics": [0],
+            "building_technology": [0],
+            "mineral_extraction": [0],
+            "transport_technology": [0],
+            "materials": [0],
+            "civil_engineering": [0],
+            "aerodynamics": [0],
+            "chemistry": [0],
+            "nuclear_engineering": [0],
+        }
 
         with open("website/static/data/industry_demand.pck", "rb") as file:
             engine.industry_demand = pickle.load(
@@ -106,22 +155,10 @@ class gameEngine(object):
     def refresh(engine):
         engine.socketio.emit("refresh")
 
-    # change specific field of the page withour reloading
-    def update_fields(engine, updates, players=None):
-        if players:
-            for player in players:
-                if player.sid:
-                    player.emit("update_data", updates)
-        else:
-            engine.socketio.emit("update_data", updates, broadcast=True)
-
     def display_new_message(engine, msg, players=None):
         if players:
             for player in players:
-                if player.sid:
-                    engine.socketio.emit(
-                        "display_new_message", msg, room=player.sid
-                    )
+                player.emit("display_new_message", msg)
 
     # logs a message with the current time in the terminal and stores it in 'logs'
     def log(engine, message):
@@ -129,48 +166,31 @@ class gameEngine(object):
         engine.logger.info(log_message)
 
 
-# function that is executed once every 24 hours :
-def daily_update(engine, app):
-    engine.data["current_t"] = 1
-    # reset current data and network data
+def clear_current_data(engine, app):
+    """reset current data and network data"""
     with app.app_context():
         engine.data["current_windspeed"] = [
             engine.data["current_windspeed"][-1]
-        ] + [0] * 1440
+        ] + [0.0] * 1440
         engine.data["current_irradiation"] = [
             engine.data["current_irradiation"][-1]
-        ] + [0] * 1440
+        ] + [0.0] * 1440
         engine.data["current_discharge"] = [
             engine.data["current_discharge"][-1]
-        ] + [0] * 1440
+        ] + [0.0] * 1440
         engine.data["current_CO2"] = [engine.data["current_CO2"][-1]] + [
             0
         ] * 1440
 
-        players = Player.query.all()
-        past_data = copy.deepcopy(engine.data["current_data"])
-        for player in players:
-            for category in engine.data["current_data"][player.id]:
-                for element in engine.data["current_data"][player.id][category]:
-                    past_data[player.id][category][element].pop(0)
-                    data_array = engine.data["current_data"][player.id][
-                        category
-                    ][element]
-                    last_value = data_array[-1]
-                    data_array.clear()
-                    data_array.extend([last_value] + [0] * 1440)
-
         networks = Network.query.all()
         network_data = copy.deepcopy(engine.data["network_data"])
         for network in networks:
-            for element in engine.data["network_data"][network.name]:
-                network_data[network.name][element].pop(0)
-                data_array = engine.data["network_data"][network.name][element]
+            for element in engine.data["network_data"][network.id]:
+                network_data[network.id][element].pop(0)
+                data_array = engine.data["network_data"][network.id][element]
                 last_value = data_array[-1]
                 data_array.clear()
                 data_array.extend([last_value] + [0] * 1440)
-
-    save_past_data_threaded(app, engine, past_data, network_data)
 
 
 from .production_update import update_electricity  # noqa: E402
@@ -185,8 +205,11 @@ def state_update_m(engine, app):
         engine.data["current_t"] += 1
         # print(f"t = {engine.data['current_t']}")
         engine.data["total_t"] += 1
+        if engine.data["total_t"] % 60 == 0:
+            save_past_data_threaded(app, engine)
         if engine.data["current_t"] > 1440:
-            daily_update(engine, app)
+            engine.data["current_t"] = 1
+            clear_current_data(engine, app)
         with app.app_context():
             if engine.data["current_t"] % 10 == 1:
                 engine.config.update_mining_productivity()
@@ -198,8 +221,8 @@ def state_update_m(engine, app):
             pickle.dump(engine.data, file)
 
 
-# function that is executed once every 1 second :
 def check_upcoming_actions(app):
+    """function that is executed once every 1 second"""
     with app.app_context():
         # check if constructions finished
         finished_constructions = Under_construction.query.filter(
@@ -224,4 +247,14 @@ def check_upcoming_actions(app):
             for a_s in arrived_shipments:
                 store_import(a_s.player, a_s.resource, a_s.quantity)
             arrived_shipments.delete()
+            db.session.commit()
+
+        # check end of lifetime of facilites
+        eolt_facilities = Active_facilites.query.filter(
+            Active_facilites.end_of_life < time.time()
+        )
+        if eolt_facilities:
+            for facility in eolt_facilities:
+                remove_asset(facility.player_id, facility.facility)
+            eolt_facilities.delete()
             db.session.commit()

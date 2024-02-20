@@ -5,7 +5,7 @@ Here are defined the classes for the items stored in the database
 from . import db
 from flask_login import UserMixin
 from flask import current_app
-from datetime import datetime
+from collections import defaultdict, deque
 
 # table that links chats to players
 player_chats = db.Table(
@@ -22,8 +22,9 @@ player_notifications = db.Table(
 )
 
 
-# class for the tiles that compose the map :
 class Hex(db.Model):
+    """class for the tiles that compose the map"""
+
     id = db.Column(db.Integer, primary_key=True)
     q = db.Column(db.Integer)
     r = db.Column(db.Integer)
@@ -42,26 +43,37 @@ class Hex(db.Model):
         return f"<Tile {self.id} wind {self.wind}>"
 
 
-# class that stores the things currently under construction :
 class Under_construction(db.Model):
+    """class that stores the things currently under construction"""
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
-    family = db.Column(db.String(50))  # to assign the thing to the correct page
+    family = db.Column(db.String(50))
+    # to assign the thing to the correct page
     start_time = db.Column(db.Float)
     duration = db.Column(db.Float)
-    suspension_time = db.Column(
-        db.Float
-    )  # time at witch the construction has been paused if it has
-    original_price = db.Column(
-        db.Float
-    )  # Price of the construction on the time of start of construction
-    player_id = db.Column(
-        db.Integer, db.ForeignKey("player.id")
-    )  # can access player directly with .player
+    suspension_time = db.Column(db.Float)
+    # time at witch the construction has been paused if it has
+    original_price = db.Column(db.Float)
+    # Price of the construction on the time of start of construction
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
+    # can access player directly with .player
 
 
-# class that stores the resources shippment on their way :
+class Active_facilites(db.Model):
+    """Class that stores the facilites on the server and teir end of life time."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    facility = db.Column(db.String(50))
+    end_of_life = db.Column(db.Float)
+    # time at witch the facility will be decomissioned
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
+    # can access player directly with .player
+
+
 class Shipment(db.Model):
+    """Class that stores the resources shippment on their way"""
+
     id = db.Column(db.Integer, primary_key=True)
     resource = db.Column(db.String(10))
     quantity = db.Column(db.Float)
@@ -76,33 +88,34 @@ class Shipment(db.Model):
 
 
 class Resource_on_sale(db.Model):
+    """Class that stores resources currently on sale"""
+
     id = db.Column(db.Integer, primary_key=True)
     resource = db.Column(db.String(10))
     quantity = db.Column(db.Float)
     price = db.Column(db.Float)
-    creation_date = db.Column(db.DateTime, default=datetime.now())
+    creation_date = db.Column(db.DateTime)
     player_id = db.Column(
         db.Integer, db.ForeignKey("player.id")
     )  # can access player directly with .player
 
 
-# class that stores the networks of players :
 class Network(db.Model):
+    """class that stores the networks of players"""
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True)
     members = db.relationship("Player", backref="network")
 
 
-# class that stores the users :
 class Player(db.Model, UserMixin):
+    """Class that stores the users"""
+
     id = db.Column(db.Integer, primary_key=True)
 
     # Authentification :
     username = db.Column(db.String(25), unique=True)
     pwhash = db.Column(db.String(25))
-
-    # Socket.io
-    sid = None
 
     # Position :
     tile = db.relationship("Hex", uselist=False, backref="player")
@@ -121,7 +134,7 @@ class Player(db.Model, UserMixin):
     )
 
     # resources :
-    money = db.Column(db.Float, default=5000)  # default is 5000
+    money = db.Column(db.Float, default=500000)  # default is 5000
     coal = db.Column(db.Float, default=0)
     oil = db.Column(db.Float, default=0)
     gas = db.Column(db.Float, default=0)
@@ -289,18 +302,6 @@ class Player(db.Model, UserMixin):
         setattr(self, attr, ",".join(id_list))
         db.session.commit()
 
-    def increase_project_priority(self, attr, id):
-        """the project with the coresponding id will move one spot up in the priority list"""
-        id_list = getattr(self, attr).split(",")
-        index = id_list.index(str(id))
-        if index > 0 and index < len(id_list):
-            id_list[index], id_list[index - 1] = (
-                id_list[index - 1],
-                id_list[index],
-            )
-        setattr(self, attr, ",".join(id_list))
-        db.session.commit()
-
     def project_max_priority(self, attr, id):
         """the project with the corresponding id will be moved to the top of the prioirty list"""
         self.remove_project_priority(attr, id)
@@ -332,6 +333,18 @@ class Player(db.Model, UserMixin):
                 db.session.delete(notification)
             db.session.commit()
 
+    def notifications_read(self):
+        for notification in self.unread_notifications():
+            notification.read = True
+        db.session.commit()
+
+    def unread_notifications(self):
+        return [
+            notification
+            for notification in self.notifications
+            if not notification.read
+        ]
+
     def get_technology_values(self):
         technology_attributes = [
             "laboratory",
@@ -353,23 +366,23 @@ class Player(db.Model, UserMixin):
         }
         return technology_values
 
-    def emit(player, *args):
-        if player.sid:
-            socketio = current_app.config["engine"].socketio
-            socketio.emit(*args, room=player.sid)
+    def emit(self, *args):
+        engine = current_app.config["engine"]
+        if self.id in engine.clients:
+            socketio = engine.socketio
+            for sid in engine.clients[self.id]:
+                socketio.emit(*args, room=sid)
 
-    def update_resources(player):
-        if player.sid:
-            updates = []
-            updates.append(
-                [
-                    "money",
-                    f"{player.money:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(
-                        ",", "'"
-                    ),
-                ]
-            )
-            player.emit("update_data", updates)
+    def send_new_data(self, new_values):
+        engine = current_app.config["engine"]
+        self.emit(
+            "new_values",
+            {
+                "total_t": engine.data["total_t"],
+                "chart_values": new_values,
+                "money": "{:,.0f}".format(self.money).replace(",", "'"),
+            },
+        )
 
     # prints out the object as a sting with the players username for debugging
     def __repr__(self):
@@ -387,7 +400,7 @@ class Chat(db.Model):
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text)
-    time = db.Column(db.DateTime, default=datetime.now())
+    time = db.Column(db.DateTime)
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
     chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"))
 
@@ -396,4 +409,74 @@ class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(50))
     content = db.Column(db.Text)
-    time = db.Column(db.DateTime, default=datetime.now())
+    time = db.Column(db.DateTime)
+    read = db.Column(db.Boolean, default=False)
+
+
+class CircularBufferPlayer:
+    """Class that stores the active data of a player"""
+
+    def __init__(self):
+        self._data = {
+            "revenues": {
+                "industry": deque([0.0] * 120, maxlen=120),
+                "O&M_costs": deque([0.0] * 120, maxlen=120),
+                "exports": deque([0.0] * 120, maxlen=120),
+                "imports": deque([0.0] * 120, maxlen=120),
+                "dumping": deque([0.0] * 120, maxlen=120),
+            },
+            "op_costs": {
+                "steam_engine": deque([0.0] * 120, maxlen=120),
+            },
+            "generation": {
+                "steam_engine": deque([0.0] * 120, maxlen=120),
+                "imports": deque([0.0] * 120, maxlen=120),
+            },
+            "demand": {
+                "industry": deque([0.0] * 120, maxlen=120),
+                "construction": deque([0.0] * 120, maxlen=120),
+                "research": deque([0.0] * 120, maxlen=120),
+                "transport": deque([0.0] * 120, maxlen=120),
+                "exports": deque([0.0] * 120, maxlen=120),
+                "dumping": deque([0.0] * 120, maxlen=120),
+            },
+            "storage": {},
+            "resources": {},
+            "emissions": {
+                "steam_engine": deque([0.0] * 120, maxlen=120),
+                "construction": deque([0.0] * 120, maxlen=120),
+            },
+        }
+
+    def append_value(self, new_value):
+        for category, subcategories in new_value.items():
+            for subcategory, value in subcategories.items():
+                self._data[category][subcategory].append(value)
+
+    def new_subcategory(self, category, subcategory):
+        if subcategory not in self._data[category]:
+            self._data[category][subcategory] = deque([0.0] * 120, maxlen=120)
+
+    def get_data(self, t=60):
+        result = defaultdict(lambda: defaultdict(dict))
+        for category, subcategories in self._data.items():
+            for subcategory, buffer in subcategories.items():
+                result[category][subcategory] = list(buffer)[-t:]
+        return result
+
+    def get_last_data(self, category, subcategory):
+        if category in self._data and subcategory in self._data[category]:
+            return self._data[category][subcategory][-1]
+        return 0
+
+    def init_new_data(self):
+        """returns a dict with the same structure as the data with 0 and with the last value for the storage and resources"""
+        result = {}
+        for category, subcategories in self._data.items():
+            result[category] = {}
+            for subcategory, buffer in subcategories.items():
+                if category in ["storage", "resources"]:
+                    result[category][subcategory] = buffer[-1]
+                else:
+                    result[category][subcategory] = 0.0
+        return result

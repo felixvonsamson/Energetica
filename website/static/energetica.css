@@ -127,7 +127,6 @@ canvas {
 }
 
 .coin {
-    width: 0.9em;
     height: 0.9em;
     position: relative;
     top: 0.07em;
@@ -183,6 +182,11 @@ canvas {
     cursor: pointer;
     color: #fff;
     background-color: #285430
+}
+
+.notification_button{
+    border-radius: 6px;
+    position: relative; 
 }
 
 .cross {
@@ -340,15 +344,18 @@ canvas {
     -ms-transform: translate(-50%, -50%)
 }
 
-.resources {
+.topRight_info {
     display: block;
     max-width: 230px;
     width: 15%;
     position: fixed;
     right: 0;
     top: 0;
-    text-align: center;
+}
+
+.resources {
     padding:8px 0;
+    text-align: center;
 }
 
 .resource_container {
@@ -421,10 +428,13 @@ canvas {
         overflow: scroll;
     }
 
-    .resources {
+    .topRight_info {
         max-width: 100%;
         width: 100%;
         position: static;
+    }
+
+    .resources {
         padding:0;
     }
 
@@ -615,6 +625,78 @@ canvas {
 .exclamation-circle {
     color: #f44336;
     margin-right: 6px;
+}
+
+.notification_container{
+    margin:20px 0;
+}
+
+.notification_title{
+    padding: 20px 16px 0 16px;
+    box-sizing: border-box; 
+    width:100%;
+}
+
+.notification_list{
+    overflow: scroll;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.notification_list-small{
+    height:700px;
+    overflow: scroll;
+}
+
+.notification_list::-webkit-scrollbar { 
+    display: none;  /* Safari and Chrome */
+}
+
+.notification_head{
+    width:100%;
+    justify-content: space-between;
+}
+
+#notification_popup{
+    width: 600px;
+    max-width: 80%;
+    height: 80%;
+}
+
+.notification{
+    color:#000;
+    background-color: #c1cf8b;
+    border: 3px solid #285430;
+    border-radius: 8px;
+    text-align: left;
+}
+
+.notification.margin-large{
+    margin-top: 32px;
+}
+
+.notification.read{
+    background-color: #a4be7b;
+}
+
+.notification_time{
+    color:#fff;
+    position:relative; 
+    bottom:32px; 
+    right:15px; 
+    margin-bottom:-25px;
+}
+
+.unread_badge {
+    min-width: 13px;
+    border-radius: 50%;
+    position: absolute;
+    top: -0.5em;
+    right: -0.9em;
+}
+
+.fa-circle{
+    color:#285430;
 }
 
 .table {
@@ -884,6 +966,46 @@ canvas {
     top: 25%;
 }
 
+.year-background {
+    width: 100%;
+    height: 8px;
+    background-color: white;
+    position: relative;
+}
+
+.current-date-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #285430;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.weather_info_container{
+    max-width: 250px;
+}
+
+.weather_level{
+    height:100%;
+    position: absolute;
+    left:0;
+    top:0;
+}
+
+.weather_level.solar{
+    background-color: #f2ee0c;
+}
+
+.weather_level.wind{
+    background-color: #0cdbf2;
+}
+
+.weather_level.water{
+    background-color: #0c10f2;
+}
+
 @media only screen and (max-width: 1500px) {
     .img {
         display: none;
@@ -894,7 +1016,7 @@ canvas {
     }
 }
 
-/* If the screen size is 1000px or less (smartphone) */
+/* If the screen size is 1200px or less (smartphone) */
 @media only screen and (max-width: 1200px) {
     .main_container {
         width: 100%;
@@ -903,5 +1025,29 @@ canvas {
 
     .title {
         padding-top: 16px;
+    }
+
+    .notification_list-small{
+        display: none;
+    }
+
+    .notification_button{
+        position: absolute;
+        right:100px;
+        transform: translate(0, 33%);
+        -ms-transform: translate(0, 33%)
+    }
+
+    .notification_txt{
+        display: none;
+    }
+
+    .notification_container{
+        margin:0;
+    }
+
+    .weather_info_container{
+        font-size: min(16px, 2vh);
+        padding: 4px 8px
     }
 }

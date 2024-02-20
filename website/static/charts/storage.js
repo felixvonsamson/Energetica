@@ -30,13 +30,15 @@ function draw() {
         let h_max = 0;
         let total_power = 0;
         for (const key of keys_storage) {
-            if (data[key][t] > 0) {
-                let h = (-data[key][t] / maxSum) * graph_h;
-                ellipse(0, h, 8, 8);
-                translate(0, h);
-                lines += 1;
-                h_max -= h;
-                total_power += data[key][t];
+            if (key in data){
+                if (data[key][t] > 0) {
+                    let h = (-data[key][t] / maxSum) * graph_h;
+                    ellipse(0, h, 8, 8);
+                    translate(0, h);
+                    lines += 1;
+                    h_max -= h;
+                    total_power += data[key][t];
+                }
             }
         }
         let tx = -180;
@@ -53,7 +55,7 @@ function draw() {
         rect(0, 0, 160, 17);
         fill(0);
         textFont(balooBold);
-        text(display_duration((data_len - t - 1) * res_to_data[res][1]), 80, 5);
+        text(display_duration((data_len - t - 1) * res_to_factor[res]), 80, 5);
         textFont(font);
         translate(0, 16 * lines);
         alternate_fill();
@@ -64,20 +66,22 @@ function draw() {
         text(display_Wh_long(total_power), 120, 6);
         textFont(font);
         for (const key of keys_storage) {
-            if (data[key][t] > 0) {
-                alternate_fill();
-                translate(0, -16);
-                rect(0, 0, 160, 17);
-                push();
-                fill(cols_and_names[key][0]);
-                rect(0, 0, 16, 17);
-                pop();
-                fill(0);
-                textAlign(LEFT, CENTER);
-                text(cols_and_names[key][1], 20, 5);
-                textAlign(CENTER, CENTER);
-                text(display_Wh(data[key][t]), 135, 5);
-                fill(229, 217, 182);
+            if (key in data){
+                if (data[key][t] > 0) {
+                    alternate_fill();
+                    translate(0, -16);
+                    rect(0, 0, 160, 17);
+                    push();
+                    fill(cols_and_names[key][0]);
+                    rect(0, 0, 16, 17);
+                    pop();
+                    fill(0);
+                    textAlign(LEFT, CENTER);
+                    text(cols_and_names[key][1], 20, 5);
+                    textAlign(CENTER, CENTER);
+                    text(display_Wh(data[key][t]), 135, 5);
+                    fill(229, 217, 182);
+                }
             }
         }
         pop();
@@ -95,20 +99,22 @@ function draw() {
             textFont(font);
             let total_cap = 0;
             for (key of keys_storage) {
-                if (caps[key] > 0) {
-                    alternate_fill();
-                    translate(0, 16);
-                    rect(0, 0, 160, 17);
-                    push();
-                    fill(cols_and_names[key][0]);
-                    rect(0, 0, 16, 16);
-                    pop();
-                    textAlign(LEFT, CENTER);
-                    fill(0);
-                    text(cols_and_names[key][1], 20, 5);
-                    textAlign(CENTER, CENTER);
-                    text(display_Wh(caps[key]), 135, 5);
-                    total_cap += caps[key];
+                if (key in data){
+                    if (caps[key] > 0) {
+                        alternate_fill();
+                        translate(0, 16);
+                        rect(0, 0, 160, 17);
+                        push();
+                        fill(cols_and_names[key][0]);
+                        rect(0, 0, 16, 16);
+                        pop();
+                        textAlign(LEFT, CENTER);
+                        fill(0);
+                        text(cols_and_names[key][1], 20, 5);
+                        textAlign(CENTER, CENTER);
+                        text(display_Wh(caps[key]), 135, 5);
+                        total_cap += caps[key];
+                    }
                 }
             }
             translate(0, 16);
@@ -125,18 +131,16 @@ function draw() {
 }
 
 function regen(res) {
-    file = res_to_data[res][0];
-    fetch(`/get_chart_data?timescale=${file}&table=storage`) // retrieves data from server
-        .then((response) => response.json())
+    load_chart_data()
         .then((raw_data) => {
             background(229, 217, 182);
-            caps = raw_data[3];
-            data = raw_data[1];
-            Object.keys(data).forEach((key) => {
-                const array = raw_data[2][key];
-                data[key] = reduce(data[key], array, res, raw_data[0]);
+            Object.keys(raw_data["storage"]).forEach((key) => {
+                data[key] = reduce(raw_data["storage"][key], res);
+                data_len = data[key].length;
             });
-            data_len = data["small_pumped_hydro"].length;
+            if (Object.keys(data).length == 0){
+                return
+            }
             push();
             translate(1.5 * margin, height - 2 * margin - 10);
             noStroke();
@@ -151,11 +155,13 @@ function regen(res) {
             for (let t = 0; t < data_len; t++) {
                 push();
                 for (const key of keys_storage) {
-                    if (data[key][t] > 0) {
-                        fill(cols_and_names[key][0]);
-                        let h = (data[key][t] / maxSum) * graph_h;
-                        rect(0, 0, graph_w / data_len + 1, -h - 1);
-                        translate(0, -h);
+                    if (key in data){
+                        if (data[key][t] > 0) {
+                            fill(cols_and_names[key][0]);
+                            let h = (data[key][t] / maxSum) * graph_h;
+                            rect(0, 0, graph_w / data_len + 1, -h - 1);
+                            translate(0, -h);
+                        }
                     }
                 }
                 pop();
@@ -212,22 +218,24 @@ function regen(res) {
             textSize(18);
             text("Total storage capacities", 0, 0);
             pop();
-            push();
-            translate(width - 2 * margin, height - 10);
-            noStroke();
-            const sum = Object.values(raw_data[3]).reduce(
-                (acc, currentValue) => acc + currentValue,
-                0
-            );
-            for (const key of keys_storage) {
-                if (raw_data[3][key] > 0) {
-                    fill(cols_and_names[key][0]);
-                    let h = (raw_data[3][key] / sum) * (height - 20);
-                    rect(0, 0, margin, -h - 1);
-                    translate(0, -h);
-                }
-            }
-            pop();
+            // push();
+            // translate(width - 2 * margin, height - 10);
+            // noStroke();
+            // const sum = Object.values(raw_data[3]).reduce(
+            //     (acc, currentValue) => acc + currentValue,
+            //     0
+            // );
+            // for (const key of keys_storage) {
+            //     if (key in data){
+            //         if (raw_data[3][key] > 0) {
+            //             fill(cols_and_names[key][0]);
+            //             let h = (raw_data[3][key] / sum) * (height - 20);
+            //             rect(0, 0, margin, -h - 1);
+            //             translate(0, -h);
+            //         }
+            //     }
+            // }
+            // pop();
             graph = get();
         })
         .catch((error) => {
