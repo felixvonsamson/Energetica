@@ -16,6 +16,7 @@ from flask_socketio import SocketIO  # noqa: E402
 from flask_sock import Sock  # noqa: E402
 import atexit  # noqa: E402
 from flask_apscheduler import APScheduler  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 db = SQLAlchemy()
 
@@ -31,6 +32,7 @@ def create_app():
 
     # creates the engine (ad loading the sava if it exists)
     engine = gameEngine()
+    Path("instance/player_data").mkdir(parents=True, exist_ok=True)
     if os.path.isfile("instance/engine_data.pck"):
         with open("instance/engine_data.pck", "rb") as file:
             engine.data = pickle.load(file)
@@ -47,7 +49,6 @@ def create_app():
     # initialize sock for WebSockets:
     sock = Sock(app)
     engine.sock = sock
-    engine.websocket_dict = {}
     from .rest_api import add_sock_handlers
 
     add_sock_handlers(sock=sock, engine=engine)

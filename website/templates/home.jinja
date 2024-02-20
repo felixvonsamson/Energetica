@@ -1,3 +1,10 @@
+{% set t = engine.data["current_t"] %}
+{% set month_number = ((engine.data["total_t"] % 73440) // 6120) %}
+{% set month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] %}
+{% set month = month_names[month_number] %}
+{% set irradiance = engine.data["current_irradiation"][t] %}
+{% set windspeed = engine.data["current_windspeed"][t] %}
+{% set discharge = engine.data["current_discharge"][t] %}
 {% extends "base.jinja" %}
 {% block title %}
     Home
@@ -19,11 +26,42 @@
             <p>This page is an overview of your profile.</p>
         </div>
     </div>
+    <div class="bone padding margin">
+        <h1>Current weather conditions</h1>
+        <div class="flex-row flex-space-around margin medium">
+            <div class="flex-col flex-grow-1 padding weather_info_container">
+                <div>Month: <b>{{ month }}</b></div>
+                <div class="year-background margin-small">
+                    <div class="current-date-dot" style="left: calc({{ (engine.data['total_t'] % 73440)/73440 }} * 100%);"></div>
+                </div>
+            </div>
+            <div class="flex-col flex-grow-1 padding weather_info_container">
+                <div>Irradiance: <b>{{ irradiance | round | int }} W/m2</b></div>
+                <div class="year-background margin-small">
+                    <div class="weather_level solar" style="width: calc({{ irradiance/875 }} * 100%);"></div>
+                </div>
+            </div>
+            <div class="flex-col flex-grow-1 padding weather_info_container">
+                <div>Wind speed: <b>{{ windspeed | round | int }} km/h</b></div>
+                <div class="year-background margin-small">
+                    <div class="weather_level wind" style="width: calc({{ windspeed/100 }} * 100%);"></div>
+                </div>
+            </div>
+            <div class="flex-col flex-grow-1 padding weather_info_container">
+                <div>River discharge: <b>{{ (discharge * 150) | round | int }} m3/s</b></div>
+                <div class="year-background margin-small">
+                    <div class="weather_level water" style="width: calc({{ discharge }} * 100%);"></div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="under_construction">
       {# Facilites under construction will show here #}
     </div>
+    <div id="under_research">
+      {# Facilites under research will show here #}
+    </div>
 {% endblock content %}
 {% block additionnal_script %}
-  <script>retrieve_constructions()</script>
   <script>refresh_progressBar()</script>
 {% endblock additionnal_script %}

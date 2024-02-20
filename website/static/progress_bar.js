@@ -2,6 +2,51 @@
 This code generates the progress bars on top of the pages that show the facilities under construction
 */
 
+asset_names = {
+    "steam_engine": "Steam engine",
+    "windmill": "Windmill",
+    "watermill": "Watermill",
+    "coal_burner": "Coal burner",
+    "oil_burner": "Oil burner",
+    "gas_burner": "Gas burner",
+    "small_water_dam": "Small water dam",
+    "onshore_wind_turbine": "Onshore wind turbine",
+    "combined_cycle": "Combined cycle",
+    "nuclear_reactor": "Nuclear reactor",
+    "large_water_dam": "Large water dam",
+    "CSP_solar": "Concentrated solar power",
+    "PV_solar": "Photovoltaics",
+    "offshore_wind_turbine": "Offshore wind turbine",
+    "nuclear_reactor_gen4": "4th generation nuclear",
+    "small_pumped_hydro": "Small pumped hydro",
+    "compressed_air": "Compressed air",
+    "molten_salt": "Molten salt",
+    "large_pumped_hydro": "Large pumped hydro",
+    "hydrogen_storage": "Hydrogen hydrolysis",
+    "lithium_ion_batteries": "Lithium-ion batteries",
+    "solid_state_batteries": "Solid state batteries",
+    "laboratory": "Laboratory",
+    "warehouse": "Warehouse",
+    "industry": "Industry",
+    "carbon_capture": "Carbon capture",
+    "coal_mine": "Coal mine",
+    "oil_field": "Oil field",
+    "gas_drilling_site": "Gas drilling site",
+    "uranium_mine": "Uranium mine",
+    "mathematics": "Mathematics",
+    "mechanical_engineering": "Mechanical engineering",
+    "thermodynamics": "Thermodynamics",
+    "physics": "Physics",
+    "building_technology": "Building Technology",
+    "mineral_extraction": "Mineral extraction",
+    "transport_technology": "Transport technology",
+    "materials": "Materials",
+    "civil_engineering": "Civil engineering",
+    "aerodynamics": "Aerodynamics",
+    "chemistry": "Chemistry",
+    "nuclear_engineering": "Nuclear engineering",
+}
+
 function formatMilliseconds(totalSeconds) {
     const days = Math.floor(totalSeconds / (3600 * 24));
     const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
@@ -145,63 +190,74 @@ function refresh_progressBar() {
     });
 }
 
-const uc = document.getElementById("under_construction");
 function display_progressBars(data){
-    uc.innerHTML = "";
-    construction_priority = data[1];
-    for (const [index, c_id] of construction_priority.entries()) {
-        construction = data[0][c_id];
-        if (
-            (construction["family"] == document.title) |
-            (document.title == "Home")
-        ) {
-            let play_pause_logo = "fa-pause";
-            if (construction["suspension_time"]) {
-                play_pause_logo = "fa-play";
+    if (document.title == "Home"){
+        const uc = document.getElementById("under_construction");
+        const ur = document.getElementById("under_research");
+        uc.innerHTML = "";
+        ur.innerHTML = "";
+        construction_priority = data[1];
+        research_priority = data[2];
+        if(construction_priority.length > 0){
+            uc.innerHTML = "<h1>&emsp;Constructions</h1>";
+        }
+        if(research_priority.length > 0){
+            ur.innerHTML = "<h1>&emsp;Researches</h1>";
+        }
+        for (const [index, c_id] of research_priority.entries()) {
+            construction = data[0][c_id];
+            ur.innerHTML += html_for_progressBar(c_id, index, research_priority, construction);
+        }
+        for (const [index, c_id] of construction_priority.entries()) {
+            construction = data[0][c_id];
+            uc.innerHTML += html_for_progressBar(c_id, index, construction_priority, construction);
+        }
+    }else{
+        const uc = document.getElementById("under_construction");
+        if(uc != null){
+            uc.innerHTML = "";
+            if(document.title == "Technologies"){
+                project_priority = data[2];
+            }else{
+                project_priority = data[1];
             }
-            let html =
-                '<div class="progressbar-container">\
-                <div class="progressbar-arrowcontainer">';
-            if (index > 0) {
-                html +=
-                    '<button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(' +
-                    c_id +
-                    ')">\
-                    <i class="fa fa-caret-up"></i>\
-                </button>';
+            for (const [index, c_id] of project_priority.entries()) {
+                construction = data[0][c_id];
+                if (construction["family"] == document.title){
+                    uc.innerHTML += html_for_progressBar(c_id, index, project_priority, construction);
+                }
             }
-            if (index + 1 != construction_priority.length) {
-                html +=
-                    '<button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(' +
-                    construction_priority[index + 1] +
-                    ')">\
-                    <i class="fa fa-caret-down"></i>\
-                </button>';
-            }
-            html +=
-                '</div>\
-                <div class="progressbar-name medium margin-small">' +
-                construction["name"] +
-                '</div>\
-                <div class="progressbar-background">\
-                <div id="' +
-                c_id +
-                '" class="progressbar-bar"></div>\
-                </div>\
-                <button class="progressbar-icon progressbar-button" onclick="pause_construction(' +
-                c_id +
-                ')">\
-                    <i class="fa ' +
-                play_pause_logo +
-                '"></i>\
-                </button>\
-                <button class="progressbar-icon progressbar-button" onclick="cancel_construction(' +
-                c_id +
-                ')">\
-                    <i class="fa fa-times"></i>\
-                </button>\
-            </div>';
-            uc.innerHTML += html;
         }
     }
+}
+
+
+function html_for_progressBar(c_id, index, project_priority, construction){
+    let playPauseLogo = "fa-pause";
+    if (construction["suspension_time"]) {
+        playPauseLogo = "fa-play";
+    }
+    return `
+    <div class="progressbar-container">
+        <div class="progressbar-arrowcontainer">
+            ${index > 0 ? `
+                <button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(${c_id})">
+                    <i class="fa fa-caret-up"></i>
+                </button>` : ''}
+            ${index + 1 != project_priority.length ? `
+                <button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(${project_priority[index + 1]})">
+                    <i class="fa fa-caret-down"></i>
+                </button>` : ''}
+        </div>
+        <div class="progressbar-name medium margin-small">${asset_names[construction["name"]]}</div>
+        <div class="progressbar-background">
+            <div id="${c_id}" class="progressbar-bar"></div>
+        </div>
+        <button class="progressbar-icon progressbar-button" onclick="pause_construction(${c_id})">
+            <i class="fa ${playPauseLogo}"></i>
+        </button>
+        <button class="progressbar-icon progressbar-button" onclick="cancel_construction(${c_id})">
+            <i class="fa fa-times"></i>
+        </button>
+    </div>`;
 }

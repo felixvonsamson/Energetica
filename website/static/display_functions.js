@@ -143,3 +143,24 @@ function calculate_delivery(delta_q, delta_r, trasport_speed) {
     );
     display_duration(dist * trasport_speed);
 }
+
+function formatDateTime(dateTimeString) {
+    const dateTime = new Date(dateTimeString);
+    const now = new Date();
+    const date = dateTime.getDate();
+    const monthIndex = dateTime.getMonth();
+    const hours = dateTime.getHours().toString().padStart(2, '0');
+    const minutes = dateTime.getMinutes().toString().padStart(2, '0');
+    const seconds = dateTime.getSeconds().toString().padStart(2, '0');
+    const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+  
+    if (dateTime.toDateString() === now.toDateString()) {
+        // If the date is today, return the time format
+        document.write(`${hours}:${minutes}:${seconds}`);
+    } else {
+        // If the date is not today, return the date + time format
+        document.write(`${date} ${months[monthIndex]} ${hours}:${minutes}:${seconds}`);
+    }
+  }

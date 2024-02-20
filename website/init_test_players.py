@@ -8,10 +8,12 @@ from .database import (
     Under_construction,
     Shipment,
     Resource_on_sale,
+    CircularBufferPlayer,
 )
 from . import db
 import pickle
 import os
+import time
 from .utils import data_init_network
 
 
@@ -78,51 +80,96 @@ def edit_database(engine):
 
 
 def init_test_players(engine):
-    # members = []
-
     player = create_player(engine, "user", "password")
-    player2 = create_player(engine, "user2", "password")
-    print(player)
-    print(player2)
-    Hex.query.filter_by(id=83).first().player_id = player.id
-    Hex.query.filter_by(id=84).first().player_id = player2.id
-    # player.coal_mine = 1
-    # player.uranium_mine = 1
-    # player.small_pumped_hydro = 1
-    # player.hydrogen_storage = 1
-    player.mineral_extraction = 2
-    player.money = 1000000
-    player.building_technology = 1
-    # player.coal = 450000
-    # player.oil = 100000
-    # player.gas = 800000
-    # player.uranium = 4500
-    # player.warehouse = 1
-    create_network(engine, "network", [player2])
+    if player:
+        print(player)
+        Hex.query.filter_by(id=83).first().player_id = player.id
 
-    # for i in range(3):
-    #     members.append(create_player(engine, "Player" + str(i), i + 1, "password"))
-    # members.append(create_player(engine, "Player3", 21, "password"))
+        player.money = 1000000
+        player.coal = 450000
+        player.oil = 100000
+        player.gas = 800000
+        player.uranium = 4500
 
-    # network = "Network1"
-    # create_network(engine, network, members)
+        add_asset(player, "industry", 18)
+        add_asset(player, "laboratory", 5)
+        add_asset(player, "mathematics", 1)
+        add_asset(player, "mineral_extraction", 2)
+        add_asset(player, "building_technology", 1)
+        add_asset(player, "coal_mine", 1)
+        # add_asset(player, "uranium_mine", 1)
+        add_asset(player, "warehouse", 2)
+        add_asset(player, "small_pumped_hydro", 1)
+        add_asset(player, "hydrogen_storage", 1)
+        add_asset(player, "PV_solar", 2)
+        # add_asset(player, "offshore_wind_turbine", 2)
+        add_asset(player, "nuclear_reactor_gen4", 1)
+        add_asset(player, "combined_cycle", 1)
+        add_asset(player, "gas_burner", 3)
+        db.session.commit()
 
-    # if members[0] is not None:
-    #     members[1].steam_engine = 10
-    #     members[1].industry = 15
-    #     members[0].gas_burner = 1
-    #     members[0].gas = 100000
-    #     members[0].coal_burner = 1
-    #     members[0].coal = 1000000
-    #     members[0].nuclear_reactor = 1
-    #     members[0].uranium = 3000
-    #     members[2].compressed_air = 1
-    #     members[2].windmill = 1
-    #     members[2].watermill = 1
-    #     members[2].PV_solar = 1
-    #     members[3].small_pumped_hydro = 1
-    #     members[3].onshore_wind_turbine = 1
-    #     db.session.commit()
+
+def add_asset(player, asset, n):
+    asset_to_family = {
+        "coal_mine": "Extraction facilities",
+        "oil_field": "Extraction facilities",
+        "gas_drilling_site": "Extraction facilities",
+        "uranium_mine": "Extraction facilities",
+        "small_pumped_hydro": "Storage facilities",
+        "compressed_air": "Storage facilities",
+        "molten_salt": "Storage facilities",
+        "large_pumped_hydro": "Storage facilities",
+        "hydrogen_storage": "Storage facilities",
+        "lithium_ion_batteries": "Storage facilities",
+        "solid_state_batteries": "Storage facilities",
+        "steam_engine": "Power facilities",
+        "nuclear_reactor": "Power facilities",
+        "nuclear_reactor_gen4": "Power facilities",
+        "combined_cycle": "Power facilities",
+        "gas_burner": "Power facilities",
+        "oil_burner": "Power facilities",
+        "coal_burner": "Power facilities",
+        "small_water_dam": "Power facilities",
+        "large_water_dam": "Power facilities",
+        "watermill": "Power facilities",
+        "onshore_wind_turbine": "Power facilities",
+        "offshore_wind_turbine": "Power facilities",
+        "windmill": "Power facilities",
+        "CSP_solar": "Power facilities",
+        "PV_solar": "Power facilities",
+        "laboratory": "Functional facilities",
+        "warehouse": "Functional facilities",
+        "industry": "Functional facilities",
+        "carbon_capture": "Functional facilities",
+        "mathematics": "Technologies",
+        "mechanical_engineering": "Technologies",
+        "thermodynamics": "Technologies",
+        "physics": "Technologies",
+        "building_technology": "Technologies",
+        "mineral_extraction": "Technologies",
+        "transport_technology": "Technologies",
+        "materials": "Technologies",
+        "civil_engineering": "Technologies",
+        "aerodynamics": "Technologies",
+        "chemistry": "Technologies",
+        "nuclear_engineering": "Technologies",
+    }
+    priority_list_name = "construction_priorities"
+    if asset_to_family[asset] == "Technologies":
+        priority_list_name = "research_priorities"
+    for i in range(n):
+        new_construction = Under_construction(
+            name=asset,
+            family=asset_to_family[asset],
+            start_time=time.time(),
+            duration=0,
+            suspension_time=None,
+            original_price=0,
+            player_id=player.id,
+        )
+        db.session.add(new_construction)
+        db.session.commit()
+        player.add_project_priority(priority_list_name, new_construction.id)
 
 
 def create_player(engine, username, password):
@@ -134,12 +181,13 @@ def create_player(engine, username, password):
         )
         db.session.add(new_player)
         db.session.commit()
-        add_player_to_data(new_player.id)
+        engine.data["current_data"][new_player.id] = CircularBufferPlayer()
+        print(engine.data["current_data"])
         init_table(new_player)
         db.session.commit()
         return new_player
-    print(f"create_player: player {username} already exists")
-    return p
+    engine.log(f"create_player: player {username} already exists")
+    return None
 
 
 def create_network(engine, name, members):

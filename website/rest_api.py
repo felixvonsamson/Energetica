@@ -26,10 +26,10 @@ def add_sock_handlers(sock, engine):
         player = Player.query.filter_by(username=username).first()
         if player:
             if check_password_hash(player.pwhash, password):
-                print(f"{username} logged in via HTTP Basic")
+                engine.log(f"{username} logged in via HTTP Basic")
                 return username
             else:
-                print(f"{username} failed to log in via HTTP Basic")
+                engine.log(f"{username} failed to log in via HTTP Basic")
 
     @rest_api.before_request
     @basic_auth.login_required
@@ -44,7 +44,7 @@ def add_sock_handlers(sock, engine):
     @sock.route("/rest_ws", bp=rest_api)
     def rest_ws(ws):
         """Main WebSocket endpoint for API."""
-        print(f"Received WebSocket connection for player {g.player}")
+        engine.log(f"Received WebSocket connection for player {g.player}")
         ws.send(rest_get_map())
         ws.send(rest_get_players())
         ws.send(rest_get_current_player(current_player=g.player))
@@ -56,10 +56,10 @@ def add_sock_handlers(sock, engine):
         engine.websocket_dict[g.player.id].append(ws)
         while True:
             data = ws.receive()
-            print(f"received on websocket: data = {data}")
+            engine.log(f"received on websocket: data = {data}")
             message = json.loads(data)
             message_data = message["data"]
-            print(f"decoded json message = {message}")
+            engine.log(f"decoded json message = {message}")
             match message["type"]:
                 # case "confirmLocation":
                 #     rest_confirm_location(engine, ws, message_data)
@@ -179,7 +179,8 @@ def rest_get_charts():
         )
 
     subcategories = {
-        "revenues": ["industry", "imports", "exports", "dumping", "O&M_costs"],
+        "revenues": ["industry", "imports", "exports", "dumping"],
+        "op_costs": ["steam_engine"],
         "generation": [
             "watermill",
             "small_water_dam",
@@ -249,7 +250,11 @@ def rest_get_charts():
 
 def rest_get_power_facilities():
     """Gets player's facilities data and returns it as a JSON string"""
-    power_facilities_info = g.engine.config[g.player.id]["assets"]
+    power_facilities_info = g.engine.config[
+        g.player.id
+    ][
+        "assets"
+    ]  # the contents of this are now distributed in a constant and a variable part
     property_keys = ["price", "power generation", "locked"]
     power_facilities = [
         "steam_engine",

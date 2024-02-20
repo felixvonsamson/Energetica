@@ -26,19 +26,20 @@
   </div>
   <div id="under_construction">{# Facilites under construction will show here #}</div>
   {% for facility in ["steam_engine", "windmill", "watermill", "coal_burner", "oil_burner", "gas_burner", "small_water_dam", "onshore_wind_turbine", "combined_cycle", "nuclear_reactor", "large_water_dam", "CSP_solar", "PV_solar", "offshore_wind_turbine", "nuclear_reactor_gen4"] %}
+    {% set const_data = engine.const_config[facility] %}
     <div id="{{ facility }}"
          class="bone margin facility small construction_tile"
          onclick="show_construction('{{ facility }}', '{{ assets[facility]['locked'] }}');">
       <img class="img"
-           src="{{ url_for('static', filename='images/power_facilities/'+facility+'.'+assets[facility].image_extension) }}"
+           src="{{ url_for('static', filename='images/power_facilities/'+facility+'.'+const_data.image_extension) }}"
            width="250"
            height="167"
-           alt="{{ assets[facility]['name'] }} power plant">
+           alt="{{ const_data.name }} power plant">
       <div class="infotext padding">
-        <strong class="large">{{ assets[facility]["name"] }}</strong>
+        <strong class="large">{{ const_data.name }}</strong>
         &ensp;
         <a class="white wikipedia_icon_container no_deco"
-           href="{{ assets[facility].wikipedia_link }}"
+           href="{{ const_data.wikipedia_link }}"
            target="_blank">
           <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
         </a>
@@ -49,12 +50,7 @@
         </span>
         <div class="infobox">
           <div class="infotext">
-            {{ assets[facility].description }}
-            {# O&M Text Description #}
-            {% if "O&M_description" in assets[facility] %}
-              <br>
-              {{ assets[facility]["O&M_description"] }}
-            {% endif %}
+            {{ const_data.description }}
             {# Wind Indicator #}
             <br>
             {% if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"] %}
@@ -88,10 +84,10 @@
               {% endif %}
             {% endfor %}
             {# Danger Indicator #}
-            {% if "danger_description" in data[facility] %}
+            {% if "danger_description" in const_data %}
               <br>
               <em class="txt-red">
-                <i class="fa fa-exclamation-triangle"></i> {{ data[facility]["danger_description"] }}
+                <i class="fa fa-exclamation-triangle"></i> {{ const_data.danger_description }}
               </em>
             {% endif %}
           </div>
@@ -104,9 +100,9 @@
                 <ul class="navbar-nav">
                   {% for req in assets[facility]["requirements"] %}
                     {% if req[2] %}
-                      <li class="padding-small req_fullfilled">- {{ assets[req[0]]["name"] }} lvl {{ req[1] }}</li>
+                      <li class="padding-small req_fullfilled">- {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}</li>
                     {% else %}
-                      <li class="padding-small requirement">- {{ assets[req[0]]["name"] }} lvl {{ req[1] }}</li>
+                      <li class="padding-small requirement">- {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}</li>
                     {% endif %}
                   {% endfor %}
                 </ul>
@@ -126,14 +122,12 @@
             </td>
           </tr>
           {# O&M Costs #}
-          {% if "O&M cost" in assets[facility] %}
-            <tr>
-              <td>Operation cost</td>
-              <td class="txt_center">
-                <strong><script>display_money({{assets[facility]["O&M cost"]}});</script>/h</strong>
-              </td>
-            </tr>
-          {% endif %}
+          <tr>
+            <td>Operation cost</td>
+            <td class="txt_center">
+              <strong><script>display_money({{assets[facility]["O&M cost"]*60}});</script>/h</strong>
+            </td>
+          </tr>
           {# Resource Consumption #}
           {% for resource in ["gas", "coal", "oil", "uranium"] %}
             {% if resource in assets[facility]["consumed resource"] %}
@@ -198,6 +192,5 @@
 {% endblock content %}
 {% block additionnal_script %}
   <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
-  <script>retrieve_constructions()</script>
   <script>refresh_progressBar()</script>
 {% endblock additionnal_script %}
