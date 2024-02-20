@@ -127,7 +127,7 @@ def add_asset(player_id, construction_id):
             db.session.commit()
             break
     if construction.family == "Technologies":
-        server_tech = engine.data["technologie_lvls"][construction.name]
+        server_tech = engine.data["technology_lvls"][construction.name]
         if len(server_tech) <= getattr(player, construction.name):
             server_tech.append(0)
         server_tech[getattr(player, construction.name) - 1] += 1

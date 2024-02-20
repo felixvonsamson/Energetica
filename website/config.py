@@ -1312,8 +1312,8 @@ class Config(object):
             if asset in engine.technologies:
                 # update price (knowledge spilling)
                 assets[asset]["price"] *= (
-                    0.95
-                    ** engine.data["technologie_lvls"][asset][
+                    0.92
+                    ** engine.data["technology_lvls"][asset][
                         getattr(player, asset)
                     ]
                 )

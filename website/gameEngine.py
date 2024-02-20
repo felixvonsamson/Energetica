@@ -119,7 +119,7 @@ class gameEngine(object):
 
         # stored the levels of technology of the server
         # for each tech an array stores [# players with lvl 1, # players with lvl 2, ...]
-        engine.data["technologie_lvls"] = {
+        engine.data["technology_lvls"] = {
             "mathematics": [0],
             "mechanical_engineering": [0],
             "thermodynamics": [0],
