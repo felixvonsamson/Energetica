@@ -11,7 +11,7 @@ import os
 import time
 import numpy as np
 
-from .rest_api import rest_notify_player_location
+from website import rest_api
 from .database import (
     Player,
     Network,
@@ -364,7 +364,7 @@ def confirm_location(engine, player, location):
     # Checks have succeeded, proceed
     location.player_id = player.id
     db.session.commit()
-    rest_notify_player_location(engine, player)
+    rest_api.rest_notify_player_location(engine, player)
     print(f"{player.username} chose the location {location.id}")
     return {"response": "success"}
 
@@ -374,6 +374,7 @@ def join_network(engine, player, network):
     player.network = network
     db.session.commit()
     print(f"{player.username} joined the network {player.network.name}")
+    rest_api.rest_notify_network_change()
 
 
 def set_network_prices(engine, player, prices, SCPs):

@@ -124,7 +124,9 @@ def rest_get_current_player(current_player):
 
 
 def rest_get_networks():
-    """Gets all player data and returns it as a JSON string."""
+    """Gets all player data and returns it as a JSON string.
+    A client receiving a message of type `getNetworks` should disregard any
+    previous network data."""
     network_list = Network.query.all()
     response = {
         "type": "getNetworks",
@@ -310,11 +312,25 @@ def rest_parse_request_confirmLocation(engine, ws, uuid, data):
 # WebSocket methods, hooked into engine states & events
 
 
+def rest_notify_all_players(engine, message):
+    """Relays the `message` argument to all currently connected REST clients."""
+    for _, wss in engine.websocket_dict.items():
+        for ws in wss:
+            ws.send(message)
+
+
 def rest_notify_player_location(engine, player):
     """This mehtod is called when player (argument) has chosen a location. This
     information needs to be relayed to clients, and this methods returns a JSON
     string with this information."""
-    payload = rest_add_player_location(player)
-    for _, wss in engine.websocket_dict.items():
-        for ws in wss:
-            ws.send(payload)
+    message = rest_add_player_location(player)
+    rest_notify_all_players(engine, message)
+
+
+def rest_notify_network_change(engine):
+    """This mehtod is called any change to the state of any network is made.
+    This includes when a network is created, when a player joins a network, and
+    when a player leaves a network. These changes are relayed to all connected
+    REST clients."""
+    message = rest_get_networks()
+    rest_notify_all_players(engine, message)
