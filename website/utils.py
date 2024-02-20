@@ -374,7 +374,7 @@ def join_network(engine, player, network):
     player.network = network
     db.session.commit()
     print(f"{player.username} joined the network {player.network.name}")
-    rest_api.rest_notify_network_change()
+    rest_api.rest_notify_network_change(engine)
 
 
 def set_network_prices(engine, player, prices, SCPs):
