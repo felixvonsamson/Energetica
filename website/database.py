@@ -357,12 +357,12 @@ class Player(db.Model, UserMixin):
         )
         return {attr: getattr(self, attr) for attr in attributes}
 
-    def emit(self, *args):
+    def emit(self, event, *args):
         engine = current_app.config["engine"]
         if self.id in engine.clients:
             socketio = engine.socketio
             for sid in engine.clients[self.id]:
-                socketio.emit(*args, room=sid)
+                socketio.emit(event, *args, room=sid)
 
     def send_new_data(self, new_values):
         engine = current_app.config["engine"]
