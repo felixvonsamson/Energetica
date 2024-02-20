@@ -8,6 +8,8 @@ const keys_storage = [
     "hydrogen_storage",
 ];
 
+let capacities = {}
+
 function draw() {
     if (graph) {
         push();
@@ -98,23 +100,21 @@ function draw() {
             text("Total storage capacity", 80, 4);
             textFont(font);
             let total_cap = 0;
-            for (key of keys_storage) {
-                if (key in data){
-                    if (caps[key] > 0) {
-                        alternate_fill();
-                        translate(0, 16);
-                        rect(0, 0, 160, 17);
-                        push();
-                        fill(cols_and_names[key][0]);
-                        rect(0, 0, 16, 16);
-                        pop();
-                        textAlign(LEFT, CENTER);
-                        fill(0);
-                        text(cols_and_names[key][1], 20, 5);
-                        textAlign(CENTER, CENTER);
-                        text(display_Wh(caps[key]), 135, 5);
-                        total_cap += caps[key];
-                    }
+            for (key in capacities) {
+                if (capacities[key] > 0) {
+                    alternate_fill();
+                    translate(0, 16);
+                    rect(0, 0, 160, 17);
+                    push();
+                    fill(cols_and_names[key][0]);
+                    rect(0, 0, 16, 16);
+                    pop();
+                    textAlign(LEFT, CENTER);
+                    fill(0);
+                    text(cols_and_names[key][1], 20, 5);
+                    textAlign(CENTER, CENTER);
+                    text(display_Wh(capacities[key]), 135, 5);
+                    total_cap += capacities[key];
                 }
             }
             translate(0, 16);
@@ -131,8 +131,8 @@ function draw() {
 }
 
 function regen(res) {
-    load_chart_data()
-        .then((raw_data) => {
+    load_chart_data().then((raw_data) => {
+        load_player_data().then((player_data) => {
             background(229, 217, 182);
             Object.keys(raw_data["storage"]).forEach((key) => {
                 data[key] = reduce(raw_data["storage"][key], res);
@@ -218,29 +218,32 @@ function regen(res) {
             textSize(18);
             text("Total storage capacities", 0, 0);
             pop();
-            // push();
-            // translate(width - 2 * margin, height - 10);
-            // noStroke();
-            // const sum = Object.values(raw_data[3]).reduce(
-            //     (acc, currentValue) => acc + currentValue,
-            //     0
-            // );
-            // for (const key of keys_storage) {
-            //     if (key in data){
-            //         if (raw_data[3][key] > 0) {
-            //             fill(cols_and_names[key][0]);
-            //             let h = (raw_data[3][key] / sum) * (height - 20);
-            //             rect(0, 0, margin, -h - 1);
-            //             translate(0, -h);
-            //         }
-            //     }
-            // }
-            // pop();
+            push();
+            translate(width - 2 * margin, 10);
+            noStroke();
+            for (const key of keys_storage){
+                if (player_data[0][key] > 0){
+                    capacities[key] = player_data[0][key] * player_data[1]["assets"][key]["power generation"]
+                }
+            }
+            const sum = Object.values(capacities).reduce(
+                (acc, currentValue) => acc + currentValue,
+                0
+            );
+            for (const key in capacities) {
+                if (key in data){
+                    if (capacities[key] > 0) {
+                        fill(cols_and_names[key][0]);
+                        let h = (capacities[key] / sum) * (height - 20);
+                        rect(0, 0, margin, h);
+                        translate(0, h);
+                    }
+                }
+            }
+            pop();
             graph = get();
-        })
-        .catch((error) => {
-            console.error("Error:", error);
         });
+    });
 }
 
 function calc_size() {

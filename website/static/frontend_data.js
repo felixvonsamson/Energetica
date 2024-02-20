@@ -34,6 +34,7 @@ function load_chart_data() {
             var currentDate = new Date();
             var last_date = new Date(last_value["time"]);
             if (currentDate.getTime() - last_date.getTime() > 120000){
+                retrieve_player_data();
                 return retrieve_chart_data();
             }
             return Promise.resolve(JSON.parse(chart_data));
@@ -51,6 +52,47 @@ function retrieve_chart_data() {
             sessionStorage.setItem("last_value", JSON.stringify({"total_t" : raw_data["total_t"], "time": currentDate}));
             sessionStorage.setItem("chart_data", JSON.stringify(raw_data["data"]));
             return raw_data["data"];
+        })
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
+}
+
+function load_player_data() {
+    if (typeof(Storage) !== "undefined") {
+        const player_data = sessionStorage.getItem("player_data");
+        if (player_data) {
+            return Promise.resolve(JSON.parse(player_data));
+        }
+    }
+    return retrieve_player_data();
+}
+ 
+function retrieve_player_data() {
+    console.log("Feching player data from the server")
+    return fetch("/get_player_data")
+        .then((response) => response.json())
+        .then((raw_data) => {
+            sessionStorage.setItem("player_data", JSON.stringify(raw_data));
+            return raw_data;
+        })
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
+}
+
+function load_const_config() {
+    if (typeof(Storage) !== "undefined") {
+        const const_config = sessionStorage.getItem("const_config");
+        if (const_config) {
+            return Promise.resolve(JSON.parse(const_config));
+        }
+    }
+    return fetch("/get_const_config")
+        .then((response) => response.json())
+        .then((raw_data) => {
+            sessionStorage.setItem("const_config", JSON.stringify(raw_data));
+            return raw_data;
         })
         .catch((error) => {
             console.error(`caught error ${error}`);

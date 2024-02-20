@@ -50,9 +50,16 @@ def request_marked_as_read():
     return jsonify({"response": "success"})
 
 
+@api.route("/get_const_config", methods=["GET"])
+def get_const_config():
+    """Gets constant config data"""
+    return jsonify(g.engine.const_config)
+
+
 # gets the map data from the database and returns it as a array of dictionaries :
 @api.route("/get_map", methods=["GET"])
 def get_map():
+    """gets the map data from the database and returns it as a array of dictionaries"""
     hex_map = Hex.query.all()
     hex_list = [
         {
@@ -104,6 +111,27 @@ def get_chat():
     messages = Chat.query.filter_by(id=chat_id).first().messages
     messages_list = [(msg.player.username, msg.text) for msg in messages]
     return jsonify(messages_list)
+
+
+@api.route("/get_resource_data", methods=["GET"])
+def get_resource_data():
+    """gets production rates and quantity on sale for every resource"""
+    rates = {}
+    on_sale = {}
+    for resource in [
+        ("coal", "coal_mine"),
+        ("oil", "oil_field"),
+        ("gas", "gas_drilling_site"),
+        ("uranium", "uranium_mine"),
+    ]:
+        rates[resource[0]] = (
+            getattr(current_user, resource[1])
+            * g.engine.config[current_user.id]["assets"][resource[1]][
+                "amount produced"
+            ]
+        )
+        on_sale[resource[0]] = getattr(current_user, resource[0] + "_on_sale")
+    return jsonify(rates, on_sale)
 
 
 # Gets the data for the overview charts
@@ -190,32 +218,17 @@ def get_market_data():
     )
 
 
-# Gets list of facilities under construction and config informations to calculate the values to display
-@api.route("/get_ud_and_config", methods=["GET"])
-def get_ud_and_config():
-    family = request.args.get("filter")
-    constructions = Under_construction.query.filter_by(
-        player_id=current_user.id, family=family
-    ).all()
-    assets = g.engine.config[current_user.id]["assets"]
-    ud = {}
-    for construction in constructions:
-        if construction.name in ud:
-            ud[construction.name]["lvl_future"] += 1
-        else:
-            lvl = getattr(current_user, construction.name)
-            ud[construction.name] = {
-                "name": assets[construction.name]["name"],
-                "lvl_at": lvl,
-                "lvl_future": lvl + 1,
-            }
-    player_lvls = current_user.get_technology_values()
-    return jsonify(ud, assets, player_lvls)
+@api.route("/get_player_data", methods=["GET"])
+def get_player_data():
+    """Gets count of assets and config for this player"""
+    asset_count = current_user.get_values()
+    config = g.engine.config[current_user.id]
+    return jsonify(asset_count, config)
 
 
-# Gets list of facilities under construction for this player
 @api.route("/get_constructions", methods=["GET"])
 def get_constructions():
+    """Gets list of facilities under construction for this player"""
     projects = current_user.get_constructions()
     construction_priorities = current_user.read_project_priority(
         "construction_priorities"

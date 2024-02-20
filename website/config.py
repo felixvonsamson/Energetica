@@ -1363,7 +1363,7 @@ class Config(object):
                 + engine.controllable_facilities
                 + engine.renewables
                 + engine.extraction_facilities
-                + ["carbon_capture"]
+                + engine.functional_facilities
             ):
                 # remove fulfilled requirements
                 assets[asset]["locked"] = False
@@ -1372,8 +1372,9 @@ class Config(object):
                     if not req[2]:
                         assets[asset]["locked"] = True
 
-                # calculate O&M cost
-                assets[asset]["O&M cost"] *= assets[asset]["price"] / 1440
+                if asset not in ["industry", "laboratory", "warehouse"]:
+                    # calculate O&M cost
+                    assets[asset]["O&M cost"] *= assets[asset]["price"] / 1440
 
             # calculating the ramping speed in W/min from the ramping time
             if "ramping time" in assets[asset]:

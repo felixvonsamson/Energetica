@@ -1,6 +1,5 @@
 let data = {};
 let buttons = [];
-let caps = {};
 
 let margin = 40;
 let data_len = 1440;
@@ -209,9 +208,6 @@ function display_money(amount) {
 }
 
 function general_format(value, units) {
-    if (!value){
-        return "NaN";
-    }
     let unit_index = 0;
     while (Math.abs(value) >= 10000 && unit_index < units.length - 1) {
         value /= 1000;

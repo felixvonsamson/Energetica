@@ -345,26 +345,17 @@ class Player(db.Model, UserMixin):
             if not notification.read
         ]
 
-    def get_technology_values(self):
-        technology_attributes = [
-            "laboratory",
-            "mathematics",
-            "mechanical_engineering",
-            "thermodynamics",
-            "physics",
-            "building_technology",
-            "mineral_extraction",
-            "transport_technology",
-            "materials",
-            "civil_engineering",
-            "aerodynamics",
-            "chemistry",
-            "nuclear_engineering",
-        ]
-        technology_values = {
-            attr: getattr(self, attr) for attr in technology_attributes
-        }
-        return technology_values
+    def get_values(self):
+        engine = current_app.config["engine"]
+        attributes = (
+            engine.controllable_facilities
+            + engine.renewables
+            + engine.storage_facilities
+            + engine.extraction_facilities
+            + engine.functional_facilities
+            + engine.technologies
+        )
+        return {attr: getattr(self, attr) for attr in attributes}
 
     def emit(self, *args):
         engine = current_app.config["engine"]
