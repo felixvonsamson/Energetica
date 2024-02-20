@@ -100,19 +100,27 @@ def rest_get_map():
     return json.dumps(response)
 
 
+def rest_helper_player_data(player):
+    payload = {
+        "id": player.id,
+        "username": player.username,
+    }
+    if player.tile is not None:
+        payload["tile"] = player.tile.id
+    return payload
+
+
+def rest_add_player(player):
+    response = {"type": "addPlayer", "data": rest_helper_player_data(player)}
+    return json.dumps(response)
+
+
 def rest_get_players():
     """Gets all player data and returns it as a JSON string."""
     player_list = Player.query.all()
     response = {
         "type": "getPlayers",
-        "data": [
-            {
-                "id": player.id,
-                "username": player.username,
-                "tile": player.tile.id if player.tile is not None else None,
-            }
-            for player in player_list
-        ],
+        "data": [rest_helper_player_data(player) for player in player_list],
     }
     return json.dumps(response)
 
@@ -333,4 +341,10 @@ def rest_notify_network_change(engine):
     when a player leaves a network. These changes are relayed to all connected
     REST clients."""
     message = rest_get_networks()
+    rest_notify_all_players(engine, message)
+
+
+def rest_notify_new_player(engine, player):
+    message = rest_add_player(player)
+    print(f"rest_notify_new_player: {message}")
     rest_notify_all_players(engine, message)

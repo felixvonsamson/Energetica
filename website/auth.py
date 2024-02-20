@@ -10,6 +10,7 @@ from . import db
 from flask_login import login_user, login_required, logout_user, current_user
 import pickle
 from pathlib import Path
+from website import rest_api
 
 auth = Blueprint("auth", __name__)
 
@@ -65,7 +66,7 @@ def sign_up():
         else:
             new_player = Player(
                 username=username,
-                pwhash=generate_password_hash(password1, method="scrypt")
+                pwhash=generate_password_hash(password1, method="scrypt"),
             )
             db.session.add(new_player)
             db.session.commit()
@@ -75,6 +76,9 @@ def sign_up():
             login_user(new_player, remember=True)
             flash("Account created!", category="message")
             print(f"{username} created an account")
+            rest_api.rest_notify_new_player(
+                current_app.config["engine"], new_player
+            )
             return redirect(url_for("views.home"))
 
     return render_template("sign_up.jinja", user=current_user)
