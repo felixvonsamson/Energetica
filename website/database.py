@@ -204,15 +204,15 @@ class Player(db.Model, UserMixin):
     # Priority lists
     self_consumption_priority = db.Column(
         db.Text,
-        default="small_water_dam large_water_dam watermill onshore_wind_turbine offshore_wind_turbine windmill CSP_solar PV_solar",
+        default="",
     )
     rest_of_priorities = db.Column(
         db.Text,
-        default="steam_engine nuclear_reactor large_pumped_hydro small_pumped_hydro molten_salt nuclear_reactor_gen4 compressed_air combined_cycle hydrogen_storage gas_burner solid_state_batteries lithium_ion_batteries oil_burner coal_burner",
+        default="steam_engine",
     )
     demand_priorities = db.Column(
         db.Text,
-        default="transport industry research construction uranium_mine gas_drilling_site oil_field coal_mine",
+        default="transport industry research construction",
     )
     construction_priorities = db.Column(db.Text, default="")
     research_priorities = db.Column(db.Text, default="")

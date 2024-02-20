@@ -94,6 +94,21 @@ def add_asset(player_id, construction_id):
         if construction.name == "warehouse":
             for resource in ["coal", "oil", "gas", "uranium"]:
                 current_data.new_subcategory("resources", resource)
+        if construction.name in engine.extraction_facilities + [
+            "carbon_capture"
+        ]:
+            add_to_priority_list(player, "demand_priorities", construction.name)
+        if construction.name in engine.renewables:
+            add_to_priority_list(
+                player, "self_consumption_priority", construction.name
+            )
+        if (
+            construction.name
+            in engine.storage_facilities + engine.controllable_facilities
+        ):
+            add_to_priority_list(
+                player, "rest_of_priorities", construction.name
+            )
     setattr(player, construction.name, getattr(player, construction.name) + 1)
     priority_list_name = "construction_priorities"
     if construction.family == "Technologies":
@@ -146,6 +161,14 @@ def add_asset(player_id, construction_id):
         db.session.add(new_facility)
         db.session.commit()
     engine.config.update_config_for_user(player.id)
+
+
+def add_to_priority_list(player, attr, name):
+    """add facility to priority list"""
+    if getattr(player, attr) == "":
+        setattr(player, attr, name)
+    else:
+        setattr(player, attr, getattr(player, attr) + " " + name)
 
 
 def remove_asset(player_id, facility, decommissioning=True):

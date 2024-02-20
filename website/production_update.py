@@ -46,7 +46,9 @@ def update_electricity(engine):
             if player.tile is None:
                 continue
             calculate_demand(engine, new_values[player.id], player, t)
-            market = calculate_generation_with_market(engine, market, player, t)
+            market = calculate_generation_with_market(
+                engine, new_values[player.id], market, player, t
+            )
         market_logic(engine, new_values, market, t)
         # Save market data
         engine.data["network_data"][network.id]["price"][t] = market[

@@ -3,7 +3,8 @@
     Network
 {% endblock title %}
 {% block content %}
-    {% set assets = engine.config[user.id]["assets"] %}
+    {% set const_config = engine.const_config %}
+    {% set assets = data["assets"] %}
     {% set SCP = user.self_consumption_priority.split(' ') %}
     <div class="flex-row huge title">
         Network
@@ -72,203 +73,144 @@
                 {% endfor %}
             </table>
         </div>
-    {% endif %}
-    <div class="flex-row huge title">Prices</div>
-    <div class="flex-col medium">
-        <b class="margin large" style="margin-top:24px">Demand prices</b>
-        <table class="table bone">
-            <tr>
-                <th>Demand</th>
-                <th>Max buying price</th>
-            </tr>
-            <tr>
-                <td>Industry</td>
-                <td>
-                    <input type="number"
-                           class="small_input medium txt_center"
-                           value="{{ user.price_buy_industry }}"
-                           id="price_buy_industry"
-                           name="price_buy_industry" />
-                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                    /MWh
-                </td>
-            </tr>
-            <tr>
-                <td>Constructions</td>
-                <td>
-                    <input type="number"
-                           class="small_input medium txt_center"
-                           value="{{ user.price_buy_construction }}"
-                           id="price_buy_construction"
-                           name="price_buy_construction" />
-                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                    /MWh
-                </td>
-            </tr>
-            <tr>
-                <td>Research</td>
-                <td>
-                    <input type="number"
-                           class="small_input medium txt_center"
-                           value="{{ user.price_buy_research }}"
-                           id="price_buy_research"
-                           name="price_buy_research" />
-                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                    /MWh
-                </td>
-            </tr>
-            <tr>
-                <td>Shipments</td>
-                <td>
-                    <input type="number"
-                           class="small_input medium txt_center"
-                           value="{{ user.price_buy_transport }}"
-                           id="price_buy_transport"
-                           name="price_buy_transport" />
-                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                    /MWh
-                </td>
-            </tr>
-            {% macro extraction_facility_display_name(extraction_facility) -%}
-                {{ {"coal_mine": "Coal mines", "oil_field": "Oil fields", "gas_drilling_site": "Gas extraction", "uranium_mine": "Uranium mines"}[extraction_facility] }}
-            {%- endmacro %}
-            {% macro extraction_facility_price_buy(extraction_facility) -%}
-                {{ 'price_buy_'+extraction_facility }}
-            {%- endmacro %}
-            {% macro extraction_facility_price_buy_value(extraction_facility) -%}
-                {{ user[extraction_facility_price_buy(extraction_facility) ] }}
-            {%- endmacro %}
-            {% for extraction_facility in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"] %}
-                {% if user[extraction_facility] > 0 %}
-                    <tr>
-                        <td>{{ extraction_facility_display_name(extraction_facility) }}</td>
-                        <td>
-                            <input type="number"
-                                   class="small_input medium txt_center"
-                                   value="{{ extraction_facility_price_buy_value(extraction_facility) }}"
-                                   id="{{ extraction_facility_price_buy(extraction_facility) }}"
-                                   name="{{ extraction_facility_price_buy(extraction_facility) }}" />
-                            <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                            /MWh
-                        </td>
-                    </tr>
-                {% endif %}
-            {% endfor %}
-            {% if user.carbon_capture > 0 %}
+        <div class="flex-row huge title">Prices</div>
+        <div class="flex-col medium">
+            <b class="margin large" style="margin-top:24px">Demand prices</b>
+            <table class="table bone">
                 <tr>
-                    <td>Carbon capture</td>
+                    <th>Demand</th>
+                    <th>Max buying price</th>
+                </tr>
+                <tr>
+                    <td>Industry</td>
                     <td>
                         <input type="number"
-                               class="small_input medium txt_center"
-                               value="{{ user.price_buy_carbon_capture }}"
-                               id="price_buy_carbon_capture"
-                               name="price_buy_carbon_capture" />
+                            class="small_input medium txt_center"
+                            value="{{ user.price_buy_industry }}"
+                            id="price_buy_industry"
+                            name="price_buy_industry" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
                     </td>
                 </tr>
-            {% endif %}
-        </table>
-        <div class="flex-row" style="justify-content:center;">
-            <b class="margin white button padding" onclick="change_prices();">Save changes</b>
-        </div>
-        <b class="margin large" style="margin-top:24px">Production capacity prices</b>
-        <table class="table bone">
-            <tr>
-                <th>Power facility</th>
-                <th>Installed capacity</th>
-                <th>Min selling price</th>
-                <th>
-                    <div class="hover_info">
-                        SCP<span class="popup_info small">Self-consumption priority</span>
-                    </div>
-                </th>
-            </tr>
-            {% macro power_facility_price(power_facility) -%}
-                {{ 'price_'+power_facility }}
-            {%- endmacro %}
-            {% macro power_facility_price_value(power_facility) -%}
-                {{ user[power_facility_price(power_facility) ] }}
-            {%- endmacro %}
-            {% macro power_facility_SCP(power_facility) -%}
-                {{ 'SCP_'+power_facility }}
-            {%- endmacro %}
-            {% for power_facility in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
-                {% if user[power_facility] %}
+                <tr>
+                    <td>Constructions</td>
+                    <td>
+                        <input type="number"
+                            class="small_input medium txt_center"
+                            value="{{ user.price_buy_construction }}"
+                            id="price_buy_construction"
+                            name="price_buy_construction" />
+                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                        /MWh
+                    </td>
+                </tr>
+                <tr>
+                    <td>Research</td>
+                    <td>
+                        <input type="number"
+                            class="small_input medium txt_center"
+                            value="{{ user.price_buy_research }}"
+                            id="price_buy_research"
+                            name="price_buy_research" />
+                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                        /MWh
+                    </td>
+                </tr>
+                <tr>
+                    <td>Shipments</td>
+                    <td>
+                        <input type="number"
+                            class="small_input medium txt_center"
+                            value="{{ user.price_buy_transport }}"
+                            id="price_buy_transport"
+                            name="price_buy_transport" />
+                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                        /MWh
+                    </td>
+                </tr>
+                {% macro extraction_facility_display_name(extraction_facility) -%}
+                    {{ {"coal_mine": "Coal mines", "oil_field": "Oil fields", "gas_drilling_site": "Gas extraction", "uranium_mine": "Uranium mines"}[extraction_facility] }}
+                {%- endmacro %}
+                {% macro extraction_facility_price_buy(extraction_facility) -%}
+                    {{ 'price_buy_'+extraction_facility }}
+                {%- endmacro %}
+                {% macro extraction_facility_price_buy_value(extraction_facility) -%}
+                    {{ user[extraction_facility_price_buy(extraction_facility) ] }}
+                {%- endmacro %}
+                {% for extraction_facility in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"] %}
+                    {% if user[extraction_facility] > 0 %}
+                        <tr>
+                            <td>{{ extraction_facility_display_name(extraction_facility) }}</td>
+                            <td>
+                                <input type="number"
+                                    class="small_input medium txt_center"
+                                    value="{{ extraction_facility_price_buy_value(extraction_facility) }}"
+                                    id="{{ extraction_facility_price_buy(extraction_facility) }}"
+                                    name="{{ extraction_facility_price_buy(extraction_facility) }}" />
+                                <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                                /MWh
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+                {% if user.carbon_capture > 0 %}
                     <tr>
-                        <td>{{ assets[power_facility].name }}</td>
-                        <td class="txt_center">
-                            <script>display_W({{ user[power_facility] * assets[power_facility]["power generation"] }});</script>
-                        </td>
+                        <td>Carbon capture</td>
                         <td>
                             <input type="number"
-                                   class="small_input medium txt_center"
-                                   value="{{ power_facility_price_value(power_facility) }}"
-                                   id="{{ power_facility_price(power_facility) }}"
-                                   name="{{ power_facility_price(power_facility) }}" />
+                                class="small_input medium txt_center"
+                                value="{{ user.price_buy_carbon_capture }}"
+                                id="price_buy_carbon_capture"
+                                name="price_buy_carbon_capture" />
                             <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                             /MWh
                         </td>
-                        <td>
-                            <input type="checkbox" id="{{ power_facility_SCP(power_facility) }}" name="{{ power_facility_SCP(power_facility) }}" {{ 'checked' if power_facility in SCP else '' }}>
-                        </td>
                     </tr>
                 {% endif %}
-            {% endfor %}
-        </table>
-        <div class="flex-row" style="justify-content:center;">
-            <b class="margin white button padding" onclick="change_prices();">Save changes</b>
-        </div>
-        {% if user["small_pumped_hydro"] > 0 or user["compressed_air"] > 0 or user["molten_salt"] > 0 or user["large_pumped_hydro"] > 0 or user["hydrogen_storage"] > 0 or user["lithium_ion_batteries"] > 0 or user["solid_state_batteries"] > 0 %}
-            <b class="margin large" style="margin-top:24px">Storage capacity prices</b>
+            </table>
+            <div class="flex-row" style="justify-content:center;">
+                <b class="margin white button padding" onclick="change_prices();">Save changes</b>
+            </div>
+            <b class="margin large" style="margin-top:24px">Production capacity prices</b>
             <table class="table bone">
                 <tr>
-                    <th>Storage facility</th>
+                    <th>Power facility</th>
                     <th>Installed capacity</th>
                     <th>Min selling price</th>
-                    <th>Max buying price</th>
                     <th>
                         <div class="hover_info">
                             SCP<span class="popup_info small">Self-consumption priority</span>
                         </div>
                     </th>
                 </tr>
-                {% macro storage_facility_price(storage_facility) -%}
-                    {{ 'price_'+storage_facility }}
+                {% macro power_facility_price(power_facility) -%}
+                    {{ 'price_'+power_facility }}
                 {%- endmacro %}
-                {% macro storage_facility_price_buy(storage_facility) -%}
-                    {{ 'price_buy_'+storage_facility }}
+                {% macro power_facility_price_value(power_facility) -%}
+                    {{ user[power_facility_price(power_facility) ] }}
                 {%- endmacro %}
-                {% macro storage_facility_SCP(storage_facility) -%}
-                    {{ 'SCP_'+storage_facility }}
+                {% macro power_facility_SCP(power_facility) -%}
+                    {{ 'SCP_'+power_facility }}
                 {%- endmacro %}
-                {% for storage_facility in ["small_pumped_hydro", "compressed_air", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
-                    {% if user[storage_facility] > 0 %}
+                {% for power_facility in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
+                    {% if user[power_facility] %}
                         <tr>
-                            <td>{{ assets[storage_facility].name }}</td>
+                            <td>{{ const_config[power_facility].name }}</td>
                             <td class="txt_center">
-                                <script>display_Wh({{ user[storage_facility] * assets[storage_facility]["storage capacity"] }});</script>
+                                <script>display_W({{ user[power_facility] * assets[power_facility]["power generation"] }});</script>
                             </td>
                             <td>
                                 <input type="number"
-                                       class="small_input medium txt_center"
-                                       value="{{ user[storage_facility_price(storage_facility) ] }}"
-                                       id="{{ storage_facility_price(storage_facility) }}"
-                                       name="{{ storage_facility_price(storage_facility) }}" />
+                                    class="small_input medium txt_center"
+                                    value="{{ power_facility_price_value(power_facility) }}"
+                                    id="{{ power_facility_price(power_facility) }}"
+                                    name="{{ power_facility_price(power_facility) }}" />
                                 <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                 /MWh
                             </td>
                             <td>
-                                <input type="number"
-                                       class="small_input medium txt_center"
-                                       value="{{ user[storage_facility_price_buy(storage_facility) ] }}"
-                                       id="{{ storage_facility_price_buy(storage_facility) }}"
-                                       name="{{ storage_facility_price_buy(storage_facility) }}" />
-                                <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                                /MWh
-                            </td>
-                            <td>
-                                <input type="checkbox" id="{{ storage_facility_SCP(storage_facility) }}" name="{{ storage_facility_SCP(storage_facility) }}" {{ 'checked' if storage_facility in SCP else '' }}>
+                                <input type="checkbox" id="{{ power_facility_SCP(power_facility) }}" name="{{ power_facility_SCP(power_facility) }}" {{ 'checked' if power_facility in SCP else '' }}>
                             </td>
                         </tr>
                     {% endif %}
@@ -277,8 +219,67 @@
             <div class="flex-row" style="justify-content:center;">
                 <b class="margin white button padding" onclick="change_prices();">Save changes</b>
             </div>
-        {% endif %}
-    </div>
+            {% if user["small_pumped_hydro"] > 0 or user["compressed_air"] > 0 or user["molten_salt"] > 0 or user["large_pumped_hydro"] > 0 or user["hydrogen_storage"] > 0 or user["lithium_ion_batteries"] > 0 or user["solid_state_batteries"] > 0 %}
+                <b class="margin large" style="margin-top:24px">Storage capacity prices</b>
+                <table class="table bone">
+                    <tr>
+                        <th>Storage facility</th>
+                        <th>Installed capacity</th>
+                        <th>Min selling price</th>
+                        <th>Max buying price</th>
+                        <th>
+                            <div class="hover_info">
+                                SCP<span class="popup_info small">Self-consumption priority</span>
+                            </div>
+                        </th>
+                    </tr>
+                    {% macro storage_facility_price(storage_facility) -%}
+                        {{ 'price_'+storage_facility }}
+                    {%- endmacro %}
+                    {% macro storage_facility_price_buy(storage_facility) -%}
+                        {{ 'price_buy_'+storage_facility }}
+                    {%- endmacro %}
+                    {% macro storage_facility_SCP(storage_facility) -%}
+                        {{ 'SCP_'+storage_facility }}
+                    {%- endmacro %}
+                    {% for storage_facility in ["small_pumped_hydro", "compressed_air", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
+                        {% if user[storage_facility] > 0 %}
+                            <tr>
+                                <td>{{ const_config[storage_facility].name }}</td>
+                                <td class="txt_center">
+                                    <script>display_Wh({{ user[storage_facility] * assets[storage_facility]["storage capacity"] }});</script>
+                                </td>
+                                <td>
+                                    <input type="number"
+                                        class="small_input medium txt_center"
+                                        value="{{ user[storage_facility_price(storage_facility) ] }}"
+                                        id="{{ storage_facility_price(storage_facility) }}"
+                                        name="{{ storage_facility_price(storage_facility) }}" />
+                                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                                    /MWh
+                                </td>
+                                <td>
+                                    <input type="number"
+                                        class="small_input medium txt_center"
+                                        value="{{ user[storage_facility_price_buy(storage_facility) ] }}"
+                                        id="{{ storage_facility_price_buy(storage_facility) }}"
+                                        name="{{ storage_facility_price_buy(storage_facility) }}" />
+                                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                                    /MWh
+                                </td>
+                                <td>
+                                    <input type="checkbox" id="{{ storage_facility_SCP(storage_facility) }}" name="{{ storage_facility_SCP(storage_facility) }}" {{ 'checked' if storage_facility in SCP else '' }}>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </table>
+                <div class="flex-row" style="justify-content:center;">
+                    <b class="margin white button padding" onclick="change_prices();">Save changes</b>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
     <br>
     <br>
     <br>

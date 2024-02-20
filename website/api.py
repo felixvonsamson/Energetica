@@ -387,7 +387,7 @@ def create_network():
     Path(f"instance/network_data/{new_network.id}/charts").mkdir(
         parents=True, exist_ok=True
     )
-    g.engine.data["network_data"][network_name] = data_init_network(1441)
+    g.engine.data["network_data"][new_network.id] = data_init_network(1441)
     past_data = data_init_network(1440)
     Path(f"instance/network_data/{new_network.id}/prices").mkdir(
         parents=True, exist_ok=True
