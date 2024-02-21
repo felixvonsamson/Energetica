@@ -550,10 +550,7 @@ def create_network(engine, player, name):
     past_data = data_init_network(1440)
     Path(f"{network_path}/prices").mkdir(parents=True, exist_ok=True)
     for timescale in ["day", "5_days", "month", "6_months"]:
-        with open(
-            f"{network_path}/prices/{timescale}.pck",
-            "wb",
-        ) as file:
+        with open(f"{network_path}/prices/{timescale}.pck", "wb") as file:
             pickle.dump(past_data, file)
     engine.log(f"{player.username} created the network {name}")
 
