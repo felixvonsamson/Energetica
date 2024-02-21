@@ -5,7 +5,6 @@ Here is the logic for the engine of the game
 import datetime
 import pickle
 import logging
-import copy
 import time
 from . import db
 from .database import Network, Under_construction, Shipment, Active_facilites
@@ -193,16 +192,15 @@ def state_update_m(engine, app):
     ).total_seconds() / 5.0  # 60.0 or 5.0
     while engine.data["total_t"] < total_t:
         engine.data["current_t"] += 1
-        # print(f"t = {engine.data['current_t']}")
         engine.data["total_t"] += 1
+        # print(f"t = {engine.data['total_t']}")
         if engine.data["total_t"] % 60 == 0:
             save_past_data_threaded(app, engine)
         if engine.data["current_t"] > 1440:
             engine.data["current_t"] = 1
             clear_current_data(engine, app)
         with app.app_context():
-            if engine.data["current_t"] % 10 == 1:
-                engine.config.update_mining_productivity()
+            if engine.data["total_t"] % 10 == 1:
                 update_weather(engine)
             update_electricity(engine)
 

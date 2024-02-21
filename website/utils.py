@@ -321,6 +321,7 @@ def save_past_data_threaded(app, engine):
 
     def save_data():
         with app.app_context():
+            engine.config.update_mining_productivity()
             players = Player.query.all()
             for player in players:
                 past_data = {}
