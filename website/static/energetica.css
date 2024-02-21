@@ -45,6 +45,10 @@ canvas {
     background-color: #285430
 }
 
+.txt_pine {
+    color: #285430;
+}
+
 .coal {
     color: #fff;
     background-color: #000000
@@ -1004,6 +1008,60 @@ canvas {
 
 .weather_level.water{
     background-color: #0c10f2;
+}
+
+.priority_list{
+    padding:0;
+}
+
+.priority_list li:nth-child(even) {
+    background-color: #d6c79a
+}
+
+.priority_list .item {
+    background-color: #e5d9b6;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.draggable {
+    cursor: move;
+}
+
+.item {
+    display: flex;
+    align-items: center;
+}
+
+.details {
+    min-width: 300px;
+    text-align: center;
+}
+
+.priority_list_icon{
+    width:1em;
+    text-align: center;
+}
+
+.priority_arrow_img{
+    height:300px;
+    margin:0 12px;
+}
+
+.priority_arrow_img.up{
+    transform: rotate(180deg);
+}
+
+.priority_list_txt.left{
+    transform:translateX(50%) rotate(-90deg);
+    color:darkred;
+}
+
+.priority_list_txt.right{
+    transform:translateX(-50%) rotate(90deg);
+    color:darkblue;
 }
 
 @media only screen and (max-width: 1500px) {
