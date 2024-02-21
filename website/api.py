@@ -249,8 +249,21 @@ def get_generation_prioirity():
                 ):
                     rest_of_priorities.insert(j, "buy_" + facility)
                     break
+                if j + 1 == len(rest_of_priorities):
+                    rest_of_priorities.append("buy_" + facility)
+                    break
     demand_priorities = current_user.read_project_priority("demand_priorities")
-    return jsonify(renewable_priorities, rest_of_priorities, demand_priorities)
+    for demand in demand_priorities:
+        for j, f in enumerate(rest_of_priorities):
+            if getattr(current_user, "price_buy_" + demand) < getattr(
+                current_user, "price_" + f
+            ):
+                rest_of_priorities.insert(j, "buy_" + demand)
+                break
+            if j + 1 == len(rest_of_priorities):
+                rest_of_priorities.append("buy_" + demand)
+                break
+    return jsonify(renewable_priorities, rest_of_priorities)
 
 
 @api.route("/get_constructions", methods=["GET"])

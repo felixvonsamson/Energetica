@@ -178,11 +178,6 @@
                     <th>Power facility</th>
                     <th>Installed capacity</th>
                     <th>Min selling price</th>
-                    <th>
-                        <div class="hover_info">
-                            SCP<span class="popup_info small">Self-consumption priority</span>
-                        </div>
-                    </th>
                 </tr>
                 {% macro power_facility_price(power_facility) -%}
                     {{ 'price_'+power_facility }}
@@ -209,9 +204,6 @@
                                 <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                 /MWh
                             </td>
-                            <td>
-                                <input type="checkbox" id="{{ power_facility_SCP(power_facility) }}" name="{{ power_facility_SCP(power_facility) }}" {{ 'checked' if power_facility in SCP else '' }}>
-                            </td>
                         </tr>
                     {% endif %}
                 {% endfor %}
@@ -227,11 +219,6 @@
                         <th>Installed capacity</th>
                         <th>Min selling price</th>
                         <th>Max buying price</th>
-                        <th>
-                            <div class="hover_info">
-                                SCP<span class="popup_info small">Self-consumption priority</span>
-                            </div>
-                        </th>
                     </tr>
                     {% macro storage_facility_price(storage_facility) -%}
                         {{ 'price_'+storage_facility }}
@@ -266,9 +253,6 @@
                                         name="{{ storage_facility_price_buy(storage_facility) }}" />
                                     <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                     /MWh
-                                </td>
-                                <td>
-                                    <input type="checkbox" id="{{ storage_facility_SCP(storage_facility) }}" name="{{ storage_facility_SCP(storage_facility) }}" {{ 'checked' if storage_facility in SCP else '' }}>
                                 </td>
                             </tr>
                         {% endif %}

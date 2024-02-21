@@ -1019,18 +1019,49 @@ canvas {
 }
 
 .priority_list .item {
-    min-width: 320px;
     background-color: #e5d9b6;
     list-style: none;
     display: flex;
-    cursor: move;
     align-items: center;
     justify-content: space-between;
 }
 
-.item .details {
+.draggable {
+    cursor: move;
+}
+
+.item {
     display: flex;
     align-items: center;
+}
+
+.details {
+    min-width: 300px;
+    text-align: center;
+}
+
+.priority_list_icon{
+    width:1em;
+    text-align: center;
+}
+
+.priority_arrow_img{
+    height:300px;
+    margin:0 12px;
+}
+
+.priority_arrow_img.up{
+    transform: rotate(180deg);
+}
+
+.priority_list_txt.left{
+    transform:translateX(50%) rotate(-90deg);
+    color:darkred;
+}
+
+.priority_list_txt.right{
+    transform:translateX(-50%) rotate(90deg);
+    color:darkblue;
 }
 
 @media only screen and (max-width: 1500px) {
