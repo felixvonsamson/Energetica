@@ -212,7 +212,7 @@ class Player(db.Model, UserMixin):
     )
     demand_priorities = db.Column(
         db.Text,
-        default="transport industry research construction",
+        default="transport,industry,research,construction",
     )
     construction_priorities = db.Column(db.Text, default="")
     research_priorities = db.Column(db.Text, default="")
@@ -287,7 +287,10 @@ class Player(db.Model, UserMixin):
         if getattr(self, attr) == "":
             return []
         priority_list = getattr(self, attr).split(",")
-        return list(map(int, priority_list))
+        if attr in ["construction_priorities", "research_priorities"]:
+            return list(map(int, priority_list))
+        else:
+            return priority_list
 
     def add_project_priority(self, attr, id):
         if getattr(self, attr) == "":
@@ -470,4 +473,24 @@ class CircularBufferPlayer:
                     result[category][subcategory] = buffer[-1]
                 else:
                     result[category][subcategory] = 0.0
+        return result
+
+
+class CircularBufferNetwork:
+    """Class that stores the active data of a Network"""
+
+    def __init__(self):
+        self._data = {
+            "price": deque([0.0] * 120, maxlen=120),
+            "quantity": deque([0.0] * 120, maxlen=120),
+        }
+
+    def append_value(self, new_value):
+        for category, value in new_value.items():
+            self._data[category].append(value)
+
+    def get_data(self, t=60):
+        result = defaultdict(lambda: defaultdict(dict))
+        for category, buffer in self._data.items():
+            result[category] = list(buffer)[-t:]
         return result

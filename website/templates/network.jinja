@@ -5,7 +5,7 @@
 {% block content %}
     {% set const_config = engine.const_config %}
     {% set assets = data["assets"] %}
-    {% set SCP = user.self_consumption_priority.split(' ') %}
+    {% set SCP = user.self_consumption_priority.split(',') %}
     <div class="flex-row huge title">
         Network
         {% if user.network %}: <b>{{ user.network.name }}</b>{% endif %}

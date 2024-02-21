@@ -72,32 +72,7 @@ socket.on("new_values", function (changes) {
                 }
                 var value = subcategories[subcategory];
                 var array = chart_data[category][subcategory]
-                array[0].shift()
-                array[0].push(value);
-                let mod5 = total_t % 5
-                if (mod5 != 0){
-                    array[1][1439] = array[0].slice(-mod5).reduce((acc, val) => acc + val, 0) / mod5
-                }else{
-                    array[1].shift()
-                    let new_val = (4*array[1][1438] + array[0][1439])/5
-                    array[1].push(new_val);
-                }
-                let mod30 = total_t % 30
-                if (mod30 != 0){
-                    array[2][1439] = array[0].slice(-mod30).reduce((acc, val) => acc + val, 0) / mod30
-                }else{
-                    array[2].shift()
-                    let new_val = (29*array[1][1438] + array[0][1439])/30
-                    array[2].push(new_val);
-                }
-                let mod180 = total_t % 180
-                if (mod180 != 0){
-                    array[3][1439] = array[0].slice(-mod180).reduce((acc, val) => acc + val, 0) / mod180
-                }else{
-                    array[3].shift()
-                    let new_val = (179*array[1][1438] + array[0][1439])/180
-                    array[3].push(new_val);
-                }
+                reduce_resolution(value, array, total_t);
             }
         }
         sessionStorage.setItem("chart_data", JSON.stringify(chart_data));
@@ -106,6 +81,48 @@ socket.on("new_values", function (changes) {
         }
     }
 });
+
+// receive new network values from the server
+socket.on("new_network_values", function (changes) {
+    let network_data = JSON.parse(sessionStorage.getItem("network_data"));
+    let last_value = JSON.parse(sessionStorage.getItem("last_value"));
+    let total_t = last_value["total_t"] + 1;
+    for (var category in changes) {
+        var value = changes[category];
+        var array = network_data[category];
+        reduce_resolution(value, array, total_t);
+    }
+    sessionStorage.setItem("network_data", JSON.stringify(network_data));
+});
+
+function reduce_resolution(value, array, total_t){
+    array[0].shift()
+    array[0].push(value);
+    let mod5 = total_t % 5
+    if (mod5 != 0){
+        array[1][1439] = array[0].slice(-mod5).reduce((acc, val) => acc + val, 0) / mod5
+    }else{
+        array[1].shift()
+        let new_val = (4*array[1][1438] + array[0][1439])/5
+        array[1].push(new_val);
+    }
+    let mod30 = total_t % 30
+    if (mod30 != 0){
+        array[2][1439] = array[0].slice(-mod30).reduce((acc, val) => acc + val, 0) / mod30
+    }else{
+        array[2].shift()
+        let new_val = (29*array[1][1438] + array[0][1439])/30
+        array[2].push(new_val);
+    }
+    let mod180 = total_t % 180
+    if (mod180 != 0){
+        array[3][1439] = array[0].slice(-mod180).reduce((acc, val) => acc + val, 0) / mod180
+    }else{
+        array[3].shift()
+        let new_val = (179*array[1][1438] + array[0][1439])/180
+        array[3].push(new_val);
+    }
+}
 
 // updates specific fields of the page without reloading
 socket.on("new_notification", function (notification) {

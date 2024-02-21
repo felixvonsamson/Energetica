@@ -17,10 +17,9 @@ from .utils import (
     cancel_project,
     pause_project,
     increase_project_priority,
-    read_priority_list,
 )
 from . import db
-from .database import Hex, Player, Chat, Network, Under_construction
+from .database import Hex, Player, Chat, Network, CircularBufferNetwork
 
 api = Blueprint("api", __name__)
 
@@ -168,7 +167,7 @@ def get_chart_data():
                 dict1[key][sub_key][3] = dict1[key][sub_key][3][
                     len(new_6month) :
                 ]
-                dict1[key][sub_key][2].extend(new_6month)
+                dict1[key][sub_key][3].extend(new_6month)
 
     total_t = g.engine.data["total_t"]
     current_data = g.engine.data["current_data"][current_user.id].get_data(
@@ -178,14 +177,28 @@ def get_chart_data():
     with open(filename, "rb") as file:
         data = pickle.load(file)
     concat_slices(data, current_data)
-    for category in data:
-        for subcategory in data[category]:
-            for i in range(4):
-                for j in range(len(data[category][subcategory][i])):
-                    if isinstance(data[category][subcategory][i][j], int):
-                        print(category, subcategory, i, j)
-                        print(data[category][subcategory][i])
-    return jsonify({"total_t": total_t, "data": data})
+
+    network_data = None
+    if current_user.network is not None:
+        current_network_data = {
+            "network_data": g.engine.data["network_data"][
+                current_user.network.id
+            ].get_data(t=total_t % 60 + 1)
+        }
+        filename = (
+            f"instance/network_data/{current_user.network.id}/time_series.pck"
+        )
+        with open(filename, "rb") as file:
+            network_data = {"network_data": pickle.load(file)}
+        concat_slices(network_data, current_network_data)
+
+    return jsonify(
+        {
+            "total_t": total_t,
+            "data": data,
+            "network_data": network_data["network_data"],
+        }
+    )
 
 
 # Gets the data from the market for the market graph
@@ -207,16 +220,7 @@ def get_market_data():
             )
     else:
         market_data = None
-    timescale = request.args.get("timescale")
-    filename_prices = f"instance/network_data/{current_user.network.id}/prices/{timescale}.pck"
-    with open(filename_prices, "rb") as file:
-        prices = pickle.load(file)
-    return jsonify(
-        g.engine.data["current_t"],
-        market_data,
-        prices,
-        g.engine.data["network_data"][current_user.network.id],
-    )
+    return jsonify(market_data)
 
 
 @api.route("/get_player_data", methods=["GET"])
@@ -230,10 +234,12 @@ def get_player_data():
 @api.route("/get_generation_prioirity", methods=["GET"])
 def get_generation_prioirity():
     """Gets generation and demand priority for this player"""
-    renewable_priorities = read_priority_list(
-        current_user.self_consumption_priority
+    renewable_priorities = current_user.read_project_priority(
+        "self_consumption_priority"
     )
-    rest_of_priorities = read_priority_list(current_user.rest_of_priorities)
+    rest_of_priorities = current_user.read_project_priority(
+        "rest_of_priorities"
+    )
     for facility in rest_of_priorities[:]:
         if facility in g.engine.storage_facilities:
             for j, f in enumerate(rest_of_priorities):
@@ -242,7 +248,7 @@ def get_generation_prioirity():
                 ):
                     rest_of_priorities.insert(j, "buy_" + facility)
                     break
-    demand_priorities = read_priority_list(current_user.demand_priorities)
+    demand_priorities = current_user.read_project_priority("demand_priorities")
     return jsonify(renewable_priorities, rest_of_priorities, demand_priorities)
 
 
@@ -349,10 +355,23 @@ def change_network_prices():
     on the network"""
     json = request.get_json()
     prices = json["prices"]
-    SCPs = json["SCPs"]
-    set_network_prices(
-        engine=g.engine, player=current_user, prices=prices, SCPs=SCPs
-    )
+    set_network_prices(engine=g.engine, player=current_user, prices=prices)
+    return jsonify("success")
+
+
+@api.route("/request_change_facility_priority", methods=["POST"])
+def request_change_facility_priority():
+    """this function is executed when a player changes the generation priority"""
+    json = request.get_json()
+    priority = json["priority"]
+    price_list = []
+    for facility in priority:
+        price_list.append(getattr(current_user, "price_" + facility))
+    price_list.sort()
+    prices = {}
+    for i, facility in enumerate(priority):
+        prices["price_" + facility] = price_list[i]
+    set_network_prices(engine=g.engine, player=current_user, prices=prices)
     return jsonify("success")
 
 
@@ -407,17 +426,16 @@ def create_network():
     Path(f"instance/network_data/{new_network.id}/charts").mkdir(
         parents=True, exist_ok=True
     )
-    g.engine.data["network_data"][new_network.id] = data_init_network(1441)
-    past_data = data_init_network(1440)
-    Path(f"instance/network_data/{new_network.id}/prices").mkdir(
+    g.engine.data["network_data"][new_network.id] = CircularBufferNetwork()
+    past_data = data_init_network()
+    Path(f"instance/network_data/{new_network.id}").mkdir(
         parents=True, exist_ok=True
     )
-    for timescale in ["day", "5_days", "month", "6_months"]:
-        with open(
-            f"instance/network_data/{new_network.id}/prices/{timescale}.pck",
-            "wb",
-        ) as file:
-            pickle.dump(past_data, file)
+    with open(
+        f"instance/network_data/{new_network.id}/time_series.pck",
+        "wb",
+    ) as file:
+        pickle.dump(past_data, file)
     g.engine.log(f"{current_user.username} created the network {network_name}")
     return redirect("/network", code=303)
 

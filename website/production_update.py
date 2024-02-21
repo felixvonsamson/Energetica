@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 from .database import Network, Player, Under_construction, Shipment
 from . import db
-from .utils import notify, read_priority_list
+from .utils import notify
 
 resource_to_extraction = {
     "coal": "coal_mine",
@@ -51,12 +51,13 @@ def update_electricity(engine):
             )
         market_logic(engine, new_values, market, t)
         # Save market data
-        engine.data["network_data"][network.id]["price"][t] = market[
-            "market_price"
-        ]
-        engine.data["network_data"][network.id]["quantity"][t] = market[
-            "market_quantity"
-        ]
+        new_network_values = {
+            "price": market["market_price"],
+            "quantity": market["market_quantity"],
+        }
+        engine.data["network_data"][network.id].append_value(new_network_values)
+        for player in network.members:
+            player.emit("new_network_values", new_network_values)
         with open(
             f"instance/network_data/{network.id}/charts/market_t{engine.data['total_t']}.pck",
             "wb",
@@ -288,7 +289,7 @@ def calculate_generation_without_market(engine, new_values, player, t):
             )
 
     # demands are demanded on the internal market
-    for demand_type in player.demand_priorities.split(" "):
+    for demand_type in player.demand_priorities.split(","):
         if demand_type in demand:
             price = getattr(player, "price_buy_" + demand_type)
             internal_market = bid(
@@ -356,16 +357,16 @@ def calculate_generation_with_market(engine, new_values, market, player, t):
             )
 
     # if demand is still not met, player has to bid on the market at the set prices
-    demand_priorities = player.demand_priorities.split(" ")
+    demand_priorities = player.demand_priorities.split(",")
     for demand_type in demand_priorities:
         bid_q = demand[demand_type]
         price = getattr(player, "price_buy_" + demand_type)
         market = bid(market, player.id, bid_q, price, demand_type)
 
     # Sell capacities of remaining facilities on the market
-    for facility in read_priority_list(
-        player.rest_of_priorities
-    ) + read_priority_list(player.self_consumption_priority):
+    for facility in player.read_project_priority(
+        "rest_of_priorities"
+    ) + player.read_project_priority("self_consumption_priority"):
         if assets[facility]["ramping speed"] != 0:
             if getattr(player, facility) > 0:
                 max_prod = calculate_prod(

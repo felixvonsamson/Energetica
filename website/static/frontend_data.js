@@ -26,7 +26,7 @@ function retrieve_constructions() {
         });
 }
 
-function load_chart_data() {
+function load_chart_data(network = false) {
     if (typeof(Storage) !== "undefined") {
         const chart_data = sessionStorage.getItem("chart_data");
         if (chart_data) {
@@ -35,15 +35,20 @@ function load_chart_data() {
             var last_date = new Date(last_value["time"]);
             if (currentDate.getTime() - last_date.getTime() > 120000){
                 retrieve_player_data();
-                return retrieve_chart_data();
+                return retrieve_chart_data(network);
             }
-            return Promise.resolve(JSON.parse(chart_data));
+            if (network){
+                const network_data = sessionStorage.getItem("network_data");
+                return Promise.resolve(JSON.parse(network_data));
+            }else{
+                return Promise.resolve(JSON.parse(chart_data));
+            }
         }
     }
-    return retrieve_chart_data();
+    return retrieve_chart_data(network);
 }
  
-function retrieve_chart_data() {
+function retrieve_chart_data(network) {
     console.log("Feching chart data from the server")
     return fetch("/get_chart_data")
         .then((response) => response.json())
@@ -51,7 +56,12 @@ function retrieve_chart_data() {
             var currentDate = new Date();
             sessionStorage.setItem("last_value", JSON.stringify({"total_t" : raw_data["total_t"], "time": currentDate}));
             sessionStorage.setItem("chart_data", JSON.stringify(raw_data["data"]));
-            return raw_data["data"];
+            sessionStorage.setItem("network_data", JSON.stringify(raw_data["network_data"]));
+            if (network){
+                return raw_data["data"];
+            }else{
+                return raw_data["network_data"];
+            }
         })
         .catch((error) => {
             console.error(`caught error ${error}`);

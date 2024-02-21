@@ -182,16 +182,6 @@ def clear_current_data(engine, app):
             0
         ] * 1440
 
-        networks = Network.query.all()
-        network_data = copy.deepcopy(engine.data["network_data"])
-        for network in networks:
-            for element in engine.data["network_data"][network.id]:
-                network_data[network.id][element].pop(0)
-                data_array = engine.data["network_data"][network.id][element]
-                last_value = data_array[-1]
-                data_array.clear()
-                data_array.extend([last_value] + [0] * 1440)
-
 
 from .production_update import update_electricity  # noqa: E402
 

@@ -97,18 +97,16 @@ def add_asset(player_id, construction_id):
         if construction.name in engine.extraction_facilities + [
             "carbon_capture"
         ]:
-            add_to_priority_list(player, "demand_priorities", construction.name)
+            player.add_project_priority("demand_priorities", construction.name)
         if construction.name in engine.renewables:
-            add_to_priority_list(
-                player, "self_consumption_priority", construction.name
+            player.add_project_priority(
+                "self_consumption_priority", construction.name
             )
         if (
             construction.name
             in engine.storage_facilities + engine.controllable_facilities
         ):
-            add_to_priority_list(
-                player, "rest_of_priorities", construction.name
-            )
+            player.add_project_priority("rest_of_priorities", construction.name)
     setattr(player, construction.name, getattr(player, construction.name) + 1)
     priority_list_name = "construction_priorities"
     if construction.family == "Technologies":
@@ -161,14 +159,6 @@ def add_asset(player_id, construction_id):
         db.session.add(new_facility)
         db.session.commit()
     engine.config.update_config_for_user(player.id)
-
-
-def add_to_priority_list(player, attr, name):
-    """add facility to priority list"""
-    if getattr(player, attr) == "":
-        setattr(player, attr, name)
-    else:
-        setattr(player, attr, getattr(player, attr) + " " + name)
 
 
 def remove_asset(player_id, facility, decommissioning=True):
@@ -371,9 +361,9 @@ def save_past_data_threaded(app, engine):
                 ) as file:
                     past_data = pickle.load(file)
 
-                network_data = engine.data["network_data"][network.id]
-                for element in network_data:
-                    new_el_data = network_data[element]
+                new_data = engine.data["network_data"][network.id].get_data()
+                for element in new_data:
+                    new_el_data = new_data[element]
                     past_el_data = past_data[element]
                     reduce_resolution(past_el_data, np.array(new_el_data))
 
@@ -403,10 +393,10 @@ def save_past_data_threaded(app, engine):
     thread.start()
 
 
-def data_init_network(length):
+def data_init_network():
     return {
-        "price": [0] * length,
-        "quantity": [0] * length,
+        "price": [[0.0] * 1440] * 4,
+        "quantity": [[0.0] * 1440] * 4,
     }
 
 
@@ -527,37 +517,35 @@ def confirm_location(engine, player, location):
     return {"response": "success"}
 
 
-def set_network_prices(engine, player, prices, SCPs):
+def set_network_prices(engine, player, prices={}):
     """this function is executed when a player changes the value the enegy selling prices"""
 
     def sort_priority(priority_list, prefix="price_"):
         return sorted(priority_list, key=lambda x: getattr(player, prefix + x))
 
-    SCP_list = []
-    rest_list = []
-    demand_list = player.demand_priorities.split(" ")
-
-    for SCP in SCPs:
-        facility = SCP[4:]
-        if SCPs[SCP]:
-            SCP_list.append(facility)
-        else:
-            rest_list.append(facility)
+    def sort_SCP(SCP_list):
+        return sorted(SCP_list, key=lambda x: engine.renewables.index(x))
 
     for price in prices:
         setattr(player, price, prices[price])
 
-    rest_list = sort_priority(rest_list)
-    SCP_list = engine.renewables + sort_priority(SCP_list)
-    demand_list = sort_priority(demand_list, prefix="price_buy_")
+    rest_list = sort_priority(
+        player.read_project_priority("rest_of_priorities")
+    )
+    SCP_list = sort_SCP(
+        player.read_project_priority("self_consumption_priority")
+    )
+    demand_list = sort_priority(
+        player.read_project_priority("demand_priorities"), prefix="price_buy_"
+    )
     demand_list.reverse()
 
     engine.log(f"{player.username} updated their prices")
 
-    space = " "
-    player.self_consumption_priority = space.join(SCP_list)
-    player.rest_of_priorities = space.join(rest_list)
-    player.demand_priorities = space.join(demand_list)
+    comma = ","
+    player.self_consumption_priority = comma.join(SCP_list)
+    player.rest_of_priorities = comma.join(rest_list)
+    player.demand_priorities = comma.join(demand_list)
     db.session.commit()
 
 
@@ -741,11 +729,3 @@ def get_construction_data(player):
     )
     research_priorities = player.read_project_priority("research_priorities")
     return {0: projects, 1: construction_priorities, 2: research_priorities}
-
-
-def read_priority_list(list):
-    """transforms sting into list"""
-    if list == "":
-        return []
-    else:
-        return list.split(" ")
