@@ -741,3 +741,11 @@ def get_construction_data(player):
     )
     research_priorities = player.read_project_priority("research_priorities")
     return {0: projects, 1: construction_priorities, 2: research_priorities}
+
+
+def read_priority_list(list):
+    """transforms sting into list"""
+    if list == "":
+        return []
+    else:
+        return list.split(" ")

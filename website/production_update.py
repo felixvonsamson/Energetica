@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 from .database import Network, Player, Under_construction, Shipment
 from . import db
-from .utils import notify
+from .utils import notify, read_priority_list
 
 resource_to_extraction = {
     "coal": "coal_mine",
@@ -819,13 +819,6 @@ def construction_emissions(engine, new_values, player, t, assets):
     add_emissions(
         engine, new_values, player, t, "construction", emissions_construction
     )
-
-
-def read_priority_list(list):
-    if list == "":
-        return []
-    else:
-        return list.split(" ")
 
 
 def reduce_demand(

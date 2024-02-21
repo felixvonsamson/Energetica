@@ -17,6 +17,7 @@ from .utils import (
     cancel_project,
     pause_project,
     increase_project_priority,
+    read_priority_list,
 )
 from . import db
 from .database import Hex, Player, Chat, Network, Under_construction
@@ -224,6 +225,25 @@ def get_player_data():
     asset_count = current_user.get_values()
     config = g.engine.config[current_user.id]
     return jsonify(asset_count, config)
+
+
+@api.route("/get_generation_prioirity", methods=["GET"])
+def get_generation_prioirity():
+    """Gets generation and demand priority for this player"""
+    renewable_priorities = read_priority_list(
+        current_user.self_consumption_priority
+    )
+    rest_of_priorities = read_priority_list(current_user.rest_of_priorities)
+    for facility in rest_of_priorities[:]:
+        if facility in g.engine.storage_facilities:
+            for j, f in enumerate(rest_of_priorities):
+                if getattr(current_user, "price_buy_" + facility) < getattr(
+                    current_user, "price_" + f
+                ):
+                    rest_of_priorities.insert(j, "buy_" + facility)
+                    break
+    demand_priorities = read_priority_list(current_user.demand_priorities)
+    return jsonify(renewable_priorities, rest_of_priorities, demand_priorities)
 
 
 @api.route("/get_constructions", methods=["GET"])

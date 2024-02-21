@@ -45,6 +45,10 @@ canvas {
     background-color: #285430
 }
 
+.txt_pine {
+    color: #285430;
+}
+
 .coal {
     color: #fff;
     background-color: #000000
@@ -1004,6 +1008,29 @@ canvas {
 
 .weather_level.water{
     background-color: #0c10f2;
+}
+
+.priority_list{
+    padding:0;
+}
+
+.priority_list li:nth-child(even) {
+    background-color: #d6c79a
+}
+
+.priority_list .item {
+    min-width: 320px;
+    background-color: #e5d9b6;
+    list-style: none;
+    display: flex;
+    cursor: move;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.item .details {
+    display: flex;
+    align-items: center;
 }
 
 @media only screen and (max-width: 1500px) {
