@@ -362,32 +362,15 @@ def join_network():
 def create_network():
     """This endpoint is used when a player creates a network"""
     network_name = request.form.get("network_name")
-    if len(network_name) < 3 or len(network_name) > 40:
+    response = utils.create_network(g.engine, current_user, network_name)
+    if response["response"] == "nameLengthInvalid":
         flash(
             "Network name must be between 3 and 40 characters", category="error"
         )
         return redirect("/network", code=303)
-    if Network.query.filter_by(name=network_name).first() is not None:
+    if response["response"] == "nameAlreadyUsed":
         flash("A network with this name already exists", category="error")
         return redirect("/network", code=303)
-    new_network = Network(name=network_name, members=[current_user])
-    db.session.add(new_network)
-    db.session.commit()
-    Path(f"instance/network_data/{new_network.id}/charts").mkdir(
-        parents=True, exist_ok=True
-    )
-    g.engine.data["network_data"][new_network.id] = data_init_network(1441)
-    past_data = data_init_network(1440)
-    Path(f"instance/network_data/{new_network.id}/prices").mkdir(
-        parents=True, exist_ok=True
-    )
-    for timescale in ["day", "5_days", "month", "6_months"]:
-        with open(
-            f"instance/network_data/{new_network.id}/prices/{timescale}.pck",
-            "wb",
-        ) as file:
-            pickle.dump(past_data, file)
-    g.engine.log(f"{current_user.username} created the network {network_name}")
     return redirect("/network", code=303)
 
 
