@@ -26,8 +26,8 @@ function updateToPay(saleId, basePrice) {
             totalPrice % 1 === 0
                 ? totalPrice.toFixed(0)
                 : totalPrice.toFixed(2);
-        toPaySpan.textContent = `(${totalPrice}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>)`;
+        toPaySpan.innerHTML = `(${totalPrice}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>)`;
     } else {
-        toPaySpan.textContent = `(0<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>)`;
+        toPaySpan.innerHTML = `(0<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>)`;
     }
 }
