@@ -537,6 +537,9 @@ def join_network(engine, player, network):
 
 
 def create_network(engine, player, name):
+    """shared API method to create a network. Network name must pass validation,
+    namely it must not be too long, nor too short, and must not already be in
+    use."""
     if len(name) < 3 or len(name) > 40:
         return {"response": "nameLengthInvalid"}
     if Network.query.filter_by(name=name).first() is not None:
