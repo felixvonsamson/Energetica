@@ -449,9 +449,9 @@ def market_logic(engine, new_values, market, t):
                 player = Player.query.get(row.player_id)
                 demand = new_values[row.player_id]["demand"]
                 demand["dumping"] += dump_cap
-                player.money -= dump_cap * 5 / 1000000
+                player.money -= dump_cap * 5 / 60000000
                 revenue = new_values[row.player_id]["revenues"]
-                revenue["dumping"] -= dump_cap * 5 / 1000000
+                revenue["dumping"] -= dump_cap * 5 / 60000000
                 continue
             break
         sell(engine, new_values, row, market_price)
