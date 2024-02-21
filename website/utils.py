@@ -553,6 +553,8 @@ def create_network(engine, player, name):
         with open(f"{network_path}/prices/{timescale}.pck", "wb") as file:
             pickle.dump(past_data, file)
     engine.log(f"{player.username} created the network {name}")
+    rest_api.rest_notify_network_change(engine)
+    return {"response": "success"}
 
 
 def set_network_prices(engine, player, prices, SCPs):
