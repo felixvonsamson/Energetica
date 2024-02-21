@@ -11,6 +11,7 @@ import os
 import time
 import numpy as np
 from datetime import datetime
+from pathlib import Path
 
 from website import rest_api
 from .database import (
@@ -533,6 +534,31 @@ def join_network(engine, player, network):
     db.session.commit()
     print(f"{player.username} joined the network {player.network.name}")
     rest_api.rest_notify_network_change(engine)
+
+
+def create_network(engine, player, name):
+    if len(name) < 3 or len(name) > 40:
+        return {"response": "nameLengthInvalid"}
+    if Network.query.filter_by(name=name).first() is not None:
+        return {"response": "nameAlreadyUsed"}
+    new_network = Network(name=name, members=[player])
+    db.session.add(new_network)
+    db.session.commit()
+    Path(f"instance/network_data/{new_network.id}/charts").mkdir(
+        parents=True, exist_ok=True
+    )
+    engine.data["network_data"][new_network.id] = data_init_network(1441)
+    past_data = data_init_network(1440)
+    Path(f"instance/network_data/{new_network.id}/prices").mkdir(
+        parents=True, exist_ok=True
+    )
+    for timescale in ["day", "5_days", "month", "6_months"]:
+        with open(
+            f"instance/network_data/{new_network.id}/prices/{timescale}.pck",
+            "wb",
+        ) as file:
+            pickle.dump(past_data, file)
+    engine.log(f"{player.username} created the network {name}")
 
 
 def set_network_prices(engine, player, prices, SCPs):
