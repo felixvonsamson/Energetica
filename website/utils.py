@@ -544,17 +544,14 @@ def create_network(engine, player, name):
     new_network = Network(name=name, members=[player])
     db.session.add(new_network)
     db.session.commit()
-    Path(f"instance/network_data/{new_network.id}/charts").mkdir(
-        parents=True, exist_ok=True
-    )
+    network_path = f"instance/network_data/{new_network.id}"
+    Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
     engine.data["network_data"][new_network.id] = data_init_network(1441)
     past_data = data_init_network(1440)
-    Path(f"instance/network_data/{new_network.id}/prices").mkdir(
-        parents=True, exist_ok=True
-    )
+    Path(f"{network_path}/prices").mkdir(parents=True, exist_ok=True)
     for timescale in ["day", "5_days", "month", "6_months"]:
         with open(
-            f"instance/network_data/{new_network.id}/prices/{timescale}.pck",
+            f"{network_path}/prices/{timescale}.pck",
             "wb",
         ) as file:
             pickle.dump(past_data, file)
