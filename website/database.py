@@ -147,7 +147,7 @@ class Player(db.Model, UserMixin):
 
     # Workers :
     construction_workers = db.Column(db.Integer, default=1)
-    lab_workers = db.Column(db.Integer, default=1)
+    lab_workers = db.Column(db.Integer, default=0)
 
     # Energy facilities :
     steam_engine = db.Column(db.Integer, default=1)
