@@ -189,7 +189,7 @@ from .production_update import update_electricity  # noqa: E402
 def state_update_m(engine, app):
     total_t = (
         datetime.datetime.now() - engine.data["start_date"]
-    ).total_seconds() / 5.0  # 60.0 or 5.0
+    ).total_seconds() / 60.0  # 60.0 or 5.0
     while engine.data["total_t"] < total_t:
         engine.data["current_t"] += 1
         engine.data["total_t"] += 1

@@ -26,7 +26,7 @@ from website.gameEngine import gameEngine  # noqa: E402
 def create_app():
     # creates the app :
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = "ghdäwrjennddsfjdcfgglkgvou"
+    app.config["SECRET_KEY"] = "ghdäwrldutnstwhwobjotrdcfgglkgvou"
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     db.init_app(app)
 
@@ -115,7 +115,7 @@ def create_app():
             args=(engine, app),
             id="state_update_m",
             trigger="cron",
-            second="*/5",  # "*/5" or "0"
+            second="0",  # "*/5" or "0"
         )
         scheduler.add_job(
             func=check_upcoming_actions,
