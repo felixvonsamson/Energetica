@@ -3,7 +3,7 @@ This code is the p5.js script that enables the player to choose a location on an
 interactive map just after having registerd to the game.
 */
 
-max_q = [1, 1, 5, 25000000000, 7000000000, 1200000000, 100000000];
+max_q = [1, 1, 5, 2500000000, 700000000, 120000000, 10000000];
 // Tile item :
 class Hex {
     constructor(_id, _q, _r, _resources, player) {
