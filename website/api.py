@@ -5,6 +5,7 @@ These functions make the link between the website and the database
 from flask import Blueprint, request, flash, jsonify, g, current_app, redirect
 from flask_login import login_required, current_user
 import pickle
+import shutil
 import numpy as np
 from pathlib import Path
 from .utils import (
@@ -178,7 +179,7 @@ def get_chart_data():
         data = pickle.load(file)
     concat_slices(data, current_data)
 
-    network_data = None
+    network_data = {"network_data": None}
     if current_user.network is not None:
         current_network_data = {
             "network_data": g.engine.data["network_data"][
@@ -457,6 +458,7 @@ def leave_network():
         g.engine.log(
             f"The network {network.name} has been deleted because it was empty"
         )
+        shutil.rmtree(f"instance/network_data/{network.id}")
         db.session.delete(network)
     db.session.commit()
     return redirect("/network", code=303)

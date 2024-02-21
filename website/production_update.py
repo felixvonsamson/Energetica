@@ -57,7 +57,13 @@ def update_electricity(engine):
         }
         engine.data["network_data"][network.id].append_value(new_network_values)
         for player in network.members:
-            player.emit("new_network_values", new_network_values)
+            player.emit(
+                "new_network_values",
+                {
+                    "total_t": engine.data["total_t"],
+                    "network_values": new_network_values,
+                },
+            )
         with open(
             f"instance/network_data/{network.id}/charts/market_t{engine.data['total_t']}.pck",
             "wb",

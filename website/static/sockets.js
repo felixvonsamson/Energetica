@@ -84,15 +84,23 @@ socket.on("new_values", function (changes) {
 
 // receive new network values from the server
 socket.on("new_network_values", function (changes) {
-    let network_data = JSON.parse(sessionStorage.getItem("network_data"));
-    let last_value = JSON.parse(sessionStorage.getItem("last_value"));
-    let total_t = last_value["total_t"] + 1;
-    for (var category in changes) {
-        var value = changes[category];
-        var array = network_data[category];
-        reduce_resolution(value, array, total_t);
+    let total_t = changes["total_t"];
+    let last_value = JSON.parse(sessionStorage.getItem("last_value_network"));
+    if (!last_value){
+        retrieve_chart_data();
+    }else if (last_value["total_t"] + 1 != total_t){
+        retrieve_chart_data();
+    }else{
+        const currentDate = new Date();
+        sessionStorage.setItem("last_value_network", JSON.stringify({"total_t" : total_t, "time": currentDate}));
+        let network_data = JSON.parse(sessionStorage.getItem("network_data"));
+        for (var category in changes["network_values"]) {
+            var value = changes["network_values"][category];
+            let array = network_data[category];
+            reduce_resolution(value, array, total_t);
+        }
+        sessionStorage.setItem("network_data", JSON.stringify(network_data));
     }
-    sessionStorage.setItem("network_data", JSON.stringify(network_data));
 });
 
 function reduce_resolution(value, array, total_t){

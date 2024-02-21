@@ -92,7 +92,6 @@ function setup() {
         buttons[i] = new Button(resolution[i]);
     }
     buttons[0].active = true;
-    setInterval(update_graph, 5000);
     update_graph();
 }
 

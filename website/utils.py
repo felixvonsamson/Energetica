@@ -98,15 +98,18 @@ def add_asset(player_id, construction_id):
             "carbon_capture"
         ]:
             player.add_project_priority("demand_priorities", construction.name)
+            set_network_prices(engine, player)
         if construction.name in engine.renewables:
             player.add_project_priority(
                 "self_consumption_priority", construction.name
             )
+            set_network_prices(engine, player)
         if (
             construction.name
             in engine.storage_facilities + engine.controllable_facilities
         ):
             player.add_project_priority("rest_of_priorities", construction.name)
+            set_network_prices(engine, player)
     setattr(player, construction.name, getattr(player, construction.name) + 1)
     priority_list_name = "construction_priorities"
     if construction.family == "Technologies":
