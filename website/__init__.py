@@ -26,7 +26,7 @@ from website.gameEngine import gameEngine  # noqa: E402
 def create_app():
     # creates the app :
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = "ghdäwrjennddsfjdcfgglkgvou"
+    app.config["SECRET_KEY"] = "ghdäwrldutnstwhwobjotrdcfgglkgvou"
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     db.init_app(app)
 
