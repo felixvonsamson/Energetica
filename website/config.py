@@ -731,7 +731,7 @@ var_config = {
             "requirements": [],
         },
         "industry": {
-            "price": 1000 / 1.25,
+            "price": 600,
             "construction time": 1200,
             "construction energy": 10000,
             "construction pollution": 1000,
@@ -1295,10 +1295,10 @@ class Config(object):
                 ] ** getattr(player, asset)
                 assets[asset]["construction time"] *= const_config["assets"][
                     asset
-                ]["price multiplier"] ** (0.75 * getattr(player, asset))
+                ]["price multiplier"] ** (0.6 * getattr(player, asset))
                 assets[asset]["construction energy"] *= const_config["assets"][
                     asset
-                ]["price multiplier"] ** (1.25 * getattr(player, asset))
+                ]["price multiplier"] ** (1.2 * getattr(player, asset))
                 if asset in [
                     "laboratory",
                     "warehouse",
@@ -1342,6 +1342,8 @@ class Config(object):
                 in engine.storage_facilities
                 + engine.controllable_facilities
                 + engine.renewables
+                + engine.extraction_facilities
+                + engine.functional_facilities
             ):
                 # update construction time (building technology)
                 assets[asset]["construction time"] *= (
@@ -1392,32 +1394,27 @@ class Config(object):
                     )
 
             # calculate energy need :
+            bt_factor = (
+                const_config["assets"]["building_technology"]["time factor"]
+                ** player.building_technology
+            )
             if asset in engine.controllable_facilities + engine.renewables:
                 assets[asset]["construction power"] = (
                     assets[asset]["construction power factor"]
                     * assets[asset]["power generation"]
-                    / (
-                        const_config["assets"]["building_technology"][
-                            "time factor"
-                        ]
-                        ** player.building_technology
-                    )
+                    / bt_factor
                 )
             elif asset in engine.storage_facilities:
                 assets[asset]["construction power"] = (
                     assets[asset]["construction power factor"]
                     * assets[asset]["storage capacity"]
-                    / (
-                        const_config["assets"]["building_technology"][
-                            "time factor"
-                        ]
-                        ** player.building_technology
-                    )
+                    / bt_factor
                 )
             elif asset in engine.extraction_facilities:
                 assets[asset]["construction power"] = (
                     assets[asset]["construction power factor"]
                     * assets[asset]["power consumption"]
+                    / bt_factor
                 )
             else:
                 assets[asset]["construction power"] = (
