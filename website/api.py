@@ -427,23 +427,6 @@ def create_network():
     if response["response"] == "nameAlreadyUsed":
         flash("A network with this name already exists", category="error")
         return redirect("/network", code=303)
-    new_network = Network(name=network_name, members=[current_user])
-    db.session.add(new_network)
-    db.session.commit()
-    Path(f"instance/network_data/{new_network.id}/charts").mkdir(
-        parents=True, exist_ok=True
-    )
-    g.engine.data["network_data"][new_network.id] = CircularBufferNetwork()
-    past_data = utils.data_init_network()
-    Path(f"instance/network_data/{new_network.id}").mkdir(
-        parents=True, exist_ok=True
-    )
-    with open(
-        f"instance/network_data/{new_network.id}/time_series.pck",
-        "wb",
-    ) as file:
-        pickle.dump(past_data, file)
-    g.engine.log(f"{current_user.username} created the network {network_name}")
     return redirect("/network", code=303)
 
 

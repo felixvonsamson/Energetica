@@ -24,6 +24,7 @@ from .database import (
     Under_construction,
     Notification,
     Active_facilites,
+    CircularBufferNetwork,
 )
 from . import db
 from flask import current_app, flash
@@ -544,12 +545,11 @@ def create_network(engine, player, name):
     db.session.commit()
     network_path = f"instance/network_data/{new_network.id}"
     Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
-    engine.data["network_data"][new_network.id] = data_init_network(1441)
-    past_data = data_init_network(1440)
-    Path(f"{network_path}/prices").mkdir(parents=True, exist_ok=True)
-    for timescale in ["day", "5_days", "month", "6_months"]:
-        with open(f"{network_path}/prices/{timescale}.pck", "wb") as file:
-            pickle.dump(past_data, file)
+    engine.data["network_data"][new_network.id] = CircularBufferNetwork()
+    past_data = data_init_network()
+    Path(f"{network_path}").mkdir(parents=True, exist_ok=True)
+    with open(f"{network_path}/time_series.pck", "wb") as file:
+        pickle.dump(past_data, file)
     engine.log(f"{player.username} created the network {name}")
     rest_api.rest_notify_network_change(engine)
     return {"response": "success"}
