@@ -1054,6 +1054,11 @@ canvas {
     transform: rotate(180deg);
 }
 
+.priority_list_txt{
+    white-space: nowrap;
+    overflow: visible;
+}
+
 .priority_list_txt.left{
     transform:translateX(50%) rotate(-90deg);
     color:darkred;
