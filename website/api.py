@@ -5,7 +5,6 @@ These functions make the link between the website and the database
 from flask import Blueprint, request, flash, jsonify, g, current_app, redirect
 from flask_login import login_required, current_user
 import pickle
-import shutil
 import numpy as np
 from pathlib import Path
 from website import utils
@@ -377,7 +376,9 @@ def request_change_facility_priority():
     prices = {}
     for i, facility in enumerate(priority):
         prices["price_" + facility] = price_list[i]
-    set_network_prices(engine=g.engine, player=current_user, prices=prices)
+    utils.set_network_prices(
+        engine=g.engine, player=current_user, prices=prices
+    )
     return jsonify("success")
 
 
@@ -433,7 +434,7 @@ def create_network():
         parents=True, exist_ok=True
     )
     g.engine.data["network_data"][new_network.id] = CircularBufferNetwork()
-    past_data = data_init_network()
+    past_data = utils.data_init_network()
     Path(f"instance/network_data/{new_network.id}").mkdir(
         parents=True, exist_ok=True
     )
@@ -451,5 +452,4 @@ def leave_network():
     """this endpoint is called when a player leaves their network"""
     flash(f"You left network {current_user.network.name}", category="message")
     utils.leave_network(g.engine, current_user)
-    # shutil.rmtree(f"instance/network_data/{network.id}")
     return redirect("/network", code=303)
