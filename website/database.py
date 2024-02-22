@@ -134,7 +134,7 @@ class Player(db.Model, UserMixin):
     )
 
     # resources :
-    money = db.Column(db.Float, default=500000)  # default is 5000
+    money = db.Column(db.Float, default=10000)  # default is 10000
     coal = db.Column(db.Float, default=0)
     oil = db.Column(db.Float, default=0)
     gas = db.Column(db.Float, default=0)
@@ -147,7 +147,7 @@ class Player(db.Model, UserMixin):
 
     # Workers :
     construction_workers = db.Column(db.Integer, default=1)
-    lab_workers = db.Column(db.Integer, default=1)
+    lab_workers = db.Column(db.Integer, default=0)
 
     # Energy facilities :
     steam_engine = db.Column(db.Integer, default=1)
@@ -212,7 +212,7 @@ class Player(db.Model, UserMixin):
     )
     demand_priorities = db.Column(
         db.Text,
-        default="transport industry research construction",
+        default="transport,industry,research,construction",
     )
     construction_priorities = db.Column(db.Text, default="")
     research_priorities = db.Column(db.Text, default="")
@@ -236,22 +236,22 @@ class Player(db.Model, UserMixin):
     price_buy_large_pumped_hydro = db.Column(db.Float, default=200)
     price_large_pumped_hydro = db.Column(db.Float, default=780)
     price_buy_hydrogen_storage = db.Column(db.Float, default=230)
-    price_hydrogen_storage = db.Column(db.Float, default=940)
+    price_hydrogen_storage = db.Column(db.Float, default=880)
     price_buy_lithium_ion_batteries = db.Column(db.Float, default=425)
-    price_lithium_ion_batteries = db.Column(db.Float, default=999)
+    price_lithium_ion_batteries = db.Column(db.Float, default=940)
     price_buy_solid_state_batteries = db.Column(db.Float, default=420)
-    price_solid_state_batteries = db.Column(db.Float, default=990)
+    price_solid_state_batteries = db.Column(db.Float, default=900)
 
     # Demand buying prices
-    price_buy_industry = db.Column(db.Float, default=1008)
-    price_buy_construction = db.Column(db.Float, default=1006)
-    price_buy_research = db.Column(db.Float, default=1005)
-    price_buy_transport = db.Column(db.Float, default=1007)
-    price_buy_coal_mine = db.Column(db.Float, default=1001)
-    price_buy_oil_field = db.Column(db.Float, default=1002)
-    price_buy_gas_drilling_site = db.Column(db.Float, default=1003)
-    price_buy_uranium_mine = db.Column(db.Float, default=1004)
-    price_buy_carbon_capture = db.Column(db.Float, default=1000)
+    price_buy_industry = db.Column(db.Float, default=1200)
+    price_buy_construction = db.Column(db.Float, default=1020)
+    price_buy_research = db.Column(db.Float, default=1000)
+    price_buy_transport = db.Column(db.Float, default=1050)
+    price_buy_coal_mine = db.Column(db.Float, default=960)
+    price_buy_oil_field = db.Column(db.Float, default=970)
+    price_buy_gas_drilling_site = db.Column(db.Float, default=980)
+    price_buy_uranium_mine = db.Column(db.Float, default=990)
+    price_buy_carbon_capture = db.Column(db.Float, default=660)
 
     # CO2 emissions :
     emissions = db.Column(db.Float, default=0)
@@ -287,7 +287,10 @@ class Player(db.Model, UserMixin):
         if getattr(self, attr) == "":
             return []
         priority_list = getattr(self, attr).split(",")
-        return list(map(int, priority_list))
+        if attr in ["construction_priorities", "research_priorities"]:
+            return list(map(int, priority_list))
+        else:
+            return priority_list
 
     def add_project_priority(self, attr, id):
         if getattr(self, attr) == "":
@@ -470,4 +473,24 @@ class CircularBufferPlayer:
                     result[category][subcategory] = buffer[-1]
                 else:
                     result[category][subcategory] = 0.0
+        return result
+
+
+class CircularBufferNetwork:
+    """Class that stores the active data of a Network"""
+
+    def __init__(self):
+        self._data = {
+            "price": deque([0.0] * 120, maxlen=120),
+            "quantity": deque([0.0] * 120, maxlen=120),
+        }
+
+    def append_value(self, new_value):
+        for category, value in new_value.items():
+            self._data[category].append(value)
+
+    def get_data(self, t=60):
+        result = defaultdict(lambda: defaultdict(dict))
+        for category, buffer in self._data.items():
+            result[category] = list(buffer)[-t:]
         return result

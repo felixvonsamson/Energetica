@@ -9,6 +9,7 @@ from .database import (
     Shipment,
     Resource_on_sale,
     CircularBufferPlayer,
+    CircularBufferNetwork,
 )
 from . import db
 import pickle
@@ -199,14 +200,13 @@ def create_network(engine, name, members):
         Path(f"instance/network_data/{new_network.id}/charts").mkdir(
             parents=True, exist_ok=True
         )
-        engine.data["network_data"][name] = data_init_network(1441)
-        past_data = data_init_network(1440)
-        Path(f"instance/network_data/{new_network.id}/prices").mkdir(
+        engine.data["network_data"][new_network.id] = CircularBufferNetwork()
+        past_data = data_init_network()
+        Path(f"instance/network_data/{new_network.id}").mkdir(
             parents=True, exist_ok=True
         )
-        for timescale in ["day", "5_days", "month", "6_months"]:
-            with open(
-                f"instance/network_data/{new_network.id}/prices/{timescale}.pck",
-                "wb",
-            ) as file:
-                pickle.dump(past_data, file)
+        with open(
+            f"instance/network_data/{new_network.id}/time_series.pck",
+            "wb",
+        ) as file:
+            pickle.dump(past_data, file)

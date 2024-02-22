@@ -6,15 +6,10 @@ function change_prices() {
         if ((input.id == "invite_player") | (input.id == "network_name")) {
             return;
         }
-        if (input.type == "checkbox") {
-            SCPs[input.id] = input.checked;
-        } else {
-            prices[input.id] = float(input.value);
-        }
+        prices[input.id] = float(input.value);
     });
     send_form("/change_network_prices", {
         prices: prices,
-        SCPs: SCPs,
     })
         .then((response) => {
             response.json().then((raw_data) => {

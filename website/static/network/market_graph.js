@@ -1,4 +1,5 @@
 let buttons = [];
+let data = {};
 
 let margin = 40;
 let t = 0;
@@ -91,7 +92,6 @@ function setup() {
         buttons[i] = new Button(resolution[i]);
     }
     buttons[0].active = true;
-    setInterval(update_graph, 5000);
     update_graph();
 }
 
@@ -400,16 +400,16 @@ function mousePressed() {
 
 function update_graph() {
     file = res_to_data[res][0];
-    fetch(`/get_market_data?timescale=${file}&t=${t}`) // retrieves data from server
+    fetch(`/get_market_data?t=${t}`) // retrieves data from server
         .then((response) => response.json())
         .then((raw_data) => {
             strokeWeight(1);
             background(229, 217, 182);
-            if (raw_data[1] != null) {
-                supply = raw_data[1]["capacities"];
-                demand = raw_data[1]["demands"];
-                mq = raw_data[1]["market_quantity"];
-                mp = raw_data[1]["market_price"];
+            if (raw_data != null) {
+                supply = raw_data["capacities"];
+                demand = raw_data["demands"];
+                mq = raw_data["market_quantity"];
+                mp = raw_data["market_price"];
                 maxCap = Math.max(
                     ...supply["cumul_capacities"],
                     ...demand["cumul_capacities"],
@@ -520,112 +520,112 @@ function update_graph() {
             text("Market : " + display_time(t), width / 2, 0.39 * height);
             pop();
 
-            data = raw_data[2];
-            Object.keys(data).forEach((key) => {
-                const array = raw_data[3][key];
-                data[key] = reduce(data[key], array, res, raw_data[0]);
-            });
-            data_len = data["price"].length;
-            min = {
-                price: Math.min(0, ...data["price"]),
-                quantity: 0,
-            };
-            max = {
-                price: Math.max(...data["price"], -min["price"]),
-                quantity: Math.max(...data["quantity"]),
-            };
-            f1 = max["price"] / (max["price"] - min["price"]);
-            push();
-            translate(1.5 * margin, 0.26 * height * f1 + 10);
-            noStroke();
-            push();
-            strokeWeight(3);
-            for (const key of ["price", "quantity"]) {
-                stroke(cols_and_names[key][0]);
+            load_chart_data(network = true).then((raw_data) => {
+                Object.keys(raw_data).forEach((key) => {
+                    data[key] = reduce(raw_data[key], res);
+                });
+                data_len = data["price"].length;
+                min = {
+                    price: Math.min(0, ...data["price"]),
+                    quantity: 0,
+                };
+                max = {
+                    price: Math.max(...data["price"], -min["price"]),
+                    quantity: Math.max(...data["quantity"]),
+                };
+                f1 = max["price"] / (max["price"] - min["price"]);
                 push();
-                for (let t = 1; t < data_len; t++) {
-                    let h1 = (data[key][t - 1] / max[key]) * 0.26 * height * f1;
-                    let h2 = (data[key][t] / max[key]) * 0.26 * height * f1;
-                    line(0, -h1, graph_w / data_len, -h2);
-                    translate(graph_w / (data_len - 1), 0);
+                translate(1.5 * margin, 0.26 * height * f1 + 10);
+                noStroke();
+                push();
+                strokeWeight(3);
+                for (const key of ["price", "quantity"]) {
+                    stroke(cols_and_names[key][0]);
+                    push();
+                    for (let t = 1; t < data_len; t++) {
+                        let h1 = (data[key][t - 1] / max[key]) * 0.26 * height * f1;
+                        let h2 = (data[key][t] / max[key]) * 0.26 * height * f1;
+                        line(0, -h1, graph_w / data_len, -h2);
+                        translate(graph_w / (data_len - 1), 0);
+                    }
+                    pop();
                 }
                 pop();
-            }
-            pop();
-            stroke(0);
-            line(0, 0, graph_w, 0);
-            line(0, 0.26 * height * (1 - f1), 0, -0.26 * height * f1);
-            line(
-                graph_w,
-                0.26 * height * (1 - f1),
-                graph_w,
-                -0.26 * height * f1
-            );
-
-            push();
-            let units = time_unit(res);
-            fill(0);
-            for (let i = 0; i < units.length; i++) {
-                stroke(0, 0, 0, 30);
-                let x = (i * graph_w) / (units.length - 1);
-                line(x, -0.26 * height * f1, x, 0.26 * height * (1 - f1));
                 stroke(0);
+                line(0, 0, graph_w, 0);
+                line(0, 0.26 * height * (1 - f1), 0, -0.26 * height * f1);
                 line(
-                    x,
+                    graph_w,
                     0.26 * height * (1 - f1),
-                    x,
-                    0.26 * height * (1 - f1) + 5
+                    graph_w,
+                    -0.26 * height * f1
                 );
-                noStroke();
-                text(units[i], x, 0.5 * margin - 3);
-            }
-            pop();
-
-            push();
-            let y_ticks = y_units(max["price"]);
-            let interval2 = y_ticks[1];
-            fill(40, 84, 48);
-            let y2 = map(interval2, 0, max["price"], 0, 0.26 * height * f1);
-            textAlign(RIGHT, CENTER);
-            for (let i = 0; i < y_ticks.length; i++) {
-                stroke(0, 0, 0, 30);
-                line(graph_w, -y2 * i, 0, -y2 * i);
-                stroke(40, 84, 48);
-                line(0, -y2 * i, -5, -y2 * i);
-                noStroke();
-                image(coin, -25, -y2 * i - 6, 12, 12);
-                text(display_money(y_ticks[i]), -28, -y2 * i - 3);
-            }
-            pop();
-
-            push();
-            let y_ticks3 = y_units(max["quantity"]);
-            let interval3 = y_ticks3[1];
-            fill(45, 53, 166);
-            let y3 = map(interval3, 0, max["quantity"], 0, 0.26 * height * f1);
-            for (let i = 0; i < y_ticks3.length; i++) {
-                stroke(45, 53, 166);
-                line(graph_w, -y3 * i, graph_w + 5, -y3 * i);
-                noStroke();
-                text(
-                    display_W(y_ticks3[i]),
-                    graph_w + 0.75 * margin,
-                    -y3 * i - 3
-                );
-            }
-            pop();
-
-            pop();
-            for (let i = 0; i < buttons.length; i++) {
+    
                 push();
-                translate(
-                    1.5 * margin + (i * graph_w) / buttons.length,
-                    0.32 * height
-                );
-                buttons[i].display_button();
+                let units = time_unit(res);
+                fill(0);
+                for (let i = 0; i < units.length; i++) {
+                    stroke(0, 0, 0, 30);
+                    let x = (i * graph_w) / (units.length - 1);
+                    line(x, -0.26 * height * f1, x, 0.26 * height * (1 - f1));
+                    stroke(0);
+                    line(
+                        x,
+                        0.26 * height * (1 - f1),
+                        x,
+                        0.26 * height * (1 - f1) + 5
+                    );
+                    noStroke();
+                    text(units[i], x, 0.5 * margin - 3);
+                }
                 pop();
-            }
-            graph = get();
+    
+                push();
+                let y_ticks = y_units(max["price"]);
+                let interval2 = y_ticks[1];
+                fill(40, 84, 48);
+                let y2 = map(interval2, 0, max["price"], 0, 0.26 * height * f1);
+                textAlign(RIGHT, CENTER);
+                for (let i = 0; i < y_ticks.length; i++) {
+                    stroke(0, 0, 0, 30);
+                    line(graph_w, -y2 * i, 0, -y2 * i);
+                    stroke(40, 84, 48);
+                    line(0, -y2 * i, -5, -y2 * i);
+                    noStroke();
+                    image(coin, -25, -y2 * i - 6, 12, 12);
+                    text(display_money(y_ticks[i]), -28, -y2 * i - 3);
+                }
+                pop();
+    
+                push();
+                let y_ticks3 = y_units(max["quantity"]);
+                let interval3 = y_ticks3[1];
+                fill(45, 53, 166);
+                let y3 = map(interval3, 0, max["quantity"], 0, 0.26 * height * f1);
+                for (let i = 0; i < y_ticks3.length; i++) {
+                    stroke(45, 53, 166);
+                    line(graph_w, -y3 * i, graph_w + 5, -y3 * i);
+                    noStroke();
+                    text(
+                        display_W(y_ticks3[i]),
+                        graph_w + 0.75 * margin,
+                        -y3 * i - 3
+                    );
+                }
+                pop();
+    
+                pop();
+                for (let i = 0; i < buttons.length; i++) {
+                    push();
+                    translate(
+                        1.5 * margin + (i * graph_w) / buttons.length,
+                        0.32 * height
+                    );
+                    buttons[i].display_button();
+                    pop();
+                }
+                graph = get();
+            });
         })
         .catch((error) => {
             console.error("Error:", error);
@@ -750,32 +750,23 @@ function y_units(maxNumber) {
     return values;
 }
 
-function reduce(arr1, arr2, res, t) {
-    arr2 = arr2.slice(1, t + 1); //first value from today is last value from yesterday
-    let result;
-    let factor = res_to_data[res][1];
-    if (factor != 1) {
-        result = arr1;
-        for (let i = 0; i < arr2.length; i += factor) {
-            const slice = arr2.slice(i, i + factor);
-            const sum = slice.reduce(
-                (acc, currentValue) => acc + currentValue,
-                0
-            );
-            const average = sum / slice.length;
-            result.push(average);
-        }
-    } else {
-        result = arr1.concat(arr2);
-    }
+function reduce(arr, res) {
     if (res == "2h") {
-        result = result.slice(-120);
-    } else if(res == "6h") {
-        result = result.slice(-360);
-    } else {
-        result = result.slice(-1440);
+        return arr[0].slice(-120);
     }
-    return result;
+    if(res == "6h"){
+        return arr[0].slice(-360);
+    }
+    if(res == "day"){
+        return arr[0].slice(-1440);
+    }
+    if(res == "5 days"){
+        return arr[1];
+    }
+    if(res == "month"){
+        return arr[2];
+    }
+    return arr[3];
 }
 
 function y_units_market(maxNumber) {

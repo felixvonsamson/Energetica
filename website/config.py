@@ -169,7 +169,7 @@ const_config = {
         "laboratory": {
             "name": "Laboratory",
             "type": "Functional facility",
-            "price multiplier": 1.3,
+            "price multiplier": 1.5,
             "time factor": 0.9,
             "description": "The laboratory is needed to research Technologies.",
             "wikipedia_link": "",
@@ -185,7 +185,7 @@ const_config = {
         "industry": {
             "name": "Industry",
             "type": "Functional facility",
-            "price multiplier": 1.25,
+            "price multiplier": 1.32,
             "power factor": 1.4,
             "income factor": 1.35,
             "description": "The industry generates revenue from energy. The Power consumption of the Industry varies daily and seasonally.",
@@ -235,8 +235,8 @@ const_config = {
             "name": "Mechanical engineering",
             "type": "Technology",
             "price multiplier": 1.3,
-            "price factor": 1.2,
-            "prod factor": 1.25,
+            "price factor": 1.15,
+            "prod factor": 1.2,
             "affected facilities": [
                 "steam_engine",
                 "watermill",
@@ -271,8 +271,8 @@ const_config = {
             "name": "Physics",
             "type": "Technology",
             "price multiplier": 1.3,
-            "price factor": 1.2,
-            "prod factor": 1.25,
+            "price factor": 1.15,
+            "prod factor": 1.2,
             "affected facilities": [
                 "CSP_solar",
                 "PV_solar",
@@ -294,9 +294,9 @@ const_config = {
             "name": "Mineral extraction",
             "type": "Technology",
             "price multiplier": 1.4,
-            "price factor": 1.25,
-            "prod factor": 1.33,
-            "energy factor": 1.28,
+            "price factor": 1.2,
+            "prod factor": 1.30,
+            "energy factor": 1.25,
             "pollution factor": 0.9,
             "affected facilities": [
                 "coal_mine",
@@ -319,7 +319,7 @@ const_config = {
             "name": "Materials",
             "type": "Technology",
             "price multiplier": 1.4,
-            "price factor": 0.85,
+            "price factor": 0.9,
             "construction energy factor": 0.9,
             "affected facilities": [
                 "onshore_wind_turbine",
@@ -335,8 +335,8 @@ const_config = {
             "type": "Technology",
             "price multiplier": 1.5,
             "price factor": 1.4,
-            "prod factor": 1.3,
-            "capacity factor": 1.3,
+            "prod factor": 1.15,
+            "capacity factor": 1.05,
             "affected facilities": [
                 "small_water_dam",
                 "large_water_dam",
@@ -349,8 +349,8 @@ const_config = {
             "name": "Aerodynamics",
             "type": "Technology",
             "price multiplier": 1.5,
-            "price factor": 1.3,
-            "prod factor": 1.4,
+            "price factor": 1.15,
+            "prod factor": 1.2,
             "affected facilities": [
                 "windmill",
                 "lithium_ion_batteries",
@@ -375,8 +375,8 @@ const_config = {
             "name": "Nuclear engineering",
             "type": "Technology",
             "price multiplier": 1.5,
-            "price factor": 1.3,
-            "prod factor": 1.4,
+            "price factor": 1.2,
+            "prod factor": 1.25,
             "affected facilities": [
                 "nuclear_reactor",
                 "nuclear_reactor_gen4",
@@ -617,7 +617,7 @@ var_config = {
         },
         "small_pumped_hydro": {
             "price": 19500,  # [¤]
-            "storage capacity": 165700000,  # [Wh]
+            "storage capacity": 260000000,  # [Wh]
             "power generation": 2600000,  # [W]
             "efficiency": 0.75,
             "construction time": 18720,  # [s]
@@ -662,7 +662,7 @@ var_config = {
         },
         "large_pumped_hydro": {
             "price": 166000,
-            "storage capacity": 6215000000,
+            "storage capacity": 4200000000,
             "power generation": 249000000,
             "efficiency": 0.8,
             "construction time": 334800,
@@ -675,7 +675,7 @@ var_config = {
         },
         "hydrogen_storage": {
             "price": 420000,
-            "storage capacity": 80000000000,
+            "storage capacity": 30000000000,
             "power generation": 90000000,
             "efficiency": 0.33,
             "construction time": 43200,
@@ -731,7 +731,7 @@ var_config = {
             "requirements": [],
         },
         "industry": {
-            "price": 1000 / 1.25,
+            "price": 600,
             "construction time": 1200,
             "construction energy": 10000,
             "construction pollution": 1000,
@@ -759,7 +759,7 @@ var_config = {
             "construction power factor": 3,  # fraction of power consumption during construction
             "construction pollution": 200000,  # [kg]
             "O&M cost": 0.25,  # [fraction of price per year]
-            "amount produced": 0.0000001,  # [fraction of total stock that can be extracted every minute by one mine]
+            "amount produced": 0.000001,  # [fraction of total stock that can be extracted every minute by one mine]
             "power consumption": 3000000,  # [W]
             "pollution": 0.065,  # [kg/kg extracted]
             "lifetime": 2782080,  # [s]
@@ -771,7 +771,7 @@ var_config = {
             "construction power factor": 5,
             "construction pollution": 400000,
             "O&M cost": 0.26,
-            "amount produced": 0.000001,
+            "amount produced": 0.00001,
             "power consumption": 15300000,
             "pollution": 0.302,
             "lifetime": 1451520,
@@ -783,7 +783,7 @@ var_config = {
             "construction power factor": 6,
             "construction pollution": 700000,
             "O&M cost": 0.26,
-            "amount produced": 0.0000008,
+            "amount produced": 0.000008,
             "power consumption": 11100000,
             "pollution": 0.523,
             "lifetime": 1209600,
@@ -795,7 +795,7 @@ var_config = {
             "construction power factor": 4,
             "construction pollution": 500000,
             "O&M cost": 0.5,
-            "amount produced": 0.0000004,
+            "amount produced": 0.000001,
             "power consumption": 36000000,
             "pollution": 230,
             "lifetime": 2177280,
@@ -1295,10 +1295,10 @@ class Config(object):
                 ] ** getattr(player, asset)
                 assets[asset]["construction time"] *= const_config["assets"][
                     asset
-                ]["price multiplier"] ** (0.75 * getattr(player, asset))
+                ]["price multiplier"] ** (0.6 * getattr(player, asset))
                 assets[asset]["construction energy"] *= const_config["assets"][
                     asset
-                ]["price multiplier"] ** (1.25 * getattr(player, asset))
+                ]["price multiplier"] ** (1.2 * getattr(player, asset))
                 if asset in [
                     "laboratory",
                     "warehouse",
@@ -1311,12 +1311,15 @@ class Config(object):
 
             if asset in engine.technologies:
                 # update price (knowledge spilling)
-                assets[asset]["price"] *= (
+                spillover_factor = (
                     0.92
                     ** engine.data["technology_lvls"][asset][
                         getattr(player, asset)
                     ]
                 )
+                assets[asset]["price"] *= spillover_factor
+                assets[asset]["construction time"] *= spillover_factor
+                assets[asset]["construction energy"] *= spillover_factor
                 # update research time (laboratory)
                 assets[asset]["construction time"] *= (
                     const_config["assets"]["laboratory"]["time factor"]
@@ -1339,6 +1342,8 @@ class Config(object):
                 in engine.storage_facilities
                 + engine.controllable_facilities
                 + engine.renewables
+                + engine.extraction_facilities
+                + engine.functional_facilities
             ):
                 # update construction time (building technology)
                 assets[asset]["construction time"] *= (
@@ -1356,6 +1361,8 @@ class Config(object):
                     const_config["assets"]["industry"]["income factor"]
                     ** player.industry
                 )
+                # basic universal income of 2000 per day
+                assets[asset]["income"] += 2000
 
             if (
                 asset
@@ -1387,32 +1394,27 @@ class Config(object):
                     )
 
             # calculate energy need :
+            bt_factor = (
+                const_config["assets"]["building_technology"]["time factor"]
+                ** player.building_technology
+            )
             if asset in engine.controllable_facilities + engine.renewables:
                 assets[asset]["construction power"] = (
                     assets[asset]["construction power factor"]
                     * assets[asset]["power generation"]
-                    / (
-                        const_config["assets"]["building_technology"][
-                            "time factor"
-                        ]
-                        ** player.building_technology
-                    )
+                    / bt_factor
                 )
             elif asset in engine.storage_facilities:
                 assets[asset]["construction power"] = (
                     assets[asset]["construction power factor"]
                     * assets[asset]["storage capacity"]
-                    / (
-                        const_config["assets"]["building_technology"][
-                            "time factor"
-                        ]
-                        ** player.building_technology
-                    )
+                    / bt_factor
                 )
             elif asset in engine.extraction_facilities:
                 assets[asset]["construction power"] = (
                     assets[asset]["construction power factor"]
                     * assets[asset]["power consumption"]
+                    / bt_factor
                 )
             else:
                 assets[asset]["construction power"] = (
@@ -1444,7 +1446,9 @@ class Config(object):
 
         # setting the number of workers
         player.construction_workers = player.building_technology + 1
-        player.lab_workers = math.floor(player.laboratory / 3) + 1
+        player.lab_workers = math.floor(player.laboratory / 3) + (
+            player.laboratory > 0
+        )
 
     def __getitem__(config, player_id):
         if player_id not in config.for_player:

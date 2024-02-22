@@ -5,7 +5,6 @@ Here is the logic for the engine of the game
 import datetime
 import pickle
 import logging
-import copy
 import time
 from . import db
 from .database import Network, Under_construction, Shipment, Active_facilites
@@ -182,16 +181,6 @@ def clear_current_data(engine, app):
             0
         ] * 1440
 
-        networks = Network.query.all()
-        network_data = copy.deepcopy(engine.data["network_data"])
-        for network in networks:
-            for element in engine.data["network_data"][network.id]:
-                network_data[network.id][element].pop(0)
-                data_array = engine.data["network_data"][network.id][element]
-                last_value = data_array[-1]
-                data_array.clear()
-                data_array.extend([last_value] + [0] * 1440)
-
 
 from .production_update import update_electricity  # noqa: E402
 
@@ -200,19 +189,18 @@ from .production_update import update_electricity  # noqa: E402
 def state_update_m(engine, app):
     total_t = (
         datetime.datetime.now() - engine.data["start_date"]
-    ).total_seconds() / 5.0  # 60.0 or 5.0
+    ).total_seconds() / 60.0  # 60.0 or 5.0
     while engine.data["total_t"] < total_t:
         engine.data["current_t"] += 1
-        # print(f"t = {engine.data['current_t']}")
         engine.data["total_t"] += 1
+        # print(f"t = {engine.data['total_t']}")
         if engine.data["total_t"] % 60 == 0:
             save_past_data_threaded(app, engine)
         if engine.data["current_t"] > 1440:
             engine.data["current_t"] = 1
             clear_current_data(engine, app)
         with app.app_context():
-            if engine.data["current_t"] % 10 == 1:
-                engine.config.update_mining_productivity()
+            if engine.data["total_t"] % 10 == 1:
                 update_weather(engine)
             update_electricity(engine)
 
