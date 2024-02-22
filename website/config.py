@@ -1359,9 +1359,8 @@ class Config(object):
                     const_config["assets"]["industry"]["income factor"]
                     ** player.industry
                 )
-                # productivity bonus for first 5 levesls
-                if player.industry < 6:
-                    assets[asset]["income"] *= 1.1 ** (6 - player.industry)
+                # basic universal income of 2000 per day
+                assets[asset]["income"] += 2000
 
             if (
                 asset

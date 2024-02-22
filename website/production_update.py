@@ -225,7 +225,7 @@ def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
             )
             additional_revenue = (
                 time_fraction
-                * industry_income
+                * (industry_income - 2000 / 1440)
                 * (engine.const_config["industry"]["income factor"] - 1)
             )
             demand["industry"] += additional_demand
