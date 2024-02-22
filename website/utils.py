@@ -529,7 +529,7 @@ def confirm_location(engine, player, location):
 
 
 def join_network(engine, player, network):
-    """shared API method to join a network. Always succeeds"""
+    """shared API method to join a network. Always succeeds."""
     player.network = network
     db.session.commit()
     print(f"{player.username} joined the network {player.network.name}")
@@ -556,6 +556,27 @@ def create_network(engine, player, name):
         with open(f"{network_path}/prices/{timescale}.pck", "wb") as file:
             pickle.dump(past_data, file)
     engine.log(f"{player.username} created the network {name}")
+    rest_api.rest_notify_network_change(engine)
+    return {"response": "success"}
+
+
+def leave_network(engine, player):
+    """Shared API method for a player to leave a network. Always succeeds."""
+    engine.log(f"{player.username} left the network {player.network.name}")
+    network = player.network
+    if network is None:
+        return {"response": "playerNotInNetwork"}
+    player.network_id = None
+    remaining_members_count = Player.query.filter_by(
+        network_id=network.id
+    ).count()
+    # delete network if it is empty
+    if remaining_members_count == 0:
+        engine.log(
+            f"The network {network.name} has been deleted because it was empty"
+        )
+        db.session.delete(network)
+    db.session.commit()
     rest_api.rest_notify_network_change(engine)
     return {"response": "success"}
 

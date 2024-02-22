@@ -376,21 +376,7 @@ def create_network():
 
 @api.route("leave_network", methods=["POST"])
 def leave_network():
-    """this function is executed when a player leaves his network"""
+    """this endpoint is called when a player leaves their network"""
     flash(f"You left network {current_user.network.name}", category="message")
-    g.engine.log(
-        f"{current_user.username} left the network {current_user.network.name}"
-    )
-    network = current_user.network
-    current_user.network_id = None
-    remaining_members_count = Player.query.filter_by(
-        network_id=network.id
-    ).count()
-    # delete network if it is empty
-    if remaining_members_count == 0:
-        g.engine.log(
-            f"The network {network.name} has been deleted because it was empty"
-        )
-        db.session.delete(network)
-    db.session.commit()
+    utils.leave_network(g.engine, current_user)
     return redirect("/network", code=303)
