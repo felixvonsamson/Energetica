@@ -287,13 +287,12 @@ def rest_get_power_facilities():
     return json.dumps(response)
 
 
-def rest_respond_confirmLocation(uuid, confirm_location_response):
-    """Informs the client of the result of them confirming map location."""
+def rest_requestResponse(uuid, endpoint, data):
     response = {
         "type": "requestResponse",
         "uuid": uuid,
-        "request_response": "confirmLocationResponse",
-        "data": confirm_location_response,
+        "request_response": endpoint,
+        "data": data,
     }
     return json.dumps(response)
 
@@ -308,18 +307,32 @@ def rest_parse_request(engine, ws, uuid, data):
     match endpoint:
         case "confirmLocation":
             rest_parse_request_confirmLocation(engine, ws, uuid, body)
+        case "joinNetwork":
+            rest_parse_request_joinNetwork(engine, ws, uuid, body)
+        case _:
+            f"rest_parse_request got unkown endpoint: {endpoint}"
 
 
 def rest_parse_request_confirmLocation(engine, ws, uuid, data):
     """Interpret message sent from a client when they chose a location."""
     cell_id = data
-    confirm_location_response = utils.confirm_location(
+    response = utils.confirm_location(
         engine=g.engine, player=g.player, location=Hex.query.get(cell_id)
     )
     print(f"ws is {ws} and we're sending rest_respond_confirmLocation")
-    ws.send(rest_respond_confirmLocation(uuid, confirm_location_response))
-    if confirm_location_response["response"] == "success":
+    message = rest_requestResponse(uuid, "confirmLocationResponse", response)
+    ws.send(message)
+    if response["response"] == "success":
         rest_init_ws_post_location(ws)
+
+
+def rest_parse_request_joinNetwork(engine, ws, uuid, data):
+    """Interpret message sent from a client when they join a network."""
+    network_id = data
+    network = Network.query.get(network_id)
+    response = utils.join_network(engine, g.player, network)
+    message = rest_requestResponse(uuid, "joinNetwork", response)
+    ws.send(message)
 
 
 # WebSocket methods, hooked into engine states & events

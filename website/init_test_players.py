@@ -108,6 +108,10 @@ def init_test_players(engine):
         # add_asset(player, "combined_cycle", 1)
         # add_asset(player, "gas_burner", 3)
         db.session.commit()
+    player2 = create_player(engine, "user2", "password")
+    if player2:
+        print(player2)
+        Hex.query.filter_by(id=84).first().player_id = player2.id
 
 
 def add_asset(player, asset, n):
