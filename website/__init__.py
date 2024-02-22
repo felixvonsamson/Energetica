@@ -124,14 +124,14 @@ def create_app():
             trigger="interval",
             seconds=1,
         )
-        # scheduler.start()
+        scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
 
-        with app.app_context():
-            # Temporary automated player creation for testing
-            from .init_test_players import init_test_players
+        # with app.app_context():
+        #     # Temporary automated player creation for testing
+        #     from .init_test_players import init_test_players
 
-            # edit_database(engine)
-            init_test_players(engine)
+        #     # edit_database(engine)
+        #     init_test_players(engine)
 
     return socketio, sock, app

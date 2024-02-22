@@ -87,7 +87,7 @@ def sign_up():
             db.session.commit()
             login_user(new_player, remember=True)
             flash("Account created!", category="message")
-            print(f"{username} created an account")
+            g.engine.log(f"{username} created an account")
             rest_api.rest_notify_new_player(
                 current_app.config["engine"], new_player
             )
