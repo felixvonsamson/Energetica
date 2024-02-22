@@ -17,7 +17,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
 import pickle
-from pathlib import Path
 from website import rest_api
 
 auth = Blueprint("auth", __name__)
