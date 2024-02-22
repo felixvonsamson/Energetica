@@ -731,7 +731,7 @@ var_config = {
             "requirements": [],
         },
         "industry": {
-            "price": 1000 / 1.25,
+            "price": 600,
             "construction time": 1200,
             "construction energy": 10000,
             "construction pollution": 1000,
@@ -1295,10 +1295,10 @@ class Config(object):
                 ] ** getattr(player, asset)
                 assets[asset]["construction time"] *= const_config["assets"][
                     asset
-                ]["price multiplier"] ** (0.75 * getattr(player, asset))
+                ]["price multiplier"] ** (0.6 * getattr(player, asset))
                 assets[asset]["construction energy"] *= const_config["assets"][
                     asset
-                ]["price multiplier"] ** (1.25 * getattr(player, asset))
+                ]["price multiplier"] ** (1.2 * getattr(player, asset))
                 if asset in [
                     "laboratory",
                     "warehouse",
