@@ -185,7 +185,7 @@ const_config = {
         "industry": {
             "name": "Industry",
             "type": "Functional facility",
-            "price multiplier": 1.4,
+            "price multiplier": 1.32,
             "power factor": 1.4,
             "income factor": 1.35,
             "description": "The industry generates revenue from energy. The Power consumption of the Industry varies daily and seasonally.",
