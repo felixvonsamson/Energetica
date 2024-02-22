@@ -433,9 +433,8 @@ def create_network():
 @api.route("leave_network", methods=["POST"])
 def leave_network():
     """this endpoint is called when a player leaves their network"""
+    network = current_user.network
     response = utils.leave_network(g.engine, current_user)
     if response["response"] == "success":
-        flash(
-            f"You left network {current_user.network.name}", category="message"
-        )
+        flash(f"You left network {network.name}", category="message")
     return redirect("/network", code=303)
