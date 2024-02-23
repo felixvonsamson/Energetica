@@ -340,9 +340,14 @@ def rest_parse_request_joinNetwork(engine, ws, uuid, data):
 
 def rest_notify_all_players(engine, message):
     """Relays the `message` argument to all currently connected REST clients."""
-    for _, wss in engine.websocket_dict.items():
+    for player_id, wss in engine.websocket_dict.items():
         for ws in wss:
-            ws.send(message)
+            try:
+                ws.send(message)
+            except Exception as err:
+                print(f"Unexpected {err=}, {type(err)=}")
+                print("closing websocket")
+                engine.websocket_dict[player_id].remove(ws)
 
 
 def rest_notify_player_location(engine, player):
