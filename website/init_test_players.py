@@ -112,6 +112,7 @@ def init_test_players(engine):
     if player2:
         print(player2)
         Hex.query.filter_by(id=84).first().player_id = player2.id
+        db.session.commit()
 
 
 def add_asset(player, asset, n):

@@ -320,7 +320,7 @@ def rest_parse_request_confirmLocation(engine, ws, uuid, data):
         engine=g.engine, player=g.player, location=Hex.query.get(cell_id)
     )
     print(f"ws is {ws} and we're sending rest_respond_confirmLocation")
-    message = rest_requestResponse(uuid, "confirmLocationResponse", response)
+    message = rest_requestResponse(uuid, "confirmLocation", response)
     ws.send(message)
     if response["response"] == "success":
         rest_init_ws_post_location(ws)
