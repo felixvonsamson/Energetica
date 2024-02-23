@@ -530,6 +530,7 @@ def join_network(engine, player, network):
     db.session.commit()
     print(f"{player.username} joined the network {player.network.name}")
     rest_api.rest_notify_network_change(engine)
+    return {"response": "success"}
 
 
 def create_network(engine, player, name):
