@@ -579,7 +579,7 @@ def leave_network(engine, player):
         shutil.rmtree(f"instance/network_data/{network.id}")
         db.session.delete(network)
     db.session.commit()
-    engine.log(f"{player.username} left the network {player.network.name}")
+    engine.log(f"{player.username} left the network {network.name}")
     rest_api.rest_notify_network_change(engine)
     return {"response": "success"}
 
