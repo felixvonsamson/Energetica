@@ -5,6 +5,7 @@ import pickle
 from flask import Blueprint, current_app, g
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
+from simple_websocket import ConnectionClosed
 
 from website import utils
 
@@ -55,7 +56,10 @@ def add_sock_handlers(sock, engine):
             engine.websocket_dict[g.player.id] = []
         engine.websocket_dict[g.player.id].append(ws)
         while True:
-            data = ws.receive()
+            try:
+                data = ws.receive()
+            except ConnectionClosed:
+                unregister_websocket_connection(g.player.id, ws)
             engine.log(f"received on websocket: data = {data}")
             message = json.loads(data)
             message_data = message["data"]
@@ -66,6 +70,12 @@ def add_sock_handlers(sock, engine):
                 case "request":
                     uuid = message["uuid"]
                     rest_parse_request(engine, ws, uuid, message_data)
+
+
+def unregister_websocket_connection(player_id, ws):
+    player = Player.query.get(player_id)
+    g.engine.log(f"Websocket connection closed for player {player}")
+    g.engine.websocket_dict[player_id].remove(ws)
 
 
 def rest_init_ws_post_location(ws):
@@ -344,10 +354,8 @@ def rest_notify_all_players(engine, message):
         for ws in wss:
             try:
                 ws.send(message)
-            except Exception as err:
-                print(f"Unexpected {err=}, {type(err)=}")
-                print("closing websocket")
-                engine.websocket_dict[player_id].remove(ws)
+            except ConnectionClosed:
+                unregister_websocket_connection(player_id, ws)
 
 
 def rest_notify_player_location(engine, player):
