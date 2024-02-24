@@ -164,6 +164,10 @@ class gameEngine(object):
         log_message = datetime.datetime.now().strftime("%H:%M:%S : ") + message
         engine.logger.info(log_message)
 
+    def warn(engine, message):
+        log_message = datetime.datetime.now().strftime("%H:%M:%S : ") + message
+        engine.logger.warn(log_message)
+
 
 def clear_current_data(engine, app):
     """reset current data and network data"""

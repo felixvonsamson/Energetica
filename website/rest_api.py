@@ -62,7 +62,6 @@ def add_sock_handlers(sock, engine):
                 unregister_websocket_connection(g.player.id, ws)
             message = json.loads(data)
             message_data = message["data"]
-            engine.log(f"decoded json message = {message}")
             match message["type"]:
                 # case "confirmLocation":
                 #     rest_confirm_location(engine, ws, message_data)
@@ -316,14 +315,14 @@ def rest_requestResponse(uuid, endpoint, data):
 def rest_parse_request(engine, ws, uuid, data):
     """Interpret a request sent from a REST client"""
     endpoint = data["endpoint"]
-    body = data["body"]
+    body = data["body"] if "body" in data else None
     match endpoint:
         case "confirmLocation":
             rest_parse_request_confirmLocation(engine, ws, uuid, body)
         case "joinNetwork":
             rest_parse_request_joinNetwork(engine, ws, uuid, body)
         case _:
-            f"rest_parse_request got unkown endpoint: {endpoint}"
+            engine.warn(f"rest_parse_request got unknown endpoint: {endpoint}")
 
 
 def rest_parse_request_confirmLocation(engine, ws, uuid, data):
