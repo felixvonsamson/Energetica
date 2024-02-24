@@ -321,6 +321,8 @@ def rest_parse_request(engine, ws, uuid, data):
             rest_parse_request_confirmLocation(engine, ws, uuid, body)
         case "joinNetwork":
             rest_parse_request_joinNetwork(engine, ws, uuid, body)
+        case "leaveNetwork":
+            rest_parse_request_leaveNetwork(engine, ws, uuid)
         case _:
             engine.warn(f"rest_parse_request got unknown endpoint: {endpoint}")
 
@@ -344,6 +346,13 @@ def rest_parse_request_joinNetwork(engine, ws, uuid, data):
     network = Network.query.get(network_id)
     response = utils.join_network(engine, g.player, network)
     message = rest_requestResponse(uuid, "joinNetwork", response)
+    ws.send(message)
+
+
+def rest_parse_request_leaveNetwork(engine, ws, uuid):
+    """Interpret message sent from a client when they leave a network"""
+    response = utils.leave_network(engine, g.player)
+    message = rest_requestResponse(uuid, "leaveNetwork", response)
     ws.send(message)
 
 
