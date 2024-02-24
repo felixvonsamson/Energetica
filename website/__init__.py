@@ -31,11 +31,13 @@ def create_app(run_init_test_players, rm_instance):
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     db.init_app(app)
 
-    if rm_instance:
-        shutil.rmtree("instance")
-
     # creates the engine (ad loading the sava if it exists)
     engine = gameEngine()
+
+    if rm_instance:
+        engine.log("removing instance")
+        shutil.rmtree("instance")
+
     Path("instance/player_data").mkdir(parents=True, exist_ok=True)
     if os.path.isfile("instance/engine_data.pck"):
         with open("instance/engine_data.pck", "rb") as file:
