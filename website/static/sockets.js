@@ -16,6 +16,19 @@ function send_form(endpoint, body) {
     });
 }
 
+//debug info for connection error
+socket.on("connect_error", (err) => {
+    // the reason of the error, for example "xhr poll error"
+    console.log(err.message);
+  
+    // some additional description, for example the status code of the initial HTTP response
+    console.log(err.description);
+  
+    // some additional context, for example the XMLHttpRequest object
+    console.log(err.context);
+  });
+
+
 // information sent to the server when a new facility is created
 function start_construction(facility, family) {
     send_form("/request_start_project", {
