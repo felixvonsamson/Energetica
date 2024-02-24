@@ -60,7 +60,6 @@ def add_sock_handlers(sock, engine):
                 data = ws.receive()
             except ConnectionClosed:
                 unregister_websocket_connection(g.player.id, ws)
-            engine.log(f"received on websocket: data = {data}")
             message = json.loads(data)
             message_data = message["data"]
             engine.log(f"decoded json message = {message}")
@@ -70,6 +69,10 @@ def add_sock_handlers(sock, engine):
                 case "request":
                     uuid = message["uuid"]
                     rest_parse_request(engine, ws, uuid, message_data)
+                case type:
+                    engine.log(
+                        f"Websocket connection from player {g.player} sent an unkown message of type {type}"
+                    )
 
 
 def unregister_websocket_connection(player_id, ws):
