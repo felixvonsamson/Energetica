@@ -525,10 +525,16 @@ def confirm_location(engine, player, location):
 
 
 def join_network(engine, player, network):
-    """shared API method to join a network. Always succeeds."""
+    """shared API method to join a network."""
+    if network is None:
+        # print("utils.join_network: argument network was `None`")
+        return {"response": "noSuchNetwork"}
+    if player.network is not None:
+        # print("utils.join_network: argument network was `None`")
+        return {"response": "playerAlreadyInNetwork"}
     player.network = network
     db.session.commit()
-    print(f"{player.username} joined the network {player.network.name}")
+    print(f"{player.username} joined the network {network.name}")
     rest_api.rest_notify_network_change(engine)
     return {"response": "success"}
 
