@@ -6,9 +6,9 @@ from flask import Blueprint, current_app, g
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
 
-import website.utils
+from website import utils
 
-from .database import Hex, Player
+from .database import Hex, Player, Network
 
 rest_api = Blueprint("rest_api", __name__)
 
@@ -48,6 +48,7 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_map())
         ws.send(rest_get_players())
         ws.send(rest_get_current_player(current_player=g.player))
+        ws.send(rest_get_networks())
         if g.player.tile is not None:
             rest_init_ws_post_location(ws)
         if g.player.id not in engine.websocket_dict:
@@ -60,15 +61,18 @@ def add_sock_handlers(sock, engine):
             message_data = message["data"]
             engine.log(f"decoded json message = {message}")
             match message["type"]:
-                case "confirmLocation":
-                    rest_confirm_location(engine, ws, message_data)
+                # case "confirmLocation":
+                #     rest_confirm_location(engine, ws, message_data)
+                case "request":
+                    uuid = message["uuid"]
+                    rest_parse_request(engine, ws, uuid, message_data)
 
 
 def rest_init_ws_post_location(ws):
     """Called once the player has selected a location, or immediately after
     logging in if location was already selected."""
-    ws.send(rest_get_charts())
-    ws.send(rest_get_power_facilities())
+    # ws.send(rest_get_charts())
+    # ws.send(rest_get_power_facilities())
 
 
 # The following methods generate messages to be sent over websocket connections.
@@ -96,19 +100,27 @@ def rest_get_map():
     return json.dumps(response)
 
 
+def rest_helper_player_data(player):
+    payload = {
+        "id": player.id,
+        "username": player.username,
+    }
+    if player.tile is not None:
+        payload["tile"] = player.tile.id
+    return payload
+
+
+def rest_add_player(player):
+    response = {"type": "addPlayer", "data": rest_helper_player_data(player)}
+    return json.dumps(response)
+
+
 def rest_get_players():
     """Gets all player data and returns it as a JSON string."""
     player_list = Player.query.all()
     response = {
         "type": "getPlayers",
-        "data": [
-            {
-                "id": player.id,
-                "username": player.username,
-                "tile": player.tile.id if player.tile is not None else None,
-            }
-            for player in player_list
-        ],
+        "data": [rest_helper_player_data(player) for player in player_list],
     }
     return json.dumps(response)
 
@@ -116,6 +128,25 @@ def rest_get_players():
 def rest_get_current_player(current_player):
     """Gets the current player's id and returns it as a JSON string."""
     response = {"type": "getCurrentPlayer", "data": current_player.id}
+    return json.dumps(response)
+
+
+def rest_get_networks():
+    """Gets all player data and returns it as a JSON string.
+    A client receiving a message of type `getNetworks` should disregard any
+    previous network data."""
+    network_list = Network.query.all()
+    response = {
+        "type": "getNetworks",
+        "data": [
+            {
+                "id": network.id,
+                "name": network.name,
+                "members": [player.id for player in network.members],
+            }
+            for network in network_list
+        ],
+    }
     return json.dumps(response)
 
 
@@ -256,10 +287,12 @@ def rest_get_power_facilities():
     return json.dumps(response)
 
 
-def rest_notify_confirm_location_response(confirm_location_response):
+def rest_respond_confirmLocation(uuid, confirm_location_response):
     """Informs the client of the result of them confirming map location."""
     response = {
-        "type": "notifyConfirmLocationResponse",
+        "type": "requestResponse",
+        "uuid": uuid,
+        "request_response": "confirmLocationResponse",
         "data": confirm_location_response,
     }
     return json.dumps(response)
@@ -268,13 +301,23 @@ def rest_notify_confirm_location_response(confirm_location_response):
 ## Client Messages
 
 
-def rest_confirm_location(engine, ws, data):
+def rest_parse_request(engine, ws, uuid, data):
+    """Interpret a request sent from a REST client"""
+    endpoint = data["endpoint"]
+    body = data["body"]
+    match endpoint:
+        case "confirmLocation":
+            rest_parse_request_confirmLocation(engine, ws, uuid, body)
+
+
+def rest_parse_request_confirmLocation(engine, ws, uuid, data):
     """Interpret message sent from a client when they chose a location."""
     cell_id = data
-    confirm_location_response = website.utils.confirm_location(
+    confirm_location_response = utils.confirm_location(
         engine=g.engine, player=g.player, location=Hex.query.get(cell_id)
     )
-    ws.send(rest_notify_confirm_location_response(confirm_location_response))
+    print(f"ws is {ws} and we're sending rest_respond_confirmLocation")
+    ws.send(rest_respond_confirmLocation(uuid, confirm_location_response))
     if confirm_location_response["response"] == "success":
         rest_init_ws_post_location(ws)
 
@@ -282,11 +325,31 @@ def rest_confirm_location(engine, ws, data):
 # WebSocket methods, hooked into engine states & events
 
 
+def rest_notify_all_players(engine, message):
+    """Relays the `message` argument to all currently connected REST clients."""
+    for _, wss in engine.websocket_dict.items():
+        for ws in wss:
+            ws.send(message)
+
+
 def rest_notify_player_location(engine, player):
     """This mehtod is called when player (argument) has chosen a location. This
     information needs to be relayed to clients, and this methods returns a JSON
     string with this information."""
-    payload = rest_add_player_location(player)
-    for _, wss in engine.websocket_dict.items():
-        for ws in wss:
-            ws.send(payload)
+    message = rest_add_player_location(player)
+    rest_notify_all_players(engine, message)
+
+
+def rest_notify_network_change(engine):
+    """This mehtod is called any change to the state of any network is made.
+    This includes when a network is created, when a player joins a network, and
+    when a player leaves a network. These changes are relayed to all connected
+    REST clients."""
+    message = rest_get_networks()
+    rest_notify_all_players(engine, message)
+
+
+def rest_notify_new_player(engine, player):
+    message = rest_add_player(player)
+    print(f"rest_notify_new_player: {message}")
+    rest_notify_all_players(engine, message)
