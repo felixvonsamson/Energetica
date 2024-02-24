@@ -1,6 +1,6 @@
 from werkzeug.security import generate_password_hash
 from pathlib import Path
-from .auth import add_player_to_data, init_table
+from .auth import init_table
 from .database import (
     Player,
     Hex,
