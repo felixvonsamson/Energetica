@@ -114,7 +114,7 @@ def init_test_players(engine):
         Hex.query.filter_by(id=84).first().player_id = player2.id
         db.session.commit()
 
-    network = create_network(engine, "net", [player2])
+    create_network(engine, "net", [player2])
     db.session.commit()
 
 
