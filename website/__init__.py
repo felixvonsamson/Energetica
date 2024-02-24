@@ -23,7 +23,7 @@ db = SQLAlchemy()
 from website.gameEngine import gameEngine  # noqa: E402
 
 
-def create_app():
+def create_app(run_init_test_players):
     # creates the app :
     app = Flask(__name__)
     app.config["SECRET_KEY"] = "ghdäwrldutnstwhwobjotrdcfgglkgvou"
@@ -127,11 +127,13 @@ def create_app():
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
 
-        # with app.app_context():
-        #     # Temporary automated player creation for testing
-        #     from .init_test_players import init_test_players
+        if run_init_test_players:
+            engine.log("running init_test_players")
+            with app.app_context():
+                # Temporary automated player creation for testing
+                from .init_test_players import init_test_players
 
-        #     # edit_database(engine)
-        #     init_test_players(engine)
+                # edit_database(engine)
+                init_test_players(engine)
 
     return socketio, sock, app
