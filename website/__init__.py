@@ -17,18 +17,22 @@ from flask_sock import Sock  # noqa: E402
 import atexit  # noqa: E402
 from flask_apscheduler import APScheduler  # noqa: E402
 from pathlib import Path  # noqa: E402
+import shutil  # noqa: E402
 
 db = SQLAlchemy()
 
 from website.gameEngine import gameEngine  # noqa: E402
 
 
-def create_app(run_init_test_players):
+def create_app(run_init_test_players, rm_instance):
     # creates the app :
     app = Flask(__name__)
     app.config["SECRET_KEY"] = "ghdäwrldutnstwhwobjotrdcfgglkgvou"
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     db.init_app(app)
+
+    if rm_instance:
+        shutil.rmtree("instance")
 
     # creates the engine (ad loading the sava if it exists)
     engine = gameEngine()
