@@ -7,7 +7,7 @@ import pickle
 import logging
 import time
 from . import db
-from .database import Network, Under_construction, Shipment, Active_facilites
+from .database import Under_construction, Shipment, Active_facilites
 
 from .config import config, wind_power_curve, river_discharge, const_config
 
