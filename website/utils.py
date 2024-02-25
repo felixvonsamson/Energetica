@@ -616,6 +616,18 @@ def set_network_prices(engine, player, prices={}):
     db.session.commit()
 
 
+def get_scoreboard():
+    players = Player.query.filter(Player.tile != None)
+    return {
+        player.id: {
+            "money": player.money,
+            "average_hourly_revenues": player.average_revenues,
+            "co2_emissions": player.emissions,
+        }
+        for player in players
+    }
+
+
 def start_project(player, facility, family):
     """this function is executed when a player clicks on 'start construction'"""
     engine = current_app.config["engine"]

@@ -50,6 +50,7 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_players())
         ws.send(rest_get_current_player(current_player=g.player))
         ws.send(rest_get_networks())
+        ws.send(rest_get_scoreboard())
         if g.player.tile is not None:
             rest_init_ws_post_location(ws)
         if g.player.id not in engine.websocket_dict:
@@ -305,6 +306,11 @@ def rest_get_power_facilities():
     return json.dumps(response)
 
 
+def rest_get_scoreboard():
+    response = {"type": "getScoreboard", "data": utils.get_scoreboard()}
+    return json.dumps(response)
+
+
 def rest_requestResponse(uuid, endpoint, data):
     response = {
         "type": "requestResponse",
@@ -405,4 +411,9 @@ def rest_notify_network_change(engine):
 def rest_notify_new_player(engine, player):
     message = rest_add_player(player)
     print(f"rest_notify_new_player: {message}")
+    rest_notify_all_players(engine, message)
+
+
+def rest_notify_scoreboard(engine):
+    message = rest_get_scoreboard()
     rest_notify_all_players(engine, message)

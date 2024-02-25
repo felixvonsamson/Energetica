@@ -88,6 +88,7 @@ def sign_up():
             login_user(new_player, remember=True)
             flash("Account created!", category="message")
             g.engine.log(f"{username} created an account")
+            rest_api.rest_notify_scoreboard(current_app.config["engine"])
             rest_api.rest_notify_new_player(
                 current_app.config["engine"], new_player
             )
