@@ -54,6 +54,7 @@ def add_sock_handlers(sock, engine):
             rest_init_ws_post_location(ws)
         if g.player.id not in engine.websocket_dict:
             engine.websocket_dict[g.player.id] = []
+        ws.send(rest_setup_complete())
         engine.websocket_dict[g.player.id].append(ws)
         while True:
             try:
@@ -90,6 +91,11 @@ def rest_init_ws_post_location(ws):
 # The following methods generate messages to be sent over websocket connections.
 # These are returned in the form of JSON formatted strings. See the
 # `ServerMessage` enum in the Xcode project.
+
+
+def rest_setup_complete():
+    response = {"type": "setupComplete"}
+    return json.dumps(response)
 
 
 def rest_get_map():
