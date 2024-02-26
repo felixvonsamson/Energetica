@@ -1,131 +1,101 @@
-{% extends "base.jinja" %}
-{% block title %}
-  Energetica wiki
-{% endblock title %}
-{% block content %}
-  <div class="flex-row huge title">Energetica wiki</div>
-  <div class="medium margin-large">
-    <h2>Table of Contents</h2>
-    <ul>
-      <li>
-        <a href="#Introduction">Introduction</a>
-      </li>
-      <li>
-        <a href="#Map">Map</a>
-        <ul>
-          <li>
-            <a href="#Renewable_resources">Renewable resources</a>
-          </li>
-          <li>
-            <a href="#Fossil_fuels">Fossil fuels</a>
-          </li>
-        </ul>
-      </li>
-      <li>
-        <a href="#Power_Facilities">Power Facilities</a>
-        <ul>
-          <li>
-            <a href="#Power_Generation_of_Renewable_Facilities">Power Generation of Renewable Facilities</a>
-          </li>
-          <li>
-            <a href="#Power_Generation_of_Controllable_Plants">Power Generation of Controllable Plants</a>
-          </li>
-          <li>
-            <a href="#Use_of_Resources">Use of Resources</a>
-          </li>
-          <li>
-            <a href="#Construction_of_a_Plant">Construction of a Plant</a>
-          </li>
-        </ul>
-      </li>
-      <li>
-        <a href="#Storage_Facilities">Storage Facilities</a>
-      </li>
-      <li>
-        <a href="#Extraction_Facilities">Extraction Facilities</a>
-      </li>
-      <li>
-        <a href="#Functional_Facilities">Functional Facilities</a>
-      </li>
-      <li>
-        <a href="#Technology">Technology</a>
-      </li>
-    </li>
-    <li>
-      <a href="#Resource_Market">Resource Market</a>
-    </li>
-    <li>
-      <a href="#Network">Network</a>
-      <ul>
-        <li>
-          <a href="#SCP">Self Consumption Priority (SCP)</a>
-        </li>
-        <li>
-          <a href="#Obligatory_Generation">Obligatory Electricity Generation</a>
-        </li>
-        <li>
-          <a href="#Market_Logic">Market Logic</a>
-        </li>
-      </ul>
-    </li>
-  </ul>
-  <h2 id="Introduction">Introduction to Energetica</h2>
+{% extends "base.jinja" %} {% block title %}Energetica wiki{% endblock %} {% block content %}
+
+<div class="flex-row huge title">Energetica wiki</div>
+
+<div class="medium margin-large">
+
+  <h2>Introduction to Energetica</h2>
   <p>
-    Energetica is a massive multiplayer online game where players are tasked with managing the electricity generation
-    of their community. Beginning with basic technology like a rudimentary steam engine, players progress towards more
+    Energetica is a massive multiplayer online game where players are tasked with managing the electricity generation of
+    their community. Beginning with basic technology like a rudimentary steam engine, players progress towards more
     advanced options such as photovoltaics and nuclear reactors.
   </p>
   <p>
-    Continuous vigilance over production is essential to ensure a consistent and adequate supply of electricity to
-    support various industrial needs. Collaboration with other players to establish a network for trading electricity
+    Continuous vigilance over production is essential to ensure a consistent and adequate supply of electricity to 
+    support various industrial needs. Collaboration with other players to establish a network for trading electricity 
     and advancing technological developments is crucial.
   </p>
   <p>
-    Effective management of fossil fuels and careful monitoring of emissions are imperative, as consequences may arise
+    Effective management of fossil fuels and careful monitoring of emissions are imperative, as consequences may arise 
     from negligence in these areas.
   </p>
   <p>
-    This wiki serves as a comprehensive documentation of all the mechanics within the game. While not a prerequisite
-    before gameplay, referencing specific chapters within this wiki can aid in making informed decisions during
+    This wiki serves as a comprehensive documentation of all the mechanics within the game. While not a prerequisite 
+    before gameplay, referencing specific chapters within this wiki can aid in making informed decisions during 
     gameplay.
   </p>
+
+  <h2>Table of Contents</h2>
+  <ul>
+    <li>
+      <a href="#Map">Map</a>
+      <ul>
+        <li><a href="#Renewable_resources">Renewable resources</a></li>
+        <li><a href="#Fossil_fuels">Fossil fuels</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#Power_Facilities">Power Facilities</a>
+      <ul>
+        <li><a href="#Power_Generation_of_Renewable_Facilities">Power Generation of Renewable Facilities</a></li>
+        <li><a href="#Power_Generation_of_Controllable_Plants">Power Generation of Controllable Plants</a></li>
+        <li><a href="#Use_of_Resources">Use of Resources</a></li>
+        <li><a href="#O&M_costs">Operation and Maintenance Cost</a></li>
+        <li><a href="#Construction_of_a_Plant">Construction of a Plant</a></li>
+      </ul>
+    </li>
+    <li><a href="#Storage_Facilities">Storage Facilities</a></li>
+    <li><a href="#Extraction_Facilities">Extraction Facilities</a></li>
+    <li><a href="#Functional_Facilities">Functional Facilities</a></li>
+    <li><a href="#Technology">Technology</a></li></li>
+    <li><a href="#Resource_Market">Resource Market</a></li>
+    <li>
+      <a href="#Network">Network</a>
+      <ul>
+        <li><a href="#SCP">Self Consumption Priority (SCP)</a></li>
+        <li><a href="#Obligatory_Generation">Obligatory Electricity Generation</a></li>
+        <li><a href="#Market_Logic">Market Logic</a></li>
+      </ul>
+    </li>
+  </ul>
+
   <h2 id="Map">The Map</h2>
   <p>
-    Upon creating an account, your initial task is to select a location on the map. It's crucial to note that this
-    choice is <strong>permanent</strong>; there won't be any opportunity to expand or alter your chosen tile. Choose
+    Upon creating an account, your initial task is to select a location on the map. It's crucial to note that this 
+    choice is <strong>permanent</strong>; there won't be any opportunity to expand or alter your chosen tile. Choose 
     wisely.
   </p>
-  <p>The map consists of a hexagonal grid comprising 331 tiles, visualized on the home screen.</p>
   <p>
-    The coordinate system utilized is the cube coordinates, extensively detailed in this <a href="https://www.redblobgames.com/grids/hexagons/#coordinates-cube">Red Blob Games article</a>. Each tile is
-    identified by three values: q, r, and s (where s = -q -r and isn't necessary for identification).
+    The map consists of a hexagonal grid comprising 331 tiles, visualized on the home screen.
   </p>
   <p>
-    The distance between your location and another player's tile directly impacts resource shipment times when engaging
+    The distance between your location and another player's tile directly impacts resource shipment times when engaging 
     in trade. For more insights, refer to the <a href="#Resource_Market">resource market</a> section.
   </p>
   <p>
-    Each tile offers a specific assortment of resources—seven distinct resources categorized into renewable and fossil
+    Each tile offers a specific assortment of resources—seven distinct resources categorized into renewable and fossil 
     fuel types:
   </p>
+
   <h3 id="Renewable_resources">Renewable resources:</h3>
   <ul>
     <li>
-      <strong>Solar:</strong> The solar potential is represented as a percentage, indicating the fraction of the
-      maximum power achievable using PV and CSP plants.
+      <strong>Solar:</strong> The solar potential is given in W/m², indicating the maximal irradiance acievable at this 
+      latitiude. The higher this maximum irradiance, the higher will be the power production of PV and CSP plants.
     </li>
     <li>
-      <strong>Wind:</strong> The wind potential, also expressed as a percentage, influences the generation of
-      windmills and wind turbines. Refer to <a href="#Wind_Power_Generation">wind power generation</a> for detailed
-      effects.
+      <strong>Wind:</strong> The wind potential is given in km/h, indicating the average wind speed at this tile. Refer 
+      to <a href="#Wind_Power_Generation">wind power generation</a> for details on how it affects the generation of 
+      windmills and wind turbines.
     </li>
     <li>
-      <strong>Hydro:</strong> Presented as a number from 0 to 5, the hydro potential signifies the number of suitable
-      locations available for building watermills and water dams. Note that each of the three hydropower plants is
-      considerated independently for the hydro potential; thus, smaller structures dont need to be dismantled to make
+      <strong>Hydro:</strong> Presented as a number from 0 to 5, the hydro potential signifies the number of suitable 
+      locations available for building watermills and water dams. Note that each of the three hydropower plants is 
+      considerated independently for the hydro potential; thus, smaller structures dont need to be dismantled to make 
       room for larger ones. Pumped hydro facilities are not affected by hydro potential.
     </li>
   </ul>
+  
   <h3 id="Fossil_fuels">Fossil fuels:</h3>
   <ul>
     <li>
@@ -291,6 +261,7 @@
     consumption, CO2 production correlates with the amount of power generated. CO2 emissions affect the shared
     atmosphere among all players, influencing the game's climate. Refer to <a href="[Climate Change Impact Link]">climate change impact</a> for more details.
   </p>
+  <h3 id="O&M_costs">Operation and Maintenance Cost</h3>
   <!-- Add further information or details about emissions and their impacts if required -->
   <h3 id="Construction_of_a_Plant">Construction of a Plant</h3>
   <p>If you opt to construct a new power plant, it will require money, time, energy, and emissions:</p>
