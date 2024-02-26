@@ -8,6 +8,7 @@ import logging
 import time
 from . import db
 from .database import Under_construction, Shipment, Active_facilites
+from website import rest_api
 
 from .config import config, wind_power_curve, river_discharge, const_config
 
@@ -211,6 +212,8 @@ def state_update_m(engine, app):
         # save engine every minute in case of server crash
         with open("instance/engine_data.pck", "wb") as file:
             pickle.dump(engine.data, file)
+    with app.app_context():
+        rest_api.rest_notify_scoreboard(engine)
 
 
 def check_upcoming_actions(app):
