@@ -52,7 +52,7 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_networks())
         ws.send(rest_get_scoreboard())
         if g.player.tile is not None:
-            rest_init_ws_post_location(ws)
+            rest_init_ws_post_location(engine, ws)
         if g.player.id not in engine.websocket_dict:
             engine.websocket_dict[g.player.id] = []
         ws.send(rest_setup_complete())
@@ -82,11 +82,11 @@ def unregister_websocket_connection(player_id, ws):
     g.engine.websocket_dict[player_id].remove(ws)
 
 
-def rest_init_ws_post_location(ws):
+def rest_init_ws_post_location(engine, ws):
     """Called once the player has selected a location, or immediately after
     logging in if location was already selected."""
     # ws.send(rest_get_charts())
-    # ws.send(rest_get_power_facilities())
+    ws.send(rest_get_power_facilities(engine))
 
 
 # The following methods generate messages to be sent over websocket connections.
@@ -267,9 +267,9 @@ def rest_get_charts():
     return json.dumps(response)
 
 
-def rest_get_power_facilities():
+def rest_get_power_facilities(engine):
     """Gets player's facilities data and returns it as a JSON string"""
-    power_facilities_info = g.engine.config[
+    power_facilities_info = engine.config[
         g.player.id
     ][
         "assets"
@@ -351,7 +351,7 @@ def rest_parse_request_confirmLocation(engine, ws, uuid, data):
     message = rest_requestResponse(uuid, "confirmLocation", response)
     ws.send(message)
     if response["response"] == "success":
-        rest_init_ws_post_location(ws)
+        rest_init_ws_post_location(engine, ws)
 
 
 def rest_parse_request_joinNetwork(engine, ws, uuid, data):
