@@ -251,9 +251,7 @@ def shipment_demand(engine, player, t, demand):
         if shipment.suspension_time is None:
             demand["transport"] += (
                 transport["power consumption"]
-                / transport["time"]
                 * shipment.quantity
-                * 3.6
             )
 
 
