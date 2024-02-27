@@ -337,6 +337,8 @@ def rest_parse_request(engine, ws, uuid, data):
             rest_parse_request_leaveNetwork(engine, ws, uuid)
         case "createNetwork":
             rest_parse_request_createNetwork(engine, ws, uuid, body)
+        case "startProject":
+            rest_parse_request_startProject(engine, ws, uuid, body)
         case _:
             engine.warn(f"rest_parse_request got unknown endpoint: {endpoint}")
 
@@ -375,6 +377,20 @@ def rest_parse_request_createNetwork(engine, ws, uuid, data):
     network_name = data
     response = utils.create_network(engine, g.player, network_name)
     message = rest_requestResponse(uuid, "createNetwork", response)
+    ws.send(message)
+
+
+def rest_parse_request_startProject(engine, ws, uuid, data):
+    """Interpret message sent from a client when they start a project"""
+    facility = data["facility"]
+    family = data["family"]
+    print(
+        f"rest_parse_request_startProject got: family = {family}, facility = {facility}"
+    )
+    response = utils.start_project(
+        player=g.player, facility=facility, family=family
+    )
+    message = rest_requestResponse(uuid, "startProject", response)
     ws.send(message)
 
 
