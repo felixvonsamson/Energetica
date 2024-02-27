@@ -27,7 +27,7 @@ def add_sock_handlers(sock, engine):
         player = Player.query.filter_by(username=username).first()
         if player:
             if check_password_hash(player.pwhash, password):
-                engine.log(f"{username} logged in via HTTP Basic")
+                # engine.log(f"{username} logged in via HTTP Basic")
                 return username
             else:
                 engine.log(f"{username} failed to log in via HTTP Basic")
