@@ -1,8 +1,6 @@
 const keys_revenues = [
     "industry",
     "exports",
-    "imports",
-    "dumping",
     // O&M costs
     "watermill",
     "small_water_dam",
@@ -30,6 +28,9 @@ const keys_revenues = [
     "oil_field",
     "gas_drilling_site",
     "uranium_mine",
+
+    "imports",
+    "dumping",
 ];
 
 function draw() {
