@@ -250,10 +250,7 @@ def shipment_demand(engine, player, t, demand):
     for shipment in player.shipments:
         if shipment.suspension_time is None:
             demand["transport"] += (
-                transport["power consumption"]
-                / transport["time"]
-                * shipment.quantity
-                * 3.6
+                transport["power consumption"] * shipment.quantity
             )
 
 
@@ -845,6 +842,9 @@ def reduce_demand(
                 "Energy shortage",
                 f"Your industry has been downgraded to level {player.industry-1} because of a lack of electricity.",
                 [player],
+            )
+            engine.log(
+                f"The industry of {player.username} has been downgraded to level {player.industry-1} because of a lack of electricity."
             )
         player.industry = max(1, player.industry - 1)
         engine.config.update_config_for_user(player.id)

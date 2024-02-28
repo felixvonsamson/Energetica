@@ -17,13 +17,14 @@ from flask_sock import Sock  # noqa: E402
 import atexit  # noqa: E402
 from flask_apscheduler import APScheduler  # noqa: E402
 from pathlib import Path  # noqa: E402
+import shutil  # noqa: E402
 
 db = SQLAlchemy()
 
 from website.gameEngine import gameEngine  # noqa: E402
 
 
-def create_app():
+def create_app(run_init_test_players, rm_instance):
     # creates the app :
     app = Flask(__name__)
     app.config["SECRET_KEY"] = "ghdäwrldutnstwhwobjotrdcfgglkgvou"
@@ -32,11 +33,16 @@ def create_app():
 
     # creates the engine (ad loading the sava if it exists)
     engine = gameEngine()
+
+    if rm_instance:
+        engine.log("removing instance")
+        shutil.rmtree("instance")
+
     Path("instance/player_data").mkdir(parents=True, exist_ok=True)
     if os.path.isfile("instance/engine_data.pck"):
         with open("instance/engine_data.pck", "rb") as file:
             engine.data = pickle.load(file)
-            print("loaded engine data")
+            engine.log("loaded engine data from disk")
     app.config["engine"] = engine
 
     # initialize socketio :
@@ -70,7 +76,6 @@ def create_app():
     # initialize database :
     with app.app_context():
         db.create_all()
-        print("database created")
         # if map data not already stored in database, read map.csv and store it in database
         if Hex.query.count() == 0:
             with open("website/static/data/map.csv", "r") as file:
@@ -127,11 +132,13 @@ def create_app():
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
 
-        # with app.app_context():
-        #     # Temporary automated player creation for testing
-        #     from .init_test_players import init_test_players
+        if run_init_test_players:
+            engine.log("running init_test_players")
+            with app.app_context():
+                # Temporary automated player creation for testing
+                from .init_test_players import init_test_players
 
-        #     # edit_database(engine)
-        #     init_test_players(engine)
+                # edit_database(engine)
+                init_test_players(engine)
 
     return socketio, sock, app

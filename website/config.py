@@ -203,24 +203,28 @@ const_config = {
         "coal_mine": {
             "name": "Coal mine",
             "type": "Extraction facility",
+            "extraction_rate":0.000001, # [fraction of total stock that can be extracted every minute by one mine]
             "description": "The coal mine extracts coal from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Coal_mining",
         },
         "oil_field": {
             "name": "Oil field",
             "type": "Extraction facility",
+            "extraction_rate":0.00001,
             "description": "The oil field extracts oil from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Extraction_of_petroleum",
         },
         "gas_drilling_site": {
             "name": "Gas drilling site",
             "type": "Extraction facility",
+            "extraction_rate":0.000008,
             "description": "The gas drilling site extracts gas from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Natural_gas",
         },
         "uranium_mine": {
             "name": "Uranium mine",
             "type": "Extraction facility",
+            "extraction_rate":0.000001,
             "description": "The uranium mine extracts uranium from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Uranium_mining",
         },
@@ -759,7 +763,6 @@ var_config = {
             "construction power factor": 3,  # fraction of power consumption during construction
             "construction pollution": 200000,  # [kg]
             "O&M cost": 0.25,  # [fraction of price per year]
-            "amount produced": 0.000001,  # [fraction of total stock that can be extracted every minute by one mine]
             "power consumption": 3000000,  # [W]
             "pollution": 0.065,  # [kg/kg extracted]
             "lifetime": 2782080,  # [s]
@@ -771,7 +774,6 @@ var_config = {
             "construction power factor": 5,
             "construction pollution": 400000,
             "O&M cost": 0.26,
-            "amount produced": 0.00001,
             "power consumption": 15300000,
             "pollution": 0.302,
             "lifetime": 1451520,
@@ -783,7 +785,6 @@ var_config = {
             "construction power factor": 6,
             "construction pollution": 700000,
             "O&M cost": 0.26,
-            "amount produced": 0.000008,
             "power consumption": 11100000,
             "pollution": 0.523,
             "lifetime": 1209600,
@@ -795,7 +796,6 @@ var_config = {
             "construction power factor": 4,
             "construction pollution": 500000,
             "O&M cost": 0.5,
-            "amount produced": 0.000001,
             "power consumption": 36000000,
             "pollution": 230,
             "lifetime": 2177280,
@@ -1066,22 +1066,22 @@ class Config(object):
             ** player.mineral_extraction
         )
         assets["coal_mine"]["amount produced"] = (
-            var_config["assets"]["coal_mine"]["amount produced"]
+            const_config["assets"]["coal_mine"]["extraction_rate"]
             * player.tile.coal
             * me_factor
         )
         assets["oil_field"]["amount produced"] = (
-            var_config["assets"]["oil_field"]["amount produced"]
+            const_config["assets"]["oil_field"]["extraction_rate"]
             * player.tile.oil
             * me_factor
         )
         assets["gas_drilling_site"]["amount produced"] = (
-            var_config["assets"]["gas_drilling_site"]["amount produced"]
+            const_config["assets"]["gas_drilling_site"]["extraction_rate"]
             * player.tile.gas
             * me_factor
         )
         assets["uranium_mine"]["amount produced"] = (
-            var_config["assets"]["uranium_mine"]["amount produced"]
+            const_config["assets"]["uranium_mine"]["extraction_rate"]
             * player.tile.uranium
             * me_factor
         )
@@ -1441,7 +1441,7 @@ class Config(object):
         )
         config.for_player[player_id]["transport"]["power consumption"] *= (
             const_config["assets"]["transport_technology"]["energy factor"]
-            ** player.transport_technology
+            ** player.transport_technology * 3600 / config.for_player[player_id]["transport"]["time"]
         )
 
         # setting the number of workers

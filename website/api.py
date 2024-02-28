@@ -5,22 +5,10 @@ These functions make the link between the website and the database
 from flask import Blueprint, request, flash, jsonify, g, current_app, redirect
 from flask_login import login_required, current_user
 import pickle
-import shutil
 import numpy as np
 from pathlib import Path
-from .utils import (
-    put_resource_on_market,
-    buy_resource_from_market,
-    data_init_network,
-    confirm_location,
-    set_network_prices,
-    start_project,
-    cancel_project,
-    pause_project,
-    increase_project_priority,
-)
-from . import db
-from .database import Hex, Player, Chat, Network, CircularBufferNetwork
+from website import utils
+from .database import Hex, Player, Chat, Network
 
 api = Blueprint("api", __name__)
 
@@ -302,7 +290,7 @@ def choose_location():
     json = request.get_json()
     selected_id = json["selected_id"]
     location = Hex.query.get(selected_id + 1)
-    confirm_location_response = confirm_location(
+    confirm_location_response = utils.confirm_location(
         engine=g.engine, player=current_user, location=location
     )
     return jsonify(confirm_location_response)
@@ -318,7 +306,7 @@ def request_start_project():
     json = request.get_json()
     facility = json["facility"]
     family = json["family"]
-    response = start_project(
+    response = utils.start_project(
         player=current_user, facility=facility, family=family
     )
     return jsonify(response)
@@ -331,7 +319,7 @@ def request_cancel_project():
     """
     json = request.get_json()
     construction_id = json["id"]
-    response = cancel_project(
+    response = utils.cancel_project(
         player=current_user, construction_id=construction_id
     )
     return jsonify(response)
@@ -344,7 +332,7 @@ def request_pause_project():
     """
     json = request.get_json()
     construction_id = json["id"]
-    response = pause_project(
+    response = utils.pause_project(
         player=current_user, construction_id=construction_id
     )
     return jsonify(response)
@@ -357,7 +345,7 @@ def request_increase_project_priority():
     """
     json = request.get_json()
     construction_id = json["id"]
-    response = increase_project_priority(
+    response = utils.increase_project_priority(
         player=current_user, construction_id=construction_id
     )
     return jsonify(response)
@@ -369,7 +357,9 @@ def change_network_prices():
     on the network"""
     json = request.get_json()
     prices = json["prices"]
-    set_network_prices(engine=g.engine, player=current_user, prices=prices)
+    utils.set_network_prices(
+        engine=g.engine, player=current_user, prices=prices
+    )
     return jsonify("success")
 
 
@@ -385,7 +375,9 @@ def request_change_facility_priority():
     prices = {}
     for i, facility in enumerate(priority):
         prices["price_" + facility] = price_list[i]
-    set_network_prices(engine=g.engine, player=current_user, prices=prices)
+    utils.set_network_prices(
+        engine=g.engine, player=current_user, prices=prices
+    )
     return jsonify("success")
 
 
@@ -395,7 +387,7 @@ def put_resource_on_sale():
     resource = request.form.get("resource")
     quantity = float(request.form.get("quantity")) * 1000
     price = float(request.form.get("price")) / 1000
-    put_resource_on_market(current_user, resource, quantity, price)
+    utils.put_resource_on_market(current_user, resource, quantity, price)
     return redirect("/resource_market", code=303)
 
 
@@ -404,7 +396,7 @@ def buy_resource():
     """Parse the HTTP form for buying resources"""
     quantity = float(request.form.get("purchases_quantity")) * 1000
     sale_id = int(request.form.get("sale_id"))
-    buy_resource_from_market(current_user, quantity, sale_id)
+    utils.buy_resource_from_market(current_user, quantity, sale_id)
     return redirect("/resource_market", code=303)
 
 
@@ -413,8 +405,7 @@ def join_network():
     """player is trying to join a network"""
     network_name = request.form.get("choose_network")
     network = Network.query.filter_by(name=network_name).first()
-    current_user.network = network
-    db.session.commit()
+    utils.join_network(g.engine, current_user, network)
     flash(f"You joined the network {network_name}", category="message")
     g.engine.log(
         f"{current_user.username} joined the network {current_user.network.name}"
@@ -426,52 +417,23 @@ def join_network():
 def create_network():
     """This endpoint is used when a player creates a network"""
     network_name = request.form.get("network_name")
-    if len(network_name) < 3 or len(network_name) > 40:
+    response = utils.create_network(g.engine, current_user, network_name)
+    if response["response"] == "nameLengthInvalid":
         flash(
             "Network name must be between 3 and 40 characters", category="error"
         )
         return redirect("/network", code=303)
-    if Network.query.filter_by(name=network_name).first() is not None:
+    if response["response"] == "nameAlreadyUsed":
         flash("A network with this name already exists", category="error")
         return redirect("/network", code=303)
-    new_network = Network(name=network_name, members=[current_user])
-    db.session.add(new_network)
-    db.session.commit()
-    Path(f"instance/network_data/{new_network.id}/charts").mkdir(
-        parents=True, exist_ok=True
-    )
-    g.engine.data["network_data"][new_network.id] = CircularBufferNetwork()
-    past_data = data_init_network()
-    Path(f"instance/network_data/{new_network.id}").mkdir(
-        parents=True, exist_ok=True
-    )
-    with open(
-        f"instance/network_data/{new_network.id}/time_series.pck",
-        "wb",
-    ) as file:
-        pickle.dump(past_data, file)
-    g.engine.log(f"{current_user.username} created the network {network_name}")
     return redirect("/network", code=303)
 
 
 @api.route("leave_network", methods=["POST"])
 def leave_network():
-    """this function is executed when a player leaves his network"""
-    flash(f"You left network {current_user.network.name}", category="message")
-    g.engine.log(
-        f"{current_user.username} left the network {current_user.network.name}"
-    )
+    """this endpoint is called when a player leaves their network"""
     network = current_user.network
-    current_user.network_id = None
-    remaining_members_count = Player.query.filter_by(
-        network_id=network.id
-    ).count()
-    # delete network if it is empty
-    if remaining_members_count == 0:
-        g.engine.log(
-            f"The network {network.name} has been deleted because it was empty"
-        )
-        shutil.rmtree(f"instance/network_data/{network.id}")
-        db.session.delete(network)
-    db.session.commit()
+    response = utils.leave_network(g.engine, current_user)
+    if response["response"] == "success":
+        flash(f"You left network {network.name}", category="message")
     return redirect("/network", code=303)

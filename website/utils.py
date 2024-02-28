@@ -10,9 +10,11 @@ import pickle
 import os
 import time
 import numpy as np
+import shutil
 from datetime import datetime
+from pathlib import Path
 
-from .rest_api import rest_notify_player_location
+from website import rest_api
 from .database import (
     Player,
     Network,
@@ -22,6 +24,7 @@ from .database import (
     Under_construction,
     Notification,
     Active_facilites,
+    CircularBufferNetwork,
 )
 from . import db
 from flask import current_app, flash
@@ -274,7 +277,7 @@ def update_weather(engine):
                 engine.data["current_windspeed"][t - 1]
             ] * 10
     except Exception as e:
-        engine.log("An error occurred:" + e)
+        engine.log(e)
         engine.data["current_windspeed"][t : t + 10] = [
             engine.data["current_windspeed"][t - 1]
         ] * 10
@@ -503,8 +506,8 @@ def buy_resource_from_market(player, quantity, sale_id):
 
 
 def confirm_location(engine, player, location):
-    """This function is calle when a player choses a location. It returns either
-    success or an explanatory error message in the form of a dictionary.
+    """This function is called when a player choses a location. It returns
+    either success or an explanatory error message in the form of a dictionary.
     It is called when a web client uses the choose_location socket.io endpoint,
     or the REST websocket API."""
     if location.player_id is not None:
@@ -516,8 +519,68 @@ def confirm_location(engine, player, location):
     # Checks have succeeded, proceed
     location.player_id = player.id
     db.session.commit()
-    rest_notify_player_location(engine, player)
+    rest_api.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
+    return {"response": "success"}
+
+
+def join_network(engine, player, network):
+    """shared API method to join a network."""
+    if network is None:
+        # print("utils.join_network: argument network was `None`")
+        return {"response": "noSuchNetwork"}
+    if player.network is not None:
+        # print("utils.join_network: argument network was `None`")
+        return {"response": "playerAlreadyInNetwork"}
+    player.network = network
+    db.session.commit()
+    print(f"{player.username} joined the network {network.name}")
+    rest_api.rest_notify_network_change(engine)
+    return {"response": "success"}
+
+
+def create_network(engine, player, name):
+    """shared API method to create a network. Network name must pass validation,
+    namely it must not be too long, nor too short, and must not already be in
+    use."""
+    if len(name) < 3 or len(name) > 40:
+        return {"response": "nameLengthInvalid"}
+    if Network.query.filter_by(name=name).first() is not None:
+        return {"response": "nameAlreadyUsed"}
+    new_network = Network(name=name, members=[player])
+    db.session.add(new_network)
+    db.session.commit()
+    network_path = f"instance/network_data/{new_network.id}"
+    Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
+    engine.data["network_data"][new_network.id] = CircularBufferNetwork()
+    past_data = data_init_network()
+    Path(f"{network_path}").mkdir(parents=True, exist_ok=True)
+    with open(f"{network_path}/time_series.pck", "wb") as file:
+        pickle.dump(past_data, file)
+    engine.log(f"{player.username} created the network {name}")
+    rest_api.rest_notify_network_change(engine)
+    return {"response": "success"}
+
+
+def leave_network(engine, player):
+    """Shared API method for a player to leave a network. Always succeeds."""
+    network = player.network
+    if network is None:
+        return {"response": "playerNotInNetwork"}
+    player.network_id = None
+    remaining_members_count = Player.query.filter_by(
+        network_id=network.id
+    ).count()
+    # delete network if it is empty
+    if remaining_members_count == 0:
+        engine.log(
+            f"The network {network.name} has been deleted because it was empty"
+        )
+        shutil.rmtree(f"instance/network_data/{network.id}")
+        db.session.delete(network)
+    db.session.commit()
+    engine.log(f"{player.username} left the network {network.name}")
+    rest_api.rest_notify_network_change(engine)
     return {"response": "success"}
 
 
@@ -551,6 +614,18 @@ def set_network_prices(engine, player, prices={}):
     player.rest_of_priorities = comma.join(rest_list)
     player.demand_priorities = comma.join(demand_list)
     db.session.commit()
+
+
+def get_scoreboard():
+    players = Player.query.filter(Player.tile != None)
+    return {
+        player.id: {
+            "money": player.money,
+            "average_hourly_revenues": player.average_revenues,
+            "co2_emissions": player.emissions,
+        }
+        for player in players
+    }
 
 
 def start_project(player, facility, family):

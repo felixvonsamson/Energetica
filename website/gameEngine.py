@@ -7,7 +7,8 @@ import pickle
 import logging
 import time
 from . import db
-from .database import Network, Under_construction, Shipment, Active_facilites
+from .database import Under_construction, Shipment, Active_facilites
+from website import rest_api
 
 from .config import config, wind_power_curve, river_discharge, const_config
 
@@ -164,6 +165,10 @@ class gameEngine(object):
         log_message = datetime.datetime.now().strftime("%H:%M:%S : ") + message
         engine.logger.info(log_message)
 
+    def warn(engine, message):
+        log_message = datetime.datetime.now().strftime("%H:%M:%S : ") + message
+        engine.logger.warn(log_message)
+
 
 def clear_current_data(engine, app):
     """reset current data and network data"""
@@ -207,6 +212,8 @@ def state_update_m(engine, app):
         # save engine every minute in case of server crash
         with open("instance/engine_data.pck", "wb") as file:
             pickle.dump(engine.data, file)
+    with app.app_context():
+        rest_api.rest_notify_scoreboard(engine)
 
 
 def check_upcoming_actions(app):
