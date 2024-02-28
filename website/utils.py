@@ -564,7 +564,6 @@ def create_network(engine, player, name):
 
 def leave_network(engine, player):
     """Shared API method for a player to leave a network. Always succeeds."""
-    engine.log(f"{player.username} left the network {player.network.name}")
     network = player.network
     if network is None:
         return {"response": "playerNotInNetwork"}
@@ -580,6 +579,7 @@ def leave_network(engine, player):
         shutil.rmtree(f"instance/network_data/{network.id}")
         db.session.delete(network)
     db.session.commit()
+    engine.log(f"{player.username} left the network {network.name}")
     rest_api.rest_notify_network_change(engine)
     return {"response": "success"}
 
@@ -614,6 +614,18 @@ def set_network_prices(engine, player, prices={}):
     player.rest_of_priorities = comma.join(rest_list)
     player.demand_priorities = comma.join(demand_list)
     db.session.commit()
+
+
+def get_scoreboard():
+    players = Player.query.filter(Player.tile != None)
+    return {
+        player.id: {
+            "money": player.money,
+            "average_hourly_revenues": player.average_revenues,
+            "co2_emissions": player.emissions,
+        }
+        for player in players
+    }
 
 
 def start_project(player, facility, family):

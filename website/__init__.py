@@ -42,7 +42,7 @@ def create_app(run_init_test_players, rm_instance):
     if os.path.isfile("instance/engine_data.pck"):
         with open("instance/engine_data.pck", "rb") as file:
             engine.data = pickle.load(file)
-            print("loaded engine data")
+            engine.log("loaded engine data from disk")
     app.config["engine"] = engine
 
     # initialize socketio :
@@ -76,7 +76,6 @@ def create_app(run_init_test_players, rm_instance):
     # initialize database :
     with app.app_context():
         db.create_all()
-        print("database created")
         # if map data not already stored in database, read map.csv and store it in database
         if Hex.query.count() == 0:
             with open("website/static/data/map.csv", "r") as file:

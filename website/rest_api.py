@@ -5,6 +5,7 @@ import pickle
 from flask import Blueprint, current_app, g
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
+from simple_websocket import ConnectionClosed
 
 from website import utils
 
@@ -26,7 +27,7 @@ def add_sock_handlers(sock, engine):
         player = Player.query.filter_by(username=username).first()
         if player:
             if check_password_hash(player.pwhash, password):
-                engine.log(f"{username} logged in via HTTP Basic")
+                # engine.log(f"{username} logged in via HTTP Basic")
                 return username
             else:
                 engine.log(f"{username} failed to log in via HTTP Basic")
@@ -49,35 +50,53 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_players())
         ws.send(rest_get_current_player(current_player=g.player))
         ws.send(rest_get_networks())
+        ws.send(rest_get_scoreboard())
         if g.player.tile is not None:
-            rest_init_ws_post_location(ws)
+            rest_init_ws_post_location(engine, ws)
         if g.player.id not in engine.websocket_dict:
             engine.websocket_dict[g.player.id] = []
+        ws.send(rest_setup_complete())
         engine.websocket_dict[g.player.id].append(ws)
         while True:
-            data = ws.receive()
-            engine.log(f"received on websocket: data = {data}")
+            try:
+                data = ws.receive()
+            except ConnectionClosed:
+                unregister_websocket_connection(g.player.id, ws)
             message = json.loads(data)
             message_data = message["data"]
-            engine.log(f"decoded json message = {message}")
             match message["type"]:
                 # case "confirmLocation":
                 #     rest_confirm_location(engine, ws, message_data)
                 case "request":
                     uuid = message["uuid"]
                     rest_parse_request(engine, ws, uuid, message_data)
+                case type:
+                    engine.log(
+                        f"Websocket connection from player {g.player} sent an unkown message of type {type}"
+                    )
 
 
-def rest_init_ws_post_location(ws):
+def unregister_websocket_connection(player_id, ws):
+    player = Player.query.get(player_id)
+    g.engine.log(f"Websocket connection closed for player {player}")
+    g.engine.websocket_dict[player_id].remove(ws)
+
+
+def rest_init_ws_post_location(engine, ws):
     """Called once the player has selected a location, or immediately after
     logging in if location was already selected."""
     # ws.send(rest_get_charts())
-    # ws.send(rest_get_power_facilities())
+    ws.send(rest_get_power_facilities(engine))
 
 
 # The following methods generate messages to be sent over websocket connections.
 # These are returned in the form of JSON formatted strings. See the
 # `ServerMessage` enum in the Xcode project.
+
+
+def rest_setup_complete():
+    response = {"type": "setupComplete"}
+    return json.dumps(response)
 
 
 def rest_get_map():
@@ -248,9 +267,9 @@ def rest_get_charts():
     return json.dumps(response)
 
 
-def rest_get_power_facilities():
+def rest_get_power_facilities(engine):
     """Gets player's facilities data and returns it as a JSON string"""
-    power_facilities_info = g.engine.config[
+    power_facilities_info = engine.config[
         g.player.id
     ][
         "assets"
@@ -287,6 +306,11 @@ def rest_get_power_facilities():
     return json.dumps(response)
 
 
+def rest_get_scoreboard():
+    response = {"type": "getScoreboard", "data": utils.get_scoreboard()}
+    return json.dumps(response)
+
+
 def rest_requestResponse(uuid, endpoint, data):
     response = {
         "type": "requestResponse",
@@ -303,14 +327,18 @@ def rest_requestResponse(uuid, endpoint, data):
 def rest_parse_request(engine, ws, uuid, data):
     """Interpret a request sent from a REST client"""
     endpoint = data["endpoint"]
-    body = data["body"]
+    body = data["body"] if "body" in data else None
     match endpoint:
         case "confirmLocation":
             rest_parse_request_confirmLocation(engine, ws, uuid, body)
         case "joinNetwork":
             rest_parse_request_joinNetwork(engine, ws, uuid, body)
+        case "leaveNetwork":
+            rest_parse_request_leaveNetwork(engine, ws, uuid)
+        case "createNetwork":
+            rest_parse_request_createNetwork(engine, ws, uuid, body)
         case _:
-            f"rest_parse_request got unkown endpoint: {endpoint}"
+            engine.warn(f"rest_parse_request got unknown endpoint: {endpoint}")
 
 
 def rest_parse_request_confirmLocation(engine, ws, uuid, data):
@@ -323,7 +351,7 @@ def rest_parse_request_confirmLocation(engine, ws, uuid, data):
     message = rest_requestResponse(uuid, "confirmLocation", response)
     ws.send(message)
     if response["response"] == "success":
-        rest_init_ws_post_location(ws)
+        rest_init_ws_post_location(engine, ws)
 
 
 def rest_parse_request_joinNetwork(engine, ws, uuid, data):
@@ -332,6 +360,21 @@ def rest_parse_request_joinNetwork(engine, ws, uuid, data):
     network = Network.query.get(network_id)
     response = utils.join_network(engine, g.player, network)
     message = rest_requestResponse(uuid, "joinNetwork", response)
+    ws.send(message)
+
+
+def rest_parse_request_leaveNetwork(engine, ws, uuid):
+    """Interpret message sent from a client when they leave a network"""
+    response = utils.leave_network(engine, g.player)
+    message = rest_requestResponse(uuid, "leaveNetwork", response)
+    ws.send(message)
+
+
+def rest_parse_request_createNetwork(engine, ws, uuid, data):
+    """Interpret message sent from a client when they create a network"""
+    network_name = data
+    response = utils.create_network(engine, g.player, network_name)
+    message = rest_requestResponse(uuid, "createNetwork", response)
     ws.send(message)
 
 
@@ -344,10 +387,8 @@ def rest_notify_all_players(engine, message):
         for ws in wss:
             try:
                 ws.send(message)
-            except Exception as err:
-                print(f"Unexpected {err=}, {type(err)=}")
-                print("closing websocket")
-                engine.websocket_dict[player_id].remove(ws)
+            except ConnectionClosed:
+                unregister_websocket_connection(player_id, ws)
 
 
 def rest_notify_player_location(engine, player):
@@ -370,4 +411,9 @@ def rest_notify_network_change(engine):
 def rest_notify_new_player(engine, player):
     message = rest_add_player(player)
     print(f"rest_notify_new_player: {message}")
+    rest_notify_all_players(engine, message)
+
+
+def rest_notify_scoreboard(engine):
+    message = rest_get_scoreboard()
     rest_notify_all_players(engine, message)
