@@ -628,10 +628,12 @@ def get_scoreboard():
     }
 
 
-def start_project(player, facility, family):
+def start_project(engine, player, facility, family):
+    print(f"utils.start_project({player}, {facility}, {family})")
     """this function is executed when a player clicks on 'start construction'"""
-    engine = current_app.config["engine"]
     assets = engine.config[player.id]["assets"]
+    print(f"engine = {engine}")
+    print(f"assets = {assets}")
 
     if assets[facility]["locked"]:
         return {"response": "locked"}

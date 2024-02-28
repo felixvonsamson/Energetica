@@ -307,7 +307,7 @@ def request_start_project():
     facility = json["facility"]
     family = json["family"]
     response = utils.start_project(
-        player=current_user, facility=facility, family=family
+        engine=g.engine, player=current_user, facility=facility, family=family
     )
     return jsonify(response)
 

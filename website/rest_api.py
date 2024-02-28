@@ -387,9 +387,7 @@ def rest_parse_request_startProject(engine, ws, uuid, data):
     print(
         f"rest_parse_request_startProject got: family = {family}, facility = {facility}"
     )
-    response = utils.start_project(
-        player=g.player, facility=facility, family=family
-    )
+    response = utils.start_project(engine, g.player, facility, family)
     message = rest_requestResponse(uuid, "startProject", response)
     ws.send(message)
 
