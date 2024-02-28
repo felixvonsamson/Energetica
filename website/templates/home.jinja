@@ -75,15 +75,21 @@
     <div id="under_research">
       {# Facilites under research will show here #}
     </div>
+    {% if not user.network %}
     <div class="flex-row huge title">Prioritization of facilities</div>
     <div class="txt_center medium txt_pine">Drag and drop facilities in the list</div>
     <div class="flex-row flex-center align-items-center">
-    <span class="medium priority_list_txt left">Consumption priority</span>
-    <img src="{{ url_for('static', filename='images/others/arrow_red.png') }}" alt="arrow-up" class="priority_arrow_img up">
-    <ul class="priority_list flex-col"></ul>
-    <img src="{{ url_for('static', filename='images/others/arrow_blue.png') }}" alt="arrow-up" class="priority_arrow_img">
-    <span class="medium priority_list_txt right">Generation priority</span>
+        <span class="medium priority_list_txt left">Consumption priority</span>
+        <img src="{{ url_for('static', filename='images/others/arrow_red.png') }}" alt="arrow-up" class="priority_arrow_img up">
+        <ul class="priority_list flex-col"></ul>
+        <img src="{{ url_for('static', filename='images/others/arrow_blue.png') }}" alt="arrow-up" class="priority_arrow_img">
+        <span class="medium priority_list_txt right">Generation priority</span>
     </div>
+    {% else %}
+    <div class="txt_center medium margin-large">
+        (Prioritization of facilities are managed on the <a href="{{ url_for('views.network') }}">Network page</a>)
+    </div>
+    {% endif %}
 {% endblock content %}
 {% block additionnal_script %}
   <script>refresh_progressBar()</script>
