@@ -48,16 +48,17 @@
     <li><a href="#Storage_Facilities">Storage Facilities</a></li>
     <li><a href="#Extraction_Facilities">Extraction Facilities</a></li>
     <li><a href="#Functional_Facilities">Functional Facilities</a></li>
-    <li><a href="#Technology">Technology</a></li></li>
-    <li><a href="#Resource_Market">Resource Market</a></li>
+    <li><a href="#Technology">Technology</a></li>
+    <li><a href="#Prioritazation_of_Facilities">Prioritazation of Facilities</a></li>
     <li>
       <a href="#Network">Network</a>
       <ul>
-        <li><a href="#SCP">Self Consumption Priority (SCP)</a></li>
         <li><a href="#Obligatory_Generation">Obligatory Electricity Generation</a></li>
         <li><a href="#Market_Logic">Market Logic</a></li>
       </ul>
     </li>
+    <li><a href="#Resource_Market">Resource Market</a></li>
+    <li><a href="#climate_change_impacts">Climate Change Impacts</a></li>
   </ul>
 
   <h2 id="Map">The Map</h2>
@@ -233,7 +234,10 @@
     between 90 and 110 kW in the following minute. Unused minimal power may need to be dumped to satisfy the ramping down
     constraint.
   </p>
-  <p>Every controllable plant follows specific constraints for ramping, ensuring smooth adjustments in output levels.</p>
+  <p>
+    The order of priority in withch the controllable facilities are used can be adjusted by the player. See 
+    <a href="#Prioritazation_of_Facilities">Prioritazation of Facilities</a> for details.
+  </p>
   <h4>Use of Resources</h4>
   <p>Except for the steam engine, controllable power plants consume resources/fuel for operation.</p>
   <p>
@@ -456,6 +460,120 @@
     (<a href="#Construction_of_a_Plant">Construction of a plant</a>). Consecutive upgrades of the same technology are 
     not parallelizable.
   </p>
+
+  <h2 id="Prioritization_of_Facilities">Prioritization of Facilities</h2>
+  <p>
+    If you are part of a Network, facility prioritization for generation and consumption is determined by market logic. 
+    See <a href="#Network">Network</a> for details.
+  </p>
+  <p>
+    Otherwise, if you're not part of a Network, generation and consumption priorities are managed via an interactive 
+    list on the <a href="{{ url_for('views.home') }}">home page</a>. This list contains all relevant facilities and 
+    processes involved in electricity generation or consumption. Note that storage plants are listed twice, once as 
+    generators and once as consumers.
+  </p>
+  <p>
+    The list operates in two directions. Energy generation is prioritized from top to bottom, meaning facilities at the 
+    top have higher priority for power generation. Conversely, power consumption is prioritized from bottom to top, with 
+    components at the bottom having higher satisfaction priority. Additionally, a generation facility in the list only 
+    provides power to consumption components listed below it, and vice versa for consumption components, that only 
+    accept power form failites listed above them. Renewable facilities remain fixed in the list as their output is 
+    non-controllable and must be used with the highest priority.
+  </p>
+  <div class="flex-col">
+    <img src="{{ url_for('static', filename='images/wiki/prioritization_example.png') }}"
+         alt="Example of prioritization of facilities"
+         style="width:500px">
+  </div>
+  <p>
+    For example, in the above list, the coal burner and small pumped hydro (discharge) are positioned after the demand 
+    component for constructions. Consequently, these facilities will never be used to generate power for constructions. 
+    If the power supplied by the Watermill and steam engine is insufficient to meet the needs of Industry and 
+    constructions, ongoing constructions will be paused, even if there is available capacity from the coal burner or small 
+    pumped hydro. However, if the power provided by the windmill and steam engine isn't enough for Industry alone, the 
+    coal burner will begin generating, possibly followed by the small pumped hydro, since they are listed before 
+    Industry. A generation facility placed at the very end of the list will never be used.
+  </p>
+
+
+  <h2 id="Network">Network</h2>
+  <p>
+    In Energetica, players initially operate independently, generating precisely what they need. However, they have the
+    option to join or create a network with other players, facilitating electricity trading and potentially enhancing
+    supply security.
+  </p>
+  <p>Within the <a href="{{ url_for('views.network') }}">network page</a>, three tables enable players to set buying and selling prices (only it they are part of a Network):</p>
+  <h4>Demand Prices</h4>
+  <p>
+    The first table is to set maximum buying prices for electricity components within your demand:
+  </p>
+  <ul>
+    <li>Industry</li>
+    <li>Constructions</li>
+    <li>Research</li>
+    <li>Shipments</li>
+    <li>Extraction Plants</li>
+  </ul>
+  <p>
+    If the max buying price for one of these demand components is below market price, mesures will be taken to reduce this demand 
+    (industry is levelled down, constructions, researches and shipments are paused and extraction plants stop functioning).
+  </p>
+  <h4>Production Capacity Prices</h4>
+  <p>In the second table, you can set the minimum selling prices for your controllable power facilities. When the
+      market price exceeds this set price, any producible capacity with the facility will be sold at market price.</p>
+  <h4>Storage Capacity Prices</h4>
+  <p>
+    In the third table, you can specify both the maximum buying price and the minimum selling price for your storage
+    facilities:
+  </p>
+  <ul>
+    <li>
+      <strong>Buying Price:</strong> Determines the maximum price you're willing to pay for purchasing electricity to
+      charge your storage plants. If the market price is below the set price, electricity will be bought to charge the storage facility.
+    </li>
+    <li>
+      <strong>Selling Price:</strong> Sets the minimum price at which you will sell any capacity producible by your
+      storage facility. If the market price exceeds the set price, the storage facility will be discharged and the generated power sold on the market.
+    </li>
+  </ul>
+  <h3 id="Obligatory_Generation">Obligatory Electricity Generation</h3>
+  <p>Obligatory electricity generation includes:</p>
+  <ul>
+    <li>
+      <strong>Non-controllable Renewable Power Facilities:</strong> Generation from these facilities cannot be
+      controlled and contributes to the overall electricity output.
+    </li>
+    <li>
+      <strong>Minimal generation of Controllable Facilities:</strong> Due to ramping down constraints, a minimal
+      generation from controllable facilities is obligatory.
+    </li>
+  </ul>
+  <p>
+    If surplus electricity from these obligatory sources is not needed domestically, it is sold at a fixed price of
+    -5/MWh in the market, coresponding to the cost to dump excess electricity. If it cannot be sold, it will be dumped.
+  </p>
+  <h3 id="Market_Logic">Market Logic</h3>
+  <p>The electricity market operates automatically and follows specific steps:</p>
+  <ol>
+    <li>
+      <strong>Calculate Capacities:</strong> Calculate available generation capacities and demand from all players in
+      the market.
+    </li>
+    <li>
+      <strong>Order Capacities:</strong> Organize available capacities and demand in ascending and descending price
+      order, respectively.
+    </li>
+    <li>
+      <strong>Find Market Equilibrium:</strong> Determine the point where the supply and demand curves intersect to
+      find the market quantity and price (red dot on the <a href="{{ url_for('views.network') }}">market graph</a>).
+    </li>
+    <li>
+      <strong>Transaction:</strong> Capacities below the market price are sold at market price, while demands above
+      the market price are bought at market price.
+    </li>
+  </ol>
+  <p>This automatic process ensures fair transactions based on market supply and demand dynamics.</p>
+
   <h2 id="Resource_Market">Resource Market</h2>
   <p>The resource market serves as a marketplace for natural resources within Energetica.</p>
   <p>
@@ -492,126 +610,6 @@
     If the energy demand of the shipment isn't met, it is paused. Upon arrival, if
     the buyer's warehouse lacks sufficient capacity to store the shipped amount, excess resources will be lost.
   </p>
-  
-  <h2 id="Network">Network</h2>
-  <p>
-    In Energetica, players initially operate independently, generating precisely what they need. However, they have the
-    option to join or create a network with other players, facilitating electricity trading and potentially enhancing
-    supply security.
-  </p>
-  <p>Within the network page, three tables enable players to set buying and selling prices:</p>
-  <h4>Demand Prices</h4>
-  <p>
-    In the network page, there are tables to set maximum buying prices for electricity components within your demand:
-  </p>
-  <ul>
-    <li>
-      <strong>Industry:</strong> Sets the maximum price for electricity consumed by the industry. If demand isn't met,
-      the industry is leveled down.
-    </li>
-    <li>
-      <strong>Constructions:</strong> Establishes the buying price for electricity used in constructions. If demand
-      isn't satisfied, the last construction in progress is canceled.
-    </li>
-    <li>
-      <strong>Research:</strong> Sets the maximum buying price for research-related electricity. If demand isn't met,
-      ongoing and queued technologies are canceled.
-    </li>
-    <li>
-      <strong>Shipments:</strong> Determines the buying price for electricity used in shipments. If demand isn't
-      satisfied, the last departed shipment is canceled, resulting in resource loss.
-    </li>
-    <li>
-      <strong>Extraction Plants:</strong> Sets the variable demand price for extraction plants. If demand isn't met,
-      the extraction plant stops functioning.
-    </li>
-  </ul>
-  <p>
-    Note: For players outside a network, these prices determine priority measures to reduce electricity consumption if
-    demand isn't met.
-  </p>
-  <h4>Production Capacity Prices</h4>
-  <p>In this section, you can set the minimum selling prices for your controllable power facilities:</p>
-  <ul>
-    <li>
-      <strong>Controllable Power Facilities:</strong> Determine the minimum selling price for each facility. When the
-      market price exceeds this set price, you will sell any producible capacity with the facility.
-    </li>
-  </ul>
-  <p>
-    Note: For players outside a network, these prices establish the priority of facilities for generating electricity.
-  </p>
-  <h4>Storage Capacity Prices</h4>
-  <p>
-    Within this table, you can specify both the maximum buying price and the minimum selling price for your storage
-    facilities:
-  </p>
-  <ul>
-    <li>
-      <strong>Buying Price:</strong> Determines the maximum price you're willing to pay for purchasing electricity to
-      fill your storage plant from the market.
-    </li>
-    <li>
-      <strong>Selling Price:</strong> Sets the minimum price at which you will sell any capacity produced by your
-      storage facility, if the market price exceeds this value.
-    </li>
-  </ul>
-  <h3 id="SCP">Self Consumption Priority (SCP)</h3>
-  <p>
-    For both power and storage facilities, the "SCP" toggle allows you to adjust the domestic priority of electricity
-    usage:
-  </p>
-  <ul>
-    <li>
-      <strong>Enabled SCP:</strong> Facilities set to SCP prioritize generating electricity for domestic demand before
-      considering selling excess production on the market, even if the set minimal selling price is higher than the
-      market price.
-    </li>
-    <li>
-      <strong>Disabled SCP:</strong> Facilities without SCP enabled might import cheaper electricity from the market,
-      potentially neglecting their own production if the set minimal selling price is higher than the market price.
-    </li>
-  </ul>
-  <p>
-    This feature enables players to use their own production, even if more expensive, to reduce dependency on imports.
-  </p>
-  <h3 id="Obligatory_Generation">Obligatory Electricity Generation</h3>
-  <p>Obligatory electricity generation includes:</p>
-  <ul>
-    <li>
-      <strong>Non-controllable Renewable Power Facilities:</strong> Generation from these facilities cannot be
-      controlled and contributes to the overall electricity output.
-    </li>
-    <li>
-      <strong>Minimal generation of Controllable Facilities:</strong> Due to ramping down constraints, a minimal
-      generation from controllable facilities is obligatory.
-    </li>
-  </ul>
-  <p>
-    If surplus electricity from these obligatory sources is not needed domestically, it is sold at a fixed price of
-    -5/MWh in the market, coresponding to the cost to dump excess electricity.
-  </p>
-  <h3 id="Market_Logic">Market Logic</h3>
-  <p>The electricity market operates automatically and follows specific steps:</p>
-  <ol>
-    <li>
-      <strong>Calculate Capacities:</strong> Calculate available generation capacities and demand from all players in
-      the market.
-    </li>
-    <li>
-      <strong>Order Capacities:</strong> Organize available capacities and demand in ascending and descending price
-      order, respectively.
-    </li>
-    <li>
-      <strong>Find Market Equilibrium:</strong> Determine the point where the supply and demand curves intersect to
-      find the market quantity and price (red dot on the <a href="{{ url_for('views.network') }}">market graph</a>).
-    </li>
-    <li>
-      <strong>Transaction:</strong> Capacities below the market price are sold at market price, while demands above
-      the market price are bought at market price.
-    </li>
-  </ol>
-  <p>This automatic process ensures fair transactions based on market supply and demand dynamics.</p>
 
   <h2 id="climate_change_impacts">Climate change impacts</h2>
   <p>Not implemented in the game yet...</p>
