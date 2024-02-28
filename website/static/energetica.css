@@ -348,6 +348,16 @@ canvas {
     -ms-transform: translate(-50%, -50%)
 }
 
+.game_info {
+    position: fixed;
+    max-width:800px;
+    border-radius: 8px;
+    bottom: 10%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%)
+}
+
 .topRight_info {
     display: block;
     max-width: 230px;
@@ -473,6 +483,10 @@ canvas {
         background-color: #0000;
         position: relative;
         top: 2px
+    }
+
+    .game_info{
+        width: 75%;
     }
 }
 
