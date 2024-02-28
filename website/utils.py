@@ -277,7 +277,7 @@ def update_weather(engine):
                 engine.data["current_windspeed"][t - 1]
             ] * 10
     except Exception as e:
-        engine.log("An error occurred:" + e)
+        engine.log(e)
         engine.data["current_windspeed"][t : t + 10] = [
             engine.data["current_windspeed"][t - 1]
         ] * 10

@@ -631,6 +631,21 @@ canvas {
     margin-right: 6px;
 }
 
+.info_message {
+    border-radius: 8px;
+    color: #000;
+    border: 1px solid #2196F3;
+    background-color: #ddffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info_message i {
+    color: #2196F3;
+    font-size: min(25px, 3.5vh)
+}
+
 .notification_container{
     margin:20px 0;
 }
