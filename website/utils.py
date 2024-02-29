@@ -616,6 +616,18 @@ def set_network_prices(engine, player, prices={}):
     db.session.commit()
 
 
+def package_players():
+    def package_player(player):
+        payload = {
+            "username": player.username,
+        }
+        if player.tile is not None:
+            payload["tile_id"] = player.tile.id
+        return payload
+
+    return {player.id: package_player(player) for player in Player.query.all()}
+
+
 def get_scoreboard():
     players = Player.query.filter(Player.tile != None)
     return {

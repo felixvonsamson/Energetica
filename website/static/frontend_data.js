@@ -69,6 +69,28 @@ function retrieve_chart_data(network) {
         });
 }
 
+function load_players() {
+    if (typeof(Storage) !== "undefined") {
+        const players = sessionStorage.getItem("players");
+        if (players) {
+            return Promise.resolve(JSON.parse(players));
+        }
+    }
+    return retrieve_players()
+}
+
+function retreive_players() {
+    return fetch("/get_players")
+        .then((response) => response.json())
+        .then((raw_data) => {
+            sessionStorage.setItem("players", JSON.stringify(raw_data));
+            return raw_data;
+        })
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
+}
+
 function load_player_data() {
     if (typeof(Storage) !== "undefined") {
         const player_data = sessionStorage.getItem("player_data");

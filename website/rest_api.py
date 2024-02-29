@@ -397,6 +397,7 @@ def rest_notify_player_location(engine, player):
     string with this information."""
     message = rest_add_player_location(player)
     rest_notify_all_players(engine, message)
+    engine.socketio.emit("get_players", utils.package_players())
 
 
 def rest_notify_network_change(engine):
@@ -412,6 +413,7 @@ def rest_notify_new_player(engine, player):
     message = rest_add_player(player)
     print(f"rest_notify_new_player: {message}")
     rest_notify_all_players(engine, message)
+    engine.socketio.emit("get_players", utils.package_players())
 
 
 def rest_notify_scoreboard(engine):

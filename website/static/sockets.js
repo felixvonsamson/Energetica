@@ -60,6 +60,10 @@ function start_construction(facility, family) {
         });
 }
 
+socket.on("get_players", function (players) {
+    sessionStorage.setItem("players", JSON.stringify(players));
+});
+
 // receive new values from the server
 socket.on("new_values", function (changes) {
     let money = document.getElementById("money");
