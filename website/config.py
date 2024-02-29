@@ -203,28 +203,28 @@ const_config = {
         "coal_mine": {
             "name": "Coal mine",
             "type": "Extraction facility",
-            "extraction_rate":0.000001, # [fraction of total stock that can be extracted every minute by one mine]
+            "extraction_rate": 0.000001,  # [fraction of total stock that can be extracted every minute by one mine]
             "description": "The coal mine extracts coal from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Coal_mining",
         },
         "oil_field": {
             "name": "Oil field",
             "type": "Extraction facility",
-            "extraction_rate":0.00001,
+            "extraction_rate": 0.00001,
             "description": "The oil field extracts oil from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Extraction_of_petroleum",
         },
         "gas_drilling_site": {
             "name": "Gas drilling site",
             "type": "Extraction facility",
-            "extraction_rate":0.000008,
+            "extraction_rate": 0.000008,
             "description": "The gas drilling site extracts gas from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Natural_gas",
         },
         "uranium_mine": {
             "name": "Uranium mine",
             "type": "Extraction facility",
-            "extraction_rate":0.000001,
+            "extraction_rate": 0.000001,
             "description": "The uranium mine extracts uranium from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Uranium_mining",
         },
@@ -1269,6 +1269,10 @@ class Config(object):
                         const_config["assets"]["chemistry"]["efficiency_factor"]
                         ** player.chemistry
                     )
+                assets[asset]["price"] *= (
+                    const_config["assets"]["chemistry"]["price factor"]
+                    ** player.chemistry
+                )
 
             if (
                 asset
@@ -1441,7 +1445,9 @@ class Config(object):
         )
         config.for_player[player_id]["transport"]["power consumption"] *= (
             const_config["assets"]["transport_technology"]["energy factor"]
-            ** player.transport_technology * 3600 / config.for_player[player_id]["transport"]["time"]
+            ** player.transport_technology
+            * 3600
+            / config.for_player[player_id]["transport"]["time"]
         )
 
         # setting the number of workers
@@ -1452,6 +1458,7 @@ class Config(object):
 
     def __getitem__(config, player_id):
         if player_id not in config.for_player:
+            config.update_resource_extraction(player_id)
             config.update_config_for_user(player_id)
         return config.for_player[player_id]
 
