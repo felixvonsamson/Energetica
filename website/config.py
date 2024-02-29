@@ -1458,6 +1458,7 @@ class Config(object):
 
     def __getitem__(config, player_id):
         if player_id not in config.for_player:
+            config.update_resource_extraction(player_id)
             config.update_config_for_user(player_id)
         return config.for_player[player_id]
 
