@@ -85,6 +85,21 @@ def create_app(run_init_test_players, rm_instance):
         for player in players:
             if player.id not in engine.data["current_data"]:
                 engine.data["current_data"][player.id] = CircularBufferPlayer()
+            for asset in ["watermill", "windmill", "small_pumped_hydro"]:
+                if getattr(player, asset) > 0:
+                    engine.data["current_data"][player.id].new_subcategory(
+                        "generation", asset
+                    )
+                    engine.data["current_data"][player.id].new_subcategory(
+                        "op_costs", asset
+                    )
+                    if asset == "small_pumped_hydro":
+                        engine.data["current_data"][player.id].new_subcategory(
+                            "storage", asset
+                        )
+                        engine.data["current_data"][player.id].new_subcategory(
+                            "demand", asset
+                        )
 
         networks = Network.query.all()
         for network in networks:
