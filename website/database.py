@@ -510,9 +510,8 @@ class WeatherData:
             "river_discharge": deque([0.0] * 120, maxlen=120),
         }
 
-    def update_weather(self):
+    def update_weather(self, engine):
         """This function upddates the windspeed and irradiation data every 10 minutes using the meteosuisse api and calculates the river discharge for the next 10 min"""
-        engine = current_app.config["engine"]
         urls = {
             "windspeed": (
                 "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min_en.json",
