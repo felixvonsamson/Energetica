@@ -62,6 +62,7 @@ def add_sock_handlers(sock, engine):
                 data = ws.receive()
             except ConnectionClosed:
                 unregister_websocket_connection(g.player.id, ws)
+                break
             message = json.loads(data)
             message_data = message["data"]
             match message["type"]:
