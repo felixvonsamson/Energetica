@@ -73,13 +73,13 @@ def create_app(run_init_test_players, rm_instance):
 
     from .database import Hex, Player, CircularBufferPlayer
 
-    players = Player.query.all()
-    for player in players:
-        if player.id not in engine.data["current_data"]:
-            engine.data["current_data"][player.id] = CircularBufferPlayer()
-
     # initialize database :
     with app.app_context():
+        players = Player.query.all()
+        for player in players:
+            if player.id not in engine.data["current_data"]:
+                engine.data["current_data"][player.id] = CircularBufferPlayer()
+
         db.create_all()
         # if map data not already stored in database, read map.csv and store it in database
         if Hex.query.count() == 0:
