@@ -1,10 +1,9 @@
-{% set t = engine.data["current_t"] %}
 {% set month_number = ((engine.data["total_t"] % 73440) // 6120) %}
 {% set month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] %}
 {% set month = month_names[month_number] %}
-{% set irradiance = engine.data["current_irradiation"][t] %}
-{% set windspeed = engine.data["current_windspeed"][t] %}
-{% set discharge = engine.data["current_discharge"][t] %}
+{% set irradiance = engine.data["weather"]["irradiance"] %}
+{% set windspeed = engine.data["weather"]["windspeed"] %}
+{% set discharge = engine.data["weather"]["river_discharge"] %}
 {% extends "base.jinja" %}
 {% block title %}
     Home

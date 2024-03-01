@@ -3,6 +3,10 @@ Here are defined the classes for the items stored in the database
 """
 
 from . import db
+import requests
+import json
+import math
+import numpy as np
 from flask_login import UserMixin
 from flask import current_app
 from collections import defaultdict, deque
@@ -494,3 +498,83 @@ class CircularBufferNetwork:
         for category, buffer in self._data.items():
             result[category] = list(buffer)[-t:]
         return result
+
+
+class WeatherData:
+    """Class that stores the weather data"""
+
+    def __init__(self):
+        self._data = {
+            "windspeed": deque([0.0] * 120, maxlen=120),
+            "irradiance": deque([0.0] * 120, maxlen=120),
+            "river_discharge": deque([0.0] * 120, maxlen=120),
+        }
+
+    def update_weather(self, engine):
+        """This function upddates the windspeed and irradiation data every 10 minutes using the meteosuisse api and calculates the river discharge for the next 10 min"""
+        urls = {
+            "windspeed": (
+                "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min_en.json",
+                107,
+            ),
+            "irradiance": (
+                "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-globalstrahlung-10min/ch.meteoschweiz.messwerte-globalstrahlung-10min_en.json",
+                65,
+            ),
+        }
+
+        def log_error(e, weather):
+            engine.log("An error occurred:" + str(e))
+            self._data[weather].extend([self._data[weather][-1]] * 10)
+
+        for weather in urls:
+            try:
+                response = requests.get(urls[weather][0])
+                if response.status_code == 200:
+                    datapoint = json.loads(response.content)["features"][
+                        urls[weather][1]
+                    ]["properties"]["value"]
+                    if datapoint > 2000:
+                        datapoint = self._data[weather][-1]
+                    interpolation = np.linspace(
+                        self._data[weather][-1], datapoint, 11
+                    )
+                    self._data[weather].extend(interpolation[1:])
+                else:
+                    log_error(response.status_code, weather)
+            except Exception as e:
+                log_error(e, weather)
+
+        month = math.floor((engine.data["total_t"] % 73440) / 6120)
+        # One year in game is 51 days
+        f = (engine.data["total_t"] % 73440) / 6120 - month
+        from .config import river_discharge_seasonal
+
+        d = river_discharge_seasonal
+        power_factor = d[month] + (d[(month + 1) % 12] - d[month]) * f
+        interpolation = np.linspace(
+            self._data["river_discharge"][-1], power_factor, 11
+        )
+        self._data["river_discharge"].extend(interpolation[1:])
+
+    def __getitem__(self, weather):
+        return self._data[weather][-1]
+
+
+class EmissionData:
+    """Class that stores the emission data"""
+
+    def __init__(self):
+        self._data = {
+            "CO2": deque([0.0] * 120, maxlen=120),
+        }
+
+    def add(self, type, value):
+        self._data[type][-1] += value
+
+    def init_new_value(self):
+        for type in self._data:
+            self._data[type].append(self._data[type][-1])
+
+    def __getitem__(self, type):
+        return self._data[type][-1]
