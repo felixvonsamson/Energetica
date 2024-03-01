@@ -162,12 +162,12 @@ class gameEngine(object):
 
     # logs a message with the current time in the terminal and stores it in 'logs'
     def log(engine, message):
-        log_message = datetime.datetime.now().strftime("%H:%M:%S : ") + message
-        engine.logger.info(log_message)
+        formatted_datetime = datetime.datetime.now().strftime("%H:%M:%S : ")
+        engine.logger.info(formatted_datetime + str(message))
 
     def warn(engine, message):
-        log_message = datetime.datetime.now().strftime("%H:%M:%S : ") + message
-        engine.logger.warn(log_message)
+        formatted_datetime = datetime.datetime.now().strftime("%H:%M:%S : ")
+        engine.logger.warn(formatted_datetime + str(message))
 
 
 def clear_current_data(engine, app):
