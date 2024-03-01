@@ -2,8 +2,6 @@
 I dumped all small helpful functions here
 """
 
-import requests
-import json
 import math
 import threading
 import pickle
@@ -252,73 +250,6 @@ def check_existing_chats(participants):
     return False
 
 
-# This function upddates the windspeed and irradiation data every 10 mminutes by using the meteosuisse api
-def update_weather(engine):
-    url_wind = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min_en.json"
-    url_irr = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-globalstrahlung-10min/ch.meteoschweiz.messwerte-globalstrahlung-10min_en.json"
-    t = engine.data["current_t"]
-    try:
-        response = requests.get(url_wind)
-        if response.status_code == 200:
-            windspeed = json.loads(response.content)["features"][107][
-                "properties"
-            ]["value"]
-            if windspeed > 2000:
-                windspeed = engine.data["current_windspeed"][t - 1]
-            interpolation = np.linspace(
-                engine.data["current_windspeed"][t - 1], windspeed, 11
-            )
-            engine.data["current_windspeed"][t : t + 10] = interpolation[1:]
-        else:
-            engine.log(
-                "Failed to fetch the file. Status code:", response.status_code
-            )
-            engine.data["current_windspeed"][t : t + 10] = [
-                engine.data["current_windspeed"][t - 1]
-            ] * 10
-    except Exception as e:
-        engine.log(e)
-        engine.data["current_windspeed"][t : t + 10] = [
-            engine.data["current_windspeed"][t - 1]
-        ] * 10
-
-    try:
-        response = requests.get(url_irr)
-        if response.status_code == 200:
-            irradiation = json.loads(response.content)["features"][65][
-                "properties"
-            ]["value"]
-            if irradiation > 2000:
-                irradiation = engine.data["current_irradiation"][t - 1]
-            interpolation = np.linspace(
-                engine.data["current_irradiation"][t - 1], irradiation, 11
-            )
-            engine.data["current_irradiation"][t : t + 10] = interpolation[1:]
-        else:
-            engine.log(
-                "Failed to fetch the file. Status code:", response.status_code
-            )
-            engine.data["current_irradiation"][t : t + 10] = [
-                engine.data["current_irradiation"][t - 1]
-            ] * 10
-    except Exception as e:
-        engine.log("An error occurred:" + str(e))
-        engine.data["current_irradiation"][t : t + 10] = [
-            engine.data["current_irradiation"][t - 1]
-        ] * 10
-
-    month = math.floor(
-        (engine.data["total_t"] % 73440) / 6120
-    )  # One year in game is 51 days
-    f = (engine.data["total_t"] % 73440) / 6120 - month
-    d = engine.river_discharge
-    power_factor = d[month] + (d[(month + 1) % 12] - d[month]) * f
-    engine.data["current_discharge"][t : t + 10] = [power_factor] * 10
-    engine.log(
-        f"the current irradiation in Zürich is {engine.data['current_irradiation'][t+9]} W/m2 with a windspeed of {engine.data['current_windspeed'][t+9]} km/h"
-    )
-
-
 def save_past_data_threaded(app, engine):
     """Saves the past production data to files every hour AND remove network data older than 24h"""
 
@@ -392,7 +323,7 @@ def save_past_data_threaded(app, engine):
         new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
         array[2] = array[2][len(new_month) :]
         array[2].extend(new_month)
-        if engine.data["current_t"] % 180 == 0:
+        if engine.data["total_t"] % 180 == 0:
             array[3] = array[3][1:]
             array[3].append(np.mean(array[2][-6:]))
 

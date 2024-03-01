@@ -1034,7 +1034,7 @@ wind_power_curve = [
     0,
 ]  # from 0 to 100 km/h
 
-river_discharge = [
+river_discharge_seasonal = [
     0.26,
     0.23,
     0.3,
