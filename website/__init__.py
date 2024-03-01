@@ -71,43 +71,10 @@ def create_app(run_init_test_players, rm_instance):
     app.register_blueprint(api, url_prefix="/")
     app.register_blueprint(rest_api, url_prefix="/")
 
-    from .database import (
-        Hex,
-        Player,
-        CircularBufferPlayer,
-        Network,
-        CircularBufferNetwork,
-    )
+    from .database import Hex, Player
 
     # initialize database :
     with app.app_context():
-        players = Player.query.all()
-        for player in players:
-            if player.id not in engine.data["current_data"]:
-                engine.data["current_data"][player.id] = CircularBufferPlayer()
-            for asset in ["watermill", "windmill", "small_pumped_hydro"]:
-                if getattr(player, asset) > 0:
-                    engine.data["current_data"][player.id].new_subcategory(
-                        "generation", asset
-                    )
-                    engine.data["current_data"][player.id].new_subcategory(
-                        "op_costs", asset
-                    )
-                    if asset == "small_pumped_hydro":
-                        engine.data["current_data"][player.id].new_subcategory(
-                            "storage", asset
-                        )
-                        engine.data["current_data"][player.id].new_subcategory(
-                            "demand", asset
-                        )
-
-        networks = Network.query.all()
-        for network in networks:
-            if network.id not in engine.data["network_data"]:
-                engine.data["network_data"][
-                    network.id
-                ] = CircularBufferNetwork()
-
         db.create_all()
         # if map data not already stored in database, read map.csv and store it in database
         if Hex.query.count() == 0:
