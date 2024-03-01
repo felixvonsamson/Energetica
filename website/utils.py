@@ -277,7 +277,7 @@ def update_weather(engine):
                 engine.data["current_windspeed"][t - 1]
             ] * 10
     except Exception as e:
-        engine.log("An error occurred:" + e)
+        engine.log(e)
         engine.data["current_windspeed"][t : t + 10] = [
             engine.data["current_windspeed"][t - 1]
         ] * 10
@@ -614,6 +614,18 @@ def set_network_prices(engine, player, prices={}):
     player.rest_of_priorities = comma.join(rest_list)
     player.demand_priorities = comma.join(demand_list)
     db.session.commit()
+
+
+def package_players():
+    def package_player(player):
+        payload = {
+            "username": player.username,
+        }
+        if player.tile is not None:
+            payload["tile_id"] = player.tile.id
+        return payload
+
+    return {player.id: package_player(player) for player in Player.query.all()}
 
 
 def get_scoreboard():

@@ -220,6 +220,11 @@ def get_player_data():
     return jsonify(asset_count, config)
 
 
+@api.route("/get_players", methods=["GET"])
+def get_players():
+    return jsonify(utils.package_players())
+
+
 @api.route("/get_generation_prioirity", methods=["GET"])
 def get_generation_prioirity():
     """Gets generation and demand priority for this player"""

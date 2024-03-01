@@ -11,12 +11,6 @@ const navLinks = document.querySelectorAll("nav a").forEach((link) => {
             expand_menu("facilities");
         } else if (link.href.includes("overview")) {
             expand_menu("overview");
-        } else if (
-            link.href.includes("scoreboard") ||
-            link.href.includes("map") ||
-            link.href.includes("network")
-        ) {
-            expand_menu("community");
         }
     }
 });

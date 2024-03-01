@@ -874,11 +874,11 @@
       </tr>
       <tr>
         <td>Efficiency Li-ion</td>
-        <td id="E_Li_ion" class="txt_center">+{{ (10/assets["lithium_ion_batteries"]["efficiency"]-10)| round(2) }}%</td>
+        <td id="E_Li_ion" class="txt_center">+{{ (10-10*assets["lithium_ion_batteries"]["efficiency"])| round(2) }}%</td>
       </tr>
       <tr>
         <td>Efficiency solid state</td>
-        <td id="E_SS" class="txt_center">+{{ (10/assets["solid_state_batteries"]["efficiency"]-10)| round(2) }}%</td>
+        <td id="E_SS" class="txt_center">+{{ (10-10*assets["solid_state_batteries"]["efficiency"])| round(2) }}%</td>
       </tr>
       <tr>
         <td>Price</td>
