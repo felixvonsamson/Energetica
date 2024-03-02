@@ -11,6 +11,9 @@ import numpy as np
 import shutil
 from datetime import datetime
 from pathlib import Path
+import requests
+import json
+
 
 from website import rest_api
 from .database import (
