@@ -644,7 +644,7 @@ def package_constructions(player):
 
 
 def get_scoreboard():
-    players = Player.query.filter(Player.tile != None)
+    players = Player.query.filter(Player.tile != None)  # noqa: E711
     return {
         player.id: {
             "money": player.money,
