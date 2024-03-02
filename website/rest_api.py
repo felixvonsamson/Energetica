@@ -414,6 +414,7 @@ def rest_notify_player_location(engine, player):
     string with this information."""
     message = rest_add_player_location(player)
     rest_notify_all_players(engine, message)
+    rest_notify_scoreboard(engine)
     engine.socketio.emit("get_players", utils.package_players())
 
 
