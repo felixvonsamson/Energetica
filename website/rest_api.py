@@ -401,7 +401,7 @@ def rest_notify_all_players(engine, message):
 def rest_notify_player(engine, player, message):
     if player.id not in engine.websocket_dict:
         return
-    for ws in engine.websocket_dict(player.id):
+    for ws in engine.websocket_dict[player.id]:
         try:
             ws.send(message)
         except ConnectionClosed:
