@@ -626,6 +626,20 @@ def package_players():
     return {player.id: package_player(player) for player in Player.query.all()}
 
 
+def package_constructions(player):
+    return {
+        construction.id: {
+            "id": construction.id,
+            "name": construction.name,
+            "family": construction.family,
+            # "start_time": construction.start_time,
+            # "duration": construction.duration,
+            # "suspension_time": construction.suspension_time,
+        }
+        for construction in player.under_construction
+    }
+
+
 def get_scoreboard():
     players = Player.query.filter(Player.tile != None)
     return {
@@ -700,6 +714,7 @@ def start_project(engine, player, facility, family):
     player.add_project_priority(priority_list_name, new_construction.id)
     if suspension_time is None:
         player.project_max_priority(priority_list_name, new_construction.id)
+    rest_api.rest_notify_constructions(engine, player)
     return {
         "response": "success",
         "money": player.money,

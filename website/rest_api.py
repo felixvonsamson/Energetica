@@ -45,23 +45,25 @@ def add_sock_handlers(sock, engine):
     @sock.route("/rest_ws", bp=rest_api)
     def rest_ws(ws):
         """Main WebSocket endpoint for API."""
-        engine.log(f"Received WebSocket connection for player {g.player}")
+        player = g.player
+        engine.log(f"Received WebSocket connection for player {player}")
         ws.send(rest_get_map())
         ws.send(rest_get_players())
-        ws.send(rest_get_current_player(current_player=g.player))
+        ws.send(rest_get_current_player(player))
         ws.send(rest_get_networks())
         ws.send(rest_get_scoreboard())
-        if g.player.tile is not None:
+        ws.send(rest_get_constructions(player))
+        if player.tile is not None:
             rest_init_ws_post_location(engine, ws)
-        if g.player.id not in engine.websocket_dict:
-            engine.websocket_dict[g.player.id] = []
+        if player.id not in engine.websocket_dict:
+            engine.websocket_dict[player.id] = []
         ws.send(rest_setup_complete())
-        engine.websocket_dict[g.player.id].append(ws)
+        engine.websocket_dict[player.id].append(ws)
         while True:
             try:
                 data = ws.receive()
             except ConnectionClosed:
-                unregister_websocket_connection(g.player.id, ws)
+                unregister_websocket_connection(player.id, ws)
                 break
             message = json.loads(data)
             message_data = message["data"]
@@ -73,7 +75,7 @@ def add_sock_handlers(sock, engine):
                     rest_parse_request(engine, ws, uuid, message_data)
                 case type:
                     engine.log(
-                        f"Websocket connection from player {g.player} sent an unkown message of type {type}"
+                        f"Websocket connection from player {player} sent an unkown message of type {type}"
                     )
 
 
@@ -129,6 +131,15 @@ def rest_get_current_player(current_player):
     """Gets the current player's id and returns it as a JSON string."""
     response = {"type": "getCurrentPlayer", "data": current_player.id}
     return json.dumps(response)
+
+
+def rest_get_constructions(player):
+    return json.dumps(
+        {
+            "type": "getConstructions",
+            "data": utils.package_constructions(player),
+        }
+    )
 
 
 def rest_get_networks():
@@ -387,6 +398,16 @@ def rest_notify_all_players(engine, message):
                 unregister_websocket_connection(player_id, ws)
 
 
+def rest_notify_player(engine, player, message):
+    if player.id not in engine.websocket_dict:
+        return
+    for ws in engine.websocket_dict(player.id):
+        try:
+            ws.send(message)
+        except ConnectionClosed:
+            unregister_websocket_connection(player.id, ws)
+
+
 def rest_notify_player_location(engine, player):
     """This mehtod is called when player (argument) has chosen a location. This
     information needs to be relayed to clients, and this methods returns a JSON
@@ -414,3 +435,8 @@ def rest_notify_new_player(engine, player):
 def rest_notify_scoreboard(engine):
     message = rest_get_scoreboard()
     rest_notify_all_players(engine, message)
+
+
+def rest_notify_constructions(engine, player):
+    message = rest_get_constructions(player)
+    rest_notify_player(engine, player, message)
