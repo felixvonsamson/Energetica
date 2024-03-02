@@ -8,6 +8,7 @@ import math
 import pandas as pd
 import numpy as np
 from .database import Network, Player, Under_construction, Shipment
+from .config import wind_power_curve
 from . import db
 from .utils import notify
 
@@ -28,9 +29,8 @@ extraction_to_resource = {
 
 def update_electricity(engine):
     """Update the electricity generation and storage status for all players"""
-    t = engine.data["current_t"]
     # keep CO2 values for next t
-    engine.data["current_CO2"][t] = engine.data["current_CO2"][t - 1]
+    engine.data["emissions"].init_new_value()
     players = Player.query.all()
     networks = Network.query.all()
 
@@ -45,11 +45,11 @@ def update_electricity(engine):
         for player in network.members:
             if player.tile is None:
                 continue
-            calculate_demand(engine, new_values[player.id], player, t)
+            calculate_demand(engine, new_values[player.id], player)
             market = calculate_generation_with_market(
-                engine, new_values[player.id], market, player, t
+                engine, new_values[player.id], market, player
             )
-        market_logic(engine, new_values, market, t)
+        market_logic(engine, new_values, market)
         # Save market data
         new_network_values = {
             "price": market["market_price"],
@@ -75,11 +75,11 @@ def update_electricity(engine):
             continue
         # Power generation calculation for players that are not in a network
         if player.network is None:
-            calculate_demand(engine, new_values[player.id], player, t)
-            calculate_generation_without_market(engine, new_values, player, t)
+            calculate_demand(engine, new_values[player.id], player)
+            calculate_generation_without_market(engine, new_values, player)
         calculate_net_import(new_values[player.id], player.network is not None)
-        update_storgage_lvls(engine, new_values[player.id], player, t)
-        resources_and_pollution(engine, new_values[player.id], player, t)
+        update_storgage_lvls(engine, new_values[player.id], player)
+        resources_and_pollution(engine, new_values[player.id], player)
         engine.data["current_data"][player.id].append_value(
             new_values[player.id]
         )
@@ -118,7 +118,7 @@ def init_market():
     }
 
 
-def update_storgage_lvls(engine, new_values, player, t):
+def update_storgage_lvls(engine, new_values, player):
     """Update storage levels according to the use of storage failities"""
     assets = engine.config[player.id]["assets"]
     generation = new_values["generation"]
@@ -156,7 +156,7 @@ def calculate_net_import(new_values, network):
         new_values["revenues"]["imports"] = min(0.0, exp_rev + imp_rev)
 
 
-def extraction_facility_demand(engine, new_values, player, t, assets, demand):
+def extraction_facility_demand(engine, new_values, player, assets, demand):
     """Calculate power consumption of extraction facilites"""
     player_resources = new_values["resources"]
     warehouse_caps = engine.config[player.id]["warehouse_capacities"]
@@ -177,7 +177,7 @@ def extraction_facility_demand(engine, new_values, player, t, assets, demand):
             )
 
 
-def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
+def industry_demand_and_revenues(engine, player, assets, demand, revenues):
     """calculate power consumption and revenues from industry"""
     # interpolating seasonal factor on the day
     day = engine.data["total_t"] // 1440
@@ -187,8 +187,9 @@ def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
         + engine.industry_seasonal[(day + 1) % 51]
         * (engine.data["total_t"] % 1440)
     ) / 1440
+    t = (engine.data["total_t"] + engine.data["delta_min"]) % 1440
     industry_demand = (
-        engine.industry_demand[t - 1]
+        engine.industry_demand[t]
         * seasonal_factor
         * assets["industry"]["power consumption"]
     )
@@ -225,7 +226,7 @@ def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
             )
             additional_revenue = (
                 time_fraction
-                * industry_income
+                * (industry_income - 2000 / 1440)
                 * (engine.const_config["industry"]["income factor"] - 1)
             )
             demand["industry"] += additional_demand
@@ -233,7 +234,7 @@ def industry_demand_and_revenues(engine, player, t, assets, demand, revenues):
     player.money += revenues["industry"]
 
 
-def construction_demand(player, t, assets, demand):
+def construction_demand(player, assets, demand):
     """calculate power consumption for facilites under construction"""
     for ud in player.under_construction:
         if ud.suspension_time is None:
@@ -244,39 +245,36 @@ def construction_demand(player, t, assets, demand):
                 demand["construction"] += construction["construction power"]
 
 
-def shipment_demand(engine, player, t, demand):
+def shipment_demand(engine, player, demand):
     """calculate the power consumption for shipments"""
     transport = engine.config[player.id]["transport"]
     for shipment in player.shipments:
         if shipment.suspension_time is None:
             demand["transport"] += (
-                transport["power consumption"]
-                / transport["time"]
-                * shipment.quantity
-                * 3.6
+                transport["power consumption"] * shipment.quantity
             )
 
 
-def calculate_demand(engine, new_values, player, t):
+def calculate_demand(engine, new_values, player):
     """Calculates the electricity demand of one player"""
 
     assets = engine.config[player.id]["assets"]
     demand = new_values["demand"]
     revenues = new_values["revenues"]
 
-    extraction_facility_demand(engine, new_values, player, t, assets, demand)
-    industry_demand_and_revenues(engine, player, t, assets, demand, revenues)
-    construction_demand(player, t, assets, demand)
-    shipment_demand(engine, player, t, demand)
+    extraction_facility_demand(engine, new_values, player, assets, demand)
+    industry_demand_and_revenues(engine, player, assets, demand, revenues)
+    construction_demand(player, assets, demand)
+    shipment_demand(engine, player, demand)
 
 
-def calculate_generation_without_market(engine, new_values, player, t):
+def calculate_generation_without_market(engine, new_values, player):
     internal_market = init_market()
     assets = engine.config[player.id]["assets"]
     generation = new_values[player.id]["generation"]
     demand = new_values[player.id]["demand"]
     # generation of non controllable facilities is calculated from weather data
-    renewables_generation(engine, player, assets, generation, t)
+    renewables_generation(engine, player, assets, generation)
     minimal_generation(engine, player, assets, generation)
     facilities = (
         engine.storage_facilities
@@ -339,16 +337,16 @@ def calculate_generation_without_market(engine, new_values, player, t):
             internal_market = bid(
                 internal_market, player.id, demand_q, price, facility
             )
-    market_logic(engine, new_values, internal_market, t)
+    market_logic(engine, new_values, internal_market)
 
 
-def calculate_generation_with_market(engine, new_values, market, player, t):
+def calculate_generation_with_market(engine, new_values, market, player):
     assets = engine.config[player.id]["assets"]
     generation = new_values["generation"]
     demand = new_values["demand"]
 
     excess_generation = 0
-    renewables_generation(engine, player, assets, generation, t)
+    renewables_generation(engine, player, assets, generation)
     minimal_generation(engine, player, assets, generation)
     facilities = (
         engine.storage_facilities
@@ -404,7 +402,7 @@ def calculate_generation_with_market(engine, new_values, market, player, t):
     return market
 
 
-def market_logic(engine, new_values, market, t):
+def market_logic(engine, new_values, market):
     """Calculate overall network demand,
     class all capacity offers in ascending order of price
     and find the market price of electricity.
@@ -517,10 +515,10 @@ def market_optimum(offers_og, demands_og):
             return price, row.cumul_capacities
 
 
-def renewables_generation(engine, player, assets, generation, t):
+def renewables_generation(engine, player, assets, generation):
     """Generation of non controllable facilities is calculated from weather data"""
     # WIND
-    power_factor = interpolate_wind(engine, player, t)
+    power_factor = interpolate_wind(engine, player)
     for facility in [
         "windmill",
         "onshore_wind_turbine",
@@ -534,7 +532,7 @@ def renewables_generation(engine, player, assets, generation, t):
             )
     # SOLAR
     power_factor = (
-        engine.data["current_irradiation"][t] / 875 * player.tile.solar
+        engine.data["weather"]["irradiance"] / 875 * player.tile.solar
     )  # 875 W/m2 is the maximim irradiation in Zürich
     for facility in ["CSP_solar", "PV_solar"]:
         if getattr(player, facility) > 0:
@@ -544,7 +542,7 @@ def renewables_generation(engine, player, assets, generation, t):
                 * getattr(player, facility)
             )
     # HYDRO
-    power_factor = engine.data["current_discharge"][t]
+    power_factor = engine.data["weather"]["river_discharge"]
     for facility in ["watermill", "small_water_dam", "large_water_dam"]:
         if getattr(player, facility) > 0:
             generation[facility] = (
@@ -554,13 +552,13 @@ def renewables_generation(engine, player, assets, generation, t):
             )
 
 
-def interpolate_wind(engine, player, t):
-    if engine.data["current_windspeed"][t] > 100:
+def interpolate_wind(engine, player):
+    if engine.data["weather"]["windspeed"] > 100:
         return 0
-    windspeed = engine.data["current_windspeed"][t] * pow(player.tile.wind, 0.5)
+    windspeed = engine.data["weather"]["windspeed"] * pow(player.tile.wind, 0.5)
     i = math.floor(windspeed)
     f = windspeed - i
-    pc = engine.wind_power_curve
+    pc = wind_power_curve
     return pc[i] + (pc[(i + 1) % 100] - pc[i]) * f
 
 
@@ -713,7 +711,7 @@ def buy(engine, new_values, row, market_price, quantity=None):
     revenue["imports"] -= quantity * market_price / 60000000
 
 
-def resources_and_pollution(engine, new_values, player, t):
+def resources_and_pollution(engine, new_values, player):
     """Calculate resource use and production, O&M costs and emissions"""
     assets = engine.config[player.id]["assets"]
     generation = new_values["generation"]
@@ -731,7 +729,7 @@ def resources_and_pollution(engine, new_values, player, t):
                 assets[facility]["pollution"] * generation[facility] / 60000000
             )
             add_emissions(
-                engine, new_values, player, t, facility, facility_emmissions
+                engine, new_values, player, facility, facility_emmissions
             )
 
     if player.warehouse > 0:
@@ -766,13 +764,12 @@ def resources_and_pollution(engine, new_values, player, t):
                     engine,
                     new_values,
                     player,
-                    t,
                     extraction_facility,
                     emissions,
                 )
             new_values["resources"][resource] = getattr(player, resource)
 
-    construction_emissions(engine, new_values, player, t, assets)
+    construction_emissions(engine, new_values, player, assets)
 
     # O&M costs
     for facility in (
@@ -812,7 +809,7 @@ def resources_and_pollution(engine, new_values, player, t):
             op_costs[facility] -= operational_cost
 
 
-def construction_emissions(engine, new_values, player, t, assets):
+def construction_emissions(engine, new_values, player, assets):
     """calculate emissions of facilites under construction"""
     emissions_construction = 0.0
     for ud in player.under_construction:
@@ -824,7 +821,7 @@ def construction_emissions(engine, new_values, player, t, assets):
                     / construction["construction time"]
                 )
     add_emissions(
-        engine, new_values, player, t, "construction", emissions_construction
+        engine, new_values, player, "construction", emissions_construction
     )
 
 
@@ -845,6 +842,9 @@ def reduce_demand(
                 "Energy shortage",
                 f"Your industry has been downgraded to level {player.industry-1} because of a lack of electricity.",
                 [player],
+            )
+            engine.log(
+                f"The industry of {player.username} has been downgraded to level {player.industry-1} because of a lack of electricity."
             )
         player.industry = max(1, player.industry - 1)
         engine.config.update_config_for_user(player.id)
@@ -925,7 +925,7 @@ def reduce_demand(
         demand[demand_type] = satisfaction
 
 
-def add_emissions(engine, new_values, player, t, facility, amount):
+def add_emissions(engine, new_values, player, facility, amount):
     new_values["emissions"][facility] += amount
     player.emissions += amount
-    engine.data["current_CO2"][t] += amount
+    engine.data["emissions"].add("CO2", amount)

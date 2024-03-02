@@ -348,6 +348,16 @@ canvas {
     -ms-transform: translate(-50%, -50%)
 }
 
+.game_info {
+    position: fixed;
+    max-width:800px;
+    border-radius: 8px;
+    bottom: 10%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%)
+}
+
 .topRight_info {
     display: block;
     max-width: 230px;
@@ -473,6 +483,10 @@ canvas {
         background-color: #0000;
         position: relative;
         top: 2px
+    }
+
+    .game_info{
+        width: 75%;
     }
 }
 
@@ -629,6 +643,21 @@ canvas {
 .exclamation-circle {
     color: #f44336;
     margin-right: 6px;
+}
+
+.info_message {
+    border-radius: 8px;
+    color: #000;
+    border: 1px solid #2196F3;
+    background-color: #ddffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info_message i {
+    color: #2196F3;
+    font-size: min(25px, 3.5vh)
 }
 
 .notification_container{
@@ -1052,6 +1081,11 @@ canvas {
 
 .priority_arrow_img.up{
     transform: rotate(180deg);
+}
+
+.priority_list_txt{
+    white-space: nowrap;
+    overflow: visible;
 }
 
 .priority_list_txt.left{

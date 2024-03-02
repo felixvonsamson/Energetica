@@ -121,14 +121,6 @@
         </a>
       </li>
 
-      <li class="nav-item">
-        <a class="navbar_item tan_green flex-row" id="messages" href="{{ url_for('views.messages') }}">
-          <img src="{{ url_for('static', filename='images/icons/messages.png') }}"
-                class="navbar_icon margin-small" />
-          <span style="padding:8px 0">Messages</span>
-        </a>
-      </li>
-
       <li class="nav-item dropdown">
         <a class="navbar_item tan_green flex-row"
             id="production_overview"
@@ -231,15 +223,21 @@
 
       <li class="nav-item dropdown">
         <a class="navbar_item tan_green flex-row"
-            id="comunity"
-            onclick="expand_menu('comunity')">
+            id="community"
+            onclick="expand_menu('community')">
           <img src="{{ url_for('static', filename='images/icons/dropdown.png') }}"
                 class="navbar_icon margin-small"
-                id="dropdown-comunity" />
-          <span style="padding:8px 0">Comunity</span>
+                id="dropdown-community" />
+          <span style="padding:8px 0">Community</span>
         </a>
-        <div class="dropdown-menu" id="menu-comunity">
-        
+        <div class="dropdown-menu" id="menu-community">
+
+          <a class="navbar_item bone flex-row" id="messages" href="{{ url_for('views.messages') }}">
+            <img src="{{ url_for('static', filename='images/icons/messages.png') }}"
+                  class="navbar_icon margin-small" />
+            <span style="padding:8px 0">Messages</span>
+          </a>
+
           <a class="navbar_item bone flex-row" id="network" href="{{ url_for('views.network') }}">
             <img src="{{ url_for('static', filename='images/icons/network.png') }}"
                 class="navbar_icon margin-small" />
@@ -302,7 +300,7 @@
     </ul>
   </div>
 </nav>
-<div class="version medium">Version : beta 0.7.0</div>
+<div class="version medium">Version : beta 0.7.2</div>
 <div class="main_container tan_green">
   {% block content %}
   {% endblock content %}

@@ -2,17 +2,17 @@
 I dumped all small helpful functions here
 """
 
-import requests
-import json
 import math
 import threading
 import pickle
 import os
 import time
 import numpy as np
+import shutil
 from datetime import datetime
+from pathlib import Path
 
-from .rest_api import rest_notify_player_location
+from website import rest_api
 from .database import (
     Player,
     Network,
@@ -22,6 +22,7 @@ from .database import (
     Under_construction,
     Notification,
     Active_facilites,
+    CircularBufferNetwork,
 )
 from . import db
 from flask import current_app, flash
@@ -249,73 +250,6 @@ def check_existing_chats(participants):
     return False
 
 
-# This function upddates the windspeed and irradiation data every 10 mminutes by using the meteosuisse api
-def update_weather(engine):
-    url_wind = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min_en.json"
-    url_irr = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-globalstrahlung-10min/ch.meteoschweiz.messwerte-globalstrahlung-10min_en.json"
-    t = engine.data["current_t"]
-    try:
-        response = requests.get(url_wind)
-        if response.status_code == 200:
-            windspeed = json.loads(response.content)["features"][107][
-                "properties"
-            ]["value"]
-            if windspeed > 2000:
-                windspeed = engine.data["current_windspeed"][t - 1]
-            interpolation = np.linspace(
-                engine.data["current_windspeed"][t - 1], windspeed, 11
-            )
-            engine.data["current_windspeed"][t : t + 10] = interpolation[1:]
-        else:
-            engine.log(
-                "Failed to fetch the file. Status code:", response.status_code
-            )
-            engine.data["current_windspeed"][t : t + 10] = [
-                engine.data["current_windspeed"][t - 1]
-            ] * 10
-    except Exception as e:
-        engine.log("An error occurred:" + e)
-        engine.data["current_windspeed"][t : t + 10] = [
-            engine.data["current_windspeed"][t - 1]
-        ] * 10
-
-    try:
-        response = requests.get(url_irr)
-        if response.status_code == 200:
-            irradiation = json.loads(response.content)["features"][65][
-                "properties"
-            ]["value"]
-            if irradiation > 2000:
-                irradiation = engine.data["current_irradiation"][t - 1]
-            interpolation = np.linspace(
-                engine.data["current_irradiation"][t - 1], irradiation, 11
-            )
-            engine.data["current_irradiation"][t : t + 10] = interpolation[1:]
-        else:
-            engine.log(
-                "Failed to fetch the file. Status code:", response.status_code
-            )
-            engine.data["current_irradiation"][t : t + 10] = [
-                engine.data["current_irradiation"][t - 1]
-            ] * 10
-    except Exception as e:
-        engine.log("An error occurred:", e)
-        engine.data["current_irradiation"][t : t + 10] = [
-            engine.data["current_irradiation"][t - 1]
-        ] * 10
-
-    month = math.floor(
-        (engine.data["total_t"] % 73440) / 6120
-    )  # One year in game is 51 days
-    f = (engine.data["total_t"] % 73440) / 6120 - month
-    d = engine.river_discharge
-    power_factor = d[month] + (d[(month + 1) % 12] - d[month]) * f
-    engine.data["current_discharge"][t : t + 10] = [power_factor] * 10
-    engine.log(
-        f"the current irradiation in Zürich is {engine.data['current_irradiation'][t+9]} W/m2 with a windspeed of {engine.data['current_windspeed'][t+9]} km/h"
-    )
-
-
 def save_past_data_threaded(app, engine):
     """Saves the past production data to files every hour AND remove network data older than 24h"""
 
@@ -389,7 +323,7 @@ def save_past_data_threaded(app, engine):
         new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
         array[2] = array[2][len(new_month) :]
         array[2].extend(new_month)
-        if engine.data["current_t"] % 180 == 0:
+        if engine.data["total_t"] % 180 == 0:
             array[3] = array[3][1:]
             array[3].append(np.mean(array[2][-6:]))
 
@@ -503,8 +437,8 @@ def buy_resource_from_market(player, quantity, sale_id):
 
 
 def confirm_location(engine, player, location):
-    """This function is calle when a player choses a location. It returns either
-    success or an explanatory error message in the form of a dictionary.
+    """This function is called when a player choses a location. It returns
+    either success or an explanatory error message in the form of a dictionary.
     It is called when a web client uses the choose_location socket.io endpoint,
     or the REST websocket API."""
     if location.player_id is not None:
@@ -516,8 +450,68 @@ def confirm_location(engine, player, location):
     # Checks have succeeded, proceed
     location.player_id = player.id
     db.session.commit()
-    rest_notify_player_location(engine, player)
+    rest_api.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
+    return {"response": "success"}
+
+
+def join_network(engine, player, network):
+    """shared API method to join a network."""
+    if network is None:
+        # print("utils.join_network: argument network was `None`")
+        return {"response": "noSuchNetwork"}
+    if player.network is not None:
+        # print("utils.join_network: argument network was `None`")
+        return {"response": "playerAlreadyInNetwork"}
+    player.network = network
+    db.session.commit()
+    print(f"{player.username} joined the network {network.name}")
+    rest_api.rest_notify_network_change(engine)
+    return {"response": "success"}
+
+
+def create_network(engine, player, name):
+    """shared API method to create a network. Network name must pass validation,
+    namely it must not be too long, nor too short, and must not already be in
+    use."""
+    if len(name) < 3 or len(name) > 40:
+        return {"response": "nameLengthInvalid"}
+    if Network.query.filter_by(name=name).first() is not None:
+        return {"response": "nameAlreadyUsed"}
+    new_network = Network(name=name, members=[player])
+    db.session.add(new_network)
+    db.session.commit()
+    network_path = f"instance/network_data/{new_network.id}"
+    Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
+    engine.data["network_data"][new_network.id] = CircularBufferNetwork()
+    past_data = data_init_network()
+    Path(f"{network_path}").mkdir(parents=True, exist_ok=True)
+    with open(f"{network_path}/time_series.pck", "wb") as file:
+        pickle.dump(past_data, file)
+    engine.log(f"{player.username} created the network {name}")
+    rest_api.rest_notify_network_change(engine)
+    return {"response": "success"}
+
+
+def leave_network(engine, player):
+    """Shared API method for a player to leave a network. Always succeeds."""
+    network = player.network
+    if network is None:
+        return {"response": "playerNotInNetwork"}
+    player.network_id = None
+    remaining_members_count = Player.query.filter_by(
+        network_id=network.id
+    ).count()
+    # delete network if it is empty
+    if remaining_members_count == 0:
+        engine.log(
+            f"The network {network.name} has been deleted because it was empty"
+        )
+        shutil.rmtree(f"instance/network_data/{network.id}")
+        db.session.delete(network)
+    db.session.commit()
+    engine.log(f"{player.username} left the network {network.name}")
+    rest_api.rest_notify_network_change(engine)
     return {"response": "success"}
 
 
@@ -551,6 +545,18 @@ def set_network_prices(engine, player, prices={}):
     player.rest_of_priorities = comma.join(rest_list)
     player.demand_priorities = comma.join(demand_list)
     db.session.commit()
+
+
+def get_scoreboard():
+    players = Player.query.filter(Player.tile != None)
+    return {
+        player.id: {
+            "money": player.money,
+            "average_hourly_revenues": player.average_revenues,
+            "co2_emissions": player.emissions,
+        }
+        for player in players
+    }
 
 
 def start_project(player, facility, family):

@@ -185,7 +185,7 @@ const_config = {
         "industry": {
             "name": "Industry",
             "type": "Functional facility",
-            "price multiplier": 1.4,
+            "price multiplier": 1.32,
             "power factor": 1.4,
             "income factor": 1.35,
             "description": "The industry generates revenue from energy. The Power consumption of the Industry varies daily and seasonally.",
@@ -203,24 +203,28 @@ const_config = {
         "coal_mine": {
             "name": "Coal mine",
             "type": "Extraction facility",
+            "extraction_rate": 0.000001,  # [fraction of total stock that can be extracted every minute by one mine]
             "description": "The coal mine extracts coal from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Coal_mining",
         },
         "oil_field": {
             "name": "Oil field",
             "type": "Extraction facility",
+            "extraction_rate": 0.00001,
             "description": "The oil field extracts oil from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Extraction_of_petroleum",
         },
         "gas_drilling_site": {
             "name": "Gas drilling site",
             "type": "Extraction facility",
+            "extraction_rate": 0.000008,
             "description": "The gas drilling site extracts gas from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Natural_gas",
         },
         "uranium_mine": {
             "name": "Uranium mine",
             "type": "Extraction facility",
+            "extraction_rate": 0.000001,
             "description": "The uranium mine extracts uranium from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Uranium_mining",
         },
@@ -731,7 +735,7 @@ var_config = {
             "requirements": [],
         },
         "industry": {
-            "price": 1000 / 1.25,
+            "price": 600,
             "construction time": 1200,
             "construction energy": 10000,
             "construction pollution": 1000,
@@ -759,7 +763,6 @@ var_config = {
             "construction power factor": 3,  # fraction of power consumption during construction
             "construction pollution": 200000,  # [kg]
             "O&M cost": 0.25,  # [fraction of price per year]
-            "amount produced": 0.000001,  # [fraction of total stock that can be extracted every minute by one mine]
             "power consumption": 3000000,  # [W]
             "pollution": 0.065,  # [kg/kg extracted]
             "lifetime": 2782080,  # [s]
@@ -771,7 +774,6 @@ var_config = {
             "construction power factor": 5,
             "construction pollution": 400000,
             "O&M cost": 0.26,
-            "amount produced": 0.00001,
             "power consumption": 15300000,
             "pollution": 0.302,
             "lifetime": 1451520,
@@ -783,7 +785,6 @@ var_config = {
             "construction power factor": 6,
             "construction pollution": 700000,
             "O&M cost": 0.26,
-            "amount produced": 0.000008,
             "power consumption": 11100000,
             "pollution": 0.523,
             "lifetime": 1209600,
@@ -795,7 +796,6 @@ var_config = {
             "construction power factor": 4,
             "construction pollution": 500000,
             "O&M cost": 0.5,
-            "amount produced": 0.000001,
             "power consumption": 36000000,
             "pollution": 230,
             "lifetime": 2177280,
@@ -1034,7 +1034,7 @@ wind_power_curve = [
     0,
 ]  # from 0 to 100 km/h
 
-river_discharge = [
+river_discharge_seasonal = [
     0.26,
     0.23,
     0.3,
@@ -1066,22 +1066,22 @@ class Config(object):
             ** player.mineral_extraction
         )
         assets["coal_mine"]["amount produced"] = (
-            var_config["assets"]["coal_mine"]["amount produced"]
+            const_config["assets"]["coal_mine"]["extraction_rate"]
             * player.tile.coal
             * me_factor
         )
         assets["oil_field"]["amount produced"] = (
-            var_config["assets"]["oil_field"]["amount produced"]
+            const_config["assets"]["oil_field"]["extraction_rate"]
             * player.tile.oil
             * me_factor
         )
         assets["gas_drilling_site"]["amount produced"] = (
-            var_config["assets"]["gas_drilling_site"]["amount produced"]
+            const_config["assets"]["gas_drilling_site"]["extraction_rate"]
             * player.tile.gas
             * me_factor
         )
         assets["uranium_mine"]["amount produced"] = (
-            var_config["assets"]["uranium_mine"]["amount produced"]
+            const_config["assets"]["uranium_mine"]["extraction_rate"]
             * player.tile.uranium
             * me_factor
         )
@@ -1269,6 +1269,10 @@ class Config(object):
                         const_config["assets"]["chemistry"]["efficiency_factor"]
                         ** player.chemistry
                     )
+                assets[asset]["price"] *= (
+                    const_config["assets"]["chemistry"]["price factor"]
+                    ** player.chemistry
+                )
 
             if (
                 asset
@@ -1295,10 +1299,10 @@ class Config(object):
                 ] ** getattr(player, asset)
                 assets[asset]["construction time"] *= const_config["assets"][
                     asset
-                ]["price multiplier"] ** (0.75 * getattr(player, asset))
+                ]["price multiplier"] ** (0.6 * getattr(player, asset))
                 assets[asset]["construction energy"] *= const_config["assets"][
                     asset
-                ]["price multiplier"] ** (1.25 * getattr(player, asset))
+                ]["price multiplier"] ** (1.2 * getattr(player, asset))
                 if asset in [
                     "laboratory",
                     "warehouse",
@@ -1342,6 +1346,8 @@ class Config(object):
                 in engine.storage_facilities
                 + engine.controllable_facilities
                 + engine.renewables
+                + engine.extraction_facilities
+                + engine.functional_facilities
             ):
                 # update construction time (building technology)
                 assets[asset]["construction time"] *= (
@@ -1359,9 +1365,8 @@ class Config(object):
                     const_config["assets"]["industry"]["income factor"]
                     ** player.industry
                 )
-                # productivity bonus for first 5 levesls
-                if player.industry < 6:
-                    assets[asset]["income"] *= 1.1 ** (6 - player.industry)
+                # basic universal income of 2000 per day
+                assets[asset]["income"] += 2000
 
             if (
                 asset
@@ -1393,32 +1398,27 @@ class Config(object):
                     )
 
             # calculate energy need :
+            bt_factor = (
+                const_config["assets"]["building_technology"]["time factor"]
+                ** player.building_technology
+            )
             if asset in engine.controllable_facilities + engine.renewables:
                 assets[asset]["construction power"] = (
                     assets[asset]["construction power factor"]
                     * assets[asset]["power generation"]
-                    / (
-                        const_config["assets"]["building_technology"][
-                            "time factor"
-                        ]
-                        ** player.building_technology
-                    )
+                    / bt_factor
                 )
             elif asset in engine.storage_facilities:
                 assets[asset]["construction power"] = (
                     assets[asset]["construction power factor"]
                     * assets[asset]["storage capacity"]
-                    / (
-                        const_config["assets"]["building_technology"][
-                            "time factor"
-                        ]
-                        ** player.building_technology
-                    )
+                    / bt_factor
                 )
             elif asset in engine.extraction_facilities:
                 assets[asset]["construction power"] = (
                     assets[asset]["construction power factor"]
                     * assets[asset]["power consumption"]
+                    / bt_factor
                 )
             else:
                 assets[asset]["construction power"] = (
@@ -1446,6 +1446,8 @@ class Config(object):
         config.for_player[player_id]["transport"]["power consumption"] *= (
             const_config["assets"]["transport_technology"]["energy factor"]
             ** player.transport_technology
+            * 3600
+            / config.for_player[player_id]["transport"]["time"]
         )
 
         # setting the number of workers
@@ -1457,6 +1459,7 @@ class Config(object):
     def __getitem__(config, player_id):
         if player_id not in config.for_player:
             config.update_config_for_user(player_id)
+            config.update_resource_extraction(player_id)
         return config.for_player[player_id]
 
 

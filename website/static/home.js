@@ -46,15 +46,18 @@ fetch("/get_generation_prioirity")
             </li>`
             }
             const items = sortableList.querySelectorAll(".item");
-            console.log(items);
             items.forEach(item => {
                 item.addEventListener("dragstart", () => item.classList.add("dragging"));
                 item.addEventListener("dragend", () => {
                     item.classList.remove("dragging");
                     send_new_list();
                 });
+                item.addEventListener("touchstart", () => item.classList.add("dragging"));
+                item.addEventListener("touchend", () => {
+                    item.classList.remove("dragging");
+                    send_new_list();
+                });
             });
-            console.log(raw_data);
         });
     })
     .catch((error) => {
@@ -68,7 +71,10 @@ const initSortableList = (e) => {
         return
     }
     const sortableListRect = sortableList.getBoundingClientRect();
-    const offsetY = e.clientY - sortableListRect.top;
+    let offsetY = e.clientY - sortableListRect.top;
+    if (!offsetY){
+        offsetY = e.touches[0].clientY - sortableListRect.top;
+    }
     let siblings = [...sortableList.querySelectorAll(".item:not(.dragging)")].filter(item => item.draggable);
 
     // Finding the sibling after which the dragging item should be placed
@@ -84,6 +90,8 @@ const initSortableList = (e) => {
 
 sortableList.addEventListener("dragover", initSortableList);
 sortableList.addEventListener("dragenter", e => e.preventDefault());
+sortableList.addEventListener("touchmove", initSortableList);
+sortableList.addEventListener("touchenter", e => e.preventDefault());
 
 function send_new_list(){
     new_priority = [];
@@ -92,7 +100,6 @@ function send_new_list(){
             new_priority.push(item.id);
         }
     });
-    console.log(new_priority);
     send_form("/request_change_facility_priority", {
         priority: new_priority,
     }).catch((error) => {

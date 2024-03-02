@@ -1,6 +1,6 @@
 from werkzeug.security import generate_password_hash
 from pathlib import Path
-from .auth import add_player_to_data, init_table
+from .auth import init_table
 from .database import (
     Player,
     Hex,
@@ -83,8 +83,7 @@ def edit_database(engine):
 def init_test_players(engine):
     player = create_player(engine, "user", "password")
     if player:
-        print(player)
-        Hex.query.filter_by(id=83).first().player_id = player.id
+        Hex.query.filter_by(id=300).first().player_id = player.id
 
         player.money = 1000000
         player.coal = 450000
@@ -102,12 +101,19 @@ def init_test_players(engine):
         add_asset(player, "warehouse", 2)
         add_asset(player, "small_pumped_hydro", 1)
         add_asset(player, "hydrogen_storage", 1)
-        add_asset(player, "PV_solar", 2)
+        add_asset(player, "onshore_wind_turbine", 1)
         # add_asset(player, "offshore_wind_turbine", 2)
         add_asset(player, "nuclear_reactor_gen4", 1)
         add_asset(player, "combined_cycle", 1)
         add_asset(player, "gas_burner", 3)
         db.session.commit()
+    player2 = create_player(engine, "user2", "password")
+    if player2:
+        Hex.query.filter_by(id=84).first().player_id = player2.id
+        db.session.commit()
+
+    create_network(engine, "net", [player, player2])
+    db.session.commit()
 
 
 def add_asset(player, asset, n):
@@ -183,7 +189,6 @@ def create_player(engine, username, password):
         db.session.add(new_player)
         db.session.commit()
         engine.data["current_data"][new_player.id] = CircularBufferPlayer()
-        print(engine.data["current_data"])
         init_table(new_player)
         db.session.commit()
         return new_player

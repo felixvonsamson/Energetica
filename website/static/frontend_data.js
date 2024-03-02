@@ -59,9 +59,9 @@ function retrieve_chart_data(network) {
             sessionStorage.setItem("chart_data", JSON.stringify(raw_data["data"]));
             sessionStorage.setItem("network_data", JSON.stringify(raw_data["network_data"]));
             if (network){
-                return raw_data["data"];
-            }else{
                 return raw_data["network_data"];
+            }else{
+                return raw_data["data"];
             }
         })
         .catch((error) => {

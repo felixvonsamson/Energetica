@@ -2,7 +2,7 @@
 
 ## Setup & Installation
 
-Make sure you have the latest version of Python installed. 
+Make sure you have the latest version of Python installed.
 
 ```bash
 git clone <repo-url>
@@ -11,14 +11,32 @@ git clone <repo-url>
 ```bash
 pip install -r requirements.txt
 ```
+
 or
+
 ```bash
 conda install -c conda-forge --file requirements.txt
 ```
+
 ## Running The App
 
 ```bash
 python main.py
+```
+
+Use python versions 3.10 and above.
+
+Command line options are available to help with debugging:
+
+```bash
+python3.10 main.py --help
+usage: main.py [-h] [--run_init_test_players] [--rm_instance]
+
+options:
+  -h, --help            show this help message and exit
+  --run_init_test_players
+                        run the init_test_players function
+  --rm_instance         remvove the instance folder
 ```
 
 ## Viewing The App

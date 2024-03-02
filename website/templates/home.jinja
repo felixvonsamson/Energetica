@@ -1,10 +1,9 @@
-{% set t = engine.data["current_t"] %}
 {% set month_number = ((engine.data["total_t"] % 73440) // 6120) %}
 {% set month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] %}
 {% set month = month_names[month_number] %}
-{% set irradiance = engine.data["current_irradiation"][t] %}
-{% set windspeed = engine.data["current_windspeed"][t] %}
-{% set discharge = engine.data["current_discharge"][t] %}
+{% set irradiance = engine.data["weather"]["irradiance"] %}
+{% set windspeed = engine.data["weather"]["windspeed"] %}
+{% set discharge = engine.data["weather"]["river_discharge"] %}
 {% extends "base.jinja" %}
 {% block title %}
     Home
@@ -23,9 +22,23 @@
                  style="width:39px">×</div>
         </div>
         <div class="txt_center margin medium">
-            <p>This page is an overview of your profile.</p>
+            <p>
+                This is the home page of your account. Here you will find the current weather information aswell as the 
+                in-game date, lists of all ongoing or planned construction and research projects, ongoing shipments and,
+                if you are not part of a Network, you will find a priorritization list for generation and consumption. 
+                For more information about the later refer to <a href="{{ url_for('views.wiki', _anchor='Prioritazation_of_Facilities') }}">Prioritazation of Facilities</a>.
+            </p>
         </div>
     </div>
+
+    <div class="info_message medium margin padding">
+        <i class="fa fa-info-circle info-circle"></i>
+        <div class="padding-small">
+            🚧 This game is still under development! 🚧 Join the <a href="https://discord.gg/HAhqZHSn">Energetica 
+            Discord server</a> to stay updated with the latest news, report bugs, and engage with the community.
+        </div>
+    </div>
+
     <div class="bone padding margin">
         <h1>Current weather conditions</h1>
         <div class="flex-row flex-space-around margin medium">
@@ -61,15 +74,21 @@
     <div id="under_research">
       {# Facilites under research will show here #}
     </div>
-    <div class="flex-row huge title">Prioritazation of facilities</div>
+    {% if not user.network %}
+    <div class="flex-row huge title">Prioritization of facilities</div>
     <div class="txt_center medium txt_pine">Drag and drop facilities in the list</div>
     <div class="flex-row flex-center align-items-center">
-    <span class="medium priority_list_txt left">Consumption priority</span>
-    <img src="{{ url_for('static', filename='images/others/arrow_red.png') }}" alt="arrow-up" class="priority_arrow_img up">
-    <ul class="priority_list flex-col"></ul>
-    <img src="{{ url_for('static', filename='images/others/arrow_blue.png') }}" alt="arrow-up" class="priority_arrow_img">
-    <span class="medium priority_list_txt right">Generation priority</span>
+        <span class="medium priority_list_txt left">Consumption priority</span>
+        <img src="{{ url_for('static', filename='images/others/arrow_red.png') }}" alt="arrow-up" class="priority_arrow_img up">
+        <ul class="priority_list flex-col"></ul>
+        <img src="{{ url_for('static', filename='images/others/arrow_blue.png') }}" alt="arrow-up" class="priority_arrow_img">
+        <span class="medium priority_list_txt right">Generation priority</span>
     </div>
+    {% else %}
+    <div class="txt_center medium margin-large">
+        (Prioritization of facilities are managed on the <a href="{{ url_for('views.network') }}">Network page</a>)
+    </div>
+    {% endif %}
 {% endblock content %}
 {% block additionnal_script %}
   <script>refresh_progressBar()</script>
