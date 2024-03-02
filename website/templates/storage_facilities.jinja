@@ -31,7 +31,7 @@
     {% set facility_data = assets[storage_facility] %}
     {% set const_data = engine.const_config[storage_facility] %}
     <div id="{{ const_data.name }}"
-         class="bone margin facility small construction_tile"
+         class="bone margin facility small"
          onclick="show_construction('{{ const_data.name }}', '{{ facility_data.locked }}');">
       {% if storage_facility == "small_pumped_hydro" %}
         {% set filename = "small_pumped_hydro.png" %}

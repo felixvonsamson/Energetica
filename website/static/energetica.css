@@ -74,7 +74,7 @@ canvas {
 }
 
 .txt-red {
-    color: #f71717
+    color:darkred;
 }
 
 /* Generic */
@@ -758,8 +758,7 @@ canvas {
 }
 
 .table.tan_green {
-    width: 250px;
-    margin: 0 20px
+    width: 257px;
 }
 
 .table tbody tr:nth-child(even) {
@@ -771,7 +770,7 @@ canvas {
 }
 
 .table tbody td {
-    padding: 5px 8px 2px 8px;
+    padding: 6px 8px 4px 12px;
 }
 
 #scoreboard td {
@@ -915,7 +914,7 @@ canvas {
 .facility {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    cursor: pointer;
 }
 
 .infotext {
@@ -932,16 +931,51 @@ canvas {
     padding-left:16px;
 }
 
-.infobox.shown {
-    max-width: 500px;
-    transition: max-width 0.3s ease;
-    padding: 8px 16px 8px 0;
+#constructionContent {
+    width:100%;
+    overflow: hidden;
 }
 
-.infobox.hidden {
-    max-width: 0;
-    transition: max-width 0.3s ease;
+#constructionContent.shown {
+    max-height: 100px;
+    transition: max-height 0.3s ease;
+}
+
+#constructionContent.hidden {
+    max-height: 0;
+    transition: max-height 0.3s ease;
+}
+
+#infotable{
     overflow: hidden;
+    margin: 14px 20px;
+    position: relative;
+}
+
+#infotable.minimized {
+    max-height: 139px;
+    transition: max-height 0.3s ease;
+}
+
+#infotable.maximized {
+    max-height: 250px;
+    transition: max-height 0.3s ease;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    box-shadow: rgba(40, 84, 48, 1) 0px -40px 20px -28px inset;
+    z-index: 1;
+    transition: opacity 0.5s ease;
+}
+
+.overlay.hidden {
+    opacity: 0;
 }
 
 .resource_market_container {
@@ -976,11 +1010,7 @@ canvas {
 }
 
 .graph-container img {
-    max-width: 600px
-}
-
-.construction_tile {
-    min-height: 167px;
+    max-width: 600px;
 }
 
 .info_icon {
@@ -1004,11 +1034,14 @@ canvas {
 
 .wikipedia_icon_container {
     display: inline-block;
-    width: 1.3em;
-    height: 1em;
-    padding: 0.3em 0.15em;
+    font-size: min(14px, 1.8vh);
+    height:1em;
+    padding: 0.5em 0.37em;
+    margin: 0 16px;
+    transform: translate(0, -2px);
     border-radius: 50%;
-    cursor: pointer;
+    cursor: help;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
 #info_popup {
@@ -1075,7 +1108,11 @@ canvas {
 }
 
 .draggable {
-    cursor: move;
+    cursor: grab;
+}
+
+.dragging {
+    cursor: grabbing;
 }
 
 .item {

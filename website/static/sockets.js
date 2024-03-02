@@ -51,7 +51,7 @@ function start_construction(facility, family) {
                 } else if (response == "notEnoughMoneyError") {
                     addError("Not enough money");
                 } else if (response == "locked") {
-                    addError("Facility is locked! Nice try 😉");
+                    addError("Facility is locked");
                 }
             });
         })

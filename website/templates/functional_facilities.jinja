@@ -31,7 +31,7 @@
   {% set facility = assets["industry"] %}
   {% set const_data = engine.const_config["industry"] %}
   <div id="{{ const_data.name }}"
-       class="bone margin facility small construction_tile"
+       class="bone margin facility small"
        onclick="show_construction('{{ const_data.name }}', 'False');">
     <img class="img"
          src="{{ url_for('static', filename='images/functional_facilities/industry.jpg') }}">
@@ -91,7 +91,7 @@
 {% set facility = assets["laboratory"] %}
 {% set const_data = engine.const_config["laboratory"] %}
 <div id="{{ const_data.name }}"
-     class="bone margin facility small construction_tile"
+     class="bone margin facility small"
      onclick="show_construction('{{ const_data.name }}', 'False');">
   <img class="img"
        src="{{ url_for('static', filename='images/functional_facilities/laboratory.jpg') }}">
@@ -142,7 +142,7 @@
 {% set facility = assets["warehouse"] %}
 {% set const_data = engine.const_config["warehouse"] %}
 <div id="{{ const_data.name }}"
-     class="bone margin facility small construction_tile"
+     class="bone margin facility small"
      onclick="show_construction('{{ const_data.name }}', 'False');">
   <img class="img"
        src="{{ url_for('static', filename='images/functional_facilities/warehouse.jpg') }}">
@@ -232,7 +232,7 @@
 {% set facility = assets["carbon_capture"] %}
 {% set const_data = engine.const_config["carbon_capture"] %}
 <div id="{{ const_data.name }}"
-     class="bone margin facility small construction_tile"
+     class="bone margin facility small"
      onclick="show_construction('{{ const_data.name }}', '{{ facility['locked'] }}');">
   <img class="img"
        src="{{ url_for('static', filename='images/functional_facilities/carbon_capture.jpg') }}">
