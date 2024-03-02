@@ -1,5 +1,5 @@
 /* 
-This code contains the functions to acess frontend data and retreive it if it is not avalable. 
+This code contains the functions to acess frontend data and retrieve it if it is not avalable. 
 */
 
 function load_constructions() {
@@ -79,7 +79,7 @@ function load_players() {
     return retrieve_players()
 }
 
-function retreive_players() {
+function retrieve_players() {
     return fetch("/get_players")
         .then((response) => response.json())
         .then((raw_data) => {
