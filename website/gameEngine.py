@@ -2,18 +2,23 @@
 Here is the logic for the engine of the game
 """
 
-import datetime
+from datetime import datetime
 import pickle
 import logging
 import time
 from . import db
-from .database import Under_construction, Shipment, Active_facilites
+from .database import (
+    Under_construction,
+    Shipment,
+    Active_facilites,
+    WeatherData,
+    EmissionData,
+)
 from website import rest_api
 
-from .config import config, wind_power_curve, river_discharge, const_config
+from .config import config, const_config
 
 from .utils import (
-    update_weather,
     save_past_data_threaded,
     add_asset,
     store_import,
@@ -93,29 +98,24 @@ class gameEngine(object):
             "nuclear_engineering",
         ]
 
-        engine.wind_power_curve = wind_power_curve
-        engine.river_discharge = river_discharge
-
         engine.data = {}
         # All data for the current day will be stored here :
         engine.data["current_data"] = {}
         engine.data["network_data"] = {}
-        engine.data["current_windspeed"] = [0] * 1441  # daily windspeed in km/h
-        engine.data["current_irradiation"] = [
-            0
-        ] * 1441  # daily irradiation in W/m2
-        engine.data["current_discharge"] = [
-            0
-        ] * 1441  # daily river discharge rate factor
-        engine.data["current_CO2"] = [0] * 1441
-        now = datetime.datetime.today().time()
+        engine.data["weather"] = WeatherData()
+        engine.data["emissions"] = EmissionData()
         engine.data["total_t"] = 0
-        engine.data["current_t"] = (
-            now.hour * 60 + now.minute + 1
-        )  # +1 bc fist value of current day has to be last value of last day
-        engine.data[
-            "start_date"
-        ] = datetime.datetime.today()  # 0 point of server time
+        engine.data["start_date"] = datetime.today()
+        # 0 point of server time
+        start_day = datetime(
+            engine.data["start_date"].year,
+            engine.data["start_date"].month,
+            engine.data["start_date"].day,
+        )
+        engine.data["delta_min"] = int(
+            (engine.data["start_date"] - start_day).total_seconds() // 60
+        )
+        # time shift for daily industry variation
 
         # stored the levels of technology of the server
         # for each tech an array stores [# players with lvl 1, # players with lvl 2, ...]
@@ -143,7 +143,7 @@ class gameEngine(object):
                 file
             )  # array of length 51 of normalized yearly industry demand variations
 
-        update_weather(engine)
+        engine.data["weather"].update_weather(engine)
 
     def init_logger(engine):
         engine.logger.setLevel(logging.INFO)
@@ -162,11 +162,11 @@ class gameEngine(object):
 
     # logs a message with the current time in the terminal and stores it in 'logs'
     def log(engine, message):
-        formatted_datetime = datetime.datetime.now().strftime("%H:%M:%S : ")
+        formatted_datetime = datetime.now().strftime("%H:%M:%S : ")
         engine.logger.info(formatted_datetime + str(message))
 
     def warn(engine, message):
-        formatted_datetime = datetime.datetime.now().strftime("%H:%M:%S : ")
+        formatted_datetime = datetime.now().strftime("%H:%M:%S : ")
         engine.logger.warn(formatted_datetime + str(message))
 
 
@@ -193,20 +193,16 @@ from .production_update import update_electricity  # noqa: E402
 # function that is executed once every 1 minute :
 def state_update_m(engine, app):
     total_t = (
-        datetime.datetime.now() - engine.data["start_date"]
+        datetime.now() - engine.data["start_date"]
     ).total_seconds() / 60.0  # 60.0 or 5.0
     while engine.data["total_t"] < total_t:
-        engine.data["current_t"] += 1
         engine.data["total_t"] += 1
         # print(f"t = {engine.data['total_t']}")
         if engine.data["total_t"] % 60 == 0:
             save_past_data_threaded(app, engine)
-        if engine.data["current_t"] > 1440:
-            engine.data["current_t"] = 1
-            clear_current_data(engine, app)
         with app.app_context():
             if engine.data["total_t"] % 10 == 1:
-                update_weather(engine)
+                engine.data["weather"].update_weather(engine)
             update_electricity(engine)
 
         # save engine every minute in case of server crash

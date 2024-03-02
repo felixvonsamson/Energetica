@@ -1034,7 +1034,7 @@ wind_power_curve = [
     0,
 ]  # from 0 to 100 km/h
 
-river_discharge = [
+river_discharge_seasonal = [
     0.26,
     0.23,
     0.3,
@@ -1459,6 +1459,7 @@ class Config(object):
     def __getitem__(config, player_id):
         if player_id not in config.for_player:
             config.update_config_for_user(player_id)
+            config.update_resource_extraction(player_id)
         return config.for_player[player_id]
 
 

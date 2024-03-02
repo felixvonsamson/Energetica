@@ -83,7 +83,7 @@ def edit_database(engine):
 def init_test_players(engine):
     player = create_player(engine, "user", "password")
     if player:
-        Hex.query.filter_by(id=83).first().player_id = player.id
+        Hex.query.filter_by(id=300).first().player_id = player.id
 
         player.money = 1000000
         player.coal = 450000
@@ -91,21 +91,21 @@ def init_test_players(engine):
         player.gas = 800000
         player.uranium = 4500
 
-        # add_asset(player, "industry", 18)
-        # add_asset(player, "laboratory", 5)
-        # add_asset(player, "mathematics", 1)
-        # add_asset(player, "mineral_extraction", 2)
-        # add_asset(player, "building_technology", 1)
-        # add_asset(player, "coal_mine", 1)
-        # # add_asset(player, "uranium_mine", 1)
-        # add_asset(player, "warehouse", 2)
-        # add_asset(player, "small_pumped_hydro", 1)
-        # add_asset(player, "hydrogen_storage", 1)
-        # add_asset(player, "PV_solar", 2)
-        # # add_asset(player, "offshore_wind_turbine", 2)
-        # add_asset(player, "nuclear_reactor_gen4", 1)
-        # add_asset(player, "combined_cycle", 1)
-        # add_asset(player, "gas_burner", 3)
+        add_asset(player, "industry", 18)
+        add_asset(player, "laboratory", 5)
+        add_asset(player, "mathematics", 1)
+        add_asset(player, "mineral_extraction", 2)
+        add_asset(player, "building_technology", 1)
+        add_asset(player, "coal_mine", 1)
+        # add_asset(player, "uranium_mine", 1)
+        add_asset(player, "warehouse", 2)
+        add_asset(player, "small_pumped_hydro", 1)
+        add_asset(player, "hydrogen_storage", 1)
+        add_asset(player, "onshore_wind_turbine", 1)
+        # add_asset(player, "offshore_wind_turbine", 2)
+        add_asset(player, "nuclear_reactor_gen4", 1)
+        add_asset(player, "combined_cycle", 1)
+        add_asset(player, "gas_burner", 3)
         db.session.commit()
     player2 = create_player(engine, "user2", "password")
     if player2:

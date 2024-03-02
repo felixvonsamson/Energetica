@@ -161,6 +161,7 @@ def rest_add_player_location(player):
 
 
 def rest_get_charts():
+    # !!! current_t HAS BEEN REMOVED !!!
     """Gets the player's chart data and returns it as a JSON string."""
     current_t = g.engine.data["current_t"]
     timescale = "day"  # request.args.get('timescale')

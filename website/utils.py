@@ -2,8 +2,6 @@
 I dumped all small helpful functions here
 """
 
-import requests
-import json
 import math
 import threading
 import pickle
@@ -392,7 +390,7 @@ def save_past_data_threaded(app, engine):
         new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
         array[2] = array[2][len(new_month) :]
         array[2].extend(new_month)
-        if engine.data["current_t"] % 180 == 0:
+        if engine.data["total_t"] % 180 == 0:
             array[3] = array[3][1:]
             array[3].append(np.mean(array[2][-6:]))
 
