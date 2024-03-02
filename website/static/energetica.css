@@ -355,7 +355,7 @@ canvas {
     bottom: 10%;
     left: 50%;
     transform: translate(-50%, -50%);
-    -ms-transform: translate(-50%, -50%)
+    -ms-transform: translate(-50%, -50%);
 }
 
 .topRight_info {
@@ -499,6 +499,25 @@ canvas {
         max-width: 230px;
         width: 15%;
         justify-content: space-around;
+    }
+}
+
+@media only screen and (max-height: 800px) {
+    .game_info{
+        bottom: 10px;
+        transform: translate(-50%, 0);
+        -ms-transform: translate(-50%, 0);
+    }
+
+    .logo_txt.large {
+        font-size: 100px;
+        top: -15px;
+        transform: translate(-50%, 0);
+        -ms-transform: translate(-50%, 0)
+    }
+
+    .margin {
+        margin: 10px
     }
 }
 
