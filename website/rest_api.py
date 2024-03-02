@@ -45,23 +45,26 @@ def add_sock_handlers(sock, engine):
     @sock.route("/rest_ws", bp=rest_api)
     def rest_ws(ws):
         """Main WebSocket endpoint for API."""
-        engine.log(f"Received WebSocket connection for player {g.player}")
+        player = g.player
+        engine.log(f"Received WebSocket connection for player {player}")
         ws.send(rest_get_map())
         ws.send(rest_get_players())
-        ws.send(rest_get_current_player(current_player=g.player))
+        ws.send(rest_get_current_player(player))
         ws.send(rest_get_networks())
         ws.send(rest_get_scoreboard())
-        if g.player.tile is not None:
+        ws.send(rest_get_constructions(player))
+        if player.tile is not None:
             rest_init_ws_post_location(engine, ws)
-        if g.player.id not in engine.websocket_dict:
-            engine.websocket_dict[g.player.id] = []
+        if player.id not in engine.websocket_dict:
+            engine.websocket_dict[player.id] = []
         ws.send(rest_setup_complete())
-        engine.websocket_dict[g.player.id].append(ws)
+        engine.websocket_dict[player.id].append(ws)
         while True:
             try:
                 data = ws.receive()
             except ConnectionClosed:
-                unregister_websocket_connection(g.player.id, ws)
+                unregister_websocket_connection(player.id, ws)
+                break
             message = json.loads(data)
             message_data = message["data"]
             match message["type"]:
@@ -72,7 +75,7 @@ def add_sock_handlers(sock, engine):
                     rest_parse_request(engine, ws, uuid, message_data)
                 case type:
                     engine.log(
-                        f"Websocket connection from player {g.player} sent an unkown message of type {type}"
+                        f"Websocket connection from player {player} sent an unkown message of type {type}"
                     )
 
 
@@ -119,35 +122,24 @@ def rest_get_map():
     return json.dumps(response)
 
 
-def rest_helper_player_data(player):
-    payload = {
-        "id": player.id,
-        "username": player.username,
-    }
-    if player.tile is not None:
-        payload["tile"] = player.tile.id
-    return payload
-
-
-def rest_add_player(player):
-    response = {"type": "addPlayer", "data": rest_helper_player_data(player)}
-    return json.dumps(response)
-
-
 def rest_get_players():
     """Gets all player data and returns it as a JSON string."""
-    player_list = Player.query.all()
-    response = {
-        "type": "getPlayers",
-        "data": [rest_helper_player_data(player) for player in player_list],
-    }
-    return json.dumps(response)
+    return json.dumps({"type": "getPlayers", "data": utils.package_players()})
 
 
 def rest_get_current_player(current_player):
     """Gets the current player's id and returns it as a JSON string."""
     response = {"type": "getCurrentPlayer", "data": current_player.id}
     return json.dumps(response)
+
+
+def rest_get_constructions(player):
+    return json.dumps(
+        {
+            "type": "getConstructions",
+            "data": utils.package_constructions(player),
+        }
+    )
 
 
 def rest_get_networks():
@@ -338,6 +330,8 @@ def rest_parse_request(engine, ws, uuid, data):
             rest_parse_request_leaveNetwork(engine, ws, uuid)
         case "createNetwork":
             rest_parse_request_createNetwork(engine, ws, uuid, body)
+        case "startProject":
+            rest_parse_request_startProject(engine, ws, uuid, body)
         case _:
             engine.warn(f"rest_parse_request got unknown endpoint: {endpoint}")
 
@@ -379,6 +373,18 @@ def rest_parse_request_createNetwork(engine, ws, uuid, data):
     ws.send(message)
 
 
+def rest_parse_request_startProject(engine, ws, uuid, data):
+    """Interpret message sent from a client when they start a project"""
+    facility = data["facility"]
+    family = data["family"]
+    print(
+        f"rest_parse_request_startProject got: family = {family}, facility = {facility}"
+    )
+    response = utils.start_project(engine, g.player, facility, family)
+    message = rest_requestResponse(uuid, "startProject", response)
+    ws.send(message)
+
+
 # WebSocket methods, hooked into engine states & events
 
 
@@ -392,12 +398,24 @@ def rest_notify_all_players(engine, message):
                 unregister_websocket_connection(player_id, ws)
 
 
+def rest_notify_player(engine, player, message):
+    if player.id not in engine.websocket_dict:
+        return
+    for ws in engine.websocket_dict[player.id]:
+        try:
+            ws.send(message)
+        except ConnectionClosed:
+            unregister_websocket_connection(player.id, ws)
+
+
 def rest_notify_player_location(engine, player):
     """This mehtod is called when player (argument) has chosen a location. This
     information needs to be relayed to clients, and this methods returns a JSON
     string with this information."""
     message = rest_add_player_location(player)
     rest_notify_all_players(engine, message)
+    rest_notify_scoreboard(engine)
+    engine.socketio.emit("get_players", utils.package_players())
 
 
 def rest_notify_network_change(engine):
@@ -410,11 +428,16 @@ def rest_notify_network_change(engine):
 
 
 def rest_notify_new_player(engine, player):
-    message = rest_add_player(player)
-    print(f"rest_notify_new_player: {message}")
-    rest_notify_all_players(engine, message)
+    print("rest_notify_new_player")
+    rest_notify_all_players(engine, rest_get_players())
+    engine.socketio.emit("get_players", utils.package_players())
 
 
 def rest_notify_scoreboard(engine):
     message = rest_get_scoreboard()
     rest_notify_all_players(engine, message)
+
+
+def rest_notify_constructions(engine, player):
+    message = rest_get_constructions(player)
+    rest_notify_player(engine, player, message)

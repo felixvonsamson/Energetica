@@ -65,7 +65,7 @@ class Under_construction(db.Model):
 
 
 class Active_facilites(db.Model):
-    """Class that stores the facilites on the server and teir end of life time."""
+    """Class that stores the facilites on the server and their end of life time."""
 
     id = db.Column(db.Integer, primary_key=True)
     facility = db.Column(db.String(50))
@@ -76,7 +76,7 @@ class Active_facilites(db.Model):
 
 
 class Shipment(db.Model):
-    """Class that stores the resources shippment on their way"""
+    """Class that stores the resources shipment on their way"""
 
     id = db.Column(db.Integer, primary_key=True)
     resource = db.Column(db.String(10))

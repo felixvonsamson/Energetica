@@ -11,6 +11,9 @@ import numpy as np
 import shutil
 from datetime import datetime
 from pathlib import Path
+import requests
+import json
+
 
 from website import rest_api
 from .database import (
@@ -248,6 +251,73 @@ def check_existing_chats(participants):
         if len(chat.participants) == len(participants):
             return True
     return False
+
+
+# This function upddates the windspeed and irradiation data every 10 mminutes by using the meteosuisse api
+def update_weather(engine):
+    url_wind = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min_en.json"
+    url_irr = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-globalstrahlung-10min/ch.meteoschweiz.messwerte-globalstrahlung-10min_en.json"
+    t = engine.data["current_t"]
+    try:
+        response = requests.get(url_wind)
+        if response.status_code == 200:
+            windspeed = json.loads(response.content)["features"][107][
+                "properties"
+            ]["value"]
+            if windspeed > 2000:
+                windspeed = engine.data["current_windspeed"][t - 1]
+            interpolation = np.linspace(
+                engine.data["current_windspeed"][t - 1], windspeed, 11
+            )
+            engine.data["current_windspeed"][t : t + 10] = interpolation[1:]
+        else:
+            engine.log(
+                "Failed to fetch the file. Status code:", response.status_code
+            )
+            engine.data["current_windspeed"][t : t + 10] = [
+                engine.data["current_windspeed"][t - 1]
+            ] * 10
+    except Exception as e:
+        engine.log(e)
+        engine.data["current_windspeed"][t : t + 10] = [
+            engine.data["current_windspeed"][t - 1]
+        ] * 10
+
+    try:
+        response = requests.get(url_irr)
+        if response.status_code == 200:
+            irradiation = json.loads(response.content)["features"][65][
+                "properties"
+            ]["value"]
+            if irradiation > 2000:
+                irradiation = engine.data["current_irradiation"][t - 1]
+            interpolation = np.linspace(
+                engine.data["current_irradiation"][t - 1], irradiation, 11
+            )
+            engine.data["current_irradiation"][t : t + 10] = interpolation[1:]
+        else:
+            engine.log(
+                "Failed to fetch the file. Status code:", response.status_code
+            )
+            engine.data["current_irradiation"][t : t + 10] = [
+                engine.data["current_irradiation"][t - 1]
+            ] * 10
+    except Exception as e:
+        engine.log("An error occurred:" + str(e))
+        engine.data["current_irradiation"][t : t + 10] = [
+            engine.data["current_irradiation"][t - 1]
+        ] * 10
+
+    month = math.floor(
+        (engine.data["total_t"] % 73440) / 6120
+    )  # One year in game is 51 days
+    f = (engine.data["total_t"] % 73440) / 6120 - month
+    d = engine.river_discharge
+    power_factor = d[month] + (d[(month + 1) % 12] - d[month]) * f
+    engine.data["current_discharge"][t : t + 10] = [power_factor] * 10
+    engine.log(
+        f"the current irradiation in Zürich is {engine.data['current_irradiation'][t+9]} W/m2 with a windspeed of {engine.data['current_windspeed'][t+9]} km/h"
+    )
 
 
 def save_past_data_threaded(app, engine):
@@ -547,8 +617,34 @@ def set_network_prices(engine, player, prices={}):
     db.session.commit()
 
 
+def package_players():
+    def package_player(player):
+        payload = {
+            "username": player.username,
+        }
+        if player.tile is not None:
+            payload["tile_id"] = player.tile.id
+        return payload
+
+    return {player.id: package_player(player) for player in Player.query.all()}
+
+
+def package_constructions(player):
+    return {
+        construction.id: {
+            "id": construction.id,
+            "name": construction.name,
+            "family": construction.family,
+            # "start_time": construction.start_time,
+            # "duration": construction.duration,
+            # "suspension_time": construction.suspension_time,
+        }
+        for construction in player.under_construction
+    }
+
+
 def get_scoreboard():
-    players = Player.query.filter(Player.tile != None)
+    players = Player.query.filter(Player.tile != None)  # noqa: E711
     return {
         player.id: {
             "money": player.money,
@@ -559,9 +655,9 @@ def get_scoreboard():
     }
 
 
-def start_project(player, facility, family):
+def start_project(engine, player, facility, family):
+    print(f"utils.start_project({player}, {facility}, {family})")
     """this function is executed when a player clicks on 'start construction'"""
-    engine = current_app.config["engine"]
     assets = engine.config[player.id]["assets"]
 
     if assets[facility]["locked"]:
@@ -619,6 +715,7 @@ def start_project(player, facility, family):
     player.add_project_priority(priority_list_name, new_construction.id)
     if suspension_time is None:
         player.project_max_priority(priority_list_name, new_construction.id)
+    rest_api.rest_notify_constructions(engine, player)
     return {
         "response": "success",
         "money": player.money,
