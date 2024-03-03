@@ -70,7 +70,7 @@
                 <div class="infotext">
                   {{ const_data.description }}
                   {# Wind Indicator #}
-                  <br>
+                  <br class="smartphone_hide">
                   {% if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"] %}
                     <br>
                     <em class="txt-blue">
@@ -97,7 +97,7 @@
                       <br>
                       <em class="txt-blue">
                         <i class="fa fa-info-circle"></i> Current stock of {{ resource }} :
-                        <strong><script>display_kg({{user.gas}});</script></strong>
+                        <strong><script>display_kg({{user[resource]}});</script></strong>
                       </em>
                     {% endif %}
                   {% endfor %}
@@ -130,9 +130,9 @@
 
         </div>
 
-        {# Construction information #}
-        <div id="constructionContent" class="flex-row align-items-center hidden">
-          <div style="width:250px" class="flex-col">
+        {# Construction information for big screen #}
+        <div id="constructionContent" class="hidden">
+          <div class="flex-col construction_button_container hidden">
             {% if assets[facility].locked %}
               <b class="padding medium margin txt_center white txt-red"
               onclick="start_construction('{{ facility }}', 'Power facilities');">
@@ -145,7 +145,7 @@
               </b>
             {% endif %}
           </div>
-          <div class="flex-row align-items-center flex-space-around flex-grow-1">
+          <div class="construction_info">
             <strong class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
               <script>display_duration({{assets[facility]["construction time"]}});</script>
@@ -166,8 +166,43 @@
 
       </div>
 
-      {# Power Facility Data #}
-      <div class="infobox">
+      <div class="infobox information_container">
+
+        {# Construction information for smarphone #}
+        <div id="constructionContent_smartphone" class="hidden margin">
+          <div class="flex-col construction_button_container hidden">
+            {% if assets[facility].locked %}
+              <b class="padding medium margin txt_center white txt-red"
+              onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
+                  Locked
+              </b>
+            {% else %}
+              <b class="padding medium button margin txt_center white"
+                  onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
+                  Start construction
+              </b>
+            {% endif %}
+          </div>
+          <div class="construction_info">
+            <strong class="hover_info">
+              <i class="fa fa-clock-o"></i>&ensp;
+              <script>display_duration({{assets[facility]["construction time"]}});</script>
+              <span class="popup_info small">Duration</span>
+            </strong>
+            <strong class="hover_info">
+              <i class="fa fa-bolt"></i>&ensp;
+              <script>display_W({{assets[facility]["construction power"]}});</script>
+              <span class="popup_info small">Power consumption</span>
+            </strong>
+            <strong class="hover_info">
+              <i class="fa fa-cloud"></i>&ensp;
+              <script>display_kg({{assets[facility]["construction pollution"]}});</script> CO2
+              <span class="popup_info small">CO2 emissions</span>
+            </strong>
+          </div>
+        </div>
+
+        {# Power Facility Data #}
         <div id="infotable" class="minimized">
           <table class="table tan_green">
             {# Max Generation #}
