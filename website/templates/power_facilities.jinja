@@ -41,88 +41,84 @@
               height="167"
               alt="{{ const_data.name }} power plant">
 
-          <div>
+          <div class="infotext padding">
 
-            <div class="infotext padding">
+            <div class="flex-row align-items-center">
 
-              <div class="flex-row align-items-center">
+              {# Facility name #}
+              <strong class="large">{{ const_data.name }}</strong>
 
-                {# Facility name #}
-                <strong class="large">{{ const_data.name }}</strong>
+              {# Wikipedia icon #}
+              <a class="white wikipedia_icon_container no_deco"
+                href="{{ const_data.wikipedia_link }}"
+                target="_blank">
+                <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
+              </a>
 
-                {# Wikipedia icon #}
-                <a class="white wikipedia_icon_container no_deco"
-                  href="{{ const_data.wikipedia_link }}"
-                  target="_blank">
-                  <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
-                </a>
+              {# Construction Cost #}
+              <span class="money_font">
+                <script>display_money_long({{ assets[facility]["price"] }});</script>
+              </span>
 
-                {# Construction Cost #}
-                <span class="money_font">
-                  <script>display_money_long({{ assets[facility]["price"] }});</script>
-                </span>
+            </div>
 
-              </div>
+            <div class="infobox">
 
-              <div class="infobox">
-
-                {# Description & indicators #}
-                <div class="infotext">
-                  {{ const_data.description }}
-                  {# Wind Indicator #}
-                  <br class="smartphone_hide">
-                  {% if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"] %}
-                    <br>
-                    <em class="txt-blue">
-                      <i class="fa fa-info-circle"></i> Wind potential : <strong>{{ (user.tile.wind*100)|int }}%</strong>
-                    </em>
-                  {% endif %}
-                  {# Solar Indicator #}
-                  {% if facility in ["CSP_solar", "PV_solar"] %}
-                    <br>
-                    <em class="txt-blue">
-                      <i class="fa fa-info-circle"></i> Solar potential : <strong>{{ (user.tile.solar*100)|int }}%</strong>
-                    </em>
-                  {% endif %}
-                  {# Hydro Location Availability Indicator #}
-                  {% if facility in ["watermill", "small_water_dam", "large_water_dam"] %}
-                    <br>
-                    <em class="txt-blue">
-                      <i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{ user.tile.hydro - user.watermill }}</strong>
-                    </em>
-                  {% endif %}
-                  {# Resource Indicator #}
-                  {% for resource in ["gas", "coal", "oil", "uranium"] %}
-                    {% if facility in {"gas": ["gas_burner", "combined_cycle"], "coal": ["coal_burner", "combined_cycle"], "oil": ["oil_burner"], "uranium": ["nuclear_reactor", "nuclear_reactor_gen4"]}[resource] %}
-                      <br>
-                      <em class="txt-blue">
-                        <i class="fa fa-info-circle"></i> Current stock of {{ resource }} :
-                        <strong><script>display_kg({{user[resource]}});</script></strong>
-                      </em>
-                    {% endif %}
-                  {% endfor %}
-                </div>
-
-                {# Requirements #}
-                {% if assets[facility]["locked"] %}
-                  <div class="infobox requirements" id="requirements">
-                    <div>
-                      <strong>Unlock with :</strong>
-                      <br>
-                      <ul class="navbar-nav">
-                        {% for req in assets[facility]["requirements"] %}
-                          {% if req[2] %}
-                            <li class="padding-small req_fullfilled">- {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}</li>
-                          {% else %}
-                            <li class="padding-small requirement">- {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}</li>
-                          {% endif %}
-                        {% endfor %}
-                      </ul>
-                    </div>
-                  </div>
+              {# Description & indicators #}
+              <div class="infotext">
+                {{ const_data.description }}
+                {# Wind Indicator #}
+                <br class="smartphone_hide">
+                {% if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"] %}
+                  <br>
+                  <em class="txt-blue">
+                    <i class="fa fa-info-circle"></i> Wind potential : <strong>{{ (user.tile.wind*100)|int }}%</strong>
+                  </em>
                 {% endif %}
-
+                {# Solar Indicator #}
+                {% if facility in ["CSP_solar", "PV_solar"] %}
+                  <br>
+                  <em class="txt-blue">
+                    <i class="fa fa-info-circle"></i> Solar potential : <strong>{{ (user.tile.solar*100)|int }}%</strong>
+                  </em>
+                {% endif %}
+                {# Hydro Location Availability Indicator #}
+                {% if facility in ["watermill", "small_water_dam", "large_water_dam"] %}
+                  <br>
+                  <em class="txt-blue">
+                    <i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{ user.tile.hydro - user.watermill }}</strong>
+                  </em>
+                {% endif %}
+                {# Resource Indicator #}
+                {% for resource in ["gas", "coal", "oil", "uranium"] %}
+                  {% if facility in {"gas": ["gas_burner", "combined_cycle"], "coal": ["coal_burner", "combined_cycle"], "oil": ["oil_burner"], "uranium": ["nuclear_reactor", "nuclear_reactor_gen4"]}[resource] %}
+                    <br>
+                    <em class="txt-blue">
+                      <i class="fa fa-info-circle"></i> Current stock of {{ resource }} :
+                      <strong><script>display_kg({{user[resource]}});</script></strong>
+                    </em>
+                  {% endif %}
+                {% endfor %}
               </div>
+
+              {# Requirements #}
+              {% if assets[facility]["locked"] %}
+                <div class="infobox requirements" id="requirements">
+                  <div>
+                    <strong>Unlock with :</strong>
+                    <br>
+                    <ul class="navbar-nav">
+                      {% for req in assets[facility]["requirements"] %}
+                        {% if req[2] %}
+                          <li class="padding-small req_fullfilled">- {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}</li>
+                        {% else %}
+                          <li class="padding-small requirement">- {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}</li>
+                        {% endif %}
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </div>
+              {% endif %}
 
             </div>
 
@@ -203,7 +199,7 @@
         </div>
 
         {# Power Facility Data #}
-        <div id="infotable" class="minimized">
+        <div id="infotable" class="{% if assets[facility]['ramping speed'] != 0 %}minimized minimizable{% endif %}">
           <table class="table tan_green">
             {# Max Generation #}
             <tr>
@@ -213,18 +209,16 @@
               </td>
             </tr>
             {# Ramping Speed #}
+            {% if assets[facility]["ramping speed"] != 0 %}
             <tr>
               <td>Ramping speed</td>
               <td class="txt_center">
                 <strong>
-                  {% if assets[facility]["ramping speed"] == 0 %}
-                    -
-                  {% else %}
-                    <script>display_W({{assets[facility]["ramping speed"]}});</script>/min
-                  {% endif %}
+                  <script>display_W({{assets[facility]["ramping speed"]}});</script>/min
                 </strong>
               </td>
             </tr>
+            {% endif %}
             {# O&M Costs #}
             <tr>
               <td>Operation cost</td>
@@ -272,7 +266,7 @@
               </td>
             </tr>
           </table>
-          <div class="overlay"></div>
+          <div class="overlay {% if assets[facility]['ramping speed'] == 0 %}hidden{% endif %}"></div>
         </div>
       </div>
 

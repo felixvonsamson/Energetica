@@ -13,10 +13,12 @@ function show_construction(name) {
         additionalContent_smartphone.classList.remove("hidden");
         additionalContent_smartphone.classList.add("shown");
 
-        infotable.classList.remove("minimized");
-        infotable.classList.add("maximized");
+        if (infotable.classList.contains("minimizable")) {
+            infotable.classList.remove("minimized");
+            infotable.classList.add("maximized");
+            overlay.classList.add('hidden');
+        }
 
-        overlay.classList.add('hidden');
         button.classList.remove('hidden');
     } else {
         additionalContent.classList.remove("shown");
@@ -25,10 +27,12 @@ function show_construction(name) {
         additionalContent_smartphone.classList.remove("shown");
         additionalContent_smartphone.classList.add("hidden");
 
-        infotable.classList.remove("maximized");
-        infotable.classList.add("minimized");
+        if (infotable.classList.contains("minimizable")) {
+            infotable.classList.remove("maximized");
+            infotable.classList.add("minimized");
+            overlay.classList.remove('hidden');
+        }
 
-        overlay.classList.remove('hidden');
         button.classList.add('hidden');
     }
 }

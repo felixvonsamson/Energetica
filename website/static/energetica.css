@@ -919,13 +919,14 @@ canvas {
 
 .infotext {
     flex: 1;
+    justify-content: space-between;
 }
 
 .infobox {
     display: flex;
     flex-direction: row;
     align-items: center;
-}
+    }
 
 .infobox.requirements {
     padding-left:16px;
