@@ -635,9 +635,9 @@ def package_constructions(player):
             "id": construction.id,
             "name": construction.name,
             "family": construction.family,
-            # "start_time": construction.start_time,
-            # "duration": construction.duration,
-            # "suspension_time": construction.suspension_time,
+            "start_time": construction.start_time,
+            "duration": construction.duration,
+            "suspension_time": construction.suspension_time,
         }
         for construction in player.under_construction
     }
