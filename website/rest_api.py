@@ -53,6 +53,7 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_networks())
         ws.send(rest_get_scoreboard())
         ws.send(rest_get_constructions(player))
+        ws.send(rest_get_weather(engine))
         if player.tile is not None:
             rest_init_ws_post_location(engine, ws)
         if player.id not in engine.websocket_dict:
@@ -304,6 +305,11 @@ def rest_get_scoreboard():
     return json.dumps(response)
 
 
+def rest_get_weather(engine):
+    response = {"type": "getWeather", "data": utils.package_weather(engine)}
+    return json.dumps(response)
+
+
 def rest_requestResponse(uuid, endpoint, data):
     response = {
         "type": "requestResponse",
@@ -441,3 +447,8 @@ def rest_notify_scoreboard(engine):
 def rest_notify_constructions(engine, player):
     message = rest_get_constructions(player)
     rest_notify_player(engine, player, message)
+
+
+def rest_notify_weather(engine):
+    message = rest_get_weather(engine)
+    rest_notify_all_players(engine, message)
