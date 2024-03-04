@@ -35,7 +35,7 @@
     {% set const_data = engine.const_config[facility] %}
     <div id="{{ const_data.name }}"
          class="bone margin facility small"
-         onclick="show_construction('{{ facility }}');">
+         onclick="show_construction('{{ const_data.name }}');">
 
       <div class="flex-col flex-grow-1">
 
@@ -195,7 +195,7 @@
               <tr>
                 <th>Effects :</th>
                 <th id="upgrade" class="txt_center">
-                  lvl {{ user.mechanical_engineering }} -> lvl {{ user.mechanical_engineering+1 }}
+                  lvl {{ user[facility] }} -> lvl {{ user[facility]+1 }}
                 </th>
               </tr>
               {% if "prod factor" in const_data %}
