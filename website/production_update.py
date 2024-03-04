@@ -608,13 +608,19 @@ def calculate_prod(
                 * 60
                 * (assets[facility]["efficiency"] ** 0.5),
             )  # max available storge content
-        max_resources = min(
-            E, (2 * E * ramping_speed) ** 0.5 - 0.5 * ramping_speed
+        max_resources = max(
+            0, min(E, (2 * E * ramping_speed) ** 0.5 - 0.5 * ramping_speed)
         )  # ramping down
     if minmax == "max":
-        max_ramping = (
-            past_values.get_last_data("generation", facility) + ramping_speed
-        )
+        if filling:
+            max_ramping = (
+                past_values.get_last_data("demand", facility) + ramping_speed
+            )
+        else:
+            max_ramping = (
+                past_values.get_last_data("generation", facility)
+                + ramping_speed
+            )
         return min(
             max_resources,
             max_ramping,
