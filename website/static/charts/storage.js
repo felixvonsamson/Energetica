@@ -223,7 +223,7 @@ function regen(res) {
             noStroke();
             for (const key of keys_storage){
                 if (player_data[0][key] > 0){
-                    capacities[key] = player_data[0][key] * player_data[1]["assets"][key]["power generation"]
+                    capacities[key] = player_data[0][key] * player_data[1]["assets"][key]["storage capacity"]
                 }
             }
             const sum = Object.values(capacities).reduce(
