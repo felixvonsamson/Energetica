@@ -225,11 +225,11 @@
                 </tr>
                 <tr>
                   <td>Effic. comp. air</td>
-                  <td id="Efficiency_CA" class="txt_center">+{{ ((1-1/const_data["efficiency_factor"])*(0.8-assets["compressed_air"]["efficiency"])*100)|round(1) }}%</td>
+                  <td id="Efficiency_CA" class="txt_center hover_info">+{{ ((1-1/const_data["efficiency_factor"])*(0.8-assets["compressed_air"]["efficiency"])*100)|round(1) }}pp<span class="popup_info small">percentage point</span></td>
                 </tr>
                 <tr>
                   <td>Effic. molten salt</td>
-                  <td id="Efficiency_MS" class="txt_center">+{{ ((1-1/const_data["efficiency_factor"])*(1-assets["molten_salt"]["efficiency"])*100)|round(1) }}%</td>
+                  <td id="Efficiency_MS" class="txt_center hover_info">+{{ ((1-1/const_data["efficiency_factor"])*(1-assets["molten_salt"]["efficiency"])*100)|round(1) }}pp<span class="popup_info small">percentage point</span></td>
                 </tr>
               {% endif %}
               {% if facility == "building_technology" %}
@@ -269,15 +269,15 @@
               {% if "inefficiency_factor" in const_data %}
                 <tr>
                   <td>Efficiency hydrogen</td>
-                  <td class="txt_center">+{{ ((1-const_data["inefficiency_factor"])*(0.65-assets["hydrogen_storage"]["efficiency"])*100) | round(1) }}%</td>
+                  <td class="txt_center hover_info">+{{ ((1-const_data["inefficiency_factor"])*(0.65-assets["hydrogen_storage"]["efficiency"])*100) | round(1) }}pp<span class="popup_info small">percentage point</span></td>
                 </tr>
                 <tr>
                   <td>Efficiency Li-ion</td>
-                  <td id="E_Li_ion" class="txt_center">+{{ ((1-const_data["inefficiency_factor"])*(1-assets["lithium_ion_batteries"]["efficiency"])*100) | round(1) }}%</td>
+                  <td id="E_Li_ion" class="txt_center hover_info">+{{ ((1-const_data["inefficiency_factor"])*(1-assets["lithium_ion_batteries"]["efficiency"])*100) | round(1) }}pp<span class="popup_info small">percentage point</span></td>
                 </tr>
                 <tr>
                   <td>Efficiency solid state</td>
-                  <td id="E_SS" class="txt_center">+{{ ((1-const_data["inefficiency_factor"])*(1-assets["solid_state_batteries"]["efficiency"])*100) | round(1) }}%</td>
+                  <td id="E_SS" class="txt_center hover_info">+{{ ((1-const_data["inefficiency_factor"])*(1-assets["solid_state_batteries"]["efficiency"])*100) | round(1) }}pp<span class="popup_info small">percentage point</span></td>
                 </tr>
               {% endif %}
               {% if "price factor" in const_data %}
