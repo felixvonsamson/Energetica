@@ -129,6 +129,11 @@ function display_duration(seconds) {
     document.write(duration.trim());
 }
 
+function display_days(seconds) {
+    const days = Math.round(seconds / 86400);
+    document.write(days);
+}
+
 function to_string(inputFloat) {
     var resultString = inputFloat.toString();
     if (resultString.includes(".")) {

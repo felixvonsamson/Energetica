@@ -28,165 +28,253 @@
   {% for facility in ["steam_engine", "windmill", "watermill", "coal_burner", "oil_burner", "gas_burner", "small_water_dam", "onshore_wind_turbine", "combined_cycle", "nuclear_reactor", "large_water_dam", "CSP_solar", "PV_solar", "offshore_wind_turbine", "nuclear_reactor_gen4"] %}
     {% set const_data = engine.const_config[facility] %}
     <div id="{{ facility }}"
-         class="bone margin facility small construction_tile"
-         onclick="show_construction('{{ facility }}', '{{ assets[facility]['locked'] }}');">
-      <img class="img"
-           src="{{ url_for('static', filename='images/power_facilities/'+facility+'.'+const_data.image_extension) }}"
-           width="250"
-           height="167"
-           alt="{{ const_data.name }} power plant">
-      <div class="infotext padding">
-        <strong class="large">{{ const_data.name }}</strong>
-        &ensp;
-        <a class="white wikipedia_icon_container no_deco"
-           href="{{ const_data.wikipedia_link }}"
-           target="_blank">
-          <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
-        </a>
-        &emsp;
-        {# Construction Cost #}
-        <span class="money_font">
-          <script>display_money_long({{ assets[facility]["price"] }});</script>
-        </span>
-        <div class="infobox">
-          <div class="infotext">
-            {{ const_data.description }}
-            {# Wind Indicator #}
-            <br>
-            {% if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"] %}
-              <br>
-              <em class="txt-blue">
-                <i class="fa fa-info-circle"></i> Wind potential : <strong>{{ (user.tile.wind*100)|int }}%</strong>
-              </em>
+         class="bone margin facility small"
+         onclick="show_construction('{{ facility }}');">
+
+      <div class="flex-col flex-grow-1">
+
+        <div style="width:100%" class="flex-row">
+
+          <img class="img"
+              src="{{ url_for('static', filename='images/power_facilities/'+facility+'.'+const_data.image_extension) }}"
+              width="250"
+              height="167"
+              alt="{{ const_data.name }} power plant">
+
+          <div class="infotext padding">
+
+            <div class="flex-row align-items-center">
+
+              {# Facility name #}
+              <strong class="large">{{ const_data.name }}</strong>
+
+              {# Wikipedia icon #}
+              <a class="white wikipedia_icon_container no_deco"
+                href="{{ const_data.wikipedia_link }}"
+                target="_blank">
+                <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
+              </a>
+
+              {# Construction Cost #}
+              <span class="money_font">
+                <script>display_money_long({{ assets[facility]["price"] }});</script>
+              </span>
+
+            </div>
+
+            <div class="infobox">
+
+              {# Description & indicators #}
+              <div class="infotext">
+                {{ const_data.description }}
+                <br class="smartphone_hide">
+                {# Wind Indicator #}
+                {% if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"] %}
+                  <br>
+                  <em class="txt-blue">
+                    <i class="fa fa-info-circle"></i> Wind potential : <strong>{{ (user.tile.wind*100)|int }}%</strong>
+                  </em>
+                {% endif %}
+                {# Solar Indicator #}
+                {% if facility in ["CSP_solar", "PV_solar"] %}
+                  <br>
+                  <em class="txt-blue">
+                    <i class="fa fa-info-circle"></i> Solar potential : <strong>{{ (user.tile.solar*100)|int }}%</strong>
+                  </em>
+                {% endif %}
+                {# Hydro Location Availability Indicator #}
+                {% if facility in ["watermill", "small_water_dam", "large_water_dam"] %}
+                  <br>
+                  <em class="txt-blue">
+                    <i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{ user.tile.hydro - user.watermill }}</strong>
+                  </em>
+                {% endif %}
+                {# Resource Indicator #}
+                {% for resource in ["gas", "coal", "oil", "uranium"] %}
+                  {% if facility in {"gas": ["gas_burner", "combined_cycle"], "coal": ["coal_burner", "combined_cycle"], "oil": ["oil_burner"], "uranium": ["nuclear_reactor", "nuclear_reactor_gen4"]}[resource] %}
+                    <br>
+                    <em class="txt-blue">
+                      <i class="fa fa-info-circle"></i> Current stock of {{ resource }} :
+                      <strong><script>display_kg({{user[resource]}});</script></strong>
+                    </em>
+                  {% endif %}
+                {% endfor %}
+              </div>
+
+              {# Requirements #}
+              {% if assets[facility]["locked"] %}
+                <div class="infobox requirements" id="requirements">
+                  <div>
+                    <strong>Unlock with :</strong>
+                    <br>
+                    <ul class="navbar-nav">
+                      {% for req in assets[facility]["requirements"] %}
+                        {% if req[0] == "mechanical_engineering" %}
+                          {% set tech_name = "Mech. engineering" %}
+                        {% else %}
+                          {% set tech_name = engine.const_config[req[0]]["name"] %}
+                        {% endif %}
+                        {% if req[2] %}
+                          <li class="padding-small req_fullfilled">- {{ tech_name }} lvl {{ req[1] }}</li>
+                        {% else %}
+                          <li class="padding-small requirement">- {{ tech_name }} lvl {{ req[1] }}</li>
+                        {% endif %}
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </div>
+              {% endif %}
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {# Construction information for big screen #}
+        <div id="constructionContent" class="hidden">
+          <div class="flex-col construction_button_container hidden">
+            {% if assets[facility].locked %}
+              <b class="padding medium margin txt_center white txt-red"
+              onclick="start_construction('{{ facility }}', 'Power facilities');">
+                  Locked
+              </b>
+            {% else %}
+              <b class="padding medium button margin txt_center white"
+                  onclick="start_construction('{{ facility }}', 'Power facilities');">
+                  Start construction
+              </b>
             {% endif %}
-            {# Solar Indicator #}
-            {% if facility in ["CSP_solar", "PV_solar"] %}
-              <br>
-              <em class="txt-blue">
-                <i class="fa fa-info-circle"></i> Solar potential : <strong>{{ (user.tile.solar*100)|int }}%</strong>
-              </em>
+          </div>
+          <div class="construction_info">
+            <strong class="hover_info">
+              <i class="fa fa-clock-o"></i>&ensp;
+              <script>display_duration({{assets[facility]["construction time"]}});</script>
+              <span class="popup_info small">Duration</span>
+            </strong>
+            <strong class="hover_info">
+              <i class="fa fa-bolt"></i>&ensp;
+              <script>display_W({{assets[facility]["construction power"]}});</script>
+              <span class="popup_info small">Power consumption</span>
+            </strong>
+            <strong class="hover_info">
+              <i class="fa fa-cloud"></i>&ensp;
+              <script>display_kg({{assets[facility]["construction pollution"]}});</script> CO2
+              <span class="popup_info small">CO2 emissions</span>
+            </strong>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="infobox information_container">
+
+        {# Construction information for smarphone #}
+        <div id="constructionContent_smartphone" class="hidden margin">
+          <div class="flex-col">
+            {% if assets[facility].locked %}
+              <b class="padding medium margin txt_center white txt-red"
+              onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
+                  Locked
+              </b>
+            {% else %}
+              <b class="padding medium button margin txt_center white"
+                  onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
+                  Start construction
+              </b>
             {% endif %}
-            {# Hydro Location Availability Indicator #}
-            {% if facility in ["watermill", "small_water_dam", "large_water_dam"] %}
-              <br>
-              <em class="txt-blue">
-                <i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{ user.tile.hydro - user.watermill }}</strong>
-              </em>
+          </div>
+          <div class="construction_info">
+            <strong class="hover_info">
+              <i class="fa fa-clock-o"></i>&ensp;
+              <script>display_duration({{assets[facility]["construction time"]}});</script>
+              <span class="popup_info small">Duration</span>
+            </strong>
+            <strong class="hover_info">
+              <i class="fa fa-bolt"></i>&ensp;
+              <script>display_W({{assets[facility]["construction power"]}});</script>
+              <span class="popup_info small">Power consumption</span>
+            </strong>
+            <strong class="hover_info">
+              <i class="fa fa-cloud"></i>&ensp;
+              <script>display_kg({{assets[facility]["construction pollution"]}});</script> CO2
+              <span class="popup_info small">CO2 emissions</span>
+            </strong>
+          </div>
+        </div>
+
+        {# Power Facility Data #}
+        <div id="infotable" class="{% if assets[facility]['ramping speed'] != 0 %}minimized minimizable{% endif %}">
+          <table class="table tan_green">
+            {# Max Generation #}
+            <tr>
+              <td>Max generation</td>
+              <td class="txt_center">
+                <strong><script>display_W({{assets[facility]["power generation"]}});</script></strong>
+              </td>
+            </tr>
+            {# Ramping Speed #}
+            {% if assets[facility]["ramping speed"] != 0 %}
+            <tr>
+              <td>Ramping speed</td>
+              <td class="txt_center">
+                <strong>
+                  <script>display_W({{assets[facility]["ramping speed"]}});</script>/min
+                </strong>
+              </td>
+            </tr>
             {% endif %}
-            {# Resource Indicator #}
+            {# O&M Costs #}
+            <tr>
+              <td>Operation cost</td>
+              <td class="txt_center">
+                <strong><script>display_money({{assets[facility]["O&M cost"]*60}});</script>/h</strong>
+              </td>
+            </tr>
+            {# Resource Consumption #}
             {% for resource in ["gas", "coal", "oil", "uranium"] %}
-              {% if facility in {"gas": ["gas_burner", "combined_cycle"], "coal": ["coal_burner", "combined_cycle"], "oil": ["oil_burner"], "uranium": ["nuclear_reactor", "nuclear_reactor_gen4"]}[resource] %}
-                <br>
-                <em class="txt-blue">
-                  <i class="fa fa-info-circle"></i> Current stock of {{ resource }} :
-                  <strong><script>display_kg({{user.gas}});</script></strong>
-                </em>
+              {% if resource in assets[facility]["consumed resource"] %}
+                <tr>
+                  {% if resource == "uranium" %}
+                    <td>Uran. consumption</td>
+                  {% else %}
+                    <td>{{ resource[0]|upper|upper + resource[1:] }} consumption</td>
+                  {% endif %}
+                  <td class="txt_center">
+                    <strong>
+                      {% if resource == "uranium" %}
+                        {% if facility == "nuclear_reactor" %}
+                          {{ (assets[facility]["consumed resource"][resource]*1000)|int }} g/MWh
+                        {% else %}
+                          {{ (assets[facility]["consumed resource"]["uranium"]*1000)|round(2) }} g/MWh
+                        {% endif %}
+                      {% else %}
+                        <script>display_kg({{ assets[facility]["consumed resource"][resource] }});</script>/MWh
+                      {% endif %}
+                    </strong>
+                  </td>
+                </tr>
               {% endif %}
             {% endfor %}
-            {# Danger Indicator
-            {% if "danger_description" in const_data %}
-              <br>
-              <em class="txt-red">
-                <i class="fa fa-exclamation-triangle"></i> {{ const_data.danger_description }}
-              </em>
-            {% endif %} #}
-          </div>
-          {# Requirements #}
-          {% if assets[facility]["locked"] %}
-            <div class="infobox requirements" id="requirements">
-              <div>
-                <strong>Unlock with :</strong>
-                <br>
-                <ul class="navbar-nav">
-                  {% for req in assets[facility]["requirements"] %}
-                    {% if req[2] %}
-                      <li class="padding-small req_fullfilled">- {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}</li>
-                    {% else %}
-                      <li class="padding-small requirement">- {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}</li>
-                    {% endif %}
-                  {% endfor %}
-                </ul>
-              </div>
-            </div>
-          {% endif %}
+            {# CO2 Emssions #}
+            <tr>
+              <td>CO2 emissions</td>
+              <td class="txt_center">
+                <strong><script>display_kg({{assets[facility]["pollution"]}});</script>/MWh</strong>
+              </td>
+            </tr>
+            {# lifetime #}
+            <tr>
+              <td>Lifetime</td>
+              <td class="txt_center">
+                <strong><script>display_days({{assets[facility]["lifetime"]}});</script> days</strong>
+              </td>
+            </tr>
+          </table>
+          <div class="overlay {% if assets[facility]['ramping speed'] == 0 %}hidden{% endif %}"></div>
         </div>
       </div>
-      {# Power Facility Data #}
-      <div class="infobox" id="infotable">
-        <table class="table tan_green">
-          {# Max Generation #}
-          <tr>
-            <td>Max generation</td>
-            <td class="txt_center">
-              <strong><script>display_W({{assets[facility]["power generation"]}});</script></strong>
-            </td>
-          </tr>
-          {# O&M Costs #}
-          <tr>
-            <td>Operation cost</td>
-            <td class="txt_center">
-              <strong><script>display_money({{assets[facility]["O&M cost"]*60}});</script>/h</strong>
-            </td>
-          </tr>
-          {# Resource Consumption #}
-          {% for resource in ["gas", "coal", "oil", "uranium"] %}
-            {% if resource in assets[facility]["consumed resource"] %}
-              <tr>
-                <td>{{ resource[0]|upper|upper + resource[1:] }} consumption</td>
-                <td class="txt_center">
-                  <strong>
-                    {% if resource == "uranium" %}
-                      {% if facility == "nuclear_reactor" %}
-                        {{ (assets[facility]["consumed resource"][resource]*1000)|int }} g/MWh
-                      {% else %}
-                        {{ (assets[facility]["consumed resource"]["uranium"]*1000)|round(2) }} g/MWh
-                      {% endif %}
-                    {% else %}
-                      <script>display_kg({{ assets[facility]["consumed resource"][resource] }});</script>/MWh
-                    {% endif %}
-                  </strong>
-                </td>
-              </tr>
-            {% endif %}
-          {% endfor %}
-          {# Ramping Speed #}
-          <tr>
-            <td>Ramping speed</td>
-            <td class="txt_center">
-              <strong>
-                {% if assets[facility]["ramping speed"] == 0 %}
-                  -
-                {% else %}
-                  <script>display_W({{assets[facility]["ramping speed"]}});</script>/min
-                {% endif %}
-              </strong>
-            </td>
-          </tr>
-          {# CO2 Emssions #}
-          <tr>
-            <td>CO2 emissions</td>
-            <td class="txt_center">
-              <strong><script>display_kg({{assets[facility]["pollution"]}});</script>/MWh</strong>
-            </td>
-          </tr>
-        </table>
-      </div>
-      <div id="constructionContent" class="infobox hidden constructionContent">
-        <div class="flex-col">
-          <div class="txt_center margin-small" style="width:180px">
-            Duration : <strong><script>display_duration({{assets[facility]["construction time"]}});</script></strong>
-            <br>
-            Energy need : <strong><script>display_W({{assets[facility]["construction power"]}});</script></strong>
-            <br>
-            Emmissions : <strong><script>display_kg({{assets[facility]["construction pollution"]}});</script> CO2</strong>
-          </div>
-          <b class="padding medium button margin-small txt_center white"
-             onclick="start_construction('{{ facility }}', 'Power facilities');"
-             style="width:160px">
-            Start construction
-          </b>
-        </div>
-      </div>
+
     </div>
   {% endfor %}
 {% endblock content %}
