@@ -79,10 +79,15 @@
                     <br>
                     <ul class="navbar-nav">
                       {% for req in assets[facility]["requirements"] %}
-                        {% if req[2] %}
-                          <li class="padding-small req_fullfilled">- {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}</li>
+                        {% if req[0] == "mechanical_engineering" %}
+                          {% set tech_name = "Mech. engineering" %}
                         {% else %}
-                          <li class="padding-small requirement">- {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}</li>
+                          {% set tech_name = engine.const_config[req[0]]["name"] %}
+                        {% endif %}
+                        {% if req[2] %}
+                          <li class="padding-small req_fullfilled">- {{ tech_name }} lvl {{ req[1] }}</li>
+                        {% else %}
+                          <li class="padding-small requirement">- {{ tech_name }} lvl {{ req[1] }}</li>
                         {% endif %}
                       {% endfor %}
                     </ul>
@@ -101,12 +106,12 @@
           <div class="flex-col construction_button_container hidden">
             {% if assets[facility].locked %}
               <b class="padding medium margin txt_center white txt-red"
-              onclick="start_construction('{{ facility }}', 'Power facilities');">
+              onclick="start_construction('{{ facility }}', 'Storage facilities');">
                   Locked
               </b>
             {% else %}
               <b class="padding medium button margin txt_center white"
-                  onclick="start_construction('{{ facility }}', 'Power facilities');">
+                  onclick="start_construction('{{ facility }}', 'Storage facilities');">
                   Start construction
               </b>
             {% endif %}
@@ -136,15 +141,15 @@
 
         {# Construction information for smarphone #}
         <div id="constructionContent_smartphone" class="hidden margin">
-          <div class="flex-col construction_button_container hidden">
+          <div class="flex-col">
             {% if assets[facility].locked %}
               <b class="padding medium margin txt_center white txt-red"
-              onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
+              onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Storage facilities');">
                   Locked
               </b>
             {% else %}
               <b class="padding medium button margin txt_center white"
-                  onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
+                  onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Storage facilities');">
                   Start construction
               </b>
             {% endif %}

@@ -773,6 +773,10 @@ canvas {
     padding: 6px 8px 4px 12px;
 }
 
+.table tbody th {
+    padding: 6px 8px 4px 12px;
+}
+
 #scoreboard td {
     padding: 4px 16px;
 }
@@ -930,7 +934,7 @@ canvas {
 
 .infobox.requirements {
     padding-left:16px;
-    width: 220px;
+    width: 196px;
 }
 
 #constructionContent {
@@ -975,7 +979,7 @@ canvas {
 
 #infotable{
     overflow: hidden;
-    margin: 14px 20px;
+    margin: 14px 20px 14px 0px;
     position: relative;
 }
 

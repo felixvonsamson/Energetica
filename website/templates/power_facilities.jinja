@@ -67,8 +67,8 @@
               {# Description & indicators #}
               <div class="infotext">
                 {{ const_data.description }}
-                {# Wind Indicator #}
                 <br class="smartphone_hide">
+                {# Wind Indicator #}
                 {% if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"] %}
                   <br>
                   <em class="txt-blue">
@@ -109,10 +109,15 @@
                     <br>
                     <ul class="navbar-nav">
                       {% for req in assets[facility]["requirements"] %}
-                        {% if req[2] %}
-                          <li class="padding-small req_fullfilled">- {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}</li>
+                        {% if req[0] == "mechanical_engineering" %}
+                          {% set tech_name = "Mech. engineering" %}
                         {% else %}
-                          <li class="padding-small requirement">- {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}</li>
+                          {% set tech_name = engine.const_config[req[0]]["name"] %}
+                        {% endif %}
+                        {% if req[2] %}
+                          <li class="padding-small req_fullfilled">- {{ tech_name }} lvl {{ req[1] }}</li>
+                        {% else %}
+                          <li class="padding-small requirement">- {{ tech_name }} lvl {{ req[1] }}</li>
                         {% endif %}
                       {% endfor %}
                     </ul>
@@ -166,7 +171,7 @@
 
         {# Construction information for smarphone #}
         <div id="constructionContent_smartphone" class="hidden margin">
-          <div class="flex-col construction_button_container hidden">
+          <div class="flex-col">
             {% if assets[facility].locked %}
               <b class="padding medium margin txt_center white txt-red"
               onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">

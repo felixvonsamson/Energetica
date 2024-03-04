@@ -240,6 +240,7 @@ const_config = {
             "type": "Technology",
             "price multiplier": 1.3,
             "affected facilities": [],
+            "description": "Mathematics is the fundamental tool of science.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173657&",
         },
         "mechanical_engineering": {
@@ -258,13 +259,14 @@ const_config = {
                 "compressed_air",
                 "molten_salt",
             ],
+            "description": "Mechanical engineering drives innovation in machine design and functionality.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172711&",
         },
         "thermodynamics": {
             "name": "Thermodynamics",
             "type": "Technology",
             "price multiplier": 1.3,
-            "efficiency_factor": 0.1,
+            "efficiency_factor": 1 / (1 - 0.075),
             "affected facilities": [
                 "steam_engine",
                 "coal_burner",
@@ -276,6 +278,7 @@ const_config = {
                 "compressed_air",
                 "molten_salt",
             ],
+            "description": "Thermodynamics explores the dynamics of energy transfer and transformation.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173159&",
         },
         "physics": {
@@ -291,6 +294,7 @@ const_config = {
                 "lithium_ion_batteries",
                 "solid_state_batteries",
             ],
+            "description": "Physics delves into the empirical exploration and comprehension of natural phenomena.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2024S&ansicht=ALLE&lerneinheitId=177068&",
         },
         "building_technology": {
@@ -299,6 +303,7 @@ const_config = {
             "price multiplier": 1.3,
             "time factor": 0.9,
             "affected facilities": [],  # (all power and storage facilites)
+            "description": "Building technology enables more efficient construction of facilities.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172899&",
         },
         "mineral_extraction": {
@@ -306,24 +311,26 @@ const_config = {
             "type": "Technology",
             "price multiplier": 1.4,
             "price factor": 1.2,
-            "prod factor": 1.30,
+            "extract factor": 1.30,
             "energy factor": 1.25,
-            "pollution factor": 0.9,
+            "pollution factor": 1.05,
             "affected facilities": [
                 "coal_mine",
                 "oil_field",
                 "gas_drilling_site",
                 "uranium_mine",
             ],
+            "description": "Mineral extraction improves the extraction process of natural resources.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173723&",
         },
         "transport_technology": {
             "name": "Transport technology",
             "type": "Technology",
             "price multiplier": 1.4,
-            "time factor": 0.85,
-            "energy factor": 0.9,
+            "time factor": 0.9,
+            "energy factor": 1.035,
             "affected facilities": [],
+            "description": "Transport technology enables more efficient transport of natural resources.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172788&",
         },
         "materials": {
@@ -339,6 +346,7 @@ const_config = {
                 "lithium_ion_batteries",
                 "solid_state_batteries",
             ],
+            "description": "Material sciences are essential to discover and improve advanced materials.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2024S&ansicht=ALLE&lerneinheitId=178386&",
         },
         "civil_engineering": {
@@ -354,6 +362,7 @@ const_config = {
                 "small_pumped_hydro",
                 "large_pumped_hydro",
             ],
+            "description": "Civil engineering enables the realization of large infrastructure projects.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173564&",
         },
         "aerodynamics": {
@@ -367,6 +376,7 @@ const_config = {
                 "lithium_ion_batteries",
                 "solid_state_batteries",
             ],
+            "description": "Aerodynamics studies the principles governing airflow.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172719&",
         },
         "chemistry": {
@@ -374,12 +384,13 @@ const_config = {
             "type": "Technology",
             "price multiplier": 1.4,
             "price factor": 1.25,
-            "efficiency_factor": 0.9,
+            "inefficiency_factor": 0.9,
             "affected facilities": [
                 "hydrogen_storage",
                 "lithium_ion_batteries",
                 "solid_state_batteries",
             ],
+            "description": "Chemistry unlocks the mysteries of molecular interactions and transformations.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=174071&",
         },
         "nuclear_engineering": {
@@ -392,6 +403,7 @@ const_config = {
                 "nuclear_reactor",
                 "nuclear_reactor_gen4",
             ],
+            "description": "Nuclear engineering is used to improve nuclear power facilities.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172874&",
         },
     }
@@ -920,7 +932,6 @@ var_config = {
             "requirements": [
                 ["laboratory", 4, False],
                 ["physics", 3, False],
-                ["building_technology", 3, False],
                 ["mechanical_engineering", 3, False],
             ],
         },
@@ -1069,7 +1080,7 @@ class Config(object):
             return
         assets = config.for_player[player_id]["assets"]
         me_factor = (
-            const_config["assets"]["mineral_extraction"]["prod factor"]
+            const_config["assets"]["mineral_extraction"]["extract factor"]
             ** player.mineral_extraction
         )
         assets["coal_mine"]["amount produced"] = (
@@ -1138,33 +1149,39 @@ class Config(object):
                 # update resource consumption and pollution (thermodynamics)
                 if asset == "compressed_air":
                     # special case for compressed air rountrip efficiency (thermodynamics)
-                    assets[asset]["efficiency"] += (
-                        0.05
-                        * player.thermodynamics
-                        * assets[asset]["efficiency"]
+                    assets[asset]["efficiency"] = 0.8 - (
+                        0.8 - assets[asset]["efficiency"]
+                    ) / (
+                        const_config["assets"]["thermodynamics"][
+                            "efficiency_factor"
+                        ]
+                        ** player.thermodynamics
                     )
 
                 elif asset == "molten_salt":
                     # special case for molten salt efficiency (thermodynamics)
                     assets[asset]["efficiency"] = 1 - (
                         1 - assets[asset]["efficiency"]
-                    ) * (0.9**player.thermodynamics)
+                    ) / (
+                        const_config["assets"]["thermodynamics"][
+                            "efficiency_factor"
+                        ]
+                        ** player.thermodynamics
+                    )
 
                 else:
                     for resource in assets[asset]["consumed resource"]:
                         assets[asset]["consumed resource"][resource] /= (
-                            1
-                            + const_config["assets"]["thermodynamics"][
+                            const_config["assets"]["thermodynamics"][
                                 "efficiency_factor"
                             ]
-                            * player.thermodynamics
+                            ** player.thermodynamics
                         )
                     assets[asset]["pollution"] /= (
-                        1
-                        + const_config["assets"]["thermodynamics"][
+                        const_config["assets"]["thermodynamics"][
                             "efficiency_factor"
                         ]
-                        * player.thermodynamics
+                        ** player.thermodynamics
                     )
 
             if (
@@ -1266,14 +1283,21 @@ class Config(object):
                 # update roundtrip efficiencies (chemistry)
                 if asset == "hydrogen_storage":
                     # special case for hydrogen storage rountrip efficiency (chemistry)
-                    assets[asset]["efficiency"] += (
-                        0.05 * player.chemistry * assets[asset]["efficiency"]
+                    assets[asset]["efficiency"] = 0.65 - (
+                        0.65 - assets[asset]["efficiency"]
+                    ) * (
+                        const_config["assets"]["chemistry"][
+                            "inefficiency_factor"
+                        ]
+                        ** player.chemistry
                     )
                 else:
                     assets[asset]["efficiency"] = 1 - (
                         1 - assets[asset]["efficiency"]
                     ) * (
-                        const_config["assets"]["chemistry"]["efficiency_factor"]
+                        const_config["assets"]["chemistry"][
+                            "inefficiency_factor"
+                        ]
                         ** player.chemistry
                     )
                 assets[asset]["price"] *= (
