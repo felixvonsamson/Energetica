@@ -20,14 +20,13 @@ function send_form(endpoint, body) {
 socket.on("connect_error", (err) => {
     // the reason of the error, for example "xhr poll error"
     console.log(err.message);
-  
+
     // some additional description, for example the status code of the initial HTTP response
     console.log(err.description);
-  
+
     // some additional context, for example the XMLHttpRequest object
     console.log(err.context);
-  });
-
+});
 
 // information sent to the server when a new facility is created
 function start_construction(facility, family) {
@@ -43,15 +42,17 @@ function start_construction(facility, family) {
                     var obj = document.getElementById("money");
                     obj.innerHTML = formatted_money(money);
                     addToast("Construction started");
-                    sessionStorage.setItem("constructions", 
-                    JSON.stringify(raw_data["constructions"]));
+                    sessionStorage.setItem(
+                        "constructions",
+                        JSON.stringify(raw_data["constructions"])
+                    );
                     refresh_progressBar();
                 } else if (response == "noSuitableLocationAvailable") {
                     addError("No suitable locations");
                 } else if (response == "notEnoughMoneyError") {
                     addError("Not enough money");
                 } else if (response == "locked") {
-                    addError("Facility is locked! Nice try 😉");
+                    addError("Facility is locked");
                 }
             });
         })
@@ -59,6 +60,10 @@ function start_construction(facility, family) {
             console.error(`caught error ${error}`);
         });
 }
+
+socket.on("get_players", function (players) {
+    sessionStorage.setItem("players", JSON.stringify(players));
+});
 
 // receive new values from the server
 socket.on("new_values", function (changes) {
@@ -69,27 +74,33 @@ socket.on("new_values", function (changes) {
     let total_t = changes["total_t"];
     console.log("received new values : " + total_t);
     let last_value = JSON.parse(sessionStorage.getItem("last_value"));
-    if (!last_value){
+    if (!last_value) {
         retrieve_chart_data();
-    }else if (last_value["total_t"] + 1 != total_t){
+    } else if (last_value["total_t"] + 1 != total_t) {
         retrieve_chart_data();
-    }else{
+    } else {
         const currentDate = new Date();
-        sessionStorage.setItem("last_value", JSON.stringify({"total_t" : total_t, "time": currentDate}));
+        sessionStorage.setItem(
+            "last_value",
+            JSON.stringify({ total_t: total_t, time: currentDate })
+        );
         let chart_data = JSON.parse(sessionStorage.getItem("chart_data"));
         for (var category in changes["chart_values"]) {
             var subcategories = changes["chart_values"][category];
             for (var subcategory in subcategories) {
                 if (!chart_data[category].hasOwnProperty(subcategory)) {
-                    chart_data[category][subcategory] = Array.from({ length: 4 }, () => Array(1440).fill(0));
+                    chart_data[category][subcategory] = Array.from(
+                        { length: 4 },
+                        () => Array(1440).fill(0)
+                    );
                 }
                 var value = subcategories[subcategory];
-                var array = chart_data[category][subcategory]
+                var array = chart_data[category][subcategory];
                 reduce_resolution(value, array, total_t);
             }
         }
         sessionStorage.setItem("chart_data", JSON.stringify(chart_data));
-        if (typeof update_graph === 'function') {
+        if (typeof update_graph === "function") {
             update_graph();
         }
     }
@@ -99,13 +110,16 @@ socket.on("new_values", function (changes) {
 socket.on("new_network_values", function (changes) {
     let total_t = changes["total_t"];
     let last_value = JSON.parse(sessionStorage.getItem("last_value_network"));
-    if (!last_value){
+    if (!last_value) {
         retrieve_chart_data();
-    }else if (last_value["total_t"] + 1 != total_t){
+    } else if (last_value["total_t"] + 1 != total_t) {
         retrieve_chart_data();
-    }else{
+    } else {
         const currentDate = new Date();
-        sessionStorage.setItem("last_value_network", JSON.stringify({"total_t" : total_t, "time": currentDate}));
+        sessionStorage.setItem(
+            "last_value_network",
+            JSON.stringify({ total_t: total_t, time: currentDate })
+        );
         let network_data = JSON.parse(sessionStorage.getItem("network_data"));
         for (var category in changes["network_values"]) {
             var value = changes["network_values"][category];
@@ -116,31 +130,34 @@ socket.on("new_network_values", function (changes) {
     }
 });
 
-function reduce_resolution(value, array, total_t){
-    array[0].shift()
+function reduce_resolution(value, array, total_t) {
+    array[0].shift();
     array[0].push(value);
-    let mod5 = total_t % 5
-    if (mod5 != 0){
-        array[1][1439] = array[0].slice(-mod5).reduce((acc, val) => acc + val, 0) / mod5
-    }else{
-        array[1].shift()
-        let new_val = (4*array[1][1438] + array[0][1439])/5
+    let mod5 = total_t % 5;
+    if (mod5 != 0) {
+        array[1][1439] =
+            array[0].slice(-mod5).reduce((acc, val) => acc + val, 0) / mod5;
+    } else {
+        array[1].shift();
+        let new_val = (4 * array[1][1438] + array[0][1439]) / 5;
         array[1].push(new_val);
     }
-    let mod30 = total_t % 30
-    if (mod30 != 0){
-        array[2][1439] = array[0].slice(-mod30).reduce((acc, val) => acc + val, 0) / mod30
-    }else{
-        array[2].shift()
-        let new_val = (29*array[1][1438] + array[0][1439])/30
+    let mod30 = total_t % 30;
+    if (mod30 != 0) {
+        array[2][1439] =
+            array[0].slice(-mod30).reduce((acc, val) => acc + val, 0) / mod30;
+    } else {
+        array[2].shift();
+        let new_val = (29 * array[1][1438] + array[0][1439]) / 30;
         array[2].push(new_val);
     }
-    let mod180 = total_t % 180
-    if (mod180 != 0){
-        array[3][1439] = array[0].slice(-mod180).reduce((acc, val) => acc + val, 0) / mod180
-    }else{
-        array[3].shift()
-        let new_val = (179*array[1][1438] + array[0][1439])/180
+    let mod180 = total_t % 180;
+    if (mod180 != 0) {
+        array[3][1439] =
+            array[0].slice(-mod180).reduce((acc, val) => acc + val, 0) / mod180;
+    } else {
+        array[3].shift();
+        let new_val = (179 * array[1][1438] + array[0][1439]) / 180;
         array[3].push(new_val);
     }
 }
@@ -169,8 +186,9 @@ socket.on("new_notification", function (notification) {
         let unread_badge = document.getElementById("unread_badge");
         if (unread_badge != null) {
             unread_badge.innerHTML = int(unread_badge.innerHTML) + 1;
-        }else{
-            notification_button.innerHTML += '<span id="unread_badge" class="unread_badge small pine padding-small">1</span>';
+        } else {
+            notification_button.innerHTML +=
+                '<span id="unread_badge" class="unread_badge small pine padding-small">1</span>';
         }
     }
 });
@@ -178,7 +196,8 @@ socket.on("new_notification", function (notification) {
 socket.on("pause_construction", function (info) {
     load_constructions().then((construction_list) => {
         console.log(construction_list);
-        construction_list[0][info["construction_id"]]["suspension_time"] = info["suspension_time"]
+        construction_list[0][info["construction_id"]]["suspension_time"] =
+            info["suspension_time"];
         sessionStorage.setItem(
             "constructions",
             JSON.stringify(construction_list)

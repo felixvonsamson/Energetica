@@ -13,15 +13,16 @@ let maxCap;
 let f1, f2;
 let graph;
 let fill_alt = 0;
+let players = {};
 
 const resolution = ["2h", "6h", "day", "5 days", "month", "6 months"];
 let res = "2h";
 const res_to_data = {
     "2h": ["day", 1],
     "6h": ["day", 1],
-    "day": ["day", 1],
+    day: ["day", 1],
     "5 days": ["5_days", 5],
-    "month": ["month", 30],
+    month: ["month", 30],
     "6 months": ["6_months", 180],
 };
 
@@ -246,7 +247,11 @@ function draw() {
                     translate(0, -16 * 3);
                     textAlign(CENTER);
                     textFont(balooBold);
-                    text(supply["player_id"][i], 90, 4);
+                    let userObject = players[supply["player_id"][i]];
+                    let username = userObject
+                        ? userObject.username
+                        : "Loading...";
+                    text(username, 90, 4);
                     textFont(font);
                     push();
                     textAlign(RIGHT, CENTER);
@@ -351,7 +356,11 @@ function draw() {
                     translate(0, -16 * 3);
                     textAlign(CENTER);
                     textFont(balooBold);
-                    text(demand["player_id"][i], 90, 4);
+                    let userObject = players[supply["player_id"][i]];
+                    let username = userObject
+                        ? userObject.username
+                        : "Loading...";
+                    text(username, 90, 4);
                     textFont(font);
                     push();
                     textAlign(RIGHT, CENTER);
@@ -520,7 +529,7 @@ function update_graph() {
             text("Market : " + display_time(t), width / 2, 0.39 * height);
             pop();
 
-            load_chart_data(network = true).then((raw_data) => {
+            load_chart_data((network = true)).then((raw_data) => {
                 Object.keys(raw_data).forEach((key) => {
                     data[key] = reduce(raw_data[key], res);
                 });
@@ -543,7 +552,8 @@ function update_graph() {
                     stroke(cols_and_names[key][0]);
                     push();
                     for (let t = 1; t < data_len; t++) {
-                        let h1 = (data[key][t - 1] / max[key]) * 0.26 * height * f1;
+                        let h1 =
+                            (data[key][t - 1] / max[key]) * 0.26 * height * f1;
                         let h2 = (data[key][t] / max[key]) * 0.26 * height * f1;
                         line(0, -h1, graph_w / data_len, -h2);
                         translate(graph_w / (data_len - 1), 0);
@@ -560,7 +570,7 @@ function update_graph() {
                     graph_w,
                     -0.26 * height * f1
                 );
-    
+
                 push();
                 let units = time_unit(res);
                 fill(0);
@@ -579,7 +589,7 @@ function update_graph() {
                     text(units[i], x, 0.5 * margin - 3);
                 }
                 pop();
-    
+
                 push();
                 let y_ticks = y_units(max["price"]);
                 let interval2 = y_ticks[1];
@@ -596,12 +606,18 @@ function update_graph() {
                     text(display_money(y_ticks[i]), -28, -y2 * i - 3);
                 }
                 pop();
-    
+
                 push();
                 let y_ticks3 = y_units(max["quantity"]);
                 let interval3 = y_ticks3[1];
                 fill(45, 53, 166);
-                let y3 = map(interval3, 0, max["quantity"], 0, 0.26 * height * f1);
+                let y3 = map(
+                    interval3,
+                    0,
+                    max["quantity"],
+                    0,
+                    0.26 * height * f1
+                );
                 for (let i = 0; i < y_ticks3.length; i++) {
                     stroke(45, 53, 166);
                     line(graph_w, -y3 * i, graph_w + 5, -y3 * i);
@@ -613,7 +629,7 @@ function update_graph() {
                     );
                 }
                 pop();
-    
+
                 pop();
                 for (let i = 0; i < buttons.length; i++) {
                     push();
@@ -630,6 +646,9 @@ function update_graph() {
         .catch((error) => {
             console.error("Error:", error);
         });
+    load_players().then((players_) => {
+        players = players_;
+    });
 }
 
 function display_W(energy) {
@@ -754,16 +773,16 @@ function reduce(arr, res) {
     if (res == "2h") {
         return arr[0].slice(-120);
     }
-    if(res == "6h"){
+    if (res == "6h") {
         return arr[0].slice(-360);
     }
-    if(res == "day"){
+    if (res == "day") {
         return arr[0].slice(-1440);
     }
-    if(res == "5 days"){
+    if (res == "5 days") {
         return arr[1];
     }
-    if(res == "month"){
+    if (res == "month") {
         return arr[2];
     }
     return arr[3];

@@ -23,6 +23,7 @@ function change_info(constructions) {
     }
     load_const_config().then((const_config) => {
         for (const name in lvls_in_progress){
+            console.log(const_config[name]["name"])
             let tile = document.getElementById(const_config[name]["name"]);
 
             let lvl = tile.querySelector("#lvl");

@@ -1,5 +1,5 @@
 /* 
-This code contains the functions to acess frontend data and retreive it if it is not avalable. 
+This code contains the functions to acess frontend data and retrieve it if it is not avalable. 
 */
 
 function load_constructions() {
@@ -63,6 +63,28 @@ function retrieve_chart_data(network) {
             }else{
                 return raw_data["data"];
             }
+        })
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
+}
+
+function load_players() {
+    if (typeof(Storage) !== "undefined") {
+        const players = sessionStorage.getItem("players");
+        if (players) {
+            return Promise.resolve(JSON.parse(players));
+        }
+    }
+    return retrieve_players()
+}
+
+function retrieve_players() {
+    return fetch("/get_players")
+        .then((response) => response.json())
+        .then((raw_data) => {
+            sessionStorage.setItem("players", JSON.stringify(raw_data));
+            return raw_data;
         })
         .catch((error) => {
             console.error(`caught error ${error}`);

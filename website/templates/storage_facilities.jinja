@@ -27,111 +27,199 @@
   <div id="under_construction">
     {# Facilites under construction will show here #}
   </div>
-  {% for storage_facility in ["small_pumped_hydro", "compressed_air", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
-    {% set facility_data = assets[storage_facility] %}
-    {% set const_data = engine.const_config[storage_facility] %}
-    <div id="{{ const_data.name }}"
-         class="bone margin facility small construction_tile"
-         onclick="show_construction('{{ const_data.name }}', '{{ facility_data.locked }}');">
-      {% if storage_facility == "small_pumped_hydro" %}
-        {% set filename = "small_pumped_hydro.png" %}
-      {% else %}
-        {% set filename = storage_facility+'.jpg' %}
-      {% endif %}
-      <img class="img"
-           src="{{ url_for('static', filename='images/storage_facilities/'+filename) }}"
-           width="250"
-           height="167"
-           alt="{{ const_data.name+' storage facility' }}">
-      <div class="infotext padding">
-        <strong class="large">{{ const_data.name }}</strong>
-        &ensp;
-        <a class="white wikipedia_icon_container no_deco"
-           href="{{ const_data.wikipedia_link }}"
-           target="_blank">
-          <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
-        </a>
-        &emsp;
-        <span class="money_font">
-          <script>display_money_long({{ facility_data.price }});</script>
-        </span>
-        <br>
-        {{ const_data.description }}
-        <br>
-      </div>
-      <div class="infobox" id="requirements">
-        {% if facility_data.locked %}
-          <div>
-            <strong>Unlock with :</strong>
-            <br>
-            <ul style="padding:0; margin:0;">
-              {% for req in facility_data.requirements %}
-                <li class="margin-small{% if req[2] %} req_fullfilled {% else %} requirement {% endif %}">
-                  -
-                  {{ engine.const_config[req[0]]["name"] }} lvl {{ req[1] }}
-                </li>
-              {% endfor %}
-            </ul>
+  {% for facility in ["small_pumped_hydro", "compressed_air", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
+    {% set const_data = engine.const_config[facility] %}
+    <div id="{{ facility }}"
+         class="bone margin facility small"
+         onclick="show_construction('{{ facility }}');">
+
+      <div class="flex-col flex-grow-1">
+
+        <div style="width:100%" class="flex-row">
+
+          <img class="img"
+              src="{{ url_for('static', filename='images/storage_facilities/'+facility+'.'+const_data.image_extension) }}"
+              width="250"
+              height="167"
+              alt="{{ const_data.name }} power plant">
+
+          <div class="infotext padding">
+
+            <div class="flex-row align-items-center">
+
+              {# Facility name #}
+              <strong class="large">{{ const_data.name }}</strong>
+
+              {# Wikipedia icon #}
+              <a class="white wikipedia_icon_container no_deco"
+                href="{{ const_data.wikipedia_link }}"
+                target="_blank">
+                <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
+              </a>
+
+              {# Construction Cost #}
+              <span class="money_font">
+                <script>display_money_long({{ assets[facility]["price"] }});</script>
+              </span>
+
+            </div>
+
+            <div class="infobox">
+
+              {# Description #}
+              <div class="infotext">
+                {{ const_data.description }}
+              </div>
+
+              {# Requirements #}
+              {% if assets[facility]["locked"] %}
+                <div class="infobox requirements" id="requirements">
+                  <div>
+                    <strong>Unlock with :</strong>
+                    <br>
+                    <ul class="navbar-nav">
+                      {% for req in assets[facility]["requirements"] %}
+                        {% if req[0] == "mechanical_engineering" %}
+                          {% set tech_name = "Mech. engineering" %}
+                        {% else %}
+                          {% set tech_name = engine.const_config[req[0]]["name"] %}
+                        {% endif %}
+                        {% if req[2] %}
+                          <li class="padding-small req_fullfilled">- {{ tech_name }} lvl {{ req[1] }}</li>
+                        {% else %}
+                          <li class="padding-small requirement">- {{ tech_name }} lvl {{ req[1] }}</li>
+                        {% endif %}
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </div>
+              {% endif %}
+
+            </div>
+
           </div>
-        {% endif %}
-      </div>
-      <div class="infobox" id="infotable">
-        <table class="table tan_green">
-          <tr>
-            <td>Storage capacity</td>
-            <td class="txt_center">
-              <strong>
-                <script>display_Wh({{ facility_data["storage capacity"] }});</script>
-              </strong>
-            </td>
-          </tr>
-          <tr>
-            <td>Max generation</td>
-            <td class="txt_center">
-              <strong>
-                <script>display_W({{ facility_data["power generation"] }});</script>
-              </strong>
-            </td>
-          </tr>
-          <tr>
-            <td>Efficiency</td>
-            <td class="txt_center">
-              <strong>{{ (facility_data["efficiency"]*100)|int }}%</strong>
-            </td>
-          </tr>
-          <tr>
-            <td>Ramping speed</td>
-            <td class="txt_center">
-              <strong>
-                <script>display_W({{ facility_data["ramping speed"] }});</script>/min
-              </strong>
-            </td>
-          </tr>
-        </table>
-      </div>
-      <div id="constructionContent" class="infobox hidden constructionContent">
-        <div class="flex-col">
-          <div class="txt_center margin-small" style="width:180px">
-            Duration :
-            <strong>
-              <script>display_duration({{ facility_data["construction time"]}});</script>
+
+        </div>
+
+        {# Construction information for big screen #}
+        <div id="constructionContent" class="hidden">
+          <div class="flex-col construction_button_container hidden">
+            {% if assets[facility].locked %}
+              <b class="padding medium margin txt_center white txt-red"
+              onclick="start_construction('{{ facility }}', 'Storage facilities');">
+                  Locked
+              </b>
+            {% else %}
+              <b class="padding medium button margin txt_center white"
+                  onclick="start_construction('{{ facility }}', 'Storage facilities');">
+                  Start construction
+              </b>
+            {% endif %}
+          </div>
+          <div class="construction_info">
+            <strong class="hover_info">
+              <i class="fa fa-clock-o"></i>&ensp;
+              <script>display_duration({{assets[facility]["construction time"]}});</script>
+              <span class="popup_info small">Duration</span>
             </strong>
-            <br>
-            Energy need :
-            <strong>
-              <script>display_W({{ facility_data["construction power"]}});</script>
+            <strong class="hover_info">
+              <i class="fa fa-bolt"></i>&ensp;
+              <script>display_W({{assets[facility]["construction power"]}});</script>
+              <span class="popup_info small">Power consumption</span>
             </strong>
-            <br>
-            Emmissions :
-            <strong>
-              <script>display_kg({{ facility_data["construction pollution"]}});</script> CO2
+            <strong class="hover_info">
+              <i class="fa fa-cloud"></i>&ensp;
+              <script>display_kg({{assets[facility]["construction pollution"]}});</script> CO2
+              <span class="popup_info small">CO2 emissions</span>
             </strong>
           </div>
-          <b class="padding medium white button margin-small txt_center"
-             onclick="start_construction('{{ storage_facility }}', 'Storage facilities');"
-             style="width:160px">
-            Start construction
-          </b>
+        </div>
+
+      </div>
+
+      <div class="infobox information_container">
+
+        {# Construction information for smarphone #}
+        <div id="constructionContent_smartphone" class="hidden margin">
+          <div class="flex-col">
+            {% if assets[facility].locked %}
+              <b class="padding medium margin txt_center white txt-red"
+              onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Storage facilities');">
+                  Locked
+              </b>
+            {% else %}
+              <b class="padding medium button margin txt_center white"
+                  onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Storage facilities');">
+                  Start construction
+              </b>
+            {% endif %}
+          </div>
+          <div class="construction_info">
+            <strong class="hover_info">
+              <i class="fa fa-clock-o"></i>&ensp;
+              <script>display_duration({{assets[facility]["construction time"]}});</script>
+              <span class="popup_info small">Duration</span>
+            </strong>
+            <strong class="hover_info">
+              <i class="fa fa-bolt"></i>&ensp;
+              <script>display_W({{assets[facility]["construction power"]}});</script>
+              <span class="popup_info small">Power consumption</span>
+            </strong>
+            <strong class="hover_info">
+              <i class="fa fa-cloud"></i>&ensp;
+              <script>display_kg({{assets[facility]["construction pollution"]}});</script> CO2
+              <span class="popup_info small">CO2 emissions</span>
+            </strong>
+          </div>
+        </div>
+
+        {# Power Facility Data #}
+        <div id="infotable" class="minimized minimizable">
+          <table class="table tan_green">
+            {# Storage capacity #}
+            <tr>
+              <td>Storage capacity</td>
+              <td class="txt_center">
+                <strong><script>display_Wh({{assets[facility]["storage capacity"]}});</script></strong>
+              </td>
+            </tr>
+            {# Max Generation #}
+            <tr>
+              <td>Max generation</td>
+              <td class="txt_center">
+                <strong><script>display_W({{assets[facility]["power generation"]}});</script></strong>
+              </td>
+            </tr>
+            {# Ramping Speed #}
+            <tr>
+              <td>Ramping speed</td>
+              <td class="txt_center">
+                <strong><script>display_W({{assets[facility]["ramping speed"]}});</script>/min</strong>
+              </td>
+            </tr>
+            {# Efficiency #}
+            <tr>
+              <td>Efficiency</td>
+              <td class="txt_center">
+                <strong>{{ (assets[facility]["efficiency"]*100)|int }}%</strong>
+              </td>
+            </tr>
+            {# O&M Costs #}
+            <tr>
+              <td>Operation cost</td>
+              <td class="txt_center">
+                <strong><script>display_money({{assets[facility]["O&M cost"]*60}});</script>/h</strong>
+              </td>
+            </tr>
+            {# lifetime #}
+            <tr>
+              <td>Lifetime</td>
+              <td class="txt_center">
+                <strong><script>display_days({{assets[facility]["lifetime"]}});</script> days</strong>
+              </td>
+            </tr>
+          </table>
+          <div class="overlay"></div>
         </div>
       </div>
     </div>

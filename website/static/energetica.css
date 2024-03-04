@@ -74,7 +74,7 @@ canvas {
 }
 
 .txt-red {
-    color: #f71717
+    color:darkred;
 }
 
 /* Generic */
@@ -355,7 +355,7 @@ canvas {
     bottom: 10%;
     left: 50%;
     transform: translate(-50%, -50%);
-    -ms-transform: translate(-50%, -50%)
+    -ms-transform: translate(-50%, -50%);
 }
 
 .topRight_info {
@@ -499,6 +499,25 @@ canvas {
         max-width: 230px;
         width: 15%;
         justify-content: space-around;
+    }
+}
+
+@media only screen and (max-height: 800px) {
+    .game_info{
+        bottom: 10px;
+        transform: translate(-50%, 0);
+        -ms-transform: translate(-50%, 0);
+    }
+
+    .logo_txt.large {
+        font-size: 100px;
+        top: -15px;
+        transform: translate(-50%, 0);
+        -ms-transform: translate(-50%, 0)
+    }
+
+    .margin {
+        margin: 10px
     }
 }
 
@@ -739,8 +758,7 @@ canvas {
 }
 
 .table.tan_green {
-    width: 250px;
-    margin: 0 20px
+    width: 257px;
 }
 
 .table tbody tr:nth-child(even) {
@@ -752,7 +770,11 @@ canvas {
 }
 
 .table tbody td {
-    padding: 5px 8px 2px 8px;
+    padding: 6px 8px 4px 12px;
+}
+
+.table tbody th {
+    padding: 6px 8px 4px 12px;
 }
 
 #scoreboard td {
@@ -896,33 +918,97 @@ canvas {
 .facility {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    cursor: pointer;
 }
 
 .infotext {
     flex: 1;
+    justify-content: space-between;
 }
 
 .infobox {
     display: flex;
     flex-direction: row;
     align-items: center;
-}
+    }
 
 .infobox.requirements {
     padding-left:16px;
+    width: 196px;
 }
 
-.infobox.shown {
-    max-width: 500px;
-    transition: max-width 0.3s ease;
-    padding: 8px 16px 8px 0;
+#constructionContent {
+    width:100%;
+    display: flex;
+    flex-direction: row;
+    align-items:center;
 }
 
-.infobox.hidden {
-    max-width: 0;
-    transition: max-width 0.3s ease;
+#constructionContent.shown {
+    max-height: 100px;
+    transition: max-height 0.3s ease;
+}
+
+#constructionContent.hidden {
+    max-height: 0;
+    transition: max-height 0.3s ease;
     overflow: hidden;
+}
+
+#constructionContent_smartphone{
+    display: None;
+}
+
+.construction_info{
+    display: flex;
+    flex-direction: row;
+    align-items:center;
+    justify-content: space-around;
+    flex-grow: 1;
+}
+
+.construction_button_container{
+    width:250px;
+    overflow: hidden;
+    transition: opacity 0.3s ease;
+}
+
+.construction_button_container.hidden {
+    opacity: 0;
+}
+
+#infotable{
+    overflow: hidden;
+    margin: 14px 20px 14px 0px;
+    position: relative;
+}
+
+#infotable.minimized {
+    max-height: 139px;
+    transition: max-height 0.3s ease;
+}
+
+#infotable.maximized {
+    overflow:visible;
+    max-height: 250px;
+    transition: max-height 0.3s ease;
+}
+
+.overlay {
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    box-shadow: rgba(40, 84, 48, 1) 0px -40px 20px -28px inset;
+    z-index: 1;
+    transition: opacity 0.3s ease;
+}
+
+.overlay.hidden {
+    opacity: 0;
 }
 
 .resource_market_container {
@@ -957,11 +1043,7 @@ canvas {
 }
 
 .graph-container img {
-    max-width: 600px
-}
-
-.construction_tile {
-    min-height: 167px;
+    max-width: 600px;
 }
 
 .info_icon {
@@ -985,11 +1067,14 @@ canvas {
 
 .wikipedia_icon_container {
     display: inline-block;
-    width: 1.3em;
-    height: 1em;
-    padding: 0.3em 0.15em;
+    font-size: min(14px, 1.8vh);
+    height:1em;
+    padding: 0.5em 0.37em;
+    margin: 0 16px;
+    transform: translate(0, -2px);
     border-radius: 50%;
-    cursor: pointer;
+    cursor: help;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
 #info_popup {
@@ -1056,7 +1141,11 @@ canvas {
 }
 
 .draggable {
-    cursor: move;
+    cursor: grab;
+}
+
+.dragging {
+    cursor: grabbing;
 }
 
 .item {
@@ -1141,5 +1230,57 @@ canvas {
     .weather_info_container{
         font-size: min(16px, 2vh);
         padding: 4px 8px
+    }
+
+    .facility {
+        flex-direction: column;
+    }
+
+    #constructionContent {
+        display: None;
+    }
+
+    #constructionContent_smartphone{
+        display: flex;
+        flex-direction: column;
+        align-items:center;
+    }
+
+    #constructionContent_smartphone.shown {
+        opacity: 1;
+        transition: opacity 0.3s ease;
+    }
+    
+    #constructionContent_smartphone.hidden {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+    }
+
+    .construction_button_container.hidden {
+        opacity: 1;
+    }
+
+    .construction_info{
+        flex-direction: column;
+    }
+
+    .information_container{
+        display: flex;
+        flex-direction: row;
+        align-items:center;
+        justify-content: space-around;
+    }
+
+    .smartphone_hide{
+        display: None;
+    }
+
+    #infotable.minimized {
+        max-height: 113px;
+    }
+
+    .margin {
+        margin: 10px
     }
 }
