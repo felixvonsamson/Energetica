@@ -53,6 +53,7 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_networks())
         ws.send(rest_get_scoreboard())
         ws.send(rest_get_constructions(player))
+        ws.send(rest_get_construction_queue(player))
         ws.send(rest_get_weather(engine))
         if player.tile is not None:
             rest_init_ws_post_location(engine, ws)
@@ -139,6 +140,15 @@ def rest_get_constructions(player):
         {
             "type": "getConstructions",
             "data": utils.package_constructions(player),
+        }
+    )
+
+
+def rest_get_construction_queue(player):
+    return json.dumps(
+        {
+            "type": "getConstructionQueue",
+            "data": utils.package_construction_queue(player),
         }
     )
 
@@ -445,8 +455,12 @@ def rest_notify_scoreboard(engine):
 
 
 def rest_notify_constructions(engine, player):
-    message = rest_get_constructions(player)
-    rest_notify_player(engine, player, message)
+    rest_notify_player(engine, player, rest_get_constructions(player))
+    rest_notify_construction_queue(engine, player)
+
+
+def rest_notify_construction_queue(engine, player):
+    rest_notify_player(engine, player, rest_get_construction_queue(player))
 
 
 def rest_notify_weather(engine):
