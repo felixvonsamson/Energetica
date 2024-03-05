@@ -343,14 +343,14 @@ def request_pause_project():
     return jsonify(response)
 
 
-@api.route("/request_increase_project_priority", methods=["POST"])
-def request_increase_project_priority():
+@api.route("/request_decrease_project_priority", methods=["POST"])
+def request_decrease_project_priority():
     """
     this function is executed when a player changes the order of ongoing constructions or upgrades
     """
     json = request.get_json()
     construction_id = json["id"]
-    response = utils.increase_project_priority(
+    response = utils.decrease_project_priority(
         player=current_user, construction_id=construction_id
     )
     return jsonify(response)

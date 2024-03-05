@@ -114,8 +114,8 @@ function pause_construction(construction_id) {
         });
 }
 
-function increase_project_priority(construction_id) {
-    send_form("/request_increase_project_priority", {
+function decrease_project_priority(construction_id) {
+    send_form("/request_decrease_project_priority", {
         id: construction_id,
     })
         .then((response) => {
@@ -241,11 +241,11 @@ function html_for_progressBar(c_id, index, project_priority, construction){
     <div class="progressbar-container">
         <div class="progressbar-arrowcontainer">
             ${index > 0 ? `
-                <button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(${c_id})">
+                <button class="progressbar-arrow progressbar-button" onclick="decrease_project_priority(${project_priority[index - 1]})">
                     <i class="fa fa-caret-up"></i>
                 </button>` : ''}
             ${index + 1 != project_priority.length ? `
-                <button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(${project_priority[index + 1]})">
+                <button class="progressbar-arrow progressbar-button" onclick="decrease_project_priority(${c_id})">
                     <i class="fa fa-caret-down"></i>
                 </button>` : ''}
         </div>
