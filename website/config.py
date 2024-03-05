@@ -740,14 +740,14 @@ var_config = {
             ],
         },
         "laboratory": {
-            "price": 100000,  # [¤]
+            "price": 32000,  # [¤]
             "construction time": 5400,  # [s]
             "construction energy": 750000,  # [Wh]
             "construction pollution": 100000,  # [kg]
             "requirements": [],
         },
         "warehouse": {
-            "price": 50000,
+            "price": 25000,
             "construction time": 18000,
             "construction energy": 100000,
             "construction pollution": 25000,
@@ -821,114 +821,109 @@ var_config = {
             "requirements": [["mineral_extraction", 5, False]],
         },
         "mathematics": {
-            "price": 180000,  # [¤]
+            "price": 36000,  # [¤]
             "construction time": 18000,  # [s]
-            "construction energy": 25000000,  # [Wh]
+            "construction energy": 5000000,  # [Wh]
             "requirements": [
                 ["laboratory", 1, False]
             ],  # level is given relative to the research level
         },
         "mechanical_engineering": {
-            "price": 180000,
+            "price": 36000,
             "construction time": 18000,
-            "construction energy": 25000000,
+            "construction energy": 5000000,
             "requirements": [
                 ["laboratory", 1, False],
                 ["mathematics", 1, False],
             ],
         },
         "thermodynamics": {
-            "price": 180000,
+            "price": 36000,
             "construction time": 18000,
-            "construction energy": 25000000,
+            "construction energy": 5000000,
             "requirements": [
                 ["laboratory", 1, False],
                 ["mathematics", 1, False],
             ],
         },
         "physics": {
-            "price": 180000,
+            "price": 36000,
             "construction time": 18000,
-            "construction energy": 25000000,
+            "construction energy": 5000000,
             "requirements": [
                 ["laboratory", 1, False],
                 ["mathematics", 1, False],
-                ["chemistry", -1, False],
+                ["chemistry", -2, False],
             ],
         },
         "building_technology": {
-            "price": 280000,
+            "price": 56000,
             "construction time": 28800,
-            "construction energy": 80000000,
+            "construction energy": 16000000,
             "requirements": [
                 ["laboratory", 1, False],
-                ["mechanical_engineering", 1, False],
-                ["transport_technology", -1, False],
+                ["transport_technology", -2, False],
             ],
         },
         "mineral_extraction": {
-            "price": 160000,
+            "price": 32000,
             "construction time": 14400,
-            "construction energy": 40000000,
+            "construction energy": 8000000,
             "requirements": [
-                ["laboratory", 2, False],
-                ["building_technology", 1, False],
+                ["laboratory", 1, False],
+                ["mathematics", 1, False],
             ],
         },
         "transport_technology": {
-            "price": 280000,
+            "price": 56000,
             "construction time": 28800,
-            "construction energy": 120000000,
+            "construction energy": 24000000,
             "requirements": [
                 ["laboratory", 2, False],
-                ["mathematics", 2, False],
-                ["mechanical_engineering", 2, False],
+                ["mechanical_engineering", 1, False],
             ],
         },
         "materials": {
-            "price": 420000,
+            "price": 84000,
             "construction time": 43200,
-            "construction energy": 240000000,
+            "construction energy": 48000000,
             "requirements": [
                 ["laboratory", 2, False],
-                ["mathematics", 2, False],
-                ["chemistry", 1, False],
+                ["chemistry", 0, False],
             ],
         },
         "civil_engineering": {
-            "price": 140000,
+            "price": 28000,
             "construction time": 14400,
-            "construction energy": 80000000,
+            "construction energy": 16000000,
             "requirements": [
                 ["laboratory", 3, False],
                 ["mathematics", 2, False],
-                ["building_technology", 3, False],
+                ["building_technology", 2, False],
             ],
         },
         "aerodynamics": {
-            "price": 420000,
+            "price": 84000,
             "construction time": 43200,
-            "construction energy": 300000000,
+            "construction energy": 60000000,
             "requirements": [
                 ["laboratory", 3, False],
                 ["physics", 3, False],
-                ["building_technology", 3, False],
             ],
         },
         "chemistry": {
-            "price": 300000,
+            "price": 60000,
             "construction time": 28800,
-            "construction energy": 200000000,
+            "construction energy": 40000000,
             "requirements": [
                 ["laboratory", 3, False],
-                ["physics", 0, False],
-                ["mathematics", 2, False],
+                ["physics", -1, False],
             ],
         },
         "nuclear_engineering": {
-            "price": 700000,
+            "price": 140000,
             "construction time": 64800,
-            "construction energy": 540000000,
+            "construction energy": 108000000,
             "requirements": [
                 ["laboratory", 4, False],
                 ["physics", 3, False],
