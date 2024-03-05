@@ -356,7 +356,7 @@ function draw() {
                     translate(0, -16 * 3);
                     textAlign(CENTER);
                     textFont(balooBold);
-                    let userObject = players[supply["player_id"][i]];
+                    let userObject = players[demand["player_id"][i]];
                     let username = userObject
                         ? userObject.username
                         : "Loading...";
