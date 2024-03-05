@@ -761,7 +761,18 @@ def pause_project(player, construction_id):
     construction = Under_construction.query.get(int(construction_id))
 
     if construction.suspension_time is None:
-        construction.suspension_time = time.time()
+        while construction.suspension_time is None:
+            response = decrease_project_priority(
+                player, construction_id, pausing=True
+            )
+            if response["response"] == "paused":
+                break
+            if construction.family == "Technologies":
+                last_project = response["constructions"][2][-1]
+            else:
+                last_project = response["constructions"][1][-1]
+            if last_project == int(construction_id):
+                construction.suspension_time = time.time()
     else:
         if construction.family == "Technologies":
             player.project_max_priority(
@@ -796,7 +807,7 @@ def pause_project(player, construction_id):
     }
 
 
-def increase_project_priority(player, construction_id):
+def decrease_project_priority(player, construction_id, pausing=False):
     """this function is executed when a player changes the order of ongoing constructions"""
     construction = Under_construction.query.get(int(construction_id))
 
@@ -807,18 +818,23 @@ def increase_project_priority(player, construction_id):
 
     id_list = player.read_project_priority(attr)
     index = id_list.index(construction_id)
-    if index > 0 and index < len(id_list):
-        construction_1 = Under_construction.query.get(id_list[index - 1])
-        construction_2 = Under_construction.query.get(id_list[index])
+    if index >= 0 and index < len(id_list) - 1:
+        construction_1 = Under_construction.query.get(id_list[index])
+        construction_2 = Under_construction.query.get(id_list[index + 1])
         if (
             construction_1.suspension_time is None
             and construction_2.suspension_time is not None
         ):
-            pause_project(player, id_list[index - 1])
-            pause_project(player, id_list[index])
-        id_list[index], id_list[index - 1] = (
-            id_list[index - 1],
+            construction_1.suspension_time = time.time()
+            if pausing:
+                return {"response": "paused"}
+            construction_2.start_time += (
+                time.time() - construction.suspension_time
+            )
+            construction_2.suspension_time = None
+        id_list[index + 1], id_list[index] = (
             id_list[index],
+            id_list[index + 1],
         )
         setattr(player, attr, ",".join(map(str, id_list)))
         db.session.commit()
