@@ -348,6 +348,8 @@ def rest_parse_request(engine, ws, uuid, data):
             rest_parse_request_createNetwork(engine, ws, uuid, body)
         case "startProject":
             rest_parse_request_startProject(engine, ws, uuid, body)
+        case "pauseUnpauseProject":
+            rest_parse_request_pauseUnpauseProject(engine, ws, uuid, body)
         case _:
             engine.warn(f"rest_parse_request got unknown endpoint: {endpoint}")
 
@@ -398,6 +400,15 @@ def rest_parse_request_startProject(engine, ws, uuid, data):
     )
     response = utils.start_project(engine, g.player, facility, family)
     message = rest_requestResponse(uuid, "startProject", response)
+    ws.send(message)
+
+
+def rest_parse_request_pauseUnpauseProject(engine, ws, uuid, data):
+    """Interpret message sent from a client when they pause or unpause a
+    project"""
+    construction_id = data
+    response = utils.pause_project(g.player, construction_id)
+    message = rest_requestResponse(uuid, "pauseUnpauseProject", response)
     ws.send(message)
 
 
