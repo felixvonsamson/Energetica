@@ -350,8 +350,8 @@ def rest_parse_request(engine, ws, uuid, data):
             rest_parse_request_startProject(engine, ws, uuid, body)
         case "pauseUnpauseProject":
             rest_parse_request_pauseUnpauseProject(engine, ws, uuid, body)
-        case "increaseProjectPriority":
-            rest_parse_request_increaseProjectPriority(engine, ws, uuid, body)
+        case "decreaseProjectPriority":
+            rest_parse_request_decreaseProjectPriority(engine, ws, uuid, body)
         case _:
             engine.warn(f"rest_parse_request got unknown endpoint: {endpoint}")
 
@@ -414,12 +414,12 @@ def rest_parse_request_pauseUnpauseProject(engine, ws, uuid, data):
     ws.send(message)
 
 
-def rest_parse_request_increaseProjectPriority(engine, ws, uuid, data):
-    """Interpret message sent from a client when they increase a project's
+def rest_parse_request_decreaseProjectPriority(engine, ws, uuid, data):
+    """Interpret message sent from a client when they decrease a project's
     priority"""
     construction_id = data
-    response = utils.increase_project_priority(g.player, construction_id)
-    message = rest_requestResponse(uuid, "increaseProjectPriority", response)
+    response = utils.decrease_project_priority(g.player, construction_id)
+    message = rest_requestResponse(uuid, "decreaseProjectPriority", response)
     ws.send(message)
 
 
