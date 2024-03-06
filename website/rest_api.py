@@ -53,6 +53,8 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_networks())
         ws.send(rest_get_scoreboard())
         ws.send(rest_get_constructions(player))
+        ws.send(rest_get_construction_queue(player))
+        ws.send(rest_get_weather(engine))
         if player.tile is not None:
             rest_init_ws_post_location(engine, ws)
         if player.id not in engine.websocket_dict:
@@ -138,6 +140,15 @@ def rest_get_constructions(player):
         {
             "type": "getConstructions",
             "data": utils.package_constructions(player),
+        }
+    )
+
+
+def rest_get_construction_queue(player):
+    return json.dumps(
+        {
+            "type": "getConstructionQueue",
+            "data": utils.package_construction_queue(player),
         }
     )
 
@@ -304,6 +315,11 @@ def rest_get_scoreboard():
     return json.dumps(response)
 
 
+def rest_get_weather(engine):
+    response = {"type": "getWeather", "data": utils.package_weather(engine)}
+    return json.dumps(response)
+
+
 def rest_requestResponse(uuid, endpoint, data):
     response = {
         "type": "requestResponse",
@@ -332,6 +348,10 @@ def rest_parse_request(engine, ws, uuid, data):
             rest_parse_request_createNetwork(engine, ws, uuid, body)
         case "startProject":
             rest_parse_request_startProject(engine, ws, uuid, body)
+        case "pauseUnpauseProject":
+            rest_parse_request_pauseUnpauseProject(engine, ws, uuid, body)
+        case "increaseProjectPriority":
+            rest_parse_request_increaseProjectPriority(engine, ws, uuid, body)
         case _:
             engine.warn(f"rest_parse_request got unknown endpoint: {endpoint}")
 
@@ -382,6 +402,24 @@ def rest_parse_request_startProject(engine, ws, uuid, data):
     )
     response = utils.start_project(engine, g.player, facility, family)
     message = rest_requestResponse(uuid, "startProject", response)
+    ws.send(message)
+
+
+def rest_parse_request_pauseUnpauseProject(engine, ws, uuid, data):
+    """Interpret message sent from a client when they pause or unpause a
+    project"""
+    construction_id = data
+    response = utils.pause_project(g.player, construction_id)
+    message = rest_requestResponse(uuid, "pauseUnpauseProject", response)
+    ws.send(message)
+
+
+def rest_parse_request_increaseProjectPriority(engine, ws, uuid, data):
+    """Interpret message sent from a client when they increase a project's
+    priority"""
+    construction_id = data
+    response = utils.increase_project_priority(g.player, construction_id)
+    message = rest_requestResponse(uuid, "increaseProjectPriority", response)
     ws.send(message)
 
 
@@ -439,5 +477,14 @@ def rest_notify_scoreboard(engine):
 
 
 def rest_notify_constructions(engine, player):
-    message = rest_get_constructions(player)
-    rest_notify_player(engine, player, message)
+    rest_notify_player(engine, player, rest_get_constructions(player))
+    rest_notify_construction_queue(engine, player)
+
+
+def rest_notify_construction_queue(engine, player):
+    rest_notify_player(engine, player, rest_get_construction_queue(player))
+
+
+def rest_notify_weather(engine):
+    message = rest_get_weather(engine)
+    rest_notify_all_players(engine, message)
