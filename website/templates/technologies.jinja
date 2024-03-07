@@ -109,9 +109,9 @@
                           {% set tech_name = engine.const_config[req[0]]["name"] %}
                         {% endif %}
                         {% if req[2] %}
-                          <li class="padding-small req_fullfilled">- {{ tech_name }} lvl {{ req[1] }}</li>
+                          <li class="padding-small req_fullfilled">- {{ tech_name }} lvl {{ req[1] + user[facility] }}</li>
                         {% else %}
-                          <li class="padding-small requirement">- {{ tech_name }} lvl {{ req[1] }}</li>
+                          <li class="padding-small requirement">- {{ tech_name }} lvl {{ req[1] + user[facility] }}</li>
                         {% endif %}
                       {% endfor %}
                     </ul>
