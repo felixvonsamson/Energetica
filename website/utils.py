@@ -635,11 +635,24 @@ def package_constructions(player):
             "id": construction.id,
             "name": construction.name,
             "family": construction.family,
-            # "start_time": construction.start_time,
-            # "duration": construction.duration,
-            # "suspension_time": construction.suspension_time,
+            "start_time": construction.start_time,
+            "duration": construction.duration,
+            "suspension_time": construction.suspension_time,
         }
         for construction in player.under_construction
+    }
+
+
+def package_construction_queue(player):
+    return player.read_project_priority("construction_priorities")
+
+
+def package_weather(engine):
+    return {
+        "month_number": ((engine.data["total_t"] % 73440) // 6120),
+        "irradiance": engine.data["weather"]["irradiance"],
+        "wind_speed": engine.data["weather"]["windspeed"],
+        "river_discharge": engine.data["weather"]["river_discharge"] * 150,
     }
 
 
@@ -749,6 +762,7 @@ def cancel_project(player, construction_id):
         f"{player.username} cancelled the construction {construction.name}"
     )
     player.remove_project_priority(priority_list_name, construction_id)
+    rest_api.rest_notify_constructions(engine, player)
     return {
         "response": "success",
         "money": player.money,
@@ -758,6 +772,7 @@ def cancel_project(player, construction_id):
 
 def pause_project(player, construction_id):
     """this function is executed when a player pauses or unpauses an ongoing construction"""
+    engine = current_app.config["engine"]
     construction = Under_construction.query.get(int(construction_id))
 
     if construction.suspension_time is None:
@@ -801,6 +816,7 @@ def pause_project(player, construction_id):
         construction.start_time += time.time() - construction.suspension_time
         construction.suspension_time = None
     db.session.commit()
+    rest_api.rest_notify_constructions(engine, player)
     return {
         "response": "success",
         "constructions": get_construction_data(player),
@@ -809,6 +825,7 @@ def pause_project(player, construction_id):
 
 def decrease_project_priority(player, construction_id, pausing=False):
     """this function is executed when a player changes the order of ongoing constructions"""
+    engine = current_app.config["engine"]
     construction = Under_construction.query.get(int(construction_id))
 
     if construction.family == "Technologies":
@@ -838,6 +855,7 @@ def decrease_project_priority(player, construction_id, pausing=False):
         )
         setattr(player, attr, ",".join(map(str, id_list)))
         db.session.commit()
+        rest_api.rest_notify_constructions(engine, player)
 
     return {
         "response": "success",
