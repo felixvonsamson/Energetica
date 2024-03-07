@@ -1,6 +1,5 @@
 from werkzeug.security import generate_password_hash
 from pathlib import Path
-from .auth import init_table
 from .database import (
     Player,
     Hex,
@@ -15,7 +14,7 @@ from . import db
 import pickle
 import os
 import time
-from .utils import data_init_network
+from .utils import data_init_network, init_table
 
 
 def edit_database(engine):

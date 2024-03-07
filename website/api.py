@@ -278,6 +278,8 @@ def get_scoreboard():
     scoreboard_data = []
     players = Player.query.all()
     for player in players:
+        if player.tile is None:
+            continue
         scoreboard_data.append(
             [
                 player.username,

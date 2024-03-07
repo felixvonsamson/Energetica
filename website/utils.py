@@ -26,6 +26,7 @@ from .database import (
     Notification,
     Active_facilites,
     CircularBufferNetwork,
+    CircularBufferPlayer,
 )
 from . import db
 from flask import current_app, flash
@@ -328,6 +329,8 @@ def save_past_data_threaded(app, engine):
             engine.config.update_mining_productivity()
             players = Player.query.all()
             for player in players:
+                if player.tile is None:
+                    continue
                 past_data = {}
                 with open(
                     f"instance/player_data/player_{player.id}.pck",
@@ -519,10 +522,58 @@ def confirm_location(engine, player, location):
         return {"response": "choiceUnmodifiable"}
     # Checks have succeeded, proceed
     location.player_id = player.id
+    add_player_to_data(engine, player.id)
+    init_table(player.id)
     db.session.commit()
     rest_api.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
     return {"response": "success"}
+
+
+# initialize data table for new user and stores it as a .pck in the 'player_data' repo
+def init_table(user_id):
+    past_data = data_init()
+    with open(f"instance/player_data/player_{user_id}.pck", "wb") as file:
+        pickle.dump(past_data, file)
+
+
+def add_player_to_data(engine, user_id):
+    engine.data["current_data"][user_id] = CircularBufferPlayer()
+
+
+def data_init():
+    def init_array():
+        return [[0.0] * 1440] * 4
+
+    return {
+        "revenues": {
+            "industry": init_array(),
+            "exports": init_array(),
+            "imports": init_array(),
+            "dumping": init_array(),
+        },
+        "op_costs": {
+            "steam_engine": init_array(),
+        },
+        "generation": {
+            "steam_engine": init_array(),
+            "imports": init_array(),
+        },
+        "demand": {
+            "industry": init_array(),
+            "construction": init_array(),
+            "research": init_array(),
+            "transport": init_array(),
+            "exports": init_array(),
+            "dumping": init_array(),
+        },
+        "storage": {},
+        "resources": {},
+        "emissions": {
+            "steam_engine": init_array(),
+            "construction": init_array(),
+        },
+    }
 
 
 def join_network(engine, player, network):

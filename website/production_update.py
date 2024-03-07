@@ -36,6 +36,8 @@ def update_electricity(engine):
 
     new_values = {}
     for player in players:
+        if player.tile is None:
+            continue
         new_values[player.id] = engine.data["current_data"][
             player.id
         ].init_new_data()
@@ -43,8 +45,6 @@ def update_electricity(engine):
     for network in networks:
         market = init_market()
         for player in network.members:
-            if player.tile is None:
-                continue
             calculate_demand(engine, new_values[player.id], player)
             market = calculate_generation_with_market(
                 engine, new_values[player.id], market, player
