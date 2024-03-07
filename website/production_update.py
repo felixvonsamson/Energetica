@@ -473,7 +473,7 @@ def market_logic(engine, new_values, market):
                     engine.data["current_data"][row.player_id],
                     row.facility,
                     row.player_id,
-                    max(0, bought_cap),
+                    max(0.0, bought_cap),
                 )
         else:
             buy(engine, new_values, row, market_price)
