@@ -15,7 +15,7 @@ import requests
 import json
 
 
-from website.api import rest_api
+from website.api import ws
 from .database import (
     Player,
     Network,
@@ -525,7 +525,7 @@ def confirm_location(engine, player, location):
     add_player_to_data(engine, player.id)
     init_table(player.id)
     db.session.commit()
-    rest_api.rest_notify_player_location(engine, player)
+    ws.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
     return {"response": "success"}
 
@@ -587,7 +587,7 @@ def join_network(engine, player, network):
     player.network = network
     db.session.commit()
     print(f"{player.username} joined the network {network.name}")
-    rest_api.rest_notify_network_change(engine)
+    ws.rest_notify_network_change(engine)
     return {"response": "success"}
 
 
@@ -610,7 +610,7 @@ def create_network(engine, player, name):
     with open(f"{network_path}/time_series.pck", "wb") as file:
         pickle.dump(past_data, file)
     engine.log(f"{player.username} created the network {name}")
-    rest_api.rest_notify_network_change(engine)
+    ws.rest_notify_network_change(engine)
     return {"response": "success"}
 
 
@@ -632,7 +632,7 @@ def leave_network(engine, player):
         db.session.delete(network)
     db.session.commit()
     engine.log(f"{player.username} left the network {network.name}")
-    rest_api.rest_notify_network_change(engine)
+    ws.rest_notify_network_change(engine)
     return {"response": "success"}
 
 
@@ -779,7 +779,7 @@ def start_project(engine, player, facility, family):
     player.add_project_priority(priority_list_name, new_construction.id)
     if suspension_time is None:
         player.project_max_priority(priority_list_name, new_construction.id)
-    rest_api.rest_notify_constructions(engine, player)
+    ws.rest_notify_constructions(engine, player)
     return {
         "response": "success",
         "money": player.money,
@@ -813,7 +813,7 @@ def cancel_project(player, construction_id):
         f"{player.username} cancelled the construction {construction.name}"
     )
     player.remove_project_priority(priority_list_name, construction_id)
-    rest_api.rest_notify_constructions(engine, player)
+    ws.rest_notify_constructions(engine, player)
     return {
         "response": "success",
         "money": player.money,
@@ -867,7 +867,7 @@ def pause_project(player, construction_id):
         construction.start_time += time.time() - construction.suspension_time
         construction.suspension_time = None
     db.session.commit()
-    rest_api.rest_notify_constructions(engine, player)
+    ws.rest_notify_constructions(engine, player)
     return {
         "response": "success",
         "constructions": get_construction_data(player),
@@ -906,7 +906,7 @@ def decrease_project_priority(player, construction_id, pausing=False):
         )
         setattr(player, attr, ",".join(map(str, id_list)))
         db.session.commit()
-        rest_api.rest_notify_constructions(engine, player)
+        ws.rest_notify_constructions(engine, player)
 
     return {
         "response": "success",

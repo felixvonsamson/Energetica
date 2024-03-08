@@ -14,7 +14,7 @@ from .database import (
     WeatherData,
     EmissionData,
 )
-from website.api import rest_api
+from website.api import ws
 
 from .config import config, const_config
 
@@ -209,8 +209,8 @@ def state_update_m(engine, app):
         with open("instance/engine_data.pck", "wb") as file:
             pickle.dump(engine.data, file)
     with app.app_context():
-        rest_api.rest_notify_scoreboard(engine)
-        rest_api.rest_notify_weather(engine)
+        ws.rest_notify_scoreboard(engine)
+        ws.rest_notify_weather(engine)
 
 
 def check_upcoming_actions(app):
