@@ -386,6 +386,15 @@ class Player(db.Model, UserMixin):
     def __repr__(self):
         return f"<Player {self.id} '{self.username}'>"
 
+    def package(self):
+        """Serialize select attributes of self to a dictionary"""
+        payload = {
+            "username": self.username,
+        }
+        if self.tile is not None:
+            payload["tile_id"] = self.tile.id
+        return payload
+
 
 # class that stores chats with 2 or more players :
 class Chat(db.Model):
