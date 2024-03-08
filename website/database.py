@@ -395,6 +395,12 @@ class Player(db.Model, UserMixin):
             payload["tile_id"] = self.tile.id
         return payload
 
+    @staticmethod
+    def package_all():
+        print("packaging all players")
+        print({player.id: player.package() for player in Player.query.all()})
+        return {player.id: player.package() for player in Player.query.all()}
+
 
 # class that stores chats with 2 or more players :
 class Chat(db.Model):

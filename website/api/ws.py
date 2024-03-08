@@ -127,7 +127,7 @@ def rest_get_map():
 
 def rest_get_players():
     """Gets all player data and returns it as a JSON string."""
-    return json.dumps({"type": "getPlayers", "data": utils.package_players()})
+    return json.dumps({"type": "getPlayers", "data": Player.package_all()})
 
 
 def rest_get_current_player(current_player):
@@ -454,7 +454,7 @@ def rest_notify_player_location(engine, player):
     message = rest_add_player_location(player)
     rest_notify_all_players(engine, message)
     rest_notify_scoreboard(engine)
-    engine.socketio.emit("get_players", utils.package_players())
+    engine.socketio.emit("get_players", Player.package_all())
 
 
 def rest_notify_network_change(engine):
@@ -469,7 +469,7 @@ def rest_notify_network_change(engine):
 def rest_notify_new_player(engine, player):
     print("rest_notify_new_player")
     rest_notify_all_players(engine, rest_get_players())
-    engine.socketio.emit("get_players", utils.package_players())
+    engine.socketio.emit("get_players", Player.package_all())
 
 
 def rest_notify_scoreboard(engine):

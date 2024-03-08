@@ -222,7 +222,7 @@ def get_player_data():
 
 @http.route("/get_players", methods=["GET"])
 def get_players():
-    return jsonify(utils.package_players())
+    return jsonify(Player.package_all())
 
 
 @http.route("/get_generation_prioirity", methods=["GET"])

@@ -668,10 +668,6 @@ def set_network_prices(engine, player, prices={}):
     db.session.commit()
 
 
-def package_players():
-    return {player.id: player.package() for player in Player.query.all()}
-
-
 def package_constructions(player):
     return {
         construction.id: {
