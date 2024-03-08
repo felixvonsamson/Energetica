@@ -62,7 +62,7 @@ def create_app(run_init_test_players, rm_instance):
     # add blueprints (website repositories) :
     from .views import views, overviews
     from .auth import auth
-    from .api.api import http
+    from .api.http import http
     from .api.rest_api import rest_api
 
     app.register_blueprint(views, url_prefix="/")
