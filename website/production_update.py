@@ -448,8 +448,7 @@ def market_logic(engine, new_values, market):
                 sell(engine, new_values, row, market_price, quantity=sold_cap)
             # dumping electricity that is offered for negative price and not sold
             if row.price < 0:
-                rest = max(0, min(row.capacity, row.capacity - sold_cap))
-                dump_cap = rest
+                dump_cap = max(0.0, min(row.capacity, row.capacity - sold_cap))
                 player = Player.query.get(row.player_id)
                 demand = new_values[row.player_id]["demand"]
                 demand["dumping"] += dump_cap
@@ -609,7 +608,7 @@ def calculate_prod(
                 * (assets[facility]["efficiency"] ** 0.5),
             )  # max available storge content
         max_resources = max(
-            0, min(E, (2 * E * ramping_speed) ** 0.5 - 0.5 * ramping_speed)
+            0.0, min(E, (2 * E * ramping_speed) ** 0.5 - 0.5 * ramping_speed)
         )  # ramping down
     if minmax == "max":
         if filling:
