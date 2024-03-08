@@ -14,7 +14,7 @@ from .database import (
     WeatherData,
     EmissionData,
 )
-from website import rest_api
+from website.api import rest_api
 
 from .config import config, const_config
 

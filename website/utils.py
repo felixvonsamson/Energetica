@@ -15,7 +15,7 @@ import requests
 import json
 
 
-from website import rest_api
+from website.api import rest_api
 from .database import (
     Player,
     Network,

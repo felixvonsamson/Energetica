@@ -48,22 +48,22 @@ def create_app(run_init_test_players, rm_instance):
     # initialize socketio :
     socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
     engine.socketio = socketio
-    from .socketio_handlers import add_handlers
+    from .api.socketio_handlers import add_handlers
 
     add_handlers(socketio=socketio, engine=engine)
 
     # initialize sock for WebSockets:
     sock = Sock(app)
     engine.sock = sock
-    from .rest_api import add_sock_handlers
+    from .api.rest_api import add_sock_handlers
 
     add_sock_handlers(sock=sock, engine=engine)
 
     # add blueprints (website repositories) :
     from .views import views, overviews
     from .auth import auth
-    from .api import api
-    from .rest_api import rest_api
+    from .api.api import api
+    from .api.rest_api import rest_api
 
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")

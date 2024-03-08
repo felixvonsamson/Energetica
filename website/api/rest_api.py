@@ -1,4 +1,5 @@
 """Code providing API access using WebSockets and HTTP Basic Auth"""
+
 import json
 import pickle
 
@@ -9,7 +10,7 @@ from simple_websocket import ConnectionClosed
 
 from website import utils
 
-from .database import Hex, Player, Network
+from ..database import Hex, Player, Network
 
 rest_api = Blueprint("rest_api", __name__)
 
