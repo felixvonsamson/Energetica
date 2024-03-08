@@ -63,13 +63,13 @@ def create_app(run_init_test_players, rm_instance):
     from .views import views, overviews
     from .auth import auth
     from .api.http import http
-    from .api.rest_api import rest_api
+    from .api.rest_api import ws
 
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")
     app.register_blueprint(auth, url_prefix="/")
     app.register_blueprint(http, url_prefix="/")
-    app.register_blueprint(rest_api, url_prefix="/")
+    app.register_blueprint(ws, url_prefix="/")
 
     from .database import Hex, Player
 
