@@ -169,7 +169,7 @@ def extraction_facility_demand(engine, new_values, player, assets, demand):
             max_prod = (
                 getattr(player, facility) * assets[facility]["amount produced"]
             )
-            power_factor = min(1, max_warehouse / max(1, max_prod))
+            power_factor = min(1.0, max_warehouse / max(1.0, max_prod))
             demand[facility] = (
                 assets[facility]["power consumption"]
                 * getattr(player, facility)
@@ -843,18 +843,6 @@ def reduce_demand(
     if satisfaction > 1.05 * past_data.get_last_data("demand", demand_type):
         return
     if demand_type == "industry":
-        if player.industry > 1:
-            notify(
-                "Energy shortage",
-                f"Your industry has been downgraded to level {player.industry-1} because of a lack of electricity.",
-                [player],
-            )
-            engine.log(
-                f"The industry of {player.username} has been downgraded to level {player.industry-1} because of a lack of electricity."
-            )
-        player.industry = max(1, player.industry - 1)
-        engine.config.update_config_for_user(player.id)
-        db.session.commit()
         return
     assets = engine.config[player.id]["assets"]
     if demand_type == "construction":
