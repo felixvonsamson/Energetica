@@ -839,7 +839,6 @@ def reduce_demand(
         return
     player = Player.query.get(player_id)
     demand = new_values[player.id]["demand"]
-    demand[demand_type] = satisfaction
     if satisfaction > 1.05 * past_data.get_last_data("demand", demand_type):
         return
     if demand_type == "industry":
@@ -847,7 +846,9 @@ def reduce_demand(
         new_values[player.id]["revenues"]["industry"] *= (
             satisfaction / demand["industry"]
         ) ** 2
+        demand["industry"] = satisfaction
         return
+    demand[demand_type] = satisfaction
     assets = engine.config[player.id]["assets"]
     if demand_type == "construction":
         construction_priorities = player.read_project_priority(
