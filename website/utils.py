@@ -668,10 +668,6 @@ def set_network_prices(engine, player, prices={}):
     db.session.commit()
 
 
-def package_construction_queue(player):
-    return player.read_project_priority("construction_priorities")
-
-
 def package_weather(engine):
     return {
         "month_number": ((engine.data["total_t"] % 73440) // 6120),

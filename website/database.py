@@ -414,6 +414,9 @@ class Player(db.Model, UserMixin):
             for construction in self.under_construction
         }
 
+    def package_construction_queue(self):
+        return self.read_project_priority("construction_priorities")
+
 
 # class that stores chats with 2 or more players :
 class Chat(db.Model):

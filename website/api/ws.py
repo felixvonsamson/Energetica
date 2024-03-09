@@ -149,7 +149,7 @@ def rest_get_construction_queue(player):
     return json.dumps(
         {
             "type": "getConstructionQueue",
-            "data": utils.package_construction_queue(player),
+            "data": player.package_construction_queue(),
         }
     )
 
