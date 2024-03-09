@@ -591,6 +591,14 @@ class WeatherData:
     def __getitem__(self, weather):
         return self._data[weather][-1]
 
+    def package(self, total_t):
+        return {
+            "month_number": ((total_t % 73440) // 6120),
+            "irradiance": self["irradiance"],
+            "wind_speed": self["windspeed"],
+            "river_discharge": self["river_discharge"] * 150,
+        }
+
 
 class EmissionData:
     """Class that stores the emission data"""

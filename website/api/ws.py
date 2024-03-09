@@ -317,7 +317,10 @@ def rest_get_scoreboard():
 
 
 def rest_get_weather(engine):
-    response = {"type": "getWeather", "data": utils.package_weather(engine)}
+    response = {
+        "type": "getWeather",
+        "data": engine.data["weather"].package(engine.data["total_t"]),
+    }
     return json.dumps(response)
 
 

@@ -668,15 +668,6 @@ def set_network_prices(engine, player, prices={}):
     db.session.commit()
 
 
-def package_weather(engine):
-    return {
-        "month_number": ((engine.data["total_t"] % 73440) // 6120),
-        "irradiance": engine.data["weather"]["irradiance"],
-        "wind_speed": engine.data["weather"]["windspeed"],
-        "river_discharge": engine.data["weather"]["river_discharge"] * 150,
-    }
-
-
 def get_scoreboard():
     players = Player.query.filter(Player.tile != None)  # noqa: E711
     return {
