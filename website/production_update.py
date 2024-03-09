@@ -7,7 +7,7 @@ import time
 import math
 import pandas as pd
 import numpy as np
-from .database import Network, Player, Under_construction, Shipment
+from .database.database import Network, Player, Under_construction, Shipment
 from .config import wind_power_curve
 from . import db
 from .utils import notify

@@ -10,7 +10,7 @@ from simple_websocket import ConnectionClosed
 
 from website import utils
 
-from ..database import Hex, Player, Network
+from ..database.database import Hex, Player, Network
 
 ws = Blueprint("rest_api", __name__)
 

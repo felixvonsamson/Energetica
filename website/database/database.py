@@ -2,7 +2,7 @@
 Here are defined the classes for the items stored in the database
 """
 
-from . import db
+from .. import db
 import requests
 import json
 import math
@@ -577,7 +577,7 @@ class WeatherData:
         month = math.floor((engine.data["total_t"] % 73440) / 6120)
         # One year in game is 51 days
         f = (engine.data["total_t"] % 73440) / 6120 - month
-        from .config import river_discharge_seasonal
+        from ..config import river_discharge_seasonal
 
         d = river_discharge_seasonal
         power_factor = d[month] + (d[(month + 1) % 12] - d[month]) * f

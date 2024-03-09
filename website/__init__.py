@@ -71,7 +71,7 @@ def create_app(run_init_test_players, rm_instance):
     app.register_blueprint(http, url_prefix="/")
     app.register_blueprint(ws, url_prefix="/")
 
-    from .database import Hex, Player
+    from .database.database import Hex, Player
 
     # initialize database :
     with app.app_context():

@@ -1,6 +1,6 @@
 from werkzeug.security import generate_password_hash
 from pathlib import Path
-from .database import (
+from .database.database import (
     Player,
     Hex,
     Network,
