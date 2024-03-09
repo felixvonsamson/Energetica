@@ -397,8 +397,6 @@ class Player(db.Model, UserMixin):
 
     @staticmethod
     def package_all():
-        print("packaging all players")
-        print({player.id: player.package() for player in Player.query.all()})
         return {player.id: player.package() for player in Player.query.all()}
 
     def package_constructions(self):
