@@ -83,6 +83,8 @@ def update_electricity(engine):
         engine.data["current_data"][player.id].append_value(
             new_values[player.id]
         )
+        # add industry revenues to player money
+        player.money += new_values[player.id]["revenues"]["industry"]
         # calculate moving average revenue
         player.average_revenues = (
             player.average_revenues
@@ -231,7 +233,6 @@ def industry_demand_and_revenues(engine, player, assets, demand, revenues):
             )
             demand["industry"] += additional_demand
             revenues["industry"] += additional_revenue
-    player.money += revenues["industry"]
 
 
 def construction_demand(player, assets, demand):
@@ -842,6 +843,10 @@ def reduce_demand(
     if satisfaction > 1.05 * past_data.get_last_data("demand", demand_type):
         return
     if demand_type == "industry":
+        # revenues of industry are reduced
+        new_values[player.id]["revenues"]["industry"] *= (
+            satisfaction / demand["industry"]
+        ) ** 2
         return
     assets = engine.config[player.id]["assets"]
     if demand_type == "construction":
