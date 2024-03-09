@@ -11,7 +11,7 @@ from simple_websocket import ConnectionClosed
 from website import utils
 from ..database.player import Network, Player
 
-from ..database.database import Hex
+from ..database.map import Hex
 
 ws = Blueprint("rest_api", __name__)
 

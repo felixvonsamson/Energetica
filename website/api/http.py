@@ -8,8 +8,9 @@ import pickle
 import numpy as np
 from pathlib import Path
 from website import utils
+from ..database.map import Hex
 from ..database.player import Network, Player
-from ..database.database import Hex, Chat
+from ..database.database import Chat
 
 http = Blueprint("http", __name__)
 
