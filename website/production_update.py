@@ -36,6 +36,8 @@ def update_electricity(engine):
 
     new_values = {}
     for player in players:
+        if player.tile is None:
+            continue
         new_values[player.id] = engine.data["current_data"][
             player.id
         ].init_new_data()
@@ -43,8 +45,6 @@ def update_electricity(engine):
     for network in networks:
         market = init_market()
         for player in network.members:
-            if player.tile is None:
-                continue
             calculate_demand(engine, new_values[player.id], player)
             market = calculate_generation_with_market(
                 engine, new_values[player.id], market, player
@@ -83,6 +83,8 @@ def update_electricity(engine):
         engine.data["current_data"][player.id].append_value(
             new_values[player.id]
         )
+        # add industry revenues to player money
+        player.money += new_values[player.id]["revenues"]["industry"]
         # calculate moving average revenue
         player.average_revenues = (
             player.average_revenues
@@ -169,7 +171,7 @@ def extraction_facility_demand(engine, new_values, player, assets, demand):
             max_prod = (
                 getattr(player, facility) * assets[facility]["amount produced"]
             )
-            power_factor = min(1, max_warehouse / max(1, max_prod))
+            power_factor = min(1.0, max_warehouse / max(1.0, max_prod))
             demand[facility] = (
                 assets[facility]["power consumption"]
                 * getattr(player, facility)
@@ -231,7 +233,6 @@ def industry_demand_and_revenues(engine, player, assets, demand, revenues):
             )
             demand["industry"] += additional_demand
             revenues["industry"] += additional_revenue
-    player.money += revenues["industry"]
 
 
 def construction_demand(player, assets, demand):
@@ -448,8 +449,7 @@ def market_logic(engine, new_values, market):
                 sell(engine, new_values, row, market_price, quantity=sold_cap)
             # dumping electricity that is offered for negative price and not sold
             if row.price < 0:
-                rest = max(0, min(row.capacity, row.capacity - sold_cap))
-                dump_cap = rest
+                dump_cap = max(0.0, min(row.capacity, row.capacity - sold_cap))
                 player = Player.query.get(row.player_id)
                 demand = new_values[row.player_id]["demand"]
                 demand["dumping"] += dump_cap
@@ -473,7 +473,7 @@ def market_logic(engine, new_values, market):
                     engine.data["current_data"][row.player_id],
                     row.facility,
                     row.player_id,
-                    max(0, bought_cap),
+                    max(0.0, bought_cap),
                 )
         else:
             buy(engine, new_values, row, market_price)
@@ -609,7 +609,7 @@ def calculate_prod(
                 * (assets[facility]["efficiency"] ** 0.5),
             )  # max available storge content
         max_resources = max(
-            0, min(E, (2 * E * ramping_speed) ** 0.5 - 0.5 * ramping_speed)
+            0.0, min(E, (2 * E * ramping_speed) ** 0.5 - 0.5 * ramping_speed)
         )  # ramping down
     if minmax == "max":
         if filling:
@@ -843,18 +843,10 @@ def reduce_demand(
     if satisfaction > 1.05 * past_data.get_last_data("demand", demand_type):
         return
     if demand_type == "industry":
-        if player.industry > 1:
-            notify(
-                "Energy shortage",
-                f"Your industry has been downgraded to level {player.industry-1} because of a lack of electricity.",
-                [player],
-            )
-            engine.log(
-                f"The industry of {player.username} has been downgraded to level {player.industry-1} because of a lack of electricity."
-            )
-        player.industry = max(1, player.industry - 1)
-        engine.config.update_config_for_user(player.id)
-        db.session.commit()
+        # revenues of industry are reduced
+        new_values[player.id]["revenues"]["industry"] *= (
+            satisfaction / demand["industry"]
+        ) ** 2
         return
     assets = engine.config[player.id]["assets"]
     if demand_type == "construction":

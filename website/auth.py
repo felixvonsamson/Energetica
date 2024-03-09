@@ -12,11 +12,10 @@ from flask import (
     g,
 )
 from flask import current_app
-from .database import Player, CircularBufferPlayer
+from .database import Player
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
-import pickle
 from website import rest_api
 
 auth = Blueprint("auth", __name__)
@@ -82,9 +81,6 @@ def sign_up():
             )
             db.session.add(new_player)
             db.session.commit()
-            add_player_to_data(new_player.id)
-            init_table(new_player)
-            db.session.commit()
             login_user(new_player, remember=True)
             flash("Account created!", category="message")
             g.engine.log(f"{username} created an account")
@@ -95,49 +91,3 @@ def sign_up():
             return redirect(url_for("views.home"))
 
     return render_template("sign_up.jinja", user=current_user)
-
-
-# initialize data table for new user and stores it as a .pck in the 'player_data' repo
-def init_table(player):
-    past_data = data_init()
-    with open(f"instance/player_data/player_{player.id}.pck", "wb") as file:
-        pickle.dump(past_data, file)
-
-
-def add_player_to_data(user_id):
-    g.engine.data["current_data"][user_id] = CircularBufferPlayer()
-
-
-def data_init():
-    def init_array():
-        return [[0.0] * 1440] * 4
-
-    return {
-        "revenues": {
-            "industry": init_array(),
-            "exports": init_array(),
-            "imports": init_array(),
-            "dumping": init_array(),
-        },
-        "op_costs": {
-            "steam_engine": init_array(),
-        },
-        "generation": {
-            "steam_engine": init_array(),
-            "imports": init_array(),
-        },
-        "demand": {
-            "industry": init_array(),
-            "construction": init_array(),
-            "research": init_array(),
-            "transport": init_array(),
-            "exports": init_array(),
-            "dumping": init_array(),
-        },
-        "storage": {},
-        "resources": {},
-        "emissions": {
-            "steam_engine": init_array(),
-            "construction": init_array(),
-        },
-    }

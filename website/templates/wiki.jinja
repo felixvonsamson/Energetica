@@ -417,7 +417,9 @@
          src="{{ url_for('static', filename='images/wiki/seasonal_variation_industry.jpg') }}"
          alt="Seasonal variation of the industry demand">
   </div>
-  <p>If the industry's demand isn't met, it is leveled down to decrease demand.</p>
+  <p>If the industry's demand isn't met, its revenues will decrease following this rule : 
+  \( revenues = revenues_{base} \times (\frac{satisfaction}{demand})^{2} \). 
+  This models the fact that reducing slightly the consumption of the industry has a low cost but reducing it a lot has a very high cost.</p>
   <h3 id="The_Laboratory">The Laboratory</h3>
   <p>
     The laboratory is crucial for researching technologies. Different technology levels require corresponding
