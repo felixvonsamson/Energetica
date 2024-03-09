@@ -401,6 +401,19 @@ class Player(db.Model, UserMixin):
         print({player.id: player.package() for player in Player.query.all()})
         return {player.id: player.package() for player in Player.query.all()}
 
+    def package_constructions(self):
+        return {
+            construction.id: {
+                "id": construction.id,
+                "name": construction.name,
+                "family": construction.family,
+                "start_time": construction.start_time,
+                "duration": construction.duration,
+                "suspension_time": construction.suspension_time,
+            }
+            for construction in self.under_construction
+        }
+
 
 # class that stores chats with 2 or more players :
 class Chat(db.Model):

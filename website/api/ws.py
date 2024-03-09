@@ -140,7 +140,7 @@ def rest_get_constructions(player):
     return json.dumps(
         {
             "type": "getConstructions",
-            "data": utils.package_constructions(player),
+            "data": player.package_constructions(),
         }
     )
 

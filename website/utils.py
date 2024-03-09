@@ -668,20 +668,6 @@ def set_network_prices(engine, player, prices={}):
     db.session.commit()
 
 
-def package_constructions(player):
-    return {
-        construction.id: {
-            "id": construction.id,
-            "name": construction.name,
-            "family": construction.family,
-            "start_time": construction.start_time,
-            "duration": construction.duration,
-            "suspension_time": construction.suspension_time,
-        }
-        for construction in player.under_construction
-    }
-
-
 def package_construction_queue(player):
     return player.read_project_priority("construction_priorities")
 
