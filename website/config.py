@@ -2,7 +2,7 @@
 This file contains all the data needed for the game
 """
 
-from .database.database import Player
+from .database.player import Player
 import copy
 import math
 from flask import current_app

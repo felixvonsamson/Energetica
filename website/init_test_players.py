@@ -1,9 +1,9 @@
 from werkzeug.security import generate_password_hash
 from pathlib import Path
+
+from .database.player import Network, Player
 from .database.database import (
-    Player,
     Hex,
-    Network,
     Under_construction,
     Shipment,
     Resource_on_sale,

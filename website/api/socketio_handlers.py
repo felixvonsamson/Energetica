@@ -4,7 +4,9 @@ This code contains the main functions that communicate with the server (server s
 
 from flask import request
 from flask_login import current_user
-from ..database.database import Player, Chat, Message
+
+from ..database.player import Player
+from ..database.database import Chat, Message
 from ..utils import check_existing_chats
 from .. import db
 from datetime import datetime
