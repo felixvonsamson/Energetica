@@ -4,8 +4,6 @@ This code is run once at the start of the game
 
 import eventlet
 
-from .database.player import Player
-
 eventlet.monkey_patch(thread=True, time=True)
 
 from flask import Flask  # noqa: E402
@@ -23,6 +21,7 @@ import shutil  # noqa: E402
 
 db = SQLAlchemy()
 
+from .database.player import Player  # noqa: E402
 from website.gameEngine import gameEngine  # noqa: E402
 
 
