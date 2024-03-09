@@ -81,30 +81,6 @@ class Resource_on_sale(db.Model):
     )  # can access player directly with .player
 
 
-# class that stores chats with 2 or more players :
-class Chat(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50))
-    messages = db.relationship("Message", backref="chat")
-
-
-# class that stores messages :
-class Message(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.Text)
-    time = db.Column(db.DateTime)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
-    chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"))
-
-
-class Notification(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(50))
-    content = db.Column(db.Text)
-    time = db.Column(db.DateTime)
-    read = db.Column(db.Boolean, default=False)
-
-
 class CircularBufferPlayer:
     """Class that stores the active data of a player"""
 

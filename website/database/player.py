@@ -1,6 +1,5 @@
 from website import db
 from website.database.database import (
-    Notification,
     Under_construction,
     player_chats,
     player_notifications,
@@ -9,6 +8,8 @@ from website.database.database import (
 
 from flask import current_app
 from flask_login import UserMixin
+
+from website.database.messages import Notification
 
 
 class Player(db.Model, UserMixin):

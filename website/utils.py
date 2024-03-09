@@ -16,13 +16,12 @@ import json
 
 
 from website.api import ws
+from .database.messages import Chat, Notification
 from .database.player import Network, Player
 from .database.database import (
     Resource_on_sale,
     Shipment,
-    Chat,
     Under_construction,
-    Notification,
     Active_facilites,
     CircularBufferNetwork,
     CircularBufferPlayer,
