@@ -16,6 +16,7 @@ import json
 
 
 from website.api import ws
+from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer
 from .database.messages import Chat, Notification
 from .database.player import Network, Player
 from .database.database import (
@@ -23,8 +24,6 @@ from .database.database import (
     Shipment,
     Under_construction,
     Active_facilites,
-    CircularBufferNetwork,
-    CircularBufferPlayer,
 )
 from . import db
 from flask import current_app, flash
