@@ -190,28 +190,15 @@ def industry_demand_and_revenues(engine, player, assets, demand, revenues):
         * (engine.data["total_t"] % 1440)
     ) / 1440
     t = (engine.data["total_t"] + engine.data["delta_min"]) % 1440
-    industry_demand = (
+    demand["industry"] = (
         engine.industry_demand[t]
         * seasonal_factor
         * assets["industry"]["power consumption"]
     )
-    demand["industry"] = min(
-        engine.data["current_data"][player.id].get_last_data(
-            "demand", "industry"
-        )
-        + 0.07 * industry_demand,
-        industry_demand,
-    )  # progressive demand change in case of restart
     # calculate income of industry
-    industry_income = (
+    revenues["industry"] = (
         engine.config[player.id]["assets"]["industry"]["income"] / 1440.0
     )
-    if demand["industry"] < industry_demand:
-        revenues["industry"] = (
-            industry_income * demand["industry"] / industry_demand
-        )
-    else:
-        revenues["industry"] = industry_income
     for ud in player.under_construction:
         # industry demand ramps up during construction
         if ud.name == "industry":
@@ -223,12 +210,14 @@ def industry_demand_and_revenues(engine, player, assets, demand, revenues):
                 )
             additional_demand = (
                 time_fraction
-                * industry_demand
+                * demand["industry"]
                 * (engine.const_config["industry"]["power factor"] - 1)
             )
             additional_revenue = (
                 time_fraction
-                * (industry_income - 2000 / 1440)
+                * (
+                    revenues["industry"] - 2000 / 1440
+                )  # the 2000 is to account for the universal basic revenue
                 * (engine.const_config["industry"]["income factor"] - 1)
             )
             demand["industry"] += additional_demand
@@ -839,14 +828,14 @@ def reduce_demand(
         return
     player = Player.query.get(player_id)
     demand = new_values[player.id]["demand"]
-    if satisfaction > 1.05 * past_data.get_last_data("demand", demand_type):
-        return
     if demand_type == "industry":
         # revenues of industry are reduced
         new_values[player.id]["revenues"]["industry"] *= (
             satisfaction / demand["industry"]
         ) ** 2
         demand["industry"] = satisfaction
+        return
+    if satisfaction > 1.05 * past_data.get_last_data("demand", demand_type):
         return
     demand[demand_type] = satisfaction
     assets = engine.config[player.id]["assets"]

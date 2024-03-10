@@ -14,7 +14,7 @@ from . import db
 import pickle
 import os
 import time
-from .utils import data_init_network, init_table
+from .utils import data_init_network, init_table, add_player_to_data
 
 
 def edit_database(engine):
@@ -188,7 +188,8 @@ def create_player(engine, username, password):
         db.session.add(new_player)
         db.session.commit()
         engine.data["current_data"][new_player.id] = CircularBufferPlayer()
-        init_table(new_player)
+        add_player_to_data(engine, new_player.id)
+        init_table(new_player.id)
         db.session.commit()
         return new_player
     engine.log(f"create_player: player {username} already exists")
