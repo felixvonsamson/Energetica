@@ -19,7 +19,7 @@ from website.api import ws
 from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer
 from .database.messages import Chat, Notification
 from .database.player import Network, Player
-from .database.database import (
+from .database.player_assets import (
     Resource_on_sale,
     Shipment,
     Under_construction,

@@ -6,7 +6,7 @@ from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer
 from .database.map import Hex
 
 from .database.player import Network, Player
-from .database.database import (
+from .database.player_assets import (
     Under_construction,
     Shipment,
     Resource_on_sale,

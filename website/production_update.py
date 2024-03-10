@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 
 from .database.player import Network, Player
-from .database.database import Under_construction, Shipment
+from .database.player_assets import Under_construction, Shipment
 from .config import wind_power_curve
 from . import db
 from .utils import notify
