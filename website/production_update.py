@@ -844,7 +844,9 @@ def reduce_demand(
             "construction_priorities"
         )
         cumul_demand = 0.0
-        for i in range(player.construction_workers):
+        for i in range(
+            min(len(construction_priorities), player.construction_workers)
+        ):
             construction_id = construction_priorities[i]
             construction = Under_construction.query.get(construction_id)
             cumul_demand += assets[construction.name]["construction power"]
@@ -869,7 +871,7 @@ def reduce_demand(
             "research_priorities"
         )
         cumul_demand = 0.0
-        for i in range(player.lab_workers):
+        for i in range(min(len(research_priorities), player.lab_workers)):
             construction_id = research_priorities[i]
             construction = Under_construction.query.get(construction_id)
             cumul_demand += assets[construction.name]["construction power"]
