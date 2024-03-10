@@ -386,6 +386,35 @@ class Player(db.Model, UserMixin):
     def __repr__(self):
         return f"<Player {self.id} '{self.username}'>"
 
+    def package(self):
+        """Serialize select attributes of self to a dictionary"""
+        payload = {
+            "username": self.username,
+        }
+        if self.tile is not None:
+            payload["tile_id"] = self.tile.id
+        return payload
+
+    @staticmethod
+    def package_all():
+        return {player.id: player.package() for player in Player.query.all()}
+
+    def package_constructions(self):
+        return {
+            construction.id: {
+                "id": construction.id,
+                "name": construction.name,
+                "family": construction.family,
+                "start_time": construction.start_time,
+                "duration": construction.duration,
+                "suspension_time": construction.suspension_time,
+            }
+            for construction in self.under_construction
+        }
+
+    def package_construction_queue(self):
+        return self.read_project_priority("construction_priorities")
+
 
 # class that stores chats with 2 or more players :
 class Chat(db.Model):
@@ -559,6 +588,14 @@ class WeatherData:
 
     def __getitem__(self, weather):
         return self._data[weather][-1]
+
+    def package(self, total_t):
+        return {
+            "month_number": ((total_t % 73440) // 6120),
+            "irradiance": self["irradiance"],
+            "wind_speed": self["windspeed"],
+            "river_discharge": self["river_discharge"] * 150,
+        }
 
 
 class EmissionData:

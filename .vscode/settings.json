@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "*.jinja": "jinja-html"
+    },
+    "[jinja-html]": {
+        "editor.wordWrapColumn": 80,
+        "editor.defaultFormatter": "monosans.djlint"
+    },
+    "files.exclude": {
+        "**/__pycache__": true
+    }
+}
