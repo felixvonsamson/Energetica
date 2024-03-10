@@ -1,15 +1,17 @@
 from website import db
 from website.database.database import (
     Under_construction,
-    player_chats,
-    player_notifications,
 )
 
 
 from flask import current_app
 from flask_login import UserMixin
 
-from website.database.messages import Notification
+from website.database.messages import (
+    Notification,
+    player_chats,
+    player_notifications,
+)
 
 
 class Player(db.Model, UserMixin):
