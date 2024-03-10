@@ -8,18 +8,18 @@ import pickle
 import numpy as np
 from pathlib import Path
 from website import utils
-from .database import Hex, Player, Chat, Network
+from ..database import Hex, Player, Chat, Network
 
-api = Blueprint("api", __name__)
+http = Blueprint("http", __name__)
 
 
-@api.before_request
+@http.before_request
 @login_required
 def check_user():
     g.engine = current_app.config["engine"]
 
 
-@api.route("/request_delete_notification", methods=["POST"])
+@http.route("/request_delete_notification", methods=["POST"])
 def request_delete_notification():
     """
     this function is executed when a player deletes a notification
@@ -30,7 +30,7 @@ def request_delete_notification():
     return jsonify({"response": "success"})
 
 
-@api.route("/request_marked_as_read", methods=["GET"])
+@http.route("/request_marked_as_read", methods=["GET"])
 def request_marked_as_read():
     """
     this function is executed when a player read the notifications
@@ -39,14 +39,14 @@ def request_marked_as_read():
     return jsonify({"response": "success"})
 
 
-@api.route("/get_const_config", methods=["GET"])
+@http.route("/get_const_config", methods=["GET"])
 def get_const_config():
     """Gets constant config data"""
     return jsonify(g.engine.const_config)
 
 
 # gets the map data from the database and returns it as a array of dictionaries :
-@api.route("/get_map", methods=["GET"])
+@http.route("/get_map", methods=["GET"])
 def get_map():
     """gets the map data from the database and returns it as a array of dictionaries"""
     hex_map = Hex.query.all()
@@ -74,7 +74,7 @@ def get_map():
 
 
 # gets all the player usernames (except it's own) and returns it as a list :
-@api.route("/get_usernames", methods=["GET"])
+@http.route("/get_usernames", methods=["GET"])
 def get_usernames():
     username_list = Player.query.with_entities(Player.username).all()
     username_list = [
@@ -86,7 +86,7 @@ def get_usernames():
 
 
 # gets all the network names and returns it as a list :
-@api.route("/get_networks", methods=["GET"])
+@http.route("/get_networks", methods=["GET"])
 def get_networks():
     network_list = Network.query.with_entities(Network.name).all()
     network_list = [name[0] for name in network_list]
@@ -94,7 +94,7 @@ def get_networks():
 
 
 # gets the last 20 messages from a chat and returns it as a list :
-@api.route("/get_chat", methods=["GET"])
+@http.route("/get_chat", methods=["GET"])
 def get_chat():
     chat_id = request.args.get("chatID")
     messages = Chat.query.filter_by(id=chat_id).first().messages
@@ -102,7 +102,7 @@ def get_chat():
     return jsonify(messages_list)
 
 
-@api.route("/get_resource_data", methods=["GET"])
+@http.route("/get_resource_data", methods=["GET"])
 def get_resource_data():
     """gets production rates and quantity on sale for every resource"""
     rates = {}
@@ -124,7 +124,7 @@ def get_resource_data():
 
 
 # Gets the data for the overview charts
-@api.route("/get_chart_data", methods=["GET"])
+@http.route("/get_chart_data", methods=["GET"])
 def get_chart_data():
     def calculate_mean_subarrays(array, x):
         return [np.mean(array[i : i + x]) for i in range(0, len(array), x)]
@@ -191,7 +191,7 @@ def get_chart_data():
 
 
 # Gets the data from the market for the market graph
-@api.route("/get_market_data", methods=["GET"])
+@http.route("/get_market_data", methods=["GET"])
 def get_market_data():
     market_data = {}
     if current_user.network is None:
@@ -212,7 +212,7 @@ def get_market_data():
     return jsonify(market_data)
 
 
-@api.route("/get_player_data", methods=["GET"])
+@http.route("/get_player_data", methods=["GET"])
 def get_player_data():
     """Gets count of assets and config for this player"""
     asset_count = current_user.get_values()
@@ -220,12 +220,12 @@ def get_player_data():
     return jsonify(asset_count, config)
 
 
-@api.route("/get_players", methods=["GET"])
+@http.route("/get_players", methods=["GET"])
 def get_players():
-    return jsonify(utils.package_players())
+    return jsonify(Player.package_all())
 
 
-@api.route("/get_generation_prioirity", methods=["GET"])
+@http.route("/get_generation_prioirity", methods=["GET"])
 def get_generation_prioirity():
     """Gets generation and demand priority for this player"""
     renewable_priorities = current_user.read_project_priority(
@@ -259,7 +259,7 @@ def get_generation_prioirity():
     return jsonify(renewable_priorities, rest_of_priorities)
 
 
-@api.route("/get_constructions", methods=["GET"])
+@http.route("/get_constructions", methods=["GET"])
 def get_constructions():
     """Gets list of facilities under construction for this player"""
     projects = current_user.get_constructions()
@@ -273,7 +273,7 @@ def get_constructions():
 
 
 # gets scoreboard data :
-@api.route("/get_scoreboard", methods=["GET"])
+@http.route("/get_scoreboard", methods=["GET"])
 def get_scoreboard():
     scoreboard_data = []
     players = Player.query.all()
@@ -291,7 +291,7 @@ def get_scoreboard():
     return jsonify(scoreboard_data)
 
 
-@api.route("choose_location", methods=["POST"])
+@http.route("choose_location", methods=["POST"])
 def choose_location():
     """this function is executed when a player choses a location"""
     json = request.get_json()
@@ -303,7 +303,7 @@ def choose_location():
     return jsonify(confirm_location_response)
 
 
-@api.route("/request_start_project", methods=["POST"])
+@http.route("/request_start_project", methods=["POST"])
 def request_start_project():
     """
     this function is executed when a player does any of the following:
@@ -319,7 +319,7 @@ def request_start_project():
     return jsonify(response)
 
 
-@api.route("/request_cancel_project", methods=["POST"])
+@http.route("/request_cancel_project", methods=["POST"])
 def request_cancel_project():
     """
     this function is executed when a player cancels an ongoing construction or upgrade
@@ -332,7 +332,7 @@ def request_cancel_project():
     return jsonify(response)
 
 
-@api.route("/request_pause_project", methods=["POST"])
+@http.route("/request_pause_project", methods=["POST"])
 def request_pause_project():
     """
     this function is executed when a player pauses or unpauses an ongoing construction or upgrade
@@ -345,7 +345,7 @@ def request_pause_project():
     return jsonify(response)
 
 
-@api.route("/request_decrease_project_priority", methods=["POST"])
+@http.route("/request_decrease_project_priority", methods=["POST"])
 def request_decrease_project_priority():
     """
     this function is executed when a player changes the order of ongoing constructions or upgrades
@@ -358,7 +358,7 @@ def request_decrease_project_priority():
     return jsonify(response)
 
 
-@api.route("/change_network_prices", methods=["POST"])
+@http.route("/change_network_prices", methods=["POST"])
 def change_network_prices():
     """this function is executed when a player changes the prices for anything
     on the network"""
@@ -370,7 +370,7 @@ def change_network_prices():
     return jsonify("success")
 
 
-@api.route("/request_change_facility_priority", methods=["POST"])
+@http.route("/request_change_facility_priority", methods=["POST"])
 def request_change_facility_priority():
     """this function is executed when a player changes the generation priority"""
     json = request.get_json()
@@ -388,7 +388,7 @@ def request_change_facility_priority():
     return jsonify("success")
 
 
-@api.route("/put_resource_on_sale", methods=["POST"])
+@http.route("/put_resource_on_sale", methods=["POST"])
 def put_resource_on_sale():
     """Parse the HTTP form for selling resources"""
     resource = request.form.get("resource")
@@ -398,7 +398,7 @@ def put_resource_on_sale():
     return redirect("/resource_market", code=303)
 
 
-@api.route("/buy_resource", methods=["POST"])
+@http.route("/buy_resource", methods=["POST"])
 def buy_resource():
     """Parse the HTTP form for buying resources"""
     quantity = float(request.form.get("purchases_quantity")) * 1000
@@ -407,7 +407,7 @@ def buy_resource():
     return redirect("/resource_market", code=303)
 
 
-@api.route("join_network", methods=["POST"])
+@http.route("join_network", methods=["POST"])
 def join_network():
     """player is trying to join a network"""
     network_name = request.form.get("choose_network")
@@ -420,7 +420,7 @@ def join_network():
     return redirect("/network", code=303)
 
 
-@api.route("create_network", methods=["POST"])
+@http.route("create_network", methods=["POST"])
 def create_network():
     """This endpoint is used when a player creates a network"""
     network_name = request.form.get("network_name")
@@ -436,7 +436,7 @@ def create_network():
     return redirect("/network", code=303)
 
 
-@api.route("leave_network", methods=["POST"])
+@http.route("leave_network", methods=["POST"])
 def leave_network():
     """this endpoint is called when a player leaves their network"""
     network = current_user.network

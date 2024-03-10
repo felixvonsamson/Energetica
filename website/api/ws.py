@@ -1,4 +1,5 @@
 """Code providing API access using WebSockets and HTTP Basic Auth"""
+
 import json
 import pickle
 
@@ -9,9 +10,9 @@ from simple_websocket import ConnectionClosed
 
 from website import utils
 
-from .database import Hex, Player, Network
+from ..database import Hex, Player, Network
 
-rest_api = Blueprint("rest_api", __name__)
+ws = Blueprint("rest_api", __name__)
 
 
 def add_sock_handlers(sock, engine):
@@ -32,7 +33,7 @@ def add_sock_handlers(sock, engine):
             else:
                 engine.log(f"{username} failed to log in via HTTP Basic")
 
-    @rest_api.before_request
+    @ws.before_request
     @basic_auth.login_required
     def check_user():
         """Sets up variables used by endpoints."""
@@ -42,7 +43,7 @@ def add_sock_handlers(sock, engine):
         ).first()
 
     # Main WebSocket endpoint for Swift client
-    @sock.route("/rest_ws", bp=rest_api)
+    @sock.route("/rest_ws", bp=ws)
     def rest_ws(ws):
         """Main WebSocket endpoint for API."""
         player = g.player
@@ -126,7 +127,7 @@ def rest_get_map():
 
 def rest_get_players():
     """Gets all player data and returns it as a JSON string."""
-    return json.dumps({"type": "getPlayers", "data": utils.package_players()})
+    return json.dumps({"type": "getPlayers", "data": Player.package_all()})
 
 
 def rest_get_current_player(current_player):
@@ -139,7 +140,7 @@ def rest_get_constructions(player):
     return json.dumps(
         {
             "type": "getConstructions",
-            "data": utils.package_constructions(player),
+            "data": player.package_constructions(),
         }
     )
 
@@ -148,7 +149,7 @@ def rest_get_construction_queue(player):
     return json.dumps(
         {
             "type": "getConstructionQueue",
-            "data": utils.package_construction_queue(player),
+            "data": player.package_construction_queue(),
         }
     )
 
@@ -316,7 +317,10 @@ def rest_get_scoreboard():
 
 
 def rest_get_weather(engine):
-    response = {"type": "getWeather", "data": utils.package_weather(engine)}
+    response = {
+        "type": "getWeather",
+        "data": engine.data["weather"].package(engine.data["total_t"]),
+    }
     return json.dumps(response)
 
 
@@ -453,7 +457,7 @@ def rest_notify_player_location(engine, player):
     message = rest_add_player_location(player)
     rest_notify_all_players(engine, message)
     rest_notify_scoreboard(engine)
-    engine.socketio.emit("get_players", utils.package_players())
+    engine.socketio.emit("get_players", Player.package_all())
 
 
 def rest_notify_network_change(engine):
@@ -468,7 +472,7 @@ def rest_notify_network_change(engine):
 def rest_notify_new_player(engine, player):
     print("rest_notify_new_player")
     rest_notify_all_players(engine, rest_get_players())
-    engine.socketio.emit("get_players", utils.package_players())
+    engine.socketio.emit("get_players", Player.package_all())
 
 
 def rest_notify_scoreboard(engine):

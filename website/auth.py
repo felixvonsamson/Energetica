@@ -16,7 +16,7 @@ from .database import Player
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
-from website import rest_api
+from website.api import ws
 
 auth = Blueprint("auth", __name__)
 
@@ -84,10 +84,8 @@ def sign_up():
             login_user(new_player, remember=True)
             flash("Account created!", category="message")
             g.engine.log(f"{username} created an account")
-            rest_api.rest_notify_scoreboard(current_app.config["engine"])
-            rest_api.rest_notify_new_player(
-                current_app.config["engine"], new_player
-            )
+            ws.rest_notify_scoreboard(current_app.config["engine"])
+            ws.rest_notify_new_player(current_app.config["engine"], new_player)
             return redirect(url_for("views.home"))
 
     return render_template("sign_up.jinja", user=current_user)
