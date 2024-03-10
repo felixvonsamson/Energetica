@@ -5,8 +5,12 @@ In this file, the main routes of the website are managed
 from flask import Blueprint, render_template, request, flash
 from flask import g, current_app
 from flask_login import login_required, current_user
+
+from .database.messages import Chat
+
+from .database.player import Player
 from . import db
-from .database import Chat, Player, Resource_on_sale
+from .database.player_assets import Resource_on_sale
 from .utils import check_existing_chats
 
 views = Blueprint("views", __name__)
