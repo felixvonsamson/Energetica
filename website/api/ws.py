@@ -304,12 +304,22 @@ def rest_get_facilities_data(engine):
         }
         for facility in engine.extraction_facilities
     ]
+    functional_facilities_property_keys = ["price", "locked"]
+    functional_facilities_data = [
+        {"name": facility}
+        | {
+            property_key: assets[facility][property_key]
+            for property_key in functional_facilities_property_keys
+        }
+        for facility in engine.functional_facilities
+    ]
     response = {
         "type": "getFacilitiesData",
         "data": {
             "power_facilities": power_facilities_data,
             "storage_facilities": storage_facilities_data,
             "extraction_facilities": extraction_facilities_data,
+            "functional_facilities": functional_facilities_data,
         },
     }
     return json.dumps(response)
