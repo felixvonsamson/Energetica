@@ -93,7 +93,7 @@ def rest_init_ws_post_location(engine, ws):
     """Called once the player has selected a location, or immediately after
     logging in if location was already selected."""
     # ws.send(rest_get_charts())
-    ws.send(rest_get_power_facilities(engine))
+    ws.send(rest_get_facilities_data(engine))
 
 
 # The following methods generate messages to be sent over websocket connections.
@@ -273,21 +273,34 @@ def rest_get_charts():
     return json.dumps(response)
 
 
-def rest_get_power_facilities(engine):
+def rest_get_facilities_data(engine):
     """Gets player's facilities data and returns it as a JSON string"""
+    assets = engine.config[g.player.id]["assets"]
     # the contents of this are now distributed in a constant and a variable part
-    power_facilities_info = engine.config[g.player.id]["assets"]
-    property_keys = ["price", "power generation", "locked"]
+    power_facilities_property_keys = ["price", "power generation", "locked"]
+    power_facilities_data = [
+        {"name": facility}
+        | {
+            property_key: assets[facility][property_key]
+            for property_key in power_facilities_property_keys
+        }
+        for facility in engine.power_facilities
+    ]
+    storage_facilities_property_keys = ["price", "locked"]
+    storage_facilities_data = [
+        {"name": facility}
+        | {
+            property_key: assets[facility][property_key]
+            for property_key in storage_facilities_property_keys
+        }
+        for facility in engine.storage_facilities
+    ]
     response = {
-        "type": "getPowerFacilities",
-        "data": [
-            {"name": facility}
-            | {
-                property_key: power_facilities_info[facility][property_key]
-                for property_key in property_keys
-            }
-            for facility in engine.power_facilities
-        ],
+        "type": "getFacilitiesData",
+        "data": {
+            "power_facilities": power_facilities_data,
+            "storage_facilities": storage_facilities_data,
+        },
     }
     return json.dumps(response)
 
