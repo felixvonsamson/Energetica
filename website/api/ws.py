@@ -281,23 +281,6 @@ def rest_get_power_facilities(engine):
         "assets"
     ]  # the contents of this are now distributed in a constant and a variable part
     property_keys = ["price", "power generation", "locked"]
-    power_facilities = [
-        "steam_engine",
-        "windmill",
-        "watermill",
-        "coal_burner",
-        "oil_burner",
-        "gas_burner",
-        "small_water_dam",
-        "onshore_wind_turbine",
-        "combined_cycle",
-        "nuclear_reactor",
-        "large_water_dam",
-        "CSP_solar",
-        "PV_solar",
-        "offshore_wind_turbine",
-        "nuclear_reactor_gen4",
-    ]
     response = {
         "type": "getPowerFacilities",
         "data": [
@@ -306,7 +289,7 @@ def rest_get_power_facilities(engine):
                 property_key: power_facilities_info[facility][property_key]
                 for property_key in property_keys
             }
-            for facility in power_facilities
+            for facility in engine.power_facilities
         ],
     }
     return json.dumps(response)
