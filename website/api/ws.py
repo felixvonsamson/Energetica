@@ -275,11 +275,8 @@ def rest_get_charts():
 
 def rest_get_power_facilities(engine):
     """Gets player's facilities data and returns it as a JSON string"""
-    power_facilities_info = engine.config[
-        g.player.id
-    ][
-        "assets"
-    ]  # the contents of this are now distributed in a constant and a variable part
+    # the contents of this are now distributed in a constant and a variable part
+    power_facilities_info = engine.config[g.player.id]["assets"]
     property_keys = ["price", "power generation", "locked"]
     response = {
         "type": "getPowerFacilities",
