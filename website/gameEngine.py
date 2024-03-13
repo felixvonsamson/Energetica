@@ -201,35 +201,34 @@ def check_upcoming_actions(app):
     with app.app_context():
         # check if constructions finished
         finished_constructions = Under_construction.query.filter(
-            Under_construction.suspension_time.is_(None)
-        ).filter(
+            Under_construction.suspension_time.is_(None),
             Under_construction.start_time + Under_construction.duration
-            < time.time()
-        )
+            < time.time(),
+        ).all()
         if finished_constructions:
             for fc in finished_constructions:
                 add_asset(fc.player_id, fc.id)
-            finished_constructions.delete()
+                db.session.delete(fc)
             db.session.commit()
 
         # check if shipment arrived
-        arrived_shipments = (
-            Shipment.query.filter(Shipment.departure_time.isnot(None))
-            .filter(Shipment.suspension_time.is_(None))
-            .filter(Shipment.departure_time + Shipment.duration < time.time())
-        )
+        arrived_shipments = Shipment.query.filter(
+            Shipment.departure_time.isnot(None),
+            Shipment.suspension_time.is_(None),
+            Shipment.departure_time + Shipment.duration < time.time(),
+        ).all()
         if arrived_shipments:
             for a_s in arrived_shipments:
                 store_import(a_s.player, a_s.resource, a_s.quantity)
-            arrived_shipments.delete()
+                db.session.delete(a_s)
             db.session.commit()
 
         # check end of lifetime of facilites
         eolt_facilities = Active_facilites.query.filter(
             Active_facilites.end_of_life < time.time()
-        )
+        ).all()
         if eolt_facilities:
             for facility in eolt_facilities:
                 remove_asset(facility.player_id, facility.facility)
-            eolt_facilities.delete()
+                db.session.delete(facility)
             db.session.commit()
