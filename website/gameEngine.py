@@ -170,23 +170,6 @@ class gameEngine(object):
         engine.logger.warn(formatted_datetime + str(message))
 
 
-def clear_current_data(engine, app):
-    """reset current data and network data"""
-    with app.app_context():
-        engine.data["current_windspeed"] = [
-            engine.data["current_windspeed"][-1]
-        ] + [0.0] * 1440
-        engine.data["current_irradiation"] = [
-            engine.data["current_irradiation"][-1]
-        ] + [0.0] * 1440
-        engine.data["current_discharge"] = [
-            engine.data["current_discharge"][-1]
-        ] + [0.0] * 1440
-        engine.data["current_CO2"] = [engine.data["current_CO2"][-1]] + [
-            0
-        ] * 1440
-
-
 from .production_update import update_electricity  # noqa: E402
 
 

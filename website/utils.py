@@ -9,7 +9,7 @@ import os
 import time
 import numpy as np
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 import requests
 import json
@@ -380,6 +380,13 @@ def save_past_data_threaded(app, engine):
                     "wb",
                 ) as file:
                     pickle.dump(past_data, file)
+
+            # remove old notifications
+            Notification.query.filter(
+                Notification.title != "Tutorial",
+                Notification.time < datetime.now() - timedelta(weeks=2),
+            ).delete()
+            db.session.commit()
 
             engine.log("past hour data has been saved to files")
 
