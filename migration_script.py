@@ -6,7 +6,7 @@ from website.database import engine_data
 
 class CustomModule:
     def __init__(self):
-        self.CircularBufferPlayer = engine_data.CircularBufferNetwork
+        self.CircularBufferPlayer = engine_data.CircularBufferPlayer
         self.CircularBufferNetwork = engine_data.CircularBufferNetwork
         self.WeatherData = engine_data.WeatherData
         self.EmissionData = engine_data.EmissionData
