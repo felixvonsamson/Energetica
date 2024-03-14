@@ -487,11 +487,12 @@ def buy_resource_from_market(player, quantity, sale_id):
         dr = player.tile.r - sale.player.tile.r
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
         shipment_duration = distance * engine.config["transport"]["time"]
+        round_up = 60 - time.time() % 60
         new_shipment = Shipment(
             resource=sale.resource,
             quantity=quantity,
             departure_time=time.time(),
-            duration=shipment_duration,
+            duration=shipment_duration + round_up,
             player_id=player.id,
         )
         db.session.add(new_shipment)
@@ -685,7 +686,6 @@ def get_scoreboard():
 
 
 def start_project(engine, player, facility, family):
-    print(f"utils.start_project({player}, {facility}, {family})")
     """this function is executed when a player clicks on 'start construction'"""
     assets = engine.config[player.id]["assets"]
 
@@ -729,11 +729,12 @@ def start_project(engine, player, facility, family):
             suspension_time = None
 
     player.money -= real_price
+    round_up = 60 - time.time() % 60
     new_construction = Under_construction(
         name=facility,
         family=family,
         start_time=time.time(),
-        duration=duration,
+        duration=duration + round_up,
         suspension_time=suspension_time,
         original_price=real_price,
         player_id=player.id,
@@ -830,6 +831,7 @@ def pause_project(player, construction_id):
                 )
                 project_to_pause.suspension_time = time.time()
         construction.start_time += time.time() - construction.suspension_time
+        construction.duration += 60 - construction.start_time % 60
         construction.suspension_time = None
     db.session.commit()
     ws.rest_notify_constructions(engine, player)
