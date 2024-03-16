@@ -800,7 +800,7 @@ var_config = {
             "requirements": [["mineral_extraction", 2, False]],
         },
         "gas_drilling_site": {
-            "price": 335000,
+            "price": 110000,
             "construction time": 54000,
             "construction power factor": 2.5,
             "construction pollution": 700000,
