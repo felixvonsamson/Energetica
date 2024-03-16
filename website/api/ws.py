@@ -304,6 +304,7 @@ def rest_get_facilities_data(engine):
         "construction power",
         "construction pollution",
         "locked",
+        "storage capacity",
         "power generation",
         "ramping speed",
         "efficiency",
