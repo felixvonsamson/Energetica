@@ -277,7 +277,16 @@ def rest_get_facilities_data(engine):
     """Gets player's facilities data and returns it as a JSON string"""
     assets = engine.config[g.player.id]["assets"]
     # the contents of this are now distributed in a constant and a variable part
-    power_facilities_property_keys = ["price", "power generation", "locked"]
+    power_facilities_property_keys = [
+        "price",
+        "locked",
+        "power generation",
+        "ramping speed",
+        "O&M cost",
+        "consumed resource",
+        "pollution",
+        "lifetime",
+    ]
     power_facilities_data = [
         {"name": facility}
         | {
@@ -286,7 +295,15 @@ def rest_get_facilities_data(engine):
         }
         for facility in engine.power_facilities
     ]
-    storage_facilities_property_keys = ["price", "locked"]
+    storage_facilities_property_keys = [
+        "price",
+        "locked",
+        "power generation",
+        "ramping speed",
+        "efficiency",
+        "O&M cost",
+        "lifetime",
+    ]
     storage_facilities_data = [
         {"name": facility}
         | {
@@ -295,7 +312,14 @@ def rest_get_facilities_data(engine):
         }
         for facility in engine.storage_facilities
     ]
-    extraction_facilities_property_keys = ["price", "locked"]
+    extraction_facilities_property_keys = [
+        "price",
+        "locked",
+        "power consumption",
+        "O&M cost",
+        "pollution",
+        "lifetime",
+    ]
     extraction_facilities_data = [
         {"name": facility}
         | {
