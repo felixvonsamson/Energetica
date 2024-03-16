@@ -279,6 +279,9 @@ def rest_get_facilities_data(engine):
     # the contents of this are now distributed in a constant and a variable part
     power_facilities_property_keys = [
         "price",
+        "construction time",
+        "construction power",
+        "construction pollution",
         "locked",
         "power generation",
         "ramping speed",
@@ -297,6 +300,9 @@ def rest_get_facilities_data(engine):
     ]
     storage_facilities_property_keys = [
         "price",
+        "construction time",
+        "construction power",
+        "construction pollution",
         "locked",
         "power generation",
         "ramping speed",
@@ -314,6 +320,9 @@ def rest_get_facilities_data(engine):
     ]
     extraction_facilities_property_keys = [
         "price",
+        "construction time",
+        "construction power",
+        "construction pollution",
         "locked",
         "power consumption",
         "O&M cost",
@@ -328,7 +337,13 @@ def rest_get_facilities_data(engine):
         }
         for facility in engine.extraction_facilities
     ]
-    functional_facilities_property_keys = ["price", "locked"]
+    functional_facilities_property_keys = [
+        "price",
+        "locked",
+        "construction time",
+        "construction power",
+        "construction pollution",
+    ]
     functional_facilities_data = [
         {"name": facility}
         | {
