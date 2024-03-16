@@ -16,17 +16,14 @@ import json
 
 
 from website.api import ws
-from .database import (
-    Player,
-    Network,
+from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer
+from .database.messages import Chat, Notification
+from .database.player import Network, Player
+from .database.player_assets import (
     Resource_on_sale,
     Shipment,
-    Chat,
     Under_construction,
-    Notification,
     Active_facilites,
-    CircularBufferNetwork,
-    CircularBufferPlayer,
 )
 from . import db
 from flask import current_app, flash
