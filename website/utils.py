@@ -464,8 +464,6 @@ def buy_resource_from_market(player, quantity, sale_id):
         sale.quantity -= quantity
         player.money -= total_price
         sale.player.money += total_price
-        player.update_resources()
-        sale.player.update_resources()
         setattr(
             sale.player,
             sale.resource,
