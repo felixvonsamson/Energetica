@@ -93,7 +93,7 @@ def rest_init_ws_post_location(engine, ws):
     """Called once the player has selected a location, or immediately after
     logging in if location was already selected."""
     # ws.send(rest_get_charts())
-    ws.send(rest_get_power_facilities(engine))
+    ws.send(rest_get_facilities_data(engine))
 
 
 # The following methods generate messages to be sent over websocket connections.
@@ -273,41 +273,94 @@ def rest_get_charts():
     return json.dumps(response)
 
 
-def rest_get_power_facilities(engine):
+def rest_get_facilities_data(engine):
     """Gets player's facilities data and returns it as a JSON string"""
-    power_facilities_info = engine.config[
-        g.player.id
-    ][
-        "assets"
-    ]  # the contents of this are now distributed in a constant and a variable part
-    property_keys = ["price", "power generation", "locked"]
-    power_facilities = [
-        "steam_engine",
-        "windmill",
-        "watermill",
-        "coal_burner",
-        "oil_burner",
-        "gas_burner",
-        "small_water_dam",
-        "onshore_wind_turbine",
-        "combined_cycle",
-        "nuclear_reactor",
-        "large_water_dam",
-        "CSP_solar",
-        "PV_solar",
-        "offshore_wind_turbine",
-        "nuclear_reactor_gen4",
+    assets = engine.config[g.player.id]["assets"]
+    # the contents of this are now distributed in a constant and a variable part
+    power_facilities_property_keys = [
+        "price",
+        "construction time",
+        "construction power",
+        "construction pollution",
+        "locked",
+        "power generation",
+        "ramping speed",
+        "O&M cost",
+        "consumed resource",
+        "pollution",
+        "lifetime",
+    ]
+    power_facilities_data = [
+        {"name": facility}
+        | {
+            property_key: assets[facility][property_key]
+            for property_key in power_facilities_property_keys
+        }
+        for facility in engine.power_facilities
+    ]
+    storage_facilities_property_keys = [
+        "price",
+        "construction time",
+        "construction power",
+        "construction pollution",
+        "locked",
+        "storage capacity",
+        "power generation",
+        "ramping speed",
+        "efficiency",
+        "O&M cost",
+        "lifetime",
+    ]
+    storage_facilities_data = [
+        {"name": facility}
+        | {
+            property_key: assets[facility][property_key]
+            for property_key in storage_facilities_property_keys
+        }
+        for facility in engine.storage_facilities
+    ]
+    extraction_facilities_property_keys = [
+        "price",
+        "construction time",
+        "construction power",
+        "construction pollution",
+        "locked",
+        "power consumption",
+        "O&M cost",
+        "pollution",
+        "lifetime",
+    ]
+    extraction_facilities_data = [
+        {"name": facility}
+        | {
+            property_key: assets[facility][property_key]
+            for property_key in extraction_facilities_property_keys
+        }
+        for facility in engine.extraction_facilities
+    ]
+    functional_facilities_property_keys = [
+        "price",
+        "locked",
+        "construction time",
+        "construction power",
+        "construction pollution",
+    ]
+    functional_facilities_data = [
+        {"name": facility}
+        | {
+            property_key: assets[facility][property_key]
+            for property_key in functional_facilities_property_keys
+        }
+        for facility in engine.functional_facilities
     ]
     response = {
-        "type": "getPowerFacilities",
-        "data": [
-            {"name": facility}
-            | {
-                property_key: power_facilities_info[facility][property_key]
-                for property_key in property_keys
-            }
-            for facility in power_facilities
-        ],
+        "type": "getFacilitiesData",
+        "data": {
+            "power_facilities": power_facilities_data,
+            "storage_facilities": storage_facilities_data,
+            "extraction_facilities": extraction_facilities_data,
+            "functional_facilities": functional_facilities_data,
+        },
     }
     return json.dumps(response)
 

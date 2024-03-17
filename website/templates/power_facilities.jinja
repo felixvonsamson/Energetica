@@ -25,7 +25,7 @@
     </div>
   </div>
   <div id="under_construction">{# Facilites under construction will show here #}</div>
-  {% for facility in ["steam_engine", "windmill", "watermill", "coal_burner", "oil_burner", "gas_burner", "small_water_dam", "onshore_wind_turbine", "combined_cycle", "nuclear_reactor", "large_water_dam", "CSP_solar", "PV_solar", "offshore_wind_turbine", "nuclear_reactor_gen4"] %}
+  {% for facility in engine.power_facilities %}
     {% set const_data = engine.const_config[facility] %}
     <div id="{{ facility }}"
          class="bone margin facility small"

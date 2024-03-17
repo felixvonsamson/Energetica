@@ -676,7 +676,6 @@ def get_scoreboard():
 
 
 def start_project(engine, player, facility, family):
-    print(f"utils.start_project({player}, {facility}, {family})")
     """this function is executed when a player clicks on 'start construction'"""
     assets = engine.config[player.id]["assets"]
 
