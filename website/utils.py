@@ -117,10 +117,8 @@ def add_asset(player_id, construction_id):
     if construction.family == "Technologies":
         priority_list_name = "research_priorities"
     player.remove_project_priority(priority_list_name, construction_id)
-    construction_priorities = player.read_project_priority(
-        "construction_priorities"
-    )
-    for id in construction_priorities:
+    project_priorities = player.read_project_priority(priority_list_name)
+    for id in project_priorities:
         next_construction = Under_construction.query.get(id)
         if next_construction.suspension_time is not None:
             next_construction.start_time += (
