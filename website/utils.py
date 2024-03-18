@@ -117,10 +117,8 @@ def add_asset(player_id, construction_id):
     if construction.family == "Technologies":
         priority_list_name = "research_priorities"
     player.remove_project_priority(priority_list_name, construction_id)
-    construction_priorities = player.read_project_priority(
-        "construction_priorities"
-    )
-    for id in construction_priorities:
+    project_priorities = player.read_project_priority(priority_list_name)
+    for id in project_priorities:
         next_construction = Under_construction.query.get(id)
         if next_construction.suspension_time is not None:
             next_construction.start_time += (
@@ -464,8 +462,6 @@ def buy_resource_from_market(player, quantity, sale_id):
         sale.quantity -= quantity
         player.money -= total_price
         sale.player.money += total_price
-        player.update_resources()
-        sale.player.update_resources()
         setattr(
             sale.player,
             sale.resource,
@@ -678,7 +674,6 @@ def get_scoreboard():
 
 
 def start_project(engine, player, facility, family):
-    print(f"utils.start_project({player}, {facility}, {family})")
     """this function is executed when a player clicks on 'start construction'"""
     assets = engine.config[player.id]["assets"]
 
