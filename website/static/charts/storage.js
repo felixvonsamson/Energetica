@@ -1,11 +1,11 @@
 const keys_storage = [
     "small_pumped_hydro",
     "large_pumped_hydro",
-    "lithium_ion_batteries",
-    "solid_state_batteries",
+    "hydrogen_storage",
     "compressed_air",
     "molten_salt",
-    "hydrogen_storage",
+    "lithium_ion_batteries",
+    "solid_state_batteries",
 ];
 
 let capacities = {}
@@ -221,7 +221,8 @@ function regen(res) {
             push();
             translate(width - 2 * margin, 10);
             noStroke();
-            for (const key of keys_storage){
+            const keys = [...keys_storage].reverse();
+            for (const key of keys){
                 if (player_data[0][key] > 0){
                     capacities[key] = player_data[0][key] * player_data[1]["assets"][key]["storage capacity"]
                 }
