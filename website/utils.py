@@ -475,7 +475,9 @@ def buy_resource_from_market(player, quantity, sale_id):
         dq = player.tile.q - sale.player.tile.q
         dr = player.tile.r - sale.player.tile.r
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
-        shipment_duration = distance * engine.config["transport"]["time"]
+        shipment_duration = (
+            distance * engine.config[player.id]["transport"]["time"]
+        )
         new_shipment = Shipment(
             resource=sale.resource,
             quantity=quantity,
