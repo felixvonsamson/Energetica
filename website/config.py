@@ -940,7 +940,7 @@ var_config = {
     },
     "transport": {
         "time": 5000,  # [s/distance unit]
-        "power consumption": 5000,  # [Wh/t/distance unit]
+        "power consumption": 5,  # [Wh/kg/distance unit]
     },
 }
 

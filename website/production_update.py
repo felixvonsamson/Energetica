@@ -896,7 +896,7 @@ def reduce_demand(
     if demand_type == "transport":
         last_shipment = (
             Shipment.query.filter(Shipment.player_id == player.id)
-            .order_by(Shipment.start_time.desc())
+            .order_by(Shipment.departure_time.desc())
             .first()
         )
         if last_shipment:
