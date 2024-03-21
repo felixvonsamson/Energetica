@@ -207,8 +207,7 @@ class Player(db.Model, UserMixin):
 
     def remove_project_priority(self, attr, id):
         id_list = getattr(self, attr).split(",")
-        if str(id) in id_list:
-            id_list.remove(str(id))
+        id_list.remove(str(id))
         setattr(self, attr, ",".join(id_list))
         db.session.commit()
 
