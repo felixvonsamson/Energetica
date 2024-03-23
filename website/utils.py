@@ -120,6 +120,10 @@ def add_asset(player_id, construction_id):
     project_priorities = player.read_project_priority(priority_list_name)
     for id in project_priorities:
         next_construction = Under_construction.query.get(id)
+        if next_construction is None:
+            print(
+                f"DATABASE MISMATCH : CONSTRUCTION {id} OF PLAYER {player.username} DOES NOT EXIST IN UNDER_CONSTRUCTION DATABASE !!!"
+            )
         if next_construction.suspension_time is not None:
             next_construction.start_time += (
                 time.time() - next_construction.suspension_time
@@ -581,7 +585,7 @@ def join_network(engine, player, network):
         return {"response": "playerAlreadyInNetwork"}
     player.network = network
     db.session.commit()
-    print(f"{player.username} joined the network {network.name}")
+    engine.log(f"{player.username} joined the network {network.name}")
     ws.rest_notify_network_change(engine)
     return {"response": "success"}
 
@@ -762,12 +766,12 @@ def cancel_project(player, construction_id):
 
     refund = 0.8 * construction.original_price * (1 - time_fraction)
     player.money += refund
+    player.remove_project_priority(priority_list_name, construction_id)
     db.session.delete(construction)
-    db.session.commit()
     engine.log(
         f"{player.username} cancelled the construction {construction.name}"
     )
-    player.remove_project_priority(priority_list_name, construction_id)
+    db.session.commit()
     ws.rest_notify_constructions(engine, player)
     return {
         "response": "success",
