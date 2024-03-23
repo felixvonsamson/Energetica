@@ -733,11 +733,10 @@ def start_project(engine, player, facility, family):
         player_id=player.id,
     )
     db.session.add(new_construction)
-    db.session.commit()
-    engine.log(f"{player.username} started the construction {facility}")
     player.add_project_priority(priority_list_name, new_construction.id)
     if suspension_time is None:
         player.project_max_priority(priority_list_name, new_construction.id)
+    engine.log(f"{player.username} started the construction {facility}")
     ws.rest_notify_constructions(engine, player)
     return {
         "response": "success",
