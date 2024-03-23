@@ -92,8 +92,8 @@ def unregister_websocket_connection(player_id, ws):
 def rest_init_ws_post_location(engine, ws):
     """Called once the player has selected a location, or immediately after
     logging in if location was already selected."""
-    # ws.send(rest_get_charts())
     ws.send(rest_get_facilities_data(engine))
+    ws.send(rest_get_charts())
 
 
 # The following methods generate messages to be sent over websocket connections.
@@ -185,89 +185,42 @@ def rest_add_player_location(player):
 
 
 def rest_get_charts():
-    # !!! current_t HAS BEEN REMOVED !!!
     """Gets the player's chart data and returns it as a JSON string."""
-    current_t = g.engine.data["current_t"]
-    timescale = "day"  # request.args.get('timescale')
-    filename = f"instance/player_data/{g.player.id}/{timescale}.pck"
+    total_t = g.engine.data["total_t"]
+    filename = f"instance/player_data/player_{g.player.id}.pck"
     with open(filename, "rb") as file:
         file_data = pickle.load(file)
+    total_t = g.engine.data["total_t"]
+    engine_data = g.engine.data["current_data"][g.player.id].get_data(
+        t=total_t % 60 + 1
+    )
 
-    def combine_file_data_and_engine_data(file_data, engine_data):
-        combined_data_unsliced = file_data + engine_data[1 : current_t + 1]
-        return combined_data_unsliced[-1440:]
+    # both dictionaries are assumed to have the same strcture, that is the
+    # same keys, only differing values
+    for category, subdict in engine_data.items():
+        for subcategory in subdict:
+            if subcategory not in file_data[category]:
+                # occurs when new data starts being recorded
+                # e.g. category: generation, subcategory: watermill
+                file_data[category][subcategory] = [[0.0] * 1440] * 4
+            file_datapoints = file_data[category][subcategory]
+            engine_datapoints = engine_data[category][subcategory]
+            concatenated_list = list(file_datapoints[0]) + engine_datapoints
+            file_data[category][subcategory][0] = concatenated_list[-1440:]
 
-    def industry_data_for(category, subcategory):
-        return combine_file_data_and_engine_data(
-            file_data[category][subcategory],
-            g.engine.data["current_data"][g.player.id][category][subcategory],
-        )
-
-    subcategories = {
-        "revenues": ["industry", "imports", "exports", "dumping"],
-        "op_costs": ["steam_engine"],
-        "generation": [
-            "watermill",
-            "small_water_dam",
-            "large_water_dam",
-            "nuclear_reactor",
-            "nuclear_reactor_gen4",
-            "steam_engine",
-            "coal_burner",
-            "oil_burner",
-            "gas_burner",
-            "combined_cycle",
-            "windmill",
-            "onshore_wind_turbine",
-            "offshore_wind_turbine",
-            "CSP_solar",
-            "PV_solar",
-            # storages I guess go here too
-            "small_pumped_hydro",
-            "large_pumped_hydro",
-            "lithium_ion_batteries",
-            "solid_state_batteries",
-            "compressed_air",
-            "molten_salt",
-            "hydrogen_storage",
-        ],
-        "demand": [
-            "coal_mine",
-            "oil_field",
-            "gas_drilling_site",
-            "uranium_mine",
-            "research",
-            "construction",
-            "transport",
-            "industry",
-            "exports",
-            "dumping",
-            "small_pumped_hydro",
-            "large_pumped_hydro",
-            "lithium_ion_batteries",
-            "solid_state_batteries",
-            "compressed_air",
-            "molten_salt",
-            "hydrogen_storage",
-        ],
-        "storage": [
-            "small_pumped_hydro",
-            "large_pumped_hydro",
-            "lithium_ion_batteries",
-            "solid_state_batteries",
-            "compressed_air",
-            "molten_salt",
-            "hydrogen_storage",
-        ],
-    }
     response = {
         "type": "getCharts",
         "data": {
             category: {
-                subcategory: industry_data_for(category, subcategory)
-                for subcategory in subcategories[category]
+                subcategory: [
+                    file_data[category][subcategory][0][-360:],  # 1 min
+                    file_data[category][subcategory][1][-288:],  # 5 min x5
+                    file_data[category][subcategory][2][-240:],  # 30 min x6
+                    file_data[category][subcategory][3][-240:],  # 2h x6
+                ]
+                for subcategory in file_data[category]
             }
-            for category in ["revenues", "generation", "demand"]
+            for category in file_data
         },
     }
     return json.dumps(response)
