@@ -110,6 +110,7 @@ def init_test_players(engine):
     player2 = create_player(engine, "user2", "password")
     if player2:
         Hex.query.filter_by(id=84).first().player_id = player2.id
+        add_asset(player2, "warehouse", 1)
         db.session.commit()
 
     create_network(engine, "net", [player, player2])

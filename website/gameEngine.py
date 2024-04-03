@@ -38,6 +38,24 @@ class gameEngine(object):
         engine.init_logger()
         engine.log("engine created")
 
+        engine.power_facilities = [
+            "steam_engine",
+            "windmill",
+            "watermill",
+            "coal_burner",
+            "oil_burner",
+            "gas_burner",
+            "small_water_dam",
+            "onshore_wind_turbine",
+            "combined_cycle",
+            "nuclear_reactor",
+            "large_water_dam",
+            "CSP_solar",
+            "PV_solar",
+            "offshore_wind_turbine",
+            "nuclear_reactor_gen4",
+        ]
+
         engine.extraction_facilities = [
             "coal_mine",
             "oil_field",
