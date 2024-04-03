@@ -132,6 +132,7 @@ def add_asset(player_id, construction_id):
             db.session.commit()
             break
     if construction.family == "Technologies":
+        player.total_technologies += 1
         server_tech = engine.data["technology_lvls"][construction.name]
         if len(server_tech) <= getattr(player, construction.name):
             server_tech.append(0)
@@ -483,6 +484,8 @@ def buy_resource_from_market(player, quantity, sale_id):
             sale.resource + "_on_sale",
             getattr(sale.player, sale.resource + "_on_sale") - quantity,
         )
+        sale.player.sold_resources += quantity
+        player.bought_resources += quantity
         dq = player.tile.q - sale.player.tile.q
         dr = player.tile.r - sale.player.tile.r
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))

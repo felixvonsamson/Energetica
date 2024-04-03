@@ -87,27 +87,52 @@ def update_electricity(engine):
         )
         # add industry revenues to player money
         player.money += new_values[player.id]["revenues"]["industry"]
-        # calculate moving average revenue
-        player.average_revenues = (
-            player.average_revenues
-            + 60
-            * 0.03
-            * sum(
-                [
-                    new_values[player.id]["revenues"][rev]
-                    for rev in new_values[player.id]["revenues"]
-                ]
-                + [
-                    new_values[player.id]["op_costs"][rev]
-                    for rev in new_values[player.id]["op_costs"]
-                ]
-            )
-        ) / 1.03
+        update_player_progress_values(player, new_values)
         # send new data to clients
         player.send_new_data(new_values[player.id])
 
     # save changes
     db.session.commit()
+
+
+def update_player_progress_values(player, new_values):
+    # calculate moving average revenue
+    player.average_revenues = (
+        player.average_revenues
+        + 60
+        * 0.03
+        * sum(
+            [
+                new_values[player.id]["revenues"][rev]
+                for rev in new_values[player.id]["revenues"]
+            ]
+            + [
+                new_values[player.id]["op_costs"][rev]
+                for rev in new_values[player.id]["op_costs"]
+            ]
+        )
+    ) / 1.03
+    # update max power consumption
+    total_demand = sum(
+        [
+            new_values[player.id]["demand"][demand]
+            for demand in new_values[player.id]["demand"]
+        ]
+    )
+    if total_demand > player.max_power_consumption:
+        player.max_power_consumption = total_demand
+    # update max stored energy
+    total_storage = sum(
+        [
+            new_values[player.id]["storage"][storage]
+            for storage in new_values[player.id]["storage"]
+        ]
+    )
+    if total_storage > player.max_energy_stored:
+        player.max_energy_stored = total_storage
+    # update imported and exported energy
+    player.imported_energy += new_values["generation"]["imports"] / 60  # in Wh
+    player.exported_energy += new_values["demand"]["exports"] / 60  # in Wh
 
 
 def init_market():
@@ -752,6 +777,7 @@ def resources_and_pollution(engine, new_values, player):
                     resource,
                     getattr(player, resource) + extracted_quantity,
                 )
+                player.extracted_resources += extracted_quantity
                 db.session.commit()
                 emissions = (
                     extracted_quantity

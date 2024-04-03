@@ -108,14 +108,8 @@ class Player(db.Model, UserMixin):
     nuclear_engineering = db.Column(db.Integer, default=0)
 
     # Priority lists
-    self_consumption_priority = db.Column(
-        db.Text,
-        default="",
-    )
-    rest_of_priorities = db.Column(
-        db.Text,
-        default="steam_engine",
-    )
+    self_consumption_priority = db.Column(db.Text, default="")
+    rest_of_priorities = db.Column(db.Text, default="steam_engine")
     demand_priorities = db.Column(
         db.Text,
         default="transport,industry,research,construction",
@@ -159,9 +153,19 @@ class Player(db.Model, UserMixin):
     price_buy_uranium_mine = db.Column(db.Float, default=990)
     price_buy_carbon_capture = db.Column(db.Float, default=660)
 
-    # CO2 emissions :
+    # player progression data :
     emissions = db.Column(db.Float, default=0)
     average_revenues = db.Column(db.Float, default=0)
+    max_power_consumption = db.Column(db.Float, default=0)
+    max_energy_stored = db.Column(db.Float, default=0)
+    extracted_resources = db.Column(db.Float, default=0)
+    bought_resources = db.Column(db.Float, default=0)
+    sold_resources = db.Column(db.Float, default=0)
+    total_technologies = db.Column(db.Integer, default=0)
+    imported_energy = db.Column(db.Float, default=0)
+    exported_energy = db.Column(db.Float, default=0)
+
+    achievements = db.Column(db.Text, default="")
 
     under_construction = db.relationship("Under_construction")
     resource_on_sale = db.relationship("Resource_on_sale", backref="player")
