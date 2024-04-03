@@ -109,9 +109,7 @@ function display_duration(seconds) {
     seconds -= days * 86400;
     const hours = Math.floor(seconds / 3600);
     seconds -= hours * 3600;
-    const minutes = Math.floor(seconds / 60);
-    seconds -= minutes * 60;
-    seconds = Math.round(seconds);
+    const minutes = Math.round(seconds / 60);
 
     let duration = "";
     if (days > 0) {
@@ -121,10 +119,7 @@ function display_duration(seconds) {
         duration += `${hours}h `;
     }
     if (minutes > 0) {
-        duration += `${minutes}m `;
-    }
-    if (seconds > 0 || duration === "") {
-        duration += `${seconds}s`;
+        duration += `${minutes}m`;
     }
     document.write(duration.trim());
 }

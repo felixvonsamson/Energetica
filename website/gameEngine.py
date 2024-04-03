@@ -188,28 +188,12 @@ class gameEngine(object):
         engine.logger.warn(formatted_datetime + str(message))
 
 
-def clear_current_data(engine, app):
-    """reset current data and network data"""
-    with app.app_context():
-        engine.data["current_windspeed"] = [
-            engine.data["current_windspeed"][-1]
-        ] + [0.0] * 1440
-        engine.data["current_irradiation"] = [
-            engine.data["current_irradiation"][-1]
-        ] + [0.0] * 1440
-        engine.data["current_discharge"] = [
-            engine.data["current_discharge"][-1]
-        ] + [0.0] * 1440
-        engine.data["current_CO2"] = [engine.data["current_CO2"][-1]] + [
-            0
-        ] * 1440
-
-
 from .production_update import update_electricity  # noqa: E402
 
 
 # function that is executed once every 1 minute :
 def state_update_m(engine, app):
+    check_upcoming_actions(app)
     total_t = (
         datetime.now() - engine.data["start_date"]
     ).total_seconds() / 60.0  # 60.0 or 5.0
@@ -223,48 +207,47 @@ def state_update_m(engine, app):
                 engine.data["weather"].update_weather(engine)
             update_electricity(engine)
 
-        # save engine every minute in case of server crash
-        with open("instance/engine_data.pck", "wb") as file:
-            pickle.dump(engine.data, file)
+    # save engine every minute in case of server crash
+    with open("instance/engine_data.pck", "wb") as file:
+        pickle.dump(engine.data, file)
     with app.app_context():
         ws.rest_notify_scoreboard(engine)
         ws.rest_notify_weather(engine)
 
 
 def check_upcoming_actions(app):
-    """function that is executed once every 1 second"""
+    """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
     with app.app_context():
         # check if constructions finished
         finished_constructions = Under_construction.query.filter(
-            Under_construction.suspension_time.is_(None)
-        ).filter(
+            Under_construction.suspension_time.is_(None),
             Under_construction.start_time + Under_construction.duration
-            < time.time()
-        )
+            < time.time() + 50,
+        ).all()
         if finished_constructions:
             for fc in finished_constructions:
                 add_asset(fc.player_id, fc.id)
-            finished_constructions.delete()
+                db.session.delete(fc)
             db.session.commit()
 
         # check if shipment arrived
-        arrived_shipments = (
-            Shipment.query.filter(Shipment.departure_time.isnot(None))
-            .filter(Shipment.suspension_time.is_(None))
-            .filter(Shipment.departure_time + Shipment.duration < time.time())
-        )
+        arrived_shipments = Shipment.query.filter(
+            Shipment.departure_time.isnot(None),
+            Shipment.suspension_time.is_(None),
+            Shipment.departure_time + Shipment.duration < time.time() + 50,
+        ).all()
         if arrived_shipments:
             for a_s in arrived_shipments:
                 store_import(a_s.player, a_s.resource, a_s.quantity)
-            arrived_shipments.delete()
+                db.session.delete(a_s)
             db.session.commit()
 
         # check end of lifetime of facilites
         eolt_facilities = Active_facilites.query.filter(
-            Active_facilites.end_of_life < time.time()
-        )
+            Active_facilites.end_of_life < time.time() + 50
+        ).all()
         if eolt_facilities:
             for facility in eolt_facilities:
                 remove_asset(facility.player_id, facility.facility)
-            eolt_facilities.delete()
+                db.session.delete(facility)
             db.session.commit()

@@ -123,13 +123,6 @@ def create_app(run_init_test_players, rm_instance):
             trigger="cron",
             second="0",  # "*/5" or "0"
         )
-        scheduler.add_job(
-            func=check_upcoming_actions,
-            args=[app],
-            id="check_upcoming_actions",
-            trigger="interval",
-            seconds=1,
-        )
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
 
