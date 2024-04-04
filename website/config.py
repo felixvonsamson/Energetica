@@ -466,6 +466,7 @@ var_config = {
             "requirements": [
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
+                ["warehouse", 1, False],
             ],
         },
         "oil_burner": {
@@ -482,6 +483,7 @@ var_config = {
             "requirements": [
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
+                ["warehouse", 1, False],
             ],
         },
         "gas_burner": {
@@ -498,6 +500,7 @@ var_config = {
             "requirements": [
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
+                ["warehouse", 1, False],
             ],
         },
         "small_water_dam": {
@@ -544,6 +547,7 @@ var_config = {
             "requirements": [
                 ["thermodynamics", 3, False],
                 ["mechanical_engineering", 3, False],
+                ["warehouse", 2, False],
             ],
         },
         "nuclear_reactor": {
@@ -561,6 +565,7 @@ var_config = {
             "requirements": [
                 ["chemistry", 3, False],
                 ["nuclear_engineering", 1, False],
+                ["warehouse", 3, False],
             ],
         },
         "large_water_dam": {
@@ -637,6 +642,7 @@ var_config = {
             "requirements": [
                 ["chemistry", 5, False],
                 ["nuclear_engineering", 5, False],
+                ["warehouse", 3, False],
             ],
         },
         "small_pumped_hydro": {
@@ -786,7 +792,10 @@ var_config = {
             "power consumption": 3000000,  # [W]
             "pollution": 0.065,  # [kg/kg extracted]
             "lifetime": 2782080,  # [s]
-            "requirements": [["mineral_extraction", 1, False]],
+            "requirements": [
+                ["mineral_extraction", 1, False],
+                ["warehouse", 1, False],
+            ],
         },
         "oil_field": {
             "price": 120000,
@@ -797,7 +806,10 @@ var_config = {
             "power consumption": 7300000,
             "pollution": 0.302,
             "lifetime": 1451520,
-            "requirements": [["mineral_extraction", 2, False]],
+            "requirements": [
+                ["mineral_extraction", 2, False],
+                ["warehouse", 1, False],
+            ],
         },
         "gas_drilling_site": {
             "price": 110000,
@@ -808,7 +820,10 @@ var_config = {
             "power consumption": 5100000,
             "pollution": 0.523,
             "lifetime": 1209600,
-            "requirements": [["mineral_extraction", 2, False]],
+            "requirements": [
+                ["mineral_extraction", 2, False],
+                ["warehouse", 1, False],
+            ],
         },
         "uranium_mine": {
             "price": 350000,
@@ -819,7 +834,10 @@ var_config = {
             "power consumption": 18000000,
             "pollution": 230,
             "lifetime": 2177280,
-            "requirements": [["mineral_extraction", 5, False]],
+            "requirements": [
+                ["mineral_extraction", 5, False],
+                ["warehouse", 3, False],
+            ],
         },
         "mathematics": {
             "price": 36000,  # [¤]

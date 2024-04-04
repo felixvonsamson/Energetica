@@ -230,12 +230,8 @@ def get_players():
 @http.route("/get_generation_prioirity", methods=["GET"])
 def get_generation_prioirity():
     """Gets generation and demand priority for this player"""
-    renewable_priorities = current_user.read_project_priority(
-        "self_consumption_priority"
-    )
-    rest_of_priorities = current_user.read_project_priority(
-        "rest_of_priorities"
-    )
+    renewable_priorities = current_user.read_list("self_consumption_priority")
+    rest_of_priorities = current_user.read_list("rest_of_priorities")
     for facility in rest_of_priorities[:]:
         if facility in g.engine.storage_facilities:
             for j, f in enumerate(rest_of_priorities):
@@ -247,7 +243,7 @@ def get_generation_prioirity():
                 if j + 1 == len(rest_of_priorities):
                     rest_of_priorities.append("buy_" + facility)
                     break
-    demand_priorities = current_user.read_project_priority("demand_priorities")
+    demand_priorities = current_user.read_list("demand_priorities")
     for demand in demand_priorities:
         for j, f in enumerate(rest_of_priorities):
             if getattr(current_user, "price_buy_" + demand) < getattr(
@@ -265,12 +261,8 @@ def get_generation_prioirity():
 def get_constructions():
     """Gets list of facilities under construction for this player"""
     projects = current_user.get_constructions()
-    construction_priorities = current_user.read_project_priority(
-        "construction_priorities"
-    )
-    research_priorities = current_user.read_project_priority(
-        "research_priorities"
-    )
+    construction_priorities = current_user.read_list("construction_priorities")
+    research_priorities = current_user.read_list("research_priorities")
     return jsonify(projects, construction_priorities, research_priorities)
 
 

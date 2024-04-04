@@ -165,6 +165,7 @@ class Player(db.Model, UserMixin):
     imported_energy = db.Column(db.Float, default=0)
     exported_energy = db.Column(db.Float, default=0)
 
+    advancements = db.Column(db.Text, default="")
     achievements = db.Column(db.Text, default="")
 
     under_construction = db.relationship("Under_construction")
@@ -193,7 +194,7 @@ class Player(db.Model, UserMixin):
         )
         return self.lab_workers - occupied_workers
 
-    def read_project_priority(self, attr):
+    def read_list(self, attr):
         if getattr(self, attr) == "":
             return []
         priority_list = getattr(self, attr).split(",")
@@ -202,14 +203,14 @@ class Player(db.Model, UserMixin):
         else:
             return priority_list
 
-    def add_project_priority(self, attr, id):
+    def add_to_list(self, attr, id):
         if getattr(self, attr) == "":
             setattr(self, attr, str(id))
         else:
             setattr(self, attr, getattr(self, attr) + f",{id}")
         db.session.commit()
 
-    def remove_project_priority(self, attr, id):
+    def remove_from_list(self, attr, id):
         id_list = getattr(self, attr).split(",")
         id_list.remove(str(id))
         setattr(self, attr, ",".join(id_list))
@@ -217,7 +218,7 @@ class Player(db.Model, UserMixin):
 
     def project_max_priority(self, attr, id):
         """the project with the corresponding id will be moved to the top of the prioirty list"""
-        self.remove_project_priority(attr, id)
+        self.remove_from_list(attr, id)
         if getattr(self, attr) == "":
             setattr(self, attr, str(id))
         else:
@@ -319,7 +320,7 @@ class Player(db.Model, UserMixin):
         }
 
     def package_construction_queue(self):
-        return self.read_project_priority("construction_priorities")
+        return self.read_list("construction_priorities")
 
 
 class Network(db.Model):

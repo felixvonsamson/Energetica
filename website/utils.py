@@ -99,25 +99,57 @@ def add_asset(player_id, construction_id):
         if construction.name in engine.extraction_facilities + [
             "carbon_capture"
         ]:
-            player.add_project_priority("demand_priorities", construction.name)
+            player.add_to_list("demand_priorities", construction.name)
             set_network_prices(engine, player)
         if construction.name in engine.renewables:
-            player.add_project_priority(
-                "self_consumption_priority", construction.name
-            )
+            player.add_to_list("self_consumption_priority", construction.name)
             set_network_prices(engine, player)
         if (
             construction.name
             in engine.storage_facilities + engine.controllable_facilities
         ):
-            player.add_project_priority("rest_of_priorities", construction.name)
+            player.add_to_list("rest_of_priorities", construction.name)
             set_network_prices(engine, player)
+
+        # update advancements
+        if "storage_overview" not in player.advancements:
+            if construction.name in engine.storage_facilities:
+                player.add_to_list("advancements", "storage_overview")
+                notify(
+                    "Tutorial",
+                    "You have built your first storage facility, you can monitor the stored energy in the <a href='/production_overview/storage'>storage graph<\a>.",
+                    [player],
+                )
+        if "technology" not in player.advancements:
+            if construction.name == "laboratory":
+                player.add_to_list("advancements", "technology")
+                notify(
+                    "Tutorial",
+                    "You have built a laboratory, you can now reseach <a href='/technology'>technologies<\a> to unlock and upgrade facilities.",
+                    [player],
+                )
+        if "warehouse" not in player.advancements:
+            if construction.name == "warehouse":
+                player.add_to_list("advancements", "warehouse")
+                notify(
+                    "Tutorial",
+                    "You have built a warehouse to store natural resources, you can now buy resources on the <a href='/resource_market'>resources market<\a> or invest in <a href='/extraction_facilities'>extraction facilites<\a> to extract your own resources from the ground.",
+                    [player],
+                )
+        if "GHG_effect" not in player.advancements:
+            if construction.name == "chemistry":
+                player.add_to_list("advancements", "GHG_effect")
+                notify(
+                    "Tutorial",
+                    "Scientists have discovered the greenhouse effect and have shown that climate change increses the risks of natural and social catastrophies. You can now monitor your emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph<\a>.",
+                    [player],
+                )
     setattr(player, construction.name, getattr(player, construction.name) + 1)
     priority_list_name = "construction_priorities"
     if construction.family == "Technologies":
         priority_list_name = "research_priorities"
-    player.remove_project_priority(priority_list_name, construction_id)
-    project_priorities = player.read_project_priority(priority_list_name)
+    player.remove_from_list(priority_list_name, construction_id)
+    project_priorities = player.read_list(priority_list_name)
     for id in project_priorities:
         next_construction = Under_construction.query.get(id)
         if next_construction is None:
@@ -658,14 +690,10 @@ def set_network_prices(engine, player, prices={}):
     for price in prices:
         setattr(player, price, prices[price])
 
-    rest_list = sort_priority(
-        player.read_project_priority("rest_of_priorities")
-    )
-    SCP_list = sort_SCP(
-        player.read_project_priority("self_consumption_priority")
-    )
+    rest_list = sort_priority(player.read_list("rest_of_priorities"))
+    SCP_list = sort_SCP(player.read_list("self_consumption_priority"))
     demand_list = sort_priority(
-        player.read_project_priority("demand_priorities"), prefix="price_buy_"
+        player.read_list("demand_priorities"), prefix="price_buy_"
     )
     demand_list.reverse()
 
@@ -745,7 +773,7 @@ def start_project(engine, player, facility, family):
         player_id=player.id,
     )
     db.session.add(new_construction)
-    player.add_project_priority(priority_list_name, new_construction.id)
+    player.add_to_list(priority_list_name, new_construction.id)
     if suspension_time is None:
         player.project_max_priority(priority_list_name, new_construction.id)
     engine.log(f"{player.username} started the construction {facility}")
@@ -777,7 +805,7 @@ def cancel_project(player, construction_id):
 
     refund = 0.8 * construction.original_price * (1 - time_fraction)
     player.money += refund
-    player.remove_project_priority(priority_list_name, construction_id)
+    player.remove_from_list(priority_list_name, construction_id)
     db.session.delete(construction)
     engine.log(
         f"{player.username} cancelled the construction {construction.name}"
@@ -815,9 +843,7 @@ def pause_project(player, construction_id):
                 "research_priorities", int(construction_id)
             )
             if player.available_lab_workers() == 0:
-                research_priorities = player.read_project_priority(
-                    "research_priorities"
-                )
+                research_priorities = player.read_list("research_priorities")
                 project_to_pause = Under_construction.query.get(
                     research_priorities[player.lab_workers]
                 )
@@ -827,7 +853,7 @@ def pause_project(player, construction_id):
                 "construction_priorities", int(construction_id)
             )
             if player.available_construction_workers() == 0:
-                construction_priorities = player.read_project_priority(
+                construction_priorities = player.read_list(
                     "construction_priorities"
                 )
                 project_to_pause = Under_construction.query.get(
@@ -855,7 +881,7 @@ def decrease_project_priority(player, construction_id, pausing=False):
     else:
         attr = "construction_priorities"
 
-    id_list = player.read_project_priority(attr)
+    id_list = player.read_list(attr)
     index = id_list.index(construction_id)
     if index >= 0 and index < len(id_list) - 1:
         construction_1 = Under_construction.query.get(id_list[index])
@@ -887,8 +913,6 @@ def decrease_project_priority(player, construction_id, pausing=False):
 
 def get_construction_data(player):
     projects = player.get_constructions()
-    construction_priorities = player.read_project_priority(
-        "construction_priorities"
-    )
-    research_priorities = player.read_project_priority("research_priorities")
+    construction_priorities = player.read_list("construction_priorities")
+    research_priorities = player.read_list("research_priorities")
     return {0: projects, 1: construction_priorities, 2: research_priorities}

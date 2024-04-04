@@ -134,6 +134,15 @@ def update_player_progress_values(player, new_values):
     player.imported_energy += new_values["generation"]["imports"] / 60  # in Wh
     player.exported_energy += new_values["demand"]["exports"] / 60  # in Wh
 
+    if "network" not in player.advancements:
+        if player.max_power_consumption > 5000000:
+            player.add_to_list("advancements", "network")
+            notify(
+                "Tutorial",
+                "Your generation capabilites are now big enougth to join a Network and trade electricity. See <b>Community<\b> > <b><a href='/network'>Network<\a><\b>.",
+                [player],
+            )
+
 
 def init_market():
     """Initialize an empty market"""
@@ -385,9 +394,9 @@ def calculate_generation_with_market(engine, new_values, market, player):
         market = bid(market, player.id, bid_q, price, demand_type)
 
     # Sell capacities of remaining facilities on the market
-    for facility in player.read_project_priority(
-        "rest_of_priorities"
-    ) + player.read_project_priority("self_consumption_priority"):
+    for facility in player.read_list("rest_of_priorities") + player.read_list(
+        "self_consumption_priority"
+    ):
         if assets[facility]["ramping speed"] != 0:
             if getattr(player, facility) > 0:
                 max_prod = calculate_prod(
@@ -868,9 +877,7 @@ def reduce_demand(
         return
     assets = engine.config[player.id]["assets"]
     if demand_type == "construction":
-        construction_priorities = player.read_project_priority(
-            "construction_priorities"
-        )
+        construction_priorities = player.read_list("construction_priorities")
         cumul_demand = 0.0
         for i in range(
             min(len(construction_priorities), player.construction_workers)
@@ -895,9 +902,7 @@ def reduce_demand(
         db.session.commit()
         return
     if demand_type == "research":
-        research_priorities = player.read_project_priority(
-            "research_priorities"
-        )
+        research_priorities = player.read_list("research_priorities")
         cumul_demand = 0.0
         for i in range(min(len(research_priorities), player.lab_workers)):
             construction_id = research_priorities[i]

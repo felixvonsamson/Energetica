@@ -177,7 +177,7 @@ def add_asset(player, asset, n):
         )
         db.session.add(new_construction)
         db.session.commit()
-        player.add_project_priority(priority_list_name, new_construction.id)
+        player.add_to_list(priority_list_name, new_construction.id)
 
 
 def create_player(engine, username, password):

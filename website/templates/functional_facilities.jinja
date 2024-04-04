@@ -65,9 +65,9 @@
 
               {# Description #}
               <div class="infotext">
-                {% if facility == "laboratory" %}
+                {% if facility == "laboratory" and "technology" in user.advancements %}
                   The laboratory is needed to research <strong><a class="txt-blue" id="technology-link" href="/technology">Technologies</a></strong>.
-                {% elif facility == "warehouse" %}
+                {% elif facility == "warehouse" and "warehouse" in user.advancements %}
                   The warehouse stores physical <strong><a class="txt-blue" id="resources-link" href="/extraction_facilities">resources</a></strong>.
                 {% else %}
                   {{ const_data.description }}
