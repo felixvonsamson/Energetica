@@ -131,8 +131,12 @@ def update_player_progress_values(player, new_values):
     if total_storage > player.max_energy_stored:
         player.max_energy_stored = total_storage
     # update imported and exported energy
-    player.imported_energy += new_values["generation"]["imports"] / 60  # in Wh
-    player.exported_energy += new_values["demand"]["exports"] / 60  # in Wh
+    player.imported_energy += (
+        new_values[player.id]["generation"]["imports"] / 60
+    )  # in Wh
+    player.exported_energy += (
+        new_values[player.id]["demand"]["exports"] / 60
+    )  # in Wh
 
     if "network" not in player.advancements:
         if player.max_power_consumption > 5000000:
