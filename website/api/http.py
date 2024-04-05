@@ -269,20 +269,7 @@ def get_constructions():
 # gets scoreboard data :
 @http.route("/get_scoreboard", methods=["GET"])
 def get_scoreboard():
-    scoreboard_data = []
-    players = Player.query.all()
-    for player in players:
-        if player.tile is None:
-            continue
-        scoreboard_data.append(
-            [
-                player.username,
-                player.money,
-                player.average_revenues,
-                player.emissions,
-            ]
-        )
-    return jsonify(scoreboard_data)
+    return jsonify(utils.get_scoreboard())
 
 
 @http.route("choose_location", methods=["POST"])

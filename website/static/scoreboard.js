@@ -1,4 +1,5 @@
 let data;
+let decending = true;
 get_data();
 
 function get_data() {
@@ -6,40 +7,60 @@ function get_data() {
         .then((response) => response.json())
         .then((raw_data) => {
             data = raw_data;
-            sortTable(2);
+            sortTable('average_hourly_revenues');
         })
         .catch((error) => {
             console.error("Error:", error);
         });
 }
 
-function sortTable(columnIndex) {
-    table = document.getElementById("scoreboard");
-    let headers = table.getElementsByTagName("th");
-    let triangle = ' <i class="fa fa-caret-down">';
+function sortTable(columnName) {
+    const table = document.getElementById("scoreboard");
+    let column = document.getElementById(columnName);
+    let triangle = ' <i class="fa fa-caret-down"></i>';
 
-    if (headers[columnIndex].innerHTML.includes(triangle)) {
-        data.sort((a, b) => a[columnIndex] - b[columnIndex]);
-        triangle = ' <i class="fa fa-caret-up">';
-    } else {
-        data.sort((a, b) => b[columnIndex] - a[columnIndex]);
+    // Check if the column is already sorted, toggle sorting order accordingly
+    if (column.innerHTML.includes(triangle)) {
+        decending = !decending;
+        triangle = ' <i class="fa fa-caret-up"></i>';
+    }else{
+        decending = true;
     }
 
+    // Sort the data based on the selected column
+    const sortedData = Object.entries(data).sort((a, b) => {
+        const aValue = a[1][columnName];
+        const bValue = b[1][columnName];
+
+        if (typeof aValue === "string" && typeof bValue === "string") {
+            return decending ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
+        } else {
+            return decending ? bValue - aValue : aValue - bValue;
+        }
+    });
+
+    // Rebuild the HTML table
     let html = `<tr>
-        <th>Usernames</th>
-        <th onclick="sortTable(1)">Money </th>
-        <th onclick="sortTable(2)">Revenues </th>
-        <th onclick="sortTable(3)">CO2 emissions </th>
+        <th id="username" onclick="sortTable('username')">Usernames</th>
+        <th id="average_hourly_revenues" onclick="sortTable('average_hourly_revenues')">Revenues</th>
+        <th id="max_power_consumption" onclick="sortTable('max_power_consumption')">Max power</th>
+        <th id="total_technology_levels" onclick="sortTable('total_technology_levels')">Technology</th>
+        <th id="xp" onclick="sortTable('xp')">xp</th>
+        <th id="co2_emissions" onclick="sortTable('co2_emissions')">Emissions</th>
         </tr>`;
-    for (row in data) {
+    for (const [id, player] of sortedData) {
         html += `<tr>
-            <td>${data[row][0]}</td>
-            <td>${Math.round(data[row][1])}</td>
-            <td>${Math.round(data[row][2])}</td>
-            <td>${Math.round(data[row][3])}</td>
+            <td><a href="/profile?player_name=${player['username']}">${player['username']}</td>
+            <td>${formatted_money(player['average_hourly_revenues'])}</td>
+            <td>${player['max_power_consumption']}</td>
+            <td>${player['total_technology_levels']}</td>
+            <td>${player['xp']}</td>
+            <td>${player['co2_emissions']}</td>
             </tr>`;
     }
     table.innerHTML = html;
-    headers = table.getElementsByTagName("th");
-    headers[columnIndex].innerHTML += triangle;
+
+    // Update the sorting indicator
+    column = document.getElementById(columnName);
+    column.innerHTML += triangle;
 }

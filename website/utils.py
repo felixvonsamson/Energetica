@@ -768,8 +768,11 @@ def get_scoreboard():
     players = Player.query.filter(Player.tile != None)  # noqa: E711
     return {
         player.id: {
-            "money": player.money,
+            "username": player.username,
             "average_hourly_revenues": player.average_revenues,
+            "max_power_consumption": player.max_power_consumption,
+            "total_technology_levels": player.total_technologies,
+            "xp": player.xp,
             "co2_emissions": player.emissions,
         }
         for player in players

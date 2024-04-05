@@ -23,10 +23,12 @@
     <div class="flex-col medium">
         <table id="scoreboard" class="table bone margin txt_center">
             <tr>
-                <th onclick="sortTable(0)">Usernames</th>
-                <th onclick="sortTable(1)">Money</th>
-                <th onclick="sortTable(2)">Revenues</th>
-                <th onclick="sortTable(3)">CO2 emissions</th>
+                <th id="username" onclick="sortTable('username')">Usernames</th>
+                <th id="average_hourly_revenues" onclick="sortTable('average_hourly_revenues')">Revenues</th>
+                <th id="max_power_consumption" onclick="sortTable('max_power_consumption')">Max power</th>
+                <th id="total_technology_levels" onclick="sortTable('total_technology_levels')">Technology</th>
+                <th id="xp" onclick="sortTable('xp')">xp</th>
+                <th id="co2_emissions" onclick="sortTable('co2_emissions')">Emissions</th>
             </tr>
         </table>
     </div>
