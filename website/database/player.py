@@ -154,6 +154,7 @@ class Player(db.Model, UserMixin):
     price_buy_carbon_capture = db.Column(db.Float, default=660)
 
     # player progression data :
+    xp = db.Column(db.Integer, default=0)
     emissions = db.Column(db.Float, default=0)
     average_revenues = db.Column(db.Float, default=0)
     max_power_consumption = db.Column(db.Float, default=0)

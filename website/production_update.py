@@ -147,6 +147,134 @@ def update_player_progress_values(player, new_values):
                 [player],
             )
 
+    # check achievements
+    if "power_consumption_1" not in player.achievements:
+        if player.max_power_consumption > 1000000:
+            player.add_to_list("achievements", "power_consumption_1")
+            player.xp += 5
+            notify(
+                "Achievements",
+                "You consume as much electricity as a small village in europe. (+5 xp)",
+                [player],
+            )
+    elif "power_consumption_2" not in player.achievements:
+        if player.max_power_consumption > 150000000:
+            player.add_to_list("achievements", "power_consumption_2")
+            player.xp += 10
+            notify(
+                "Achievements",
+                "You consume as much electricity as the city of Basel. (+10 xp)",
+                [player],
+            )
+    elif "power_consumption_3" not in player.achievements:
+        if player.max_power_consumption > 6500000000:
+            player.add_to_list("achievements", "power_consumption_3")
+            player.xp += 15
+            notify(
+                "Achievements",
+                "You consume as much electricity as Switzerland. (+15 xp)",
+                [player],
+            )
+    elif "power_consumption_4" not in player.achievements:
+        if player.max_power_consumption > 100000000000:
+            player.add_to_list("achievements", "power_consumption_4")
+            player.xp += 20
+            notify(
+                "Achievements",
+                "You consume as much electricity as Japan. (+20 xp)",
+                [player],
+            )
+    elif "power_consumption_5" not in player.achievements:
+        if player.max_power_consumption > 3000000000000:
+            player.add_to_list("achievements", "power_consumption_5")
+            player.xp += 25
+            notify(
+                "Achievements",
+                "You consume as much electricity as the entire world population. (+25 xp)",
+                [player],
+            )
+    if "energy_storage_1" not in player.achievements:
+        if player.max_energy_stored > 8000000000:
+            player.add_to_list("achievements", "energy_storage_1")
+            player.xp += 5
+            notify(
+                "Achievements",
+                "You have stored enougth energy to power Zurich for a day. (+5 xp)",
+                [player],
+            )
+    elif "energy_storage_2" not in player.achievements:
+        if player.max_energy_stored > 160000000000:
+            player.add_to_list("achievements", "energy_storage_2")
+            player.xp += 10
+            notify(
+                "Achievements",
+                "You have stored enougth energy to power switzerland for a day. (+10 xp)",
+                [player],
+            )
+    elif "energy_storage_3" not in player.achievements:
+        if player.max_energy_stored > 5000000000000:
+            player.add_to_list("achievements", "energy_storage_3")
+            player.xp += 20
+            notify(
+                "Achievements",
+                "You have stored enougth energy to power switzerland for a month. (+20 xp)",
+                [player],
+            )
+    if "mineral_extraction_1" not in player.achievements:
+        if player.extracted_resources > 1000000:
+            player.add_to_list("achievements", "mineral_extraction_1")
+            player.xp += 5
+            notify(
+                "Achievements",
+                "You have extracted 1000 tons of resources. (+5 xp)",
+                [player],
+            )
+    elif "mineral_extraction_2" not in player.achievements:
+        if player.extracted_resources > 50000000:
+            player.add_to_list("achievements", "mineral_extraction_2")
+            player.xp += 10
+            notify(
+                "Achievements",
+                "You have extracted 50'000 tons of resources. (+10 xp)",
+                [player],
+            )
+    if "network_import_1" not in player.achievements:
+        if player.imported_energy > 10000000000:
+            player.add_to_list("achievements", "network_import_1")
+            player.xp += 5
+            notify(
+                "Achievements",
+                "You have imported more than 10GWh on the market. (+5 xp)",
+                [player],
+            )
+    elif "network_import_2" not in player.achievements:
+        if player.imported_energy > 1000000000000:
+            player.add_to_list("achievements", "network_import_2")
+            player.xp += 10
+            notify(
+                "Achievements",
+                "You have imported more than 1TWh on the market. (+10 xp)",
+                [player],
+            )
+    if "network_export_1" not in player.achievements:
+        if player.exported_energy > 10000000000:
+            player.add_to_list("achievements", "network_export_1")
+            player.xp += 5
+            notify(
+                "Achievements",
+                "You have exported more than 10GWh on the market. (+5 xp)",
+                [player],
+            )
+    elif "network_export_2" not in player.achievements:
+        if player.exported_energy > 1000000000000:
+            player.add_to_list("achievements", "network_export_2")
+            player.xp += 10
+            notify(
+                "Achievements",
+                "You have exported more than 1TWh on the market. (+10 xp)",
+                [player],
+            )
+
 
 def init_market():
     """Initialize an empty market"""

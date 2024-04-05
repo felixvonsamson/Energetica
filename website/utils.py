@@ -163,8 +163,31 @@ def add_asset(player_id, construction_id):
             next_construction.suspension_time = None
             db.session.commit()
             break
+    # check achievement
+    if (
+        construction.name == "laboratory"
+        and getattr(player, construction.name) >= 3
+        and "technology_1" not in player.achievements
+    ):
+        player.add_to_list("achievements", "technology_1")
+        player.xp += 5
+        notify(
+            "Achievements",
+            "Your lab is level 3, a additional lab worker is available. (+5 xp)",
+            [player],
+        )
     if construction.family == "Technologies":
         player.total_technologies += 1
+        # check achievement
+        if "technology_2" not in player.achievements:
+            if player.total_technologies >= 25:
+                player.add_to_list("achievements", "technology_2")
+                player.xp += 10
+                notify(
+                    "Achievements",
+                    "You have researched a total of 25 levels of technologies. (+10 xp)",
+                    [player],
+                )
         server_tech = engine.data["technology_lvls"][construction.name]
         if len(server_tech) <= getattr(player, construction.name):
             server_tech.append(0)
@@ -518,6 +541,41 @@ def buy_resource_from_market(player, quantity, sale_id):
         )
         sale.player.sold_resources += quantity
         player.bought_resources += quantity
+        # check achievements
+        if "trading_1" not in player.achievements:
+            player.add_to_list("achievements", "trading_1")
+            player.xp += 5
+            notify(
+                "Achievements",
+                "You have bougth a resources on the market. (+5 xp)",
+                [player],
+            )
+        if "trading_2" not in sale.player.achievements:
+            sale.player.add_to_list("achievements", "trading_2")
+            sale.player.xp += 5
+            notify(
+                "Achievements",
+                "You have sold a resources on the market. (+5 xp)",
+                [sale.player],
+            )
+        if "trading_3" not in player.achievements:
+            if player.bought_resources >= 10000000:
+                player.add_to_list("achievements", "trading_3")
+                player.xp += 10
+                notify(
+                    "Achievements",
+                    "You have bought more than 10'000 tons of resources. (+10 xp)",
+                    [player],
+                )
+        if "trading_3" not in sale.player.achievements:
+            if sale.player.sold_resources >= 10000000:
+                sale.player.add_to_list("achievements", "trading_3")
+                sale.player.xp += 10
+                notify(
+                    "Achievements",
+                    "You have sold more than 10'000 tons of resources. (+10 xp)",
+                    [sale.player],
+                )
         dq = player.tile.q - sale.player.tile.q
         dr = player.tile.r - sale.player.tile.r
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
