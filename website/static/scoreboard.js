@@ -51,11 +51,11 @@ function sortTable(columnName) {
     for (const [id, player] of sortedData) {
         html += `<tr>
             <td><a href="/profile?player_name=${player['username']}">${player['username']}</td>
-            <td>${formatted_money(player['average_hourly_revenues'])}</td>
-            <td>${player['max_power_consumption']}</td>
+            <td>${display_money(player['average_hourly_revenues'], write=false)}/h</td>
+            <td>${display_W(player['max_power_consumption'], write=false)}</td>
             <td>${player['total_technology_levels']}</td>
             <td>${player['xp']}</td>
-            <td>${player['co2_emissions']}</td>
+            <td>${display_kg(player['co2_emissions'], write=false)}</td>
             </tr>`;
     }
     table.innerHTML = html;

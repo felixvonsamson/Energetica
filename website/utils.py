@@ -834,6 +834,7 @@ def start_project(engine, player, facility, family):
         player_id=player.id,
     )
     db.session.add(new_construction)
+    db.session.commit()
     player.add_to_list(priority_list_name, new_construction.id)
     if suspension_time is None:
         player.project_max_priority(priority_list_name, new_construction.id)

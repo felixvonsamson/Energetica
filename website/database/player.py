@@ -112,7 +112,7 @@ class Player(db.Model, UserMixin):
     rest_of_priorities = db.Column(db.Text, default="steam_engine")
     demand_priorities = db.Column(
         db.Text,
-        default="transport,industry,research,construction",
+        default="industry,construction,transport,research",
     )
     construction_priorities = db.Column(db.Text, default="")
     research_priorities = db.Column(db.Text, default="")
@@ -143,9 +143,9 @@ class Player(db.Model, UserMixin):
     price_solid_state_batteries = db.Column(db.Float, default=900)
 
     # Demand buying prices
-    price_buy_industry = db.Column(db.Float, default=1200)
+    price_buy_industry = db.Column(db.Float, default=1000)
     price_buy_construction = db.Column(db.Float, default=1020)
-    price_buy_research = db.Column(db.Float, default=1000)
+    price_buy_research = db.Column(db.Float, default=1200)
     price_buy_transport = db.Column(db.Float, default=1050)
     price_buy_coal_mine = db.Column(db.Float, default=960)
     price_buy_oil_field = db.Column(db.Float, default=970)
