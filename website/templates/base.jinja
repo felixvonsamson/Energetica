@@ -86,7 +86,8 @@
      <div class="small notification_time"><script>formatDateTime("{{ notification.time }}");</script></div>
       <div class="flex-row align-items-center notification_head">
         <b>{{ notification.title }}{% if not notification.read %}<i class="fa fa-circle small padding"></i>{% endif %}</b>
-        <span onclick="delete_notification(this, {{ notification.id }});" class="cross">×</span></div>
+        <span onclick="delete_notification(this, {{ notification.id }});" class="cross">×</span>
+      </div>
       {{ notification.content }}
     </div>
   {% endfor %}

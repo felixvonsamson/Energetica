@@ -1,7 +1,7 @@
 from collections import defaultdict, deque
 import json
 import math
-
+from flask import current_app
 import numpy as np
 import requests
 
@@ -153,7 +153,9 @@ class WeatherData:
         self._data["river_discharge"].extend(interpolation[1:])
 
     def __getitem__(self, weather):
-        return self._data[weather][-1]
+        total_t = current_app.config["engine"].data["total_t"]
+        i = total_t % 10 - 10
+        return self._data[weather][i]
 
     def package(self, total_t):
         return {

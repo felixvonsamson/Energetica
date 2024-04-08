@@ -107,13 +107,21 @@ def init_test_players(engine):
         add_asset(player, "combined_cycle", 1)
         add_asset(player, "gas_burner", 3)
         db.session.commit()
+
     player2 = create_player(engine, "user2", "password")
     if player2:
         Hex.query.filter_by(id=84).first().player_id = player2.id
         add_asset(player2, "warehouse", 1)
+        add_asset(player2, "steam_engine", 10)
         db.session.commit()
 
-    create_network(engine, "net", [player, player2])
+    player3 = create_player(engine, "user3", "password")
+    if player3:
+        Hex.query.filter_by(id=301).first().player_id = player3.id
+        add_asset(player3, "onshore_wind_turbine", 5)
+        db.session.commit()
+
+    create_network(engine, "net", [player, player2, player3])
     db.session.commit()
 
 

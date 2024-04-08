@@ -203,7 +203,7 @@ def state_update_m(engine, app):
         if engine.data["total_t"] % 60 == 0:
             save_past_data_threaded(app, engine)
         with app.app_context():
-            if engine.data["total_t"] % 10 == 1:
+            if engine.data["total_t"] % 10 == 0:
                 engine.data["weather"].update_weather(engine)
             update_electricity(engine)
 

@@ -139,11 +139,11 @@ def update_player_progress_values(player, new_values):
     )  # in Wh
 
     if "network" not in player.advancements:
-        if player.max_power_consumption > 5000000:
+        if player.max_power_consumption > 3000000:
             player.add_to_list("advancements", "network")
             notify(
                 "Tutorial",
-                "Your generation capabilites are now big enougth to join a Network and trade electricity. See <b>Community<\b> > <b><a href='/network'>Network<\a><\b>.",
+                "Your generation capabilites are now big enougth to join a Network and trade electricity. See <b>Community</b> > <b><a href='/network'>Network</a></b>.",
                 [player],
             )
 

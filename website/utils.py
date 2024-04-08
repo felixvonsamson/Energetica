@@ -11,8 +11,6 @@ import numpy as np
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
-import requests
-import json
 
 
 from website.api import ws
@@ -117,7 +115,7 @@ def add_asset(player_id, construction_id):
                 player.add_to_list("advancements", "storage_overview")
                 notify(
                     "Tutorial",
-                    "You have built your first storage facility, you can monitor the stored energy in the <a href='/production_overview/storage'>storage graph<\a>.",
+                    "You have built your first storage facility, you can monitor the stored energy in the <a href='/production_overview/storage'>storage graph</a>.",
                     [player],
                 )
         if "technology" not in player.advancements:
@@ -125,7 +123,7 @@ def add_asset(player_id, construction_id):
                 player.add_to_list("advancements", "technology")
                 notify(
                     "Tutorial",
-                    "You have built a laboratory, you can now reseach <a href='/technology'>technologies<\a> to unlock and upgrade facilities.",
+                    "You have built a laboratory, you can now reseach <a href='/technology'>technologies</a> to unlock and upgrade facilities.",
                     [player],
                 )
         if "warehouse" not in player.advancements:
@@ -133,7 +131,7 @@ def add_asset(player_id, construction_id):
                 player.add_to_list("advancements", "warehouse")
                 notify(
                     "Tutorial",
-                    "You have built a warehouse to store natural resources, you can now buy resources on the <a href='/resource_market'>resources market<\a> or invest in <a href='/extraction_facilities'>extraction facilites<\a> to extract your own resources from the ground.",
+                    "You have built a warehouse to store natural resources, you can now buy resources on the <a href='/resource_market'>resources market</a> or invest in <a href='/extraction_facilities'>extraction facilites</a> to extract your own resources from the ground.",
                     [player],
                 )
         if "GHG_effect" not in player.advancements:
@@ -141,7 +139,7 @@ def add_asset(player_id, construction_id):
                 player.add_to_list("advancements", "GHG_effect")
                 notify(
                     "Tutorial",
-                    "Scientists have discovered the greenhouse effect and have shown that climate change increses the risks of natural and social catastrophies. You can now monitor your emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph<\a>.",
+                    "Scientists have discovered the greenhouse effect and have shown that climate change increses the risks of natural and social catastrophies. You can now monitor your emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph</a>.",
                     [player],
                 )
     setattr(player, construction.name, getattr(player, construction.name) + 1)
@@ -174,7 +172,7 @@ def add_asset(player_id, construction_id):
         player.xp += 5
         notify(
             "Achievements",
-            "Your lab is level 3, a additional lab worker is available. (+5 xp)",
+            "Your lab is level 3, an additional lab worker is available. (+5 xp)",
             [player],
         )
     if construction.family == "Technologies":
@@ -308,73 +306,6 @@ def check_existing_chats(participants):
         if len(chat.participants) == len(participants):
             return True
     return False
-
-
-# This function upddates the windspeed and irradiation data every 10 mminutes by using the meteosuisse api
-def update_weather(engine):
-    url_wind = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min_en.json"
-    url_irr = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-globalstrahlung-10min/ch.meteoschweiz.messwerte-globalstrahlung-10min_en.json"
-    t = engine.data["current_t"]
-    try:
-        response = requests.get(url_wind)
-        if response.status_code == 200:
-            windspeed = json.loads(response.content)["features"][107][
-                "properties"
-            ]["value"]
-            if windspeed > 2000:
-                windspeed = engine.data["current_windspeed"][t - 1]
-            interpolation = np.linspace(
-                engine.data["current_windspeed"][t - 1], windspeed, 11
-            )
-            engine.data["current_windspeed"][t : t + 10] = interpolation[1:]
-        else:
-            engine.log(
-                "Failed to fetch the file. Status code:", response.status_code
-            )
-            engine.data["current_windspeed"][t : t + 10] = [
-                engine.data["current_windspeed"][t - 1]
-            ] * 10
-    except Exception as e:
-        engine.log(e)
-        engine.data["current_windspeed"][t : t + 10] = [
-            engine.data["current_windspeed"][t - 1]
-        ] * 10
-
-    try:
-        response = requests.get(url_irr)
-        if response.status_code == 200:
-            irradiation = json.loads(response.content)["features"][65][
-                "properties"
-            ]["value"]
-            if irradiation > 2000:
-                irradiation = engine.data["current_irradiation"][t - 1]
-            interpolation = np.linspace(
-                engine.data["current_irradiation"][t - 1], irradiation, 11
-            )
-            engine.data["current_irradiation"][t : t + 10] = interpolation[1:]
-        else:
-            engine.log(
-                "Failed to fetch the file. Status code:", response.status_code
-            )
-            engine.data["current_irradiation"][t : t + 10] = [
-                engine.data["current_irradiation"][t - 1]
-            ] * 10
-    except Exception as e:
-        engine.log("An error occurred:" + str(e))
-        engine.data["current_irradiation"][t : t + 10] = [
-            engine.data["current_irradiation"][t - 1]
-        ] * 10
-
-    month = math.floor(
-        (engine.data["total_t"] % 73440) / 6120
-    )  # One year in game is 51 days
-    f = (engine.data["total_t"] % 73440) / 6120 - month
-    d = engine.river_discharge
-    power_factor = d[month] + (d[(month + 1) % 12] - d[month]) * f
-    engine.data["current_discharge"][t : t + 10] = [power_factor] * 10
-    engine.log(
-        f"the current irradiation in Zürich is {engine.data['current_irradiation'][t+9]} W/m2 with a windspeed of {engine.data['current_windspeed'][t+9]} km/h"
-    )
 
 
 def save_past_data_threaded(app, engine):
