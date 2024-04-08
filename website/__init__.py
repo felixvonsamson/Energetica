@@ -111,7 +111,6 @@ def create_app(run_init_test_players, rm_instance):
         os.environ.get("WERKZEUG_RUN_MAIN") == "true"
     ):  # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
         from .gameEngine import state_update_m
-        from .gameEngine import check_upcoming_actions
 
         scheduler = APScheduler()
         scheduler.init_app(app)
