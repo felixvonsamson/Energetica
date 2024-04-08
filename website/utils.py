@@ -156,6 +156,7 @@ def add_asset(player_id, construction_id):
             print(
                 f"DATABASE MISMATCH : CONSTRUCTION {id} OF PLAYER {player.username} DOES NOT EXIST IN UNDER_CONSTRUCTION DATABASE !!!"
             )
+            break
         if next_construction.suspension_time is not None:
             next_construction.start_time += (
                 time.time() - next_construction.suspension_time
