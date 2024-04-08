@@ -414,9 +414,9 @@ const_config = {
 var_config = {
     "assets": {
         "steam_engine": {
-            "price": 2600,  # [¤]
-            "power generation": 210000,  # [W]
-            "construction time": 3600,  # [s]
+            "price": 10000,  # [¤]
+            "power generation": 820000,  # [W]
+            "construction time": 5400,  # [s]
             "construction power factor": 0.4,  # fraction of power gen during construction
             "construction pollution": 17520,  # [kg]
             "O&M cost": 0.8,  # [fraction of price per (day)]
@@ -761,12 +761,12 @@ var_config = {
             "requirements": [],
         },
         "industry": {
-            "price": 600,
+            "price": 2400,
             "construction time": 1200,
-            "construction energy": 10000,
-            "construction pollution": 1000,
-            "power consumption": 50000,  # [W]
-            "income": 2000,  # [¤/day]
+            "construction energy": 40000,
+            "construction pollution": 4000,
+            "power consumption": 200000,  # [W]
+            "income": 8000,  # [¤/day]
             "requirements": [],
         },
         "carbon_capture": {
