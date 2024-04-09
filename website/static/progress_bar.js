@@ -107,6 +107,9 @@ function pause_construction(construction_id) {
                     );
                     refresh_progressBar();
                 }
+                else if (response == "parallelization not allowed") {
+                    addError("Consecutive upgrades of the same asset cannot be paralelized.");
+                }
             });
         })
         .catch((error) => {

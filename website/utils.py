@@ -144,11 +144,27 @@ def add_asset(player_id, construction_id):
                 )
     setattr(player, construction.name, getattr(player, construction.name) + 1)
     priority_list_name = "construction_priorities"
+    project_index = (
+        Under_construction.query.filter(
+            Under_construction.family != "Technologies",
+            Under_construction.player_id == player.id,
+            Under_construction.suspension_time.is_(None),
+        ).count()
+        - 1
+    )
     if construction.family == "Technologies":
         priority_list_name = "research_priorities"
+        project_index = (
+            Under_construction.query.filter(
+                Under_construction.family != "Technologies",
+                Under_construction.player_id == player.id,
+                Under_construction.suspension_time.is_(None),
+            ).count()
+            - 1
+        )
     player.remove_from_list(priority_list_name, construction_id)
     project_priorities = player.read_list(priority_list_name)
-    for id in project_priorities:
+    for i, id in enumerate(project_priorities[:]):
         next_construction = Under_construction.query.get(id)
         if next_construction is None:
             print(
@@ -156,10 +172,42 @@ def add_asset(player_id, construction_id):
             )
             break
         if next_construction.suspension_time is not None:
+            if next_construction.family in [
+                "Functional facilities",
+                "Technologies",
+            ]:
+                first_lvl = (
+                    Under_construction.query.filter_by(
+                        name=next_construction.name, player_id=player.id
+                    )
+                    .order_by(Under_construction.duration)
+                    .first()
+                )
+                if first_lvl.suspension_time is None:
+                    continue
+                else:
+                    first_lvl.start_time += (
+                        time.time() - first_lvl.suspension_time
+                    )
+                    first_lvl.suspension_time = None
+                    index_first_lvl = project_priorities.index(first_lvl.id)
+                    (
+                        project_priorities[index_first_lvl],
+                        project_priorities[project_index],
+                    ) = (
+                        project_priorities[project_index],
+                        project_priorities[index_first_lvl],
+                    )
+                    db.session.commit()
+                    break
             next_construction.start_time += (
                 time.time() - next_construction.suspension_time
             )
             next_construction.suspension_time = None
+            project_priorities[i], project_priorities[project_index] = (
+                project_priorities[project_index],
+                project_priorities[i],
+            )
             db.session.commit()
             break
     # check achievement
@@ -725,6 +773,7 @@ def start_project(engine, player, facility, family):
         if player.tile.hydro <= getattr(player, facility) + ud:
             return {"response": "noSuitableLocationAvailable"}
 
+    ud_count = 0
     if family in ["Functional facilities", "Technologies"]:
         ud_count = Under_construction.query.filter_by(
             name=facility, player_id=player.id
@@ -733,10 +782,9 @@ def start_project(engine, player, facility, family):
             assets[facility]["price"]
             * engine.const_config[facility]["price multiplier"] ** ud_count
         )
-        duration = (
-            assets[facility]["construction time"]
-            * engine.const_config[facility]["price multiplier"] ** ud_count
-        )
+        duration = assets[facility]["construction time"] * engine.const_config[
+            facility
+        ]["price multiplier"] ** (0.6 * ud_count)
     else:  # power facitlies, storage facilities, extractions facilities
         real_price = assets[facility]["price"]
         duration = assets[facility]["construction time"]
@@ -748,10 +796,10 @@ def start_project(engine, player, facility, family):
     suspension_time = time.time()
     if family == "Technologies":
         priority_list_name = "research_priorities"
-        if player.available_lab_workers() > 0:
+        if player.available_lab_workers() > 0 and ud_count == 0:
             suspension_time = None
     else:
-        if player.available_construction_workers() > 0:
+        if player.available_construction_workers() > 0 and ud_count == 0:
             suspension_time = None
 
     player.money -= real_price
@@ -832,6 +880,20 @@ def pause_project(player, construction_id):
             if last_project == int(construction_id):
                 construction.suspension_time = time.time()
     else:
+        if construction.family in ["Functional facilities", "Technologies"]:
+            first_lvl = (
+                Under_construction.query.filter_by(
+                    name=construction.name, player_id=player.id
+                )
+                .order_by(Under_construction.duration)
+                .first()
+            )
+            if first_lvl.suspension_time is None:
+                return {
+                    "response": "parallelization not allowed",
+                }
+            else:
+                construction = first_lvl
         if construction.family == "Technologies":
             player.project_max_priority(
                 "research_priorities", int(construction_id)
@@ -887,8 +949,30 @@ def decrease_project_priority(player, construction_id, pausing=False):
             construction_1.suspension_time = time.time()
             if pausing:
                 return {"response": "paused"}
+            if construction_2.family in [
+                "Functional facilities",
+                "Technologies",
+            ]:
+                first_lvl = (
+                    Under_construction.query.filter_by(
+                        name=construction_2.name, player_id=player.id
+                    )
+                    .order_by(Under_construction.duration)
+                    .first()
+                )
+                if first_lvl.suspension_time is None:
+                    return {
+                        "response": "parallelization not allowed",
+                    }
+                else:
+                    index_first_lvl = id_list.index(first_lvl.id)
+                    id_list[index + 1], id_list[index_first_lvl] = (
+                        id_list[index_first_lvl],
+                        id_list[index + 1],
+                    )
+                    construction_2 = first_lvl
             construction_2.start_time += (
-                time.time() - construction.suspension_time
+                time.time() - construction_2.suspension_time
             )
             construction_2.suspension_time = None
         id_list[index + 1], id_list[index] = (
