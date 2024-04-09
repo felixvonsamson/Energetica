@@ -135,7 +135,7 @@ void redraw(){
     for(int i = 0; i<buttons.length-1; i++){
       push();
       translate(0, 20*i);
-      fill(button_colors[i], 100, 100);
+      fill(button_colors[i], 255, 255);
       rect(0, 0, selected_h.resources[i]*100, 20);
       fill(0);
       text(0.01*round(selected_h.resources[i]*100), selected_h.resources[i]*100+15, 10);
@@ -181,6 +181,25 @@ void mousePressed() {
       }
     }
   }
-  println(selected_id);
   redraw();
+}
+
+void keyPressed(){
+  if(key == 's'){
+    generate_table();
+  }
+  if(key == 'r'){
+    for(int i = 0; i<mapsize; i++){
+      for(int j = 1; j< map[i].resources.length; j++){
+        map[i].resources[j] = 0;
+      }
+    }
+    generate_hydro();
+    generate_coal();
+    generate_oil_gas();
+    generate_uranium();
+    generate_background_resources();
+    generate_wind();
+    redraw();
+  }
 }
