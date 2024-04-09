@@ -1,43 +1,35 @@
 class Hex{
-  int q, r, s;
+  int id;
+  int q, r;
+  boolean selected;
   //float solar, wind, hydro, coal, oil, gas, uranium, total;
   float[] resources = {0, 0, 0, 0, 0, 0, 0, 0};
-  Hex(int _q, int _r){
+  Hex(int _id, int _q, int _r){
+    id = _id;
     q = _q;
     r = _r;
-    s = - q - r;
-    resources[0] = 0.8*exp(-sq(r*3.75/mapsize))+0.2;
+    resources[0] = 0.8*exp(-sq(this.r*3)/mapsize)+0.2;
+    selected = false;
   }
   void display_tile(){
     if(active_vew>=0){
-      hexagon.setFill(color(button_colors[active_vew], resources[active_vew]*(255-int(active_vew==7)*155), 255));
+      fill(color(button_colors[active_vew], resources[active_vew]*(255-int(active_vew==7)*155), 255));
     }else{
-      hexagon.setFill(color(180));
+      fill(color(180));
     }
-    shape(hexagon, 0, 0);
+    beginShape();
+    vertex(0, s);
+    vertex(0.5*w, 0.5*s);
+    vertex(0.5*w, -0.5*s);
+    vertex(0, -s);
+    vertex(-0.5*w, -0.5*s);
+    vertex(-0.5*w, 0.5*s);
+    endShape(CLOSE);
     fill(0);
     if(active_vew>=0){
-      text(resources[active_vew], 0, 0);
+      text(0.01*round(resources[active_vew]*100), 0, 0);
     }else{
-      text(str(q)+", "+r+", "+s, 0, 0);
+      text(id, 0, 0);
     }
-    
   }
-}
-
-void create_hexagon(){
-  //creating PShape
-  h = 2*size;
-  w = sqrt(3)*size;
-  hexagon = createShape();
-  hexagon.beginShape();
-  hexagon.fill(180);
-  //hexagon.noStroke();
-  hexagon.vertex(0, size);
-  hexagon.vertex(0.5*w, 0.5*size);
-  hexagon.vertex(0.5*w, -0.5*size);
-  hexagon.vertex(0, -size);
-  hexagon.vertex(-0.5*w, -0.5*size);
-  hexagon.vertex(-0.5*w, 0.5*size);
-  hexagon.endShape(CLOSE);
 }

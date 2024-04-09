@@ -2,17 +2,15 @@ ArrayList<Grow_tile_coal> growing_patches_coal = new ArrayList<Grow_tile_coal>()
 
 void generate_coal(){
   int coal_tile = 0;
-  while(coal_tile<0.3*sq(mapsize)){
-    int randx = 0;
-    int randy = 0;
+  while(coal_tile<0.3*mapsize){
+    int rand_id = 0;
     Hex seedTile = null;
     while(seedTile == null){
-      randx = floor(random(mapsize));
-      randy = floor(random(mapsize));
-      seedTile = map[randx][randy];
+      rand_id = floor(random(mapsize));
+      seedTile = map[rand_id];
     }
     coal_tile++;
-    Grow_tile_coal seed_tile = new Grow_tile_coal(new PVector(randx, randy), 1.5);
+    Grow_tile_coal seed_tile = new Grow_tile_coal(rand_id, 1.5);
     growing_patches_coal.add(seed_tile);
     while(growing_patches_coal.size() > 0){
       int i_max = growing_patches_coal.size();
@@ -31,21 +29,24 @@ void generate_coal(){
 }
 
 class Grow_tile_coal{
-  PVector position;
+  int id;
   float max_value;
-  Grow_tile_coal(PVector _position, float _max_value){
-    position = _position;
+  Grow_tile_coal(int _id, float _max_value){
+    id = _id;
     max_value = _max_value;
   }
   void add_coal(){
-    Hex h = map[round(position.x)][round(position.y)];
+    Hex h = map[id];
     float value = max(0,min(1,random(max_value-0.4,max_value*0.9)));
     h.resources[3] = value;
   }
   void create_children(){
+    Hex h = map[id];
+    PVector position = new PVector(h.q, h.r);
     for(int i = 0; i<directions.length; i++){
       PVector new_positon = position.copy().add(directions[i]);
-      Grow_tile_coal new_tile = new Grow_tile_coal(new_positon, max_value-0.2);
+      int new_id = coords_to_id(int(new_positon.x), int(new_positon.y));
+      Grow_tile_coal new_tile = new Grow_tile_coal(new_id, max_value-0.2);
       if(new_tile.inBounds()){
         growing_patches_coal.add(new_tile);
       }
@@ -55,18 +56,15 @@ class Grow_tile_coal{
     if(max_value<=0){
       return false;
     }
-    if(position.x<0 | position.y<0 | position.x>=mapsize | position.y>=mapsize){
+    if(id >= mapsize){
       return false;
     }
-    Hex h = map[round(position.x)][round(position.y)];
-    if(h == null){
-      return false;
-    }
-    if(h.resources[3] != 0){
+    Hex h = map[id];
+    if(h.resources[3] != 0 & h.resources[3] > this.max_value-0.2){
       return false;
     }
     for(int i = 0; i<growing_patches_coal.size(); i++){
-      if(growing_patches_coal.get(i).position.copy().sub(position).mag()<0.5){
+      if(growing_patches_coal.get(i).id == id){
         return false;
       }
     }

@@ -49,7 +49,7 @@
                 </div>
             </div>
             <div class="flex-col flex-grow-1 padding weather_info_container">
-                <div>Irradiance: <b>{{ irradiance | round | int }} W/m2</b></div>
+                <div>Irradiance: <b>{{ irradiance | round | int }} W/m²</b></div>
                 <div class="year-background margin-small">
                     <div class="weather_level solar" style="width: calc({{ irradiance/875 }} * 100%);"></div>
                 </div>
@@ -61,7 +61,7 @@
                 </div>
             </div>
             <div class="flex-col flex-grow-1 padding weather_info_container">
-                <div>River discharge: <b>{{ (discharge * 150) | round | int }} m3/s</b></div>
+                <div>River discharge: <b>{{ (discharge * 150) | round | int }} m³/s</b></div>
                 <div class="year-background margin-small">
                     <div class="weather_level water" style="width: calc({{ discharge }} * 100%);"></div>
                 </div>

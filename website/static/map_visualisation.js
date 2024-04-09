@@ -2,7 +2,7 @@
 This code is the p5.js script that eshows the map in the home screen
 */
 
-max_q = [1, 1, 5, 2500000000, 700000000, 120000000, 10000000];
+max_q = [1, 1, 1, 500000000, 140000000, 24000000, 2000000];
 // Tile item :
 class Hex {
     constructor(_id, _q, _r, _resources, player) {
@@ -166,7 +166,7 @@ function draw() {
         fill(255);
         text(round(map[id].resources[0] * 1000) + " W/m²", 190, 45);
         text(round(pow(map[id].resources[1], 0.5) * 50) + " km/h", 190, 77);
-        text(map[id].resources[2] + " locations", 190, 109);
+        text(round(map[id].resources[2] * 150) + " m³/s", 190, 109);
         textAlign(CENTER);
         textSize(18);
         text("Distance : " + calc_dist(id) + " tiles", 100, 275);

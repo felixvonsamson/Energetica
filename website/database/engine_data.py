@@ -162,7 +162,7 @@ class WeatherData:
             "month_number": ((total_t % 73440) // 6120),
             "irradiance": self["irradiance"],
             "wind_speed": self["windspeed"],
-            "river_discharge": self["river_discharge"] * 150,
+            "river_discharge": self["river_discharge"],
         }
 
 
