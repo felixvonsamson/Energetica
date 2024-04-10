@@ -41,7 +41,8 @@ function sortTable(columnName) {
 
     // Rebuild the HTML table
     let html = `<tr>
-        <th id="username" onclick="sortTable('username')">Usernames</th>
+        <th id="username" onclick="sortTable('username')">Username</th>
+        <th id="network_name" onclick="sortTable('network_name')">Network</th>
         <th id="average_hourly_revenues" onclick="sortTable('average_hourly_revenues')">Revenues</th>
         <th id="max_power_consumption" onclick="sortTable('max_power_consumption')">Max power</th>
         <th id="total_technology_levels" onclick="sortTable('total_technology_levels')">Technology</th>
@@ -50,7 +51,8 @@ function sortTable(columnName) {
         </tr>`;
     for (const [id, player] of sortedData) {
         html += `<tr>
-            <td><a href="/profile?player_name=${player['username']}">${player['username']}</td>
+            <td><a href="/profile?player_name=${player['username']}">${player['username']}</a></td>
+            <td>${player['network_name']}</td>
             <td>${display_money(player['average_hourly_revenues'], write=false)}/h</td>
             <td>${display_W(player['max_power_consumption'], write=false)}</td>
             <td>${player['total_technology_levels']}</td>

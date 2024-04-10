@@ -749,6 +749,7 @@ def get_scoreboard():
     return {
         player.id: {
             "username": player.username,
+            "network_name": player.network.name if player.network else "-",
             "average_hourly_revenues": player.average_revenues,
             "max_power_consumption": player.max_power_consumption,
             "total_technology_levels": player.total_technologies,

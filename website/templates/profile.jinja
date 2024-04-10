@@ -204,6 +204,10 @@
     <b>Other informations</b>
     <table class="table bone">
       <tr>
+        <td>Network</td>
+        <td class="txt_center">{% if profile.network %}{{ profile.network.name }}{% else %}-{% endif %}</td>
+      </tr>
+      <tr>
         <td>Revenues</td>
         <td class="txt_center"><script>display_money({{ profile.average_revenues }})</script>/h</td>
       </tr>
