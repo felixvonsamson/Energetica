@@ -1486,7 +1486,7 @@ class Config(object):
                     assets[asset]["construction energy"]
                     / assets[asset]["construction time"]
                     * 60
-                    * engine.clock_time
+                    * (60 * engine.clock_time) ** 0.5
                 )
 
         # calculating the maximum storage capacity from the warehouse level
