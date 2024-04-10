@@ -204,9 +204,56 @@
     <b>Other informations</b>
     <table class="table bone">
       <tr>
+        <td>Revenues</td>
+        <td class="txt_center"><script>display_money({{ profile.average_revenues }})</script>/h</td>
+      </tr>
+      <tr>
+        <td>Max power</td>
+        <td class="txt_center"><script>display_W({{ profile.max_power_consumption }})</script></td>
+      </tr>
+      <tr>
+        <td>Max storage</td>
+        <td class="txt_center"><script>display_Wh({{ profile.max_energy_stored }})</script></td>
+      </tr>
+      <tr>
+        <td>Imported energy</td>
+        <td class="txt_center"><script>display_Wh({{ profile.imported_energy }})</script></td>
+      </tr>
+      <tr>
+        <td>Exported energy</td>
+        <td class="txt_center"><script>display_Wh({{ profile.exported_energy }})</script></td>
+      </tr>
+      <tr>
+        <td>Extracted resources</td>
+        <td class="txt_center"><script>display_kg({{ profile.extracted_resources }})</script></td>
+      </tr>
+      <tr>
+        <td>Bought resources</td>
+        <td class="txt_center"><script>display_kg({{ profile.bought_resources }})</script></td>
+      </tr>
+      <tr>
+        <td>Sold resources</td>
+        <td class="txt_center"><script>display_kg({{ profile.sold_resources }})</script></td>
+      </tr>
+      <tr>
+        <td>Technology</td>
+        <td class="txt_center">{{ profile.total_technologies }}</td>
+      </tr>
+      <tr>
+        <td>xp</td>
+        <td class="txt_center">{{ profile.xp }}</td>
+      </tr>
+      <tr>
         <td>Emissions</td>
-        <td>{{ profile.emissions|int }}</td>
+        <td class="txt_center"><script>display_kg({{ profile.emissions }})</script></td>
+      </tr>
+      <tr>
+        <td>Captured CO2</td>
+        <td class="txt_center"><script>display_kg({{ profile.captured_CO2 }})</script></td>
       </tr>
     </table>
   </div>
+  <br>
+  <br>
+  <br>
 {% endblock content %}
