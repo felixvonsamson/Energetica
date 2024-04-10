@@ -100,9 +100,9 @@ class WeatherData:
 
     def __init__(self):
         self._data = {
-            "windspeed": deque([0.0] * 120, maxlen=120),
-            "irradiance": deque([0.0] * 120, maxlen=120),
-            "river_discharge": deque([0.0] * 120, maxlen=120),
+            "windspeed": deque([0.0] * 600, maxlen=600),
+            "irradiance": deque([0.0] * 600, maxlen=600),
+            "river_discharge": deque([0.0] * 600, maxlen=600),
         }
 
     def update_weather(self, engine):
@@ -120,7 +120,9 @@ class WeatherData:
 
         def log_error(e, weather):
             engine.log("An error occurred:" + str(e))
-            self._data[weather].extend([self._data[weather][-1]] * 10)
+            self._data[weather].extend(
+                [self._data[weather][-1]] * round(600 / engine.clock_time)
+            )
 
         for weather in urls:
             try:
@@ -132,7 +134,9 @@ class WeatherData:
                     if datapoint > 2000:
                         datapoint = self._data[weather][-1]
                     interpolation = np.linspace(
-                        self._data[weather][-1], datapoint, 11
+                        self._data[weather][-1],
+                        datapoint,
+                        round(600 / engine.clock_time) + 1,
                     )
                     self._data[weather].extend(interpolation[1:])
                 else:
@@ -141,20 +145,25 @@ class WeatherData:
                 log_error(e, weather)
 
         month = math.floor((engine.data["total_t"] % 73440) / 6120)
-        # One year in game is 51 days
+        # One year in game is 73440 ticks
         f = (engine.data["total_t"] % 73440) / 6120 - month
         from ..config import river_discharge_seasonal
 
         d = river_discharge_seasonal
         power_factor = d[month] + (d[(month + 1) % 12] - d[month]) * f
         interpolation = np.linspace(
-            self._data["river_discharge"][-1], power_factor, 11
+            self._data["river_discharge"][-1],
+            power_factor,
+            round(600 / engine.clock_time) + 1,
         )
         self._data["river_discharge"].extend(interpolation[1:])
 
     def __getitem__(self, weather):
-        total_t = current_app.config["engine"].data["total_t"]
-        i = total_t % 10 - 10
+        engine = current_app.config["engine"]
+        total_t = engine.data["total_t"]
+        i = total_t % round(600 / engine.clock_time) - round(
+            600 / engine.clock_time
+        )
         return self._data[weather][i]
 
     def package(self, total_t):

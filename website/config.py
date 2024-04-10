@@ -1134,6 +1134,12 @@ class Config(object):
         config.update_resource_extraction(player_id)
 
         for asset in assets:
+            # adapt durations to clock_time
+            assets[asset]["construction time"] *= (
+                engine.clock_time / 60
+            ) ** 0.5
+            if "lifetime" in assets[asset]:
+                assets[asset]["lifetime"] *= (engine.clock_time / 60) ** 0.5
             if (
                 asset
                 in const_config["assets"]["mechanical_engineering"][
@@ -1409,6 +1415,7 @@ class Config(object):
                 assets[asset]["income"] += 2000
 
             if asset == "carbon_capture":
+                # calculating carbon capture power consumption and CO2 absorbtion
                 assets[asset]["power consumption"] *= (
                     const_config["assets"]["carbon_capture"]["power factor"]
                     ** player.carbon_capture
@@ -1447,6 +1454,8 @@ class Config(object):
                     assets[asset]["ramping speed"] = (
                         assets[asset]["power generation"]
                         / assets[asset]["ramping time"]
+                        * engine.clock_time
+                        / 60
                     )
 
             # calculate energy need :
@@ -1476,7 +1485,8 @@ class Config(object):
                 assets[asset]["construction power"] = (
                     assets[asset]["construction energy"]
                     / assets[asset]["construction time"]
-                    * 3600
+                    * 60
+                    * engine.clock_time
                 )
 
         # calculating the maximum storage capacity from the warehouse level
@@ -1501,6 +1511,10 @@ class Config(object):
             * 3600
             / config.for_player[player_id]["transport"]["time"]
         )
+        # reducing transport time with clock time
+        config.for_player[player_id]["transport"]["time"] *= (
+            engine.clock_time / 60
+        ) ** 0.5
 
         # setting the number of workers
         player.construction_workers = player.building_technology + 1

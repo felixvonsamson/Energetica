@@ -562,7 +562,7 @@ def buy_resource_from_market(player, quantity, sale_id):
         shipment_duration = (
             distance * engine.config[player.id]["transport"]["time"]
         )
-        round_up = 60 - time.time() % 60
+        round_up = engine.clock_time - time.time() % engine.clock_time
         new_shipment = Shipment(
             resource=sale.resource,
             quantity=quantity,
@@ -804,7 +804,7 @@ def start_project(engine, player, facility, family):
             suspension_time = None
 
     player.money -= real_price
-    round_up = 60 - time.time() % 60
+    round_up = engine.clock_time - time.time() % engine.clock_time
     new_construction = Under_construction(
         name=facility,
         family=family,
@@ -918,7 +918,9 @@ def pause_project(player, construction_id):
                 )
                 project_to_pause.suspension_time = time.time()
         construction.start_time += time.time() - construction.suspension_time
-        construction.duration += 60 - construction.start_time % 60
+        construction.duration += (
+            engine.clock_time - construction.start_time % engine.clock_time
+        )
         construction.suspension_time = None
     db.session.commit()
     ws.rest_notify_constructions(engine, player)
