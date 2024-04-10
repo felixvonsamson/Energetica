@@ -40,6 +40,7 @@ const keys_demand = [
   "research",
   "construction",
   "transport",
+  "carbon_capture",
   "small_pumped_hydro",
   "large_pumped_hydro",
   "lithium_ion_batteries",

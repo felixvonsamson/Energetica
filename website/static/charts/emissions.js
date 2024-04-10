@@ -1,4 +1,5 @@
 const keys_emissions = [
+    "carbon_capture",
     "steam_engine",
     "coal_burner",
     "oil_burner",
@@ -30,14 +31,15 @@ function draw() {
         }
         line(X, 0, X, graph_h);
         noStroke();
-        translate(X, graph_h);
+        translate(X, graph_h*f);
         let lines = 1;
         let h_max = 0;
         let total_power = 0;
+        push();
         for (const key of keys_emissions) {
             if (key in data){
-                if (data[key][t] > 0) {
-                    let h = (-data[key][t] / maxSum) * graph_h;
+                if (data[key][t] < -0.01) {
+                    let h = (-data[key][t] / maxSum) * graph_h * f;
                     ellipse(0, h, 8, 8);
                     translate(0, h);
                     lines += 1;
@@ -46,10 +48,27 @@ function draw() {
                 }
             }
         }
+        pop();
+        push();
+        for (const key of keys_emissions) {
+            if (key in data){
+                if (data[key][t] > 0.01) {
+                    let h = (-data[key][t] / maxSum) * graph_h * f;
+                    ellipse(0, h, 8, 8);
+                    translate(0, h);
+                    lines += 1;
+                    h_max -= h;
+                    total_power += data[key][t] * 60;
+                }
+            }
+        }
+        pop();
         let tx = -180;
-        let ty = 0;
-        if (h_max < (lines + 1) * 16) {
-            ty = h_max - (lines + 1) * 16 - 2;
+        let ty = mouseY - graph_h * f - 10;
+        if (ty < -graph_h * f) {
+            ty = -graph_h * f;
+        } else if (ty > graph_h * (1 - f) - lines * 16 - 16) {
+            ty = graph_h * (1 - f) - lines * 16 - 16;
         }
         if (t / data_len < 180 / graph_w) {
             tx = 20;
@@ -72,7 +91,7 @@ function draw() {
         textFont(font);
         for (const key of keys_emissions) {
             if (key in data){
-                if (data[key][t] > 0) {
+                if (data[key][t] > 0.01 | data[key][t] < -0.01) {
                     alternate_fill();
                     translate(0, -16);
                     rect(0, 0, 160, 17);
@@ -97,31 +116,54 @@ function draw() {
 function regen(res) {
     load_chart_data()
         .then((raw_data) => {
-            console.log(raw_data);
             background(229, 217, 182);
             Object.keys(raw_data["emissions"]).forEach((key) => {
                 data[key] = reduce(raw_data["emissions"][key], res);
             });
             data_len = data["steam_engine"].length;
             push();
-            translate(1.5 * margin, height - 2 * margin - 10);
             noStroke();
-            const sumArray = Array.from({ length: data_len }, (_, i) =>
-                Object.values(data).reduce((acc, arr) => acc + arr[i], 0)
+            const sums = Object.values(data).reduce(
+                (acc, arr) => {
+                    arr.forEach((value, i) => {
+                        if (value > 0) {
+                            acc.positive[i] = (acc.positive[i] || 0) + value;
+                        } else if (value < 0) {
+                            acc.negative[i] = (acc.negative[i] || 0) + value;
+                        }
+                    });
+                    return acc;
+                },
+                { positive: [], negative: [] }
             );
-            maxSum = Math.max(...sumArray);
+            maxSum = Math.max(...Object.values(sums.positive));
+            minSum = Math.min(...Object.values(sums.negative));
             if (maxSum == 0) {
                 maxSum = 100;
             }
+            f = maxSum / (maxSum - minSum);
+            translate(1.5 * margin, height - 2 * margin - 10 - graph_h * (1 - f));
             push();
             for (let t = 0; t < data_len; t++) {
                 push();
                 for (const key of keys_emissions) {
                     if (key in data){
-                        if (data[key][t] > 0) {
+                        if (data[key][t] > 0.01) {
                             fill(cols_and_names[key][0]);
-                            let h = (data[key][t] / maxSum) * graph_h;
+                            let h = (data[key][t] / maxSum) * graph_h * f;
                             rect(0, 0, graph_w / data_len + 1, -h - 1);
+                            translate(0, -h);
+                        }
+                    }
+                }
+                pop();
+                push();
+                for (const key of keys_emissions) {
+                    if (key in data){
+                        if (data[key][t] < -0.01) {
+                            fill(cols_and_names[key][0]);
+                            let h = (data[key][t] / maxSum) * graph_h * f;
+                            rect(0, 0, graph_w / data_len + 1, -h-1);
                             translate(0, -h);
                         }
                     }
@@ -132,7 +174,7 @@ function regen(res) {
             pop();
             stroke(0);
             line(0, 0, graph_w, 0);
-            line(0, 0, 0, -graph_h);
+            line(0, graph_h * (1 - f), 0, -graph_h * f);
 
             push();
             let units = time_unit(res);
@@ -152,14 +194,22 @@ function regen(res) {
             let y_ticks = y_units(maxSum * 60);
             let interval = y_ticks[1];
             fill(0);
-            let y = map(interval, 0, maxSum * 60, 0, graph_h);
-            for (let i = 0; i < y_ticks.length; i++) {
+            let y = map(interval, 0, maxSum * 60, 0, graph_h * f);
+            for (let i = 0; i <= graph_h * f; i += y) {
                 stroke(0, 0, 0, 30);
-                line(graph_w, -y * i, 0, -y * i);
+                line(graph_w, -i, 0, -i);
                 stroke(0);
-                line(0, -y * i, -5, -y * i);
+                line(0, -i, -5, -i);
                 noStroke();
-                text(display_kgh(y_ticks[i]), -0.75 * margin, -y * i - 4);
+                text(display_kgh((interval * i) / y), -0.75 * margin, -i - 4);
+            }
+            for (let i = -y; i >= -graph_h * (1 - f); i -= y) {
+                stroke(0, 0, 0, 30);
+                line(graph_w, -i, 0, -i);
+                stroke(0);
+                line(0, -i, -5, -i);
+                noStroke();
+                text(display_kgh((interval * i) / y), -0.75 * margin, -i - 4);
             }
             pop();
             pop();

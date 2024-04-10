@@ -424,6 +424,8 @@ def calculate_demand(engine, new_values, player):
     industry_demand_and_revenues(engine, player, assets, demand, revenues)
     construction_demand(player, assets, demand)
     shipment_demand(engine, player, demand)
+    if player.carbon_capture > 0:
+        demand["carbon_capture"] = assets["carbon_capture"]["power consumption"]
 
 
 def calculate_generation_without_market(engine, new_values, player):
@@ -933,6 +935,21 @@ def resources_and_pollution(engine, new_values, player):
                 )
             new_values["resources"][resource] = getattr(player, resource)
 
+    # Carbon capture CO2 absorbtion
+    if player.carbon_capture > 0:
+        satisfaction = (
+            demand["carbon_capture"]
+            / assets["carbon_capture"]["power consumption"]
+        )
+        captured_CO2 = (
+            assets["carbon_capture"]["absorbtion"] / 60 * satisfaction
+        )
+        player.captured_CO2 += captured_CO2
+        db.session.commit()
+        add_emissions(
+            engine, new_values, player, "carbon_capture", -captured_CO2
+        )
+
     construction_emissions(engine, new_values, player, assets)
 
     # O&M costs
@@ -993,8 +1010,6 @@ def reduce_demand(
     engine, new_values, past_data, demand_type, player_id, satisfaction
 ):
     """Mesures taken to reduce demand"""
-    if demand_type == "extraction_facilities":
-        return
     player = Player.query.get(player_id)
     demand = new_values[player.id]["demand"]
     if demand_type == "industry":
@@ -1005,6 +1020,8 @@ def reduce_demand(
         demand["industry"] = satisfaction
         return
     demand[demand_type] = satisfaction
+    if demand_type in ["extraction_facilities", "carbon_capture"]:
+        return
     if satisfaction > 1.05 * past_data.get_last_data("demand", demand_type):
         return
     assets = engine.config[player.id]["assets"]

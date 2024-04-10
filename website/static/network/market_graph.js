@@ -68,7 +68,7 @@ function setup() {
         research: [color(255, 255, 255), "Research"],
         construction: [color(255, 123, 0), "Constructions"],
         transport: [color(106, 0, 244), "Transport"],
-        CO2_capture: [color(173, 181, 189), "CO2 capture"],
+        carbon_capture: [color(173, 181, 189), "CO2 capture"],
 
         price: [color(40, 84, 48), "Market price"],
         quantity: [color(45, 53, 166), "Market quantity"],

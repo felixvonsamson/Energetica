@@ -165,6 +165,7 @@ class Player(db.Model, UserMixin):
     total_technologies = db.Column(db.Integer, default=0)
     imported_energy = db.Column(db.Float, default=0)
     exported_energy = db.Column(db.Float, default=0)
+    captured_CO2 = db.Column(db.Float, default=0)
 
     advancements = db.Column(db.Text, default="")
     achievements = db.Column(db.Text, default="")

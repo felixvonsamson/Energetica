@@ -1348,12 +1348,7 @@ class Config(object):
                 assets[asset]["construction energy"] *= const_config["assets"][
                     asset
                 ]["price multiplier"] ** (1.2 * getattr(player, asset))
-                if asset in [
-                    "laboratory",
-                    "warehouse",
-                    "industry",
-                    "carbon_capture",
-                ]:
+                if asset in engine.functional_facilities:
                     assets[asset]["construction pollution"] *= const_config[
                         "assets"
                     ][asset]["price multiplier"] ** (getattr(player, asset))
@@ -1412,6 +1407,18 @@ class Config(object):
                 )
                 # basic universal income of 2000 per day
                 assets[asset]["income"] += 2000
+
+            if asset == "carbon_capture":
+                assets[asset]["power consumption"] *= (
+                    const_config["assets"]["carbon_capture"]["power factor"]
+                    ** player.carbon_capture
+                )
+                assets[asset]["absorbtion"] *= (
+                    const_config["assets"]["carbon_capture"][
+                        "absorbtion factor"
+                    ]
+                    ** player.carbon_capture
+                )
 
             if (
                 asset

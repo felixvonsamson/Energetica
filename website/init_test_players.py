@@ -106,6 +106,8 @@ def init_test_players(engine):
         add_asset(player, "nuclear_reactor_gen4", 1)
         add_asset(player, "combined_cycle", 1)
         add_asset(player, "gas_burner", 3)
+        add_asset(player, "chemistry", 2)
+        add_asset(player, "carbon_capture", 4)
         db.session.commit()
 
     player2 = create_player(engine, "user2", "password")
