@@ -226,7 +226,9 @@ function newdraw_monitor() {
     fill(color(83, 35, 75));
     noStroke();
     rect(0, 0, 390, 100);
-    image(logo, 25, 10, 82, 80);
+    if(logo.height != 0){
+        image(logo, 25, 10, 82, 80);
+    }
     textFont(font_logo, 50);
     fill(color(131, 52, 33));
     text("Energetica", 230, 40);
