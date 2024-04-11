@@ -28,7 +28,8 @@ from .utils import (
 
 # This is the engine object
 class gameEngine(object):
-    def __init__(engine):
+    def __init__(engine, clock_time):
+        engine.clock_time = clock_time
         engine.config = config
         engine.const_config = const_config["assets"]
         engine.socketio = None
@@ -130,8 +131,9 @@ class gameEngine(object):
             engine.data["start_date"].month,
             engine.data["start_date"].day,
         )
-        engine.data["delta_min"] = int(
-            (engine.data["start_date"] - start_day).total_seconds() // 60
+        engine.data["delta_t"] = round(
+            (engine.data["start_date"] - start_day).total_seconds()
+            // engine.clock_time
         )
         # time shift for daily industry variation
 
@@ -192,37 +194,38 @@ from .production_update import update_electricity  # noqa: E402
 
 
 # function that is executed once every 1 minute :
-def state_update_m(engine, app):
-    check_upcoming_actions(app)
+def state_update(engine, app):
+    check_upcoming_actions(engine, app)
     total_t = (
         datetime.now() - engine.data["start_date"]
-    ).total_seconds() / 60.0  # 60.0 or 5.0
+    ).total_seconds() / engine.clock_time
     while engine.data["total_t"] < total_t:
         engine.data["total_t"] += 1
         # print(f"t = {engine.data['total_t']}")
         if engine.data["total_t"] % 60 == 0:
             save_past_data_threaded(app, engine)
         with app.app_context():
-            if engine.data["total_t"] % 10 == 1:
+            if engine.data["total_t"] % (600 / engine.clock_time) == 0:
                 engine.data["weather"].update_weather(engine)
             update_electricity(engine)
 
     # save engine every minute in case of server crash
-    with open("instance/engine_data.pck", "wb") as file:
-        pickle.dump(engine.data, file)
+    if engine.data["total_t"] % (60 / engine.clock_time) == 0:
+        with open("instance/engine_data.pck", "wb") as file:
+            pickle.dump(engine.data, file)
     with app.app_context():
         ws.rest_notify_scoreboard(engine)
         ws.rest_notify_weather(engine)
 
 
-def check_upcoming_actions(app):
+def check_upcoming_actions(engine, app):
     """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
     with app.app_context():
         # check if constructions finished
         finished_constructions = Under_construction.query.filter(
             Under_construction.suspension_time.is_(None),
             Under_construction.start_time + Under_construction.duration
-            < time.time() + 50,
+            < time.time() + 0.8 * engine.clock_time,
         ).all()
         if finished_constructions:
             for fc in finished_constructions:
@@ -234,7 +237,8 @@ def check_upcoming_actions(app):
         arrived_shipments = Shipment.query.filter(
             Shipment.departure_time.isnot(None),
             Shipment.suspension_time.is_(None),
-            Shipment.departure_time + Shipment.duration < time.time() + 50,
+            Shipment.departure_time + Shipment.duration
+            < time.time() + 0.8 * engine.clock_time,
         ).all()
         if arrived_shipments:
             for a_s in arrived_shipments:
@@ -244,7 +248,7 @@ def check_upcoming_actions(app):
 
         # check end of lifetime of facilites
         eolt_facilities = Active_facilites.query.filter(
-            Active_facilites.end_of_life < time.time() + 50
+            Active_facilites.end_of_life < time.time() + 0.8 * engine.clock_time
         ).all()
         if eolt_facilities:
             for facility in eolt_facilities:

@@ -6,6 +6,7 @@ from .database.player import Player
 import copy
 import math
 from flask import current_app
+from .utils import hydro_price_function
 
 const_config = {
     "assets": {
@@ -354,7 +355,7 @@ const_config = {
             "name": "Civil engineering",
             "type": "Technology",
             "price multiplier": 1.5,
-            "price factor": 1.4,
+            "price factor": 1.25,
             "prod factor": 1.15,
             "capacity factor": 1.05,
             "affected facilities": [
@@ -414,9 +415,9 @@ const_config = {
 var_config = {
     "assets": {
         "steam_engine": {
-            "price": 2600,  # [¤]
-            "power generation": 210000,  # [W]
-            "construction time": 3600,  # [s]
+            "price": 10000,  # [¤]
+            "power generation": 820000,  # [W]
+            "construction time": 5400,  # [s]
             "construction power factor": 0.4,  # fraction of power gen during construction
             "construction pollution": 17520,  # [kg]
             "O&M cost": 0.8,  # [fraction of price per (day)]
@@ -466,6 +467,7 @@ var_config = {
             "requirements": [
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
+                ["warehouse", 1, False],
             ],
         },
         "oil_burner": {
@@ -482,6 +484,7 @@ var_config = {
             "requirements": [
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
+                ["warehouse", 1, False],
             ],
         },
         "gas_burner": {
@@ -498,6 +501,7 @@ var_config = {
             "requirements": [
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
+                ["warehouse", 1, False],
             ],
         },
         "small_water_dam": {
@@ -544,6 +548,7 @@ var_config = {
             "requirements": [
                 ["thermodynamics", 3, False],
                 ["mechanical_engineering", 3, False],
+                ["warehouse", 2, False],
             ],
         },
         "nuclear_reactor": {
@@ -561,6 +566,7 @@ var_config = {
             "requirements": [
                 ["chemistry", 3, False],
                 ["nuclear_engineering", 1, False],
+                ["warehouse", 3, False],
             ],
         },
         "large_water_dam": {
@@ -637,6 +643,7 @@ var_config = {
             "requirements": [
                 ["chemistry", 5, False],
                 ["nuclear_engineering", 5, False],
+                ["warehouse", 3, False],
             ],
         },
         "small_pumped_hydro": {
@@ -755,12 +762,12 @@ var_config = {
             "requirements": [],
         },
         "industry": {
-            "price": 600,
+            "price": 2400,
             "construction time": 1200,
-            "construction energy": 10000,
-            "construction pollution": 1000,
-            "power consumption": 50000,  # [W]
-            "income": 2000,  # [¤/day]
+            "construction energy": 40000,
+            "construction pollution": 4000,
+            "power consumption": 200000,  # [W]
+            "income": 8000,  # [¤/day]
             "requirements": [],
         },
         "carbon_capture": {
@@ -786,7 +793,10 @@ var_config = {
             "power consumption": 3000000,  # [W]
             "pollution": 0.065,  # [kg/kg extracted]
             "lifetime": 2782080,  # [s]
-            "requirements": [["mineral_extraction", 1, False]],
+            "requirements": [
+                ["mineral_extraction", 1, False],
+                ["warehouse", 1, False],
+            ],
         },
         "oil_field": {
             "price": 120000,
@@ -797,7 +807,10 @@ var_config = {
             "power consumption": 7300000,
             "pollution": 0.302,
             "lifetime": 1451520,
-            "requirements": [["mineral_extraction", 2, False]],
+            "requirements": [
+                ["mineral_extraction", 2, False],
+                ["warehouse", 1, False],
+            ],
         },
         "gas_drilling_site": {
             "price": 110000,
@@ -808,7 +821,10 @@ var_config = {
             "power consumption": 5100000,
             "pollution": 0.523,
             "lifetime": 1209600,
-            "requirements": [["mineral_extraction", 2, False]],
+            "requirements": [
+                ["mineral_extraction", 2, False],
+                ["warehouse", 1, False],
+            ],
         },
         "uranium_mine": {
             "price": 350000,
@@ -819,7 +835,10 @@ var_config = {
             "power consumption": 18000000,
             "pollution": 230,
             "lifetime": 2177280,
-            "requirements": [["mineral_extraction", 5, False]],
+            "requirements": [
+                ["mineral_extraction", 5, False],
+                ["warehouse", 3, False],
+            ],
         },
         "mathematics": {
             "price": 36000,  # [¤]
@@ -1071,6 +1090,7 @@ class Config(object):
 
     # update mining speeds according to reserves depleation
     def update_resource_extraction(config, player_id):
+        engine = current_app.config["engine"]
         player = Player.query.get(player_id)
         if player.tile is None:
             return
@@ -1083,21 +1103,29 @@ class Config(object):
             const_config["assets"]["coal_mine"]["extraction_rate"]
             * player.tile.coal
             * me_factor
+            * engine.clock_time
+            / 60
         )
         assets["oil_field"]["amount produced"] = (
             const_config["assets"]["oil_field"]["extraction_rate"]
             * player.tile.oil
             * me_factor
+            * engine.clock_time
+            / 60
         )
         assets["gas_drilling_site"]["amount produced"] = (
             const_config["assets"]["gas_drilling_site"]["extraction_rate"]
             * player.tile.gas
             * me_factor
+            * engine.clock_time
+            / 60
         )
         assets["uranium_mine"]["amount produced"] = (
             const_config["assets"]["uranium_mine"]["extraction_rate"]
             * player.tile.uranium
             * me_factor
+            * engine.clock_time
+            / 60
         )
 
     # regularly update minimg productivity for all players (mineral depletion)
@@ -1116,6 +1144,12 @@ class Config(object):
         config.update_resource_extraction(player_id)
 
         for asset in assets:
+            # adapt durations to clock_time
+            assets[asset]["construction time"] *= (
+                engine.clock_time / 60
+            ) ** 0.5
+            if "lifetime" in assets[asset]:
+                assets[asset]["lifetime"] *= (engine.clock_time / 60) ** 0.5
             if (
                 asset
                 in const_config["assets"]["mechanical_engineering"][
@@ -1330,12 +1364,7 @@ class Config(object):
                 assets[asset]["construction energy"] *= const_config["assets"][
                     asset
                 ]["price multiplier"] ** (1.2 * getattr(player, asset))
-                if asset in [
-                    "laboratory",
-                    "warehouse",
-                    "industry",
-                    "carbon_capture",
-                ]:
+                if asset in engine.functional_facilities:
                     assets[asset]["construction pollution"] *= const_config[
                         "assets"
                     ][asset]["price multiplier"] ** (getattr(player, asset))
@@ -1368,6 +1397,12 @@ class Config(object):
                     if not req[2]:
                         assets[asset]["locked"] = True
 
+            if asset in ["watermill", "small_water_dam", "large_water_dam"]:
+                # update price according to existing
+                assets[asset]["price"] *= hydro_price_function(
+                    getattr(player, asset), player.tile.hydro
+                )
+
             if (
                 asset
                 in engine.storage_facilities
@@ -1394,6 +1429,19 @@ class Config(object):
                 )
                 # basic universal income of 2000 per day
                 assets[asset]["income"] += 2000
+
+            if asset == "carbon_capture":
+                # calculating carbon capture power consumption and CO2 absorbtion
+                assets[asset]["power consumption"] *= (
+                    const_config["assets"]["carbon_capture"]["power factor"]
+                    ** player.carbon_capture
+                )
+                assets[asset]["absorbtion"] *= (
+                    const_config["assets"]["carbon_capture"][
+                        "absorbtion factor"
+                    ]
+                    ** player.carbon_capture
+                )
 
             if (
                 asset
@@ -1422,6 +1470,8 @@ class Config(object):
                     assets[asset]["ramping speed"] = (
                         assets[asset]["power generation"]
                         / assets[asset]["ramping time"]
+                        * engine.clock_time
+                        / 60
                     )
 
             # calculate energy need :
@@ -1451,7 +1501,8 @@ class Config(object):
                 assets[asset]["construction power"] = (
                     assets[asset]["construction energy"]
                     / assets[asset]["construction time"]
-                    * 3600
+                    * 60
+                    * (60 * engine.clock_time) ** 0.5
                 )
 
         # calculating the maximum storage capacity from the warehouse level
@@ -1476,6 +1527,10 @@ class Config(object):
             * 3600
             / config.for_player[player_id]["transport"]["time"]
         )
+        # reducing transport time with clock time
+        config.for_player[player_id]["transport"]["time"] *= (
+            engine.clock_time / 60
+        ) ** 0.5
 
         # setting the number of workers
         player.construction_workers = player.building_technology + 1

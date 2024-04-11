@@ -12,19 +12,47 @@ let minPrice;
 let maxCap;
 let f1, f2;
 let graph;
+let clock_time;
 let fill_alt = 0;
 let players = {};
 
-const resolution = ["2h", "6h", "day", "5 days", "month", "6 months"];
-let res = "2h";
-const res_to_data = {
-    "2h": ["day", 1],
-    "6h": ["day", 1],
-    day: ["day", 1],
-    "5 days": ["5_days", 5],
-    month: ["month", 30],
-    "6 months": ["6_months", 180],
-};
+let resolution;
+let res;
+let res_to_factor;
+if (clock_time == 60){
+    resolution = ["2h", "6h", "day", "5 days", "month", "6 months"];
+    res = "2h";
+    res_to_factor = {
+        "2h": 1,
+        "6h": 1,
+        "day": 1,
+        "5 days": 5,
+        "month": 30,
+        "6 months": 180,
+    };
+}else if(clock_time == 30){
+    resolution = ["1h", "3h", "12h", "2 days", "15 days", "3 months"];
+    res = "1h";
+    res_to_factor = {
+        "1h": 1,
+        "3h": 1,
+        "12h": 1,
+        "2 days": 5,
+        "15 days": 30,
+        "3 months": 180,
+    };
+}else{
+    resolution = ["×1 (120)", "×1 (360)", "×1 (1440)", "×5", "×30", "×180"];
+    res = "×1 (120)";
+    res_to_factor = {
+        "×1 (120)": 1,
+        "×1 (360)": 1,
+        "×1 (1440)": 1,
+        "×5": 5,
+        "×30": 30,
+        "×180": 180,
+    };
+}
 
 let cols_and_names = {};
 
@@ -68,7 +96,7 @@ function setup() {
         research: [color(255, 255, 255), "Research"],
         construction: [color(255, 123, 0), "Constructions"],
         transport: [color(106, 0, 244), "Transport"],
-        CO2_capture: [color(173, 181, 189), "CO2 capture"],
+        carbon_capture: [color(173, 181, 189), "CO2 capture"],
 
         price: [color(40, 84, 48), "Market price"],
         quantity: [color(45, 53, 166), "Market quantity"],
@@ -163,7 +191,7 @@ function draw() {
             fill(0);
             textFont(balooBold);
             text(
-                display_duration((data_len - t_view - 1) * res_to_data[res][1]),
+                display_duration((data_len - t_view - 1) * res_to_factor[res]),
                 80,
                 5
             );
@@ -190,7 +218,7 @@ function draw() {
                 fill(229, 217, 182);
             }
             translate(0, 16);
-            if ((data_len - t_view - 1) * res_to_data[res][1] < 1440) {
+            if ((data_len - t_view - 1) * res_to_factor[res] < 1440) {
                 fill(0);
                 text("(click to see market)", 80, 5);
             }
@@ -402,13 +430,12 @@ function mousePressed() {
         return;
     }
     if (mouseY < 0.32 * height) {
-        t = (data_len - t_view - 1) * res_to_data[res][1];
+        t = (data_len - t_view - 1) * res_to_factor[res];
         update_graph();
     }
 }
 
 function update_graph() {
-    file = res_to_data[res][0];
     fetch(`/get_market_data?t=${t}`) // retrieves data from server
         .then((response) => response.json())
         .then((raw_data) => {
@@ -530,8 +557,9 @@ function update_graph() {
             pop();
 
             load_chart_data((network = true)).then((raw_data) => {
-                Object.keys(raw_data).forEach((key) => {
-                    data[key] = reduce(raw_data[key], res);
+                clock_time = raw_data.resolution
+                Object.keys(raw_data.data).forEach((key) => {
+                    data[key] = reduce(raw_data.data[key], res);
                 });
                 data_len = data["price"].length;
                 min = {
@@ -661,17 +689,20 @@ function display_money(price) {
     return general_format(price, units);
 }
 
-function display_duration(minutes) {
-    if (minutes == 0) {
+function display_duration(ticks) {
+    let seconds = ticks * clock_time;
+    if (seconds == 0) {
         return "now";
     }
 
-    const months = Math.floor(minutes / 43200);
-    minutes -= months * 43200;
-    const days = Math.floor(minutes / 1440);
-    minutes -= days * 1440;
-    const hours = Math.floor(minutes / 60);
-    minutes -= hours * 60;
+    const months = Math.floor(seconds / 2592000);
+    seconds -= months * 2592000;
+    const days = Math.floor(seconds / 86400);
+    seconds -= days * 86400;
+    const hours = Math.floor(seconds / 3600);
+    seconds -= hours * 3600;
+    const minutes = Math.floor(seconds / 60);
+    seconds -= minutes * 60;
 
     let duration = "t - ";
     if (months > 0) {
@@ -684,19 +715,25 @@ function display_duration(minutes) {
         duration += `${hours}h `;
     }
     if (minutes > 0) {
-        duration += `${minutes}m`;
+        duration += `${minutes}m `;
+    }
+    if (seconds > 0) {
+        duration += `${seconds}s`;
     }
     return duration.trim();
 }
 
-function display_time(minutes) {
-    if (minutes == 0) {
+function display_time(ticks) {
+    let seconds = ticks * clock_time;
+    if (seconds == 0) {
         return "Now";
     }
-    const days = Math.floor(minutes / 1440);
-    minutes -= days * 1440;
-    const hours = Math.floor(minutes / 60);
-    minutes -= hours * 60;
+    const days = Math.floor(seconds / 86400);
+    seconds -= days * 86400;
+    const hours = Math.floor(seconds / 3600);
+    seconds -= hours * 3600;
+    const minutes = Math.floor(seconds / 60);
+    seconds -= minutes * 60;
 
     let duration = "";
     if (days > 0) {
@@ -706,7 +743,10 @@ function display_time(minutes) {
         duration += `${hours}h `;
     }
     if (minutes > 0) {
-        duration += `${minutes}min`;
+        duration += `${minutes}min `;
+    }
+    if (seconds > 0) {
+        duration += `${seconds}s`;
     }
     duration += " ago";
     return duration.trim();
@@ -742,18 +782,36 @@ function calc_h(price) {
 }
 
 function time_unit(res) {
-    if (res == "2h") {
-        return ["2h", "1h40", "1h20", "1h", "40min", "20min", "now"];
-    } else if (res == "6h") {
-        return ["6h", "5h", "4h", "3h", "2h", "1h", "now"];
-    } else if (res == "day") {
-        return ["24h", "20h", "16h", "12h", "8h", "4h", "now"];
-    } else if (res == "5 days") {
-        return ["5d", "4d", "3d", "2d", "1d", "now"];
-    } else if (res == "month") {
-        return ["30d", "25d", "20d", "15d", "10d", "5d", "now"];
-    } else if (res == "6 months") {
-        return ["6m", "5m", "4m", "3m", "2m", "1m", "now"];
+    if(clock_time == 60){
+        if (res == "2h") {
+            return ["2h", "1h40", "1h20", "1h", "40min", "20min", "now"];
+        } else if (res == "6h") {
+            return ["6h", "5h", "4h", "3h", "2h", "1h", "now"];
+        } else if (res == "day") {
+            return ["24h", "20h", "16h", "12h", "8h", "4h", "now"];
+        } else if (res == "5 days") {
+            return ["5d", "4d", "3d", "2d", "1d", "now"];
+        } else if (res == "month") {
+            return ["30d", "25d", "20d", "15d", "10d", "5d", "now"];
+        } else if (res == "6 months") {
+            return ["6m", "5m", "4m", "3m", "2m", "1m", "now"];
+        }
+    }else if(clock_time == 30){
+        if (res == "1h") {
+            return ["1h", "50min", "40min", "30min", "20min", "10min", "now"];
+        } else if (res == "3h") {
+            return ["3h", "2h30", "2h", "1h30", "1h", "30min", "now"];
+        } else if (res == "12h") {
+            return ["12h", "10h", "8h", "6h", "4h", "2h", "now"];
+        } else if (res == "2 days") {
+            return ["60h", "48h", "36h", "24h", "12h", "now"];
+        } else if (res == "15 days") {
+            return ["15d", "12.5d", "10d", "7.5d", "5d", "2.5d", "now"];
+        } else if (res == "3 months") {
+            return ["3m", "2.5m", "2m", "1.5m", "1m", "15d", "now"];
+        }
+    }else{
+        return [res, "", "", "", "", "", "now"];
     }
 }
 
@@ -769,20 +827,21 @@ function y_units(maxNumber) {
     return values;
 }
 
+
 function reduce(arr, res) {
-    if (res == "2h") {
+    if (res == resolution[0]) {
         return arr[0].slice(-120);
     }
-    if (res == "6h") {
+    if(res == resolution[1]){
         return arr[0].slice(-360);
     }
-    if (res == "day") {
+    if(res == resolution[2]){
         return arr[0].slice(-1440);
     }
-    if (res == "5 days") {
+    if(res == resolution[3]){
         return arr[1];
     }
-    if (res == "month") {
+    if(res == resolution[4]){
         return arr[2];
     }
     return arr[3];

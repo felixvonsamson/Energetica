@@ -134,8 +134,9 @@ function regen(res) {
     load_chart_data().then((raw_data) => {
         load_player_data().then((player_data) => {
             background(229, 217, 182);
-            Object.keys(raw_data["storage"]).forEach((key) => {
-                data[key] = reduce(raw_data["storage"][key], res);
+            clock_time = raw_data.resolution;
+            Object.keys(raw_data.data["storage"]).forEach((key) => {
+                data[key] = reduce(raw_data.data["storage"][key], res);
                 data_len = data[key].length;
             });
             if (Object.keys(data).length == 0){

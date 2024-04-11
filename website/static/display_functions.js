@@ -4,20 +4,20 @@ readable format for humans.
 */
 
 // Inserts spaces as a thousands separator and the right unit
-function general_format(value, units) {
+function general_format(value, units, write=false) {
     let unit_index = 0;
     while (value >= 10000 && unit_index < units.length - 1) {
         value /= 1000;
         unit_index += 1;
     }
-    document.write(
-        `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
-            units[unit_index]
-        }`
-    );
+    formatted_value = `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]}`
+    if (write){
+        document.write(formatted_value);
+    }
+    return formatted_value
 }
 
-// Inserts spaces as a thousands separator and the right unit
+// Inserts spaces as a thousands separator and the right unit for current and future value
 function upgrade_format(value, units, factor) {
     let unit_index = 0;
     let value2 = value * factor;
@@ -55,56 +55,55 @@ function display_upgrade_kg(price, factor) {
 }
 
 // Price :
-function display_money(price) {
+function display_money(price, write=true) {
     const units = [
         "<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>",
         "k<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>",
         "M<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>",
         "Md<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>",
     ];
-    general_format(price, units);
+    return general_format(price, units, write);
 }
 
 // Prices for balance display :
-function display_money_long(price) {
-    document.write(
-        `<span id="money">${price
-            .toFixed(0)
-            .replace(/\B(?=(\d{3})+(?!\d))/g, "'")}</span>
-            <img src="/static/images/icons/coin.svg" class="coin" alt="coin">`
-    );
-}
-
-function formatted_money(amount) {
-    return `${amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`;
+function display_money_long(price, write=true) {
+    formatted_value = `<span id="money">${price
+        .toFixed(0)
+        .replace(/\B(?=(\d{3})+(?!\d))/g, "'")}</span>
+        <img src="/static/images/icons/coin.svg" class="coin" alt="coin">`
+    if(write){
+        document.write(formatted_value);
+    }
+    return formatted_value;
+    
 }
 
 // Power :
-function display_W(power) {
+function display_W(power, write=true) {
     const units = [" W", " kW", " MW", " GW", " TW"];
-    general_format(power, units);
+    return general_format(power, units, write);
 }
 
 // Energy :
-function display_Wh(energy) {
+function display_Wh(energy, write=true) {
     const units = [" Wh", " kWh", " MWh", " GWh", " TWh"];
-    general_format(energy, units);
+    return general_format(energy, units, write);
 }
 
 // Mass rate :
-function display_kgh(mass_rate) {
+function display_kgh(mass_rate, write=true) {
     const units = [" kg/h", " t/h"];
-    general_format(mass_rate, units);
+    return general_format(mass_rate, units, write);
 }
 
 // Mass
-function display_kg(mass) {
+function display_kg(mass, write=true) {
     const units = [" kg", " t", " kt", " Mt"];
-    general_format(mass, units);
+    return general_format(mass, units, write);
 }
 
 // Duration :
-function display_duration(seconds) {
+function display_duration(seconds, write=true) {
     const days = Math.floor(seconds / 86400);
     seconds -= days * 86400;
     const hours = Math.floor(seconds / 3600);
@@ -121,12 +120,18 @@ function display_duration(seconds) {
     if (minutes > 0) {
         duration += `${minutes}m`;
     }
-    document.write(duration.trim());
+    if(write){
+        document.write(duration.trim());
+    }
+    return duration.trim();
 }
 
-function display_days(seconds) {
+function display_days(seconds, write=true) {
     const days = Math.round(seconds / 86400);
-    document.write(days);
+    if(write){
+        document.write(days);
+    }
+    return days;
 }
 
 function to_string(inputFloat) {
@@ -164,3 +169,7 @@ function formatDateTime(dateTimeString) {
         document.write(`${date} ${months[monthIndex]} ${hours}:${minutes}:${seconds}`);
     }
   }
+
+function formatted_money(amount) {
+    return `${amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`;
+}

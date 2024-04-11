@@ -57,13 +57,13 @@ function draw() {
         push();
         for (const key of keys_revenues) {
             if (key in data){
-                if (data[key][t]*60 < -1) {
+                if (data[key][t]*3600/clock_time < -1) {
                     let h = (-data[key][t] / maxSum) * graph_h * f;
                     ellipse(0, h, 8, 8);
                     translate(0, h);
                     lines += 1;
                     h_max -= h;
-                    total_power += data[key][t] * 60;
+                    total_power += data[key][t] * 3600/clock_time;
                 }
             }
         }
@@ -71,13 +71,13 @@ function draw() {
         push();
         for (const key of keys_revenues) {
             if (key in data){
-                if (data[key][t]*60 > 1) {
+                if (data[key][t]*3600/clock_time > 1) {
                     let h = (-data[key][t] / maxSum) * graph_h * f;
                     ellipse(0, h, 8, 8);
                     translate(0, h);
                     lines += 1;
                     h_max -= h;
-                    total_power += data[key][t] * 60;
+                    total_power += data[key][t] * 3600/clock_time;
                 }
             }
         }
@@ -110,7 +110,7 @@ function draw() {
         textFont(font);
         for (const key of keys_revenues) {
             if (key in data){
-                if (data[key][t]*60 < -1 | data[key][t]*60 > 1) {
+                if (data[key][t]*3600/clock_time < -1 | data[key][t]*3600/clock_time > 1) {
                     alternate_fill();
                     translate(0, -16);
                     rect(0, 0, 160, 17);
@@ -122,7 +122,7 @@ function draw() {
                     textAlign(LEFT, CENTER);
                     text(cols_and_names[key][1], 20, 5);
                     textAlign(CENTER, CENTER);
-                    display_coin(display_money(data[key][t] * 60), 160, 0);
+                    display_coin(display_money(data[key][t] * 3600/clock_time), 160, 0);
                     fill(229, 217, 182);
                 }
             }
@@ -136,11 +136,12 @@ function regen(res) {
     load_chart_data()
         .then((raw_data) => {
             background(229, 217, 182);
-            Object.keys(raw_data["revenues"]).forEach((key) => {
-                data[key] = reduce(raw_data["revenues"][key], res);
+            clock_time = raw_data.resolution;
+            Object.keys(raw_data.data["revenues"]).forEach((key) => {
+                data[key] = reduce(raw_data.data["revenues"][key], res);
             });
-            Object.keys(raw_data["op_costs"]).forEach((key) => {
-                data[key] = reduce(raw_data["op_costs"][key], res);
+            Object.keys(raw_data.data["op_costs"]).forEach((key) => {
+                data[key] = reduce(raw_data.data["op_costs"][key], res);
             });
             data_len = data["industry"].length;
             push();
@@ -170,7 +171,7 @@ function regen(res) {
                 push();
                 for (const key of keys_revenues) {
                     if (key in data){
-                        if (data[key][t]*60 > 1) {
+                        if (data[key][t]*3600/clock_time > 1) {
                             fill(cols_and_names[key][0]);
                             let h = (data[key][t] / maxSum) * graph_h * f;
                             rect(0, 0, graph_w / data_len + (data_len>1000), -h);
@@ -182,7 +183,7 @@ function regen(res) {
                 push();
                 for (const key of keys_revenues) {
                     if (key in data){
-                        if (data[key][t]*60 < -1) {
+                        if (data[key][t]*3600/clock_time < -1) {
                             fill(cols_and_names[key][0]);
                             let h = (data[key][t] / maxSum) * graph_h * f;
                             rect(0, 0, graph_w / data_len + (data_len>1000), -h);
@@ -213,10 +214,10 @@ function regen(res) {
             pop();
 
             push();
-            let y_ticks = y_units(maxSum * 60);
+            let y_ticks = y_units(maxSum * 3600/clock_time);
             let interval = y_ticks[1];
             fill(0);
-            let y = map(interval, 0, maxSum * 60, 0, graph_h * f);
+            let y = map(interval, 0, maxSum * 3600/clock_time, 0, graph_h * f);
             for (let i = 0; i <= graph_h * f; i += y) {
                 stroke(0, 0, 0, 30);
                 line(graph_w, -i, 0, -i);

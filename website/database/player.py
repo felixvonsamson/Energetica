@@ -40,7 +40,7 @@ class Player(db.Model, UserMixin):
     )
 
     # resources :
-    money = db.Column(db.Float, default=10000)  # default is 10000
+    money = db.Column(db.Float, default=25000)  # default is 25000
     coal = db.Column(db.Float, default=0)
     oil = db.Column(db.Float, default=0)
     gas = db.Column(db.Float, default=0)
@@ -108,17 +108,11 @@ class Player(db.Model, UserMixin):
     nuclear_engineering = db.Column(db.Integer, default=0)
 
     # Priority lists
-    self_consumption_priority = db.Column(
-        db.Text,
-        default="",
-    )
-    rest_of_priorities = db.Column(
-        db.Text,
-        default="steam_engine",
-    )
+    self_consumption_priority = db.Column(db.Text, default="")
+    rest_of_priorities = db.Column(db.Text, default="steam_engine")
     demand_priorities = db.Column(
         db.Text,
-        default="transport,industry,research,construction",
+        default="industry,construction,transport,research",
     )
     construction_priorities = db.Column(db.Text, default="")
     research_priorities = db.Column(db.Text, default="")
@@ -149,9 +143,9 @@ class Player(db.Model, UserMixin):
     price_solid_state_batteries = db.Column(db.Float, default=900)
 
     # Demand buying prices
-    price_buy_industry = db.Column(db.Float, default=1200)
+    price_buy_industry = db.Column(db.Float, default=1000)
     price_buy_construction = db.Column(db.Float, default=1020)
-    price_buy_research = db.Column(db.Float, default=1000)
+    price_buy_research = db.Column(db.Float, default=1200)
     price_buy_transport = db.Column(db.Float, default=1050)
     price_buy_coal_mine = db.Column(db.Float, default=960)
     price_buy_oil_field = db.Column(db.Float, default=970)
@@ -159,9 +153,22 @@ class Player(db.Model, UserMixin):
     price_buy_uranium_mine = db.Column(db.Float, default=990)
     price_buy_carbon_capture = db.Column(db.Float, default=660)
 
-    # CO2 emissions :
+    # player progression data :
+    xp = db.Column(db.Integer, default=0)
     emissions = db.Column(db.Float, default=0)
     average_revenues = db.Column(db.Float, default=0)
+    max_power_consumption = db.Column(db.Float, default=0)
+    max_energy_stored = db.Column(db.Float, default=0)
+    extracted_resources = db.Column(db.Float, default=0)
+    bought_resources = db.Column(db.Float, default=0)
+    sold_resources = db.Column(db.Float, default=0)
+    total_technologies = db.Column(db.Integer, default=0)
+    imported_energy = db.Column(db.Float, default=0)
+    exported_energy = db.Column(db.Float, default=0)
+    captured_CO2 = db.Column(db.Float, default=0)
+
+    advancements = db.Column(db.Text, default="")
+    achievements = db.Column(db.Text, default="")
 
     under_construction = db.relationship("Under_construction")
     resource_on_sale = db.relationship("Resource_on_sale", backref="player")
@@ -189,7 +196,7 @@ class Player(db.Model, UserMixin):
         )
         return self.lab_workers - occupied_workers
 
-    def read_project_priority(self, attr):
+    def read_list(self, attr):
         if getattr(self, attr) == "":
             return []
         priority_list = getattr(self, attr).split(",")
@@ -198,14 +205,14 @@ class Player(db.Model, UserMixin):
         else:
             return priority_list
 
-    def add_project_priority(self, attr, id):
+    def add_to_list(self, attr, id):
         if getattr(self, attr) == "":
             setattr(self, attr, str(id))
         else:
             setattr(self, attr, getattr(self, attr) + f",{id}")
         db.session.commit()
 
-    def remove_project_priority(self, attr, id):
+    def remove_from_list(self, attr, id):
         id_list = getattr(self, attr).split(",")
         id_list.remove(str(id))
         setattr(self, attr, ",".join(id_list))
@@ -213,7 +220,7 @@ class Player(db.Model, UserMixin):
 
     def project_max_priority(self, attr, id):
         """the project with the corresponding id will be moved to the top of the prioirty list"""
-        self.remove_project_priority(attr, id)
+        self.remove_from_list(attr, id)
         if getattr(self, attr) == "":
             setattr(self, attr, str(id))
         else:
@@ -315,7 +322,7 @@ class Player(db.Model, UserMixin):
         }
 
     def package_construction_queue(self):
-        return self.read_project_priority("construction_priorities")
+        return self.read_list("construction_priorities")
 
 
 class Network(db.Model):

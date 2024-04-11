@@ -106,14 +106,24 @@ def init_test_players(engine):
         add_asset(player, "nuclear_reactor_gen4", 1)
         add_asset(player, "combined_cycle", 1)
         add_asset(player, "gas_burner", 3)
+        add_asset(player, "chemistry", 2)
+        add_asset(player, "carbon_capture", 4)
         db.session.commit()
+
     player2 = create_player(engine, "user2", "password")
     if player2:
         Hex.query.filter_by(id=84).first().player_id = player2.id
         add_asset(player2, "warehouse", 1)
+        add_asset(player2, "steam_engine", 10)
         db.session.commit()
 
-    create_network(engine, "net", [player, player2])
+    player3 = create_player(engine, "user3", "password")
+    if player3:
+        Hex.query.filter_by(id=301).first().player_id = player3.id
+        add_asset(player3, "onshore_wind_turbine", 5)
+        db.session.commit()
+
+    create_network(engine, "net", [player, player2, player3])
     db.session.commit()
 
 
@@ -177,7 +187,7 @@ def add_asset(player, asset, n):
         )
         db.session.add(new_construction)
         db.session.commit()
-        player.add_project_priority(priority_list_name, new_construction.id)
+        player.add_to_list(priority_list_name, new_construction.id)
 
 
 def create_player(engine, username, password):

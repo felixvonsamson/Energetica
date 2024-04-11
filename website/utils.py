@@ -11,8 +11,6 @@ import numpy as np
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
-import requests
-import json
 
 
 from website.api import ws
@@ -99,39 +97,144 @@ def add_asset(player_id, construction_id):
         if construction.name in engine.extraction_facilities + [
             "carbon_capture"
         ]:
-            player.add_project_priority("demand_priorities", construction.name)
+            player.add_to_list("demand_priorities", construction.name)
             set_network_prices(engine, player)
         if construction.name in engine.renewables:
-            player.add_project_priority(
-                "self_consumption_priority", construction.name
-            )
+            player.add_to_list("self_consumption_priority", construction.name)
             set_network_prices(engine, player)
         if (
             construction.name
             in engine.storage_facilities + engine.controllable_facilities
         ):
-            player.add_project_priority("rest_of_priorities", construction.name)
+            player.add_to_list("rest_of_priorities", construction.name)
             set_network_prices(engine, player)
+
+        # update advancements
+        if "storage_overview" not in player.advancements:
+            if construction.name in engine.storage_facilities:
+                player.add_to_list("advancements", "storage_overview")
+                notify(
+                    "Tutorial",
+                    "You have built your first storage facility, you can monitor the stored energy in the <a href='/production_overview/storage'>storage graph</a>.",
+                    [player],
+                )
+        if "technology" not in player.advancements:
+            if construction.name == "laboratory":
+                player.add_to_list("advancements", "technology")
+                notify(
+                    "Tutorial",
+                    "You have built a laboratory, you can now reseach <a href='/technology'>technologies</a> to unlock and upgrade facilities.",
+                    [player],
+                )
+        if "warehouse" not in player.advancements:
+            if construction.name == "warehouse":
+                player.add_to_list("advancements", "warehouse")
+                notify(
+                    "Tutorial",
+                    "You have built a warehouse to store natural resources, you can now buy resources on the <a href='/resource_market'>resources market</a> or invest in <a href='/extraction_facilities'>extraction facilites</a> to extract your own resources from the ground.",
+                    [player],
+                )
+        if "GHG_effect" not in player.advancements:
+            if construction.name == "chemistry":
+                player.add_to_list("advancements", "GHG_effect")
+                notify(
+                    "Tutorial",
+                    "Scientists have discovered the greenhouse effect and have shown that climate change increses the risks of natural and social catastrophies. You can now monitor your emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph</a>.",
+                    [player],
+                )
     setattr(player, construction.name, getattr(player, construction.name) + 1)
     priority_list_name = "construction_priorities"
+    project_index = (
+        Under_construction.query.filter(
+            Under_construction.family != "Technologies",
+            Under_construction.player_id == player.id,
+            Under_construction.suspension_time.is_(None),
+        ).count()
+        - 1
+    )
     if construction.family == "Technologies":
         priority_list_name = "research_priorities"
-    player.remove_project_priority(priority_list_name, construction_id)
-    project_priorities = player.read_project_priority(priority_list_name)
-    for id in project_priorities:
+        project_index = (
+            Under_construction.query.filter(
+                Under_construction.family != "Technologies",
+                Under_construction.player_id == player.id,
+                Under_construction.suspension_time.is_(None),
+            ).count()
+            - 1
+        )
+    player.remove_from_list(priority_list_name, construction_id)
+    project_priorities = player.read_list(priority_list_name)
+    for i, id in enumerate(project_priorities[:]):
         next_construction = Under_construction.query.get(id)
         if next_construction is None:
             print(
                 f"DATABASE MISMATCH : CONSTRUCTION {id} OF PLAYER {player.username} DOES NOT EXIST IN UNDER_CONSTRUCTION DATABASE !!!"
             )
+            break
         if next_construction.suspension_time is not None:
+            if next_construction.family in [
+                "Functional facilities",
+                "Technologies",
+            ]:
+                first_lvl = (
+                    Under_construction.query.filter_by(
+                        name=next_construction.name, player_id=player.id
+                    )
+                    .order_by(Under_construction.duration)
+                    .first()
+                )
+                if first_lvl.suspension_time is None:
+                    continue
+                else:
+                    first_lvl.start_time += (
+                        time.time() - first_lvl.suspension_time
+                    )
+                    first_lvl.suspension_time = None
+                    index_first_lvl = project_priorities.index(first_lvl.id)
+                    (
+                        project_priorities[index_first_lvl],
+                        project_priorities[project_index],
+                    ) = (
+                        project_priorities[project_index],
+                        project_priorities[index_first_lvl],
+                    )
+                    db.session.commit()
+                    break
             next_construction.start_time += (
                 time.time() - next_construction.suspension_time
             )
             next_construction.suspension_time = None
+            project_priorities[i], project_priorities[project_index] = (
+                project_priorities[project_index],
+                project_priorities[i],
+            )
             db.session.commit()
             break
+    # check achievement
+    if (
+        construction.name == "laboratory"
+        and getattr(player, construction.name) >= 3
+        and "technology_1" not in player.achievements
+    ):
+        player.add_to_list("achievements", "technology_1")
+        player.xp += 5
+        notify(
+            "Achievements",
+            "Your lab is level 3, an additional lab worker is available. (+5 xp)",
+            [player],
+        )
     if construction.family == "Technologies":
+        player.total_technologies += 1
+        # check achievement
+        if "technology_2" not in player.achievements:
+            if player.total_technologies >= 25:
+                player.add_to_list("achievements", "technology_2")
+                player.xp += 10
+                notify(
+                    "Achievements",
+                    "You have researched a total of 25 levels of technologies. (+10 xp)",
+                    [player],
+                )
         server_tech = engine.data["technology_lvls"][construction.name]
         if len(server_tech) <= getattr(player, construction.name):
             server_tech.append(0)
@@ -251,73 +354,6 @@ def check_existing_chats(participants):
         if len(chat.participants) == len(participants):
             return True
     return False
-
-
-# This function upddates the windspeed and irradiation data every 10 mminutes by using the meteosuisse api
-def update_weather(engine):
-    url_wind = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min_en.json"
-    url_irr = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-globalstrahlung-10min/ch.meteoschweiz.messwerte-globalstrahlung-10min_en.json"
-    t = engine.data["current_t"]
-    try:
-        response = requests.get(url_wind)
-        if response.status_code == 200:
-            windspeed = json.loads(response.content)["features"][107][
-                "properties"
-            ]["value"]
-            if windspeed > 2000:
-                windspeed = engine.data["current_windspeed"][t - 1]
-            interpolation = np.linspace(
-                engine.data["current_windspeed"][t - 1], windspeed, 11
-            )
-            engine.data["current_windspeed"][t : t + 10] = interpolation[1:]
-        else:
-            engine.log(
-                "Failed to fetch the file. Status code:", response.status_code
-            )
-            engine.data["current_windspeed"][t : t + 10] = [
-                engine.data["current_windspeed"][t - 1]
-            ] * 10
-    except Exception as e:
-        engine.log(e)
-        engine.data["current_windspeed"][t : t + 10] = [
-            engine.data["current_windspeed"][t - 1]
-        ] * 10
-
-    try:
-        response = requests.get(url_irr)
-        if response.status_code == 200:
-            irradiation = json.loads(response.content)["features"][65][
-                "properties"
-            ]["value"]
-            if irradiation > 2000:
-                irradiation = engine.data["current_irradiation"][t - 1]
-            interpolation = np.linspace(
-                engine.data["current_irradiation"][t - 1], irradiation, 11
-            )
-            engine.data["current_irradiation"][t : t + 10] = interpolation[1:]
-        else:
-            engine.log(
-                "Failed to fetch the file. Status code:", response.status_code
-            )
-            engine.data["current_irradiation"][t : t + 10] = [
-                engine.data["current_irradiation"][t - 1]
-            ] * 10
-    except Exception as e:
-        engine.log("An error occurred:" + str(e))
-        engine.data["current_irradiation"][t : t + 10] = [
-            engine.data["current_irradiation"][t - 1]
-        ] * 10
-
-    month = math.floor(
-        (engine.data["total_t"] % 73440) / 6120
-    )  # One year in game is 51 days
-    f = (engine.data["total_t"] % 73440) / 6120 - month
-    d = engine.river_discharge
-    power_factor = d[month] + (d[(month + 1) % 12] - d[month]) * f
-    engine.data["current_discharge"][t : t + 10] = [power_factor] * 10
-    engine.log(
-        f"the current irradiation in Zürich is {engine.data['current_irradiation'][t+9]} W/m2 with a windspeed of {engine.data['current_windspeed'][t+9]} km/h"
-    )
 
 
 def save_past_data_threaded(app, engine):
@@ -483,13 +519,50 @@ def buy_resource_from_market(player, quantity, sale_id):
             sale.resource + "_on_sale",
             getattr(sale.player, sale.resource + "_on_sale") - quantity,
         )
+        sale.player.sold_resources += quantity
+        player.bought_resources += quantity
+        # check achievements
+        if "trading_1" not in player.achievements:
+            player.add_to_list("achievements", "trading_1")
+            player.xp += 5
+            notify(
+                "Achievements",
+                "You have bougth a resources on the market. (+5 xp)",
+                [player],
+            )
+        if "trading_2" not in sale.player.achievements:
+            sale.player.add_to_list("achievements", "trading_2")
+            sale.player.xp += 5
+            notify(
+                "Achievements",
+                "You have sold a resources on the market. (+5 xp)",
+                [sale.player],
+            )
+        if "trading_3" not in player.achievements:
+            if player.bought_resources >= 10000000:
+                player.add_to_list("achievements", "trading_3")
+                player.xp += 10
+                notify(
+                    "Achievements",
+                    "You have bought more than 10'000 tons of resources. (+10 xp)",
+                    [player],
+                )
+        if "trading_3" not in sale.player.achievements:
+            if sale.player.sold_resources >= 10000000:
+                sale.player.add_to_list("achievements", "trading_3")
+                sale.player.xp += 10
+                notify(
+                    "Achievements",
+                    "You have sold more than 10'000 tons of resources. (+10 xp)",
+                    [sale.player],
+                )
         dq = player.tile.q - sale.player.tile.q
         dr = player.tile.r - sale.player.tile.r
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
         shipment_duration = (
             distance * engine.config[player.id]["transport"]["time"]
         )
-        round_up = 60 - time.time() % 60
+        round_up = engine.clock_time - time.time() % engine.clock_time
         new_shipment = Shipment(
             resource=sale.resource,
             quantity=quantity,
@@ -655,14 +728,10 @@ def set_network_prices(engine, player, prices={}):
     for price in prices:
         setattr(player, price, prices[price])
 
-    rest_list = sort_priority(
-        player.read_project_priority("rest_of_priorities")
-    )
-    SCP_list = sort_SCP(
-        player.read_project_priority("self_consumption_priority")
-    )
+    rest_list = sort_priority(player.read_list("rest_of_priorities"))
+    SCP_list = sort_SCP(player.read_list("self_consumption_priority"))
     demand_list = sort_priority(
-        player.read_project_priority("demand_priorities"), prefix="price_buy_"
+        player.read_list("demand_priorities"), prefix="price_buy_"
     )
     demand_list.reverse()
 
@@ -679,8 +748,12 @@ def get_scoreboard():
     players = Player.query.filter(Player.tile != None)  # noqa: E711
     return {
         player.id: {
-            "money": player.money,
+            "username": player.username,
+            "network_name": player.network.name if player.network else "-",
             "average_hourly_revenues": player.average_revenues,
+            "max_power_consumption": player.max_power_consumption,
+            "total_technology_levels": player.total_technologies,
+            "xp": player.xp,
             "co2_emissions": player.emissions,
         }
         for player in players
@@ -698,9 +771,13 @@ def start_project(engine, player, facility, family):
         ud = Under_construction.query.filter_by(
             name=facility, player_id=player.id
         ).count()
-        if player.tile.hydro <= getattr(player, facility) + ud:
-            return {"response": "noSuitableLocationAvailable"}
+        price_factor = hydro_price_function(
+            getattr(player, facility) + ud, player.tile.hydro
+        ) / hydro_price_function(getattr(player, facility), player.tile.hydro)
+        if player.money < assets[facility]["price"] * price_factor:
+            return {"response": "notEnoughMoneyError"}
 
+    ud_count = 0
     if family in ["Functional facilities", "Technologies"]:
         ud_count = Under_construction.query.filter_by(
             name=facility, player_id=player.id
@@ -709,10 +786,9 @@ def start_project(engine, player, facility, family):
             assets[facility]["price"]
             * engine.const_config[facility]["price multiplier"] ** ud_count
         )
-        duration = (
-            assets[facility]["construction time"]
-            * engine.const_config[facility]["price multiplier"] ** ud_count
-        )
+        duration = assets[facility]["construction time"] * engine.const_config[
+            facility
+        ]["price multiplier"] ** (0.6 * ud_count)
     else:  # power facitlies, storage facilities, extractions facilities
         real_price = assets[facility]["price"]
         duration = assets[facility]["construction time"]
@@ -724,14 +800,14 @@ def start_project(engine, player, facility, family):
     suspension_time = time.time()
     if family == "Technologies":
         priority_list_name = "research_priorities"
-        if player.available_lab_workers() > 0:
+        if player.available_lab_workers() > 0 and ud_count == 0:
             suspension_time = None
     else:
-        if player.available_construction_workers() > 0:
+        if player.available_construction_workers() > 0 and ud_count == 0:
             suspension_time = None
 
     player.money -= real_price
-    round_up = 60 - time.time() % 60
+    round_up = engine.clock_time - time.time() % engine.clock_time
     new_construction = Under_construction(
         name=facility,
         family=family,
@@ -742,7 +818,8 @@ def start_project(engine, player, facility, family):
         player_id=player.id,
     )
     db.session.add(new_construction)
-    player.add_project_priority(priority_list_name, new_construction.id)
+    db.session.commit()
+    player.add_to_list(priority_list_name, new_construction.id)
     if suspension_time is None:
         player.project_max_priority(priority_list_name, new_construction.id)
     engine.log(f"{player.username} started the construction {facility}")
@@ -774,7 +851,7 @@ def cancel_project(player, construction_id):
 
     refund = 0.8 * construction.original_price * (1 - time_fraction)
     player.money += refund
-    player.remove_project_priority(priority_list_name, construction_id)
+    player.remove_from_list(priority_list_name, construction_id)
     db.session.delete(construction)
     engine.log(
         f"{player.username} cancelled the construction {construction.name}"
@@ -807,14 +884,26 @@ def pause_project(player, construction_id):
             if last_project == int(construction_id):
                 construction.suspension_time = time.time()
     else:
+        if construction.family in ["Functional facilities", "Technologies"]:
+            first_lvl = (
+                Under_construction.query.filter_by(
+                    name=construction.name, player_id=player.id
+                )
+                .order_by(Under_construction.duration)
+                .first()
+            )
+            if first_lvl.suspension_time is None:
+                return {
+                    "response": "parallelization not allowed",
+                }
+            else:
+                construction = first_lvl
         if construction.family == "Technologies":
             player.project_max_priority(
                 "research_priorities", int(construction_id)
             )
             if player.available_lab_workers() == 0:
-                research_priorities = player.read_project_priority(
-                    "research_priorities"
-                )
+                research_priorities = player.read_list("research_priorities")
                 project_to_pause = Under_construction.query.get(
                     research_priorities[player.lab_workers]
                 )
@@ -824,7 +913,7 @@ def pause_project(player, construction_id):
                 "construction_priorities", int(construction_id)
             )
             if player.available_construction_workers() == 0:
-                construction_priorities = player.read_project_priority(
+                construction_priorities = player.read_list(
                     "construction_priorities"
                 )
                 project_to_pause = Under_construction.query.get(
@@ -832,7 +921,9 @@ def pause_project(player, construction_id):
                 )
                 project_to_pause.suspension_time = time.time()
         construction.start_time += time.time() - construction.suspension_time
-        construction.duration += 60 - construction.start_time % 60
+        construction.duration += (
+            engine.clock_time - construction.start_time % engine.clock_time
+        )
         construction.suspension_time = None
     db.session.commit()
     ws.rest_notify_constructions(engine, player)
@@ -852,7 +943,7 @@ def decrease_project_priority(player, construction_id, pausing=False):
     else:
         attr = "construction_priorities"
 
-    id_list = player.read_project_priority(attr)
+    id_list = player.read_list(attr)
     index = id_list.index(construction_id)
     if index >= 0 and index < len(id_list) - 1:
         construction_1 = Under_construction.query.get(id_list[index])
@@ -864,8 +955,30 @@ def decrease_project_priority(player, construction_id, pausing=False):
             construction_1.suspension_time = time.time()
             if pausing:
                 return {"response": "paused"}
+            if construction_2.family in [
+                "Functional facilities",
+                "Technologies",
+            ]:
+                first_lvl = (
+                    Under_construction.query.filter_by(
+                        name=construction_2.name, player_id=player.id
+                    )
+                    .order_by(Under_construction.duration)
+                    .first()
+                )
+                if first_lvl.suspension_time is None:
+                    return {
+                        "response": "parallelization not allowed",
+                    }
+                else:
+                    index_first_lvl = id_list.index(first_lvl.id)
+                    id_list[index + 1], id_list[index_first_lvl] = (
+                        id_list[index_first_lvl],
+                        id_list[index + 1],
+                    )
+                    construction_2 = first_lvl
             construction_2.start_time += (
-                time.time() - construction.suspension_time
+                time.time() - construction_2.suspension_time
             )
             construction_2.suspension_time = None
         id_list[index + 1], id_list[index] = (
@@ -884,8 +997,12 @@ def decrease_project_priority(player, construction_id, pausing=False):
 
 def get_construction_data(player):
     projects = player.get_constructions()
-    construction_priorities = player.read_project_priority(
-        "construction_priorities"
-    )
-    research_priorities = player.read_project_priority("research_priorities")
+    construction_priorities = player.read_list("construction_priorities")
+    research_priorities = player.read_list("research_priorities")
     return {0: projects, 1: construction_priorities, 2: research_priorities}
+
+
+def hydro_price_function(lvl, potential):
+    return 0.6 * (
+        math.e ** (0.6 * (lvl + 1 - 3 * potential) / (0.3 + potential))
+    )

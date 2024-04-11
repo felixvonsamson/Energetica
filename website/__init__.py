@@ -25,15 +25,15 @@ from .database.player import Player  # noqa: E402
 from website.gameEngine import gameEngine  # noqa: E402
 
 
-def create_app(run_init_test_players, rm_instance):
+def create_app(clock_time, run_init_test_players, rm_instance):
     # creates the app :
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = "ghdäwrldutnstwhwobjotrdcfgglkgvou"
+    app.config["SECRET_KEY"] = "ksdfzrtbf6clkIzhfdsuihsf98ERf"
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     db.init_app(app)
 
     # creates the engine (ad loading the sava if it exists)
-    engine = gameEngine()
+    engine = gameEngine(clock_time)
 
     if rm_instance:
         engine.log("removing instance")
@@ -110,18 +110,17 @@ def create_app(run_init_test_players, rm_instance):
     if (
         os.environ.get("WERKZEUG_RUN_MAIN") == "true"
     ):  # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
-        from .gameEngine import state_update_m
-        from .gameEngine import check_upcoming_actions
+        from .gameEngine import state_update
 
         scheduler = APScheduler()
         scheduler.init_app(app)
 
         scheduler.add_job(
-            func=state_update_m,
+            func=state_update,
             args=(engine, app),
-            id="state_update_m",
+            id="state_update",
             trigger="cron",
-            second="0",  # "*/5" or "0"
+            second=f"*/{clock_time}",
         )
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())

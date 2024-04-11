@@ -3,7 +3,7 @@ This code is the p5.js script that enables the player to choose a location on an
 interactive map just after having registerd to the game.
 */
 
-max_q = [1, 1, 5, 2500000000, 700000000, 120000000, 10000000];
+max_q = [1, 1, 1, 500000000, 140000000, 24000000, 2000000];
 // Tile item :
 class Hex {
     constructor(_id, _q, _r, _resources, player) {
@@ -51,11 +51,8 @@ class Hex {
         fill(0);
         if (active_vew >= 0) {
             textSize(ts1);
-            if ((active_vew == 0) | (active_vew == 1)) {
+            if ((active_vew == 0) | (active_vew == 1) | (active_vew == 2)) {
                 text(round(this.resources[active_vew] * 100) + "%", 0, -3);
-            } else if (active_vew == 2) {
-                textSize(ts2);
-                text(this.resources[active_vew], 0, -4);
             } else {
                 text(convert_kg(this.resources[active_vew]), 0, -3);
             }
@@ -229,7 +226,9 @@ function newdraw_monitor() {
     fill(color(83, 35, 75));
     noStroke();
     rect(0, 0, 390, 100);
-    image(logo, 25, 10, 82, 80);
+    if(logo.height != 0){
+        image(logo, 25, 10, 82, 80);
+    }
     textFont(font_logo, 50);
     fill(color(131, 52, 33));
     text("Energetica", 230, 40);
@@ -323,7 +322,7 @@ function newdraw_monitor() {
             height / 9.5 + 0.1 * height
         );
         text(
-            map[selected_id].resources[2] + " suitable locations",
+            round(map[selected_id].resources[2]*150) + " m³/s river discharge",
             mw - 20,
             height / 9.5 + 0.2 * height
         );
@@ -468,7 +467,7 @@ function newdraw_smartphone() {
             mh / 7.5 + 0.1 * mh
         );
         text(
-            map[selected_id].resources[2] + " suitable locations",
+            round(map[selected_id].resources[2]*150) + " m³/s river discharge",
             width - 15,
             mh / 7.5 + 0.2 * mh
         );

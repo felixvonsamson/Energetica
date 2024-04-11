@@ -86,7 +86,8 @@
      <div class="small notification_time"><script>formatDateTime("{{ notification.time }}");</script></div>
       <div class="flex-row align-items-center notification_head">
         <b>{{ notification.title }}{% if not notification.read %}<i class="fa fa-circle small padding"></i>{% endif %}</b>
-        <span onclick="delete_notification(this, {{ notification.id }});" class="cross">×</span></div>
+        <span onclick="delete_notification(this, {{ notification.id }});" class="cross">×</span>
+      </div>
       {{ notification.content }}
     </div>
   {% endfor %}
@@ -148,6 +149,7 @@
             <span style="padding:8px 0">Electricity</span>
           </a>
 
+          {% if "storage_overview" in user.advancements %}
           <a class="navbar_item bone flex-row"
               id="production_overview"
               href="{{ url_for('overviews.storage') }}">
@@ -155,7 +157,9 @@
                   class="navbar_icon margin-small" />
             <span style="padding:8px 0">Storage</span>
           </a>
+          {% endif %}
 
+          {% if "warehouse" in user.advancements %}
           <a class="navbar_item bone flex-row"
               id="production_overview"
               href="{{ url_for('overviews.resources') }}">
@@ -163,7 +167,9 @@
                   class="navbar_icon margin-small" />
             <span style="padding:8px 0">Resources</span>
           </a>
+          {% endif %}
 
+          {% if "GHG_effect" in user.advancements %}
           <a class="navbar_item bone flex-row"
               id="production_overview"
               href="{{ url_for('overviews.emissions') }}">
@@ -171,6 +177,7 @@
                   class="navbar_icon margin-small" />
             <span style="padding:8px 0">Emissions</span>
           </a>
+          {% endif %}
 
         </div>
       </li>
@@ -202,6 +209,7 @@
             <span style="padding:8px 0">Storage facilities</span>
           </a>
           
+          {% if "warehouse" in user.advancements %}
           <a class="navbar_item bone flex-row"
               id="extraction_facilities"
               href="{{ url_for('views.extraction_facilities') }}">
@@ -209,6 +217,7 @@
                   class="navbar_icon margin-small" />
             <span style="padding:8px 0">Extraction facilities</span>
           </a>
+          {% endif %}
 
           <a class="navbar_item bone flex-row"
               id="functional_facilities"
@@ -238,11 +247,13 @@
             <span style="padding:8px 0">Messages</span>
           </a>
 
+          {% if "network" in user.advancements %}
           <a class="navbar_item bone flex-row" id="network" href="{{ url_for('views.network') }}">
             <img src="{{ url_for('static', filename='images/icons/network.png') }}"
                 class="navbar_icon margin-small" />
             <span style="padding:8px 0">Network</span>
           </a>
+          {% endif %}
 
           <a class="navbar_item bone flex-row" id="map" href="{{ url_for('views.map') }}">
             <img src="{{ url_for('static', filename='images/icons/map.png') }}"
@@ -261,6 +272,7 @@
         </div>
       </li>
 
+      {% if "technology" in user.advancements %}
       <li class="nav-item">
         <a class="navbar_item tan_green flex-row"
             id="technology"
@@ -270,7 +282,9 @@
           <span style="padding:8px 0">Technology</span>
         </a>
       </li>
+      {% endif %}
 
+      {% if "warehouse" in user.advancements %}
       <li class="nav-item">
         <a class="navbar_item tan_green flex-row"
             id="resource_market"
@@ -280,6 +294,7 @@
           <span style="padding:8px 0">Resources market</span>
         </a>
       </li>
+      {% endif %}
 
       <li class="nav-item">
         <a class="navbar_item tan_green flex-row" id="wiki" href="{{ url_for('views.wiki') }}">
@@ -300,7 +315,7 @@
     </ul>
   </div>
 </nav>
-<div class="version medium">Version : beta 0.7.6</div>
+<div class="version medium">Version : beta 0.8.0</div>
 <div class="main_container tan_green">
   {% block content %}
   {% endblock content %}

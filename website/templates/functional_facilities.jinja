@@ -65,9 +65,9 @@
 
               {# Description #}
               <div class="infotext">
-                {% if facility == "laboratory" %}
+                {% if facility == "laboratory" and "technology" in user.advancements %}
                   The laboratory is needed to research <strong><a class="txt-blue" id="technology-link" href="/technology">Technologies</a></strong>.
-                {% elif facility == "warehouse" %}
+                {% elif facility == "warehouse" and "warehouse" in user.advancements %}
                   The warehouse stores physical <strong><a class="txt-blue" id="resources-link" href="/extraction_facilities">resources</a></strong>.
                 {% else %}
                   {{ const_data.description }}
@@ -197,7 +197,7 @@
               <tr>
                 <td>Revenue generation</td>
                 <td class="txt_center">
-                  <script>display_upgrade_money({{ assets[facility]["income"] }}, {{ const_data["income factor"] }});</script>
+                  <script>display_upgrade_money({{ assets[facility]["income"] * 60 / engine.clock_time}}, {{ const_data["income factor"] }});</script>
                 </td>
               </tr>
             {% elif facility == "laboratory" %}
