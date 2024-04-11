@@ -27,7 +27,8 @@ def flash_error(msg):
 @login_required
 def check_user():
     g.engine = current_app.config["engine"]
-    g.config = g.engine.config[current_user.id]
+    if current_user.tile is not None:
+        g.config = g.engine.config[current_user.id]
 
     def render_template_ctx(page):
         if page == "wiki.jinja":

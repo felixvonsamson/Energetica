@@ -1398,8 +1398,6 @@ class Config(object):
                         assets[asset]["locked"] = True
 
             if asset in ["watermill", "small_water_dam", "large_water_dam"]:
-                if player.tile is None:
-                    return
                 # update price according to existing
                 assets[asset]["price"] *= hydro_price_function(
                     getattr(player, asset), player.tile.hydro
