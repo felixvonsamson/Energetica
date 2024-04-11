@@ -261,9 +261,8 @@ function regen(res) {
     load_chart_data().then((raw_data) => {
         load_player_data().then((player_data) => {
             background(229, 217, 182);
-            clock_time = raw_data.resolution
-            Object.keys(raw_data.data["generation"]).forEach((key) => {
-                data_gen[key] = reduce(raw_data.data["generation"][key], res);
+            Object.keys(raw_data["generation"]).forEach((key) => {
+                data_gen[key] = reduce(raw_data["generation"][key], res);
             });
             data_len = data_gen["imports"].length;
             push();
@@ -298,7 +297,7 @@ function regen(res) {
             line(0, 0, 0, -graph_h);
 
             push();
-            let units = time_unit(res);
+            let units = time_unit(res, clock_time);
             fill(0);
             for (let i = 0; i < units.length; i++) {
                 stroke(0, 0, 0, 30);
@@ -357,8 +356,8 @@ function regen(res) {
             graph_gen = get();
 
             background(229, 217, 182);
-            Object.keys(raw_data.data["demand"]).forEach((key) => {
-                data_demand[key] = reduce(raw_data.data["demand"][key], res);
+            Object.keys(raw_data["demand"]).forEach((key) => {
+                data_demand[key] = reduce(raw_data["demand"][key], res);
             });
             data_len = data_demand["exports"].length;
             push();
@@ -393,7 +392,7 @@ function regen(res) {
             line(0, 0, 0, -graph_h);
 
             push();
-            units = time_unit(res);
+            units = time_unit(res, clock_time);
             fill(0);
             for (let i = 0; i < units.length; i++) {
                 stroke(0, 0, 0, 30);

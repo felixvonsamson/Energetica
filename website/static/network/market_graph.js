@@ -12,7 +12,6 @@ let minPrice;
 let maxCap;
 let f1, f2;
 let graph;
-let clock_time;
 let fill_alt = 0;
 let players = {};
 
@@ -557,9 +556,8 @@ function update_graph() {
             pop();
 
             load_chart_data((network = true)).then((raw_data) => {
-                clock_time = raw_data.resolution
-                Object.keys(raw_data.data).forEach((key) => {
-                    data[key] = reduce(raw_data.data[key], res);
+                Object.keys(raw_data).forEach((key) => {
+                    data[key] = reduce(raw_data[key], res);
                 });
                 data_len = data["price"].length;
                 min = {
@@ -600,7 +598,7 @@ function update_graph() {
                 );
 
                 push();
-                let units = time_unit(res);
+                let units = time_unit(res, clock_time);
                 fill(0);
                 for (let i = 0; i < units.length; i++) {
                     stroke(0, 0, 0, 30);
@@ -781,8 +779,8 @@ function calc_h(price) {
     }
 }
 
-function time_unit(res) {
-    if(clock_time == 60){
+function time_unit(res, ct) {
+    if(ct == 60){
         if (res == "2h") {
             return ["2h", "1h40", "1h20", "1h", "40min", "20min", "now"];
         } else if (res == "6h") {
@@ -796,7 +794,7 @@ function time_unit(res) {
         } else if (res == "6 months") {
             return ["6m", "5m", "4m", "3m", "2m", "1m", "now"];
         }
-    }else if(clock_time == 30){
+    }else if(ct == 30){
         if (res == "1h") {
             return ["1h", "50min", "40min", "30min", "20min", "10min", "now"];
         } else if (res == "3h") {

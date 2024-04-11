@@ -1004,6 +1004,6 @@ def get_construction_data(player):
 
 
 def hydro_price_function(lvl, potential):
-    return 0.6 * (
+    return 0.6 + (
         math.e ** (0.6 * (lvl + 1 - 3 * potential) / (0.3 + potential))
     )

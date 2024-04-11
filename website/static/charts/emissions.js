@@ -117,9 +117,8 @@ function regen(res) {
     load_chart_data()
         .then((raw_data) => {
             background(229, 217, 182);
-            clock_time = raw_data.resolution;
-            Object.keys(raw_data.data["emissions"]).forEach((key) => {
-                data[key] = reduce(raw_data.data["emissions"][key], res);
+            Object.keys(raw_data["emissions"]).forEach((key) => {
+                data[key] = reduce(raw_data["emissions"][key], res);
             });
             data_len = data["steam_engine"].length;
             push();
@@ -178,7 +177,7 @@ function regen(res) {
             line(0, graph_h * (1 - f), 0, -graph_h * f);
 
             push();
-            let units = time_unit(res);
+            let units = time_unit(res, clock_time);
             fill(0);
             for (let i = 0; i < units.length; i++) {
                 stroke(0, 0, 0, 30);
