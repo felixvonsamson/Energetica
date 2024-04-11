@@ -44,7 +44,7 @@ function draw() {
                     translate(0, h);
                     lines += 1;
                     h_max -= h;
-                    total_power += data[key][t] * 60;
+                    total_power += data[key][t] * 3600/clock_time;
                 }
             }
         }
@@ -58,7 +58,7 @@ function draw() {
                     translate(0, h);
                     lines += 1;
                     h_max -= h;
-                    total_power += data[key][t] * 60;
+                    total_power += data[key][t] * 3600/clock_time;
                 }
             }
         }
@@ -103,7 +103,7 @@ function draw() {
                     textAlign(LEFT, CENTER);
                     text(cols_and_names[key][1], 20, 5);
                     textAlign(CENTER, CENTER);
-                    text(display_kgh(data[key][t] * 60), 135, 5);
+                    text(display_kgh(data[key][t] * 3600/clock_time), 135, 5);
                     fill(229, 217, 182);
                 }
             }
@@ -117,8 +117,9 @@ function regen(res) {
     load_chart_data()
         .then((raw_data) => {
             background(229, 217, 182);
-            Object.keys(raw_data["emissions"]).forEach((key) => {
-                data[key] = reduce(raw_data["emissions"][key], res);
+            clock_time = raw_data.resolution;
+            Object.keys(raw_data.data["emissions"]).forEach((key) => {
+                data[key] = reduce(raw_data.data["emissions"][key], res);
             });
             data_len = data["steam_engine"].length;
             push();
@@ -134,7 +135,7 @@ function regen(res) {
                     });
                     return acc;
                 },
-                { positive: [], negative: [] }
+                { positive: [], negative: [0] }
             );
             maxSum = Math.max(...Object.values(sums.positive));
             minSum = Math.min(...Object.values(sums.negative));
@@ -191,10 +192,10 @@ function regen(res) {
             pop();
 
             push();
-            let y_ticks = y_units(maxSum * 60);
+            let y_ticks = y_units(maxSum * 3600/clock_time);
             let interval = y_ticks[1];
             fill(0);
-            let y = map(interval, 0, maxSum * 60, 0, graph_h * f);
+            let y = map(interval, 0, maxSum * 3600/clock_time, 0, graph_h * f);
             for (let i = 0; i <= graph_h * f; i += y) {
                 stroke(0, 0, 0, 30);
                 line(graph_w, -i, 0, -i);

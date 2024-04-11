@@ -223,7 +223,7 @@ function draw() {
     rect(0, 0, 160, 17);
     fill(0);
     textFont(balooBold);
-    text(display_duration(data_len - t - 1), 80, 5);
+    text(display_duration((data_len - t - 1) * res_to_factor[res]), 80, 5);
     textFont(font);
     translate(0, 16 * lines);
     alternate_fill();
@@ -261,8 +261,9 @@ function regen(res) {
     load_chart_data().then((raw_data) => {
         load_player_data().then((player_data) => {
             background(229, 217, 182);
-            Object.keys(raw_data["generation"]).forEach((key) => {
-                data_gen[key] = reduce(raw_data["generation"][key], res);
+            clock_time = raw_data.resolution
+            Object.keys(raw_data.data["generation"]).forEach((key) => {
+                data_gen[key] = reduce(raw_data.data["generation"][key], res);
             });
             data_len = data_gen["imports"].length;
             push();
@@ -356,8 +357,8 @@ function regen(res) {
             graph_gen = get();
 
             background(229, 217, 182);
-            Object.keys(raw_data["demand"]).forEach((key) => {
-                data_demand[key] = reduce(raw_data["demand"][key], res);
+            Object.keys(raw_data.data["demand"]).forEach((key) => {
+                data_demand[key] = reduce(raw_data.data["demand"][key], res);
             });
             data_len = data_demand["exports"].length;
             push();

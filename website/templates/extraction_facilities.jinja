@@ -190,14 +190,14 @@
             <tr>
               <td>{{ resource[0]|upper + resource[1:] }} production</td>
               <td class="txt_center">
-                <strong><script>display_kg({{ assets[facility]["amount produced"]* 60 }});</script>/h</strong>
+                <strong><script>display_kg({{ assets[facility]["amount produced"]* 3600/engine.clock_time }});</script>/h</strong>
               </td>
             </tr>
             {# O&M Costs #}
             <tr>
               <td>Operation cost</td>
               <td class="txt_center">
-                <strong><script>display_money({{ assets[facility]["O&M cost"]*60 }});</script>/h</strong>
+                <strong><script>display_money({{ assets[facility]["O&M cost"]*3600/engine.clock_time }});</script>/h</strong>
               </td>
             </tr>
             {# CO2 emissions #}

@@ -86,7 +86,7 @@
                 {% if facility in ["watermill", "small_water_dam", "large_water_dam"] %}
                   <br>
                   <em class="txt-blue">
-                    <i class="fa fa-info-circle"></i> Remaining suitable locations : <strong>{{ user.tile.hydro - user[facility] }}</strong>
+                    <i class="fa fa-info-circle"></i> Hydro potential : <strong>{{ (user.tile.hydro*100)|int }}%</strong>
                   </em>
                 {% endif %}
                 {# Resource Indicator #}
@@ -228,7 +228,7 @@
             <tr>
               <td>Operation cost</td>
               <td class="txt_center">
-                <strong><script>display_money({{assets[facility]["O&M cost"]*60}});</script>/h</strong>
+                <strong><script>display_money({{assets[facility]["O&M cost"]*3600/engine.clock_time}});</script>/h</strong>
               </td>
             </tr>
             {# Resource Consumption #}

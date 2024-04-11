@@ -6,6 +6,7 @@ from .database.player import Player
 import copy
 import math
 from flask import current_app
+from .utils import hydro_price_function
 
 const_config = {
     "assets": {
@@ -354,7 +355,7 @@ const_config = {
             "name": "Civil engineering",
             "type": "Technology",
             "price multiplier": 1.5,
-            "price factor": 1.4,
+            "price factor": 1.25,
             "prod factor": 1.15,
             "capacity factor": 1.05,
             "affected facilities": [
@@ -1089,6 +1090,7 @@ class Config(object):
 
     # update mining speeds according to reserves depleation
     def update_resource_extraction(config, player_id):
+        engine = current_app.config["engine"]
         player = Player.query.get(player_id)
         if player.tile is None:
             return
@@ -1101,21 +1103,29 @@ class Config(object):
             const_config["assets"]["coal_mine"]["extraction_rate"]
             * player.tile.coal
             * me_factor
+            * engine.clock_time
+            / 60
         )
         assets["oil_field"]["amount produced"] = (
             const_config["assets"]["oil_field"]["extraction_rate"]
             * player.tile.oil
             * me_factor
+            * engine.clock_time
+            / 60
         )
         assets["gas_drilling_site"]["amount produced"] = (
             const_config["assets"]["gas_drilling_site"]["extraction_rate"]
             * player.tile.gas
             * me_factor
+            * engine.clock_time
+            / 60
         )
         assets["uranium_mine"]["amount produced"] = (
             const_config["assets"]["uranium_mine"]["extraction_rate"]
             * player.tile.uranium
             * me_factor
+            * engine.clock_time
+            / 60
         )
 
     # regularly update minimg productivity for all players (mineral depletion)
@@ -1386,6 +1396,12 @@ class Config(object):
                     )
                     if not req[2]:
                         assets[asset]["locked"] = True
+
+            if asset in ["watermill", "small_water_dam", "large_water_dam"]:
+                # update price according to existing
+                assets[asset]["price"] *= hydro_price_function(
+                    getattr(player, asset), player.tile.hydro
+                )
 
             if (
                 asset

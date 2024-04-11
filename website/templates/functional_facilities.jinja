@@ -197,7 +197,7 @@
               <tr>
                 <td>Revenue generation</td>
                 <td class="txt_center">
-                  <script>display_upgrade_money({{ assets[facility]["income"] }}, {{ const_data["income factor"] }});</script>
+                  <script>display_upgrade_money({{ assets[facility]["income"] * 60 / engine.clock_time}}, {{ const_data["income factor"] }});</script>
                 </td>
               </tr>
             {% elif facility == "laboratory" %}

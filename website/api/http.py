@@ -185,6 +185,7 @@ def get_chart_data():
 
     return jsonify(
         {
+            "clock_time": g.engine.clock_time,
             "total_t": total_t,
             "data": data,
             "network_data": network_data["network_data"],

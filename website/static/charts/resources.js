@@ -179,8 +179,9 @@ function regen(res) {
                 }
 
                 background(229, 217, 182);
-                Object.keys(raw_data["resources"]).forEach((key) => {
-                    data[key] = reduce(raw_data["resources"][key], res);
+                clock_time = raw_data.resolution;
+                Object.keys(raw_data.data["resources"]).forEach((key) => {
+                    data[key] = reduce(raw_data.data["resources"][key], res);
                     data_len = data[key].length;
                 });
                 if (Object.keys(data).length == 0){

@@ -771,8 +771,11 @@ def start_project(engine, player, facility, family):
         ud = Under_construction.query.filter_by(
             name=facility, player_id=player.id
         ).count()
-        if player.tile.hydro <= getattr(player, facility) + ud:
-            return {"response": "noSuitableLocationAvailable"}
+        price_factor = hydro_price_function(
+            getattr(player, facility) + ud, player.tile.hydro
+        ) / hydro_price_function(getattr(player, facility), player.tile.hydro)
+        if player.money < assets[facility]["price"] * price_factor:
+            return {"response": "notEnoughMoneyError"}
 
     ud_count = 0
     if family in ["Functional facilities", "Technologies"]:
@@ -997,3 +1000,9 @@ def get_construction_data(player):
     construction_priorities = player.read_list("construction_priorities")
     research_priorities = player.read_list("research_priorities")
     return {0: projects, 1: construction_priorities, 2: research_priorities}
+
+
+def hydro_price_function(lvl, potential):
+    return 0.6 * (
+        math.e ** (0.6 * (lvl + 1 - 3 * potential) / (0.3 + potential))
+    )
