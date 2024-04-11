@@ -120,6 +120,8 @@ def get_resource_data():
             * g.engine.config[current_user.id]["assets"][resource[1]][
                 "amount produced"
             ]
+            * 3600
+            / g.engine.clock_time
         )
         on_sale[resource[0]] = getattr(current_user, resource[0] + "_on_sale")
     return jsonify(rates, on_sale)
