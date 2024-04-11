@@ -289,6 +289,7 @@ def remove_asset(player_id, facility, decommissioning=True):
     engine.log(
         f"The facility {engine.const_config[facility]['name']} from {player.username} has been decommissioned."
     )
+    engine.config.update_config_for_user(player.id)
 
 
 def store_import(player, resource, quantity):
