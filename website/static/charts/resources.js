@@ -179,9 +179,8 @@ function regen(res) {
                 }
 
                 background(229, 217, 182);
-                clock_time = raw_data.resolution;
-                Object.keys(raw_data.data["resources"]).forEach((key) => {
-                    data[key] = reduce(raw_data.data["resources"][key], res);
+                Object.keys(raw_data["resources"]).forEach((key) => {
+                    data[key] = reduce(raw_data["resources"][key], res);
                     data_len = data[key].length;
                 });
                 if (Object.keys(data).length == 0){
@@ -211,7 +210,7 @@ function regen(res) {
                 line(0, 0, 0, -graph_h);
 
                 push();
-                let units = time_unit(res);
+                let units = time_unit(res, clock_time);
                 fill(0);
                 for (let i = 0; i < units.length; i++) {
                     stroke(0, 0, 0, 30);
