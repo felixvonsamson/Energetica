@@ -120,7 +120,7 @@ def create_app(clock_time, run_init_test_players, rm_instance):
             args=(engine, app),
             id="state_update",
             trigger="cron",
-            second=f"*/{clock_time}",
+            second=f"*/{clock_time}" if clock_time != 60 else "0",
         )
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
