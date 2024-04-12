@@ -371,7 +371,9 @@ function newdraw_smartphone() {
     fill(color(83, 35, 75));
     noStroke();
     rect(0, 0, 80, 80, 0, 0, 25, 0);
-    image(logo, 4, 5, 72, 70);
+    if(logo.height != 0){
+        image(logo, 4, 5, 72, 70);
+    }
     pop();
     push();
     translate(0.5 * width, 0.2 * width + 0.3 * height);
