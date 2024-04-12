@@ -6,6 +6,7 @@
         style="margin-left:7px" />
   <span class="logo_txt topleft">Energetica</span>
 </div>
+{% if user != None %}
 <div class="topRight_info">
   <div class="resources medium tan_green">
     <div class="money_font large money">
@@ -315,6 +316,8 @@
     </ul>
   </div>
 </nav>
+{% endif %}
+
 <div class="version medium">Version : beta 0.8.0</div>
 <div class="main_container tan_green">
   {% block content %}
