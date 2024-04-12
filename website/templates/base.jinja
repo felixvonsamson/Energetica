@@ -58,12 +58,12 @@
   </div>
   <div class="notification_container txt_center">
   <button id="notification_button" class="bone button padding medium notification_button" 
-  onclick="document.getElementById('notification_popup').classList.remove('hidden');">
+  onclick="show_notification_list();">
     <i class="fa fa-bell"></i><span class="notification_txt"> Notifications</span>
     {% if user.unread_notifications()|length > 0 %}<span id="unread_badge" class="unread_badge small pine padding-small">{{ user.unread_notifications()|length }}</span>{% endif %}
   </button>
   <div id="notification_list-small" class="notification_list notification_list-small">
-    {% for notification in user.unread_notifications()|reverse %}
+    {% for notification in user.unread_notifications() %}
       <div id="notification_{{ notification.id }}" class="notification padding-small margin-small">
         <b>{{ notification.title }}</b><br>
         {{ notification.content }}
@@ -80,8 +80,8 @@
           class="cross pine"
           style="width:39px">×</div>
   </div>
-  <div class="notification_list flex-grow-1">
-  {% for notification in user.notifications|reverse %}
+  <div id="notification_list" class="notification_list flex-grow-1">
+  {% for notification in user.notifications %}
     <div id="notification_{{ notification.id }}" class="{% if notification.read %}read{% endif %} notification padding medium margin-large">
      <div class="small notification_time"><script>formatDateTime("{{ notification.time }}");</script></div>
       <div class="flex-row align-items-center notification_head">

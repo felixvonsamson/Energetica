@@ -274,7 +274,7 @@ function newdraw_monitor() {
             300
         );
         text(
-            "If you need help, click on the book icon next to to title.",
+            "If you need help, click on the book icon next to the title.",
             20,
             300,
             mw - 40,

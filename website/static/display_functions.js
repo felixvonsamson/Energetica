@@ -149,7 +149,7 @@ function calculate_delivery(delta_q, delta_r, trasport_speed) {
     display_duration(dist * trasport_speed);
 }
 
-function formatDateTime(dateTimeString) {
+function formatDateTime(dateTimeString, write=true) {
     const dateTime = new Date(dateTimeString);
     const now = new Date();
     const date = dateTime.getDate();
@@ -160,14 +160,19 @@ function formatDateTime(dateTimeString) {
     const months = [
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-  
+    
+    let formated_date;
     if (dateTime.toDateString() === now.toDateString()) {
         // If the date is today, return the time format
-        document.write(`${hours}:${minutes}:${seconds}`);
+        formated_date = `${hours}:${minutes}:${seconds}`;
     } else {
         // If the date is not today, return the date + time format
-        document.write(`${date} ${months[monthIndex]} ${hours}:${minutes}:${seconds}`);
+        formated_date = `${date} ${months[monthIndex]} ${hours}:${minutes}:${seconds}`;
     }
+    if (write){
+        document.write(formated_date);
+    }
+    return formated_date;
   }
 
 function formatted_money(amount) {
