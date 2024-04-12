@@ -21,3 +21,16 @@ function expand_menu(id) {
     dropdown.classList.toggle("show");
     dropdown_icon.classList.toggle("rotate");
 }
+
+function show_notification_list(){
+    document.getElementById('notification_popup').classList.remove('hidden');
+    let notification_list = document.getElementById('notification_list');
+    notification_list.scrollTop = notification_list.scrollHeight;
+}
+
+function scroll_down_small_notification_list(){
+    let notification_list = document.getElementById('notification_list-small');
+    notification_list.scrollTop = notification_list.scrollHeight;
+}
+
+scroll_down_small_notification_list();
