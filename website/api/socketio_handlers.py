@@ -17,7 +17,8 @@ from datetime import datetime
 def add_handlers(socketio, engine):
     @socketio.on("connect")
     def handle_connect():
-        db.session.commit()
+        if current_user.is_anonymous:
+            return
         # Store client's sid when connected
         if current_user.id not in engine.clients:
             engine.clients[current_user.id] = []
