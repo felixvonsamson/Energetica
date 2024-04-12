@@ -28,8 +28,12 @@
   <div id="under_construction">
     {# Facilites under construction will show here #}
   </div>
-
-  {% for facility in ["industry", "laboratory", "warehouse", "carbon_capture"] %}
+  {% if "GHG_effect" in user.advancements %}
+    {% set functional_facilities = ["industry", "laboratory", "warehouse", "carbon_capture"] %}
+  {% else %}
+    {% set functional_facilities = ["industry", "laboratory", "warehouse"] %}
+  {% endif %}
+  {% for facility in functional_facilities %}
     {% set const_data = engine.const_config[facility] %}
     <div id="{{ const_data.name }}"
          class="bone margin facility small"
