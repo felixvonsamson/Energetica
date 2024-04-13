@@ -183,7 +183,7 @@ def add_asset(player_id, construction_id):
                     .order_by(Under_construction.duration)
                     .first()
                 )
-                if first_lvl.suspension_time is None:
+                if first_lvl.suspension_time is None and first_lvl.start_time + first_lvl.duration > time.time() + 0.8 * engine.clock_time:
                     continue
                 else:
                     first_lvl.start_time += (
