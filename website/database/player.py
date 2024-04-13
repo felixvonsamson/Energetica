@@ -110,10 +110,7 @@ class Player(db.Model, UserMixin):
     # Priority lists
     self_consumption_priority = db.Column(db.Text, default="")
     rest_of_priorities = db.Column(db.Text, default="steam_engine")
-    demand_priorities = db.Column(
-        db.Text,
-        default="industry,construction,transport,research",
-    )
+    demand_priorities = db.Column(db.Text, default="industry,construction")
     construction_priorities = db.Column(db.Text, default="")
     research_priorities = db.Column(db.Text, default="")
 
