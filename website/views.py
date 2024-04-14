@@ -32,6 +32,13 @@ def check_user():
 
     def render_template_ctx(page):
         if page == "wiki.jinja":
+            if current_user.tile is not None:
+                return render_template(
+                    "wiki.jinja",
+                    engine=g.engine,
+                    user=current_user,
+                    data=g.config,
+                )
             return render_template("wiki.jinja", engine=g.engine, user=None)
         # show location choice if player didn't choose yet
         if current_user.tile is None:

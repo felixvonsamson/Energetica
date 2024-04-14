@@ -120,6 +120,8 @@ def add_asset(player_id, construction_id):
                 )
         if "technology" not in player.advancements:
             if construction.name == "laboratory":
+                player.add_to_list("demand_priorities", "research")
+                set_network_prices(engine, player)
                 player.add_to_list("advancements", "technology")
                 notify(
                     "Tutorial",
@@ -128,6 +130,8 @@ def add_asset(player_id, construction_id):
                 )
         if "warehouse" not in player.advancements:
             if construction.name == "warehouse":
+                player.add_to_list("demand_priorities", "transport")
+                set_network_prices(engine, player)
                 player.add_to_list("advancements", "warehouse")
                 notify(
                     "Tutorial",
@@ -183,7 +187,7 @@ def add_asset(player_id, construction_id):
                     .order_by(Under_construction.duration)
                     .first()
                 )
-                if first_lvl.suspension_time is None:
+                if first_lvl.suspension_time is None and first_lvl.start_time + first_lvl.duration > time.time() + 0.8 * engine.clock_time:
                     continue
                 else:
                     first_lvl.start_time += (
