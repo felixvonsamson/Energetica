@@ -161,6 +161,7 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
                             )
                 constructions = Under_construction.query.all()
                 for construction in constructions:
+                    found = False
                     for player in players:
                         construction_list = player.read_list(
                             "construction_priorities"
@@ -172,10 +173,13 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
                             construction.id
                             not in construction_list + research_priorities
                         ):
-                            db.session.delete(construction)
-                            print(
-                                f"removed construction {construction.name} from Under_construction ({player.username})"
-                            )
+                            found = True
+                            break
+                    if not found:
+                        db.session.delete(construction)
+                        print(
+                            f"removed construction {construction.name} from Under_construction ({player.username})"
+                        )
                 db.session.commit()
 
         if run_init_test_players:
