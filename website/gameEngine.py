@@ -23,6 +23,7 @@ from .utils import (
     add_asset,
     store_import,
     remove_asset,
+    check_construction_parity,
 )
 
 
@@ -227,11 +228,14 @@ def check_upcoming_actions(engine, app):
             Under_construction.start_time + Under_construction.duration
             < time.time() + 0.8 * engine.clock_time,
         ).all()
+        print(finished_constructions)
         if finished_constructions:
             for fc in finished_constructions:
                 add_asset(fc.player_id, fc.id)
+                print(f"removing construction {fc.id} from Under_construction (check_upcoming_actions)")
                 db.session.delete(fc)
             db.session.commit()
+            check_construction_parity()
 
         # check if shipment arrived
         arrived_shipments = Shipment.query.filter(

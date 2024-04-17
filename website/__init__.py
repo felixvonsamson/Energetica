@@ -25,7 +25,7 @@ from .database.player import Player  # noqa: E402
 from website.gameEngine import gameEngine  # noqa: E402
 
 
-def create_app(clock_time, run_init_test_players, rm_instance):
+def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     # creates the app :
     app = Flask(__name__)
     app.config["SECRET_KEY"] = "ksdfzrtbf6clkIzhfdsuihsf98ERf"
@@ -124,6 +124,63 @@ def create_app(clock_time, run_init_test_players, rm_instance):
         )
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
+
+        from .utils import check_construction_parity
+        with app.app_context():
+            check_construction_parity() 
+
+        if repair_database:
+            from .database.player_assets import Under_construction
+
+            with app.app_context():
+                players = Player.query.all()
+                for player in players:
+                    construction_list = player.read_list(
+                        "construction_priorities"
+                    )
+                    research_priorities = player.read_list(
+                        "research_priorities"
+                    )
+                    for contruction_id in construction_list:
+                        const = Under_construction.query.get(contruction_id)
+                        if const is None:
+                            player.remove_from_list(
+                                "construction_priorities", contruction_id
+                            )
+                            print(
+                                f"removed construction {contruction_id} from construction priorities ({player.username})"
+                            )
+                    for contruction_id in research_priorities:
+                        const = Under_construction.query.get(contruction_id)
+                        if const is None:
+                            player.remove_from_list(
+                                "research_priorities", contruction_id
+                            )
+                            print(
+                                f"removed construction {contruction_id} from research priorities ({player.username})"
+                            )
+                constructions = Under_construction.query.all()
+                for construction in constructions:
+                    found = False
+                    for player in players:
+                        construction_list = player.read_list(
+                            "construction_priorities"
+                        )
+                        research_priorities = player.read_list(
+                            "research_priorities"
+                        )
+                        if (
+                            construction.id
+                            not in construction_list + research_priorities
+                        ):
+                            found = True
+                            break
+                    if not found:
+                        db.session.delete(construction)
+                        print(
+                            f"removed construction {construction.name} from Under_construction ({player.username})"
+                        )
+                db.session.commit()
 
         if run_init_test_players:
             engine.log("running init_test_players")

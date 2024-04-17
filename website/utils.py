@@ -94,7 +94,7 @@ def add_asset(player_id, construction_id):
         if construction.name == "warehouse":
             for resource in ["coal", "oil", "gas", "uranium"]:
                 current_data.new_subcategory("resources", resource)
-        if construction.name in engine.extraction_facilities + [
+        if construction.name in engine.extraction_facilities + engine.storage_facilities + [
             "carbon_capture"
         ]:
             player.add_to_list("demand_priorities", construction.name)
@@ -166,6 +166,7 @@ def add_asset(player_id, construction_id):
             ).count()
             - 1
         )
+    print(f"removing id {construction_id} from {priority_list_name} ({player.username}) (add_asset)")
     player.remove_from_list(priority_list_name, construction_id)
     project_priorities = player.read_list(priority_list_name)
     for i, id in enumerate(project_priorities[:]):
@@ -187,8 +188,15 @@ def add_asset(player_id, construction_id):
                     .order_by(Under_construction.duration)
                     .first()
                 )
-                if first_lvl.suspension_time is None and first_lvl.start_time + first_lvl.duration > time.time() + 0.8 * engine.clock_time:
-                    continue
+                if first_lvl.suspension_time is None:
+                    if first_lvl.start_time + first_lvl.duration > time.time() + 0.8 * engine.clock_time:
+                        continue
+                    else:
+                        second_lvl = Under_construction.query.filter_by(name=next_construction.name, player_id=player.id).order_by(Under_construction.duration).offset(1).first()
+                        if second_lvl is None:
+                            continue
+                        else:
+                            first_lvl = second_lvl
                 else:
                     first_lvl.start_time += (
                         time.time() - first_lvl.suspension_time
@@ -567,7 +575,7 @@ def buy_resource_from_market(player, quantity, sale_id):
         shipment_duration = (
             distance * engine.config[player.id]["transport"]["time"]
         )
-        round_up = engine.clock_time - time.time() % engine.clock_time
+        round_up = engine.clock_time - (time.time() + shipment_duration) % engine.clock_time
         new_shipment = Shipment(
             resource=sale.resource,
             quantity=quantity,
@@ -826,19 +834,22 @@ def start_project(engine, player, facility, family):
             suspension_time = None
 
     player.money -= real_price
-    round_up = engine.clock_time - time.time() % engine.clock_time
+    round_up = engine.clock_time - (time.time() + duration) % engine.clock_time
     new_construction = Under_construction(
         name=facility,
         family=family,
         start_time=time.time(),
         duration=duration + round_up,
         suspension_time=suspension_time,
-        original_price=real_price,
+        original_price=real_price, 
         player_id=player.id,
     )
     db.session.add(new_construction)
     db.session.commit()
+    print(f"added new construction {new_construction.id} to Uner_construction (start_project)")
     player.add_to_list(priority_list_name, new_construction.id)
+    print(f"added id {new_construction.id} from {priority_list_name} ({player.username}) (start_project)")
+    check_construction_parity()
     if suspension_time is None:
         player.project_max_priority(priority_list_name, new_construction.id)
     engine.log(f"{player.username} started the construction {facility}")
@@ -870,12 +881,15 @@ def cancel_project(player, construction_id):
 
     refund = 0.8 * construction.original_price * (1 - time_fraction)
     player.money += refund
+    print(f"removing id {construction_id} from {priority_list_name} ({player.username}) (cancel_project)")
     player.remove_from_list(priority_list_name, construction_id)
+    print(f"removing construction {construction.id} from Under_construction (cancel_project)")
     db.session.delete(construction)
     engine.log(
         f"{player.username} cancelled the construction {construction.name}"
     )
     db.session.commit()
+    check_construction_parity()
     ws.rest_notify_constructions(engine, player)
     return {
         "response": "success",
@@ -1025,3 +1039,37 @@ def hydro_price_function(lvl, potential):
     return 0.6 + (
         math.e ** (0.6 * (lvl + 1 - 3 * potential) / (0.3 + potential))
     )
+
+
+def check_construction_parity():
+    players = Player.query.all()
+    for player in players:
+        construction_list = player.read_list("construction_priorities")
+        research_priorities = player.read_list("research_priorities")
+        for contruction_id in construction_list:
+            const = Under_construction.query.get(contruction_id)
+            if const is None:
+                print(
+                    f"\n\n\n!!! CONSTRUCTION {contruction_id} IS IN construction_list OF PLAYER {player.username} BUT NOT IN Under_construction !!!"
+                )
+        for contruction_id in research_priorities:
+            const = Under_construction.query.get(contruction_id)
+            if const is None:
+                print(
+                    f"\n\n\n!!! CONSTRUCTION {contruction_id} IS IN research_list OF PLAYER {player.username} BUT NOT IN Under_construction !!!"
+                )
+    constructions = Under_construction.query.all()
+    for construction in constructions:
+        found = False
+        for player in players:
+            construction_list = player.read_list("construction_priorities")
+            research_priorities = player.read_list("research_priorities")
+            if (
+                construction.id in construction_list + research_priorities
+            ):
+                found = True
+                break
+        if not found:
+            print(
+                f"\n\n\n!!! CONSTRUCTION {construction.name} (id:{construction.id}) IS IN Under_construction BUT WAS NOT FOUND IN ANY construction_list OR research_list !!!"
+            )
