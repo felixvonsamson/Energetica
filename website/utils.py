@@ -94,7 +94,7 @@ def add_asset(player_id, construction_id):
         if construction.name == "warehouse":
             for resource in ["coal", "oil", "gas", "uranium"]:
                 current_data.new_subcategory("resources", resource)
-        if construction.name in engine.extraction_facilities + [
+        if construction.name in engine.extraction_facilities + engine.storage_facilities + [
             "carbon_capture"
         ]:
             player.add_to_list("demand_priorities", construction.name)
@@ -188,8 +188,15 @@ def add_asset(player_id, construction_id):
                     .order_by(Under_construction.duration)
                     .first()
                 )
-                if first_lvl.suspension_time is None and first_lvl.start_time + first_lvl.duration > time.time() + 0.8 * engine.clock_time:
-                    continue
+                if first_lvl.suspension_time is None:
+                    if first_lvl.start_time + first_lvl.duration > time.time() + 0.8 * engine.clock_time:
+                        continue
+                    else:
+                        second_lvl = Under_construction.query.filter_by(name=next_construction.name, player_id=player.id).order_by(Under_construction.duration).offset(1).first()
+                        if second_lvl is None:
+                            continue
+                        else:
+                            first_lvl = second_lvl
                 else:
                     first_lvl.start_time += (
                         time.time() - first_lvl.suspension_time
@@ -568,7 +575,7 @@ def buy_resource_from_market(player, quantity, sale_id):
         shipment_duration = (
             distance * engine.config[player.id]["transport"]["time"]
         )
-        round_up = engine.clock_time - time.time() % engine.clock_time
+        round_up = engine.clock_time - (time.time() + shipment_duration) % engine.clock_time
         new_shipment = Shipment(
             resource=sale.resource,
             quantity=quantity,
@@ -827,7 +834,7 @@ def start_project(engine, player, facility, family):
             suspension_time = None
 
     player.money -= real_price
-    round_up = engine.clock_time - time.time() % engine.clock_time
+    round_up = engine.clock_time - (time.time() + duration) % engine.clock_time
     new_construction = Under_construction(
         name=facility,
         family=family,

@@ -129,6 +129,27 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
         with app.app_context():
             check_construction_parity() 
 
+            from .init_test_players import add_asset
+
+            player_1 = Player.query.get(1)
+            add_asset(player_1, "steam_engine", 1)
+            add_asset(player_1, "small_pumped_hydro", 1)
+            add_asset(player_1, "mathematics", 1)
+            player_2 = Player.query.get(2)
+            add_asset(player_2, "small_pumped_hydro", 1)
+            player_4 = Player.query.get(4)
+            add_asset(player_4, "small_pumped_hydro", 1)
+            add_asset(player_4, "industry", 1)
+            player_10 = Player.query.get(10)
+            add_asset(player_10, "steam_engine", 1)
+            player_13 = Player.query.get(13)
+            add_asset(player_13, "industry", 1)
+            add_asset(player_13, "laboratory", 1)
+            player_15 = Player.query.get(15)
+            add_asset(player_15, "windmill", 1)
+
+            db.session.commit()
+
         if repair_database:
             from .database.player_assets import Under_construction
 
