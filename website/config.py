@@ -1534,9 +1534,7 @@ class Config(object):
 
         # setting the number of workers
         player.construction_workers = player.building_technology + 1
-        player.lab_workers = math.floor(player.laboratory / 3) + (
-            player.laboratory > 0
-        )
+        player.lab_workers = (player.laboratory + 2) // 3
 
     def __getitem__(config, player_id):
         if player_id not in config.for_player:

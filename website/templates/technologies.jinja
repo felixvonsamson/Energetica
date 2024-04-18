@@ -237,6 +237,10 @@
                   <td>Construction time</td>
                   <td class="txt_center">-{{ (100-const_data["time factor"]*100)|int }}%</td>
                 </tr>
+                <tr>
+                  <td>Constrtruct. workers</td>
+                  <td class="txt_center">{{ user.building_technology + 1 }} -> {{ user.building_technology + 2 }}</td>
+                </tr>
               {% endif %}
               {% if facility == "transport_technology" %}
                 <tr>
