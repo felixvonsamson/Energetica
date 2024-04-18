@@ -133,7 +133,7 @@ def add_asset(player_id, construction_id):
                 )
         if "warehouse" not in player.advancements:
             if construction.name == "warehouse":
-                player.add_to_list("demand_priorities", "shipment")
+                player.add_to_list("demand_priorities", "transport")
                 set_network_prices(engine, player)
                 player.add_to_list("advancements", "warehouse")
                 notify(
@@ -982,7 +982,9 @@ def pause_project(player, construction_id):
                 project_to_pause.suspension_time = time.time()
         construction.start_time += time.time() - construction.suspension_time
         construction.duration += (
-            engine.clock_time - construction.start_time % engine.clock_time
+            engine.clock_time
+            - (construction.start_time + construction.duration)
+            % engine.clock_time
         )
         construction.suspension_time = None
     db.session.commit()
@@ -990,6 +992,27 @@ def pause_project(player, construction_id):
     return {
         "response": "success",
         "constructions": get_construction_data(player),
+    }
+
+
+def pause_shipment(player, shipment_id):
+    """this function is executed when a player pauses or unpauses an ongoing shipment"""
+    engine = current_app.config["engine"]
+    shipment = Shipment.query.get(int(shipment_id))
+
+    if shipment.suspension_time is None:
+        shipment.suspension_time = time.time()
+    else:
+        shipment.departure_time += time.time() - shipment.suspension_time
+        shipment.duration += (
+            engine.clock_time
+            - (shipment.departure_time + shipment.duration) % engine.clock_time
+        )
+        shipment.suspension_time = None
+    db.session.commit()
+    return {
+        "response": "success",
+        "shipments": player.package_shipments(),
     }
 
 

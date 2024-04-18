@@ -4,7 +4,6 @@ This file contains all the data needed for the game
 
 from .database.player import Player
 import copy
-import math
 from flask import current_app
 from .utils import hydro_price_function
 
@@ -212,28 +211,28 @@ const_config = {
         "coal_mine": {
             "name": "Coal mine",
             "type": "Extraction facility",
-            "extraction_rate": 0.000001,  # [fraction of total stock that can be extracted every minute by one mine]
+            "extraction_rate": 0.000005,  # [fraction of total stock that can be extracted every minute by one mine]
             "description": "The coal mine extracts coal from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Coal_mining",
         },
         "oil_field": {
             "name": "Oil field",
             "type": "Extraction facility",
-            "extraction_rate": 0.00001,
+            "extraction_rate": 0.00005,
             "description": "The oil field extracts oil from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Extraction_of_petroleum",
         },
         "gas_drilling_site": {
             "name": "Gas drilling site",
             "type": "Extraction facility",
-            "extraction_rate": 0.000008,
+            "extraction_rate": 0.00004,
             "description": "The gas drilling site extracts gas from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Natural_gas",
         },
         "uranium_mine": {
             "name": "Uranium mine",
             "type": "Extraction facility",
-            "extraction_rate": 0.000001,
+            "extraction_rate": 0.000005,
             "description": "The uranium mine extracts uranium from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Uranium_mining",
         },

@@ -589,7 +589,7 @@ canvas {
     text-align: right;
 }
 
-.progressbar-bar {
+.progressbar-bar, .shipmentbar-bar {
     display: flex;
     height: 100%;
     width: calc(var(--width, 0) * 1%);

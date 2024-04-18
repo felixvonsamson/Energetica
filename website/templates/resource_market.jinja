@@ -87,15 +87,7 @@
            onclick="document.getElementById('put_on_sale').classList.remove('hidden');">Put on
         sale</b>
     </div>
-    <div id="shipments">
-        {% if user.shipments %}
-            {% for shipment in user.shipments %}
-                <div class="padding" id="progress_bar">
-                    <b>{{ shipment.quantity/1000 }} t</b> of <b>{{ shipment.resource }}</b> will arrive in <i class="time" data-name="{{ shipment.arrival_time }}"></i>
-                </div>
-            {% endfor %}
-        {% endif %}
-    </div>
+    <div id="under_construction">{# Shipments on their way will show here #}</div>
     <div class="resource_market_container">
         {% for sale in on_sale %}
             <div id="tile{{ sale.id }}"
@@ -156,4 +148,5 @@
 {% endblock content %}
 {% block additionnal_script %}
     <script src="{{ url_for('static', filename='resource_market.js') }}"></script>
+    <script>refresh_progressBar()</script>
 {% endblock additionnal_script %}

@@ -318,6 +318,19 @@ class Player(db.Model, UserMixin):
             for construction in self.under_construction
         }
 
+    def package_shipments(self):
+        return {
+            shipment.id: {
+                "id": shipment.id,
+                "resource": shipment.resource,
+                "quantity": shipment.quantity,
+                "departure_time": shipment.departure_time,
+                "duration": shipment.duration,
+                "suspension_time": shipment.suspension_time,
+            }
+            for shipment in self.shipments
+        }
+
     def package_construction_queue(self):
         return self.read_list("construction_priorities")
 

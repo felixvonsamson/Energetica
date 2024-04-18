@@ -257,6 +257,12 @@ def get_constructions():
     return jsonify(projects, construction_priorities, research_priorities)
 
 
+@http.route("/get_shipments", methods=["GET"])
+def get_shipments():
+    """Gets list of shipments under way for this player"""
+    return jsonify(current_user.package_shipments())
+
+
 # gets scoreboard data :
 @http.route("/get_scoreboard", methods=["GET"])
 def get_scoreboard():
@@ -313,6 +319,19 @@ def request_pause_project():
     construction_id = json["id"]
     response = utils.pause_project(
         player=current_user, construction_id=construction_id
+    )
+    return jsonify(response)
+
+
+@http.route("/request_pause_shipment", methods=["POST"])
+def request_pause_shipment():
+    """
+    this function is executed when a player pauses or unpauses an ongoing construction or upgrade
+    """
+    json = request.get_json()
+    shipment_id = json["id"]
+    response = utils.pause_shipment(
+        player=current_user, shipment_id=shipment_id
     )
     return jsonify(response)
 
