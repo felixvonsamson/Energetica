@@ -4,7 +4,6 @@ This file contains all the data needed for the game
 
 from .database.player import Player
 import copy
-import math
 from flask import current_app
 from .utils import hydro_price_function
 
@@ -212,28 +211,28 @@ const_config = {
         "coal_mine": {
             "name": "Coal mine",
             "type": "Extraction facility",
-            "extraction_rate": 0.000001,  # [fraction of total stock that can be extracted every minute by one mine]
+            "extraction_rate": 0.000005,  # [fraction of total stock that can be extracted every minute by one mine]
             "description": "The coal mine extracts coal from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Coal_mining",
         },
         "oil_field": {
             "name": "Oil field",
             "type": "Extraction facility",
-            "extraction_rate": 0.00001,
+            "extraction_rate": 0.00005,
             "description": "The oil field extracts oil from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Extraction_of_petroleum",
         },
         "gas_drilling_site": {
             "name": "Gas drilling site",
             "type": "Extraction facility",
-            "extraction_rate": 0.000008,
+            "extraction_rate": 0.00004,
             "description": "The gas drilling site extracts gas from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Natural_gas",
         },
         "uranium_mine": {
             "name": "Uranium mine",
             "type": "Extraction facility",
-            "extraction_rate": 0.000001,
+            "extraction_rate": 0.000005,
             "description": "The uranium mine extracts uranium from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Uranium_mining",
         },
@@ -332,7 +331,7 @@ const_config = {
             "time factor": 0.9,
             "energy factor": 1.035,
             "affected facilities": [],
-            "description": "Transport technology enables more efficient transport of natural resources.",
+            "description": "Transport technology enables more efficient shipments of natural resources.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172788&",
         },
         "materials": {
@@ -1527,16 +1526,14 @@ class Config(object):
             * 3600
             / config.for_player[player_id]["transport"]["time"]
         )
-        # reducing transport time with clock time
+        # reducing shipment time with clock time
         config.for_player[player_id]["transport"]["time"] *= (
             engine.clock_time / 60
         ) ** 0.5
 
         # setting the number of workers
         player.construction_workers = player.building_technology + 1
-        player.lab_workers = math.floor(player.laboratory / 3) + (
-            player.laboratory > 0
-        )
+        player.lab_workers = (player.laboratory + 2) // 3
 
     def __getitem__(config, player_id):
         if player_id not in config.for_player:

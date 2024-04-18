@@ -26,6 +26,31 @@ function retrieve_constructions() {
         });
 }
 
+function load_shipments() {
+    if (typeof(Storage) !== "undefined") {
+        const shipmentData = sessionStorage.getItem("shipments");
+        if (shipmentData) {
+            return Promise.resolve(JSON.parse(shipmentData));
+        }
+    } 
+    return retrieve_shipments();
+}
+
+function retrieve_shipments() {
+    console.log("Feching shipments data from the server")
+    return fetch("/get_shipments")
+        .then((response) => response.json())
+        .then((raw_data) => {
+            // Save fetched data to sessionStorage
+            console.log(raw_data);
+            sessionStorage.setItem("shipments", JSON.stringify(raw_data));
+            return raw_data;
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+}
+
 function load_chart_data(network = false) {
     if (typeof(Storage) !== "undefined") {
         const chart_data = sessionStorage.getItem("chart_data");

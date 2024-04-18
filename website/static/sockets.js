@@ -196,7 +196,6 @@ socket.on("new_notification", function (notification) {
 
 socket.on("pause_construction", function (info) {
     load_constructions().then((construction_list) => {
-        console.log(construction_list);
         construction_list[0][info["construction_id"]]["suspension_time"] =
             info["suspension_time"];
         sessionStorage.setItem(

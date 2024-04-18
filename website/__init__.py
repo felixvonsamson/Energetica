@@ -138,6 +138,7 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
         if repair_database:
             from .database.player_assets import Under_construction
 
+            print("repairing database")
             with app.app_context():
                 players = Player.query.all()
                 for player in players:
@@ -177,7 +178,7 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
                         )
                         if (
                             construction.id
-                            not in construction_list + research_priorities
+                            in construction_list + research_priorities
                         ):
                             found = True
                             break
