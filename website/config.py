@@ -332,7 +332,7 @@ const_config = {
             "time factor": 0.9,
             "energy factor": 1.035,
             "affected facilities": [],
-            "description": "Transport technology enables more efficient transport of natural resources.",
+            "description": "Transport technology enables more efficient shipments of natural resources.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172788&",
         },
         "materials": {
@@ -1527,7 +1527,7 @@ class Config(object):
             * 3600
             / config.for_player[player_id]["transport"]["time"]
         )
-        # reducing transport time with clock time
+        # reducing shipment time with clock time
         config.for_player[player_id]["transport"]["time"] *= (
             engine.clock_time / 60
         ) ** 0.5
