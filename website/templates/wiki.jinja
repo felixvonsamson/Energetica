@@ -9,7 +9,7 @@
     <div class="padding-small">
         🚧 This game is still under development! 🚧 Join the <a href="https://discord.gg/6xQsfqe2Nd">Energetica 
         Discord server</a> to stay updated with the latest news, report bugs, and engage with the community. 
-        You can also contact me directly if you have questions (+33666600393)
+        You can also contact me directly if you have questions (vsfelix@ethz.ch)
     </div>
 </div>
 
@@ -81,7 +81,7 @@
     wisely.
   </p>
   <p>
-    The map consists of a hexagonal grid comprising 331 tiles, visualized on the home screen.
+    The map consists of a hexagonal grid comprising 331 tiles, visualized on community > <a href="/map">Map</a>.
   </p>
   <p>
     The distance between your location and another player's tile directly impacts resource shipment times when engaging 
@@ -104,10 +104,13 @@
       windmills and wind turbines.
     </li>
     <li>
-      <strong>Hydro:</strong> Presented as a number from 0 to 5, the hydro potential signifies the number of suitable 
-      locations available for building watermills and water dams. Note that each of the three hydropower plants is 
-      considerated independently for the hydro potential; thus, smaller structures dont need to be dismantled to make 
-      room for larger ones. Pumped hydro facilities are not affected by hydro potential.
+      <strong>Hydro:</strong> The hydro potential is given in m³/s, indicating the maximal river discharge rate in the area. 
+      The prices of watermills and water dams increase with each additional facility created. This increase is more important 
+      for tiles with low discharge rates. This price increase also affect the operational cost of the facility. 
+      Pumped hydro facilities are not affected by hydro potential. The price of the 
+      \(n^{th}\) facility of type \(i\) is calculated as follows : <br>
+      \(P_{i,n} = P_{i,0} \times (0.6 + e^{0.6 \times \frac{n + 1 - 3 \times hydropot}{0.3 + hydropot}})\) &ensp;
+      With \(hydropot\) beeing the hydropotential as a percentage.
     </li>
   </ul>
   
@@ -127,11 +130,9 @@
   </p>
   <p>
     Power facilities within Energetica are classified into five distinct categories, each offering different
-    characteristics and functionalities. Understanding these categories is crucial for strategic decision-making when
-    managing electricity generation.
+    characteristics and functionalities.
   </p>
   <h4>Fossil Fuel Family</h4>
-  <p>This category includes various power facilities:</p>
   <ul>
     <li>Steam engine</li>
     <li>Coal burner &ensp;<span class="txt_pine">(Coal)</span></li>
@@ -143,7 +144,6 @@
   </ul>
   <p>These plants are controllable, emit CO2, and require fuel for operation (except for the steam engine).</p>
   <h4>Wind Family</h4>
-  <p>The wind family consists of:</p>
   <ul>
     <li>Windmill</li>
     <li>Onshore wind turbine</li>
@@ -153,8 +153,7 @@
     These facilities are non-controllable, do not emit pollutants during operation, and their power output varies based 
     on windconditions.
   </p>
-  <h4>Water Family</h4>
-  <p>Facilities in this category include:</p>
+  <h4>Hydro Family</h4>
   <ul>
     <li>Watermill</li>
     <li>Small water dam</li>
@@ -165,7 +164,6 @@
     during the year based on river discharge rates.
   </p>
   <h4>Solar Family</h4>
-  <p>The solar family comprises:</p>
   <ul>
     <li>Concentrated solar power</li>
     <li>Photovoltaics</li>
