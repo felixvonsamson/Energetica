@@ -252,7 +252,7 @@ def check_upcoming_actions(engine, app):
                 db.session.delete(a_s)
             db.session.commit()
 
-        # check end of lifetime of facilites
+        # check end of lifespan of facilites
         eolt_facilities = Active_facilites.query.filter(
             Active_facilites.end_of_life < time.time() + 0.8 * engine.clock_time
         ).all()

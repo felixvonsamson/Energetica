@@ -27,7 +27,8 @@ def add_handlers(socketio, engine):
     @socketio.on("disconnect")
     def handle_disconnect():
         # Remove client's sid when disconnected
-        engine.clients[current_user.id].remove(request.sid)
+        if request.sid in engine.clients[current_user.id]:
+            engine.clients[current_user.id].remove(request.sid)
 
     # this function is executed when a player creates a new group chat
     @socketio.on("create_group_chat")

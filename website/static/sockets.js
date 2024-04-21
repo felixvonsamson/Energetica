@@ -47,12 +47,16 @@ function start_construction(facility, family) {
                         JSON.stringify(raw_data["constructions"])
                     );
                     refresh_progressBar();
-                } else if (response == "noSuitableLocationAvailable") {
-                    addError("No suitable locations");
                 } else if (response == "notEnoughMoneyError") {
                     addError("Not enough money");
                 } else if (response == "locked") {
-                    addError("Facility is locked");
+                    if (family == "Technologies"){
+                        addError("Requirements not fulfilled");
+                    }else{
+                        addError("Facility is locked");
+                    }
+                } else if (response == "requirementsNotFullfilled") {
+                    addError("Requirements not fulfilled for this Technology level");
                 }
             });
         })
