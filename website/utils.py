@@ -163,7 +163,7 @@ def add_asset(player_id, construction_id):
         priority_list_name = "research_priorities"
         project_index = (
             Under_construction.query.filter(
-                Under_construction.family != "Technologies",
+                Under_construction.family == "Technologies",
                 Under_construction.player_id == player.id,
                 Under_construction.suspension_time.is_(None),
             ).count()
@@ -290,7 +290,7 @@ def add_asset(player_id, construction_id):
     ]:
         new_facility = Active_facilites(
             facility=construction.name,
-            end_of_life=time.time() + assets[construction.name]["lifetime"],
+            end_of_life=time.time() + assets[construction.name]["lifespan"],
             player_id=player.id,
         )
         db.session.add(new_facility)
@@ -828,6 +828,10 @@ def start_project(engine, player, facility, family):
         ud_count = Under_construction.query.filter_by(
             name=facility, player_id=player.id
         ).count()
+        if family == "Technologies":
+            for req in assets[facility]["requirements"]:
+                if getattr(player, facility) + ud_count + req[1] > getattr(player, req[0]):
+                    return {"response": "requirementsNotFullfilled"}
         real_price = (
             assets[facility]["price"]
             * engine.const_config[facility]["price multiplier"] ** ud_count

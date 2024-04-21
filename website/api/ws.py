@@ -288,7 +288,7 @@ def rest_get_facilities_data(engine):
         "O&M cost",
         "consumed resource",
         "pollution",
-        "lifetime",
+        "lifespan",
     ]
     power_facilities_data = [
         {"name": facility}
@@ -309,7 +309,7 @@ def rest_get_facilities_data(engine):
         "ramping speed",
         "efficiency",
         "O&M cost",
-        "lifetime",
+        "lifespan",
     ]
     storage_facilities_data = [
         {"name": facility}
@@ -328,7 +328,7 @@ def rest_get_facilities_data(engine):
         "power consumption",
         "O&M cost",
         "pollution",
-        "lifetime",
+        "lifespan",
     ]
     extraction_facilities_data = [
         {"name": facility}
