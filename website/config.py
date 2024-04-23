@@ -647,7 +647,7 @@ var_config = {
         },
         "small_pumped_hydro": {
             "price": 19500,  # [¤]
-            "storage capacity": 260000000,  # [Wh]
+            "storage_capacity": 260000000,  # [Wh]
             "power generation": 2600000,  # [W]
             "efficiency": 0.75,
             "construction time": 18720,  # [s]
@@ -660,7 +660,7 @@ var_config = {
         },
         "compressed_air": {
             "price": 10700,
-            "storage capacity": 2860000000,
+            "storage_capacity": 2860000000,
             "power generation": 12000000,
             "efficiency": 0.52,
             "construction time": 64800,
@@ -676,7 +676,7 @@ var_config = {
         },
         "molten_salt": {
             "price": 27500,
-            "storage capacity": 3000000000,
+            "storage_capacity": 3000000000,
             "power generation": 55000000,
             "efficiency": 0.63,
             "construction time": 86400,
@@ -692,7 +692,7 @@ var_config = {
         },
         "large_pumped_hydro": {
             "price": 166000,
-            "storage capacity": 4200000000,
+            "storage_capacity": 4200000000,
             "power generation": 249000000,
             "efficiency": 0.8,
             "construction time": 334800,
@@ -705,7 +705,7 @@ var_config = {
         },
         "hydrogen_storage": {
             "price": 420000,
-            "storage capacity": 30000000000,
+            "storage_capacity": 30000000000,
             "power generation": 90000000,
             "efficiency": 0.33,
             "construction time": 43200,
@@ -718,7 +718,7 @@ var_config = {
         },
         "lithium_ion_batteries": {
             "price": 660000,
-            "storage capacity": 3200000000,
+            "storage_capacity": 3200000000,
             "power generation": 86000000,
             "efficiency": 0.69,
             "construction time": 64800,
@@ -731,7 +731,7 @@ var_config = {
         },
         "solid_state_batteries": {
             "price": 1000000,
-            "storage capacity": 5000000000,
+            "storage_capacity": 5000000000,
             "power generation": 107000000,
             "efficiency": 0.79,
             "construction time": 54000,
@@ -1284,7 +1284,7 @@ class Config(object):
                 )
                 if asset in ["small_pumped_hydro", "large_pumped_hydro"]:
                     # update capacity (civil engineering)
-                    assets[asset]["storage capacity"] *= (
+                    assets[asset]["storage_capacity"] *= (
                         const_config["assets"]["civil_engineering"][
                             "capacity factor"
                         ]
@@ -1487,7 +1487,7 @@ class Config(object):
             elif asset in engine.storage_facilities:
                 assets[asset]["construction power"] = (
                     assets[asset]["construction power factor"]
-                    * assets[asset]["storage capacity"]
+                    * assets[asset]["storage_capacity"]
                     / bt_factor
                 )
             elif asset in engine.extraction_facilities:

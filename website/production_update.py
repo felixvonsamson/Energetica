@@ -777,7 +777,7 @@ def calculate_prod(
             E = (
                 max(
                     0.0,
-                    assets[facility]["storage capacity"]
+                    assets[facility]["storage_capacity"]
                     * getattr(player, facility)
                     - past_values.get_last_data("storage", facility),
                 )
