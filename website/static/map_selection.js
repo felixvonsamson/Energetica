@@ -522,9 +522,9 @@ function coords_to_id(q, r) {
 
 function mousePressed() {
     if (width < 1200) {
-        if (touches.length == 0) {
-            mousePressed_smartphone();
-        }
+        // if (touches.length == 0) {
+        mousePressed_smartphone();
+        // }
     } else {
         mousePressed_monitor();
     }
