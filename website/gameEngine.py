@@ -228,6 +228,13 @@ def check_upcoming_actions(engine, app):
             Under_construction.start_time + Under_construction.duration
             < time.time() + 0.8 * engine.clock_time,
         ).all()
+        # This is just to remove corrupted construction after a bug. This should not be necessary in a bugfree version.
+        zombie_constructions = Under_construction.query.filter(
+            Under_construction.suspension_time.isnot(None),
+            Under_construction.start_time + Under_construction.duration
+            < Under_construction.suspension_time,
+        ).all()
+        finished_constructions = finished_constructions + zombie_constructions
         engine.log(finished_constructions)
         if finished_constructions:
             for fc in finished_constructions:
