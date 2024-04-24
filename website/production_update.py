@@ -681,14 +681,14 @@ def market_optimum(offers_og, demands_og):
     merged_table = pd.concat([offers, demands], ignore_index=True)
     merged_table = merged_table.sort_values(by="cumul_capacities")
 
-    for row in merged_table.itertuples(index=False):
+    for row in merged_table.itertuples():
         if np.isnan(row.index_offer):
             price_d = row.price
         else:
             price_o = row.price
-        if price_o == np.inf:
-            return price_d, 0
         if price_d < price_o:
+            if row.Index == 0:
+                return price_d, 0
             price = price_d
             if np.isnan(row.index_offer):
                 price = price_o
