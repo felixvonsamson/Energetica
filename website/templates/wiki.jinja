@@ -410,16 +410,18 @@
   <h2 id="Functional_Facilities">Functional Facilities</h2>
   <p>
     Functional facilities in Energetica are distinct from power, storage, and extraction facilities as they operate on
-    a level-based system. Each upgrade to a higher level incurs increasing costs in terms of money, time, and energy.
-    There are four unique functional facilities:
+    a level-based system. Each upgrade to a higher level incurs increasing costs in terms of construction price, time, and energy.
   </p>
   <p>
     The construction process for functional facilities works the same way as for power facilities (<a href="#Construction_of_a_Plant">Construction of a facility</a>) 
     except for the fact that consecutive upgrades of the same facility cannot be parallelized.
   </p>
+  <p>
+    There are four unique functional facilities:
+  </p>
   <h3>The Industry</h3>
   <p>
-    The Industry serves as a central element, initially starting at level 1. It generates revenue by consuming
+    The Industry serves as a central element in the game, initially starting at level 1. It generates revenue by consuming
     electricity. With each level upgrade, revenue increase by {{ ((const_data.industry["income factor"]-1)*100) | round | int }}% 
     and electricity demand increases by {{ ((const_data.industry["power factor"]-1)*100) | round | int }}%. It is worth 
     noting that because of these rates, the industries economic efficiency (in <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh) is decreasing with higher levels of industry.
@@ -484,13 +486,16 @@
   </p>
   <h3>Carbon Capture</h3>
   <p>
-    The carbon capture facility consumes electricity to extract CO2 from the atmosphere and store it underground. Higher
-    levels increase electricity consumption and CO2 absorption rate. HOW MUCH ???
+    The carbon capture facility consumes electricity to extract CO2 from the atmosphere and store it underground. 
+    With each level upgrade, CO2 absorbtion increase by {{ ((const_data.carbon_capture["absorbtion factor"]-1)*100) | round | int }}% 
+    and power consumption increases by {{ ((const_data.carbon_capture["power factor"]-1)*100) | round | int }}%.
+    Contrary to the industry, CO2 absorbtion is more efficient with higher carbon capture levels. 
   </p>
 
   <h2 id="Technology">Technology</h2>
   <p>
-    Technological advancements in Energetica are made possible through research conducted at the <a href="#The_Laboratory">laboratory</a>. These technologies offer improvements to specific aspects of your
+    Technological advancements in Energetica are made possible through research conducted at the <a href="#The_Laboratory">laboratory</a>. 
+    These technologies are needed to unlock more advanced facilities and offer improvements to specific aspects of your
     production within the game. Each technology has a unique effect tailored to a particular set of facilities.
   </p>
   <p>

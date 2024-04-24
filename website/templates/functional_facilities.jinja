@@ -211,7 +211,7 @@
               </tr>
               <tr>
                 <td>Lab workers</td>
-                <td class="txt_center">{{ user.laboratory + 2 // 3 }} -> {{ user.laboratory + 2 // 3 }}</td>
+                <td class="txt_center">{{ (user.laboratory + 2) // 3 }} -> {{ (user.laboratory + 2) // 3 }}</td>
               </tr>
             {% elif facility == "warehouse" %}
               {% if user.warehouse == 0 %}
