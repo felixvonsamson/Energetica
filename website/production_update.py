@@ -1085,6 +1085,8 @@ def reduce_demand(
         ):
             construction_id = construction_priorities[i]
             construction = Under_construction.query.get(construction_id)
+            if construction.suspension_time is not None:
+                continue
             cumul_demand += assets[construction.name]["construction power"]
             if cumul_demand > satisfaction:
                 construction.suspension_time = time.time()
@@ -1108,6 +1110,8 @@ def reduce_demand(
         for i in range(min(len(research_priorities), player.lab_workers)):
             construction_id = research_priorities[i]
             construction = Under_construction.query.get(construction_id)
+            if construction.suspension_time is not None:
+                continue
             cumul_demand += assets[construction.name]["construction power"]
             if cumul_demand > satisfaction:
                 construction.suspension_time = time.time()
@@ -1127,7 +1131,7 @@ def reduce_demand(
         return
     if demand_type == "transport":
         last_shipment = (
-            Shipment.query.filter(Shipment.player_id == player.id)
+            Shipment.query.filter(Shipment.suspension_time.is_(None), Shipment.player_id == player.id)
             .order_by(Shipment.departure_time.desc())
             .first()
         )
