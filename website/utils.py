@@ -555,7 +555,7 @@ def buy_resource_from_market(player, quantity, sale_id):
             player.xp += 5
             notify(
                 "Achievements",
-                "You have bougth a resources on the market. (+5 xp)",
+                "You have bought a resources on the market. (+5 xp)",
                 [player],
             )
         if "trading_2" not in sale.player.achievements:
@@ -604,15 +604,15 @@ def buy_resource_from_market(player, quantity, sale_id):
         db.session.add(new_shipment)
         notify(
             "Resource transaction",
-            f"{player} bougth {format_mass(quantity)} of {sale.resource} for a total cost of {display_money(total_price)}.",
+            f"{player.username} bought {format_mass(quantity)} of {sale.resource} for a total cost of {display_money(total_price)}.",
             [sale.player],
         )
         flash(
-            f"You bougth {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}.",
+            f"You bought {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}.",
             category="message",
         )
         engine.log(
-            f"{player} bougth {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}."
+            f"{player.username} bought {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}."
         )
         if sale.quantity == 0:
             # Player is purchasing all available quantity
