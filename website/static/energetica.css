@@ -90,6 +90,10 @@ canvas {
     padding: 12px 24px
 }
 
+.li_padding {
+    padding: 6px 0;
+}
+
 .margin-small {
     margin: 8px
 }
@@ -100,6 +104,10 @@ canvas {
 
 .margin-large {
     margin: 24px
+}
+
+.big_side_margins{
+    margin: 24px 100px
 }
 
 .small {
@@ -188,9 +196,10 @@ canvas {
     background-color: #285430
 }
 
-.notification_button{
+.notification_button, .changelog_button{
     border-radius: 6px;
     position: relative; 
+    text-decoration: none;
 }
 
 .cross {
@@ -535,7 +544,7 @@ canvas {
     border-radius: 6px;
     padding: 5px;
     position: absolute;
-    z-index: 1;
+    z-index: 50;
     bottom: 130%;
     left: 50%;
     transform: translate(-50%, 0);
@@ -794,11 +803,13 @@ canvas {
 }
 
 .main_container {
+    position: relative;
     max-width: 1200px;
     width: 70%;
     min-height: 100vh;
     margin: auto;
     overflow: hidden;
+    z-index: 2;
 }
 
 .title {
@@ -833,6 +844,7 @@ canvas {
     bottom: 4px;
     left: 16px;
     font-family: 'Cabin Condensed', sans-serif;
+    z-index: 1;
 }
 
 /* messages */
@@ -1003,7 +1015,7 @@ canvas {
     height: 100%;
     background-color: transparent;
     box-shadow: rgba(40, 84, 48, 1) 0px -40px 20px -28px inset;
-    z-index: 1;
+    z-index: 5;
     transition: opacity 0.3s ease;
 }
 

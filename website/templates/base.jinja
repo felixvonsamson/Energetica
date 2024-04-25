@@ -318,8 +318,13 @@
 </nav>
 {% endif %}
 
-<div class="version medium">Version : beta 0.8.0</div>
-<div class="main_container tan_green">
+<div class="version medium">
+<a id="changelog_button" class="white button padding-small margin-small medium changelog_button" href="{{ url_for('views.changelog') }}">
+  Changelog &nbsp;<i class="fa fa-bullhorn"></i>
+</a>
+<div class="margin-small">beta 0.8.1 (25.04.2024)</div>
+</div>
+<div id="main_container" class="main_container tan_green">
   {% block content %}
   {% endblock content %}
 </div>

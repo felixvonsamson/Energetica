@@ -31,10 +31,10 @@ def check_user():
         g.config = g.engine.config[current_user.id]
 
     def render_template_ctx(page):
-        if page == "wiki.jinja":
+        if page in ["wiki.jinja", "changelog.jinja"]:
             if current_user.tile is not None:
                 return render_template(
-                    "wiki.jinja",
+                    page,
                     engine=g.engine,
                     user=current_user,
                     data=g.config,
@@ -176,6 +176,10 @@ def scoreboard():
 @views.route("/wiki")
 def wiki():
     return g.render_template_ctx("wiki.jinja")
+
+@views.route("/changelog")
+def changelog():
+    return g.render_template_ctx("changelog.jinja")
 
 
 @overviews.route("/revenues")

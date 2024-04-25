@@ -62,7 +62,7 @@
     <li><a href="#Extraction_Facilities">Extraction Facilities</a></li>
     <li><a href="#Functional_Facilities">Functional Facilities</a></li>
     <li><a href="#Technology">Technology</a></li>
-    <li><a href="#Prioritazation_of_Facilities">Prioritazation of Facilities</a></li>
+    <li><a href="#Prioritization_of_Facilities">Prioritazation of Facilities</a></li>
     <li>
       <a href="#Network">Network</a>
       <ul>
@@ -450,7 +450,7 @@
   This models the fact that reducing slightly the consumption of the industry has a low cost but reducing it a lot has a very high cost.</p>
   <h3 id="The_Laboratory">The Laboratory</h3>
   <p>
-    The laboratory is needed for researching technologies. Different technology levels require corresponding
+    The laboratory is needed for researching <a href="#Technology">technologies</a>. Different technology levels require corresponding
     laboratory levels. It also enhances research speed by {{ ((1-const_data.laboratory["time factor"])*100) | round | int }}% 
     and for every 3rd upgrade, a new lab worker is unlocked.
   </p>
@@ -546,7 +546,7 @@
     option to join or create a network with other players, facilitating electricity trading and potentially enhancing
     supply security.
   </p>
-  <p>Within the {% if "network" in user.advancements %}<a href="{{ url_for('views.network') }}">network page</a>{% else %}network page{% endif %}, three tables enable players to set buying and selling prices (only it they are part of a Network):</p>
+  <p>Within the {% if "network" in user.advancements %}<a href="{{ url_for('views.network') }}">network page</a>{% else %}network page{% endif %}, three tables enable players to set buying and selling prices (only if they are part of a Network):</p>
   <h4>Demand Prices</h4>
   <p>
     The first table is to set maximum buying prices for electricity components within your demand:
@@ -560,7 +560,7 @@
   </ul>
   <p>
     If the max buying price for one of these demand components is below market price, mesures will be taken to reduce this demand 
-    (industry is levelled down, constructions, researches and shipments are paused and extraction facilities stop functioning).
+    (industry activity is reduced, constructions, researches and shipments are paused and extraction facilities stop functioning).
   </p>
   <h4>Production Capacity Prices</h4>
   <p>In the second table, you can set the minimum selling prices for your controllable power facilities. When the
@@ -593,8 +593,8 @@
     </li>
   </ul>
   <p>
-    If surplus electricity from these obligatory sources is not needed domestically, it is sold at a fixed price of
-    -5/MWh in the market, coresponding to the cost to dump excess electricity. If it cannot be sold, it will be dumped.
+    If surplus electricity from these obligatory sources is not needed domestically, it is put on the market at a fixed price of
+    -5/MWh, coresponding to the cost to dump excess electricity. If it cannot be sold, it will be dumped.
   </p>
   <h3 id="Market_Logic">Market Logic</h3>
   <p>The electricity market operates automatically and follows specific steps:</p>
@@ -645,12 +645,12 @@
     q_{ship} \times {{ const_data.transport_technology["energy factor"] }}^{TT} }{ t_{base} \times {{ const_data.transport_technology["time factor"] }}^{TT} } \)
   </p>
   <p>
-    where \(t_{ship}\) is the shipment duration in hours, \(t_{base}\) is the base value of shipment duration : 1.39
+    where \(t_{ship}\) is the shipment duration in hours, \(t_{base}\) is the base value of shipment duration : {{ (5000 / 3600 * (engine.clock_time / 60) ** 0.5) | round(2) }}
     h/tile, \(dist\) is the distance between buyer and seller, \(TT\) is the level of 
     {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Transport technology') }}">
     transport technology</a>{% else %}transport technology{% endif %},
     \(P_{ship}\) is the power consumed for shipping in kW, \(E_{base}\) is the base energy need of shipments : 
-    5 kWh/ton/tile and \(q_{ship}\) is the quantity of shipped resources.
+    5 Wh/kg/tile and \(q_{ship}\) is the quantity of shipped resources.
   </p>
   <p>
     If the energy demand of the shipment isn't met, it is paused. Upon arrival, if
