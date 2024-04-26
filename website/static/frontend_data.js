@@ -2,6 +2,17 @@
 This code contains the functions to acess frontend data and retrieve it if it is not avalable. 
 */
 
+if (!sessionStorage.getItem("player_id")){
+    fetch("/get_player_id")
+        .then((response) => response.json())
+        .then((player_id) => {
+            sessionStorage.setItem("player_id", player_id);
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+}
+
 function load_constructions() {
     if (typeof(Storage) !== "undefined") {
         const constructionsData = sessionStorage.getItem("constructions");

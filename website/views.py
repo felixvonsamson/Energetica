@@ -5,6 +5,7 @@ In this file, the main routes of the website are managed
 from flask import Blueprint, redirect, render_template, request, flash
 from flask import g, current_app
 from flask_login import login_required, current_user
+from datetime import datetime
 
 from .database.messages import Chat
 
@@ -113,7 +114,8 @@ def messages():
                 flash_error("Chat already exists")
                 return g.render_template_ctx("messages.jinja")
             new_chat = Chat(
-                name=current_user.username + buddy_username,
+                name=None,
+                last_activity=datetime.now(),
                 participants=[current_user, buddy],
             )
             db.session.add(new_chat)

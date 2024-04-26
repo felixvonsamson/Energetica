@@ -41,7 +41,11 @@ def add_handlers(socketio, engine):
         if check_existing_chats(groupMembers):
             current_user.emit("errorMessage", "Chat already exists")
             return
-        new_chat = Chat(name=title, participants=groupMembers)
+        new_chat = Chat(
+            name=title, 
+            last_activity=datetime.now(), 
+            participants=groupMembers,
+        )
         db.session.add(new_chat)
         db.session.commit()
         engine.refresh()

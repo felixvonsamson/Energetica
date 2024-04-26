@@ -10,7 +10,7 @@ from pathlib import Path
 from website import utils
 from ..database.map import Hex
 from ..database.player import Network, Player
-from ..database.messages import Chat
+from ..database.messages import Chat, Message
 
 http = Blueprint("http", __name__)
 
@@ -68,23 +68,7 @@ def get_map():
         }
         for tile in hex_map
     ]
-    with_id = request.args.get("with_id")
-    if with_id is None:
-        return jsonify(hex_list)
-    else:
-        return jsonify(hex_list, current_user.tile.id)
-
-
-# gets all the player usernames (except it's own) and returns it as a list :
-@http.route("/get_usernames", methods=["GET"])
-def get_usernames():
-    username_list = Player.query.with_entities(Player.username).all()
-    username_list = [
-        username[0]
-        for username in username_list
-        if username[0] != current_user.username
-    ]
-    return jsonify(username_list)
+    return jsonify(hex_list)
 
 
 # gets all the network names and returns it as a list :
@@ -95,13 +79,36 @@ def get_networks():
     return jsonify(network_list)
 
 
-# gets the last 20 messages from a chat and returns it as a list :
-@http.route("/get_chat", methods=["GET"])
-def get_chat():
+@http.route("/get_chat_messages", methods=["GET"])
+def get_chat_messages():
+    """gets the last 20 messages from a chat and returns it as a list"""
     chat_id = request.args.get("chatID")
-    messages = Chat.query.filter_by(id=chat_id).first().messages
-    messages_list = [(msg.player.username, msg.text) for msg in messages]
+    chat = Chat.query.filter_by(id=chat_id).first()
+    messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
+    messages_list = [
+            {
+                "time": message.time,
+                "player_id": message.player_id,
+                "text": message.text
+            }
+            for message in reversed(messages)
+        ]
     return jsonify(messages_list)
+
+@http.route("/get_chat_list", methods=["GET"])
+def get_chat_list():
+    def get_other_participant_username(chat):
+        for participant in chat.participants:
+            if participant != current_user:
+                return participant.username
+        return None 
+
+    chat_dict = {
+        chat.id: {
+            "name":chat.name if chat.name is not None else get_other_participant_username(chat),
+            "last_activity":chat.last_activity,
+        } for chat in current_user.chats}
+    return jsonify(chat_dict)
 
 
 @http.route("/get_resource_data", methods=["GET"])
@@ -222,6 +229,12 @@ def get_player_data():
     asset_count = current_user.get_values()
     config = g.engine.config[current_user.id]
     return jsonify(asset_count, config)
+
+
+@http.route("/get_player_id", methods=["GET"])
+def get_player_id():
+    """Gets the id for this player"""
+    return jsonify(current_user.id)
 
 
 @http.route("/get_players", methods=["GET"])
@@ -435,3 +448,12 @@ def leave_network():
     if response["response"] == "success":
         flash(f"You left network {network.name}", category="message")
     return redirect("/network", code=303)
+
+
+@http.route("new_message", methods=["POST"])
+def new_message():
+    """this endpoint is called when a player writes a new message"""
+    message = request.form.get("message")
+    chat_id = request.form.get("chat_id")
+    response = utils.add_message(current_user, message, chat_id)
+    return response

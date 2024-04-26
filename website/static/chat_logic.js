@@ -2,19 +2,36 @@
 This code creates a list of suggestions when typing names in a field
 */
 
+let chats;
 let active_chat = 1;
 let sortedNames;
 let group = [];
 
-fetch("/get_usernames") // retrieves list of all names using api.py
+fetch("/get_chat_list")
     .then((response) => response.json())
-    .then((data) => {
-        sortedNames = data.sort();
+    .then((chat_list) => {
+        console.log(chat_list);
+        chats = chat_list;
+        let chat_list_container = document.getElementById("chat_list_container");
+        chat_list_container.innerHTML = "";
+        for(chat_id in chats){
+            chat_list_container.innerHTML += `<div onclick="openChat(${chat_id})" class="margin-small white button">
+                <div class="proile-icon green large">${chats[chat_id].name[0]}</div>
+                <b class="medium padding test">${chats[chat_id].name}</b>
+            </div>`
+        }
     })
     .catch((error) => {
-        console.log(error);
         console.error("Error:", error);
     });
+
+load_players().then((players_) => {
+    const player_id = sessionStorage.getItem("player_id")
+    const usernames = Object.entries(players_)
+        .filter(([id, user]) => id != player_id)
+        .map(([id, user]) => user.username);
+    sortedNames = usernames.sort();
+});
 
 let input1 = document.getElementById("add_chat_username");
 let input2 = document.getElementById("add_player");
@@ -122,7 +139,7 @@ function createGroupChat() {
 function openChat(chatID) {
     active_chat = chatID;
     let html = ``;
-    fetch(`/get_chat?chatID=${chatID}`)
+    fetch(`/get_chat_messages?chatID=${chatID}`)
         .then((response) => response.json())
         .then((data) => {
             for (let i = 0; i < Math.min(25, data.length); i++) {

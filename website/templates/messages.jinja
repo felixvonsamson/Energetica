@@ -10,7 +10,7 @@
         <form method="post" class="flex-col margin medium">
             <div class="txt_center margin">
                 This is a disclamier that tells you that the chat is not censored and that any message can be read by the
-                administrator.
+                administrators.
             </div>
             <div>
                 <label for="dont_show_disclaimer">Dont show again</label>
@@ -87,18 +87,14 @@
                  style="margin-top:16px">Add group chat</div>
         </div>
     </div>
+
+
     <div class="medium flex-row">
         <div class="chat_sidebar bone">
-            <div class="txt_center large padding">CHATS</div>
-            {% for chat in chats %}
-                {% set chat_name = chat.name.replace(user.username,"") if chat.participants|length == 2 else chat.name %}
-                <div onclick="openChat({{ chat.id }})" class="margin-small white button">
-                    <div class="proile-icon green large">{{ chat_name[0] }}</div>
-                    <b class="medium padding test">
-                        {{ chat_name }}
-                    </b>
-                </div>
-            {% endfor %}
+            <div class="txt_center large padding">Chats</div>
+            <div id="chat_list_container">
+            
+            </div>
             <div onclick="document.getElementById('add_chat').classList.remove('hidden');"
                  class="margin-small pine button txt_center padding">Write to player</div>
             <div onclick="document.getElementById('add_group_chat').classList.remove('hidden');"

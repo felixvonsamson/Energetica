@@ -58,11 +58,14 @@ let player_tile_id;
 function preload() {
     font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
     //filling map
-    fetch("/get_map?with_id=true") // retrieves map data from the database using api.py
+    fetch("/get_map") // retrieves map data from the database using api.py
         .then((response) => response.json())
         .then((raw_data) => {
-            data = raw_data[0];
-            player_tile_id = raw_data[1] - 1;
+            data = raw_data;
+            const player_id = sessionStorage.getItem("player_id");
+            load_players().then((location_data) => {
+                player_tile_id = location_data[player_id].tile_id - 1;
+            });
             for (let i = 0; i < data.length; i++) {
                 let resources = [
                     data[i].solar,

@@ -15,7 +15,7 @@ from pathlib import Path
 
 from website.api import ws
 from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer
-from .database.messages import Chat, Notification
+from .database.messages import Chat, Notification, Message
 from .database.player import Network, Player
 from .database.player_assets import (
     Resource_on_sale,
@@ -383,6 +383,26 @@ def check_existing_chats(participants):
             return True
     return False
 
+def add_message(player, message, chat_id):
+    engine = current_app.config["engine"]
+    if not chat_id:
+        return {"response": "noChatID"}
+    chat = Chat.query.filter_by(id=chat_id).first()
+    new_message = Message(
+        text=message,
+        time=datetime.now(),
+        player_id=player.id,
+        chat_id=chat.id,
+    )
+    db.session.add(new_message)
+    db.session.commit()
+    msg = f"<div>{player.username} : {message}</div>"
+    engine.display_new_message(msg, chat.participants)
+    engine.log(
+        f"{player.username} sent the message {message} in the chat {chat.name}"
+    )
+    return {"response": "success"}
+
 
 def save_past_data_threaded(app, engine):
     """Saves the past production data to files every hour AND remove network data older than 24h"""
@@ -612,7 +632,7 @@ def buy_resource_from_market(player, quantity, sale_id):
             category="message",
         )
         engine.log(
-            f"{player.username} bought {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}."
+            f"{player.username} bought {format_mass(quantity)} of {sale.resource} from {sale.player.username} for a total cost of {display_money(total_price)}."
         )
         if sale.quantity == 0:
             # Player is purchasing all available quantity

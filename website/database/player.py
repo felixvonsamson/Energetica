@@ -34,6 +34,9 @@ class Player(db.Model, UserMixin):
     chats = db.relationship(
         "Chat", secondary=player_chats, backref="participants"
     )
+    chat_activities = db.relationship(
+        "PlayerChatActivity", backref="player", lazy="dynamic"
+    )
     messages = db.relationship("Message", backref="player")
     notifications = db.relationship(
         "Notification", secondary=player_notifications, backref="players"
@@ -341,3 +344,10 @@ class Network(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True)
     members = db.relationship("Player", backref="network")
+
+
+class PlayerChatActivity(db.Model):
+    """Association table to store player's last activity in each chat"""
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), primary_key=True)
+    chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"), primary_key=True)
+    last_opened_time = db.Column(db.DateTime)
