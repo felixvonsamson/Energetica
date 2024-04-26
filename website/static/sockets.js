@@ -47,12 +47,16 @@ function start_construction(facility, family) {
                         JSON.stringify(raw_data["constructions"])
                     );
                     refresh_progressBar();
-                } else if (response == "noSuitableLocationAvailable") {
-                    addError("No suitable locations");
                 } else if (response == "notEnoughMoneyError") {
                     addError("Not enough money");
                 } else if (response == "locked") {
-                    addError("Facility is locked");
+                    if (family == "Technologies"){
+                        addError("Requirements not fulfilled");
+                    }else{
+                        addError("Facility is locked");
+                    }
+                } else if (response == "requirementsNotFullfilled") {
+                    addError("Requirements not fulfilled for this Technology level");
                 }
             });
         })
@@ -170,11 +174,12 @@ socket.on("new_notification", function (notification) {
         <b>${notification["title"]}</b><br>
         ${notification["content"]}
       </div>`;
+      scroll_down_small_notification_list();
     }
     notification_list = document.getElementById("notification_list");
     if (notification_list != null) {
         notification_list.innerHTML += `<div id="notification_${notification["id"]}" class="notification padding medium margin-large">
-        <div class="small notification_time"><script>formatDateTime("${notification["time"]}");</script></div>
+        <div class="small notification_time">${formatDateTime(notification["time"], write=false)}</div>
          <div class="flex-row align-items-center notification_head">
            <b>${notification["title"]}<i class="fa fa-circle small padding"></i></b>
            <span onclick="delete_notification(this, ${notification["id"]});" class="cross">×</span></div>
@@ -185,7 +190,7 @@ socket.on("new_notification", function (notification) {
     if (notification_button != null) {
         let unread_badge = document.getElementById("unread_badge");
         if (unread_badge != null) {
-            unread_badge.innerHTML = int(unread_badge.innerHTML) + 1;
+            unread_badge.innerHTML = parseInt(unread_badge.innerHTML) + 1;
         } else {
             notification_button.innerHTML +=
                 '<span id="unread_badge" class="unread_badge small pine padding-small">1</span>';
@@ -195,7 +200,6 @@ socket.on("new_notification", function (notification) {
 
 socket.on("pause_construction", function (info) {
     load_constructions().then((construction_list) => {
-        console.log(construction_list);
         construction_list[0][info["construction_id"]]["suspension_time"] =
             info["suspension_time"];
         sessionStorage.setItem(

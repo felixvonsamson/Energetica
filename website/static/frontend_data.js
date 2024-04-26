@@ -26,6 +26,31 @@ function retrieve_constructions() {
         });
 }
 
+function load_shipments() {
+    if (typeof(Storage) !== "undefined") {
+        const shipmentData = sessionStorage.getItem("shipments");
+        if (shipmentData) {
+            return Promise.resolve(JSON.parse(shipmentData));
+        }
+    } 
+    return retrieve_shipments();
+}
+
+function retrieve_shipments() {
+    console.log("Feching shipments data from the server")
+    return fetch("/get_shipments")
+        .then((response) => response.json())
+        .then((raw_data) => {
+            // Save fetched data to sessionStorage
+            console.log(raw_data);
+            sessionStorage.setItem("shipments", JSON.stringify(raw_data));
+            return raw_data;
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+}
+
 function load_chart_data(network = false) {
     if (typeof(Storage) !== "undefined") {
         const chart_data = sessionStorage.getItem("chart_data");
@@ -40,9 +65,9 @@ function load_chart_data(network = false) {
             }
             if (network){
                 const network_data = sessionStorage.getItem("network_data");
-                return Promise.resolve({"data": JSON.parse(network_data), "resolution":clock_time});
+                return Promise.resolve(JSON.parse(network_data));
             }else{
-                return Promise.resolve({"data": JSON.parse(chart_data), "resolution":clock_time});
+                return Promise.resolve(JSON.parse(chart_data));
             }
         }
     }
@@ -55,7 +80,6 @@ function retrieve_chart_data(network) {
         .then((response) => response.json())
         .then((raw_data) => {
             var currentDate = new Date();
-            sessionStorage.setItem("clock_time", JSON.stringify(raw_data["clock_time"]));
             sessionStorage.setItem("last_value", JSON.stringify({"total_t" : raw_data["total_t"], "time": currentDate}));
             sessionStorage.setItem("last_value_network", JSON.stringify({"total_t" : raw_data["total_t"], "time": currentDate}));
             sessionStorage.setItem("chart_data", JSON.stringify(raw_data["data"]));

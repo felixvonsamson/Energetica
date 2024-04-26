@@ -28,8 +28,12 @@
   <div id="under_construction">
     {# Facilites under construction will show here #}
   </div>
-
-  {% for facility in ["industry", "laboratory", "warehouse", "carbon_capture"] %}
+  {% if "GHG_effect" in user.advancements %}
+    {% set functional_facilities = ["industry", "laboratory", "warehouse", "carbon_capture"] %}
+  {% else %}
+    {% set functional_facilities = ["industry", "laboratory", "warehouse"] %}
+  {% endif %}
+  {% for facility in functional_facilities %}
     {% set const_data = engine.const_config[facility] %}
     <div id="{{ const_data.name }}"
          class="bone margin facility small"
@@ -204,6 +208,10 @@
               <tr>
                 <td>Research speed</td>
                 <td class="txt_center">+{{ (100-const_data["time factor"]*100) | int }}%</td>
+              </tr>
+              <tr>
+                <td>Lab workers</td>
+                <td class="txt_center">{{ (user.laboratory + 2) // 3 }} -> {{ (user.laboratory + 2) // 3 }}</td>
               </tr>
             {% elif facility == "warehouse" %}
               {% if user.warehouse == 0 %}

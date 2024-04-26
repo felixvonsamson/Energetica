@@ -6,7 +6,6 @@ let data_len = 1440;
 let graph_h, graph_w;
 let maxSum;
 let graph;
-let clock_time;
 let fill_alt = 0;
 
 let resolution;
@@ -115,7 +114,7 @@ function setup() {
         industry: [color(188, 108, 37), "Industry"],
         research: [color(255, 255, 255), "Research"],
         construction: [color(255, 123, 0), "Constructions"],
-        transport: [color(106, 0, 244), "Transport"],
+        transport: [color(106, 0, 244), "Shipments"],
         carbon_capture: [color(173, 181, 189), "CO2 capture"],
 
         coal: [color(0, 0, 0), "Coal"],
@@ -182,8 +181,9 @@ function reduce(arr, res) {
     return arr[3];
 }
 
-function time_unit(res) {
-    if(clock_time == 60){
+function time_unit(res, ct) {
+    console.log(res, ct);
+    if(ct == 60){
         if (res == "2h") {
             return ["2h", "1h40", "1h20", "1h", "40min", "20min", "now"];
         } else if (res == "6h") {
@@ -197,7 +197,7 @@ function time_unit(res) {
         } else if (res == "6 months") {
             return ["6m", "5m", "4m", "3m", "2m", "1m", "now"];
         }
-    }else if(clock_time == 30){
+    }else if(ct == 30){
         if (res == "1h") {
             return ["1h", "50min", "40min", "30min", "20min", "10min", "now"];
         } else if (res == "3h") {

@@ -44,7 +44,16 @@
         </div>
     </div>
     {% if user.network == None %}
-        <div class="medium padding txt_center">You a currently not part of a Network. Join or create one :</div>
+        <div class="flex-col medium" style="justify-content:center;">
+            <div class="txt_center padding">
+            <b>You are currently not connected to a network.</b>
+            </div>
+            <div class="padding" style="max-width:650px">
+                Joining or establishing a network enables you to trade electricity with its members, providing opportunities 
+                to profit from exporting electricity or ensuring energy supply during energy-intensive construction projects, 
+                by importing energy from other network members. You'll have the freedom to set your own buying and selling prices.
+            </div>
+         </div>
         <div class="flex-row" style="justify-content:center;">
             <b class="margin button2"
                onclick="document.getElementById('join_network').classList.remove('hidden');">Join

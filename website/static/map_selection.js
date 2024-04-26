@@ -274,7 +274,7 @@ function newdraw_monitor() {
             300
         );
         text(
-            "If you need help, click on the book icon next to to title.",
+            "If you need help, click on the book icon next to the title.",
             20,
             300,
             mw - 40,
@@ -371,7 +371,9 @@ function newdraw_smartphone() {
     fill(color(83, 35, 75));
     noStroke();
     rect(0, 0, 80, 80, 0, 0, 25, 0);
-    image(logo, 4, 5, 72, 70);
+    if(logo.height != 0){
+        image(logo, 4, 5, 72, 70);
+    }
     pop();
     push();
     translate(0.5 * width, 0.2 * width + 0.3 * height);
@@ -520,9 +522,9 @@ function coords_to_id(q, r) {
 
 function mousePressed() {
     if (width < 1200) {
-        if (touches.length == 0) {
-            mousePressed_smartphone();
-        }
+        // if (touches.length == 0) {
+        mousePressed_smartphone();
+        // }
     } else {
         mousePressed_monitor();
     }

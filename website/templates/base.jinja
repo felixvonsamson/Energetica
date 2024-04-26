@@ -6,6 +6,7 @@
         style="margin-left:7px" />
   <span class="logo_txt topleft">Energetica</span>
 </div>
+{% if user != None %}
 <div class="topRight_info">
   <div class="resources medium tan_green">
     <div class="money_font large money">
@@ -58,12 +59,12 @@
   </div>
   <div class="notification_container txt_center">
   <button id="notification_button" class="bone button padding medium notification_button" 
-  onclick="document.getElementById('notification_popup').classList.remove('hidden');">
+  onclick="show_notification_list();">
     <i class="fa fa-bell"></i><span class="notification_txt"> Notifications</span>
     {% if user.unread_notifications()|length > 0 %}<span id="unread_badge" class="unread_badge small pine padding-small">{{ user.unread_notifications()|length }}</span>{% endif %}
   </button>
   <div id="notification_list-small" class="notification_list notification_list-small">
-    {% for notification in user.unread_notifications()|reverse %}
+    {% for notification in user.unread_notifications() %}
       <div id="notification_{{ notification.id }}" class="notification padding-small margin-small">
         <b>{{ notification.title }}</b><br>
         {{ notification.content }}
@@ -80,8 +81,8 @@
           class="cross pine"
           style="width:39px">×</div>
   </div>
-  <div class="notification_list flex-grow-1">
-  {% for notification in user.notifications|reverse %}
+  <div id="notification_list" class="notification_list flex-grow-1">
+  {% for notification in user.notifications %}
     <div id="notification_{{ notification.id }}" class="{% if notification.read %}read{% endif %} notification padding medium margin-large">
      <div class="small notification_time"><script>formatDateTime("{{ notification.time }}");</script></div>
       <div class="flex-row align-items-center notification_head">
@@ -315,8 +316,15 @@
     </ul>
   </div>
 </nav>
-<div class="version medium">Version : beta 0.8.0</div>
-<div class="main_container tan_green">
+{% endif %}
+
+<div class="version medium">
+<a id="changelog_button" class="white button padding-small margin-small medium changelog_button" href="{{ url_for('views.changelog') }}">
+  Changelog &nbsp;<i class="fa fa-bullhorn"></i>
+</a>
+<div class="margin-small">beta 0.8.1 (25.04.2024)</div>
+</div>
+<div id="main_container" class="main_container tan_green">
   {% block content %}
   {% endblock content %}
 </div>
@@ -326,6 +334,7 @@
           integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
           crossorigin="anonymous"></script>
   <script>var socket = io();</script>
+  <script>let clock_time = {{engine.clock_time}}</script>
   <script src="{{ url_for('static', filename='frontend_data.js') }}"></script>
   <script src="{{ url_for('static', filename='sockets.js') }}"></script>
   <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>

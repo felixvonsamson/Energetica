@@ -94,9 +94,12 @@ def add_asset(player_id, construction_id):
         if construction.name == "warehouse":
             for resource in ["coal", "oil", "gas", "uranium"]:
                 current_data.new_subcategory("resources", resource)
-        if construction.name in engine.extraction_facilities + [
-            "carbon_capture"
-        ]:
+        if (
+            construction.name
+            in engine.extraction_facilities
+            + engine.storage_facilities
+            + ["carbon_capture"]
+        ):
             player.add_to_list("demand_priorities", construction.name)
             set_network_prices(engine, player)
         if construction.name in engine.renewables:
@@ -108,7 +111,7 @@ def add_asset(player_id, construction_id):
         ):
             player.add_to_list("rest_of_priorities", construction.name)
             set_network_prices(engine, player)
-
+        db.session.commit()
         # update advancements
         if "storage_overview" not in player.advancements:
             if construction.name in engine.storage_facilities:
@@ -120,6 +123,8 @@ def add_asset(player_id, construction_id):
                 )
         if "technology" not in player.advancements:
             if construction.name == "laboratory":
+                player.add_to_list("demand_priorities", "research")
+                set_network_prices(engine, player)
                 player.add_to_list("advancements", "technology")
                 notify(
                     "Tutorial",
@@ -128,6 +133,8 @@ def add_asset(player_id, construction_id):
                 )
         if "warehouse" not in player.advancements:
             if construction.name == "warehouse":
+                player.add_to_list("demand_priorities", "transport")
+                set_network_prices(engine, player)
                 player.add_to_list("advancements", "warehouse")
                 notify(
                     "Tutorial",
@@ -156,12 +163,15 @@ def add_asset(player_id, construction_id):
         priority_list_name = "research_priorities"
         project_index = (
             Under_construction.query.filter(
-                Under_construction.family != "Technologies",
+                Under_construction.family == "Technologies",
                 Under_construction.player_id == player.id,
                 Under_construction.suspension_time.is_(None),
             ).count()
             - 1
         )
+    print(
+        f"removing id {construction_id} from {priority_list_name} ({player.username}) (add_asset)"
+    )
     player.remove_from_list(priority_list_name, construction_id)
     project_priorities = player.read_list(priority_list_name)
     for i, id in enumerate(project_priorities[:]):
@@ -184,7 +194,24 @@ def add_asset(player_id, construction_id):
                     .first()
                 )
                 if first_lvl.suspension_time is None:
-                    continue
+                    if (
+                        first_lvl.start_time + first_lvl.duration
+                        > time.time() + 0.8 * engine.clock_time
+                    ):
+                        continue
+                    else:
+                        second_lvl = (
+                            Under_construction.query.filter_by(
+                                name=next_construction.name, player_id=player.id
+                            )
+                            .order_by(Under_construction.duration)
+                            .offset(1)
+                            .first()
+                        )
+                        if second_lvl is None:
+                            continue
+                        else:
+                            first_lvl = second_lvl
                 else:
                     first_lvl.start_time += (
                         time.time() - first_lvl.suspension_time
@@ -263,7 +290,7 @@ def add_asset(player_id, construction_id):
     ]:
         new_facility = Active_facilites(
             facility=construction.name,
-            end_of_life=time.time() + assets[construction.name]["lifetime"],
+            end_of_life=time.time() + assets[construction.name]["lifespan"],
             player_id=player.id,
         )
         db.session.add(new_facility)
@@ -289,6 +316,7 @@ def remove_asset(player_id, facility, decommissioning=True):
     engine.log(
         f"The facility {engine.const_config[facility]['name']} from {player.username} has been decommissioned."
     )
+    engine.config.update_config_for_user(player.id)
 
 
 def store_import(player, resource, quantity):
@@ -527,7 +555,7 @@ def buy_resource_from_market(player, quantity, sale_id):
             player.xp += 5
             notify(
                 "Achievements",
-                "You have bougth a resources on the market. (+5 xp)",
+                "You have bought a resources on the market. (+5 xp)",
                 [player],
             )
         if "trading_2" not in sale.player.achievements:
@@ -562,7 +590,10 @@ def buy_resource_from_market(player, quantity, sale_id):
         shipment_duration = (
             distance * engine.config[player.id]["transport"]["time"]
         )
-        round_up = engine.clock_time - time.time() % engine.clock_time
+        round_up = (
+            engine.clock_time
+            - (time.time() + shipment_duration) % engine.clock_time
+        )
         new_shipment = Shipment(
             resource=sale.resource,
             quantity=quantity,
@@ -573,15 +604,15 @@ def buy_resource_from_market(player, quantity, sale_id):
         db.session.add(new_shipment)
         notify(
             "Resource transaction",
-            f"{player} bougth {format_mass(quantity)} of {sale.resource} for a total cost of {display_money(total_price)}.",
+            f"{player.username} bought {format_mass(quantity)} of {sale.resource} for a total cost of {display_money(total_price)}.",
             [sale.player],
         )
         flash(
-            f"You bougth {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}.",
+            f"You bought {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}.",
             category="message",
         )
         engine.log(
-            f"{player} bougth {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}."
+            f"{player.username} bought {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}."
         )
         if sale.quantity == 0:
             # Player is purchasing all available quantity
@@ -607,6 +638,20 @@ def confirm_location(engine, player, location):
     db.session.commit()
     ws.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
+    notify(
+        "Tutorial",
+        "Welcome to Energetica! Begin your journey with 1 steam engine and a small industry, generating revenues. \
+        The first thing you will probably want to do is to expand your operations by investing in <a href='/power_facilities'>power</a>, <a href='/storage_facilities'>storage</a>, and <a href='/functional_facilities'>functional</a> facilities under the facility menu. \
+        Keep track of your <a href='/production_overview/revenues'>revenues</a> and <a href='/production_overview/electricity'>power generation & consumption</a> through the dedicated production overview pages. \
+        Engage with other players via the community menu. For detailed explanations on any game mechanics, consult the <a href='/wiki'>wiki</a>. \
+        Best of luck in your endeavors!",
+        [player],
+    )
+    notify(
+        "Tutorial",
+        "Tip : Keep in mind, every construction project consumes electricity during its construction phase. While you might have enough money for a build, inadequate power generation can halt the construction process. Don't build a watermill or windmill until you have enough power generation capacity.",
+        [player],
+    )
     return {"response": "success"}
 
 
@@ -628,6 +673,7 @@ def data_init():
     return {
         "revenues": {
             "industry": init_array(),
+            "O&M_costs": init_array(),
             "exports": init_array(),
             "imports": init_array(),
             "dumping": init_array(),
@@ -782,6 +828,10 @@ def start_project(engine, player, facility, family):
         ud_count = Under_construction.query.filter_by(
             name=facility, player_id=player.id
         ).count()
+        if family == "Technologies":
+            for req in assets[facility]["requirements"]:
+                if getattr(player, facility) + ud_count + req[1] > getattr(player, req[0]):
+                    return {"response": "requirementsNotFullfilled"}
         real_price = (
             assets[facility]["price"]
             * engine.const_config[facility]["price multiplier"] ** ud_count
@@ -807,7 +857,7 @@ def start_project(engine, player, facility, family):
             suspension_time = None
 
     player.money -= real_price
-    round_up = engine.clock_time - time.time() % engine.clock_time
+    round_up = engine.clock_time - (time.time() + duration) % engine.clock_time
     new_construction = Under_construction(
         name=facility,
         family=family,
@@ -819,7 +869,14 @@ def start_project(engine, player, facility, family):
     )
     db.session.add(new_construction)
     db.session.commit()
+    print(
+        f"added new construction {new_construction.id} to Uner_construction (start_project)"
+    )
     player.add_to_list(priority_list_name, new_construction.id)
+    print(
+        f"added id {new_construction.id} from {priority_list_name} ({player.username}) (start_project)"
+    )
+    check_construction_parity()
     if suspension_time is None:
         player.project_max_priority(priority_list_name, new_construction.id)
     engine.log(f"{player.username} started the construction {facility}")
@@ -851,12 +908,19 @@ def cancel_project(player, construction_id):
 
     refund = 0.8 * construction.original_price * (1 - time_fraction)
     player.money += refund
+    print(
+        f"removing id {construction_id} from {priority_list_name} ({player.username}) (cancel_project)"
+    )
     player.remove_from_list(priority_list_name, construction_id)
+    print(
+        f"removing construction {construction.id} from Under_construction (cancel_project)"
+    )
     db.session.delete(construction)
     engine.log(
         f"{player.username} cancelled the construction {construction.name}"
     )
     db.session.commit()
+    check_construction_parity()
     ws.rest_notify_constructions(engine, player)
     return {
         "response": "success",
@@ -922,7 +986,9 @@ def pause_project(player, construction_id):
                 project_to_pause.suspension_time = time.time()
         construction.start_time += time.time() - construction.suspension_time
         construction.duration += (
-            engine.clock_time - construction.start_time % engine.clock_time
+            engine.clock_time
+            - (construction.start_time + construction.duration)
+            % engine.clock_time
         )
         construction.suspension_time = None
     db.session.commit()
@@ -930,6 +996,27 @@ def pause_project(player, construction_id):
     return {
         "response": "success",
         "constructions": get_construction_data(player),
+    }
+
+
+def pause_shipment(player, shipment_id):
+    """this function is executed when a player pauses or unpauses an ongoing shipment"""
+    engine = current_app.config["engine"]
+    shipment = Shipment.query.get(int(shipment_id))
+
+    if shipment.suspension_time is None:
+        shipment.suspension_time = time.time()
+    else:
+        shipment.departure_time += time.time() - shipment.suspension_time
+        shipment.duration += (
+            engine.clock_time
+            - (shipment.departure_time + shipment.duration) % engine.clock_time
+        )
+        shipment.suspension_time = None
+    db.session.commit()
+    return {
+        "response": "success",
+        "shipments": player.package_shipments(),
     }
 
 
@@ -1003,6 +1090,38 @@ def get_construction_data(player):
 
 
 def hydro_price_function(lvl, potential):
-    return 0.6 * (
+    return 0.6 + (
         math.e ** (0.6 * (lvl + 1 - 3 * potential) / (0.3 + potential))
     )
+
+
+def check_construction_parity():
+    players = Player.query.all()
+    for player in players:
+        construction_list = player.read_list("construction_priorities")
+        research_priorities = player.read_list("research_priorities")
+        for contruction_id in construction_list:
+            const = Under_construction.query.get(contruction_id)
+            if const is None:
+                print(
+                    f"\n\n\n!!! CONSTRUCTION {contruction_id} IS IN construction_list OF PLAYER {player.username} BUT NOT IN Under_construction !!!"
+                )
+        for contruction_id in research_priorities:
+            const = Under_construction.query.get(contruction_id)
+            if const is None:
+                print(
+                    f"\n\n\n!!! CONSTRUCTION {contruction_id} IS IN research_list OF PLAYER {player.username} BUT NOT IN Under_construction !!!"
+                )
+    constructions = Under_construction.query.all()
+    for construction in constructions:
+        found = False
+        for player in players:
+            construction_list = player.read_list("construction_priorities")
+            research_priorities = player.read_list("research_priorities")
+            if construction.id in construction_list + research_priorities:
+                found = True
+                break
+        if not found:
+            print(
+                f"\n\n\n!!! CONSTRUCTION {construction.name} (id:{construction.id}) IS IN Under_construction BUT WAS NOT FOUND IN ANY construction_list OR research_list !!!"
+            )

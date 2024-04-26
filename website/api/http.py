@@ -187,7 +187,6 @@ def get_chart_data():
 
     return jsonify(
         {
-            "clock_time": g.engine.clock_time,
             "total_t": total_t,
             "data": data,
             "network_data": network_data["network_data"],
@@ -235,17 +234,6 @@ def get_generation_prioirity():
     """Gets generation and demand priority for this player"""
     renewable_priorities = current_user.read_list("self_consumption_priority")
     rest_of_priorities = current_user.read_list("rest_of_priorities")
-    for facility in rest_of_priorities[:]:
-        if facility in g.engine.storage_facilities:
-            for j, f in enumerate(rest_of_priorities):
-                if getattr(current_user, "price_buy_" + facility) < getattr(
-                    current_user, "price_" + f
-                ):
-                    rest_of_priorities.insert(j, "buy_" + facility)
-                    break
-                if j + 1 == len(rest_of_priorities):
-                    rest_of_priorities.append("buy_" + facility)
-                    break
     demand_priorities = current_user.read_list("demand_priorities")
     for demand in demand_priorities:
         for j, f in enumerate(rest_of_priorities):
@@ -267,6 +255,12 @@ def get_constructions():
     construction_priorities = current_user.read_list("construction_priorities")
     research_priorities = current_user.read_list("research_priorities")
     return jsonify(projects, construction_priorities, research_priorities)
+
+
+@http.route("/get_shipments", methods=["GET"])
+def get_shipments():
+    """Gets list of shipments under way for this player"""
+    return jsonify(current_user.package_shipments())
 
 
 # gets scoreboard data :
@@ -325,6 +319,19 @@ def request_pause_project():
     construction_id = json["id"]
     response = utils.pause_project(
         player=current_user, construction_id=construction_id
+    )
+    return jsonify(response)
+
+
+@http.route("/request_pause_shipment", methods=["POST"])
+def request_pause_shipment():
+    """
+    this function is executed when a player pauses or unpauses an ongoing construction or upgrade
+    """
+    json = request.get_json()
+    shipment_id = json["id"]
+    response = utils.pause_shipment(
+        player=current_user, shipment_id=shipment_id
     )
     return jsonify(response)
 

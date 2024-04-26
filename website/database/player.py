@@ -110,10 +110,7 @@ class Player(db.Model, UserMixin):
     # Priority lists
     self_consumption_priority = db.Column(db.Text, default="")
     rest_of_priorities = db.Column(db.Text, default="steam_engine")
-    demand_priorities = db.Column(
-        db.Text,
-        default="industry,construction,transport,research",
-    )
+    demand_priorities = db.Column(db.Text, default="industry,construction")
     construction_priorities = db.Column(db.Text, default="")
     research_priorities = db.Column(db.Text, default="")
 
@@ -319,6 +316,19 @@ class Player(db.Model, UserMixin):
                 "suspension_time": construction.suspension_time,
             }
             for construction in self.under_construction
+        }
+
+    def package_shipments(self):
+        return {
+            shipment.id: {
+                "id": shipment.id,
+                "resource": shipment.resource,
+                "quantity": shipment.quantity,
+                "departure_time": shipment.departure_time,
+                "duration": shipment.duration,
+                "suspension_time": shipment.suspension_time,
+            }
+            for shipment in self.shipments
         }
 
     def package_construction_queue(self):

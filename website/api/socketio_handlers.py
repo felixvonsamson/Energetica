@@ -17,7 +17,8 @@ from datetime import datetime
 def add_handlers(socketio, engine):
     @socketio.on("connect")
     def handle_connect():
-        db.session.commit()
+        if current_user.is_anonymous:
+            return
         # Store client's sid when connected
         if current_user.id not in engine.clients:
             engine.clients[current_user.id] = []
@@ -26,7 +27,8 @@ def add_handlers(socketio, engine):
     @socketio.on("disconnect")
     def handle_disconnect():
         # Remove client's sid when disconnected
-        engine.clients[current_user.id].remove(request.sid)
+        if request.sid in engine.clients[current_user.id]:
+            engine.clients[current_user.id].remove(request.sid)
 
     # this function is executed when a player creates a new group chat
     @socketio.on("create_group_chat")

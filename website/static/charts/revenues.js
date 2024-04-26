@@ -136,12 +136,11 @@ function regen(res) {
     load_chart_data()
         .then((raw_data) => {
             background(229, 217, 182);
-            clock_time = raw_data.resolution;
-            Object.keys(raw_data.data["revenues"]).forEach((key) => {
-                data[key] = reduce(raw_data.data["revenues"][key], res);
+            Object.keys(raw_data["revenues"]).forEach((key) => {
+                data[key] = reduce(raw_data["revenues"][key], res);
             });
-            Object.keys(raw_data.data["op_costs"]).forEach((key) => {
-                data[key] = reduce(raw_data.data["op_costs"][key], res);
+            Object.keys(raw_data["op_costs"]).forEach((key) => {
+                data[key] = reduce(raw_data["op_costs"][key], res);
             });
             data_len = data["industry"].length;
             push();
@@ -200,7 +199,9 @@ function regen(res) {
             line(0, graph_h * (1 - f), 0, -graph_h * f);
 
             push();
-            let units = time_unit(res);
+            let units = time_unit(res, clock_time);
+            console.log(clock_time);
+            console.log(units);
             fill(0);
             for (let i = 1; i < units.length; i++) {
                 stroke(0, 0, 0, 30);

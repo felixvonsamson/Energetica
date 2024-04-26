@@ -157,7 +157,7 @@ def update_player_progress_values(engine, player, new_values):
             player.xp += 5
             notify(
                 "Achievements",
-                "You consume as much electricity as a small village in europe. (+5 xp)",
+                "You have passed the 1MW mark, you consume as much electricity as a small village in Europe. (+5 xp)",
                 [player],
             )
     elif "power_consumption_2" not in player.achievements:
@@ -166,7 +166,7 @@ def update_player_progress_values(engine, player, new_values):
             player.xp += 10
             notify(
                 "Achievements",
-                "You consume as much electricity as the city of Basel. (+10 xp)",
+                "You have passed the 150MW mark, you consume as much electricity as the city of Basel. (+10 xp)",
                 [player],
             )
     elif "power_consumption_3" not in player.achievements:
@@ -175,7 +175,7 @@ def update_player_progress_values(engine, player, new_values):
             player.xp += 15
             notify(
                 "Achievements",
-                "You consume as much electricity as Switzerland. (+15 xp)",
+                "You have passed the 6.5GW mark, you consume as much electricity as Switzerland. (+15 xp)",
                 [player],
             )
     elif "power_consumption_4" not in player.achievements:
@@ -184,7 +184,7 @@ def update_player_progress_values(engine, player, new_values):
             player.xp += 20
             notify(
                 "Achievements",
-                "You consume as much electricity as Japan. (+20 xp)",
+                "You have passed the 100GW mark, you consume as much electricity as Japan. (+20 xp)",
                 [player],
             )
     elif "power_consumption_5" not in player.achievements:
@@ -193,7 +193,7 @@ def update_player_progress_values(engine, player, new_values):
             player.xp += 25
             notify(
                 "Achievements",
-                "You consume as much electricity as the entire world population. (+25 xp)",
+                "You have passed the 3TW mark, you consume as much electricity as the entire world population. (+25 xp)",
                 [player],
             )
     if "energy_storage_1" not in player.achievements:
@@ -202,7 +202,7 @@ def update_player_progress_values(engine, player, new_values):
             player.xp += 5
             notify(
                 "Achievements",
-                "You have stored enougth energy to power Zurich for a day. (+5 xp)",
+                "You have stored 8GWh of energy, enought to power Zurich for a day. (+5 xp)",
                 [player],
             )
     elif "energy_storage_2" not in player.achievements:
@@ -211,7 +211,7 @@ def update_player_progress_values(engine, player, new_values):
             player.xp += 10
             notify(
                 "Achievements",
-                "You have stored enougth energy to power switzerland for a day. (+10 xp)",
+                "You have stored 160GWh of energy, enought to power switzerland for a day. (+10 xp)",
                 [player],
             )
     elif "energy_storage_3" not in player.achievements:
@@ -220,7 +220,7 @@ def update_player_progress_values(engine, player, new_values):
             player.xp += 20
             notify(
                 "Achievements",
-                "You have stored enougth energy to power switzerland for a month. (+20 xp)",
+                "You have stored 5TWh of energy, enought to power switzerland for a month. (+20 xp)",
                 [player],
             )
     if "mineral_extraction_1" not in player.achievements:
@@ -681,14 +681,14 @@ def market_optimum(offers_og, demands_og):
     merged_table = pd.concat([offers, demands], ignore_index=True)
     merged_table = merged_table.sort_values(by="cumul_capacities")
 
-    for row in merged_table.itertuples(index=False):
+    for row in merged_table.itertuples():
         if np.isnan(row.index_offer):
             price_d = row.price
         else:
             price_o = row.price
-        if price_o == np.inf:
-            return price_d, row.cumul_capacities
         if price_d < price_o:
+            if row.Index == 0:
+                return price_d, 0
             price = price_d
             if np.isnan(row.index_offer):
                 price = price_o
@@ -1085,6 +1085,8 @@ def reduce_demand(
         ):
             construction_id = construction_priorities[i]
             construction = Under_construction.query.get(construction_id)
+            if construction.suspension_time is not None:
+                continue
             cumul_demand += assets[construction.name]["construction power"]
             if cumul_demand > satisfaction:
                 construction.suspension_time = time.time()
@@ -1108,6 +1110,8 @@ def reduce_demand(
         for i in range(min(len(research_priorities), player.lab_workers)):
             construction_id = research_priorities[i]
             construction = Under_construction.query.get(construction_id)
+            if construction.suspension_time is not None:
+                continue
             cumul_demand += assets[construction.name]["construction power"]
             if cumul_demand > satisfaction:
                 construction.suspension_time = time.time()
@@ -1127,7 +1131,7 @@ def reduce_demand(
         return
     if demand_type == "transport":
         last_shipment = (
-            Shipment.query.filter(Shipment.player_id == player.id)
+            Shipment.query.filter(Shipment.suspension_time.is_(None), Shipment.player_id == player.id)
             .order_by(Shipment.departure_time.desc())
             .first()
         )

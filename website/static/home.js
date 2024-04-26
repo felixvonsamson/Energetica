@@ -14,6 +14,7 @@ fetch("/get_generation_prioirity")
     .then((response) => response.json())
     .then((raw_data) => {
         load_const_config().then((const_config) => {
+            console.log(raw_data)
             for(facility of raw_data[0]){
                 let name = const_config[facility].name;
                 sortableList.innerHTML += `<li class="item medium">
@@ -32,6 +33,8 @@ fetch("/get_generation_prioirity")
                 }else if (facility.includes("buy_")){
                     if (facility.slice(4) in const_config){
                         name = const_config[facility.slice(4)].name
+                    }else if(facility == "buy_transport"){
+                        name = "Shipments"
                     }else{
                         name = facility.charAt(4).toUpperCase() + facility.slice(5);
                     }

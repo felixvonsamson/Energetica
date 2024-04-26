@@ -28,7 +28,7 @@
     </div>
   </div>
   <div id="under_construction">
-    {# Facilites under construction will show here #}
+    {# Technologies currently researched will show here #}
   </div>
 
   {% for facility in ["mathematics", "mechanical_engineering", "thermodynamics", "physics", "building_technology", "mineral_extraction", "transport_technology", "materials", "civil_engineering", "aerodynamics", "chemistry", "nuclear_engineering"] %}
@@ -236,6 +236,10 @@
                 <tr>
                   <td>Construction time</td>
                   <td class="txt_center">-{{ (100-const_data["time factor"]*100)|int }}%</td>
+                </tr>
+                <tr>
+                  <td>Constrtruct. workers</td>
+                  <td class="txt_center">{{ user.building_technology + 1 }} -> {{ user.building_technology + 2 }}</td>
                 </tr>
               {% endif %}
               {% if facility == "transport_technology" %}

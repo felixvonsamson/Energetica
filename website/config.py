@@ -4,7 +4,6 @@ This file contains all the data needed for the game
 
 from .database.player import Player
 import copy
-import math
 from flask import current_app
 from .utils import hydro_price_function
 
@@ -212,28 +211,28 @@ const_config = {
         "coal_mine": {
             "name": "Coal mine",
             "type": "Extraction facility",
-            "extraction_rate": 0.000001,  # [fraction of total stock that can be extracted every minute by one mine]
+            "extraction_rate": 0.000005,  # [fraction of total stock that can be extracted every minute by one mine]
             "description": "The coal mine extracts coal from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Coal_mining",
         },
         "oil_field": {
             "name": "Oil field",
             "type": "Extraction facility",
-            "extraction_rate": 0.00001,
+            "extraction_rate": 0.00005,
             "description": "The oil field extracts oil from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Extraction_of_petroleum",
         },
         "gas_drilling_site": {
             "name": "Gas drilling site",
             "type": "Extraction facility",
-            "extraction_rate": 0.000008,
+            "extraction_rate": 0.00004,
             "description": "The gas drilling site extracts gas from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Natural_gas",
         },
         "uranium_mine": {
             "name": "Uranium mine",
             "type": "Extraction facility",
-            "extraction_rate": 0.000001,
+            "extraction_rate": 0.000005,
             "description": "The uranium mine extracts uranium from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Uranium_mining",
         },
@@ -332,7 +331,7 @@ const_config = {
             "time factor": 0.9,
             "energy factor": 1.035,
             "affected facilities": [],
-            "description": "Transport technology enables more efficient transport of natural resources.",
+            "description": "Transport technology enables more efficient shipments of natural resources.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172788&",
         },
         "materials": {
@@ -424,7 +423,7 @@ var_config = {
             "consumed resource": {},  # [kg/MWh]
             "pollution": 988,  # [kg CO2/MWh]
             "ramping time": 15,  # [min]
-            "lifetime": 1209600,  # [s]
+            "lifespan": 1209600,  # [s]
             "requirements": [],
         },
         "windmill": {
@@ -437,7 +436,7 @@ var_config = {
             "consumed resource": {"wind": 0},
             "pollution": 0,
             "ramping time": 0,
-            "lifetime": 2419200,
+            "lifespan": 2419200,
             "requirements": [],
         },
         "watermill": {
@@ -450,7 +449,7 @@ var_config = {
             "consumed resource": {"water": 0},
             "pollution": 0,
             "ramping time": 0,
-            "lifetime": 3024000,
+            "lifespan": 3024000,
             "requirements": [],
         },
         "coal_burner": {
@@ -463,7 +462,7 @@ var_config = {
             "consumed resource": {"coal": 640},
             "pollution": 1664,
             "ramping time": 75,
-            "lifetime": 3628800,
+            "lifespan": 3628800,
             "requirements": [
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
@@ -480,7 +479,7 @@ var_config = {
             "consumed resource": {"oil": 375},
             "pollution": 1181,
             "ramping time": 10,
-            "lifetime": 2419200,
+            "lifespan": 2419200,
             "requirements": [
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
@@ -497,7 +496,7 @@ var_config = {
             "consumed resource": {"gas": 353},
             "pollution": 1006,
             "ramping time": 9,
-            "lifetime": 2419200,
+            "lifespan": 2419200,
             "requirements": [
                 ["mechanical_engineering", 1, False],
                 ["thermodynamics", 1, False],
@@ -514,7 +513,7 @@ var_config = {
             "consumed resource": {"hydropower": 0},
             "pollution": 0,
             "ramping time": 0,
-            "lifetime": 9072000,
+            "lifespan": 9072000,
             "requirements": [["civil_engineering", 1, False]],
         },
         "onshore_wind_turbine": {
@@ -527,7 +526,7 @@ var_config = {
             "consumed resource": {"wind": 0},
             "pollution": 0,
             "ramping time": 0,
-            "lifetime": 3870720,
+            "lifespan": 3870720,
             "requirements": [
                 ["aerodynamics", 1, False],
                 ["materials", 2, False],
@@ -544,7 +543,7 @@ var_config = {
             "consumed resource": {"gas": 210, "coal": 76},
             "pollution": 797,
             "ramping time": 150,
-            "lifetime": 4233600,
+            "lifespan": 4233600,
             "requirements": [
                 ["thermodynamics", 3, False],
                 ["mechanical_engineering", 3, False],
@@ -562,7 +561,7 @@ var_config = {
             "efficiency": 0.22,
             "pollution": 2,
             "ramping time": 1200,
-            "lifetime": 6048000,
+            "lifespan": 6048000,
             "requirements": [
                 ["chemistry", 3, False],
                 ["nuclear_engineering", 1, False],
@@ -579,7 +578,7 @@ var_config = {
             "consumed resource": {"hydropower": 0},
             "pollution": 0,
             "ramping time": 0,
-            "lifetime": 12096000,
+            "lifespan": 12096000,
             "requirements": [["civil_engineering", 4, False]],
         },
         "CSP_solar": {
@@ -592,7 +591,7 @@ var_config = {
             "consumed resource": {"irradiation": 0},
             "pollution": 0,
             "ramping time": 0,
-            "lifetime": 2782080,
+            "lifespan": 2782080,
             "requirements": [
                 ["physics", 5, False],
                 ["thermodynamics", 5, False],
@@ -608,7 +607,7 @@ var_config = {
             "consumed resource": {"irradiation": 0},
             "pollution": 0,
             "ramping time": 0,
-            "lifetime": 2177280,
+            "lifespan": 2177280,
             "requirements": [["physics", 6, False], ["materials", 4, False]],
         },
         "offshore_wind_turbine": {
@@ -621,7 +620,7 @@ var_config = {
             "consumed resource": {"wind": 0},
             "pollution": 0,
             "ramping time": 0,
-            "lifetime": 4596480,
+            "lifespan": 4596480,
             "requirements": [
                 ["aerodynamics", 3, False],
                 ["materials", 4, False],
@@ -639,7 +638,7 @@ var_config = {
             "efficiency": 0.3,
             "pollution": 3,
             "ramping time": 800,
-            "lifetime": 8467200,
+            "lifespan": 8467200,
             "requirements": [
                 ["chemistry", 5, False],
                 ["nuclear_engineering", 5, False],
@@ -656,7 +655,7 @@ var_config = {
             "construction pollution": 80000,  # [kg]
             "O&M cost": 0.088,  # [fraction of price per year]
             "ramping time": 9,  # [min]
-            "lifetime": 9072000,  # [s]
+            "lifespan": 9072000,  # [s]
             "requirements": [],
         },
         "compressed_air": {
@@ -669,7 +668,7 @@ var_config = {
             "construction pollution": 570000,
             "O&M cost": 0.297,
             "ramping time": 5,
-            "lifetime": 3265920,
+            "lifespan": 3265920,
             "requirements": [
                 ["mechanical_engineering", 2, False],
                 ["thermodynamics", 2, False],
@@ -685,7 +684,7 @@ var_config = {
             "construction pollution": 1200000,
             "O&M cost": 0.424,
             "ramping time": 60,
-            "lifetime": 1814400,
+            "lifespan": 1814400,
             "requirements": [
                 ["mechanical_engineering", 2, False],
                 ["thermodynamics", 3, False],
@@ -701,7 +700,7 @@ var_config = {
             "construction pollution": 3000000,
             "O&M cost": 0.115,
             "ramping time": 16,
-            "lifetime": 10886400,
+            "lifespan": 10886400,
             "requirements": [["civil_engineering", 3, False]],
         },
         "hydrogen_storage": {
@@ -714,7 +713,7 @@ var_config = {
             "construction pollution": 2400000,
             "O&M cost": 0.028,
             "ramping time": 8,
-            "lifetime": 5443200,
+            "lifespan": 5443200,
             "requirements": [["chemistry", 3, False], ["materials", 3, False]],
         },
         "lithium_ion_batteries": {
@@ -727,7 +726,7 @@ var_config = {
             "construction pollution": 8000000,
             "O&M cost": 0.003,
             "ramping time": 3,
-            "lifetime": 967680,
+            "lifespan": 967680,
             "requirements": [["chemistry", 4, False], ["materials", 4, False]],
         },
         "solid_state_batteries": {
@@ -740,7 +739,7 @@ var_config = {
             "construction pollution": 6000000,
             "O&M cost": 0.002,
             "ramping time": 3,
-            "lifetime": 1814400,
+            "lifespan": 1814400,
             "requirements": [
                 ["chemistry", 6, False],
                 ["materials", 5, False],
@@ -792,7 +791,7 @@ var_config = {
             "O&M cost": 0.25,  # [fraction of price per year]
             "power consumption": 3000000,  # [W]
             "pollution": 0.065,  # [kg/kg extracted]
-            "lifetime": 2782080,  # [s]
+            "lifespan": 2782080,  # [s]
             "requirements": [
                 ["mineral_extraction", 1, False],
                 ["warehouse", 1, False],
@@ -806,7 +805,7 @@ var_config = {
             "O&M cost": 0.36,
             "power consumption": 7300000,
             "pollution": 0.302,
-            "lifetime": 1451520,
+            "lifespan": 1451520,
             "requirements": [
                 ["mineral_extraction", 2, False],
                 ["warehouse", 1, False],
@@ -820,7 +819,7 @@ var_config = {
             "O&M cost": 0.36,
             "power consumption": 5100000,
             "pollution": 0.523,
-            "lifetime": 1209600,
+            "lifespan": 1209600,
             "requirements": [
                 ["mineral_extraction", 2, False],
                 ["warehouse", 1, False],
@@ -834,7 +833,7 @@ var_config = {
             "O&M cost": 0.5,
             "power consumption": 18000000,
             "pollution": 230,
-            "lifetime": 2177280,
+            "lifespan": 2177280,
             "requirements": [
                 ["mineral_extraction", 5, False],
                 ["warehouse", 3, False],
@@ -1148,8 +1147,8 @@ class Config(object):
             assets[asset]["construction time"] *= (
                 engine.clock_time / 60
             ) ** 0.5
-            if "lifetime" in assets[asset]:
-                assets[asset]["lifetime"] *= (engine.clock_time / 60) ** 0.5
+            if "lifespan" in assets[asset]:
+                assets[asset]["lifespan"] *= (engine.clock_time / 60) ** 0.5
             if (
                 asset
                 in const_config["assets"]["mechanical_engineering"][
@@ -1527,16 +1526,14 @@ class Config(object):
             * 3600
             / config.for_player[player_id]["transport"]["time"]
         )
-        # reducing transport time with clock time
+        # reducing shipment time with clock time
         config.for_player[player_id]["transport"]["time"] *= (
             engine.clock_time / 60
         ) ** 0.5
 
         # setting the number of workers
         player.construction_workers = player.building_technology + 1
-        player.lab_workers = math.floor(player.laboratory / 3) + (
-            player.laboratory > 0
-        )
+        player.lab_workers = (player.laboratory + 2) // 3
 
     def __getitem__(config, player_id):
         if player_id not in config.for_player:

@@ -2,7 +2,7 @@
 In this file, the main routes of the website are managed
 """
 
-from flask import Blueprint, render_template, request, flash
+from flask import Blueprint, redirect, render_template, request, flash
 from flask import g, current_app
 from flask_login import login_required, current_user
 
@@ -27,13 +27,19 @@ def flash_error(msg):
 @login_required
 def check_user():
     g.engine = current_app.config["engine"]
-    g.config = g.engine.config[current_user.id]
+    if current_user.tile is not None:
+        g.config = g.engine.config[current_user.id]
 
     def render_template_ctx(page):
-        if page == "wiki.jinja":
-            return render_template(
-                "wiki.jinja", engine=g.engine, user=current_user, data=g.config
-            )
+        if page in ["wiki.jinja", "changelog.jinja"]:
+            if current_user.tile is not None:
+                return render_template(
+                    page,
+                    engine=g.engine,
+                    user=current_user,
+                    data=g.config,
+                )
+            return render_template("wiki.jinja", engine=g.engine, user=None)
         # show location choice if player didn't choose yet
         if current_user.tile is None:
             return render_template("location_choice.jinja")
@@ -122,7 +128,7 @@ def messages():
 @views.route("/network")
 def network():
     if "network" not in current_user.advancements:
-        return
+        return redirect("/home", code=302)
     return g.render_template_ctx("network.jinja")
 
 
@@ -139,7 +145,7 @@ def storage_facilities():
 @views.route("/technology")
 def technology():
     if "technology" not in current_user.advancements:
-        return
+        return redirect("/home", code=302)
     return g.render_template_ctx("technologies.jinja")
 
 
@@ -151,14 +157,14 @@ def functional_facilities():
 @views.route("/extraction_facilities")
 def extraction_facilities():
     if "warehouse" not in current_user.advancements:
-        return
+        return redirect("/home", code=302)
     return g.render_template_ctx("extraction_facilities.jinja")
 
 
 @views.route("/resource_market")
 def resource_market():
     if "warehouse" not in current_user.advancements:
-        return
+        return redirect("/home", code=302)
     return g.render_template_ctx("resource_market.jinja")
 
 
@@ -170,6 +176,10 @@ def scoreboard():
 @views.route("/wiki")
 def wiki():
     return g.render_template_ctx("wiki.jinja")
+
+@views.route("/changelog")
+def changelog():
+    return g.render_template_ctx("changelog.jinja")
 
 
 @overviews.route("/revenues")
@@ -185,19 +195,19 @@ def electricity():
 @overviews.route("/storage")
 def storage():
     if "storage_overview" not in current_user.advancements:
-        return
+        return redirect("/home", code=302)
     return g.render_template_ctx("overviews/storage.jinja")
 
 
 @overviews.route("/resources")
 def resources():
     if "warehouse" not in current_user.advancements:
-        return
+        return redirect("/home", code=302)
     return g.render_template_ctx("overviews/resources.jinja")
 
 
 @overviews.route("/emissions")
 def emissions():
     if "GHG_effect" not in current_user.advancements:
-        return
+        return redirect("/home", code=302)
     return g.render_template_ctx("overviews/emissions.jinja")
