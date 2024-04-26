@@ -38,6 +38,7 @@ def login():
             if check_password_hash(player.pwhash, password):
                 flash("Logged in successfully!", category="message")
                 login_user(player, remember=True)
+                current_user.emit("clear_session_storage")
                 g.engine.log(f"{username} logged in")
                 return redirect(url_for("views.home"))
             else:
@@ -55,6 +56,7 @@ def login():
 @auth.route("/logout")
 @login_required
 def logout():
+    current_user.emit("clear_session_storage")
     g.engine.log(f"{current_user.username} logged out")
     logout_user()
     return redirect(url_for("auth.login"))

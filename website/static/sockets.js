@@ -221,3 +221,7 @@ socket.on("display_new_message", function (msg) {
 socket.on("refresh", function () {
     window.location = window.location;
 });
+
+socket.on("clear_session_storage", function () {
+    sessionStorage.clear();
+});

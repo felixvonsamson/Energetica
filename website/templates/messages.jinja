@@ -103,15 +103,17 @@
         <div class="chat_container">
             <div class="txt_center large padding">MESSAGES</div>
             <div id="messages_field"></div>
-            <input type="text"
-                   class="message_input medium"
-                   id="new_message"
-                   name="new_message"
-                   placeholder="Message">
-            <b onclick="sendMessage()"
-               class="margin-small pine button txt_center padding-small">
-                send
-            </b>
+            <form action="/new_message" method="post" autocomplete="off">
+                <input type="hidden" id="chat_id" name="chat_id" value="">
+                <input type="text"
+                    class="message_input medium"
+                    id="new_message"
+                    name="new_message"
+                    placeholder="Message">
+                <button type="submit" class="margin-small pine button txt_center padding medium">
+                    send
+                </button>
+            </form>
         </div>
     </div>
 {% endblock content %}

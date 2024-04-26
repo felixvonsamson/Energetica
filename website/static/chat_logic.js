@@ -3,7 +3,6 @@ This code creates a list of suggestions when typing names in a field
 */
 
 let chats;
-let active_chat = 1;
 let sortedNames;
 let group = [];
 
@@ -136,15 +135,19 @@ function createGroupChat() {
 }
 
 function openChat(chatID) {
-    active_chat = chatID;
+    let hidden_input = document.getElementById("chat_id");
+    hidden_input.value = chatID;
     let html = ``;
     fetch(`/get_chat_messages?chatID=${chatID}`)
         .then((response) => response.json())
         .then((data) => {
-            for (let i = 0; i < Math.min(25, data.length); i++) {
-                html += `<div>${data[i][0]} : ${data[i][1]}</div>`;
-            }
-            document.getElementById("messages_field").innerHTML = html;
+            load_players().then((players) => {
+                for (let i = 0; i < data.length; i++) {
+                    html += `<div>${formatDateString(data[i].time)}</div>
+                    <div> ${players[data[i].player_id].username} : ${data[i].text}</div>`;
+                }
+                document.getElementById("messages_field").innerHTML = html;
+            })
         })
         .catch((error) => {
             console.log(error);
@@ -152,11 +155,15 @@ function openChat(chatID) {
         });
 }
 
-function sendMessage() {
-    let message = document.getElementById("new_message").value;
-    if (message.length == 0) {
-        return;
+function formatDateString(dateString) {
+    var [, day, month, year, time] = dateString.match(/(\d{2}) (\w{3}) (\d{4}) (\d{2}:\d{2}:\d{2})/);
+    var date = new Date(year, new Date().getMonth(month), day, time.substring(0, 2), time.substring(3, 5));
+    var currentDate = new Date();
+    if (date.toDateString() === currentDate.toDateString()) {
+        return date.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Paris'});
+    } else {
+        var formattedDate = date.getDate() + ' ' + date.toLocaleString('default', { month: 'short' }) + '. ' +
+                            date.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Paris'});
+        return formattedDate;
     }
-    document.getElementById("new_message").value = "";
-    socket.emit("new_message", message, active_chat);
 }

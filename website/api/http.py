@@ -455,6 +455,7 @@ def hide_chat_disclaimer():
     """this endpoint is called when a player selects 'don't show again' on the chat disclamer"""
     if request.form.get("dont_show_disclaimer") == "on":
         utils.hide_chat_disclaimer(current_user)
+    return
 
 
 @http.route("create_chat", methods=["POST"])
@@ -473,7 +474,7 @@ def create_chat():
 @http.route("new_message", methods=["POST"])
 def new_message():
     """this endpoint is called when a player writes a new message"""
-    message = request.form.get("message")
+    message = request.form.get("new_message")
     chat_id = request.form.get("chat_id")
     response = utils.add_message(current_user, message, chat_id)
     return response
