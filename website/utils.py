@@ -370,6 +370,28 @@ def format_mass(mass):
     return formatted_mass
 
 
+def hide_chat_disclaimer(player):
+    player.show_disclamer = False
+    db.session.commit()
+
+
+def create_chat(player, buddy_username, ):
+    if buddy_username == player.username:
+        return {"response": "cannotChatWithYourself"}
+    buddy = Player.query.filter_by(username=buddy_username).first()
+    if buddy is None:
+        return {"response": "usernameIsWrong"}
+    if check_existing_chats([player, buddy]):
+        return {"response": "chatAlreadyExist"}
+    new_chat = Chat(
+        name=None,
+        last_activity=datetime.now(),
+        participants=[player, buddy],
+    )
+    db.session.add(new_chat)
+    db.session.commit()
+    return {"response": "success"}
+
 # checks if a chat with exactly these participants already exists
 def check_existing_chats(participants):
     participant_ids = [participant.id for participant in participants]

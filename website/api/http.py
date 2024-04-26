@@ -450,6 +450,26 @@ def leave_network():
     return redirect("/network", code=303)
 
 
+@http.route("hide_chat_disclaimer", methods=["POST"])
+def hide_chat_disclaimer():
+    """this endpoint is called when a player selects 'don't show again' on the chat disclamer"""
+    if request.form.get("dont_show_disclaimer") == "on":
+        utils.hide_chat_disclaimer(current_user)
+
+
+@http.route("create_chat", methods=["POST"])
+def create_chat():
+    """this endpoint is called when a player crreates a chat with one other player"""
+    buddy_username = request.form.get("add_chat_username")
+    response = utils.create_chat(current_user, buddy_username)
+    if response["response"] == "cannotChatWithYourself":
+        flash("Cannot create a chat with yourself", category="error")
+    elif response["response"] == "usernameIsWrong":
+        flash("No Player with this username", category="error")
+    elif response["response"] == "chatAlreadyExist":
+        flash("This chat already exists", category="error")
+    return redirect("/messages", code=303)
+
 @http.route("new_message", methods=["POST"])
 def new_message():
     """this endpoint is called when a player writes a new message"""

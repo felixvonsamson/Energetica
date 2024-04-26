@@ -12,7 +12,6 @@ from .database.messages import Chat
 from .database.player import Player
 from . import db
 from .database.player_assets import Resource_on_sale
-from .utils import check_existing_chats
 
 views = Blueprint("views", __name__)
 overviews = Blueprint("overviews", __name__, static_folder="static")
@@ -98,32 +97,7 @@ def profile():
 
 
 @views.route("/messages", methods=["GET", "POST"])
-def messages():
-    if request.method == "POST":
-        # If player is trying to create a chat with one other player
-        if "add_chat_username" in request.form:
-            buddy_username = request.form.get("add_chat_username")
-            if buddy_username == current_user.username:
-                flash_error("Cannot create a chat with yourself")
-                return g.render_template_ctx("messages.jinja")
-            buddy = Player.query.filter_by(username=buddy_username).first()
-            if buddy is None:
-                flash_error("No Player with this username")
-                return g.render_template_ctx("messages.jinja")
-            if check_existing_chats([current_user, buddy]):
-                flash_error("Chat already exists")
-                return g.render_template_ctx("messages.jinja")
-            new_chat = Chat(
-                name=None,
-                last_activity=datetime.now(),
-                participants=[current_user, buddy],
-            )
-            db.session.add(new_chat)
-            db.session.commit()
-        else:
-            current_user.show_disclamer = False
-            if request.form.get("dont_show_disclaimer") == "on":
-                db.session.commit()
+def messages(): 
     return g.render_template_ctx("messages.jinja")
 
 

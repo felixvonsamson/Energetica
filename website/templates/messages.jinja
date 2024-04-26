@@ -7,7 +7,7 @@
     <div id="disclamer"
          class="popup {% if user.show_disclamer == False %}hidden{% endif %} green"
          style="max-width:500px">
-        <form method="post" class="flex-col margin medium">
+        <form action="/hide_chat_disclaimer" method="post" class="flex-col margin medium">
             <div class="txt_center margin">
                 This is a disclamier that tells you that the chat is not censored and that any message can be read by the
                 administrators.
@@ -32,7 +32,7 @@
                  class="cross pine margin-small"
                  style="width:39px">×</div>
         </div>
-        <form method="post" autocomplete="off" class="flex-col margin-large">
+        <form action="/create_chat" method="post" autocomplete="off" class="flex-col margin-large">
             <div style="width:100%;">
                 <label for="add_chat_username">Player username</label>
                 <input type="text"

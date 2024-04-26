@@ -10,7 +10,6 @@ let group = [];
 fetch("/get_chat_list")
     .then((response) => response.json())
     .then((chat_list) => {
-        console.log(chat_list);
         chats = chat_list;
         let chat_list_container = document.getElementById("chat_list_container");
         chat_list_container.innerHTML = "";
