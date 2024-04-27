@@ -868,20 +868,11 @@ def sell(engine, new_values, row, market_price, quantity=None):
     player = Player.query.get(row.player_id)
     generation = new_values[player.id]["generation"]
     demand = new_values[player.id]["demand"]
-    storage = new_values[player.id]["storage"]
     revenue = new_values[player.id]["revenues"]
     if quantity is None:
         quantity = row.capacity
     if row.price >= 0:
         generation[row.facility] += quantity
-        if row.facility in engine.storage_facilities:
-            assets = engine.config[player.id]["assets"]
-            storage[row.facility] -= (
-                quantity
-                / 3600
-                * engine.clock_time
-                / (assets[row.facility]["efficiency"] ** 0.5)
-            )  # Transform W in Wh + efficiency loss
     demand["exports"] += quantity
     player.money += quantity * market_price / 3600 * engine.clock_time / 1000000
     revenue["exports"] += (
@@ -892,19 +883,10 @@ def sell(engine, new_values, row, market_price, quantity=None):
 def buy(engine, new_values, row, market_price, quantity=None):
     player = Player.query.get(row.player_id)
     generation = new_values[player.id]["generation"]
-    storage = new_values[player.id]["storage"]
     demand = new_values[player.id]["demand"]
     revenue = new_values[player.id]["revenues"]
     if quantity is None:
         quantity = row.capacity
-    if row.facility in engine.storage_facilities:
-        assets = engine.config[player.id]["assets"]
-        storage[row.facility] += (
-            quantity
-            / 3600
-            * engine.clock_time
-            * (assets[row.facility]["efficiency"] ** 0.5)
-        )  # Transform W in Wh + efficiency loss
         demand[row.facility] += quantity
     generation["imports"] += quantity
     player.money -= quantity * market_price / 3600 * engine.clock_time / 1000000
