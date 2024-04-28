@@ -178,3 +178,15 @@ function formatDateTime(dateTimeString, write=true) {
 function formatted_money(amount) {
     return `${amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`;
 }
+
+function formatDateString(dateString) {
+    var date = new Date(dateString);
+    var currentDate = new Date();
+    if (date.toDateString() === currentDate.toDateString()) {
+        return date.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Paris'});
+    } else {
+        var formattedDate = date.getDate() + ' ' + date.toLocaleString('default', { month: 'short' }) + '. ' +
+                            date.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Paris'});
+        return formattedDate;
+    }
+}

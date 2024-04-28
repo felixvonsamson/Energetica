@@ -7,7 +7,7 @@
     <div id="disclamer"
          class="popup {% if user.show_disclamer == False %}hidden{% endif %} green"
          style="max-width:500px">
-        <form action="/hide_chat_disclaimer" method="post" class="flex-col margin medium">
+        <div class="flex-col margin medium">
             <div class="txt_center margin">
                 This is a disclamier that tells you that the chat is not censored and that any message can be read by the
                 administrators.
@@ -19,10 +19,9 @@
                        name="dont_show_disclaimer"
                        class="margin">
             </div>
-            <button type="submit"
-                    onclick="console.log('Button clicked!'); document.getElementById('disclamer').classList.add('hidden');"
+            <button onclick="hide_disclaimer()"
                     class="bone padding margin medium login-button">OK</button>
-        </form>
+        </div>
     </div>
     <!--ADD CHAT-->
     <div id="add_chat" class="popup hidden green">
@@ -32,7 +31,7 @@
                  class="cross pine margin-small"
                  style="width:39px">×</div>
         </div>
-        <form action="/create_chat" method="post" autocomplete="off" class="flex-col margin-large">
+        <div class="flex-col margin-large">
             <div style="width:100%;">
                 <label for="add_chat_username">Player username</label>
                 <input type="text"
@@ -42,10 +41,10 @@
                        placeholder="Username">
                 <div class="suggestions1"></div>
             </div>
-            <button type="submit"
-                    class="bone padding medium login-button"
-                    style="margin-top:16px">Add chat</button>
-        </form>
+            <button class="bone padding medium login-button"
+                    style="margin-top:16px"
+                    onclick="createChat()">Add chat</button>
+        </div>
     </div>
     <!--ADD GROUP CHAT-->
     <div id="add_group_chat" class="popup hidden green">
@@ -103,17 +102,14 @@
         <div class="chat_container">
             <div class="txt_center large padding">MESSAGES</div>
             <div id="messages_field"></div>
-            <form action="/new_message" method="post" autocomplete="off">
-                <input type="hidden" id="chat_id" name="chat_id" value="">
-                <input type="text"
-                    class="message_input medium"
-                    id="new_message"
-                    name="new_message"
-                    placeholder="Message">
-                <button type="submit" class="margin-small pine button txt_center padding medium">
-                    send
-                </button>
-            </form>
+            <input type="text"
+                class="message_input medium"
+                id="new_message"
+                name="new_message"
+                placeholder="Message">
+            <button onclick="newMessage()" class="margin-small pine button txt_center padding medium">
+                send
+            </button>
         </div>
     </div>
 {% endblock content %}

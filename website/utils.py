@@ -375,7 +375,8 @@ def hide_chat_disclaimer(player):
     db.session.commit()
 
 
-def create_chat(player, buddy_username, ):
+def create_chat(player, buddy_username):
+    """creates a chat with 2 players"""
     if buddy_username == player.username:
         return {"response": "cannotChatWithYourself"}
     buddy = Player.query.filter_by(username=buddy_username).first()
@@ -390,7 +391,37 @@ def create_chat(player, buddy_username, ):
     )
     db.session.add(new_chat)
     db.session.commit()
+    engine = current_app.config["engine"]
+    engine.log(f"{player.username} created a chat with {buddy.username}")
     return {"response": "success"}
+
+        
+def create_group_chat(player, title, group):
+    """creates a group chat"""
+    if len(title) == 0 or len(title) > 25:
+        return {"response": "wrongTitleLength"}
+    groupMembers = [player]
+    for username in group:
+        new_member = Player.query.filter_by(username=username).first()
+        if new_member:
+            groupMembers.append(new_member)
+    if len(groupMembers) < 3:
+        return {"response": "groupTooSmall"}
+    if check_existing_chats(groupMembers):
+        return {"response": "chatAlreadyExist"}
+    new_chat = Chat(
+        name=title, 
+        last_activity=datetime.now(), 
+        participants=groupMembers,
+    )
+    db.session.add(new_chat)
+    db.session.commit()
+    engine = current_app.config["engine"]
+    engine.log(
+        f"{player.username} created a group chat called {title} with {group}"
+    )
+    return {"response": "success"}
+
 
 # checks if a chat with exactly these participants already exists
 def check_existing_chats(participants):
@@ -418,11 +449,7 @@ def add_message(player, message, chat_id):
     )
     db.session.add(new_message)
     db.session.commit()
-    msg = f"<div>{player.username} : {message}</div>"
-    engine.display_new_message(msg, chat.participants)
-    engine.log(
-        f"{player.username} sent the message {message} in the chat {chat.name}"
-    )
+    engine.display_new_message(new_message, chat.participants)
     return {"response": "success"}
 
 

@@ -176,10 +176,17 @@ class gameEngine(object):
     def refresh(engine):
         engine.socketio.emit("refresh")
 
-    def display_new_message(engine, msg, players=None):
+    def display_new_message(engine, message, players=None):
         if players:
             for player in players:
-                player.emit("display_new_message", msg)
+                player.emit(
+                    "display_new_message", 
+                    {
+                        "time":message.time.isoformat(), 
+                        "player_id":message.player_id,
+                        "text":message.text,
+                    }
+                )
 
     # logs a message with the current time in the terminal and stores it in 'logs'
     def log(engine, message):

@@ -210,10 +210,14 @@ socket.on("pause_construction", function (info) {
     });
 });
 
-socket.on("display_new_message", function (msg) {
+socket.on("display_new_message", function (message) {
     let obj = document.getElementById("messages_field");
     if (obj != null) {
-        obj.innerHTML += msg;
+        load_players().then((players) => {
+            let formatted_message = `<div>${formatDateString(message.time)}</div>
+                <div> ${players[message.player_id].username} : ${message.text}</div>`;
+            obj.innerHTML += formatted_message;
+        });
     }
 });
 

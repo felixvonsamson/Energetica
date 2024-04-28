@@ -87,7 +87,7 @@ def get_chat_messages():
     messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
     messages_list = [
             {
-                "time": message.time,
+                "time": message.time.isoformat(),
                 "player_id": message.player_id,
                 "text": message.text
             }
@@ -450,31 +450,36 @@ def leave_network():
     return redirect("/network", code=303)
 
 
-@http.route("hide_chat_disclaimer", methods=["POST"])
+@http.route("hide_chat_disclaimer", methods=["GET"])
 def hide_chat_disclaimer():
     """this endpoint is called when a player selects 'don't show again' on the chat disclamer"""
-    if request.form.get("dont_show_disclaimer") == "on":
-        utils.hide_chat_disclaimer(current_user)
-    return
+    utils.hide_chat_disclaimer(current_user)
+    return jsonify({"response": "success"})
 
 
 @http.route("create_chat", methods=["POST"])
 def create_chat():
-    """this endpoint is called when a player crreates a chat with one other player"""
-    buddy_username = request.form.get("add_chat_username")
+    """this endpoint is called when a player creates a chat with one other player"""
+    json = request.get_json()
+    buddy_username = json["buddy_username"]
     response = utils.create_chat(current_user, buddy_username)
-    if response["response"] == "cannotChatWithYourself":
-        flash("Cannot create a chat with yourself", category="error")
-    elif response["response"] == "usernameIsWrong":
-        flash("No Player with this username", category="error")
-    elif response["response"] == "chatAlreadyExist":
-        flash("This chat already exists", category="error")
-    return redirect("/messages", code=303)
+    return jsonify(response)
+
+
+@http.route("create_group_chat", methods=["POST"])
+def create_group_chat():
+    """this endpoint is called when a player creates a group chat"""
+    json = request.get_json()
+    chat_title = json["chat_title"]
+    group_memebers = json["group_memebers"]
+    response = utils.create_group_chat(current_user, chat_title, group_memebers)
+    return jsonify(response)
 
 @http.route("new_message", methods=["POST"])
 def new_message():
     """this endpoint is called when a player writes a new message"""
-    message = request.form.get("new_message")
-    chat_id = request.form.get("chat_id")
+    json = request.get_json()
+    message = json["new_message"]
+    chat_id = json["chat_id"]
     response = utils.add_message(current_user, message, chat_id)
     return response

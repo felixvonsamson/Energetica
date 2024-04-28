@@ -5,8 +5,20 @@ This code creates a list of suggestions when typing names in a field
 let chats;
 let sortedNames;
 let group = [];
+let current_chat_id;
 
-fetch("/get_chat_list")
+refresh_chats();
+
+load_players().then((players_) => {
+    const player_id = sessionStorage.getItem("player_id")
+    const usernames = Object.entries(players_)
+        .filter(([id, user]) => id != player_id)
+        .map(([id, user]) => user.username);
+    sortedNames = usernames.sort();
+});
+
+function refresh_chats(){
+    fetch("/get_chat_list")
     .then((response) => response.json())
     .then((chat_list) => {
         chats = chat_list;
@@ -22,14 +34,7 @@ fetch("/get_chat_list")
     .catch((error) => {
         console.error("Error:", error);
     });
-
-load_players().then((players_) => {
-    const player_id = sessionStorage.getItem("player_id")
-    const usernames = Object.entries(players_)
-        .filter(([id, user]) => id != player_id)
-        .map(([id, user]) => user.username);
-    sortedNames = usernames.sort();
-});
+}
 
 let input1 = document.getElementById("add_chat_username");
 let input2 = document.getElementById("add_player");
@@ -77,6 +82,21 @@ input2.addEventListener("input", (e) => {
     }
 });
 
+//Enter to add player to list
+input2.addEventListener("keydown", (e) => {
+    if (e.key == "Enter") {
+        addPlayer();
+    }
+});
+
+//Enter to send message
+let message_input = document.getElementById("new_message");
+message_input.addEventListener("keydown", (e) => {
+    if (e.key == "Enter") {
+        newMessage();
+    }
+});
+
 function displayNames1(value) {
     input1.value = value;
     removeElements();
@@ -85,6 +105,7 @@ function displayNames1(value) {
 function displayNames2(value) {
     input2.value = value;
     removeElements();
+    addPlayer();
 }
 
 function removeElements() {
@@ -119,24 +140,90 @@ function removePlayer(name) {
     document.getElementById("groupMember_" + name).remove();
 }
 
+function hide_disclaimer(){
+    checkmark = document.getElementById("dont_show_disclaimer")
+    if(checkmark.checked){
+        fetch("/hide_chat_disclaimer")
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
+    }
+    document.getElementById('disclamer').classList.add('hidden');
+}
+
+function createChat(){
+    username = document.getElementById("add_chat_username").value
+    send_form("/create_chat", {
+        buddy_username: username,
+    }).then((response) => {
+        response.json().then((raw_data) => {
+            let response = raw_data["response"];
+            if (response == "success") {
+                refresh_chats();
+                document.getElementById('add_chat').classList.add('hidden');
+            }else if(response == "cannotChatWithYourself"){
+                addError("Cannot create a chat with yourself");
+            }else if(response == "usernameIsWrong"){
+                addError("No Player with this username");
+            }else if(response == "chatAlreadyExist"){
+                addError("This chat already exists");
+            }
+        });
+    })
+    .catch((error) => {
+        console.error(`caught error ${error}`);
+    });
+}
+
 function createGroupChat() {
     let title = document.getElementById("chat_title").value;
-    if (title.length == 0 || title.length > 25) {
-        addError(
-            "The chat title cannot be empty and cannot have more than 25 characters"
-        );
-        return;
+    send_form("/create_group_chat", {
+        chat_title: title,
+        group_memebers: group,
+    }).then((response) => {
+        response.json().then((raw_data) => {
+            let response = raw_data["response"];
+            if (response == "success") {
+                refresh_chats();
+                document.getElementById('add_group_chat').classList.add('hidden');
+                group = [];
+            }else if(response == "wrongTitleLength"){
+                addError("The chat title cannot be empty and cannot have more than 25 characters");
+            }else if(response == "groupTooSmall"){
+                addError("Group chats have to have at least 3 members");
+            }else if(response == "chatAlreadyExist"){
+                addError("This chat already exists");
+            }
+        });
+    })
+    .catch((error) => {
+        console.error(`caught error ${error}`);
+    });
+}
+
+function newMessage(){
+    let message_field = document.getElementById("new_message");
+    if (!current_chat_id){
+        addError("No chat has been selected")
     }
-    if (group.length == 0) {
-        addError("The chat has to have at least 2 members");
-        return;
-    }
-    socket.emit("create_group_chat", title, group);
+    send_form("/new_message", {
+        new_message: message_field.value,
+        chat_id: current_chat_id,
+    }).then((response) => {
+        response.json().then((raw_data) => {
+            let response = raw_data["response"];
+            if (response == "success") {
+                message_field.value = "";
+            }
+        });
+    })
+    .catch((error) => {
+        console.error(`caught error ${error}`);
+    });
 }
 
 function openChat(chatID) {
-    let hidden_input = document.getElementById("chat_id");
-    hidden_input.value = chatID;
+    current_chat_id = chatID;
     let html = ``;
     fetch(`/get_chat_messages?chatID=${chatID}`)
         .then((response) => response.json())
@@ -153,17 +240,4 @@ function openChat(chatID) {
             console.log(error);
             console.error("Error:", error);
         });
-}
-
-function formatDateString(dateString) {
-    var [, day, month, year, time] = dateString.match(/(\d{2}) (\w{3}) (\d{4}) (\d{2}:\d{2}:\d{2})/);
-    var date = new Date(year, new Date().getMonth(month), day, time.substring(0, 2), time.substring(3, 5));
-    var currentDate = new Date();
-    if (date.toDateString() === currentDate.toDateString()) {
-        return date.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Paris'});
-    } else {
-        var formattedDate = date.getDate() + ' ' + date.toLocaleString('default', { month: 'short' }) + '. ' +
-                            date.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Paris'});
-        return formattedDate;
-    }
 }
