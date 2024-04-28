@@ -48,7 +48,7 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     if os.path.isfile("instance/engine_data.pck"):
         with open("instance/engine_data.pck", "rb") as file:
             engine.data = pickle.load(file)
-            engine.log("loaded engine data from disk")
+            engine.log("Loaded engine data from disk.")
     app.config["engine"] = engine
 
     # initialize socketio :
@@ -74,8 +74,8 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")
     app.register_blueprint(auth, url_prefix="/")
-    app.register_blueprint(http, url_prefix="/")
-    app.register_blueprint(ws, url_prefix="/")
+    app.register_blueprint(http, url_prefix="/api/")
+    app.register_blueprint(ws, url_prefix="/api/")
 
     from .database.map import Hex
 
@@ -87,17 +87,7 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
             with open("website/static/data/map.csv", "r") as file:
                 csv_reader = csv.DictReader(file)
                 for row in csv_reader:
-                    hex = Hex(
-                        q=row["q"],
-                        r=row["r"],
-                        solar=row["solar"],
-                        wind=row["wind"],
-                        hydro=row["hydro"],
-                        coal=row["coal"],
-                        oil=row["oil"],
-                        gas=row["gas"],
-                        uranium=row["uranium"],
-                    )
+                    hex = Hex(**{ k: row[k] for k in ["q", "r", "solar", "wind", "hydro", "coal", "oil", "gas", "uranium"] })
                     db.session.add(hex)
                 db.session.commit()
 
@@ -112,9 +102,8 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
         return player
 
     # initialize the schedulers and add the recurrent functions :
-    if (
-        os.environ.get("WERKZEUG_RUN_MAIN") == "true"
-    ):  # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
+    # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         from .gameEngine import state_update
 
         scheduler = APScheduler()

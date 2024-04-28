@@ -1,3 +1,4 @@
+from itertools import chain
 from website import db
 from website.database.player_assets import (
     Under_construction,
@@ -10,7 +11,6 @@ from flask_login import UserMixin
 from website.database.messages import (
     Notification,
     player_chats,
-    player_notifications,
 )
 
 
@@ -38,9 +38,7 @@ class Player(db.Model, UserMixin):
         "PlayerChatActivity", backref="player", lazy="dynamic"
     )
     messages = db.relationship("Message", backref="player")
-    notifications = db.relationship(
-        "Notification", secondary=player_notifications, backref="players"
-    )
+    notifications = db.relationship("Notification", backref="players", lazy="dynamic")
 
     # resources :
     money = db.Column(db.Float, default=25000)  # default is 25000
@@ -227,26 +225,10 @@ class Player(db.Model, UserMixin):
             setattr(self, attr, f"{id}," + getattr(self, attr))
         db.session.commit()
 
-    def get_constructions(self):
-        constructions = self.under_construction
-        construction_list = {
-            construction.id: {
-                "name": construction.name,
-                "family": construction.family,
-                "start_time": construction.start_time,
-                "duration": construction.duration,
-                "suspension_time": construction.suspension_time,
-            }
-            for construction in constructions
-        }
-        return construction_list
-
     def delete_notification(self, notification_id):
         notification = Notification.query.get(notification_id)
-        if notification in self.notifications:
-            self.notifications.remove(notification)
-            if not notification.players:
-                db.session.delete(notification)
+        if notification in self.notifications.all():
+            db.session.delete(notification)
             db.session.commit()
 
     def notifications_read(self):
@@ -255,30 +237,24 @@ class Player(db.Model, UserMixin):
         db.session.commit()
 
     def unread_notifications(self):
-        return [
-            notification
-            for notification in self.notifications
-            if not notification.read
-        ]
+        return self.notifications.filter_by(read=False).all()
 
     def get_values(self):
         engine = current_app.config["engine"]
-        attributes = (
-            engine.controllable_facilities
-            + engine.renewables
-            + engine.storage_facilities
-            + engine.extraction_facilities
-            + engine.functional_facilities
-            + engine.technologies
+        attributes = chain(
+            engine.controllable_facilities, 
+            engine.renewables, 
+            engine.storage_facilities, 
+            engine.extraction_facilities, 
+            engine.functional_facilities, 
+            engine.technologies
         )
-        return {attr: getattr(self, attr) for attr in attributes}
+        return { attr: getattr(self, attr) for attr in attributes }
 
     def emit(self, event, *args):
         engine = current_app.config["engine"]
-        if self.id in engine.clients:
-            socketio = engine.socketio
-            for sid in engine.clients[self.id]:
-                socketio.emit(event, *args, room=sid)
+        for sid in engine.clients[self.id]:
+            engine.socketio.emit(event, *args, room=sid)
 
     def send_new_data(self, new_values):
         engine = current_app.config["engine"]
@@ -287,8 +263,8 @@ class Player(db.Model, UserMixin):
             {
                 "total_t": engine.data["total_t"],
                 "chart_values": new_values,
-                "money": "{:,.0f}".format(self.money).replace(",", "'"),
-            },
+                "money": f"{self.money:,.0f}".replace(",", "'"),
+            }
         )
 
     # prints out the object as a sting with the players username for debugging
@@ -310,14 +286,7 @@ class Player(db.Model, UserMixin):
 
     def package_constructions(self):
         return {
-            construction.id: {
-                "id": construction.id,
-                "name": construction.name,
-                "family": construction.family,
-                "start_time": construction.start_time,
-                "duration": construction.duration,
-                "suspension_time": construction.suspension_time,
-            }
+            construction.id: { k: getattr(construction, k) for k in ["id", "name", "family", "start_time", "duration", "suspension_time"] }
             for construction in self.under_construction
         }
 
