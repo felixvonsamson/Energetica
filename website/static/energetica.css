@@ -851,7 +851,7 @@ canvas {
 /* messages */
 .chat_sidebar {
     width: 230px;
-    min-height: 100vh;
+    height: 100vh;
     overflow: auto;
     padding: 0 8px
 }
@@ -859,7 +859,18 @@ canvas {
 .chat_container {
     flex: 1;
     overflow: auto;
-    padding: 0 16px
+    padding: 0 16px;
+    height:100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat_title, .message_input_field{
+    flex: 0 0 auto;
+}
+
+.message_input_field.hidden {
+    display: none;
 }
 
 .proile-icon {
@@ -876,17 +887,48 @@ canvas {
 }
 
 .message_container {
+    flex: 1;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.message_infos {
+    font-size: min(16px, 2vh);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.message_text {
+    padding: 6px 12px;
+    font-size: min(20px, 2.8vh);
+}
+
+.message_text.left{
+    background-color: #e5d9b6;
+    border-radius: 10px 10px 10px 0;
+}
+
+.message_text.right{
+    background-color: #d8e2b1;
+    border-radius: 10px 10px 0 10px;
+}
+
+.message{
+    margin-bottom: 5px;
 }
 
 .message.left {
     align-self: flex-start;
+    margin-right: 20%;
 }
   
-
 .message.right {
     align-self: flex-end;
+    margin-left: 20%;
 }
 
 .img {

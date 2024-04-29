@@ -100,16 +100,18 @@
                  class="margin-small pine button txt_center padding">Create goup chat</div>
         </div>
         <div class="chat_container">
-            <div class="txt_center large padding">MESSAGES</div>
+            <div id="chat_title_div" class="txt_center large padding chat_title">Messages</div>
             <div id="message_container" class="message_container"></div>
-            <input type="text"
-                class="message_input medium"
-                id="new_message"
-                name="new_message"
-                placeholder="Message">
-            <button onclick="newMessage()" class="margin-small pine button txt_center padding medium">
-                send
-            </button>
+            <div id = "message_input_field" class="message_input_field flex-space-around margin hidden">
+                <input type="text"
+                    class="message_input medium"
+                    id="new_message"
+                    name="new_message"
+                    placeholder="Message">
+                <button onclick="newMessage()" class="margin-small pine button txt_center padding medium">
+                    send
+                </button>
+            </div>
         </div>
     </div>
 {% endblock content %}

@@ -213,17 +213,24 @@ socket.on("pause_construction", function (info) {
 socket.on("display_new_message", function (message) {
     let obj = document.getElementById("message_container");
     if (obj != null) {
-        load_players().then((players) => {
-            let formatted_message
-            if(message.player_id == sessionStorage.getItem("player_id")){
-                formatted_message = `<div class="message right"><div>${formatDateString(message.time)}</div>
-                <div> ${players[message.player_id].username} : ${message.text}</div></div>`;
-            }else{
-                formatted_message = `<div class="message left"><div>${formatDateString(message.time)}</div>
-                <div> ${players[message.player_id].username} : ${message.text}</div></div>`;
-            }
-            obj.innerHTML += formatted_message;
-        });
+        if (current_chat_id == message.chat_id){
+            load_players().then((players) => {
+                let alignment = "left";
+                let username = "";
+                if(message.player_id == sessionStorage.getItem("player_id")){
+                    alignment = "right";
+                }else if(chats[message.chat_id].group_chat){
+                    username = players[message.player_id].username + "&emsp;";
+                }
+                obj.innerHTML += `<div class="message ${alignment}">
+                    <div class="message_infos">
+                        <span>${username}</span>
+                        <span class="txt_pine">${formatDateString(message.time)}</span></div>
+                    <div class="message_text bone ${alignment}">${message.text}</div>
+                </div>`;
+                obj.scrollTop = obj.scrollHeight;
+            });
+        }
     }
 });
 

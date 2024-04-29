@@ -86,14 +86,15 @@ def get_chat_messages():
     chat = Chat.query.filter_by(id=chat_id).first()
     messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
     messages_list = [
-            {
-                "time": message.time.isoformat(),
-                "player_id": message.player_id,
-                "text": message.text
-            }
-            for message in reversed(messages)
-        ]
+        {
+            "time": message.time.isoformat(),
+            "player_id": message.player_id,
+            "text": message.text,
+        }
+        for message in reversed(messages)
+    ]
     return jsonify(messages_list)
+
 
 @http.route("/get_chat_list", methods=["GET"])
 def get_chat_list():
@@ -101,13 +102,18 @@ def get_chat_list():
         for participant in chat.participants:
             if participant != current_user:
                 return participant.username
-        return None 
+        return None
 
     chat_dict = {
         chat.id: {
-            "name":chat.name if chat.name is not None else get_other_participant_username(chat),
-            "last_activity":chat.last_activity,
-        } for chat in current_user.chats}
+            "name": chat.name
+            if chat.name is not None
+            else get_other_participant_username(chat),
+            "last_activity": chat.last_activity,
+            "group_chat": chat.name is not None,
+        }
+        for chat in current_user.chats
+    }
     return jsonify(chat_dict)
 
 
@@ -474,6 +480,7 @@ def create_group_chat():
     group_memebers = json["group_memebers"]
     response = utils.create_group_chat(current_user, chat_title, group_memebers)
     return jsonify(response)
+
 
 @http.route("new_message", methods=["POST"])
 def new_message():

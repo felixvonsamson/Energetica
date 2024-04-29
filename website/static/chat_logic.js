@@ -229,16 +229,28 @@ function openChat(chatID) {
         .then((response) => response.json())
         .then((data) => {
             load_players().then((players) => {
+                let chat_title = document.getElementById("chat_title_div");
+                chat_title.innerHTML = `<b>${chats[chatID].name}</b>`;
+                document.getElementById("message_input_field").classList.remove("hidden");
                 for (let i = 0; i < data.length; i++) {
+                    let alignment = "left";
+                    let username = "";
                     if(data[i].player_id == sessionStorage.getItem("player_id")){
-                        html += `<div class="message right"><div>${formatDateString(data[i].time)}</div>
-                        <div> ${players[data[i].player_id].username} : ${data[i].text}</div></div>`;
-                    }else{
-                        html += `<div class="message left"><div>${formatDateString(data[i].time)}</div>
-                        <div> ${players[data[i].player_id].username} : ${data[i].text}</div></div>`;
+                        alignment = "right";
+                    }else if(chats[chatID].group_chat){
+                        username = players[data[i].player_id].username + "&emsp;";
                     }
+                    html += `<div class="message ${alignment}">
+                        <div class="message_infos">
+                            <span>${username}</span>
+                            <span class="txt_pine">${formatDateString(data[i].time)}</span></div>
+                        <div class="message_text bone ${alignment}">${data[i].text}</div>
+                    </div>`;
                 }
-                document.getElementById("message_container").innerHTML = html;
+                let message_container = document.getElementById("message_container")
+                message_container.innerHTML = html;
+                message_container.scrollTop = message_container.scrollHeight;
+                document.getElementById("new_message").focus();
             })
         })
         .catch((error) => {

@@ -348,6 +348,9 @@ class Network(db.Model):
 
 class PlayerChatActivity(db.Model):
     """Association table to store player's last activity in each chat"""
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), primary_key=True)
+
+    player_id = db.Column(
+        db.Integer, db.ForeignKey("player.id"), primary_key=True
+    )
     chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"), primary_key=True)
     last_opened_time = db.Column(db.DateTime)
