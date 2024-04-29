@@ -230,10 +230,15 @@ function openChat(chatID) {
         .then((data) => {
             load_players().then((players) => {
                 for (let i = 0; i < data.length; i++) {
-                    html += `<div>${formatDateString(data[i].time)}</div>
-                    <div> ${players[data[i].player_id].username} : ${data[i].text}</div>`;
+                    if(data[i].player_id == sessionStorage.getItem("player_id")){
+                        html += `<div class="message right"><div>${formatDateString(data[i].time)}</div>
+                        <div> ${players[data[i].player_id].username} : ${data[i].text}</div></div>`;
+                    }else{
+                        html += `<div class="message left"><div>${formatDateString(data[i].time)}</div>
+                        <div> ${players[data[i].player_id].username} : ${data[i].text}</div></div>`;
+                    }
                 }
-                document.getElementById("messages_field").innerHTML = html;
+                document.getElementById("message_container").innerHTML = html;
             })
         })
         .catch((error) => {

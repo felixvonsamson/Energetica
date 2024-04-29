@@ -875,6 +875,20 @@ canvas {
     width: 80%
 }
 
+.message_container {
+    display: flex;
+    flex-direction: column;
+}
+
+.message.left {
+    align-self: flex-start;
+}
+  
+
+.message.right {
+    align-self: flex-end;
+}
+
 .img {
     width: 250px
 }

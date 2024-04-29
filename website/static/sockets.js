@@ -211,11 +211,17 @@ socket.on("pause_construction", function (info) {
 });
 
 socket.on("display_new_message", function (message) {
-    let obj = document.getElementById("messages_field");
+    let obj = document.getElementById("message_container");
     if (obj != null) {
         load_players().then((players) => {
-            let formatted_message = `<div>${formatDateString(message.time)}</div>
-                <div> ${players[message.player_id].username} : ${message.text}</div>`;
+            let formatted_message
+            if(message.player_id == sessionStorage.getItem("player_id")){
+                formatted_message = `<div class="message right"><div>${formatDateString(message.time)}</div>
+                <div> ${players[message.player_id].username} : ${message.text}</div></div>`;
+            }else{
+                formatted_message = `<div class="message left"><div>${formatDateString(message.time)}</div>
+                <div> ${players[message.player_id].username} : ${message.text}</div></div>`;
+            }
             obj.innerHTML += formatted_message;
         });
     }
