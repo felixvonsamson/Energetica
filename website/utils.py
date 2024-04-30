@@ -386,7 +386,6 @@ def create_chat(player, buddy_username):
         return {"response": "chatAlreadyExist"}
     new_chat = Chat(
         name=None,
-        last_activity=datetime.now(),
         participants=[player, buddy],
     )
     db.session.add(new_chat)
@@ -395,7 +394,7 @@ def create_chat(player, buddy_username):
     engine.log(f"{player.username} created a chat with {buddy.username}")
     return {"response": "success"}
 
-        
+
 def create_group_chat(player, title, group):
     """creates a group chat"""
     if len(title) == 0 or len(title) > 25:
@@ -410,8 +409,7 @@ def create_group_chat(player, title, group):
     if check_existing_chats(groupMembers):
         return {"response": "chatAlreadyExist"}
     new_chat = Chat(
-        name=title, 
-        last_activity=datetime.now(), 
+        name=title,
         participants=groupMembers,
     )
     db.session.add(new_chat)
@@ -435,6 +433,7 @@ def check_existing_chats(participants):
         if len(chat.participants) == len(participants):
             return True
     return False
+
 
 def add_message(player, message, chat_id):
     engine = current_app.config["engine"]
@@ -899,7 +898,9 @@ def start_project(engine, player, facility, family):
         ).count()
         if family == "Technologies":
             for req in assets[facility]["requirements"]:
-                if getattr(player, facility) + ud_count + req[1] > getattr(player, req[0]):
+                if getattr(player, facility) + ud_count + req[1] > getattr(
+                    player, req[0]
+                ):
                     return {"response": "requirementsNotFullfilled"}
         real_price = (
             assets[facility]["price"]

@@ -3,10 +3,10 @@ from website import db
 
 class Chat(db.Model):
     """Stores chats with 2 or more players"""
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
     messages = db.relationship("Message", backref="chat", lazy="dynamic")
-    last_activity = db.Column(db.DateTime)
 
 
 class Message(db.Model):

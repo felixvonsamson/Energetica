@@ -83,38 +83,14 @@ def get_networks():
 def get_chat_messages():
     """gets the last 20 messages from a chat and returns it as a list"""
     chat_id = request.args.get("chatID")
-    chat = Chat.query.filter_by(id=chat_id).first()
-    messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
-    messages_list = [
-        {
-            "time": message.time.isoformat(),
-            "player_id": message.player_id,
-            "text": message.text,
-        }
-        for message in reversed(messages)
-    ]
-    return jsonify(messages_list)
+    response = current_user.package_chat_messages(chat_id)
+    return jsonify(response)
 
 
 @http.route("/get_chat_list", methods=["GET"])
 def get_chat_list():
-    def get_other_participant_username(chat):
-        for participant in chat.participants:
-            if participant != current_user:
-                return participant.username
-        return None
-
-    chat_dict = {
-        chat.id: {
-            "name": chat.name
-            if chat.name is not None
-            else get_other_participant_username(chat),
-            "last_activity": chat.last_activity,
-            "group_chat": chat.name is not None,
-        }
-        for chat in current_user.chats
-    }
-    return jsonify(chat_dict)
+    response = current_user.package_chat_list()
+    return jsonify(response)
 
 
 @http.route("/get_resource_data", methods=["GET"])

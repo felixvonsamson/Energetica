@@ -20,8 +20,8 @@ load_players().then((players_) => {
 function refresh_chats(){
     fetch("/get_chat_list")
     .then((response) => response.json())
-    .then((chat_list) => {
-        chats = chat_list;
+    .then((data) => {
+        chats = data.chat_list;
         let chat_list_container = document.getElementById("chat_list_container");
         chat_list_container.innerHTML = "";
         for(chat_id in chats){
@@ -29,6 +29,9 @@ function refresh_chats(){
                 <div class="proile-icon green large">${chats[chat_id].name[0]}</div>
                 <b class="medium padding test">${chats[chat_id].name}</b>
             </div>`
+        }
+        if(data.last_opened_chat != null){
+            openChat(data.last_opened_chat);
         }
     })
     .catch((error) => {
@@ -229,22 +232,23 @@ function openChat(chatID) {
         .then((response) => response.json())
         .then((data) => {
             load_players().then((players) => {
+                let messages = data.messages;
                 let chat_title = document.getElementById("chat_title_div");
                 chat_title.innerHTML = `<b>${chats[chatID].name}</b>`;
                 document.getElementById("message_input_field").classList.remove("hidden");
-                for (let i = 0; i < data.length; i++) {
+                for (let i = 0; i < messages.length; i++) {
                     let alignment = "left";
                     let username = "";
-                    if(data[i].player_id == sessionStorage.getItem("player_id")){
+                    if(messages[i].player_id == sessionStorage.getItem("player_id")){
                         alignment = "right";
                     }else if(chats[chatID].group_chat){
-                        username = players[data[i].player_id].username + "&emsp;";
+                        username = players[messages[i].player_id].username + "&emsp;";
                     }
                     html += `<div class="message ${alignment}">
                         <div class="message_infos">
                             <span>${username}</span>
-                            <span class="txt_pine">${formatDateString(data[i].time)}</span></div>
-                        <div class="message_text bone ${alignment}">${data[i].text}</div>
+                            <span class="txt_pine">${formatDateString(messages[i].time)}</span></div>
+                        <div class="message_text bone ${alignment}">${messages[i].text}</div>
                     </div>`;
                 }
                 let message_container = document.getElementById("message_container")

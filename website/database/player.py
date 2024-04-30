@@ -8,6 +8,8 @@ from flask import current_app
 from flask_login import UserMixin
 
 from website.database.messages import (
+    Chat,
+    Message,
     Notification,
     player_chats,
     player_notifications,
@@ -34,9 +36,7 @@ class Player(db.Model, UserMixin):
     chats = db.relationship(
         "Chat", secondary=player_chats, backref="participants"
     )
-    chat_activities = db.relationship(
-        "PlayerChatActivity", backref="player", lazy="dynamic"
-    )
+    last_opened_chat = db.Column(db.Integer, default=None)
     messages = db.relationship("Message", backref="player")
     notifications = db.relationship(
         "Notification", secondary=player_notifications, backref="players"
@@ -241,6 +241,56 @@ class Player(db.Model, UserMixin):
         }
         return construction_list
 
+    def package_chat_messages(self, chat_id):
+        chat = Chat.query.filter_by(id=chat_id).first()
+        messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
+        messages_list = [
+            {
+                "time": message.time.isoformat(),
+                "player_id": message.player_id,
+                "text": message.text,
+            }
+            for message in reversed(messages)
+        ]
+        self.last_opened_chat = chat.id
+        db.session.commit()
+        return {"response": "success", "messages": messages_list}
+
+    def package_chat_list(self):
+        def chat_name(chat):
+            if chat.name is not None:
+                return chat.name
+            for participant in chat.participants:
+                if participant != self:
+                    return participant.username
+            return None
+
+        def unread_message_count(chat):
+            unread_messages_count = (
+                PlayerReadMessages.query.join(
+                    Message, PlayerReadMessages.message_id == Message.id
+                )
+                .filter(PlayerReadMessages.player_id == self.id)
+                .filter(Message.chat_id == chat.id)
+                .filter(PlayerReadMessages.read.is_(False))
+                .count()
+            )
+            return unread_messages_count
+
+        chat_dict = {
+            chat.id: {
+                "name": chat_name(chat),
+                "group_chat": chat.name is not None,
+                "unread_messages": unread_message_count(chat),
+            }
+            for chat in self.chats
+        }
+        return {
+            "response": "success",
+            "chat_list": chat_dict,
+            "last_opened_chat": self.last_opened_chat,
+        }
+
     def delete_notification(self, notification_id):
         notification = Notification.query.get(notification_id)
         if notification in self.notifications:
@@ -346,11 +396,17 @@ class Network(db.Model):
     members = db.relationship("Player", backref="network")
 
 
-class PlayerChatActivity(db.Model):
+class PlayerReadMessages(db.Model):
     """Association table to store player's last activity in each chat"""
 
     player_id = db.Column(
         db.Integer, db.ForeignKey("player.id"), primary_key=True
     )
-    chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"), primary_key=True)
-    last_opened_time = db.Column(db.DateTime)
+    message_id = db.Column(
+        db.Integer, db.ForeignKey("message.id"), primary_key=True
+    )
+    read = db.Column(db.Boolean, default=False)
+    player = db.relationship("Player", backref="read_messages", lazy="dynamic")
+    message = db.relationship(
+        "Message", backref="read_by_players", lazy="dynamic"
+    )
