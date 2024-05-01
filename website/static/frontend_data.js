@@ -65,7 +65,6 @@ function retrieve_shipments() {
 function load_chart_data(network = false) {
     if (typeof(Storage) !== "undefined") {
         const chart_data = sessionStorage.getItem("chart_data");
-        const clock_time = sessionStorage.getItem("clock_time");
         if (chart_data) {
             const last_value = JSON.parse(sessionStorage.getItem("last_value"));
             var currentDate = new Date();

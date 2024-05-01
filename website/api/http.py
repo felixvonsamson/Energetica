@@ -126,10 +126,10 @@ def get_chart_data():
         for key, value in dict2.items():
             for sub_key, array2 in value.items():
                 if sub_key not in dict1[key]:
-                    dict1[key][sub_key] = [[0.0] * 1440] * 4
+                    dict1[key][sub_key] = [[0.0] * 360] * 5
                 array = dict1[key][sub_key]
                 concatenated_array = list(array[0]) + array2
-                dict1[key][sub_key][0] = concatenated_array[-1440:]
+                dict1[key][sub_key][0] = concatenated_array[-360:]
                 new_5days = calculate_mean_subarrays(array2, 5)
                 dict1[key][sub_key][1] = dict1[key][sub_key][1][
                     len(new_5days) :

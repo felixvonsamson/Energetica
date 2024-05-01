@@ -195,7 +195,7 @@ def rest_get_charts():
 
     def combine_file_data_and_engine_data(file_data, engine_data):
         combined_data_unsliced = file_data + engine_data[1 : current_t + 1]
-        return combined_data_unsliced[-1440:]
+        return combined_data_unsliced[-360:]
 
     def industry_data_for(category, subcategory):
         return combine_file_data_and_engine_data(

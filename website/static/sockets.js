@@ -28,6 +28,11 @@ socket.on("connect_error", (err) => {
     console.log(err.context);
 });
 
+//function that checks if the connection is a new connection or not
+function check_new_connection(){
+    const last_value = JSON.parse(sessionStorage.getItem("last_value"));
+}
+
 // information sent to the server when a new facility is created
 function start_construction(facility, family) {
     send_form("/request_start_project", {
@@ -94,8 +99,8 @@ socket.on("new_values", function (changes) {
             for (var subcategory in subcategories) {
                 if (!chart_data[category].hasOwnProperty(subcategory)) {
                     chart_data[category][subcategory] = Array.from(
-                        { length: 4 },
-                        () => Array(1440).fill(0)
+                        { length: 5 },
+                        () => Array(360).fill(0)
                     );
                 }
                 var value = subcategories[subcategory];
@@ -137,32 +142,21 @@ socket.on("new_network_values", function (changes) {
 function reduce_resolution(value, array, total_t) {
     array[0].shift();
     array[0].push(value);
-    let mod5 = total_t % 5;
-    if (mod5 != 0) {
-        array[1][1439] =
-            array[0].slice(-mod5).reduce((acc, val) => acc + val, 0) / mod5;
-    } else {
-        array[1].shift();
-        let new_val = (4 * array[1][1438] + array[0][1439]) / 5;
-        array[1].push(new_val);
-    }
-    let mod30 = total_t % 30;
-    if (mod30 != 0) {
-        array[2][1439] =
-            array[0].slice(-mod30).reduce((acc, val) => acc + val, 0) / mod30;
-    } else {
-        array[2].shift();
-        let new_val = (29 * array[1][1438] + array[0][1439]) / 30;
-        array[2].push(new_val);
-    }
-    let mod180 = total_t % 180;
-    if (mod180 != 0) {
-        array[3][1439] =
-            array[0].slice(-mod180).reduce((acc, val) => acc + val, 0) / mod180;
-    } else {
-        array[3].shift();
-        let new_val = (179 * array[1][1438] + array[0][1439]) / 180;
-        array[3].push(new_val);
+    for(r=1; r<5; r++){
+        factor = Math.pow(6,r)
+        let mod = total_t % factor;
+        if (mod != 0) {
+            if(r == 4){
+                let mod_6 = ceil(mod / 6);
+                array[r][359] = array[1].slice(-mod_6).reduce((acc, val) => acc + val, 0) / mod_6;
+            }else{
+                array[r][359] = array[0].slice(-mod).reduce((acc, val) => acc + val, 0) / mod;
+            }
+        } else {
+            array[r].shift();
+            let new_val = ((factor-1) * array[r][358] + array[0][359]) / factor;
+            array[r].push(new_val);
+        }
     }
 }
 

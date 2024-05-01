@@ -146,7 +146,7 @@ def add_asset(player_id, construction_id):
                 player.add_to_list("advancements", "GHG_effect")
                 notify(
                     "Tutorial",
-                    "Scientists have discovered the greenhouse effect and have shown that climate change increses the risks of natural and social catastrophies. You can now monitor your emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph</a>.",
+                    "Scientists have discovered the greenhouse effect and have shown that climate change increases the risks of natural and social catastrophies. You can now monitor your emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph</a>.",
                     [player],
                 )
     setattr(player, construction.name, getattr(player, construction.name) + 1)
@@ -474,7 +474,7 @@ def save_past_data_threaded(app, engine):
                         new_el_data = new_data[category][element]
                         if element not in past_data[category]:
                             # if facility didn't exist in past data, initialize it
-                            past_data[category][element] = [[0.0] * 1440] * 4
+                            past_data[category][element] = [[0.0] * 360] * 5
                         past_el_data = past_data[category][element]
                         reduce_resolution(past_el_data, np.array(new_el_data))
 
@@ -524,19 +524,18 @@ def save_past_data_threaded(app, engine):
 
             engine.log("past hour data has been saved to files")
 
-    def reduce_resolution(array, new_day):
-        """reduces resolution of new day data to 5min, 30min, and 3h"""
-        array[0] = array[0][len(new_day) :]
-        array[0].extend(new_day)
-        new_5_days = np.mean(new_day.reshape(-1, 5), axis=1)
-        array[1] = array[1][len(new_5_days) :]
-        array[1].extend(new_5_days)
-        new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
-        array[2] = array[2][len(new_month) :]
-        array[2].extend(new_month)
-        if engine.data["total_t"] % 180 == 0:
-            array[3] = array[3][1:]
-            array[3].append(np.mean(array[2][-6:]))
+    def reduce_resolution(array, new_values):
+        """reduces resolution of current array x6, x36, x216 and x1296"""
+        array[0] = array[0][len(new_values) :]
+        array[0].extend(new_values)
+        new_values_reduced = new_values
+        for r in range(1, 4):
+            new_values_reduced = np.mean(new_values_reduced.reshape(-1, 6), axis=1)
+            array[r] = array[r][len(new_values_reduced) :]
+            array[r].extend(new_values_reduced)
+        if engine.data["total_t"] % 1296 == 0:
+            array[4] = array[4][1:]
+            array[4].append(np.mean(array[3][-6:]))
 
     thread = threading.Thread(target=save_data)
     thread.start()
@@ -544,8 +543,8 @@ def save_past_data_threaded(app, engine):
 
 def data_init_network():
     return {
-        "price": [[0.0] * 1440] * 4,
-        "quantity": [[0.0] * 1440] * 4,
+        "price": [[0.0] * 360] * 5,
+        "quantity": [[0.0] * 360] * 5,
     }
 
 
@@ -736,7 +735,7 @@ def add_player_to_data(engine, user_id):
 
 def data_init():
     def init_array():
-        return [[0.0] * 1440] * 4
+        return [[0.0] * 360] * 5
 
     return {
         "revenues": {

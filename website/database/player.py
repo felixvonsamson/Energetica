@@ -406,7 +406,5 @@ class PlayerReadMessages(db.Model):
         db.Integer, db.ForeignKey("message.id"), primary_key=True
     )
     read = db.Column(db.Boolean, default=False)
-    player = db.relationship("Player", backref="read_messages", lazy="dynamic")
-    message = db.relationship(
-        "Message", backref="read_by_players", lazy="dynamic"
-    )
+    player = db.relationship("Player", backref="read_messages")
+    message = db.relationship("Message", backref="read_by_players")

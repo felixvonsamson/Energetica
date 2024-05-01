@@ -211,7 +211,7 @@ def state_update(engine, app):
     while engine.data["total_t"] < total_t:
         engine.data["total_t"] += 1
         # print(f"t = {engine.data['total_t']}")
-        if engine.data["total_t"] % 60 == 0:
+        if engine.data["total_t"] % 216 == 0:
             save_past_data_threaded(app, engine)
         with app.app_context():
             if engine.data["total_t"] % (600 / engine.clock_time) == 0:

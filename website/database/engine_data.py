@@ -12,32 +12,32 @@ class CircularBufferPlayer:
     def __init__(self):
         self._data = {
             "revenues": {
-                "industry": deque([0.0] * 120, maxlen=120),
-                "O&M_costs": deque([0.0] * 120, maxlen=120),
-                "exports": deque([0.0] * 120, maxlen=120),
-                "imports": deque([0.0] * 120, maxlen=120),
-                "dumping": deque([0.0] * 120, maxlen=120),
+                "industry": deque([0.0] * 360, maxlen=360),
+                "O&M_costs": deque([0.0] * 360, maxlen=360),
+                "exports": deque([0.0] * 360, maxlen=360),
+                "imports": deque([0.0] * 360, maxlen=360),
+                "dumping": deque([0.0] * 360, maxlen=360),
             },
             "op_costs": {
-                "steam_engine": deque([0.0] * 120, maxlen=120),
+                "steam_engine": deque([0.0] * 360, maxlen=360),
             },
             "generation": {
-                "steam_engine": deque([0.0] * 120, maxlen=120),
-                "imports": deque([0.0] * 120, maxlen=120),
+                "steam_engine": deque([0.0] * 360, maxlen=360),
+                "imports": deque([0.0] * 360, maxlen=360),
             },
             "demand": {
-                "industry": deque([0.0] * 120, maxlen=120),
-                "construction": deque([0.0] * 120, maxlen=120),
-                "research": deque([0.0] * 120, maxlen=120),
-                "transport": deque([0.0] * 120, maxlen=120),
-                "exports": deque([0.0] * 120, maxlen=120),
-                "dumping": deque([0.0] * 120, maxlen=120),
+                "industry": deque([0.0] * 360, maxlen=360),
+                "construction": deque([0.0] * 360, maxlen=360),
+                "research": deque([0.0] * 360, maxlen=360),
+                "transport": deque([0.0] * 360, maxlen=360),
+                "exports": deque([0.0] * 360, maxlen=360),
+                "dumping": deque([0.0] * 360, maxlen=360),
             },
             "storage": {},
             "resources": {},
             "emissions": {
-                "steam_engine": deque([0.0] * 120, maxlen=120),
-                "construction": deque([0.0] * 120, maxlen=120),
+                "steam_engine": deque([0.0] * 360, maxlen=360),
+                "construction": deque([0.0] * 360, maxlen=360),
             },
         }
 
@@ -48,9 +48,9 @@ class CircularBufferPlayer:
 
     def new_subcategory(self, category, subcategory):
         if subcategory not in self._data[category]:
-            self._data[category][subcategory] = deque([0.0] * 120, maxlen=120)
+            self._data[category][subcategory] = deque([0.0] * 360, maxlen=360)
 
-    def get_data(self, t=60):
+    def get_data(self, t=216):
         result = defaultdict(lambda: defaultdict(dict))
         for category, subcategories in self._data.items():
             for subcategory, buffer in subcategories.items():
@@ -80,15 +80,15 @@ class CircularBufferNetwork:
 
     def __init__(self):
         self._data = {
-            "price": deque([0.0] * 120, maxlen=120),
-            "quantity": deque([0.0] * 120, maxlen=120),
+            "price": deque([0.0] * 360, maxlen=360),
+            "quantity": deque([0.0] * 360, maxlen=360),
         }
 
     def append_value(self, new_value):
         for category, value in new_value.items():
             self._data[category].append(value)
 
-    def get_data(self, t=60):
+    def get_data(self, t=216):
         result = defaultdict(lambda: defaultdict(dict))
         for category, buffer in self._data.items():
             result[category] = list(buffer)[-t:]
@@ -180,7 +180,7 @@ class EmissionData:
 
     def __init__(self):
         self._data = {
-            "CO2": deque([0.0] * 120, maxlen=120),
+            "CO2": deque([0.0] * 360, maxlen=360),
         }
 
     def add(self, type, value):

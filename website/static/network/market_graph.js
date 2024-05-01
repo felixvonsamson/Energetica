@@ -19,37 +19,37 @@ let resolution;
 let res;
 let res_to_factor;
 if (clock_time == 60){
-    resolution = ["2h", "6h", "day", "5 days", "month", "6 months"];
-    res = "2h";
-    res_to_factor = {
-        "2h": 1,
-        "6h": 1,
-        "day": 1,
-        "5 days": 5,
-        "month": 30,
-        "6 months": 180,
-    };
-}else if(clock_time == 30){
-    resolution = ["1h", "3h", "12h", "2 days", "15 days", "3 months"];
+    resolution = ["1h", "6h", "36h", "9 days", "2 months", "year"];
     res = "1h";
     res_to_factor = {
         "1h": 1,
+        "6h": 1,
+        "36h": 6,
+        "9 days": 36,
+        "2 months": 216,
+        "year": 1296,
+    };
+}else if(clock_time == 30){
+    resolution = ["30min", "3h", "18h", "4 days", "month", "6 months"];
+    res = "30min";
+    res_to_factor = {
+        "30min": 1,
         "3h": 1,
-        "12h": 1,
-        "2 days": 5,
-        "15 days": 30,
-        "3 months": 180,
+        "18h": 6,
+        "4 days": 36,
+        "month": 216,
+        "6 months": 1296,
     };
 }else{
-    resolution = ["×1 (120)", "×1 (360)", "×1 (1440)", "×5", "×30", "×180"];
-    res = "×1 (120)";
+    resolution = ["×1 (60)", "×1 (360)", "×6", "×36", "×216", "x1296"];
+    res = "×1 (60)";
     res_to_factor = {
-        "×1 (120)": 1,
+        "×1 (60)": 1,
         "×1 (360)": 1,
-        "×1 (1440)": 1,
-        "×5": 5,
-        "×30": 30,
-        "×180": 180,
+        "×6)": 6,
+        "×36": 36,
+        "×216": 216,
+        "×1296": 1296,
     };
 }
 
@@ -781,32 +781,32 @@ function calc_h(price) {
 
 function time_unit(res, ct) {
     if(ct == 60){
-        if (res == "2h") {
-            return ["2h", "1h40", "1h20", "1h", "40min", "20min", "now"];
-        } else if (res == "6h") {
-            return ["6h", "5h", "4h", "3h", "2h", "1h", "now"];
-        } else if (res == "day") {
-            return ["24h", "20h", "16h", "12h", "8h", "4h", "now"];
-        } else if (res == "5 days") {
-            return ["5d", "4d", "3d", "2d", "1d", "now"];
-        } else if (res == "month") {
-            return ["30d", "25d", "20d", "15d", "10d", "5d", "now"];
-        } else if (res == "6 months") {
-            return ["6m", "5m", "4m", "3m", "2m", "1m", "now"];
-        }
-    }else if(ct == 30){
         if (res == "1h") {
             return ["1h", "50min", "40min", "30min", "20min", "10min", "now"];
+        } else if (res == "6h") {
+            return ["6h", "5h", "4h", "3h", "2h", "1h", "now"];
+        } else if (res == "36h") {
+            return ["36h", "30h", "24h", "18h", "12h", "6h", "now"];
+        } else if (res == "9 days") {
+            return ["9d", "7.5d", "6d", "4.5d", "3d", "1.5d", "now"];
+        } else if (res == "2 months") {
+            return ["54d", "45d", "36d", "27d", "18d", "9d", "now"];
+        } else if (res == "year") {
+            return ["12m", "10m", "8m", "6m", "4m", "2m", "now"];
+        }
+    }else if(ct == 30){
+        if (res == "30min") {
+            return ["30min", "25min", "20min", "15min", "10min", "5min", "now"];
         } else if (res == "3h") {
             return ["3h", "2h30", "2h", "1h30", "1h", "30min", "now"];
-        } else if (res == "12h") {
-            return ["12h", "10h", "8h", "6h", "4h", "2h", "now"];
-        } else if (res == "2 days") {
-            return ["60h", "48h", "36h", "24h", "12h", "now"];
-        } else if (res == "15 days") {
-            return ["15d", "12.5d", "10d", "7.5d", "5d", "2.5d", "now"];
-        } else if (res == "3 months") {
-            return ["3m", "2.5m", "2m", "1.5m", "1m", "15d", "now"];
+        } else if (res == "18h") {
+            return ["18h", "15h", "12h", "9h", "6h", "3h", "now"];
+        } else if (res == "4 days") {
+            return ["108h", "90h", "72h", "54h", "36h", "18h", "now"];
+        } else if (res == "month") {
+            return ["27d", "22.5d", "18d", "13.5d", "9d", "4.5d", "now"];
+        } else if (res == "6 months") {
+            return ["6m", "5m", "4m", "3m", "2m", "1m", "now"];
         }
     }else{
         return [res, "", "", "", "", "", "now"];
@@ -828,19 +828,19 @@ function y_units(maxNumber) {
 
 function reduce(arr, res) {
     if (res == resolution[0]) {
-        return arr[0].slice(-120);
+        return arr[0].slice(-60);
     }
     if(res == resolution[1]){
-        return arr[0].slice(-360);
+        return arr[0];
     }
     if(res == resolution[2]){
-        return arr[0].slice(-1440);
-    }
-    if(res == resolution[3]){
         return arr[1];
     }
-    if(res == resolution[4]){
+    if(res == resolution[3]){
         return arr[2];
+    }
+    if(res == resolution[4]){
+        return arr[3];
     }
     return arr[3];
 }
