@@ -883,11 +883,9 @@ def sell(engine, new_values, row, market_price, quantity=None):
 def buy(engine, new_values, row, market_price, quantity=None):
     player = Player.query.get(row.player_id)
     generation = new_values[player.id]["generation"]
-    demand = new_values[player.id]["demand"]
     revenue = new_values[player.id]["revenues"]
     if quantity is None:
         quantity = row.capacity
-        demand[row.facility] += quantity
     generation["imports"] += quantity
     player.money -= quantity * market_price / 3600 * engine.clock_time / 1000000
     revenue["imports"] -= (
@@ -1113,7 +1111,10 @@ def reduce_demand(
         return
     if demand_type == "transport":
         last_shipment = (
-            Shipment.query.filter(Shipment.suspension_time.is_(None), Shipment.player_id == player.id)
+            Shipment.query.filter(
+                Shipment.suspension_time.is_(None),
+                Shipment.player_id == player.id,
+            )
             .order_by(Shipment.departure_time.desc())
             .first()
         )
