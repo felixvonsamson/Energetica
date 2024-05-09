@@ -253,6 +253,13 @@ class Player(db.Model, UserMixin):
             for message in reversed(messages)
         ]
         self.last_opened_chat = chat.id
+        PlayerUnreadMessages.query.filter(
+            PlayerUnreadMessages.player_id == self.id
+        ).filter(
+            PlayerUnreadMessages.message_id.in_(
+                db.session.query(Message.id).filter(Message.chat_id == chat_id)
+            )
+        ).delete(synchronize_session=False)
         db.session.commit()
         return {"response": "success", "messages": messages_list}
 
@@ -267,12 +274,11 @@ class Player(db.Model, UserMixin):
 
         def unread_message_count(chat):
             unread_messages_count = (
-                PlayerReadMessages.query.join(
-                    Message, PlayerReadMessages.message_id == Message.id
+                PlayerUnreadMessages.query.join(
+                    Message, PlayerUnreadMessages.message_id == Message.id
                 )
-                .filter(PlayerReadMessages.player_id == self.id)
+                .filter(PlayerUnreadMessages.player_id == self.id)
                 .filter(Message.chat_id == chat.id)
-                .filter(PlayerReadMessages.read.is_(False))
                 .count()
             )
             return unread_messages_count
@@ -396,7 +402,7 @@ class Network(db.Model):
     members = db.relationship("Player", backref="network")
 
 
-class PlayerReadMessages(db.Model):
+class PlayerUnreadMessages(db.Model):
     """Association table to store player's last activity in each chat"""
 
     player_id = db.Column(
@@ -405,6 +411,5 @@ class PlayerReadMessages(db.Model):
     message_id = db.Column(
         db.Integer, db.ForeignKey("message.id"), primary_key=True
     )
-    read = db.Column(db.Boolean, default=False)
     player = db.relationship("Player", backref="read_messages")
     message = db.relationship("Message", backref="read_by_players")

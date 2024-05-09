@@ -232,7 +232,7 @@
       </li>
 
       <li class="nav-item dropdown">
-        <a class="navbar_item tan_green flex-row"
+        <a class="navbar_item tan_green flex-row position_relative"
             id="community"
             onclick="expand_menu('community')">
           <img src="{{ url_for('static', filename='images/icons/dropdown.png') }}"
@@ -242,7 +242,7 @@
         </a>
         <div class="dropdown-menu" id="menu-community">
 
-          <a class="navbar_item bone flex-row" id="messages" href="{{ url_for('views.messages') }}">
+          <a class="navbar_item bone flex-row position_relative" id="messages" href="{{ url_for('views.messages') }}">
             <img src="{{ url_for('static', filename='images/icons/messages.png') }}"
                   class="navbar_icon margin-small" />
             <span style="padding:8px 0">Messages</span>
@@ -306,7 +306,7 @@
       </li>
 
       <li class="nav-item">
-        <a class="navbar_item tan_green flex-row" id="logout" href="{{ url_for('auth.logout') }}">
+        <a onclick="sessionStorage.clear();" class="navbar_item tan_green flex-row" id="logout" href="{{ url_for('auth.logout') }}">
           <img src="{{ url_for('static', filename='images/icons/logout.png') }}"
                 class="navbar_icon margin-small" />
           <span style="padding:8px 0">Logout</span>
@@ -330,12 +330,7 @@
 </div>
 {% endblock base %}
 {% block scripts %}
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
-          integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
-          crossorigin="anonymous"></script>
-  <script>var socket = io();</script>
-  <script>let clock_time = {{engine.clock_time}}</script>
-  <script src="{{ url_for('static', filename='sockets.js') }}"></script>
+  <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}"></script>
   <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
   <script src="{{ url_for('static', filename='notifications.js') }}"></script>
   {% block additionnal_script %}

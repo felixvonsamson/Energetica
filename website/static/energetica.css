@@ -196,6 +196,10 @@ canvas {
     background-color: #285430
 }
 
+.position_relative{
+    position: relative; 
+}
+
 .notification_button, .changelog_button{
     border-radius: 6px;
     position: relative; 
@@ -755,6 +759,17 @@ canvas {
     position: absolute;
     top: -0.5em;
     right: -0.9em;
+    text-align: center;
+}
+
+.unread_badge.messages{
+    padding: 3px 9px;
+    top: 5px;
+    right:8px;
+}
+
+.unread_badge.hidden{
+    display:none;
 }
 
 .fa-circle{

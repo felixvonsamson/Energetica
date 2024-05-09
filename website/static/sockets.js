@@ -84,9 +84,9 @@ socket.on("new_values", function (changes) {
     console.log("received new values : " + total_t);
     let last_value = JSON.parse(sessionStorage.getItem("last_value"));
     if (!last_value) {
-        retrieve_chart_data();
+        retrieve_all();
     } else if (last_value["total_t"] + 1 != total_t) {
-        retrieve_chart_data();
+        retrieve_all();
     } else {
         const currentDate = new Date();
         sessionStorage.setItem(
@@ -120,9 +120,9 @@ socket.on("new_network_values", function (changes) {
     let total_t = changes["total_t"];
     let last_value = JSON.parse(sessionStorage.getItem("last_value_network"));
     if (!last_value) {
-        retrieve_chart_data();
+        retrieve_all();
     } else if (last_value["total_t"] + 1 != total_t) {
-        retrieve_chart_data();
+        retrieve_all();
     } else {
         const currentDate = new Date();
         sessionStorage.setItem(
@@ -147,7 +147,7 @@ function reduce_resolution(value, array, total_t) {
         let mod = total_t % factor;
         if (mod != 0) {
             if(r == 4){
-                let mod_6 = ceil(mod / 6);
+                let mod_6 = Math.ceil(mod / 6);
                 array[r][359] = array[1].slice(-mod_6).reduce((acc, val) => acc + val, 0) / mod_6;
             }else{
                 array[r][359] = array[0].slice(-mod).reduce((acc, val) => acc + val, 0) / mod;
@@ -206,33 +206,43 @@ socket.on("pause_construction", function (info) {
 
 socket.on("display_new_message", function (message) {
     let obj = document.getElementById("message_container");
-    if (obj != null) {
-        if (current_chat_id == message.chat_id){
-            load_players().then((players) => {
-                let alignment = "left";
-                let username = "";
-                if(message.player_id == sessionStorage.getItem("player_id")){
-                    alignment = "right";
-                }else if(chats[message.chat_id].group_chat){
-                    username = players[message.player_id].username + "&emsp;";
-                }
-                obj.innerHTML += `<div class="message ${alignment}">
-                    <div class="message_infos">
-                        <span>${username}</span>
-                        <span class="txt_pine">${formatDateString(message.time)}</span></div>
-                    <div class="message_text bone ${alignment}">${message.text}</div>
-                </div>`;
-                obj.scrollTop = obj.scrollHeight;
-            });
+    load_chats().then((chat_data) => {
+        if (obj != null) {
+            if (current_chat_id == message.chat_id){
+                load_players().then((players) => {
+                    let alignment = "left";
+                    let username = "";
+                    if(message.player_id == sessionStorage.getItem("player_id")){
+                        alignment = "right";
+                    }else if(chat_data.chat_list[message.chat_id].group_chat){
+                        username = players[message.player_id].username + "&emsp;";
+                    }
+                    obj.innerHTML += `<div class="message ${alignment}">
+                        <div class="message_infos">
+                            <span>${username}</span>
+                            <span class="txt_pine">${formatDateString(message.time)}</span></div>
+                        <div class="message_text bone ${alignment}">${message.text}</div>
+                    </div>`;
+                    obj.scrollTop = obj.scrollHeight;
+                });
+            }
         }
-    }
+        if(!chat_data.chat_list[message.chat_id]){
+            retrieve_chats();
+        }else{
+            if(chat_data.chat_list[message.chat_id].unread_messages == 0){
+                chat_data.unread_chats += 1;
+            }
+            chat_data.chat_list[message.chat_id].unread_messages += 1;
+            sessionStorage.setItem("chats", JSON.stringify(chat_data));
+            if (typeof refresh_chats === 'function') {
+                refresh_chats();
+            }
+        }
+    });
 });
 
 // reloads the page
 socket.on("refresh", function () {
     window.location = window.location;
-});
-
-socket.on("clear_session_storage", function () {
-    sessionStorage.clear();
 });

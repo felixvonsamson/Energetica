@@ -2,7 +2,6 @@
 This code creates a list of suggestions when typing names in a field
 */
 
-let chats;
 let sortedNames;
 let group = [];
 let current_chat_id;
@@ -18,16 +17,19 @@ load_players().then((players_) => {
 });
 
 function refresh_chats(){
-    fetch("/get_chat_list")
-    .then((response) => response.json())
-    .then((data) => {
-        chats = data.chat_list;
+    load_chats().then((data) => {
+        let chats = data.chat_list;
         let chat_list_container = document.getElementById("chat_list_container");
         chat_list_container.innerHTML = "";
         for(chat_id in chats){
-            chat_list_container.innerHTML += `<div onclick="openChat(${chat_id})" class="margin-small white button">
+            badge = ""
+            if(chats[chat_id].unread_messages > 0){
+                badge = `<span id="unread_badge_chat" class="unread_badge messages padding-small pine">${chats[chat_id].unread_messages}</span>`
+            }
+            chat_list_container.innerHTML += `<div id="chat_${chat_id}" onclick="openChat(${chat_id})" class="margin-small white button position_relative">
                 <div class="proile-icon green large">${chats[chat_id].name[0]}</div>
                 <b class="medium padding test">${chats[chat_id].name}</b>
+                ${badge}
             </div>`
         }
         if(data.last_opened_chat != null){
@@ -162,7 +164,7 @@ function createChat(){
         response.json().then((raw_data) => {
             let response = raw_data["response"];
             if (response == "success") {
-                refresh_chats();
+                retrieve_chats();
                 document.getElementById('add_chat').classList.add('hidden');
             }else if(response == "cannotChatWithYourself"){
                 addError("Cannot create a chat with yourself");
@@ -187,7 +189,7 @@ function createGroupChat() {
         response.json().then((raw_data) => {
             let response = raw_data["response"];
             if (response == "success") {
-                refresh_chats();
+                retrieve_chats();
                 document.getElementById('add_group_chat').classList.add('hidden');
                 group = [];
             }else if(response == "wrongTitleLength"){
@@ -228,7 +230,17 @@ function newMessage(){
 function openChat(chatID) {
     current_chat_id = chatID;
     let html = ``;
-    fetch(`/get_chat_messages?chatID=${chatID}`)
+    load_chats().then((chat_data) => {
+        let chats = chat_data.chat_list;
+        if (chat_data.chat_list[chatID].unread_messages > 0){
+            chat_data.chat_list[chatID].unread_messages = 0
+            chat_data.unread_chats -= 1;
+            document.getElementById(`chat_${chatID}`).querySelector("#unread_badge_chat").classList.add("hidden");
+        }
+        chat_data.last_opened_chat = chatID;
+        sessionStorage.setItem("chats", JSON.stringify(chat_data));
+        show_unread_badges();
+        fetch(`/get_chat_messages?chatID=${chatID}`)
         .then((response) => response.json())
         .then((data) => {
             load_players().then((players) => {
@@ -258,7 +270,7 @@ function openChat(chatID) {
             })
         })
         .catch((error) => {
-            console.log(error);
             console.error("Error:", error);
         });
+    });
 }

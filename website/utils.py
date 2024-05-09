@@ -16,7 +16,7 @@ from pathlib import Path
 from website.api import ws
 from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer
 from .database.messages import Chat, Notification, Message
-from .database.player import Network, Player
+from .database.player import Network, Player, PlayerUnreadMessages
 from .database.player_assets import (
     Resource_on_sale,
     Shipment,
@@ -448,6 +448,14 @@ def add_message(player, message, chat_id):
     )
     db.session.add(new_message)
     db.session.commit()
+    for participant in chat.participants:
+        if participant == player:
+            continue
+        player_read_message = PlayerUnreadMessages(
+            player_id=participant.id, message_id=new_message.id
+        )
+        db.session.add(player_read_message)
+    db.session.commit()
     engine.display_new_message(new_message, chat.participants)
     return {"response": "success"}
 
@@ -522,7 +530,7 @@ def save_past_data_threaded(app, engine):
             ).delete()
             db.session.commit()
 
-            engine.log("past hour data has been saved to files")
+            engine.log("last 216 datapoints have been saved to files")
 
     def reduce_resolution(array, new_values):
         """reduces resolution of current array x6, x36, x216 and x1296"""
@@ -530,7 +538,9 @@ def save_past_data_threaded(app, engine):
         array[0].extend(new_values)
         new_values_reduced = new_values
         for r in range(1, 4):
-            new_values_reduced = np.mean(new_values_reduced.reshape(-1, 6), axis=1)
+            new_values_reduced = np.mean(
+                new_values_reduced.reshape(-1, 6), axis=1
+            )
             array[r] = array[r][len(new_values_reduced) :]
             array[r].extend(new_values_reduced)
         if engine.data["total_t"] % 1296 == 0:

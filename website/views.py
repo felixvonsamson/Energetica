@@ -40,7 +40,7 @@ def check_user():
             return render_template("wiki.jinja", engine=g.engine, user=None)
         # show location choice if player didn't choose yet
         if current_user.tile is None:
-            return render_template("location_choice.jinja")
+            return render_template("location_choice.jinja", engine=g.engine)
         # render template with or without player production data
         if page == "messages.jinja":
             chats = Chat.query.filter(
@@ -95,7 +95,7 @@ def profile():
 
 
 @views.route("/messages", methods=["GET", "POST"])
-def messages(): 
+def messages():
     return g.render_template_ctx("messages.jinja")
 
 
@@ -150,6 +150,7 @@ def scoreboard():
 @views.route("/wiki")
 def wiki():
     return g.render_template_ctx("wiki.jinja")
+
 
 @views.route("/changelog")
 def changelog():
