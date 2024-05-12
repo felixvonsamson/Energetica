@@ -153,7 +153,7 @@ def get_chart_data():
 
     total_t = g.engine.data["total_t"]
     current_data = g.engine.data["current_data"][current_user.id].get_data(
-        t=total_t % 60 + 1
+        t=total_t % 216 + 1
     )
     filename = f"instance/player_data/player_{current_user.id}.pck"
     with open(filename, "rb") as file:
@@ -165,7 +165,7 @@ def get_chart_data():
         current_network_data = {
             "network_data": g.engine.data["network_data"][
                 current_user.network.id
-            ].get_data(t=total_t % 60 + 1)
+            ].get_data(t=total_t % 216 + 1)
         }
         filename = (
             f"instance/network_data/{current_user.network.id}/time_series.pck"

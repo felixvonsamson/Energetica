@@ -88,6 +88,8 @@
         <img src="{{ url_for('static', filename='images/others/arrow_blue.png') }}" alt="arrow-up" class="priority_arrow_img">
         <span class="medium priority_list_txt right">Generation priority</span>
     </div>
+    <p class="txt_center medium">To have a better understanding how this priority list works, please refer to <a href="{{ url_for('views.wiki', _anchor='Prioritization_of_Facilities') }}">this sction of the wiki</a>.</p>
+    <br><br>
     {% else %}
     <div class="txt_center medium margin-large">
         (Prioritization of facilities are managed on the <a href="{{ url_for('views.network') }}">Network page</a>)

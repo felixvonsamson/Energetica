@@ -1212,20 +1212,44 @@ canvas {
     padding:0;
 }
 
-.priority_list li:nth-child(even) {
-    background-color: #d6c79a
-}
-
 .priority_list .item {
-    background-color: #e5d9b6;
     list-style: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
 
+.priority_list .item.cons:nth-child(even) {
+    background-color: #ffdede; /* Lighter red */
+}
+
+.priority_list .item.cons:nth-child(odd) {
+    background-color: #ffbbbb; /* Darker red */
+}
+
+.priority_list .item.gen:nth-child(even) {
+    background-color: #dedeff; /* Lighter blue */
+}
+
+.priority_list .item.gen:nth-child(odd) {
+    background-color: #bbbbff; /* Darker blue */
+}
+
 .draggable {
     cursor: grab;
+}
+
+.draggable.dimmed {
+    opacity: 0.5;
+    filter: grayscale(100%);
+}
+
+.draggable.gen{
+    margin-left:2.1em;
+}
+
+.draggable.cons{
+    margin-right:2.1em;
 }
 
 .dragging {
@@ -1245,6 +1269,7 @@ canvas {
 .priority_list_icon{
     width:1em;
     text-align: center;
+    margin:0 0.55em;
 }
 
 .priority_arrow_img{

@@ -219,7 +219,7 @@
               <td>Ramping speed</td>
               <td class="txt_center">
                 <strong>
-                  <script>display_W({{assets[facility]["ramping speed"]}});</script>/min
+                  <script>display_W({{assets[facility]["ramping speed"] * 60 / engine.clock_time}});</script>/min
                 </strong>
               </td>
             </tr>
