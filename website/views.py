@@ -15,10 +15,6 @@ views = Blueprint("views", __name__)
 overviews = Blueprint("overviews", __name__, static_folder="static")
 
 
-def flash_error(msg):
-    return flash(msg, category="error")
-
-
 # this function is executed once before every request :
 @views.before_request
 @overviews.before_request

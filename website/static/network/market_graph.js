@@ -435,129 +435,129 @@ function mousePressed() {
 }
 
 function update_graph() {
-    fetch(`/get_market_data?t=${t}`) // retrieves data from server
-        .then((response) => response.json())
-        .then((raw_data) => {
-            strokeWeight(1);
-            background(229, 217, 182);
-            if (raw_data != null) {
-                supply = raw_data["capacities"];
-                demand = raw_data["demands"];
-                mq = raw_data["market_quantity"];
-                mp = raw_data["market_price"];
-                maxCap = Math.max(
-                    ...supply["cumul_capacities"],
-                    ...demand["cumul_capacities"],
-                    100
-                );
-                maxPrice =
-                    Math.max(...supply["price"], ...demand["price"], 1 / 1.1) *
-                    1.1;
-                minPrice =
-                    Math.min(...supply["price"], ...demand["price"], 0) * 1.1;
-                f2 = maxPrice / (maxPrice - minPrice);
-                push();
-                translate(
-                    2 * margin,
-                    height - margin - 10 - graph_h * (1 - f2)
-                );
-                noStroke();
-                push();
-                for (i = 0; i < supply["capacity"].length; i++) {
-                    let w = map(supply["capacity"][i], 0, maxCap, 0, graph_w);
-                    let h = map(
-                        supply["price"][i],
-                        0,
-                        maxPrice,
-                        0,
-                        -graph_h * f2
+    load_chart_data((network = true)).then((raw_chart_data) => {
+        fetch(`/get_market_data?t=${t}`) // retrieves data from server
+            .then((response) => response.json())
+            .then((raw_data) => {
+                strokeWeight(1);
+                background(229, 217, 182);
+                if (raw_data != null) {
+                    supply = raw_data["capacities"];
+                    demand = raw_data["demands"];
+                    mq = raw_data["market_quantity"];
+                    mp = raw_data["market_price"];
+                    maxCap = Math.max(
+                        ...supply["cumul_capacities"],
+                        ...demand["cumul_capacities"],
+                        100
                     );
-                    if (h < 0) {
-                        h = Math.min(h, -3);
-                    }
-                    if (h > 0) {
-                        h = Math.max(h, 3);
-                    }
-                    fill(cols_and_names[supply["facility"][i]][0]);
-                    rect(0, 0, w - 1, h);
-                    translate(w, 0);
-                }
-                pop();
-
-                push();
-                stroke(255, 0, 0);
-                strokeWeight(3);
-                for (i = 0; i < demand["capacity"].length; i++) {
-                    let w = map(demand["capacity"][i], 0, maxCap, 0, graph_w);
-                    h = calc_h(demand["price"][i]);
-                    let h2 = 0;
-                    if (i + 1 < demand["capacity"].length) {
-                        h2 = calc_h(demand["price"][i + 1]);
-                    }
-                    line(0, h, w, h);
-                    line(w, h, w, h2);
+                    maxPrice =
+                        Math.max(...supply["price"], ...demand["price"], 1 / 1.1) *
+                        1.1;
+                    minPrice =
+                        Math.min(...supply["price"], ...demand["price"], 0) * 1.1;
+                    f2 = maxPrice / (maxPrice - minPrice);
                     push();
-                    strokeWeight(0.3);
-                    line(w, h2, w, 0);
+                    translate(
+                        2 * margin,
+                        height - margin - 10 - graph_h * (1 - f2)
+                    );
+                    noStroke();
+                    push();
+                    for (i = 0; i < supply["capacity"].length; i++) {
+                        let w = map(supply["capacity"][i], 0, maxCap, 0, graph_w);
+                        let h = map(
+                            supply["price"][i],
+                            0,
+                            maxPrice,
+                            0,
+                            -graph_h * f2
+                        );
+                        if (h < 0) {
+                            h = Math.min(h, -3);
+                        }
+                        if (h > 0) {
+                            h = Math.max(h, 3);
+                        }
+                        fill(cols_and_names[supply["facility"][i]][0]);
+                        rect(0, 0, w - 1, h);
+                        translate(w, 0);
+                    }
                     pop();
-                    translate(w, 0);
-                }
-                pop();
-                let ox = map(mq, 0, maxCap, 0, graph_w);
-                let oy = map(mp, 0, maxPrice, 0, graph_h * f2);
-                fill(255, 0, 0);
-                ellipse(ox, -oy, 10, 10);
 
-                stroke(0);
-                line(0, 0, graph_w, 0);
-                line(0, (1 - f2) * graph_h, 0, -graph_h * f2);
+                    push();
+                    stroke(255, 0, 0);
+                    strokeWeight(3);
+                    for (i = 0; i < demand["capacity"].length; i++) {
+                        let w = map(demand["capacity"][i], 0, maxCap, 0, graph_w);
+                        h = calc_h(demand["price"][i]);
+                        let h2 = 0;
+                        if (i + 1 < demand["capacity"].length) {
+                            h2 = calc_h(demand["price"][i + 1]);
+                        }
+                        line(0, h, w, h);
+                        line(w, h, w, h2);
+                        push();
+                        strokeWeight(0.3);
+                        line(w, h2, w, 0);
+                        pop();
+                        translate(w, 0);
+                    }
+                    pop();
+                    let ox = map(mq, 0, maxCap, 0, graph_w);
+                    let oy = map(mp, 0, maxPrice, 0, graph_h * f2);
+                    fill(255, 0, 0);
+                    ellipse(ox, -oy, 10, 10);
+
+                    stroke(0);
+                    line(0, 0, graph_w, 0);
+                    line(0, (1 - f2) * graph_h, 0, -graph_h * f2);
+
+                    push();
+                    let interval = y_units_market(maxCap);
+                    fill(0);
+                    let x = map(interval, 0, maxCap, 0, graph_w);
+                    for (let i = x; i <= graph_w; i += x) {
+                        stroke(0, 0, 0, 30);
+                        line(i, -graph_h * f2, i, (1 - f2) * graph_h);
+                        stroke(0);
+                        line(i, 0, i, 5);
+                        noStroke();
+                        text(display_W((interval * i) / x), i, 0.5 * margin - 3);
+                    }
+                    pop();
+
+                    push();
+                    interval = y_units_market(maxPrice - minPrice);
+                    fill(0);
+                    let y = map(interval, 0, maxPrice, 0, graph_h * f2);
+                    textAlign(RIGHT, CENTER);
+                    for (let i = 0; i <= graph_h * f2; i += y) {
+                        stroke(0, 0, 0, 30);
+                        line(graph_w, -i, 0, -i);
+                        stroke(0);
+                        line(0, -i, -5, -i);
+                        noStroke();
+                        image(coin, -25, -i - 6, 12, 12);
+                        text(display_money((interval * i) / y), -28, -i - 3);
+                    }
+                    pop();
+                    pop();
+                } else {
+                    supply = null;
+                }
 
                 push();
-                let interval = y_units_market(maxCap);
+                fill(229, 217, 182);
+                noStroke();
+                rect(0, 0, width, 0.4 * height);
                 fill(0);
-                let x = map(interval, 0, maxCap, 0, graph_w);
-                for (let i = x; i <= graph_w; i += x) {
-                    stroke(0, 0, 0, 30);
-                    line(i, -graph_h * f2, i, (1 - f2) * graph_h);
-                    stroke(0);
-                    line(i, 0, i, 5);
-                    noStroke();
-                    text(display_W((interval * i) / x), i, 0.5 * margin - 3);
-                }
+                textSize(30);
+                text("Market : " + display_time(t), width / 2, 0.39 * height);
                 pop();
-
-                push();
-                interval = y_units_market(maxPrice - minPrice);
-                fill(0);
-                let y = map(interval, 0, maxPrice, 0, graph_h * f2);
-                textAlign(RIGHT, CENTER);
-                for (let i = 0; i <= graph_h * f2; i += y) {
-                    stroke(0, 0, 0, 30);
-                    line(graph_w, -i, 0, -i);
-                    stroke(0);
-                    line(0, -i, -5, -i);
-                    noStroke();
-                    image(coin, -25, -i - 6, 12, 12);
-                    text(display_money((interval * i) / y), -28, -i - 3);
-                }
-                pop();
-                pop();
-            } else {
-                supply = null;
-            }
-
-            push();
-            fill(229, 217, 182);
-            noStroke();
-            rect(0, 0, width, 0.4 * height);
-            fill(0);
-            textSize(30);
-            text("Market : " + display_time(t), width / 2, 0.39 * height);
-            pop();
-
-            load_chart_data((network = true)).then((raw_data) => {
-                Object.keys(raw_data).forEach((key) => {
-                    data[key] = reduce(raw_data[key], res);
+            
+                Object.keys(raw_chart_data).forEach((key) => {
+                    data[key] = reduce(raw_chart_data[key], res);
                 });
                 data_len = data["price"].length;
                 min = {
