@@ -715,20 +715,6 @@ def confirm_location(engine, player, location):
     db.session.commit()
     ws.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
-    notify(
-        "Tutorial",
-        "Welcome to Energetica! Begin your journey with 1 steam engine and a small industry, generating revenues. \
-        The first thing you will probably want to do is to expand your operations by investing in <a href='/power_facilities'>power</a>, <a href='/storage_facilities'>storage</a>, and <a href='/functional_facilities'>functional</a> facilities under the facility menu. \
-        Keep track of your <a href='/production_overview/revenues'>revenues</a> and <a href='/production_overview/electricity'>power generation & consumption</a> through the dedicated production overview pages. \
-        Engage with other players via the community menu. For detailed explanations on any game mechanics, consult the <a href='/wiki'>wiki</a>. \
-        Best of luck in your endeavors!",
-        [player],
-    )
-    notify(
-        "Tutorial",
-        "Tip : Keep in mind, every construction project consumes electricity during its construction phase. While you might have enough money for a build, inadequate power generation can halt the construction process. Don't build a watermill or windmill until you have enough power generation capacity.",
-        [player],
-    )
     return {"response": "success"}
 
 

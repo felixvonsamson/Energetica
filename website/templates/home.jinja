@@ -23,10 +23,10 @@
         </div>
         <div class="txt_center margin medium">
             <p>
-                This is the home page of your account. Here you will find the current weather information aswell as the 
-                in-game date, lists of all ongoing or planned construction and research projects, ongoing shipments and,
-                if you are not part of a Network, you will find a priorritization list for generation and consumption. 
-                For more information about the later refer to <a href="{{ url_for('views.wiki', _anchor='Prioritazation_of_Facilities') }}">Prioritazation of Facilities</a>.
+                This is the home page of your account. Here you will find the current weather information and the 
+                in-game time of the year. Ongoing or planned construction and research projects aswell as ongoing 
+                shipments will also show on the home page{% if "network" in user.advancements %} and,
+                if you are not part of a Network, you will find a priorritization list for generation and consumption{% endif %}.
             </p>
         </div>
     </div>
@@ -78,6 +78,7 @@
     <div id="shipments">
       {# Shipments on their way will show here #}
     </div>
+    {% if "network" in user.advancements %}
     {% if not user.network %}
     <div class="flex-row huge title">Prioritization of facilities</div>
     <div class="txt_center medium txt_pine">Drag and drop facilities in the list</div>
@@ -93,6 +94,29 @@
     {% else %}
     <div class="txt_center medium margin-large">
         (Prioritization of facilities are managed on the <a href="{{ url_for('views.network') }}">Network page</a>)
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="padding margin">
+        <h1>Beginners guide</h1>
+        <p class="medium">Welcome to Energetica!<br>
+            You begin your journey with <b>1 steam engine</b> and a small <b>industry</b>, generating revenues. You can monitor their 
+            <a href='/production_overview/electricity'>power generation and consumption</a> aswell as your 
+            <a href='/production_overview/revenues'>revenues</a> under the <i>Production overview</i> tab in the 
+            <span class="smartphone_hide">left</span><span class="display_hide">top</span> menu.<br>
+            The first thing you will probably want to do is to <b>expand your production</b> by investing in 
+            <a href='/power_facilities'>Power facilites</a> and upgrading your industry on the <a href='/functional_facilities'>Functional facilites</a> page.
+            You have also acess to <a href='/storage_facilities'>Storage facilites</a> to store energy.<br>
+            Engage with other players via the <i>Community</i> tab. <br>
+            If your are lost, click on the
+            <img style="width: 0.8em; height: auto; padding:0 4px;" src="{{ url_for('static', filename='images/icons/wiki.png') }}" width="91" height="96" alt="Help page" />
+            icon on the right side of the title, you will find explanations about the 
+            content of the page. For detailed explanations on any game mechanics, consult the <a href='/wiki'>wiki</a>.<br>
+            Best of luck in your energy adventure!
+        </p>
+        <p class="medium">Tip : Keep in mind, every construction project <b>consumes electricity</b> during its construction phase. 
+        While you might have enough money for a build, inadequate power generation can halt the construction process. 
+        Don't build a watermill or windmill until you have enough power generation capacity.</p>
     </div>
     {% endif %}
 {% endblock content %}

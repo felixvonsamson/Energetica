@@ -1306,8 +1306,18 @@ canvas {
     }
 }
 
+@media only screen and (min-width: 1199px) {
+    .display_hide{
+        display: None;
+    }
+}
+
 /* If the screen size is 1200px or less (smartphone) */
 @media only screen and (max-width: 1200px) {
+    .smartphone_hide{
+        display: None;
+    }
+
     .main_container {
         width: 100%;
         min-height: 0;
