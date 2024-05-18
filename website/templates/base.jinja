@@ -96,6 +96,17 @@
 </div>
 
 
+<div id="are_you_sure_popup" class="popup bone flex-col medium hidden">
+  <div class="margin padding flex-col">
+    <span id="are_you_sure_content">Are you sure you want to delete this notification?</span>
+    <div class="flex-row flex-space-around" style="width:100%">
+      <button id="yes_im_sure" class="button padding medium txt_pine" style="margin-top:16px"><b>Yes</b></button>
+      <button id="no_cancel" onclick="hide_are_you_sure();" class="button padding medium txt-red" style="margin-top:16px"><b>Cancel</b></button>
+    </div>
+  </div>
+</div>
+
+
 <nav class="navbar medium">
 
   <div class="tan_green flex-row main_dropdown">
@@ -333,6 +344,7 @@
   <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}"></script>
   <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
   <script src="{{ url_for('static', filename='notifications.js') }}"></script>
+  <script>calculate_generation_capacity();</script>
   {% block additionnal_script %}
   {% endblock additionnal_script %}
 {% endblock scripts %}

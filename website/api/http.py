@@ -286,8 +286,13 @@ def request_start_project():
     json = request.get_json()
     facility = json["facility"]
     family = json["family"]
+    force = json["force"]
     response = utils.start_project(
-        engine=g.engine, player=current_user, facility=facility, family=family
+        engine=g.engine,
+        player=current_user,
+        facility=facility,
+        family=family,
+        force=force,
     )
     return jsonify(response)
 
@@ -299,8 +304,9 @@ def request_cancel_project():
     """
     json = request.get_json()
     construction_id = json["id"]
+    force = json["force"]
     response = utils.cancel_project(
-        player=current_user, construction_id=construction_id
+        player=current_user, construction_id=construction_id, force=force
     )
     return jsonify(response)
 

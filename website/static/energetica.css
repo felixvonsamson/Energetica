@@ -729,6 +729,12 @@ canvas {
     height: 80%;
 }
 
+#are_you_sure_popup{
+    width: 500px;
+    max-width: 80%;
+    border:#f59f00 6px solid;
+}
+
 .notification{
     color:#000;
     background-color: #c1cf8b;
@@ -774,6 +780,10 @@ canvas {
 
 .fa-circle{
     color:#285430;
+}
+
+.fa-caret-up, .fa-caret-down, .fa-play, .fa-pause, .fa-times{
+    color:#000;
 }
 
 .table {

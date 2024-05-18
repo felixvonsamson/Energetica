@@ -869,7 +869,7 @@ def get_scoreboard():
     }
 
 
-def start_project(engine, player, facility, family):
+def start_project(engine, player, facility, family, force=False):
     """this function is executed when a player clicks on 'start construction'"""
     assets = engine.config[player.id]["assets"]
 
@@ -910,6 +910,19 @@ def start_project(engine, player, facility, family):
 
     if player.money < real_price:
         return {"response": "notEnoughMoneyError"}
+
+    if not force and "network" not in player.advancements :
+        capacity = 0
+        for gen in engine.power_facilities:
+            capacity += (
+                getattr(player, gen) * assets[gen]["power generation"]
+            )
+        if assets[facility]["construction power"] > capacity:
+            return {
+                "response": "areYouSure",
+                "capacity": capacity,
+                "construction_power": assets[facility]["construction power"],
+            }
 
     priority_list_name = "construction_priorities"
     suspension_time = time.time()
@@ -953,7 +966,7 @@ def start_project(engine, player, facility, family):
     }
 
 
-def cancel_project(player, construction_id):
+def cancel_project(player, construction_id, force=False):
     """this function is executed when a player cancels an ongoing construction"""
     engine = current_app.config["engine"]
     construction = Under_construction.query.get(int(construction_id))
@@ -971,6 +984,12 @@ def cancel_project(player, construction_id):
             construction.suspension_time - construction.start_time
         ) / (construction.duration)
 
+    if not force:
+        return {
+            "response": "areYouSure",
+            "refund": f"{round(80 * (1 - time_fraction))}%",
+        }
+    
     refund = 0.8 * construction.original_price * (1 - time_fraction)
     player.money += refund
     print(
