@@ -590,7 +590,6 @@ def buy_resource_from_market(player, quantity, sale_id):
     """Buy an offer from the resource market"""
     engine = current_app.config["engine"]
     sale = Resource_on_sale.query.filter_by(id=sale_id).first()
-    print(quantity, sale.quantity)
     if quantity is None or quantity <= 0 or quantity > sale.quantity:
         return {"response": "invalidQuantity"}
     total_price = sale.price * quantity
