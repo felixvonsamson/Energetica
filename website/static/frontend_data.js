@@ -71,7 +71,6 @@ function load_shipments() {
     if (typeof(Storage) !== "undefined") {
         const shipmentData = sessionStorage.getItem("shipments");
         if (shipmentData) {
-            console.log(JSON.parse(shipmentData));
             return Promise.resolve(JSON.parse(shipmentData));
         }
     } 
@@ -84,7 +83,6 @@ function retrieve_shipments() {
         .then((response) => response.json())
         .then((raw_data) => {
             // Save fetched data to sessionStorage
-            console.log(raw_data);
             sessionStorage.setItem("shipments", JSON.stringify(raw_data));
             return raw_data;
         })
