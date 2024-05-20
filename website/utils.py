@@ -590,25 +590,29 @@ def buy_resource_from_market(player, quantity, sale_id):
     """Buy an offer from the resource market"""
     engine = current_app.config["engine"]
     sale = Resource_on_sale.query.filter_by(id=sale_id).first()
+    print(quantity, sale.quantity)
+    if quantity is None or quantity <= 0 or quantity > sale.quantity:
+        return {"response": "invalidQuantity"}
     total_price = sale.price * quantity
     if player == sale.player:
         # Player is buying their own resource
-        if quantity == sale.quantity:
-            Resource_on_sale.query.filter_by(id=sale_id).delete()
-        else:
-            sale.quantity -= quantity
+        sale.quantity -= quantity
+        if sale.quantity == 0:
+            Resource_on_sale.query.filter_by(id=sale_id).delete() 
         setattr(
             player,
             sale.resource + "_on_sale",
             getattr(player, sale.resource + "_on_sale") - quantity,
         )
         db.session.commit()
-        flash(
-            f"You removed {format_mass(quantity)} of {sale.resource} from the market",
-            category="message",
-        )
-    elif total_price > player.money:
-        flash_error("You have not enough money")
+        return {
+            "response": "removedFromMarket",
+            "quantity": quantity,
+            "available_quantity": sale.quantity,
+            "resource": sale.resource,
+        }
+    if total_price > player.money:
+        return {"response": "notEnoughMoney"}
     else:
         # Player buys form another player
         sale.quantity -= quantity
@@ -684,10 +688,6 @@ def buy_resource_from_market(player, quantity, sale_id):
             f"{player.username} bought {format_mass(quantity)} of {sale.resource} for a total cost of {display_money(total_price)}.",
             [sale.player],
         )
-        flash(
-            f"You bought {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}.",
-            category="message",
-        )
         engine.log(
             f"{player.username} bought {format_mass(quantity)} of {sale.resource} from {sale.player.username} for a total cost of {display_money(total_price)}."
         )
@@ -695,6 +695,15 @@ def buy_resource_from_market(player, quantity, sale_id):
             # Player is purchasing all available quantity
             Resource_on_sale.query.filter_by(id=sale_id).delete()
         db.session.commit()
+        return {
+            "response": "success",
+            "resource": sale.resource,
+            "total_price": total_price,
+            "quantity": quantity,
+            "seller": sale.player.username,
+            "available_quantity": sale.quantity,
+            "shipments": player.get_shipments(),
+        }
 
 
 def confirm_location(engine, player, location):

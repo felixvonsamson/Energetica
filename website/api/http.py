@@ -393,10 +393,11 @@ def put_resource_on_sale():
 @http.route("/buy_resource", methods=["POST"])
 def buy_resource():
     """Parse the HTTP form for buying resources"""
-    quantity = float(request.form.get("purchases_quantity")) * 1000
-    sale_id = int(request.form.get("sale_id"))
-    utils.buy_resource_from_market(current_user, quantity, sale_id)
-    return redirect("/resource_market", code=303)
+    json = request.get_json()
+    sale_id = int(json["id"])
+    quantity = float(json["quantity"]) * 1000
+    response = utils.buy_resource_from_market(current_user, quantity, sale_id)
+    return jsonify(response)
 
 
 @http.route("join_network", methods=["POST"])

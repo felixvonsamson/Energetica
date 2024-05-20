@@ -240,6 +240,21 @@ class Player(db.Model, UserMixin):
             for construction in constructions
         }
         return construction_list
+    
+    def get_shipments(self):
+        shipments = self.shipments
+        shipment_list = {
+            shipment.id: {
+                "id": shipment.id,
+                "resource": shipment.resource,
+                "quantity": shipment.quantity,
+                "departure_time": shipment.departure_time,
+                "duration": shipment.duration,
+                "suspension_time": shipment.suspension_time,
+            }
+            for shipment in shipments
+        }
+        return shipment_list
 
     def package_chat_messages(self, chat_id):
         chat = Chat.query.filter_by(id=chat_id).first()

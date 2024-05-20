@@ -90,38 +90,34 @@
     <div id="under_construction">{# Shipments on their way will show here #}</div>
     <div class="resource_market_container">
         {% for sale in on_sale %}
-            <div id="tile{{ sale.id }}"
-                 onclick="expand_tile('tile{{ sale.id }}');"
+            <div id="tile_{{ sale.id }}"
+                 onclick="expand_tile({{ sale.id }});"
                  class="resource_market_block bone txt_center">
                 <img class="img"
                      src="{{ url_for('static', filename='images/resources/'+sale.resource+'_img.jpg') }}">
                 <div id="infos" class="flex-col medium">
-                    <span class="large">
-                        <script>to_string({{ sale.quantity / 1000 }});</script> t {{ sale.resource }}
+                    <span id="available_quantitiy_{{ sale.id }}" class="large">
+                        <script>display_kg({{ sale.quantity }});</script> {{ sale.resource }}
                     </span>
                     <span class="large"><b>
-                        <script>to_string({{ sale.price * 1000 }});</script>
-                    </b>
-                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                /t</span>
+                        <script>display_money({{ sale.price * 1000 }});</script>
+                    </b>/t</span>
                 shipment :
                 <script>calculate_delivery({{ user.tile.q - sale.player.tile.q }}, {{ user.tile.r - sale.player.tile.r }}, {{ data["transport"]["time"] }});</script>
             </div>
-            <form action="/buy_resource"
-                  method="post"
+            <form method="post"
                   autocomplete="off"
-                  id="additionalContent"
-                  class="hidden-info medium flex-col">
+                  id="buyForm_{{ sale.id }}"
+                  class="additionalContent hidden-info medium flex-col">
                 Seller : {{ sale.player.username }}
                 <br>
                 <br>
-                <input type="hidden" name="sale_id" value="{{ sale.id }}">
-                <label for="q_buy_{{ sale.id }}" class="small">Purchased quantity (in tons)</label>
+                <label for="buying_quantity_{{ sale.id }}" class="small">Purchased quantity (in tons)</label>
                 <input type="number"
                        class="create_chat_input medium txt_center"
                        style="width:164px"
                        value="{{ sale.quantity/1000 }}"
-                       id="{{ sale.id }}"
+                       id="buying_quantity_{{ sale.id }}"
                        name="purchases_quantity"
                        placeholder="quantity [t]"
                        min="0.01"
@@ -131,8 +127,7 @@
                        oninput="updateToPay({{ sale.id }}, {{ sale.price }});"
                        required />
                 <span id="to_pay_{{ sale.id }}">(
-                    <script>to_string({{ sale.quantity * sale.price }});</script>
-                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                    <script>display_money({{ sale.quantity * sale.price }});</script>
                     )
                 </span>
                 <button type="submit"

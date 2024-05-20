@@ -134,14 +134,6 @@ function display_days(seconds, write=true) {
     return days;
 }
 
-function to_string(inputFloat) {
-    var resultString = inputFloat.toString();
-    if (resultString.includes(".")) {
-        resultString = resultString.replace(/(\.[0-9]*[1-9])0+$/, "$1");
-    }
-    document.write(resultString);
-}
-
 function calculate_delivery(delta_q, delta_r, trasport_speed) {
     const dist = Math.sqrt(
         2 * (Math.pow(delta_q, 2) + Math.pow(delta_r, 2) + delta_q * delta_r)

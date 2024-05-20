@@ -71,6 +71,7 @@ function load_shipments() {
     if (typeof(Storage) !== "undefined") {
         const shipmentData = sessionStorage.getItem("shipments");
         if (shipmentData) {
+            console.log(JSON.parse(shipmentData));
             return Promise.resolve(JSON.parse(shipmentData));
         }
     } 
