@@ -31,7 +31,7 @@
                  class="cross pine margin-small"
                  style="width:39px">×</div>
         </div>
-        <form action="/put_resource_on_sale"
+        <form action="/api/put_resource_on_sale"
               method="post"
               autocomplete="off"
               class="flex-col margin-large"
@@ -107,7 +107,7 @@
                 shipment :
                 <script>calculate_delivery({{ user.tile.q - sale.player.tile.q }}, {{ user.tile.r - sale.player.tile.r }}, {{ data["transport"]["time"] }});</script>
             </div>
-            <form action="/buy_resource"
+            <form action="/api/buy_resource"
                   method="post"
                   autocomplete="off"
                   id="additionalContent"

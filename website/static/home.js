@@ -10,7 +10,7 @@ const storageCharging = [
     "buy_solid_state_batteries",
 ]
 
-fetch("/get_generation_prioirity")
+fetch("/api/get_generation_prioirity")
     .then((response) => response.json())
     .then((raw_data) => {
         load_const_config().then((const_config) => {
@@ -103,7 +103,7 @@ function send_new_list(){
             new_priority.push(item.id);
         }
     });
-    send_form("/request_change_facility_priority", {
+    send_form("/api/request_change_facility_priority", {
         priority: new_priority,
     }).catch((error) => {
             console.error(`caught error ${error}`);

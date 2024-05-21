@@ -30,7 +30,7 @@ socket.on("connect_error", (err) => {
 
 // information sent to the server when a new facility is created
 function start_construction(facility, family) {
-    send_form("/request_start_project", {
+    send_form("/api/request_start_project", {
         facility: facility,
         family: family,
     })

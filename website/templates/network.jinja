@@ -64,7 +64,7 @@
         </div>
     {% else %}
         <div id="market_graph" class="bone" style="padding:30px 0; margin:30px 0;"></div>
-        <form action="/leave_network"
+        <form action="/api/leave_network"
               method="post"
               class="flex-row"
               style="justify-content:center">
@@ -285,7 +285,7 @@
                  style="width:39px">×</div>
         </div>
         <div id="warning" style="width:260px;" class="margin-large"></div>
-        <form action="/join_network"
+        <form action="/api/join_network"
               id="join_network_form"
               method="post"
               autocomplete="off"
@@ -313,7 +313,7 @@
                  class="cross pine margin-small"
                  style="width:39px">×</div>
         </div>
-        <form action="/create_network"
+        <form action="/api/create_network"
               method="post"
               autocomplete="off"
               class="flex-col margin-large">

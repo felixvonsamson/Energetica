@@ -131,7 +131,7 @@ function preload() {
     font_logo = loadFont("static/fonts/ExpletusSans-SemiBold.ttf");
     logo = loadImage("static/images/icon_green.svg");
     //filling map
-    fetch("/get_map") // retrieves map data from the database using api.py
+    fetch("/api/get_map") // retrieves map data from the database using api.py
         .then((response) => response.json())
         .then((data) => {
             for (let i = 0; i < data.length; i++) {
@@ -538,7 +538,7 @@ function mousePressed_monitor() {
     ) {
         if (validate.is_clicked()) {
             if (selected_id != null) {
-                send_form("/choose_location", { selected_id: selected_id })
+                send_form("/api/choose_location", { selected_id: selected_id })
                     .then((response) => {
                         response.json().then((raw_data) => {
                             if (raw_data["response"] == "locationOccupied") {
@@ -607,7 +607,7 @@ function mousePressed_smartphone() {
     ) {
         if (validate.is_clicked()) {
             if (selected_id != null) {
-                send_form("/choose_location", { selected_id: selected_id })
+                send_form("/api/choose_location", { selected_id: selected_id })
                     .then((response) => {
                         response.json().then((raw_data) => {
                             if (raw_data["response"] == "locationOccupied") {

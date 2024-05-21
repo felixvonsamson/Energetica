@@ -335,7 +335,7 @@ function calc_size() {
 
 
 function retrieve_resource_data() {
-    return fetch("/get_resource_data")
+    return fetch("/api/get_resource_data")
         .then((response) => response.json())
         .then((raw_data) => {
             rates = raw_data[0];

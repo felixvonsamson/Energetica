@@ -1,7 +1,7 @@
 function delete_notification(element, notification_id){
   element.parentElement.parentElement.style.display='none';
   document.getElementById("notification_"+notification_id).style.display='none';
-  send_form("/request_delete_notification", {
+  send_form("/api/request_delete_notification", {
     id: notification_id,
   })
   .catch((error) => {
@@ -16,7 +16,7 @@ function read_notifications(){
     badge.style.display='none';
   }
   document.getElementById('notification_popup').classList.add('hidden');
-  fetch("/request_marked_as_read")
+  fetch("/api/request_marked_as_read")
   .catch((error) => {
       console.error(`caught error ${error}`);
   });

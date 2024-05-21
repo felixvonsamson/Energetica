@@ -18,7 +18,7 @@ load_players().then((players_) => {
 });
 
 function refresh_chats(){
-    fetch("/get_chat_list")
+    fetch("/api/get_chat_list")
     .then((response) => response.json())
     .then((chat_list) => {
         chats = chat_list;
@@ -143,7 +143,7 @@ function removePlayer(name) {
 function hide_disclaimer(){
     checkmark = document.getElementById("dont_show_disclaimer")
     if(checkmark.checked){
-        fetch("/hide_chat_disclaimer")
+        fetch("/api/hide_chat_disclaimer")
         .catch((error) => {
             console.error(`caught error ${error}`);
         });
@@ -153,7 +153,7 @@ function hide_disclaimer(){
 
 function createChat(){
     username = document.getElementById("add_chat_username").value
-    send_form("/create_chat", {
+    send_form("/api/create_chat", {
         buddy_username: username,
     }).then((response) => {
         response.json().then((raw_data) => {
@@ -177,7 +177,7 @@ function createChat(){
 
 function createGroupChat() {
     let title = document.getElementById("chat_title").value;
-    send_form("/create_group_chat", {
+    send_form("/api/create_group_chat", {
         chat_title: title,
         group_memebers: group,
     }).then((response) => {
@@ -206,7 +206,7 @@ function newMessage(){
     if (!current_chat_id){
         addError("No chat has been selected")
     }
-    send_form("/new_message", {
+    send_form("/api/new_message", {
         new_message: message_field.value,
         chat_id: current_chat_id,
     }).then((response) => {
@@ -225,7 +225,7 @@ function newMessage(){
 function openChat(chatID) {
     current_chat_id = chatID;
     let html = ``;
-    fetch(`/get_chat_messages?chatID=${chatID}`)
+    fetch(`/api/get_chat_messages?chatID=${chatID}`)
         .then((response) => response.json())
         .then((data) => {
             load_players().then((players) => {

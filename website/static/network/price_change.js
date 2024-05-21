@@ -8,7 +8,7 @@ function change_prices() {
         }
         prices[input.id] = float(input.value);
     });
-    send_form("/change_network_prices", {
+    send_form("/api/change_network_prices", {
         prices: prices,
     })
         .then((response) => {
