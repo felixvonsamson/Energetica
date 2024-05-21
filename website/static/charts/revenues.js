@@ -200,8 +200,6 @@ function regen(res) {
 
             push();
             let units = time_unit(res, clock_time);
-            console.log(clock_time);
-            console.log(units);
             fill(0);
             for (let i = 1; i < units.length; i++) {
                 stroke(0, 0, 0, 30);

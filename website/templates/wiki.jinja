@@ -527,7 +527,7 @@
   <div class="flex-col">
     <img src="{{ url_for('static', filename='images/wiki/prioritization_example.png') }}"
          alt="Example of prioritization of facilities"
-         style="width:500px">
+         style="width:600px">
   </div>
   <p>
     For example, in the above list, the coal burner and small pumped hydro (discharge) are positioned after the demand 
@@ -663,6 +663,7 @@
 </div>
 {% endblock content %}
 {% block additionnal_script %}
+  <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}"></script>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script"
           async

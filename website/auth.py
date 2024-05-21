@@ -38,7 +38,6 @@ def login():
             if check_password_hash(player.pwhash, password):
                 flash("Logged in successfully!", category="message")
                 login_user(player, remember=True)
-                current_user.emit("clear_session_storage")
                 g.engine.log(f"{username} logged in")
                 return redirect(url_for("views.home"))
             else:
@@ -49,14 +48,13 @@ def login():
                 category="error",
             )
 
-    return render_template("login.jinja", user=current_user)
+    return render_template("login.jinja", engine=g.engine, user=current_user)
 
 
 # logic for the logout :
 @auth.route("/logout")
 @login_required
 def logout():
-    current_user.emit("clear_session_storage")
     g.engine.log(f"{current_user.username} logged out")
     logout_user()
     return redirect(url_for("auth.login"))
@@ -94,4 +92,4 @@ def sign_up():
             ws.rest_notify_new_player(current_app.config["engine"], new_player)
             return redirect(url_for("views.home"))
 
-    return render_template("sign_up.jinja", user=current_user)
+    return render_template("sign_up.jinja", engine=g.engine, user=current_user)

@@ -20,6 +20,12 @@ function expand_menu(id) {
     let dropdown_icon = document.getElementById("dropdown-" + id);
     dropdown.classList.toggle("show");
     dropdown_icon.classList.toggle("rotate");
+    if(id == "community"){
+        const community_badge = document.getElementById("unread_badge_community");
+        if(community_badge){
+            community_badge.classList.toggle("hidden");
+        }
+    }
 }
 
 function show_notification_list(){

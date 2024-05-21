@@ -123,6 +123,17 @@ def init_test_players(engine):
         add_asset(player3, "onshore_wind_turbine", 5)
         db.session.commit()
 
+    player4 = create_player(engine, "user4", "password")
+    if player4:
+        Hex.query.filter_by(id=28).first().player_id = player4.id
+        add_asset(player4, "warehouse", 1)
+        add_asset(player4, "watermill", 1)
+        add_asset(player4, "steam_engine", 1)
+        add_asset(player4, "small_pumped_hydro", 1)
+        add_asset(player4, "coal_burner", 1)
+        add_asset(player4, "coal_mine", 1)
+        db.session.commit()
+
     create_network(engine, "net", [player, player2, player3])
     db.session.commit()
 

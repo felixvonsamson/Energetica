@@ -83,32 +83,14 @@ def get_networks():
 def get_chat_messages():
     """gets the last 20 messages from a chat and returns it as a list"""
     chat_id = request.args.get("chatID")
-    chat = Chat.query.filter_by(id=chat_id).first()
-    messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
-    messages_list = [
-            {
-                "time": message.time.isoformat(),
-                "player_id": message.player_id,
-                "text": message.text
-            }
-            for message in reversed(messages)
-        ]
-    return jsonify(messages_list)
+    response = current_user.package_chat_messages(chat_id)
+    return jsonify(response)
+
 
 @http.route("/get_chat_list", methods=["GET"])
 def get_chat_list():
-    def get_other_participant_username(chat):
-        for participant in chat.participants:
-            if participant != current_user:
-                return participant.username
-        return None 
-
-    chat_dict = {
-        chat.id: {
-            "name":chat.name if chat.name is not None else get_other_participant_username(chat),
-            "last_activity":chat.last_activity,
-        } for chat in current_user.chats}
-    return jsonify(chat_dict)
+    response = current_user.package_chat_list()
+    return jsonify(response)
 
 
 @http.route("/get_resource_data", methods=["GET"])
@@ -144,10 +126,10 @@ def get_chart_data():
         for key, value in dict2.items():
             for sub_key, array2 in value.items():
                 if sub_key not in dict1[key]:
-                    dict1[key][sub_key] = [[0.0] * 1440] * 4
+                    dict1[key][sub_key] = [[0.0] * 360] * 5
                 array = dict1[key][sub_key]
                 concatenated_array = list(array[0]) + array2
-                dict1[key][sub_key][0] = concatenated_array[-1440:]
+                dict1[key][sub_key][0] = concatenated_array[-360:]
                 new_5days = calculate_mean_subarrays(array2, 5)
                 dict1[key][sub_key][1] = dict1[key][sub_key][1][
                     len(new_5days) :
@@ -171,7 +153,7 @@ def get_chart_data():
 
     total_t = g.engine.data["total_t"]
     current_data = g.engine.data["current_data"][current_user.id].get_data(
-        t=total_t % 60 + 1
+        t=total_t % 216 + 1
     )
     filename = f"instance/player_data/player_{current_user.id}.pck"
     with open(filename, "rb") as file:
@@ -183,7 +165,7 @@ def get_chart_data():
         current_network_data = {
             "network_data": g.engine.data["network_data"][
                 current_user.network.id
-            ].get_data(t=total_t % 60 + 1)
+            ].get_data(t=total_t % 216 + 1)
         }
         filename = (
             f"instance/network_data/{current_user.network.id}/time_series.pck"
@@ -304,8 +286,13 @@ def request_start_project():
     json = request.get_json()
     facility = json["facility"]
     family = json["family"]
+    force = json["force"]
     response = utils.start_project(
-        engine=g.engine, player=current_user, facility=facility, family=family
+        engine=g.engine,
+        player=current_user,
+        facility=facility,
+        family=family,
+        force=force,
     )
     return jsonify(response)
 
@@ -317,8 +304,9 @@ def request_cancel_project():
     """
     json = request.get_json()
     construction_id = json["id"]
+    force = json["force"]
     response = utils.cancel_project(
-        player=current_user, construction_id=construction_id
+        player=current_user, construction_id=construction_id, force=force
     )
     return jsonify(response)
 
@@ -405,10 +393,11 @@ def put_resource_on_sale():
 @http.route("/buy_resource", methods=["POST"])
 def buy_resource():
     """Parse the HTTP form for buying resources"""
-    quantity = float(request.form.get("purchases_quantity")) * 1000
-    sale_id = int(request.form.get("sale_id"))
-    utils.buy_resource_from_market(current_user, quantity, sale_id)
-    return redirect("/resource_market", code=303)
+    json = request.get_json()
+    sale_id = int(json["id"])
+    quantity = float(json["quantity"]) * 1000
+    response = utils.buy_resource_from_market(current_user, quantity, sale_id)
+    return jsonify(response)
 
 
 @http.route("join_network", methods=["POST"])
@@ -474,6 +463,7 @@ def create_group_chat():
     group_memebers = json["group_memebers"]
     response = utils.create_group_chat(current_user, chat_title, group_memebers)
     return jsonify(response)
+
 
 @http.route("new_message", methods=["POST"])
 def new_message():

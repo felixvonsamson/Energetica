@@ -348,9 +348,9 @@
 {% endblock content %}
 {% block additionnal_script %}
     <script src="{{ url_for('static', filename='network/network_logic.js') }}"></script>
+    <script>expand_menu('community')</script>
     {% if user.network != None %}
         <script src="{{ url_for('static', filename='network/market_graph.js') }}"></script>
         <script src="{{ url_for('static', filename='network/price_change.js') }}"></script>
-        <script>expand_menu('community')</script>
     {% endif %}
 {% endblock additionnal_script %}

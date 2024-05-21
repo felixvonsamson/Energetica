@@ -16,7 +16,7 @@ from pathlib import Path
 from website.api import ws
 from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer
 from .database.messages import Chat, Notification, Message
-from .database.player import Network, Player
+from .database.player import Network, Player, PlayerUnreadMessages
 from .database.player_assets import (
     Resource_on_sale,
     Shipment,
@@ -145,7 +145,7 @@ def add_asset(player_id, construction_id):
                 player.add_to_list("advancements", "GHG_effect")
                 notify(
                     "Tutorial",
-                    "Scientists have discovered the greenhouse effect and have shown that climate change increses the risks of natural and social catastrophies. You can now monitor your emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph</a>.",
+                    "Scientists have discovered the greenhouse effect and have shown that climate change increases the risks of natural and social catastrophies. You can now monitor your emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph</a>.",
                     player,
                 )
     setattr(player, construction.name, getattr(player, construction.name) + 1)
@@ -385,7 +385,6 @@ def create_chat(player, buddy_username):
         return {"response": "chatAlreadyExist"}
     new_chat = Chat(
         name=None,
-        last_activity=datetime.now(),
         participants=[player, buddy],
     )
     db.session.add(new_chat)
@@ -394,7 +393,7 @@ def create_chat(player, buddy_username):
     engine.log(f"{player.username} created a chat with {buddy.username}")
     return {"response": "success"}
 
-        
+
 def create_group_chat(player, title, group):
     """creates a group chat"""
     if len(title) == 0 or len(title) > 25:
@@ -409,8 +408,7 @@ def create_group_chat(player, title, group):
     if check_existing_chats(groupMembers):
         return {"response": "chatAlreadyExist"}
     new_chat = Chat(
-        name=title, 
-        last_activity=datetime.now(), 
+        name=title,
         participants=groupMembers,
     )
     db.session.add(new_chat)
@@ -435,6 +433,7 @@ def check_existing_chats(participants):
             return True
     return False
 
+
 def add_message(player, message, chat_id):
     engine = current_app.config["engine"]
     if not chat_id:
@@ -447,6 +446,14 @@ def add_message(player, message, chat_id):
         chat_id=chat.id,
     )
     db.session.add(new_message)
+    db.session.commit()
+    for participant in chat.participants:
+        if participant == player:
+            continue
+        player_read_message = PlayerUnreadMessages(
+            player_id=participant.id, message_id=new_message.id
+        )
+        db.session.add(player_read_message)
     db.session.commit()
     engine.display_new_message(new_message, chat.participants)
     return {"response": "success"}
@@ -474,7 +481,7 @@ def save_past_data_threaded(app, engine):
                         new_el_data = new_data[category][element]
                         if element not in past_data[category]:
                             # if facility didn't exist in past data, initialize it
-                            past_data[category][element] = [[0.0] * 1440] * 4
+                            past_data[category][element] = [[0.0] * 360] * 5
                         past_el_data = past_data[category][element]
                         reduce_resolution(past_el_data, np.array(new_el_data))
 
@@ -522,21 +529,22 @@ def save_past_data_threaded(app, engine):
             ).delete()
             db.session.commit()
 
-            engine.log("past hour data has been saved to files")
+            engine.log("last 216 datapoints have been saved to files")
 
-    def reduce_resolution(array, new_day):
-        """reduces resolution of new day data to 5min, 30min, and 3h"""
-        array[0] = array[0][len(new_day) :]
-        array[0].extend(new_day)
-        new_5_days = np.mean(new_day.reshape(-1, 5), axis=1)
-        array[1] = array[1][len(new_5_days) :]
-        array[1].extend(new_5_days)
-        new_month = np.mean(new_5_days.reshape(-1, 6), axis=1)
-        array[2] = array[2][len(new_month) :]
-        array[2].extend(new_month)
-        if engine.data["total_t"] % 180 == 0:
-            array[3] = array[3][1:]
-            array[3].append(np.mean(array[2][-6:]))
+    def reduce_resolution(array, new_values):
+        """reduces resolution of current array x6, x36, x216 and x1296"""
+        array[0] = array[0][len(new_values) :]
+        array[0].extend(new_values)
+        new_values_reduced = new_values
+        for r in range(1, 4):
+            new_values_reduced = np.mean(
+                new_values_reduced.reshape(-1, 6), axis=1
+            )
+            array[r] = array[r][len(new_values_reduced) :]
+            array[r].extend(new_values_reduced)
+        if engine.data["total_t"] % 1296 == 0:
+            array[4] = array[4][1:]
+            array[4].append(np.mean(array[3][-6:]))
 
     thread = threading.Thread(target=save_data)
     thread.start()
@@ -544,8 +552,8 @@ def save_past_data_threaded(app, engine):
 
 def data_init_network():
     return {
-        "price": [[0.0] * 1440] * 4,
-        "quantity": [[0.0] * 1440] * 4,
+        "price": [[0.0] * 360] * 5,
+        "quantity": [[0.0] * 360] * 5,
     }
 
 
@@ -581,25 +589,28 @@ def buy_resource_from_market(player, quantity, sale_id):
     """Buy an offer from the resource market"""
     engine = current_app.config["engine"]
     sale = Resource_on_sale.query.filter_by(id=sale_id).first()
+    if quantity is None or quantity <= 0 or quantity > sale.quantity:
+        return {"response": "invalidQuantity"}
     total_price = sale.price * quantity
     if player == sale.player:
         # Player is buying their own resource
-        if quantity == sale.quantity:
-            Resource_on_sale.query.filter_by(id=sale_id).delete()
-        else:
-            sale.quantity -= quantity
+        sale.quantity -= quantity
+        if sale.quantity == 0:
+            Resource_on_sale.query.filter_by(id=sale_id).delete() 
         setattr(
             player,
             sale.resource + "_on_sale",
             getattr(player, sale.resource + "_on_sale") - quantity,
         )
         db.session.commit()
-        flash(
-            f"You removed {format_mass(quantity)} of {sale.resource} from the market",
-            category="message",
-        )
-    elif total_price > player.money:
-        flash_error("You have not enough money")
+        return {
+            "response": "removedFromMarket",
+            "quantity": quantity,
+            "available_quantity": sale.quantity,
+            "resource": sale.resource,
+        }
+    if total_price > player.money:
+        return {"response": "notEnoughMoney"}
     else:
         # Player buys form another player
         sale.quantity -= quantity
@@ -675,10 +686,6 @@ def buy_resource_from_market(player, quantity, sale_id):
             f"{player.username} bought {format_mass(quantity)} of {sale.resource} for a total cost of {display_money(total_price)}.",
             [sale.player],
         )
-        flash(
-            f"You bought {format_mass(quantity)} of {sale.resource} from {sale.player} for a total cost of {display_money(total_price)}.",
-            category="message",
-        )
         engine.log(
             f"{player.username} bought {format_mass(quantity)} of {sale.resource} from {sale.player.username} for a total cost of {display_money(total_price)}."
         )
@@ -686,6 +693,15 @@ def buy_resource_from_market(player, quantity, sale_id):
             # Player is purchasing all available quantity
             Resource_on_sale.query.filter_by(id=sale_id).delete()
         db.session.commit()
+        return {
+            "response": "success",
+            "resource": sale.resource,
+            "total_price": total_price,
+            "quantity": quantity,
+            "seller": sale.player.username,
+            "available_quantity": sale.quantity,
+            "shipments": player.get_shipments(),
+        }
 
 
 def confirm_location(engine, player, location):
@@ -706,20 +722,6 @@ def confirm_location(engine, player, location):
     db.session.commit()
     ws.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
-    notify(
-        "Tutorial",
-        "Welcome to Energetica! Begin your journey with 1 steam engine and a small industry, generating revenues. \
-        The first thing you will probably want to do is to expand your operations by investing in <a href='/power_facilities'>power</a>, <a href='/storage_facilities'>storage</a>, and <a href='/functional_facilities'>functional</a> facilities under the facility menu. \
-        Keep track of your <a href='/production_overview/revenues'>revenues</a> and <a href='/production_overview/electricity'>power generation & consumption</a> through the dedicated production overview pages. \
-        Engage with other players via the community menu. For detailed explanations on any game mechanics, consult the <a href='/wiki'>wiki</a>. \
-        Best of luck in your endeavors!",
-        player,
-    )
-    notify(
-        "Tutorial",
-        "Tip : Keep in mind, every construction project consumes electricity during its construction phase. While you might have enough money for a build, inadequate power generation can halt the construction process. Don't build a watermill or windmill until you have enough power generation capacity.",
-        player,
-    )
     return {"response": "success"}
 
 
@@ -736,7 +738,7 @@ def add_player_to_data(engine, user_id):
 
 def data_init():
     def init_array():
-        return [[0.0] * 1440] * 4
+        return [[0.0] * 360] * 5
 
     return {
         "revenues": {
@@ -874,7 +876,7 @@ def get_scoreboard():
     }
 
 
-def start_project(engine, player, facility, family):
+def start_project(engine, player, facility, family, force=False):
     """this function is executed when a player clicks on 'start construction'"""
     assets = engine.config[player.id]["assets"]
 
@@ -898,7 +900,9 @@ def start_project(engine, player, facility, family):
         ).count()
         if family == "Technologies":
             for req in assets[facility]["requirements"]:
-                if getattr(player, facility) + ud_count + req[1] > getattr(player, req[0]):
+                if getattr(player, facility) + ud_count + req[1] > getattr(
+                    player, req[0]
+                ):
                     return {"response": "requirementsNotFullfilled"}
         real_price = (
             assets[facility]["price"]
@@ -913,6 +917,19 @@ def start_project(engine, player, facility, family):
 
     if player.money < real_price:
         return {"response": "notEnoughMoneyError"}
+
+    if not force and "network" not in player.advancements :
+        capacity = 0
+        for gen in engine.power_facilities:
+            capacity += (
+                getattr(player, gen) * assets[gen]["power generation"]
+            )
+        if assets[facility]["construction power"] > capacity:
+            return {
+                "response": "areYouSure",
+                "capacity": capacity,
+                "construction_power": assets[facility]["construction power"],
+            }
 
     priority_list_name = "construction_priorities"
     suspension_time = time.time()
@@ -956,7 +973,7 @@ def start_project(engine, player, facility, family):
     }
 
 
-def cancel_project(player, construction_id):
+def cancel_project(player, construction_id, force=False):
     """this function is executed when a player cancels an ongoing construction"""
     engine = current_app.config["engine"]
     construction = Under_construction.query.get(int(construction_id))
@@ -974,6 +991,12 @@ def cancel_project(player, construction_id):
             construction.suspension_time - construction.start_time
         ) / (construction.duration)
 
+    if not force:
+        return {
+            "response": "areYouSure",
+            "refund": f"{round(80 * (1 - time_fraction))}%",
+        }
+    
     refund = 0.8 * construction.original_price * (1 - time_fraction)
     player.money += refund
     print(

@@ -75,9 +75,52 @@ function formatMilliseconds(totalSeconds) {
     return formattedTime.trim();
 }
 
-function cancel_construction(construction_id) {
-    send_form("/api/request_cancel_project", {
+// information sent to the server when a new facility is created
+function start_construction(facility, family, force=false) {
+    send_form("/request_start_project", {
+        facility: facility,
+        family: family,
+        force: force,
+    })
+        .then((response) => {
+            response.json().then((raw_data) => {
+                let response = raw_data["response"];
+                if (response == "success") {
+                    let money = raw_data["money"];
+                    var obj = document.getElementById("money");
+                    obj.innerHTML = formatted_money(money);
+                    addToast("Construction started");
+                    sessionStorage.setItem(
+                        "constructions",
+                        JSON.stringify(raw_data["constructions"])
+                    );
+                    refresh_progressBar();
+                } else if (response == "areYouSure") {
+                    capacity = raw_data["capacity"];
+                    construction_power = raw_data["construction_power"];
+                    are_you_sure_start_construction(facility, family, capacity, construction_power);
+                } else if (response == "notEnoughMoneyError") {
+                    addError("Not enough money");
+                } else if (response == "locked") {
+                    if (family == "Technologies"){
+                        addError("Requirements not fulfilled");
+                    }else{
+                        addError("Facility is locked");
+                    }
+                } else if (response == "requirementsNotFullfilled") {
+                    addError("Requirements not fulfilled for this Technology level");
+                }
+            });
+        })
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
+}
+
+function cancel_construction(construction_id, force=false) {
+    send_form("/request_cancel_project", {
         id: construction_id,
+        force: force,
     })
         .then((response) => {
             response.json().then((raw_data) => {
@@ -92,6 +135,9 @@ function cancel_construction(construction_id) {
                         JSON.stringify(raw_data["constructions"])
                     );
                     refresh_progressBar();
+                }else if(response == "areYouSure"){
+                    refund = raw_data["refund"];
+                    are_you_sure_cancel_construction(construction_id, refund);
                 }
             });
         })

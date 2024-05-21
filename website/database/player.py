@@ -9,6 +9,8 @@ from flask import current_app
 from flask_login import UserMixin
 
 from website.database.messages import (
+    Chat,
+    Message,
     Notification,
     player_chats,
 )
@@ -34,9 +36,7 @@ class Player(db.Model, UserMixin):
     chats = db.relationship(
         "Chat", secondary=player_chats, backref="participants"
     )
-    chat_activities = db.relationship(
-        "PlayerChatActivity", backref="player", lazy="dynamic"
-    )
+    last_opened_chat = db.Column(db.Integer, default=None)
     messages = db.relationship("Message", backref="player")
     notifications = db.relationship("Notification", backref="players", lazy="dynamic")
 
@@ -224,6 +224,77 @@ class Player(db.Model, UserMixin):
         else:
             setattr(self, attr, f"{id}," + getattr(self, attr))
         db.session.commit()
+    
+    def get_shipments(self):
+        shipments = self.shipments
+        shipment_list = {
+            shipment.id: {
+                "id": shipment.id,
+                "resource": shipment.resource,
+                "quantity": shipment.quantity,
+                "departure_time": shipment.departure_time,
+                "duration": shipment.duration,
+                "suspension_time": shipment.suspension_time,
+            }
+            for shipment in shipments
+        }
+        return shipment_list
+
+    def package_chat_messages(self, chat_id):
+        chat = Chat.query.filter_by(id=chat_id).first()
+        messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
+        messages_list = [
+            {
+                "time": message.time.isoformat(),
+                "player_id": message.player_id,
+                "text": message.text,
+            }
+            for message in reversed(messages)
+        ]
+        self.last_opened_chat = chat.id
+        PlayerUnreadMessages.query.filter(
+            PlayerUnreadMessages.player_id == self.id
+        ).filter(
+            PlayerUnreadMessages.message_id.in_(
+                db.session.query(Message.id).filter(Message.chat_id == chat_id)
+            )
+        ).delete(synchronize_session=False)
+        db.session.commit()
+        return {"response": "success", "messages": messages_list}
+
+    def package_chat_list(self):
+        def chat_name(chat):
+            if chat.name is not None:
+                return chat.name
+            for participant in chat.participants:
+                if participant != self:
+                    return participant.username
+            return None
+
+        def unread_message_count(chat):
+            unread_messages_count = (
+                PlayerUnreadMessages.query.join(
+                    Message, PlayerUnreadMessages.message_id == Message.id
+                )
+                .filter(PlayerUnreadMessages.player_id == self.id)
+                .filter(Message.chat_id == chat.id)
+                .count()
+            )
+            return unread_messages_count
+
+        chat_dict = {
+            chat.id: {
+                "name": chat_name(chat),
+                "group_chat": chat.name is not None,
+                "unread_messages": unread_message_count(chat),
+            }
+            for chat in self.chats
+        }
+        return {
+            "response": "success",
+            "chat_list": chat_dict,
+            "last_opened_chat": self.last_opened_chat,
+        }
 
     def delete_notification(self, notification_id):
         notification = Notification.query.get(notification_id)
@@ -315,8 +386,14 @@ class Network(db.Model):
     members = db.relationship("Player", backref="network")
 
 
-class PlayerChatActivity(db.Model):
+class PlayerUnreadMessages(db.Model):
     """Association table to store player's last activity in each chat"""
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), primary_key=True)
-    chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"), primary_key=True)
-    last_opened_time = db.Column(db.DateTime)
+
+    player_id = db.Column(
+        db.Integer, db.ForeignKey("player.id"), primary_key=True
+    )
+    message_id = db.Column(
+        db.Integer, db.ForeignKey("message.id"), primary_key=True
+    )
+    player = db.relationship("Player", backref="read_messages")
+    message = db.relationship("Message", backref="read_by_players")

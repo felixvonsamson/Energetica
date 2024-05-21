@@ -40,28 +40,30 @@ load_players().then((players_) => {
 
 let input = document.getElementById("invite_player");
 
-input.addEventListener("keyup", (e) => {
-    //Initially remove all elements (so if user erases a letter or adds new letter then clean previous outputs)
-    removeElements();
-    for (let i of sortedNames) {
-        //convert input to lowercase and compare with each string
-        if (invitations.includes(i)) {
-            continue;
+if(input){
+    input.addEventListener("keyup", (e) => {
+        //Initially remove all elements (so if user erases a letter or adds new letter then clean previous outputs)
+        removeElements();
+        for (let i of sortedNames) {
+            //convert input to lowercase and compare with each string
+            if (invitations.includes(i)) {
+                continue;
+            }
+            if (i.toLowerCase().startsWith(input.value.toLowerCase())) {
+                let listItem = document.createElement("li");
+                listItem.classList.add("suggestions-items", "white", "medium");
+                listItem.style.cursor = "pointer";
+                listItem.setAttribute("onclick", "displayNames('" + i + "')");
+                //Display matched part in bold
+                let word = "<b>" + i.substr(0, input.value.length) + "</b>";
+                word += i.substr(input.value.length);
+                //display the value in array
+                listItem.innerHTML = word;
+                document.querySelector(".suggestions").appendChild(listItem);
+            }
         }
-        if (i.toLowerCase().startsWith(input.value.toLowerCase())) {
-            let listItem = document.createElement("li");
-            listItem.classList.add("suggestions-items", "white", "medium");
-            listItem.style.cursor = "pointer";
-            listItem.setAttribute("onclick", "displayNames('" + i + "')");
-            //Display matched part in bold
-            let word = "<b>" + i.substr(0, input.value.length) + "</b>";
-            word += i.substr(input.value.length);
-            //display the value in array
-            listItem.innerHTML = word;
-            document.querySelector(".suggestions").appendChild(listItem);
-        }
-    }
-});
+    });
+}
 
 function displayNames(value) {
     input.value = value;
