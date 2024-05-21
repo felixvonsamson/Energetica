@@ -31,23 +31,22 @@ def flash_error(msg):
     return flash(msg, category="error")
 
 
-def notify(title, message, players):
+def notify(title, message, player):
     """creates a new notification"""
     new_notification = Notification(
-        title=title, content=message, time=datetime.now()
+        title=title, content=message, time=datetime.now(), player_id=player.id
     )
     db.session.add(new_notification)
-    for player in players:
-        player.notifications.append(new_notification)
-        player.emit(
-            "new_notification",
-            {
-                "id": new_notification.id,
-                "time": str(new_notification.time),
-                "title": new_notification.title,
-                "content": new_notification.content,
-            },
-        )
+    player.notifications.append(new_notification)
+    player.emit(
+        "new_notification",
+        {
+            "id": new_notification.id,
+            "time": str(new_notification.time),
+            "title": new_notification.title,
+            "content": new_notification.content,
+        },
+    )
     db.session.commit()
 
 
@@ -119,7 +118,7 @@ def add_asset(player_id, construction_id):
                 notify(
                     "Tutorial",
                     "You have built your first storage facility, you can monitor the stored energy in the <a href='/production_overview/storage'>storage graph</a>.",
-                    [player],
+                    player,
                 )
         if "technology" not in player.advancements:
             if construction.name == "laboratory":
@@ -129,7 +128,7 @@ def add_asset(player_id, construction_id):
                 notify(
                     "Tutorial",
                     "You have built a laboratory, you can now reseach <a href='/technology'>technologies</a> to unlock and upgrade facilities.",
-                    [player],
+                    player,
                 )
         if "warehouse" not in player.advancements:
             if construction.name == "warehouse":
@@ -139,7 +138,7 @@ def add_asset(player_id, construction_id):
                 notify(
                     "Tutorial",
                     "You have built a warehouse to store natural resources, you can now buy resources on the <a href='/resource_market'>resources market</a> or invest in <a href='/extraction_facilities'>extraction facilites</a> to extract your own resources from the ground.",
-                    [player],
+                    player,
                 )
         if "GHG_effect" not in player.advancements:
             if construction.name == "chemistry":
@@ -147,7 +146,7 @@ def add_asset(player_id, construction_id):
                 notify(
                     "Tutorial",
                     "Scientists have discovered the greenhouse effect and have shown that climate change increases the risks of natural and social catastrophies. You can now monitor your emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph</a>.",
-                    [player],
+                    player,
                 )
     setattr(player, construction.name, getattr(player, construction.name) + 1)
     priority_list_name = "construction_priorities"
@@ -248,7 +247,7 @@ def add_asset(player_id, construction_id):
         notify(
             "Achievements",
             "Your lab is level 3, an additional lab worker is available. (+5 xp)",
-            [player],
+            player,
         )
     if construction.family == "Technologies":
         player.total_technologies += 1
@@ -260,7 +259,7 @@ def add_asset(player_id, construction_id):
                 notify(
                     "Achievements",
                     "You have researched a total of 25 levels of technologies. (+10 xp)",
-                    [player],
+                    player,
                 )
         server_tech = engine.data["technology_lvls"][construction.name]
         if len(server_tech) <= getattr(player, construction.name):
@@ -269,7 +268,7 @@ def add_asset(player_id, construction_id):
         notify(
             "Technologies",
             f"The research of the technology {engine.const_config[construction.name]['name']} has finished.",
-            [player],
+            player,
         )
         engine.log(
             f"{player.username} has finished the research of technology {engine.const_config[construction.name]['name']}"
@@ -278,7 +277,7 @@ def add_asset(player_id, construction_id):
         notify(
             "Constructions",
             f"The construction of the facility {engine.const_config[construction.name]['name']} has finished.",
-            [player],
+            player,
         )
         engine.log(
             f"{player.username} has finished the construction of facility {engine.const_config[construction.name]['name']}"
@@ -311,7 +310,7 @@ def remove_asset(player_id, facility, decommissioning=True):
         notify(
             "Decommissioning",
             f"The facility {engine.const_config[facility]['name']} reached the end of its operational lifespan and had to be decommissioned. The cost of this operation was {round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>.",
-            [player],
+            player,
         )
     engine.log(
         f"The facility {engine.const_config[facility]['name']} from {player.username} has been decommissioned."
@@ -337,7 +336,7 @@ def store_import(player, resource, quantity):
         notify(
             "Shipments",
             f"A shipment of {format_mass(quantity)} {resource} arrived, but only {format_mass(max_cap - getattr(player, resource))} could be stored in your warehouse.",
-            [player],
+            player,
         )
         engine.log(
             f"{player.username} received a shipment of {format_mass(quantity)} {resource}, but could only store {format_mass(max_cap - getattr(player, resource))} in their warehouse."
@@ -347,7 +346,7 @@ def store_import(player, resource, quantity):
         notify(
             "Shipments",
             f"A shipment of {format_mass(quantity)} {resource} arrived.",
-            [player],
+            player,
         )
         engine.log(
             f"{player.username} received a shipment of {format_mass(quantity)} {resource}."
@@ -636,7 +635,7 @@ def buy_resource_from_market(player, quantity, sale_id):
             notify(
                 "Achievements",
                 "You have bought a resources on the market. (+5 xp)",
-                [player],
+                player,
             )
         if "trading_2" not in sale.player.achievements:
             sale.player.add_to_list("achievements", "trading_2")
@@ -653,7 +652,7 @@ def buy_resource_from_market(player, quantity, sale_id):
                 notify(
                     "Achievements",
                     "You have bought more than 10'000 tons of resources. (+10 xp)",
-                    [player],
+                    player,
                 )
         if "trading_3" not in sale.player.achievements:
             if sale.player.sold_resources >= 10000000:
@@ -1175,7 +1174,7 @@ def decrease_project_priority(player, construction_id, pausing=False):
 
 
 def get_construction_data(player):
-    projects = player.get_constructions()
+    projects = player.package_constructions()
     construction_priorities = player.read_list("construction_priorities")
     research_priorities = player.read_list("research_priorities")
     return {0: projects, 1: construction_priorities, 2: research_priorities}

@@ -23,6 +23,7 @@ class Notification(db.Model):
     content = db.Column(db.Text)
     time = db.Column(db.DateTime)
     read = db.Column(db.Boolean, default=False)
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
 
 # table that links chats to players
@@ -30,10 +31,4 @@ player_chats = db.Table(
     "player_chats",
     db.Column("player_id", db.Integer, db.ForeignKey("player.id")),
     db.Column("chat_id", db.Integer, db.ForeignKey("chat.id")),
-)
-# table that links notifications to players
-player_notifications = db.Table(
-    "player_notifications",
-    db.Column("player_id", db.Integer, db.ForeignKey("player.id")),
-    db.Column("notification_id", db.Integer, db.ForeignKey("notification.id")),
 )

@@ -147,7 +147,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Tutorial",
                 "Your generation capabilites are now big enougth to join a Network and trade electricity. See <b>Community</b> > <b><a href='/network'>Network</a></b>.",
-                [player],
+                player,
             )
 
     # check achievements
@@ -158,7 +158,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Achievements",
                 "You have passed the 1MW mark, you consume as much electricity as a small village in Europe. (+5 xp)",
-                [player],
+                player,
             )
     elif "power_consumption_2" not in player.achievements:
         if player.max_power_consumption > 150000000:
@@ -167,7 +167,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Achievements",
                 "You have passed the 150MW mark, you consume as much electricity as the city of Basel. (+10 xp)",
-                [player],
+                player,
             )
     elif "power_consumption_3" not in player.achievements:
         if player.max_power_consumption > 6500000000:
@@ -176,7 +176,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Achievements",
                 "You have passed the 6.5GW mark, you consume as much electricity as Switzerland. (+15 xp)",
-                [player],
+                player,
             )
     elif "power_consumption_4" not in player.achievements:
         if player.max_power_consumption > 100000000000:
@@ -185,7 +185,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Achievements",
                 "You have passed the 100GW mark, you consume as much electricity as Japan. (+20 xp)",
-                [player],
+                player,
             )
     elif "power_consumption_5" not in player.achievements:
         if player.max_power_consumption > 3000000000000:
@@ -194,7 +194,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Achievements",
                 "You have passed the 3TW mark, you consume as much electricity as the entire world population. (+25 xp)",
-                [player],
+                player,
             )
     if "energy_storage_1" not in player.achievements:
         if player.max_energy_stored > 8000000000:
@@ -203,7 +203,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Achievements",
                 "You have stored 8GWh of energy, enought to power Zurich for a day. (+5 xp)",
-                [player],
+                player,
             )
     elif "energy_storage_2" not in player.achievements:
         if player.max_energy_stored > 160000000000:
@@ -212,7 +212,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Achievements",
                 "You have stored 160GWh of energy, enought to power switzerland for a day. (+10 xp)",
-                [player],
+                player,
             )
     elif "energy_storage_3" not in player.achievements:
         if player.max_energy_stored > 5000000000000:
@@ -221,7 +221,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Achievements",
                 "You have stored 5TWh of energy, enought to power switzerland for a month. (+20 xp)",
-                [player],
+                player,
             )
     if "mineral_extraction_1" not in player.achievements:
         if player.extracted_resources > 1000000:
@@ -230,7 +230,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Achievements",
                 "You have extracted 1000 tons of resources. (+5 xp)",
-                [player],
+                player,
             )
     elif "mineral_extraction_2" not in player.achievements:
         if player.extracted_resources > 50000000:
@@ -239,7 +239,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Achievements",
                 "You have extracted 50'000 tons of resources. (+10 xp)",
-                [player],
+                player,
             )
     if "network_import_1" not in player.achievements:
         if player.imported_energy > 10000000000:
@@ -248,7 +248,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Achievements",
                 "You have imported more than 10GWh on the market. (+5 xp)",
-                [player],
+                player,
             )
     elif "network_import_2" not in player.achievements:
         if player.imported_energy > 1000000000000:
@@ -257,7 +257,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Achievements",
                 "You have imported more than 1TWh on the market. (+10 xp)",
-                [player],
+                player,
             )
     if "network_export_1" not in player.achievements:
         if player.exported_energy > 10000000000:
@@ -266,7 +266,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Achievements",
                 "You have exported more than 10GWh on the market. (+5 xp)",
-                [player],
+                player,
             )
     elif "network_export_2" not in player.achievements:
         if player.exported_energy > 1000000000000:
@@ -275,7 +275,7 @@ def update_player_progress_values(engine, player, new_values):
             notify(
                 "Achievements",
                 "You have exported more than 1TWh on the market. (+10 xp)",
-                [player],
+                player,
             )
 
 
@@ -1100,7 +1100,7 @@ def reduce_demand(
                 notify(
                     "Energy shortage",
                     f"The construction of the facility {engine.const_config[construction.name]['name']} has been suspended because of a lack of electricity.",
-                    [player],
+                    player,
                 )
         db.session.commit()
         return
@@ -1125,7 +1125,7 @@ def reduce_demand(
                 notify(
                     "Energy shortage",
                     f"The research of the technology {engine.const_config[construction.name]['name']} has been suspended because of a lack of electricity.",
-                    [player],
+                    player,
                 )
         db.session.commit()
         return
@@ -1140,7 +1140,7 @@ def reduce_demand(
             notify(
                 "Energy shortage",
                 f"The shipment of {last_shipment.resource} has been suspended because of a lack of electricity.",
-                [player],
+                player,
             )
             db.session.commit()
         return

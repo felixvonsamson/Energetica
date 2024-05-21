@@ -55,7 +55,7 @@ function load_constructions() {
 
 function retrieve_constructions() {
     console.log("Feching construction data from the server")
-    return fetch("/get_constructions")
+    return fetch("/api/get_constructions")
         .then((response) => response.json())
         .then((raw_data) => {
             // Save fetched data to sessionStorage
@@ -79,7 +79,7 @@ function load_shipments() {
 
 function retrieve_shipments() {
     console.log("Feching shipments data from the server")
-    return fetch("/get_shipments")
+    return fetch("/api/get_shipments")
         .then((response) => response.json())
         .then((raw_data) => {
             // Save fetched data to sessionStorage
@@ -108,7 +108,7 @@ function load_chart_data(network = false) {
  
 function retrieve_chart_data(network = false) {
     console.log("Feching chart data from the server")
-    return fetch("/get_chart_data")
+    return fetch("/api/get_chart_data")
         .then((response) => response.json())
         .then((raw_data) => {
             var currentDate = new Date();
@@ -138,7 +138,7 @@ function load_players() {
 }
 
 function retrieve_players() {
-    return fetch("/get_players")
+    return fetch("/api/get_players")
         .then((response) => response.json())
         .then((raw_data) => {
             sessionStorage.setItem("players", JSON.stringify(raw_data));
@@ -161,7 +161,7 @@ function load_player_data() {
  
 function retrieve_player_data() {
     console.log("Feching player data from the server")
-    return fetch("/get_player_data")
+    return fetch("/api/get_player_data")
         .then((response) => response.json())
         .then((raw_data) => {
             sessionStorage.setItem("player_data", JSON.stringify(raw_data));
@@ -179,7 +179,7 @@ function load_const_config() {
             return Promise.resolve(JSON.parse(const_config));
         }
     }
-    return fetch("/get_const_config")
+    return fetch("/api/get_const_config")
         .then((response) => response.json())
         .then((raw_data) => {
             sessionStorage.setItem("const_config", JSON.stringify(raw_data));

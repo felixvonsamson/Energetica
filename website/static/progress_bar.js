@@ -147,7 +147,7 @@ function cancel_construction(construction_id, force=false) {
 }
 
 function pause_construction(construction_id) {
-    send_form("/request_pause_project", {
+    send_form("/api/request_pause_project", {
         id: construction_id,
     })
         .then((response) => {
@@ -171,7 +171,7 @@ function pause_construction(construction_id) {
 }
 
 function pause_shipment(shipment_id) {
-    send_form("/request_pause_shipment", {
+    send_form("/api/request_pause_shipment", {
         id: shipment_id,
     })
         .then((response) => {
@@ -192,7 +192,7 @@ function pause_shipment(shipment_id) {
 }
 
 function decrease_project_priority(construction_id) {
-    send_form("/request_decrease_project_priority", {
+    send_form("/api/request_decrease_project_priority", {
         id: construction_id,
     })
         .then((response) => {

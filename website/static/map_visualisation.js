@@ -58,7 +58,7 @@ let player_tile_id;
 function preload() {
     font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
     //filling map
-    fetch("/get_map") // retrieves map data from the database using api.py
+    fetch("/api/get_map") // retrieves map data from the database using api.py
         .then((response) => response.json())
         .then((raw_data) => {
             data = raw_data;

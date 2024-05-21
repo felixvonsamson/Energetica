@@ -1,6 +1,6 @@
 let sortedNetworks;
 
-fetch("/get_networks") // retrieves list of all networks using api.py
+fetch("/api/get_networks") // retrieves list of all networks using api.py
     .then((response) => response.json())
     .then((data) => {
         sortedNetworks = data.sort();

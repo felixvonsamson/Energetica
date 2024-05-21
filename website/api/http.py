@@ -246,7 +246,7 @@ def get_generation_prioirity():
 @http.route("/get_constructions", methods=["GET"])
 def get_constructions():
     """Gets list of facilities under construction for this player"""
-    projects = current_user.get_constructions()
+    projects = current_user.package_constructions()
     construction_priorities = current_user.read_list("construction_priorities")
     research_priorities = current_user.read_list("research_priorities")
     return jsonify(projects, construction_priorities, research_priorities)

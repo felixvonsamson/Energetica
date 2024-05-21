@@ -2,6 +2,7 @@
 Here is the logic for the engine of the game
 """
 
+from collections import defaultdict
 from datetime import datetime
 import pickle
 import logging
@@ -34,7 +35,7 @@ class gameEngine(object):
         engine.config = config
         engine.const_config = const_config["assets"]
         engine.socketio = None
-        engine.clients = {}
+        engine.clients = defaultdict(list)
         engine.websocket_dict = {}
         engine.logger = logging.getLogger("Energetica")  # Not sure what that is
         engine.init_logger()

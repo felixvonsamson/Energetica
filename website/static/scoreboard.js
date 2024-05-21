@@ -3,7 +3,7 @@ let decending = true;
 get_data();
 
 function get_data() {
-    fetch(`/get_scoreboard`) // retrieves array of players with scoreboard data
+    fetch("/api/get_scoreboard") // retrieves array of players with scoreboard data
         .then((response) => response.json())
         .then((raw_data) => {
             data = raw_data;
