@@ -38,7 +38,9 @@ class Player(db.Model, UserMixin):
     )
     last_opened_chat = db.Column(db.Integer, default=None)
     messages = db.relationship("Message", backref="player")
-    notifications = db.relationship("Notification", backref="players", lazy="dynamic")
+    notifications = db.relationship(
+        "Notification", backref="players", lazy="dynamic"
+    )
 
     # resources :
     money = db.Column(db.Float, default=25000)  # default is 25000
@@ -224,21 +226,6 @@ class Player(db.Model, UserMixin):
         else:
             setattr(self, attr, f"{id}," + getattr(self, attr))
         db.session.commit()
-    
-    def get_shipments(self):
-        shipments = self.shipments
-        shipment_list = {
-            shipment.id: {
-                "id": shipment.id,
-                "resource": shipment.resource,
-                "quantity": shipment.quantity,
-                "departure_time": shipment.departure_time,
-                "duration": shipment.duration,
-                "suspension_time": shipment.suspension_time,
-            }
-            for shipment in shipments
-        }
-        return shipment_list
 
     def package_chat_messages(self, chat_id):
         chat = Chat.query.filter_by(id=chat_id).first()
@@ -313,14 +300,14 @@ class Player(db.Model, UserMixin):
     def get_values(self):
         engine = current_app.config["engine"]
         attributes = chain(
-            engine.controllable_facilities, 
-            engine.renewables, 
-            engine.storage_facilities, 
-            engine.extraction_facilities, 
-            engine.functional_facilities, 
-            engine.technologies
+            engine.controllable_facilities,
+            engine.renewables,
+            engine.storage_facilities,
+            engine.extraction_facilities,
+            engine.functional_facilities,
+            engine.technologies,
         )
-        return { attr: getattr(self, attr) for attr in attributes }
+        return {attr: getattr(self, attr) for attr in attributes}
 
     def emit(self, event, *args):
         engine = current_app.config["engine"]
@@ -335,7 +322,7 @@ class Player(db.Model, UserMixin):
                 "total_t": engine.data["total_t"],
                 "chart_values": new_values,
                 "money": f"{self.money:,.0f}".replace(",", "'"),
-            }
+            },
         )
 
     # prints out the object as a sting with the players username for debugging
@@ -357,19 +344,32 @@ class Player(db.Model, UserMixin):
 
     def package_constructions(self):
         return {
-            construction.id: { k: getattr(construction, k) for k in ["id", "name", "family", "start_time", "duration", "suspension_time"] }
+            construction.id: {
+                k: getattr(construction, k)
+                for k in [
+                    "id",
+                    "name",
+                    "family",
+                    "start_time",
+                    "duration",
+                    "suspension_time",
+                ]
+            }
             for construction in self.under_construction
         }
 
     def package_shipments(self):
         return {
             shipment.id: {
-                "id": shipment.id,
-                "resource": shipment.resource,
-                "quantity": shipment.quantity,
-                "departure_time": shipment.departure_time,
-                "duration": shipment.duration,
-                "suspension_time": shipment.suspension_time,
+                k: getattr(shipment, k)
+                for k in [
+                    "id",
+                    "resource",
+                    "quantity",
+                    "departure_time",
+                    "duration",
+                    "suspension_time",
+                ]
             }
             for shipment in self.shipments
         }

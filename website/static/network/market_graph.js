@@ -436,7 +436,7 @@ function mousePressed() {
 
 function update_graph() {
     load_chart_data((network = true)).then((raw_chart_data) => {
-        fetch(`/get_market_data?t=${t}`) // retrieves data from server
+        fetch(`/api/get_market_data?t=${t}`) // retrieves data from server
             .then((response) => response.json())
             .then((raw_data) => {
                 strokeWeight(1);

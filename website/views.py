@@ -2,7 +2,7 @@
 In this file, the main routes of the website are managed
 """
 
-from flask import Blueprint, redirect, render_template, request, flash
+from flask import Blueprint, redirect, render_template, request
 from flask import g, current_app
 from flask_login import login_required, current_user
 

@@ -240,7 +240,7 @@ function openChat(chatID) {
         chat_data.last_opened_chat = chatID;
         sessionStorage.setItem("chats", JSON.stringify(chat_data));
         show_unread_badges();
-        fetch(`/get_chat_messages?chatID=${chatID}`)
+        fetch(`/api/get_chat_messages?chatID=${chatID}`)
         .then((response) => response.json())
         .then((data) => {
             load_players().then((players) => {

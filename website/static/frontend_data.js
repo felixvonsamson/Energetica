@@ -32,7 +32,7 @@ function retrieve_all(){
     retrieve_player_data();
     retrieve_chats();
     if (!sessionStorage.getItem("player_id")){
-        fetch("/get_player_id")
+        fetch("/api/get_player_id")
             .then((response) => response.json())
             .then((player_id) => {
                 sessionStorage.setItem("player_id", player_id);
@@ -201,7 +201,7 @@ function load_chats() {
 }
 
 function retrieve_chats(){
-    fetch("/get_chat_list")
+    fetch("/api/get_chat_list")
     .then((response) => response.json())
     .then((data) => {
         const unread_chat_count = Object.values(data.chat_list).reduce((count, chat) => count + (chat.unread_messages > 0 ? 1 : 0), 0);

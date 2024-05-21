@@ -37,7 +37,7 @@ function buy_resource(saleId){
         addError("Please enter a valid quantity");
         return;
     }
-    send_form("/buy_resource", {"id": saleId, "quantity": quantity})
+    send_form("/api/buy_resource", {"id": saleId, "quantity": quantity})
     .then((response) => {
         response.json().then((raw_data) => {
             let response = raw_data["response"];

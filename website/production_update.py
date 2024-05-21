@@ -1131,12 +1131,22 @@ def reduce_demand(
         return
     if demand_type == "transport":
         last_shipment = (
-            Shipment.query.filter(Shipment.suspension_time.is_(None), Shipment.player_id == player.id)
+            Shipment.query.filter(
+                Shipment.suspension_time.is_(None),
+                Shipment.player_id == player.id,
+            )
             .order_by(Shipment.departure_time.desc())
             .first()
         )
         if last_shipment:
             last_shipment.suspension_time = time.time()
+            player.emit(
+                "pause_shipment",
+                {
+                    "shipment_id": last_shipment.id,
+                    "suspension_time": time.time(),
+                },
+            )
             notify(
                 "Energy shortage",
                 f"The shipment of {last_shipment.resource} has been suspended because of a lack of electricity.",

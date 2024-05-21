@@ -596,7 +596,7 @@ def buy_resource_from_market(player, quantity, sale_id):
         # Player is buying their own resource
         sale.quantity -= quantity
         if sale.quantity == 0:
-            Resource_on_sale.query.filter_by(id=sale_id).delete() 
+            Resource_on_sale.query.filter_by(id=sale_id).delete()
         setattr(
             player,
             sale.resource + "_on_sale",
@@ -643,7 +643,7 @@ def buy_resource_from_market(player, quantity, sale_id):
             notify(
                 "Achievements",
                 "You have sold a resources on the market. (+5 xp)",
-                [sale.player],
+                sale.player,
             )
         if "trading_3" not in player.achievements:
             if player.bought_resources >= 10000000:
@@ -661,7 +661,7 @@ def buy_resource_from_market(player, quantity, sale_id):
                 notify(
                     "Achievements",
                     "You have sold more than 10'000 tons of resources. (+10 xp)",
-                    [sale.player],
+                    sale.player,
                 )
         dq = player.tile.q - sale.player.tile.q
         dr = player.tile.r - sale.player.tile.r
@@ -684,7 +684,7 @@ def buy_resource_from_market(player, quantity, sale_id):
         notify(
             "Resource transaction",
             f"{player.username} bought {format_mass(quantity)} of {sale.resource} for a total cost of {display_money(total_price)}.",
-            [sale.player],
+            sale.player,
         )
         engine.log(
             f"{player.username} bought {format_mass(quantity)} of {sale.resource} from {sale.player.username} for a total cost of {display_money(total_price)}."
@@ -700,7 +700,7 @@ def buy_resource_from_market(player, quantity, sale_id):
             "quantity": quantity,
             "seller": sale.player.username,
             "available_quantity": sale.quantity,
-            "shipments": player.get_shipments(),
+            "shipments": player.package_shipments(),
         }
 
 
@@ -918,12 +918,10 @@ def start_project(engine, player, facility, family, force=False):
     if player.money < real_price:
         return {"response": "notEnoughMoneyError"}
 
-    if not force and "network" not in player.advancements :
+    if not force and "network" not in player.advancements:
         capacity = 0
         for gen in engine.power_facilities:
-            capacity += (
-                getattr(player, gen) * assets[gen]["power generation"]
-            )
+            capacity += getattr(player, gen) * assets[gen]["power generation"]
         if assets[facility]["construction power"] > capacity:
             return {
                 "response": "areYouSure",
@@ -996,7 +994,7 @@ def cancel_project(player, construction_id, force=False):
             "response": "areYouSure",
             "refund": f"{round(80 * (1 - time_fraction))}%",
         }
-    
+
     refund = 0.8 * construction.original_price * (1 - time_fraction)
     player.money += refund
     print(
