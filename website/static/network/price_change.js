@@ -1,7 +1,6 @@
 function change_prices() {
     const inputElements = document.querySelectorAll("input");
     let prices = {};
-    let SCPs = {};
     inputElements.forEach((input) => {
         if ((input.id == "invite_player") | (input.id == "network_name")) {
             return;
@@ -13,7 +12,14 @@ function change_prices() {
     })
         .then((response) => {
             response.json().then((raw_data) => {
-                addToast("Changes saved");
+                let response = raw_data["response"];
+                if (response == "success") {
+                    addToast("Changes saved");
+                    return;
+                } 
+                if (response == "priceTooLow") {
+                    addError("Prices need to be greater than -5");
+                }
             });
         })
         .catch((error) => {

@@ -842,6 +842,8 @@ def set_network_prices(engine, player, prices={}):
         return sorted(SCP_list, key=lambda x: engine.renewables.index(x))
 
     for price in prices:
+        if prices[price] <= -5:
+            return {"response": "priceTooLow"}
         setattr(player, price, prices[price])
 
     rest_list = sort_priority(player.read_list("rest_of_priorities"))
@@ -858,6 +860,7 @@ def set_network_prices(engine, player, prices={}):
     player.rest_of_priorities = comma.join(rest_list)
     player.demand_priorities = comma.join(demand_list)
     db.session.commit()
+    return {"response": "success"}
 
 
 def get_scoreboard():

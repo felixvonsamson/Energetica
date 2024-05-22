@@ -872,7 +872,7 @@ def sell(engine, new_values, row, market_price, quantity=None):
     revenue = new_values[player.id]["revenues"]
     if quantity is None:
         quantity = row.capacity
-    if row.price >= 0:
+    if row.price > -5:
         generation[row.facility] += quantity
         if row.facility in engine.storage_facilities:
             assets = engine.config[player.id]["assets"]

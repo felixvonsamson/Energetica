@@ -356,10 +356,10 @@ def change_network_prices():
     on the network"""
     json = request.get_json()
     prices = json["prices"]
-    utils.set_network_prices(
+    response = utils.set_network_prices(
         engine=g.engine, player=current_user, prices=prices
     )
-    return jsonify("success")
+    return jsonify(response)
 
 
 @http.route("/request_change_facility_priority", methods=["POST"])
