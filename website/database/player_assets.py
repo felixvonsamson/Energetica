@@ -28,6 +28,8 @@ class Active_facilites(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     facility = db.Column(db.String(50))
     end_of_life = db.Column(db.Float)
+    initial_price = db.Column(db.Float)
+
     # time at witch the facility will be decomissioned
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
     # can access player directly with .player

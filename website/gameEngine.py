@@ -274,6 +274,6 @@ def check_upcoming_actions(engine, app):
         ).all()
         if eolt_facilities:
             for facility in eolt_facilities:
-                remove_asset(facility.player_id, facility.facility)
+                remove_asset(facility.player_id, facility)
                 db.session.delete(facility)
             db.session.commit()

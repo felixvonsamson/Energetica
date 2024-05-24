@@ -291,29 +291,33 @@ def add_asset(player_id, construction_id):
             facility=construction.name,
             end_of_life=time.time() + assets[construction.name]["lifespan"],
             player_id=player.id,
+            initial_price=construction["original_price"],
         )
         db.session.add(new_facility)
         db.session.commit()
     engine.config.update_config_for_user(player.id)
 
 
-def remove_asset(player_id, facility, decommissioning=True):
+def remove_asset(player_id, facility_info, decommissioning=True):
     """this function is executed when a facility is decomissioned"""
     engine = current_app.config["engine"]
-    assets = engine.config[player_id]["assets"]
     player = Player.query.get(player_id)
-    setattr(player, facility, getattr(player, facility) - 1)
+    setattr(
+        player,
+        facility_info.facility,
+        getattr(player, facility_info.facility) - 1,
+    )
     # The cost of decommissioning is 20% of the building cost.
-    cost = 0.2 * assets[facility]["price"]
+    cost = 0.2 * facility_info.initial_price
     player.money -= cost
     if decommissioning:
         notify(
             "Decommissioning",
-            f"The facility {engine.const_config[facility]['name']} reached the end of its operational lifespan and had to be decommissioned. The cost of this operation was {round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>.",
+            f"The facility {engine.const_config[facility_info.facility]['name']} reached the end of its operational lifespan and had to be decommissioned. The cost of this operation was {round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>.",
             player,
         )
     engine.log(
-        f"The facility {engine.const_config[facility]['name']} from {player.username} has been decommissioned."
+        f"The facility {engine.const_config[facility_info.facility]['name']} from {player.username} has been decommissioned."
     )
     engine.config.update_config_for_user(player.id)
 
@@ -719,6 +723,14 @@ def confirm_location(engine, player, location):
     location.player_id = player.id
     add_player_to_data(engine, player.id)
     init_table(player.id)
+    assets = engine.config[player.id]["assets"]
+    steam_engine = Active_facilites(
+        facility="steam_engine",
+        end_of_life=time.time() + assets["steam_engine"]["lifespan"],
+        player_id=player.id,
+        initial_price=assets["steam_engine"]["price"],
+    )
+    db.session.add(steam_engine)
     db.session.commit()
     ws.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
