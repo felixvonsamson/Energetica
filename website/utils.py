@@ -963,6 +963,7 @@ def start_project(engine, player, facility, family, force=False):
         duration=duration + round_up,
         suspension_time=suspension_time,
         original_price=real_price,
+        construction_power=assets[facility]["construction power"],
         player_id=player.id,
     )
     db.session.add(new_construction)

@@ -194,6 +194,7 @@ def add_asset(player, asset, n):
             duration=0,
             suspension_time=None,
             original_price=0,
+            construction_power=0,
             player_id=player.id,
         )
         db.session.add(new_construction)

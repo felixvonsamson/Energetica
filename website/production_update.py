@@ -409,11 +409,10 @@ def construction_demand(player, assets, demand):
     """calculate power consumption for facilites under construction"""
     for ud in player.under_construction:
         if ud.suspension_time is None:
-            construction = assets[ud.name]
             if ud.family == "Technologies":
-                demand["research"] += construction["construction power"]
+                demand["research"] += ud.construction_power
             else:
-                demand["construction"] += construction["construction power"]
+                demand["construction"] += ud.construction_power
 
 
 def shipment_demand(engine, player, demand):
