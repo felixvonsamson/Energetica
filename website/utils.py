@@ -23,6 +23,7 @@ from .database.player_assets import (
     Under_construction,
     Active_facilites,
 )
+from website import technology_effects
 from . import db
 from flask import current_app, flash
 
@@ -292,6 +293,10 @@ def add_asset(player_id, construction_id):
             end_of_life=time.time() + assets[construction.name]["lifespan"],
             player_id=player.id,
             initial_price=construction["original_price"],
+            price_multiplier=construction.price_multiplier,
+            power_multiplier=construction.power_multiplier,
+            capacity_multiplier=construction.capacity_multiplier,
+            efficiency_multiplier=construction.efficiency_multiplier,
         )
         db.session.add(new_facility)
         db.session.commit()
@@ -964,6 +969,10 @@ def start_project(engine, player, facility, family, force=False):
         suspension_time=suspension_time,
         original_price=real_price,
         construction_power=assets[facility]["construction power"],
+        price_multiplier=technology_effects.price_multiplier(facility),
+        power_multiplier=technology_effects.power_multiplier(facility),
+        capacity_multiplier=technology_effects.capacity_multiplier(facility),
+        efficiency_multiplier=technology_effects.efficiency_multiplier(facility),
         player_id=player.id,
     )
     db.session.add(new_construction)

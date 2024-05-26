@@ -10,7 +10,6 @@ from pathlib import Path
 from website import utils
 from ..database.map import Hex
 from ..database.player import Network, Player
-from ..database.messages import Chat, Message
 
 http = Blueprint("http", __name__)
 

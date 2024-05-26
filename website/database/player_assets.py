@@ -14,12 +14,20 @@ class Under_construction(db.Model):
     # to assign the thing to the correct page
     start_time = db.Column(db.Float)
     duration = db.Column(db.Float)
+    # time at witch the construction has been paused if it has else None
     suspension_time = db.Column(db.Float)
-    # time at witch the construction has been paused if it has
-    original_price = db.Column(db.Float)
     # Price of the construction on the time of start of construction
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
+    original_price = db.Column(db.Float)
+    # Power consumed by the construction
+    construction_power = db.Column(db.Float)
+    # multipliers to keep track of the technology level at the time of the start of the constuction
+    price_multiplier = db.Column(db.Float, default=1)
+    power_multiplier = db.Column(db.Float, default=1)
+    capacity_multiplier = db.Column(db.Float, default=1)
+    efficiency_multiplier = db.Column(db.Float, default=1)
     # can access player directly with .player
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
+    
 
 
 class Active_facilites(db.Model):
@@ -28,11 +36,15 @@ class Active_facilites(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     facility = db.Column(db.String(50))
     end_of_life = db.Column(db.Float)
-    initial_price = db.Column(db.Float)
-
     # time at witch the facility will be decomissioned
+    initial_price = db.Column(db.Float)
+    # multiply the base values by the folowing values
+    price_multiplier = db.Column(db.Float)
+    power_multiplier = db.Column(db.Float)
+    capacity_multiplier = db.Column(db.Float)
+    efficiency_multiplier = db.Column(db.Float)
+    
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
-    # can access player directly with .player
 
 
 class Shipment(db.Model):
