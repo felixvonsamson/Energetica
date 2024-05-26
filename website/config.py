@@ -5,7 +5,6 @@ This file contains all the data needed for the game
 from .database.player import Player
 import copy
 from flask import current_app
-from .utils import hydro_price_function
 
 const_config = {
     "assets": {
@@ -1150,46 +1149,9 @@ class Config(object):
         config.update_resource_extraction(player_id)
 
         for asset in assets:
-            # adapt durations to clock_time
-            assets[asset]["construction time"] *= (
-                engine.clock_time / 60
-            ) ** 0.5
             
-            if "lifespan" in assets[asset]:
-                assets[asset]["lifespan"] *= (engine.clock_time / 60) ** 0.5
-
-            if asset in engine.functional_facilities + engine.technologies:
-                # update prices, construction time and construction energy
-                assets[asset]["price"] *= const_config["assets"][asset][
-                    "price multiplier"
-                ] ** getattr(player, asset)
-                assets[asset]["construction time"] *= const_config["assets"][
-                    asset
-                ]["price multiplier"] ** (0.6 * getattr(player, asset))
-                assets[asset]["construction energy"] *= const_config["assets"][
-                    asset
-                ]["price multiplier"] ** (1.2 * getattr(player, asset))
-                if asset in engine.functional_facilities:
-                    assets[asset]["construction pollution"] *= const_config[
-                        "assets"
-                    ][asset]["price multiplier"] ** (getattr(player, asset))
 
             if asset in engine.technologies:
-                # update price (knowledge spilling)
-                spillover_factor = (
-                    0.92
-                    ** engine.data["technology_lvls"][asset][
-                        getattr(player, asset)
-                    ]
-                )
-                assets[asset]["price"] *= spillover_factor
-                assets[asset]["construction time"] *= spillover_factor
-                assets[asset]["construction energy"] *= spillover_factor
-                # update research time (laboratory)
-                assets[asset]["construction time"] *= (
-                    const_config["assets"]["laboratory"]["time factor"]
-                    ** player.laboratory
-                )
                 # remove fulfilled requirements
                 assets[asset]["locked"] = False
                 for req in assets[asset]["requirements"]:
@@ -1201,26 +1163,6 @@ class Config(object):
                     )
                     if not req[2]:
                         assets[asset]["locked"] = True
-
-            if asset in ["watermill", "small_water_dam", "large_water_dam"]:
-                # update price according to existing
-                assets[asset]["price"] *= hydro_price_function(
-                    getattr(player, asset), player.tile.hydro
-                )
-
-            if (
-                asset
-                in engine.storage_facilities
-                + engine.controllable_facilities
-                + engine.renewables
-                + engine.extraction_facilities
-                + engine.functional_facilities
-            ):
-                # update construction time (building technology)
-                assets[asset]["construction time"] *= (
-                    const_config["assets"]["building_technology"]["time factor"]
-                    ** player.building_technology
-                )
 
             if asset == "industry":
                 # calculating industry energy consumption and income
