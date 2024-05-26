@@ -473,7 +473,6 @@ def save_past_data_threaded(app, engine):
 
     def save_data():
         with app.app_context():
-            engine.config.update_mining_productivity()
             players = Player.query.all()
             for player in players:
                 if player.tile is None:
@@ -972,7 +971,9 @@ def start_project(engine, player, facility, family, force=False):
         price_multiplier=technology_effects.price_multiplier(facility),
         power_multiplier=technology_effects.power_multiplier(facility),
         capacity_multiplier=technology_effects.capacity_multiplier(facility),
-        efficiency_multiplier=technology_effects.efficiency_multiplier(facility),
+        efficiency_multiplier=technology_effects.efficiency_multiplier(
+            facility
+        ),
         player_id=player.id,
     )
     db.session.add(new_construction)
