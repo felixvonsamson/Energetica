@@ -202,7 +202,7 @@ def update_player_progress_values(engine, player, new_values):
             player.xp += 5
             notify(
                 "Achievements",
-                "You have stored 8GWh of energy, enought to power Zurich for a day. (+5 xp)",
+                "You have stored 8GWh of energy, enough to power Zurich for a day. (+5 xp)",
                 player,
             )
     elif "energy_storage_2" not in player.achievements:
@@ -211,7 +211,7 @@ def update_player_progress_values(engine, player, new_values):
             player.xp += 10
             notify(
                 "Achievements",
-                "You have stored 160GWh of energy, enought to power switzerland for a day. (+10 xp)",
+                "You have stored 160GWh of energy, enough to power switzerland for a day. (+10 xp)",
                 player,
             )
     elif "energy_storage_3" not in player.achievements:
@@ -220,7 +220,7 @@ def update_player_progress_values(engine, player, new_values):
             player.xp += 20
             notify(
                 "Achievements",
-                "You have stored 5TWh of energy, enought to power switzerland for a month. (+20 xp)",
+                "You have stored 5TWh of energy, enough to power switzerland for a month. (+20 xp)",
                 player,
             )
     if "mineral_extraction_1" not in player.achievements:

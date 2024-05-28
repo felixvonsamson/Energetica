@@ -23,7 +23,7 @@ class Player(db.Model, UserMixin):
 
     # Authentification :
     username = db.Column(db.String(25), unique=True)
-    pwhash = db.Column(db.String(25))
+    pwhash = db.Column(db.String(50))
 
     # Position :
     tile = db.relationship("Hex", uselist=False, backref="player")

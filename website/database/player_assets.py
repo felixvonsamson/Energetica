@@ -16,8 +16,6 @@ class Under_construction(db.Model):
     duration = db.Column(db.Float)
     # time at witch the construction has been paused if it has else None
     suspension_time = db.Column(db.Float)
-    # Price of the construction on the time of start of construction
-    original_price = db.Column(db.Float)
     # Power consumed by the construction
     construction_power = db.Column(db.Float)
     # multipliers to keep track of the technology level at the time of the start of the constuction
@@ -27,23 +25,21 @@ class Under_construction(db.Model):
     efficiency_multiplier = db.Column(db.Float, default=1)
     # can access player directly with .player
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
-    
 
 
-class Active_facilites(db.Model):
+class Active_facilities(db.Model):
     """Class that stores the facilites on the server and their end of life time."""
 
     id = db.Column(db.Integer, primary_key=True)
     facility = db.Column(db.String(50))
-    end_of_life = db.Column(db.Float)
     # time at witch the facility will be decomissioned
-    initial_price = db.Column(db.Float)
+    end_of_life = db.Column(db.Float)
     # multiply the base values by the folowing values
     price_multiplier = db.Column(db.Float)
     power_multiplier = db.Column(db.Float)
     capacity_multiplier = db.Column(db.Float)
     efficiency_multiplier = db.Column(db.Float)
-    
+
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
 

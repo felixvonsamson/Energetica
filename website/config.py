@@ -3,9 +3,11 @@ This file contains all the data needed for the game
 """
 
 from .database.player import Player
+from .database.player_assets import Active_facilities
 from website import technology_effects
 import copy
 from flask import current_app
+from sqlalchemy import func
 
 const_config = {
     "assets": {
@@ -684,8 +686,8 @@ const_config = {
             "prod factor": 1.2,
             "affected facilities": [
                 "windmill",
-                "lithium_ion_batteries",
-                "solid_state_batteries",
+                "onshore_wind_turbine",
+                "offshore_wind_turbine",
             ],
             "description": "Aerodynamics studies the principles governing airflow.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172719&",
@@ -1036,6 +1038,34 @@ var_config = {
             ],
         },
     },
+    "installed_capacity": {
+        "steam_engine": {},
+        "windmill": {},
+        "watermill": {},
+        "coal_burner": {},
+        "oil_burner": {},
+        "gas_burner": {},
+        "small_water_dam": {},
+        "onshore_wind_turbine": {},
+        "combined_cycle": {},
+        "nuclear_reactor": {},
+        "large_water_dam": {},
+        "CSP_solar": {},
+        "PV_solar": {},
+        "offshore_wind_turbine": {},
+        "nuclear_reactor_gen4": {},
+        "small_pumped_hydro": {},
+        "compressed_air": {},
+        "molten_salt": {},
+        "large_pumped_hydro": {},
+        "hydrogen_storage": {},
+        "lithium_ion_batteries": {},
+        "solid_state_batteries": {},
+        "coal_mine": {},
+        "oil_field": {},
+        "gas_drilling_site": {},
+        "uranium_mine": {},
+    },
     "warehouse_capacities": {
         "coal": 3000000 / 1.5,  # [kg]
         "oil": 300000 / 1.5,
@@ -1285,6 +1315,16 @@ class Config(object):
         config.for_player[player_id]["transport"]["time"] *= (
             engine.clock_time / 60
         ) ** 0.5
+
+        # calculate the installed power, capacity, efficiency and O&M cost for the player
+        ic = config.for_player[player_id]["installed_capacity"]
+        for installed_capacity in ic:
+            total_power_mlt = Active_facilities.query.with_entities(
+                func.sum(Active_facilities.power_multiplier).filter_by(
+                    facility=installed_capacity, player_id=player_id
+                )
+            ).scalar()
+            ic[installed_capacity] = total_power_mlt
 
         # setting the number of workers
         player.construction_workers = player.building_technology + 1

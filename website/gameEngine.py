@@ -13,7 +13,7 @@ from . import db
 from .database.player_assets import (
     Under_construction,
     Shipment,
-    Active_facilites,
+    Active_facilities,
 )
 from website.api import ws
 
@@ -269,8 +269,9 @@ def check_upcoming_actions(engine, app):
             db.session.commit()
 
         # check end of lifespan of facilites
-        eolt_facilities = Active_facilites.query.filter(
-            Active_facilites.end_of_life < time.time() + 0.8 * engine.clock_time
+        eolt_facilities = Active_facilities.query.filter(
+            Active_facilities.end_of_life
+            < time.time() + 0.8 * engine.clock_time
         ).all()
         if eolt_facilities:
             for facility in eolt_facilities:

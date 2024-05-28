@@ -21,7 +21,7 @@ from .database.player_assets import (
     Resource_on_sale,
     Shipment,
     Under_construction,
-    Active_facilites,
+    Active_facilities,
 )
 from website import technology_effects
 from . import db
@@ -288,11 +288,10 @@ def add_asset(player_id, construction_id):
         "Power facilities",
         "Storage facilities",
     ]:
-        new_facility = Active_facilites(
+        new_facility = Active_facilities(
             facility=construction.name,
             end_of_life=time.time() + assets[construction.name]["lifespan"],
             player_id=player.id,
-            initial_price=construction["original_price"],
             price_multiplier=construction.price_multiplier,
             power_multiplier=construction.power_multiplier,
             capacity_multiplier=construction.capacity_multiplier,
@@ -313,7 +312,11 @@ def remove_asset(player_id, facility_info, decommissioning=True):
         getattr(player, facility_info.facility) - 1,
     )
     # The cost of decommissioning is 20% of the building cost.
-    cost = 0.2 * facility_info.initial_price
+    cost = (
+        0.2
+        * engine.const_config[facility_info.facility]["base_price"]
+        * facility_info.price_multiplier
+    )
     player.money -= cost
     if decommissioning:
         notify(
@@ -728,11 +731,14 @@ def confirm_location(engine, player, location):
     add_player_to_data(engine, player.id)
     init_table(player.id)
     assets = engine.config[player.id]["assets"]
-    steam_engine = Active_facilites(
+    steam_engine = Active_facilities(
         facility="steam_engine",
         end_of_life=time.time() + assets["steam_engine"]["lifespan"],
         player_id=player.id,
-        initial_price=assets["steam_engine"]["price"],
+        price_multiplier=1.0,
+        power_multiplier=1.0,
+        capacity_multiplier=1.0,
+        efficiency_multiplier=1.0,
     )
     db.session.add(steam_engine)
     db.session.commit()
@@ -966,7 +972,6 @@ def start_project(engine, player, facility, family, force=False):
         start_time=time.time(),
         duration=duration + round_up,
         suspension_time=suspension_time,
-        original_price=real_price,
         construction_power=assets[facility]["construction power"],
         price_multiplier=technology_effects.price_multiplier(facility),
         power_multiplier=technology_effects.power_multiplier(facility),
@@ -1021,7 +1026,12 @@ def cancel_project(player, construction_id, force=False):
             "refund": f"{round(80 * (1 - time_fraction))}%",
         }
 
-    refund = 0.8 * construction.original_price * (1 - time_fraction)
+    refund = (
+        0.8
+        * engine.const_config[construction.name]["base_price"]
+        * construction.price_multiplier
+        * (1 - time_fraction)
+    )
     player.money += refund
     print(
         f"removing id {construction_id} from {priority_list_name} ({player.username}) (cancel_project)"

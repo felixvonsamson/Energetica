@@ -4,6 +4,74 @@ import math
 from flask import current_app
 import numpy as np
 import requests
+from .player_assets import Active_facilities
+from ..config import const_config
+
+
+class CapacityData:
+    """Class that stores the capacity data"""
+
+    def __init__(self):
+        self._data = {
+            "steam_engine": {
+                "O&M": 0.0,
+                "power": 0.0,
+                "capacity": 0.0,
+                "fuel_use": 0.0,
+            },
+        }
+
+    def update(self, player_id, facility):
+        """This function updates the capacity data of the player"""
+        engine = current_app.config["engine"]
+        if facility is None:
+            active_facilities = Active_facilities.query.filter_by(player_id=player_id).all()
+            for facility in self._data:
+                self._data[facility] = {
+                    "O&M": 0.0,
+                    "power": 0.0,
+                    "capacity": 0.0,
+                    "fuel_use": 0.0,
+                }
+        else:
+            active_facilities = Active_facilities.query.filter_by(player_id=player_id, facility=facility).all()
+            self._data[facility] = {
+                "O&M": 0.0,
+                "power": 0.0,
+                "capacity": 0.0,
+                "fuel_use": 0.0,
+            }
+        for facility in active_facilities:
+            base_data = const_config["assets"][facility.facility]
+            effective_values = self._data[facility.facility]
+            effective_values["O&M"] += base_data["base_price"] * facility.price_multiplier * base_data["O&M_factor"]
+            if facility.facility in engine.power_facilities + engine.storage_facilities:
+                effective_values["power"] += base_data["base_power_generation"] * facility.power_multiplier
+            elif facility.facility in engine.extraction_facilities:
+                effective_values["power"] += base_data["base_power_consumption"] * facility.power_multiplier
+                effective_values["capacity"] += base_data["extraction_rate"] * facility.capacity_multiplier
+                # in this case there is no fuel use and this corresponds to the pollution
+                effective_values["fuel_use"] += (
+                    base_data["base_pollution"]
+                    * facility.efficiency_multiplier
+                    * base_data["extraction_rate"]
+                    * facility.capacity_multiplier
+                )
+            if facility.facility in engine.storage_facilities:
+                effective_values["capacity"] += base_data["base_storage_capacity"] * facility.capacity_multiplier
+                effective_values["efficiency"] = (
+                    (
+                        effective_values["efficiency"]
+                        * (effective_values["power"] - base_data["base_power_generation"] * facility.power_multiplier)
+                    )
+                    + (base_data["base_efficiency"] * facility.efficiency_multiplier)
+                ) / effective_values["power"]
+            elif facility.facility in engine.power_facilities:
+                effective_values["efficiency"] = (
+                    effective_values["efficiency"]
+                    * (effective_values["power"] - base_data["base_power_generation"] * facility.power_multiplier)
+                    + facility.efficiency_multiplier
+                ) / effective_values["power"]
 
 
 class CircularBufferPlayer:
@@ -13,7 +81,6 @@ class CircularBufferPlayer:
         self._data = {
             "revenues": {
                 "industry": deque([0.0] * 360, maxlen=360),
-                "O&M_costs": deque([0.0] * 360, maxlen=360),
                 "exports": deque([0.0] * 360, maxlen=360),
                 "imports": deque([0.0] * 360, maxlen=360),
                 "dumping": deque([0.0] * 360, maxlen=360),
@@ -120,17 +187,13 @@ class WeatherData:
 
         def log_error(e, weather):
             engine.log("An error occurred:" + str(e))
-            self._data[weather].extend(
-                [self._data[weather][-1]] * round(600 / engine.clock_time)
-            )
+            self._data[weather].extend([self._data[weather][-1]] * round(600 / engine.clock_time))
 
         for weather in urls:
             try:
                 response = requests.get(urls[weather][0])
                 if response.status_code == 200:
-                    datapoint = json.loads(response.content)["features"][
-                        urls[weather][1]
-                    ]["properties"]["value"]
+                    datapoint = json.loads(response.content)["features"][urls[weather][1]]["properties"]["value"]
                     if datapoint > 2000:
                         datapoint = self._data[weather][-1]
                     interpolation = np.linspace(
@@ -161,9 +224,7 @@ class WeatherData:
     def __getitem__(self, weather):
         engine = current_app.config["engine"]
         total_t = engine.data["total_t"]
-        i = total_t % round(600 / engine.clock_time) - round(
-            600 / engine.clock_time
-        )
+        i = total_t % round(600 / engine.clock_time) - round(600 / engine.clock_time)
         return self._data[weather][i]
 
     def package(self, total_t):
