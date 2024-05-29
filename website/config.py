@@ -17,7 +17,7 @@ const_config = {
             "base_price": 10000,  # [¤]
             "base_power_generation": 820000,  # [W]
             "base_construction_time": 5400,  # [s]
-            "constriuction_power_factor": 0.4,  # fraction of power gen during construction
+            "construction_power_factor": 0.4,  # fraction of power gen during construction
             "base_construction_pollution": 17520,  # [kg]
             "O&M_factor": 0.00056,  # [fraction of price per minute]
             "consumed_resource": {},  # [kg/MWh]
@@ -35,7 +35,7 @@ const_config = {
             "base_price": 22200,
             "base_power_generation": 3350000,
             "base_construction_time": 21600,
-            "constriuction_power_factor": 0.56,
+            "construction_power_factor": 0.56,
             "base_construction_pollution": 1600,
             "O&M_factor": 0.000037,
             "consumed_resource": {"wind": 0},
@@ -53,7 +53,7 @@ const_config = {
             "base_price": 15000,
             "base_power_generation": 2700000,
             "base_construction_time": 18000,
-            "constriuction_power_factor": 0.48,
+            "construction_power_factor": 0.48,
             "base_construction_pollution": 2200,
             "O&M_factor": 0.000038,
             "consumed_resource": {"water": 0},
@@ -71,7 +71,7 @@ const_config = {
             "base_price": 105000,
             "base_power_generation": 21000000,
             "base_construction_time": 194400,
-            "constriuction_power_factor": 0.28,
+            "construction_power_factor": 0.28,
             "base_construction_pollution": 1100000,
             "O&M_factor": 0.000066,
             "consumed_resource": {"coal": 640},
@@ -88,7 +88,7 @@ const_config = {
             "base_price": 52000,
             "base_power_generation": 8000000,
             "base_construction_time": 43200,
-            "constriuction_power_factor": 0.56,
+            "construction_power_factor": 0.56,
             "base_construction_pollution": 440000,
             "O&M_factor": 0.000069,
             "consumed_resource": {"oil": 375},
@@ -105,7 +105,7 @@ const_config = {
             "base_price": 90000,
             "base_power_generation": 11000000,
             "base_construction_time": 43200,
-            "constriuction_power_factor": 0.56,
+            "construction_power_factor": 0.56,
             "base_construction_pollution": 657000,
             "O&M_factor": 0.000081,
             "consumed_resource": {"gas": 353},
@@ -123,7 +123,7 @@ const_config = {
             "base_price": 45000,
             "base_power_generation": 27500000,
             "base_construction_time": 216000,
-            "constriuction_power_factor": 0.3,
+            "construction_power_factor": 0.3,
             "base_construction_pollution": 876000,
             "O&M_factor": 0.000022,
             "consumed_resource": {"hydropower": 0},
@@ -141,7 +141,7 @@ const_config = {
             "base_price": 270000,
             "base_power_generation": 11000000,
             "base_construction_time": 64800,
-            "constriuction_power_factor": 1.3,
+            "construction_power_factor": 1.3,
             "base_construction_pollution": 420000,
             "O&M_factor": 0.000036,
             "consumed_resource": {"wind": 0},
@@ -159,7 +159,7 @@ const_config = {
             "base_price": 310000,
             "base_power_generation": 54000000,
             "base_construction_time": 108000,
-            "constriuction_power_factor": 0.56,
+            "construction_power_factor": 0.56,
             "base_construction_pollution": 1500000,
             "O&M_factor": 0.000039,
             "consumed_resource": {"gas": 210, "coal": 76},
@@ -177,7 +177,7 @@ const_config = {
             "base_price": 840000,
             "base_power_generation": 167000000,
             "base_construction_time": 432000,
-            "constriuction_power_factor": 0.08,
+            "construction_power_factor": 0.08,
             "base_construction_pollution": 6800000,
             "O&M_factor": 0.000072,
             "consumed_resource": {"uranium": 0.044},
@@ -195,7 +195,7 @@ const_config = {
             "base_price": 320000,
             "base_power_generation": 410000000,
             "base_construction_time": 302400,
-            "constriuction_power_factor": 0.15,
+            "construction_power_factor": 0.15,
             "base_construction_pollution": 8760000,
             "O&M_factor": 0.000015,
             "consumed_resource": {"hydropower": 0},
@@ -213,7 +213,7 @@ const_config = {
             "base_price": 123000,
             "base_power_generation": 38000000,
             "base_construction_time": 129600,
-            "constriuction_power_factor": 0.4,
+            "construction_power_factor": 0.4,
             "base_construction_pollution": 1260000,
             "O&M_factor": 0.000046,
             "consumed_resource": {"irradiance": 0},
@@ -230,7 +230,7 @@ const_config = {
             "base_price": 700000,
             "base_power_generation": 59000000,
             "base_construction_time": 32400,
-            "constriuction_power_factor": 5,
+            "construction_power_factor": 5,
             "base_construction_pollution": 24000000,
             "O&M_factor": 0.000014,
             "consumed_resource": {"irradiance": 0},
@@ -247,7 +247,7 @@ const_config = {
             "base_price": 2000000,
             "base_power_generation": 130000000,
             "base_construction_time": 172800,
-            "constriuction_power_factor": 1.2,
+            "construction_power_factor": 1.2,
             "base_construction_pollution": 4900000,
             "O&M_factor": 0.000045,
             "consumed_resource": {"wind": 0},
@@ -265,7 +265,7 @@ const_config = {
             "base_price": 1800000,
             "base_power_generation": 335000000,
             "base_construction_time": 518400,
-            "constriuction_power_factor": 0.06,
+            "construction_power_factor": 0.06,
             "base_construction_pollution": 12000000,
             "O&M_factor": 0.000059,
             "consumed_resource": {"uranium": 0.00057},
@@ -285,7 +285,7 @@ const_config = {
             "base_power_generation": 2600000,  # [W]
             "base_efficiency": 0.75,
             "base_construction_time": 18720,  # [s]
-            "constriuction_power_factor": 0.005,  # fraction of capacity demanded during construction
+            "construction_power_factor": 0.005,  # fraction of capacity demanded during construction
             "base_construction_pollution": 80000,  # [kg]
             "O&M_factor": 0.000061,  # [fraction of price per minute]
             "ramping_time": 9,  # [min]
@@ -303,7 +303,7 @@ const_config = {
             "base_power_generation": 12000000,
             "base_efficiency": 0.52,
             "base_construction_time": 64800,
-            "constriuction_power_factor": 0.001,
+            "construction_power_factor": 0.001,
             "base_construction_pollution": 570000,
             "O&M_factor": 0.00021,
             "ramping_time": 5,
@@ -321,7 +321,7 @@ const_config = {
             "base_power_generation": 55000000,
             "base_efficiency": 0.63,
             "base_construction_time": 86400,
-            "constriuction_power_factor": 0.001,
+            "construction_power_factor": 0.001,
             "base_construction_pollution": 1200000,
             "O&M_factor": 0.00029,
             "ramping_time": 60,
@@ -339,7 +339,7 @@ const_config = {
             "base_power_generation": 249000000,
             "base_efficiency": 0.8,
             "base_construction_time": 334800,
-            "constriuction_power_factor": 0.003,
+            "construction_power_factor": 0.003,
             "base_construction_pollution": 3000000,
             "O&M_factor": 0.00008,
             "ramping_time": 16,
@@ -357,7 +357,7 @@ const_config = {
             "base_power_generation": 90000000,
             "base_efficiency": 0.33,
             "base_construction_time": 43200,
-            "constriuction_power_factor": 0.00025,
+            "construction_power_factor": 0.00025,
             "base_construction_pollution": 2400000,
             "O&M_factor": 0.000019,
             "ramping_time": 8,
@@ -375,7 +375,7 @@ const_config = {
             "base_power_generation": 86000000,
             "base_efficiency": 0.69,
             "base_construction_time": 64800,
-            "constriuction_power_factor": 0.1,
+            "construction_power_factor": 0.1,
             "base_construction_pollution": 8000000,
             "O&M_factor": 0.000002,
             "ramping_time": 3,
@@ -393,7 +393,7 @@ const_config = {
             "base_power_generation": 107000000,
             "base_efficiency": 0.79,
             "base_construction_time": 54000,
-            "constriuction_power_factor": 0.07,
+            "construction_power_factor": 0.07,
             "base_construction_pollution": 6000000,
             "O&M_factor": 0.0000014,
             "ramping_time": 3,
@@ -964,9 +964,7 @@ var_config = {
             ],
         },
         "mathematics": {
-            "requirements": [
-                ["laboratory", 1, False]
-            ],  # level is given relative to the research level
+            "requirements": [["laboratory", 1, False]],  # level is given relative to the research level
         },
         "mechanical_engineering": {
             "requirements": [
@@ -1212,24 +1210,16 @@ class Config(object):
 
         for asset in assets:
             if "price_multiplier" in assets[asset]:
-                assets[asset][
-                    "price_multiplier"
-                ] = technology_effects.price_multiplier(player, asset)
+                assets[asset]["price_multiplier"] = technology_effects.price_multiplier(player, asset)
 
             if "power_multiplier" in assets[asset]:
-                assets[asset][
-                    "power_multiplier"
-                ] = technology_effects.power_multiplier(player, asset)
+                assets[asset]["power_multiplier"] = technology_effects.power_multiplier(player, asset)
 
             if "capacity_multiplier" in assets[asset]:
-                assets[asset][
-                    "capacity_multiplier"
-                ] = technology_effects.capacity_multiplier(player, asset)
+                assets[asset]["capacity_multiplier"] = technology_effects.capacity_multiplier(player, asset)
 
             if "efficiency_multiplier" in assets[asset]:
-                assets[asset][
-                    "efficiency_multiplier"
-                ] = technology_effects.efficiency_multiplier(player, asset)
+                assets[asset]["efficiency_multiplier"] = technology_effects.efficiency_multiplier(player, asset)
 
             if asset in engine.technologies:
                 # remove fulfilled requirements
@@ -1238,36 +1228,26 @@ class Config(object):
                     if req[1] + getattr(player, asset) < 1:
                         assets[asset]["requirements"].remove(req)
                         continue
-                    req[2] = getattr(player, req[0]) >= req[1] + getattr(
-                        player, asset
-                    )
+                    req[2] = getattr(player, req[0]) >= req[1] + getattr(player, asset)
                     if not req[2]:
                         assets[asset]["locked"] = True
 
             if asset == "industry":
                 # calculating industry energy consumption and income
                 assets[asset]["power consumption"] *= (
-                    const_config["assets"]["industry"]["power factor"]
-                    ** player.industry
+                    const_config["assets"]["industry"]["power factor"] ** player.industry
                 )
-                assets[asset]["income"] *= (
-                    const_config["assets"]["industry"]["income factor"]
-                    ** player.industry
-                )
+                assets[asset]["income"] *= const_config["assets"]["industry"]["income factor"] ** player.industry
                 # basic universal income of 2000 per day
                 assets[asset]["income"] += 2000
 
             if asset == "carbon_capture":
                 # calculating carbon capture power consumption and CO2 absorbtion
                 assets[asset]["power consumption"] *= (
-                    const_config["assets"]["carbon_capture"]["power factor"]
-                    ** player.carbon_capture
+                    const_config["assets"]["carbon_capture"]["power factor"] ** player.carbon_capture
                 )
                 assets[asset]["absorbtion"] *= (
-                    const_config["assets"]["carbon_capture"][
-                        "absorbtion factor"
-                    ]
-                    ** player.carbon_capture
+                    const_config["assets"]["carbon_capture"]["absorbtion factor"] ** player.carbon_capture
                 )
 
             if (
@@ -1295,34 +1275,25 @@ class Config(object):
             if player.warehouse == 0:
                 max_cap[resource] = 0
             else:
-                max_cap[resource] *= (
-                    const_config["assets"]["warehouse"]["capacity factor"]
-                    ** player.warehouse
-                )
+                max_cap[resource] *= const_config["assets"]["warehouse"]["capacity factor"] ** player.warehouse
 
         # calculating the transport speed and energy consumption from the level of transport technology
         config.for_player[player_id]["transport"]["time"] *= (
-            const_config["assets"]["transport_technology"]["time factor"]
-            ** player.transport_technology
+            const_config["assets"]["transport_technology"]["time factor"] ** player.transport_technology
         )
         config.for_player[player_id]["transport"]["power consumption"] *= (
-            const_config["assets"]["transport_technology"]["energy factor"]
-            ** player.transport_technology
+            const_config["assets"]["transport_technology"]["energy factor"] ** player.transport_technology
             * 3600
             / config.for_player[player_id]["transport"]["time"]
         )
         # reducing shipment time with clock time
-        config.for_player[player_id]["transport"]["time"] *= (
-            engine.clock_time / 60
-        ) ** 0.5
+        config.for_player[player_id]["transport"]["time"] *= (engine.clock_time / 60) ** 0.5
 
         # calculate the installed power, capacity, efficiency and O&M cost for the player
         ic = config.for_player[player_id]["installed_capacity"]
         for installed_capacity in ic:
             total_power_mlt = Active_facilities.query.with_entities(
-                func.sum(Active_facilities.power_multiplier).filter_by(
-                    facility=installed_capacity, player_id=player_id
-                )
+                func.sum(Active_facilities.power_multiplier).filter_by(facility=installed_capacity, player_id=player_id)
             ).scalar()
             ic[installed_capacity] = total_power_mlt
 

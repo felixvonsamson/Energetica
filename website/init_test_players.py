@@ -1,7 +1,7 @@
 from werkzeug.security import generate_password_hash
 from pathlib import Path
 
-from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer
+from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer, CapacityData
 
 from .database.map import Hex
 
@@ -28,9 +28,7 @@ def edit_database(engine):
             retieved_data["player"][player_id]["pwhash"],
         )
         for attribute in retieved_data["player"][player_id]:
-            setattr(
-                player, attribute, retieved_data["player"][player_id][attribute]
-            )
+            setattr(player, attribute, retieved_data["player"][player_id][attribute])
         db.session.commit()
 
     for network_id in retieved_data["network"]:
@@ -211,6 +209,7 @@ def create_player(engine, username, password):
         db.session.add(new_player)
         db.session.commit()
         engine.data["current_data"][new_player.id] = CircularBufferPlayer()
+        engine.data["player_capacities"][new_player.id] = CapacityData()
         add_player_to_data(engine, new_player.id)
         init_table(new_player.id)
         db.session.commit()
@@ -225,14 +224,10 @@ def create_network(engine, name, members):
         new_network = Network(name=name, members=members)
         db.session.add(new_network)
         db.session.commit()
-        Path(f"instance/network_data/{new_network.id}/charts").mkdir(
-            parents=True, exist_ok=True
-        )
+        Path(f"instance/network_data/{new_network.id}/charts").mkdir(parents=True, exist_ok=True)
         engine.data["network_data"][new_network.id] = CircularBufferNetwork()
         past_data = data_init_network()
-        Path(f"instance/network_data/{new_network.id}").mkdir(
-            parents=True, exist_ok=True
-        )
+        Path(f"instance/network_data/{new_network.id}").mkdir(parents=True, exist_ok=True)
         with open(
             f"instance/network_data/{new_network.id}/time_series.pck",
             "wb",

@@ -16,8 +16,9 @@ class Under_construction(db.Model):
     duration = db.Column(db.Float)
     # time at witch the construction has been paused if it has else None
     suspension_time = db.Column(db.Float)
-    # Power consumed by the construction
+    # Power consumed and emissions produced by the construction
     construction_power = db.Column(db.Float)
+    construction_pollution = db.Column(db.Float)
     # multipliers to keep track of the technology level at the time of the start of the constuction
     price_multiplier = db.Column(db.Float, default=1)
     power_multiplier = db.Column(db.Float, default=1)
@@ -51,12 +52,8 @@ class Shipment(db.Model):
     quantity = db.Column(db.Float)
     departure_time = db.Column(db.Float)
     duration = db.Column(db.Float)
-    suspension_time = db.Column(
-        db.Float, default=None
-    )  # time at witch the shipment has been paused if it has
-    player_id = db.Column(
-        db.Integer, db.ForeignKey("player.id")
-    )  # can access player directly with .player
+    suspension_time = db.Column(db.Float, default=None)  # time at witch the shipment has been paused if it has
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player
 
 
 class Resource_on_sale(db.Model):
@@ -67,6 +64,4 @@ class Resource_on_sale(db.Model):
     quantity = db.Column(db.Float)
     price = db.Column(db.Float)
     creation_date = db.Column(db.DateTime)
-    player_id = db.Column(
-        db.Integer, db.ForeignKey("player.id")
-    )  # can access player directly with .player
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player

@@ -27,20 +27,14 @@ class Player(db.Model, UserMixin):
 
     # Position :
     tile = db.relationship("Hex", uselist=False, backref="player")
-    network_id = db.Column(
-        db.Integer, db.ForeignKey("network.id"), default=None
-    )
+    network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
 
     # Chats :
     show_disclamer = db.Column(db.Boolean, default=True)
-    chats = db.relationship(
-        "Chat", secondary=player_chats, backref="participants"
-    )
+    chats = db.relationship("Chat", secondary=player_chats, backref="participants")
     last_opened_chat = db.Column(db.Integer, default=None)
     messages = db.relationship("Message", backref="player")
-    notifications = db.relationship(
-        "Notification", backref="players", lazy="dynamic"
-    )
+    notifications = db.relationship("Notification", backref="players", lazy="dynamic")
 
     # resources :
     money = db.Column(db.Float, default=25000)  # default is 25000
@@ -58,43 +52,11 @@ class Player(db.Model, UserMixin):
     construction_workers = db.Column(db.Integer, default=1)
     lab_workers = db.Column(db.Integer, default=0)
 
-    # Energy facilities :
-    steam_engine = db.Column(db.Integer, default=1)
-    windmill = db.Column(db.Integer, default=0)
-    watermill = db.Column(db.Integer, default=0)
-    coal_burner = db.Column(db.Integer, default=0)
-    oil_burner = db.Column(db.Integer, default=0)
-    gas_burner = db.Column(db.Integer, default=0)
-    small_water_dam = db.Column(db.Integer, default=0)
-    onshore_wind_turbine = db.Column(db.Integer, default=0)
-    combined_cycle = db.Column(db.Integer, default=0)
-    nuclear_reactor = db.Column(db.Integer, default=0)
-    large_water_dam = db.Column(db.Integer, default=0)
-    CSP_solar = db.Column(db.Integer, default=0)
-    PV_solar = db.Column(db.Integer, default=0)
-    offshore_wind_turbine = db.Column(db.Integer, default=0)
-    nuclear_reactor_gen4 = db.Column(db.Integer, default=0)
-
-    # Storage facilities :
-    small_pumped_hydro = db.Column(db.Integer, default=0)
-    compressed_air = db.Column(db.Integer, default=0)
-    molten_salt = db.Column(db.Integer, default=0)
-    large_pumped_hydro = db.Column(db.Integer, default=0)
-    hydrogen_storage = db.Column(db.Integer, default=0)
-    lithium_ion_batteries = db.Column(db.Integer, default=0)
-    solid_state_batteries = db.Column(db.Integer, default=0)
-
     # Functional facilities :
     industry = db.Column(db.Integer, default=1)
     laboratory = db.Column(db.Integer, default=0)
     warehouse = db.Column(db.Integer, default=0)
     carbon_capture = db.Column(db.Integer, default=0)
-
-    # Extraction facilities :
-    coal_mine = db.Column(db.Integer, default=0)
-    oil_field = db.Column(db.Integer, default=0)
-    gas_drilling_site = db.Column(db.Integer, default=0)
-    uranium_mine = db.Column(db.Integer, default=0)
 
     # Technology :
     mathematics = db.Column(db.Integer, default=0)
@@ -176,9 +138,7 @@ class Player(db.Model, UserMixin):
 
     def available_construction_workers(self):
         occupied_workers = (
-            Under_construction.query.filter(
-                Under_construction.player_id == self.id
-            )
+            Under_construction.query.filter(Under_construction.player_id == self.id)
             .filter(Under_construction.family != "Technologies")
             .filter(Under_construction.suspension_time.is_(None))
             .count()
@@ -187,9 +147,7 @@ class Player(db.Model, UserMixin):
 
     def available_lab_workers(self):
         occupied_workers = (
-            Under_construction.query.filter(
-                Under_construction.player_id == self.id
-            )
+            Under_construction.query.filter(Under_construction.player_id == self.id)
             .filter(Under_construction.family == "Technologies")
             .filter(Under_construction.suspension_time.is_(None))
             .count()
@@ -239,12 +197,8 @@ class Player(db.Model, UserMixin):
             for message in reversed(messages)
         ]
         self.last_opened_chat = chat.id
-        PlayerUnreadMessages.query.filter(
-            PlayerUnreadMessages.player_id == self.id
-        ).filter(
-            PlayerUnreadMessages.message_id.in_(
-                db.session.query(Message.id).filter(Message.chat_id == chat_id)
-            )
+        PlayerUnreadMessages.query.filter(PlayerUnreadMessages.player_id == self.id).filter(
+            PlayerUnreadMessages.message_id.in_(db.session.query(Message.id).filter(Message.chat_id == chat_id))
         ).delete(synchronize_session=False)
         db.session.commit()
         return {"response": "success", "messages": messages_list}
@@ -260,9 +214,7 @@ class Player(db.Model, UserMixin):
 
         def unread_message_count(chat):
             unread_messages_count = (
-                PlayerUnreadMessages.query.join(
-                    Message, PlayerUnreadMessages.message_id == Message.id
-                )
+                PlayerUnreadMessages.query.join(Message, PlayerUnreadMessages.message_id == Message.id)
                 .filter(PlayerUnreadMessages.player_id == self.id)
                 .filter(Message.chat_id == chat.id)
                 .count()
@@ -389,11 +341,7 @@ class Network(db.Model):
 class PlayerUnreadMessages(db.Model):
     """Association table to store player's last activity in each chat"""
 
-    player_id = db.Column(
-        db.Integer, db.ForeignKey("player.id"), primary_key=True
-    )
-    message_id = db.Column(
-        db.Integer, db.ForeignKey("message.id"), primary_key=True
-    )
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), primary_key=True)
+    message_id = db.Column(db.Integer, db.ForeignKey("message.id"), primary_key=True)
     player = db.relationship("Player", backref="read_messages")
     message = db.relationship("Message", backref="read_by_players")

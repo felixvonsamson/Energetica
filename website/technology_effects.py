@@ -115,17 +115,17 @@ def efficiency_multiplier(player, facility):
     return mlt
 
 
-def construction_time_multiplier(player, facility):
+def construction_time(player, facility):
     engine = current_app.config["engine"]
     # dilatation foactor dependent on clock_time
-    mlt = (engine.clock_time / 60) ** 0.5
+    duration = const_config["assets"][facility]["base_construction_time"] * (engine.clock_time / 60) ** 0.5
     # construction time increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
-        mlt *= const_config["assets"][facility]["price multiplier"] ** (0.6 * getattr(player, facility))
+        duration *= const_config["assets"][facility]["price multiplier"] ** (0.6 * getattr(player, facility))
     # knowledge spillover and laboratory time reduction
     if facility in engine.technologies:
-        mlt *= 0.92 ** engine.data["technology_lvls"][facility][getattr(player, facility)]
-        mlt *= const_config["assets"]["laboratory"]["time factor"] ** player.laboratory
+        duration *= 0.92 ** engine.data["technology_lvls"][facility][getattr(player, facility)]
+        duration *= const_config["assets"]["laboratory"]["time factor"] ** player.laboratory
     # building technology time reduction
     if (
         facility
@@ -135,50 +135,53 @@ def construction_time_multiplier(player, facility):
         + engine.extraction_facilities
         + engine.functional_facilities
     ):
-        mlt *= const_config["assets"]["building_technology"]["time factor"] ** player.building_technology
-    return mlt
+        duration *= const_config["assets"]["building_technology"]["time factor"] ** player.building_technology
+    return duration
 
 
-def construction_power_multiplier(player, facility):
+def construction_power(player, facility):
     engine = current_app.config["engine"]
     bt_factor = const_config["assets"]["building_technology"]["time factor"] ** player.building_technology
     # construction power in relation of facilities characteristics
     if facility in engine.controllable_facilities + engine.renewables + engine.extraction_facilities:
         return (
-            const_config["assets"][facility]["construction power factor"]
+            const_config["assets"][facility]["base_power_generation"]
+            * const_config["assets"][facility]["construction_power_factor"]
             * power_multiplier(player, facility)
             / bt_factor
         )
     if facility in engine.storage_facilities:
         return (
-            const_config["assets"][facility]["construction power factor"]
+            const_config["assets"][facility]["base_storage_capacity"]
+            * const_config["assets"][facility]["construction_power_factor"]
             * capacity_multiplier(player, facility)
             / bt_factor
         )
-    mlt = (
-        const_config["assets"][facility]["construction energy"]
-        / const_config["assets"][facility]["construction time"]
-        / construction_time_multiplier(player, facility)
-        * 60
-    )
+    power = const_config["assets"][facility]["base_construction_energy"] / construction_time(player, facility) * 3600
     # construction power increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
-        mlt *= const_config["assets"][facility]["price multiplier"] ** (1.2 * getattr(player, facility))
+        power *= const_config["assets"][facility]["price multiplier"] ** (1.2 * getattr(player, facility))
     # knowledge spillover
     if facility in engine.technologies:
-        mlt *= 0.92 ** engine.data["technology_lvls"][facility][getattr(player, facility)]
-    return mlt
+        power *= 0.92 ** engine.data["technology_lvls"][facility][getattr(player, facility)]
+    return power
 
 
 def construction_pollution(player, facility):
     engine = current_app.config["engine"]
-    mlt = 1
+    if facility in engine.technologies:
+        return 0
+    pollution = (
+        const_config["assets"][facility]["base_construction_pollution"]
+        / construction_time(player, facility)
+        * engine.clock_time
+    )
     # construction pollution increases with higher levels for functional facilities
     if facility in engine.functional_facilities:
-        mlt *= const_config["assets"][facility]["price multiplier"] ** getattr(player, facility)
-    return mlt
+        pollution *= const_config["assets"][facility]["price multiplier"] ** getattr(player, facility)
+    return pollution
 
 
-def lifespan_multiplier(player, facility):
+def time_multiplier():
     # dilatation foactor dependent on clock_time
     return (current_app.config["engine"].clock_time / 60) ** 0.5

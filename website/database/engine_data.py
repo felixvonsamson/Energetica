@@ -12,66 +12,63 @@ class CapacityData:
     """Class that stores the capacity data"""
 
     def __init__(self):
-        self._data = {
-            "steam_engine": {
-                "O&M": 0.0,
-                "power": 0.0,
-                "capacity": 0.0,
-                "fuel_use": 0.0,
-            },
-        }
+        self._data = {}
 
     def update(self, player_id, facility):
         """This function updates the capacity data of the player"""
         engine = current_app.config["engine"]
         if facility is None:
             active_facilities = Active_facilities.query.filter_by(player_id=player_id).all()
-            for facility in self._data:
-                self._data[facility] = {
-                    "O&M": 0.0,
-                    "power": 0.0,
-                    "capacity": 0.0,
-                    "fuel_use": 0.0,
-                }
+            unique_facilities = {af.facility for af in active_facilities}
+            for uf in unique_facilities:
+                self.init_facility(engine, uf)
         else:
             active_facilities = Active_facilities.query.filter_by(player_id=player_id, facility=facility).all()
-            self._data[facility] = {
-                "O&M": 0.0,
-                "power": 0.0,
-                "capacity": 0.0,
-                "fuel_use": 0.0,
-            }
+            self.init_facility(engine, facility)
+
         for facility in active_facilities:
             base_data = const_config["assets"][facility.facility]
             effective_values = self._data[facility.facility]
             effective_values["O&M"] += base_data["base_price"] * facility.price_multiplier * base_data["O&M_factor"]
-            if facility.facility in engine.power_facilities + engine.storage_facilities:
-                effective_values["power"] += base_data["base_power_generation"] * facility.power_multiplier
-            elif facility.facility in engine.extraction_facilities:
-                effective_values["power"] += base_data["base_power_consumption"] * facility.power_multiplier
-                effective_values["capacity"] += base_data["extraction_rate"] * facility.capacity_multiplier
-                # in this case there is no fuel use and this corresponds to the pollution
-                effective_values["fuel_use"] += (
-                    base_data["base_pollution"]
-                    * facility.efficiency_multiplier
-                    * base_data["extraction_rate"]
-                    * facility.capacity_multiplier
-                )
-            if facility.facility in engine.storage_facilities:
+            if facility.facility in engine.power_facilities:
+                power_gen = base_data["base_power_generation"] * facility.power_multiplier
+                effective_values["power"] += power_gen
+                for fuel in effective_values["fuel_use"]:
+                    effective_values["fuel_use"][fuel] += (
+                        base_data["consumed_resource"][fuel]
+                        / facility.efficiency_multiplier
+                        * power_gen
+                        * engine.clock_time
+                        / 3600
+                        / 10**6
+                    )
+            elif facility.facility in engine.storage_facilities:
+                power_gen = base_data["base_power_generation"] * facility.power_multiplier
+                effective_values["power"] += power_gen
                 effective_values["capacity"] += base_data["base_storage_capacity"] * facility.capacity_multiplier
                 effective_values["efficiency"] = (
-                    (
-                        effective_values["efficiency"]
-                        * (effective_values["power"] - base_data["base_power_generation"] * facility.power_multiplier)
-                    )
+                    (effective_values["efficiency"] * (effective_values["power"] - power_gen))
                     + (base_data["base_efficiency"] * facility.efficiency_multiplier)
                 ) / effective_values["power"]
-            elif facility.facility in engine.power_facilities:
-                effective_values["efficiency"] = (
-                    effective_values["efficiency"]
-                    * (effective_values["power"] - base_data["base_power_generation"] * facility.power_multiplier)
-                    + facility.efficiency_multiplier
-                ) / effective_values["power"]
+            elif facility.facility in engine.extraction_facilities:
+                effective_values["extraction"] += (
+                    base_data["extraction_rate"] * facility.capacity_multiplier * engine.clock_time / 60
+                )
+                effective_values["power_use"] += base_data["base_power_consumption"] * facility.power_multiplier
+                effective_values["pollution"] += base_data["base_pollution"] * facility.efficiency_multiplier
+
+    def init_facility(self, engine, facility):
+        if facility in engine.power_facilities:
+            self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "fuel_use": {}}
+            for resource in const_config["assets"][facility]["consumed_resource"]:
+                if const_config["assets"][facility]["consumed_resource"][resource] > 0:
+                    self._data[facility]["fuel_use"][resource] = 0.0
+            return
+        if facility in engine.storage_facilities:
+            self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "capacity": 0.0, "efficiency": 0.0}
+            return
+        if facility in engine.extraction_facilities:
+            self._data[facility] = {"O&M_cost": 0.0, "extraction": 0.0, "power_use": 0.0, "pollution": 0.0}
 
 
 class CircularBufferPlayer:

@@ -121,6 +121,7 @@ class gameEngine(object):
 
         engine.data = {}
         # All data for the current day will be stored here :
+        engine.data["player_capacities"] = {}
         engine.data["current_data"] = {}
         engine.data["network_data"] = {}
         engine.data["weather"] = WeatherData()
@@ -133,10 +134,7 @@ class gameEngine(object):
             engine.data["start_date"].month,
             engine.data["start_date"].day,
         )
-        engine.data["delta_t"] = round(
-            (engine.data["start_date"] - start_day).total_seconds()
-            // engine.clock_time
-        )
+        engine.data["delta_t"] = round((engine.data["start_date"] - start_day).total_seconds() // engine.clock_time)
         # time shift for daily industry variation
 
         # stored the levels of technology of the server
@@ -206,9 +204,7 @@ from .production_update import update_electricity  # noqa: E402
 # function that is executed once every 1 minute :
 def state_update(engine, app):
     check_upcoming_actions(engine, app)
-    total_t = (
-        datetime.now() - engine.data["start_date"]
-    ).total_seconds() / engine.clock_time
+    total_t = (datetime.now() - engine.data["start_date"]).total_seconds() / engine.clock_time
     while engine.data["total_t"] < total_t:
         engine.data["total_t"] += 1
         # print(f"t = {engine.data['total_t']}")
@@ -234,23 +230,19 @@ def check_upcoming_actions(engine, app):
         # check if constructions finished
         finished_constructions = Under_construction.query.filter(
             Under_construction.suspension_time.is_(None),
-            Under_construction.start_time + Under_construction.duration
-            < time.time() + 0.8 * engine.clock_time,
+            Under_construction.start_time + Under_construction.duration < time.time() + 0.8 * engine.clock_time,
         ).all()
         # This is just to remove corrupted construction after a bug. This should not be necessary in a bugfree version.
         zombie_constructions = Under_construction.query.filter(
             Under_construction.suspension_time.isnot(None),
-            Under_construction.start_time + Under_construction.duration
-            < Under_construction.suspension_time,
+            Under_construction.start_time + Under_construction.duration < Under_construction.suspension_time,
         ).all()
         finished_constructions = finished_constructions + zombie_constructions
         engine.log(finished_constructions)
         if finished_constructions:
             for fc in finished_constructions:
                 add_asset(fc.player_id, fc.id)
-                print(
-                    f"removing construction {fc.id} from Under_construction (check_upcoming_actions)"
-                )
+                print(f"removing construction {fc.id} from Under_construction (check_upcoming_actions)")
                 db.session.delete(fc)
             db.session.commit()
             check_construction_parity()
@@ -259,8 +251,7 @@ def check_upcoming_actions(engine, app):
         arrived_shipments = Shipment.query.filter(
             Shipment.departure_time.isnot(None),
             Shipment.suspension_time.is_(None),
-            Shipment.departure_time + Shipment.duration
-            < time.time() + 0.8 * engine.clock_time,
+            Shipment.departure_time + Shipment.duration < time.time() + 0.8 * engine.clock_time,
         ).all()
         if arrived_shipments:
             for a_s in arrived_shipments:
@@ -270,8 +261,7 @@ def check_upcoming_actions(engine, app):
 
         # check end of lifespan of facilites
         eolt_facilities = Active_facilities.query.filter(
-            Active_facilities.end_of_life
-            < time.time() + 0.8 * engine.clock_time
+            Active_facilities.end_of_life < time.time() + 0.8 * engine.clock_time
         ).all()
         if eolt_facilities:
             for facility in eolt_facilities:
