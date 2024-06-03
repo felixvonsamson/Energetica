@@ -18,9 +18,10 @@ function general_format(value, units, write=false) {
 }
 
 // Inserts spaces as a thousands separator and the right unit for current and future value
-function upgrade_format(value, units, factor) {
+function upgrade_format(value, units, factor, constant=0) {
     let unit_index = 0;
-    let value2 = value * factor;
+    let value2 = value * factor + constant;
+    value += constant;
     while (value >= 10000 && unit_index < units.length - 1) {
         value /= 1000;
         value2 /= 1000;
@@ -40,13 +41,13 @@ function display_upgrade_W(price, factor) {
     upgrade_format(price, units, factor);
 }
 
-function display_upgrade_money(price, factor) {
+function display_upgrade_money(price, factor, constant) {
     const units = [
         " <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day",
         "k <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day",
         "M <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day",
     ];
-    upgrade_format(price, units, factor);
+    upgrade_format(price, units, factor, constant);
 }
 
 function display_upgrade_kg(price, factor) {

@@ -289,6 +289,7 @@ def remove_asset(player_id, facility_info, decommissioning=True):
     engine.log(
         f"The facility {engine.const_config[facility_info.facility]['name']} from {player.username} has been decommissioned."
     )
+    engine.data["player_capacities"][player.id].update(player.id, facility_info.facility)
     engine.config.update_config_for_user(player.id)
 
 
@@ -664,8 +665,6 @@ def confirm_location(engine, player, location):
         return {"response": "choiceUnmodifiable"}
     # Checks have succeeded, proceed
     location.player_id = player.id
-    add_player_to_data(engine, player.id)
-    init_table(player.id)
     steam_engine = Active_facilities(
         facility="steam_engine",
         end_of_life=time.time()
@@ -678,6 +677,8 @@ def confirm_location(engine, player, location):
     )
     db.session.add(steam_engine)
     db.session.commit()
+    add_player_to_data(engine, player.id)
+    init_table(player.id)
     ws.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
     return {"response": "success"}
@@ -692,6 +693,8 @@ def init_table(user_id):
 
 def add_player_to_data(engine, user_id):
     engine.data["current_data"][user_id] = CircularBufferPlayer()
+    engine.data["player_capacities"][user_id] = CapacityData()
+    engine.data["player_capacities"][user_id].update(user_id, None)
 
 
 def data_init():
@@ -833,17 +836,18 @@ def get_scoreboard():
 
 def start_project(engine, player, facility, family, force=False):
     """this function is executed when a player clicks on 'start construction'"""
-    assets = engine.config[player.id]["assets"]
+    facility_info = technology_effects.get_current_technology_values(player)
     player_cap = engine.data["player_capacities"][player.id]
 
-    if assets[facility]["locked"]:
+    if facility_info[facility]["locked"]:
         return {"response": "locked"}
 
     if facility in ["small_water_dam", "large_water_dam", "watermill"]:
         ud = Under_construction.query.filter_by(name=facility, player_id=player.id).count()
-        price_factor = hydro_price_function(getattr(player, facility) + ud, player.tile.hydro) / hydro_price_function(
-            getattr(player, facility), player.tile.hydro
-        )
+        count = Active_facilities.query.filter_by(facility=facility, player_id=player.id).count()
+        price_factor = technology_effects.hydro_price_function(
+            count + ud, player.tile.hydro
+        ) / technology_effects.hydro_price_function(count, player.tile.hydro)
         if (
             player.money
             < engine.const_config[facility]["base_price"]
@@ -856,7 +860,7 @@ def start_project(engine, player, facility, family, force=False):
     if family in ["Functional facilities", "Technologies"]:
         ud_count = Under_construction.query.filter_by(name=facility, player_id=player.id).count()
         if family == "Technologies":
-            for req in assets[facility]["requirements"]:
+            for req in facility_info[facility]["requirements"]:
                 if getattr(player, facility) + ud_count + req[1] > getattr(player, req[0]):
                     return {"response": "requirementsNotFullfilled"}
         real_price = (
@@ -873,12 +877,12 @@ def start_project(engine, player, facility, family, force=False):
 
     if player.money < real_price:
         return {"response": "notEnoughMoneyError"}
-
     construction_power = technology_effects.construction_power(player, facility)
     if not force and "network" not in player.advancements:
         capacity = 0
         for gen in engine.power_facilities:
-            capacity += player_cap[gen]["power"]
+            if player_cap[gen] is not None:
+                capacity += player_cap[gen]["power"]
         if construction_power > capacity:
             return {
                 "response": "areYouSure",
@@ -906,10 +910,10 @@ def start_project(engine, player, facility, family, force=False):
         suspension_time=suspension_time,
         construction_power=construction_power,
         construction_pollution=technology_effects.construction_pollution(player, facility),
-        price_multiplier=technology_effects.price_multiplier(facility),
-        power_multiplier=technology_effects.power_multiplier(facility),
-        capacity_multiplier=technology_effects.capacity_multiplier(facility),
-        efficiency_multiplier=technology_effects.efficiency_multiplier(facility),
+        price_multiplier=technology_effects.price_multiplier(player, facility),
+        power_multiplier=technology_effects.power_multiplier(player, facility),
+        capacity_multiplier=technology_effects.capacity_multiplier(player, facility),
+        efficiency_multiplier=technology_effects.efficiency_multiplier(player, facility),
         player_id=player.id,
     )
     db.session.add(new_construction)
@@ -1100,10 +1104,6 @@ def get_construction_data(player):
     construction_priorities = player.read_list("construction_priorities")
     research_priorities = player.read_list("research_priorities")
     return {0: projects, 1: construction_priorities, 2: research_priorities}
-
-
-def hydro_price_function(lvl, potential):
-    return 0.6 + (math.e ** (0.6 * (lvl + 1 - 3 * potential) / (0.3 + potential)))
 
 
 def check_construction_parity():

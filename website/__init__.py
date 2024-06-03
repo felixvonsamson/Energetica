@@ -29,7 +29,7 @@ from website.gameEngine import gameEngine  # noqa: E402
 def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     # gets lock to avoid multiple instances
     lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-    lock.bind('\0energetica')
+    lock.bind("\0energetica")
 
     # creates the app :
     app = Flask(__name__)
@@ -87,7 +87,17 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
             with open("website/static/data/map.csv", "r") as file:
                 csv_reader = csv.DictReader(file)
                 for row in csv_reader:
-                    hex = Hex(**{ k: row[k] for k in ["q", "r", "solar", "wind", "hydro", "coal", "oil", "gas", "uranium"] })
+                    hex = Hex(
+                        q=row["q"],
+                        r=row["r"],
+                        solar=float(row["solar"]),
+                        wind=float(row["wind"]),
+                        hydro=float(row["hydro"]),
+                        coal=float(row["coal"]) * engine.clock_time / 60,
+                        oil=float(row["oil"]) * engine.clock_time / 60,
+                        gas=float(row["gas"]) * engine.clock_time / 60,
+                        uranium=float(row["uranium"]) * engine.clock_time / 60,
+                    )
                     db.session.add(hex)
                 db.session.commit()
 
@@ -131,51 +141,32 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
             with app.app_context():
                 players = Player.query.all()
                 for player in players:
-                    construction_list = player.read_list(
-                        "construction_priorities"
-                    )
-                    research_priorities = player.read_list(
-                        "research_priorities"
-                    )
+                    construction_list = player.read_list("construction_priorities")
+                    research_priorities = player.read_list("research_priorities")
                     for contruction_id in construction_list:
                         const = Under_construction.query.get(contruction_id)
                         if const is None:
-                            player.remove_from_list(
-                                "construction_priorities", contruction_id
-                            )
+                            player.remove_from_list("construction_priorities", contruction_id)
                             print(
                                 f"removed construction {contruction_id} from construction priorities ({player.username})"
                             )
                     for contruction_id in research_priorities:
                         const = Under_construction.query.get(contruction_id)
                         if const is None:
-                            player.remove_from_list(
-                                "research_priorities", contruction_id
-                            )
-                            print(
-                                f"removed construction {contruction_id} from research priorities ({player.username})"
-                            )
+                            player.remove_from_list("research_priorities", contruction_id)
+                            print(f"removed construction {contruction_id} from research priorities ({player.username})")
                 constructions = Under_construction.query.all()
                 for construction in constructions:
                     found = False
                     for player in players:
-                        construction_list = player.read_list(
-                            "construction_priorities"
-                        )
-                        research_priorities = player.read_list(
-                            "research_priorities"
-                        )
-                        if (
-                            construction.id
-                            in construction_list + research_priorities
-                        ):
+                        construction_list = player.read_list("construction_priorities")
+                        research_priorities = player.read_list("research_priorities")
+                        if construction.id in construction_list + research_priorities:
                             found = True
                             break
                     if not found:
                         db.session.delete(construction)
-                        print(
-                            f"removed construction {construction.name} from Under_construction ({player.username})"
-                        )
+                        print(f"removed construction {construction.name} from Under_construction ({player.username})")
                 db.session.commit()
 
         if run_init_test_players:

@@ -105,9 +105,7 @@ def get_resource_data():
     ]:
         rates[resource[0]] = (
             getattr(current_user, resource[1])
-            * g.engine.config[current_user.id]["assets"][resource[1]][
-                "amount produced"
-            ]
+            * g.engine.config[current_user.id]["assets"][resource[1]]["amount produced"]
             * 3600
             / g.engine.clock_time
         )
@@ -130,30 +128,24 @@ def get_chart_data():
                 concatenated_array = list(array[0]) + array2
                 dict1[key][sub_key][0] = concatenated_array[-360:]
                 new_5days = calculate_mean_subarrays(array2, 5)
-                dict1[key][sub_key][1] = dict1[key][sub_key][1][
-                    len(new_5days) :
-                ]
+                dict1[key][sub_key][1] = dict1[key][sub_key][1][len(new_5days) :]
                 dict1[key][sub_key][1].extend(new_5days)
                 new_month = calculate_mean_subarrays(new_5days, 6)
                 l2v = dict1[key][sub_key][2][-2:]
-                dict1[key][sub_key][2] = dict1[key][sub_key][2][
-                    len(new_month) :
-                ]
+                dict1[key][sub_key][2] = dict1[key][sub_key][2][len(new_month) :]
                 dict1[key][sub_key][2].extend(new_month)
                 new_6month = calculate_mean_subarrays(new_month, 6)
                 if total_t % 180 >= 120:
                     new_6month[0] = new_6month[0] / 3 + l2v[0] / 3 + l2v[1] / 3
                 elif total_t % 180 >= 60:
                     new_6month[0] = new_6month[0] / 2 + l2v[1] / 2
-                dict1[key][sub_key][3] = dict1[key][sub_key][3][
-                    len(new_6month) :
-                ]
+                dict1[key][sub_key][3] = dict1[key][sub_key][3][len(new_6month) :]
                 dict1[key][sub_key][3].extend(new_6month)
 
+    if current_user.tile is None:
+        return "", 404
     total_t = g.engine.data["total_t"]
-    current_data = g.engine.data["current_data"][current_user.id].get_data(
-        t=total_t % 216 + 1
-    )
+    current_data = g.engine.data["current_data"][current_user.id].get_data(t=total_t % 216 + 1)
     filename = f"instance/player_data/player_{current_user.id}.pck"
     with open(filename, "rb") as file:
         data = pickle.load(file)
@@ -162,13 +154,9 @@ def get_chart_data():
     network_data = {"network_data": None}
     if current_user.network is not None:
         current_network_data = {
-            "network_data": g.engine.data["network_data"][
-                current_user.network.id
-            ].get_data(t=total_t % 216 + 1)
+            "network_data": g.engine.data["network_data"][current_user.network.id].get_data(t=total_t % 216 + 1)
         }
-        filename = (
-            f"instance/network_data/{current_user.network.id}/time_series.pck"
-        )
+        filename = f"instance/network_data/{current_user.network.id}/time_series.pck"
         with open(filename, "rb") as file:
             network_data = {"network_data": pickle.load(file)}
         concat_slices(network_data, current_network_data)
@@ -193,12 +181,8 @@ def get_market_data():
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
             market_data = pickle.load(file)
-            market_data["capacities"] = market_data["capacities"].to_dict(
-                orient="list"
-            )
-            market_data["demands"] = market_data["demands"].to_dict(
-                orient="list"
-            )
+            market_data["capacities"] = market_data["capacities"].to_dict(orient="list")
+            market_data["demands"] = market_data["demands"].to_dict(orient="list")
     else:
         market_data = None
     return jsonify(market_data)
@@ -207,6 +191,8 @@ def get_market_data():
 @http.route("/get_player_data", methods=["GET"])
 def get_player_data():
     """Gets count of assets and config for this player"""
+    if current_user.tile is None:
+        return "", 404
     asset_count = current_user.get_values()
     config = g.engine.config[current_user.id]
     return jsonify(asset_count, config)
@@ -231,9 +217,7 @@ def get_generation_prioirity():
     demand_priorities = current_user.read_list("demand_priorities")
     for demand in demand_priorities:
         for j, f in enumerate(rest_of_priorities):
-            if getattr(current_user, "price_buy_" + demand) < getattr(
-                current_user, "price_" + f
-            ):
+            if getattr(current_user, "price_buy_" + demand) < getattr(current_user, "price_" + f):
                 rest_of_priorities.insert(j, "buy_" + demand)
                 break
             if j + 1 == len(rest_of_priorities):
@@ -269,9 +253,7 @@ def choose_location():
     json = request.get_json()
     selected_id = json["selected_id"]
     location = Hex.query.get(selected_id + 1)
-    confirm_location_response = utils.confirm_location(
-        engine=g.engine, player=current_user, location=location
-    )
+    confirm_location_response = utils.confirm_location(engine=g.engine, player=current_user, location=location)
     return jsonify(confirm_location_response)
 
 
@@ -304,9 +286,7 @@ def request_cancel_project():
     json = request.get_json()
     construction_id = json["id"]
     force = json["force"]
-    response = utils.cancel_project(
-        player=current_user, construction_id=construction_id, force=force
-    )
+    response = utils.cancel_project(player=current_user, construction_id=construction_id, force=force)
     return jsonify(response)
 
 
@@ -317,9 +297,7 @@ def request_pause_project():
     """
     json = request.get_json()
     construction_id = json["id"]
-    response = utils.pause_project(
-        player=current_user, construction_id=construction_id
-    )
+    response = utils.pause_project(player=current_user, construction_id=construction_id)
     return jsonify(response)
 
 
@@ -330,9 +308,7 @@ def request_pause_shipment():
     """
     json = request.get_json()
     shipment_id = json["id"]
-    response = utils.pause_shipment(
-        player=current_user, shipment_id=shipment_id
-    )
+    response = utils.pause_shipment(player=current_user, shipment_id=shipment_id)
     return jsonify(response)
 
 
@@ -343,9 +319,7 @@ def request_decrease_project_priority():
     """
     json = request.get_json()
     construction_id = json["id"]
-    response = utils.decrease_project_priority(
-        player=current_user, construction_id=construction_id
-    )
+    response = utils.decrease_project_priority(player=current_user, construction_id=construction_id)
     return jsonify(response)
 
 
@@ -355,9 +329,7 @@ def change_network_prices():
     on the network"""
     json = request.get_json()
     prices = json["prices"]
-    response = utils.set_network_prices(
-        engine=g.engine, player=current_user, prices=prices
-    )
+    response = utils.set_network_prices(engine=g.engine, player=current_user, prices=prices)
     return jsonify(response)
 
 
@@ -373,9 +345,7 @@ def request_change_facility_priority():
     prices = {}
     for i, facility in enumerate(priority):
         prices["price_" + facility] = price_list[i]
-    utils.set_network_prices(
-        engine=g.engine, player=current_user, prices=prices
-    )
+    utils.set_network_prices(engine=g.engine, player=current_user, prices=prices)
     return jsonify("success")
 
 
@@ -406,9 +376,7 @@ def join_network():
     network = Network.query.filter_by(name=network_name).first()
     utils.join_network(g.engine, current_user, network)
     flash(f"You joined the network {network_name}", category="message")
-    g.engine.log(
-        f"{current_user.username} joined the network {current_user.network.name}"
-    )
+    g.engine.log(f"{current_user.username} joined the network {current_user.network.name}")
     return redirect("/network", code=303)
 
 
@@ -418,9 +386,7 @@ def create_network():
     network_name = request.form.get("network_name")
     response = utils.create_network(g.engine, current_user, network_name)
     if response["response"] == "nameLengthInvalid":
-        flash(
-            "Network name must be between 3 and 40 characters", category="error"
-        )
+        flash("Network name must be between 3 and 40 characters", category="error")
         return redirect("/network", code=303)
     if response["response"] == "nameAlreadyUsed":
         flash("A network with this name already exists", category="error")

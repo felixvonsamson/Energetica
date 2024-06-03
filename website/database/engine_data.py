@@ -5,7 +5,6 @@ from flask import current_app
 import numpy as np
 import requests
 from .player_assets import Active_facilities
-from ..config import const_config
 
 
 class CapacityData:
@@ -17,6 +16,7 @@ class CapacityData:
     def update(self, player_id, facility):
         """This function updates the capacity data of the player"""
         engine = current_app.config["engine"]
+        const_config = engine.const_config
         if facility is None:
             active_facilities = Active_facilities.query.filter_by(player_id=player_id).all()
             unique_facilities = {af.facility for af in active_facilities}
@@ -27,9 +27,11 @@ class CapacityData:
             self.init_facility(engine, facility)
 
         for facility in active_facilities:
-            base_data = const_config["assets"][facility.facility]
+            base_data = const_config[facility.facility]
             effective_values = self._data[facility.facility]
-            effective_values["O&M"] += base_data["base_price"] * facility.price_multiplier * base_data["O&M_factor"]
+            effective_values["O&M_cost"] += (
+                base_data["base_price"] * facility.price_multiplier * base_data["O&M_factor"]
+            )
             if facility.facility in engine.power_facilities:
                 power_gen = base_data["base_power_generation"] * facility.power_multiplier
                 effective_values["power"] += power_gen
@@ -58,10 +60,11 @@ class CapacityData:
                 effective_values["pollution"] += base_data["base_pollution"] * facility.efficiency_multiplier
 
     def init_facility(self, engine, facility):
+        const_config = engine.const_config
         if facility in engine.power_facilities:
             self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "fuel_use": {}}
-            for resource in const_config["assets"][facility]["consumed_resource"]:
-                if const_config["assets"][facility]["consumed_resource"][resource] > 0:
+            for resource in const_config[facility]["consumed_resource"]:
+                if const_config[facility]["consumed_resource"][resource] > 0:
                     self._data[facility]["fuel_use"][resource] = 0.0
             return
         if facility in engine.storage_facilities:
@@ -69,6 +72,11 @@ class CapacityData:
             return
         if facility in engine.extraction_facilities:
             self._data[facility] = {"O&M_cost": 0.0, "extraction": 0.0, "power_use": 0.0, "pollution": 0.0}
+
+    def __getitem__(self, facility):
+        if facility not in self._data:
+            return None
+        return self._data[facility]
 
 
 class CircularBufferPlayer:

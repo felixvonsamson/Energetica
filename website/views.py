@@ -11,6 +11,8 @@ from .database.messages import Chat
 from .database.player import Player
 from .database.player_assets import Resource_on_sale
 
+from .technology_effects import get_current_technology_values
+
 views = Blueprint("views", __name__)
 overviews = Blueprint("overviews", __name__, static_folder="static")
 
@@ -22,7 +24,7 @@ overviews = Blueprint("overviews", __name__, static_folder="static")
 def check_user():
     g.engine = current_app.config["engine"]
     if current_user.tile is not None:
-        g.config = g.engine.config[current_user.id]
+        g.data = get_current_technology_values(current_user)
 
     def render_template_ctx(page):
         if page in ["wiki.jinja", "changelog.jinja"]:
@@ -31,7 +33,7 @@ def check_user():
                     page,
                     engine=g.engine,
                     user=current_user,
-                    data=g.config,
+                    data=g.data,
                 )
             return render_template("wiki.jinja", engine=g.engine, user=None)
         # show location choice if player didn't choose yet
@@ -39,15 +41,13 @@ def check_user():
             return render_template("location_choice.jinja", engine=g.engine)
         # render template with or without player production data
         if page == "messages.jinja":
-            chats = Chat.query.filter(
-                Chat.participants.any(id=current_user.id)
-            ).all()
+            chats = Chat.query.filter(Chat.participants.any(id=current_user.id)).all()
             return render_template(
                 page,
                 engine=g.engine,
                 user=current_user,
                 chats=chats,
-                data=g.config,
+                data=g.data,
             )
         elif page == "resource_market.jinja":
             on_sale = Resource_on_sale.query.all()
@@ -56,12 +56,10 @@ def check_user():
                 engine=g.engine,
                 user=current_user,
                 on_sale=on_sale,
-                data=g.config,
+                data=g.data,
             )
         else:
-            return render_template(
-                page, engine=g.engine, user=current_user, data=g.config
-            )
+            return render_template(page, engine=g.engine, user=current_user, data=g.data)
 
     g.render_template_ctx = render_template_ctx
 
@@ -86,7 +84,7 @@ def profile():
         engine=g.engine,
         user=current_user,
         profile=player,
-        data=g.config,
+        data=g.data,
     )
 
 

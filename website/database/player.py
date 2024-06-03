@@ -252,10 +252,6 @@ class Player(db.Model, UserMixin):
     def get_values(self):
         engine = current_app.config["engine"]
         attributes = chain(
-            engine.controllable_facilities,
-            engine.renewables,
-            engine.storage_facilities,
-            engine.extraction_facilities,
             engine.functional_facilities,
             engine.technologies,
         )

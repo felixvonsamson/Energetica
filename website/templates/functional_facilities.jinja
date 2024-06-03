@@ -4,7 +4,7 @@
 {% endblock title %}
 {% block content
   %}
-  {% set assets = data["assets"] %}
+  {% set facility_values = data %}
   <div class="flex-row huge title">
     Functional facilities
     <div class="pine info_icon_container"
@@ -60,7 +60,7 @@
 
               {# Construction Cost #}
               <span class="money_font">
-                <script>display_money_long({{ assets[facility]["price"] }});</script>
+                <script>display_money_long({{ const_data["base_price"] * facility_values[facility]["price_multiplier"] }});</script>
               </span>
 
             </div>
@@ -79,13 +79,13 @@
               </div>
 
               {# Requirements #}
-              {% if assets[facility]["locked"] %}
+              {% if facility_values[facility]["locked"] %}
                 <div class="infobox requirements" id="requirements">
                   <div>
                     <strong>Unlock with :</strong>
                     <br>
                     <ul class="navbar-nav">
-                      {% for req in assets[facility]["requirements"] %}
+                      {% for req in facility_values[facility]["requirements"] %}
                         {% if req[0] == "mechanical_engineering" %}
                           {% set tech_name = "Mech. engineering" %}
                         {% else %}
@@ -111,7 +111,7 @@
         {# Construction information for big screen #}
         <div id="constructionContent" class="hidden">
           <div class="flex-col construction_button_container hidden">
-            {% if assets[facility].locked %}
+            {% if facility_values[facility].locked %}
               <b class="padding medium margin txt_center white txt-red"
               onclick="start_construction('{{ facility }}', 'Functional facilities');">
                   Locked
@@ -126,17 +126,17 @@
           <div class="construction_info">
             <strong class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <script>display_duration({{assets[facility]["construction time"]}});</script>
+              <script>display_duration({{facility_values[facility]["construction_time"]}});</script>
               <span class="popup_info small">Duration</span>
             </strong>
             <strong class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <script>display_W({{assets[facility]["construction power"]}});</script>
+              <script>display_W({{facility_values[facility]["construction_power"]}});</script>
               <span class="popup_info small">Power consumption</span>
             </strong>
             <strong class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <script>display_kg({{assets[facility]["construction pollution"]}});</script> CO2
+              <script>display_kg({{facility_values[facility]["construction_pollution"]}});</script> CO2
               <span class="popup_info small">CO2 emissions</span>
             </strong>
           </div>
@@ -149,7 +149,7 @@
         {# Construction information for smarphone #}
         <div id="constructionContent_smartphone" class="hidden margin">
           <div class="flex-col">
-            {% if assets[facility].locked %}
+            {% if facility_values[facility].locked %}
               <b class="padding medium margin txt_center white txt-red"
               onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Functional facilities');">
                   Locked
@@ -164,17 +164,17 @@
           <div class="construction_info">
             <strong class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <script>display_duration({{assets[facility]["construction time"]}});</script>
+              <script>display_duration({{facility_values[facility]["construction_time"]}});</script>
               <span class="popup_info small">Duration</span>
             </strong>
             <strong class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <script>display_W({{assets[facility]["construction power"]}});</script>
+              <script>display_W({{facility_values[facility]["construction_power"]}});</script>
               <span class="popup_info small">Power consumption</span>
             </strong>
             <strong class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <script>display_kg({{assets[facility]["construction pollution"]}});</script> CO2
+              <script>display_kg({{facility_values[facility]["construction_pollution"]}});</script> CO2
               <span class="popup_info small">CO2 emissions</span>
             </strong>
           </div>
@@ -194,14 +194,14 @@
               <tr>
                 <td>Average consumption</td>
                 <td class="txt_center">
-                  <script>display_W({{ assets[facility]["power consumption"] }});</script> ->
-                  <script>display_W({{ assets[facility]["power consumption"]* const_data["power factor"] }});</script>
+                  <script>display_W({{ const_data["base_power_consumption"] * const_data["power factor"] ** user.industry }});</script> ->
+                  <script>display_W({{ const_data["base_power_consumption"] * const_data["power factor"] ** (user.industry+1) }});</script>
                 </td>
               </tr>
               <tr>
                 <td>Revenue generation</td>
                 <td class="txt_center">
-                  <script>display_upgrade_money({{ assets[facility]["income"] * 60 / engine.clock_time}}, {{ const_data["income factor"] }});</script>
+                  <script>display_upgrade_money({{ const_data["base_income"] * const_data["income factor"] ** user.industry * 3600 / engine.clock_time}}, {{ const_data["income factor"] }}, {{ const_data["universal_income"] * 3600 / engine.clock_time }});</script>
                 </td>
               </tr>
             {% elif facility == "laboratory" %}
@@ -211,7 +211,7 @@
               </tr>
               <tr>
                 <td>Lab workers</td>
-                <td class="txt_center">{{ (user.laboratory + 2) // 3 }} -> {{ (user.laboratory + 2) // 3 }}</td>
+                <td class="txt_center">{{ (user.laboratory + 2) // 3 }} -> {{ (user.laboratory + 3) // 3 }}</td>
               </tr>
             {% elif facility == "warehouse" %}
               {% if user.warehouse == 0 %}
@@ -261,13 +261,13 @@
               <tr>
                 <td>Power consumption</td>
                 <td class="txt_center">
-                  <script>display_upgrade_W({{ assets[facility]["power consumption"]}}, {{ const_data["power factor"]}});</script>
+                  <script>display_upgrade_W({{ const_data["base_power_consumption"] * const_data["power factor"] ** user.carbon_capture }}, {{ const_data["power factor"]}});</script>
                 </td>
               </tr>
               <tr>
                 <td>CO2 absorbed</td>
                 <td class="txt_center">
-                  <script>display_upgrade_kg({{ assets[facility]["absorbtion"]}}, {{ const_data["absorbtion factor"]}});</script>/h
+                  <script>display_upgrade_kg({{ const_data["base_absorbtion"] * const_data["absorbtion factor"] ** user.carbon_capture }}, {{ const_data["absorbtion factor"]}});</script>/h
                 </td>
               </tr>
             {% endif %}

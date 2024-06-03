@@ -39,9 +39,7 @@ def add_sock_handlers(sock, engine):
     def check_user():
         """Sets up variables used by endpoints."""
         g.engine = current_app.config["engine"]
-        g.player = Player.query.filter_by(
-            username=basic_auth.current_user()
-        ).first()
+        g.player = Player.query.filter_by(username=basic_auth.current_user()).first()
 
     # Main WebSocket endpoint for Swift client
     @sock.route("/rest_ws", bp=ws)
@@ -78,9 +76,7 @@ def add_sock_handlers(sock, engine):
                     uuid = message["uuid"]
                     rest_parse_request(engine, ws, uuid, message_data)
                 case type:
-                    engine.log(
-                        f"Websocket connection from player {player} sent an unkown message of type {type}"
-                    )
+                    engine.log(f"Websocket connection from player {player} sent an unkown message of type {type}")
 
 
 def unregister_websocket_connection(player_id, ws):
@@ -263,10 +259,7 @@ def rest_get_charts():
     response = {
         "type": "getCharts",
         "data": {
-            category: {
-                subcategory: industry_data_for(category, subcategory)
-                for subcategory in subcategories[category]
-            }
+            category: {subcategory: industry_data_for(category, subcategory) for subcategory in subcategories[category]}
             for category in ["revenues", "generation", "demand"]
         },
     }
@@ -292,10 +285,7 @@ def rest_get_facilities_data(engine):
     ]
     power_facilities_data = [
         {"name": facility}
-        | {
-            property_key: assets[facility][property_key]
-            for property_key in power_facilities_property_keys
-        }
+        | {property_key: assets[facility][property_key] for property_key in power_facilities_property_keys}
         for facility in engine.power_facilities
     ]
     storage_facilities_property_keys = [
@@ -313,10 +303,7 @@ def rest_get_facilities_data(engine):
     ]
     storage_facilities_data = [
         {"name": facility}
-        | {
-            property_key: assets[facility][property_key]
-            for property_key in storage_facilities_property_keys
-        }
+        | {property_key: assets[facility][property_key] for property_key in storage_facilities_property_keys}
         for facility in engine.storage_facilities
     ]
     extraction_facilities_property_keys = [
@@ -332,10 +319,7 @@ def rest_get_facilities_data(engine):
     ]
     extraction_facilities_data = [
         {"name": facility}
-        | {
-            property_key: assets[facility][property_key]
-            for property_key in extraction_facilities_property_keys
-        }
+        | {property_key: assets[facility][property_key] for property_key in extraction_facilities_property_keys}
         for facility in engine.extraction_facilities
     ]
     functional_facilities_property_keys = [
@@ -347,10 +331,7 @@ def rest_get_facilities_data(engine):
     ]
     functional_facilities_data = [
         {"name": facility}
-        | {
-            property_key: assets[facility][property_key]
-            for property_key in functional_facilities_property_keys
-        }
+        | {property_key: assets[facility][property_key] for property_key in functional_facilities_property_keys}
         for facility in engine.functional_facilities
     ]
     response = {
@@ -417,9 +398,7 @@ def rest_parse_request(engine, ws, uuid, data):
 def rest_parse_request_confirmLocation(engine, ws, uuid, data):
     """Interpret message sent from a client when they chose a location."""
     cell_id = data
-    response = utils.confirm_location(
-        engine=g.engine, player=g.player, location=Hex.query.get(cell_id)
-    )
+    response = utils.confirm_location(engine=g.engine, player=g.player, location=Hex.query.get(cell_id))
     print(f"ws is {ws} and we're sending rest_respond_confirmLocation")
     message = rest_requestResponse(uuid, "confirmLocation", response)
     ws.send(message)
@@ -455,9 +434,7 @@ def rest_parse_request_startProject(engine, ws, uuid, data):
     """Interpret message sent from a client when they start a project"""
     facility = data["facility"]
     family = data["family"]
-    print(
-        f"rest_parse_request_startProject got: family = {family}, facility = {facility}"
-    )
+    print(f"rest_parse_request_startProject got: family = {family}, facility = {facility}")
     response = utils.start_project(engine, g.player, facility, family)
     message = rest_requestResponse(uuid, "startProject", response)
     ws.send(message)
@@ -524,7 +501,6 @@ def rest_notify_network_change(engine):
 
 
 def rest_notify_new_player(engine, player):
-    print("rest_notify_new_player")
     rest_notify_all_players(engine, rest_get_players())
     engine.socketio.emit("get_players", Player.package_all())
 
