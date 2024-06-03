@@ -684,9 +684,18 @@ canvas {
     align-items: center;
 }
 
+.info_message.important {
+    border: 1px solid #f44336;
+    background-color: #ffdddd
+}
+
 .info_message i {
     color: #2196F3;
     font-size: min(25px, 3.5vh)
+}
+
+.info_message.important i{
+    color: #f44336;
 }
 
 .notification_container{
