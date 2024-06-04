@@ -54,23 +54,94 @@ def add_asset(player_id, construction_id):
     engine = current_app.config["engine"]
     player = Player.query.get(player_id)
     construction = Under_construction.query.get(construction_id)
-    if getattr(player, construction.name) == 0:
+
+    if construction.family in ["Technologies", "Functional facilities"]:
+        if getattr(player, construction.name) == 0:
+            current_data = engine.data["current_data"][player.id]
+            if construction.name == "carbon_capture":
+                current_data.new_subcategory("demand", construction.name)
+                current_data.new_subcategory("emissions", construction.name)
+                player.add_to_list("demand_priorities", construction.name)
+                set_network_prices(engine, player)
+            if construction.name == "warehouse":
+                for resource in ["coal", "oil", "gas", "uranium"]:
+                    current_data.new_subcategory("resources", resource)
+            db.session.commit()
+
+            # update advancements
+            if "technology" not in player.advancements:
+                if construction.name == "laboratory":
+                    player.add_to_list("demand_priorities", "research")
+                    set_network_prices(engine, player)
+                    player.add_to_list("advancements", "technology")
+                    notify(
+                        "Tutorial",
+                        "You have built a laboratory, you can now reseach <a href='/technology'>technologies</a> to unlock and upgrade facilities.",
+                        player,
+                    )
+            if "warehouse" not in player.advancements:
+                if construction.name == "warehouse":
+                    player.add_to_list("demand_priorities", "transport")
+                    set_network_prices(engine, player)
+                    player.add_to_list("advancements", "warehouse")
+                    notify(
+                        "Tutorial",
+                        "You have built a warehouse to store natural resources, you can now buy resources on the <a href='/resource_market'>resources market</a> or invest in <a href='/extraction_facilities'>extraction facilites</a> to extract your own resources from the ground.",
+                        player,
+                    )
+            if "GHG_effect" not in player.advancements:
+                if construction.name == "chemistry":
+                    player.add_to_list("advancements", "GHG_effect")
+                    notify(
+                        "Tutorial",
+                        "Scientists have discovered the greenhouse effect and have shown that climate change increases the risks of natural and social catastrophies. You can now monitor your emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph</a>.",
+                        player,
+                    )
+
+        setattr(player, construction.name, getattr(player, construction.name) + 1)
+        db.session.commit()
+        # check achievement
+        if (
+            construction.name == "laboratory"
+            and getattr(player, construction.name) >= 4
+            and "technology_1" not in player.achievements
+        ):
+            player.add_to_list("achievements", "technology_1")
+            player.xp += 5
+            notify(
+                "Achievements",
+                "Your lab is level 4, an additional lab worker is available. (+5 xp)",
+                player,
+            )
+        if construction.family == "Technologies":
+            player.total_technologies += 1
+            server_tech = engine.data["technology_lvls"][construction.name]
+            if len(server_tech) <= getattr(player, construction.name):
+                server_tech.append(0)
+            server_tech[getattr(player, construction.name) - 1] += 1
+            if "technology_2" not in player.achievements and player.total_technologies >= 25:
+                player.add_to_list("achievements", "technology_2")
+                player.xp += 10
+                notify(
+                    "Achievements",
+                    "You have researched a total of 25 levels of technologies. (+10 xp)",
+                    player,
+                )
+
+    if Active_facilities.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
         # initialize array for facility if it is the first one built
         current_data = engine.data["current_data"][player.id]
         if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
             current_data.new_subcategory("op_costs", construction.name)
         if construction.name in engine.storage_facilities + engine.power_facilities:
             current_data.new_subcategory("generation", construction.name)
-        if construction.name in engine.storage_facilities + engine.extraction_facilities + ["carbon_capture"]:
+        if construction.name in engine.storage_facilities + engine.extraction_facilities:
             current_data.new_subcategory("demand", construction.name)
         if construction.name in engine.storage_facilities:
             current_data.new_subcategory("storage", construction.name)
-        if construction.name in engine.controllable_facilities + engine.extraction_facilities + ["carbon_capture"]:
+        if construction.name in engine.controllable_facilities + engine.extraction_facilities:
             current_data.new_subcategory("emissions", construction.name)
-        if construction.name == "warehouse":
-            for resource in ["coal", "oil", "gas", "uranium"]:
-                current_data.new_subcategory("resources", resource)
-        if construction.name in engine.extraction_facilities + engine.storage_facilities + ["carbon_capture"]:
+        if construction.name in engine.extraction_facilities + engine.storage_facilities:
             player.add_to_list("demand_priorities", construction.name)
             set_network_prices(engine, player)
         if construction.name in engine.renewables:
@@ -80,6 +151,7 @@ def add_asset(player_id, construction_id):
             player.add_to_list("rest_of_priorities", construction.name)
             set_network_prices(engine, player)
         db.session.commit()
+
         # update advancements
         if "storage_overview" not in player.advancements:
             if construction.name in engine.storage_facilities:
@@ -89,35 +161,7 @@ def add_asset(player_id, construction_id):
                     "You have built your first storage facility, you can monitor the stored energy in the <a href='/production_overview/storage'>storage graph</a>.",
                     player,
                 )
-        if "technology" not in player.advancements:
-            if construction.name == "laboratory":
-                player.add_to_list("demand_priorities", "research")
-                set_network_prices(engine, player)
-                player.add_to_list("advancements", "technology")
-                notify(
-                    "Tutorial",
-                    "You have built a laboratory, you can now reseach <a href='/technology'>technologies</a> to unlock and upgrade facilities.",
-                    player,
-                )
-        if "warehouse" not in player.advancements:
-            if construction.name == "warehouse":
-                player.add_to_list("demand_priorities", "transport")
-                set_network_prices(engine, player)
-                player.add_to_list("advancements", "warehouse")
-                notify(
-                    "Tutorial",
-                    "You have built a warehouse to store natural resources, you can now buy resources on the <a href='/resource_market'>resources market</a> or invest in <a href='/extraction_facilities'>extraction facilites</a> to extract your own resources from the ground.",
-                    player,
-                )
-        if "GHG_effect" not in player.advancements:
-            if construction.name == "chemistry":
-                player.add_to_list("advancements", "GHG_effect")
-                notify(
-                    "Tutorial",
-                    "Scientists have discovered the greenhouse effect and have shown that climate change increases the risks of natural and social catastrophies. You can now monitor your emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph</a>.",
-                    player,
-                )
-    setattr(player, construction.name, getattr(player, construction.name) + 1)
+
     priority_list_name = "construction_priorities"
     project_index = (
         Under_construction.query.filter(
@@ -192,52 +236,17 @@ def add_asset(player_id, construction_id):
             )
             db.session.commit()
             break
-    # check achievement
-    if (
-        construction.name == "laboratory"
-        and getattr(player, construction.name) >= 3
-        and "technology_1" not in player.achievements
-    ):
-        player.add_to_list("achievements", "technology_1")
-        player.xp += 5
-        notify(
-            "Achievements",
-            "Your lab is level 3, an additional lab worker is available. (+5 xp)",
-            player,
-        )
+
+    construction_name = engine.const_config["assets"][construction.name]["name"]
     if construction.family == "Technologies":
-        player.total_technologies += 1
-        # check achievement
-        if "technology_2" not in player.achievements:
-            if player.total_technologies >= 25:
-                player.add_to_list("achievements", "technology_2")
-                player.xp += 10
-                notify(
-                    "Achievements",
-                    "You have researched a total of 25 levels of technologies. (+10 xp)",
-                    player,
-                )
-        server_tech = engine.data["technology_lvls"][construction.name]
-        if len(server_tech) <= getattr(player, construction.name):
-            server_tech.append(0)
-        server_tech[getattr(player, construction.name) - 1] += 1
-        notify(
-            "Technologies",
-            f"The research of the technology {engine.const_config[construction.name]['name']} has finished.",
-            player,
-        )
-        engine.log(
-            f"{player.username} has finished the research of technology {engine.const_config[construction.name]['name']}"
-        )
+        notify("Technologies", f"+ 1 lvl <b>{construction_name}</b>.", player)
+        engine.log(f"{player.username} : + 1 lvl {construction_name}")
+    elif construction.family == "Functional facilities":
+        notify("Constructions", f"+ 1 lvl <b>{construction_name}</b>", player)
+        engine.log(f"{player.username} : + 1 lvl {construction_name}")
     else:
-        notify(
-            "Constructions",
-            f"The construction of the facility {engine.const_config[construction.name]['name']} has finished.",
-            player,
-        )
-        engine.log(
-            f"{player.username} has finished the construction of facility {engine.const_config[construction.name]['name']}"
-        )
+        notify("Constructions", f"+ 1 <b>{construction_name}</b>", player)
+        engine.log(f"{player.username} : + 1 {construction_name}")
     if construction.family in [
         "Extraction facilities",
         "Power facilities",
@@ -246,7 +255,7 @@ def add_asset(player_id, construction_id):
         new_facility = Active_facilities(
             facility=construction.name,
             end_of_life=time.time()
-            + engine.const_config[construction.name]["lifespan"] * technology_effects.time_multiplier(),
+            + engine.const_config["assets"][construction.name]["lifespan"] * technology_effects.time_multiplier(),
             player_id=player.id,
             price_multiplier=construction.price_multiplier,
             power_multiplier=construction.power_multiplier,
@@ -266,23 +275,27 @@ def remove_asset(player_id, facility_info, decommissioning=True):
     """this function is executed when a facility is decomissioned"""
     engine = current_app.config["engine"]
     player = Player.query.get(player_id)
-    setattr(
-        player,
-        facility_info.facility,
-        getattr(player, facility_info.facility) - 1,
-    )
+    if facility_info.facility in engine.technologies + engine.functional_facilities:
+        setattr(
+            player,
+            facility_info.facility,
+            getattr(player, facility_info.facility) - 1,
+        )
+        engine.data["player_capacities"][player.id].update(player.id, None)
+    else:
+        Active_facilities.query.filter_by(player_id=player.id, facility=facility_info.facility).delete()
+        engine.data["player_capacities"][player.id].update(player.id, facility_info.facility)
     # The cost of decommissioning is 20% of the building cost.
-    cost = 0.2 * engine.const_config[facility_info.facility]["base_price"] * facility_info.price_multiplier
+    cost = 0.2 * engine.const_config["assets"][facility_info.facility]["base_price"] * facility_info.price_multiplier
     player.money -= cost
+    construction_name = engine.const_config["assets"][facility_info.facility]["name"]
     if decommissioning:
         notify(
             "Decommissioning",
-            f"The facility {engine.const_config[facility_info.facility]['name']} reached the end of its operational lifespan and had to be decommissioned. The cost of this operation was {round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>.",
+            f"The facility {construction_name} reached the end of its operational lifespan and had to be decommissioned. The cost of this operation was {round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>.",
             player,
         )
-    engine.log(
-        f"The facility {engine.const_config[facility_info.facility]['name']} from {player.username} has been decommissioned."
-    )
+    engine.log(f"The facility {construction_name} from {player.username} has been decommissioned.")
     engine.data["player_capacities"][player.id].update(player.id, facility_info.facility)
     engine.config.update_config_for_user(player.id)
 
@@ -662,7 +675,7 @@ def confirm_location(engine, player, location):
     steam_engine = Active_facilities(
         facility="steam_engine",
         end_of_life=time.time()
-        + engine.const_config["steam_engine"]["lifespan"] * technology_effects.time_multiplier(),
+        + engine.const_config["assets"]["steam_engine"]["lifespan"] * technology_effects.time_multiplier(),
         player_id=player.id,
         price_multiplier=1.0,
         power_multiplier=1.0,
@@ -832,6 +845,7 @@ def start_project(engine, player, facility, family, force=False):
     """this function is executed when a player clicks on 'start construction'"""
     facility_info = technology_effects.get_current_technology_values(player)
     player_cap = engine.data["player_capacities"][player.id]
+    const_config = engine.const_config["assets"][facility]
 
     if facility_info[facility]["locked"]:
         return {"response": "locked"}
@@ -844,9 +858,7 @@ def start_project(engine, player, facility, family, force=False):
         ) / technology_effects.hydro_price_function(count, player.tile.hydro)
         if (
             player.money
-            < engine.const_config[facility]["base_price"]
-            * technology_effects.price_multiplier(player, facility)
-            * price_factor
+            < const_config["base_price"] * technology_effects.price_multiplier(player, facility) * price_factor
         ):
             return {"response": "notEnoughMoneyError"}
 
@@ -858,15 +870,15 @@ def start_project(engine, player, facility, family, force=False):
                 if getattr(player, facility) + ud_count + req[1] > getattr(player, req[0]):
                     return {"response": "requirementsNotFullfilled"}
         real_price = (
-            engine.const_config[facility]["base_price"]
+            const_config["base_price"]
             * technology_effects.price_multiplier(player, facility)
-            * engine.const_config[facility]["price multiplier"] ** ud_count
+            * const_config["price multiplier"] ** ud_count
         )
-        duration = technology_effects.construction_time(player, facility) * engine.const_config[facility][
-            "price multiplier"
-        ] ** (0.6 * ud_count)
+        duration = technology_effects.construction_time(player, facility) * const_config["price multiplier"] ** (
+            0.6 * ud_count
+        )
     else:  # power facitlies, storage facilities, extractions facilities
-        real_price = engine.const_config[facility]["base_price"] * technology_effects.price_multiplier(player, facility)
+        real_price = const_config["base_price"] * technology_effects.price_multiplier(player, facility)
         duration = technology_effects.construction_time(player, facility)
 
     if player.money < real_price:
@@ -948,7 +960,10 @@ def cancel_project(player, construction_id, force=False):
         }
 
     refund = (
-        0.8 * engine.const_config[construction.name]["base_price"] * construction.price_multiplier * (1 - time_fraction)
+        0.8
+        * engine.const_config["assets"][construction.name]["base_price"]
+        * construction.price_multiplier
+        * (1 - time_fraction)
     )
     player.money += refund
     print(f"removing id {construction_id} from {priority_list_name} ({player.username}) (cancel_project)")

@@ -34,7 +34,7 @@
     {% set functional_facilities = ["industry", "laboratory", "warehouse"] %}
   {% endif %}
   {% for facility in functional_facilities %}
-    {% set const_data = engine.const_config[facility] %}
+    {% set const_data = engine.const_config["assets"][facility] %}
     <div id="{{ const_data.name }}"
          class="bone margin facility small"
          onclick="show_construction('{{ const_data.name }}');">
@@ -89,7 +89,7 @@
                         {% if req[0] == "mechanical_engineering" %}
                           {% set tech_name = "Mech. engineering" %}
                         {% else %}
-                          {% set tech_name = engine.const_config[req[0]]["name"] %}
+                          {% set tech_name = engine.const_config["assets"][req[0]]["name"] %}
                         {% endif %}
                         {% if req[2] %}
                           <li class="padding-small req_fullfilled">- {{ tech_name }} lvl {{ req[1] }}</li>
@@ -232,28 +232,30 @@
                   <td class="txt_center">0 -> 5'000 kg</td>
                 </tr>
               {% else %}
+                {% set warehouse_cap = engine.const_config.warehouse_capacities %}
+                {% set warehouse_mult = engine.const_config.assets.warehouse["capacity factor"] ** user.warehouse %}
                 <tr>
                   <td>Coal capacity</td>
                   <td class="txt_center">
-                    <script>display_upgrade_kg({{ data["warehouse_capacities"]["coal"] }}, {{ const_data["capacity factor"]}});</script>
+                    <script>display_upgrade_kg({{ warehouse_cap.coal * warehouse_mult }}, {{ const_data["capacity factor"]}});</script>
                   </td>
                 </tr>
                 <tr>
                   <td>Oil capacity</td>
                   <td class="txt_center">
-                    <script>display_upgrade_kg({{ data["warehouse_capacities"]["oil"] }}, {{ const_data["capacity factor"]}});</script>
+                    <script>display_upgrade_kg({{ warehouse_cap.oil * warehouse_mult }}, {{ const_data["capacity factor"]}});</script>
                   </td>
                 </tr>
                 <tr>
                   <td>Gas capacity</td>
                   <td class="txt_center">
-                    <script>display_upgrade_kg({{ data["warehouse_capacities"]["gas"] }}, {{ const_data["capacity factor"]}});</script>
+                    <script>display_upgrade_kg({{ warehouse_cap.gas * warehouse_mult }}, {{ const_data["capacity factor"]}});</script>
                   </td>
                 </tr>
                 <tr>
                   <td>Uranium cap.</td>
                   <td class="txt_center">
-                    <script>display_upgrade_kg({{ data["warehouse_capacities"]["uranium"] }}, {{ const_data["capacity factor"]}});</script>
+                    <script>display_upgrade_kg({{ warehouse_cap.uranium * warehouse_mult }}, {{ const_data["capacity factor"]}});</script>
                   </td>
                 </tr>
               {% endif %}

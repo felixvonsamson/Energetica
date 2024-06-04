@@ -7,7 +7,7 @@ from .database.player_assets import Active_facilities
 
 def price_multiplier(player, facility):
     """Function that returns the price multiplier according to the technology level of the player."""
-    const_config = current_app.config["engine"].const_config
+    const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Mechanical engineering
     if facility in const_config["mechanical_engineering"]["affected facilities"]:
@@ -48,7 +48,7 @@ def price_multiplier(player, facility):
 
 def power_multiplier(player, facility):
     """Function that returns the power multiplier according to the technology level of the player."""
-    const_config = current_app.config["engine"].const_config
+    const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Mechanical engineering
     if facility in const_config["mechanical_engineering"]["affected facilities"]:
@@ -76,7 +76,7 @@ def power_multiplier(player, facility):
 
 def capacity_multiplier(player, facility):
     """Function that returns the capacity multiplier according to the technology level of the player."""
-    const_config = current_app.config["engine"].const_config
+    const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Mineral extraction (in this case it is the extraction rate in fraction of total underground stock per minute)
     if facility in const_config["mineral_extraction"]["affected facilities"]:
@@ -89,7 +89,7 @@ def capacity_multiplier(player, facility):
 
 def efficiency_multiplier(player, facility):
     """Function that returns the efficiency multiplier according to the technology level of the player."""
-    const_config = current_app.config["engine"].const_config
+    const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Thermodynamics
     if facility in const_config["thermodynamics"]["affected facilities"]:
@@ -119,7 +119,7 @@ def efficiency_multiplier(player, facility):
 
 def construction_time(player, facility):
     engine = current_app.config["engine"]
-    const_config = engine.const_config
+    const_config = engine.const_config["assets"]
     # dilatation foactor dependent on clock_time
     duration = const_config[facility]["base_construction_time"] * (engine.clock_time / 60) ** 0.5
     # construction time increases with higher levels
@@ -144,7 +144,7 @@ def construction_time(player, facility):
 
 def construction_power(player, facility):
     engine = current_app.config["engine"]
-    const_config = engine.const_config
+    const_config = engine.const_config["assets"]
     bt_factor = const_config["building_technology"]["time factor"] ** player.building_technology
     # construction power in relation of facilities characteristics
     if facility in engine.power_facilities:
@@ -180,7 +180,7 @@ def construction_power(player, facility):
 
 def construction_pollution(player, facility):
     engine = current_app.config["engine"]
-    const_config = engine.const_config
+    const_config = engine.const_config["assets"]
     if facility in engine.technologies:
         return 0
     pollution = (
@@ -235,7 +235,7 @@ def get_current_technology_values(player):
         }
         # remove fulfilled requirements
         dict[facility]["locked"] = False
-        dict[facility]["requirements"] = engine.const_config[facility]["requirements"].copy()
+        dict[facility]["requirements"] = engine.const_config["assets"][facility]["requirements"].copy()
         for req in dict[facility]["requirements"]:
             if req[1] + getattr(player, facility) < 1:
                 dict[facility]["requirements"].remove(req)
@@ -251,7 +251,7 @@ def get_current_technology_values(player):
     ):
         # remove fulfilled requirements
         dict[facility]["locked"] = False
-        dict[facility]["requirements"] = engine.const_config[facility]["requirements"].copy()
+        dict[facility]["requirements"] = engine.const_config["assets"][facility]["requirements"].copy()
         for req in dict[facility]["requirements"]:
             req[2] = getattr(player, req[0]) >= req[1]
             if not req[2]:

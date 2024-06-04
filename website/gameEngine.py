@@ -33,7 +33,7 @@ class gameEngine(object):
     def __init__(engine, clock_time):
         engine.clock_time = clock_time
         engine.config = config
-        engine.const_config = const_config["assets"]
+        engine.const_config = const_config
         engine.socketio = None
         engine.clients = defaultdict(list)
         engine.websocket_dict = {}

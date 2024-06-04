@@ -26,7 +26,7 @@
   </div>
   <div id="under_construction">{# Facilites under construction will show here #}</div>
   {% for facility in engine.power_facilities %}
-    {% set const_data = engine.const_config[facility] %}
+    {% set const_data = engine.const_config["assets"][facility] %}
     <div id="{{ facility }}"
          class="bone margin facility small"
          onclick="show_construction('{{ facility }}');">
@@ -57,7 +57,7 @@
 
               {# Construction Cost #}
               <span class="money_font">
-                <script>display_money_long({{ engine.const_config[facility]["base_price"] * facility_values[facility]["price_multiplier"] }});</script>
+                <script>display_money_long({{ const_data["base_price"] * facility_values[facility]["price_multiplier"] }});</script>
               </span>
 
             </div>
@@ -112,7 +112,7 @@
                         {% if req[0] == "mechanical_engineering" %}
                           {% set tech_name = "Mech. engineering" %}
                         {% else %}
-                          {% set tech_name = engine.const_config[req[0]]["name"] %}
+                          {% set tech_name = engine.const_config["assets"][req[0]]["name"] %}
                         {% endif %}
                         {% if req[2] %}
                           <li class="padding-small req_fullfilled">- {{ tech_name }} lvl {{ req[1] }}</li>
@@ -159,7 +159,7 @@
             </strong>
             <strong class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <script>display_kg({{ engine.const_config[facility]["base_construction_pollution"] }});</script> CO2
+              <script>display_kg({{ const_data["base_construction_pollution"] }});</script> CO2
               <span class="popup_info small">CO2 emissions</span>
             </strong>
           </div>
@@ -197,29 +197,29 @@
             </strong>
             <strong class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <script>display_kg({{ engine.const_config[facility]["base_construction_pollution"] }});</script> CO2
+              <script>display_kg({{ const_data["base_construction_pollution"] }});</script> CO2
               <span class="popup_info small">CO2 emissions</span>
             </strong>
           </div>
         </div>
 
         {# Power Facility Data #}
-        <div id="infotable" class="{% if engine.const_config[facility]['ramping_time'] != 0 %}minimized minimizable{% endif %}">
+        <div id="infotable" class="{% if const_data['ramping_time'] != 0 %}minimized minimizable{% endif %}">
           <table class="table tan_green">
             {# Max Generation #}
             <tr>
               <td>Max generation</td>
               <td class="txt_center">
-                <strong><script>display_W({{ engine.const_config[facility]["base_power_generation"] * facility_values[facility]["power_multiplier"] }});</script></strong>
+                <strong><script>display_W({{ const_data["base_power_generation"] * facility_values[facility]["power_multiplier"] }});</script></strong>
               </td>
             </tr>
             {# Ramping Speed #}
-            {% if engine.const_config[facility]["ramping_time"] != 0 %}
+            {% if const_data["ramping_time"] != 0 %}
             <tr>
               <td>Ramping speed</td>
               <td class="txt_center">
                 <strong>
-                  <script>display_W({{ engine.const_config[facility]["base_power_generation"] * facility_values[facility]["power_multiplier"] / engine.const_config[facility]["ramping_time"] }});</script>/min
+                  <script>display_W({{ const_data["base_power_generation"] * facility_values[facility]["power_multiplier"] / const_data["ramping_time"] }});</script>/min
                 </strong>
               </td>
             </tr>
@@ -228,12 +228,12 @@
             <tr>
               <td>Operation cost</td>
               <td class="txt_center">
-                <strong><script>display_money({{ engine.const_config[facility]["base_price"] * facility_values[facility]["price_multiplier"] * engine.const_config[facility]["O&M_factor"] / engine.clock_time * 3600 }});</script>/h</strong>
+                <strong><script>display_money({{ const_data["base_price"] * facility_values[facility]["price_multiplier"] * const_data["O&M_factor"] / engine.clock_time * 3600 }});</script>/h</strong>
               </td>
             </tr>
             {# Resource Consumption #}
             {% for resource in ["gas", "coal", "oil", "uranium"] %}
-              {% if resource in engine.const_config[facility]["consumed_resource"] %}
+              {% if resource in const_data["consumed_resource"] %}
                 <tr>
                   {% if resource == "uranium" %}
                     <td>Uran. consumption</td>
@@ -244,12 +244,12 @@
                     <strong>
                       {% if resource == "uranium" %}
                         {% if facility == "nuclear_reactor" %}
-                          {{ (engine.const_config[facility]["consumed_resource"][resource] / facility_values[facility]["efficiency_multiplier"] * 1000)|int }} g/MWh
+                          {{ (const_data["consumed_resource"][resource] / facility_values[facility]["efficiency_multiplier"] * 1000)|int }} g/MWh
                         {% else %}
-                          {{ (engine.const_config[facility]["consumed_resource"][resource] / facility_values[facility]["efficiency_multiplier"] * 1000)|round(2) }} g/MWh
+                          {{ (const_data["consumed_resource"][resource] / facility_values[facility]["efficiency_multiplier"] * 1000)|round(2) }} g/MWh
                         {% endif %}
                       {% else %}
-                        <script>display_kg({{ engine.const_config[facility]["consumed_resource"][resource] / facility_values[facility]["efficiency_multiplier"] }});</script>/MWh
+                        <script>display_kg({{ const_data["consumed_resource"][resource] / facility_values[facility]["efficiency_multiplier"] }});</script>/MWh
                       {% endif %}
                     </strong>
                   </td>
@@ -261,9 +261,9 @@
               <td>CO2 emissions</td>
               <td class="txt_center">
                 {% if "efficiency_multiplier" in facility_values[facility] %}
-                <strong><script>display_kg({{ engine.const_config[facility]["base_pollution"] / facility_values[facility]["efficiency_multiplier"] }});</script>/MWh</strong>
+                <strong><script>display_kg({{ const_data["base_pollution"] / facility_values[facility]["efficiency_multiplier"] }});</script>/MWh</strong>
                 {% else %}
-                <strong><script>display_kg({{ engine.const_config[facility]["base_pollution"] }});</script>/MWh</strong>
+                <strong><script>display_kg({{ const_data["base_pollution"] }});</script>/MWh</strong>
                 {% endif %}
               </td>
             </tr>
@@ -271,11 +271,11 @@
             <tr>
               <td>Lifespan</td>
               <td class="txt_center">
-                <strong><script>display_days({{ engine.const_config[facility]["lifespan"] * (engine.clock_time / 60) ** 0.5 }});</script> days</strong>
+                <strong><script>display_days({{ const_data["lifespan"] * (engine.clock_time / 60) ** 0.5 }});</script> days</strong>
               </td>
             </tr>
           </table>
-          <div class="overlay {% if engine.const_config[facility]['ramping_time'] == 0 %}hidden{% endif %}"></div>
+          <div class="overlay {% if const_data['ramping_time'] == 0 %}hidden{% endif %}"></div>
         </div>
       </div>
 

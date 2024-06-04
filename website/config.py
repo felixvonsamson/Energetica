@@ -862,235 +862,6 @@ const_config = {
                 ["mechanical_engineering", 3, False],
             ],
         },
-    }
-}
-
-# initial values of the game for each asset
-var_config = {
-    "assets": {
-        "steam_engine": {
-            "requirements": [],
-        },
-        "windmill": {
-            "requirements": [],
-        },
-        "watermill": {
-            "requirements": [],
-        },
-        "coal_burner": {
-            "requirements": [
-                ["mechanical_engineering", 1, False],
-                ["thermodynamics", 1, False],
-                ["warehouse", 1, False],
-            ],
-        },
-        "oil_burner": {
-            "requirements": [
-                ["mechanical_engineering", 1, False],
-                ["thermodynamics", 1, False],
-                ["warehouse", 1, False],
-            ],
-        },
-        "gas_burner": {
-            "requirements": [
-                ["mechanical_engineering", 1, False],
-                ["thermodynamics", 1, False],
-                ["warehouse", 1, False],
-            ],
-        },
-        "small_water_dam": {
-            "requirements": [["civil_engineering", 1, False]],
-        },
-        "onshore_wind_turbine": {
-            "requirements": [
-                ["aerodynamics", 1, False],
-                ["materials", 2, False],
-                ["mechanical_engineering", 3, False],
-            ],
-        },
-        "combined_cycle": {
-            "requirements": [
-                ["thermodynamics", 3, False],
-                ["mechanical_engineering", 3, False],
-                ["warehouse", 2, False],
-            ],
-        },
-        "nuclear_reactor": {
-            "requirements": [
-                ["chemistry", 3, False],
-                ["nuclear_engineering", 1, False],
-                ["warehouse", 3, False],
-            ],
-        },
-        "large_water_dam": {
-            "requirements": [["civil_engineering", 4, False]],
-        },
-        "CSP_solar": {
-            "requirements": [
-                ["physics", 5, False],
-                ["thermodynamics", 5, False],
-            ],
-        },
-        "PV_solar": {
-            "requirements": [["physics", 6, False], ["materials", 4, False]],
-        },
-        "offshore_wind_turbine": {
-            "requirements": [
-                ["aerodynamics", 3, False],
-                ["materials", 4, False],
-                ["mechanical_engineering", 6, False],
-            ],
-        },
-        "nuclear_reactor_gen4": {
-            "requirements": [
-                ["chemistry", 5, False],
-                ["nuclear_engineering", 5, False],
-                ["warehouse", 3, False],
-            ],
-        },
-        "small_pumped_hydro": {
-            "requirements": [],
-        },
-        "compressed_air": {
-            "requirements": [
-                ["mechanical_engineering", 2, False],
-                ["thermodynamics", 2, False],
-            ],
-        },
-        "molten_salt": {
-            "requirements": [
-                ["mechanical_engineering", 2, False],
-                ["thermodynamics", 3, False],
-            ],
-        },
-        "large_pumped_hydro": {
-            "requirements": [["civil_engineering", 3, False]],
-        },
-        "hydrogen_storage": {
-            "requirements": [["chemistry", 3, False], ["materials", 3, False]],
-        },
-        "lithium_ion_batteries": {
-            "requirements": [["chemistry", 4, False], ["materials", 4, False]],
-        },
-        "solid_state_batteries": {
-            "requirements": [
-                ["chemistry", 6, False],
-                ["materials", 5, False],
-                ["physics", 6, False],
-            ],
-        },
-        "laboratory": {
-            "requirements": [],
-        },
-        "warehouse": {
-            "requirements": [],
-        },
-        "industry": {
-            "requirements": [],
-        },
-        "carbon_capture": {
-            "requirements": [
-                ["mathematics", 3, False],
-                ["physics", 3, False],
-                ["chemistry", 3, False],
-            ],
-        },
-        "coal_mine": {
-            "requirements": [
-                ["mineral_extraction", 1, False],
-                ["warehouse", 1, False],
-            ],
-        },
-        "oil_field": {
-            "requirements": [
-                ["mineral_extraction", 2, False],
-                ["warehouse", 1, False],
-            ],
-        },
-        "gas_drilling_site": {
-            "requirements": [
-                ["mineral_extraction", 2, False],
-                ["warehouse", 1, False],
-            ],
-        },
-        "uranium_mine": {
-            "requirements": [
-                ["mineral_extraction", 5, False],
-                ["warehouse", 3, False],
-            ],
-        },
-        "mathematics": {
-            "requirements": [["laboratory", 1, False]],  # level is given relative to the research level
-        },
-        "mechanical_engineering": {
-            "requirements": [
-                ["laboratory", 1, False],
-                ["mathematics", 1, False],
-            ],
-        },
-        "thermodynamics": {
-            "requirements": [
-                ["laboratory", 1, False],
-                ["mathematics", 1, False],
-            ],
-        },
-        "physics": {
-            "requirements": [
-                ["laboratory", 1, False],
-                ["mathematics", 1, False],
-                ["chemistry", -2, False],
-            ],
-        },
-        "building_technology": {
-            "requirements": [
-                ["laboratory", 1, False],
-                ["transport_technology", -2, False],
-            ],
-        },
-        "mineral_extraction": {
-            "requirements": [
-                ["laboratory", 1, False],
-                ["mathematics", 1, False],
-            ],
-        },
-        "transport_technology": {
-            "requirements": [
-                ["laboratory", 2, False],
-                ["mechanical_engineering", 1, False],
-            ],
-        },
-        "materials": {
-            "requirements": [
-                ["laboratory", 2, False],
-                ["chemistry", 0, False],
-            ],
-        },
-        "civil_engineering": {
-            "requirements": [
-                ["laboratory", 3, False],
-                ["mathematics", 2, False],
-                ["building_technology", 2, False],
-            ],
-        },
-        "aerodynamics": {
-            "requirements": [
-                ["laboratory", 3, False],
-                ["physics", 3, False],
-            ],
-        },
-        "chemistry": {
-            "requirements": [
-                ["laboratory", 3, False],
-                ["physics", -1, False],
-            ],
-        },
-        "nuclear_engineering": {
-            "requirements": [
-                ["laboratory", 4, False],
-                ["physics", 3, False],
-                ["mechanical_engineering", 3, False],
-            ],
-        },
     },
     "warehouse_capacities": {
         "coal": 3000000 / 1.5,  # [kg]
@@ -1232,8 +1003,13 @@ class Config(object):
     # updating the config values according to the players technology level
     def update_config_for_user(config, player_id):
         engine = current_app.config["engine"]
-        config.for_player[player_id] = copy.deepcopy(var_config)
-        assets = config.for_player[player_id]["assets"]
+        config.for_player[player_id] = {
+            "industry": {},
+            "carbon_capture": {},
+            "warehouse_capacities": {},
+            "transport": {},
+        }
+        assets = config.for_player[player_id]
         player = Player.query.get(player_id)
 
         # calculating industry energy consumption and income
@@ -1259,24 +1035,28 @@ class Config(object):
         )
 
         # calculating the maximum storage capacity from the warehouse level
-        max_cap = config.for_player[player_id]["warehouse_capacities"]
-        for resource in max_cap:
+        for resource in const_config["warehouse_capacities"]:
             if player.warehouse == 0:
-                max_cap[resource] = 0
+                assets["warehouse_capacities"][resource] = 0
             else:
-                max_cap[resource] *= const_config["assets"]["warehouse"]["capacity factor"] ** player.warehouse
+                assets["warehouse_capacities"][resource] = (
+                    const_config["warehouse_capacities"][resource]
+                    * const_config["assets"]["warehouse"]["capacity factor"] ** player.warehouse
+                )
 
         # calculating the transport speed and energy consumption from the level of transport technology
-        config.for_player[player_id]["transport"]["time"] *= (
-            const_config["assets"]["transport_technology"]["time factor"] ** player.transport_technology
+        assets["transport"]["time"] = (
+            const_config["transport"]["time"]
+            * const_config["assets"]["transport_technology"]["time factor"] ** player.transport_technology
         )
-        config.for_player[player_id]["transport"]["power consumption"] *= (
-            const_config["assets"]["transport_technology"]["energy factor"] ** player.transport_technology
+        assets["transport"]["power consumption"] = (
+            const_config["transport"]["power consumption"]
+            * const_config["assets"]["transport_technology"]["energy factor"] ** player.transport_technology
             * 3600
-            / config.for_player[player_id]["transport"]["time"]
+            / assets["transport"]["time"]
         )
         # reducing shipment time with clock time
-        config.for_player[player_id]["transport"]["time"] *= (engine.clock_time / 60) ** 0.5
+        assets["transport"]["time"] *= (engine.clock_time / 60) ** 0.5
 
         # setting the number of workers
         player.construction_workers = player.building_technology + 1

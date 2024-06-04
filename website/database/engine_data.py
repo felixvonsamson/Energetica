@@ -16,7 +16,6 @@ class CapacityData:
     def update(self, player_id, facility):
         """This function updates the capacity data of the player"""
         engine = current_app.config["engine"]
-        const_config = engine.const_config
         if facility is None:
             active_facilities = Active_facilities.query.filter_by(player_id=player_id).all()
             unique_facilities = {af.facility for af in active_facilities}
@@ -27,7 +26,7 @@ class CapacityData:
             self.init_facility(engine, facility)
 
         for facility in active_facilities:
-            base_data = const_config[facility.facility]
+            base_data = engine.const_config["assets"][facility.facility]
             effective_values = self._data[facility.facility]
             effective_values["O&M_cost"] += (
                 base_data["base_price"] * facility.price_multiplier * base_data["O&M_factor"]
@@ -60,7 +59,7 @@ class CapacityData:
                 effective_values["pollution"] += base_data["base_pollution"] * facility.efficiency_multiplier
 
     def init_facility(self, engine, facility):
-        const_config = engine.const_config
+        const_config = engine.const_config["assets"]
         if facility in engine.power_facilities:
             self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "fuel_use": {}}
             for resource in const_config[facility]["consumed_resource"]:

@@ -32,7 +32,7 @@
   </div>
 
   {% for facility in ["mathematics", "mechanical_engineering", "thermodynamics", "physics", "building_technology", "mineral_extraction", "transport_technology", "materials", "civil_engineering", "aerodynamics", "chemistry", "nuclear_engineering"] %}
-    {% set const_data = engine.const_config[facility] %}
+    {% set const_data = engine.const_config["assets"][facility] %}
     <div id="{{ const_data.name }}"
          class="bone margin facility small"
          onclick="show_construction('{{ const_data.name }}');">
@@ -64,7 +64,7 @@
 
               {# Construction Cost #}
               <span class="money_font">
-                <script>display_money_long({{ engine.const_config[facility]["base_price"] * facility_values[facility]["price_multiplier"] }});</script>
+                <script>display_money_long({{ const_data["base_price"] * facility_values[facility]["price_multiplier"] }});</script>
               </span>
 
             </div>
@@ -81,9 +81,9 @@
                   {% endif %}
                   Affected facilities :
                   {% for affected in const_data["affected facilities"][:-1] %}
-                    <em class="txt-blue">{{ engine.const_config[affected].name }}</em> ,
+                    <em class="txt-blue">{{ engine.const_config["assets"][affected].name }}</em> ,
                   {% endfor %}
-                  <em class="txt-blue">{{ engine.const_config[const_data["affected facilities"][-1]].name }}</em>
+                  <em class="txt-blue">{{ engine.const_config["assets"][const_data["affected facilities"][-1]].name }}</em>
                 {% endif %}
                 {% if facility == "building_technology" %}
                   <br>
@@ -106,7 +106,7 @@
                         {% if req[0] == "mechanical_engineering" %}
                           {% set tech_name = "Mech. engineering" %}
                         {% else %}
-                          {% set tech_name = engine.const_config[req[0]]["name"] %}
+                          {% set tech_name = engine.const_config["assets"][req[0]]["name"] %}
                         {% endif %}
                         {% if req[2] %}
                           <li class="padding-small req_fullfilled">- {{ tech_name }} lvl {{ req[1] + user[facility] }}</li>
@@ -225,11 +225,11 @@
                 </tr>
                 <tr>
                   <td>Effic. comp. air</td>
-                  <td id="Efficiency_CA" class="txt_center hover_info">+{{ ((1-1/const_data["efficiency_factor"])*(0.8 - engine.const_config["compressed_air"]["base_efficiency"] * facility_values["compressed_air"]["efficiency_multiplier"])*100)|round(1) }}pp<span class="popup_info small">percentage point</span></td>
+                  <td id="Efficiency_CA" class="txt_center hover_info">+{{ ((1-1/const_data["efficiency_factor"])*(0.8 - engine.const_config["assets"]["compressed_air"]["base_efficiency"] * facility_values["compressed_air"]["efficiency_multiplier"])*100)|round(1) }}pp<span class="popup_info small">percentage point</span></td>
                 </tr>
                 <tr>
                   <td>Effic. molten salt</td>
-                  <td id="Efficiency_MS" class="txt_center hover_info">+{{ ((1-1/const_data["efficiency_factor"])*(1 - engine.const_config["molten_salt"]["base_efficiency"] * facility_values["molten_salt"]["efficiency_multiplier"])*100)|round(1) }}pp<span class="popup_info small">percentage point</span></td>
+                  <td id="Efficiency_MS" class="txt_center hover_info">+{{ ((1-1/const_data["efficiency_factor"])*(1 - engine.const_config["assets"]["molten_salt"]["base_efficiency"] * facility_values["molten_salt"]["efficiency_multiplier"])*100)|round(1) }}pp<span class="popup_info small">percentage point</span></td>
                 </tr>
               {% endif %}
               {% if facility == "building_technology" %}
@@ -273,15 +273,15 @@
               {% if "inefficiency_factor" in const_data %}
                 <tr>
                   <td>Efficiency hydrogen</td>
-                  <td class="txt_center hover_info">+{{ ((1-const_data["inefficiency_factor"])*(0.65 - engine.const_config["hydrogen_storage"]["base_efficiency"] * facility_values["hydrogen_storage"]["efficiency_multiplier"])*100) | round(1) }}pp<span class="popup_info small">percentage point</span></td>
+                  <td class="txt_center hover_info">+{{ ((1-const_data["inefficiency_factor"])*(0.65 - engine.const_config["assets"]["hydrogen_storage"]["base_efficiency"] * facility_values["hydrogen_storage"]["efficiency_multiplier"])*100) | round(1) }}pp<span class="popup_info small">percentage point</span></td>
                 </tr>
                 <tr>
                   <td>Efficiency Li-ion</td>
-                  <td id="E_Li_ion" class="txt_center hover_info">+{{ ((1-const_data["inefficiency_factor"])*(1 - engine.const_config["lithium_ion_batteries"]["base_efficiency"] * facility_values["lithium_ion_batteries"]["efficiency_multiplier"] )*100) | round(1) }}pp<span class="popup_info small">percentage point</span></td>
+                  <td id="E_Li_ion" class="txt_center hover_info">+{{ ((1-const_data["inefficiency_factor"])*(1 - engine.const_config["assets"]["lithium_ion_batteries"]["base_efficiency"] * facility_values["lithium_ion_batteries"]["efficiency_multiplier"] )*100) | round(1) }}pp<span class="popup_info small">percentage point</span></td>
                 </tr>
                 <tr>
                   <td>Efficiency solid state</td>
-                  <td id="E_SS" class="txt_center hover_info">+{{ ((1-const_data["inefficiency_factor"])*(1 - engine.const_config["solid_state_batteries"]["base_efficiency"] * facility_values["solid_state_batteries"]["efficiency_multiplier"] )*100) | round(1) }}pp<span class="popup_info small">percentage point</span></td>
+                  <td id="E_SS" class="txt_center hover_info">+{{ ((1-const_data["inefficiency_factor"])*(1 - engine.const_config["assets"]["solid_state_batteries"]["base_efficiency"] * facility_values["solid_state_batteries"]["efficiency_multiplier"] )*100) | round(1) }}pp<span class="popup_info small">percentage point</span></td>
                 </tr>
               {% endif %}
               {% if "price factor" in const_data %}

@@ -310,7 +310,7 @@ def extraction_facility_demand(engine, new_values, player, player_cap, demand):
 def industry_demand_and_revenues(engine, player, demand, revenues):
     """calculate power consumption and revenues from industry"""
     # interpolating seasonal factor on the day
-    assets = engine.config[player.id]["assets"]
+    assets = engine.config[player.id]
     day = engine.data["total_t"] // 1440
     seasonal_factor = (
         engine.industry_seasonal[day % 51] * (1440 - engine.data["total_t"] % 1440)
@@ -326,7 +326,7 @@ def industry_demand_and_revenues(engine, player, demand, revenues):
     )
     demand["industry"] = interpolation * seasonal_factor * assets["industry"]["power consumption"]
     # calculate income of industry
-    revenues["industry"] = engine.config[player.id]["assets"]["industry"]["income"]
+    revenues["industry"] = assets["industry"]["income"]
     for ud in player.under_construction:
         # industry demand ramps up during construction
         if ud.name == "industry":
@@ -335,12 +335,12 @@ def industry_demand_and_revenues(engine, player, demand, revenues):
             else:
                 time_fraction = (ud.suspension_time - ud.start_time) / (ud.duration)
             additional_demand = (
-                time_fraction * demand["industry"] * (engine.const_config["industry"]["power factor"] - 1)
+                time_fraction * demand["industry"] * (engine.const_config["assets"]["industry"]["power factor"] - 1)
             )
             additional_revenue = (
                 time_fraction
                 * (revenues["industry"] - 2000 / 1440)  # the 2000 is to account for the universal basic revenue
-                * (engine.const_config["industry"]["income factor"] - 1)
+                * (engine.const_config["assets"]["industry"]["income factor"] - 1)
             )
             demand["industry"] += additional_demand
             revenues["industry"] += additional_revenue
@@ -377,7 +377,7 @@ def calculate_demand(engine, new_values, player):
     construction_demand(player, demand)
     shipment_demand(engine, player, demand)
     if player.carbon_capture > 0:
-        demand["carbon_capture"] = engine.config[player.id]["assets"]["carbon_capture"]["power consumption"]
+        demand["carbon_capture"] = engine.config[player.id]["carbon_capture"]["power consumption"]
 
 
 def calculate_generation_without_market(engine, new_values, player):
@@ -470,7 +470,7 @@ def calculate_generation_with_market(engine, new_values, market, player):
 
     # Sell capacities of remaining facilities on the market
     for facility in player.read_list("rest_of_priorities") + player.read_list("self_consumption_priority"):
-        if engine.const_config[facility]["ramping_time"] != 0:
+        if engine.const_config["assets"][facility]["ramping_time"] != 0:
             if player_cap[facility] is not None:
                 max_prod = calculate_prod(
                     engine,
@@ -663,7 +663,7 @@ def calculate_prod(
     """
     max_resources = np.inf
     ramping_speed = (
-        player_cap[facility]["power"] / engine.const_config[facility]["ramping_time"] * engine.clock_time / 60
+        player_cap[facility]["power"] / engine.const_config["assets"][facility]["ramping_time"] * engine.clock_time / 60
     )
     if not storage:
         for resource, amount in player_cap[facility]["fuel_use"].items():
@@ -799,7 +799,7 @@ def resources_and_pollution(engine, new_values, player):
                 quantity = amount * generation[facility] / player_cap[facility]["power"]
                 setattr(player, resource, getattr(player, resource) - quantity)
             facility_emmissions = (
-                engine.const_config[facility]["base_pollution"]
+                engine.const_config["assets"][facility]["base_pollution"]
                 * generation[facility]
                 / 3600
                 * engine.clock_time
@@ -838,7 +838,7 @@ def resources_and_pollution(engine, new_values, player):
 
     # Carbon capture CO2 absorbtion
     if player.carbon_capture > 0:
-        assets = engine.config[player.id]["assets"]
+        assets = engine.config[player.id]
         satisfaction = demand["carbon_capture"] / assets["carbon_capture"]["power consumption"]
         captured_CO2 = assets["carbon_capture"]["absorbtion"] / 3600 * engine.clock_time * satisfaction
         player.captured_CO2 += captured_CO2
@@ -909,7 +909,7 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
                 )
                 notify(
                     "Energy shortage",
-                    f"The construction of the facility {engine.const_config[construction.name]['name']} has been suspended because of a lack of electricity.",
+                    f"The construction of the facility {engine.const_config['assets'][construction.name]['name']} has been suspended because of a lack of electricity.",
                     player,
                 )
         db.session.commit()
@@ -934,7 +934,7 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
                 )
                 notify(
                     "Energy shortage",
-                    f"The research of the technology {engine.const_config[construction.name]['name']} has been suspended because of a lack of electricity.",
+                    f"The research of the technology {engine.const_config['assets'][construction.name]['name']} has been suspended because of a lack of electricity.",
                     player,
                 )
         db.session.commit()
