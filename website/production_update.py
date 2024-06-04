@@ -840,7 +840,13 @@ def resources_and_pollution(engine, new_values, player):
     if player.carbon_capture > 0:
         assets = engine.config[player.id]
         satisfaction = demand["carbon_capture"] / assets["carbon_capture"]["power consumption"]
-        captured_CO2 = assets["carbon_capture"]["absorbtion"] / 3600 * engine.clock_time * satisfaction
+        captured_CO2 = (
+            assets["carbon_capture"]["absorbtion"]
+            * engine.data["emissions"]["CO2"]
+            / 60
+            * engine.clock_time
+            * satisfaction
+        )
         player.captured_CO2 += captured_CO2
         db.session.commit()
         add_emissions(engine, new_values, player, "carbon_capture", -captured_CO2)

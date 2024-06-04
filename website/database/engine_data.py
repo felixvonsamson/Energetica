@@ -245,7 +245,8 @@ class EmissionData:
 
     def __init__(self):
         self._data = {
-            "CO2": deque([0.0] * 360, maxlen=360),
+            # base value of 5Mt of CO2 in the atmosphere
+            "CO2": deque([5.0 * 10**9] * 360, maxlen=360),
         }
 
     def add(self, type, value):
