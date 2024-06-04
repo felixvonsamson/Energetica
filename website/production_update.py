@@ -389,7 +389,7 @@ def calculate_generation_without_market(engine, new_values, player):
     # generation of non controllable facilities is calculated from weather data
     renewables_generation(engine, player, player_cap, generation)
     minimal_generation(engine, player, player_cap, generation)
-    facilities = engine.storage_facilities + engine.controllable_facilities + engine.renewables
+    facilities = engine.storage_facilities + engine.power_facilities
     # Obligatory generation is put on the internal market at a price of -5
     for facility in facilities:
         if player_cap[facility] is not None:
@@ -455,7 +455,7 @@ def calculate_generation_with_market(engine, new_values, market, player):
     excess_generation = 0
     renewables_generation(engine, player, player_cap, generation)
     minimal_generation(engine, player, player_cap, generation)
-    facilities = engine.storage_facilities + engine.controllable_facilities + engine.renewables
+    facilities = engine.storage_facilities + engine.power_facilities
     for facility in facilities:
         if player_cap[facility] is not None:
             excess_generation += generation[facility]
@@ -848,9 +848,7 @@ def resources_and_pollution(engine, new_values, player):
     construction_emissions(engine, new_values, player)
 
     # O&M costs
-    for facility in (
-        engine.controllable_facilities + engine.renewables + engine.storage_facilities + engine.extraction_facilities
-    ):
+    for facility in engine.power_facilities + engine.storage_facilities + engine.extraction_facilities:
         if player_cap[facility] is not None:
             # the proportion of fixed cost is 100% for renewable and storage facilites, 50% for nuclear reactors and 20% for the rest
             operational_cost = player_cap[facility]["O&M_cost"]

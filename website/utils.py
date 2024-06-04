@@ -57,15 +57,9 @@ def add_asset(player_id, construction_id):
     if getattr(player, construction.name) == 0:
         # initialize array for facility if it is the first one built
         current_data = engine.data["current_data"][player.id]
-        if (
-            construction.name
-            in engine.storage_facilities
-            + engine.controllable_facilities
-            + engine.renewables
-            + engine.extraction_facilities
-        ):
+        if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
             current_data.new_subcategory("op_costs", construction.name)
-        if construction.name in engine.storage_facilities + engine.controllable_facilities + engine.renewables:
+        if construction.name in engine.storage_facilities + engine.power_facilities:
             current_data.new_subcategory("generation", construction.name)
         if construction.name in engine.storage_facilities + engine.extraction_facilities + ["carbon_capture"]:
             current_data.new_subcategory("demand", construction.name)
