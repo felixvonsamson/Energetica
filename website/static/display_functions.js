@@ -6,11 +6,16 @@ readable format for humans.
 // Inserts spaces as a thousands separator and the right unit
 function general_format(value, units, write=false) {
     let unit_index = 0;
+    let isNegative = value < 0;
+    value = Math.abs(value);
     while (value >= 10000 && unit_index < units.length - 1) {
         value /= 1000;
         unit_index += 1;
     }
     formatted_value = `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]}`
+    if (isNegative) {
+        formatted_value = '-' + formatted_value;
+    }
     if (write){
         document.write(formatted_value);
     }

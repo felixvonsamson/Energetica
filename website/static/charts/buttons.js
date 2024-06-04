@@ -252,9 +252,9 @@ function display_money(amount) {
     return general_format(amount, units);
 }
 
-function general_format(value, units) {
+function general_format(value, units, treshold = 10000) {
     let unit_index = 0;
-    while (Math.abs(value) >= 10000 && unit_index < units.length - 1) {
+    while (Math.abs(value) >= treshold && unit_index < units.length - 1) {
         value /= 1000;
         unit_index += 1;
     }
@@ -308,17 +308,21 @@ function alternate_fill() {
 }
 
 function display_W_long(power) {
-    return `${power.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} W`;
+    const units = [" W", " kW", " MW", " GW", " TW"];
+    return general_format(power, units, treshold = 50000);
 }
 
 function display_Wh_long(energy) {
-    return `${energy.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} Wh`;
+    const units = [" Wh", " kWh", " MWh", " GWh", " TWh"];
+    return general_format(energy, units, treshold = 50000);
 }
 
 function display_kg_long(mass) {
-    return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} kg`;
+    const units = [" kg", " t", " kt", " Mt"];
+    return general_format(mass, units, treshold = 50000);
 }
 
-function display_kgh_long(mass) {
-    return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} kg/h`;
+function display_kgh_long(mass_rate) {
+    const units = [" kg/h", " t/h"];
+    return general_format(mass_rate, units, treshold = 50000);
 }
