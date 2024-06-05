@@ -52,9 +52,7 @@ class CapacityData:
                     + (base_data["base_efficiency"] * facility.efficiency_multiplier)
                 ) / effective_values["power"]
             elif facility.facility in engine.extraction_facilities:
-                effective_values["extraction"] += (
-                    base_data["extraction_rate"] * facility.capacity_multiplier * engine.clock_time / 60
-                )
+                effective_values["extraction"] += base_data["extraction_rate"] * facility.capacity_multiplier
                 effective_values["power_use"] += base_data["base_power_consumption"] * facility.power_multiplier
                 effective_values["pollution"] += base_data["base_pollution"] * facility.efficiency_multiplier
 
@@ -76,6 +74,9 @@ class CapacityData:
         if facility not in self._data:
             return None
         return self._data[facility]
+
+    def get_all(self):
+        return self._data
 
 
 class CircularBufferPlayer:

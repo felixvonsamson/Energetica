@@ -175,7 +175,8 @@ function regen(res) {
             load_player_data().then((player_data) => {
 
                 for (const key of keys_resources){
-                    capacities[key] = player_data[1]["warehouse_capacities"][key]
+                    capacities[key] = player_data["config"]["warehouse_capacities"][key]
+                    rates[key] = (raw_data["resources"][key][0].at(-1) - raw_data["resources"][key][0].at(-2)) * 3600 / clock_time;
                 }
 
                 background(229, 217, 182);
@@ -273,7 +274,11 @@ function regen(res) {
                 fill(0);
                 text("Coal", 0.5 * margin, 10);
                 textSize(12);
-                text("+" + display_kgh(rates["coal"]), 0.5 * margin, 30);
+                let sign = "";
+                if (rates["coal"] > 0) {
+                    sign = "+";
+                }
+                text(sign + display_kgh(rates["coal"]), 0.5 * margin, 30);
 
                 translate(1.5 * margin, 0);
                 fill(255);
@@ -288,7 +293,11 @@ function regen(res) {
                 fill(0);
                 text("Oil", 0.5 * margin, 10);
                 textSize(12);
-                text("+" + display_kgh(rates["oil"]), 0.5 * margin, 30);
+                sign = "";
+                if (rates["oil"] > 0) {
+                    sign = "+";
+                }
+                text(sign + display_kgh(rates["oil"]), 0.5 * margin, 30);
 
                 translate(0, 0.5 * height);
                 fill(255);
@@ -305,7 +314,11 @@ function regen(res) {
                 fill(0);
                 text("Uranium", 0.5 * margin, 10);
                 textSize(12);
-                text("+" + display_kgh(rates["uranium"]), 0.5 * margin, 30);
+                sign = "";
+                if (rates["uranium"] > 0) {
+                    sign = "+";
+                }
+                text(sign + display_kgh(rates["uranium"]), 0.5 * margin, 30);
 
                 translate(-1.5 * margin, 0);
                 fill(255);
@@ -320,7 +333,11 @@ function regen(res) {
                 fill(0);
                 text("Gas", 0.5 * margin, 10);
                 textSize(12);
-                text("+" + display_kgh(rates["gas"]), 0.5 * margin, 30);
+                sign = "";
+                if (rates["gas"] > 0) {
+                    sign = "+";
+                }
+                text(sign + display_kgh(rates["gas"]), 0.5 * margin, 30);
                 pop();
                 graph = get();
             });
@@ -338,8 +355,7 @@ function retrieve_resource_data() {
     return fetch("/api/get_resource_data")
         .then((response) => response.json())
         .then((raw_data) => {
-            rates = raw_data[0];
-            on_sale = raw_data[1];
+            on_sale = raw_data;
         })
         .catch((error) => {
             console.error(`caught error ${error}`);

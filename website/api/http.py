@@ -10,6 +10,7 @@ from pathlib import Path
 from website import utils
 from ..database.map import Hex
 from ..database.player import Network, Player
+from ..technology_effects import get_current_technology_values
 
 http = Blueprint("http", __name__)
 
@@ -95,22 +96,10 @@ def get_chat_list():
 @http.route("/get_resource_data", methods=["GET"])
 def get_resource_data():
     """gets production rates and quantity on sale for every resource"""
-    rates = {}
     on_sale = {}
-    for resource in [
-        ("coal", "coal_mine"),
-        ("oil", "oil_field"),
-        ("gas", "gas_drilling_site"),
-        ("uranium", "uranium_mine"),
-    ]:
-        rates[resource[0]] = (
-            getattr(current_user, resource[1])
-            * g.engine.config[current_user.id]["assets"][resource[1]]["amount produced"]
-            * 3600
-            / g.engine.clock_time
-        )
-        on_sale[resource[0]] = getattr(current_user, resource[0] + "_on_sale")
-    return jsonify(rates, on_sale)
+    for resource in ["coal", "oil", "gas", "uranium"]:
+        on_sale[resource] = getattr(current_user, resource + "_on_sale")
+    return jsonify(on_sale)
 
 
 # Gets the data for the overview charts
@@ -193,9 +182,17 @@ def get_player_data():
     """Gets count of assets and config for this player"""
     if current_user.tile is None:
         return "", 404
-    asset_count = current_user.get_values()
+    levels = current_user.get_lvls()
     config = g.engine.config[current_user.id]
-    return jsonify(asset_count, config)
+    capacities = g.engine.data["player_capacities"][current_user.id].get_all()
+    return jsonify(
+        {
+            "levels": levels,
+            "config": config,
+            "capacities": capacities,
+            "multipliers": get_current_technology_values(current_user),
+        }
+    )
 
 
 @http.route("/get_player_id", methods=["GET"])

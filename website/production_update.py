@@ -38,6 +38,7 @@ def update_electricity(engine):
 
     new_values = {}
     for player in players:
+        engine.data["player_capacities"][player.id].update(player.id, None)
         if player.tile is None:
             continue
         new_values[player.id] = engine.data["current_data"][player.id].init_new_data()
@@ -813,7 +814,9 @@ def resources_and_pollution(engine, new_values, player):
             if player_cap[extraction_facility] is not None:
                 max_demand = player_cap[extraction_facility]["power_use"]
                 production_factor = demand[extraction_facility] / max_demand
-                extracted_quantity = production_factor * player_cap[extraction_facility]["extraction"]
+                extracted_quantity = (
+                    production_factor * player_cap[extraction_facility]["extraction"] * getattr(player.tile, resource)
+                )
                 setattr(
                     player.tile,
                     resource,

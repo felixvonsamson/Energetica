@@ -249,7 +249,7 @@ class Player(db.Model, UserMixin):
     def unread_notifications(self):
         return self.notifications.filter_by(read=False).all()
 
-    def get_values(self):
+    def get_lvls(self):
         engine = current_app.config["engine"]
         attributes = chain(
             engine.functional_facilities,

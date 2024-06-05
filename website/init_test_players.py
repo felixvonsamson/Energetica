@@ -8,74 +8,16 @@ from .database.map import Hex
 from .database.player import Network, Player
 from .database.player_assets import (
     Under_construction,
-    Shipment,
-    Resource_on_sale,
 )
 from . import db
 import pickle
-import os
 import time
 from .utils import data_init_network, init_table, add_player_to_data
+from website import technology_effects
 
 
 def edit_database(engine):
-    with open("retieved_data.pck", "rb") as file:
-        retieved_data = pickle.load(file)
-    for player_id in retieved_data["player"]:
-        player = create_player(
-            engine,
-            retieved_data["player"][player_id]["username"],
-            retieved_data["player"][player_id]["pwhash"],
-        )
-        for attribute in retieved_data["player"][player_id]:
-            setattr(player, attribute, retieved_data["player"][player_id][attribute])
-        db.session.commit()
-
-    for network_id in retieved_data["network"]:
-        create_network(engine, retieved_data["network"][network_id]["name"], [])
-
-    for tile_id in retieved_data["hex"]:
-        tile = Hex.query.filter_by(id=tile_id).first()
-        tile.player_id = retieved_data["hex"][tile_id]["player_id"]
-        db.session.commit()
-
-    for construction_id in retieved_data["under_construction"]:
-        construction = retieved_data["under_construction"][construction_id]
-        new_facility = Under_construction(
-            name=construction["name"],
-            family=construction["family"],
-            start_time=construction["start_time"],
-            duration=construction["duration"],
-            player_id=construction["player_id"],
-        )
-        db.session.add(new_facility)
-        db.session.commit()
-
-    for shipment_id in retieved_data["shipment"]:
-        shipment = retieved_data["shipment"][shipment_id]
-        new_shipment = Shipment(
-            resource=shipment["resource"],
-            quantity=shipment["quantity"],
-            departure_time=shipment["departure_time"],
-            duration=shipment["duration"],
-            player_id=shipment["player_id"],
-        )
-        db.session.add(new_shipment)
-        db.session.commit()
-
-    for sale_id in retieved_data["resource_on_sale"]:
-        sale = retieved_data["resource_on_sale"][sale_id]
-        new_sale = Resource_on_sale(
-            resource=sale["resource"],
-            quantity=sale["quantity"],
-            price=sale["price"],
-            creation_date=sale["creation_date"],
-            player_id=sale["player_id"],
-        )
-        db.session.add(new_sale)
-        db.session.commit()
-
-    os.remove("retieved_data.pck")
+    pass
 
 
 def init_test_players(engine):
@@ -192,6 +134,11 @@ def add_asset(player, asset, n):
             duration=0,
             suspension_time=None,
             construction_power=0,
+            construction_pollution=technology_effects.construction_pollution(player, asset),
+            price_multiplier=technology_effects.price_multiplier(player, asset),
+            power_multiplier=technology_effects.power_multiplier(player, asset),
+            capacity_multiplier=technology_effects.capacity_multiplier(player, asset),
+            efficiency_multiplier=technology_effects.efficiency_multiplier(player, asset),
             player_id=player.id,
         )
         db.session.add(new_construction)
