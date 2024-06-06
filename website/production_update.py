@@ -707,7 +707,7 @@ def renewables_generation(engine, player, assets, generation):
         if getattr(player, facility) > 0:
             generation[facility] = (
                 power_factor
-                * assets[facility]["power generation"]
+                * assets[facility]["power_generation"]
                 * getattr(player, facility)
             )
     # SOLAR
@@ -718,7 +718,7 @@ def renewables_generation(engine, player, assets, generation):
         if getattr(player, facility) > 0:
             generation[facility] = (
                 power_factor
-                * assets[facility]["power generation"]
+                * assets[facility]["power_generation"]
                 * getattr(player, facility)
             )
     # HYDRO
@@ -727,7 +727,7 @@ def renewables_generation(engine, player, assets, generation):
         if getattr(player, facility) > 0:
             generation[facility] = (
                 power_factor
-                * assets[facility]["power generation"]
+                * assets[facility]["power_generation"]
                 * getattr(player, facility)
             )
 
@@ -809,7 +809,7 @@ def calculate_prod(
         return min(
             max_resources,
             max_ramping,
-            getattr(player, facility) * assets[facility]["power generation"],
+            getattr(player, facility) * assets[facility]["power_generation"],
         )
     else:
         min_ramping = (
@@ -1029,7 +1029,7 @@ def resources_and_pollution(engine, new_values, player):
                 else:
                     capacity = generation[facility] / (
                         getattr(player, facility)
-                        * assets[facility]["power generation"]
+                        * assets[facility]["power_generation"]
                     )
                 operational_cost = (
                     getattr(player, facility)

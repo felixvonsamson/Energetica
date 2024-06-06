@@ -1,661 +1,740 @@
-{% extends "base.jinja" %} {% block title %}Energetica wiki{% endblock %} {% block content %}
-
-{% set const_data = engine.const_config %}
-
-<div class="flex-row huge title">Energetica wiki</div>
-
-<div class="info_message medium margin padding">
+{% extends "base.jinja" %}
+{% block title %}Energetica wiki{% endblock %}
+{% block content %}
+  {% set const_data = engine.const_config %}
+  <div class="flex-row huge title">Energetica wiki</div>
+  <div class="info_message medium margin padding">
     <i class="fa fa-info-circle info-circle"></i>
     <div class="padding-small">
-        🚧 This game is still under development! 🚧 Join the <a href="https://discord.gg/6xQsfqe2Nd">Energetica 
-        Discord server</a> to stay updated with the latest news, report bugs, and engage with the community. 
-        You can also contact me directly if you have questions (vsfelix@ethz.ch)
+      🚧 This game is still under development! 🚧 Join the <a href="https://discord.gg/6xQsfqe2Nd">Energetica
+      Discord server</a> to stay updated with the latest news, report bugs, and engage with the community.
+      You can also contact me directly if you have questions (vsfelix@ethz.ch)
     </div>
-</div>
-
-<div class="medium margin-large">
-
-  <h2>Welcome to Energetica</h2>
-  <p>
-    As a player, you take on the role of managing the electricity generation of your city or country. 
-    Starting with basic technology like a rudimentary steam engine, you'll progress towards more advanced options such 
-    as photovoltaics and nuclear reactors.
-  </p>
-  <p>
-    Your continuous vigilance over production is essential to ensure a consistent and adequate supply of electricity to 
-    support various energy needs. Collaborating with other players to establish a network for trading electricity 
-    and advancing technological developments is crucial.
-  </p>
-  <p>
-    Effective management of fossil fuels and careful monitoring of emissions are imperative, as consequences may arise 
-    from negligence in these areas.
-  </p>
-  <p>
-    Energetica is a long-term game lasting multiple months. Remember to log in regularly to check progress and make 
-    new decisions to shape the energy landscape of your community!
-  </p>
-  <p>
-    This wiki serves as a comprehensive documentation of all the mechanics within the game. While not a prerequisite 
-    before gameplay, referencing specific chapters within this wiki can aid in making informed decisions during 
-    gameplay.
-  </p>
-
-  <h2>Table of Contents</h2>
-  <ul>
-    <li>
-      <a href="#Map">Map</a>
-      <ul>
-        <li><a href="#Renewable_resources">Renewable resources</a></li>
-        <li><a href="#Fossil_fuels">Fossil fuels</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#Power_Facilities">Power Facilities</a>
-      <ul>
-        <li><a href="#Power_Generation_of_Renewable_Facilities">Power Generation of Renewable Facilities</a></li>
-        <li><a href="#Power_Generation_of_Controllable_Plants">Power Generation of Controllable Facilities</a></li>
-        <li><a href="#O&M_costs">Operation and Maintenance Cost</a></li>
-        <li><a href="#Construction_of_a_Plant">Construction of a Facility</a></li>
-      </ul>
-    </li>
-    <li><a href="#Storage_Facilities">Storage Facilities</a></li>
-    <li><a href="#Extraction_Facilities">Extraction Facilities</a></li>
-    <li><a href="#Functional_Facilities">Functional Facilities</a></li>
-    <li><a href="#Technology">Technology</a></li>
-    <li><a href="#Prioritazation_of_Facilities">Prioritazation of Facilities</a></li>
-    <li>
-      <a href="#Network">Network</a>
-      <ul>
-        <li><a href="#Obligatory_Generation">Obligatory Electricity Generation</a></li>
-        <li><a href="#Market_Logic">Market Logic</a></li>
-      </ul>
-    </li>
-    <li><a href="#Resource_Market">Resource Market</a></li>
-    <li><a href="#climate_change_impacts">Climate Change Impacts</a></li>
-  </ul>
-
-  <h2 id="Map">The Map</h2>
-  <p>
-    Upon creating an account, your initial task is to select a location on the map. It's crucial to note that this 
-    choice is <strong>permanent</strong>; there won't be any opportunity to expand or alter your chosen tile. Choose 
-    wisely.
-  </p>
-  <p>
-    The map consists of a hexagonal grid comprising 331 tiles, visualized on community > <a href="/map">Map</a>.
-  </p>
-  <p>
-    The distance between your location and another player's tile directly impacts resource shipment times when engaging 
-    in trade. For more insights, refer to the <a href="#Resource_Market">resource market</a> section.
-  </p>
-  <p>
-    Each tile offers a specific assortment of resources—seven distinct resources categorized into renewable and fossil 
-    fuel types:
-  </p>
-
-  <h3 id="Renewable_resources">Renewable resources:</h3>
-  <ul>
-    <li>
-      <strong>Solar:</strong> The solar potential is given in W/m², indicating the maximal irradiance achievable at this 
-      latitiude. The higher this maximum irradiance, the higher will be the power production of PV and CSP plants.
-    </li>
-    <li>
-      <strong>Wind:</strong> The wind potential is given in km/h, indicating the average wind speed at this tile. Refer 
-      to <a href="#Wind_Power_Generation">wind power generation</a> for details on how it affects the generation of 
-      windmills and wind turbines.
-    </li>
-    <li>
-      <strong>Hydro:</strong> The hydro potential is given in m³/s, indicating the maximal river discharge rate in the area. 
-      The prices of watermills and water dams increase with each additional facility created. This increase is more important 
-      for tiles with low discharge rates and also affects the operational cost of the facility. 
-      Pumped hydro facilities are not affected by hydro potential. The price of the 
-      \(n^{th}\) facility of type \(i\) is calculated as follows : <br>
-      \(P_{i,n} = P_{i,0} \times (0.6 + e^{0.6 \times \frac{n + 1 - 3 \times hydropot}{0.3 + hydropot}})\) &ensp;
-      With \(hydropot\) beeing the hydropotential as a percentage.
-    </li>
-  </ul>
-  
-  <h3 id="Fossil_fuels">Fossil fuels:</h3>
-  <ul>
-    <li>
-      <strong>Coal, Oil, Gas, and Uranium:</strong> These indicate the quantity of each resource stored underground on
-      a specific tile. Extraction facilities allow you to extract these resources. For detailed procedures, consult the
-      <a href="#Extraction_Facilities">extraction facilities</a> section.
-    </li>
-  </ul>
-  <h2 id="Power_Facilities">Power Facilities</h2>
-  <p>
-    Power facilities are integral for electricity generation within the game. Upon starting, you begin with a single
-    steam engine. Initially, only the steam engine, watermill, and windmill are available. However, researching
-    technologies will unlock additional power facilities.
-  </p>
-  <p>
-    Power facilities within Energetica are classified into five categories, each offering different
-    characteristics and functionalities.
-  </p>
-  <h4>Fossil Fuel Family</h4>
-  <ul>
-    <li>Steam engine</li>
-    <li>Coal burner &ensp;<span class="txt_pine">(Coal)</span></li>
-    <li>Oil burner  &ensp;<span class="txt_pine">(Oil)</span></li>
-    <li>Gas burner &ensp;<span class="txt_pine">(Gas)</span></li>
-    <li>Combined cycle &ensp;<span class="txt_pine">(Gas + Coal)</span></li>
-    <li>Nuclear reactor &ensp;<span class="txt_pine">(Uranium)</span></li>
-    <li>Gen4 Nuclear &ensp;<span class="txt_pine">(Uranium)</span></li>
-  </ul>
-  <p>These facilites are controllable, emit CO2, and require fuel for operation (except for the steam engine).</p>
-  <h4>Wind Family</h4>
-  <ul>
-    <li>Windmill</li>
-    <li>Onshore wind turbine</li>
-    <li>Offshore wind turbine</li>
-  </ul>
-  <p>
-    These facilities are non-controllable, do not emit pollutants during operation, and their power output varies based 
-    on wind conditions.
-  </p>
-  <h4>Hydro Family</h4>
-  <ul>
-    <li>Watermill</li>
-    <li>Small water dam</li>
-    <li>Large water dam</li>
-  </ul>
-  <p>
-    Similar to wind facilities, these are non-controllable, emission-free during operation, and their output varies 
-    during the year based on river discharge rates.
-  </p>
-  <h4>Solar Family</h4>
-  <ul>
-    <li>Concentrated solar power</li>
-    <li>Photovoltaics</li>
-  </ul>
-  <p>
-    These facilities are also non-controllable, emission-free during operation, and their output varies based on solar 
-    irradiance levels.
-  </p>
-  <h3 id="Power_Generation_of_Renewable_Facilities">Power Generation of Renewable Facilities</h3>
-  <p>
-    Renewable power generation is non-controllable, meaning their power output is determined by specific calculations,
-    regardless of the demand. Any surplus generation needs to be either stored or dumped.
-  </p>
-  <h4 id="Wind_Power_Generation">Wind Power Generation</h4>
-  <p>
-    The power generated by wind facilities is influenced by the number of wind power facilities, the wind potential,
-    and the current wind speed.
-  </p>
-  <p>
-    Real-life wind speed data from Zürich with a 15-minute delay is utilized. The location-specific wind speed on a
-    tile is calculated as follows: &ensp; \(ws_{loc} = ws_{ütli} \times \sqrt{windpot}\) &ensp; with \(ws_{ütli}\) 
-    beeing the wind speed mesured at Uetliberg and \(windpot\) the wind potential on the players tile defined as \(\frac{ws_{avr} }{50km/h}\) 
-    with \(ws_{avr}\) beeing the average wind speed as indicated on the map.
-  </p>
-  <p>
-    The power generated by wind turbines is calculated using a characteristic function:
-  </p>
-  <!-- Placeholder for Wind Turbine Characteristic Curve Graph -->
-  <div class="graph-container">
-    <img src="{{ url_for('static', filename='images/wiki/char_func_wind.jpg') }}"
-         alt="Characteristic curve of wind turbine">
   </div>
-  <p>Formula for total power generation of wind facilty type i:</p>
-  <p>\(P_i = cf(ws_{ütli} \times \sqrt{windpot}) \times maxP_i \times n_i \)</p>
-  <p>
-    where \(cf()\) is the characteristic function shown in the graph above, \(ws_{ütli}\) is the current wind speed (live
-    Zürich) in km/h, \(windpot\) is the wind potential on the players tile in percent, \(maxP_i\) is the max power generation for the
-    facility type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
-  </p>
-  <h4>Solar Power Generation</h4>
-  <p>
-    Solar power generation depends on the number of solar power facilities, the tiles solar potential, and the current
-    irradiance.
-  </p>
-  <p>
-    Real-life irradiance data from Zürich with a 15-minute delay is utilized. The location-specific irradiance on a tile is
-    calculated as follows: \(irr_{loc} = irr_{ütli} \times solarpot \) &ensp; with \(irr_{ütli}\) beeing the 
-    irradiance mesured at Uetliberg and \(solarpot\) the solar potential specific to the players tile defined as \(\frac{ irr_{tile} }{1000W/m²}\) 
-    with \(irr_{tile}\) beeing the maximal irradiance as indicated on the map.
-  </p>
-  <p>Formula for total power generation of solar facilty type i:</p>
-  <p>\(P_i = \frac{ irr_{ütli} }{875W/m²} \times solarpot \times maxP_i \times n_i \)</p>
-  <p>
-    where \(irr_{ütli}\) is the current irradiance (live Zürich) in W/m², \(solarpot\) is the solar potential on the players tile in percent, 
-    \(875 W/m²\)  is the maximal theoretical irradiance in Zürich, \(maxP_i\) is the max power generation of the
-    facility type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
-  </p>
-  <h4>Hydropower Generation</h4>
-  <p>
-    Hydropower generation fluctuates with the change in river discharge rates, following seasonal patterns within the
-    game's timeline.
-  </p>
-  <!-- Placeholder for Seasonal Variation of River Discharge Graph -->
-  <div class="graph-container">
-    <img src="{{ url_for('static', filename='images/wiki/seasonal_variation_rivers.jpg') }}"
-         alt="Seasonal variataions of river discharges">
-  </div>
-  <p>Formula for total power generation of hydropower facilty type i:</p>
-  <p>\(P_i = sv(t) \times maxP_i \times n_i \)</p>
-  <p>
-    where \(sv()\) is the seasonal variation shown in the graph, \(t\) is the in-game date (in-game years have only {{(51 / 60 * engine.clock_time) | round() | int }} days), \(maxP_i\) is the max power
-    generation of the facility type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
-  </p>
-  <h3 id="Power_Generation_of_Controllable_Plants">Power Generation of Controllable Facilities</h3>
-  <p>
-    Controllable facility power generation must adhere to the ramping constraints of each facility from one minute to the
-    next. The ramping speed, expressed in W/min, applies both to ramping up and down.
-  </p>
-  <p>
-    For instance, a controllable facility with a ramping speed of 10 kW/min, generating 100 kW, can vary its output
-    between 90 and 110 kW in the following minute. Unused minimal power may need to be dumped to satisfy the ramping down
-    constraint.
-  </p>
-  <p>
-    The order of priority in which the controllable facilities are used can be adjusted by the player. See 
-    <a href="#Prioritazation_of_Facilities">Prioritazation of Facilities</a> for details.
-  </p>
-  <h4>Use of Resources</h4>
-  <p>Except for the steam engine, controllable power facilites consume resources (fuel) for operation.</p>
-  <p>
-    The fuel usage is measured in kg/MWh, indicating that fuel consumption is proportionate to the electricity
-    generated. In cases where a facility lacks sufficient fuel to produce a specific amount of electricity, it will cap its
-    maximal production according to the available fuel stocks.
-  </p>
-  <p>
-    {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Thermodynamics') }}">
-    Thermodynamics</a>{% else %}Thermodynamics{% endif %} 
-    influences facility efficiency, decreasing fuel consumption per unit of energy.
-  </p>
-  <h4>CO2 Emissions</h4>
-  <p>
-    CO2 emissions are calculated based on the fuel usage of a facility and are expressed in kg/MWh. Similar to fuel
-    consumption, CO2 production correlates with the amount of power generated. CO2 emissions affect the shared
-    atmosphere among all players, influencing the game's climate. Refer to <a href="#climate_change_impacts">climate change impact</a> for more details.
-  </p>
-  <h3 id="O&M_costs">Operation and Maintenance Cost</h3>
-  <p>
-    Each power facility in the game incurs operational and maintenance costs. For renewable facilities, these costs are
-    fixed, while for controllable facilities, there is both a fixed and a variable component. The fixed costs represent 20%
-    of the total O&M costs, while the variable costs, dependent on the power output of the facility, constitute the 
-    remaining 80%. Nuclear facilities, such as the Nuclear Reactor and Gen4 Nuclear, differ in that they have a fixed 
-    cost fraction of 50%. The O&M costs provided for each facility in the power facilities page are based on 100% power 
-    output.
-  </p>
-  <h3 id="Construction_of_a_Plant">Construction of a Facility</h3>
-  <p>If you choose to build a new facility, it will require various resources:</p>
-  <ul>
-    <li>Price: The cost to initiate construction</li>
-    <li>Duration: The time required for completion</li>
-    <li>Power consumption: Power required during construction</li>
-    <li>Emissions: CO2 emitted during construction, distributed over the construction period</li>
-  </ul>
-  <p>
-    Construction projects are undertaken by construction workers. Each worker can focus on a single construction at a 
-    time. Construction projects can be paused, cancelled, and reordered. If a construction is immediately cancelled, 80% 
-    of the facility's price will be refunded, with a proportionaly decreasing refund as construction progresses. Upon completing a 
-    construction, a worker will automatically move on to the next project in the list, if possible.
-  </p>
-  <p>If the energy demand for constructions isn't met, it is paused, except for the initial phase, during which a ramping up period is allowed. 
-  During this period, it's acceptable for the satisfaction level to be lower as long as the power consumption increases by at least 5% per minute.</p>
-  <p>
-    Researching {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Building Technology') }}">
-    building technology</a>{% else %}building technology{% endif %} will unlock additional construction workers and 
-    increase the speed of construction projects.
-  </p>
-  <h4>Lifespan of a Facility</h4>
-  <p>
-    Each facility has an operational lifespan. At the end of its lifespan, a facility is decommisionned at a cost equivalent to 20% of its original price.
-  </p>
-  <h2 id="Storage_Facilities">Storage Facilities</h2>
-  <p>
-    Storage facilities play a crucial role in storing energy within Energetica. Initially, only the small water dam is
-    accessible, but as you research technologies, other storage facilities can be unlocked. Despite working on the same
-    principle, each storage facility possesses unique characteristics:
-  </p>
-  <ul>
-    <li>
-      <strong>Storage Capacity:</strong> Maximum amount of stored energy.
-    </li>
-    <li>
-      <strong>Max Generation:</strong> Maximum electricity generation and usage for charging. Determines the maximum
-      charge and discharge speed of the storage facilities.
-    </li>
-    <li>
-      <strong>Ramping Speed:</strong> Defines the maximum rate of change for charging and discharging. For further
-      information, refer to the <a href="#Power_Generation_of_Controllable_Plants">controllable facility power
-      generation</a> section. (Currently there is no ramping down constraint for storage facilities during charging, meaning that a storage facility can go from 100% charging rate to 0% instantly)
-    </li>
-    <li>
-      <strong>Efficiency:</strong> Round trip efficiency of the storage facility. Efficiency losses occur during both
-      charging and discharging. For instance, if the roundtrip efficiency is 0.81, the charging and discharging
-      efficiencies would be sqrt(0.81) = 0.9 (10% loss during charging and 10% more during discharging). Improvements in
-      efficiency are possible through certain technologies.
-    </li>
-    <li>
-      <strong>Operation cost:</strong> Operational cost of the facility that consist of 100% fixed costs.
-    </li>
-    <li>
-      <strong>Lifespan:</strong> Lifespan of the facility.
-    </li>
-  </ul>
-  <p>
-    The construction process for a storage facility mirrors that of power facilities, as described in the <a href="#Construction_of_a_Plant">construction of a facility</a> section.
-  </p>
-  <h2 id="Extraction_Facilities">Extraction Facilities</h2>
-  <p>
-    Extraction facilities play a pivotal role in acquiring fossil resources within Energetica. Each of the four natural
-    resources (Coal, Oil, Gas, and Uranium) has a dedicated extraction facility. Unlocking these facilities requires different
-    levels of {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
-    mineral extraction</a>{% else %}mineral extraction{% endif %} technology and <a href="{{ url_for('views.functional_facilities', _anchor='Warehouse') }}">warehouse</a>.
-  </p>
-  <ul>
-    <li>
-      <strong>Power Consumption:</strong> Maximum power consumption of the facility. This consumption is proportional to
-      the amount of resources extracted. When an extraction facility is inactive, it doesn't consume any power.
-    </li>
-    <li>
-      <strong>Resource Production:</strong> Extraction speed of one facility measured in kg or tons per hour. The extraction speed is
-      influenced by the extraction rate, available resources in the ground, and the level of {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
-      mineral extraction</a>{% else %}mineral extraction{% endif %}.
-    </li>
-    <li>
-      <strong>Operation cost:</strong> Operational cost of the extraction facility consisting of 20% fixed costs and 80% variable cost.
-    </li>
-    <li>
-      <strong>CO2 Emissions:</strong> Amount of CO2 emitted during resource extraction. Emissions are proportional to
-      the resource production and measured in kg of CO2 per ton of extracted resource.
-    </li>
-    <li>
-      <strong>Lifespan:</strong> Lifespan of the extraction facility.
-    </li>
-  </ul>
-  <p>Formula for extraction speed of natural resource i:</p>
-  <p>\(es_i = er_i \times q_i \times 1.4^{ME} \times n_{ef,i} \)</p>
-  <p>
-    where \(es\) is the extraction speed in tons/h, \(er\) is the extraction rate in h\(^{-1}\), \(q_i\) is the amount of the
-    resource i in the ground on the player's tile in tons, \(ME\) is the level of the technology 
-    {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
-    mineral extraction</a>{% else %}mineral extraction{% endif %}, and \(n_{ef,i}\) is the number of extraction
-    facilities for the resource i owned by the player. Extraction rates are fixed and determine the fraction of underground resources extractable per hour by one
-    facility. They are given in the following table :
-  </p>
-  <div class="flex-col">
-    <table class="table bone txt_center">
-      <tr>
-        <th class="padding">Resource</th>
-        <th class="padding">Extraction Rate</th>
-      </tr>
-      <tr>
-        <td>Coal</td>
-        <td>{{ (const_data.coal_mine.extraction_rate*6000) | round(4) }}% /h</td>
-      </tr>
-      <tr>
-        <td>Oil</td>
-        <td>{{ (const_data.oil_field.extraction_rate*6000) | round(4) }}% /h</td>
-      </tr>
-      <tr>
-        <td>Gas</td>
-        <td>{{ (const_data.gas_drilling_site.extraction_rate*6000) | round(4) }}% /h</td>
-      </tr>
-      <tr>
-        <td>Uranium</td>
-        <td>{{ (const_data.uranium_mine.extraction_rate*6000) | round(4) }}% /h</td>
-      </tr>
-    </table>
-  </div>
-  <p>
-    Resources extracted from these facilities are stored in the <a href="#The_Warehouse">warehouse</a>. Extraction facilities cease operation when the
-    warehouse reach full capacity.
-  </p>
-  <p>
-    The construction process for an extraction facility aligns with that of power facilities, detailed in the <a href="#Construction_of_a_Plant">construction of a facility</a> section.
-  </p>
-  <h2 id="Functional_Facilities">Functional Facilities</h2>
-  <p>
-    Functional facilities in Energetica are distinct from power, storage, and extraction facilities as they operate on
-    a level-based system. Each upgrade to a higher level incurs increasing costs in terms of money, time, and energy.
-    There are four unique functional facilities:
-  </p>
-  <p>
-    The construction process for functional facilities works the same way as for power facilities (<a href="#Construction_of_a_Plant">Construction of a facility</a>) 
-    except for the fact that consecutive upgrades of the same facility cannot be parallelized.
-  </p>
-  <h3>The Industry</h3>
-  <p>
-    The Industry serves as a central element, initially starting at level 1. It generates revenue by consuming
-    electricity. With each level upgrade, revenue increase by {{ ((const_data.industry["income factor"]-1)*100) | round | int }}% 
-    and electricity demand increases by {{ ((const_data.industry["power factor"]-1)*100) | round | int }}%. It is worth 
-    noting that because of these rates, the industries economic efficiency (in <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh) is decreasing with higher levels of industry.
-    Revenues and power demand gradually increase during the upgrade duration.
-  </p>
-  <p>
-    The electricity demand of the industry fluctuates daily and yearly (in-game time), following specific cycles represented in the following graphs.
-    Energy demand is calculated based on these factors as follows :
-  </p>
-  <p>\( D = D_{base} \times dv(t) \times sv(t) \)</p>
-  <p>
-    with \(D_{base}\) the base demand as indicated on the page <a href="{{ url_for('views.functional_facilities') }}">Functional
-    facilities</a>, \(dv()\) the daily variations shown in the following graph, \(sv()\) the seasonal variations shown
-    in the following graph and \(t\) the in-game date and time (in-game years have only {{(51 / 60 * engine.clock_time) | round() | int }} days).
-  </p>
-  <div class="graph-container">
-    <img style="height:350px"
-         src="{{ url_for('static', filename='images/wiki/daily_variation_industry.jpg') }}"
-         alt="Daily variation of the industry demand">
-    <img style="height:350px"
-         src="{{ url_for('static', filename='images/wiki/seasonal_variation_industry.jpg') }}"
-         alt="Seasonal variation of the industry demand">
-  </div>
-  <p>If the industry's demand isn't met, its revenues will decrease following this rule : 
-  \( revenues = revenues_{base} \times (\frac{satisfaction}{demand})^{2} \). 
-  This models the fact that reducing slightly the consumption of the industry has a low cost but reducing it a lot has a very high cost.</p>
-  <h3 id="The_Laboratory">The Laboratory</h3>
-  <p>
-    The laboratory is needed for researching technologies. Different technology levels require corresponding
-    laboratory levels. It also enhances research speed by {{ ((1-const_data.laboratory["time factor"])*100) | round | int }}% 
-    and for every 3rd upgrade, a new lab worker is unlocked.
-  </p>
-  <h3 id="The_Warehouse">The Warehouse</h3>
-  <p>
-    The warehouse is essential for storing natural resources. Each level increment increases the maximum storage
-    capacity by {{ ((const_data.warehouse["capacity factor"]-1)*100) | round | int }}% for all resources. The following 
-    table defines the initial storage capacities at level 1.
+  <div class="medium margin-large">
+    <h2>Welcome to Energetica</h2>
+    <p>
+      As a player, you take on the role of managing the electricity generation of your city or country.
+      Starting with basic technology like a rudimentary steam engine, you'll progress towards more advanced options such
+      as photovoltaics and nuclear reactors.
+    </p>
+    <p>
+      Your continuous vigilance over production is essential to ensure a consistent and adequate supply of electricity to
+      support various energy needs. Collaborating with other players to establish a network for trading electricity
+      and advancing technological developments is crucial.
+    </p>
+    <p>
+      Effective management of fossil fuels and careful monitoring of emissions are imperative, as consequences may arise
+      from negligence in these areas.
+    </p>
+    <p>
+      Energetica is a long-term game lasting multiple months. Remember to log in regularly to check progress and make
+      new decisions to shape the energy landscape of your community!
+    </p>
+    <p>
+      This wiki serves as a comprehensive documentation of all the mechanics within the game. While not a prerequisite
+      before gameplay, referencing specific chapters within this wiki can aid in making informed decisions during
+      gameplay.
+    </p>
+    <h2>Table of Contents</h2>
+    <ul>
+      <li>
+        <a href="#Map">Map</a>
+        <ul>
+          <li>
+            <a href="#Renewable_resources">Renewable resources</a>
+          </li>
+          <li>
+            <a href="#Fossil_fuels">Fossil fuels</a>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <a href="#Power_Facilities">Power Facilities</a>
+        <ul>
+          <li>
+            <a href="#Power_Generation_of_Renewable_Facilities">Power Generation of Renewable Facilities</a>
+          </li>
+          <li>
+            <a href="#Power_Generation_of_Controllable_Plants">Power Generation of Controllable Facilities</a>
+          </li>
+          <li>
+            <a href="#O&M_costs">Operation and Maintenance Cost</a>
+          </li>
+          <li>
+            <a href="#Construction_of_a_Plant">Construction of a Facility</a>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <a href="#Storage_Facilities">Storage Facilities</a>
+      </li>
+      <li>
+        <a href="#Extraction_Facilities">Extraction Facilities</a>
+      </li>
+      <li>
+        <a href="#Functional_Facilities">Functional Facilities</a>
+      </li>
+      <li>
+        <a href="#Technology">Technology</a>
+      </li>
+      <li>
+        <a href="#Prioritazation_of_Facilities">Prioritazation of Facilities</a>
+      </li>
+      <li>
+        <a href="#Network">Network</a>
+        <ul>
+          <li>
+            <a href="#Obligatory_Generation">Obligatory Electricity Generation</a>
+          </li>
+          <li>
+            <a href="#Market_Logic">Market Logic</a>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <a href="#Resource_Market">Resource Market</a>
+      </li>
+      <li>
+        <a href="#climate_change_impacts">Climate Change Impacts</a>
+      </li>
+    </ul>
+    <h2 id="Map">The Map</h2>
+    <p>
+      Upon creating an account, your initial task is to select a location on the map. It's crucial to note that this
+      choice is <strong>permanent</strong>; there won't be any opportunity to expand or alter your chosen tile. Choose
+      wisely.
+    </p>
+    <p>
+      The map consists of a hexagonal grid comprising 331 tiles, visualized on community > <a href="/map">Map</a>.
+    </p>
+    <p>
+      The distance between your location and another player's tile directly impacts resource shipment times when engaging
+      in trade. For more insights, refer to the <a href="#Resource_Market">resource market</a> section.
+    </p>
+    <p>
+      Each tile offers a specific assortment of resources—seven distinct resources categorized into renewable and fossil
+      fuel types:
+    </p>
+    <h3 id="Renewable_resources">Renewable resources:</h3>
+    <ul>
+      <li>
+        <strong>Solar:</strong> The solar potential is given in W/m², indicating the maximal irradiance achievable at this
+        latitiude. The higher this maximum irradiance, the higher will be the power production of PV and CSP plants.
+      </li>
+      <li>
+        <strong>Wind:</strong> The wind potential is given in km/h, indicating the average wind speed at this tile. Refer
+        to <a href="#Wind_Power_Generation">wind power_generation</a> for details on how it affects the generation of
+        windmills and wind turbines.
+      </li>
+      <li>
+        <strong>Hydro:</strong> The hydro potential is given in m³/s, indicating the maximal river discharge rate in the area.
+        The prices of watermills and water dams increase with each additional facility created. This increase is more important
+        for tiles with low discharge rates and also affects the operational cost of the facility.
+        Pumped hydro facilities are not affected by hydro potential. The price of the
+        \(n^{th}\) facility of type \(i\) is calculated as follows :
+        <br>
+        \(P_{i,n} = P_{i,0} \times (0.6 + e^{0.6 \times \frac{n + 1 - 3 \times hydropot}{0.3 + hydropot}})\) &ensp;
+        With \(hydropot\) beeing the hydropotential as a percentage.
+      </li>
+    </ul>
+    <h3 id="Fossil_fuels">Fossil fuels:</h3>
+    <ul>
+      <li>
+        <strong>Coal, Oil, Gas, and Uranium:</strong> These indicate the quantity of each resource stored underground on
+        a specific tile. Extraction facilities allow you to extract these resources. For detailed procedures, consult the
+        <a href="#Extraction_Facilities">extraction facilities</a> section.
+      </li>
+    </ul>
+    <h2 id="Power_Facilities">Power Facilities</h2>
+    <p>
+      Power facilities are integral for electricity generation within the game. Upon starting, you begin with a single
+      steam engine. Initially, only the steam engine, watermill, and windmill are available. However, researching
+      technologies will unlock additional power facilities.
+    </p>
+    <p>
+      Power facilities within Energetica are classified into five categories, each offering different
+      characteristics and functionalities.
+    </p>
+    <h4>Fossil Fuel Family</h4>
+    <ul>
+      <li>Steam engine</li>
+      <li>
+        Coal burner &ensp;<span class="txt_pine">(Coal)</span>
+      </li>
+      <li>
+        Oil burner  &ensp;<span class="txt_pine">(Oil)</span>
+      </li>
+      <li>
+        Gas burner &ensp;<span class="txt_pine">(Gas)</span>
+      </li>
+      <li>
+        Combined cycle &ensp;<span class="txt_pine">(Gas + Coal)</span>
+      </li>
+      <li>
+        Nuclear reactor &ensp;<span class="txt_pine">(Uranium)</span>
+      </li>
+      <li>
+        Gen4 Nuclear &ensp;<span class="txt_pine">(Uranium)</span>
+      </li>
+    </ul>
+    <p>These facilites are controllable, emit CO2, and require fuel for operation (except for the steam engine).</p>
+    <h4>Wind Family</h4>
+    <ul>
+      <li>Windmill</li>
+      <li>Onshore wind turbine</li>
+      <li>Offshore wind turbine</li>
+    </ul>
+    <p>
+      These facilities are non-controllable, do not emit pollutants during operation, and their power output varies based
+      on wind conditions.
+    </p>
+    <h4>Hydro Family</h4>
+    <ul>
+      <li>Watermill</li>
+      <li>Small water dam</li>
+      <li>Large water dam</li>
+    </ul>
+    <p>
+      Similar to wind facilities, these are non-controllable, emission-free during operation, and their output varies
+      during the year based on river discharge rates.
+    </p>
+    <h4>Solar Family</h4>
+    <ul>
+      <li>Concentrated solar power</li>
+      <li>Photovoltaics</li>
+    </ul>
+    <p>
+      These facilities are also non-controllable, emission-free during operation, and their output varies based on solar
+      irradiance levels.
+    </p>
+    <h3 id="Power_Generation_of_Renewable_Facilities">Power Generation of Renewable Facilities</h3>
+    <p>
+      Renewable power_generation is non-controllable, meaning their power output is determined by specific calculations,
+      regardless of the demand. Any surplus generation needs to be either stored or dumped.
+    </p>
+    <h4 id="Wind_Power_Generation">Wind Power Generation</h4>
+    <p>
+      The power generated by wind facilities is influenced by the number of wind power facilities, the wind potential,
+      and the current wind speed.
+    </p>
+    <p>
+      Real-life wind speed data from Zürich with a 15-minute delay is utilized. The location-specific wind speed on a
+      tile is calculated as follows: &ensp; \(ws_{loc} = ws_{ütli} \times \sqrt{windpot}\) &ensp; with \(ws_{ütli}\)
+      beeing the wind speed mesured at Uetliberg and \(windpot\) the wind potential on the players tile defined as \(\frac{ws_{avr} }{50km/h}\)
+      with \(ws_{avr}\) beeing the average wind speed as indicated on the map.
+    </p>
+    <p>The power generated by wind turbines is calculated using a characteristic function:</p>
+    <!-- Placeholder for Wind Turbine Characteristic Curve Graph -->
+    <div class="graph-container">
+      <img src="{{ url_for('static', filename='images/wiki/char_func_wind.jpg') }}"
+           alt="Characteristic curve of wind turbine">
+    </div>
+    <p>Formula for total power_generation of wind facilty type i:</p>
+    <p>\(P_i = cf(ws_{ütli} \times \sqrt{windpot}) \times maxP_i \times n_i \)</p>
+    <p>
+      where \(cf()\) is the characteristic function shown in the graph above, \(ws_{ütli}\) is the current wind speed (live
+      Zürich) in km/h, \(windpot\) is the wind potential on the players tile in percent, \(maxP_i\) is the max power_generation for the
+      facility type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
+    </p>
+    <h4>Solar Power Generation</h4>
+    <p>
+      Solar power_generation depends on the number of solar power facilities, the tiles solar potential, and the current
+      irradiance.
+    </p>
+    <p>
+      Real-life irradiance data from Zürich with a 15-minute delay is utilized. The location-specific irradiance on a tile is
+      calculated as follows: \(irr_{loc} = irr_{ütli} \times solarpot \) &ensp; with \(irr_{ütli}\) beeing the
+      irradiance mesured at Uetliberg and \(solarpot\) the solar potential specific to the players tile defined as \(\frac{ irr_{tile} }{1000W/m²}\)
+      with \(irr_{tile}\) beeing the maximal irradiance as indicated on the map.
+    </p>
+    <p>Formula for total power_generation of solar facilty type i:</p>
+    <p>\(P_i = \frac{ irr_{ütli} }{875W/m²} \times solarpot \times maxP_i \times n_i \)</p>
+    <p>
+      where \(irr_{ütli}\) is the current irradiance (live Zürich) in W/m², \(solarpot\) is the solar potential on the players tile in percent,
+      \(875 W/m²\)  is the maximal theoretical irradiance in Zürich, \(maxP_i\) is the max power_generation of the
+      facility type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
+    </p>
+    <h4>Hydropower Generation</h4>
+    <p>
+      Hydropower_generation fluctuates with the change in river discharge rates, following seasonal patterns within the
+      game's timeline.
+    </p>
+    <!-- Placeholder for Seasonal Variation of River Discharge Graph -->
+    <div class="graph-container">
+      <img src="{{ url_for('static', filename='images/wiki/seasonal_variation_rivers.jpg') }}"
+           alt="Seasonal variataions of river discharges">
+    </div>
+    <p>Formula for total power_generation of hydropower facilty type i:</p>
+    <p>\(P_i = sv(t) \times maxP_i \times n_i \)</p>
+    <p>
+      where \(sv()\) is the seasonal variation shown in the graph, \(t\) is the in-game date (in-game years have only {{ (51 / 60 * engine.clock_time) | round() | int }} days), \(maxP_i\) is the max power
+      generation of the facility type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
+    </p>
+    <h3 id="Power_Generation_of_Controllable_Plants">Power Generation of Controllable Facilities</h3>
+    <p>
+      Controllable facility power_generation must adhere to the ramping constraints of each facility from one minute to the
+      next. The ramping speed, expressed in W/min, applies both to ramping up and down.
+    </p>
+    <p>
+      For instance, a controllable facility with a ramping speed of 10 kW/min, generating 100 kW, can vary its output
+      between 90 and 110 kW in the following minute. Unused minimal power may need to be dumped to satisfy the ramping down
+      constraint.
+    </p>
+    <p>
+      The order of priority in which the controllable facilities are used can be adjusted by the player. See
+      <a href="#Prioritazation_of_Facilities">Prioritazation of Facilities</a> for details.
+    </p>
+    <h4>Use of Resources</h4>
+    <p>Except for the steam engine, controllable power facilites consume resources (fuel) for operation.</p>
+    <p>
+      The fuel usage is measured in kg/MWh, indicating that fuel consumption is proportionate to the electricity
+      generated. In cases where a facility lacks sufficient fuel to produce a specific amount of electricity, it will cap its
+      maximal production according to the available fuel stocks.
+    </p>
+    <p>
+      {% if "technology" in user.advancements %}
+        <a href="{{ url_for('views.technology', _anchor='Thermodynamics') }}">Thermodynamics</a>
+      {% else %}
+        Thermodynamics
+      {% endif %}
+      influences facility efficiency, decreasing fuel consumption per unit of energy.
+    </p>
+    <h4>CO2 Emissions</h4>
+    <p>
+      CO2 emissions are calculated based on the fuel usage of a facility and are expressed in kg/MWh. Similar to fuel
+      consumption, CO2 production correlates with the amount of power generated. CO2 emissions affect the shared
+      atmosphere among all players, influencing the game's climate. Refer to <a href="#climate_change_impacts">climate change impact</a> for more details.
+    </p>
+    <h3 id="O&M_costs">Operation and Maintenance Cost</h3>
+    <p>
+      Each power facility in the game incurs operational and maintenance costs. For renewable facilities, these costs are
+      fixed, while for controllable facilities, there is both a fixed and a variable component. The fixed costs represent 20%
+      of the total O&M costs, while the variable costs, dependent on the power output of the facility, constitute the
+      remaining 80%. Nuclear facilities, such as the Nuclear Reactor and Gen4 Nuclear, differ in that they have a fixed
+      cost fraction of 50%. The O&M costs provided for each facility in the power facilities page are based on 100% power
+      output.
+    </p>
+    <h3 id="Construction_of_a_Plant">Construction of a Facility</h3>
+    <p>If you choose to build a new facility, it will require various resources:</p>
+    <ul>
+      <li>Price: The cost to initiate construction</li>
+      <li>Duration: The time required for completion</li>
+      <li>Power consumption: Power required during construction</li>
+      <li>Emissions: CO2 emitted during construction, distributed over the construction period</li>
+    </ul>
+    <p>
+      Construction projects are undertaken by construction workers. Each worker can focus on a single construction at a
+      time. Construction projects can be paused, cancelled, and reordered. If a construction is immediately cancelled, 80%
+      of the facility's price will be refunded, with a proportionaly decreasing refund as construction progresses. Upon completing a
+      construction, a worker will automatically move on to the next project in the list, if possible.
+    </p>
+    <p>
+      If the energy demand for constructions isn't met, it is paused, except for the initial phase, during which a ramping up period is allowed.
+      During this period, it's acceptable for the satisfaction level to be lower as long as the power consumption increases by at least 5% per minute.
+    </p>
+    <p>
+      Researching
+      {% if "technology" in user.advancements %}
+        <a href="{{ url_for('views.technology', _anchor='Building Technology') }}">building technology</a>
+      {% else %}
+        building technology
+      {% endif %}
+      will unlock additional construction workers and
+      increase the speed of construction projects.
+    </p>
+    <h4>Lifespan of a Facility</h4>
+    <p>
+      Each facility has an operational lifespan. At the end of its lifespan, a facility is decommisionned at a cost equivalent to 20% of its original price.
+    </p>
+    <h2 id="Storage_Facilities">Storage Facilities</h2>
+    <p>
+      Storage facilities play a crucial role in storing energy within Energetica. Initially, only the small water dam is
+      accessible, but as you research technologies, other storage facilities can be unlocked. Despite working on the same
+      principle, each storage facility possesses unique characteristics:
+    </p>
+    <ul>
+      <li>
+        <strong>Storage Capacity:</strong> Maximum amount of stored energy.
+      </li>
+      <li>
+        <strong>Max Generation:</strong> Maximum electricity generation and usage for charging. Determines the maximum
+        charge and discharge speed of the storage facilities.
+      </li>
+      <li>
+        <strong>Ramping Speed:</strong> Defines the maximum rate of change for charging and discharging. For further
+        information, refer to the <a href="#Power_Generation_of_Controllable_Plants">controllable facility power
+        generation</a> section. (Currently there is no ramping down constraint for storage facilities during charging, meaning that a storage facility can go from 100% charging rate to 0% instantly)
+      </li>
+      <li>
+        <strong>Efficiency:</strong> Round trip efficiency of the storage facility. Efficiency losses occur during both
+        charging and discharging. For instance, if the roundtrip efficiency is 0.81, the charging and discharging
+        efficiencies would be sqrt(0.81) = 0.9 (10% loss during charging and 10% more during discharging). Improvements in
+        efficiency are possible through certain technologies.
+      </li>
+      <li>
+        <strong>Operation cost:</strong> Operational cost of the facility that consist of 100% fixed costs.
+      </li>
+      <li>
+        <strong>Lifespan:</strong> Lifespan of the facility.
+      </li>
+    </ul>
+    <p>
+      The construction process for a storage facility mirrors that of power facilities, as described in the <a href="#Construction_of_a_Plant">construction of a facility</a> section.
+    </p>
+    <h2 id="Extraction_Facilities">Extraction Facilities</h2>
+    <p>
+      Extraction facilities play a pivotal role in acquiring fossil resources within Energetica. Each of the four natural
+      resources (Coal, Oil, Gas, and Uranium) has a dedicated extraction facility. Unlocking these facilities requires different
+      levels of
+      {% if "technology" in user.advancements %}
+        <a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">mineral extraction</a>
+      {% else %}
+        mineral extraction
+      {% endif %}
+      technology and <a href="{{ url_for('views.functional_facilities', _anchor='Warehouse') }}">warehouse</a>.
+    </p>
+    <ul>
+      <li>
+        <strong>Power Consumption:</strong> Maximum power consumption of the facility. This consumption is proportional to
+        the amount of resources extracted. When an extraction facility is inactive, it doesn't consume any power.
+      </li>
+      <li>
+        <strong>Resource Production:</strong> Extraction speed of one facility measured in kg or tons per hour. The extraction speed is
+        influenced by the extraction rate, available resources in the ground, and the level of
+        {% if "technology" in user.advancements %}
+          <a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">mineral extraction</a>
+        {% else %}
+          mineral extraction
+        {% endif %}
+        .
+      </li>
+      <li>
+        <strong>Operation cost:</strong> Operational cost of the extraction facility consisting of 20% fixed costs and 80% variable cost.
+      </li>
+      <li>
+        <strong>CO2 Emissions:</strong> Amount of CO2 emitted during resource extraction. Emissions are proportional to
+        the resource production and measured in kg of CO2 per ton of extracted resource.
+      </li>
+      <li>
+        <strong>Lifespan:</strong> Lifespan of the extraction facility.
+      </li>
+    </ul>
+    <p>Formula for extraction speed of natural resource i:</p>
+    <p>\(es_i = er_i \times q_i \times 1.4^{ME} \times n_{ef,i} \)</p>
+    <p>
+      where \(es\) is the extraction speed in tons/h, \(er\) is the extraction rate in h\(^{-1}\), \(q_i\) is the amount of the
+      resource i in the ground on the player's tile in tons, \(ME\) is the level of the technology
+      {% if "technology" in user.advancements %}
+        <a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">mineral extraction</a>
+      {% else %}
+        mineral extraction
+      {% endif %}
+      , and \(n_{ef,i}\) is the number of extraction
+      facilities for the resource i owned by the player. Extraction rates are fixed and determine the fraction of underground resources extractable per hour by one
+      facility. They are given in the following table :
+    </p>
     <div class="flex-col">
-    <table class="table bone txt_center">
-      <tr>
-        <th class="padding">Resource</th>
-        <th class="padding">Initial capacity</th>
-      </tr>
-      <tr>
-        <td>Coal</td>
-        <td>3'000 tons</td>
-      </tr>
-      <tr>
-        <td>Oil</td>
-        <td>300 tons</td>
-      </tr>
-      <tr>
-        <td>Gas</td>
-        <td>1'000 tons</td>
-      </tr>
-      <tr>
-        <td>Uranium</td>
-        <td>5 tons</td>
-      </tr>
-    </table>
+      <table class="table bone txt_center">
+        <tr>
+          <th class="padding">Resource</th>
+          <th class="padding">Extraction Rate</th>
+        </tr>
+        <tr>
+          <td>Coal</td>
+          <td>{{ (const_data.coal_mine.extraction_rate*6000) | round(4) }}% /h</td>
+        </tr>
+        <tr>
+          <td>Oil</td>
+          <td>{{ (const_data.oil_field.extraction_rate*6000) | round(4) }}% /h</td>
+        </tr>
+        <tr>
+          <td>Gas</td>
+          <td>{{ (const_data.gas_drilling_site.extraction_rate*6000) | round(4) }}% /h</td>
+        </tr>
+        <tr>
+          <td>Uranium</td>
+          <td>{{ (const_data.uranium_mine.extraction_rate*6000) | round(4) }}% /h</td>
+        </tr>
+      </table>
+    </div>
+    <p>
+      Resources extracted from these facilities are stored in the <a href="#The_Warehouse">warehouse</a>. Extraction facilities cease operation when the
+      warehouse reach full capacity.
+    </p>
+    <p>
+      The construction process for an extraction facility aligns with that of power facilities, detailed in the <a href="#Construction_of_a_Plant">construction of a facility</a> section.
+    </p>
+    <h2 id="Functional_Facilities">Functional Facilities</h2>
+    <p>
+      Functional facilities in Energetica are distinct from power, storage, and extraction facilities as they operate on
+      a level-based system. Each upgrade to a higher level incurs increasing costs in terms of money, time, and energy.
+      There are four unique functional facilities:
+    </p>
+    <p>
+      The construction process for functional facilities works the same way as for power facilities (<a href="#Construction_of_a_Plant">Construction of a facility</a>)
+      except for the fact that consecutive upgrades of the same facility cannot be parallelized.
+    </p>
+    <h3>The Industry</h3>
+    <p>
+      The Industry serves as a central element, initially starting at level 1. It generates revenue by consuming
+      electricity. With each level upgrade, revenue increase by {{ ((const_data.industry["income factor"]-1)*100) | round | int }}%
+      and electricity demand increases by {{ ((const_data.industry["power factor"]-1)*100) | round | int }}%. It is worth
+      noting that because of these rates, the industries economic efficiency (in
+      <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+      /MWh) is decreasing with higher levels of industry.
+      Revenues and power demand gradually increase during the upgrade duration.
+    </p>
+    <p>
+      The electricity demand of the industry fluctuates daily and yearly (in-game time), following specific cycles represented in the following graphs.
+      Energy demand is calculated based on these factors as follows :
+    </p>
+    <p>\( D = D_{base} \times dv(t) \times sv(t) \)</p>
+    <p>
+      with \(D_{base}\) the base demand as indicated on the page <a href="{{ url_for("views.functional_facilities") }}">Functional
+      facilities</a>, \(dv()\) the daily variations shown in the following graph, \(sv()\) the seasonal variations shown
+      in the following graph and \(t\) the in-game date and time (in-game years have only {{ (51 / 60 * engine.clock_time) | round() | int }} days).
+    </p>
+    <div class="graph-container">
+      <img style="height:350px"
+           src="{{ url_for('static', filename='images/wiki/daily_variation_industry.jpg') }}"
+           alt="Daily variation of the industry demand">
+      <img style="height:350px"
+           src="{{ url_for('static', filename='images/wiki/seasonal_variation_industry.jpg') }}"
+           alt="Seasonal variation of the industry demand">
+    </div>
+    <p>
+      If the industry's demand isn't met, its revenues will decrease following this rule :
+      \( revenues = revenues_{base} \times (\frac{satisfaction}{demand})^{2} \).
+      This models the fact that reducing slightly the consumption of the industry has a low cost but reducing it a lot has a very high cost.
+    </p>
+    <h3 id="The_Laboratory">The Laboratory</h3>
+    <p>
+      The laboratory is needed for researching technologies. Different technology levels require corresponding
+      laboratory levels. It also enhances research speed by {{ ((1-const_data.laboratory["time factor"])*100) | round | int }}%
+      and for every 3rd upgrade, a new lab worker is unlocked.
+    </p>
+    <h3 id="The_Warehouse">The Warehouse</h3>
+    <p>
+      The warehouse is essential for storing natural resources. Each level increment increases the maximum storage
+      capacity by {{ ((const_data.warehouse["capacity factor"]-1)*100) | round | int }}% for all resources. The following
+      table defines the initial storage capacities at level 1.
+      <div class="flex-col">
+        <table class="table bone txt_center">
+          <tr>
+            <th class="padding">Resource</th>
+            <th class="padding">Initial capacity</th>
+          </tr>
+          <tr>
+            <td>Coal</td>
+            <td>3'000 tons</td>
+          </tr>
+          <tr>
+            <td>Oil</td>
+            <td>300 tons</td>
+          </tr>
+          <tr>
+            <td>Gas</td>
+            <td>1'000 tons</td>
+          </tr>
+          <tr>
+            <td>Uranium</td>
+            <td>5 tons</td>
+          </tr>
+        </table>
+      </div>
+    </p>
+    <h3>Carbon Capture</h3>
+    <p>
+      The carbon capture facility consumes electricity to extract CO2 from the atmosphere and store it underground. Higher
+      levels increase electricity consumption and CO2 absorption rate. HOW MUCH ???
+    </p>
+    <h2 id="Technology">Technology</h2>
+    <p>
+      Technological advancements in Energetica are made possible through research conducted at the <a href="#The_Laboratory">laboratory</a>. These technologies offer improvements to specific aspects of your
+      production within the game. Each technology has a unique effect tailored to a particular set of facilities.
+    </p>
+    <p>
+      Researching technologies involves electricity consumption without direct CO2 emissions. The technology research is
+      carried out by the lab workers and it follows the same principle as the constructions with the construction workers
+      (<a href="#Construction_of_a_Plant">Construction of a facility</a>). Consecutive upgrades of the same technology are
+      not parallelizable.
+    </p>
+    <h2 id="Prioritization_of_Facilities">Prioritization of Facilities</h2>
+    <p>
+      If you are part of a Network, facility prioritization for generation and consumption is determined by market logic.
+      See <a href="#Network">Network</a> for details.
+    </p>
+    <p>
+      Otherwise, if you're not part of a Network, generation and consumption priorities are managed via an interactive
+      list on the <a href="{{ url_for("views.home") }}">home page</a>. This list contains all relevant facilities and
+      processes involved in electricity generation or consumption. Note that storage facilities are listed twice, once as
+      generators and once as consumers.
+    </p>
+    <p>
+      The list operates in two directions. Energy generation is prioritized from top to bottom, meaning facilities at the
+      top have higher priority for power_generation. Conversely, power consumption is prioritized from bottom to top, with
+      components at the bottom having higher satisfaction priority. Additionally, a generation facility in the list only
+      provides power to consumption components listed below it, and vice versa for consumption components, that only
+      accept power form failites listed above them. Renewable facilities remain fixed in the list as their output is
+      non-controllable and must be used with the highest priority.
+    </p>
+    <div class="flex-col">
+      <img src="{{ url_for('static', filename='images/wiki/prioritization_example.png') }}"
+           alt="Example of prioritization of facilities"
+           style="width:500px">
+    </div>
+    <p>
+      For example, in the above list, the coal burner and small pumped hydro (discharge) are positioned after the demand
+      component for constructions. Consequently, these facilities will never be used to generate power for constructions.
+      If the power supplied by the Watermill and steam engine is insufficient to meet the needs of Industry and
+      constructions, ongoing constructions will be paused, even if there is available capacity from the coal burner or small
+      pumped hydro. However, if the power provided by the windmill and steam engine isn't enough for Industry alone, the
+      coal burner will begin generating, possibly followed by the small pumped hydro, since they are listed before
+      Industry. A generation facility placed at the very end of the list will never be used.
+    </p>
+    <h2 id="Network">Network</h2>
+    <p>
+      In Energetica, players initially operate independently, generating precisely what they need. However, they have the
+      option to join or create a network with other players, facilitating electricity trading and potentially enhancing
+      supply security.
+    </p>
+    <p>
+      Within the
+      {% if "network" in user.advancements %}
+        <a href="{{ url_for("views.network") }}">network page</a>
+      {% else %}
+        network page
+      {% endif %}
+      , three tables enable players to set buying and selling prices (only it they are part of a Network):
+    </p>
+    <h4>Demand Prices</h4>
+    <p>The first table is to set maximum buying prices for electricity components within your demand:</p>
+    <ul>
+      <li>Industry</li>
+      <li>Constructions</li>
+      <li>Research</li>
+      <li>Shipments</li>
+      <li>Extraction facilites</li>
+    </ul>
+    <p>
+      If the max buying price for one of these demand components is below market price, mesures will be taken to reduce this demand
+      (industry is levelled down, constructions, researches and shipments are paused and extraction facilities stop functioning).
+    </p>
+    <h4>Production Capacity Prices</h4>
+    <p>
+      In the second table, you can set the minimum selling prices for your controllable power facilities. When the
+      market price exceeds this set price, any producible capacity with the facility will be sold at market price.
+    </p>
+    <h4>Storage Capacity Prices</h4>
+    <p>
+      In the third table, you can specify both the maximum buying price and the minimum selling price for your storage
+      facilities:
+    </p>
+    <ul>
+      <li>
+        <strong>Buying Price:</strong> Determines the maximum price you're willing to pay for purchasing electricity to
+        charge your storage facilities. If the market price is below the set price, electricity will be bought to charge the storage facility.
+      </li>
+      <li>
+        <strong>Selling Price:</strong> Sets the minimum price at which you will sell any capacity producible by your
+        storage facility. If the market price exceeds the set price, the storage facility will be discharged and the generated power sold on the market.
+      </li>
+    </ul>
+    <h3 id="Obligatory_Generation">Obligatory Electricity Generation</h3>
+    <p>Obligatory electricity generation includes:</p>
+    <ul>
+      <li>
+        <strong>Non-controllable Renewable Power Facilities:</strong> Generation from these facilities cannot be
+        controlled and contributes to the overall electricity output.
+      </li>
+      <li>
+        <strong>Minimal generation of Controllable Facilities:</strong> Due to ramping down constraints, a minimal
+        generation from controllable facilities is obligatory.
+      </li>
+    </ul>
+    <p>
+      If surplus electricity from these obligatory sources is not needed domestically, it is sold at a fixed price of
+      -5/MWh in the market, coresponding to the cost to dump excess electricity. If it cannot be sold, it will be dumped.
+    </p>
+    <h3 id="Market_Logic">Market Logic</h3>
+    <p>The electricity market operates automatically and follows specific steps:</p>
+    <ol>
+      <li>
+        <strong>Calculate Capacities:</strong> Calculate available generation capacities and demand from all players in
+        the market.
+      </li>
+      <li>
+        <strong>Order Capacities:</strong> Organize available capacities and demand in ascending and descending price
+        order, respectively.
+      </li>
+      <li>
+        <strong>Find Market Equilibrium:</strong> Determine the point where the supply and demand curves intersect to
+        find the market quantity and price (red dot on the
+        {% if "network" in user.advancements and user.network != None %}
+          <a href="{{ url_for("views.network") }}">market graph</a>
+        {% else %}
+          market graph
+        {% endif %}
+        ).
+      </li>
+      <li>
+        <strong>Transaction:</strong> Capacities below the market price are sold at market price, while demands above
+        the market price are bought at market price.
+      </li>
+    </ol>
+    <p>This automatic process ensures fair transactions based on market supply and demand dynamics.</p>
+    <h2 id="Resource_Market">Resource Market</h2>
+    <p>The resource market serves as a marketplace for natural resources within Energetica.</p>
+    <p>
+      To add an offer for a specific quantity of a resource at a chosen price, users can click on the "Put on sale"
+      button on the market. This offer will be displayed as a new tile on the page. The amount put up for sale is stored
+      in your warehouse but cannot be consumed until sold (visible as "on sale" in the
+      {% if "network" in user.advancements %}
+        <a href="{{ url_for("overviews.resources") }}">resource graph</a>
+      {% else %}
+        resource graph
+      {% endif %}
+      ).
+    </p>
+    <p>
+      Once another player buys a portion of your offer, you receive the money, and the sold amount is shipped. To remove
+      offers from the market, users can repurchase their own resources without losing money, thereby regaining access to
+      the resources.
+    </p>
+    <p>
+      If users wish to purchase resources from another player, they can click on the tile of interest, specify the
+      desired amount within the available offer, and click "buy". The purchased resources will be shipped to their
+      location (refer to <a href="#Resource_shipment">resource shipment</a>).
+    </p>
+    <h3 id="Resource_shipment">Resource Shipment</h3>
+    <p>
+      When a certain amount of a natural resource is bought on the market, it is shipped from the seller to the buyer.
+      The shipment duration and electricity consumption are calculated based on the following formulas:
+    </p>
+    <p>
+      \(t_{ship} = t_{base} \times dist \times {{ const_data.transport_technology["time factor"] }}^{TT} \) &emsp;&emsp;&emsp; \(P_{ship} = \frac{E_{base} \times
+      q_{ship} \times {{ const_data.transport_technology["energy factor"] }}^{TT} }{ t_{base} \times {{ const_data.transport_technology["time factor"] }}^{TT} } \)
+    </p>
+    <p>
+      where \(t_{ship}\) is the shipment duration in hours, \(t_{base}\) is the base value of shipment duration : 1.39
+      h/tile, \(dist\) is the distance between buyer and seller, \(TT\) is the level of
+      {% if "technology" in user.advancements %}
+        <a href="{{ url_for('views.technology', _anchor='Transport technology') }}">transport technology</a>
+      {% else %}
+        transport technology
+      {% endif %}
+      ,
+      \(P_{ship}\) is the power consumed for shipping in kW, \(E_{base}\) is the base energy need of shipments :
+      5 kWh/ton/tile and \(q_{ship}\) is the quantity of shipped resources.
+    </p>
+    <p>
+      If the energy demand of the shipment isn't met, it is paused. Upon arrival, if
+      the buyer's warehouse lacks sufficient capacity to store the shipped amount, excess resources will be lost.
+    </p>
+    <h2 id="climate_change_impacts">Climate change impacts</h2>
+    <p>Not implemented in the game yet...</p>
   </div>
-  </p>
-  <h3>Carbon Capture</h3>
-  <p>
-    The carbon capture facility consumes electricity to extract CO2 from the atmosphere and store it underground. Higher
-    levels increase electricity consumption and CO2 absorption rate. HOW MUCH ???
-  </p>
-
-  <h2 id="Technology">Technology</h2>
-  <p>
-    Technological advancements in Energetica are made possible through research conducted at the <a href="#The_Laboratory">laboratory</a>. These technologies offer improvements to specific aspects of your
-    production within the game. Each technology has a unique effect tailored to a particular set of facilities.
-  </p>
-  <p>
-    Researching technologies involves electricity consumption without direct CO2 emissions. The technology research is 
-    carried out by the lab workers and it follows the same principle as the constructions with the construction workers 
-    (<a href="#Construction_of_a_Plant">Construction of a facility</a>). Consecutive upgrades of the same technology are 
-    not parallelizable.
-  </p>
-
-  <h2 id="Prioritization_of_Facilities">Prioritization of Facilities</h2>
-  <p>
-    If you are part of a Network, facility prioritization for generation and consumption is determined by market logic. 
-    See <a href="#Network">Network</a> for details.
-  </p>
-  <p>
-    Otherwise, if you're not part of a Network, generation and consumption priorities are managed via an interactive 
-    list on the <a href="{{ url_for('views.home') }}">home page</a>. This list contains all relevant facilities and 
-    processes involved in electricity generation or consumption. Note that storage facilities are listed twice, once as 
-    generators and once as consumers.
-  </p>
-  <p>
-    The list operates in two directions. Energy generation is prioritized from top to bottom, meaning facilities at the 
-    top have higher priority for power generation. Conversely, power consumption is prioritized from bottom to top, with 
-    components at the bottom having higher satisfaction priority. Additionally, a generation facility in the list only 
-    provides power to consumption components listed below it, and vice versa for consumption components, that only 
-    accept power form failites listed above them. Renewable facilities remain fixed in the list as their output is 
-    non-controllable and must be used with the highest priority.
-  </p>
-  <div class="flex-col">
-    <img src="{{ url_for('static', filename='images/wiki/prioritization_example.png') }}"
-         alt="Example of prioritization of facilities"
-         style="width:500px">
-  </div>
-  <p>
-    For example, in the above list, the coal burner and small pumped hydro (discharge) are positioned after the demand 
-    component for constructions. Consequently, these facilities will never be used to generate power for constructions. 
-    If the power supplied by the Watermill and steam engine is insufficient to meet the needs of Industry and 
-    constructions, ongoing constructions will be paused, even if there is available capacity from the coal burner or small 
-    pumped hydro. However, if the power provided by the windmill and steam engine isn't enough for Industry alone, the 
-    coal burner will begin generating, possibly followed by the small pumped hydro, since they are listed before 
-    Industry. A generation facility placed at the very end of the list will never be used.
-  </p>
-
-
-  <h2 id="Network">Network</h2>
-  <p>
-    In Energetica, players initially operate independently, generating precisely what they need. However, they have the
-    option to join or create a network with other players, facilitating electricity trading and potentially enhancing
-    supply security.
-  </p>
-  <p>Within the {% if "network" in user.advancements %}<a href="{{ url_for('views.network') }}">network page</a>{% else %}network page{% endif %}, three tables enable players to set buying and selling prices (only it they are part of a Network):</p>
-  <h4>Demand Prices</h4>
-  <p>
-    The first table is to set maximum buying prices for electricity components within your demand:
-  </p>
-  <ul>
-    <li>Industry</li>
-    <li>Constructions</li>
-    <li>Research</li>
-    <li>Shipments</li>
-    <li>Extraction facilites</li>
-  </ul>
-  <p>
-    If the max buying price for one of these demand components is below market price, mesures will be taken to reduce this demand 
-    (industry is levelled down, constructions, researches and shipments are paused and extraction facilities stop functioning).
-  </p>
-  <h4>Production Capacity Prices</h4>
-  <p>In the second table, you can set the minimum selling prices for your controllable power facilities. When the
-      market price exceeds this set price, any producible capacity with the facility will be sold at market price.</p>
-  <h4>Storage Capacity Prices</h4>
-  <p>
-    In the third table, you can specify both the maximum buying price and the minimum selling price for your storage
-    facilities:
-  </p>
-  <ul>
-    <li>
-      <strong>Buying Price:</strong> Determines the maximum price you're willing to pay for purchasing electricity to
-      charge your storage facilities. If the market price is below the set price, electricity will be bought to charge the storage facility.
-    </li>
-    <li>
-      <strong>Selling Price:</strong> Sets the minimum price at which you will sell any capacity producible by your
-      storage facility. If the market price exceeds the set price, the storage facility will be discharged and the generated power sold on the market.
-    </li>
-  </ul>
-  <h3 id="Obligatory_Generation">Obligatory Electricity Generation</h3>
-  <p>Obligatory electricity generation includes:</p>
-  <ul>
-    <li>
-      <strong>Non-controllable Renewable Power Facilities:</strong> Generation from these facilities cannot be
-      controlled and contributes to the overall electricity output.
-    </li>
-    <li>
-      <strong>Minimal generation of Controllable Facilities:</strong> Due to ramping down constraints, a minimal
-      generation from controllable facilities is obligatory.
-    </li>
-  </ul>
-  <p>
-    If surplus electricity from these obligatory sources is not needed domestically, it is sold at a fixed price of
-    -5/MWh in the market, coresponding to the cost to dump excess electricity. If it cannot be sold, it will be dumped.
-  </p>
-  <h3 id="Market_Logic">Market Logic</h3>
-  <p>The electricity market operates automatically and follows specific steps:</p>
-  <ol>
-    <li>
-      <strong>Calculate Capacities:</strong> Calculate available generation capacities and demand from all players in
-      the market.
-    </li>
-    <li>
-      <strong>Order Capacities:</strong> Organize available capacities and demand in ascending and descending price
-      order, respectively.
-    </li>
-    <li>
-      <strong>Find Market Equilibrium:</strong> Determine the point where the supply and demand curves intersect to
-      find the market quantity and price (red dot on the {% if "network" in user.advancements and user.network != None %}<a href="{{ url_for('views.network') }}">market graph</a>{% else %}market graph{% endif %}).
-    </li>
-    <li>
-      <strong>Transaction:</strong> Capacities below the market price are sold at market price, while demands above
-      the market price are bought at market price.
-    </li>
-  </ol>
-  <p>This automatic process ensures fair transactions based on market supply and demand dynamics.</p>
-
-  <h2 id="Resource_Market">Resource Market</h2>
-  <p>The resource market serves as a marketplace for natural resources within Energetica.</p>
-  <p>
-    To add an offer for a specific quantity of a resource at a chosen price, users can click on the "Put on sale"
-    button on the market. This offer will be displayed as a new tile on the page. The amount put up for sale is stored
-    in your warehouse but cannot be consumed until sold (visible as "on sale" in the {% if "network" in user.advancements %}<a href="{{ url_for('overviews.resources') }}">resource graph</a>{% else %}resource graph{% endif %}).
-  </p>
-  <p>
-    Once another player buys a portion of your offer, you receive the money, and the sold amount is shipped. To remove
-    offers from the market, users can repurchase their own resources without losing money, thereby regaining access to
-    the resources.
-  </p>
-  <p>
-    If users wish to purchase resources from another player, they can click on the tile of interest, specify the
-    desired amount within the available offer, and click "buy". The purchased resources will be shipped to their
-    location (refer to <a href="#Resource_shipment">resource shipment</a>).
-  </p>
-  <h3 id="Resource_shipment">Resource Shipment</h3>
-  <p>
-    When a certain amount of a natural resource is bought on the market, it is shipped from the seller to the buyer.
-    The shipment duration and electricity consumption are calculated based on the following formulas:
-  </p>
-  <p>
-    \(t_{ship} = t_{base} \times dist \times {{ const_data.transport_technology["time factor"] }}^{TT} \) &emsp;&emsp;&emsp; \(P_{ship} = \frac{E_{base} \times
-    q_{ship} \times {{ const_data.transport_technology["energy factor"] }}^{TT} }{ t_{base} \times {{ const_data.transport_technology["time factor"] }}^{TT} } \)
-  </p>
-  <p>
-    where \(t_{ship}\) is the shipment duration in hours, \(t_{base}\) is the base value of shipment duration : 1.39
-    h/tile, \(dist\) is the distance between buyer and seller, \(TT\) is the level of 
-    {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Transport technology') }}">
-    transport technology</a>{% else %}transport technology{% endif %},
-    \(P_{ship}\) is the power consumed for shipping in kW, \(E_{base}\) is the base energy need of shipments : 
-    5 kWh/ton/tile and \(q_{ship}\) is the quantity of shipped resources.
-  </p>
-  <p>
-    If the energy demand of the shipment isn't met, it is paused. Upon arrival, if
-    the buyer's warehouse lacks sufficient capacity to store the shipped amount, excess resources will be lost.
-  </p>
-
-  <h2 id="climate_change_impacts">Climate change impacts</h2>
-  <p>Not implemented in the game yet...</p>
-
-</div>
 {% endblock content %}
 {% block additionnal_script %}
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>

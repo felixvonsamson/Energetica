@@ -339,7 +339,7 @@ function regen(res) {
             keys.splice(0, 8);
             for (const key of keys){
                 if (player_data[0][key] > 0){
-                    capacities[key] = player_data[0][key] * player_data[1]["assets"][key]["power generation"]
+                    capacities[key] = player_data[0][key] * player_data[1]["assets"][key]["power_generation"]
                 }
             }
             const sum = Object.values(capacities).reduce(

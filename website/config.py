@@ -415,7 +415,7 @@ var_config = {
     "assets": {
         "steam_engine": {
             "price": 10000,  # [¤]
-            "power generation": 820000,  # [W]
+            "power_generation": 820000,  # [W]
             "construction time": 5400,  # [s]
             "construction power factor": 0.4,  # fraction of power gen during construction
             "construction pollution": 17520,  # [kg]
@@ -428,7 +428,7 @@ var_config = {
         },
         "windmill": {
             "price": 22200,
-            "power generation": 3350000,
+            "power_generation": 3350000,
             "construction time": 21600,
             "construction power factor": 0.56,
             "construction pollution": 1600,
@@ -441,7 +441,7 @@ var_config = {
         },
         "watermill": {
             "price": 15000,
-            "power generation": 2700000,
+            "power_generation": 2700000,
             "construction time": 18000,
             "construction power factor": 0.48,
             "construction pollution": 2200,
@@ -454,7 +454,7 @@ var_config = {
         },
         "coal_burner": {
             "price": 105000,
-            "power generation": 21000000,
+            "power_generation": 21000000,
             "construction time": 194400,
             "construction power factor": 0.28,
             "construction pollution": 1100000,
@@ -471,7 +471,7 @@ var_config = {
         },
         "oil_burner": {
             "price": 52000,
-            "power generation": 8000000,
+            "power_generation": 8000000,
             "construction time": 43200,
             "construction power factor": 0.56,
             "construction pollution": 440000,
@@ -488,7 +488,7 @@ var_config = {
         },
         "gas_burner": {
             "price": 90000,
-            "power generation": 11000000,
+            "power_generation": 11000000,
             "construction time": 43200,
             "construction power factor": 0.56,
             "construction pollution": 657000,
@@ -505,7 +505,7 @@ var_config = {
         },
         "small_water_dam": {
             "price": 45000,
-            "power generation": 27500000,
+            "power_generation": 27500000,
             "construction time": 216000,
             "construction power factor": 0.3,
             "construction pollution": 876000,
@@ -518,7 +518,7 @@ var_config = {
         },
         "onshore_wind_turbine": {
             "price": 270000,
-            "power generation": 11000000,
+            "power_generation": 11000000,
             "construction time": 64800,
             "construction power factor": 1.3,
             "construction pollution": 420000,
@@ -535,7 +535,7 @@ var_config = {
         },
         "combined_cycle": {
             "price": 310000,
-            "power generation": 54000000,
+            "power_generation": 54000000,
             "construction time": 108000,
             "construction power factor": 0.56,
             "construction pollution": 1500000,
@@ -552,7 +552,7 @@ var_config = {
         },
         "nuclear_reactor": {
             "price": 840000,
-            "power generation": 167000000,
+            "power_generation": 167000000,
             "construction time": 432000,
             "construction power factor": 0.08,
             "construction pollution": 6800000,
@@ -570,7 +570,7 @@ var_config = {
         },
         "large_water_dam": {
             "price": 320000,
-            "power generation": 410000000,
+            "power_generation": 410000000,
             "construction time": 302400,
             "construction power factor": 0.15,
             "construction pollution": 8760000,
@@ -583,7 +583,7 @@ var_config = {
         },
         "CSP_solar": {
             "price": 123000,
-            "power generation": 38000000,
+            "power_generation": 38000000,
             "construction time": 129600,
             "construction power factor": 0.4,
             "construction pollution": 1260000,
@@ -599,7 +599,7 @@ var_config = {
         },
         "PV_solar": {
             "price": 700000,
-            "power generation": 59000000,
+            "power_generation": 59000000,
             "construction time": 32400,
             "construction power factor": 5,
             "construction pollution": 24000000,
@@ -612,7 +612,7 @@ var_config = {
         },
         "offshore_wind_turbine": {
             "price": 2000000,
-            "power generation": 130000000,
+            "power_generation": 130000000,
             "construction time": 172800,
             "construction power factor": 1.2,
             "construction pollution": 4900000,
@@ -629,7 +629,7 @@ var_config = {
         },
         "nuclear_reactor_gen4": {
             "price": 1800000,
-            "power generation": 335000000,
+            "power_generation": 335000000,
             "construction time": 518400,
             "construction power factor": 0.06,
             "construction pollution": 12000000,
@@ -648,7 +648,7 @@ var_config = {
         "small_pumped_hydro": {
             "price": 19500,  # [¤]
             "storage_capacity": 260000000,  # [Wh]
-            "power generation": 2600000,  # [W]
+            "power_generation": 2600000,  # [W]
             "efficiency": 0.75,
             "construction time": 18720,  # [s]
             "construction power factor": 0.005,  # fraction of capacity demanded during construction
@@ -661,7 +661,7 @@ var_config = {
         "compressed_air": {
             "price": 10700,
             "storage_capacity": 2860000000,
-            "power generation": 12000000,
+            "power_generation": 12000000,
             "efficiency": 0.52,
             "construction time": 64800,
             "construction power factor": 0.001,
@@ -677,7 +677,7 @@ var_config = {
         "molten_salt": {
             "price": 27500,
             "storage_capacity": 3000000000,
-            "power generation": 55000000,
+            "power_generation": 55000000,
             "efficiency": 0.63,
             "construction time": 86400,
             "construction power factor": 0.001,
@@ -693,7 +693,7 @@ var_config = {
         "large_pumped_hydro": {
             "price": 166000,
             "storage_capacity": 4200000000,
-            "power generation": 249000000,
+            "power_generation": 249000000,
             "efficiency": 0.8,
             "construction time": 334800,
             "construction power factor": 0.003,
@@ -706,7 +706,7 @@ var_config = {
         "hydrogen_storage": {
             "price": 420000,
             "storage_capacity": 30000000000,
-            "power generation": 90000000,
+            "power_generation": 90000000,
             "efficiency": 0.33,
             "construction time": 43200,
             "construction power factor": 0.00025,
@@ -719,7 +719,7 @@ var_config = {
         "lithium_ion_batteries": {
             "price": 660000,
             "storage_capacity": 3200000000,
-            "power generation": 86000000,
+            "power_generation": 86000000,
             "efficiency": 0.69,
             "construction time": 64800,
             "construction power factor": 0.1,
@@ -732,7 +732,7 @@ var_config = {
         "solid_state_batteries": {
             "price": 1000000,
             "storage_capacity": 5000000000,
-            "power generation": 107000000,
+            "power_generation": 107000000,
             "efficiency": 0.79,
             "construction time": 54000,
             "construction power factor": 0.07,
@@ -1162,7 +1162,7 @@ class Config(object):
                     ]
                     ** player.mechanical_engineering
                 )
-                assets[asset]["power generation"] *= (
+                assets[asset]["power_generation"] *= (
                     const_config["assets"]["mechanical_engineering"][
                         "prod factor"
                     ]
@@ -1222,7 +1222,7 @@ class Config(object):
                     const_config["assets"]["physics"]["price factor"]
                     ** player.physics
                 )
-                assets[asset]["power generation"] *= (
+                assets[asset]["power_generation"] *= (
                     const_config["assets"]["physics"]["prod factor"]
                     ** player.physics
                 )
@@ -1278,7 +1278,7 @@ class Config(object):
                     const_config["assets"]["civil_engineering"]["price factor"]
                     ** player.civil_engineering
                 )
-                assets[asset]["power generation"] *= (
+                assets[asset]["power_generation"] *= (
                     const_config["assets"]["civil_engineering"]["prod factor"]
                     ** player.civil_engineering
                 )
@@ -1300,7 +1300,7 @@ class Config(object):
                     const_config["assets"]["aerodynamics"]["price factor"]
                     ** player.aerodynamics
                 )
-                assets[asset]["power generation"] *= (
+                assets[asset]["power_generation"] *= (
                     const_config["assets"]["aerodynamics"]["prod factor"]
                     ** player.aerodynamics
                 )
@@ -1347,7 +1347,7 @@ class Config(object):
                     ]
                     ** player.nuclear_engineering
                 )
-                assets[asset]["power generation"] *= (
+                assets[asset]["power_generation"] *= (
                     const_config["assets"]["nuclear_engineering"]["prod factor"]
                     ** player.nuclear_engineering
                 )
@@ -1467,7 +1467,7 @@ class Config(object):
                     assets[asset]["ramping speed"] = 0
                 else:
                     assets[asset]["ramping speed"] = (
-                        assets[asset]["power generation"]
+                        assets[asset]["power_generation"]
                         / assets[asset]["ramping time"]
                         * engine.clock_time
                         / 60
@@ -1481,7 +1481,7 @@ class Config(object):
             if asset in engine.controllable_facilities + engine.renewables:
                 assets[asset]["construction power"] = (
                     assets[asset]["construction power factor"]
-                    * assets[asset]["power generation"]
+                    * assets[asset]["power_generation"]
                     / bt_factor
                 )
             elif asset in engine.storage_facilities:
