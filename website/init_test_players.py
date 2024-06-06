@@ -130,7 +130,7 @@ def add_asset(player, asset, n):
         new_construction = Under_construction(
             name=asset,
             family=asset_to_family[asset],
-            start_time=time.time(),
+            start_time=0,
             duration=0,
             suspension_time=None,
             construction_power=0,

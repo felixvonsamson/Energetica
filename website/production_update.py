@@ -3,7 +3,7 @@ The game states update functions are defined here
 """
 
 import pickle
-import time
+from datetime import datetime
 import math
 import pandas as pd
 import numpy as np
@@ -332,7 +332,7 @@ def industry_demand_and_revenues(engine, player, demand, revenues):
         # industry demand ramps up during construction
         if ud.name == "industry":
             if ud.suspension_time is None:
-                time_fraction = (time.time() - ud.start_time) / (ud.duration)
+                time_fraction = (engine.data["total_t"] - ud.start_time) / (ud.duration)
             else:
                 time_fraction = (ud.suspension_time - ud.start_time) / (ud.duration)
             additional_demand = (
@@ -908,12 +908,12 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
                 continue
             cumul_demand += construction.construction_power
             if cumul_demand > satisfaction:
-                construction.suspension_time = time.time()
+                construction.suspension_time = engine.data["total_t"]
                 player.emit(
                     "pause_construction",
                     {
                         "construction_id": construction_id,
-                        "suspension_time": time.time(),
+                        "suspension_time": engine.data["total_t"],
                     },
                 )
                 notify(
@@ -933,12 +933,12 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
                 continue
             cumul_demand += construction.construction_power
             if cumul_demand > satisfaction:
-                construction.suspension_time = time.time()
+                construction.suspension_time = engine.data["total_t"]
                 player.emit(
                     "pause_construction",
                     {
                         "construction_id": construction_id,
-                        "suspension_time": time.time(),
+                        "suspension_time": engine.data["total_t"],
                     },
                 )
                 notify(
@@ -958,12 +958,12 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
             .first()
         )
         if last_shipment:
-            last_shipment.suspension_time = time.time()
+            last_shipment.suspension_time = engine.data["total_t"]
             player.emit(
                 "pause_shipment",
                 {
                     "shipment_id": last_shipment.id,
-                    "suspension_time": time.time(),
+                    "suspension_time": engine.data["total_t"],
                 },
             )
             notify(

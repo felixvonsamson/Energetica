@@ -54,7 +54,8 @@ resource_names = {
     "uranium": "Uranium",
 }
 
-function formatMilliseconds(totalSeconds) {
+function formatSeconds(totalSeconds) {
+    totalSeconds = totalSeconds * clock_time;
     const days = Math.floor(totalSeconds / (3600 * 24));
     const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -222,6 +223,9 @@ load_constructions().then((constructions) => {
             const id = progressBar.id;
             const construction = constructions_data[0][id];
             const now = new Date().getTime() / 1000;
+            const round_up = server_start % clock_time;
+            const current_time = (now-server_start + round_up) / clock_time;
+            console.log(current_time, construction.start_time, construction.duration);
             let new_width;
             let time_remaining;
             if (construction.suspension_time) {
@@ -236,11 +240,11 @@ load_constructions().then((constructions) => {
                     construction.suspension_time;
             } else {
                 new_width =
-                    ((now - construction.start_time) /
+                    ((current_time - construction.start_time) /
                         construction.duration) *
                     100;
                 time_remaining =
-                    construction.duration + construction.start_time - now;
+                    construction.duration + construction.start_time - current_time;
             }
             progressBar.style.setProperty("--width", new_width);
             if (new_width > 0.01) {
@@ -255,7 +259,7 @@ load_constructions().then((constructions) => {
                     });
                 }, 1000);
             }
-            const time = formatMilliseconds(time_remaining);
+            const time = formatSeconds(time_remaining);
             progressBar.innerHTML = "&nbsp; " + time;
         }
         for (const shipmentBar of shipmentBars) {
@@ -295,7 +299,7 @@ load_constructions().then((constructions) => {
                     });
                 }, 1000);
             }
-            const time = formatMilliseconds(time_remaining);
+            const time = formatSeconds(time_remaining);
             shipmentBar.innerHTML = "&nbsp; " + time;
         }
     }, 100);

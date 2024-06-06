@@ -3,10 +3,13 @@ These functions make the link between the website and the database
 """
 
 from flask import Blueprint, request, flash, jsonify, g, current_app, redirect
-from flask_login import login_required, current_user
+from flask_login import current_user
 import pickle
+import json
 import numpy as np
+from datetime import datetime
 from pathlib import Path
+from functools import wraps
 from website import utils
 from ..database.map import Hex
 from ..database.player import Network, Player
@@ -15,8 +18,34 @@ from ..technology_effects import get_current_technology_values
 http = Blueprint("http", __name__)
 
 
+def combined_authenticator(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return current_app.config["engine"].auth.login_required(func)(*args, **kwargs)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def log_action(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        log_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "player_id": current_user.id,
+            "endpoint": request.path,
+            "method": request.method,
+            "request_content": request.get_json(),
+        }
+        g.engine.action_logger.info(json.dumps(log_entry))
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 @http.before_request
-@login_required
+@combined_authenticator
 def check_user():
     g.engine = current_app.config["engine"]
 
@@ -245,6 +274,7 @@ def get_scoreboard():
 
 
 @http.route("choose_location", methods=["POST"])
+@log_action
 def choose_location():
     """this function is executed when a player choses a location"""
     json = request.get_json()
@@ -255,6 +285,7 @@ def choose_location():
 
 
 @http.route("/request_start_project", methods=["POST"])
+@log_action
 def request_start_project():
     """
     this function is executed when a player does any of the following:
@@ -276,6 +307,7 @@ def request_start_project():
 
 
 @http.route("/request_cancel_project", methods=["POST"])
+@log_action
 def request_cancel_project():
     """
     this function is executed when a player cancels an ongoing construction or upgrade
@@ -288,6 +320,7 @@ def request_cancel_project():
 
 
 @http.route("/request_pause_project", methods=["POST"])
+@log_action
 def request_pause_project():
     """
     this function is executed when a player pauses or unpauses an ongoing construction or upgrade
@@ -299,6 +332,7 @@ def request_pause_project():
 
 
 @http.route("/request_pause_shipment", methods=["POST"])
+@log_action
 def request_pause_shipment():
     """
     this function is executed when a player pauses or unpauses an ongoing construction or upgrade
@@ -310,6 +344,7 @@ def request_pause_shipment():
 
 
 @http.route("/request_decrease_project_priority", methods=["POST"])
+@log_action
 def request_decrease_project_priority():
     """
     this function is executed when a player changes the order of ongoing constructions or upgrades
@@ -321,6 +356,7 @@ def request_decrease_project_priority():
 
 
 @http.route("/change_network_prices", methods=["POST"])
+@log_action
 def change_network_prices():
     """this function is executed when a player changes the prices for anything
     on the network"""
@@ -331,22 +367,17 @@ def change_network_prices():
 
 
 @http.route("/request_change_facility_priority", methods=["POST"])
+@log_action
 def request_change_facility_priority():
     """this function is executed when a player changes the generation priority"""
     json = request.get_json()
     priority = json["priority"]
-    price_list = []
-    for facility in priority:
-        price_list.append(getattr(current_user, "price_" + facility))
-    price_list.sort()
-    prices = {}
-    for i, facility in enumerate(priority):
-        prices["price_" + facility] = price_list[i]
-    utils.set_network_prices(engine=g.engine, player=current_user, prices=prices)
-    return jsonify("success")
+    response = utils.change_facility_priority(engine=g.engine, player=current_user, priority=priority)
+    return jsonify(response)
 
 
 @http.route("/put_resource_on_sale", methods=["POST"])
+@log_action
 def put_resource_on_sale():
     """Parse the HTTP form for selling resources"""
     resource = request.form.get("resource")
@@ -357,6 +388,7 @@ def put_resource_on_sale():
 
 
 @http.route("/buy_resource", methods=["POST"])
+@log_action
 def buy_resource():
     """Parse the HTTP form for buying resources"""
     json = request.get_json()
@@ -367,6 +399,7 @@ def buy_resource():
 
 
 @http.route("join_network", methods=["POST"])
+@log_action
 def join_network():
     """player is trying to join a network"""
     network_name = request.form.get("choose_network")
@@ -378,6 +411,7 @@ def join_network():
 
 
 @http.route("create_network", methods=["POST"])
+@log_action
 def create_network():
     """This endpoint is used when a player creates a network"""
     network_name = request.form.get("network_name")
@@ -388,10 +422,13 @@ def create_network():
     if response["response"] == "nameAlreadyUsed":
         flash("A network with this name already exists", category="error")
         return redirect("/network", code=303)
+    flash(f"You created the network {network_name}", category="message")
+    g.engine.log(f"{current_user.username} created the network {current_user.network.name}")
     return redirect("/network", code=303)
 
 
 @http.route("leave_network", methods=["POST"])
+@log_action
 def leave_network():
     """this endpoint is called when a player leaves their network"""
     network = current_user.network

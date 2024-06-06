@@ -12,10 +12,10 @@ class Under_construction(db.Model):
     name = db.Column(db.String(50))
     family = db.Column(db.String(50))
     # to assign the thing to the correct page
-    start_time = db.Column(db.Float)
-    duration = db.Column(db.Float)
+    start_time = db.Column(db.Integer)
+    duration = db.Column(db.Integer)
     # time at witch the construction has been paused if it has else None
-    suspension_time = db.Column(db.Float)
+    suspension_time = db.Column(db.Integer)
     # Power consumed and emissions produced by the construction
     construction_power = db.Column(db.Float)
     construction_pollution = db.Column(db.Float)
@@ -34,7 +34,7 @@ class Active_facilities(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     facility = db.Column(db.String(50))
     # time at witch the facility will be decomissioned
-    end_of_life = db.Column(db.Float)
+    end_of_life = db.Column(db.Integer)
     # multiply the base values by the folowing values
     price_multiplier = db.Column(db.Float)
     power_multiplier = db.Column(db.Float)
@@ -50,9 +50,9 @@ class Shipment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     resource = db.Column(db.String(10))
     quantity = db.Column(db.Float)
-    departure_time = db.Column(db.Float)
-    duration = db.Column(db.Float)
-    suspension_time = db.Column(db.Float, default=None)  # time at witch the shipment has been paused if it has
+    departure_time = db.Column(db.Integer)
+    duration = db.Column(db.Integer)
+    suspension_time = db.Column(db.Integer, default=None)  # time at witch the shipment has been paused if it has
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player
 
 

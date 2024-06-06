@@ -3,7 +3,6 @@ This file contains all the data needed for the game
 """
 
 from .database.player import Player
-import copy
 from flask import current_app
 
 const_config = {

@@ -6,7 +6,6 @@ import math
 import threading
 import pickle
 import os
-import time
 import numpy as np
 import shutil
 from datetime import datetime, timedelta
@@ -202,7 +201,7 @@ def add_asset(player_id, construction_id):
                     .first()
                 )
                 if first_lvl.suspension_time is None:
-                    if first_lvl.start_time + first_lvl.duration > time.time() + 0.8 * engine.clock_time:
+                    if first_lvl.start_time + first_lvl.duration >= engine.data["total_t"]:
                         continue
                     else:
                         second_lvl = (
@@ -216,7 +215,7 @@ def add_asset(player_id, construction_id):
                         else:
                             first_lvl = second_lvl
                 else:
-                    first_lvl.start_time += time.time() - first_lvl.suspension_time
+                    first_lvl.start_time += engine.data["total_t"] - first_lvl.suspension_time
                     first_lvl.suspension_time = None
                     index_first_lvl = project_priorities.index(first_lvl.id)
                     (
@@ -228,7 +227,7 @@ def add_asset(player_id, construction_id):
                     )
                     db.session.commit()
                     break
-            next_construction.start_time += time.time() - next_construction.suspension_time
+            next_construction.start_time += engine.data["total_t"] - next_construction.suspension_time
             next_construction.suspension_time = None
             project_priorities[i], project_priorities[project_index] = (
                 project_priorities[project_index],
@@ -252,10 +251,14 @@ def add_asset(player_id, construction_id):
         "Power facilities",
         "Storage facilities",
     ]:
+        eol = engine.data["total_t"] + math.ceil(
+            engine.const_config["assets"][construction.name]["lifespan"]
+            * technology_effects.time_multiplier()
+            / engine.clock_time
+        )
         new_facility = Active_facilities(
             facility=construction.name,
-            end_of_life=time.time()
-            + engine.const_config["assets"][construction.name]["lifespan"] * technology_effects.time_multiplier(),
+            end_of_life=eol,
             player_id=player.id,
             price_multiplier=construction.price_multiplier,
             power_multiplier=construction.power_multiplier,
@@ -627,12 +630,12 @@ def buy_resource_from_market(player, quantity, sale_id):
         dr = player.tile.r - sale.player.tile.r
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
         shipment_duration = distance * engine.config[player.id]["transport"]["time"]
-        round_up = engine.clock_time - (time.time() + shipment_duration) % engine.clock_time
+        shipment_duration = math.ceil(shipment_duration / engine.clock_time)
         new_shipment = Shipment(
             resource=sale.resource,
             quantity=quantity,
-            departure_time=time.time(),
-            duration=shipment_duration + round_up,
+            departure_time=engine.data["total_t"],
+            duration=shipment_duration,
             player_id=player.id,
         )
         db.session.add(new_shipment)
@@ -672,10 +675,14 @@ def confirm_location(engine, player, location):
         return {"response": "choiceUnmodifiable"}
     # Checks have succeeded, proceed
     location.player_id = player.id
+    eol = engine.data["total_t"] + math.ceil(
+        engine.const_config["assets"]["steam_engine"]["lifespan"]
+        * technology_effects.time_multiplier()
+        / engine.clock_time
+    )
     steam_engine = Active_facilities(
         facility="steam_engine",
-        end_of_life=time.time()
-        + engine.const_config["assets"]["steam_engine"]["lifespan"] * technology_effects.time_multiplier(),
+        end_of_life=eol,
         player_id=player.id,
         price_multiplier=1.0,
         power_multiplier=1.0,
@@ -796,6 +803,17 @@ def leave_network(engine, player):
     return {"response": "success"}
 
 
+def change_facility_priority(engine, player, priority):
+    price_list = []
+    for facility in priority:
+        price_list.append(getattr(player, "price_" + facility))
+    price_list.sort()
+    prices = {}
+    for i, facility in enumerate(priority):
+        prices["price_" + facility] = price_list[i]
+    return set_network_prices(engine, player, prices)
+
+
 def set_network_prices(engine, player, prices={}):
     """this function is executed when a player changes the value the enegy selling prices"""
 
@@ -897,7 +915,7 @@ def start_project(engine, player, facility, family, force=False):
             }
 
     priority_list_name = "construction_priorities"
-    suspension_time = time.time()
+    suspension_time = engine.data["total_t"]
     if family == "Technologies":
         priority_list_name = "research_priorities"
         if player.available_lab_workers() > 0 and ud_count == 0:
@@ -907,12 +925,12 @@ def start_project(engine, player, facility, family, force=False):
             suspension_time = None
 
     player.money -= real_price
-    round_up = engine.clock_time - (time.time() + duration) % engine.clock_time
+    duration = math.ceil(duration / engine.clock_time)
     new_construction = Under_construction(
         name=facility,
         family=family,
-        start_time=time.time(),
-        duration=duration + round_up,
+        start_time=engine.data["total_t"],
+        duration=duration,
         suspension_time=suspension_time,
         construction_power=construction_power,
         construction_pollution=technology_effects.construction_pollution(player, facility),
@@ -949,7 +967,7 @@ def cancel_project(player, construction_id, force=False):
         priority_list_name = "research_priorities"
 
     if construction.suspension_time is None:
-        time_fraction = (time.time() - construction.start_time) / (construction.duration)
+        time_fraction = (engine.data["total_t"] - construction.start_time) / (construction.duration)
     else:
         time_fraction = (construction.suspension_time - construction.start_time) / (construction.duration)
 
@@ -996,7 +1014,7 @@ def pause_project(player, construction_id):
             else:
                 last_project = response["constructions"][1][-1]
             if last_project == int(construction_id):
-                construction.suspension_time = time.time()
+                construction.suspension_time = engine.data["total_t"]
     else:
         if construction.family in ["Functional facilities", "Technologies"]:
             first_lvl = (
@@ -1015,17 +1033,14 @@ def pause_project(player, construction_id):
             if player.available_lab_workers() == 0:
                 research_priorities = player.read_list("research_priorities")
                 project_to_pause = Under_construction.query.get(research_priorities[player.lab_workers])
-                project_to_pause.suspension_time = time.time()
+                project_to_pause.suspension_time = engine.data["total_t"]
         else:
             player.project_max_priority("construction_priorities", int(construction_id))
             if player.available_construction_workers() == 0:
                 construction_priorities = player.read_list("construction_priorities")
                 project_to_pause = Under_construction.query.get(construction_priorities[player.construction_workers])
-                project_to_pause.suspension_time = time.time()
-        construction.start_time += time.time() - construction.suspension_time
-        construction.duration += (
-            engine.clock_time - (construction.start_time + construction.duration) % engine.clock_time
-        )
+                project_to_pause.suspension_time = engine.data["total_t"]
+        construction.start_time += engine.data["total_t"] - construction.suspension_time
         construction.suspension_time = None
     db.session.commit()
     ws.rest_notify_constructions(engine, player)
@@ -1041,10 +1056,9 @@ def pause_shipment(player, shipment_id):
     shipment = Shipment.query.get(int(shipment_id))
 
     if shipment.suspension_time is None:
-        shipment.suspension_time = time.time()
+        shipment.suspension_time = engine.data["total_t"]
     else:
-        shipment.departure_time += time.time() - shipment.suspension_time
-        shipment.duration += engine.clock_time - (shipment.departure_time + shipment.duration) % engine.clock_time
+        shipment.departure_time += engine.data["total_t"] - shipment.suspension_time
         shipment.suspension_time = None
     db.session.commit()
     return {
@@ -1069,7 +1083,7 @@ def decrease_project_priority(player, construction_id, pausing=False):
         construction_1 = Under_construction.query.get(id_list[index])
         construction_2 = Under_construction.query.get(id_list[index + 1])
         if construction_1.suspension_time is None and construction_2.suspension_time is not None:
-            construction_1.suspension_time = time.time()
+            construction_1.suspension_time = engine.data["total_t"]
             if pausing:
                 return {"response": "paused"}
             if construction_2.family in [
@@ -1092,7 +1106,7 @@ def decrease_project_priority(player, construction_id, pausing=False):
                         id_list[index + 1],
                     )
                     construction_2 = first_lvl
-            construction_2.start_time += time.time() - construction_2.suspension_time
+            construction_2.start_time += engine.data["total_t"] - construction_2.suspension_time
             construction_2.suspension_time = None
         id_list[index + 1], id_list[index] = (
             id_list[index],

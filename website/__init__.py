@@ -13,6 +13,8 @@ import os  # noqa: E402
 import csv  # noqa: E402
 import pickle  # noqa: E402
 from flask_login import LoginManager  # noqa: E402
+from flask_httpauth import HTTPBasicAuth  # noqa: E402
+from werkzeug.security import check_password_hash
 from flask_socketio import SocketIO  # noqa: E402
 from flask_sock import Sock  # noqa: E402
 import atexit  # noqa: E402
@@ -110,6 +112,16 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     def load_user(id):
         player = Player.query.get(int(id))
         return player
+
+    # initialize HTTP basic auth
+    engine.auth = HTTPBasicAuth()
+
+    @engine.auth.verify_password
+    def verify_password(username, password):
+        player = Player.query.filter_by(username=username).first()
+        if player:
+            if check_password_hash(player.pwhash, password):
+                return player
 
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
