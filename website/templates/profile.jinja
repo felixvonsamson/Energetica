@@ -2,147 +2,51 @@
 {% block title %}
   Home
 {% endblock title %}
-{% block content
-  %}
-  <div class="flex-row huge title">{{ profile.username }}</div>
-  <div class="medium flex-space-around">
-    <div class="flex-col">
-      <b>Power facilities</b>
-      <table class="table bone">
-        <tr>
-          <td>Steam engine</td>
-          <td>{{ profile.steam_engine }}</td>
-        </tr>
-        <tr>
-          <td>Windmill</td>
-          <td>{{ profile.windmill }}</td>
-        </tr>
-        <tr>
-          <td>Watermill</td>
-          <td>{{ profile.watermill }}</td>
-        </tr>
-        <tr>
-          <td>Coal burner</td>
-          <td>{{ profile.coal_burner }}</td>
-        </tr>
-        <tr>
-          <td>Oil burner</td>
-          <td>{{ profile.oil_burner }}</td>
-        </tr>
-        <tr>
-          <td>Gas burner</td>
-          <td>{{ profile.gas_burner }}</td>
-        </tr>
-        <tr>
-          <td>Small water dam</td>
-          <td>{{ profile.small_water_dam }}</td>
-        </tr>
-        <tr>
-          <td>Onshore wind turbine</td>
-          <td>{{ profile.onshore_wind_turbine }}</td>
-        </tr>
-        <tr>
-          <td>Combined cycle</td>
-          <td>{{ profile.combined_cycle }}</td>
-        </tr>
-        <tr>
-          <td>Nuclear reactor</td>
-          <td>{{ profile.nuclear_reactor }}</td>
-        </tr>
-        <tr>
-          <td>Large water dam</td>
-          <td>{{ profile.large_water_dam }}</td>
-        </tr>
-        <tr>
-          <td>Concentrated solar power</td>
-          <td>{{ profile.CSP_solar }}</td>
-        </tr>
-        <tr>
-          <td>Photovoltaics</td>
-          <td>{{ profile.PV_solar }}</td>
-        </tr>
-        <tr>
-          <td>Offshore wind turbine</td>
-          <td>{{ profile.offshore_wind_turbine }}</td>
-        </tr>
-        <tr>
-          <td>4th generation nuclear</td>
-          <td>{{ profile.nuclear_reactor_gen4 }}</td>
-        </tr>
-      </table>
-    </div>
-    <div class="flex-col">
-      <b>Storage facilities</b>
-      <table class="table bone">
-        <tr>
-          <td>Small pumped hydro</td>
-          <td>{{ profile.small_pumped_hydro }}</td>
-        </tr>
-        <tr>
-          <td>Compressed air</td>
-          <td>{{ profile.compressed_air }}</td>
-        </tr>
-        <tr>
-          <td>Molten salt</td>
-          <td>{{ profile.molten_salt }}</td>
-        </tr>
-        <tr>
-          <td>Large pumped hydro</td>
-          <td>{{ profile.large_pumped_hydro }}</td>
-        </tr>
-        <tr>
-          <td>Hydrogen hydrolysis</td>
-          <td>{{ profile.hydrogen_storage }}</td>
-        </tr>
-        <tr>
-          <td>Lithium-ion batteries</td>
-          <td>{{ profile.lithium_ion_batteries }}</td>
-        </tr>
-        <tr>
-          <td>Solid state batteries</td>
-          <td>{{ profile.solid_state_batteries }}</td>
-        </tr>
-      </table>
-    </div>
+{% block content %}
+
+  <div id="profile_headder" class="flex-row huge title">
+      Profile
+      <div class="pine info_icon_container"
+            onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
+  </div>
+  <div id="info_popup" class="popup hidden green">
+      <div class="flex-row margin-small align-items-center">
+          <div class="large txt_center flex-grow-1">Help : Profile</div>
+          <div onclick="document.getElementById('info_popup').classList.add('hidden');"
+                class="cross pine margin-small"
+                style="width:39px">×</div>
+      </div>
+      <div class="txt_center margin medium">
+          <p>
+              This is your profile page. Here you will find all the information about your account.
+              ...
+          </p>
+      </div>
+  </div>
+
+  <div class="flex-space-evenly">
+    <div class="player_username">{{ profile.username }}</div>
+  </div>
+
+  <div class="medium flex-space-evenly">
     <div class="flex-col">
       <b>Functional facilities</b>
       <table class="table bone">
         <tr>
           <td>Industry</td>
-          <td>{{ profile.industry }}</td>
+          <td>lvl <b>{{ profile.industry }}</b></td>
         </tr>
         <tr>
           <td>Laboratory</td>
-          <td>{{ profile.laboratory }}</td>
+          <td>lvl <b>{{ profile.laboratory }}</b></td>
         </tr>
         <tr>
           <td>Warehouse</td>
-          <td>{{ profile.warehouse }}</td>
+          <td>lvl <b>{{ profile.warehouse }}</b></td>
         </tr>
         <tr>
           <td>Carbon capture</td>
-          <td>{{ profile.carbon_capture }}</td>
-        </tr>
-      </table>
-      <br>
-      <br>
-      <b>Extraction facilities</b>
-      <table class="table bone">
-        <tr>
-          <td>Coal mine</td>
-          <td>{{ profile.coal_mine }}</td>
-        </tr>
-        <tr>
-          <td>Oil field</td>
-          <td>{{ profile.oil_field }}</td>
-        </tr>
-        <tr>
-          <td>Gas drilling site</td>
-          <td>{{ profile.gas_drilling_site }}</td>
-        </tr>
-        <tr>
-          <td>Uranium mine</td>
-          <td>{{ profile.uranium_mine }}</td>
+          <td>lvl <b>{{ profile.carbon_capture }}</b></td>
         </tr>
       </table>
     </div>
@@ -151,113 +55,116 @@
       <table class="table bone">
         <tr>
           <td>Mathematics</td>
-          <td>{{ profile.mathematics }}</td>
+          <td>lvl <b>{{ profile.mathematics }}</b></td>
         </tr>
         <tr>
           <td>Mechanical engineering</td>
-          <td>{{ profile.mechanical_engineering }}</td>
+          <td>lvl <b>{{ profile.mechanical_engineering }}</b></td>
         </tr>
         <tr>
           <td>Thermodynamics</td>
-          <td>{{ profile.thermodynamics }}</td>
+          <td>lvl <b>{{ profile.thermodynamics }}</b></td>
         </tr>
         <tr>
           <td>Physics</td>
-          <td>{{ profile.physics }}</td>
+          <td>lvl <b>{{ profile.physics }}</b></td>
         </tr>
         <tr>
           <td>Building Technology</td>
-          <td>{{ profile.building_technology }}</td>
+          <td>lvl <b>{{ profile.building_technology }}</b></td>
         </tr>
         <tr>
           <td>Mineral extraction</td>
-          <td>{{ profile.mineral_extraction }}</td>
+          <td>lvl <b>{{ profile.mineral_extraction }}</b></td>
         </tr>
         <tr>
           <td>Transport technology</td>
-          <td>{{ profile.transport_technology }}</td>
+          <td>lvl <b>{{ profile.transport_technology }}</b></td>
         </tr>
         <tr>
           <td>Materials</td>
-          <td>{{ profile.materials }}</td>
+          <td>lvl <b>{{ profile.materials }}</b></td>
         </tr>
         <tr>
           <td>Civil engineering</td>
-          <td>{{ profile.civil_engineering }}</td>
+          <td>lvl <b>{{ profile.civil_engineering }}</b></td>
         </tr>
         <tr>
           <td>Aerodynamics</td>
-          <td>{{ profile.aerodynamics }}</td>
+          <td>lvl <b>{{ profile.aerodynamics }}</b></td>
         </tr>
         <tr>
           <td>Chemistry</td>
-          <td>{{ profile.chemistry }}</td>
+          <td>lvl <b>{{ profile.chemistry }}</b></td>
         </tr>
         <tr>
           <td>Nuclear engineering</td>
-          <td>{{ profile.nuclear_engineering }}</td>
+          <td>lvl <b>{{ profile.nuclear_engineering }}</b></td>
         </tr>
       </table>
     </div>
-  </div>
-  <div class="flex-col medium">
-    <b>Other informations</b>
-    <table class="table bone">
-      <tr>
-        <td>Network</td>
-        <td class="txt_center">{% if profile.network %}{{ profile.network.name }}{% else %}-{% endif %}</td>
-      </tr>
-      <tr>
-        <td>Revenues</td>
-        <td class="txt_center"><script>display_money({{ profile.average_revenues }})</script>/h</td>
-      </tr>
-      <tr>
-        <td>Max power</td>
-        <td class="txt_center"><script>display_W({{ profile.max_power_consumption }})</script></td>
-      </tr>
-      <tr>
-        <td>Max storage</td>
-        <td class="txt_center"><script>display_Wh({{ profile.max_energy_stored }})</script></td>
-      </tr>
-      <tr>
-        <td>Imported energy</td>
-        <td class="txt_center"><script>display_Wh({{ profile.imported_energy }})</script></td>
-      </tr>
-      <tr>
-        <td>Exported energy</td>
-        <td class="txt_center"><script>display_Wh({{ profile.exported_energy }})</script></td>
-      </tr>
-      <tr>
-        <td>Extracted resources</td>
-        <td class="txt_center"><script>display_kg({{ profile.extracted_resources }})</script></td>
-      </tr>
-      <tr>
-        <td>Bought resources</td>
-        <td class="txt_center"><script>display_kg({{ profile.bought_resources }})</script></td>
-      </tr>
-      <tr>
-        <td>Sold resources</td>
-        <td class="txt_center"><script>display_kg({{ profile.sold_resources }})</script></td>
-      </tr>
-      <tr>
-        <td>Technology</td>
-        <td class="txt_center">{{ profile.total_technologies }}</td>
-      </tr>
-      <tr>
-        <td>xp</td>
-        <td class="txt_center">{{ profile.xp }}</td>
-      </tr>
-      <tr>
-        <td>Emissions</td>
-        <td class="txt_center"><script>display_kg({{ profile.emissions }})</script></td>
-      </tr>
-      <tr>
-        <td>Captured CO2</td>
-        <td class="txt_center"><script>display_kg({{ profile.captured_CO2 }})</script></td>
-      </tr>
-    </table>
+    <div class="flex-col medium">
+      <b>Other informations</b>
+      <table class="table bone">
+        <tr>
+          <td>Network</td>
+          <td class="txt_center">{% if profile.network %}{{ profile.network.name }}{% else %}-{% endif %}</td>
+        </tr>
+        <tr>
+          <td>Revenues</td>
+          <td class="txt_center"><script>display_money({{ profile.average_revenues }})</script>/h</td>
+        </tr>
+        <tr>
+          <td>Max power</td>
+          <td class="txt_center"><script>display_W({{ profile.max_power_consumption }})</script></td>
+        </tr>
+        <tr>
+          <td>Max storage</td>
+          <td class="txt_center"><script>display_Wh({{ profile.max_energy_stored }})</script></td>
+        </tr>
+        <tr>
+          <td>Imported energy</td>
+          <td class="txt_center"><script>display_Wh({{ profile.imported_energy }})</script></td>
+        </tr>
+        <tr>
+          <td>Exported energy</td>
+          <td class="txt_center"><script>display_Wh({{ profile.exported_energy }})</script></td>
+        </tr>
+        <tr>
+          <td>Extracted resources</td>
+          <td class="txt_center"><script>display_kg({{ profile.extracted_resources }})</script></td>
+        </tr>
+        <tr>
+          <td>Bought resources</td>
+          <td class="txt_center"><script>display_kg({{ profile.bought_resources }})</script></td>
+        </tr>
+        <tr>
+          <td>Sold resources</td>
+          <td class="txt_center"><script>display_kg({{ profile.sold_resources }})</script></td>
+        </tr>
+        <tr>
+          <td>Technology</td>
+          <td class="txt_center">{{ profile.total_technologies }}</td>
+        </tr>
+        <tr>
+          <td>xp</td>
+          <td class="txt_center">{{ profile.xp }}</td>
+        </tr>
+        <tr>
+          <td>Emissions</td>
+          <td class="txt_center"><script>display_kg({{ profile.emissions }})</script></td>
+        </tr>
+        <tr>
+          <td>Captured CO2</td>
+          <td class="txt_center"><script>display_kg({{ profile.captured_CO2 }})</script></td>
+        </tr>
+      </table>
+    </div>
   </div>
   <br>
   <br>
   <br>
 {% endblock content %}
+{% block additionnal_script %}
+  <script src="{{ url_for('static', filename='profile.js') }}"></script>
+{% endblock additionnal_script %}

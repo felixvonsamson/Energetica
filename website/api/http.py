@@ -93,7 +93,7 @@ def get_map():
             "oil": tile.oil,
             "gas": tile.gas,
             "uranium": tile.uranium,
-            "player": tile.player.username if tile.player else None,
+            "player_id": tile.player.id if tile.player else None,
         }
         for tile in hex_map
     ]

@@ -77,8 +77,10 @@ def map():
 
 @views.route("/profile")
 def profile():
-    player_name = request.args.get("player_name")
-    player = Player.query.filter_by(username=player_name).first()
+    player_id = request.args.get("player_id")
+    if player_id is None:
+        player_id = current_user.id
+    player = Player.query.get(player_id)
     return render_template(
         "profile.jinja",
         engine=g.engine,

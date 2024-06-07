@@ -131,7 +131,7 @@ def add_asset(player, asset, n):
             name=asset,
             family=asset_to_family[asset],
             start_time=0,
-            duration=0,
+            duration=1,
             suspension_time=None,
             construction_power=0,
             construction_pollution=technology_effects.construction_pollution(player, asset),

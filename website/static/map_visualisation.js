@@ -5,13 +5,13 @@ This code is the p5.js script that eshows the map in the home screen
 max_q = [1, 1, 1, 500000000*clock_time/60, 140000000*clock_time/60, 24000000*clock_time/60, 2000000*clock_time/60];
 // Tile item :
 class Hex {
-    constructor(_id, _q, _r, _resources, player) {
+    constructor(_id, _q, _r, _resources, player_id) {
         this.id = _id; // Tile id
         this.q = _q; // q coordinate
         this.r = _r; // r coordinate
         this.s = -this.q - this.r; // s coordinate
         this.resources = _resources; // array with amount of resources on the tile. Format : [solar, wind, hydro, coal, oil, gas, uranium]
-        this.owner = player;
+        this.owner_id = player_id;
     }
     display_tile(hover = false) {
         let tx = w * this.q + 0.5 * w * this.r;
@@ -20,9 +20,9 @@ class Hex {
         translate(tx, ty);
         if (hover) {
             fill(104, 45, 55);
-        } else if (this.id == player_tile_id + 1) {
+        } else if (this.id == players_ids[current_player_id].tile_id) {
             fill(color(0, 89, 32));
-        } else if (this.owner) {
+        } else if (this.owner_id) {
             fill(color(131, 52, 33));
         } else {
             fill(color(45, 21, 90));
@@ -36,10 +36,11 @@ class Hex {
         vertex(-0.5 * w, 0.5 * s);
         endShape(CLOSE);
         fill(0);
-        if (this.owner) {
+        if (this.owner_id) {
             textSize(20);
             fill(255);
-            text(this.owner.slice(0, 3), 0, -4);
+            const first_letters = players_ids[this.owner_id].username.slice(0, 3);
+            text(first_letters, 0, -4);
         }
         pop();
     }
@@ -53,7 +54,8 @@ let map = [];
 let resources = ["Solar", "Wind", "Hydro", "Coal", "Gas", "Oil", "Uranium"];
 let validate;
 let resource_colors = [59, 186, 239, 0, 320, 275, 109];
-let player_tile_id;
+let players_ids;
+let current_player_id;
 
 function preload() {
     font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
@@ -62,9 +64,9 @@ function preload() {
         .then((response) => response.json())
         .then((raw_data) => {
             data = raw_data;
-            const player_id = sessionStorage.getItem("player_id");
-            load_players().then((location_data) => {
-                player_tile_id = location_data[player_id].tile_id - 1;
+            current_player_id = sessionStorage.getItem("player_id");
+            load_players().then((_players_ids) => {
+                players_ids = _players_ids;
             });
             for (let i = 0; i < data.length; i++) {
                 let resources = [
@@ -82,7 +84,7 @@ function preload() {
                         data[i].q,
                         data[i].r,
                         resources,
-                        data[i].player
+                        data[i].player_id
                     )
                 );
             }
@@ -110,7 +112,7 @@ function setup() {
 }
 
 function draw() {
-    if (map.length == 0) {
+    if (map.length == 0 || !players_ids) {
         return;
     }
     background(83, 35, 75);
@@ -137,9 +139,10 @@ function draw() {
         rect(0, 0, 200, 300);
         noStroke();
         textSize(25);
-        if (map[id].owner) {
+        if (map[id].owner_id) {
             fill(255);
-            text(map[id].owner, 100, 15);
+            let username = players_ids[map[id].owner_id].username;
+            text(username, 100, 15);
         } else {
             fill(131, 52, 33);
             text("Vacant tile", 100, 15);
@@ -209,9 +212,11 @@ function mousePressed() {
     // APPROXIMATIVE WAY OF LOCATING A TILE :
     let id = mouse_to_id(mouseX, mouseY);
     if (id < map.length) {
-        let player = map[id].owner;
-        if (player) {
-            window.location.href = `/profile?player_name=${player}`;
+        let player_id = map[id].owner_id;
+        if (player_id == current_player_id) {
+            window.location.href = `/profile`;
+        }else if (player_id) {
+            window.location.href = `/profile?player_id=${player_id}`;
         }
     }
 }
@@ -224,7 +229,7 @@ function convert_kg(mass) {
     return general_convert(mass, units);
 }
 
-function convert_kg_long(mass, resource) {
+function convert_kg_long(mass) {
     mass /= 1000;
     return `${mass.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} tons`;
 }
@@ -241,6 +246,7 @@ function general_convert(value, units) {
 }
 
 function calc_dist(id) {
+    const player_tile_id = players_ids[current_player_id].tile_id - 1;
     let dq = map[id].q - map[player_tile_id].q;
     let dr = map[id].r - map[player_tile_id].r;
     return round(Math.sqrt(dq * dq + dr * dr + dq * dr), 2);

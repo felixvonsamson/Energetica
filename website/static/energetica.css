@@ -252,6 +252,12 @@ canvas {
     align-items: center;
 }
 
+.flex-space-evenly {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
 .flex-grow-1 {
     flex-grow:1
 }
@@ -958,6 +964,20 @@ canvas {
 
 .img {
     width: 250px
+}
+
+#profile_headder.hidden{
+    display: none;
+}
+
+.player_username{
+    font-size: min(35px, 4.4vh);
+    border-radius: 16px;
+    color: #285430;
+    margin: 16px;
+    padding: 2px 20px;
+    border:3px solid #285430;
+    background-color: #ced6ab;
 }
 
 .popup {
