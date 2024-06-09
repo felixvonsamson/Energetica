@@ -24,15 +24,15 @@ function change_info(constructions) {
     }
     load_const_config().then((const_config) => {
         for (const name in lvls_in_progress){
-            console.log(const_config[name]["name"])
-            let tile = document.getElementById(const_config[name]["name"]);
+            console.log(const_config.assets[name]["name"])
+            let tile = document.getElementById(const_config.assets[name]["name"]);
 
             let lvl = tile.querySelector("#lvl");
             lvl.innerHTML = player_levels[name] + " -> " + (player_levels[name] + lvls_in_progress[name]);
 
             let price = tile.querySelector("#price");
             let new_price =
-                const_config[name]["base_price"] * const_config[name]["price multiplier"] ** (player_levels[name] + lvls_in_progress[name]);
+                const_config.assets[name]["base_price"] * const_config.assets[name]["price multiplier"] ** (player_levels[name] + lvls_in_progress[name]);
             price.innerHTML = `${new_price
                 .toFixed(0)
                 .replace(
@@ -47,14 +47,14 @@ function change_info(constructions) {
                 " -> lvl " +
                 (player_levels[name] + lvls_in_progress[name] + 1);
 
-            if ("requirements" in const_config[name]) {
+            if ("requirements" in const_config.assets[name]) {
                 let requirements = tile.querySelector("#requirements");
                 let unfullfilled = [];
-                for (let i in const_config[name]["requirements"]) {
-                    req = const_config[name]["requirements"][i][0];
+                for (let i in const_config.assets[name]["requirements"]) {
+                    req = const_config.assets[name]["requirements"][i][0];
                     if (
                         player_levels[req] <
-                        const_config[name]["requirements"][i][1] + player_levels[name] + lvls_in_progress[name]
+                        const_config.assets[name]["requirements"][i][1] + player_levels[name] + lvls_in_progress[name]
                     ) {
                         unfullfilled.push(req);
                     }
@@ -62,9 +62,9 @@ function change_info(constructions) {
                 if (unfullfilled.length > 0) {
                     let html =
                         '<div><strong>Upgrade with :</strong><br><ul style="padding:0; margin:0;">';
-                    for (let i in const_config[name]["requirements"]) {
+                    for (let i in const_config.assets[name]["requirements"]) {
                         html += '<li class="margin-small ';
-                        req = const_config[name]["requirements"][i][0];
+                        req = const_config.assets[name]["requirements"][i][0];
                         if (unfullfilled.includes(req)) {
                             html += "requirement";
                         } else {
@@ -72,9 +72,9 @@ function change_info(constructions) {
                         }
                         html +=
                             '"> - ' +
-                            const_config[req]["name"] +
+                            const_config.assets[req]["name"] +
                             " lvl " +
-                            (const_config[name]["requirements"][i][1] +
+                            (const_config.assets[name]["requirements"][i][1] +
                             player_levels[name] + lvls_in_progress[name]) +
                             "</li>";
                     }
@@ -88,16 +88,16 @@ function change_info(constructions) {
                 let pollution = tile.querySelector("#pollution");
                 let Efficiency_MS = tile.querySelector("#Efficiency_MS");
                 let reduction =
-                    (const_config[name]["efficiency_factor"] /
+                    (const_config.assets[name]["efficiency_factor"] /
                         (1 +
-                            const_config[name]["efficiency_factor"] *
+                            const_config.assets[name]["efficiency_factor"] *
                             player_levels[name] + lvls_in_progress[name])) *
                     100;
                 fuel_use.innerHTML = "-" + reduction.toFixed(1) + "%";
                 pollution.innerHTML = "-" + reduction.toFixed(1) + "%";
                 let old_E_MS =
                     1 -
-                    (1 - const_config["molten_salt"]["base_efficiency"] * multipliers["molten_salt"]["efficiency_multiplier"]) *
+                    (1 - const_config.assets["molten_salt"]["base_efficiency"] * multipliers["molten_salt"]["efficiency_multiplier"]) *
                         0.9 ** (lvls_in_progress[name]);
                 let new_E_MS = 10 / old_E_MS - 10;
                 Efficiency_MS.innerHTML = "+" + new_E_MS.toFixed(1) + "%";
@@ -106,15 +106,15 @@ function change_info(constructions) {
                 let E_SS = tile.querySelector("#E_SS");
                 let old_E_Li_ion =
                     1 -
-                    (1 - const_config["lithium_ion_batteries"]["base_efficiency"] * multipliers["lithium_ion_batteries"]["efficiency_multiplier"]) *
-                    const_config[name]["efficiency_factor"] **
+                    (1 - const_config.assets["lithium_ion_batteries"]["base_efficiency"] * multipliers["lithium_ion_batteries"]["efficiency_multiplier"]) *
+                    const_config.assets[name]["efficiency_factor"] **
                             (lvls_in_progress[name]);
                 let new_E_Li_ion = 10 / old_E_Li_ion - 10;
                 E_Li_ion.innerHTML = "+" + new_E_Li_ion.toFixed(2) + "%";
                 let old_E_SS =
                     1 -
-                    (1 - const_config["solid_state_batteries"]["base_efficiency"] * multipliers["solid_state_batteries"]["efficiency_multiplier"]) *
-                    const_config[name]["efficiency_factor"] **
+                    (1 - const_config.assets["solid_state_batteries"]["base_efficiency"] * multipliers["solid_state_batteries"]["efficiency_multiplier"]) *
+                    const_config.assets[name]["efficiency_factor"] **
                             (lvls_in_progress[name]);
                 let new_E_SS = 10 / old_E_SS - 10;
                 E_SS.innerHTML = "+" + new_E_SS.toFixed(2) + "%";

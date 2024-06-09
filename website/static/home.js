@@ -89,7 +89,8 @@ if (sortableList){
         load_const_config().then((const_config) => {
             renewables = raw_data[0];
             for(facility of raw_data[0]){
-                let name = const_config[facility].name;
+                console.log(facility, const_config.assets[facility]);
+                let name = const_config.assets[facility].name;
                 sortableList.innerHTML += `<li class="item medium gen" style="margin-left:2.1em;" id="${ facility }">
                 <div class="details padding">
                 <span>${ name }</span>
@@ -102,20 +103,20 @@ if (sortableList){
                 let generation = true;
                 if (storageCharging.includes(facility)){
                     generation = false;
-                    name = const_config[facility.slice(4)].name + " (charge)";
+                    name = const_config.assets[facility.slice(4)].name + " (charge)";
                 }else if(storageCharging.includes("buy_" + facility)){
-                    name = const_config[facility].name + " (discharge)";
+                    name = const_config.assets[facility].name + " (discharge)";
                 }else if (facility.includes("buy_")){
                     generation = false;
-                    if (facility.slice(4) in const_config){
-                        name = const_config[facility.slice(4)].name;
+                    if (facility.slice(4) in const_config.assets){
+                        name = const_config.assets[facility.slice(4)].name;
                     }else if(facility == "buy_transport"){
                         name = "Shipments";
                     }else{
                         name = facility.charAt(4).toUpperCase() + facility.slice(5);
                     }
                 }else{
-                    name = const_config[facility].name;
+                    name = const_config.assets[facility].name;
                 }
                 if(generation){
                     sortableList.innerHTML += `<li class="item medium draggable gen" draggable="true" id="${ facility }">

@@ -28,6 +28,19 @@
     <div class="player_username">{{ profile.username }}</div>
   </div>
 
+  <div class="flex-col medium">
+      <table id="power_facilities_table" class="table bone margin txt_center">
+          <tr>
+              <th id="facility" onclick="sortTable('facility')">Facility</th>
+              <th id="installed_cap" onclick="sortTable('installed_cap')">Max power</th>
+              <th id="op_cost" onclick="sortTable('op_cost')">O&M cost</th>
+              <th id="remaining_lifespan" onclick="sortTable('remaining_lifespan')">Lifespan left</th>
+              <th id="upgrade">Upgrade</th>
+              <th id="dismantle">Dismantle</th>
+          </tr>
+      </table>
+  </div>
+
   <div class="medium flex-space-evenly">
     <div class="flex-col">
       <b>Functional facilities</b>

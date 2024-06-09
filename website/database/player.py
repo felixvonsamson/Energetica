@@ -14,6 +14,7 @@ from website.database.messages import (
     Notification,
     player_chats,
 )
+from website.database.player_assets import Active_facilities
 
 
 class Player(db.Model, UserMixin):
@@ -135,6 +136,7 @@ class Player(db.Model, UserMixin):
     under_construction = db.relationship("Under_construction")
     resource_on_sale = db.relationship("Resource_on_sale", backref="player")
     shipments = db.relationship("Shipment", backref="player")
+    active_facilities = db.relationship("Active_facilities", backref="player", lazy="dynamic")
 
     def available_construction_workers(self):
         occupied_workers = (
@@ -324,6 +326,31 @@ class Player(db.Model, UserMixin):
 
     def package_construction_queue(self):
         return self.read_list("construction_priorities")
+
+    def package_active_facilities(self):
+        def get_facility_data(facilities):
+            sub_facilities = self.active_facilities.filter(Active_facilities.facility.in_(facilities)).all()
+            return {
+                facility.id: {
+                    k: getattr(facility, k)
+                    for k in [
+                        "facility",
+                        "end_of_life",
+                        "price_multiplier",
+                        "power_multiplier",
+                        "capacity_multiplier",
+                        "efficiency_multiplier",
+                    ]
+                }
+                for facility in sub_facilities
+            }
+
+        engine = current_app.config["engine"]
+        return {
+            "power_facilities": get_facility_data(engine.power_facilities),
+            "storage_facilities": get_facility_data(engine.storage_facilities),
+            "extraction_facilities": get_facility_data(engine.extraction_facilities),
+        }
 
 
 class Network(db.Model):

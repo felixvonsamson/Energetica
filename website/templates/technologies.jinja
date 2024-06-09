@@ -63,7 +63,7 @@
               </a>
 
               {# Construction Cost #}
-              <span class="money_font">
+              <span id="price" class="money_font">
                 <script>display_money_long({{ const_data["base_price"] * facility_values[facility]["price_multiplier"] }});</script>
               </span>
 
@@ -96,8 +96,8 @@
               </div>
 
               {# Requirements #}
-              {% if facility_values[facility]["locked"] %}
-                <div class="infobox requirements" id="requirements">
+              <div id="requirements" class="infobox requirements">
+                {% if facility_values[facility]["locked"] %}
                   <div>
                     <strong>Unlock with :</strong>
                     <br>
@@ -116,8 +116,8 @@
                       {% endfor %}
                     </ul>
                   </div>
-                </div>
-              {% endif %}
+                {% endif %}
+              </div>
 
             </div>
 

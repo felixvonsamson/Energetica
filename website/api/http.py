@@ -270,7 +270,14 @@ def get_shipments():
 # gets scoreboard data :
 @http.route("/get_scoreboard", methods=["GET"])
 def get_scoreboard():
+    """Gets the scoreboard data"""
     return jsonify(utils.get_scoreboard())
+
+
+@http.route("/get_active_facilities", methods=["GET"])
+def get_active_facilities():
+    """Gets list of active facilities for this player"""
+    return jsonify(current_user.package_active_facilities())
 
 
 @http.route("choose_location", methods=["POST"])
