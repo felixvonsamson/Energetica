@@ -262,5 +262,4 @@ def check_finished_constructions(engine, app):
     if eolt_facilities:
         for facility in eolt_facilities:
             utils.remove_asset(facility.player_id, facility)
-            db.session.delete(facility)
         db.session.commit()

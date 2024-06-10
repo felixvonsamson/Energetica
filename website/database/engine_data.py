@@ -23,6 +23,9 @@ class CapacityData:
                 self.init_facility(engine, uf)
         else:
             active_facilities = Active_facilities.query.filter_by(player_id=player_id, facility=facility).all()
+            if len(active_facilities) == 0 and facility in self._data:
+                del self._data[facility]
+                return
             self.init_facility(engine, facility)
 
         for facility in active_facilities:

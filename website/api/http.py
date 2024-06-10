@@ -362,6 +362,24 @@ def request_decrease_project_priority():
     return jsonify(response)
 
 
+@http.route("/request_upgrade_facility", methods=["POST"])
+@log_action
+def request_upgrade_facility():
+    json = request.get_json()
+    facility_id = json["facility_id"]
+    response = utils.upgrade_facility(player=current_user, facility_id=facility_id)
+    return jsonify(response)
+
+
+@http.route("/request_dismantle_facility", methods=["POST"])
+@log_action
+def request_dismantle_facility():
+    json = request.get_json()
+    facility_id = json["facility_id"]
+    response = utils.dismantle_facility(player=current_user, facility_id=facility_id)
+    return jsonify(response)
+
+
 @http.route("/change_network_prices", methods=["POST"])
 @log_action
 def change_network_prices():

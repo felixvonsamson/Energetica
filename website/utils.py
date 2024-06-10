@@ -274,33 +274,91 @@ def add_asset(player_id, construction_id):
     engine.config.update_config_for_user(player.id)
 
 
-def remove_asset(player_id, facility_info, decommissioning=True):
-    """this function is executed when a facility is decomissioned"""
+def upgrade_facility(player, facility_id):
+    """this function is executed when a player upgrades a facility"""
+
+    extraction_multiplier = {
+        "price_multiplier": "price_multiplier",
+        "extraction_multiplier": "capacity_multiplier",
+        "power_use_multiplier": "power_multiplier",
+        "pollution_multiplier": "efficiency_multiplier",
+    }
+
+    def is_upgradable(facility, new_multipliers):
+        if facility.facility in engine.extraction_facilities:
+            for key in extraction_multiplier:
+                if getattr(facility, extraction_multiplier[key]) < new_multipliers[key]:
+                    return True
+        else:
+            for key in ["price_multiplier", "power_multiplier", "capacity_multiplier", "efficiency_multiplier"]:
+                if key in new_multipliers:
+                    if getattr(facility, key) < new_multipliers[key]:
+                        return True
+        return False
+
+    def apply_upgrade(facility, new_multipliers):
+        if facility.facility in engine.extraction_facilities:
+            for key in extraction_multiplier:
+                setattr(facility, extraction_multiplier[key], new_multipliers[key])
+        else:
+            for key in ["price_multiplier", "power_multiplier", "capacity_multiplier", "efficiency_multiplier"]:
+                if key in new_multipliers:
+                    setattr(facility, key, new_multipliers[key])
+        db.session.commit()
+
     engine = current_app.config["engine"]
-    player = Player.query.get(player_id)
-    if facility_info.facility in engine.technologies + engine.functional_facilities:
-        setattr(
-            player,
-            facility_info.facility,
-            getattr(player, facility_info.facility) - 1,
-        )
-        engine.data["player_capacities"][player.id].update(player.id, None)
+    facility = Active_facilities.query.get(facility_id)
+    new_multipliers = technology_effects.get_current_technology_values(player)
+    const_config = engine.const_config["assets"][facility.facility]
+
+    if is_upgradable(facility, new_multipliers[facility.facility]):
+        price_diff = new_multipliers[facility.facility]["price_multiplier"] - facility.price_multiplier
+        if price_diff > 0:
+            upgrade_cost = const_config["base_price"] * price_diff
+        else:
+            upgrade_cost = 0.05 * const_config["base_price"]
+        if player.money < upgrade_cost:
+            return {"response": "notEnoughMoney"}
+        player.money -= upgrade_cost
+        apply_upgrade(facility, new_multipliers[facility.facility])
+        return {"response": "success"}
     else:
-        Active_facilities.query.filter_by(player_id=player.id, facility=facility_info.facility).delete()
-        engine.data["player_capacities"][player.id].update(player.id, facility_info.facility)
+        return {"response": "notUpgradable"}
+
+
+def dismantle_facility(player, facility_id):
+    """this function is executed when a player dismantles a facility"""
+    facility = Active_facilities.query.get(facility_id)
+    base_price = current_app.config["engine"].const_config["assets"][facility.facility]["base_price"]
+    if player.money < 0.2 * base_price * facility.price_multiplier:
+        return {"response": "notEnoughMoney"}
+    remove_asset(player.id, facility, decommissioning=False)
+    return {"response": "success"}
+
+
+def remove_asset(player_id, facility, decommissioning=True):
+    """this function is executed when a facility is decomissioned. The removal of the facility is logged and the"""
+    engine = current_app.config["engine"]
+    if facility.facility in engine.technologies + engine.functional_facilities:
+        return
+    player = Player.query.get(player_id)
+    db.session.delete(facility)
     # The cost of decommissioning is 20% of the building cost.
-    cost = 0.2 * engine.const_config["assets"][facility_info.facility]["base_price"] * facility_info.price_multiplier
+    cost = 0.2 * engine.const_config["assets"][facility.facility]["base_price"] * facility.price_multiplier
     player.money -= cost
-    construction_name = engine.const_config["assets"][facility_info.facility]["name"]
+    construction_name = engine.const_config["assets"][facility.facility]["name"]
     if decommissioning:
         notify(
             "Decommissioning",
             f"The facility {construction_name} reached the end of its operational lifespan and had to be decommissioned. The cost of this operation was {round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>.",
             player,
         )
-    engine.log(f"The facility {construction_name} from {player.username} has been decommissioned.")
-    engine.data["player_capacities"][player.id].update(player.id, facility_info.facility)
+        engine.log(f"The facility {construction_name} from {player.username} has been decommissioned.")
+    else:
+        engine.log(f"{player.username} dismanteled the facility {construction_name}.")
+    engine.data["player_capacities"][player.id].update(player.id, facility.facility)
     engine.config.update_config_for_user(player.id)
+    db.session.commit()
 
 
 def store_import(player, resource, quantity):
