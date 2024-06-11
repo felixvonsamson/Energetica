@@ -259,6 +259,12 @@ class Player(db.Model, UserMixin):
         )
         return {attr: getattr(self, attr) for attr in attributes}
 
+    def get_reserves(self):
+        reserves = {}
+        for resource in ["coal", "oil", "gas", "uranium"]:
+            reserves[resource] = getattr(self.tile, resource)
+        return reserves
+
     def emit(self, event, *args):
         engine = current_app.config["engine"]
         for sid in engine.clients[self.id]:

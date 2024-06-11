@@ -225,6 +225,12 @@ def get_player_data():
     )
 
 
+@http.route("/get_resource_reserves", methods=["GET"])
+def get_resource_reserves():
+    reserves = current_user.get_reserves()
+    return jsonify(reserves)
+
+
 @http.route("/get_player_id", methods=["GET"])
 def get_player_id():
     """Gets the id for this player"""

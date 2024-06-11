@@ -721,7 +721,7 @@ def calculate_prod(
         )
     else:
         min_ramping = past_values.get_last_data("generation", facility) - ramping_speed
-        return max(0.0, min(max_resources, min_ramping))
+        return max(0.0, min(max_resources, min_ramping, player_cap[facility]["power"]))
 
 
 def minimal_generation(engine, player, player_cap, generation):

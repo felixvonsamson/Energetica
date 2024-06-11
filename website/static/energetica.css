@@ -106,6 +106,10 @@ canvas {
     margin: 24px
 }
 
+.margin-top {
+    margin-top: 16px
+}
+
 .big_side_margins{
     margin: 24px 100px
 }

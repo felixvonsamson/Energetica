@@ -28,23 +28,53 @@
     <div class="player_username">{{ profile.username }}</div>
   </div>
 
-  <div class="flex-col medium">
-      <table id="power_facilities_table" class="table bone margin txt_center">
+  <div id="facilities_list" class="flex-col medium margin">
+    <b class="large">Power facilities</b>
+    <table id="power_facilities_table" class="table bone txt_center margin-small">
+        <tr>
+            <th class="facility" onclick="sortTable('power_facilities_table', 'facility')">Name</th>
+            <th class="installed_cap" onclick="sortTable('power_facilities_table', 'installed_cap')">Max power</th>
+            <th class="op_cost" onclick="sortTable('power_facilities_table', 'op_cost')">O&M cost</th>
+            <th class="remaining_lifespan" onclick="sortTable('power_facilities_table', 'remaining_lifespan')">Lifespan left</th>
+            <th class="upgrade" onclick="sortTable('power_facilities_table', 'upgrade')">Upgrade</th>
+            <th class="dismantle" onclick="sortTable('power_facilities_table', 'dismantle')">Dismantle</th>
+        </tr>
+    </table>
+    {% set caps = engine.data["player_capacities"][user.id] %}
+    {% if caps["small_pumped_hydro"] or caps["compressed_air"] or caps["molten_salt"] or caps["large_pumped_hydro"] or caps["hydrogen_storage"] or caps["lithium_ion_batteries"] or caps["solid_state_batteries"] %}
+      <b class="large margin-top">Storage facilities</b>
+      <table id="storage_facilities_table" class="table bone txt_center margin-small">
           <tr>
-              <th id="facility" onclick="sortTable('facility')">Facility</th>
-              <th id="installed_cap" onclick="sortTable('installed_cap')">Max power</th>
-              <th id="op_cost" onclick="sortTable('op_cost')">O&M cost</th>
-              <th id="remaining_lifespan" onclick="sortTable('remaining_lifespan')">Lifespan left</th>
-              <th id="upgrade">Upgrade</th>
-              <th id="dismantle">Dismantle</th>
+              <th class="facility" onclick="sortTable('storage_facilities_table', 'facility')">Name</th>
+              <th class="installed_cap" onclick="sortTable('storage_facilities_table', 'installed_cap')">Capacity</th>
+              <th class="op_cost" onclick="sortTable('storage_facilities_table', 'op_cost')">O&M cost</th>
+              <th class="efficiency" onclick="sortTable('storage_facilities_table', 'efficiency')">Efficiency</th>
+              <th class="remaining_lifespan" onclick="sortTable('storage_facilities_table', 'remaining_lifespan')">Lifespan left</th>
+              <th class="upgrade" onclick="sortTable('storage_facilities_table', 'upgrade')">Upgrade</th>
+              <th class="dismantle" onclick="sortTable('storage_facilities_table', 'dismantle')">Dismantle</th>
           </tr>
       </table>
+    {% endif %}
+    {% if caps["coal_mine"] or caps["oil_field"] or caps["gas_drilling_site"] or caps["uranium_mine"] %}
+      <b class="large margin-top">Extraction facilities</b>
+      <table id="extraction_facilities_table" class="table bone txt_center margin-small">
+          <tr>
+              <th class="facility" onclick="sortTable('extraction_facilities_table', 'facility')">Name</th>
+              <th class="extraction_rate" onclick="sortTable('extraction_facilities_table', 'extraction_rate')">Extra. rate</th>
+              <th class="op_cost" onclick="sortTable('extraction_facilities_table', 'op_cost')">O&M cost</th>
+              <th class="energy_use" onclick="sortTable('extraction_facilities_table', 'energy_use')">Energy cons.</th>
+              <th class="remaining_lifespan" onclick="sortTable('extraction_facilities_table', 'remaining_lifespan')">Lifespan left</th>
+              <th class="upgrade" onclick="sortTable('extraction_facilities_table', 'upgrade')">Upgrade</th>
+              <th class="dismantle" onclick="sortTable('extraction_facilities_table', 'dismantle')">Dismantle</th>
+          </tr>
+      </table>
+    {% endif %}
   </div>
 
   <div class="medium flex-space-evenly">
     <div class="flex-col">
       <b>Functional facilities</b>
-      <table class="table bone">
+      <table class="table bone margin-small">
         <tr>
           <td>Industry</td>
           <td>lvl <b>{{ profile.industry }}</b></td>
@@ -65,7 +95,7 @@
     </div>
     <div class="flex-col">
       <b>Technologies</b>
-      <table class="table bone">
+      <table class="table bone margin-small">
         <tr>
           <td>Mathematics</td>
           <td>lvl <b>{{ profile.mathematics }}</b></td>
@@ -118,7 +148,7 @@
     </div>
     <div class="flex-col medium">
       <b>Other informations</b>
-      <table class="table bone">
+      <table class="table bone margin-small">
         <tr>
           <td>Network</td>
           <td class="txt_center">{% if profile.network %}{{ profile.network.name }}{% else %}-{% endif %}</td>
