@@ -2,7 +2,7 @@
 
 import math
 from flask import current_app
-from .database.player_assets import Active_facilities
+from .database.player_assets import Active_facilities, Under_construction
 
 
 def price_multiplier(player, facility):
@@ -23,9 +23,6 @@ def price_multiplier(player, facility):
         mlt *= const_config["materials"]["price factor"] ** player.materials
     # Civil engineering
     if facility in const_config["civil_engineering"]["affected facilities"]:
-        if facility in ["watermill", "small_water_dam", "large_water_dam"]:
-            count = Active_facilities.query.filter_by(facility=facility, player_id=player.id).count()
-            mlt *= hydro_price_function(count, player.tile.hydro)
         mlt *= const_config["civil_engineering"]["price factor"] ** player.civil_engineering
     # Aerodynamics
     if facility in const_config["aerodynamics"]["affected facilities"]:
@@ -84,6 +81,9 @@ def capacity_multiplier(player, facility):
     # Civil engineering
     if facility in ["small_pumped_hydro", "large_pumped_hydro"]:
         mlt *= const_config["civil_engineering"]["capacity factor"] ** player.civil_engineering
+    # calculating the hydro price multiplier linked to the number of hydro facilities
+    if facility in ["watermill", "small_water_dam", "large_water_dam"]:
+        mlt *= hydro_price_function(efficiency_multiplier(player, facility), player.tile.hydro)
     return mlt
 
 
@@ -114,6 +114,17 @@ def efficiency_multiplier(player, facility):
         if facility == "hydrogen_storage":
             return 0.65 / const_config[facility]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
         return 1 / const_config[facility]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
+    # finding the next available location for a hydro facility
+    if facility in ["watermill", "small_water_dam", "large_water_dam"]:
+        active_facilities = Active_facilities.query.filter_by(facility=facility, player_id=player.id).all()
+        under_construction = Under_construction.query.filter_by(name=facility, player_id=player.id).all()
+        # Create a set of used efficiency multipliers
+        used_locations = {af.efficiency_multiplier for af in active_facilities}
+        used_locations.update(uc.efficiency_multiplier for uc in under_construction)
+        i = 0
+        while i in used_locations:
+            i += 1
+        return i
     return mlt
 
 
@@ -139,7 +150,7 @@ def construction_time(player, facility):
         + engine.functional_facilities
     ):
         duration *= const_config["building_technology"]["time factor"] ** player.building_technology
-    return math.ceil(duration / engine.clock_time) * engine.clock_time
+    return math.ceil(0.01 * duration / engine.clock_time) * engine.clock_time
 
 
 def construction_power(player, facility):
@@ -221,12 +232,14 @@ def get_current_technology_values(player):
         dict[facility]["power_multiplier"] = power_multiplier(player, facility)
     for facility in engine.controllable_facilities + engine.storage_facilities:
         dict[facility]["efficiency_multiplier"] = efficiency_multiplier(player, facility)
+    for facility in ["watermill", "small_water_dam", "large_water_dam"]:
+        dict[facility]["special_price_multiplier"] = capacity_multiplier(player, facility)
     for facility in engine.storage_facilities:
         dict[facility]["capacity_multiplier"] = capacity_multiplier(player, facility)
     for facility in engine.extraction_facilities:
         dict[facility]["extraction_multiplier"] = capacity_multiplier(player, facility)
-        dict[facility]["power_use_multiplier"] = capacity_multiplier(player, facility)
-        dict[facility]["pollution_multiplier"] = capacity_multiplier(player, facility)
+        dict[facility]["power_use_multiplier"] = power_multiplier(player, facility)
+        dict[facility]["pollution_multiplier"] = efficiency_multiplier(player, facility)
     for facility in engine.technologies:
         dict[facility] = {
             "price_multiplier": price_multiplier(player, facility),

@@ -240,10 +240,8 @@ def check_finished_constructions(engine, app):
     if finished_constructions:
         for fc in finished_constructions:
             utils.add_asset(fc.player_id, fc.id)
-            print(f"removing construction {fc.id} from Under_construction (check_upcoming_actions)")
             db.session.delete(fc)
         db.session.commit()
-        utils.check_construction_parity()
 
     # check if shipment arrived
     arrived_shipments = Shipment.query.filter(

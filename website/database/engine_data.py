@@ -31,9 +31,10 @@ class CapacityData:
         for facility in active_facilities:
             base_data = engine.const_config["assets"][facility.facility]
             effective_values = self._data[facility.facility]
-            effective_values["O&M_cost"] += (
-                base_data["base_price"] * facility.price_multiplier * base_data["O&M_factor"]
-            )
+            op_costs = base_data["base_price"] * facility.price_multiplier * base_data["O&M_factor"]
+            if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
+                op_costs *= facility.capacity_multiplier
+            effective_values["O&M_cost"] += op_costs
             if facility.facility in engine.power_facilities:
                 power_gen = base_data["base_power_generation"] * facility.power_multiplier
                 effective_values["power"] += power_gen

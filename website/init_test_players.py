@@ -11,7 +11,6 @@ from .database.player_assets import (
 )
 from . import db
 import pickle
-import time
 from .utils import data_init_network, init_table, add_player_to_data
 from website import technology_effects
 
@@ -23,7 +22,7 @@ def edit_database(engine):
 def init_test_players(engine):
     player = create_player(engine, "user", "password")
     if player:
-        Hex.query.filter_by(id=300).first().player_id = player.id
+        Hex.query.filter_by(id=1).first().player_id = player.id
 
         player.money = 1000000
         player.coal = 450000
@@ -36,6 +35,7 @@ def init_test_players(engine):
         add_asset(player, "mathematics", 1)
         add_asset(player, "mineral_extraction", 2)
         add_asset(player, "building_technology", 1)
+        add_asset(player, "civil_engineering", 1)
         add_asset(player, "coal_mine", 1)
         # add_asset(player, "uranium_mine", 1)
         add_asset(player, "warehouse", 2)
@@ -43,10 +43,10 @@ def init_test_players(engine):
         add_asset(player, "hydrogen_storage", 1)
         add_asset(player, "onshore_wind_turbine", 1)
         # add_asset(player, "offshore_wind_turbine", 2)
-        add_asset(player, "nuclear_reactor_gen4", 1)
-        add_asset(player, "combined_cycle", 1)
-        add_asset(player, "gas_burner", 3)
-        add_asset(player, "steam_engine", 10)
+        # add_asset(player, "nuclear_reactor_gen4", 1)
+        # add_asset(player, "combined_cycle", 1)
+        # add_asset(player, "gas_burner", 3)
+        add_asset(player, "steam_engine", 1)
         add_asset(player, "chemistry", 2)
         add_asset(player, "carbon_capture", 4)
         db.session.commit()

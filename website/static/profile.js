@@ -29,6 +29,9 @@ function upgrade_cost(facility, current_multipliers, config){
     if (upgradable(facility, current_multipliers)){
         const price_diff = current_multipliers.price_multiplier - facility.price_multiplier
         if (price_diff > 0){
+            if (["watermill", "small_water_dam", "large_water_dam"].includes(facility.facility)) {
+                return price_diff * config.base_price * facility.capacity_multiplier;
+            }
             return price_diff * config.base_price;
         }else{
             return 0.05 * config.base_price;
@@ -53,13 +56,17 @@ function get_active_facilities() {
                     for (const [id, facility] of Object.entries(raw_data.power_facilities)) {
                         let config = const_config.assets[facility.facility];
                         let last_value = JSON.parse(sessionStorage.getItem("last_value"));
+                        let tot_cost = config.base_price * facility.price_multiplier;
+                        if (["watermill", "small_water_dam", "large_water_dam"].includes(facility.facility)) {
+                            tot_cost *= facility.capacity_multiplier;
+                        }
                         active_facilities.power_facilities[id] = {
                             "name": config.name,
                             "installed_cap": config.base_power_generation * facility.power_multiplier,
-                            "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor"] * 3600 / clock_time,
+                            "op_cost": tot_cost * config["O&M_factor"] * 3600 / clock_time,
                             "remaining_lifespan": (facility.end_of_life - last_value["total_t"]) * clock_time,
                             "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
-                            "dismantle": config.base_price * facility.price_multiplier * 0.2,
+                            "dismantle": tot_cost * 0.2,
                         };
                     }
                     sortTable('installed_cap');

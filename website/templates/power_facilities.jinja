@@ -57,7 +57,11 @@
 
               {# Construction Cost #}
               <span class="money_font">
+                {% if facility in ["watermill", "small_water_dam", "large_water_dam"] %}
+                <script>display_money_long({{ const_data["base_price"] * facility_values[facility]["price_multiplier"] * facility_values[facility]["special_price_multiplier"]}});</script>
+                {% else %}
                 <script>display_money_long({{ const_data["base_price"] * facility_values[facility]["price_multiplier"] }});</script>
+                {% endif %}
               </span>
 
             </div>
@@ -228,7 +232,11 @@
             <tr>
               <td>Operation cost</td>
               <td class="txt_center">
+                {% if facility in ["watermill", "small_water_dam", "large_water_dam"] %}
+                <strong><script>display_money({{ const_data["base_price"] * facility_values[facility]["price_multiplier"] * facility_values[facility]["special_price_multiplier"] * const_data["O&M_factor"] / engine.clock_time * 3600 }});</script>/h</strong>
+                {% else %}
                 <strong><script>display_money({{ const_data["base_price"] * facility_values[facility]["price_multiplier"] * const_data["O&M_factor"] / engine.clock_time * 3600 }});</script>/h</strong>
+                {% endif %}
               </td>
             </tr>
             {# Resource Consumption #}

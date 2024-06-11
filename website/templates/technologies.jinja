@@ -96,8 +96,8 @@
               </div>
 
               {# Requirements #}
-              <div id="requirements" class="infobox requirements">
-                {% if facility_values[facility]["locked"] %}
+              {% if facility_values[facility]["locked"] %}
+                <div id="requirements" class="infobox requirements">
                   <div>
                     <strong>Unlock with :</strong>
                     <br>
@@ -116,8 +116,8 @@
                       {% endfor %}
                     </ul>
                   </div>
-                {% endif %}
-              </div>
+                </div>
+              {% endif %}
 
             </div>
 

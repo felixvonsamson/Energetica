@@ -141,11 +141,6 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
 
-        from .utils import check_construction_parity
-
-        with app.app_context():
-            check_construction_parity()
-
         if repair_database:
             from .database.player_assets import Under_construction
 

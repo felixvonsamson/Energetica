@@ -850,7 +850,6 @@ def resources_and_pollution(engine, new_values, player):
             * engine.clock_time
             * satisfaction
         )
-        print(assets["carbon_capture"]["absorbtion"], captured_CO2)
         player.captured_CO2 += captured_CO2
         db.session.commit()
         add_emissions(engine, new_values, player, "carbon_capture", -captured_CO2)

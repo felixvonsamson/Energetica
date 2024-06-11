@@ -180,7 +180,6 @@ def add_asset(player_id, construction_id):
             ).count()
             - 1
         )
-    print(f"removing id {construction_id} from {priority_list_name} ({player.username}) (add_asset)")
     player.remove_from_list(priority_list_name, construction_id)
     project_priorities = player.read_list(priority_list_name)
     for i, id in enumerate(project_priorities[:]):
@@ -330,7 +329,10 @@ def dismantle_facility(player, facility_id):
     """this function is executed when a player dismantles a facility"""
     facility = Active_facilities.query.get(facility_id)
     base_price = current_app.config["engine"].const_config["assets"][facility.facility]["base_price"]
-    if player.money < 0.2 * base_price * facility.price_multiplier:
+    cost = 0.2 * base_price * facility.price_multiplier
+    if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
+        cost *= facility.capacity_multiplier
+    if player.money < cost:
         return {"response": "notEnoughMoney"}
     remove_asset(player.id, facility, decommissioning=False)
     return {"response": "success"}
@@ -345,6 +347,8 @@ def remove_asset(player_id, facility, decommissioning=True):
     db.session.delete(facility)
     # The cost of decommissioning is 20% of the building cost.
     cost = 0.2 * engine.const_config["assets"][facility.facility]["base_price"] * facility.price_multiplier
+    if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
+        cost *= facility.capacity_multiplier
     player.money -= cost
     construction_name = engine.const_config["assets"][facility.facility]["name"]
     if decommissioning:
@@ -927,15 +931,10 @@ def start_project(engine, player, facility, family, force=False):
         return {"response": "locked"}
 
     if facility in ["small_water_dam", "large_water_dam", "watermill"]:
-        ud = Under_construction.query.filter_by(name=facility, player_id=player.id).count()
-        count = Active_facilities.query.filter_by(facility=facility, player_id=player.id).count()
-        price_factor = technology_effects.hydro_price_function(
-            count + ud, player.tile.hydro
-        ) / technology_effects.hydro_price_function(count, player.tile.hydro)
-        if (
-            player.money
-            < const_config["base_price"] * technology_effects.price_multiplier(player, facility) * price_factor
-        ):
+        price_factor = technology_effects.price_multiplier(player, facility) * technology_effects.capacity_multiplier(
+            player, facility
+        )
+        if player.money < const_config["base_price"] * price_factor:
             return {"response": "notEnoughMoneyError"}
 
     ud_count = 0
@@ -955,6 +954,8 @@ def start_project(engine, player, facility, family, force=False):
         )
     else:  # power facitlies, storage facilities, extractions facilities
         real_price = const_config["base_price"] * technology_effects.price_multiplier(player, facility)
+        if facility in ["small_water_dam", "large_water_dam", "watermill"]:
+            real_price *= technology_effects.capacity_multiplier(player, facility)
         duration = technology_effects.construction_time(player, facility)
 
     if player.money < real_price:
@@ -1003,7 +1004,6 @@ def start_project(engine, player, facility, family, force=False):
     print(f"added new construction {new_construction.id} to Uner_construction (start_project)")
     player.add_to_list(priority_list_name, new_construction.id)
     print(f"added id {new_construction.id} from {priority_list_name} ({player.username}) (start_project)")
-    check_construction_parity()
     if suspension_time is None:
         player.project_max_priority(priority_list_name, new_construction.id)
     engine.log(f"{player.username} started the construction {facility}")
@@ -1041,14 +1041,13 @@ def cancel_project(player, construction_id, force=False):
         * construction.price_multiplier
         * (1 - time_fraction)
     )
+    if construction.name in ["small_water_dam", "large_water_dam", "watermill"]:
+        refund *= construction.capacity_multiplier
     player.money += refund
-    print(f"removing id {construction_id} from {priority_list_name} ({player.username}) (cancel_project)")
     player.remove_from_list(priority_list_name, construction_id)
-    print(f"removing construction {construction.id} from Under_construction (cancel_project)")
     db.session.delete(construction)
     engine.log(f"{player.username} cancelled the construction {construction.name}")
     db.session.commit()
-    check_construction_parity()
     ws.rest_notify_constructions(engine, player)
     return {
         "response": "success",
@@ -1185,35 +1184,3 @@ def get_construction_data(player):
     construction_priorities = player.read_list("construction_priorities")
     research_priorities = player.read_list("research_priorities")
     return {0: projects, 1: construction_priorities, 2: research_priorities}
-
-
-def check_construction_parity():
-    players = Player.query.all()
-    for player in players:
-        construction_list = player.read_list("construction_priorities")
-        research_priorities = player.read_list("research_priorities")
-        for contruction_id in construction_list:
-            const = Under_construction.query.get(contruction_id)
-            if const is None:
-                print(
-                    f"\n\n\n!!! CONSTRUCTION {contruction_id} IS IN construction_list OF PLAYER {player.username} BUT NOT IN Under_construction !!!"
-                )
-        for contruction_id in research_priorities:
-            const = Under_construction.query.get(contruction_id)
-            if const is None:
-                print(
-                    f"\n\n\n!!! CONSTRUCTION {contruction_id} IS IN research_list OF PLAYER {player.username} BUT NOT IN Under_construction !!!"
-                )
-    constructions = Under_construction.query.all()
-    for construction in constructions:
-        found = False
-        for player in players:
-            construction_list = player.read_list("construction_priorities")
-            research_priorities = player.read_list("research_priorities")
-            if construction.id in construction_list + research_priorities:
-                found = True
-                break
-        if not found:
-            print(
-                f"\n\n\n!!! CONSTRUCTION {construction.name} (id:{construction.id}) IS IN Under_construction BUT WAS NOT FOUND IN ANY construction_list OR research_list !!!"
-            )

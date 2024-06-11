@@ -225,7 +225,6 @@ load_constructions().then((constructions) => {
             const now = new Date().getTime() / 1000;
             const round_up = server_start % clock_time;
             const current_time = (now-server_start + round_up) / clock_time;
-            console.log(current_time, construction.start_time, construction.duration);
             let new_width;
             let time_remaining;
             if (construction.suspension_time) {
