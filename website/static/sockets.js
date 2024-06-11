@@ -94,9 +94,17 @@ socket.on("new_network_values", function (changes) {
         );
         let network_data = JSON.parse(sessionStorage.getItem("network_data"));
         for (var category in changes["network_values"]) {
-            var value = changes["network_values"][category];
-            let array = network_data[category];
-            reduce_resolution(value, array, total_t);
+            for (var player_id in changes["network_values"][category]) {
+                if(!network_data[category].hasOwnProperty(player_id)){
+                    network_data[category][player_id] = Array.from(
+                        { length: 5 },
+                        () => Array(360).fill(0)
+                    );
+                }
+                var value = changes["network_values"][category][player_id];
+                let array = network_data[category][player_id];
+                reduce_resolution(value, array, total_t);
+            }
         }
         sessionStorage.setItem("network_data", JSON.stringify(network_data));
     }

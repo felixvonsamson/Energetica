@@ -156,18 +156,29 @@ class CircularBufferNetwork:
 
     def __init__(self):
         self._data = {
-            "price": deque([0.0] * 360, maxlen=360),
-            "quantity": deque([0.0] * 360, maxlen=360),
+            "network_data": {
+                "price": deque([0.0] * 360, maxlen=360),
+                "quantity": deque([0.0] * 360, maxlen=360),
+            },
+            "exports": {},
+            "imports": {},
         }
 
     def append_value(self, new_value):
-        for category, value in new_value.items():
-            self._data[category].append(value)
+        for category in self._data:
+            for player_id, value in new_value[category].items():
+                if player_id not in self._data[category]:
+                    self._data[category][player_id] = deque([0.0] * 360, maxlen=360)
+                self._data[category][player_id].append(value)
+            for player_id in self._data[category]:
+                if player_id not in new_value[category]:
+                    self._data[category][player_id].append(0.0)
 
     def get_data(self, t=216):
         result = defaultdict(lambda: defaultdict(dict))
-        for category, buffer in self._data.items():
-            result[category] = list(buffer)[-t:]
+        for category in self._data:
+            for player_id, buffer in self._data[category].items():
+                result[category][player_id] = list(buffer)[-t:]
         return result
 
 

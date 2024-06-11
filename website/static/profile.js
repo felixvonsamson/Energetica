@@ -123,7 +123,7 @@ function sortTable(columnName) {
             <td>${display_money(facility.op_cost, write=false)}/h</td>
             <td>${display_days(facility.remaining_lifespan, write=false)} d</td>
             <td>${upgrade}</td>
-            <td><button class="dismantle_button" onclick="dismantle(${id})">${display_money(facility.dismantle, write=false)}</button></td>
+            <td><button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${display_money(facility.dismantle, write=false)}</button></td>
             </tr>`;
     }
     table.innerHTML = html;
@@ -133,6 +133,14 @@ function sortTable(columnName) {
     column.innerHTML += triangle;
 }
 
+function are_you_sure_dismantle_facility(facility_id, cost){
+    document.getElementById('are_you_sure_popup').classList.remove('hidden');
+    document.getElementById('are_you_sure_content').innerHTML = `Are you sure you want to dismantle this facility?<br>
+    This will cost you ${display_money(cost, write=false)}.`;
+    document.getElementById('yes_im_sure').setAttribute('onclick', `dismantle(${facility_id}); hide_are_you_sure()`);
+    document.getElementById('no_cancel').innerHTML = '<b>Cancel</b>';
+  }
+
 function upgrade(id){
     send_form("/api/request_upgrade_facility", {
         facility_id: id,
@@ -140,6 +148,9 @@ function upgrade(id){
         response.json().then((raw_data) => {
             let response = raw_data["response"];
             if (response == "success") {
+                let money = raw_data["money"];
+                var obj = document.getElementById("money");
+                obj.innerHTML = formatted_money(money);
                 get_active_facilities();
             }else if(response == "notEnoughMoney"){
                 addError("Not enough money");
@@ -158,6 +169,9 @@ function dismantle(id){
         response.json().then((raw_data) => {
             let response = raw_data["response"];
             if (response == "success") {
+                let money = raw_data["money"];
+                var obj = document.getElementById("money");
+                obj.innerHTML = formatted_money(money);
                 get_active_facilities();
             }else if(response == "notEnoughMoney"){
                 addError("Not enough money");

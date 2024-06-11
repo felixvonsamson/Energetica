@@ -51,8 +51,12 @@ def update_electricity(engine):
         market_logic(engine, new_values, market)
         # Save market data
         new_network_values = {
-            "price": market["market_price"],
-            "quantity": market["market_quantity"],
+            "network_data": {
+                "price": market["market_price"],
+                "quantity": market["market_quantity"],
+            },
+            "exports": market["player_exports"],
+            "imports": market["player_imports"],
         }
         engine.data["network_data"][network.id].append_value(new_network_values)
         for player in network.members:
@@ -509,6 +513,16 @@ def market_logic(engine, new_values, market):
     class all capacity offers in ascending order of price
     and find the market price of electricity.
     Sell all capacities that are below market price at market price."""
+
+    market["player_exports"] = {}
+    market["player_imports"] = {}
+
+    def add_export_import(type, player_id, quantity):
+        if player_id in market[type]:
+            market[type][player_id] += quantity
+        else:
+            market[type][player_id] = quantity
+
     offers = market["capacities"]
     offers = offers.sort_values("price").reset_index(drop=True)
     offers["cumul_capacities"] = offers["capacity"].cumsum()
@@ -542,6 +556,7 @@ def market_logic(engine, new_values, market):
             sold_cap = row.capacity - row.cumul_capacities + market_quantity
             if sold_cap > 0.1:
                 sell(engine, new_values, row, market_price, quantity=sold_cap)
+                add_export_import("player_exports", row.player_id, sold_cap)
             # dumping electricity that is offered for negative price and not sold
             if row.price < 0:
                 dump_cap = max(0.0, min(row.capacity, row.capacity - sold_cap))
@@ -554,12 +569,14 @@ def market_logic(engine, new_values, market):
                 continue
             break
         sell(engine, new_values, row, market_price)
+        add_export_import("player_exports", row.player_id, row.capacity)
     # buy all demands over market price
     for row in demands.itertuples(index=False):
         if row.cumul_capacities > market_quantity:
             bought_cap = row.capacity - row.cumul_capacities + market_quantity
             if bought_cap > 0.1:
                 buy(engine, new_values, row, market_price, quantity=bought_cap)
+                add_export_import("player_imports", row.player_id, bought_cap)
             # if demand is not a storage facility mesures a taken to reduce demand
             if row.facility not in engine.storage_facilities:
                 reduce_demand(
@@ -572,6 +589,7 @@ def market_logic(engine, new_values, market):
                 )
         else:
             buy(engine, new_values, row, market_price)
+            add_export_import("player_imports", row.player_id, row.capacity)
     market["market_price"] = market_price
     market["market_quantity"] = market_quantity
 

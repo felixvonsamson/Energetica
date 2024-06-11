@@ -30,7 +30,7 @@ def init_test_players(engine):
         player.gas = 800000
         player.uranium = 4500
 
-        add_asset(player, "industry", 18)
+        add_asset(player, "industry", 11)
         add_asset(player, "laboratory", 5)
         add_asset(player, "mathematics", 1)
         add_asset(player, "mineral_extraction", 2)
@@ -41,11 +41,11 @@ def init_test_players(engine):
         add_asset(player, "warehouse", 2)
         add_asset(player, "small_pumped_hydro", 1)
         add_asset(player, "hydrogen_storage", 1)
-        add_asset(player, "onshore_wind_turbine", 1)
+        # add_asset(player, "onshore_wind_turbine", 1)
         # add_asset(player, "offshore_wind_turbine", 2)
-        # add_asset(player, "nuclear_reactor_gen4", 1)
-        # add_asset(player, "combined_cycle", 1)
-        # add_asset(player, "gas_burner", 3)
+        add_asset(player, "nuclear_reactor_gen4", 1)
+        add_asset(player, "combined_cycle", 2)
+        add_asset(player, "gas_burner", 5)
         add_asset(player, "steam_engine", 1)
         add_asset(player, "chemistry", 2)
         add_asset(player, "carbon_capture", 4)
@@ -54,13 +54,16 @@ def init_test_players(engine):
     player2 = create_player(engine, "user2", "password")
     if player2:
         Hex.query.filter_by(id=84).first().player_id = player2.id
+        add_asset(player2, "industry", 9)
         add_asset(player2, "warehouse", 1)
         add_asset(player2, "steam_engine", 10)
+        add_asset(player2, "small_water_dam", 1)
         db.session.commit()
 
     player3 = create_player(engine, "user3", "password")
     if player3:
-        Hex.query.filter_by(id=301).first().player_id = player3.id
+        Hex.query.filter_by(id=143).first().player_id = player3.id
+        add_asset(player3, "industry", 8)
         add_asset(player3, "onshore_wind_turbine", 5)
         db.session.commit()
 

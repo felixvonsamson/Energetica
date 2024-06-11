@@ -1,12 +1,13 @@
 let buttons = [];
-let data = {};
+let data = {"network_data": {}, "exports": {}, "imports": {}};
 
 let margin = 40;
 let t = 0;
 let t_view;
 let graph_h, graph_w;
 let demand, supply;
-let mq, mp;
+let mp, mq;
+let exports, imports;
 let maxPrice;
 let minPrice;
 let maxCap;
@@ -17,6 +18,7 @@ let players = {};
 
 let resolution;
 let res;
+let view = "exports";
 let res_to_factor;
 if (clock_time == 60){
     resolution = ["1h", "6h", "36h", "9 days", "2 months", "year"];
@@ -46,7 +48,7 @@ if (clock_time == 60){
     res_to_factor = {
         "×1 (60)": 1,
         "×1 (360)": 1,
-        "×6)": 6,
+        "×6": 6,
         "×36": 36,
         "×216": 216,
         "×1296": 1296,
@@ -54,6 +56,7 @@ if (clock_time == 60){
 }
 
 let cols_and_names = {};
+let random_colors = [];
 
 function preload() {
     font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
@@ -62,6 +65,20 @@ function preload() {
 }
 
 function setup() {
+    random_colors = [
+        color(166,206,227),
+        color(31,120,180),
+        color(178,223,138),
+        color(51,160,44),
+        color(251,154,153),
+        color(227,26,28),
+        color(253,191,111),
+        color(255,127,0),
+        color(202,178,214),
+        color(106,61,154),
+        color(255,255,153),
+        color(177,89,40),
+    ];
     cols_and_names = {
         watermill: [color(0, 180, 216), "Watermill"],
         small_water_dam: [color(0, 119, 182), "Water dam (S)"],
@@ -170,7 +187,7 @@ function draw() {
             noStroke();
             translate(X, 0.26 * height * f1);
             for (const key of ["price", "quantity"]) {
-                let h = (-data[key][t_view] / max[key]) * 0.26 * height * f1;
+                let h = (-data["network_data"][key][t_view] / max[key]) * 0.26 * height * f1;
                 ellipse(0, h, 8, 8);
             }
             let tx = -180;
@@ -208,11 +225,11 @@ function draw() {
                 text(cols_and_names[key][1], 20, 5);
                 if (key == "price") {
                     textAlign(RIGHT, CENTER);
-                    text(display_money(data[key][t_view]), 137, 5);
+                    text(display_money(data["network_data"][key][t_view]), 137, 5);
                     image(coin, 140, 2, 12, 12);
                 } else {
                     textAlign(CENTER, CENTER);
-                    text(display_W(data[key][t_view]), 132, 5);
+                    text(display_W(data["network_data"][key][t_view]), 132, 5);
                 }
                 fill(229, 217, 182);
             }
@@ -414,8 +431,8 @@ function draw() {
 
 function mousePressed() {
     if (
-        (mouseY > 0.32 * height) &
-        (mouseY < 0.32 * height + margin) &
+        (mouseY > 0.33 * height) &
+        (mouseY < 0.33 * height + margin) &
         (mouseX > 1.5 * margin) &
         (mouseX < graph_w + 1.5 * margin)
     ) {
@@ -425,6 +442,21 @@ function mousePressed() {
         }
         buttons[i].active = true;
         res = buttons[i].res;
+        update_graph();
+        return;
+    }
+    if (
+        (mouseY > 0.3 * height) &
+        (mouseY < 0.33 * height) &
+        (mouseX > width - 1.5 * margin - 160) &
+        (mouseX < width - 1.5 * margin)
+    ) {
+        let i = floor((mouseX - width + 1.5 * margin + 160)/ 80);
+        if (i == 0) {
+            view = "exports";
+        } else {  
+            view = "imports";
+        }
         update_graph();
         return;
     }
@@ -557,34 +589,45 @@ function update_graph() {
                 pop();
             
                 Object.keys(raw_chart_data).forEach((key) => {
-                    data[key] = reduce(raw_chart_data[key], res);
+                    Object.keys(raw_chart_data[key]).forEach((subkey) => {
+                        data[key][subkey] = reduce(raw_chart_data[key][subkey], res);
+                    });
                 });
-                data_len = data["price"].length;
+                data_len = data["network_data"]["price"].length;
                 min = {
-                    price: Math.min(0, ...data["price"]),
+                    price: Math.min(0, ...data["network_data"]["price"]),
                     quantity: 0,
                 };
                 max = {
-                    price: Math.max(...data["price"], -min["price"]),
-                    quantity: Math.max(...data["quantity"]),
+                    price: Math.max(...data["network_data"]["price"], -min["price"]),
+                    quantity: Math.max(...data["network_data"]["quantity"]),
                 };
                 f1 = max["price"] / (max["price"] - min["price"]);
                 push();
                 translate(1.5 * margin, 0.26 * height * f1 + 10);
                 noStroke();
                 push();
-                strokeWeight(3);
-                for (const key of ["price", "quantity"]) {
-                    stroke(cols_and_names[key][0]);
+                for (let t = 0; t < data_len; t++) {
                     push();
-                    for (let t = 1; t < data_len; t++) {
-                        let h1 =
-                            (data[key][t - 1] / max[key]) * 0.26 * height * f1;
-                        let h2 = (data[key][t] / max[key]) * 0.26 * height * f1;
-                        line(0, -h1, graph_w / data_len, -h2);
-                        translate(graph_w / (data_len - 1), 0);
+                    for (const player_id in data[view]) {
+                        fill(random_colors[player_id % random_colors.length]);
+                        let h = (data[view][player_id][t] / max["quantity"]) * 0.26 * height * f1;
+                        rect(0, 0, graph_w / data_len + 1, -h - 1);
+                        translate(0, -h);
                     }
                     pop();
+                    translate(graph_w / data_len, 0);
+                }
+                pop();
+                push();
+                strokeWeight(3);
+                stroke(cols_and_names["price"][0]);
+                for (let t = 1; t < data_len; t++) {
+                    let h1 =
+                        (data["network_data"]["price"][t - 1] / max["price"]) * 0.26 * height * f1;
+                    let h2 = (data["network_data"]["price"][t] / max["price"]) * 0.26 * height * f1;
+                    line(0, -h1, graph_w / data_len, -h2);
+                    translate(graph_w / (data_len - 1), 0);
                 }
                 pop();
                 stroke(0);
@@ -661,11 +704,38 @@ function update_graph() {
                     push();
                     translate(
                         1.5 * margin + (i * graph_w) / buttons.length,
-                        0.32 * height
+                        0.33 * height
                     );
                     buttons[i].display_button();
                     pop();
                 }
+
+                push();
+                translate(width - 1.5 * margin - 160, 0.3 * height);
+                if (view == "exports") {
+                    fill(220);
+                } else {
+                    fill(180);
+                }
+                stroke(0);
+                rect(0, 0, 80, 0.7*margin);
+                fill(0);
+                textSize(18);
+                textAlign(CENTER, CENTER);
+                noStroke();
+                text("exports", 40, 0.35 * margin - 5);
+                if (view == "exports") {
+                    fill(180);
+                } else {
+                    fill(220);
+                }
+                stroke(0);
+                rect(80, 0, 80, 0.7*margin);
+                fill(0);
+                noStroke();
+                text("imports", 120, 0.35 * margin - 5);
+                pop();
+
                 graph = get();
             });
         })

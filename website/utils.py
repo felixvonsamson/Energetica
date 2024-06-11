@@ -320,7 +320,7 @@ def upgrade_facility(player, facility_id):
             return {"response": "notEnoughMoney"}
         player.money -= upgrade_cost
         apply_upgrade(facility, new_multipliers[facility.facility])
-        return {"response": "success"}
+        return {"response": "success", "money": player.money}
     else:
         return {"response": "notUpgradable"}
 
@@ -335,7 +335,7 @@ def dismantle_facility(player, facility_id):
     if player.money < cost:
         return {"response": "notEnoughMoney"}
     remove_asset(player.id, facility, decommissioning=False)
-    return {"response": "success"}
+    return {"response": "success", "money": player.money}
 
 
 def remove_asset(player_id, facility, decommissioning=True):
@@ -541,10 +541,12 @@ def save_past_data_threaded(app, engine):
                     past_data = pickle.load(file)
 
                 new_data = engine.data["network_data"][network.id].get_data()
-                for element in new_data:
-                    new_el_data = new_data[element]
-                    past_el_data = past_data[element]
-                    reduce_resolution(past_el_data, np.array(new_el_data))
+                for category in new_data:
+                    for player_id, buffer in new_data[category].items():
+                        if player_id not in past_data[category]:
+                            past_data[category][player_id] = [[0.0] * 360] * 5
+                        past_el_data = past_data[category][player_id]
+                        reduce_resolution(past_el_data, np.array(buffer))
 
                 with open(
                     f"instance/network_data/{network.id}/time_series.pck",
@@ -580,8 +582,12 @@ def save_past_data_threaded(app, engine):
 
 def data_init_network():
     return {
-        "price": [[0.0] * 360] * 5,
-        "quantity": [[0.0] * 360] * 5,
+        "network_data": {
+            "price": [[0.0] * 360] * 5,
+            "quantity": [[0.0] * 360] * 5,
+        },
+        "exports": {},
+        "imports": {},
     }
 
 

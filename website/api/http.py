@@ -36,8 +36,11 @@ def log_action(func):
             "player_id": current_user.id,
             "endpoint": request.path,
             "method": request.method,
-            "request_content": request.get_json(),
         }
+        if request.content_type == "application/json":
+            log_entry["request_content"] = request.get_json()
+        else:
+            log_entry["request_content"] = request.form.to_dict()
         g.engine.action_logger.info(json.dumps(log_entry))
         return func(*args, **kwargs)
 
@@ -169,21 +172,19 @@ def get_chart_data():
         data = pickle.load(file)
     concat_slices(data, current_data)
 
-    network_data = {"network_data": None}
+    network_data = None
     if current_user.network is not None:
-        current_network_data = {
-            "network_data": g.engine.data["network_data"][current_user.network.id].get_data(t=total_t % 216 + 1)
-        }
+        current_network_data = g.engine.data["network_data"][current_user.network.id].get_data(t=total_t % 216 + 1)
         filename = f"instance/network_data/{current_user.network.id}/time_series.pck"
         with open(filename, "rb") as file:
-            network_data = {"network_data": pickle.load(file)}
+            network_data = pickle.load(file)
         concat_slices(network_data, current_network_data)
 
     return jsonify(
         {
             "total_t": total_t,
             "data": data,
-            "network_data": network_data["network_data"],
+            "network_data": network_data,
         }
     )
 
