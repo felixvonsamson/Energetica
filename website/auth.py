@@ -44,7 +44,7 @@ def login():
                 flash("Incorrect password, try again.", category="error")
         else:
             flash(
-                "Username does not exist.<br><b>All accounts created before the 12.03.2024 have been<br>deleted due to a server reset for the 0.8 update.<br>If your account has been deleted, please create a new one.</b>",
+                "Username does not exist.<br><b>All accounts created before the 13.06.2024 have been<br>deleted due to a server reset for the 0.9 update.<br>If your account has been deleted, please create a new one.</b>",
                 category="error",
             )
 

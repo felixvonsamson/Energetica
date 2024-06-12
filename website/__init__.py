@@ -35,7 +35,7 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
 
     # creates the app :
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = "ksdfzrtbf6clkIzhfdsuihsf98ERf"
+    app.config["SECRET_KEY"] = "psdfjfdf7ehsfdxxnvezartylfzutzngpssdw98w23"
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     db.init_app(app)
 
