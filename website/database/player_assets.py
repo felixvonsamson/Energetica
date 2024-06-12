@@ -40,6 +40,8 @@ class Active_facilities(db.Model):
     power_multiplier = db.Column(db.Float)
     capacity_multiplier = db.Column(db.Float)
     efficiency_multiplier = db.Column(db.Float)
+    # percentage of the facility that is currently used
+    usage = db.Column(db.Float, default=0)
 
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 

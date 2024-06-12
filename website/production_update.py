@@ -3,13 +3,12 @@ The game states update functions are defined here
 """
 
 import pickle
-from datetime import datetime
 import math
 import pandas as pd
 import numpy as np
 
 from .database.player import Network, Player
-from .database.player_assets import Under_construction, Shipment
+from .database.player_assets import Under_construction, Shipment, Active_facilities
 from .config import wind_power_curve
 from . import db
 from .utils import notify
@@ -38,7 +37,6 @@ def update_electricity(engine):
 
     new_values = {}
     for player in players:
-        engine.data["player_capacities"][player.id].update(player.id, None)
         if player.tile is None:
             continue
         new_values[player.id] = engine.data["current_data"][player.id].init_new_data()
@@ -630,15 +628,8 @@ def market_optimum(offers_og, demands_og):
 
 def renewables_generation(engine, player, player_cap, generation):
     """Generation of non controllable facilities is calculated from weather data"""
-    # WIND
-    power_factor = interpolate_wind(engine, player)
-    for facility in [
-        "windmill",
-        "onshore_wind_turbine",
-        "offshore_wind_turbine",
-    ]:
-        if player_cap[facility] is not None:
-            generation[facility] = power_factor * player_cap[facility]["power"]
+    # WIND (wind generation is more complex and deserves its own function)
+    wind_generation(engine, player, player_cap, generation)
     # SOLAR
     power_factor = (
         engine.data["weather"]["irradiance"] / 875 * player.tile.solar
@@ -653,10 +644,23 @@ def renewables_generation(engine, player, player_cap, generation):
             generation[facility] = power_factor * player_cap[facility]["power"]
 
 
-def interpolate_wind(engine, player):
+def wind_generation(engine, player, player_cap, generation):
+    """Each wind facility has its own wind speed multiplier and therefore generates a different amount of power"""
+    for facility_type in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
+        if player_cap[facility_type] is not None:
+            wind_facilities = Active_facilities.query.filter_by(player_id=player.id, facility=facility_type).all()
+            for facility in wind_facilities:
+                wind_speed_factor = facility.capacity_multiplier
+                max_power = (
+                    engine.const_config["assets"][facility_type]["base_power_generation"] * facility.power_multiplier
+                )
+                generation[facility_type] += interpolate_wind(engine, wind_speed_factor) * max_power
+
+
+def interpolate_wind(engine, wind_speed_factor):
     if engine.data["weather"]["windspeed"] > 100:
         return 0
-    windspeed = engine.data["weather"]["windspeed"] * pow(player.tile.wind, 0.5)
+    windspeed = engine.data["weather"]["windspeed"] * wind_speed_factor
     i = math.floor(windspeed)
     f = windspeed - i
     pc = wind_power_curve

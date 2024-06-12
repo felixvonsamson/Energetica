@@ -84,6 +84,9 @@ def capacity_multiplier(player, facility):
     # calculating the hydro price multiplier linked to the number of hydro facilities
     if facility in ["watermill", "small_water_dam", "large_water_dam"]:
         mlt *= hydro_price_function(efficiency_multiplier(player, facility), player.tile.hydro)
+    # calculating the wind speed multiplier linked to the number of wind turbines
+    if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
+        mlt *= wind_speed_multiplier(efficiency_multiplier(player, facility), player.tile.wind)
     return mlt
 
 
@@ -114,8 +117,15 @@ def efficiency_multiplier(player, facility):
         if facility == "hydrogen_storage":
             return 0.65 / const_config[facility]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
         return 1 / const_config[facility]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
-    # finding the next available location for a hydro facility
-    if facility in ["watermill", "small_water_dam", "large_water_dam"]:
+    # finding the next available location for a hydro and wind facilities
+    if facility in [
+        "watermill",
+        "small_water_dam",
+        "large_water_dam",
+        "windmill",
+        "onshore_wind_turbine",
+        "offshore_wind_turbine",
+    ]:
         active_facilities = Active_facilities.query.filter_by(facility=facility, player_id=player.id).all()
         under_construction = Under_construction.query.filter_by(name=facility, player_id=player.id).all()
         # Create a set of used efficiency multipliers
@@ -150,7 +160,7 @@ def construction_time(player, facility):
         + engine.functional_facilities
     ):
         duration *= const_config["building_technology"]["time factor"] ** player.building_technology
-    return math.ceil(0.01 * duration / engine.clock_time) * engine.clock_time
+    return math.ceil(duration / engine.clock_time) * engine.clock_time
 
 
 def construction_power(player, facility):
@@ -210,6 +220,10 @@ def time_multiplier():
 
 def hydro_price_function(count, potential):
     return 0.6 + (math.e ** (0.6 * (count + 1 - 3 * potential) / (0.3 + potential)))
+
+
+def wind_speed_multiplier(count, potential):
+    return 1 / (math.log(math.e + (count * (1 / (9 * potential + 1))) ** 2))
 
 
 def get_current_technology_values(player):
