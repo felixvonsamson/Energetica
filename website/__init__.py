@@ -13,6 +13,8 @@ import os  # noqa: E402
 import csv  # noqa: E402
 import pickle  # noqa: E402
 from flask_login import LoginManager  # noqa: E402
+from flask_httpauth import HTTPBasicAuth  # noqa: E402
+from werkzeug.security import check_password_hash
 from flask_socketio import SocketIO  # noqa: E402
 from flask_sock import Sock  # noqa: E402
 import atexit  # noqa: E402
@@ -33,7 +35,7 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
 
     # creates the app :
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = "ksdfzrtbf6clkIzhfdsuihsf98ERf"
+    app.config["SECRET_KEY"] = "psdfjfdf7ehsfdxxnvezartylfzutzngpssdw98w23"
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     db.init_app(app)
 
@@ -48,7 +50,7 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     if os.path.isfile("instance/engine_data.pck"):
         with open("instance/engine_data.pck", "rb") as file:
             engine.data = pickle.load(file)
-            engine.log("loaded engine data from disk")
+            engine.log("Loaded engine data from disk.")
     app.config["engine"] = engine
 
     # initialize socketio :
@@ -74,8 +76,8 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")
     app.register_blueprint(auth, url_prefix="/")
-    app.register_blueprint(http, url_prefix="/")
-    app.register_blueprint(ws, url_prefix="/")
+    app.register_blueprint(http, url_prefix="/api/")
+    app.register_blueprint(ws, url_prefix="/api/")
 
     from .database.map import Hex
 
@@ -90,13 +92,13 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
                     hex = Hex(
                         q=row["q"],
                         r=row["r"],
-                        solar=row["solar"],
-                        wind=row["wind"],
-                        hydro=row["hydro"],
-                        coal=row["coal"],
-                        oil=row["oil"],
-                        gas=row["gas"],
-                        uranium=row["uranium"],
+                        solar=float(row["solar"]),
+                        wind=float(row["wind"]),
+                        hydro=float(row["hydro"]),
+                        coal=float(row["coal"]) * engine.clock_time / 60,
+                        oil=float(row["oil"]) * engine.clock_time / 60,
+                        gas=float(row["gas"]) * engine.clock_time / 60,
+                        uranium=float(row["uranium"]) * engine.clock_time / 60,
                     )
                     db.session.add(hex)
                 db.session.commit()
@@ -111,10 +113,19 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
         player = Player.query.get(int(id))
         return player
 
+    # initialize HTTP basic auth
+    engine.auth = HTTPBasicAuth()
+
+    @engine.auth.verify_password
+    def verify_password(username, password):
+        player = Player.query.filter_by(username=username).first()
+        if player:
+            if check_password_hash(player.pwhash, password):
+                return player
+
     # initialize the schedulers and add the recurrent functions :
-    if (
-        os.environ.get("WERKZEUG_RUN_MAIN") == "true"
-    ):  # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
+    # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         from .gameEngine import state_update
 
         scheduler = APScheduler()
@@ -130,11 +141,6 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
 
-        from .utils import check_construction_parity
-
-        with app.app_context():
-            check_construction_parity()
-
         if repair_database:
             from .database.player_assets import Under_construction
 
@@ -142,51 +148,32 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
             with app.app_context():
                 players = Player.query.all()
                 for player in players:
-                    construction_list = player.read_list(
-                        "construction_priorities"
-                    )
-                    research_priorities = player.read_list(
-                        "research_priorities"
-                    )
+                    construction_list = player.read_list("construction_priorities")
+                    research_priorities = player.read_list("research_priorities")
                     for contruction_id in construction_list:
                         const = Under_construction.query.get(contruction_id)
                         if const is None:
-                            player.remove_from_list(
-                                "construction_priorities", contruction_id
-                            )
+                            player.remove_from_list("construction_priorities", contruction_id)
                             print(
                                 f"removed construction {contruction_id} from construction priorities ({player.username})"
                             )
                     for contruction_id in research_priorities:
                         const = Under_construction.query.get(contruction_id)
                         if const is None:
-                            player.remove_from_list(
-                                "research_priorities", contruction_id
-                            )
-                            print(
-                                f"removed construction {contruction_id} from research priorities ({player.username})"
-                            )
+                            player.remove_from_list("research_priorities", contruction_id)
+                            print(f"removed construction {contruction_id} from research priorities ({player.username})")
                 constructions = Under_construction.query.all()
                 for construction in constructions:
                     found = False
                     for player in players:
-                        construction_list = player.read_list(
-                            "construction_priorities"
-                        )
-                        research_priorities = player.read_list(
-                            "research_priorities"
-                        )
-                        if (
-                            construction.id
-                            in construction_list + research_priorities
-                        ):
+                        construction_list = player.read_list("construction_priorities")
+                        research_priorities = player.read_list("research_priorities")
+                        if construction.id in construction_list + research_priorities:
                             found = True
                             break
                     if not found:
                         db.session.delete(construction)
-                        print(
-                            f"removed construction {construction.name} from Under_construction ({player.username})"
-                        )
+                        print(f"removed construction {construction.name} from Under_construction ({player.username})")
                 db.session.commit()
 
         if run_init_test_players:

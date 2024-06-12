@@ -9,7 +9,7 @@ class Hex(db.Model):
     r = db.Column(db.Integer)
     solar = db.Column(db.Float)
     wind = db.Column(db.Float)
-    hydro = db.Column(db.Integer)
+    hydro = db.Column(db.Float)
     coal = db.Column(db.Float)
     oil = db.Column(db.Float)
     gas = db.Column(db.Float)

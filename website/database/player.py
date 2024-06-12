@@ -1,3 +1,4 @@
+from itertools import chain
 from website import db
 from website.database.player_assets import (
     Under_construction,
@@ -8,10 +9,12 @@ from flask import current_app
 from flask_login import UserMixin
 
 from website.database.messages import (
+    Chat,
+    Message,
     Notification,
     player_chats,
-    player_notifications,
 )
+from website.database.player_assets import Active_facilities
 
 
 class Player(db.Model, UserMixin):
@@ -21,23 +24,18 @@ class Player(db.Model, UserMixin):
 
     # Authentification :
     username = db.Column(db.String(25), unique=True)
-    pwhash = db.Column(db.String(25))
+    pwhash = db.Column(db.String(50))
 
     # Position :
     tile = db.relationship("Hex", uselist=False, backref="player")
-    network_id = db.Column(
-        db.Integer, db.ForeignKey("network.id"), default=None
-    )
+    network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
 
     # Chats :
     show_disclamer = db.Column(db.Boolean, default=True)
-    chats = db.relationship(
-        "Chat", secondary=player_chats, backref="participants"
-    )
+    chats = db.relationship("Chat", secondary=player_chats, backref="participants")
+    last_opened_chat = db.Column(db.Integer, default=None)
     messages = db.relationship("Message", backref="player")
-    notifications = db.relationship(
-        "Notification", secondary=player_notifications, backref="players"
-    )
+    notifications = db.relationship("Notification", backref="players", lazy="dynamic")
 
     # resources :
     money = db.Column(db.Float, default=25000)  # default is 25000
@@ -55,43 +53,11 @@ class Player(db.Model, UserMixin):
     construction_workers = db.Column(db.Integer, default=1)
     lab_workers = db.Column(db.Integer, default=0)
 
-    # Energy facilities :
-    steam_engine = db.Column(db.Integer, default=1)
-    windmill = db.Column(db.Integer, default=0)
-    watermill = db.Column(db.Integer, default=0)
-    coal_burner = db.Column(db.Integer, default=0)
-    oil_burner = db.Column(db.Integer, default=0)
-    gas_burner = db.Column(db.Integer, default=0)
-    small_water_dam = db.Column(db.Integer, default=0)
-    onshore_wind_turbine = db.Column(db.Integer, default=0)
-    combined_cycle = db.Column(db.Integer, default=0)
-    nuclear_reactor = db.Column(db.Integer, default=0)
-    large_water_dam = db.Column(db.Integer, default=0)
-    CSP_solar = db.Column(db.Integer, default=0)
-    PV_solar = db.Column(db.Integer, default=0)
-    offshore_wind_turbine = db.Column(db.Integer, default=0)
-    nuclear_reactor_gen4 = db.Column(db.Integer, default=0)
-
-    # Storage facilities :
-    small_pumped_hydro = db.Column(db.Integer, default=0)
-    compressed_air = db.Column(db.Integer, default=0)
-    molten_salt = db.Column(db.Integer, default=0)
-    large_pumped_hydro = db.Column(db.Integer, default=0)
-    hydrogen_storage = db.Column(db.Integer, default=0)
-    lithium_ion_batteries = db.Column(db.Integer, default=0)
-    solid_state_batteries = db.Column(db.Integer, default=0)
-
     # Functional facilities :
     industry = db.Column(db.Integer, default=1)
     laboratory = db.Column(db.Integer, default=0)
     warehouse = db.Column(db.Integer, default=0)
     carbon_capture = db.Column(db.Integer, default=0)
-
-    # Extraction facilities :
-    coal_mine = db.Column(db.Integer, default=0)
-    oil_field = db.Column(db.Integer, default=0)
-    gas_drilling_site = db.Column(db.Integer, default=0)
-    uranium_mine = db.Column(db.Integer, default=0)
 
     # Technology :
     mathematics = db.Column(db.Integer, default=0)
@@ -109,7 +75,7 @@ class Player(db.Model, UserMixin):
 
     # Priority lists
     self_consumption_priority = db.Column(db.Text, default="")
-    rest_of_priorities = db.Column(db.Text, default="steam_engine")
+    rest_of_priorities = db.Column(db.Text, default="")
     demand_priorities = db.Column(db.Text, default="industry,construction")
     construction_priorities = db.Column(db.Text, default="")
     research_priorities = db.Column(db.Text, default="")
@@ -170,12 +136,11 @@ class Player(db.Model, UserMixin):
     under_construction = db.relationship("Under_construction")
     resource_on_sale = db.relationship("Resource_on_sale", backref="player")
     shipments = db.relationship("Shipment", backref="player")
+    active_facilities = db.relationship("Active_facilities", backref="player", lazy="dynamic")
 
     def available_construction_workers(self):
         occupied_workers = (
-            Under_construction.query.filter(
-                Under_construction.player_id == self.id
-            )
+            Under_construction.query.filter(Under_construction.player_id == self.id)
             .filter(Under_construction.family != "Technologies")
             .filter(Under_construction.suspension_time.is_(None))
             .count()
@@ -184,9 +149,7 @@ class Player(db.Model, UserMixin):
 
     def available_lab_workers(self):
         occupied_workers = (
-            Under_construction.query.filter(
-                Under_construction.player_id == self.id
-            )
+            Under_construction.query.filter(Under_construction.player_id == self.id)
             .filter(Under_construction.family == "Technologies")
             .filter(Under_construction.suspension_time.is_(None))
             .count()
@@ -224,26 +187,60 @@ class Player(db.Model, UserMixin):
             setattr(self, attr, f"{id}," + getattr(self, attr))
         db.session.commit()
 
-    def get_constructions(self):
-        constructions = self.under_construction
-        construction_list = {
-            construction.id: {
-                "name": construction.name,
-                "family": construction.family,
-                "start_time": construction.start_time,
-                "duration": construction.duration,
-                "suspension_time": construction.suspension_time,
+    def package_chat_messages(self, chat_id):
+        chat = Chat.query.filter_by(id=chat_id).first()
+        messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
+        messages_list = [
+            {
+                "time": message.time.isoformat(),
+                "player_id": message.player_id,
+                "text": message.text,
             }
-            for construction in constructions
+            for message in reversed(messages)
+        ]
+        self.last_opened_chat = chat.id
+        PlayerUnreadMessages.query.filter(PlayerUnreadMessages.player_id == self.id).filter(
+            PlayerUnreadMessages.message_id.in_(db.session.query(Message.id).filter(Message.chat_id == chat_id))
+        ).delete(synchronize_session=False)
+        db.session.commit()
+        return {"response": "success", "messages": messages_list}
+
+    def package_chat_list(self):
+        def chat_name(chat):
+            if chat.name is not None:
+                return chat.name
+            for participant in chat.participants:
+                if participant != self:
+                    return participant.username
+            return None
+
+        def unread_message_count(chat):
+            unread_messages_count = (
+                PlayerUnreadMessages.query.join(Message, PlayerUnreadMessages.message_id == Message.id)
+                .filter(PlayerUnreadMessages.player_id == self.id)
+                .filter(Message.chat_id == chat.id)
+                .count()
+            )
+            return unread_messages_count
+
+        chat_dict = {
+            chat.id: {
+                "name": chat_name(chat),
+                "group_chat": chat.name is not None,
+                "unread_messages": unread_message_count(chat),
+            }
+            for chat in self.chats
         }
-        return construction_list
+        return {
+            "response": "success",
+            "chat_list": chat_dict,
+            "last_opened_chat": self.last_opened_chat,
+        }
 
     def delete_notification(self, notification_id):
         notification = Notification.query.get(notification_id)
-        if notification in self.notifications:
-            self.notifications.remove(notification)
-            if not notification.players:
-                db.session.delete(notification)
+        if notification in self.notifications.all():
+            db.session.delete(notification)
             db.session.commit()
 
     def notifications_read(self):
@@ -252,30 +249,26 @@ class Player(db.Model, UserMixin):
         db.session.commit()
 
     def unread_notifications(self):
-        return [
-            notification
-            for notification in self.notifications
-            if not notification.read
-        ]
+        return self.notifications.filter_by(read=False).all()
 
-    def get_values(self):
+    def get_lvls(self):
         engine = current_app.config["engine"]
-        attributes = (
-            engine.controllable_facilities
-            + engine.renewables
-            + engine.storage_facilities
-            + engine.extraction_facilities
-            + engine.functional_facilities
-            + engine.technologies
+        attributes = chain(
+            engine.functional_facilities,
+            engine.technologies,
         )
         return {attr: getattr(self, attr) for attr in attributes}
 
+    def get_reserves(self):
+        reserves = {}
+        for resource in ["coal", "oil", "gas", "uranium"]:
+            reserves[resource] = getattr(self.tile, resource)
+        return reserves
+
     def emit(self, event, *args):
         engine = current_app.config["engine"]
-        if self.id in engine.clients:
-            socketio = engine.socketio
-            for sid in engine.clients[self.id]:
-                socketio.emit(event, *args, room=sid)
+        for sid in engine.clients[self.id]:
+            engine.socketio.emit(event, *args, room=sid)
 
     def send_new_data(self, new_values):
         engine = current_app.config["engine"]
@@ -284,7 +277,7 @@ class Player(db.Model, UserMixin):
             {
                 "total_t": engine.data["total_t"],
                 "chart_values": new_values,
-                "money": "{:,.0f}".format(self.money).replace(",", "'"),
+                "money": f"{self.money:,.0f}".replace(",", "'"),
             },
         )
 
@@ -308,12 +301,15 @@ class Player(db.Model, UserMixin):
     def package_constructions(self):
         return {
             construction.id: {
-                "id": construction.id,
-                "name": construction.name,
-                "family": construction.family,
-                "start_time": construction.start_time,
-                "duration": construction.duration,
-                "suspension_time": construction.suspension_time,
+                k: getattr(construction, k)
+                for k in [
+                    "id",
+                    "name",
+                    "family",
+                    "start_time",
+                    "duration",
+                    "suspension_time",
+                ]
             }
             for construction in self.under_construction
         }
@@ -321,18 +317,46 @@ class Player(db.Model, UserMixin):
     def package_shipments(self):
         return {
             shipment.id: {
-                "id": shipment.id,
-                "resource": shipment.resource,
-                "quantity": shipment.quantity,
-                "departure_time": shipment.departure_time,
-                "duration": shipment.duration,
-                "suspension_time": shipment.suspension_time,
+                k: getattr(shipment, k)
+                for k in [
+                    "id",
+                    "resource",
+                    "quantity",
+                    "departure_time",
+                    "duration",
+                    "suspension_time",
+                ]
             }
             for shipment in self.shipments
         }
 
     def package_construction_queue(self):
         return self.read_list("construction_priorities")
+
+    def package_active_facilities(self):
+        def get_facility_data(facilities):
+            sub_facilities = self.active_facilities.filter(Active_facilities.facility.in_(facilities)).all()
+            return {
+                facility.id: {
+                    k: getattr(facility, k)
+                    for k in [
+                        "facility",
+                        "end_of_life",
+                        "price_multiplier",
+                        "power_multiplier",
+                        "capacity_multiplier",
+                        "efficiency_multiplier",
+                    ]
+                }
+                for facility in sub_facilities
+            }
+
+        engine = current_app.config["engine"]
+        return {
+            "power_facilities": get_facility_data(engine.power_facilities),
+            "storage_facilities": get_facility_data(engine.storage_facilities),
+            "extraction_facilities": get_facility_data(engine.extraction_facilities),
+        }
 
 
 class Network(db.Model):
@@ -341,3 +365,12 @@ class Network(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True)
     members = db.relationship("Player", backref="network")
+
+
+class PlayerUnreadMessages(db.Model):
+    """Association table to store player's last activity in each chat"""
+
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), primary_key=True)
+    message_id = db.Column(db.Integer, db.ForeignKey("message.id"), primary_key=True)
+    player = db.relationship("Player", backref="read_messages")
+    message = db.relationship("Message", backref="read_by_players")

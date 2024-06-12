@@ -223,8 +223,8 @@ function regen(res) {
             noStroke();
             const keys = [...keys_storage].reverse();
             for (const key of keys){
-                if (player_data[0][key] > 0){
-                    capacities[key] = player_data[0][key] * player_data[1]["assets"][key]["storage capacity"]
+                if (key in player_data["capacities"]){
+                    capacities[key] = player_data["capacities"][key]["capacity"]
                 }
             }
             const sum = Object.values(capacities).reduce(

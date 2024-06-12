@@ -1,89 +1,28 @@
 from werkzeug.security import generate_password_hash
 from pathlib import Path
 
-from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer
+from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer, CapacityData
 
 from .database.map import Hex
 
 from .database.player import Network, Player
 from .database.player_assets import (
     Under_construction,
-    Shipment,
-    Resource_on_sale,
 )
 from . import db
 import pickle
-import os
-import time
 from .utils import data_init_network, init_table, add_player_to_data
+from website import technology_effects
 
 
 def edit_database(engine):
-    with open("retieved_data.pck", "rb") as file:
-        retieved_data = pickle.load(file)
-    for player_id in retieved_data["player"]:
-        player = create_player(
-            engine,
-            retieved_data["player"][player_id]["username"],
-            retieved_data["player"][player_id]["pwhash"],
-        )
-        for attribute in retieved_data["player"][player_id]:
-            setattr(
-                player, attribute, retieved_data["player"][player_id][attribute]
-            )
-        db.session.commit()
-
-    for network_id in retieved_data["network"]:
-        create_network(engine, retieved_data["network"][network_id]["name"], [])
-
-    for tile_id in retieved_data["hex"]:
-        tile = Hex.query.filter_by(id=tile_id).first()
-        tile.player_id = retieved_data["hex"][tile_id]["player_id"]
-        db.session.commit()
-
-    for construction_id in retieved_data["under_construction"]:
-        construction = retieved_data["under_construction"][construction_id]
-        new_facility = Under_construction(
-            name=construction["name"],
-            family=construction["family"],
-            start_time=construction["start_time"],
-            duration=construction["duration"],
-            player_id=construction["player_id"],
-        )
-        db.session.add(new_facility)
-        db.session.commit()
-
-    for shipment_id in retieved_data["shipment"]:
-        shipment = retieved_data["shipment"][shipment_id]
-        new_shipment = Shipment(
-            resource=shipment["resource"],
-            quantity=shipment["quantity"],
-            departure_time=shipment["departure_time"],
-            duration=shipment["duration"],
-            player_id=shipment["player_id"],
-        )
-        db.session.add(new_shipment)
-        db.session.commit()
-
-    for sale_id in retieved_data["resource_on_sale"]:
-        sale = retieved_data["resource_on_sale"][sale_id]
-        new_sale = Resource_on_sale(
-            resource=sale["resource"],
-            quantity=sale["quantity"],
-            price=sale["price"],
-            creation_date=sale["creation_date"],
-            player_id=sale["player_id"],
-        )
-        db.session.add(new_sale)
-        db.session.commit()
-
-    os.remove("retieved_data.pck")
+    pass
 
 
 def init_test_players(engine):
     player = create_player(engine, "user", "password")
     if player:
-        Hex.query.filter_by(id=300).first().player_id = player.id
+        Hex.query.filter_by(id=1).first().player_id = player.id
 
         player.money = 1000000
         player.coal = 450000
@@ -91,21 +30,23 @@ def init_test_players(engine):
         player.gas = 800000
         player.uranium = 4500
 
-        add_asset(player, "industry", 18)
+        add_asset(player, "industry", 11)
         add_asset(player, "laboratory", 5)
         add_asset(player, "mathematics", 1)
         add_asset(player, "mineral_extraction", 2)
         add_asset(player, "building_technology", 1)
+        add_asset(player, "civil_engineering", 1)
         add_asset(player, "coal_mine", 1)
         # add_asset(player, "uranium_mine", 1)
         add_asset(player, "warehouse", 2)
         add_asset(player, "small_pumped_hydro", 1)
         add_asset(player, "hydrogen_storage", 1)
-        add_asset(player, "onshore_wind_turbine", 1)
+        # add_asset(player, "onshore_wind_turbine", 1)
         # add_asset(player, "offshore_wind_turbine", 2)
         add_asset(player, "nuclear_reactor_gen4", 1)
-        add_asset(player, "combined_cycle", 1)
-        add_asset(player, "gas_burner", 3)
+        add_asset(player, "combined_cycle", 2)
+        add_asset(player, "gas_burner", 5)
+        add_asset(player, "steam_engine", 1)
         add_asset(player, "chemistry", 2)
         add_asset(player, "carbon_capture", 4)
         db.session.commit()
@@ -113,14 +54,28 @@ def init_test_players(engine):
     player2 = create_player(engine, "user2", "password")
     if player2:
         Hex.query.filter_by(id=84).first().player_id = player2.id
+        add_asset(player2, "industry", 9)
         add_asset(player2, "warehouse", 1)
         add_asset(player2, "steam_engine", 10)
+        add_asset(player2, "small_water_dam", 1)
         db.session.commit()
 
     player3 = create_player(engine, "user3", "password")
     if player3:
-        Hex.query.filter_by(id=301).first().player_id = player3.id
+        Hex.query.filter_by(id=143).first().player_id = player3.id
+        add_asset(player3, "industry", 8)
         add_asset(player3, "onshore_wind_turbine", 5)
+        db.session.commit()
+
+    player4 = create_player(engine, "user4", "password")
+    if player4:
+        Hex.query.filter_by(id=28).first().player_id = player4.id
+        add_asset(player4, "warehouse", 1)
+        add_asset(player4, "watermill", 1)
+        add_asset(player4, "steam_engine", 1)
+        add_asset(player4, "small_pumped_hydro", 1)
+        add_asset(player4, "coal_burner", 1)
+        add_asset(player4, "coal_mine", 1)
         db.session.commit()
 
     create_network(engine, "net", [player, player2, player3])
@@ -179,10 +134,15 @@ def add_asset(player, asset, n):
         new_construction = Under_construction(
             name=asset,
             family=asset_to_family[asset],
-            start_time=time.time(),
-            duration=0,
+            start_time=0,
+            duration=1,
             suspension_time=None,
-            original_price=0,
+            construction_power=0,
+            construction_pollution=technology_effects.construction_pollution(player, asset),
+            price_multiplier=technology_effects.price_multiplier(player, asset),
+            power_multiplier=technology_effects.power_multiplier(player, asset),
+            capacity_multiplier=technology_effects.capacity_multiplier(player, asset),
+            efficiency_multiplier=technology_effects.efficiency_multiplier(player, asset),
             player_id=player.id,
         )
         db.session.add(new_construction)
@@ -200,6 +160,7 @@ def create_player(engine, username, password):
         db.session.add(new_player)
         db.session.commit()
         engine.data["current_data"][new_player.id] = CircularBufferPlayer()
+        engine.data["player_capacities"][new_player.id] = CapacityData()
         add_player_to_data(engine, new_player.id)
         init_table(new_player.id)
         db.session.commit()
@@ -214,14 +175,10 @@ def create_network(engine, name, members):
         new_network = Network(name=name, members=members)
         db.session.add(new_network)
         db.session.commit()
-        Path(f"instance/network_data/{new_network.id}/charts").mkdir(
-            parents=True, exist_ok=True
-        )
+        Path(f"instance/network_data/{new_network.id}/charts").mkdir(parents=True, exist_ok=True)
         engine.data["network_data"][new_network.id] = CircularBufferNetwork()
         past_data = data_init_network()
-        Path(f"instance/network_data/{new_network.id}").mkdir(
-            parents=True, exist_ok=True
-        )
+        Path(f"instance/network_data/{new_network.id}").mkdir(parents=True, exist_ok=True)
         with open(
             f"instance/network_data/{new_network.id}/time_series.pck",
             "wb",

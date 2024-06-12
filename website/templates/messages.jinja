@@ -7,10 +7,10 @@
     <div id="disclamer"
          class="popup {% if user.show_disclamer == False %}hidden{% endif %} green"
          style="max-width:500px">
-        <form method="post" class="flex-col margin medium">
+        <div class="flex-col margin medium">
             <div class="txt_center margin">
                 This is a disclamier that tells you that the chat is not censored and that any message can be read by the
-                administrator.
+                administrators.
             </div>
             <div>
                 <label for="dont_show_disclaimer">Dont show again</label>
@@ -19,10 +19,9 @@
                        name="dont_show_disclaimer"
                        class="margin">
             </div>
-            <button type="submit"
-                    onclick="console.log('Button clicked!'); document.getElementById('disclamer').classList.add('hidden');"
+            <button onclick="hide_disclaimer()"
                     class="bone padding margin medium login-button">OK</button>
-        </form>
+        </div>
     </div>
     <!--ADD CHAT-->
     <div id="add_chat" class="popup hidden green">
@@ -32,7 +31,7 @@
                  class="cross pine margin-small"
                  style="width:39px">×</div>
         </div>
-        <form method="post" autocomplete="off" class="flex-col margin-large">
+        <div class="flex-col margin-large">
             <div style="width:100%;">
                 <label for="add_chat_username">Player username</label>
                 <input type="text"
@@ -42,10 +41,10 @@
                        placeholder="Username">
                 <div class="suggestions1"></div>
             </div>
-            <button type="submit"
-                    class="bone padding medium login-button"
-                    style="margin-top:16px">Add chat</button>
-        </form>
+            <button class="bone padding medium login-button"
+                    style="margin-top:16px"
+                    onclick="createChat()">Add chat</button>
+        </div>
     </div>
     <!--ADD GROUP CHAT-->
     <div id="add_group_chat" class="popup hidden green">
@@ -87,35 +86,32 @@
                  style="margin-top:16px">Add group chat</div>
         </div>
     </div>
+
+
     <div class="medium flex-row">
         <div class="chat_sidebar bone">
-            <div class="txt_center large padding">CHATS</div>
-            {% for chat in chats %}
-                {% set chat_name = chat.name.replace(user.username,"") if chat.participants|length == 2 else chat.name %}
-                <div onclick="openChat({{ chat.id }})" class="margin-small white button">
-                    <div class="proile-icon green large">{{ chat_name[0] }}</div>
-                    <b class="medium padding test">
-                        {{ chat_name }}
-                    </b>
-                </div>
-            {% endfor %}
+            <div class="txt_center large padding">Chats</div>
+            <div id="chat_list_container">
+            
+            </div>
             <div onclick="document.getElementById('add_chat').classList.remove('hidden');"
                  class="margin-small pine button txt_center padding">Write to player</div>
             <div onclick="document.getElementById('add_group_chat').classList.remove('hidden');"
                  class="margin-small pine button txt_center padding">Create goup chat</div>
         </div>
         <div class="chat_container">
-            <div class="txt_center large padding">MESSAGES</div>
-            <div id="messages_field"></div>
-            <input type="text"
-                   class="message_input medium"
-                   id="new_message"
-                   name="new_message"
-                   placeholder="Message">
-            <b onclick="sendMessage()"
-               class="margin-small pine button txt_center padding-small">
-                send
-            </b>
+            <div id="chat_title_div" class="txt_center large padding chat_title">Messages</div>
+            <div id="message_container" class="message_container"></div>
+            <div id = "message_input_field" class="message_input_field flex-space-around margin hidden">
+                <input type="text"
+                    class="message_input medium"
+                    id="new_message"
+                    name="new_message"
+                    placeholder="Message">
+                <button onclick="newMessage()" class="margin-small pine button txt_center padding medium">
+                    send
+                </button>
+            </div>
         </div>
     </div>
 {% endblock content %}

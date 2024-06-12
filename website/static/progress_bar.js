@@ -54,7 +54,8 @@ resource_names = {
     "uranium": "Uranium",
 }
 
-function formatMilliseconds(totalSeconds) {
+function formatSeconds(totalSeconds) {
+    totalSeconds = totalSeconds * clock_time;
     const days = Math.floor(totalSeconds / (3600 * 24));
     const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -75,9 +76,52 @@ function formatMilliseconds(totalSeconds) {
     return formattedTime.trim();
 }
 
-function cancel_construction(construction_id) {
-    send_form("/request_cancel_project", {
+// information sent to the server when a new facility is created
+function start_construction(facility, family, force=false) {
+    send_form("/api/request_start_project", {
+        facility: facility,
+        family: family,
+        force: force,
+    })
+        .then((response) => {
+            response.json().then((raw_data) => {
+                let response = raw_data["response"];
+                if (response == "success") {
+                    let money = raw_data["money"];
+                    var obj = document.getElementById("money");
+                    obj.innerHTML = formatted_money(money);
+                    addToast("Construction started");
+                    sessionStorage.setItem(
+                        "constructions",
+                        JSON.stringify(raw_data["constructions"])
+                    );
+                    refresh_progressBar();
+                } else if (response == "areYouSure") {
+                    capacity = raw_data["capacity"];
+                    construction_power = raw_data["construction_power"];
+                    are_you_sure_start_construction(facility, family, capacity, construction_power);
+                } else if (response == "notEnoughMoneyError") {
+                    addError("Not enough money");
+                } else if (response == "locked") {
+                    if (family == "Technologies"){
+                        addError("Requirements not fulfilled");
+                    }else{
+                        addError("Facility is locked");
+                    }
+                } else if (response == "requirementsNotFullfilled") {
+                    addError("Requirements not fulfilled for this Technology level");
+                }
+            });
+        })
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
+}
+
+function cancel_construction(construction_id, force=false) {
+    send_form("/api/request_cancel_project", {
         id: construction_id,
+        force: force,
     })
         .then((response) => {
             response.json().then((raw_data) => {
@@ -92,6 +136,9 @@ function cancel_construction(construction_id) {
                         JSON.stringify(raw_data["constructions"])
                     );
                     refresh_progressBar();
+                }else if(response == "areYouSure"){
+                    refund = raw_data["refund"];
+                    are_you_sure_cancel_construction(construction_id, refund);
                 }
             });
         })
@@ -101,7 +148,7 @@ function cancel_construction(construction_id) {
 }
 
 function pause_construction(construction_id) {
-    send_form("/request_pause_project", {
+    send_form("/api/request_pause_project", {
         id: construction_id,
     })
         .then((response) => {
@@ -125,7 +172,7 @@ function pause_construction(construction_id) {
 }
 
 function pause_shipment(shipment_id) {
-    send_form("/request_pause_shipment", {
+    send_form("/api/request_pause_shipment", {
         id: shipment_id,
     })
         .then((response) => {
@@ -146,7 +193,7 @@ function pause_shipment(shipment_id) {
 }
 
 function decrease_project_priority(construction_id) {
-    send_form("/request_decrease_project_priority", {
+    send_form("/api/request_decrease_project_priority", {
         id: construction_id,
     })
         .then((response) => {
@@ -176,25 +223,27 @@ load_constructions().then((constructions) => {
             const id = progressBar.id;
             const construction = constructions_data[0][id];
             const now = new Date().getTime() / 1000;
+            const round_up = server_start % clock_time;
+            const current_time = (now-server_start + round_up) / clock_time;
             let new_width;
             let time_remaining;
-            if (construction["suspension_time"]) {
+            if (construction.suspension_time) {
                 new_width =
-                    ((construction["suspension_time"] -
-                        construction["start_time"]) /
-                        construction["duration"]) *
+                    ((construction.suspension_time -
+                        construction.start_time) /
+                        construction.duration) *
                     100;
                 time_remaining =
-                    construction["duration"] +
-                    construction["start_time"] -
-                    construction["suspension_time"];
+                    construction.duration +
+                    construction.start_time -
+                    construction.suspension_time;
             } else {
                 new_width =
-                    ((now - construction["start_time"]) /
-                        construction["duration"]) *
+                    ((current_time - construction.start_time) /
+                        construction.duration) *
                     100;
                 time_remaining =
-                    construction["duration"] + construction["start_time"] - now;
+                    construction.duration + construction.start_time - current_time;
             }
             progressBar.style.setProperty("--width", new_width);
             if (new_width > 0.01) {
@@ -205,11 +254,11 @@ load_constructions().then((constructions) => {
                 setTimeout(() => {
                     retrieve_constructions().then((construction_list) => {
                         constructions_data = construction_list;
-                        display_progressBars(constructions_data, shipment_data);
+                        display_progressBars(constructions_data, null);
                     });
                 }, 1000);
             }
-            const time = formatMilliseconds(time_remaining);
+            const time = formatSeconds(time_remaining);
             progressBar.innerHTML = "&nbsp; " + time;
         }
         for (const shipmentBar of shipmentBars) {
@@ -245,11 +294,11 @@ load_constructions().then((constructions) => {
                 setTimeout(() => {
                     retrieve_shipments().then((shipment_list) => {
                         shipment_data = shipment_list;
-                        display_progressBars(constructions_data, shipment_data);
+                        display_progressBars(null, shipment_data);
                     });
                 }, 1000);
             }
-            const time = formatMilliseconds(time_remaining);
+            const time = formatSeconds(time_remaining);
             shipmentBar.innerHTML = "&nbsp; " + time;
         }
     }, 100);
@@ -267,55 +316,62 @@ function refresh_progressBar() {
 
 function display_progressBars(construction_data, shipment_data){
     if (document.title == "Home"){
-        const uc = document.getElementById("under_construction");
-        const ur = document.getElementById("under_research");
-        const us = document.getElementById("shipments");
-        uc.innerHTML = "";
-        ur.innerHTML = "";
-        us.innerHTML = "";
-        construction_priority = construction_data[1];
-        research_priority = construction_data[2];
-        if(construction_priority.length > 0){
-            uc.innerHTML = "<h1>&emsp;Constructions</h1>";
+        if (construction_data != null){
+            const uc = document.getElementById("under_construction");
+            const ur = document.getElementById("under_research");
+            uc.innerHTML = "";
+            ur.innerHTML = "";
+            construction_priority = construction_data[1];
+            research_priority = construction_data[2];
+            if(construction_priority.length > 0){
+                uc.innerHTML = "<h1>&emsp;Constructions</h1>";
+            }
+            if(research_priority.length > 0){
+                ur.innerHTML = "<h1>&emsp;Researches</h1>";
+            }
+            for (const [index, c_id] of research_priority.entries()) {
+                construction = construction_data[0][c_id];
+                ur.innerHTML += html_for_progressBar(c_id, index, research_priority, construction);
+            }
+            for (const [index, c_id] of construction_priority.entries()) {
+                construction = construction_data[0][c_id];
+                uc.innerHTML += html_for_progressBar(c_id, index, construction_priority, construction);
+            }
         }
-        if(research_priority.length > 0){
-            ur.innerHTML = "<h1>&emsp;Researches</h1>";
-        }
-        if(Object.keys(shipment_data).length > 0){
-            us.innerHTML = "<h1>&emsp;Shipments</h1>";
-        }
-        for (const [index, c_id] of research_priority.entries()) {
-            construction = construction_data[0][c_id];
-            ur.innerHTML += html_for_progressBar(c_id, index, research_priority, construction);
-        }
-        for (const [index, c_id] of construction_priority.entries()) {
-            construction = construction_data[0][c_id];
-            uc.innerHTML += html_for_progressBar(c_id, index, construction_priority, construction);
-        }
-        for (var id in shipment_data) {
-            shipment = shipment_data[id];
-            us.innerHTML += html_for_shipmentBar(id, shipment);
+        if (shipment_data != null){
+            const us = document.getElementById("shipments");
+            us.innerHTML = "";
+            if(Object.keys(shipment_data).length > 0){
+                us.innerHTML = "<h1>&emsp;Shipments</h1>";
+            }
+            for (var id in shipment_data) {
+                shipment = shipment_data[id];
+                us.innerHTML += html_for_shipmentBar(id, shipment);
+            }
         }
     }else{
         const uc = document.getElementById("under_construction");
         if(uc != null){
-            uc.innerHTML = "";
-            if(document.title == "Resource market"){
+            if(document.title == "Resource market" && shipment_data != null){
+                uc.innerHTML = "";
                 for (var id in shipment_data) {
                     shipment = shipment_data[id];
                     uc.innerHTML += html_for_shipmentBar(id, shipment);
                 }
                 return
             }
-            if(document.title == "Technologies"){
-                project_priority = construction_data[2];
-            }else{
-                project_priority = construction_data[1];
-            }
-            for (const [index, c_id] of project_priority.entries()) {
-                construction = construction_data[0][c_id];
-                if (construction["family"] == document.title){
-                    uc.innerHTML += html_for_progressBar(c_id, index, project_priority, construction);
+            if (construction_data != null){
+                uc.innerHTML = "";
+                if(document.title == "Technologies"){
+                    project_priority = construction_data[2];
+                }else{
+                    project_priority = construction_data[1];
+                }
+                for (const [index, c_id] of project_priority.entries()) {
+                    construction = construction_data[0][c_id];
+                    if (construction["family"] == document.title){
+                        uc.innerHTML += html_for_progressBar(c_id, index, project_priority, construction);
+                    }
                 }
             }
         }
@@ -358,8 +414,7 @@ function html_for_shipmentBar(id, shipment){
     if (shipment["suspension_time"]) {
         playPauseLogo = "fa-play";
     }
-    return `
-    <div class="progressbar-container">
+    return `<div class="progressbar-container">
         <div class="progressbar-name medium margin-small">${display_kg(shipment["quantity"], write=false)} ${resource_names[shipment["resource"]]}</div>
         <div class="progressbar-background">
             <div id="${id}" class="shipmentbar-bar"></div>

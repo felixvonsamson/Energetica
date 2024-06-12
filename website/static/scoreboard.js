@@ -3,7 +3,7 @@ let decending = true;
 get_data();
 
 function get_data() {
-    fetch(`/get_scoreboard`) // retrieves array of players with scoreboard data
+    fetch("/api/get_scoreboard") // retrieves array of players with scoreboard data
         .then((response) => response.json())
         .then((raw_data) => {
             data = raw_data;
@@ -49,9 +49,15 @@ function sortTable(columnName) {
         <th id="xp" onclick="sortTable('xp')">xp</th>
         <th id="co2_emissions" onclick="sortTable('co2_emissions')">Emissions</th>
         </tr>`;
+    let current_player_id = sessionStorage.getItem("player_id");
     for (const [id, player] of sortedData) {
+        if (id == current_player_id){
+            href = "/profile";
+        }else{
+            href = `/profile?player_id=${id}`;
+        }
         html += `<tr>
-            <td><a href="/profile?player_name=${player['username']}">${player['username']}</a></td>
+            <td><a href="${href}">${player['username']}</a></td>
             <td>${player['network_name']}</td>
             <td>${display_money(player['average_hourly_revenues'], write=false)}/h</td>
             <td>${display_W(player['max_power_consumption'], write=false)}</td>
