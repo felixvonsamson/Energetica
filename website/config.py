@@ -518,7 +518,7 @@ const_config = {
             "base_construction_pollution": 250000,
             "O&M_factor": 0.00049,  # not used for now
             "base_power_consumption": 10000000,  # [W]
-            "base_absorbtion": 0.000001,  # [fraction of atmospheric CO2 absorbed per minute]
+            "base_absorbtion": 0.0000001,  # [fraction of atmospheric CO2 absorbed per minute]
             "price multiplier": 1.5,
             "absorbtion factor": 1.55,
             "power factor": 1.5,
