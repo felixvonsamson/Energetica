@@ -6,11 +6,16 @@ readable format for humans.
 // Inserts spaces as a thousands separator and the right unit
 function general_format(value, units, write=false) {
     let unit_index = 0;
+    let isNegative = value < 0;
+    value = Math.abs(value);
     while (value >= 10000 && unit_index < units.length - 1) {
         value /= 1000;
         unit_index += 1;
     }
     formatted_value = `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]}`
+    if (isNegative) {
+        formatted_value = '-' + formatted_value;
+    }
     if (write){
         document.write(formatted_value);
     }
@@ -18,9 +23,10 @@ function general_format(value, units, write=false) {
 }
 
 // Inserts spaces as a thousands separator and the right unit for current and future value
-function upgrade_format(value, units, factor) {
+function upgrade_format(value, units, factor, constant=0) {
     let unit_index = 0;
-    let value2 = value * factor;
+    let value2 = value * factor + constant;
+    value += constant;
     while (value >= 10000 && unit_index < units.length - 1) {
         value /= 1000;
         value2 /= 1000;
@@ -40,13 +46,13 @@ function display_upgrade_W(price, factor) {
     upgrade_format(price, units, factor);
 }
 
-function display_upgrade_money(price, factor) {
+function display_upgrade_money(price, factor, constant) {
     const units = [
         " <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day",
         "k <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day",
         "M <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/day",
     ];
-    upgrade_format(price, units, factor);
+    upgrade_format(price, units, factor, constant);
 }
 
 function display_upgrade_kg(price, factor) {
@@ -134,14 +140,6 @@ function display_days(seconds, write=true) {
     return days;
 }
 
-function to_string(inputFloat) {
-    var resultString = inputFloat.toString();
-    if (resultString.includes(".")) {
-        resultString = resultString.replace(/(\.[0-9]*[1-9])0+$/, "$1");
-    }
-    document.write(resultString);
-}
-
 function calculate_delivery(delta_q, delta_r, trasport_speed) {
     const dist = Math.sqrt(
         2 * (Math.pow(delta_q, 2) + Math.pow(delta_r, 2) + delta_q * delta_r)
@@ -177,4 +175,16 @@ function formatDateTime(dateTimeString, write=true) {
 
 function formatted_money(amount) {
     return `${amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`;
+}
+
+function formatDateString(dateString) {
+    var date = new Date(dateString);
+    var currentDate = new Date();
+    if (date.toDateString() === currentDate.toDateString()) {
+        return date.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Paris'});
+    } else {
+        var formattedDate = date.getDate() + ' ' + date.toLocaleString('default', { month: 'short' }) + '. ' +
+                            date.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Paris'});
+        return formattedDate;
+    }
 }

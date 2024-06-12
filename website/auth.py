@@ -44,11 +44,11 @@ def login():
                 flash("Incorrect password, try again.", category="error")
         else:
             flash(
-                "Username does not exist.<br><b>All accounts created before the 12.03.2024 have been<br>deleted due to a server reset for the 0.8 update.<br>If your account has been deleted, please create a new one.</b>",
+                "Username does not exist.<br><b>All accounts created before the 13.06.2024 have been<br>deleted due to a server reset for the 0.9 update.<br>If your account has been deleted, please create a new one.</b>",
                 category="error",
             )
 
-    return render_template("login.jinja", user=current_user)
+    return render_template("login.jinja", engine=g.engine, user=current_user)
 
 
 # logic for the logout :
@@ -92,4 +92,4 @@ def sign_up():
             ws.rest_notify_new_player(current_app.config["engine"], new_player)
             return redirect(url_for("views.home"))
 
-    return render_template("sign_up.jinja", user=current_user)
+    return render_template("sign_up.jinja", engine=g.engine, user=current_user)

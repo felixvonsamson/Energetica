@@ -2,19 +2,44 @@
 This code creates a list of suggestions when typing names in a field
 */
 
-let active_chat = 1;
 let sortedNames;
 let group = [];
+let current_chat_id;
 
-fetch("/get_usernames") // retrieves list of all names using api.py
-    .then((response) => response.json())
-    .then((data) => {
-        sortedNames = data.sort();
+refresh_chats();
+
+load_players().then((players_) => {
+    const player_id = sessionStorage.getItem("player_id")
+    const usernames = Object.entries(players_)
+        .filter(([id, user]) => id != player_id)
+        .map(([id, user]) => user.username);
+    sortedNames = usernames.sort();
+});
+
+function refresh_chats(){
+    load_chats().then((data) => {
+        let chats = data.chat_list;
+        let chat_list_container = document.getElementById("chat_list_container");
+        chat_list_container.innerHTML = "";
+        for(chat_id in chats){
+            badge = ""
+            if(chats[chat_id].unread_messages > 0){
+                badge = `<span id="unread_badge_chat" class="unread_badge messages padding-small pine">${chats[chat_id].unread_messages}</span>`
+            }
+            chat_list_container.innerHTML += `<div id="chat_${chat_id}" onclick="openChat(${chat_id})" class="margin-small white button position_relative">
+                <div class="proile-icon green large">${chats[chat_id].name[0]}</div>
+                <b class="medium padding test">${chats[chat_id].name}</b>
+                ${badge}
+            </div>`
+        }
+        if(data.last_opened_chat != null){
+            openChat(data.last_opened_chat);
+        }
     })
     .catch((error) => {
-        console.log(error);
         console.error("Error:", error);
     });
+}
 
 let input1 = document.getElementById("add_chat_username");
 let input2 = document.getElementById("add_player");
@@ -62,6 +87,21 @@ input2.addEventListener("input", (e) => {
     }
 });
 
+//Enter to add player to list
+input2.addEventListener("keydown", (e) => {
+    if (e.key == "Enter") {
+        addPlayer();
+    }
+});
+
+//Enter to send message
+let message_input = document.getElementById("new_message");
+message_input.addEventListener("keydown", (e) => {
+    if (e.key == "Enter") {
+        newMessage();
+    }
+});
+
 function displayNames1(value) {
     input1.value = value;
     removeElements();
@@ -70,6 +110,7 @@ function displayNames1(value) {
 function displayNames2(value) {
     input2.value = value;
     removeElements();
+    addPlayer();
 }
 
 function removeElements() {
@@ -104,43 +145,132 @@ function removePlayer(name) {
     document.getElementById("groupMember_" + name).remove();
 }
 
+function hide_disclaimer(){
+    checkmark = document.getElementById("dont_show_disclaimer")
+    if(checkmark.checked){
+        fetch("/api/hide_chat_disclaimer")
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
+    }
+    document.getElementById('disclamer').classList.add('hidden');
+}
+
+function createChat(){
+    username = document.getElementById("add_chat_username").value
+    send_form("/api/create_chat", {
+        buddy_username: username,
+    }).then((response) => {
+        response.json().then((raw_data) => {
+            let response = raw_data["response"];
+            if (response == "success") {
+                retrieve_chats();
+                document.getElementById('add_chat').classList.add('hidden');
+            }else if(response == "cannotChatWithYourself"){
+                addError("Cannot create a chat with yourself");
+            }else if(response == "usernameIsWrong"){
+                addError("No Player with this username");
+            }else if(response == "chatAlreadyExist"){
+                addError("This chat already exists");
+            }
+        });
+    })
+    .catch((error) => {
+        console.error(`caught error ${error}`);
+    });
+}
+
 function createGroupChat() {
     let title = document.getElementById("chat_title").value;
-    if (title.length == 0 || title.length > 25) {
-        addError(
-            "The chat title cannot be empty and cannot have more than 25 characters"
-        );
-        return;
+    send_form("/api/create_group_chat", {
+        chat_title: title,
+        group_memebers: group,
+    }).then((response) => {
+        response.json().then((raw_data) => {
+            let response = raw_data["response"];
+            if (response == "success") {
+                retrieve_chats();
+                document.getElementById('add_group_chat').classList.add('hidden');
+                group = [];
+            }else if(response == "wrongTitleLength"){
+                addError("The chat title cannot be empty and cannot have more than 25 characters");
+            }else if(response == "groupTooSmall"){
+                addError("Group chats have to have at least 3 members");
+            }else if(response == "chatAlreadyExist"){
+                addError("This chat already exists");
+            }
+        });
+    })
+    .catch((error) => {
+        console.error(`caught error ${error}`);
+    });
+}
+
+function newMessage(){
+    let message_field = document.getElementById("new_message");
+    if (!current_chat_id){
+        addError("No chat has been selected")
     }
-    if (group.length == 0) {
-        addError("The chat has to have at least 2 members");
-        return;
-    }
-    socket.emit("create_group_chat", title, group);
+    send_form("/api/new_message", {
+        new_message: message_field.value,
+        chat_id: current_chat_id,
+    }).then((response) => {
+        response.json().then((raw_data) => {
+            let response = raw_data["response"];
+            if (response == "success") {
+                message_field.value = "";
+            }
+        });
+    })
+    .catch((error) => {
+        console.error(`caught error ${error}`);
+    });
 }
 
 function openChat(chatID) {
-    active_chat = chatID;
+    current_chat_id = chatID;
     let html = ``;
-    fetch(`/get_chat?chatID=${chatID}`)
+    load_chats().then((chat_data) => {
+        let chats = chat_data.chat_list;
+        if (chat_data.chat_list[chatID].unread_messages > 0){
+            chat_data.chat_list[chatID].unread_messages = 0
+            chat_data.unread_chats -= 1;
+            document.getElementById(`chat_${chatID}`).querySelector("#unread_badge_chat").classList.add("hidden");
+        }
+        chat_data.last_opened_chat = chatID;
+        sessionStorage.setItem("chats", JSON.stringify(chat_data));
+        show_unread_badges();
+        fetch(`/api/get_chat_messages?chatID=${chatID}`)
         .then((response) => response.json())
         .then((data) => {
-            for (let i = 0; i < Math.min(25, data.length); i++) {
-                html += `<div>${data[i][0]} : ${data[i][1]}</div>`;
-            }
-            document.getElementById("messages_field").innerHTML = html;
+            load_players().then((players) => {
+                let messages = data.messages;
+                let chat_title = document.getElementById("chat_title_div");
+                chat_title.innerHTML = `<b>${chats[chatID].name}</b>`;
+                document.getElementById("message_input_field").classList.remove("hidden");
+                for (let i = 0; i < messages.length; i++) {
+                    let alignment = "left";
+                    let username = "";
+                    if(messages[i].player_id == sessionStorage.getItem("player_id")){
+                        alignment = "right";
+                    }else if(chats[chatID].group_chat){
+                        username = players[messages[i].player_id].username + "&emsp;";
+                    }
+                    html += `<div class="message ${alignment}">
+                        <div class="message_infos">
+                            <span>${username}</span>
+                            <span class="txt_pine">${formatDateString(messages[i].time)}</span></div>
+                        <div class="message_text bone ${alignment}">${messages[i].text}</div>
+                    </div>`;
+                }
+                let message_container = document.getElementById("message_container")
+                message_container.innerHTML = html;
+                message_container.scrollTop = message_container.scrollHeight;
+                document.getElementById("new_message").focus();
+            })
         })
         .catch((error) => {
-            console.log(error);
             console.error("Error:", error);
         });
-}
-
-function sendMessage() {
-    let message = document.getElementById("new_message").value;
-    if (message.length == 0) {
-        return;
-    }
-    document.getElementById("new_message").value = "";
-    socket.emit("new_message", message, active_chat);
+    });
 }
