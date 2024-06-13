@@ -28,41 +28,9 @@ socket.on("connect_error", (err) => {
     console.log(err.context);
 });
 
-// information sent to the server when a new facility is created
-function start_construction(facility, family) {
-    send_form("/request_start_project", {
-        facility: facility,
-        family: family,
-    })
-        .then((response) => {
-            response.json().then((raw_data) => {
-                let response = raw_data["response"];
-                if (response == "success") {
-                    let money = raw_data["money"];
-                    var obj = document.getElementById("money");
-                    obj.innerHTML = formatted_money(money);
-                    addToast("Construction started");
-                    sessionStorage.setItem(
-                        "constructions",
-                        JSON.stringify(raw_data["constructions"])
-                    );
-                    refresh_progressBar();
-                } else if (response == "notEnoughMoneyError") {
-                    addError("Not enough money");
-                } else if (response == "locked") {
-                    if (family == "Technologies"){
-                        addError("Requirements not fulfilled");
-                    }else{
-                        addError("Facility is locked");
-                    }
-                } else if (response == "requirementsNotFullfilled") {
-                    addError("Requirements not fulfilled for this Technology level");
-                }
-            });
-        })
-        .catch((error) => {
-            console.error(`caught error ${error}`);
-        });
+//function that checks if the connection is a new connection or not
+function check_new_connection(){
+    const last_value = JSON.parse(sessionStorage.getItem("last_value"));
 }
 
 socket.on("get_players", function (players) {
@@ -79,9 +47,9 @@ socket.on("new_values", function (changes) {
     console.log("received new values : " + total_t);
     let last_value = JSON.parse(sessionStorage.getItem("last_value"));
     if (!last_value) {
-        retrieve_chart_data();
+        retrieve_all();
     } else if (last_value["total_t"] + 1 != total_t) {
-        retrieve_chart_data();
+        retrieve_all();
     } else {
         const currentDate = new Date();
         sessionStorage.setItem(
@@ -94,8 +62,8 @@ socket.on("new_values", function (changes) {
             for (var subcategory in subcategories) {
                 if (!chart_data[category].hasOwnProperty(subcategory)) {
                     chart_data[category][subcategory] = Array.from(
-                        { length: 4 },
-                        () => Array(1440).fill(0)
+                        { length: 5 },
+                        () => Array(360).fill(0)
                     );
                 }
                 var value = subcategories[subcategory];
@@ -115,9 +83,9 @@ socket.on("new_network_values", function (changes) {
     let total_t = changes["total_t"];
     let last_value = JSON.parse(sessionStorage.getItem("last_value_network"));
     if (!last_value) {
-        retrieve_chart_data();
+        retrieve_all();
     } else if (last_value["total_t"] + 1 != total_t) {
-        retrieve_chart_data();
+        retrieve_all();
     } else {
         const currentDate = new Date();
         sessionStorage.setItem(
@@ -126,9 +94,17 @@ socket.on("new_network_values", function (changes) {
         );
         let network_data = JSON.parse(sessionStorage.getItem("network_data"));
         for (var category in changes["network_values"]) {
-            var value = changes["network_values"][category];
-            let array = network_data[category];
-            reduce_resolution(value, array, total_t);
+            for (var player_id in changes["network_values"][category]) {
+                if(!network_data[category].hasOwnProperty(player_id)){
+                    network_data[category][player_id] = Array.from(
+                        { length: 5 },
+                        () => Array(360).fill(0)
+                    );
+                }
+                var value = changes["network_values"][category][player_id];
+                let array = network_data[category][player_id];
+                reduce_resolution(value, array, total_t);
+            }
         }
         sessionStorage.setItem("network_data", JSON.stringify(network_data));
     }
@@ -137,32 +113,21 @@ socket.on("new_network_values", function (changes) {
 function reduce_resolution(value, array, total_t) {
     array[0].shift();
     array[0].push(value);
-    let mod5 = total_t % 5;
-    if (mod5 != 0) {
-        array[1][1439] =
-            array[0].slice(-mod5).reduce((acc, val) => acc + val, 0) / mod5;
-    } else {
-        array[1].shift();
-        let new_val = (4 * array[1][1438] + array[0][1439]) / 5;
-        array[1].push(new_val);
-    }
-    let mod30 = total_t % 30;
-    if (mod30 != 0) {
-        array[2][1439] =
-            array[0].slice(-mod30).reduce((acc, val) => acc + val, 0) / mod30;
-    } else {
-        array[2].shift();
-        let new_val = (29 * array[1][1438] + array[0][1439]) / 30;
-        array[2].push(new_val);
-    }
-    let mod180 = total_t % 180;
-    if (mod180 != 0) {
-        array[3][1439] =
-            array[0].slice(-mod180).reduce((acc, val) => acc + val, 0) / mod180;
-    } else {
-        array[3].shift();
-        let new_val = (179 * array[1][1438] + array[0][1439]) / 180;
-        array[3].push(new_val);
+    for(r=1; r<5; r++){
+        factor = Math.pow(6,r)
+        let mod = total_t % factor;
+        if (mod != 0) {
+            if(r == 4){
+                let mod_6 = Math.ceil(mod / 6);
+                array[r][359] = array[1].slice(-mod_6).reduce((acc, val) => acc + val, 0) / mod_6;
+            }else{
+                array[r][359] = array[0].slice(-mod).reduce((acc, val) => acc + val, 0) / mod;
+            }
+        } else {
+            array[r].shift();
+            let new_val = ((factor-1) * array[r][358] + array[0][359]) / factor;
+            array[r].push(new_val);
+        }
     }
 }
 
@@ -200,21 +165,61 @@ socket.on("new_notification", function (notification) {
 
 socket.on("pause_construction", function (info) {
     load_constructions().then((construction_list) => {
-        construction_list[0][info["construction_id"]]["suspension_time"] =
-            info["suspension_time"];
+        construction_list[0][info.construction_id].suspension_time =
+            info.suspension_time;
         sessionStorage.setItem(
             "constructions",
             JSON.stringify(construction_list)
         );
-        display_progressBars(construction_list);
+        display_progressBars(construction_list, null);
     });
 });
 
-socket.on("display_new_message", function (msg) {
-    let obj = document.getElementById("messages_field");
-    if (obj != null) {
-        obj.innerHTML += msg;
-    }
+socket.on("pause_shipment", function (info) {
+    load_shipments().then((shipment_list) => {
+        shipment_list[info.shipment_id].suspension_time =
+            info.suspension_time;
+        sessionStorage.setItem("shipments", JSON.stringify(shipment_list));
+        display_progressBars(null, shipment_list);
+    });
+});
+
+socket.on("display_new_message", function (message) {
+    let obj = document.getElementById("message_container");
+    load_chats().then((chat_data) => {
+        if (obj != null) {
+            if (current_chat_id == message.chat_id){
+                load_players().then((players) => {
+                    let alignment = "left";
+                    let username = "";
+                    if(message.player_id == sessionStorage.getItem("player_id")){
+                        alignment = "right";
+                    }else if(chat_data.chat_list[message.chat_id].group_chat){
+                        username = players[message.player_id].username + "&emsp;";
+                    }
+                    obj.innerHTML += `<div class="message ${alignment}">
+                        <div class="message_infos">
+                            <span>${username}</span>
+                            <span class="txt_pine">${formatDateString(message.time)}</span></div>
+                        <div class="message_text bone ${alignment}">${message.text}</div>
+                    </div>`;
+                    obj.scrollTop = obj.scrollHeight;
+                });
+            }
+        }
+        if(!chat_data.chat_list[message.chat_id]){
+            retrieve_chats();
+        }else{
+            if(chat_data.chat_list[message.chat_id].unread_messages == 0){
+                chat_data.unread_chats += 1;
+            }
+            chat_data.chat_list[message.chat_id].unread_messages += 1;
+            sessionStorage.setItem("chats", JSON.stringify(chat_data));
+            if (typeof refresh_chats === 'function') {
+                refresh_chats();
+            }
+        }
+    });
 });
 
 // reloads the page

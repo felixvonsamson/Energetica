@@ -2,23 +2,19 @@
 In this file, the main routes of the website are managed
 """
 
-from flask import Blueprint, redirect, render_template, request, flash
+from flask import Blueprint, redirect, render_template, request
 from flask import g, current_app
 from flask_login import login_required, current_user
 
 from .database.messages import Chat
 
 from .database.player import Player
-from . import db
 from .database.player_assets import Resource_on_sale
-from .utils import check_existing_chats
+
+from .technology_effects import get_current_technology_values
 
 views = Blueprint("views", __name__)
 overviews = Blueprint("overviews", __name__, static_folder="static")
-
-
-def flash_error(msg):
-    return flash(msg, category="error")
 
 
 # this function is executed once before every request :
@@ -28,7 +24,7 @@ def flash_error(msg):
 def check_user():
     g.engine = current_app.config["engine"]
     if current_user.tile is not None:
-        g.config = g.engine.config[current_user.id]
+        g.data = get_current_technology_values(current_user)
 
     def render_template_ctx(page):
         if page in ["wiki.jinja", "changelog.jinja"]:
@@ -37,23 +33,21 @@ def check_user():
                     page,
                     engine=g.engine,
                     user=current_user,
-                    data=g.config,
+                    data=g.data,
                 )
             return render_template("wiki.jinja", engine=g.engine, user=None)
         # show location choice if player didn't choose yet
         if current_user.tile is None:
-            return render_template("location_choice.jinja")
+            return render_template("location_choice.jinja", engine=g.engine)
         # render template with or without player production data
         if page == "messages.jinja":
-            chats = Chat.query.filter(
-                Chat.participants.any(id=current_user.id)
-            ).all()
+            chats = Chat.query.filter(Chat.participants.any(id=current_user.id)).all()
             return render_template(
                 page,
                 engine=g.engine,
                 user=current_user,
                 chats=chats,
-                data=g.config,
+                data=g.data,
             )
         elif page == "resource_market.jinja":
             on_sale = Resource_on_sale.query.all()
@@ -62,12 +56,10 @@ def check_user():
                 engine=g.engine,
                 user=current_user,
                 on_sale=on_sale,
-                data=g.config,
+                data=g.data,
             )
         else:
-            return render_template(
-                page, engine=g.engine, user=current_user, data=g.config
-            )
+            return render_template(page, engine=g.engine, user=current_user, data=g.data)
 
     g.render_template_ctx = render_template_ctx
 
@@ -85,43 +77,21 @@ def map():
 
 @views.route("/profile")
 def profile():
-    player_name = request.args.get("player_name")
-    player = Player.query.filter_by(username=player_name).first()
+    player_id = request.args.get("player_id")
+    if player_id is None:
+        player_id = current_user.id
+    player = Player.query.get(player_id)
     return render_template(
         "profile.jinja",
         engine=g.engine,
         user=current_user,
         profile=player,
-        data=g.config,
+        data=g.data,
     )
 
 
 @views.route("/messages", methods=["GET", "POST"])
 def messages():
-    if request.method == "POST":
-        # If player is trying to create a chat with one other player
-        if "add_chat_username" in request.form:
-            buddy_username = request.form.get("add_chat_username")
-            if buddy_username == current_user.username:
-                flash_error("Cannot create a chat with yourself")
-                return g.render_template_ctx("messages.jinja")
-            buddy = Player.query.filter_by(username=buddy_username).first()
-            if buddy is None:
-                flash_error("No Player with this username")
-                return g.render_template_ctx("messages.jinja")
-            if check_existing_chats([current_user, buddy]):
-                flash_error("Chat already exists")
-                return g.render_template_ctx("messages.jinja")
-            new_chat = Chat(
-                name=current_user.username + buddy_username,
-                participants=[current_user, buddy],
-            )
-            db.session.add(new_chat)
-            db.session.commit()
-        else:
-            current_user.show_disclamer = False
-            if request.form.get("dont_show_disclaimer") == "on":
-                db.session.commit()
     return g.render_template_ctx("messages.jinja")
 
 
@@ -176,6 +146,7 @@ def scoreboard():
 @views.route("/wiki")
 def wiki():
     return g.render_template_ctx("wiki.jinja")
+
 
 @views.route("/changelog")
 def changelog():

@@ -4,6 +4,83 @@ import math
 from flask import current_app
 import numpy as np
 import requests
+from .player_assets import Active_facilities
+
+
+class CapacityData:
+    """Class that stores the capacity data"""
+
+    def __init__(self):
+        self._data = {}
+
+    def update(self, player_id, facility):
+        """This function updates the capacity data of the player"""
+        engine = current_app.config["engine"]
+        if facility is None:
+            active_facilities = Active_facilities.query.filter_by(player_id=player_id).all()
+            unique_facilities = {af.facility for af in active_facilities}
+            for uf in unique_facilities:
+                self.init_facility(engine, uf)
+        else:
+            active_facilities = Active_facilities.query.filter_by(player_id=player_id, facility=facility).all()
+            if len(active_facilities) == 0 and facility in self._data:
+                del self._data[facility]
+                return
+            self.init_facility(engine, facility)
+
+        for facility in active_facilities:
+            base_data = engine.const_config["assets"][facility.facility]
+            effective_values = self._data[facility.facility]
+            op_costs = base_data["base_price"] * facility.price_multiplier * base_data["O&M_factor"]
+            if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
+                op_costs *= facility.capacity_multiplier
+            effective_values["O&M_cost"] += op_costs
+            if facility.facility in engine.power_facilities:
+                power_gen = base_data["base_power_generation"] * facility.power_multiplier
+                effective_values["power"] += power_gen
+                for fuel in effective_values["fuel_use"]:
+                    effective_values["fuel_use"][fuel] += (
+                        base_data["consumed_resource"][fuel]
+                        / facility.efficiency_multiplier
+                        * power_gen
+                        * engine.clock_time
+                        / 3600
+                        / 10**6
+                    )
+            elif facility.facility in engine.storage_facilities:
+                power_gen = base_data["base_power_generation"] * facility.power_multiplier
+                effective_values["power"] += power_gen
+                effective_values["capacity"] += base_data["base_storage_capacity"] * facility.capacity_multiplier
+                effective_values["efficiency"] = (
+                    (effective_values["efficiency"] * (effective_values["power"] - power_gen))
+                    + (base_data["base_efficiency"] * facility.efficiency_multiplier)
+                ) / effective_values["power"]
+            elif facility.facility in engine.extraction_facilities:
+                effective_values["extraction"] += base_data["extraction_rate"] * facility.capacity_multiplier
+                effective_values["power_use"] += base_data["base_power_consumption"] * facility.power_multiplier
+                effective_values["pollution"] += base_data["base_pollution"] * facility.efficiency_multiplier
+
+    def init_facility(self, engine, facility):
+        const_config = engine.const_config["assets"]
+        if facility in engine.power_facilities:
+            self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "fuel_use": {}}
+            for resource in const_config[facility]["consumed_resource"]:
+                if const_config[facility]["consumed_resource"][resource] > 0:
+                    self._data[facility]["fuel_use"][resource] = 0.0
+            return
+        if facility in engine.storage_facilities:
+            self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "capacity": 0.0, "efficiency": 0.0}
+            return
+        if facility in engine.extraction_facilities:
+            self._data[facility] = {"O&M_cost": 0.0, "extraction": 0.0, "power_use": 0.0, "pollution": 0.0}
+
+    def __getitem__(self, facility):
+        if facility not in self._data:
+            return None
+        return self._data[facility]
+
+    def get_all(self):
+        return self._data
 
 
 class CircularBufferPlayer:
@@ -12,32 +89,31 @@ class CircularBufferPlayer:
     def __init__(self):
         self._data = {
             "revenues": {
-                "industry": deque([0.0] * 120, maxlen=120),
-                "O&M_costs": deque([0.0] * 120, maxlen=120),
-                "exports": deque([0.0] * 120, maxlen=120),
-                "imports": deque([0.0] * 120, maxlen=120),
-                "dumping": deque([0.0] * 120, maxlen=120),
+                "industry": deque([0.0] * 360, maxlen=360),
+                "exports": deque([0.0] * 360, maxlen=360),
+                "imports": deque([0.0] * 360, maxlen=360),
+                "dumping": deque([0.0] * 360, maxlen=360),
             },
             "op_costs": {
-                "steam_engine": deque([0.0] * 120, maxlen=120),
+                "steam_engine": deque([0.0] * 360, maxlen=360),
             },
             "generation": {
-                "steam_engine": deque([0.0] * 120, maxlen=120),
-                "imports": deque([0.0] * 120, maxlen=120),
+                "steam_engine": deque([0.0] * 360, maxlen=360),
+                "imports": deque([0.0] * 360, maxlen=360),
             },
             "demand": {
-                "industry": deque([0.0] * 120, maxlen=120),
-                "construction": deque([0.0] * 120, maxlen=120),
-                "research": deque([0.0] * 120, maxlen=120),
-                "transport": deque([0.0] * 120, maxlen=120),
-                "exports": deque([0.0] * 120, maxlen=120),
-                "dumping": deque([0.0] * 120, maxlen=120),
+                "industry": deque([0.0] * 360, maxlen=360),
+                "construction": deque([0.0] * 360, maxlen=360),
+                "research": deque([0.0] * 360, maxlen=360),
+                "transport": deque([0.0] * 360, maxlen=360),
+                "exports": deque([0.0] * 360, maxlen=360),
+                "dumping": deque([0.0] * 360, maxlen=360),
             },
             "storage": {},
             "resources": {},
             "emissions": {
-                "steam_engine": deque([0.0] * 120, maxlen=120),
-                "construction": deque([0.0] * 120, maxlen=120),
+                "steam_engine": deque([0.0] * 360, maxlen=360),
+                "construction": deque([0.0] * 360, maxlen=360),
             },
         }
 
@@ -48,9 +124,9 @@ class CircularBufferPlayer:
 
     def new_subcategory(self, category, subcategory):
         if subcategory not in self._data[category]:
-            self._data[category][subcategory] = deque([0.0] * 120, maxlen=120)
+            self._data[category][subcategory] = deque([0.0] * 360, maxlen=360)
 
-    def get_data(self, t=60):
+    def get_data(self, t=216):
         result = defaultdict(lambda: defaultdict(dict))
         for category, subcategories in self._data.items():
             for subcategory, buffer in subcategories.items():
@@ -80,18 +156,29 @@ class CircularBufferNetwork:
 
     def __init__(self):
         self._data = {
-            "price": deque([0.0] * 120, maxlen=120),
-            "quantity": deque([0.0] * 120, maxlen=120),
+            "network_data": {
+                "price": deque([0.0] * 360, maxlen=360),
+                "quantity": deque([0.0] * 360, maxlen=360),
+            },
+            "exports": {},
+            "imports": {},
         }
 
     def append_value(self, new_value):
-        for category, value in new_value.items():
-            self._data[category].append(value)
+        for category in self._data:
+            for player_id, value in new_value[category].items():
+                if player_id not in self._data[category]:
+                    self._data[category][player_id] = deque([0.0] * 360, maxlen=360)
+                self._data[category][player_id].append(value)
+            for player_id in self._data[category]:
+                if player_id not in new_value[category]:
+                    self._data[category][player_id].append(0.0)
 
-    def get_data(self, t=60):
+    def get_data(self, t=216):
         result = defaultdict(lambda: defaultdict(dict))
-        for category, buffer in self._data.items():
-            result[category] = list(buffer)[-t:]
+        for category in self._data:
+            for player_id, buffer in self._data[category].items():
+                result[category][player_id] = list(buffer)[-t:]
         return result
 
 
@@ -120,17 +207,13 @@ class WeatherData:
 
         def log_error(e, weather):
             engine.log("An error occurred:" + str(e))
-            self._data[weather].extend(
-                [self._data[weather][-1]] * round(600 / engine.clock_time)
-            )
+            self._data[weather].extend([self._data[weather][-1]] * round(600 / engine.clock_time))
 
         for weather in urls:
             try:
                 response = requests.get(urls[weather][0])
                 if response.status_code == 200:
-                    datapoint = json.loads(response.content)["features"][
-                        urls[weather][1]
-                    ]["properties"]["value"]
+                    datapoint = json.loads(response.content)["features"][urls[weather][1]]["properties"]["value"]
                     if datapoint > 2000:
                         datapoint = self._data[weather][-1]
                     interpolation = np.linspace(
@@ -161,9 +244,7 @@ class WeatherData:
     def __getitem__(self, weather):
         engine = current_app.config["engine"]
         total_t = engine.data["total_t"]
-        i = total_t % round(600 / engine.clock_time) - round(
-            600 / engine.clock_time
-        )
+        i = total_t % round(600 / engine.clock_time) - round(600 / engine.clock_time)
         return self._data[weather][i]
 
     def package(self, total_t):
@@ -180,7 +261,8 @@ class EmissionData:
 
     def __init__(self):
         self._data = {
-            "CO2": deque([0.0] * 120, maxlen=120),
+            # base value of 5Mt of CO2 in the atmosphere
+            "CO2": deque([5.0 * 10**9] * 360, maxlen=360),
         }
 
     def add(self, type, value):

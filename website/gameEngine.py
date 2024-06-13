@@ -2,29 +2,23 @@
 Here is the logic for the engine of the game
 """
 
+from collections import defaultdict
 from datetime import datetime
 import pickle
+import json
 import logging
-import time
 
 from .database.engine_data import EmissionData, WeatherData
 from . import db
 from .database.player_assets import (
     Under_construction,
     Shipment,
-    Active_facilites,
+    Active_facilities,
 )
+from website import utils
 from website.api import ws
 
 from .config import config, const_config
-
-from .utils import (
-    save_past_data_threaded,
-    add_asset,
-    store_import,
-    remove_asset,
-    check_construction_parity,
-)
 
 
 # This is the engine object
@@ -32,12 +26,13 @@ class gameEngine(object):
     def __init__(engine, clock_time):
         engine.clock_time = clock_time
         engine.config = config
-        engine.const_config = const_config["assets"]
+        engine.const_config = const_config
         engine.socketio = None
-        engine.clients = {}
+        engine.clients = defaultdict(list)
         engine.websocket_dict = {}
-        engine.logger = logging.getLogger("Energetica")  # Not sure what that is
-        engine.init_logger()
+        engine.console_logger = logging.getLogger("console")  # logs events in the terminal
+        engine.action_logger = logging.getLogger("action_history")  # logs all called functions to a file
+        engine.init_loggers()
         engine.log("engine created")
 
         engine.power_facilities = [
@@ -120,6 +115,7 @@ class gameEngine(object):
 
         engine.data = {}
         # All data for the current day will be stored here :
+        engine.data["player_capacities"] = {}
         engine.data["current_data"] = {}
         engine.data["network_data"] = {}
         engine.data["weather"] = WeatherData()
@@ -132,10 +128,7 @@ class gameEngine(object):
             engine.data["start_date"].month,
             engine.data["start_date"].day,
         )
-        engine.data["delta_t"] = round(
-            (engine.data["start_date"] - start_day).total_seconds()
-            // engine.clock_time
-        )
+        engine.data["delta_t"] = round((engine.data["start_date"] - start_day).total_seconds() // engine.clock_time)
         # time shift for daily industry variation
 
         # stored the levels of technology of the server
@@ -166,29 +159,42 @@ class gameEngine(object):
 
         engine.data["weather"].update_weather(engine)
 
-    def init_logger(engine):
-        engine.logger.setLevel(logging.INFO)
+    def init_loggers(engine):
+        engine.console_logger.setLevel(logging.INFO)
         s_handler = logging.StreamHandler()
         s_handler.setLevel(logging.INFO)
-        engine.logger.addHandler(s_handler)
+        console_format = logging.Formatter("%(asctime)s : %(message)s", datefmt="%H:%M:%S")
+        s_handler.setFormatter(console_format)
+        engine.console_logger.addHandler(s_handler)
+
+        engine.action_logger.setLevel(logging.INFO)
+        f_handler = logging.FileHandler("instance/actions_history.log")
+        f_handler.setLevel(logging.INFO)
+        engine.action_logger.addHandler(f_handler)
 
     # reload page for all users
     def refresh(engine):
         engine.socketio.emit("refresh")
 
-    def display_new_message(engine, msg, players=None):
+    def display_new_message(engine, message, players=None):
         if players:
             for player in players:
-                player.emit("display_new_message", msg)
+                player.emit(
+                    "display_new_message",
+                    {
+                        "time": message.time.isoformat(),
+                        "player_id": message.player_id,
+                        "text": message.text,
+                        "chat_id": message.chat_id,
+                    },
+                )
 
-    # logs a message with the current time in the terminal and stores it in 'logs'
+    # logs a message with the current time in the terminal
     def log(engine, message):
-        formatted_datetime = datetime.now().strftime("%H:%M:%S : ")
-        engine.logger.info(formatted_datetime + str(message))
+        engine.console_logger.info(message)
 
     def warn(engine, message):
-        formatted_datetime = datetime.now().strftime("%H:%M:%S : ")
-        engine.logger.warn(formatted_datetime + str(message))
+        engine.console_logger.warn(message)
 
 
 from .production_update import update_electricity  # noqa: E402
@@ -196,19 +202,23 @@ from .production_update import update_electricity  # noqa: E402
 
 # function that is executed once every 1 minute :
 def state_update(engine, app):
-    check_upcoming_actions(engine, app)
-    total_t = (
-        datetime.now() - engine.data["start_date"]
-    ).total_seconds() / engine.clock_time
+    total_t = (datetime.now() - engine.data["start_date"]).total_seconds() / engine.clock_time
     while engine.data["total_t"] < total_t:
         engine.data["total_t"] += 1
         # print(f"t = {engine.data['total_t']}")
-        if engine.data["total_t"] % 60 == 0:
-            save_past_data_threaded(app, engine)
+        if engine.data["total_t"] % 216 == 0:
+            utils.save_past_data_threaded(app, engine)
         with app.app_context():
             if engine.data["total_t"] % (600 / engine.clock_time) == 0:
                 engine.data["weather"].update_weather(engine)
-            update_electricity(engine)
+            log_entry = {
+                "timestamp": datetime.now().isoformat(),
+                "endpoint": "update_electricity",
+                "total_t": engine.data["total_t"],
+            }
+            engine.action_logger.info(json.dumps(log_entry))
+            update_electricity(engine=engine)
+            check_finished_constructions(engine, app)
 
     # save engine every minute in case of server crash
     if engine.data["total_t"] % (60 / engine.clock_time) == 0:
@@ -219,52 +229,35 @@ def state_update(engine, app):
         ws.rest_notify_weather(engine)
 
 
-def check_upcoming_actions(engine, app):
+def check_finished_constructions(engine, app):
     """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
-    with app.app_context():
-        # check if constructions finished
-        finished_constructions = Under_construction.query.filter(
-            Under_construction.suspension_time.is_(None),
-            Under_construction.start_time + Under_construction.duration
-            < time.time() + 0.8 * engine.clock_time,
-        ).all()
-        # This is just to remove corrupted construction after a bug. This should not be necessary in a bugfree version.
-        zombie_constructions = Under_construction.query.filter(
-            Under_construction.suspension_time.isnot(None),
-            Under_construction.start_time + Under_construction.duration
-            < Under_construction.suspension_time,
-        ).all()
-        finished_constructions = finished_constructions + zombie_constructions
-        engine.log(finished_constructions)
-        if finished_constructions:
-            for fc in finished_constructions:
-                add_asset(fc.player_id, fc.id)
-                print(
-                    f"removing construction {fc.id} from Under_construction (check_upcoming_actions)"
-                )
-                db.session.delete(fc)
-            db.session.commit()
-            check_construction_parity()
+    # check if constructions finished
+    finished_constructions = Under_construction.query.filter(
+        Under_construction.suspension_time.is_(None),
+        Under_construction.start_time + Under_construction.duration <= engine.data["total_t"],
+    ).all()
+    engine.log(finished_constructions)
+    if finished_constructions:
+        for fc in finished_constructions:
+            utils.add_asset(fc.player_id, fc.id)
+            db.session.delete(fc)
+        db.session.commit()
 
-        # check if shipment arrived
-        arrived_shipments = Shipment.query.filter(
-            Shipment.departure_time.isnot(None),
-            Shipment.suspension_time.is_(None),
-            Shipment.departure_time + Shipment.duration
-            < time.time() + 0.8 * engine.clock_time,
-        ).all()
-        if arrived_shipments:
-            for a_s in arrived_shipments:
-                store_import(a_s.player, a_s.resource, a_s.quantity)
-                db.session.delete(a_s)
-            db.session.commit()
+    # check if shipment arrived
+    arrived_shipments = Shipment.query.filter(
+        Shipment.departure_time.isnot(None),
+        Shipment.suspension_time.is_(None),
+        Shipment.departure_time + Shipment.duration <= engine.data["total_t"],
+    ).all()
+    if arrived_shipments:
+        for a_s in arrived_shipments:
+            utils.store_import(a_s.player, a_s.resource, a_s.quantity)
+            db.session.delete(a_s)
+        db.session.commit()
 
-        # check end of lifespan of facilites
-        eolt_facilities = Active_facilites.query.filter(
-            Active_facilites.end_of_life < time.time() + 0.8 * engine.clock_time
-        ).all()
-        if eolt_facilities:
-            for facility in eolt_facilities:
-                remove_asset(facility.player_id, facility.facility)
-                db.session.delete(facility)
-            db.session.commit()
+    # check end of lifespan of facilites
+    eolt_facilities = Active_facilities.query.filter(Active_facilities.end_of_life <= engine.data["total_t"]).all()
+    if eolt_facilities:
+        for facility in eolt_facilities:
+            utils.remove_asset(facility.player_id, facility)
+        db.session.commit()
