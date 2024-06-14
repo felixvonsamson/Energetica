@@ -214,6 +214,8 @@ class WeatherData:
                 response = requests.get(urls[weather][0])
                 if response.status_code == 200:
                     datapoint = json.loads(response.content)["features"][urls[weather][1]]["properties"]["value"]
+                    if weather == "windspeed":
+                        datapoint *= 1.3  # increasing wind speed because windspeed in Zurich is lower than elswere
                     if datapoint > 2000:
                         datapoint = self._data[weather][-1]
                     interpolation = np.linspace(
