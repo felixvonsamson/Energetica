@@ -455,7 +455,6 @@ def create_network():
         flash("A network with this name already exists", category="error")
         return redirect("/network", code=303)
     flash(f"You created the network {network_name}", category="message")
-    g.engine.log(f"{current_user.username} created the network {current_user.network.name}")
     return redirect("/network", code=303)
 
 

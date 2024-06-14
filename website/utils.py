@@ -1007,9 +1007,7 @@ def start_project(engine, player, facility, family, force=False):
     )
     db.session.add(new_construction)
     db.session.commit()
-    print(f"added new construction {new_construction.id} to Uner_construction (start_project)")
     player.add_to_list(priority_list_name, new_construction.id)
-    print(f"added id {new_construction.id} from {priority_list_name} ({player.username}) (start_project)")
     if suspension_time is None:
         player.project_max_priority(priority_list_name, new_construction.id)
     engine.log(f"{player.username} started the construction {facility}")

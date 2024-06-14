@@ -173,7 +173,7 @@ function regen(res) {
                         if (data[key][t]*3600/clock_time > 1) {
                             fill(cols_and_names[key][0]);
                             let h = (data[key][t] / maxSum) * graph_h * f;
-                            rect(0, 0, graph_w / data_len + (data_len>1000), -h);
+                            rect(0, 0, graph_w / data_len + 1, -h);
                             translate(0, -h);
                         }
                     }
@@ -185,7 +185,7 @@ function regen(res) {
                         if (data[key][t]*3600/clock_time < -1) {
                             fill(cols_and_names[key][0]);
                             let h = (data[key][t] / maxSum) * graph_h * f;
-                            rect(0, 0, graph_w / data_len + (data_len>1000), -h);
+                            rect(0, 0, graph_w / data_len + 1, -h);
                             translate(0, -h);
                         }
                     }
