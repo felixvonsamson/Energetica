@@ -8,34 +8,38 @@ Try out Energetica online at [http://energetica.ethz.ch](http://energetica.ethz.
 
 Energetica uses Flask and Python for its backend, SQL for its database, and Jinja, JavaScript, and p5.js for its frontend.
 
-Make sure you have the latest version of Python installed.
+## Running a Local Instance
+
+Make sure you have Python 3.10 or above installed.
+
+Clone the repository:
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/felixvonsamson/Energetica
 ```
+
+Install the required dependencies using pip:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-or
+Or using conda:
 
 ```bash
 conda install -c conda-forge --file requirements.txt
 ```
 
-## Running The App
+To launch an instance of the server, run:
 
 ```bash
 python main.py
 ```
 
-Use python versions 3.10 and above.
-
 Command line options are available to help with debugging:
 
 ```bash
-python3.10 main.py --help
+python main.py --help
 usage: main.py [-h] [--run_init_test_players] [--rm_instance]
 
 options:
