@@ -2,6 +2,7 @@
 This code is run once at the start of the game
 """
 
+import platform
 import eventlet
 
 eventlet.monkey_patch(thread=True, time=True)
@@ -30,8 +31,9 @@ from website.gameEngine import gameEngine  # noqa: E402
 
 def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     # gets lock to avoid multiple instances
-    lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-    lock.bind("\0energetica")
+    if platform.system() == 'Linux':
+        lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        lock.bind("\0energetica")
 
     # creates the app :
     app = Flask(__name__)
