@@ -36,6 +36,8 @@ To launch an instance of the server, run:
 python main.py
 ```
 
+The server will be accessible at [http://127.0.0.1:5001](http://127.0.0.1:5001)
+
 Command line options are available to help with debugging:
 
 ```bash
@@ -48,10 +50,6 @@ options:
                         run the init_test_players function
   --rm_instance         remvove the instance folder
 ```
-
-## Viewing The App
-
-Go to `http://127.0.0.1:5001`
 
 ## Source Code Formattting and Linting
 
