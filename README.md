@@ -4,7 +4,9 @@ Energetica is a game focused on electricity and energy management, designed to b
 
 Try out Energetica online at [http://energetica.ethz.ch](http://energetica.ethz.ch).
 
-## Setup & Installation
+## Technology Stack
+
+Energetica uses Flask and Python for its backend, SQL for its database, and Jinja, JavaScript, and p5.js for its frontend.
 
 Make sure you have the latest version of Python installed.
 
