@@ -6,14 +6,14 @@ interactive map just after having registerd to the game.
 max_q = [1, 1, 1, 500000000*clock_time/60, 140000000*clock_time/60, 24000000*clock_time/60, 2000000*clock_time/60];
 // Tile item :
 class Hex {
-    constructor(_id, _q, _r, _resources, player) {
+    constructor(_id, _q, _r, _resources, player_id) {
         this.id = _id; // Tile id
         this.q = _q; // q coordinate
         this.r = _r; // r coordinate
         this.s = -this.q - this.r; // s coordinate
         this.selected = false; // true if tile is selected
         this.resources = _resources; // array with amount of resources on the tile. Format : [solar, wind, hydro, coal, oil, gas, uranium]
-        this.owner = player;
+        this.owner_id = player_id;
     }
     display_tile() {
         let ts1, ts2;
@@ -32,7 +32,7 @@ class Hex {
                     100
                 )
             );
-        } else if (this.owner) {
+        } else if (this.owner_id) {
             fill(color(131, 52, 33));
         } else {
             fill(color(45, 21, 90));
@@ -56,10 +56,11 @@ class Hex {
             } else {
                 text(convert_kg(this.resources[active_vew]), 0, -3);
             }
-        } else if (this.owner) {
+        } else if (this.owner_id) {
             textSize(ts2);
             fill(255);
-            text(this.owner.slice(0, 3), 0, -4);
+            const first_letters = players_ids[this.owner_id].username.slice(0, 3);
+            text(first_letters, 0, -4);
         }
     }
 }
@@ -123,6 +124,7 @@ let buttons = [];
 let validate;
 let button_colors = [59, 186, 239, 0, 320, 275, 109];
 let active_vew = -1;
+let players_ids;
 let selected_id = null;
 let button_names = ["Solar", "Wind", "Hydro", "Coal", "Gas", "Oil", "Uranium"];
 
@@ -130,10 +132,19 @@ function preload() {
     font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
     font_logo = loadFont("static/fonts/ExpletusSans-SemiBold.ttf");
     logo = loadImage("static/images/icon_green.svg");
+}
+
+function setup() {
+    createCanvas(windowWidth, windowHeight);
+    colorMode(HSB);
+    textFont(font);
+    textAlign(CENTER, CENTER);
     //filling map
     fetch("/api/get_map") // retrieves map data from the database using api.py
-        .then((response) => response.json())
-        .then((data) => {
+    .then((response) => response.json())
+    .then((data) => {
+        load_players().then((_players_ids) => {
+            players_ids = _players_ids;
             for (let i = 0; i < data.length; i++) {
                 let resources = [
                     data[i].solar,
@@ -150,46 +161,44 @@ function preload() {
                         data[i].q,
                         data[i].r,
                         resources,
-                        data[i].player
+                        data[i].player_id
                     )
                 );
             }
-            newdraw();
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-        });
-}
 
-function setup() {
-    createCanvas(windowWidth, windowHeight);
-    colorMode(HSB);
-    textFont(font);
-    textAlign(CENTER, CENTER);
-    for (let i = 0; i < button_names.length; i++) {
-        buttons[i] = new Button(
-            button_names[i],
-            i,
-            button_colors[i],
-            0.11 * width - 100,
-            0.1 * height * (i + 2),
-            (sx = 0.1 * width),
-            (sy = 0.07 * height)
-        );
-    }
-    validate = new Button(
-        "Choose this location",
-        7,
-        24,
-        0.8 * width,
-        0.93 * height - 0.02 * width,
-        (sx = 0.18 * width),
-        (sy = 0.07 * height)
-    );
-    newdraw();
+            for (let i = 0; i < button_names.length; i++) {
+                buttons[i] = new Button(
+                    button_names[i],
+                    i,
+                    button_colors[i],
+                    0.11 * width - 100,
+                    0.1 * height * (i + 2),
+                    (sx = 0.1 * width),
+                    (sy = 0.07 * height)
+                );
+            }
+            validate = new Button(
+                "Choose this location",
+                7,
+                24,
+                0.8 * width,
+                0.93 * height - 0.02 * width,
+                (sx = 0.18 * width),
+                (sy = 0.07 * height)
+            );
+
+            newdraw();
+        });
+    })
+    .catch((error) => {
+        console.error("Error:", error);
+    });
 }
 
 function draw() {
+    if (map.length == 0 || players_ids == undefined) {
+        return;
+    }
     for (let i = 0; i < buttons.length; i++) {
         if (buttons[i].is_clicked()) {
             buttons[i].display_button((hover = true));
@@ -198,7 +207,7 @@ function draw() {
         }
     }
     if (selected_id != null) {
-        if (map[selected_id].owner) {
+        if (map[selected_id].owner_id) {
             return;
         }
         if (validate.is_clicked()) {
@@ -211,8 +220,10 @@ function draw() {
 
 function newdraw() {
     if (width < 1200) {
+        console.log("smartphone");
         newdraw_smartphone();
     } else {
+        console.log("monitor");
         newdraw_monitor();
     }
 }
@@ -327,12 +338,12 @@ function newdraw_monitor() {
             height / 9.5 + 0.2 * height
         );
         textAlign(CENTER);
-        if (map[selected_id].owner) {
+        if (map[selected_id].owner_id) {
             textSize(width / 80);
             fill(0, 99, 66);
             text(
                 "This tile is already occupied by " +
-                    map[selected_id].owner +
+                    players_ids[map[selected_id].owner_id].username +
                     " !",
                 0.5 * mw,
                 0.92 * height
@@ -352,7 +363,7 @@ function newdraw_smartphone() {
     s = width / size_param / 4;
     h = 2 * s;
     w = sqrt(3) * s;
-    for (let i = 0; i < button_names.length; i++) {
+    for (let i = 0; i < buttons.length; i++) {
         buttons[i].change_values(
             width * ((i % 4) * 0.25 + 0.04 + 0.125 * floor(i / 4)),
             (height - width) * (0.15 + 0.12 * floor(i / 4)),
@@ -360,12 +371,14 @@ function newdraw_smartphone() {
             0.09 * (height - width)
         );
     }
-    validate.change_values(
-        width * 0.15,
-        height - 0.12 * (height - width),
-        width * 0.7,
-        0.09 * (height - width)
-    );
+    if(validate){
+        validate.change_values(
+            width * 0.15,
+            height - 0.12 * (height - width),
+            width * 0.7,
+            0.09 * (height - width)
+        );
+    }
     background(104, 45, 55);
     push();
     fill(color(83, 35, 75));
@@ -474,12 +487,12 @@ function newdraw_smartphone() {
             mh / 7.5 + 0.2 * mh
         );
         textAlign(CENTER);
-        if (map[selected_id].owner) {
+        if (map[selected_id].owner_id) {
             textSize(width / 25);
             fill(0, 99, 66);
             text(
                 "This tile is already occupied by " +
-                    map[selected_id].owner +
+                players_ids[this.owner_id].username +
                     " !",
                 0.5 * width,
                 0.9 * mh
