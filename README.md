@@ -1,4 +1,8 @@
-# Flask Web App Tutorial
+# Energetica
+
+Energetica is a game focused on electricity and energy management, designed to be both compelling and educational.
+
+Try out Energetica online at [http://energetica.ethz.ch](http://energetica.ethz.ch).
 
 ## Setup & Installation
 
