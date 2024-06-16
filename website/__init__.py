@@ -73,13 +73,13 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     from .views import views, overviews
     from .auth import auth
     from .api.http import http
-    from .api.websocket import ws
+    from .api.websocket import websocket_blueprint
 
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")
     app.register_blueprint(auth, url_prefix="/")
     app.register_blueprint(http, url_prefix="/api/")
-    app.register_blueprint(ws, url_prefix="/api/")
+    app.register_blueprint(websocket_blueprint, url_prefix="/api/")
 
     from .database.map import Hex
 

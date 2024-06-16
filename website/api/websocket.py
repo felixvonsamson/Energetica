@@ -13,7 +13,7 @@ from ..database.player import Network, Player
 
 from ..database.map import Hex
 
-ws = Blueprint("rest_api", __name__)
+websocket_blueprint = Blueprint("rest_api", __name__)
 
 
 def add_sock_handlers(sock, engine):
@@ -35,7 +35,7 @@ def add_sock_handlers(sock, engine):
             else:
                 engine.log(f"{username} failed to log in via HTTP Basic")
 
-    @ws.before_request
+    @websocket_blueprint.before_request
     @basic_auth.login_required
     def check_user():
         """Sets up variables used by endpoints."""
@@ -43,7 +43,7 @@ def add_sock_handlers(sock, engine):
         g.player = Player.query.filter_by(username=basic_auth.current_user()).first()
 
     # Main WebSocket endpoint for Swift client
-    @sock.route("/rest_ws", bp=ws)
+    @sock.route("/rest_ws", bp=websocket_blueprint)
     def rest_ws(ws):
         """Main WebSocket endpoint for API."""
         player = g.player
