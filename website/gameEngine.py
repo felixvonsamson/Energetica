@@ -16,7 +16,7 @@ from .database.player_assets import (
     Active_facilities,
 )
 from website import utils
-from website.api import ws
+from website.api import websocket
 
 from .config import config, const_config
 
@@ -225,8 +225,8 @@ def state_update(engine, app):
         with open("instance/engine_data.pck", "wb") as file:
             pickle.dump(engine.data, file)
     with app.app_context():
-        ws.rest_notify_scoreboard(engine)
-        ws.rest_notify_weather(engine)
+        websocket.rest_notify_scoreboard(engine)
+        websocket.rest_notify_weather(engine)
 
 
 def check_finished_constructions(engine, app):

@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 
-from website.api import ws
+from website.api import websocket
 from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer, CapacityData
 from .database.messages import Chat, Notification, Message
 from .database.player import Network, Player, PlayerUnreadMessages
@@ -761,7 +761,7 @@ def confirm_location(engine, player, location):
     db.session.commit()
     add_player_to_data(engine, player.id)
     init_table(player.id)
-    ws.rest_notify_player_location(engine, player)
+    websocket.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
     return {"response": "success"}
 
@@ -826,7 +826,7 @@ def join_network(engine, player, network):
     player.network = network
     db.session.commit()
     engine.log(f"{player.username} joined the network {network.name}")
-    ws.rest_notify_network_change(engine)
+    websocket.rest_notify_network_change(engine)
     return {"response": "success"}
 
 
@@ -849,7 +849,7 @@ def create_network(engine, player, name):
     with open(f"{network_path}/time_series.pck", "wb") as file:
         pickle.dump(past_data, file)
     engine.log(f"{player.username} created the network {name}")
-    ws.rest_notify_network_change(engine)
+    websocket.rest_notify_network_change(engine)
     return {"response": "success"}
 
 
@@ -867,7 +867,7 @@ def leave_network(engine, player):
         db.session.delete(network)
     db.session.commit()
     engine.log(f"{player.username} left the network {network.name}")
-    ws.rest_notify_network_change(engine)
+    websocket.rest_notify_network_change(engine)
     return {"response": "success"}
 
 
@@ -1011,7 +1011,7 @@ def start_project(engine, player, facility, family, force=False):
     if suspension_time is None:
         player.project_max_priority(priority_list_name, new_construction.id)
     engine.log(f"{player.username} started the construction {facility}")
-    ws.rest_notify_constructions(engine, player)
+    websocket.rest_notify_constructions(engine, player)
     return {
         "response": "success",
         "money": player.money,
@@ -1052,7 +1052,7 @@ def cancel_project(player, construction_id, force=False):
     db.session.delete(construction)
     engine.log(f"{player.username} cancelled the construction {construction.name}")
     db.session.commit()
-    ws.rest_notify_constructions(engine, player)
+    websocket.rest_notify_constructions(engine, player)
     return {
         "response": "success",
         "money": player.money,
@@ -1104,7 +1104,7 @@ def pause_project(player, construction_id):
         construction.start_time += engine.data["total_t"] - construction.suspension_time
         construction.suspension_time = None
     db.session.commit()
-    ws.rest_notify_constructions(engine, player)
+    websocket.rest_notify_constructions(engine, player)
     return {
         "response": "success",
         "constructions": get_construction_data(player),
@@ -1175,7 +1175,7 @@ def decrease_project_priority(player, construction_id, pausing=False):
         )
         setattr(player, attr, ",".join(map(str, id_list)))
         db.session.commit()
-        ws.rest_notify_constructions(engine, player)
+        websocket.rest_notify_constructions(engine, player)
 
     return {
         "response": "success",
