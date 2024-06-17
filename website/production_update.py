@@ -367,6 +367,22 @@ def shipment_demand(engine, player, demand):
         if shipment.suspension_time is None:
             demand["transport"] += transport["power consumption"] * shipment.quantity
 
+def storage_demand(engine, player, demand):
+    """calculate the maximal demand of storage plants"""
+    player_cap = engine.data["player_capacities"][player.id]
+    for facility in engine.storage_facilities:
+        if player_cap[facility] is not None:
+            demand[facility] = calculate_prod(
+                engine,
+                "max",
+                player,
+                player_cap,
+                facility,
+                engine.data["current_data"][player.id],
+                storage=True,
+                filling=True,
+            )
+
 
 def calculate_demand(engine, new_values, player):
     """Calculates the electricity demand of one player"""
@@ -379,6 +395,7 @@ def calculate_demand(engine, new_values, player):
     industry_demand_and_revenues(engine, player, demand, revenues)
     construction_demand(player, demand)
     shipment_demand(engine, player, demand)
+    storage_demand(engine, player, demand)
     if player.carbon_capture > 0:
         demand["carbon_capture"] = engine.config[player.id]["carbon_capture"]["power consumption"]
 
@@ -432,23 +449,6 @@ def calculate_generation_without_market(engine, new_values, player):
             capacity = max_prod - generation[facility]
             internal_market = offer(internal_market, player.id, capacity, price, facility)
 
-    # Demand curve for storage (no ramping down constraint, only up)
-    for facility in engine.storage_facilities:
-        if player_cap[facility] is not None:
-            demand_q = calculate_prod(
-                engine,
-                "max",
-                player,
-                player_cap,
-                facility,
-                engine.data["current_data"][player.id],
-                storage=True,
-                filling=True,
-            )
-            price = getattr(player, "price_buy_" + facility)
-            internal_market = bid(internal_market, player.id, demand_q, price, facility)
-    market_logic(engine, new_values, internal_market)
-
 
 def calculate_generation_with_market(engine, new_values, market, player):
     player_cap = engine.data["player_capacities"][player.id]
@@ -464,7 +464,7 @@ def calculate_generation_with_market(engine, new_values, market, player):
             excess_generation += generation[facility]
             market = offer(market, player.id, generation[facility], -5, facility)
 
-    # if demand is still not met, player has to bid on the market at the set prices
+    # bid demand on the market at the set prices
     demand_priorities = player.demand_priorities.split(",")
     for demand_type in demand_priorities:
         bid_q = demand[demand_type]
@@ -474,6 +474,7 @@ def calculate_generation_with_market(engine, new_values, market, player):
     # Sell capacities of remaining facilities on the market
     for facility in player.read_list("rest_of_priorities") + player.read_list("self_consumption_priority"):
         if engine.const_config["assets"][facility]["ramping_time"] != 0:
+            print(facility, player.id, player_cap[facility])
             if player_cap[facility] is not None:
                 max_prod = calculate_prod(
                     engine,
@@ -488,21 +489,6 @@ def calculate_generation_with_market(engine, new_values, market, player):
                 capacity = max_prod - generation[facility]
                 market = offer(market, player.id, capacity, price, facility)
 
-    # Demand curve for storage (no ramping down constraint, only up)
-    for facility in engine.storage_facilities:
-        if player_cap[facility] is not None:
-            demand_q = calculate_prod(
-                engine,
-                "max",
-                player,
-                player_cap,
-                facility,
-                engine.data["current_data"][player.id],
-                storage=True,
-                filling=True,
-            )
-            price = getattr(player, "price_buy_" + facility)
-            market = bid(market, player.id, demand_q, price, facility)
     return market
 
 
@@ -575,16 +561,15 @@ def market_logic(engine, new_values, market):
             if bought_cap > 0.1:
                 buy(engine, new_values, row, market_price, quantity=bought_cap)
                 add_export_import("player_imports", row.player_id, bought_cap)
-            # if demand is not a storage facility mesures a taken to reduce demand
-            if row.facility not in engine.storage_facilities:
-                reduce_demand(
-                    engine,
-                    new_values,
-                    engine.data["current_data"][row.player_id],
-                    row.facility,
-                    row.player_id,
-                    max(0.0, bought_cap),
-                )
+            # mesures a taken to reduce demand
+            reduce_demand(
+                engine,
+                new_values,
+                engine.data["current_data"][row.player_id],
+                row.facility,
+                row.player_id,
+                max(0.0, bought_cap),
+            )
         else:
             buy(engine, new_values, row, market_price)
             add_export_import("player_imports", row.player_id, row.capacity)
@@ -902,7 +887,7 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
         demand["industry"] = satisfaction
         return
     demand[demand_type] = satisfaction
-    if demand_type in ["extraction_facilities", "carbon_capture"]:
+    if demand_type in engine.extraction_facilities + engine.storage_facilities + ["carbon_capture"]:
         return
     if satisfaction > (1 + 0.0008 * engine.clock_time) * past_data.get_last_data("demand", demand_type):
         return
@@ -981,13 +966,6 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
             )
             db.session.commit()
         return
-    if demand_type in [
-        "coal_mine",
-        "oil_field",
-        "gas_drilling_site",
-        "uranium_mine",
-    ]:
-        demand[demand_type] = satisfaction
 
 
 def add_emissions(engine, new_values, player, facility, amount):

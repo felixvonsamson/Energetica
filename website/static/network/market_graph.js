@@ -306,6 +306,9 @@ function hover_on_market_graph(X, mar) {
                 }
             }
         }else{
+            if(sqrt_supply_capacities.length != demand["price"].length){
+                return;
+            }
             for (let i = 0; i < sqrt_supply_capacities.length; i++) {
                 cumul_capacities_sqrt += sqrt_supply_capacities[i];
                 if (cumul_capacities_sqrt / maxCap_sqrt_supply * graph_w > X - mar) {
@@ -332,78 +335,68 @@ function hover_on_market_graph(X, mar) {
         pop();
         return;
     }
-    if(view_market == "supply"){
-        push();
-        fill_alt = 1;
-        for (let i = 0; i < supply["price"].length; i++) {
-            if (supply["cumul_capacities"][i] > c) {
-                fill(255);
-                h = map(supply["price"][i], 0, maxPrice, 0, graph_h * f2);
-                if (h < 0) {
-                    h = Math.min(h, -5);
-                }
-                translate(0, -h);
-                if (h < graph_h * f2) {
-                    ellipse(0, 0, 8, 8);
-                }
+        if(view_market == "supply"){
+            push();
+            fill_alt = 1;
+            for (let i = 0; i < supply["price"].length; i++) {
+                if (supply["cumul_capacities"][i] > c) {
+                    fill(255);
+                    h = map(supply["price"][i], 0, maxPrice, 0, graph_h * f2);
+                    if (h < 0) {
+                        h = Math.min(h, -5);
+                    }
+                    translate(0, -h);
+                    if (h < graph_h * f2) {
+                        ellipse(0, 0, 8, 8);
+                    }
 
-                let tx = -150;
-                let ty = -110;
-                if (X - 2 * margin < 150) {
-                    tx = 20;
-                }
-                if (h + 110 > graph_h * f2) {
-                    ty = h - graph_h * f2;
-                }
-                translate(tx, ty);
+                    let tx = -150;
+                    let ty = -110;
+                    if (X - 2 * margin < 150) {
+                        tx = 20;
+                    }
+                    if (h + 110 > graph_h * f2) {
+                        ty = h - graph_h * f2;
+                    }
+                    translate(tx, ty);
 
-                display_capacity_information("Supply", supply, i)
-                break;
+                    display_capacity_information("Supply", supply, i)
+                    break;
+                }
             }
+            pop();
         }
-        pop();
-    }
-    else{
-        push();
-        fill_alt = 1;
-        for (let i = 0; i < demand["price"].length; i++) {
-            if (demand["cumul_capacities"][i] > c) {
-                fill(255);
-                h = 2 * graph_h;
-                let price = "Infinite";
-                if (demand["price"][i] != null) {
-                    h = map(
-                        demand["price"][i],
-                        0,
-                        maxPrice,
-                        0,
-                        graph_h * f2
-                    );
-                    price = display_money(demand["price"][i]);
-                    facility = cols_and_names[demand["facility"][i]][1];
-                }
-                translate(0, -h);
-                ellipse(0, 0, 8, 8);
+        else{
+            push();
+            fill_alt = 1;
+            for (let i = 0; i < demand["price"].length; i++) {
+                if (demand["cumul_capacities"][i] > c) {
+                    fill(255);
+                    h = map(demand["price"][i], 0, maxPrice, 0, graph_h * f2);
+                    translate(0, -h);
+                    if (h < graph_h * f2) {
+                        ellipse(0, 0, 8, 8);
+                    }
 
-                let tx = 20;
-                let ty = -110;
-                if (width < X + 2*margin + 150) {
-                    tx = -150;
-                }
-                if (h + 110 > graph_h * f2) {
-                    ty = h - graph_h * f2;
-                }
-                translate(tx, ty);
+                    let tx = 20;
+                    let ty = -110;
+                    if (width < X + 2*margin + 150) {
+                        tx = -150;
+                    }
+                    if (h + 110 > graph_h * f2) {
+                        ty = h - graph_h * f2;
+                    }
+                    translate(tx, ty);
 
-                display_capacity_information("Demand", demand, i)
-                break;
+                    display_capacity_information("Demand", demand, i)
+                    break;
+                }
             }
-        }
-        pop();
+            pop();
     }
 
     fill_alt = 1;
-    let ox = map(mq, minCap, maxCap, 0, graph_w);
+    ox = map(mq, minCap, maxCap, 0, graph_w);
     let oy = map(mp, 0, maxPrice, 0, graph_h * f2);
     if (abs(X - ox - 2 * margin) < 30) {
         push();
@@ -725,7 +718,7 @@ function generate_supply_and_demand_normal(view_order, v){
     }
     pop();
 
-    let ox = map(mq, 0, maxCap, 0, graph_w);
+    ox = map(mq, 0, maxCap, 0, graph_w);
     let oy = map(mp, 0, maxPrice, 0, graph_h * f2);
     fill(255, 0, 0);
     ellipse(ox, -oy, 10, 10);
@@ -998,21 +991,23 @@ function generate_temporal_graph(raw_chart_data) {
     }
     pop();
 
-    push();
-    translate(0, -s2 * height * (1 - f1));
-    let y_ticks = y_units(max["price"]);
-    let interval2 = y_ticks[1];
-    fill(cols_and_names.price[0]);
-    let y2 = map(interval2, 0, max["price"], 0, s2 * height * f1);
-    textAlign(RIGHT, CENTER);
-    for (let i = 0; i < y_ticks.length; i++) {
-        stroke(cols_and_names.price[0]);
-        line(0, -y2 * i, -5, -y2 * i);
-        noStroke();
-        image(coin, -25, -y2 * i - 6, 12, 12);
-        text(display_money(y_ticks[i]), -28, -y2 * i - 3);
+    if (price_mode != "off") {
+        push();
+        translate(0, -s2 * height * (1 - f1));
+        let y_ticks = y_units(max["price"]);
+        let interval2 = y_ticks[1];
+        fill(cols_and_names.price[0]);
+        let y2 = map(interval2, 0, max["price"], 0, s2 * height * f1);
+        textAlign(RIGHT, CENTER);
+        for (let i = 0; i < y_ticks.length; i++) {
+            stroke(cols_and_names.price[0]);
+            line(0, -y2 * i, -5, -y2 * i);
+            noStroke();
+            image(coin, -25, -y2 * i - 6, 12, 12);
+            text(display_money(y_ticks[i]), -28, -y2 * i - 3);
+        }
+        pop();
     }
-    pop();
 
     push();
     let y_ticks3 = y_units(max["quantity"]);
