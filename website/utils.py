@@ -320,6 +320,7 @@ def upgrade_facility(player, facility_id):
             return {"response": "notEnoughMoney"}
         player.money -= upgrade_cost
         apply_upgrade(facility, new_multipliers[facility.facility])
+        engine.data["player_capacities"][player.id].update(player.id, facility.facility)
         return {"response": "success", "money": player.money}
     else:
         return {"response": "notUpgradable"}
