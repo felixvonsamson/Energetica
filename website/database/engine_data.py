@@ -49,12 +49,13 @@ class CapacityData:
                     )
             elif facility.facility in engine.storage_facilities:
                 power_gen = base_data["base_power_generation"] * facility.power_multiplier
+                # mean efficiency
+                effective_values["efficiency"] = (
+                    (effective_values["efficiency"] * effective_values["power"])
+                    + (base_data["base_efficiency"] * facility.efficiency_multiplier * power_gen)
+                ) / (effective_values["power"] + power_gen)
                 effective_values["power"] += power_gen
                 effective_values["capacity"] += base_data["base_storage_capacity"] * facility.capacity_multiplier
-                effective_values["efficiency"] = (
-                    (effective_values["efficiency"] * (effective_values["power"] - power_gen))
-                    + (base_data["base_efficiency"] * facility.efficiency_multiplier)
-                ) / effective_values["power"]
             elif facility.facility in engine.extraction_facilities:
                 effective_values["extraction"] += base_data["extraction_rate"] * facility.capacity_multiplier
                 effective_values["power_use"] += base_data["base_power_consumption"] * facility.power_multiplier

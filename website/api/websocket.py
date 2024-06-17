@@ -25,6 +25,7 @@ def add_sock_handlers(sock, engine):
 
     @basic_auth.verify_password
     def verify_password(username, password):
+        engine.log(f"{username} failed to log in via HTTP Basic")
         """Called by flask-HTTPAUth to verify credentials."""
         player = Player.query.filter_by(username=username).first()
         if player:

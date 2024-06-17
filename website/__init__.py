@@ -65,7 +65,7 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     # initialize sock for WebSockets:
     sock = Sock(app)
     engine.sock = sock
-    from .api.ws import add_sock_handlers
+    from .api.websocket import add_sock_handlers
 
     add_sock_handlers(sock=sock, engine=engine)
 
@@ -73,7 +73,7 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     from .views import views, overviews
     from .auth import auth
     from .api.http import http
-    from .api.ws import ws
+    from .api.websocket import ws
 
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")
