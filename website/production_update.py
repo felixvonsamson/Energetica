@@ -474,7 +474,6 @@ def calculate_generation_with_market(engine, new_values, market, player):
     # Sell capacities of remaining facilities on the market
     for facility in player.read_list("rest_of_priorities") + player.read_list("self_consumption_priority"):
         if engine.const_config["assets"][facility]["ramping_time"] != 0:
-            print(facility, player.id, player_cap[facility])
             if player_cap[facility] is not None:
                 max_prod = calculate_prod(
                     engine,
