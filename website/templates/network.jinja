@@ -110,7 +110,8 @@
                             class="small_input medium txt_center"
                             value="{{ user.price_buy_construction }}"
                             id="price_buy_construction"
-                            name="price_buy_construction" />
+                            name="price_buy_construction" 
+                            max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
                     </td>
@@ -122,7 +123,8 @@
                             class="small_input medium txt_center"
                             value="{{ user.price_buy_research }}"
                             id="price_buy_research"
-                            name="price_buy_research" />
+                            name="price_buy_research" 
+                            max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
                     </td>
@@ -134,7 +136,8 @@
                             class="small_input medium txt_center"
                             value="{{ user.price_buy_transport }}"
                             id="price_buy_transport"
-                            name="price_buy_transport" />
+                            name="price_buy_transport"
+                            max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
                     </td>
@@ -157,7 +160,8 @@
                                     class="small_input medium txt_center"
                                     value="{{ extraction_facility_price_buy_value(extraction_facility) }}"
                                     id="{{ extraction_facility_price_buy(extraction_facility) }}"
-                                    name="{{ extraction_facility_price_buy(extraction_facility) }}" />
+                                    name="{{ extraction_facility_price_buy(extraction_facility) }}"
+                                    max="50000" />
                                 <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                 /MWh
                             </td>
@@ -172,7 +176,8 @@
                                 class="small_input medium txt_center"
                                 value="{{ user.price_buy_carbon_capture }}"
                                 id="price_buy_carbon_capture"
-                                name="price_buy_carbon_capture" />
+                                name="price_buy_carbon_capture"
+                                max="50000" />
                             <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                             /MWh
                         </td>
@@ -252,7 +257,8 @@
                                         class="small_input medium txt_center"
                                         value="{{ user[storage_facility_price(storage_facility) ] }}"
                                         id="{{ storage_facility_price(storage_facility) }}"
-                                        name="{{ storage_facility_price(storage_facility) }}" />
+                                        name="{{ storage_facility_price(storage_facility) }}"
+                                        min="-4.9" />
                                     <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                     /MWh
                                 </td>
@@ -261,7 +267,8 @@
                                         class="small_input medium txt_center"
                                         value="{{ user[storage_facility_price_buy(storage_facility) ] }}"
                                         id="{{ storage_facility_price_buy(storage_facility) }}"
-                                        name="{{ storage_facility_price_buy(storage_facility) }}" />
+                                        name="{{ storage_facility_price_buy(storage_facility) }}"
+                                        max="50000" />
                                     <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                     /MWh
                                 </td>

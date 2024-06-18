@@ -449,6 +449,8 @@ def calculate_generation_without_market(engine, new_values, player):
             capacity = max_prod - generation[facility]
             internal_market = offer(internal_market, player.id, capacity, price, facility)
 
+    market_logic(engine, new_values, internal_market)
+
 
 def calculate_generation_with_market(engine, new_values, market, player):
     player_cap = engine.data["player_capacities"][player.id]
@@ -466,10 +468,15 @@ def calculate_generation_with_market(engine, new_values, market, player):
 
     # bid demand on the market at the set prices
     demand_priorities = player.demand_priorities.split(",")
+    
     for demand_type in demand_priorities:
-        bid_q = demand[demand_type]
-        price = getattr(player, "price_buy_" + demand_type)
-        market = bid(market, player.id, bid_q, price, demand_type)
+        if player.money > 0:
+            bid_q = demand[demand_type]
+            price = getattr(player, "price_buy_" + demand_type)
+            market = bid(market, player.id, bid_q, price, demand_type)
+        else:
+            reduce_demand(engine, new_values, engine.data["current_data"][player.id], demand_type, player.id, 0)
+
 
     # Sell capacities of remaining facilities on the market
     for facility in player.read_list("rest_of_priorities") + player.read_list("self_consumption_priority"):
