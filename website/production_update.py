@@ -45,7 +45,7 @@ def update_electricity(engine):
         market = init_market()
         for player in network.members:
             calculate_demand(engine, new_values[player.id], player)
-            market = calculate_generation_with_market(engine, new_values[player.id], market, player)
+            market = calculate_generation_with_market(engine, new_values, market, player)
         market_logic(engine, new_values, market)
         # Save market data
         new_network_values = {
@@ -454,8 +454,8 @@ def calculate_generation_without_market(engine, new_values, player):
 
 def calculate_generation_with_market(engine, new_values, market, player):
     player_cap = engine.data["player_capacities"][player.id]
-    generation = new_values["generation"]
-    demand = new_values["demand"]
+    generation = new_values[player.id]["generation"]
+    demand = new_values[player.id]["demand"]
 
     excess_generation = 0
     renewables_generation(engine, player, player_cap, generation)
