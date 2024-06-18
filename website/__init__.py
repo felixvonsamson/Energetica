@@ -2,6 +2,7 @@
 This code is run once at the start of the game
 """
 
+import platform
 import eventlet
 
 eventlet.monkey_patch(thread=True, time=True)
@@ -30,8 +31,9 @@ from website.gameEngine import gameEngine  # noqa: E402
 
 def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     # gets lock to avoid multiple instances
-    lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-    lock.bind("\0energetica")
+    if platform.system() == 'Linux':
+        lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        lock.bind("\0energetica")
 
     # creates the app :
     app = Flask(__name__)
@@ -63,7 +65,7 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     # initialize sock for WebSockets:
     sock = Sock(app)
     engine.sock = sock
-    from .api.ws import add_sock_handlers
+    from .api.websocket import add_sock_handlers
 
     add_sock_handlers(sock=sock, engine=engine)
 
@@ -71,7 +73,7 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     from .views import views, overviews
     from .auth import auth
     from .api.http import http
-    from .api.ws import ws
+    from .api.websocket import ws
 
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")
