@@ -260,18 +260,29 @@
                 </tr>
               {% endif %}
             {% else %}
-              <tr>
-                <td>Power consumption</td>
-                <td class="txt_center">
-                  <script>display_upgrade_W({{ const_data["base_power_consumption"] * const_data["power factor"] ** user.carbon_capture }}, {{ const_data["power factor"]}});</script>
-                </td>
-              </tr>
-              <tr>
-                <td>CO2 absorbed</td>
-                <td class="txt_center">
-                  <script>display_upgrade_kg({{ const_data["base_absorbtion"] * const_data["absorbtion factor"] ** user.carbon_capture }}, {{ const_data["absorbtion factor"]}});</script>/h
-                </td>
-              </tr>
+              {% if user.warehouse == 0 %}
+                <tr>
+                  <td>Power consumption</td>
+                  <td class="txt_center">0 -> 15MW</td>
+                </tr>
+                <tr>
+                  <td>CO2 absorbed</td>
+                  <td class="txt_center">0 -> ??? kg/h</td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td>Power consumption</td>
+                  <td class="txt_center">
+                    <script>display_upgrade_W({{ const_data["base_power_consumption"] * const_data["power factor"] ** user.carbon_capture }}, {{ const_data["power factor"]}});</script>
+                  </td>
+                </tr>
+                <tr>
+                  <td>CO2 absorbed</td>
+                  <td class="txt_center">
+                    <script>display_upgrade_kg({{ const_data["base_absorbtion"] * (const_data["absorbtion factor"] ** user.carbon_capture) * engine.data["emissions"]["CO2"] * 60 }}, {{ const_data["absorbtion factor"]}});</script>/h
+                  </td>
+                </tr>
+              {% endif %}
             {% endif %}
           </table>
           <div class="overlay {% if facility != 'warehouse' %}hidden{% endif %}"></div>
