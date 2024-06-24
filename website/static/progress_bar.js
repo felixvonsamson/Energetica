@@ -261,10 +261,13 @@ load_constructions().then((constructions) => {
             const time = formatSeconds(time_remaining);
             progressBar.innerHTML = "&nbsp; " + time;
         }
+        console.log(shipment_data);
         for (const shipmentBar of shipmentBars) {
             const id = shipmentBar.id;
             const shipment = shipment_data[id];
             const now = new Date().getTime() / 1000;
+            const round_up = server_start % clock_time;
+            const current_time = (now-server_start + round_up) / clock_time;
             let new_width;
             let time_remaining;
             if (shipment["suspension_time"]) {
@@ -279,11 +282,11 @@ load_constructions().then((constructions) => {
                 shipment["suspension_time"];
             } else {
                 new_width =
-                    ((now - shipment["departure_time"]) /
+                    ((current_time - shipment["departure_time"]) /
                     shipment["duration"]) *
                     100;
                 time_remaining =
-                shipment["duration"] + shipment["departure_time"] - now;
+                shipment["duration"] + shipment["departure_time"] - current_time;
             }
             shipmentBar.style.setProperty("--width", new_width);
             if (new_width > 0.01) {
