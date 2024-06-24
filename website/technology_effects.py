@@ -56,9 +56,6 @@ def power_multiplier(player, facility):
     # Mineral extraction (in this case it is the energy consumption)
     if facility in const_config["mineral_extraction"]["affected facilities"]:
         mlt *= const_config["mineral_extraction"]["energy factor"] ** player.mineral_extraction
-    # Materials (in this case it is the energy consumption for construction)
-    if facility in const_config["materials"]["affected facilities"]:
-        mlt *= const_config["materials"]["construction energy factor"] ** player.materials
     # Civil engineering
     if facility in const_config["civil_engineering"]["affected facilities"]:
         mlt *= const_config["civil_engineering"]["prod factor"] ** player.civil_engineering
@@ -169,10 +166,15 @@ def construction_power(player, facility):
     bt_factor = const_config["building_technology"]["time factor"] ** player.building_technology
     # construction power in relation of facilities characteristics
     if facility in engine.power_facilities:
+        # Materials (in this case it is the energy consumption for construction)
+        mlt = 1
+        if facility in const_config["materials"]["affected facilities"]:
+            mlt *= const_config["materials"]["construction energy factor"] ** player.materials
         return (
             const_config[facility]["base_power_generation"]
             * const_config[facility]["construction_power_factor"]
             * power_multiplier(player, facility)
+            * mlt
             / bt_factor
         )
     if facility in engine.extraction_facilities:
