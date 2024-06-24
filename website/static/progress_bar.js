@@ -261,7 +261,6 @@ load_constructions().then((constructions) => {
             const time = formatSeconds(time_remaining);
             progressBar.innerHTML = "&nbsp; " + time;
         }
-        console.log(shipment_data);
         for (const shipmentBar of shipmentBars) {
             const id = shipmentBar.id;
             const shipment = shipment_data[id];
