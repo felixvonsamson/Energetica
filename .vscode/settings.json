@@ -8,5 +8,6 @@
     },
     "files.exclude": {
         "**/__pycache__": true
-    }
+    },
+    "editor.rulers": [80, 120]
 }

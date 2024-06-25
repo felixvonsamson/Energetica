@@ -1,3 +1,3 @@
 [tool.ruff]
-line-length = 120
-target-version = "py311"
+line-length = 120 # Let's keep this at 120 for now, there are some files that need it
+target-version = "py310"
