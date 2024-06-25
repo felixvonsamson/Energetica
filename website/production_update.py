@@ -469,7 +469,7 @@ def calculate_generation_with_market(engine, new_values, market, player):
     # bid demand on the market at the set prices
     demand_priorities = player.demand_priorities.split(",")
     
-    if player.money > 0:
+    if player.money <= 0:
         notify("Not Enough Money", "You dont have enough money to buy electricity on the market", player)
     for demand_type in demand_priorities:
         if player.money > 0:
