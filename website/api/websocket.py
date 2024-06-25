@@ -86,10 +86,14 @@ def unregister_websocket_connection(player_id, ws):
 
 
 def rest_init_ws_post_location(engine, ws):
-    """Called once the player has selected a location, or immediately after
-    logging in if location was already selected."""
+    """
+    Called once the player has selected a location, or immediately after logging
+    in if location was already selected.
+
+    FIXME: rest_get_facilities_data needs fixing
+    """
     # ws.send(rest_get_charts())
-    ws.send(rest_get_facilities_data(engine))
+    # ws.send(rest_get_facilities_data(engine))
 
 
 # The following methods generate messages to be sent over websocket connections.
@@ -267,8 +271,12 @@ def rest_get_charts():
 
 
 def rest_get_facilities_data(engine):
-    """Gets player's facilities data and returns it as a JSON string"""
-    assets = engine.config[g.player.id]["assets"]
+    """
+    Gets player's facilities data and returns it as a JSON string
+
+    FIXME: All the keys have changed
+    """
+    assets = engine.const_config["assets"]
     # the contents of this are now distributed in a constant and a variable part
     power_facilities_property_keys = [
         "price",
