@@ -596,7 +596,7 @@ def start_project(engine, player, facility, family, force=False):
     return {
         "response": "success",
         "money": player.money,
-        "constructions": get_construction_data(player),
+        "constructions": package_projects_data(player),
     }
 
 
@@ -637,7 +637,7 @@ def cancel_project(player, construction_id, force=False):
     return {
         "response": "success",
         "money": player.money,
-        "constructions": get_construction_data(player),
+        "constructions": package_projects_data(player),
     }
 
 
@@ -688,7 +688,7 @@ def pause_project(player, construction_id):
     websocket.rest_notify_constructions(engine, player)
     return {
         "response": "success",
-        "constructions": get_construction_data(player),
+        "constructions": package_projects_data(player),
     }
 
 
@@ -743,8 +743,20 @@ def decrease_project_priority(player, construction_id, pausing=False):
 
     return {
         "response": "success",
-        "constructions": get_construction_data(player),
+        "constructions": package_projects_data(player),
     }
+
+
+def package_projects_data(player):
+    """
+    Gets the data for the ongoing constructions for a particular player
+    TODO:
+    * Rework the return dict structure (involves back + front end)
+    """
+    projects = player.package_constructions()
+    construction_priorities = player.read_list("construction_priorities")
+    research_priorities = player.read_list("research_priorities")
+    return {0: projects, 1: construction_priorities, 2: research_priorities}
 
 
 # Resource market utilities
@@ -1189,20 +1201,3 @@ def change_facility_priority(engine, player, priority):
     for i, facility in enumerate(priority):
         prices["price_" + facility] = price_list[i]
     return set_network_prices(engine, player, prices)
-
-
-# To move
-
-
-def get_construction_data(player):
-    """
-    Gets the data for the ongoing constructions for a particular player
-    TODO:
-    * Move to Under_Construction class in player_assets file
-    * Rename this method from "construction" to "projects"
-    * Rework the return dict structure (involves back + front end)
-    """
-    projects = player.package_constructions()
-    construction_priorities = player.read_list("construction_priorities")
-    research_priorities = player.read_list("research_priorities")
-    return {0: projects, 1: construction_priorities, 2: research_priorities}
