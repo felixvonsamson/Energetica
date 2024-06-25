@@ -142,18 +142,21 @@ function setup() {
     margin = min(70, canvas_width / 10);
 
     temporal_graph_p5 =  new p5(function(sketch) {
-        let graph;
+        let graph_graphics;
+        let graph_graphics_ready = false;
         let graph_h, graph_w;
+        let frac;
         let view; // exports or imports
         let price_mode; // normal smoothed or off
         sketch.setup = function() {
             sketch.createCanvas(min(canvas_width, 1200), 0.42 * canvas_width);
             sketch.noLoop();
+            sketch.graph_graphics = createGraphics(sketch.width, sketch.height);
         }
 
         sketch.draw = function() {
-            if (sketch.graph) {
-                sketch.image(sketch.graph, 0, 0);
+            if (sketch.graph_graphics_ready) {
+                sketch.image(sketch.graph_graphics, 0, 0);
                 sketch.push();
                 sketch.stroke(255);
                 sketch.strokeWeight(2);
@@ -164,8 +167,8 @@ function setup() {
                 sketch.noStroke();
                 if (price_mode != "off") {
                     sketch.push();
-                    sketch.translate(0, -sketch.graph_h * frac);
-                    let h = (-price_curve[t_view] / upper_bounds.price) * sketch.graph_h * frac;
+                    sketch.translate(X, sketch.graph_h - 0.3 * margin - sketch.graph_h * sketch.frac);
+                    let h = (-price_curve[t_view] / upper_bounds.price) * sketch.graph_h * sketch.frac;
                     sketch.ellipse(0, h, 8, 8);
                     sketch.pop();
                 }
@@ -263,13 +266,13 @@ function setup() {
     temporal_graph_p5.price_mode = "normal";
 
     temporal_graph_p5.render_graph = function(){
-        temporal_graph_p5.resetMatrix();
-        console.log("Rendering graph");
-        temporal_graph_p5.textAlign(CENTER, CENTER);
-        temporal_graph_p5.textFont(font);
+        var graph_graphics = temporal_graph_p5.graph_graphics;
+        // graph_graphics.resetMatrix();
+        graph_graphics.textAlign(CENTER, CENTER);
+        graph_graphics.textFont(font);
         temporal_graph_p5.graph_h = temporal_graph_p5.height - margin;
         temporal_graph_p5.graph_w = temporal_graph_p5.width - 2 * margin;
-        temporal_graph_p5.background(229, 217, 182);
+        graph_graphics.background(229, 217, 182);
 
         data_len = temporal_data["network_data"]["price"][res].length;
         lower_bounds = {
@@ -280,27 +283,27 @@ function setup() {
             price: Math.max(...temporal_data["network_data"]["price"][res], -lower_bounds["price"]),
             quantity: Math.max(...temporal_data["network_data"]["quantity"][res]),
         };
-        let frac = upper_bounds["price"] / (upper_bounds["price"] - lower_bounds["price"]); // fraction of negative range in the graph
+        temporal_graph_p5.frac = upper_bounds["price"] / (upper_bounds["price"] - lower_bounds["price"]); // fraction of negative range in the graph
         
-        temporal_graph_p5.push();
-        temporal_graph_p5.translate(margin, 0.3 * margin + temporal_graph_p5.graph_h);
-        temporal_graph_p5.noStroke();
+        graph_graphics.push();
+        graph_graphics.translate(margin, 0.3 * margin + temporal_graph_p5.graph_h);
+        graph_graphics.noStroke();
 
-        temporal_graph_p5.push();
+        graph_graphics.push();
         for (let t = 0; t < data_len; t++) {
-            temporal_graph_p5.push();
+            graph_graphics.push();
             for (const player_id in temporal_data[temporal_graph_p5.view]) {
                 if (temporal_data[temporal_graph_p5.view][player_id][res][t] > 0) {
-                    temporal_graph_p5.fill(random_colors[player_id % random_colors.length]);
+                    graph_graphics.fill(random_colors[player_id % random_colors.length]);
                     let h = (temporal_data[temporal_graph_p5.view][player_id][res][t] / upper_bounds["quantity"]) * temporal_graph_p5.graph_h;
-                    temporal_graph_p5.rect(0, 0, temporal_graph_p5.graph_w / data_len + 1, -h - 1);
-                    temporal_graph_p5.translate(0, -h);
+                    graph_graphics.rect(0, 0, temporal_graph_p5.graph_w / data_len + 1, -h - 1);
+                    graph_graphics.translate(0, -h);
                 }
             }
-            temporal_graph_p5.pop();
-            temporal_graph_p5.translate(temporal_graph_p5.graph_w / data_len, 0);
+            graph_graphics.pop();
+            graph_graphics.translate(temporal_graph_p5.graph_w / data_len, 0);
         }
-        temporal_graph_p5.pop();
+        graph_graphics.pop();
 
         if(temporal_graph_p5.price_mode != "off"){
             price_curve = [...temporal_data.network_data.price[res]];
@@ -325,74 +328,75 @@ function setup() {
                     price_curve[t] = sum / weight_sum;
                 }
             }
-            temporal_graph_p5.push();
-            temporal_graph_p5.translate(0, -temporal_graph_p5.graph_h * (1 - frac));
-            temporal_graph_p5.strokeWeight(3);
-            temporal_graph_p5.stroke(cols_and_names["price"][0]);
+            graph_graphics.push();
+            graph_graphics.translate(0, -temporal_graph_p5.graph_h * (1 - temporal_graph_p5.frac));
+            graph_graphics.strokeWeight(3);
+            graph_graphics.stroke(cols_and_names["price"][0]);
             for (let t = 1; t < data_len; t++) {
-                let h1 = (price_curve[t - 1] / upper_bounds["price"]) * temporal_graph_p5.graph_h * frac;
-                let h2 = (price_curve[t] / upper_bounds["price"]) * temporal_graph_p5.graph_h * frac;
-                temporal_graph_p5.line(0, -h1, temporal_graph_p5.graph_w / data_len, -h2);
-                temporal_graph_p5.translate(temporal_graph_p5.graph_w / (data_len - 1), 0);
+                let h1 = (price_curve[t - 1] / upper_bounds["price"]) * temporal_graph_p5.graph_h * temporal_graph_p5.frac;
+                let h2 = (price_curve[t] / upper_bounds["price"]) * temporal_graph_p5.graph_h * temporal_graph_p5.frac;
+                graph_graphics.line(0, -h1, temporal_graph_p5.graph_w / data_len, -h2);
+                graph_graphics.translate(temporal_graph_p5.graph_w / (data_len - 1), 0);
             }
-            temporal_graph_p5.pop();
+            graph_graphics.pop();
         }
 
-        temporal_graph_p5.stroke(0);
-        temporal_graph_p5.line(0, 0, temporal_graph_p5.graph_w, 0);
-        temporal_graph_p5.line(0, 0, 0, -temporal_graph_p5.graph_h);
-        temporal_graph_p5.line(temporal_graph_p5.graph_w, 0, temporal_graph_p5.graph_w, -temporal_graph_p5.graph_h);
+        graph_graphics.stroke(0);
+        graph_graphics.line(0, 0, temporal_graph_p5.graph_w, 0);
+        graph_graphics.line(0, 0, 0, -temporal_graph_p5.graph_h);
+        graph_graphics.line(temporal_graph_p5.graph_w, 0, temporal_graph_p5.graph_w, -temporal_graph_p5.graph_h);
 
-        temporal_graph_p5.push();
+        graph_graphics.push();
         let units = time_unit(res, clock_time);
         fill(0);
         for (let i = 0; i < units.length; i++) {
-            temporal_graph_p5.stroke(0, 0, 0, 30);
+            graph_graphics.stroke(0, 0, 0, 30);
             let x = (i * temporal_graph_p5.graph_w) / (units.length - 1);
-            temporal_graph_p5.line(x, -temporal_graph_p5.graph_h, x, 0);
-            temporal_graph_p5.stroke(0);
-            temporal_graph_p5.line(x, 0, x, 5);
-            temporal_graph_p5.noStroke();
-            temporal_graph_p5.text(units[i], x, 0.5 * margin);
+            graph_graphics.line(x, -temporal_graph_p5.graph_h, x, 0);
+            graph_graphics.stroke(0);
+            graph_graphics.line(x, 0, x, 5);
+            graph_graphics.noStroke();
+            graph_graphics.text(units[i], x, 0.5 * margin);
         }
-        temporal_graph_p5.pop();
+        graph_graphics.pop();
 
         if (temporal_graph_p5.graph_h.price_mode != "off") {
-            temporal_graph_p5.push();
-            temporal_graph_p5.translate(0, -temporal_graph_p5.graph_h * (1 - frac));
+            graph_graphics.push();
+            graph_graphics.translate(0, -temporal_graph_p5.graph_h * (1 - temporal_graph_p5.frac));
             let y_ticks = y_units(upper_bounds["price"]);
             let interval2 = y_ticks[1];
-            temporal_graph_p5.fill(cols_and_names.price[0]);
-            let y2 = map(interval2, 0, upper_bounds["price"], 0, temporal_graph_p5.graph_h * frac);
-            temporal_graph_p5.textAlign(RIGHT, CENTER);
+            graph_graphics.fill(cols_and_names.price[0]);
+            let y2 = map(interval2, 0, upper_bounds["price"], 0, temporal_graph_p5.graph_h * temporal_graph_p5.frac);
+            graph_graphics.textAlign(RIGHT, CENTER);
             for (let i = 0; i < y_ticks.length; i++) {
-                temporal_graph_p5.stroke(cols_and_names.price[0]);
-                temporal_graph_p5.line(0, -y2 * i, -5, -y2 * i);
-                temporal_graph_p5.noStroke();
-                temporal_graph_p5.image(coin, -23, -y2 * i - 6, 12, 12);
-                temporal_graph_p5.text(display_money(y_ticks[i]), -28, -y2 * i - 3);
+                graph_graphics.stroke(cols_and_names.price[0]);
+                graph_graphics.line(0, -y2 * i, -5, -y2 * i);
+                graph_graphics.noStroke();
+                graph_graphics.image(coin, -23, -y2 * i - 6, 12, 12);
+                graph_graphics.text(display_money(y_ticks[i]), -28, -y2 * i - 3);
             }
-            temporal_graph_p5.pop();
+            graph_graphics.pop();
         }
 
-        temporal_graph_p5.push();
+        graph_graphics.push();
         let y_ticks3 = y_units(upper_bounds["quantity"]);
         let interval3 = y_ticks3[1];
-        temporal_graph_p5.fill(0);
+        graph_graphics.fill(0);
         let y3 = map(interval3, 0, upper_bounds["quantity"], 0, temporal_graph_p5.graph_h);
         for (let i = 0; i < y_ticks3.length; i++) {
-            temporal_graph_p5.stroke(0, 0, 0, 30);
-            temporal_graph_p5.line(temporal_graph_p5.graph_w, -y3 * i, 0, -y3 * i);
-            temporal_graph_p5.stroke(0);
-            temporal_graph_p5.line(temporal_graph_p5.graph_w, -y3 * i, temporal_graph_p5.graph_w + 5, -y3 * i);
-            temporal_graph_p5.noStroke();
-            temporal_graph_p5.text(display_W(y_ticks3[i]), temporal_graph_p5.graph_w + 0.5 * margin, -y3 * i - 3);
+            graph_graphics.stroke(0, 0, 0, 30);
+            graph_graphics.line(temporal_graph_p5.graph_w, -y3 * i, 0, -y3 * i);
+            graph_graphics.stroke(0);
+            graph_graphics.line(temporal_graph_p5.graph_w, -y3 * i, temporal_graph_p5.graph_w + 5, -y3 * i);
+            graph_graphics.noStroke();
+            graph_graphics.text(display_W(y_ticks3[i]), temporal_graph_p5.graph_w + 0.5 * margin, -y3 * i - 3);
         }
-        temporal_graph_p5.pop();
+        graph_graphics.pop();
 
-        temporal_graph_p5.pop();
+        graph_graphics.pop();
 
-        temporal_graph_p5.graph = temporal_graph_p5.get();
+        temporal_graph_p5.graph_graphics_ready = true;
+        temporal_graph_p5.redraw();
     } 
     
     market_chart_p5 = new p5(function(sketch) {
