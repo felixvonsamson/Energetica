@@ -262,6 +262,12 @@ canvas {
     align-items: center;
 }
 
+.flex-space-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .flex-grow-1 {
     flex-grow:1
 }

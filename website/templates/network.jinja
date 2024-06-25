@@ -64,7 +64,29 @@
         </div>
     {% else %}
         {% set caps = engine.data["player_capacities"][user.id] %}
-        <div id="market_graph" class="bone" style="padding:30px 0; margin:30px 0;"></div>
+        <div id="temporal_graph" class="bone flex-center" style="padding:16px 0; margin:30px 0;"></div>
+        <div class="flex-space-between">
+            <div>
+                <button class="padding medium login-button" onclick="change_price_mode('normal')">normal</button>
+                <button class="padding medium login-button" onclick="change_price_mode('smoothed')">smoothed</button>
+                <button class="padding medium login-button" onclick="change_price_mode('off')">off</button>
+            </div>
+            <div>
+                <button class="padding medium login-button" onclick="change_export_import('exports')">exports</button>
+                <button class="padding medium login-button" onclick="change_export_import('imports')">imports</button>
+            </div>
+        </div>
+        <div class="flex-center">
+            <button class="padding medium login-button" onclick="change_res(0)">30min</button>
+            <button class="padding medium login-button" onclick="change_res(1)">3h</button>
+            <button class="padding medium login-button" onclick="change_res(2)">18h</button>
+            <button class="padding medium login-button" onclick="change_res(3)">4 days</button>
+            <button class="padding medium login-button" onclick="change_res(4)">month</button>
+            <button class="padding medium login-button" onclick="change_res(5)">6 months</button>
+        </div>
+        <div id="market_chart" class="bone flex-center" style="padding:16px 0; margin:30px 0;"></div>
+        
+        
         <form action="/api/leave_network"
               method="post"
               class="flex-row"

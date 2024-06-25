@@ -1,10 +1,5 @@
-
 // data of the temporal graph
-let data = {"network_data": {}, "exports": {}, "imports": {}};
-let price_curve;
-let f1; // fraction of negative range in the graph
-let view = "exports"; // exports or imports
-let price_mode = "normal"; // normal smoothed or off
+let temporal_data = {"network_data": {}, "exports": {}, "imports": {}};
 
 // data for the market graph
 let demand, supply;
@@ -14,7 +9,6 @@ let maxPrice, minPrice; // price range
 let maxCap, minCap; // capacity range
 let maxCap_sqrt_supply, maxCap_sqrt_demand;
 let f2; // fraction of negative range in the graph
-let graph_h, graph_w;
 let view_market = "supply"; // supply or demand
 let market_mode = "log"; // normal log or zoom
 let categorisation = "facility"; // facility or player
@@ -83,6 +77,8 @@ function preload() {
     coin = loadImage("static/images/icons/coin.svg");
 }
 
+var temporal_graph_p5, market_chart_p5;
+
 function setup() {
     random_colors = [
         color(166,206,227),
@@ -135,41 +131,203 @@ function setup() {
 
         price: [color(139, 0, 0), "Market price"],
     };
+
     let canvas_width = 0.7 * windowWidth;
-    let canvas_height = windowWidth;
     if (windowWidth < 1200) {
         canvas_width = windowWidth;
-        canvas_height = 1.43 * windowWidth;
     }
-    let canvas = createCanvas(
-        min(canvas_width, 1200),
-        min(canvas_height, 1714)
-    );
-    margin = min(40, width / 25);
-    graph_h = 0.41 * height - 3 * margin;
-    graph_w = width - 4 * margin;
-    canvas.parent("market_graph");
-    textAlign(CENTER, CENTER);
-    textFont(font);
-    update_graph();
+    margin = min(70, canvas_width / 10);
+
+    temporal_graph_p5 =  new p5(function(sketch) {
+        let graph;
+        let graph_h, graph_w;
+        let view; // exports or imports
+        let price_mode; // normal smoothed or off
+        sketch.setup = function() {
+            sketch.createCanvas(min(canvas_width, 1200), 0.42 * canvas_width);
+            sketch.noLoop();
+        }
+
+        sketch.draw = function() {
+            if (sketch.graph) {
+                sketch.image(sketch.graph, 0, 0);
+                sketch.push();
+                sketch.stroke(255);
+                sketch.strokeWeight(2);
+                let X = min(graph_w, max(0, mouseX - margin));
+                //hover_on_temporal_graph(X, margin);
+                sketch.pop();
+            }
+        }
+
+    }, "temporal_graph");
+
+    temporal_graph_p5.view = "exports";
+    temporal_graph_p5.price_mode = "normal";
+
+    temporal_graph_p5.render_graph = function(){
+        console.log("Rendering graph");
+        temporal_graph_p5.textAlign(CENTER, CENTER);
+        temporal_graph_p5.textFont(font);
+        temporal_graph_p5.graph_h = temporal_graph_p5.height - margin;
+        temporal_graph_p5.graph_w = temporal_graph_p5.width - 2 * margin;
+        temporal_graph_p5.background(229, 217, 182);
+
+        let data_len = temporal_data["network_data"]["price"].length;
+        let lower_bounds = {
+            price: Math.min(0, ...temporal_data["network_data"]["price"]),
+            quantity: 0,
+        };
+        let upper_bounds = {
+            price: Math.max(...temporal_data["network_data"]["price"], -lower_bounds["price"]),
+            quantity: Math.max(...temporal_data["network_data"]["quantity"]),
+        };
+        let frac = upper_bounds["price"] / (upper_bounds["price"] - lower_bounds["price"]); // fraction of negative range in the graph
+        
+        temporal_graph_p5.push();
+        temporal_graph_p5.translate(margin, 0.3 * margin + temporal_graph_p5.graph_h);
+        temporal_graph_p5.noStroke();
+
+        temporal_graph_p5.push();
+        for (let t = 0; t < data_len; t++) {
+            temporal_graph_p5.push();
+            for (const player_id in temporal_data[temporal_graph_p5.view]) {
+                if (temporal_data[temporal_graph_p5.view][player_id][t] > 0) {
+                    temporal_graph_p5.fill(random_colors[player_id % random_colors.length]);
+                    let h = (temporal_data[temporal_graph_p5.view][player_id][t] / upper_bounds["quantity"]) * temporal_graph_p5.graph_h;
+                    temporal_graph_p5.rect(0, 0, temporal_graph_p5.graph_w / data_len + 1, -h - 1);
+                    temporal_graph_p5.translate(0, -h);
+                }
+            }
+            temporal_graph_p5.pop();
+            temporal_graph_p5.translate(temporal_graph_p5.graph_w / data_len, 0);
+        }
+        temporal_graph_p5.pop();
+
+        if(temporal_graph_p5.price_mode != "off"){
+            let price_curve = [...temporal_data.network_data.price];
+            if (temporal_graph_p5.price_mode == "smoothed") {
+                let window_size = 5;
+                // Generate Normalized Gaussian kernel
+                let gaussian_kernel = [];
+                for (let i = -window_size; i <= window_size; i++) {
+                    gaussian_kernel.push(Math.exp(-(i ** 2) / 10));
+                }
+
+                price_curve = []
+                for (let t = 0; t < data_len; t++) {
+                    let start = max(0, t - window_size);
+                    let end = min(data_len - 1, t + window_size);
+                    let sum = 0;
+                    let weight_sum = 0;
+                    for (let i = start; i <= end; i++) {
+                        sum += temporal_data.network_data.price[i] * gaussian_kernel[i - t + window_size];
+                        weight_sum += gaussian_kernel[i - t + window_size];
+                    }
+                    price_curve[t] = sum / weight_sum;
+                }
+            }
+            temporal_graph_p5.push();
+            temporal_graph_p5.translate(0, -temporal_graph_p5.graph_h * (1 - frac));
+            temporal_graph_p5.strokeWeight(3);
+            temporal_graph_p5.stroke(cols_and_names["price"][0]);
+            for (let t = 1; t < data_len; t++) {
+                let h1 = (price_curve[t - 1] / upper_bounds["price"]) * temporal_graph_p5.graph_h * frac;
+                let h2 = (price_curve[t] / upper_bounds["price"]) * temporal_graph_p5.graph_h * frac;
+                temporal_graph_p5.line(0, -h1, temporal_graph_p5.graph_w / data_len, -h2);
+                temporal_graph_p5.translate(temporal_graph_p5.graph_w / (data_len - 1), 0);
+            }
+            temporal_graph_p5.pop();
+        }
+
+        temporal_graph_p5.stroke(0);
+        temporal_graph_p5.line(0, 0, temporal_graph_p5.graph_w, 0);
+        temporal_graph_p5.line(0, 0, 0, -temporal_graph_p5.graph_h);
+        temporal_graph_p5.line(temporal_graph_p5.graph_w, 0, temporal_graph_p5.graph_w, -temporal_graph_p5.graph_h);
+
+        temporal_graph_p5.push();
+        let units = time_unit(res, clock_time);
+        fill(0);
+        for (let i = 0; i < units.length; i++) {
+            temporal_graph_p5.stroke(0, 0, 0, 30);
+            let x = (i * temporal_graph_p5.graph_w) / (units.length - 1);
+            temporal_graph_p5.line(x, -temporal_graph_p5.graph_h, x, 0);
+            temporal_graph_p5.stroke(0);
+            temporal_graph_p5.line(x, 0, x, 5);
+            temporal_graph_p5.noStroke();
+            temporal_graph_p5.text(units[i], x, 0.5 * margin);
+        }
+        temporal_graph_p5.pop();
+
+        if (temporal_graph_p5.graph_h.price_mode != "off") {
+            temporal_graph_p5.push();
+            temporal_graph_p5.translate(0, -temporal_graph_p5.graph_h * (1 - frac));
+            let y_ticks = y_units(upper_bounds["price"]);
+            let interval2 = y_ticks[1];
+            temporal_graph_p5.fill(cols_and_names.price[0]);
+            let y2 = map(interval2, 0, upper_bounds["price"], 0, temporal_graph_p5.graph_h * frac);
+            temporal_graph_p5.textAlign(RIGHT, CENTER);
+            for (let i = 0; i < y_ticks.length; i++) {
+                temporal_graph_p5.stroke(cols_and_names.price[0]);
+                temporal_graph_p5.line(0, -y2 * i, -5, -y2 * i);
+                temporal_graph_p5.noStroke();
+                temporal_graph_p5.image(coin, -23, -y2 * i - 6, 12, 12);
+                temporal_graph_p5.text(display_money(y_ticks[i]), -28, -y2 * i - 3);
+            }
+            temporal_graph_p5.pop();
+        }
+
+        temporal_graph_p5.push();
+        let y_ticks3 = y_units(upper_bounds["quantity"]);
+        let interval3 = y_ticks3[1];
+        temporal_graph_p5.fill(0);
+        let y3 = map(interval3, 0, upper_bounds["quantity"], 0, temporal_graph_p5.graph_h);
+        for (let i = 0; i < y_ticks3.length; i++) {
+            temporal_graph_p5.stroke(0, 0, 0, 30);
+            temporal_graph_p5.line(temporal_graph_p5.graph_w, -y3 * i, 0, -y3 * i);
+            temporal_graph_p5.stroke(0);
+            temporal_graph_p5.line(temporal_graph_p5.graph_w, -y3 * i, temporal_graph_p5.graph_w + 5, -y3 * i);
+            temporal_graph_p5.noStroke();
+            temporal_graph_p5.text(display_W(y_ticks3[i]), temporal_graph_p5.graph_w + 0.5 * margin, -y3 * i - 3);
+        }
+        temporal_graph_p5.pop();
+
+        temporal_graph_p5.pop();
+
+        temporal_graph_p5.graph = temporal_graph_p5.get();
+    } 
+    
+    market_chart_p5 = new p5(function(sketch) {
+        let graph_h, graph_w;
+        sketch.setup = function() {
+            sketch.createCanvas(min(canvas_width, 1200), 0.55 * canvas_width);
+            graph_h = sketch.height - 2 * margin;
+            graph_w = sketch.width - 2 * margin;
+            sketch.background(150, 150, 255);
+            sketch.fill(100, 100, 255);
+            sketch.rect(margin, margin, graph_w, graph_h);
+        }
+    }, "market_chart");
+ 
+    fetch_data();
 }
 
-function draw() {
-    if (graph) {
-        image(graph, 0, 0);
-        push();
-        stroke(255);
-        strokeWeight(2);
-        let mar = 2 * margin;
-        let X = Math.min(graph_w, Math.max(0, mouseX - mar));
-        if (mouseY > s1 * height && mouseY < (s1+s2) * height) {
-            hover_on_temporal_graph(X, mar);
-        } else if (mouseY > (s1+s2+s3) * height && supply != null) {
-            hover_on_market_graph(X, mar);
-        }
-        pop();
-    }
-}
+// function draw() {
+//     if (graph) {
+//         image(graph, 0, 0);
+//         push();
+//         stroke(255);
+//         strokeWeight(2);
+//         let mar = 2 * margin;
+//         let X = Math.min(graph_w, Math.max(0, mouseX - mar));
+//         if (mouseY > s1 * height && mouseY < (s1+s2) * height) {
+//             hover_on_temporal_graph(X, mar);
+//         } else if (mouseY > (s1+s2+s3) * height && supply != null) {
+//             hover_on_market_graph(X, mar);
+//         }
+//         pop();
+//     }
+// }
 
 function hover_on_temporal_graph(X, mar) {
     push();
@@ -183,17 +341,17 @@ function hover_on_temporal_graph(X, mar) {
     line(X, 0, X, s2 * height);
     noStroke();
     push();
-    translate(X, s2 * height * f1);
+    translate(X, s2 * height * frac);
     if (price_mode != "off") {
-        let h = (-price_curve[t_view] / max.price) * s2 * height * f1;
+        let h = (-price_curve[t_view] / max.price) * s2 * height * frac;
         ellipse(0, h, 8, 8);
     }
     pop();
     push();
     translate(X, s2 * height);
-    for (const player_id in data[view]) {
-        if (data[view][player_id][t_view] > 0) {
-            let h = (-data[view][player_id][t_view] / max.quantity) * s2 * height;
+    for (const player_id in temporal_data[view]) {
+        if (temporal_data[view][player_id][t_view] > 0) {
+            let h = (-temporal_data[view][player_id][t_view] / max.quantity) * s2 * height;
             ellipse(0, h, 8, 8);
             translate(0, h);
         }
@@ -201,8 +359,8 @@ function hover_on_temporal_graph(X, mar) {
     pop();
 
     let count = 2 + (price_mode != "off");
-    for(const player_id in data[view]){
-        if(data[view][player_id][t_view] > 0){
+    for(const player_id in temporal_data[view]){
+        if(temporal_data[view][player_id][t_view] > 0){
             count += 1;
         }
     }
@@ -235,14 +393,14 @@ function hover_on_temporal_graph(X, mar) {
         textAlign(LEFT, CENTER);
         text(cols_and_names.price[1], 20, 5);
         textAlign(RIGHT, CENTER);
-        text(display_money(data["network_data"].price[t_view]), 137, 5);
+        text(display_money(temporal_data["network_data"].price[t_view]), 137, 5);
         image(coin, 140, 2, 12, 12);
         translate(0, 16);
     }
 
-    const keys = Object.keys(data[view]).reverse();
+    const keys = Object.keys(temporal_data[view]).reverse();
     for(const player_id of keys){
-        if(data[view][player_id][t_view] > 0){
+        if(temporal_data[view][player_id][t_view] > 0){
             alternate_fill();
             rect(0, 0, 160, 17);
             push();
@@ -255,7 +413,7 @@ function hover_on_temporal_graph(X, mar) {
             let username = userObject ? userObject.username : "Loading...";
             text(username, 20, 5);
             textAlign(CENTER, CENTER);
-            text(display_W(data[view][player_id][t_view]), 132, 5);
+            text(display_W(temporal_data[view][player_id][t_view]), 132, 5);
             translate(0, 16);
         }
     }
@@ -482,139 +640,146 @@ function display_capacity_information(title, data, i){
     }
 }
 
-function mousePressed() {
-    let button_size_s = Math.min(120, 0.13 * graph_w);
-    let button_size_m = graph_w / resolution_list.length;
-
-    if (
-        (mouseY > (s1+s2+0.5*s3) * height) &&
-        (mouseY < (s1+s2+0.5*s3) * height + margin) &&
-        (mouseX > 2 * margin) &&
-        (mouseX < graph_w + 2 * margin)
-    ) {
-        let i = floor((mouseX - 2 * margin) / button_size_m);
-        res = resolution_list[i];
-        update_graph();
-        return;
-    }
-    else if (
-        (mouseY > (s1+s2+0.2*s3) * height) &&
-        (mouseY < (s1+s2+0.5*s3) * height) &&
-        (mouseX > width - 2 * margin - 2 * button_size_s) &&
-        (mouseX < width - 2 * margin)
-    ) {
-        let i = floor((mouseX - width + 2 * margin + 2 * button_size_s)/ button_size_s);
-        if (i == 0) {
-            view = "exports";
-        } else {  
-            view = "imports";
-        }
-        update_graph();
-        return;
-    }
-    else if (
-        (mouseY > (s1+s2+0.2*s3) * height) &&
-        (mouseY < (s1+s2+0.5*s3) * height) &&
-        (mouseX > 2 * margin) &&
-        (mouseX < 2 * margin + 3 * button_size_s)
-    ) {
-        let i = floor((mouseX - 2 * margin)/ button_size_s);
-        if (i == 0) {
-            price_mode = "normal";
-        } else if (i == 1) {  
-            price_mode = "smoothed";
-        }else {
-            price_mode = "off";
-        }
-        update_graph();
-        return;
-    }
-    else if (
-        (mouseY > height-40) &&
-        (mouseY < height) &&
-        (mouseX > width - 2 * margin - 2 * button_size_s) &&
-        (mouseX < width - 2 * margin)
-    ) {
-        let i = floor((mouseX - width + 2 * margin + 2 * button_size_s)/ button_size_s);
-        if (i == 0) {
-            view_market = "supply";
-        } else {  
-            view_market = "demand";
-        }
-        update_graph();
-        return;
-    }
-    else if (
-        (mouseY > height-40) &&
-        (mouseY < height) &&
-        (mouseX > 2 * margin + 0.5 * graph_w - 0.5 * button_size_s) &&
-        (mouseX < 2 * margin + 0.5 * graph_w + 1.5 * button_size_s)
-    ) {
-        let i = floor((mouseX - 2 * margin - 0.5 * graph_w + 0.5 * button_size_s)/ button_size_s);
-        if (i == 0) {
-            categorisation = "facility";
-        } else {  
-            categorisation = "player";
-        }
-        update_graph();
-        return;
-    }
-    else if (
-        (mouseY > height-40) &&
-        (mouseY < height) &&
-        (mouseX > 2 * margin) &&
-        (mouseX < 2 * margin + 3 * button_size_s)
-    ) {
-        let i = floor((mouseX - 2 * margin)/ button_size_s);
-        if (i == 0) {
-            market_mode = "normal";
-        } else if (i == 1) {  
-            market_mode = "log";
-        }else {
-            market_mode = "zoom";
-        }
-        update_graph();
-        return;
-    }
-    if (mouseY > s1 * height && mouseY < (s1+s2) * height) {
-        t_click = (data_len - t_view - 1) * res_to_factor[res];
-        update_graph();
-    }
+function change_res(i){
+    res = resolution_list[i];
+    console.log("test");
+    temporal_graph_p5.render_graph();
+    console.log("test2");
+    temporal_graph_p5.redraw();
+    change_price_mode("smoothed");
 }
 
-function update_graph() {
+function change_export_import(view){
+    temporal_graph_p5.view = view;
+    temporal_graph_p5.render_graph();
+}
+
+function change_price_mode(price_mode){
+    temporal_graph_p5.price_mode = price_mode;
+    temporal_graph_p5.render_graph();
+}
+
+// function mousePressed() {
+//     let button_size_s = Math.min(120, 0.13 * graph_w);
+//     let button_size_m = graph_w / resolution_list.length;
+
+//     if (
+//         (mouseY > (s1+s2+0.5*s3) * height) &&
+//         (mouseY < (s1+s2+0.5*s3) * height + margin) &&
+//         (mouseX > 2 * margin) &&
+//         (mouseX < graph_w + 2 * margin)
+//     ) {
+//         let i = floor((mouseX - 2 * margin) / button_size_m);
+//         res = resolution_list[i];
+//         update_graph();
+//         return;
+//     }
+//     else if (
+//         (mouseY > (s1+s2+0.2*s3) * height) &&
+//         (mouseY < (s1+s2+0.5*s3) * height) &&
+//         (mouseX > width - 2 * margin - 2 * button_size_s) &&
+//         (mouseX < width - 2 * margin)
+//     ) {
+//         let i = floor((mouseX - width + 2 * margin + 2 * button_size_s)/ button_size_s);
+//         if (i == 0) {
+//             view = "exports";
+//         } else {  
+//             view = "imports";
+//         }
+//         update_graph();
+//         return;
+//     }
+//     else if (
+//         (mouseY > (s1+s2+0.2*s3) * height) &&
+//         (mouseY < (s1+s2+0.5*s3) * height) &&
+//         (mouseX > 2 * margin) &&
+//         (mouseX < 2 * margin + 3 * button_size_s)
+//     ) {
+//         let i = floor((mouseX - 2 * margin)/ button_size_s);
+//         if (i == 0) {
+//             price_mode = "normal";
+//         } else if (i == 1) {  
+//             price_mode = "smoothed";
+//         }else {
+//             price_mode = "off";
+//         }
+//         update_graph();
+//         return;
+//     }
+//     else if (
+//         (mouseY > height-40) &&
+//         (mouseY < height) &&
+//         (mouseX > width - 2 * margin - 2 * button_size_s) &&
+//         (mouseX < width - 2 * margin)
+//     ) {
+//         let i = floor((mouseX - width + 2 * margin + 2 * button_size_s)/ button_size_s);
+//         if (i == 0) {
+//             view_market = "supply";
+//         } else {  
+//             view_market = "demand";
+//         }
+//         update_graph();
+//         return;
+//     }
+//     else if (
+//         (mouseY > height-40) &&
+//         (mouseY < height) &&
+//         (mouseX > 2 * margin + 0.5 * graph_w - 0.5 * button_size_s) &&
+//         (mouseX < 2 * margin + 0.5 * graph_w + 1.5 * button_size_s)
+//     ) {
+//         let i = floor((mouseX - 2 * margin - 0.5 * graph_w + 0.5 * button_size_s)/ button_size_s);
+//         if (i == 0) {
+//             categorisation = "facility";
+//         } else {  
+//             categorisation = "player";
+//         }
+//         update_graph();
+//         return;
+//     }
+//     else if (
+//         (mouseY > height-40) &&
+//         (mouseY < height) &&
+//         (mouseX > 2 * margin) &&
+//         (mouseX < 2 * margin + 3 * button_size_s)
+//     ) {
+//         let i = floor((mouseX - 2 * margin)/ button_size_s);
+//         if (i == 0) {
+//             market_mode = "normal";
+//         } else if (i == 1) {  
+//             market_mode = "log";
+//         }else {
+//             market_mode = "zoom";
+//         }
+//         update_graph();
+//         return;
+//     }
+//     if (mouseY > s1 * height && mouseY < (s1+s2) * height) {
+//         t_click = (data_len - t_view - 1) * res_to_factor[res];
+//         update_graph();
+//     }
+// }
+
+function fetch_data() {
     load_chart_data((network = true)).then((raw_chart_data) => {
         fetch(`/api/get_market_data?t=${t_click}`) // retrieves data from server
             .then((response) => response.json())
             .then((raw_data) => {
-                strokeWeight(1);
-                background(229, 217, 182);
                 if (raw_data != null) {
-                    generate_market_graph(raw_data);
+                    supply = raw_data["capacities"];
+                    demand = raw_data["demands"];
+                    mq = raw_data["market_quantity"];
+                    mp = raw_data["market_price"];
                 } else {
                     supply = null;
                 }
-
-                push();
-                // this is to hide possible overflows of the lower graph
-                fill(229, 217, 182);
-                noStroke();
-                rect(0, 0, width, height - 2 * margin - graph_h);
-                fill(0);
-                textSize(30);
-                text("Market : " + display_time(t_click), width / 2, (s1+s2+s3) * height);
-                pop();
-
-                generate_temporal_graph(raw_chart_data);
-
-                push();
-                textSize(30);
-                text("(More information about capacities of the market coming soon)", width / 2, 5 * margin);
-                pop();
-
-                display_buttons();
-
-                graph = get();
+                
+                Object.keys(raw_chart_data).forEach((key) => {
+                    Object.keys(raw_chart_data[key]).forEach((subkey) => {
+                        temporal_data[key][subkey] = reduce(raw_chart_data[key][subkey], res);
+                    });
+                });
+                
+                window.temporal_graph_p5.render_graph();
             });
         })
         .catch((error) => {
@@ -624,6 +789,49 @@ function update_graph() {
         players = players_;
     });
 }
+
+// function update_graph() {
+//     load_chart_data((network = true)).then((raw_chart_data) => {
+//         fetch(`/api/get_market_data?t=${t_click}`) // retrieves data from server
+//             .then((response) => response.json())
+//             .then((raw_data) => {
+//                 strokeWeight(1);
+//                 background(229, 217, 182);
+//                 if (raw_data != null) {
+//                     generate_market_graph(raw_data);
+//                 } else {
+//                     supply = null;
+//                 }
+
+//                 push();
+//                 // this is to hide possible overflows of the lower graph
+//                 fill(229, 217, 182);
+//                 noStroke();
+//                 rect(0, 0, width, height - 2 * margin - graph_h);
+//                 fill(0);
+//                 textSize(30);
+//                 text("Market : " + display_time(t_click), width / 2, (s1+s2+s3) * height);
+//                 pop();
+
+//                 generate_temporal_graph(raw_chart_data);
+
+//                 push();
+//                 textSize(30);
+//                 text("(More information about capacities of the market coming soon)", width / 2, 5 * margin);
+//                 pop();
+
+//                 display_buttons();
+
+//                 graph = get();
+//             });
+//         })
+//         .catch((error) => {
+//             console.error("Error:", error);
+//         });
+//     load_players().then((players_) => {
+//         players = players_;
+//     });
+// }
 
 function generate_market_graph(raw_data) {
     supply = raw_data["capacities"];
@@ -949,27 +1157,27 @@ function sum_arr(arr) {
 function generate_temporal_graph(raw_chart_data) {
     Object.keys(raw_chart_data).forEach((key) => {
         Object.keys(raw_chart_data[key]).forEach((subkey) => {
-            data[key][subkey] = reduce(raw_chart_data[key][subkey], res);
+            temporal_data[key][subkey] = reduce(raw_chart_data[key][subkey], res);
         });
     });
 
-    data_len = data["network_data"]["price"].length;
+    data_len = temporal_data["network_data"]["price"].length;
     min = {
-        price: Math.min(0, ...data["network_data"]["price"]),
+        price: Math.min(0, ...temporal_data["network_data"]["price"]),
         quantity: 0,
     };
     max = {
-        price: Math.max(...data["network_data"]["price"], -min["price"]),
-        quantity: Math.max(...data["network_data"]["quantity"]),
+        price: Math.max(...temporal_data["network_data"]["price"], -min["price"]),
+        quantity: Math.max(...temporal_data["network_data"]["quantity"]),
     };
-    f1 = max["price"] / (max["price"] - min["price"]);
+    frac = max["price"] / (max["price"] - min["price"]);
 
     push();
     translate(2 * margin, (s1+s2) * height);
     noStroke();
     generate_export_import_graph();
     if(price_mode != "off"){
-        generate_price_curve(f1);
+        generate_price_curve(frac);
     }
     
     stroke(0);
@@ -993,11 +1201,11 @@ function generate_temporal_graph(raw_chart_data) {
 
     if (price_mode != "off") {
         push();
-        translate(0, -s2 * height * (1 - f1));
+        translate(0, -s2 * height * (1 - frac));
         let y_ticks = y_units(max["price"]);
         let interval2 = y_ticks[1];
         fill(cols_and_names.price[0]);
-        let y2 = map(interval2, 0, max["price"], 0, s2 * height * f1);
+        let y2 = map(interval2, 0, max["price"], 0, s2 * height * frac);
         textAlign(RIGHT, CENTER);
         for (let i = 0; i < y_ticks.length; i++) {
             stroke(cols_and_names.price[0]);
@@ -1023,52 +1231,6 @@ function generate_temporal_graph(raw_chart_data) {
         text(display_W(y_ticks3[i]), graph_w + 0.75 * margin, -y3 * i - 3);
     }
     pop();
-    pop();
-}
-
-function generate_export_import_graph() {
-    push();
-    for (let t = 0; t < data_len; t++) {
-        push();
-        for (const player_id in data[view]) {
-            if (data[view][player_id][t] > 0) {
-                fill(random_colors[player_id % random_colors.length]);
-                let h = (data[view][player_id][t] / max["quantity"]) * s2 * height;
-                rect(0, 0, graph_w / data_len + 1, -h - 1);
-                translate(0, -h);
-            }
-        }
-        pop();
-        translate(graph_w / data_len, 0);
-    }
-    pop();
-}
-
-function generate_price_curve(f1) {
-    price_curve = [...data.network_data.price];
-    if (price_mode == "smoothed") {
-        let window_size = 3;
-        price_curve = []
-        for (let t = 0; t < data_len; t++) {
-            let start = Math.max(0, t - window_size);
-            let end = Math.min(data_len - 1, t + window_size);
-            let sum = 0;
-            for (let i = start; i <= end; i++) {
-                sum += data.network_data.price[i];
-            }
-            price_curve[t] = sum / (end - start + 1);
-        }
-    }
-    push();
-    translate(0, -s2 * height * (1 - f1));
-    strokeWeight(3);
-    stroke(cols_and_names["price"][0]);
-    for (let t = 1; t < data_len; t++) {
-        let h1 = (price_curve[t - 1] / max["price"]) * s2 * height * f1;
-        let h2 = (price_curve[t] / max["price"]) * s2 * height * f1;
-        line(0, -h1, graph_w / data_len, -h2);
-        translate(graph_w / (data_len - 1), 0);
-    }
     pop();
 }
 

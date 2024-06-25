@@ -72,8 +72,8 @@ socket.on("new_values", function (changes) {
             }
         }
         sessionStorage.setItem("chart_data", JSON.stringify(chart_data));
-        if (typeof update_graph === "function") {
-            update_graph();
+        if (typeof fetch_data === "function") {
+            fetch_data();
         }
     }
 });
