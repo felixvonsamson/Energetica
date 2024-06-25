@@ -1,5 +1,8 @@
 // data of the temporal graph
 let temporal_data = {"network_data": {}, "exports": {}, "imports": {}};
+let lower_bounds, upper_bounds;
+let price_curve;
+let data_len;
 
 // data for the market graph
 let demand, supply;
@@ -154,10 +157,104 @@ function setup() {
                 sketch.push();
                 sketch.stroke(255);
                 sketch.strokeWeight(2);
-                let X = min(graph_w, max(0, mouseX - margin));
-                //hover_on_temporal_graph(X, margin);
+                let X = min(sketch.graph_w, max(0, sketch.mouseX - margin));
+                t_view = floor(map(X, 0, sketch.graph_w, 0, data_len - 1));
+                sketch.translate(margin, sketch.graph_h + 0.3 * margin);
+                sketch.line(X, 0, X, -sketch.graph_h);
+                sketch.noStroke();
+                if (price_mode != "off") {
+                    sketch.push();
+                    sketch.translate(0, -sketch.graph_h * frac);
+                    let h = (-price_curve[t_view] / upper_bounds.price) * sketch.graph_h * frac;
+                    sketch.ellipse(0, h, 8, 8);
+                    sketch.pop();
+                }
+                // push();
+                // translate(X, s2 * height);
+                // for (const player_id in temporal_data[view]) {
+                //     if (temporal_data[view][player_id][t_view] > 0) {
+                //         let h = (-temporal_data[view][player_id][t_view] / max.quantity) * s2 * height;
+                //         ellipse(0, h, 8, 8);
+                //         translate(0, h);
+                //     }
+                // }
+                // pop();
+
+                // let count = 2 + (price_mode != "off");
+                // for(const player_id in temporal_data[view]){
+                //     if(temporal_data[view][player_id][t_view] > 0){
+                //         count += 1;
+                //     }
+                // }
+                // let tx = X - 180;
+                // let ty = mouseY - s1 * height;
+                // if (ty > s2 * height - count * 16) {
+                //     ty = s2 * height - count * 16;
+                // }
+                // if (X < 180 + 2 * margin) {
+                //     tx = X + 20;
+                // }
+                // translate(tx, ty);
+                // alternate_fill();
+                // fill_alt = 0;
+                // rect(0, 0, 160, 17);
+                // fill(0);
+                // textFont(balooBold);
+                // text(display_duration((data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+                // textFont(font);
+                // translate(0, 16);
+
+                // if(price_mode != "off"){
+                //     alternate_fill();
+                //     rect(0, 0, 160, 17);
+                //     push();
+                //     fill(cols_and_names.price[0]);
+                //     rect(0, 0, 16, 17);
+                //     pop();
+                //     fill(0);
+                //     textAlign(LEFT, CENTER);
+                //     text(cols_and_names.price[1], 20, 5);
+                //     textAlign(RIGHT, CENTER);
+                //     text(display_money(temporal_data["network_data"].price[t_view]), 137, 5);
+                //     image(coin, 140, 2, 12, 12);
+                //     translate(0, 16);
+                // }
+
+                // const keys = Object.keys(temporal_data[view]).reverse();
+                // for(const player_id of keys){
+                //     if(temporal_data[view][player_id][t_view] > 0){
+                //         alternate_fill();
+                //         rect(0, 0, 160, 17);
+                //         push();
+                //         fill(random_colors[player_id % random_colors.length]);
+                //         rect(0, 0, 16, 17);
+                //         pop();
+                //         fill(0);
+                //         textAlign(LEFT, CENTER);
+                //         let userObject = players[int(player_id)];
+                //         let username = userObject ? userObject.username : "Loading...";
+                //         text(username, 20, 5);
+                //         textAlign(CENTER, CENTER);
+                //         text(display_W(temporal_data[view][player_id][t_view]), 132, 5);
+                //         translate(0, 16);
+                //     }
+                // }
+                // if ((data_len - t_view - 1) * res_to_factor[res] < 1440) {
+                //     fill(0);
+                //     text("(click to see market)", 80, 5);
+                // }
+                // pop();
+                // pop();
                 sketch.pop();
             }
+        }
+
+        sketch.mouseMoved = function() {
+            sketch.redraw();
+        }
+
+        sketch.mouseDragged = function() {
+            sketch.redraw();
         }
 
     }, "temporal_graph");
@@ -166,6 +263,7 @@ function setup() {
     temporal_graph_p5.price_mode = "normal";
 
     temporal_graph_p5.render_graph = function(){
+        temporal_graph_p5.resetMatrix();
         console.log("Rendering graph");
         temporal_graph_p5.textAlign(CENTER, CENTER);
         temporal_graph_p5.textFont(font);
@@ -173,14 +271,14 @@ function setup() {
         temporal_graph_p5.graph_w = temporal_graph_p5.width - 2 * margin;
         temporal_graph_p5.background(229, 217, 182);
 
-        let data_len = temporal_data["network_data"]["price"].length;
-        let lower_bounds = {
-            price: Math.min(0, ...temporal_data["network_data"]["price"]),
+        data_len = temporal_data["network_data"]["price"][res].length;
+        lower_bounds = {
+            price: Math.min(0, ...temporal_data["network_data"]["price"][res]),
             quantity: 0,
         };
-        let upper_bounds = {
-            price: Math.max(...temporal_data["network_data"]["price"], -lower_bounds["price"]),
-            quantity: Math.max(...temporal_data["network_data"]["quantity"]),
+        upper_bounds = {
+            price: Math.max(...temporal_data["network_data"]["price"][res], -lower_bounds["price"]),
+            quantity: Math.max(...temporal_data["network_data"]["quantity"][res]),
         };
         let frac = upper_bounds["price"] / (upper_bounds["price"] - lower_bounds["price"]); // fraction of negative range in the graph
         
@@ -192,9 +290,9 @@ function setup() {
         for (let t = 0; t < data_len; t++) {
             temporal_graph_p5.push();
             for (const player_id in temporal_data[temporal_graph_p5.view]) {
-                if (temporal_data[temporal_graph_p5.view][player_id][t] > 0) {
+                if (temporal_data[temporal_graph_p5.view][player_id][res][t] > 0) {
                     temporal_graph_p5.fill(random_colors[player_id % random_colors.length]);
-                    let h = (temporal_data[temporal_graph_p5.view][player_id][t] / upper_bounds["quantity"]) * temporal_graph_p5.graph_h;
+                    let h = (temporal_data[temporal_graph_p5.view][player_id][res][t] / upper_bounds["quantity"]) * temporal_graph_p5.graph_h;
                     temporal_graph_p5.rect(0, 0, temporal_graph_p5.graph_w / data_len + 1, -h - 1);
                     temporal_graph_p5.translate(0, -h);
                 }
@@ -205,7 +303,7 @@ function setup() {
         temporal_graph_p5.pop();
 
         if(temporal_graph_p5.price_mode != "off"){
-            let price_curve = [...temporal_data.network_data.price];
+            price_curve = [...temporal_data.network_data.price[res]];
             if (temporal_graph_p5.price_mode == "smoothed") {
                 let window_size = 5;
                 // Generate Normalized Gaussian kernel
@@ -221,7 +319,7 @@ function setup() {
                     let sum = 0;
                     let weight_sum = 0;
                     for (let i = start; i <= end; i++) {
-                        sum += temporal_data.network_data.price[i] * gaussian_kernel[i - t + window_size];
+                        sum += temporal_data.network_data.price[res][i] * gaussian_kernel[i - t + window_size];
                         weight_sum += gaussian_kernel[i - t + window_size];
                     }
                     price_curve[t] = sum / weight_sum;
@@ -642,11 +740,7 @@ function display_capacity_information(title, data, i){
 
 function change_res(i){
     res = resolution_list[i];
-    console.log("test");
     temporal_graph_p5.render_graph();
-    console.log("test2");
-    temporal_graph_p5.redraw();
-    change_price_mode("smoothed");
 }
 
 function change_export_import(view){
@@ -775,7 +869,11 @@ function fetch_data() {
                 
                 Object.keys(raw_chart_data).forEach((key) => {
                     Object.keys(raw_chart_data[key]).forEach((subkey) => {
-                        temporal_data[key][subkey] = reduce(raw_chart_data[key][subkey], res);
+                        temporal_data[key][subkey] = {};
+                        temporal_data[key][subkey][resolution_list[0]] = raw_chart_data[key][subkey][0].slice(-60);
+                        for (r=0; r<resolution_list.length-1; r++){
+                            temporal_data[key][subkey][resolution_list[r+1]] = raw_chart_data[key][subkey][r];
+                        }
                     });
                 });
                 
@@ -1452,26 +1550,6 @@ function y_units(maxNumber) {
     }
     return values;
 }
-
-function reduce(arr, res) {
-    if (res == resolution_list[0]) {
-        return arr[0].slice(-60);
-    }
-    if(res == resolution_list[1]){
-        return arr[0];
-    }
-    if(res == resolution_list[2]){
-        return arr[1];
-    }
-    if(res == resolution_list[3]){
-        return arr[2];
-    }
-    if(res == resolution_list[4]){
-        return arr[3];
-    }
-    return arr[4];
-}
-
 function y_units_market(maxNumber) {
     let interval = Math.floor(maxNumber / 5);
     const orderOfMagnitude = Math.floor(Math.log10(interval));
