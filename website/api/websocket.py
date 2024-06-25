@@ -355,7 +355,7 @@ def rest_get_facilities_data(engine):
 
 
 def rest_get_scoreboard():
-    response = {"type": "getScoreboard", "data": utils.get_scoreboard()}
+    response = {"type": "getScoreboard", "data": Player.package_scoreboard()}
     return json.dumps(response)
 
 

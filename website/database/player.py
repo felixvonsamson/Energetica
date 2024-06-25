@@ -298,6 +298,25 @@ class Player(db.Model, UserMixin):
     def package_all():
         return {player.id: player.package() for player in Player.query.all()}
 
+    @staticmethod
+    def package_scoreboard():
+        """
+        Gets the scoreboard data for settled players
+        """
+        players = Player.query.filter(Player.tile != None)  # noqa: E711
+        return {
+            player.id: {
+                "username": player.username,
+                "network_name": player.network.name if player.network else "-",
+                "average_hourly_revenues": player.average_revenues,
+                "max_power_consumption": player.max_power_consumption,
+                "total_technology_levels": player.total_technologies,
+                "xp": player.xp,
+                "co2_emissions": player.emissions,
+            }
+            for player in players
+        }
+
     def package_constructions(self):
         return {
             construction.id: {

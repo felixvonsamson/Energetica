@@ -1194,27 +1194,6 @@ def change_facility_priority(engine, player, priority):
 # To move
 
 
-def get_scoreboard():
-    """
-    Gets the scoreboard data for settled players
-
-    TODO: move this method to the Players file, similar to get_players
-    """
-    players = Player.query.filter(Player.tile != None)  # noqa: E711
-    return {
-        player.id: {
-            "username": player.username,
-            "network_name": player.network.name if player.network else "-",
-            "average_hourly_revenues": player.average_revenues,
-            "max_power_consumption": player.max_power_consumption,
-            "total_technology_levels": player.total_technologies,
-            "xp": player.xp,
-            "co2_emissions": player.emissions,
-        }
-        for player in players
-    }
-
-
 def get_construction_data(player):
     """
     Gets the data for the ongoing constructions for a particular player
