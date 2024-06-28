@@ -131,6 +131,12 @@ class Player(db.Model, UserMixin):
     captured_CO2 = db.Column(db.Float, default=0)
 
     advancements = db.Column(db.Text, default="")
+    # advancements include
+    # * "network"
+    # * "technology"
+    # * "warehouse"
+    # * "GHG_effect"
+    # * "storage_overview"
     achievements = db.Column(db.Text, default="")
 
     under_construction = db.relationship("Under_construction")
