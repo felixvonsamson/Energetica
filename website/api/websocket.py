@@ -9,9 +9,8 @@ from werkzeug.security import check_password_hash
 from simple_websocket import ConnectionClosed
 
 from website import utils
-from ..database.player import Network, Player
-
-from ..database.map import Hex
+from website.database.map import Hex
+from website.database.player import Network, Player
 
 websocket_blueprint = Blueprint("rest_api", __name__)
 
@@ -75,8 +74,10 @@ def add_sock_handlers(sock, engine):
                 case "request":
                     uuid = message["uuid"]
                     rest_parse_request(engine, ws, uuid, message_data)
-                case type:
-                    engine.log(f"Websocket connection from player {player} sent an unkown message of type {type}")
+                case message_type:
+                    engine.log(
+                        f"Websocket connection from player {player} sent an unkown message of type {message_type}"
+                    )
 
 
 def unregister_websocket_connection(player_id, ws):
