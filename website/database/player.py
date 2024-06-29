@@ -177,6 +177,11 @@ class Player(db.Model, UserMixin):
         else:
             setattr(self, attr, getattr(self, attr) + f",{id}")
         db.session.commit()
+        if attr == "advancements":
+            from website.api.websocket import rest_notify_advancements
+
+            engine = current_app.config["engine"]
+            rest_notify_advancements(engine, self)
 
     def remove_from_list(self, attr, id):
         id_list = getattr(self, attr).split(",")

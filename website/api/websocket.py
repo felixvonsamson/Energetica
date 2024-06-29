@@ -54,6 +54,7 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_constructions(player))
         ws.send(rest_get_construction_queue(player))
         ws.send(rest_get_weather(engine))
+        ws.send(rest_get_advancements(player))
         if player.tile is not None:
             rest_init_ws_post_location(engine, ws)
         if player.id not in engine.websocket_dict:
@@ -368,6 +369,18 @@ def rest_get_weather(engine):
     return json.dumps(response)
 
 
+def rest_get_advancements(player: Player):
+    response = {
+        "type": "getAdvancements",
+        "data": {
+            advancement: advancement in player.advancements
+            for advancement in ["network", "technology", "warehouse", "GHG_effect", "storage_overview"]
+        },
+    }
+    print(json.dumps(response))
+    return json.dumps(response)
+
+
 def rest_requestResponse(uuid, endpoint, data):
     response = {
         "type": "requestResponse",
@@ -531,3 +544,7 @@ def rest_notify_construction_queue(engine, player):
 def rest_notify_weather(engine):
     message = rest_get_weather(engine)
     rest_notify_all_players(engine, message)
+
+
+def rest_notify_advancements(engine, player: Player):
+    rest_notify_player(engine, player, rest_get_advancements(player))

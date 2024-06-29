@@ -193,7 +193,7 @@ def save_past_data_threaded(app, engine):
 def add_asset(player_id, construction_id):
     """this function is executed when a construction of research project has finished"""
     engine = current_app.config["engine"]
-    player = Player.query.get(player_id)
+    player: Player = Player.query.get(player_id)
     construction = Under_construction.query.get(construction_id)
 
     if construction.family in ["Technologies", "Functional facilities"]:
