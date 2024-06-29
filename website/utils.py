@@ -324,11 +324,11 @@ def add_asset(player_id, construction_id):
         )
     player.remove_from_list(priority_list_name, construction_id)
     project_priorities = player.read_list(priority_list_name)
-    for i, id in enumerate(project_priorities[:]):
-        next_construction = Under_construction.query.get(id)
+    for priority_index, project_id in enumerate(project_priorities[:]):
+        next_construction = Under_construction.query.get(project_id)
         if next_construction is None:
             print(
-                f"DATABASE MISMATCH : CONSTRUCTION {id} OF PLAYER {player.username} DOES NOT EXIST IN UNDER_CONSTRUCTION DATABASE !!!"
+                f"DATABASE MISMATCH : CONSTRUCTION {project_id} OF PLAYER {player.username} DOES NOT EXIST IN UNDER_CONSTRUCTION DATABASE !!!"
             )
             break
         if next_construction.suspension_time is not None:
@@ -370,9 +370,9 @@ def add_asset(player_id, construction_id):
                     break
             next_construction.start_time += engine.data["total_t"] - next_construction.suspension_time
             next_construction.suspension_time = None
-            project_priorities[i], project_priorities[project_index] = (
+            project_priorities[priority_index], project_priorities[project_index] = (
                 project_priorities[project_index],
-                project_priorities[i],
+                project_priorities[priority_index],
             )
             db.session.commit()
             break

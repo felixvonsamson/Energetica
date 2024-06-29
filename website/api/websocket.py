@@ -11,6 +11,7 @@ from simple_websocket import ConnectionClosed
 from website import utils
 from website.database.map import Hex
 from website.database.player import Network, Player
+from website.technology_effects import package_constructions_page_data
 
 websocket_blueprint = Blueprint("rest_api", __name__)
 
@@ -56,7 +57,7 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_weather(engine))
         ws.send(rest_get_advancements(player))
         if player.tile is not None:
-            rest_init_ws_post_location(engine, ws)
+            rest_init_ws_post_location(engine, player, ws)
         if player.id not in engine.websocket_dict:
             engine.websocket_dict[player.id] = []
         ws.send(rest_setup_complete())
@@ -87,15 +88,13 @@ def unregister_websocket_connection(player_id, ws):
     g.engine.websocket_dict[player_id].remove(ws)
 
 
-def rest_init_ws_post_location(engine, ws):
+def rest_init_ws_post_location(engine, player, ws):
     """
     Called once the player has selected a location, or immediately after logging
     in if location was already selected.
-
-    FIXME: rest_get_facilities_data needs fixing
     """
-    # ws.send(rest_get_charts())
-    # ws.send(rest_get_facilities_data(engine))
+    # ws.send(rest_get_charts()) # TODO
+    ws.send(rest_get_facilities_data(engine, player))
 
 
 # The following methods generate messages to be sent over websocket connections.
@@ -272,7 +271,14 @@ def rest_get_charts():
     return json.dumps(response)
 
 
-def rest_get_facilities_data(engine):
+def rest_get_facilities_data(engine, player: Player):
+    """
+    Gets player's facilities data and returns it as a JSON string
+    """
+    return json.dumps({"type": "getFacilitiesData", "data": package_constructions_page_data(player)})
+
+
+def rest_get_facilities_data_OLD(engine):
     """
     Gets player's facilities data and returns it as a JSON string
 
@@ -377,7 +383,6 @@ def rest_get_advancements(player: Player):
             for advancement in ["network", "technology", "warehouse", "GHG_effect", "storage_overview"]
         },
     }
-    print(json.dumps(response))
     return json.dumps(response)
 
 
@@ -425,7 +430,7 @@ def rest_parse_request_confirmLocation(engine, ws, uuid, data):
     message = rest_requestResponse(uuid, "confirmLocation", response)
     ws.send(message)
     if response["response"] == "success":
-        rest_init_ws_post_location(engine, ws)
+        rest_init_ws_post_location(engine, g.player, ws)
 
 
 def rest_parse_request_joinNetwork(engine, ws, uuid, data):

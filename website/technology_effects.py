@@ -1,7 +1,12 @@
-# This files contains all the functions to calculate the different parameters of facilities according to the technology levels of the player.
+"""
+This files contains all the functions to calculate the different parameters of
+facilities according to the technology levels of the player.
+"""
 
 import math
 from flask import current_app
+
+from website import gameEngine
 from .database.player_assets import Active_facilities, Under_construction
 
 
@@ -287,3 +292,64 @@ def get_current_technology_values(player):
                 dict[facility]["locked"] = True
 
     return dict
+
+
+def package_constructions_page_data(player):
+    """
+    Gets cost, emissions, max power, etc data for constructions.
+    Takes into account base config prices and multipliers for the specified player.
+    Returns a dictionary with the relevant data for constructions.
+    Example:
+        {
+            'power_facilities': {
+                'steam_engine': {
+                    'price': 123.4
+                    ...
+                }
+                ...
+            }
+        }
+    ```
+
+    """
+    engine: gameEngine = current_app.config["engine"]
+    technology_values = get_current_technology_values(player)
+    # power_facilities_property_keys = [
+    #     "price",
+    #     "construction time",
+    #     "construction power",
+    #     "construction pollution",
+    #     "locked",
+    #     "power generation",
+    #     "ramping speed",
+    #     "O&M cost",
+    #     "consumed resource",
+    #     "pollution",
+    #     "lifespan",
+    # ]
+    return {
+        "power_facilities": [
+            {
+                "name": power_facility,
+                "price": engine.const_config["assets"][power_facility]["base_price"]
+                * technology_values[power_facility]["price_multiplier"]
+                * technology_values[power_facility].get("special_price_multiplier", 1),
+                # TODO: all values below
+                "construction_time": 0,
+                "construction_power": 0,
+                "construction_pollution": 0,
+                "locked": False,
+                "power_generation": 0,
+                "ramping_speed": 0,
+                "O&M_costs": 0,
+                "consumed_resource": {},
+                "pollution": 0,
+                "lifespan": 0,
+            }
+            for power_facility in engine.power_facilities
+        ],
+        # TODO: non-power facilities
+        "storage_facilities": [],
+        "extraction_facilities": [],
+        "functional_facilities": [],
+    }
