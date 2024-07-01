@@ -996,19 +996,19 @@ river_discharge_seasonal = [
 
 # config object that contains the modified data for a specific player considering the technologies he owns :
 class Config(object):
-    def __init__(config):
-        config.for_player = {}
+    def __init__(self):
+        self.for_player = {}
 
     # updating the config values according to the players technology level
-    def update_config_for_user(config, player_id):
+    def update_config_for_user(self, player_id):
         engine = current_app.config["engine"]
-        config.for_player[player_id] = {
+        self.for_player[player_id] = {
             "industry": {},
             "carbon_capture": {},
             "warehouse_capacities": {},
             "transport": {},
         }
-        assets = config.for_player[player_id]
+        assets = self.for_player[player_id]
         player = Player.query.get(player_id)
 
         # calculating industry energy consumption and income
@@ -1061,10 +1061,10 @@ class Config(object):
         player.construction_workers = player.building_technology + 1
         player.lab_workers = (player.laboratory + 2) // 3
 
-    def __getitem__(config, player_id):
-        if player_id not in config.for_player:
-            config.update_config_for_user(player_id)
-        return config.for_player[player_id]
+    def __getitem__(self, player_id):
+        if player_id not in self.for_player:
+            self.update_config_for_user(player_id)
+        return self.for_player[player_id]
 
 
 config = Config()
