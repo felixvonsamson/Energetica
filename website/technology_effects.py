@@ -364,11 +364,18 @@ def package_constructions_page_data(player):
                 / const_config_assets[power_facility]["ramping_time"]
                 if const_config_assets[power_facility]["ramping_time"] != 0
                 else None,
+                "O&M_costs": const_config_assets[power_facility]["base_price"]
+                * price_multiplier(player, power_facility)
+                * const_config_assets[power_facility]["O&M_factor"]
+                / engine.clock_time
+                * 60,
+                "pollution": const_config_assets[power_facility]["base_pollution"]
+                / efficiency_multiplier(player, power_facility)
+                if power_facility in engine.controllable_facilities + engine.storage_facilities
+                else 1,
+                "lifespan": const_config_assets[power_facility]["lifespan"] * (engine.clock_time / 60) ** 0.5,
                 # TODO: all values below
-                "O&M_costs": 0,
                 "consumed_resource": {},
-                "pollution": 0,
-                "lifespan": 0,
             }
             for power_facility in engine.power_facilities
         ],
