@@ -313,7 +313,7 @@ def package_constructions_page_data(player):
 
     """
     engine: gameEngine = current_app.config["engine"]
-    technology_values = get_current_technology_values(player)
+    const_config_assets = engine.const_config["assets"]
     # power_facilities_property_keys = [
     #     "price",
     #     "construction time",
@@ -331,9 +331,13 @@ def package_constructions_page_data(player):
         "power_facilities": [
             {
                 "name": power_facility,
-                "price": engine.const_config["assets"][power_facility]["base_price"]
-                * technology_values[power_facility]["price_multiplier"]
-                * technology_values[power_facility].get("special_price_multiplier", 1),
+                "price": const_config_assets[power_facility]["base_price"]
+                * price_multiplier(player, power_facility)
+                * (
+                    capacity_multiplier(player, power_facility)
+                    if power_facility in ["watermill", "small_water_dam", "large_water_dam"]
+                    else 1.0
+                ),
                 # TODO: all values below
                 "construction_time": 0,
                 "construction_power": 0,
