@@ -77,6 +77,10 @@ canvas {
     color:darkred;
 }
 
+.txt-green {
+    color:darkgreen;
+}
+
 /* Generic */
 .padding-small {
     padding: 4px 8px
@@ -794,6 +798,13 @@ canvas {
 
 .fa-caret-up, .fa-caret-down, .fa-play, .fa-pause, .fa-times{
     color:#000;
+}
+
+.table_legend_left {
+    width:40px; 
+    transform: rotate(-90deg); 
+    transform-origin: center; 
+    white-space: nowrap;
 }
 
 .table {

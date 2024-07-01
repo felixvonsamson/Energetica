@@ -367,6 +367,7 @@ def shipment_demand(engine, player, demand):
         if shipment.suspension_time is None:
             demand["transport"] += transport["power consumption"] * shipment.quantity
 
+
 def storage_demand(engine, player, demand):
     """calculate the maximal demand of storage plants"""
     player_cap = engine.data["player_capacities"][player.id]
@@ -468,7 +469,7 @@ def calculate_generation_with_market(engine, new_values, market, player):
 
     # bid demand on the market at the set prices
     demand_priorities = player.demand_priorities.split(",")
-    
+
     if player.money <= 0:
         notify("Not Enough Money", "You dont have enough money to buy electricity on the market", player)
     for demand_type in demand_priorities:
@@ -478,7 +479,6 @@ def calculate_generation_with_market(engine, new_values, market, player):
             market = bid(market, player.id, bid_q, price, demand_type)
         else:
             reduce_demand(engine, new_values, engine.data["current_data"][player.id], demand_type, player.id, 0)
-
 
     # Sell capacities of remaining facilities on the market
     for facility in player.read_list("rest_of_priorities") + player.read_list("self_consumption_priority"):
@@ -891,7 +891,7 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
     demand = new_values[player.id]["demand"]
     if demand_type == "industry":
         # revenues of industry are reduced
-        new_values[player.id]["revenues"]["industry"] *= (satisfaction / demand["industry"]) ** 2
+        new_values[player.id]["revenues"]["industry"] *= satisfaction / demand["industry"]
         demand["industry"] = satisfaction
         return
     demand[demand_type] = satisfaction
