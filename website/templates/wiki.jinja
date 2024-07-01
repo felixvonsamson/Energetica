@@ -92,7 +92,28 @@
     fuel types:
   </p>
 
-  <h3 id="Renewable_resources">Renewable resources:</h3>
+  <h3 id="Renewable_resources">Renewable resources</h3>
+
+  <h4>Solar potential</h4>
+  <p>
+    The solar potential is expressed in watts per square meter (W/m²), indicating the maximum irradiance achievable at 
+    this latitude. The higher this maximum irradiance, the greater the power production of photovoltaic (PV) and 
+    concentrated solar power (CSP) plants. See <a href="#Solar_Power_Generation">solar power generation</a> for more.
+  </p>
+
+  <h4>Wind potential</h4>
+  <p>
+    Wind potential is a percentage value that represents the suitability of each location for installing wind facilities 
+    (windmills, onshore, and offshore wind turbines). The initial wind facility is always placed in the most optimal 
+    location, which has a wind speed multiplier close to 1. However, as players build more wind facilities, the wind 
+    potential in new locations decreases, resulting in a lower wind speed multiplier for each subsequent facility. 
+    This decrease happens more rapidly in areas with lower wind potential.
+  </p>
+  <p>
+    The following table illustrates the wind speed multipliers applied to facilities based on different wind potentials 
+    (columns) and the number of facilities built (rows):
+  </p>
+
   <ul>
     <li>
       <strong>Solar:</strong> The solar potential is given in W/m², indicating the maximal irradiance achievable at this 
@@ -177,6 +198,26 @@
     Renewable power generation is non-controllable, meaning their power output is determined by specific calculations,
     regardless of the demand. Any surplus generation needs to be either stored or dumped.
   </p>
+
+  <h4 id="Solar_Power_Generation">Solar Power Generation</h4>
+  <p>
+    Solar power generation depends on the number of solar power facilities, the tiles solar potential, and the current
+    irradiance.
+  </p>
+  <p>
+    Real-life irradiance data from Zürich with a 15-minute delay is utilized. The location-specific irradiance on a tile is
+    calculated as follows: \(irr_{loc} = irr_{ütli} \times solarpot \) &ensp; with \(irr_{ütli}\) beeing the 
+    irradiance mesured at Uetliberg and \(solarpot\) the solar potential specific to the players tile defined as \(\frac{ irr_{tile} }{1000W/m²}\) 
+    with \(irr_{tile}\) beeing the maximal irradiance as indicated on the map.
+  </p>
+  <p>Formula for total power generation of solar facilty type i:</p>
+  <p>\(P_i = \frac{ irr_{ütli} }{875W/m²} \times solarpot \times maxP_i \times n_i \)</p>
+  <p>
+    where \(irr_{ütli}\) is the current irradiance (live Zürich) in W/m², \(solarpot\) is the solar potential on the players tile in percent, 
+    \(875 W/m²\)  is the maximal theoretical irradiance in Zürich, \(maxP_i\) is the max power generation of the
+    facility type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
+  </p>
+
   <h4 id="Wind_Power_Generation">Wind Power Generation</h4>
   <strong class="txt-red">NEEDS TO BE UPDATED</strong>
   <p>
@@ -204,24 +245,7 @@
     Zürich) in km/h, \(windpot\) is the wind potential on the players tile in percent, \(maxP_i\) is the max power generation for the
     facility type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
   </p>
-  <h4>Solar Power Generation</h4>
-  <p>
-    Solar power generation depends on the number of solar power facilities, the tiles solar potential, and the current
-    irradiance.
-  </p>
-  <p>
-    Real-life irradiance data from Zürich with a 15-minute delay is utilized. The location-specific irradiance on a tile is
-    calculated as follows: \(irr_{loc} = irr_{ütli} \times solarpot \) &ensp; with \(irr_{ütli}\) beeing the 
-    irradiance mesured at Uetliberg and \(solarpot\) the solar potential specific to the players tile defined as \(\frac{ irr_{tile} }{1000W/m²}\) 
-    with \(irr_{tile}\) beeing the maximal irradiance as indicated on the map.
-  </p>
-  <p>Formula for total power generation of solar facilty type i:</p>
-  <p>\(P_i = \frac{ irr_{ütli} }{875W/m²} \times solarpot \times maxP_i \times n_i \)</p>
-  <p>
-    where \(irr_{ütli}\) is the current irradiance (live Zürich) in W/m², \(solarpot\) is the solar potential on the players tile in percent, 
-    \(875 W/m²\)  is the maximal theoretical irradiance in Zürich, \(maxP_i\) is the max power generation of the
-    facility type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
-  </p>
+  
   <h4>Hydropower Generation</h4>
   <p>
     Hydropower generation fluctuates with the change in river discharge rates, following seasonal patterns within the
