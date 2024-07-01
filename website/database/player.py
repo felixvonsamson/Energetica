@@ -131,6 +131,12 @@ class Player(db.Model, UserMixin):
     captured_CO2 = db.Column(db.Float, default=0)
 
     advancements = db.Column(db.Text, default="")
+    # advancements include
+    # * "network"
+    # * "technology"
+    # * "warehouse"
+    # * "GHG_effect"
+    # * "storage_overview"
     achievements = db.Column(db.Text, default="")
 
     under_construction = db.relationship("Under_construction")
@@ -171,6 +177,11 @@ class Player(db.Model, UserMixin):
         else:
             setattr(self, attr, getattr(self, attr) + f",{id}")
         db.session.commit()
+        if attr == "advancements":
+            from website.api.websocket import rest_notify_advancements
+
+            engine = current_app.config["engine"]
+            rest_notify_advancements(engine, self)
 
     def remove_from_list(self, attr, id):
         id_list = getattr(self, attr).split(",")
@@ -297,6 +308,25 @@ class Player(db.Model, UserMixin):
     @staticmethod
     def package_all():
         return {player.id: player.package() for player in Player.query.all()}
+
+    @staticmethod
+    def package_scoreboard():
+        """
+        Gets the scoreboard data for settled players
+        """
+        players = Player.query.filter(Player.tile != None)  # noqa: E711
+        return {
+            player.id: {
+                "username": player.username,
+                "network_name": player.network.name if player.network else "-",
+                "average_hourly_revenues": player.average_revenues,
+                "max_power_consumption": player.max_power_consumption,
+                "total_technology_levels": player.total_technologies,
+                "xp": player.xp,
+                "co2_emissions": player.emissions,
+            }
+            for player in players
+        }
 
     def package_constructions(self):
         return {

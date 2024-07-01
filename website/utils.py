@@ -26,13 +26,15 @@ from website import technology_effects
 from . import db
 from flask import current_app, flash
 
+# Helper functions and data initialisation utilities
+
 
 def flash_error(msg):
     return flash(msg, category="error")
 
 
 def notify(title, message, player):
-    """creates a new notification"""
+    """Creates a new notification"""
     new_notification = Notification(title=title, content=message, time=datetime.now(), player_id=player.id)
     db.session.add(new_notification)
     player.notifications.append(new_notification)
@@ -48,10 +50,150 @@ def notify(title, message, player):
     db.session.commit()
 
 
+def init_table(user_id):
+    """initialize data table for new user and stores it as a .pck in the 'player_data' repo"""
+    past_data = data_init()
+    with open(f"instance/player_data/player_{user_id}.pck", "wb") as file:
+        pickle.dump(past_data, file)
+
+
+def add_player_to_data(engine, user_id):
+    engine.data["current_data"][user_id] = CircularBufferPlayer()
+    engine.data["player_capacities"][user_id] = CapacityData()
+    engine.data["player_capacities"][user_id].update(user_id, None)
+
+
+def data_init():
+    def init_array():
+        return [[0.0] * 360] * 5
+
+    return {
+        "revenues": {
+            "industry": init_array(),
+            "O&M_costs": init_array(),
+            "exports": init_array(),
+            "imports": init_array(),
+            "dumping": init_array(),
+        },
+        "op_costs": {
+            "steam_engine": init_array(),
+        },
+        "generation": {
+            "steam_engine": init_array(),
+            "imports": init_array(),
+        },
+        "demand": {
+            "industry": init_array(),
+            "construction": init_array(),
+            "research": init_array(),
+            "transport": init_array(),
+            "exports": init_array(),
+            "dumping": init_array(),
+        },
+        "storage": {},
+        "resources": {},
+        "emissions": {
+            "steam_engine": init_array(),
+            "construction": init_array(),
+        },
+    }
+
+
+def save_past_data_threaded(app, engine):
+    """Saves the past production data to files every hour AND remove network data older than 24h"""
+
+    def save_data():
+        with app.app_context():
+            players = Player.query.all()
+            for player in players:
+                if player.tile is None:
+                    continue
+                past_data = {}
+                with open(
+                    f"instance/player_data/player_{player.id}.pck",
+                    "rb",
+                ) as file:
+                    past_data = pickle.load(file)
+                new_data = engine.data["current_data"][player.id].get_data()
+                for category in new_data:
+                    for element in new_data[category]:
+                        new_el_data = new_data[category][element]
+                        if element not in past_data[category]:
+                            # if facility didn't exist in past data, initialize it
+                            past_data[category][element] = [[0.0] * 360] * 5
+                        past_el_data = past_data[category][element]
+                        reduce_resolution(past_el_data, np.array(new_el_data))
+
+                with open(
+                    f"instance/player_data/player_{player.id}.pck",
+                    "wb",
+                ) as file:
+                    pickle.dump(past_data, file)
+
+            # remove old network files AND save past prices
+            networks = Network.query.all()
+            for network in networks:
+                network_dir = f"instance/network_data/{network.id}/charts/"
+                files = os.listdir(network_dir)
+                for filename in files:
+                    t_value = int(filename.split("market_t")[1].split(".pck")[0])
+                    if t_value < engine.data["total_t"] - 1440:
+                        os.remove(os.path.join(network_dir, filename))
+
+                past_data = {}
+                with open(
+                    f"instance/network_data/{network.id}/time_series.pck",
+                    "rb",
+                ) as file:
+                    past_data = pickle.load(file)
+
+                new_data = engine.data["network_data"][network.id].get_data()
+                for category in new_data:
+                    for player_id, buffer in new_data[category].items():
+                        if player_id not in past_data[category]:
+                            past_data[category][player_id] = [[0.0] * 360] * 5
+                        past_el_data = past_data[category][player_id]
+                        reduce_resolution(past_el_data, np.array(buffer))
+
+                with open(
+                    f"instance/network_data/{network.id}/time_series.pck",
+                    "wb",
+                ) as file:
+                    pickle.dump(past_data, file)
+
+            # remove old notifications
+            Notification.query.filter(
+                Notification.title != "Tutorial",
+                Notification.time < datetime.now() - timedelta(weeks=2),
+            ).delete()
+            db.session.commit()
+
+            engine.log("last 216 datapoints have been saved to files")
+
+    def reduce_resolution(array, new_values):
+        """reduces resolution of current array x6, x36, x216 and x1296"""
+        array[0] = array[0][len(new_values) :]
+        array[0].extend(new_values)
+        new_values_reduced = new_values
+        for r in range(1, 4):
+            new_values_reduced = np.mean(new_values_reduced.reshape(-1, 6), axis=1)
+            array[r] = array[r][len(new_values_reduced) :]
+            array[r].extend(new_values_reduced)
+        if engine.data["total_t"] % 1296 == 0:
+            array[4] = array[4][1:]
+            array[4].append(np.mean(array[3][-6:]))
+
+    thread = threading.Thread(target=save_data)
+    thread.start()
+
+
+# Utilities relating to managing facilities and assets
+
+
 def add_asset(player_id, construction_id):
     """this function is executed when a construction of research project has finished"""
     engine = current_app.config["engine"]
-    player = Player.query.get(player_id)
+    player: Player = Player.query.get(player_id)
     construction = Under_construction.query.get(construction_id)
 
     if construction.family in ["Technologies", "Functional facilities"]:
@@ -182,11 +324,11 @@ def add_asset(player_id, construction_id):
         )
     player.remove_from_list(priority_list_name, construction_id)
     project_priorities = player.read_list(priority_list_name)
-    for i, id in enumerate(project_priorities[:]):
-        next_construction = Under_construction.query.get(id)
+    for priority_index, project_id in enumerate(project_priorities[:]):
+        next_construction = Under_construction.query.get(project_id)
         if next_construction is None:
             print(
-                f"DATABASE MISMATCH : CONSTRUCTION {id} OF PLAYER {player.username} DOES NOT EXIST IN UNDER_CONSTRUCTION DATABASE !!!"
+                f"DATABASE MISMATCH : CONSTRUCTION {project_id} OF PLAYER {player.username} DOES NOT EXIST IN UNDER_CONSTRUCTION DATABASE !!!"
             )
             break
         if next_construction.suspension_time is not None:
@@ -228,9 +370,9 @@ def add_asset(player_id, construction_id):
                     break
             next_construction.start_time += engine.data["total_t"] - next_construction.suspension_time
             next_construction.suspension_time = None
-            project_priorities[i], project_priorities[project_index] = (
+            project_priorities[priority_index], project_priorities[project_index] = (
                 project_priorities[project_index],
-                project_priorities[i],
+                project_priorities[priority_index],
             )
             db.session.commit()
             break
@@ -366,230 +508,258 @@ def remove_asset(player_id, facility, decommissioning=True):
     db.session.commit()
 
 
-def store_import(player, resource, quantity):
-    """This function is executed when a resource shippment arrives"""
-    engine = current_app.config["engine"]
-    max_cap = engine.config[player.id]["warehouse_capacities"][resource]
-    if getattr(player, resource) + quantity > max_cap:
-        setattr(player, resource, max_cap)
-        # excess resources are stored in the ground
-        setattr(
-            player.tile,
-            resource,
-            getattr(player.tile, resource) + getattr(player, resource) + quantity - max_cap,
+def start_project(engine, player, facility, family, force=False):
+    """this function is executed when a player clicks on 'start construction'"""
+    facility_info = technology_effects.get_current_technology_values(player)
+    player_cap = engine.data["player_capacities"][player.id]
+    const_config = engine.const_config["assets"][facility]
+
+    if facility_info[facility]["locked"]:
+        return {"response": "locked"}
+
+    if facility in ["small_water_dam", "large_water_dam", "watermill"]:
+        price_factor = technology_effects.price_multiplier(player, facility) * technology_effects.capacity_multiplier(
+            player, facility
         )
-        notify(
-            "Shipments",
-            f"A shipment of {format_mass(quantity)} {resource} arrived, but only {format_mass(max_cap - getattr(player, resource))} could be stored in your warehouse.",
-            player,
+        if player.money < const_config["base_price"] * price_factor:
+            return {"response": "notEnoughMoneyError"}
+
+    ud_count = 0
+    if family in ["Functional facilities", "Technologies"]:
+        ud_count = Under_construction.query.filter_by(name=facility, player_id=player.id).count()
+        if family == "Technologies":
+            for req in facility_info[facility]["requirements"]:
+                if getattr(player, facility) + ud_count + req[1] > getattr(player, req[0]):
+                    return {"response": "requirementsNotFullfilled"}
+        real_price = (
+            const_config["base_price"]
+            * technology_effects.price_multiplier(player, facility)
+            * const_config["price multiplier"] ** ud_count
         )
-        engine.log(
-            f"{player.username} received a shipment of {format_mass(quantity)} {resource}, but could only store {format_mass(max_cap - getattr(player, resource))} in their warehouse."
+        duration = technology_effects.construction_time(player, facility) * const_config["price multiplier"] ** (
+            0.6 * ud_count
         )
+    else:  # power facitlies, storage facilities, extractions facilities
+        real_price = const_config["base_price"] * technology_effects.price_multiplier(player, facility)
+        if facility in ["small_water_dam", "large_water_dam", "watermill"]:
+            real_price *= technology_effects.capacity_multiplier(player, facility)
+        duration = technology_effects.construction_time(player, facility)
+
+    if player.money < real_price:
+        return {"response": "notEnoughMoneyError"}
+    construction_power = technology_effects.construction_power(player, facility)
+    if not force and "network" not in player.advancements:
+        capacity = 0
+        for gen in engine.power_facilities:
+            if player_cap[gen] is not None:
+                capacity += player_cap[gen]["power"]
+        if construction_power > capacity:
+            return {
+                "response": "areYouSure",
+                "capacity": capacity,
+                "construction_power": construction_power,
+            }
+
+    priority_list_name = "construction_priorities"
+    suspension_time = engine.data["total_t"]
+    if family == "Technologies":
+        priority_list_name = "research_priorities"
+        if player.available_lab_workers() > 0 and ud_count == 0:
+            suspension_time = None
     else:
-        setattr(player, resource, getattr(player, resource) + quantity)
-        notify(
-            "Shipments",
-            f"A shipment of {format_mass(quantity)} {resource} arrived.",
-            player,
-        )
-        engine.log(f"{player.username} received a shipment of {format_mass(quantity)} {resource}.")
+        if player.available_construction_workers() > 0 and ud_count == 0:
+            suspension_time = None
 
-
-# format for price display
-def display_money(price):
-    return f"{price:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(",", "'")
-
-
-def format_mass(mass):
-    """Formats mass in kg into a string with corresponding unit."""
-    if mass < 50000:
-        formatted_mass = f"{int(mass):,d}".replace(",", "'") + " kg"
-    else:
-        formatted_mass = f"{mass / 1000:,.0f}".replace(",", "'") + " t"
-    return formatted_mass
-
-
-def hide_chat_disclaimer(player):
-    player.show_disclamer = False
-    db.session.commit()
-
-
-def create_chat(player, buddy_username):
-    """creates a chat with 2 players"""
-    if buddy_username == player.username:
-        return {"response": "cannotChatWithYourself"}
-    buddy = Player.query.filter_by(username=buddy_username).first()
-    if buddy is None:
-        return {"response": "usernameIsWrong"}
-    if check_existing_chats([player, buddy]):
-        return {"response": "chatAlreadyExist"}
-    new_chat = Chat(
-        name=None,
-        participants=[player, buddy],
-    )
-    db.session.add(new_chat)
-    db.session.commit()
-    engine = current_app.config["engine"]
-    engine.log(f"{player.username} created a chat with {buddy.username}")
-    return {"response": "success"}
-
-
-def create_group_chat(player, title, group):
-    """creates a group chat"""
-    if len(title) == 0 or len(title) > 25:
-        return {"response": "wrongTitleLength"}
-    groupMembers = [player]
-    for username in group:
-        new_member = Player.query.filter_by(username=username).first()
-        if new_member:
-            groupMembers.append(new_member)
-    if len(groupMembers) < 3:
-        return {"response": "groupTooSmall"}
-    if check_existing_chats(groupMembers):
-        return {"response": "chatAlreadyExist"}
-    new_chat = Chat(
-        name=title,
-        participants=groupMembers,
-    )
-    db.session.add(new_chat)
-    db.session.commit()
-    engine = current_app.config["engine"]
-    engine.log(f"{player.username} created a group chat called {title} with {group}")
-    return {"response": "success"}
-
-
-# checks if a chat with exactly these participants already exists
-def check_existing_chats(participants):
-    participant_ids = [participant.id for participant in participants]
-    conditions = [Chat.participants.any(id=participant_id) for participant_id in participant_ids]
-    existing_chats = Chat.query.filter(*conditions)
-    for chat in existing_chats:
-        if len(chat.participants) == len(participants):
-            return True
-    return False
-
-
-def add_message(player, message, chat_id):
-    engine = current_app.config["engine"]
-    if not chat_id:
-        return {"response": "noChatID"}
-    chat = Chat.query.filter_by(id=chat_id).first()
-    new_message = Message(
-        text=message,
-        time=datetime.now(),
+    player.money -= real_price
+    duration = math.ceil(duration / engine.clock_time)
+    new_construction = Under_construction(
+        name=facility,
+        family=family,
+        start_time=engine.data["total_t"],
+        duration=duration,
+        suspension_time=suspension_time,
+        construction_power=construction_power,
+        construction_pollution=technology_effects.construction_pollution(player, facility),
+        price_multiplier=technology_effects.price_multiplier(player, facility),
+        power_multiplier=technology_effects.power_multiplier(player, facility),
+        capacity_multiplier=technology_effects.capacity_multiplier(player, facility),
+        efficiency_multiplier=technology_effects.efficiency_multiplier(player, facility),
         player_id=player.id,
-        chat_id=chat.id,
     )
-    db.session.add(new_message)
+    db.session.add(new_construction)
     db.session.commit()
-    for participant in chat.participants:
-        if participant == player:
-            continue
-        player_read_message = PlayerUnreadMessages(player_id=participant.id, message_id=new_message.id)
-        db.session.add(player_read_message)
-    db.session.commit()
-    engine.display_new_message(new_message, chat.participants)
-    return {"response": "success"}
-
-
-def save_past_data_threaded(app, engine):
-    """Saves the past production data to files every hour AND remove network data older than 24h"""
-
-    def save_data():
-        with app.app_context():
-            players = Player.query.all()
-            for player in players:
-                if player.tile is None:
-                    continue
-                past_data = {}
-                with open(
-                    f"instance/player_data/player_{player.id}.pck",
-                    "rb",
-                ) as file:
-                    past_data = pickle.load(file)
-                new_data = engine.data["current_data"][player.id].get_data()
-                for category in new_data:
-                    for element in new_data[category]:
-                        new_el_data = new_data[category][element]
-                        if element not in past_data[category]:
-                            # if facility didn't exist in past data, initialize it
-                            past_data[category][element] = [[0.0] * 360] * 5
-                        past_el_data = past_data[category][element]
-                        reduce_resolution(past_el_data, np.array(new_el_data))
-
-                with open(
-                    f"instance/player_data/player_{player.id}.pck",
-                    "wb",
-                ) as file:
-                    pickle.dump(past_data, file)
-
-            # remove old network files AND save past prices
-            networks = Network.query.all()
-            for network in networks:
-                network_dir = f"instance/network_data/{network.id}/charts/"
-                files = os.listdir(network_dir)
-                for filename in files:
-                    t_value = int(filename.split("market_t")[1].split(".pck")[0])
-                    if t_value < engine.data["total_t"] - 1440:
-                        os.remove(os.path.join(network_dir, filename))
-
-                past_data = {}
-                with open(
-                    f"instance/network_data/{network.id}/time_series.pck",
-                    "rb",
-                ) as file:
-                    past_data = pickle.load(file)
-
-                new_data = engine.data["network_data"][network.id].get_data()
-                for category in new_data:
-                    for player_id, buffer in new_data[category].items():
-                        if player_id not in past_data[category]:
-                            past_data[category][player_id] = [[0.0] * 360] * 5
-                        past_el_data = past_data[category][player_id]
-                        reduce_resolution(past_el_data, np.array(buffer))
-
-                with open(
-                    f"instance/network_data/{network.id}/time_series.pck",
-                    "wb",
-                ) as file:
-                    pickle.dump(past_data, file)
-
-            # remove old notifications
-            Notification.query.filter(
-                Notification.title != "Tutorial",
-                Notification.time < datetime.now() - timedelta(weeks=2),
-            ).delete()
-            db.session.commit()
-
-            engine.log("last 216 datapoints have been saved to files")
-
-    def reduce_resolution(array, new_values):
-        """reduces resolution of current array x6, x36, x216 and x1296"""
-        array[0] = array[0][len(new_values) :]
-        array[0].extend(new_values)
-        new_values_reduced = new_values
-        for r in range(1, 4):
-            new_values_reduced = np.mean(new_values_reduced.reshape(-1, 6), axis=1)
-            array[r] = array[r][len(new_values_reduced) :]
-            array[r].extend(new_values_reduced)
-        if engine.data["total_t"] % 1296 == 0:
-            array[4] = array[4][1:]
-            array[4].append(np.mean(array[3][-6:]))
-
-    thread = threading.Thread(target=save_data)
-    thread.start()
-
-
-def data_init_network():
+    player.add_to_list(priority_list_name, new_construction.id)
+    if suspension_time is None:
+        player.project_max_priority(priority_list_name, new_construction.id)
+    engine.log(f"{player.username} started the construction {facility}")
+    websocket.rest_notify_constructions(engine, player)
     return {
-        "network_data": {
-            "price": [[0.0] * 360] * 5,
-            "quantity": [[0.0] * 360] * 5,
-        },
-        "exports": {},
-        "imports": {},
+        "response": "success",
+        "money": player.money,
+        "constructions": package_projects_data(player),
     }
+
+
+def cancel_project(player, construction_id, force=False):
+    """this function is executed when a player cancels an ongoing construction"""
+    engine = current_app.config["engine"]
+    construction = Under_construction.query.get(int(construction_id))
+
+    priority_list_name = "construction_priorities"
+    if construction.family == "Technologies":
+        priority_list_name = "research_priorities"
+
+    if construction.suspension_time is None:
+        time_fraction = (engine.data["total_t"] - construction.start_time) / (construction.duration)
+    else:
+        time_fraction = (construction.suspension_time - construction.start_time) / (construction.duration)
+
+    if not force:
+        return {
+            "response": "areYouSure",
+            "refund": f"{round(80 * (1 - time_fraction))}%",
+        }
+
+    refund = (
+        0.8
+        * engine.const_config["assets"][construction.name]["base_price"]
+        * construction.price_multiplier
+        * (1 - time_fraction)
+    )
+    if construction.name in ["small_water_dam", "large_water_dam", "watermill"]:
+        refund *= construction.capacity_multiplier
+    player.money += refund
+    player.remove_from_list(priority_list_name, construction_id)
+    db.session.delete(construction)
+    engine.log(f"{player.username} cancelled the construction {construction.name}")
+    db.session.commit()
+    websocket.rest_notify_constructions(engine, player)
+    return {
+        "response": "success",
+        "money": player.money,
+        "constructions": package_projects_data(player),
+    }
+
+
+def pause_project(player, construction_id):
+    """this function is executed when a player pauses or unpauses an ongoing construction"""
+    engine = current_app.config["engine"]
+    construction = Under_construction.query.get(int(construction_id))
+
+    if construction.suspension_time is None:
+        while construction.suspension_time is None:
+            response = decrease_project_priority(player, construction_id, pausing=True)
+            if response["response"] == "paused":
+                break
+            if construction.family == "Technologies":
+                last_project = response["constructions"][2][-1]
+            else:
+                last_project = response["constructions"][1][-1]
+            if last_project == int(construction_id):
+                construction.suspension_time = engine.data["total_t"]
+    else:
+        if construction.family in ["Functional facilities", "Technologies"]:
+            first_lvl = (
+                Under_construction.query.filter_by(name=construction.name, player_id=player.id)
+                .order_by(Under_construction.duration)
+                .first()
+            )
+            if first_lvl.suspension_time is None:
+                return {
+                    "response": "parallelization not allowed",
+                }
+            else:
+                construction = first_lvl
+        if construction.family == "Technologies":
+            player.project_max_priority("research_priorities", int(construction_id))
+            if player.available_lab_workers() == 0:
+                research_priorities = player.read_list("research_priorities")
+                project_to_pause = Under_construction.query.get(research_priorities[player.lab_workers])
+                project_to_pause.suspension_time = engine.data["total_t"]
+        else:
+            player.project_max_priority("construction_priorities", int(construction_id))
+            if player.available_construction_workers() == 0:
+                construction_priorities = player.read_list("construction_priorities")
+                project_to_pause = Under_construction.query.get(construction_priorities[player.construction_workers])
+                project_to_pause.suspension_time = engine.data["total_t"]
+        construction.start_time += engine.data["total_t"] - construction.suspension_time
+        construction.suspension_time = None
+    db.session.commit()
+    websocket.rest_notify_constructions(engine, player)
+    return {
+        "response": "success",
+        "constructions": package_projects_data(player),
+    }
+
+
+def decrease_project_priority(player, construction_id, pausing=False):
+    """this function is executed when a player changes the order of ongoing constructions"""
+    engine = current_app.config["engine"]
+    construction = Under_construction.query.get(int(construction_id))
+
+    if construction.family == "Technologies":
+        attr = "research_priorities"
+    else:
+        attr = "construction_priorities"
+
+    id_list = player.read_list(attr)
+    index = id_list.index(construction_id)
+    if index >= 0 and index < len(id_list) - 1:
+        construction_1 = Under_construction.query.get(id_list[index])
+        construction_2 = Under_construction.query.get(id_list[index + 1])
+        if construction_1.suspension_time is None and construction_2.suspension_time is not None:
+            construction_1.suspension_time = engine.data["total_t"]
+            if pausing:
+                return {"response": "paused"}
+            if construction_2.family in [
+                "Functional facilities",
+                "Technologies",
+            ]:
+                first_lvl = (
+                    Under_construction.query.filter_by(name=construction_2.name, player_id=player.id)
+                    .order_by(Under_construction.duration)
+                    .first()
+                )
+                if first_lvl.suspension_time is None:
+                    return {
+                        "response": "parallelization not allowed",
+                    }
+                else:
+                    index_first_lvl = id_list.index(first_lvl.id)
+                    id_list[index + 1], id_list[index_first_lvl] = (
+                        id_list[index_first_lvl],
+                        id_list[index + 1],
+                    )
+                    construction_2 = first_lvl
+            construction_2.start_time += engine.data["total_t"] - construction_2.suspension_time
+            construction_2.suspension_time = None
+        id_list[index + 1], id_list[index] = (
+            id_list[index],
+            id_list[index + 1],
+        )
+        setattr(player, attr, ",".join(map(str, id_list)))
+        db.session.commit()
+        websocket.rest_notify_constructions(engine, player)
+
+    return {
+        "response": "success",
+        "constructions": package_projects_data(player),
+    }
+
+
+def package_projects_data(player):
+    """
+    Gets the data for the ongoing constructions for a particular player
+    TODO:
+    * Rework the return dict structure (involves back + front end)
+    """
+    projects = player.package_constructions()
+    construction_priorities = player.read_list("construction_priorities")
+    research_priorities = player.read_list("research_priorities")
+    return {0: projects, 1: construction_priorities, 2: research_priorities}
+
+
+# Resource market utilities
 
 
 def put_resource_on_market(player, resource, quantity, price):
@@ -731,6 +901,159 @@ def buy_resource_from_market(player, quantity, sale_id):
         }
 
 
+def store_import(player, resource, quantity):
+    """This function is executed when a resource shippment arrives"""
+    engine = current_app.config["engine"]
+    max_cap = engine.config[player.id]["warehouse_capacities"][resource]
+    if getattr(player, resource) + quantity > max_cap:
+        setattr(player, resource, max_cap)
+        # excess resources are stored in the ground
+        setattr(
+            player.tile,
+            resource,
+            getattr(player.tile, resource) + getattr(player, resource) + quantity - max_cap,
+        )
+        notify(
+            "Shipments",
+            f"A shipment of {format_mass(quantity)} {resource} arrived, but only {format_mass(max_cap - getattr(player, resource))} could be stored in your warehouse.",
+            player,
+        )
+        engine.log(
+            f"{player.username} received a shipment of {format_mass(quantity)} {resource}, but could only store {format_mass(max_cap - getattr(player, resource))} in their warehouse."
+        )
+    else:
+        setattr(player, resource, getattr(player, resource) + quantity)
+        notify(
+            "Shipments",
+            f"A shipment of {format_mass(quantity)} {resource} arrived.",
+            player,
+        )
+        engine.log(f"{player.username} received a shipment of {format_mass(quantity)} {resource}.")
+
+
+def pause_shipment(player, shipment_id):
+    """this function is executed when a player pauses or unpauses an ongoing shipment"""
+    engine = current_app.config["engine"]
+    shipment = Shipment.query.get(int(shipment_id))
+
+    if shipment.suspension_time is None:
+        shipment.suspension_time = engine.data["total_t"]
+    else:
+        shipment.departure_time += engine.data["total_t"] - shipment.suspension_time
+        shipment.suspension_time = None
+    db.session.commit()
+    return {
+        "response": "success",
+        "shipments": player.package_shipments(),
+    }
+
+
+# Text formatting utilities
+
+
+def display_money(price):
+    """Format for price display"""
+    return f"{price:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(",", "'")
+
+
+def format_mass(mass):
+    """Formats mass in kg into a string with corresponding unit."""
+    if mass < 50000:
+        formatted_mass = f"{int(mass):,d}".replace(",", "'") + " kg"
+    else:
+        formatted_mass = f"{mass / 1000:,.0f}".replace(",", "'") + " t"
+    return formatted_mass
+
+
+# Chat utilities
+
+
+def hide_chat_disclaimer(player):
+    player.show_disclamer = False
+    db.session.commit()
+
+
+def create_chat(player, buddy_username):
+    """creates a chat with 2 players"""
+    if buddy_username == player.username:
+        return {"response": "cannotChatWithYourself"}
+    buddy = Player.query.filter_by(username=buddy_username).first()
+    if buddy is None:
+        return {"response": "usernameIsWrong"}
+    if check_existing_chats([player, buddy]):
+        return {"response": "chatAlreadyExist"}
+    new_chat = Chat(
+        name=None,
+        participants=[player, buddy],
+    )
+    db.session.add(new_chat)
+    db.session.commit()
+    engine = current_app.config["engine"]
+    engine.log(f"{player.username} created a chat with {buddy.username}")
+    return {"response": "success"}
+
+
+def create_group_chat(player, title, group):
+    """creates a group chat"""
+    if len(title) == 0 or len(title) > 25:
+        return {"response": "wrongTitleLength"}
+    groupMembers = [player]
+    for username in group:
+        new_member = Player.query.filter_by(username=username).first()
+        if new_member:
+            groupMembers.append(new_member)
+    if len(groupMembers) < 3:
+        return {"response": "groupTooSmall"}
+    if check_existing_chats(groupMembers):
+        return {"response": "chatAlreadyExist"}
+    new_chat = Chat(
+        name=title,
+        participants=groupMembers,
+    )
+    db.session.add(new_chat)
+    db.session.commit()
+    engine = current_app.config["engine"]
+    engine.log(f"{player.username} created a group chat called {title} with {group}")
+    return {"response": "success"}
+
+
+def check_existing_chats(participants):
+    """Checks if a chat with exactly these participants already exists"""
+    participant_ids = [participant.id for participant in participants]
+    conditions = [Chat.participants.any(id=participant_id) for participant_id in participant_ids]
+    existing_chats = Chat.query.filter(*conditions)
+    for chat in existing_chats:
+        if len(chat.participants) == len(participants):
+            return True
+    return False
+
+
+def add_message(player, message, chat_id):
+    engine = current_app.config["engine"]
+    if not chat_id:
+        return {"response": "noChatID"}
+    chat = Chat.query.filter_by(id=chat_id).first()
+    new_message = Message(
+        text=message,
+        time=datetime.now(),
+        player_id=player.id,
+        chat_id=chat.id,
+    )
+    db.session.add(new_message)
+    db.session.commit()
+    for participant in chat.participants:
+        if participant == player:
+            continue
+        player_read_message = PlayerUnreadMessages(player_id=participant.id, message_id=new_message.id)
+        db.session.add(player_read_message)
+    db.session.commit()
+    engine.display_new_message(new_message, chat.participants)
+    return {"response": "success"}
+
+
+# Map
+
+
 def confirm_location(engine, player, location):
     """This function is called when a player choses a location. It returns
     either success or an explanatory error message in the form of a dictionary.
@@ -767,53 +1090,7 @@ def confirm_location(engine, player, location):
     return {"response": "success"}
 
 
-# initialize data table for new user and stores it as a .pck in the 'player_data' repo
-def init_table(user_id):
-    past_data = data_init()
-    with open(f"instance/player_data/player_{user_id}.pck", "wb") as file:
-        pickle.dump(past_data, file)
-
-
-def add_player_to_data(engine, user_id):
-    engine.data["current_data"][user_id] = CircularBufferPlayer()
-    engine.data["player_capacities"][user_id] = CapacityData()
-    engine.data["player_capacities"][user_id].update(user_id, None)
-
-
-def data_init():
-    def init_array():
-        return [[0.0] * 360] * 5
-
-    return {
-        "revenues": {
-            "industry": init_array(),
-            "O&M_costs": init_array(),
-            "exports": init_array(),
-            "imports": init_array(),
-            "dumping": init_array(),
-        },
-        "op_costs": {
-            "steam_engine": init_array(),
-        },
-        "generation": {
-            "steam_engine": init_array(),
-            "imports": init_array(),
-        },
-        "demand": {
-            "industry": init_array(),
-            "construction": init_array(),
-            "research": init_array(),
-            "transport": init_array(),
-            "exports": init_array(),
-            "dumping": init_array(),
-        },
-        "storage": {},
-        "resources": {},
-        "emissions": {
-            "steam_engine": init_array(),
-            "construction": init_array(),
-        },
-    }
+# Network utilities
 
 
 def join_network(engine, player, network):
@@ -854,6 +1131,17 @@ def create_network(engine, player, name):
     return {"response": "success"}
 
 
+def data_init_network():
+    return {
+        "network_data": {
+            "price": [[0.0] * 360] * 5,
+            "quantity": [[0.0] * 360] * 5,
+        },
+        "exports": {},
+        "imports": {},
+    }
+
+
 def leave_network(engine, player):
     """Shared API method for a player to leave a network. Always succeeds."""
     network = player.network
@@ -870,17 +1158,6 @@ def leave_network(engine, player):
     engine.log(f"{player.username} left the network {network.name}")
     websocket.rest_notify_network_change(engine)
     return {"response": "success"}
-
-
-def change_facility_priority(engine, player, priority):
-    price_list = []
-    for facility in priority:
-        price_list.append(getattr(player, "price_" + facility))
-    price_list.sort()
-    prices = {}
-    for i, facility in enumerate(priority):
-        prices["price_" + facility] = price_list[i]
-    return set_network_prices(engine, player, prices)
 
 
 def set_network_prices(engine, player, prices={}):
@@ -912,280 +1189,15 @@ def set_network_prices(engine, player, prices={}):
     return {"response": "success"}
 
 
-def get_scoreboard():
-    players = Player.query.filter(Player.tile != None)  # noqa: E711
-    return {
-        player.id: {
-            "username": player.username,
-            "network_name": player.network.name if player.network else "-",
-            "average_hourly_revenues": player.average_revenues,
-            "max_power_consumption": player.max_power_consumption,
-            "total_technology_levels": player.total_technologies,
-            "xp": player.xp,
-            "co2_emissions": player.emissions,
-        }
-        for player in players
-    }
+# Misc
 
 
-def start_project(engine, player, facility, family, force=False):
-    """this function is executed when a player clicks on 'start construction'"""
-    facility_info = technology_effects.get_current_technology_values(player)
-    player_cap = engine.data["player_capacities"][player.id]
-    const_config = engine.const_config["assets"][facility]
-
-    if facility_info[facility]["locked"]:
-        return {"response": "locked"}
-
-    if facility in ["small_water_dam", "large_water_dam", "watermill"]:
-        price_factor = technology_effects.price_multiplier(player, facility) * technology_effects.capacity_multiplier(
-            player, facility
-        )
-        if player.money < const_config["base_price"] * price_factor:
-            return {"response": "notEnoughMoneyError"}
-
-    ud_count = 0
-    if family in ["Functional facilities", "Technologies"]:
-        ud_count = Under_construction.query.filter_by(name=facility, player_id=player.id).count()
-        if family == "Technologies":
-            for req in facility_info[facility]["requirements"]:
-                if getattr(player, facility) + ud_count + req[1] > getattr(player, req[0]):
-                    return {"response": "requirementsNotFullfilled"}
-        real_price = (
-            const_config["base_price"]
-            * technology_effects.price_multiplier(player, facility)
-            * const_config["price multiplier"] ** ud_count
-        )
-        duration = technology_effects.construction_time(player, facility) * const_config["price multiplier"] ** (
-            0.6 * ud_count
-        )
-    else:  # power facitlies, storage facilities, extractions facilities
-        real_price = const_config["base_price"] * technology_effects.price_multiplier(player, facility)
-        if facility in ["small_water_dam", "large_water_dam", "watermill"]:
-            real_price *= technology_effects.capacity_multiplier(player, facility)
-        duration = technology_effects.construction_time(player, facility)
-
-    if player.money < real_price:
-        return {"response": "notEnoughMoneyError"}
-    construction_power = technology_effects.construction_power(player, facility)
-    if not force and "network" not in player.advancements:
-        capacity = 0
-        for gen in engine.power_facilities:
-            if player_cap[gen] is not None:
-                capacity += player_cap[gen]["power"]
-        if construction_power > capacity:
-            return {
-                "response": "areYouSure",
-                "capacity": capacity,
-                "construction_power": construction_power,
-            }
-
-    priority_list_name = "construction_priorities"
-    suspension_time = engine.data["total_t"]
-    if family == "Technologies":
-        priority_list_name = "research_priorities"
-        if player.available_lab_workers() > 0 and ud_count == 0:
-            suspension_time = None
-    else:
-        if player.available_construction_workers() > 0 and ud_count == 0:
-            suspension_time = None
-
-    player.money -= real_price
-    duration = math.ceil(duration / engine.clock_time)
-    new_construction = Under_construction(
-        name=facility,
-        family=family,
-        start_time=engine.data["total_t"],
-        duration=duration,
-        suspension_time=suspension_time,
-        construction_power=construction_power,
-        construction_pollution=technology_effects.construction_pollution(player, facility),
-        price_multiplier=technology_effects.price_multiplier(player, facility),
-        power_multiplier=technology_effects.power_multiplier(player, facility),
-        capacity_multiplier=technology_effects.capacity_multiplier(player, facility),
-        efficiency_multiplier=technology_effects.efficiency_multiplier(player, facility),
-        player_id=player.id,
-    )
-    db.session.add(new_construction)
-    db.session.commit()
-    player.add_to_list(priority_list_name, new_construction.id)
-    if suspension_time is None:
-        player.project_max_priority(priority_list_name, new_construction.id)
-    engine.log(f"{player.username} started the construction {facility}")
-    websocket.rest_notify_constructions(engine, player)
-    return {
-        "response": "success",
-        "money": player.money,
-        "constructions": get_construction_data(player),
-    }
-
-
-def cancel_project(player, construction_id, force=False):
-    """this function is executed when a player cancels an ongoing construction"""
-    engine = current_app.config["engine"]
-    construction = Under_construction.query.get(int(construction_id))
-
-    priority_list_name = "construction_priorities"
-    if construction.family == "Technologies":
-        priority_list_name = "research_priorities"
-
-    if construction.suspension_time is None:
-        time_fraction = (engine.data["total_t"] - construction.start_time) / (construction.duration)
-    else:
-        time_fraction = (construction.suspension_time - construction.start_time) / (construction.duration)
-
-    if not force:
-        return {
-            "response": "areYouSure",
-            "refund": f"{round(80 * (1 - time_fraction))}%",
-        }
-
-    refund = (
-        0.8
-        * engine.const_config["assets"][construction.name]["base_price"]
-        * construction.price_multiplier
-        * (1 - time_fraction)
-    )
-    if construction.name in ["small_water_dam", "large_water_dam", "watermill"]:
-        refund *= construction.capacity_multiplier
-    player.money += refund
-    player.remove_from_list(priority_list_name, construction_id)
-    db.session.delete(construction)
-    engine.log(f"{player.username} cancelled the construction {construction.name}")
-    db.session.commit()
-    websocket.rest_notify_constructions(engine, player)
-    return {
-        "response": "success",
-        "money": player.money,
-        "constructions": get_construction_data(player),
-    }
-
-
-def pause_project(player, construction_id):
-    """this function is executed when a player pauses or unpauses an ongoing construction"""
-    engine = current_app.config["engine"]
-    construction = Under_construction.query.get(int(construction_id))
-
-    if construction.suspension_time is None:
-        while construction.suspension_time is None:
-            response = decrease_project_priority(player, construction_id, pausing=True)
-            if response["response"] == "paused":
-                break
-            if construction.family == "Technologies":
-                last_project = response["constructions"][2][-1]
-            else:
-                last_project = response["constructions"][1][-1]
-            if last_project == int(construction_id):
-                construction.suspension_time = engine.data["total_t"]
-    else:
-        if construction.family in ["Functional facilities", "Technologies"]:
-            first_lvl = (
-                Under_construction.query.filter_by(name=construction.name, player_id=player.id)
-                .order_by(Under_construction.duration)
-                .first()
-            )
-            if first_lvl.suspension_time is None:
-                return {
-                    "response": "parallelization not allowed",
-                }
-            else:
-                construction = first_lvl
-        if construction.family == "Technologies":
-            player.project_max_priority("research_priorities", int(construction_id))
-            if player.available_lab_workers() == 0:
-                research_priorities = player.read_list("research_priorities")
-                project_to_pause = Under_construction.query.get(research_priorities[player.lab_workers])
-                project_to_pause.suspension_time = engine.data["total_t"]
-        else:
-            player.project_max_priority("construction_priorities", int(construction_id))
-            if player.available_construction_workers() == 0:
-                construction_priorities = player.read_list("construction_priorities")
-                project_to_pause = Under_construction.query.get(construction_priorities[player.construction_workers])
-                project_to_pause.suspension_time = engine.data["total_t"]
-        construction.start_time += engine.data["total_t"] - construction.suspension_time
-        construction.suspension_time = None
-    db.session.commit()
-    websocket.rest_notify_constructions(engine, player)
-    return {
-        "response": "success",
-        "constructions": get_construction_data(player),
-    }
-
-
-def pause_shipment(player, shipment_id):
-    """this function is executed when a player pauses or unpauses an ongoing shipment"""
-    engine = current_app.config["engine"]
-    shipment = Shipment.query.get(int(shipment_id))
-
-    if shipment.suspension_time is None:
-        shipment.suspension_time = engine.data["total_t"]
-    else:
-        shipment.departure_time += engine.data["total_t"] - shipment.suspension_time
-        shipment.suspension_time = None
-    db.session.commit()
-    return {
-        "response": "success",
-        "shipments": player.package_shipments(),
-    }
-
-
-def decrease_project_priority(player, construction_id, pausing=False):
-    """this function is executed when a player changes the order of ongoing constructions"""
-    engine = current_app.config["engine"]
-    construction = Under_construction.query.get(int(construction_id))
-
-    if construction.family == "Technologies":
-        attr = "research_priorities"
-    else:
-        attr = "construction_priorities"
-
-    id_list = player.read_list(attr)
-    index = id_list.index(construction_id)
-    if index >= 0 and index < len(id_list) - 1:
-        construction_1 = Under_construction.query.get(id_list[index])
-        construction_2 = Under_construction.query.get(id_list[index + 1])
-        if construction_1.suspension_time is None and construction_2.suspension_time is not None:
-            construction_1.suspension_time = engine.data["total_t"]
-            if pausing:
-                return {"response": "paused"}
-            if construction_2.family in [
-                "Functional facilities",
-                "Technologies",
-            ]:
-                first_lvl = (
-                    Under_construction.query.filter_by(name=construction_2.name, player_id=player.id)
-                    .order_by(Under_construction.duration)
-                    .first()
-                )
-                if first_lvl.suspension_time is None:
-                    return {
-                        "response": "parallelization not allowed",
-                    }
-                else:
-                    index_first_lvl = id_list.index(first_lvl.id)
-                    id_list[index + 1], id_list[index_first_lvl] = (
-                        id_list[index_first_lvl],
-                        id_list[index + 1],
-                    )
-                    construction_2 = first_lvl
-            construction_2.start_time += engine.data["total_t"] - construction_2.suspension_time
-            construction_2.suspension_time = None
-        id_list[index + 1], id_list[index] = (
-            id_list[index],
-            id_list[index + 1],
-        )
-        setattr(player, attr, ",".join(map(str, id_list)))
-        db.session.commit()
-        websocket.rest_notify_constructions(engine, player)
-
-    return {
-        "response": "success",
-        "constructions": get_construction_data(player),
-    }
-
-
-def get_construction_data(player):
-    projects = player.package_constructions()
-    construction_priorities = player.read_list("construction_priorities")
-    research_priorities = player.read_list("research_priorities")
-    return {0: projects, 1: construction_priorities, 2: research_priorities}
+def change_facility_priority(engine, player, priority):
+    price_list = []
+    for facility in priority:
+        price_list.append(getattr(player, "price_" + facility))
+    price_list.sort()
+    prices = {}
+    for i, facility in enumerate(priority):
+        prices["price_" + facility] = price_list[i]
+    return set_network_prices(engine, player, prices)

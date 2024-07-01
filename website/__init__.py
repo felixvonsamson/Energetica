@@ -31,7 +31,7 @@ from website.gameEngine import gameEngine  # noqa: E402
 
 def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     # gets lock to avoid multiple instances
-    if platform.system() == 'Linux':
+    if platform.system() == "Linux":
         lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         lock.bind("\0energetica")
 
@@ -41,7 +41,7 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     db.init_app(app)
 
-    # creates the engine (ad loading the sava if it exists)
+    # creates the engine (and loading the save if it exists)
     engine = gameEngine(clock_time)
 
     if rm_instance:

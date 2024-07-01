@@ -278,7 +278,7 @@ def get_shipments():
 @http.route("/get_scoreboard", methods=["GET"])
 def get_scoreboard():
     """Gets the scoreboard data"""
-    return jsonify(utils.get_scoreboard())
+    return jsonify(Player.package_scoreboard())
 
 
 @http.route("/get_active_facilities", methods=["GET"])
