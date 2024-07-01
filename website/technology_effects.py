@@ -357,9 +357,14 @@ def package_constructions_page_data(player):
                 "construction_power": construction_power(player, power_facility),
                 "construction_pollution": construction_pollution(player, power_facility),
                 "locked": requirements_met(facility_requirements(player, power_facility)),
+                "power_generation": const_config_assets[power_facility]["base_power_generation"]
+                * power_multiplier(player, power_facility),
+                "ramping_speed": const_config_assets[power_facility]["base_power_generation"]
+                * power_multiplier(player, power_facility)
+                / const_config_assets[power_facility]["ramping_time"]
+                if const_config_assets[power_facility]["ramping_time"] != 0
+                else None,
                 # TODO: all values below
-                "power_generation": 0,
-                "ramping_speed": 0,
                 "O&M_costs": 0,
                 "consumed_resource": {},
                 "pollution": 0,
