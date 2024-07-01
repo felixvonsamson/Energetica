@@ -24,6 +24,7 @@ let res; // current resolution
 
 //styling variables
 let margin = 40;
+let canvas_width;
 let fill_alt = 0;
 let s1 = 0.25; // size of first chart
 let s2 = 0.25; // size of second chart
@@ -135,269 +136,13 @@ function setup() {
         price: [color(139, 0, 0), "Market price"],
     };
 
-    let canvas_width = 0.7 * windowWidth;
+    canvas_width = 0.7 * windowWidth;
     if (windowWidth < 1200) {
         canvas_width = windowWidth;
     }
     margin = min(70, canvas_width / 10);
 
-    temporal_graph_p5 =  new p5(function(sketch) {
-        let graph_graphics;
-        let graph_graphics_ready = false;
-        let graph_h, graph_w;
-        let frac;
-        let view; // exports or imports
-        let price_mode; // normal smoothed or off
-        sketch.setup = function() {
-            sketch.createCanvas(min(canvas_width, 1200), 0.42 * canvas_width);
-            sketch.noLoop();
-            sketch.graph_graphics = createGraphics(sketch.width, sketch.height);
-        }
-
-        sketch.draw = function() {
-            if (sketch.graph_graphics_ready) {
-                sketch.image(sketch.graph_graphics, 0, 0);
-                sketch.push();
-                sketch.stroke(255);
-                sketch.strokeWeight(2);
-                let X = min(sketch.graph_w, max(0, sketch.mouseX - margin));
-                t_view = floor(map(X, 0, sketch.graph_w, 0, data_len - 1));
-                sketch.translate(margin, sketch.graph_h + 0.3 * margin);
-                sketch.line(X, 0, X, -sketch.graph_h);
-                sketch.noStroke();
-                if (price_mode != "off") {
-                    sketch.push();
-                    sketch.translate(X, sketch.graph_h - 0.3 * margin - sketch.graph_h * sketch.frac);
-                    let h = (-price_curve[t_view] / upper_bounds.price) * sketch.graph_h * sketch.frac;
-                    sketch.ellipse(0, h, 8, 8);
-                    sketch.pop();
-                }
-                // push();
-                // translate(X, s2 * height);
-                // for (const player_id in temporal_data[view]) {
-                //     if (temporal_data[view][player_id][t_view] > 0) {
-                //         let h = (-temporal_data[view][player_id][t_view] / max.quantity) * s2 * height;
-                //         ellipse(0, h, 8, 8);
-                //         translate(0, h);
-                //     }
-                // }
-                // pop();
-
-                // let count = 2 + (price_mode != "off");
-                // for(const player_id in temporal_data[view]){
-                //     if(temporal_data[view][player_id][t_view] > 0){
-                //         count += 1;
-                //     }
-                // }
-                // let tx = X - 180;
-                // let ty = mouseY - s1 * height;
-                // if (ty > s2 * height - count * 16) {
-                //     ty = s2 * height - count * 16;
-                // }
-                // if (X < 180 + 2 * margin) {
-                //     tx = X + 20;
-                // }
-                // translate(tx, ty);
-                // alternate_fill();
-                // fill_alt = 0;
-                // rect(0, 0, 160, 17);
-                // fill(0);
-                // textFont(balooBold);
-                // text(display_duration((data_len - t_view - 1) * res_to_factor[res]), 80, 5);
-                // textFont(font);
-                // translate(0, 16);
-
-                // if(price_mode != "off"){
-                //     alternate_fill();
-                //     rect(0, 0, 160, 17);
-                //     push();
-                //     fill(cols_and_names.price[0]);
-                //     rect(0, 0, 16, 17);
-                //     pop();
-                //     fill(0);
-                //     textAlign(LEFT, CENTER);
-                //     text(cols_and_names.price[1], 20, 5);
-                //     textAlign(RIGHT, CENTER);
-                //     text(display_money(temporal_data["network_data"].price[t_view]), 137, 5);
-                //     image(coin, 140, 2, 12, 12);
-                //     translate(0, 16);
-                // }
-
-                // const keys = Object.keys(temporal_data[view]).reverse();
-                // for(const player_id of keys){
-                //     if(temporal_data[view][player_id][t_view] > 0){
-                //         alternate_fill();
-                //         rect(0, 0, 160, 17);
-                //         push();
-                //         fill(random_colors[player_id % random_colors.length]);
-                //         rect(0, 0, 16, 17);
-                //         pop();
-                //         fill(0);
-                //         textAlign(LEFT, CENTER);
-                //         let userObject = players[int(player_id)];
-                //         let username = userObject ? userObject.username : "Loading...";
-                //         text(username, 20, 5);
-                //         textAlign(CENTER, CENTER);
-                //         text(display_W(temporal_data[view][player_id][t_view]), 132, 5);
-                //         translate(0, 16);
-                //     }
-                // }
-                // if ((data_len - t_view - 1) * res_to_factor[res] < 1440) {
-                //     fill(0);
-                //     text("(click to see market)", 80, 5);
-                // }
-                // pop();
-                // pop();
-                sketch.pop();
-            }
-        }
-
-        sketch.mouseMoved = function() {
-            sketch.redraw();
-        }
-
-        sketch.mouseDragged = function() {
-            sketch.redraw();
-        }
-
-    }, "temporal_graph");
-
-    temporal_graph_p5.view = "exports";
-    temporal_graph_p5.price_mode = "normal";
-
-    temporal_graph_p5.render_graph = function(){
-        var graph_graphics = temporal_graph_p5.graph_graphics;
-        // graph_graphics.resetMatrix();
-        graph_graphics.textAlign(CENTER, CENTER);
-        graph_graphics.textFont(font);
-        temporal_graph_p5.graph_h = temporal_graph_p5.height - margin;
-        temporal_graph_p5.graph_w = temporal_graph_p5.width - 2 * margin;
-        graph_graphics.background(229, 217, 182);
-
-        data_len = temporal_data["network_data"]["price"][res].length;
-        lower_bounds = {
-            price: Math.min(0, ...temporal_data["network_data"]["price"][res]),
-            quantity: 0,
-        };
-        upper_bounds = {
-            price: Math.max(...temporal_data["network_data"]["price"][res], -lower_bounds["price"]),
-            quantity: Math.max(...temporal_data["network_data"]["quantity"][res]),
-        };
-        temporal_graph_p5.frac = upper_bounds["price"] / (upper_bounds["price"] - lower_bounds["price"]); // fraction of negative range in the graph
-        
-        graph_graphics.push();
-        graph_graphics.translate(margin, 0.3 * margin + temporal_graph_p5.graph_h);
-        graph_graphics.noStroke();
-
-        graph_graphics.push();
-        for (let t = 0; t < data_len; t++) {
-            graph_graphics.push();
-            for (const player_id in temporal_data[temporal_graph_p5.view]) {
-                if (temporal_data[temporal_graph_p5.view][player_id][res][t] > 0) {
-                    graph_graphics.fill(random_colors[player_id % random_colors.length]);
-                    let h = (temporal_data[temporal_graph_p5.view][player_id][res][t] / upper_bounds["quantity"]) * temporal_graph_p5.graph_h;
-                    graph_graphics.rect(0, 0, temporal_graph_p5.graph_w / data_len + 1, -h - 1);
-                    graph_graphics.translate(0, -h);
-                }
-            }
-            graph_graphics.pop();
-            graph_graphics.translate(temporal_graph_p5.graph_w / data_len, 0);
-        }
-        graph_graphics.pop();
-
-        if(temporal_graph_p5.price_mode != "off"){
-            price_curve = [...temporal_data.network_data.price[res]];
-            if (temporal_graph_p5.price_mode == "smoothed") {
-                let window_size = 5;
-                // Generate Normalized Gaussian kernel
-                let gaussian_kernel = [];
-                for (let i = -window_size; i <= window_size; i++) {
-                    gaussian_kernel.push(Math.exp(-(i ** 2) / 10));
-                }
-
-                price_curve = []
-                for (let t = 0; t < data_len; t++) {
-                    let start = max(0, t - window_size);
-                    let end = min(data_len - 1, t + window_size);
-                    let sum = 0;
-                    let weight_sum = 0;
-                    for (let i = start; i <= end; i++) {
-                        sum += temporal_data.network_data.price[res][i] * gaussian_kernel[i - t + window_size];
-                        weight_sum += gaussian_kernel[i - t + window_size];
-                    }
-                    price_curve[t] = sum / weight_sum;
-                }
-            }
-            graph_graphics.push();
-            graph_graphics.translate(0, -temporal_graph_p5.graph_h * (1 - temporal_graph_p5.frac));
-            graph_graphics.strokeWeight(3);
-            graph_graphics.stroke(cols_and_names["price"][0]);
-            for (let t = 1; t < data_len; t++) {
-                let h1 = (price_curve[t - 1] / upper_bounds["price"]) * temporal_graph_p5.graph_h * temporal_graph_p5.frac;
-                let h2 = (price_curve[t] / upper_bounds["price"]) * temporal_graph_p5.graph_h * temporal_graph_p5.frac;
-                graph_graphics.line(0, -h1, temporal_graph_p5.graph_w / data_len, -h2);
-                graph_graphics.translate(temporal_graph_p5.graph_w / (data_len - 1), 0);
-            }
-            graph_graphics.pop();
-        }
-
-        graph_graphics.stroke(0);
-        graph_graphics.line(0, 0, temporal_graph_p5.graph_w, 0);
-        graph_graphics.line(0, 0, 0, -temporal_graph_p5.graph_h);
-        graph_graphics.line(temporal_graph_p5.graph_w, 0, temporal_graph_p5.graph_w, -temporal_graph_p5.graph_h);
-
-        graph_graphics.push();
-        let units = time_unit(res, clock_time);
-        fill(0);
-        for (let i = 0; i < units.length; i++) {
-            graph_graphics.stroke(0, 0, 0, 30);
-            let x = (i * temporal_graph_p5.graph_w) / (units.length - 1);
-            graph_graphics.line(x, -temporal_graph_p5.graph_h, x, 0);
-            graph_graphics.stroke(0);
-            graph_graphics.line(x, 0, x, 5);
-            graph_graphics.noStroke();
-            graph_graphics.text(units[i], x, 0.5 * margin);
-        }
-        graph_graphics.pop();
-
-        if (temporal_graph_p5.graph_h.price_mode != "off") {
-            graph_graphics.push();
-            graph_graphics.translate(0, -temporal_graph_p5.graph_h * (1 - temporal_graph_p5.frac));
-            let y_ticks = y_units(upper_bounds["price"]);
-            let interval2 = y_ticks[1];
-            graph_graphics.fill(cols_and_names.price[0]);
-            let y2 = map(interval2, 0, upper_bounds["price"], 0, temporal_graph_p5.graph_h * temporal_graph_p5.frac);
-            graph_graphics.textAlign(RIGHT, CENTER);
-            for (let i = 0; i < y_ticks.length; i++) {
-                graph_graphics.stroke(cols_and_names.price[0]);
-                graph_graphics.line(0, -y2 * i, -5, -y2 * i);
-                graph_graphics.noStroke();
-                graph_graphics.image(coin, -23, -y2 * i - 6, 12, 12);
-                graph_graphics.text(display_money(y_ticks[i]), -28, -y2 * i - 3);
-            }
-            graph_graphics.pop();
-        }
-
-        graph_graphics.push();
-        let y_ticks3 = y_units(upper_bounds["quantity"]);
-        let interval3 = y_ticks3[1];
-        graph_graphics.fill(0);
-        let y3 = map(interval3, 0, upper_bounds["quantity"], 0, temporal_graph_p5.graph_h);
-        for (let i = 0; i < y_ticks3.length; i++) {
-            graph_graphics.stroke(0, 0, 0, 30);
-            graph_graphics.line(temporal_graph_p5.graph_w, -y3 * i, 0, -y3 * i);
-            graph_graphics.stroke(0);
-            graph_graphics.line(temporal_graph_p5.graph_w, -y3 * i, temporal_graph_p5.graph_w + 5, -y3 * i);
-            graph_graphics.noStroke();
-            graph_graphics.text(display_W(y_ticks3[i]), temporal_graph_p5.graph_w + 0.5 * margin, -y3 * i - 3);
-        }
-        graph_graphics.pop();
-
-        graph_graphics.pop();
-
-        temporal_graph_p5.graph_graphics_ready = true;
-        temporal_graph_p5.redraw();
-    } 
+    temporal_graph_p5 =  new p5(temporal_graph_sketch, "temporal_graph");
     
     market_chart_p5 = new p5(function(sketch) {
         let graph_h, graph_w;
@@ -430,6 +175,254 @@ function setup() {
 //         pop();
 //     }
 // }
+
+function temporal_graph_sketch(s){
+    s.setup = function() {
+        s.view = "exports";
+        s.price_mode = "normal";
+        s.createCanvas(min(canvas_width, 1200), 0.42 * canvas_width);
+        s.noLoop();
+        s.graphics = s.createGraphics(s.width, s.height);
+    }
+
+    s.draw = function() {
+        if (s.graphics_ready) {
+            s.image(s.graphics, 0, 0);
+            s.push();
+            s.stroke(255);
+            s.strokeWeight(2);
+            let X = min(s.graph_w, max(0, s.mouseX - margin));
+            t_view = floor(map(X, 0, s.graph_w, 0, data_len - 1));
+            s.translate(margin, s.graph_h + 0.3 * margin);
+            s.line(X, 0, X, -s.graph_h);
+            s.noStroke();
+            if (s.price_mode != "off") {
+                s.push();
+                s.translate(X, - s.graph_h * (1-s.frac));
+                let h = (-price_curve[t_view] / upper_bounds.price) * s.graph_h * s.frac;
+                s.ellipse(0, h, 8, 8);
+                s.pop();
+            }
+            // push();
+            // translate(X, s2 * height);
+            // for (const player_id in temporal_data[view]) {
+            //     if (temporal_data[view][player_id][t_view] > 0) {
+            //         let h = (-temporal_data[view][player_id][t_view] / max.quantity) * s2 * height;
+            //         ellipse(0, h, 8, 8);
+            //         translate(0, h);
+            //     }
+            // }
+            // pop();
+
+            // let count = 2 + (price_mode != "off");
+            // for(const player_id in temporal_data[view]){
+            //     if(temporal_data[view][player_id][t_view] > 0){
+            //         count += 1;
+            //     }
+            // }
+            // let tx = X - 180;
+            // let ty = mouseY - s1 * height;
+            // if (ty > s2 * height - count * 16) {
+            //     ty = s2 * height - count * 16;
+            // }
+            // if (X < 180 + 2 * margin) {
+            //     tx = X + 20;
+            // }
+            // translate(tx, ty);
+            // alternate_fill();
+            // fill_alt = 0;
+            // rect(0, 0, 160, 17);
+            // fill(0);
+            // textFont(balooBold);
+            // text(display_duration((data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+            // textFont(font);
+            // translate(0, 16);
+
+            // if(price_mode != "off"){
+            //     alternate_fill();
+            //     rect(0, 0, 160, 17);
+            //     push();
+            //     fill(cols_and_names.price[0]);
+            //     rect(0, 0, 16, 17);
+            //     pop();
+            //     fill(0);
+            //     textAlign(LEFT, CENTER);
+            //     text(cols_and_names.price[1], 20, 5);
+            //     textAlign(RIGHT, CENTER);
+            //     text(display_money(temporal_data["network_data"].price[t_view]), 137, 5);
+            //     image(coin, 140, 2, 12, 12);
+            //     translate(0, 16);
+            // }
+
+            // const keys = Object.keys(temporal_data[view]).reverse();
+            // for(const player_id of keys){
+            //     if(temporal_data[view][player_id][t_view] > 0){
+            //         alternate_fill();
+            //         rect(0, 0, 160, 17);
+            //         push();
+            //         fill(random_colors[player_id % random_colors.length]);
+            //         rect(0, 0, 16, 17);
+            //         pop();
+            //         fill(0);
+            //         textAlign(LEFT, CENTER);
+            //         let userObject = players[int(player_id)];
+            //         let username = userObject ? userObject.username : "Loading...";
+            //         text(username, 20, 5);
+            //         textAlign(CENTER, CENTER);
+            //         text(display_W(temporal_data[view][player_id][t_view]), 132, 5);
+            //         translate(0, 16);
+            //     }
+            // }
+            // if ((data_len - t_view - 1) * res_to_factor[res] < 1440) {
+            //     fill(0);
+            //     text("(click to see market)", 80, 5);
+            // }
+            // pop();
+            // pop();
+            s.pop();
+        }
+    }
+
+    s.mouseMoved = function() {
+        s.redraw();
+    }
+
+    s.mouseDragged = function() {
+        s.redraw();
+    }
+
+    s.render_graph = function(){
+        s.graphics.textAlign(CENTER, CENTER);
+        s.graphics.textFont(font);
+        s.graph_h = s.height - margin;
+        s.graph_w = s.width - 2 * margin;
+        s.graphics.background(229, 217, 182);
+
+        data_len = temporal_data["network_data"]["price"][res].length;
+        lower_bounds = {
+            price: Math.min(0, ...temporal_data["network_data"]["price"][res]),
+            quantity: 0,
+        };
+        upper_bounds = {
+            price: Math.max(...temporal_data["network_data"]["price"][res], -lower_bounds["price"]),
+            quantity: Math.max(...temporal_data["network_data"]["quantity"][res]),
+        };
+        s.frac = upper_bounds["price"] / (upper_bounds["price"] - lower_bounds["price"]); // fraction of negative range in the graph
+
+        s.graphics.push();
+        s.graphics.translate(margin, 0.3 * margin + s.graph_h);
+        s.graphics.noStroke();
+
+        s.graphics.push();
+        for (let t = 0; t < data_len; t++) {
+            s.graphics.push();
+            for (const player_id in temporal_data[s.view]) {
+                if (temporal_data[s.view][player_id][res][t] > 0) {
+                    s.graphics.fill(random_colors[player_id % random_colors.length]);
+                    let h = (temporal_data[s.view][player_id][res][t] / upper_bounds["quantity"]) * s.graph_h;
+                    s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
+                    s.graphics.translate(0, -h);
+                }
+            }
+            s.graphics.pop();
+            s.graphics.translate(s.graph_w / data_len, 0);
+        }
+        s.graphics.pop();
+        
+        if(s.price_mode != "off"){
+            price_curve = [...temporal_data.network_data.price[res]];
+            if (s.price_mode == "smoothed") {
+                let window_size = 5;
+                // Generate Normalized Gaussian kernel
+                let gaussian_kernel = [];
+                for (let i = -window_size; i <= window_size; i++) {
+                    gaussian_kernel.push(Math.exp(-(i ** 2) / 10));
+                }
+                
+                price_curve = []
+                for (let t = 0; t < data_len; t++) {
+                    let start = max(0, t - window_size);
+                    let end = min(data_len - 1, t + window_size);
+                    let sum = 0;
+                    let weight_sum = 0;
+                    for (let i = start; i <= end; i++) {
+                        sum += temporal_data.network_data.price[res][i] * gaussian_kernel[i - t + window_size];
+                        weight_sum += gaussian_kernel[i - t + window_size];
+                    }
+                    price_curve[t] = sum / weight_sum; 
+                }
+            }
+            s.graphics.push();
+            s.graphics.translate(0, -s.graph_h * (1 - s.frac));
+            s.graphics.strokeWeight(3);
+            s.graphics.stroke(cols_and_names["price"][0]);
+            for (let t = 1; t < data_len; t++) {
+                let h1 = (price_curve[t - 1] / upper_bounds["price"]) * s.graph_h * s.frac;
+                let h2 = (price_curve[t] / upper_bounds["price"]) * s.graph_h * s.frac;
+                s.graphics.line(0, -h1, s.graph_w / data_len, -h2);
+                s.graphics.translate(s.graph_w / (data_len - 1), 0);
+            }
+            s.graphics.pop();
+        }
+
+        s.graphics.stroke(0);
+        s.graphics.line(0, 0, s.graph_w, 0);
+        s.graphics.line(0, 0, 0, -s.graph_h);
+        s.graphics.line(s.graph_w, 0, s.graph_w, -s.graph_h);
+
+        s.graphics.push();
+        let units = time_unit(res, clock_time);
+        s.graphics.fill(0);
+        for (let i = 0; i < units.length; i++) {
+            s.graphics.stroke(0, 0, 0, 30);
+            let x = (i * s.graph_w) / (units.length - 1);
+            s.graphics.line(x, -s.graph_h, x, 0);
+            s.graphics.stroke(0);
+            s.graphics.line(x, 0, x, 5);
+            s.graphics.noStroke();
+            s.graphics.text(units[i], x, 0.5 * margin);
+        }
+        s.graphics.pop();
+
+        if (s.price_mode != "off") {
+            s.graphics.push();
+            s.graphics.translate(0, -s.graph_h * (1 - s.frac));
+            let y_ticks = y_units(upper_bounds["price"]);
+            let interval2 = y_ticks[1];
+            s.graphics.fill(cols_and_names["price"][0]);
+            let y2 = map(interval2, 0, upper_bounds["price"], 0, s.graph_h * s.frac);
+            s.graphics.textAlign(RIGHT, CENTER);
+            for (let i = 0; i < y_ticks.length; i++) {
+                s.graphics.stroke(cols_and_names["price"][0]);
+                s.graphics.line(0, -y2 * i, -5, -y2 * i);
+                s.graphics.noStroke();
+                s.graphics.image(coin, -23, -y2 * i - 6, 12, 12);
+                s.graphics.text(display_money(y_ticks[i]), -28, -y2 * i - 3);
+            }
+            s.graphics.pop();
+        }
+
+        s.graphics.push();
+        let y_ticks3 = y_units(upper_bounds["quantity"]);
+        let interval3 = y_ticks3[1];
+        s.graphics.fill(0);
+        let y3 = map(interval3, 0, upper_bounds["quantity"], 0, s.graph_h);
+        for (let i = 0; i < y_ticks3.length; i++) {
+            s.graphics.stroke(0, 0, 0, 30);
+            s.graphics.line(s.graph_w, -y3 * i, 0, -y3 * i);
+            s.graphics.stroke(0);
+            s.graphics.line(s.graph_w, -y3 * i, s.graph_w + 5, -y3 * i);
+            s.graphics.noStroke();
+            s.graphics.text(display_W(y_ticks3[i]), s.graph_w + 0.5 * margin, -y3 * i - 3);
+        }
+        s.graphics.pop();
+
+        s.graphics.pop();
+
+        s.graphics_ready = true;
+        s.redraw();
+    } 
+}
 
 function hover_on_temporal_graph(X, mar) {
     push();
@@ -881,7 +874,7 @@ function fetch_data() {
                     });
                 });
                 
-                window.temporal_graph_p5.render_graph();
+                temporal_graph_p5.render_graph();
             });
         })
         .catch((error) => {
