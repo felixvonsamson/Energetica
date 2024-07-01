@@ -2,7 +2,7 @@
 
 Last updated: Monday, July 1, 2024
 
-Thank you for choosing to be part of our community at Energetica. We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about this privacy policy or our practices with regard to your personal information, please contact us at (vsfelix@ethz.ch)[mailto:vsfelix@ethz.ch].
+Thank you for choosing to be part of our community at Energetica. We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about this privacy policy or our practices with regard to your personal information, please contact us at [vsfelix@ethz.ch](mailto:vsfelix@ethz.ch).
 
 When you use our mobile application, Energetica (the "App"), we appreciate that you are trusting us with your personal information. In this privacy policy, we describe what information we collect, how we use it, and what rights you have in relation to it. By using the App, you agree to th terms in this privacy policy.
 
@@ -34,7 +34,7 @@ We use technical, and physical security measures to help protect your personal i
 
 You have the right to:
 
-Request deletion of your account: You can request the deletion of your account and associated data by contacting us at (vsfelix@ethz.ch)[mailto:vsfelix@ethz.ch].
+Request deletion of your account: You can request the deletion of your account and associated data by contacting us at [vsfelix@ethz.ch](mailto:vsfelix@ethz.ch).
 
 7. Changes to This Privacy Policy
 
