@@ -243,6 +243,7 @@
             {% for resource in ["gas", "coal", "oil", "uranium"] %}
               {% if resource in const_data["consumed_resource"] %}
                 <tr>
+                  {# TODO: simplify the below using a dictionary to get the display name #}
                   {% if resource == "uranium" %}
                     <td>Uran. consumption</td>
                   {% else %}

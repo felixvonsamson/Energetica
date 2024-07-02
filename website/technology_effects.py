@@ -247,10 +247,21 @@ def requirements_met(requirements):
 
 
 def facility_requirements_and_locked(player, facility):
-    "Returns a dictionnary with both"
+    """Returns a dictionnary with both requirements and locked status"""
     requirements = facility_requirements(player, facility)
     locked = requirements_met(requirements)
     return {"requirements": requirements, "locked": locked}
+
+
+def power_facility_resource_consumtion(player, power_facility):
+    """Returns a dictionary of the resources consumed by the power_facility for this player"""
+    consumed_resources = current_app.config["engine"].const_config["assets"][power_facility]["consumed_resource"].copy()
+    multiplier = efficiency_multiplier(player, power_facility)
+    if multiplier == 0:
+        multiplier = 1
+    for resource in consumed_resources:
+        consumed_resources[resource] /= multiplier
+    return consumed_resources
 
 
 def get_current_technology_values(player):
@@ -374,8 +385,7 @@ def package_constructions_page_data(player):
                 if power_facility in engine.controllable_facilities + engine.storage_facilities
                 else 1,
                 "lifespan": const_config_assets[power_facility]["lifespan"] * (engine.clock_time / 60) ** 0.5,
-                # TODO: all values below
-                "consumed_resource": {},
+                "consumed_resources": power_facility_resource_consumtion(player, power_facility),
             }
             for power_facility in engine.power_facilities
         ],
