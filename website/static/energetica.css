@@ -224,6 +224,40 @@ canvas {
     cursor: pointer;
 }
 
+.graph_button {
+    border: none;
+    font-size: min(20px, 2.8vh);
+    width: 7em;
+    background-color: #e5d9b6;
+    padding: 8px 0;
+    margin: 2px;
+}
+
+.graph_button.selected {
+    background-color: #d3c290;
+}
+
+.graph_button:hover {
+    cursor: pointer;
+    background-color: #5f8d4e;
+    color: white;
+}
+
+.graph_button.small {
+    font-size: min(16px, 2vh);
+    padding: 6px 0;
+}
+
+.graph_button.left {
+    border-top-left-radius: 15% 50%;
+    border-bottom-left-radius: 15% 50%;
+}
+
+.graph_button.right {
+    border-top-right-radius: 15% 50%;
+    border-bottom-right-radius: 15% 50%;
+}
+
 /* Flex */
 .flex-center {
     display: flex;
