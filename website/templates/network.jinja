@@ -7,8 +7,7 @@
     {% set assets = data["assets"] %}
     {% set SCP = user.self_consumption_priority.split(',') %}
     <div class="flex-row huge title">
-        Network
-        {% if user.network %}: <b>{{ user.network.name }}</b>{% endif %}
+        Network{% if user.network %}:&nbsp;<b>{{ user.network.name }}</b>{% endif %}
         <div class="pine info_icon_container"
              onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
     </div>
@@ -67,11 +66,19 @@
 
         <div id="temporal_graph" class="bone flex-center" style="margin-top:30px"></div>
 
-        <div class="flex-space-between margin">
+        <div class="flex-space-between margin" style="flex-wrap:wrap;">
             <div class="flex-center">
                 <button id="price_mode_button_normal" class="graph_button small left selected" onclick="change_price_mode('normal')">normal</button>
                 <button id="price_mode_button_smoothed" class="graph_button small" onclick="change_price_mode('smoothed')">smoothed</button>
                 <button id="price_mode_button_off" class="graph_button small right" onclick="change_price_mode('off')">off</button>
+            </div>
+            <div class="flex-center">
+                <button id="percent_button_normal" class="graph_button small left selected" onclick="change_percent('normal')">normal</button>
+                <button id="percent_button_percent" class="graph_button small right" onclick="change_percent('percent')">percent</button>
+            </div>
+            <div class="flex-center">
+                <button id="categorisation_button_type" class="graph_button small left" onclick="change_categorisation('type')">type</button>
+                <button id="categorisation_button_player" class="graph_button small right selected" onclick="change_categorisation('player')">player</button>
             </div>
             <div class="flex-center">
                 <button id="export_import_button_exports" class="graph_button small left selected" onclick="change_export_import('exports')">exports</button>
@@ -90,15 +97,15 @@
         <div class="flex-center bone huge padding">Market:&nbsp; <span id="market_time">now</span></div>
         <div id="market_chart" class="bone flex-center"></div>
 
-        <div class="flex-space-between margin" style="margin-bottom:30px;">
+        <div class="flex-space-between margin" style="margin-bottom:30px; flex-wrap:wrap;">
             <div class="flex-center">
-                <button id="market_mode_button_normal" class="graph_button small left" onclick="change_market_mode('normal')">normal</button>
-                <button id="market_mode_button_log" class="graph_button small selected" onclick="change_market_mode('log')">log</button>
+                <button id="market_mode_button_normal" class="graph_button small left selected" onclick="change_market_mode('normal')">normal</button>
+                <button id="market_mode_button_log" class="graph_button small" onclick="change_market_mode('log')">log</button>
                 <button id="market_mode_button_zoom" class="graph_button small right" onclick="change_market_mode('zoom')">zoom</button>
             </div>
             <div class="flex-center">
-                <button id="categorisation_button_facility" class="graph_button small selected left" onclick="change_categorisation('facility')">facility</button>
-                <button id="categorisation_button_player" class="graph_button small right" onclick="change_categorisation('player')">player</button>
+                <button id="categorisation_market_button_facility" class="graph_button small selected left" onclick="change_categorisation_market('facility')">facility</button>
+                <button id="categorisation_market_button_player" class="graph_button small right" onclick="change_categorisation_market('player')">player</button>
             </div>
             <div class="flex-center">
                 <button id="market_view_button_supply" class="graph_button small selected left" onclick="change_market_view('supply')">supply</button>
