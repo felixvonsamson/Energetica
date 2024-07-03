@@ -88,7 +88,7 @@
                     <ul class="navbar-nav">
                       {% for req in facility_values[facility]["requirements"] %}
                         {% if req[2] %}
-                          <li class="padding-small req_fullfilled">- {{ engine.const_config["assets"][req[0]]["name"] }} lvl {{ req[1] }}</li>
+                          <li class="padding-small req_fulfilled">- {{ engine.const_config["assets"][req[0]]["name"] }} lvl {{ req[1] }}</li>
                         {% else %}
                           <li class="padding-small requirement">- {{ engine.const_config["assets"][req[0]]["name"] }} lvl {{ req[1] }}</li>
                         {% endif %}

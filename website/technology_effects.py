@@ -235,15 +235,22 @@ def wind_speed_multiplier(count, potential):
 
 def facility_requirements(player, facility):
     """Returns the list of requirements (name, level, and boolean for met) for the specified facility"""
-    requirements = current_app.config["engine"].const_config["assets"][facility]["requirements"].copy()
-    for requirement in requirements:
-        requirement[2] = getattr(player, requirement[0]) >= requirement[1]
-    return requirements
+    const_config = current_app.config["engine"].const_config["assets"]
+    requirements = const_config[facility]["requirements"].copy()
+    return [
+        {
+            "name": requirement[0],
+            "display_name": const_config[requirement[0]]["name"],
+            "level": requirement[1],
+            "fulfilled": getattr(player, requirement[0]) >= requirement[1],
+        }
+        for requirement in requirements
+    ]
 
 
 def requirements_met(requirements):
     """Returns True (meaning locked) if any requirements are not met, otherwise False (not locked)"""
-    return any(req[2] is False for req in requirements)
+    return any(requirement["fulfilled"] is False for requirement in requirements)
 
 
 def facility_requirements_and_locked(player, facility):
@@ -253,8 +260,11 @@ def facility_requirements_and_locked(player, facility):
     return {"requirements": requirements, "locked": locked}
 
 
-def power_facility_resource_consumtion(player, power_facility):
+def power_facility_resource_consumption(player, power_facility):
     """Returns a dictionary of the resources consumed by the power_facility for this player"""
+    # TODO: perhaps rejig how this information is packaged.
+    # Namely, switch from a dictionary with the system resource name as a key and a float for the amount as a value
+    # to an array of dictionaries with keys ranging in "name", "display_name", "amount"
     consumed_resources = current_app.config["engine"].const_config["assets"][power_facility]["consumed_resource"].copy()
     multiplier = efficiency_multiplier(player, power_facility)
     if multiplier == 0:
@@ -314,8 +324,13 @@ def get_current_technology_values(player):
         + engine.functional_facilities
         + engine.extraction_facilities
     ):
-        # add "requirements" and "locked" to the dictionnary
-        dict[facility] |= facility_requirements_and_locked(player, facility)
+        # remove fulfilled requirements
+        dict[facility]["locked"] = False
+        dict[facility]["requirements"] = engine.const_config["assets"][facility]["requirements"].copy()
+        for req in dict[facility]["requirements"]:
+            req[2] = getattr(player, req[0]) >= req[1]
+            if not req[2]:
+                dict[facility]["locked"] = True
 
     return dict
 
@@ -357,6 +372,9 @@ def package_constructions_page_data(player):
         "power_facilities": [
             {
                 "name": power_facility,
+                "display_name": const_config_assets[power_facility]["name"],
+                "wikipedia_link": const_config_assets[power_facility]["wikipedia_link"],
+                "description": const_config_assets[power_facility]["description"],
                 "price": const_config_assets[power_facility]["base_price"]
                 * price_multiplier(player, power_facility)
                 * (
@@ -368,14 +386,19 @@ def package_constructions_page_data(player):
                 "construction_power": construction_power(player, power_facility),
                 "construction_pollution": construction_pollution(player, power_facility),
                 "locked": requirements_met(facility_requirements(player, power_facility)),
+                "requirements": facility_requirements(player, power_facility),
                 "power_generation": const_config_assets[power_facility]["base_power_generation"]
                 * power_multiplier(player, power_facility),
+                "ramping_time": const_config_assets[power_facility]["ramping_time"]
+                / power_multiplier(player, power_facility)
+                if const_config_assets[power_facility]["ramping_time"] != 0
+                else None,
                 "ramping_speed": const_config_assets[power_facility]["base_power_generation"]
                 * power_multiplier(player, power_facility)
                 / const_config_assets[power_facility]["ramping_time"]
                 if const_config_assets[power_facility]["ramping_time"] != 0
                 else None,
-                "O&M_costs": const_config_assets[power_facility]["base_price"]
+                "operating_costs": const_config_assets[power_facility]["base_price"]
                 * price_multiplier(player, power_facility)
                 * const_config_assets[power_facility]["O&M_factor"]
                 / engine.clock_time
@@ -385,7 +408,7 @@ def package_constructions_page_data(player):
                 if power_facility in engine.controllable_facilities + engine.storage_facilities
                 else 1,
                 "lifespan": const_config_assets[power_facility]["lifespan"] * (engine.clock_time / 60) ** 0.5,
-                "consumed_resources": power_facility_resource_consumtion(player, power_facility),
+                "consumed_resources": power_facility_resource_consumption(player, power_facility),
             }
             for power_facility in engine.power_facilities
         ],

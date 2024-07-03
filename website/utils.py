@@ -530,7 +530,7 @@ def start_project(engine, player, facility, family, force=False):
         if family == "Technologies":
             for req in facility_info[facility]["requirements"]:
                 if getattr(player, facility) + ud_count + req[1] > getattr(player, req[0]):
-                    return {"response": "requirementsNotFullfilled"}
+                    return {"response": "requirementsNotFulfilled"}
         real_price = (
             const_config["base_price"]
             * technology_effects.price_multiplier(player, facility)

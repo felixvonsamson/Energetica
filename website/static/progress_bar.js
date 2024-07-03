@@ -77,7 +77,7 @@ function formatSeconds(totalSeconds) {
 }
 
 // information sent to the server when a new facility is created
-function start_construction(facility, family, force=false) {
+function start_construction(facility, family, force = false) {
     send_form("/api/request_start_project", {
         facility: facility,
         family: family,
@@ -103,12 +103,12 @@ function start_construction(facility, family, force=false) {
                 } else if (response == "notEnoughMoneyError") {
                     addError("Not enough money");
                 } else if (response == "locked") {
-                    if (family == "Technologies"){
+                    if (family == "Technologies") {
                         addError("Requirements not fulfilled");
-                    }else{
+                    } else {
                         addError("Facility is locked");
                     }
-                } else if (response == "requirementsNotFullfilled") {
+                } else if (response == "requirementsNotFulfilled") {
                     addError("Requirements not fulfilled for this Technology level");
                 }
             });
@@ -118,7 +118,7 @@ function start_construction(facility, family, force=false) {
         });
 }
 
-function cancel_construction(construction_id, force=false) {
+function cancel_construction(construction_id, force = false) {
     send_form("/api/request_cancel_project", {
         id: construction_id,
         force: force,
@@ -136,7 +136,7 @@ function cancel_construction(construction_id, force=false) {
                         JSON.stringify(raw_data["constructions"])
                     );
                     refresh_progressBar();
-                }else if(response == "areYouSure"){
+                } else if (response == "areYouSure") {
                     refund = raw_data["refund"];
                     are_you_sure_cancel_construction(construction_id, refund);
                 }
@@ -224,7 +224,7 @@ load_constructions().then((constructions) => {
             const construction = constructions_data[0][id];
             const now = new Date().getTime() / 1000;
             const round_up = server_start % clock_time;
-            const current_time = (now-server_start + round_up) / clock_time;
+            const current_time = (now - server_start + round_up) / clock_time;
             let new_width;
             let time_remaining;
             if (construction.suspension_time) {
@@ -249,7 +249,7 @@ load_constructions().then((constructions) => {
             if (new_width > 0.01) {
                 progressBar.classList.add("pine");
             }
-            if (time_remaining < 0){
+            if (time_remaining < 0) {
                 progressBar.parentElement.parentElement.remove();
                 setTimeout(() => {
                     retrieve_constructions().then((construction_list) => {
@@ -266,32 +266,32 @@ load_constructions().then((constructions) => {
             const shipment = shipment_data[id];
             const now = new Date().getTime() / 1000;
             const round_up = server_start % clock_time;
-            const current_time = (now-server_start + round_up) / clock_time;
+            const current_time = (now - server_start + round_up) / clock_time;
             let new_width;
             let time_remaining;
             if (shipment["suspension_time"]) {
                 new_width =
                     ((shipment["suspension_time"] -
-                    shipment["departure_time"]) /
-                    shipment["duration"]) *
+                        shipment["departure_time"]) /
+                        shipment["duration"]) *
                     100;
                 time_remaining =
-                shipment["duration"] +
-                shipment["departure_time"] -
-                shipment["suspension_time"];
+                    shipment["duration"] +
+                    shipment["departure_time"] -
+                    shipment["suspension_time"];
             } else {
                 new_width =
                     ((current_time - shipment["departure_time"]) /
-                    shipment["duration"]) *
+                        shipment["duration"]) *
                     100;
                 time_remaining =
-                shipment["duration"] + shipment["departure_time"] - current_time;
+                    shipment["duration"] + shipment["departure_time"] - current_time;
             }
             shipmentBar.style.setProperty("--width", new_width);
             if (new_width > 0.01) {
                 shipmentBar.classList.add("pine");
             }
-            if (time_remaining < 0){
+            if (time_remaining < 0) {
                 shipmentBar.parentElement.parentElement.remove();
                 setTimeout(() => {
                     retrieve_shipments().then((shipment_list) => {
@@ -316,19 +316,19 @@ function refresh_progressBar() {
     });
 }
 
-function display_progressBars(construction_data, shipment_data){
-    if (document.title == "Home"){
-        if (construction_data != null){
+function display_progressBars(construction_data, shipment_data) {
+    if (document.title == "Home") {
+        if (construction_data != null) {
             const uc = document.getElementById("under_construction");
             const ur = document.getElementById("under_research");
             uc.innerHTML = "";
             ur.innerHTML = "";
             construction_priority = construction_data[1];
             research_priority = construction_data[2];
-            if(construction_priority.length > 0){
+            if (construction_priority.length > 0) {
                 uc.innerHTML = "<h1>&emsp;Constructions</h1>";
             }
-            if(research_priority.length > 0){
+            if (research_priority.length > 0) {
                 ur.innerHTML = "<h1>&emsp;Researches</h1>";
             }
             for (const [index, c_id] of research_priority.entries()) {
@@ -340,10 +340,10 @@ function display_progressBars(construction_data, shipment_data){
                 uc.innerHTML += html_for_progressBar(c_id, index, construction_priority, construction);
             }
         }
-        if (shipment_data != null){
+        if (shipment_data != null) {
             const us = document.getElementById("shipments");
             us.innerHTML = "";
-            if(Object.keys(shipment_data).length > 0){
+            if (Object.keys(shipment_data).length > 0) {
                 us.innerHTML = "<h1>&emsp;Shipments</h1>";
             }
             for (var id in shipment_data) {
@@ -351,10 +351,10 @@ function display_progressBars(construction_data, shipment_data){
                 us.innerHTML += html_for_shipmentBar(id, shipment);
             }
         }
-    }else{
+    } else {
         const uc = document.getElementById("under_construction");
-        if(uc != null){
-            if(document.title == "Resource market" && shipment_data != null){
+        if (uc != null) {
+            if (document.title == "Resource market" && shipment_data != null) {
                 uc.innerHTML = "";
                 for (var id in shipment_data) {
                     shipment = shipment_data[id];
@@ -362,16 +362,16 @@ function display_progressBars(construction_data, shipment_data){
                 }
                 return
             }
-            if (construction_data != null){
+            if (construction_data != null) {
                 uc.innerHTML = "";
-                if(document.title == "Technologies"){
+                if (document.title == "Technologies") {
                     project_priority = construction_data[2];
-                }else{
+                } else {
                     project_priority = construction_data[1];
                 }
                 for (const [index, c_id] of project_priority.entries()) {
                     construction = construction_data[0][c_id];
-                    if (construction["family"] == document.title){
+                    if (construction["family"] == document.title) {
                         uc.innerHTML += html_for_progressBar(c_id, index, project_priority, construction);
                     }
                 }
@@ -381,7 +381,7 @@ function display_progressBars(construction_data, shipment_data){
 }
 
 
-function html_for_progressBar(c_id, index, project_priority, construction){
+function html_for_progressBar(c_id, index, project_priority, construction) {
     let playPauseLogo = "fa-pause";
     if (construction["suspension_time"]) {
         playPauseLogo = "fa-play";
@@ -411,13 +411,13 @@ function html_for_progressBar(c_id, index, project_priority, construction){
     </div>`;
 }
 
-function html_for_shipmentBar(id, shipment){
+function html_for_shipmentBar(id, shipment) {
     let playPauseLogo = "fa-pause";
     if (shipment["suspension_time"]) {
         playPauseLogo = "fa-play";
     }
     return `<div class="progressbar-container">
-        <div class="progressbar-name medium margin-small">${display_kg(shipment["quantity"], write=false)} ${resource_names[shipment["resource"]]}</div>
+        <div class="progressbar-name medium margin-small">${display_kg(shipment["quantity"], write = false)} ${resource_names[shipment["resource"]]}</div>
         <div class="progressbar-background">
             <div id="${id}" class="shipmentbar-bar"></div>
         </div>
