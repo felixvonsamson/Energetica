@@ -382,8 +382,8 @@ def _package_power_generating_facility_base(player: Player, facility):
         "operating_costs": const_config_assets[facility]["base_price"]
         * price_multiplier(player, facility)
         * const_config_assets[facility]["O&M_factor"]
-        / engine.clock_time
-        * 60,
+        * 3600
+        / engine.clock_time,
         "lifespan": const_config_assets[facility]["lifespan"] * (engine.clock_time / 60) ** 0.5,
     }
 
@@ -441,8 +441,6 @@ def package_constructions_page_data(player: Player):
         }
     ```
     """
-    engine: gameEngine = current_app.config["engine"]
-    const_config_assets = engine.const_config["assets"]
     return {
         "power_facilities": package_power_facilities(player),
         "storage_facilities": package_storage_facilities(player),
