@@ -11,7 +11,12 @@ from .database.messages import Chat
 from .database.player import Player
 from .database.player_assets import Resource_on_sale
 
-from .technology_effects import get_current_technology_values, package_power_facilities, package_storage_facilities
+from .technology_effects import (
+    get_current_technology_values,
+    package_extraction_facilities,
+    package_power_facilities,
+    package_storage_facilities,
+)
 
 views = Blueprint("views", __name__)
 overviews = Blueprint("overviews", __name__, static_folder="static")
@@ -63,6 +68,9 @@ def check_user():
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
         elif page == "storage_facilities.jinja":
             constructions = package_storage_facilities(current_user)
+            return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
+        elif page == "extraction_facilities.jinja":
+            constructions = package_extraction_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
         else:
             return render_template(page, engine=g.engine, user=current_user, data=g.data)

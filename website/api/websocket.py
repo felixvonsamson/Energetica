@@ -277,7 +277,7 @@ def rest_get_facilities_data(engine, player: Player):
     Gets player's facilities data and returns it as a JSON string
     """
     # TODO: Remove this print
-    print(package_constructions_page_data(player)["storage_facilities"])
+    print(package_constructions_page_data(player)["extraction_facilities"])
     return json.dumps({"type": "getFacilitiesData", "data": package_constructions_page_data(player)})
 
 

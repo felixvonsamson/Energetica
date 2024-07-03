@@ -7,6 +7,7 @@ import math
 from flask import current_app
 
 from website import gameEngine
+from website.database.map import Hex
 from website.database.player import Player
 from .database.player_assets import Active_facilities, Under_construction
 
@@ -369,7 +370,6 @@ def _package_power_generating_facility_base(player: Player, facility):
     engine: gameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
-        "construction_pollution": construction_pollution_per_tick(player, facility),
         "power_generation": const_config_assets[facility]["base_power_generation"] * power_multiplier(player, facility),
         "ramping_time": const_config_assets[facility]["ramping_time"] / power_multiplier(player, facility)
         if const_config_assets[facility]["ramping_time"] != 0
@@ -379,6 +379,15 @@ def _package_power_generating_facility_base(player: Player, facility):
         / const_config_assets[facility]["ramping_time"]
         if const_config_assets[facility]["ramping_time"] != 0
         else None,
+    }
+
+
+def _package_power_storage_extraction_facility_base(player: Player, facility):
+    """Gets all data shared by power, storage, and extraction facilites"""
+    engine: gameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    return {
+        "construction_pollution": const_config_assets[facility]["base_construction_pollution"],
         "operating_costs": const_config_assets[facility]["base_price"]
         * price_multiplier(player, facility)
         * const_config_assets[facility]["O&M_factor"]
@@ -395,6 +404,7 @@ def package_power_facilities(player: Player):
     return [
         _package_facility_base(player, power_facility)
         | _package_power_generating_facility_base(player, power_facility)
+        | _package_power_storage_extraction_facility_base(player, power_facility)
         | {
             "pollution": const_config_assets[power_facility]["base_pollution"]
             / efficiency_multiplier(player, power_facility)
@@ -413,6 +423,7 @@ def package_storage_facilities(player: Player):
     return [
         _package_facility_base(player, storage_facility)
         | _package_power_generating_facility_base(player, storage_facility)
+        | _package_power_storage_extraction_facility_base(player, storage_facility)
         | {
             "storage_capacity": const_config_assets[storage_facility]["base_storage_capacity"]
             * capacity_multiplier(player, storage_facility),
@@ -421,6 +432,51 @@ def package_storage_facilities(player: Player):
             * 100,
         }
         for storage_facility in engine.storage_facilities
+    ]
+
+
+def package_extraction_facilities(player: Player):
+    """Gets all data relevant for the extraction_facilities frontend"""
+    engine: gameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    facility_to_resource = {
+        "coal_mine": "coal",
+        "oil_field": "oil",
+        "gas_drilling_site": "gas",
+        "uranium_mine": "uranium",
+    }
+
+    def tile_resource_amount(tile: Hex, resource: str):
+        if resource == "coal":
+            return tile.coal
+        elif resource == "oil":
+            return tile.oil
+        elif resource == "gas":
+            return tile.gas
+        elif resource == "uranium":
+            return tile.uranium
+        else:
+            raise ValueError(f"unkown resource {resource}")
+
+    return [
+        _package_facility_base(player, extraction_facility)
+        | _package_power_storage_extraction_facility_base(player, extraction_facility)
+        | {
+            "power_consumption": const_config_assets[extraction_facility]["base_power_consumption"]
+            * power_multiplier(player, extraction_facility),
+            "pollution": const_config_assets[extraction_facility]["base_pollution"]
+            * 1000
+            * efficiency_multiplier(player, extraction_facility),
+            "resource_production": {
+                "name": facility_to_resource[extraction_facility],
+                "rate": const_config_assets[extraction_facility]["extraction_rate"]
+                * capacity_multiplier(player, extraction_facility)
+                * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
+                / engine.clock_time
+                * 3600,
+            },
+        }
+        for extraction_facility in engine.extraction_facilities
     ]
 
 
@@ -444,7 +500,7 @@ def package_constructions_page_data(player: Player):
     return {
         "power_facilities": package_power_facilities(player),
         "storage_facilities": package_storage_facilities(player),
+        "extraction_facilities": package_extraction_facilities(player),
         # TODO: non-power facilities
-        "extraction_facilities": [],
         "functional_facilities": [],
     }
