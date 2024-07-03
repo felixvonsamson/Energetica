@@ -16,6 +16,9 @@ let market_mode = "log"; // normal log or zoom
 let categorisation = "facility"; // facility or player
 let ox;
 
+// data for the energy flux graph
+let energy_flux, revenue_flux;
+
 //resolution buttons
 let resolution_list;
 let res_to_factor;
@@ -145,7 +148,106 @@ function setup() {
     
     market_chart_p5 = new p5(market_chart_sketch, "market_chart");
  
-    fetch_data();
+    fetch_temporal_network_data();
+}
+
+function temporal_imports(s){
+    s.setup = function() {
+        s.smoothed = "normal";
+        s.createCanvas(min(canvas_width, 1200), 0.3 * canvas_width);
+        s.noLoop();
+        s.textFont(font);
+        s.textAlign(CENTER, CENTER);
+        s.graphics = s.createGraphics(s.width, s.height);
+        s.graphics.textAlign(CENTER, CENTER);
+        s.graphics.textFont(font);
+    }
+
+    s.draw = function() {
+        if (s.graphics_ready) {
+            s.image(s.graphics, 0, 0);
+        }
+    }
+
+    s.render_graph = function(){
+        s.graph_h = s.height - margin;
+        s.graph_w = s.width - 2 * margin;
+        s.graphics.background(229, 217, 182);
+
+        data_len = temporal_data["network_data"]["price"][res].length;
+        lower_bounds = {
+            price: Math.min(0, ...temporal_data["network_data"]["price"][res]),
+            quantity: 0,
+        };
+        upper_bounds = {
+            price: Math.max(...temporal_data["network_data"]["price"][res], -lower_bounds["price"]),
+            quantity: Math.max(...temporal_data["network_data"]["quantity"][res]),
+        };
+        s.frac = upper_bounds["price"] / (upper_bounds["price"] - lower_bounds["price"]); // fraction of negative range in the graph
+
+        s.graphics.push();
+        s.graphics.translate(margin, 0.4 * margin + s.graph_h);
+        s.graphics.noStroke();
+
+        s.graphics.push();
+        for (let t = 0; t < data_len; t++) {
+            s.graphics.push();
+            let sum = upper_bounds["quantity"];
+            if(s.percent == "percent"){
+                const player_ids = Object.keys(temporal_data[s.view]);
+                sum = player_ids.reduce((acc, player_id) => {
+                    return acc + (temporal_data[s.view][player_id][res][t] || 0);
+                }, 0);
+            }
+            for (const player_id in temporal_data[s.view]) {
+                if (temporal_data[s.view][player_id][res][t] > 0) {
+                    s.graphics.fill(random_colors[player_id % random_colors.length]);
+                    let h = temporal_data[s.view][player_id][res][t] * s.graph_h / sum;
+                    s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
+                    s.graphics.translate(0, -h);
+                }
+            }
+            s.graphics.pop();
+            s.graphics.translate(s.graph_w / data_len, 0);
+        }
+        s.graphics.pop();
+        
+        if(s.price_mode != "off"){
+            price_curve = [...temporal_data.network_data.price[res]];
+            if (s.price_mode == "smoothed") {
+                let window_size = 5;
+                // Generate Normalized Gaussian kernel
+                let gaussian_kernel = [];
+                for (let i = -window_size; i <= window_size; i++) {
+                    gaussian_kernel.push(Math.exp(-(i ** 2) / 10));
+                }
+                
+                price_curve = []
+                for (let t = 0; t < data_len; t++) {
+                    let start = max(0, t - window_size);
+                    let end = min(data_len - 1, t + window_size);
+                    let sum = 0;
+                    let weight_sum = 0;
+                    for (let i = start; i <= end; i++) {
+                        sum += temporal_data.network_data.price[res][i] * gaussian_kernel[i - t + window_size];
+                        weight_sum += gaussian_kernel[i - t + window_size];
+                    }
+                    price_curve[t] = sum / weight_sum; 
+                }
+            }
+            s.graphics.push();
+            s.graphics.translate(0, -s.graph_h * (1 - s.frac));
+            s.graphics.strokeWeight(3);
+            s.graphics.stroke(cols_and_names["price"][0]);
+            for (let t = 1; t < data_len; t++) {
+                let h1 = (price_curve[t - 1] / upper_bounds["price"]) * s.graph_h * s.frac;
+                let h2 = (price_curve[t] / upper_bounds["price"]) * s.graph_h * s.frac;
+                s.graphics.line(0, -h1, s.graph_w / data_len, -h2);
+                s.graphics.translate(s.graph_w / (data_len - 1), 0);
+            }
+            s.graphics.pop();
+        }
+    }
 }
 
 function temporal_graph_sketch(s){
@@ -153,7 +255,7 @@ function temporal_graph_sketch(s){
         s.view = "exports";
         s.price_mode = "normal";
         s.percent = "normal";
-        s.createCanvas(min(canvas_width, 1200), 0.42 * canvas_width);
+        s.createCanvas(min(canvas_width, 1200), 0.4 * canvas_width);
         s.noLoop();
         s.textFont(font);
         s.textAlign(CENTER, CENTER);
@@ -282,7 +384,7 @@ function temporal_graph_sketch(s){
             if ((data_len - t_view - 1) * res_to_factor[res] < 1440) {
                 t_click = (data_len - t_view - 1) * res_to_factor[res];
                 document.getElementById("market_time").innerHTML = display_duration(t_click);
-                fetch_data();
+                fetch_market_data();
             }
         }
     }
@@ -434,12 +536,36 @@ function temporal_graph_sketch(s){
     } 
 }
 
+function change_res(i){
+    show_selected_button("res_button_", i)
+    res = resolution_list[i];
+    temporal_graph_p5.render_graph();
+}
+
+function change_export_import(view){
+    show_selected_button("export_import_button_", view)
+    temporal_graph_p5.view = view;
+    temporal_graph_p5.render_graph();
+}
+
+function change_price_mode(price_mode){
+    show_selected_button("price_mode_button_", price_mode)
+    temporal_graph_p5.price_mode = price_mode;
+    temporal_graph_p5.render_graph();
+}
+
+function change_percent(percent){
+    show_selected_button("percent_button_", percent)
+    temporal_graph_p5.percent = percent;
+    temporal_graph_p5.render_graph();
+}
+
 function market_chart_sketch(s){
     s.setup = function() {
         s.view = "supply";
         s.market_mode = "normal";
         s.categorisation = "facility";
-        s.createCanvas(min(canvas_width, 1200), 0.55 * canvas_width);
+        s.createCanvas(min(canvas_width, 1200), 0.5 * canvas_width);
         s.noLoop();
         s.textFont(font);
         s.textAlign(CENTER, CENTER);
@@ -729,30 +855,6 @@ function market_chart_sketch(s){
     }
 }
 
-function change_res(i){
-    show_selected_button("res_button_", i)
-    res = resolution_list[i];
-    temporal_graph_p5.render_graph();
-}
-
-function change_export_import(view){
-    show_selected_button("export_import_button_", view)
-    temporal_graph_p5.view = view;
-    temporal_graph_p5.render_graph();
-}
-
-function change_price_mode(price_mode){
-    show_selected_button("price_mode_button_", price_mode)
-    temporal_graph_p5.price_mode = price_mode;
-    temporal_graph_p5.render_graph();
-}
-
-function change_percent(percent){
-    show_selected_button("percent_button_", percent)
-    temporal_graph_p5.percent = percent;
-    temporal_graph_p5.render_graph();
-}
-
 function change_market_view(view_market){
     show_selected_button("market_view_button_", view_market)
     market_chart_p5.view = view_market;
@@ -781,39 +883,51 @@ function show_selected_button(button_id, id){
     document.getElementById(button_id + id).classList.add("selected");
 }
 
-function fetch_data() {
+function fetch_temporal_network_data() {
+    fetch_market_data();
+    load_chart_data().then((raw_chart_data) => {
+        let imports = raw_chart_data.generation.imports;
+        let exports = raw_chart_data.demand.exports;
+        energy_flux = exports;
+        for (let i = 0; i < energy_flux.length; i++) {
+            energy_flux[i] = -imports[i];
+        }
+    });
     load_chart_data((network = true)).then((raw_chart_data) => {
-        fetch(`/api/get_market_data?t=${t_click}`) // retrieves data from server
-            .then((response) => response.json())
-            .then((raw_data) => {
-                if (raw_data != null) {
-                    supply = raw_data["capacities"];
-                    demand = raw_data["demands"];
-                    mq = raw_data["market_quantity"];
-                    mp = raw_data["market_price"];
-                } else {
-                    supply = null;
+        Object.keys(raw_chart_data).forEach((key) => {
+            Object.keys(raw_chart_data[key]).forEach((subkey) => {
+                temporal_data[key][subkey] = {};
+                temporal_data[key][subkey][resolution_list[0]] = raw_chart_data[key][subkey][0].slice(-60);
+                for (r=0; r<resolution_list.length-1; r++){
+                    temporal_data[key][subkey][resolution_list[r+1]] = raw_chart_data[key][subkey][r];
                 }
-                
-                Object.keys(raw_chart_data).forEach((key) => {
-                    Object.keys(raw_chart_data[key]).forEach((subkey) => {
-                        temporal_data[key][subkey] = {};
-                        temporal_data[key][subkey][resolution_list[0]] = raw_chart_data[key][subkey][0].slice(-60);
-                        for (r=0; r<resolution_list.length-1; r++){
-                            temporal_data[key][subkey][resolution_list[r+1]] = raw_chart_data[key][subkey][r];
-                        }
-                    });
-                });
-                
-                temporal_graph_p5.render_graph();
-                market_chart_p5.render_graph();
             });
-        })
-        .catch((error) => {
-            console.error("Error:", error);
         });
+        
+        temporal_graph_p5.render_graph();
+    })
+    .catch((error) => {
+        console.error("Error:", error);
+    });
     load_players().then((players_) => {
         players = players_;
+    });
+}
+
+function fetch_market_data() {
+    fetch(`/api/get_market_data?t=${t_click}`)
+    .then((response) => response.json())
+    .then((raw_data) => {
+        if (raw_data != null) {
+            supply = raw_data["capacities"];
+            demand = raw_data["demands"];
+            mq = raw_data["market_quantity"];
+            mp = raw_data["market_price"];
+        }else{
+            supply = null;
+        }
+
+        market_chart_p5.render_graph();
     });
 }
 
