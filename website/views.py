@@ -60,7 +60,6 @@ def check_user():
             )
         elif page == "power_facilities.jinja":
             constructions = package_constructions_page_data(current_user)["power_facilities"]
-            print(constructions)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
         else:
             return render_template(page, engine=g.engine, user=current_user, data=g.data)
