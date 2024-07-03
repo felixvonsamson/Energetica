@@ -7,6 +7,7 @@ import math
 from flask import current_app
 
 from website import gameEngine
+from website.database.player import Player
 from .database.player_assets import Active_facilities, Under_construction
 
 
@@ -141,6 +142,7 @@ def efficiency_multiplier(player, facility):
 
 
 def construction_time(player, facility):
+    """Function that returns the construction time according to the technology level of the player."""
     engine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
     # dilatation foactor dependent on clock_time
@@ -166,6 +168,7 @@ def construction_time(player, facility):
 
 
 def construction_power(player, facility):
+    """Function that returns the construction power according to the technology level of the player."""
     engine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
     bt_factor = const_config["building_technology"]["time factor"] ** player.building_technology
@@ -207,6 +210,7 @@ def construction_power(player, facility):
 
 
 def construction_pollution(player, facility):
+    """Function that returns the construction pollution according to the technology level of the player."""
     engine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
     if facility in engine.technologies:
@@ -221,15 +225,17 @@ def construction_pollution(player, facility):
 
 
 def time_multiplier():
-    # dilatation foactor dependent on clock_time
+    """dilatation foactor dependent on clock_time"""
     return (current_app.config["engine"].clock_time / 60) ** 0.5
 
 
 def hydro_price_function(count, potential):
+    """price multiplier coefficient, for the `count`th hydro facility of a particular type, given the hydro potential"""
     return 0.6 + (math.e ** (0.6 * (count + 1 - 3 * potential) / (0.3 + potential)))
 
 
 def wind_speed_multiplier(count, potential):
+    """wind speed multiplier, for the `count`th wind facility of a particular type, given the wind potential"""
     return 1 / (math.log(math.e + (count * (1 / (9 * potential + 1))) ** 2))
 
 
