@@ -209,8 +209,8 @@ def construction_power(player, facility):
     return power
 
 
-def construction_pollution(player, facility):
-    """Function that returns the construction pollution according to the technology level of the player."""
+def construction_pollution_per_tick(player, facility):
+    """Function that returns the construction pollution per tick according to the technology level of the player."""
     engine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
     if facility in engine.technologies:
@@ -294,7 +294,7 @@ def get_current_technology_values(player):
             "price_multiplier": price_multiplier(player, facility),
             "construction_time": construction_time(player, facility),
             "construction_power": construction_power(player, facility),
-            "construction_pollution": construction_pollution(player, facility),
+            "construction_pollution": construction_pollution_per_tick(player, facility),
         }
     for facility in engine.power_facilities + engine.storage_facilities:
         dict[facility]["power_multiplier"] = power_multiplier(player, facility)
@@ -341,7 +341,90 @@ def get_current_technology_values(player):
     return dict
 
 
-def package_constructions_page_data(player):
+def _package_facility_base(player: Player, facility):
+    """Gets data shared between power, storage, extraction, and functional facilities"""
+    engine: gameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    return {
+        "name": facility,
+        "display_name": const_config_assets[facility]["name"],
+        "description": const_config_assets[facility]["description"],
+        "wikipedia_link": const_config_assets[facility]["wikipedia_link"],
+        "price": const_config_assets[facility]["base_price"]
+        * price_multiplier(player, facility)
+        * (
+            capacity_multiplier(player, facility)
+            if facility in ["watermill", "small_water_dam", "large_water_dam"]
+            else 1.0
+        ),
+        "construction_power": construction_power(player, facility),
+        "construction_time": construction_time(player, facility),
+        "locked": requirements_met(facility_requirements(player, facility)),
+        "requirements": facility_requirements(player, facility),
+    }
+
+
+def _package_power_generating_facility_base(player: Player, facility):
+    """Gets all data shared by power and storage facilites"""
+    engine: gameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    return {
+        "construction_pollution": construction_pollution_per_tick(player, facility),
+        "power_generation": const_config_assets[facility]["base_power_generation"] * power_multiplier(player, facility),
+        "ramping_time": const_config_assets[facility]["ramping_time"] / power_multiplier(player, facility)
+        if const_config_assets[facility]["ramping_time"] != 0
+        else None,
+        "ramping_speed": const_config_assets[facility]["base_power_generation"]
+        * power_multiplier(player, facility)
+        / const_config_assets[facility]["ramping_time"]
+        if const_config_assets[facility]["ramping_time"] != 0
+        else None,
+        "operating_costs": const_config_assets[facility]["base_price"]
+        * price_multiplier(player, facility)
+        * const_config_assets[facility]["O&M_factor"]
+        / engine.clock_time
+        * 60,
+        "lifespan": const_config_assets[facility]["lifespan"] * (engine.clock_time / 60) ** 0.5,
+    }
+
+
+def package_power_facilities(player: Player):
+    """Gets all data relevant for the power_facilities frontend"""
+    engine: gameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    return [
+        _package_facility_base(player, power_facility)
+        | _package_power_generating_facility_base(player, power_facility)
+        | {
+            "pollution": const_config_assets[power_facility]["base_pollution"]
+            / efficiency_multiplier(player, power_facility)
+            if power_facility in engine.controllable_facilities + engine.storage_facilities
+            else 1,
+            "consumed_resources": power_facility_resource_consumption(player, power_facility),
+        }
+        for power_facility in engine.power_facilities
+    ]
+
+
+def package_storage_facilities(player: Player):
+    """Gets all data relevant for the storage_facilities frontend"""
+    engine: gameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    return [
+        _package_facility_base(player, storage_facility)
+        | _package_power_generating_facility_base(player, storage_facility)
+        | {
+            "storage_capacity": const_config_assets[storage_facility]["base_storage_capacity"]
+            * capacity_multiplier(player, storage_facility),
+            "efficiency": const_config_assets[storage_facility]["base_efficiency"]
+            * efficiency_multiplier(player, storage_facility)
+            * 100,
+        }
+        for storage_facility in engine.storage_facilities
+    ]
+
+
+def package_constructions_page_data(player: Player):
     """
     Gets cost, emissions, max power, etc data for constructions.
     Takes into account base config prices and multipliers for the specified player.
@@ -357,69 +440,13 @@ def package_constructions_page_data(player):
             }
         }
     ```
-
     """
     engine: gameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
-    # power_facilities_property_keys = [
-    #     "price",
-    #     "construction time",
-    #     "construction power",
-    #     "construction pollution",
-    #     "locked",
-    #     "power generation",
-    #     "ramping speed",
-    #     "O&M cost",
-    #     "consumed resource",
-    #     "pollution",
-    #     "lifespan",
-    # ]
     return {
-        "power_facilities": [
-            {
-                "name": power_facility,
-                "display_name": const_config_assets[power_facility]["name"],
-                "wikipedia_link": const_config_assets[power_facility]["wikipedia_link"],
-                "description": const_config_assets[power_facility]["description"],
-                "price": const_config_assets[power_facility]["base_price"]
-                * price_multiplier(player, power_facility)
-                * (
-                    capacity_multiplier(player, power_facility)
-                    if power_facility in ["watermill", "small_water_dam", "large_water_dam"]
-                    else 1.0
-                ),
-                "construction_time": construction_time(player, power_facility),
-                "construction_power": construction_power(player, power_facility),
-                "construction_pollution": construction_pollution(player, power_facility),
-                "locked": requirements_met(facility_requirements(player, power_facility)),
-                "requirements": facility_requirements(player, power_facility),
-                "power_generation": const_config_assets[power_facility]["base_power_generation"]
-                * power_multiplier(player, power_facility),
-                "ramping_time": const_config_assets[power_facility]["ramping_time"]
-                / power_multiplier(player, power_facility)
-                if const_config_assets[power_facility]["ramping_time"] != 0
-                else None,
-                "ramping_speed": const_config_assets[power_facility]["base_power_generation"]
-                * power_multiplier(player, power_facility)
-                / const_config_assets[power_facility]["ramping_time"]
-                if const_config_assets[power_facility]["ramping_time"] != 0
-                else None,
-                "operating_costs": const_config_assets[power_facility]["base_price"]
-                * price_multiplier(player, power_facility)
-                * const_config_assets[power_facility]["O&M_factor"]
-                / engine.clock_time
-                * 60,
-                "pollution": const_config_assets[power_facility]["base_pollution"]
-                / efficiency_multiplier(player, power_facility)
-                if power_facility in engine.controllable_facilities + engine.storage_facilities
-                else 1,
-                "lifespan": const_config_assets[power_facility]["lifespan"] * (engine.clock_time / 60) ** 0.5,
-                "consumed_resources": power_facility_resource_consumption(player, power_facility),
-            }
-            for power_facility in engine.power_facilities
-        ],
+        "power_facilities": package_power_facilities(player),
+        "storage_facilities": package_storage_facilities(player),
         # TODO: non-power facilities
-        "storage_facilities": [],
         "extraction_facilities": [],
         "functional_facilities": [],
     }

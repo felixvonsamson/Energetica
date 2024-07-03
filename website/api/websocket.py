@@ -47,6 +47,7 @@ def add_sock_handlers(sock, engine):
         """Main WebSocket endpoint for API."""
         player = g.player
         engine.log(f"Received WebSocket connection for player {player}")
+        # TODO: Review what data is sent before a tile is selected
         ws.send(rest_get_map())
         ws.send(rest_get_players())
         ws.send(rest_get_current_player(player))
@@ -275,6 +276,8 @@ def rest_get_facilities_data(engine, player: Player):
     """
     Gets player's facilities data and returns it as a JSON string
     """
+    # TODO: Remove this print
+    print(package_constructions_page_data(player)["storage_facilities"])
     return json.dumps({"type": "getFacilitiesData", "data": package_constructions_page_data(player)})
 
 
