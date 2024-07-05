@@ -1,6 +1,5 @@
 // data of the temporal graph
 let temporal_data = {"network_data": {}, "exports": {}, "imports": {}};
-let lower_bounds, upper_bounds;
 let price_curve;
 let data_len;
 
@@ -18,6 +17,7 @@ let ox;
 
 // data for the energy flux graph
 let energy_flux, revenue_flux;
+let flux_curves;
 
 //resolution buttons
 let resolution_list;
@@ -136,6 +136,8 @@ function setup() {
         carbon_capture: [color(173, 181, 189), "CO2 capture"],
 
         price: [color(139, 0, 0), "Market price"],
+        energy: [color(0, 100, 0), "Power"],
+        revenues: [color(0, 0, 139), "Revenues"],
     };
 
     canvas_width = 0.7 * windowWidth;
@@ -143,6 +145,8 @@ function setup() {
         canvas_width = windowWidth;
     }
     margin = min(70, canvas_width / 10);
+
+    temporal_imports_p5 = new p5(temporal_imports, "temporal_imports");
 
     temporal_graph_p5 =  new p5(temporal_graph_sketch, "temporal_graph");
     
@@ -166,7 +170,82 @@ function temporal_imports(s){
     s.draw = function() {
         if (s.graphics_ready) {
             s.image(s.graphics, 0, 0);
+            s.push();
+            s.stroke(255);
+            s.strokeWeight(2);
+            let X = min(s.graph_w, max(0, s.mouseX - margin));
+            t_view = floor(map(X, 0, s.graph_w, 0, data_len - 1));
+            s.translate(margin + X, s.graph_h + 0.4 * margin);
+            s.line(0, 0, 0, -s.graph_h);
+            s.noStroke();
+
+            let h = map(flux_curves.energy[t_view], s.lower_bounds.energy, s.upper_bounds.energy, 0, -s.graph_h);
+            s.ellipse(0, h, 8, 8);
+            h = map(flux_curves.revenues[t_view], s.lower_bounds.revenues, s.upper_bounds.revenues, 0, -s.graph_h);
+            s.ellipse(0, h, 8, 8);
+            
+            let count = 3;
+            let tx = -180;
+            let ty = - 0.4 * margin - s.graph_h + s.mouseY;
+            if (ty > - count * 16) {
+                ty = - count * 16;
+            }
+            if (X < 180) {
+                tx = 20;
+            }
+            s.translate(tx, ty);
+            fill_alt = 0;
+            alternate_fill(s);
+            s.rect(0, 0, 160, 17);
+            s.fill(0);
+            s.textFont(balooBold);
+            s.text(display_duration((data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+            s.textFont(font);
+            s.translate(0, 16);
+
+            alternate_fill(s);
+            s.rect(0, 0, 160, 17);
+            s.push();
+            s.fill(cols_and_names.energy[0]);
+            s.rect(0, 0, 16, 17);
+            s.pop();
+            s.fill(0);
+            s.textAlign(LEFT, CENTER);
+            if(flux_curves.energy[t_view] >= 0){
+                s.text("Export", 20, 5);
+            }else{
+                s.text("Import", 20, 5);
+            }
+            s.textAlign(CENTER, CENTER);
+            s.text(display_W(abs(flux_curves.energy[t_view])), 132, 5);
+            s.translate(0, 16);
+
+            alternate_fill(s);
+            s.rect(0, 0, 160, 17);
+            s.push();
+            s.fill(cols_and_names.revenues[0]);
+            s.rect(0, 0, 16, 17);
+            s.pop();
+            s.fill(0);
+            s.textAlign(LEFT, CENTER);
+            s.text(cols_and_names.revenues[1], 20, 5);
+            s.textAlign(RIGHT, CENTER);
+            s.text(display_money(flux_curves.revenues[t_view]), 132, 5);
+            s.text("/h", 158, 5);
+            s.image(coin, 134, 2, 12, 12);
+            
+            s.pop();
         }
+    }
+
+    s.mouseMoved = function() {
+        if (s.mouseX>0 && s.mouseX<s.width && s.mouseY>0 && s.mouseY<s.height){
+            s.redraw();
+        }
+    }
+
+    s.mouseDragged = function() {
+        s.mouseMoved();
     }
 
     s.render_graph = function(){
@@ -174,80 +253,140 @@ function temporal_imports(s){
         s.graph_w = s.width - 2 * margin;
         s.graphics.background(229, 217, 182);
 
-        data_len = temporal_data["network_data"]["price"][res].length;
-        lower_bounds = {
-            price: Math.min(0, ...temporal_data["network_data"]["price"][res]),
-            quantity: 0,
+        data_len = energy_flux[res].length;
+        s.lower_bounds = {
+            energy: min(0, ...energy_flux[res]),
+            revenues: min(0, ...revenue_flux[res]),
         };
-        upper_bounds = {
-            price: Math.max(...temporal_data["network_data"]["price"][res], -lower_bounds["price"]),
-            quantity: Math.max(...temporal_data["network_data"]["quantity"][res]),
+        s.upper_bounds = {
+            energy: max(0, ...energy_flux[res]),
+            revenues: max(0, ...revenue_flux[res]),
         };
-        s.frac = upper_bounds["price"] / (upper_bounds["price"] - lower_bounds["price"]); // fraction of negative range in the graph
+        let range_energy = s.upper_bounds.energy - s.lower_bounds.energy;
+        let range_revenues = s.upper_bounds.revenues - s.lower_bounds.revenues;
+        let f1 = s.upper_bounds.energy / range_energy;
+        let f2 = s.upper_bounds.revenues / range_revenues;
+        let max_frac = max(f1, f2);
+        let min_frac = min(f2-1, f1-1);
+        s.lower_bounds.energy = min_frac * range_energy;
+        s.lower_bounds.revenues = min_frac * range_revenues;
+        s.upper_bounds.energy = max_frac * range_energy;
+        s.upper_bounds.revenues = max_frac * range_revenues;
 
         s.graphics.push();
         s.graphics.translate(margin, 0.4 * margin + s.graph_h);
         s.graphics.noStroke();
-
-        s.graphics.push();
-        for (let t = 0; t < data_len; t++) {
-            s.graphics.push();
-            let sum = upper_bounds["quantity"];
-            if(s.percent == "percent"){
-                const player_ids = Object.keys(temporal_data[s.view]);
-                sum = player_ids.reduce((acc, player_id) => {
-                    return acc + (temporal_data[s.view][player_id][res][t] || 0);
-                }, 0);
-            }
-            for (const player_id in temporal_data[s.view]) {
-                if (temporal_data[s.view][player_id][res][t] > 0) {
-                    s.graphics.fill(random_colors[player_id % random_colors.length]);
-                    let h = temporal_data[s.view][player_id][res][t] * s.graph_h / sum;
-                    s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
-                    s.graphics.translate(0, -h);
-                }
-            }
-            s.graphics.pop();
-            s.graphics.translate(s.graph_w / data_len, 0);
-        }
-        s.graphics.pop();
         
-        if(s.price_mode != "off"){
-            price_curve = [...temporal_data.network_data.price[res]];
-            if (s.price_mode == "smoothed") {
-                let window_size = 5;
-                // Generate Normalized Gaussian kernel
-                let gaussian_kernel = [];
-                for (let i = -window_size; i <= window_size; i++) {
-                    gaussian_kernel.push(Math.exp(-(i ** 2) / 10));
+        flux_curves = {
+            revenues: [...revenue_flux[res]],
+            energy: [...energy_flux[res]],
+        };
+        if (s.smoothed == "smoothed") {
+            let window_size = 5;
+            // Generate Normalized Gaussian kernel
+            let gaussian_kernel = [];
+            for (let i = -window_size; i <= window_size; i++) {
+                gaussian_kernel.push(Math.exp(-(i ** 2) / 10));
+            }
+            
+            flux_curves = {
+                revenues: [],
+                energy: [],
+            };
+            for (let curve in flux_curves) {
+                let curve_data = revenue_flux;
+                if (curve == "energy") {
+                    curve_data = energy_flux;
                 }
-                
-                price_curve = []
                 for (let t = 0; t < data_len; t++) {
                     let start = max(0, t - window_size);
                     let end = min(data_len - 1, t + window_size);
                     let sum = 0;
                     let weight_sum = 0;
                     for (let i = start; i <= end; i++) {
-                        sum += temporal_data.network_data.price[res][i] * gaussian_kernel[i - t + window_size];
+                        sum += curve_data[res][i] * gaussian_kernel[i - t + window_size];
                         weight_sum += gaussian_kernel[i - t + window_size];
                     }
-                    price_curve[t] = sum / weight_sum; 
+                    flux_curves[curve][t] = sum / weight_sum; 
                 }
             }
+        }
+        for (let curve in flux_curves) {
             s.graphics.push();
-            s.graphics.translate(0, -s.graph_h * (1 - s.frac));
             s.graphics.strokeWeight(3);
-            s.graphics.stroke(cols_and_names["price"][0]);
+            s.graphics.stroke(cols_and_names[curve][0]);
             for (let t = 1; t < data_len; t++) {
-                let h1 = (price_curve[t - 1] / upper_bounds["price"]) * s.graph_h * s.frac;
-                let h2 = (price_curve[t] / upper_bounds["price"]) * s.graph_h * s.frac;
+                let h1 = map(flux_curves[curve][t - 1], s.lower_bounds[curve], s.upper_bounds[curve], 0, s.graph_h);
+                let h2 = map(flux_curves[curve][t], s.lower_bounds[curve], s.upper_bounds[curve], 0, s.graph_h);
                 s.graphics.line(0, -h1, s.graph_w / data_len, -h2);
                 s.graphics.translate(s.graph_w / (data_len - 1), 0);
             }
             s.graphics.pop();
         }
+
+        s.graphics.stroke(0);
+        let h0 = map(0, s.lower_bounds.energy, s.upper_bounds.energy, 0, -s.graph_h);
+        s.graphics.line(0, h0, s.graph_w, h0);
+        s.graphics.line(0, 0, 0, -s.graph_h);
+        s.graphics.line(s.graph_w, 0, s.graph_w, -s.graph_h);
+
+        s.graphics.push();
+        let units = time_unit(res, clock_time);
+        s.graphics.fill(0);
+        for (let i = 0; i < units.length; i++) {
+            s.graphics.stroke(0, 0, 0, 30);
+            let x = (i * s.graph_w) / (units.length - 1);
+            s.graphics.line(x, -s.graph_h, x, 0);
+            s.graphics.stroke(0);
+            s.graphics.line(x, h0, x, h0+5);
+            s.graphics.noStroke();
+            s.graphics.text(units[i], x, 0.26 * margin);
+        }
+        s.graphics.pop();
+
+        s.graphics.push();
+        let y_ticks = y_units_bounded(s.graph_h, s.lower_bounds.revenues, s.upper_bounds.revenues)
+        s.graphics.fill(cols_and_names.revenues[0]);
+        s.graphics.textAlign(RIGHT, CENTER);
+        for (let i in y_ticks) {
+            s.graphics.stroke(cols_and_names.revenues[0]);
+            s.graphics.line(0, -i, -5, -i);
+            s.graphics.noStroke();
+            s.graphics.image(coin, -23, -i - 6, 12, 12);
+            s.graphics.text(display_money(y_ticks[i]), -28, -i - 3);
+        }
+        s.graphics.pop();
+
+        s.graphics.push();
+        y_ticks =y_units_bounded(s.graph_h, s.lower_bounds.energy, s.upper_bounds.energy)
+        s.graphics.fill(0);
+        s.graphics.fill(cols_and_names.energy[0]);
+        for (let i in y_ticks) {
+            s.graphics.stroke(0, 0, 0, 30);
+            s.graphics.line(s.graph_w, -i, 0, -i);
+            s.graphics.stroke(cols_and_names.energy[0]);
+            s.graphics.line(s.graph_w, -i, s.graph_w + 5, -i);
+            s.graphics.noStroke();
+            s.graphics.text(display_W(y_ticks[i]), s.graph_w + 0.5 * margin, -i - 3);
+        }
+        s.graphics.pop();
+
+        s.graphics.pop();
+
+        s.graphics_ready = true;
+        s.redraw();
     }
+}
+
+function change_smoothed(smoothed_mode){
+    if (smoothed_mode != "off") {
+        show_selected_button("price_mode_button_", smoothed_mode)
+        temporal_imports_p5.smoothed = smoothed_mode;
+        temporal_imports_p5.render_graph();
+    }
+    show_selected_button("price_mode_button_", smoothed_mode)
+    temporal_graph_p5.price_mode = smoothed_mode;
+    temporal_graph_p5.render_graph();
 }
 
 function temporal_graph_sketch(s){
@@ -278,13 +417,13 @@ function temporal_graph_sketch(s){
             if (s.price_mode != "off") {
                 s.push();
                 s.translate(0, - s.graph_h * (1-s.frac));
-                let h = (-price_curve[t_view] / upper_bounds.price) * s.graph_h * s.frac;
+                let h = (-price_curve[t_view] / s.upper_bounds.price) * s.graph_h * s.frac;
                 s.ellipse(0, h, 8, 8);
                 s.pop();
             }
 
             s.push();
-            let sum = upper_bounds.quantity;
+            let sum = s.upper_bounds.quantity;
             if(s.percent == "percent"){
                 const player_ids = Object.keys(temporal_data[s.view]);
                 sum = player_ids.reduce((acc, player_id) => {
@@ -315,8 +454,8 @@ function temporal_graph_sketch(s){
                 tx = 20;
             }
             s.translate(tx, ty);
-            alternate_fill(s);
             fill_alt = 0;
+            alternate_fill(s);
             s.rect(0, 0, 160, 17);
             s.fill(0);
             s.textFont(balooBold);
@@ -396,15 +535,15 @@ function temporal_graph_sketch(s){
         s.graphics.background(229, 217, 182);
 
         data_len = temporal_data["network_data"]["price"][res].length;
-        lower_bounds = {
+        s.lower_bounds = {
             price: Math.min(0, ...temporal_data["network_data"]["price"][res]),
             quantity: 0,
         };
-        upper_bounds = {
-            price: Math.max(...temporal_data["network_data"]["price"][res], -lower_bounds["price"]),
+        s.upper_bounds = {
+            price: Math.max(...temporal_data["network_data"]["price"][res], -s.lower_bounds["price"]),
             quantity: Math.max(...temporal_data["network_data"]["quantity"][res]),
         };
-        s.frac = upper_bounds["price"] / (upper_bounds["price"] - lower_bounds["price"]); // fraction of negative range in the graph
+        s.frac = s.upper_bounds["price"] / (s.upper_bounds["price"] - s.lower_bounds["price"]); // fraction of positive range in the graph
 
         s.graphics.push();
         s.graphics.translate(margin, 0.4 * margin + s.graph_h);
@@ -413,7 +552,7 @@ function temporal_graph_sketch(s){
         s.graphics.push();
         for (let t = 0; t < data_len; t++) {
             s.graphics.push();
-            let sum = upper_bounds["quantity"];
+            let sum = s.upper_bounds["quantity"];
             if(s.percent == "percent"){
                 const player_ids = Object.keys(temporal_data[s.view]);
                 sum = player_ids.reduce((acc, player_id) => {
@@ -461,8 +600,8 @@ function temporal_graph_sketch(s){
             s.graphics.strokeWeight(3);
             s.graphics.stroke(cols_and_names["price"][0]);
             for (let t = 1; t < data_len; t++) {
-                let h1 = (price_curve[t - 1] / upper_bounds["price"]) * s.graph_h * s.frac;
-                let h2 = (price_curve[t] / upper_bounds["price"]) * s.graph_h * s.frac;
+                let h1 = (price_curve[t - 1] / s.upper_bounds["price"]) * s.graph_h * s.frac;
+                let h2 = (price_curve[t] / s.upper_bounds["price"]) * s.graph_h * s.frac;
                 s.graphics.line(0, -h1, s.graph_w / data_len, -h2);
                 s.graphics.translate(s.graph_w / (data_len - 1), 0);
             }
@@ -490,41 +629,35 @@ function temporal_graph_sketch(s){
 
         if (s.price_mode != "off") {
             s.graphics.push();
-            s.graphics.translate(0, -s.graph_h * (1 - s.frac));
-            let y_ticks = y_units(upper_bounds["price"]);
-            let interval2 = y_ticks[1];
+            let y_ticks = y_units_bounded(s.graph_h, s.lower_bounds["price"], s.upper_bounds["price"]);
             s.graphics.fill(cols_and_names["price"][0]);
-            let y2 = map(interval2, 0, upper_bounds["price"], 0, s.graph_h * s.frac);
             s.graphics.textAlign(RIGHT, CENTER);
-            for (let i = 0; i < y_ticks.length; i++) {
+            for (let i in y_ticks) {
                 s.graphics.stroke(cols_and_names["price"][0]);
-                s.graphics.line(0, -y2 * i, -5, -y2 * i);
+                s.graphics.line(0, -i, -5, -i);
                 s.graphics.noStroke();
-                s.graphics.image(coin, -23, -y2 * i - 6, 12, 12);
-                s.graphics.text(display_money(y_ticks[i]), -28, -y2 * i - 3);
+                s.graphics.image(coin, -23, -i - 6, 12, 12);
+                s.graphics.text(display_money(y_ticks[i]), -28, -i - 3);
             }
             s.graphics.pop();
         }
 
         s.graphics.push();
-        let y_ticks3 = y_units(upper_bounds["quantity"]);
-        let interval3 = y_ticks3[1];
-        s.graphics.fill(0);
-        let y3 = map(interval3, 0, upper_bounds["quantity"], 0, s.graph_h);
         if(s.percent == "percent"){
-            y_ticks3 = ["0", "25%", "50%", "75%", "100%"];
-            y3 = s.graph_h / 4;
+            s.upper_bounds["quantity"] = 100;
         }
-        for (let i = 0; i < y_ticks3.length; i++) {
+        let y_ticks3 = y_units_bounded(s.graph_h, s.lower_bounds["quantity"], s.upper_bounds["quantity"], divisions=4);
+        s.graphics.fill(0);
+        for (let i in y_ticks3) {
             s.graphics.stroke(0, 0, 0, 30);
-            s.graphics.line(s.graph_w, -y3 * i, 0, -y3 * i);
+            s.graphics.line(s.graph_w, -i, 0, -i);
             s.graphics.stroke(0);
-            s.graphics.line(s.graph_w, -y3 * i, s.graph_w + 5, -y3 * i);
+            s.graphics.line(s.graph_w, -i, s.graph_w + 5, -i);
             s.graphics.noStroke();
             if(s.percent == "percent"){
-                s.graphics.text(y_ticks3[i], s.graph_w + 0.5 * margin, -y3 * i + 3);
+                s.graphics.text(y_ticks3[i] + "%", s.graph_w + 0.5 * margin, -i + 3);
             }else{
-                s.graphics.text(display_W(y_ticks3[i]), s.graph_w + 0.5 * margin, -y3 * i - 3);
+                s.graphics.text(display_W(y_ticks3[i]), s.graph_w + 0.5 * margin, -i - 3);
             }
         }
         s.graphics.pop();
@@ -540,17 +673,12 @@ function change_res(i){
     show_selected_button("res_button_", i)
     res = resolution_list[i];
     temporal_graph_p5.render_graph();
+    temporal_imports_p5.render_graph();
 }
 
 function change_export_import(view){
     show_selected_button("export_import_button_", view)
     temporal_graph_p5.view = view;
-    temporal_graph_p5.render_graph();
-}
-
-function change_price_mode(price_mode){
-    show_selected_button("price_mode_button_", price_mode)
-    temporal_graph_p5.price_mode = price_mode;
     temporal_graph_p5.render_graph();
 }
 
@@ -888,10 +1016,20 @@ function fetch_temporal_network_data() {
     load_chart_data().then((raw_chart_data) => {
         let imports = raw_chart_data.generation.imports;
         let exports = raw_chart_data.demand.exports;
-        energy_flux = exports;
-        for (let i = 0; i < energy_flux.length; i++) {
-            energy_flux[i] = -imports[i];
+        energy_flux = {};
+        energy_flux[resolution_list[0]] = exports[0].map((num, idx) => num - imports[0][idx]).slice(-60);
+        for (let i = 0; i < resolution_list.length-1; i++) {
+            energy_flux[resolution_list[i+1]] = exports[i].map((num, idx) => num - imports[i][idx]);
         }
+        let imports_revenue = raw_chart_data.revenues.imports;
+        let exports_revenue = raw_chart_data.revenues.exports;
+        revenue_flux = {};
+        revenue_flux[resolution_list[0]] = exports_revenue[0].map((num, idx) => 60 * clock_time * (num + imports_revenue[0][idx])).slice(-60);
+        for (let i = 0; i < resolution_list.length-1; i++) {
+            revenue_flux[resolution_list[i+1]] = exports_revenue[i].map((num, idx) => 60 * clock_time * (num + imports_revenue[i][idx]));
+        }
+
+        temporal_imports_p5.render_graph();
     });
     load_chart_data((network = true)).then((raw_chart_data) => {
         Object.keys(raw_chart_data).forEach((key) => {
@@ -1302,7 +1440,7 @@ function display_time(ticks) {
 
 function general_format(value, units) {
     let unit_index = 0;
-    while (value >= 10000 && unit_index < units.length - 1) {
+    while (abs(value) >= 10000 && unit_index < units.length - 1) {
         value /= 1000;
         unit_index += 1;
     }
@@ -1363,14 +1501,19 @@ function time_unit(res, ct) {
     }
 }
 
-function y_units(maxNumber) {
-    let interval = Math.floor(maxNumber / 3);
+function y_units_bounded(height, minNumber, maxNumber, divisions=3) {
+    let interval = Math.floor((maxNumber - minNumber) / divisions);
     const orderOfMagnitude = Math.floor(Math.log10(interval));
     const firstDigit = Math.floor(interval / 10 ** orderOfMagnitude);
     interval = firstDigit * 10 ** orderOfMagnitude;
-    let values = [];
+    let values = {};
     for (let i = 0; i <= maxNumber; i += interval) {
-        values.push(i);
+        let h = map(i, minNumber, maxNumber, 0, height);
+        values[h] = i;
+    }
+    for (let i = -interval; i >= minNumber; i -= interval) {
+        let h = map(i, minNumber, maxNumber, 0, height);
+        values[h] = i;
     }
     return values;
 }
