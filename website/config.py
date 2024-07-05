@@ -703,9 +703,9 @@ const_config = {
             "base_construction_energy": 8000000,
             "price multiplier": 1.4,
             "price factor": 1.2,
-            "extract factor": 1.30,
-            "energy factor": 1.25,
-            "pollution factor": 1.05,
+            "extract factor": 0.30,
+            "energy factor": 0.25,
+            "pollution factor": 0.05,
             "affected facilities": [
                 "coal_mine",
                 "oil_field",

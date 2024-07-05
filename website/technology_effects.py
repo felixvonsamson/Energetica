@@ -62,7 +62,7 @@ def power_multiplier(player, facility):
         mlt *= const_config["physics"]["prod factor"] ** player.physics
     # Mineral extraction (in this case it is the energy consumption)
     if facility in const_config["mineral_extraction"]["affected facilities"]:
-        mlt *= const_config["mineral_extraction"]["energy factor"] ** player.mineral_extraction
+        mlt += const_config["mineral_extraction"]["energy factor"] * player.mineral_extraction
     # Civil engineering
     if facility in const_config["civil_engineering"]["affected facilities"]:
         mlt *= const_config["civil_engineering"]["prod factor"] ** player.civil_engineering
@@ -81,7 +81,7 @@ def capacity_multiplier(player, facility):
     mlt = 1
     # Mineral extraction (in this case it is the extraction rate in fraction of total underground stock per minute)
     if facility in const_config["mineral_extraction"]["affected facilities"]:
-        mlt *= const_config["mineral_extraction"]["extract factor"] ** player.mineral_extraction
+        mlt += const_config["mineral_extraction"]["extract factor"] * player.mineral_extraction
     # Civil engineering
     if facility in ["small_pumped_hydro", "large_pumped_hydro"]:
         mlt *= const_config["civil_engineering"]["capacity factor"] ** player.civil_engineering
@@ -114,7 +114,7 @@ def efficiency_multiplier(player, facility):
         mlt *= thermodynamic_factor
     # Mineral extraction (in this case the the multiplicator is for emissions)
     if facility in const_config["mineral_extraction"]["affected facilities"]:
-        mlt *= const_config["mineral_extraction"]["pollution factor"] ** player.mineral_extraction
+        mlt += const_config["mineral_extraction"]["pollution factor"] * player.mineral_extraction
     # Chemistry
     if facility in const_config["chemistry"]["affected facilities"]:
         chemistry_factor = const_config["chemistry"]["inefficiency_factor"] ** player.chemistry

@@ -207,7 +207,7 @@
               {% if "extract factor" in const_data %}
                 <tr>
                   <td>Extraction speed</td>
-                  <td class="txt_center">+{{ (const_data["extract factor"]*100-100)|int }}%</td>
+                  <td class="txt_center">+{{ (100*const_data["extract factor"]/(1+const_data["extract factor"]*user[facility]))|round(0)|int }}%</td>
                 </tr>
               {% endif %}
               {% if "efficiency_factor" in const_data %}
@@ -255,13 +255,13 @@
               {% if facility == "mineral_extraction" %}
                 <tr>
                   <td>Power consumption</td>
-                  <td class="txt_center">+{{ (const_data["energy factor"]*100-100)|int }}%</td>
+                  <td class="txt_center">+{{ (100*const_data["energy factor"]/(1+const_data["energy factor"]*user[facility]))|round(0)|int }}%</td>
                 </tr>
               {% endif %}
               {% if "pollution factor" in const_data %}
                 <tr>
                   <td>CO2 emissions</td>
-                  <td class="txt_center">+{{ ((const_data["pollution factor"]-1)*100)|int }}%</td>
+                  <td class="txt_center">+{{ (100*const_data["pollution factor"]/(1+const_data["pollution factor"]*user[facility]))|round(0)|int }}%</td>
                 </tr>
               {% endif %}
               {% if "capacity factor" in const_data %}

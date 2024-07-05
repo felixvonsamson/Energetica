@@ -701,19 +701,19 @@
       </tr>
       <tr>
         <td>Coal</td>
-        <td>{{ (const_data.coal_mine.extraction_rate*6000) | round(4) }}% /h</td>
+        <td>{{ (const_data.coal_mine.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
       </tr>
       <tr>
         <td>Oil</td>
-        <td>{{ (const_data.oil_field.extraction_rate*6000) | round(4) }}% /h</td>
+        <td>{{ (const_data.oil_field.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
       </tr>
       <tr>
         <td>Gas</td>
-        <td>{{ (const_data.gas_drilling_site.extraction_rate*6000) | round(4) }}% /h</td>
+        <td>{{ (const_data.gas_drilling_site.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
       </tr>
       <tr>
         <td>Uranium</td>
-        <td>{{ (const_data.uranium_mine.extraction_rate*6000) | round(4) }}% /h</td>
+        <td>{{ (const_data.uranium_mine.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
       </tr>
     </table>
   </div>
