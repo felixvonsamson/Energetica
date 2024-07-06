@@ -1,7 +1,14 @@
-# This files contains all the functions to calculate the different parameters of facilities according to the technology levels of the player.
+"""
+This files contains all the functions to calculate the different parameters of
+facilities according to the technology levels of the player.
+"""
 
 import math
 from flask import current_app
+
+from website import gameEngine
+from website.database.map import Hex
+from website.database.player import Player
 from .database.player_assets import Active_facilities, Under_construction
 
 
@@ -55,7 +62,7 @@ def power_multiplier(player, facility):
         mlt *= const_config["physics"]["prod factor"] ** player.physics
     # Mineral extraction (in this case it is the energy consumption)
     if facility in const_config["mineral_extraction"]["affected facilities"]:
-        mlt *= const_config["mineral_extraction"]["energy factor"] ** player.mineral_extraction
+        mlt += const_config["mineral_extraction"]["energy factor"] * player.mineral_extraction
     # Civil engineering
     if facility in const_config["civil_engineering"]["affected facilities"]:
         mlt *= const_config["civil_engineering"]["prod factor"] ** player.civil_engineering
@@ -74,7 +81,7 @@ def capacity_multiplier(player, facility):
     mlt = 1
     # Mineral extraction (in this case it is the extraction rate in fraction of total underground stock per minute)
     if facility in const_config["mineral_extraction"]["affected facilities"]:
-        mlt *= const_config["mineral_extraction"]["extract factor"] ** player.mineral_extraction
+        mlt += const_config["mineral_extraction"]["extract factor"] * player.mineral_extraction
     # Civil engineering
     if facility in ["small_pumped_hydro", "large_pumped_hydro"]:
         mlt *= const_config["civil_engineering"]["capacity factor"] ** player.civil_engineering
@@ -107,7 +114,7 @@ def efficiency_multiplier(player, facility):
         mlt *= thermodynamic_factor
     # Mineral extraction (in this case the the multiplicator is for emissions)
     if facility in const_config["mineral_extraction"]["affected facilities"]:
-        mlt *= const_config["mineral_extraction"]["pollution factor"] ** player.mineral_extraction
+        mlt += const_config["mineral_extraction"]["pollution factor"] * player.mineral_extraction
     # Chemistry
     if facility in const_config["chemistry"]["affected facilities"]:
         chemistry_factor = const_config["chemistry"]["inefficiency_factor"] ** player.chemistry
@@ -136,6 +143,7 @@ def efficiency_multiplier(player, facility):
 
 
 def construction_time(player, facility):
+    """Function that returns the construction time according to the technology level of the player."""
     engine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
     # dilatation foactor dependent on clock_time
@@ -161,6 +169,7 @@ def construction_time(player, facility):
 
 
 def construction_power(player, facility):
+    """Function that returns the construction power according to the technology level of the player."""
     engine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
     bt_factor = const_config["building_technology"]["time factor"] ** player.building_technology
@@ -201,7 +210,8 @@ def construction_power(player, facility):
     return power
 
 
-def construction_pollution(player, facility):
+def construction_pollution_per_tick(player, facility):
+    """Function that returns the construction pollution per tick according to the technology level of the player."""
     engine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
     if facility in engine.technologies:
@@ -216,16 +226,59 @@ def construction_pollution(player, facility):
 
 
 def time_multiplier():
-    # dilatation foactor dependent on clock_time
+    """dilatation foactor dependent on clock_time"""
     return (current_app.config["engine"].clock_time / 60) ** 0.5
 
 
 def hydro_price_function(count, potential):
+    """price multiplier coefficient, for the `count`th hydro facility of a particular type, given the hydro potential"""
     return 0.6 + (math.e ** (0.6 * (count + 1 - 3 * potential) / (0.3 + potential)))
 
 
 def wind_speed_multiplier(count, potential):
+    """wind speed multiplier, for the `count`th wind facility of a particular type, given the wind potential"""
     return 1 / (math.log(math.e + (count * (1 / (9 * potential + 1))) ** 2))
+
+
+def facility_requirements(player, facility):
+    """Returns the list of requirements (name, level, and boolean for met) for the specified facility"""
+    const_config = current_app.config["engine"].const_config["assets"]
+    requirements = const_config[facility]["requirements"].copy()
+    return [
+        {
+            "name": requirement[0],
+            "display_name": const_config[requirement[0]]["name"],
+            "level": requirement[1],
+            "fulfilled": getattr(player, requirement[0]) >= requirement[1],
+        }
+        for requirement in requirements
+    ]
+
+
+def requirements_met(requirements):
+    """Returns True (meaning locked) if any requirements are not met, otherwise False (not locked)"""
+    return any(requirement["fulfilled"] is False for requirement in requirements)
+
+
+def facility_requirements_and_locked(player, facility):
+    """Returns a dictionnary with both requirements and locked status"""
+    requirements = facility_requirements(player, facility)
+    locked = requirements_met(requirements)
+    return {"requirements": requirements, "locked": locked}
+
+
+def power_facility_resource_consumption(player, power_facility):
+    """Returns a dictionary of the resources consumed by the power_facility for this player"""
+    # TODO: perhaps rejig how this information is packaged.
+    # Namely, switch from a dictionary with the system resource name as a key and a float for the amount as a value
+    # to an array of dictionaries with keys ranging in "name", "display_name", "amount"
+    consumed_resources = current_app.config["engine"].const_config["assets"][power_facility]["consumed_resource"].copy()
+    multiplier = efficiency_multiplier(player, power_facility)
+    if multiplier == 0:
+        multiplier = 1
+    for resource in consumed_resources:
+        consumed_resources[resource] /= multiplier
+    return consumed_resources
 
 
 def get_current_technology_values(player):
@@ -242,7 +295,7 @@ def get_current_technology_values(player):
             "price_multiplier": price_multiplier(player, facility),
             "construction_time": construction_time(player, facility),
             "construction_power": construction_power(player, facility),
-            "construction_pollution": construction_pollution(player, facility),
+            "construction_pollution": construction_pollution_per_tick(player, facility),
         }
     for facility in engine.power_facilities + engine.storage_facilities:
         dict[facility]["power_multiplier"] = power_multiplier(player, facility)
@@ -287,3 +340,167 @@ def get_current_technology_values(player):
                 dict[facility]["locked"] = True
 
     return dict
+
+
+def _package_facility_base(player: Player, facility):
+    """Gets data shared between power, storage, extraction, and functional facilities"""
+    engine: gameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    return {
+        "name": facility,
+        "display_name": const_config_assets[facility]["name"],
+        "description": const_config_assets[facility]["description"],
+        "wikipedia_link": const_config_assets[facility]["wikipedia_link"],
+        "price": const_config_assets[facility]["base_price"]
+        * price_multiplier(player, facility)
+        * (
+            capacity_multiplier(player, facility)
+            if facility in ["watermill", "small_water_dam", "large_water_dam"]
+            else 1.0
+        ),
+        "construction_power": construction_power(player, facility),
+        "construction_time": construction_time(player, facility),
+        "locked": requirements_met(facility_requirements(player, facility)),
+        "requirements": facility_requirements(player, facility),
+    }
+
+
+def _package_power_generating_facility_base(player: Player, facility):
+    """Gets all data shared by power and storage facilites"""
+    engine: gameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    return {
+        "power_generation": const_config_assets[facility]["base_power_generation"] * power_multiplier(player, facility),
+        "ramping_time": const_config_assets[facility]["ramping_time"] / power_multiplier(player, facility)
+        if const_config_assets[facility]["ramping_time"] != 0
+        else None,
+        "ramping_speed": const_config_assets[facility]["base_power_generation"]
+        * power_multiplier(player, facility)
+        / const_config_assets[facility]["ramping_time"]
+        if const_config_assets[facility]["ramping_time"] != 0
+        else None,
+    }
+
+
+def _package_power_storage_extraction_facility_base(player: Player, facility):
+    """Gets all data shared by power, storage, and extraction facilites"""
+    engine: gameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    return {
+        "construction_pollution": const_config_assets[facility]["base_construction_pollution"],
+        "operating_costs": const_config_assets[facility]["base_price"]
+        * price_multiplier(player, facility)
+        * const_config_assets[facility]["O&M_factor"]
+        * 3600
+        / engine.clock_time,
+        "lifespan": const_config_assets[facility]["lifespan"] * (engine.clock_time / 60) ** 0.5,
+    }
+
+
+def package_power_facilities(player: Player):
+    """Gets all data relevant for the power_facilities frontend"""
+    engine: gameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    return [
+        _package_facility_base(player, power_facility)
+        | _package_power_generating_facility_base(player, power_facility)
+        | _package_power_storage_extraction_facility_base(player, power_facility)
+        | {
+            "pollution": const_config_assets[power_facility]["base_pollution"]
+            / efficiency_multiplier(player, power_facility)
+            if power_facility in engine.controllable_facilities + engine.storage_facilities
+            else 1,
+            "consumed_resources": power_facility_resource_consumption(player, power_facility),
+        }
+        for power_facility in engine.power_facilities
+    ]
+
+
+def package_storage_facilities(player: Player):
+    """Gets all data relevant for the storage_facilities frontend"""
+    engine: gameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    return [
+        _package_facility_base(player, storage_facility)
+        | _package_power_generating_facility_base(player, storage_facility)
+        | _package_power_storage_extraction_facility_base(player, storage_facility)
+        | {
+            "storage_capacity": const_config_assets[storage_facility]["base_storage_capacity"]
+            * capacity_multiplier(player, storage_facility),
+            "efficiency": const_config_assets[storage_facility]["base_efficiency"]
+            * efficiency_multiplier(player, storage_facility)
+            * 100,
+        }
+        for storage_facility in engine.storage_facilities
+    ]
+
+
+def package_extraction_facilities(player: Player):
+    """Gets all data relevant for the extraction_facilities frontend"""
+    engine: gameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    facility_to_resource = {
+        "coal_mine": "coal",
+        "oil_field": "oil",
+        "gas_drilling_site": "gas",
+        "uranium_mine": "uranium",
+    }
+
+    def tile_resource_amount(tile: Hex, resource: str):
+        if resource == "coal":
+            return tile.coal
+        elif resource == "oil":
+            return tile.oil
+        elif resource == "gas":
+            return tile.gas
+        elif resource == "uranium":
+            return tile.uranium
+        else:
+            raise ValueError(f"unkown resource {resource}")
+
+    return [
+        _package_facility_base(player, extraction_facility)
+        | _package_power_storage_extraction_facility_base(player, extraction_facility)
+        | {
+            "power_consumption": const_config_assets[extraction_facility]["base_power_consumption"]
+            * power_multiplier(player, extraction_facility),
+            "pollution": const_config_assets[extraction_facility]["base_pollution"]
+            * 1000
+            * efficiency_multiplier(player, extraction_facility),
+            "resource_production": {
+                "name": facility_to_resource[extraction_facility],
+                "rate": const_config_assets[extraction_facility]["extraction_rate"]
+                * capacity_multiplier(player, extraction_facility)
+                * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
+                / engine.clock_time
+                * 3600,
+            },
+        }
+        for extraction_facility in engine.extraction_facilities
+    ]
+
+
+def package_constructions_page_data(player: Player):
+    """
+    Gets cost, emissions, max power, etc data for constructions.
+    Takes into account base config prices and multipliers for the specified player.
+    Returns a dictionary with the relevant data for constructions.
+    Example:
+        {
+            'power_facilities': {
+                'steam_engine': {
+                    'price': 123.4
+                    ...
+                }
+                ...
+            }
+        }
+    ```
+    """
+    return {
+        "power_facilities": package_power_facilities(player),
+        "storage_facilities": package_storage_facilities(player),
+        "extraction_facilities": package_extraction_facilities(player),
+        # TODO: non-power facilities
+        "functional_facilities": [],
+    }

@@ -43,10 +43,10 @@
   <h2>Table of Contents</h2>
   <ul>
     <li>
-      <a href="#Map">Map</a>
+      <a href="#Map">The Map</a>
       <ul>
-        <li><a href="#Renewable_resources">Renewable resources</a></li>
-        <li><a href="#Fossil_fuels">Fossil fuels</a></li>
+        <li><a href="#Renewable_resources">Renewable Resources</a></li>
+        <li><a href="#Fossil_fuels">Fossil Fuels</a></li>
       </ul>
     </li>
     <li>
@@ -92,25 +92,322 @@
     fuel types:
   </p>
 
-  <h3 id="Renewable_resources">Renewable resources:</h3>
+  <h3 id="Renewable_resources">Renewable Resources</h3>
+  <p>
+    <i>Note:</i> In the following subsections, the concept of "locations" is used to explain how potential works. 
+    Players do not see the specific locations of the facilities.
+  </p>
+
+  <h4 id="wind_potential">Solar Potential</h4>
+  <p>
+    The solar potential is expressed in watts per square meter (W/m²), indicating the maximum irradiance achievable at 
+    this latitude. The higher this maximum irradiance, the greater the power production of photovoltaic (PV) and 
+    concentrated solar power (CSP) plants. See <a href="#Solar_Power_Generation">solar power generation</a> for more 
+    information.
+  </p>
+
+  <h4 id="wind_potential">Wind Potential</h4>
+  <p>
+    Wind potential is a percentage value that represents the suitability of each tile for installing wind facilities 
+    (windmills, onshore, and offshore wind turbines). The initial wind facility is always placed in the most optimal 
+    location, which has a wind speed multiplier close to 1. However, as players build more wind facilities, the wind 
+    potential in new locations decreases, resulting in a lower wind speed multiplier for each subsequent facility. 
+    This decrease happens more rapidly for tiles with lower wind potential.
+  </p>
+  <p>
+    The following table illustrates the <b>wind speed multipliers</b> applied to facilities based on different wind potentials 
+    (columns) and the number of facilities built (rows):
+  </p>
+  <div class="flex-center align-items-center">
+    <div class="table_legend_left">
+      <b style="transform: translate(-50%, -70%); position: absolute;">Existing facilities</b>
+    </div>
+    <table class="table bone txt_center">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="padding" colspan="6">Wind potential</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th></th>
+          <th style="width:50px">0%</th>
+          <th style="width:50px">20%</th>
+          <th style="width:50px">40%</th>
+          <th style="width:50px">60%</th>
+          <th style="width:50px">80%</th>
+          <th style="width:50px">100%</th>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td class="txt-green">76%</td>
+          <td class="txt-green">96%</td>
+          <td class="txt-green">98%</td>
+          <td class="txt-green">99%</td>
+          <td class="txt-green">99%</td>
+          <td class="txt-green">100%</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>52%</td>
+          <td class="txt-green">85%</td>
+          <td class="txt-green">94%</td>
+          <td class="txt-green">97%</td>
+          <td class="txt-green">98%</td>
+          <td class="txt-green">99%</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td class="txt-red">41%</td>
+          <td>74%</td>
+          <td class="txt-green">87%</td>
+          <td class="txt-green">93%</td>
+          <td class="txt-green">95%</td>
+          <td class="txt-green">97%</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td class="txt-red">34%</td>
+          <td>64%</td>
+          <td class="txt-green">80%</td>
+          <td class="txt-green">88%</td>
+          <td class="txt-green">92%</td>
+          <td class="txt-green">95%</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td class="txt-red">30%</td>
+          <td>56%</td>
+          <td>73%</td>
+          <td class="txt-green">83%</td>
+          <td class="txt-green">89%</td>
+          <td class="txt-green">92%</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td class="txt-red">27%</td>
+          <td>50%</td>
+          <td>67%</td>
+          <td class="txt-green">78%</td>
+          <td class="txt-green">85%</td>
+          <td class="txt-green">89%</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td class="txt-red">25%</td>
+          <td class="txt-red">46%</td>
+          <td>62%</td>
+          <td>73%</td>
+          <td class="txt-green">81%</td>
+          <td class="txt-green">86%</td>
+        </tr>
+        <tr>
+          <th>7</th>
+          <td class="txt-red">24%</td>
+          <td class="txt-red">42%</td>
+          <td>57%</td>
+          <td>69%</td>
+          <td class="txt-green">77%</td>
+          <td class="txt-green">83%</td>
+        </tr>
+        <tr>
+          <th>8</th>
+          <td class="txt-red">23%</td>
+          <td class="txt-red">39%</td>
+          <td>53%</td>
+          <td>65%</td>
+          <td>73%</td>
+          <td class="txt-green">79%</td>
+        </tr>
+        <tr>
+          <th>9</th>
+          <td class="txt-red">22%</td>
+          <td class="txt-red">37%</td>
+          <td class="txt-red">50%</td>
+          <td>61%</td>
+          <td>70%</td>
+          <td class="txt-green">76%</td>
+        </tr>
+        <tr>
+          <th>10</th>
+          <td class="txt-red">21%</td>
+          <td class="txt-red">35%</td>
+          <td class="txt-red">47%</td>
+          <td>58%</td>
+          <td>66%</td>
+          <td>73%</td>
+        </tr>
+        <tr>
+          <th>11</th>
+          <td class="txt-red">20%</td>
+          <td class="txt-red">33%</td>
+          <td class="txt-red">44%</td>
+          <td>55%</td>
+          <td>63%</td>
+          <td>70%</td>
+        </tr>
+        <tr>
+          <th>12</th>
+          <td class="txt-red">19%</td>
+          <td class="txt-red">31%</td>
+          <td class="txt-red">42%</td>
+          <td>52%</td>
+          <td>60%</td>
+          <td>67%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    The wind speed formula for the n<sup>th</sup> instance of a facility i at time t is:
+  </p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\(ws_{t,n} = ws_{t,serv} \times wsm(wp, n_i)\) <br>
+    With \(ws_{t,serv}\) being the live wind speed as indicated in the home page, and \(wsm(wp, n_i)\) the wind speed 
+    multiplier as a function of the wind potential \(wp\) and the number of installed facilities \(n_i\) (see table above).
+  </li></ul>
+  {# \(wsm(wp, n_i) = ln(e+(n_i \times \frac{1}{9 \times wp + 1} )²)^{-1}\) #}
+  <p>
+    For more information about the power generation of wind facilities, refer to <a href="#Wind_Power_Generation">Wind Power Generation</a>.
+  </p>
+  
+  <h4 id="hydro_potential">Hydro Potential</h4>
+  <p>
+    Hydro potential is expressed as a percentage and indicates how suitable each tile is for the installation of hydro 
+    facilities (watermills, small and large dams). The first facility is built in the most accessible location, keeping 
+    costs low. As more hydro facilities are constructed, the investment and operational costs increase, modeling the 
+    difficulty to build in less suitable locations. This increase is more pronounced for tiles with low hydro potential. 
+    Note that pumped hydro facilities are not affected by hydro potential.
+  </p>
+  <p>
+    The following table shows the <b>cost multipliers</b> applied to hydro facilities based on different hydro potentials 
+    (columns) and the number of facilities built (rows):  
+  </p>
+  <div class="flex-center align-items-center">
+    <div class="table_legend_left">
+      <b style="transform: translate(-50%, -70%); position: absolute;">Existing facilities</b>
+    </div>
+  <table class="table bone txt_center">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="padding" colspan="6">Hydro potential</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th></th>
+          <th style="width:50px">0%</th>
+          <th style="width:50px">20%</th>
+          <th style="width:50px">40%</th>
+          <th style="width:50px">60%</th>
+          <th style="width:50px">80%</th>
+          <th style="width:50px">100%</th>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>8.0</td>
+          <td class="txt-green">2.2</td>
+          <td class="txt-green">1.4</td>
+          <td class="txt-green">1.2</td>
+          <td class="txt-green">1.1</td>
+          <td class="txt-green">1.0</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td class="txt-red">55</td>
+          <td>6.0</td>
+          <td class="txt-green">2.6</td>
+          <td class="txt-green">1.7</td>
+          <td class="txt-green">1.4</td>
+          <td class="txt-green">1.2</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">18</td>
+          <td>5.3</td>
+          <td class="txt-green">2.8</td>
+          <td class="txt-green">2.0</td>
+          <td class="txt-green">1.6</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">60</td>
+          <td>12</td>
+          <td>4.9</td>
+          <td class="txt-green">3.0</td>
+          <td class="txt-green">2.2</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">27</td>
+          <td>9.0</td>
+          <td>4.7</td>
+          <td class="txt-green">3.1</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">62</td>
+          <td class="txt-red">17</td>
+          <td>7.7</td>
+          <td>4.6</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">33</td>
+          <td>13</td>
+          <td>6.9</td>
+        </tr>
+        <tr>
+          <th>7</th>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">63</td>
+          <td class="txt-red">22</td>
+          <td>10.6</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    The formula for the price of the n<sup>th</sup> instance of facility i is:
+  </p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\(p_{i,n} = p_{i,base} \times pm(hp, n_i)\) <br>
+    With \(p_{i,base}\) being the base price of the facility i, and \(pm(hp, n_i)\) the price multiplier as a function 
+    of the hydro potential \(hp\) and the number of installed facilities \(n_i\) (see table above).
+  </li></ul>
+  {# \(pm(hp, n_i) = 0.6 + e^{0.6 \times \frac{n_i + 1 - 3 \times hp}{0.3 + hp}}\) #}
+  <p>
+    Similarly, the operation and management cost of the n<sup>th</sup> instance of facility i is:
+  </p>
+  <ul style="list-style: none;"><li>
+      <i class="fa fa-angle-double-right padding"></i>\(omc_{i,n} = omc_{i,base} \times pm(hp, n_i)\)
+  </li></ul>
+  <p>
+    For more information about the power generation of hydro facilities, refer to <a href="#Hydro_Power_Generation">Hydropower Generation</a>.
+  </p>
+
+  <h4>General Notes</h4>
   <ul>
     <li>
-      <strong>Solar:</strong> The solar potential is given in W/m², indicating the maximal irradiance achievable at this 
-      latitiude. The higher this maximum irradiance, the higher will be the power production of PV and CSP plants.
+      For both wind and hydro facilities, when a facility is dismantled or decommissioned, its location is freed, making 
+      it available for a new facility with the same potential.
     </li>
     <li>
-      <strong>Wind:</strong> <strong class="txt-red">NEEDS TO BE UPDATED :</strong>(The wind potential is given in km/h, indicating the average wind speed at this tile. Refer 
-      to <a href="#Wind_Power_Generation">wind power generation</a> for details on how it affects the generation of 
-      windmills and wind turbines.)
-    </li>
-    <li>
-      <strong>Hydro:</strong> <strong class="txt-red">CHANGE UNITS AND EXPLAIN THE LOCATION ALLOCATION</strong>The hydro potential is given in m³/s, indicating the maximal river discharge rate in the area. 
-      The prices of watermills and water dams increase with each additional facility created. This increase is more important 
-      for tiles with low discharge rates and also affects the operational cost of the facility. 
-      Pumped hydro facilities are not affected by hydro potential. The price of the 
-      \(n^{th}\) facility of type \(i\) is calculated as follows : <br>
-      \(P_{i,n} = P_{i,0} \times (0.6 + e^{0.6 \times \frac{n + 1 - 3 \times hydropot}{0.3 + hydropot}})\) &ensp;
-      With \(hydropot\) beeing the hydropotential as a percentage.
+      When a facility is built, the optimal location is always chosen first, reflecting the best potential for energy 
+      production or cost efficiency.
     </li>
   </ul>
   
@@ -177,67 +474,67 @@
     Renewable power generation is non-controllable, meaning their power output is determined by specific calculations,
     regardless of the demand. Any surplus generation needs to be either stored or dumped.
   </p>
+
+  <h4 id="Solar_Power_Generation">Solar Power Generation</h4>
+  <p>
+    The power generation of solar facilities is influenced by the current irradiance level, visible on the 
+    <a href="/home">Home</a> page.
+  </p>
+  <p>
+    <i>Note:</i> The servers irradiance level is updated with live data from the Uetilberg (Zürich) weather station.
+  </p>
+  <p>The formula for total power generation of solar facilty type i is:</p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\(P_i = \frac{ irr_{serv} }{875W/m²} \times sp \times P_{max,i} \times n_i \)<br>
+    where \(irr_{serv}\) is the current server irradiance in W/m², \(sp\) is the solar potential on the players tile in percent, 
+    \(875 W/m²\)  is the maximal theoretical irradiance in Zürich, \(P_{max,i}\) is the max power generation of the
+    facility type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
+  </li></ul>
+
   <h4 id="Wind_Power_Generation">Wind Power Generation</h4>
-  <strong class="txt-red">NEEDS TO BE UPDATED</strong>
   <p>
-    The power generated by wind facilities is influenced by the number of wind power facilities, the wind potential,
-    and the current wind speed.
+    Wind facilities are the only power facilities for which each instance produces a different amount of electricity. 
+    The power production of wind facilities is influenced by the current wind speed on the server visible on the 
+    <a href="/home">Home</a> page. However, each wind facility instance has its own instantaneous wind 
+    speed, reflecting its specific location's exposure to wind. See <a href="#wind_potential">Wind Potential</a> for 
+    more details. 
   </p>
   <p>
-    Real-life wind speed data from Zürich with a 15-minute delay is utilized. The location-specific wind speed on a
-    tile is calculated as follows: &ensp; \(ws_{loc} = ws_{ütli} \times \sqrt{windpot}\) &ensp; with \(ws_{ütli}\) 
-    beeing the wind speed mesured at Uetliberg and \(windpot\) the wind potential on the players tile defined as \(\frac{ws_{avr} }{50km/h}\) 
-    with \(ws_{avr}\) beeing the average wind speed as indicated on the map.
+    <i>Note:</i> The servers wind speed is updated with live data from the Uetilberg (Zürich) weather station. The wind 
+    speed is then increased by 30% to account for Zürich not being the windiest location on earth.
   </p>
   <p>
-    The power generated by wind turbines is calculated using a characteristic function:
+    The power production of a wind facility is calculated using a characteristic function:
   </p>
-  <!-- Placeholder for Wind Turbine Characteristic Curve Graph -->
   <div class="graph-container">
     <img src="{{ url_for('static', filename='images/wiki/char_func_wind.jpg') }}"
          alt="Characteristic curve of wind turbine">
   </div>
-  <p>Formula for total power generation of wind facilty type i:</p>
-  <p>\(P_i = cf(ws_{ütli} \times \sqrt{windpot}) \times maxP_i \times n_i \)</p>
-  <p>
-    where \(cf()\) is the characteristic function shown in the graph above, \(ws_{ütli}\) is the current wind speed (live
-    Zürich) in km/h, \(windpot\) is the wind potential on the players tile in percent, \(maxP_i\) is the max power generation for the
-    facility type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
-  </p>
-  <h4>Solar Power Generation</h4>
-  <p>
-    Solar power generation depends on the number of solar power facilities, the tiles solar potential, and the current
-    irradiance.
-  </p>
-  <p>
-    Real-life irradiance data from Zürich with a 15-minute delay is utilized. The location-specific irradiance on a tile is
-    calculated as follows: \(irr_{loc} = irr_{ütli} \times solarpot \) &ensp; with \(irr_{ütli}\) beeing the 
-    irradiance mesured at Uetliberg and \(solarpot\) the solar potential specific to the players tile defined as \(\frac{ irr_{tile} }{1000W/m²}\) 
-    with \(irr_{tile}\) beeing the maximal irradiance as indicated on the map.
-  </p>
-  <p>Formula for total power generation of solar facilty type i:</p>
-  <p>\(P_i = \frac{ irr_{ütli} }{875W/m²} \times solarpot \times maxP_i \times n_i \)</p>
-  <p>
-    where \(irr_{ütli}\) is the current irradiance (live Zürich) in W/m², \(solarpot\) is the solar potential on the players tile in percent, 
-    \(875 W/m²\)  is the maximal theoretical irradiance in Zürich, \(maxP_i\) is the max power generation of the
-    facility type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
-  </p>
-  <h4>Hydropower Generation</h4>
+  <p>The formula for the power generation at time t of all wind facilities of type i is:</p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\(P_{t,i} = \sum_{n} cf(ws_{t,n}) \times P_{max,i} \)<br>
+    where \(cf()\) is the characteristic function shown in the graph above, \(ws_{t,n}\) the current wind speed for the 
+    specific instance \(n\) of this facility type (see <a href="#wind_potential">Wind Potential</a>) and \(P_{max,i}\) 
+    is the max power generation for the facility type i as indicated in the power facilities page.
+  </li></ul>
+  
+  <h4 id="Hydro_Power_Generation">Hydropower Generation</h4>
   <p>
     Hydropower generation fluctuates with the change in river discharge rates, following seasonal patterns within the
     game's timeline.
   </p>
-  <!-- Placeholder for Seasonal Variation of River Discharge Graph -->
   <div class="graph-container">
     <img src="{{ url_for('static', filename='images/wiki/seasonal_variation_rivers.jpg') }}"
          alt="Seasonal variataions of river discharges">
   </div>
   <p>Formula for total power generation of hydropower facilty type i:</p>
-  <p>\(P_i = sv(t) \times maxP_i \times n_i \)</p>
-  <p>
-    where \(sv()\) is the seasonal variation shown in the graph, \(t\) is the in-game date (in-game years have only {{(51 / 60 * engine.clock_time) | round() | int }} days), \(maxP_i\) is the max power
-    generation of the facility type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
-  </p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\(P_i = sv(t) \times P_{max,i} \times n_i \)<br>
+    where \(sv()\) is the seasonal variation shown in the graph, \(t\) is the in-game date (in-game years have only 
+    {{(51 / 60 * engine.clock_time) | round() | int }} days), \(P_{max,i}\) is the max power generation of the facility 
+    type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
+  </li></ul>
+
   <h3 id="Power_Generation_of_Controllable_Plants">Power Generation of Controllable Facilities</h3>
   <p>
     Controllable facility power generation must adhere to the ramping constraints of each facility from one minute to the
@@ -300,11 +597,26 @@
     building technology</a>{% else %}building technology{% endif %} will unlock additional construction workers and 
     increase the speed of construction projects.
   </p>
+
   <h4>Lifespan of a Facility</h4>
   <p>
-    Each facility has an operational lifespan. At the end of its lifespan, a facility is decommisionned at a cost equivalent to 20% of its original price.
+    Each facility has an operational lifespan. At the end of its lifespan, a facility is automatically decommisionned 
+    at a cost equivalent to 20% of its original price.
   </p>
-  <strong class="txt-red">ADD SECTION ABOUT UPGRADES AND DISMANTELING</strong>
+  <p>
+    It is also possible to dismantle a facility before the end of its lifespan. The can be done in the 
+    <a href="/profile">Profile page</a> and happens instantly. The dismantling process has the same cost as decomissioning.
+  </p>
+
+  <h4>Upgrades</h4>
+  <p>
+    When a new technology research is completed that affects the characteristics of certain facilities, the effect do 
+    not automatically apply to instances of the facilities that are under construction or already built. Players must 
+    individually upgrade these facilities through the <a href="/profile">Profile page</a>. The upgrade cost is 
+    determined as the maximum value between 5% of the initial facility cost and the price difference associated with 
+    the new upgrade. This upgrade process is instantaneous.
+  </p>
+
   <h2 id="Storage_Facilities">Storage Facilities</h2>
   <p>
     Storage facilities play a crucial role in storing energy within Energetica. Initially, only the small water dam is
@@ -368,14 +680,17 @@
       <strong>Lifespan:</strong> Lifespan of the extraction facility.
     </li>
   </ul>
-  <p>Formula for extraction speed of natural resource i:</p>
-  <p>\(es_i = er_i \times q_i \times 1.4^{ME} \times n_{ef,i} \)</p>
-  <p>
-    where \(es\) is the extraction speed in tons/h, \(er\) is the extraction rate in h\(^{-1}\), \(q_i\) is the amount of the
+  <p>The formula for extraction speed of natural resource i is:</p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\(es_i = er_i \times q_i \times 1.4^{ME} \times n_{ef,i} \)<br>
+    where \(es_i\) is the extraction speed in tons/h, \(er_i\) is the extraction rate in h\(^{-1}\), \(q_i\) is the amount of the
     resource i in the ground on the player's tile in tons, \(ME\) is the level of the technology 
     {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
     mineral extraction</a>{% else %}mineral extraction{% endif %}, and \(n_{ef,i}\) is the number of extraction
-    facilities for the resource i owned by the player. Extraction rates are fixed and determine the fraction of underground resources extractable per hour by one
+    facilities for the resource i owned by the player.
+  </li></ul>
+  <p>
+    Extraction rates are fixed and determine the fraction of underground resources extractable per hour by one
     facility. They are given in the following table :
   </p>
   <div class="flex-col">
@@ -386,19 +701,19 @@
       </tr>
       <tr>
         <td>Coal</td>
-        <td>{{ (const_data.coal_mine.extraction_rate*6000) | round(4) }}% /h</td>
+        <td>{{ (const_data.coal_mine.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
       </tr>
       <tr>
         <td>Oil</td>
-        <td>{{ (const_data.oil_field.extraction_rate*6000) | round(4) }}% /h</td>
+        <td>{{ (const_data.oil_field.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
       </tr>
       <tr>
         <td>Gas</td>
-        <td>{{ (const_data.gas_drilling_site.extraction_rate*6000) | round(4) }}% /h</td>
+        <td>{{ (const_data.gas_drilling_site.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
       </tr>
       <tr>
         <td>Uranium</td>
-        <td>{{ (const_data.uranium_mine.extraction_rate*6000) | round(4) }}% /h</td>
+        <td>{{ (const_data.uranium_mine.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
       </tr>
     </table>
   </div>
@@ -433,12 +748,12 @@
     The electricity demand of the industry fluctuates daily and yearly (in-game time), following specific cycles represented in the following graphs.
     Energy demand is calculated based on these factors as follows :
   </p>
-  <p>\( D = D_{base} \times dv(t) \times sv(t) \)</p>
-  <p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\( D = D_{base} \times dv(t) \times sv(t) \)<br>
     with \(D_{base}\) the base demand as indicated on the page <a href="{{ url_for('views.functional_facilities') }}">Functional
     facilities</a>, \(dv()\) the daily variations shown in the following graph, \(sv()\) the seasonal variations shown
     in the following graph and \(t\) the in-game date and time (in-game years have only {{(51 / 60 * engine.clock_time) | round() | int }} days).
-  </p>
+  </li></ul>
   <div class="graph-container">
     <img style="height:350px"
          src="{{ url_for('static', filename='images/wiki/daily_variation_industry.jpg') }}"
@@ -447,9 +762,7 @@
          src="{{ url_for('static', filename='images/wiki/seasonal_variation_industry.jpg') }}"
          alt="Seasonal variation of the industry demand">
   </div>
-  <p>If the industry's demand isn't met, its revenues will decrease following this rule : 
-  \( revenues = revenues_{base} \times (\frac{satisfaction}{demand})^{2} \). 
-  This models the fact that reducing slightly the consumption of the industry has a low cost but reducing it a lot has a very high cost.</p>
+  <p>If the industry's demand isn't met, revenues are proportional to the satisfaction level.</p>
   <h3 id="The_Laboratory">The Laboratory</h3>
   <p>
     The laboratory is needed for researching <a href="#Technology">technologies</a>. Different technology levels require corresponding
@@ -642,18 +955,26 @@
     When a certain amount of a natural resource is bought on the market, it is shipped from the seller to the buyer.
     The shipment duration and electricity consumption are calculated based on the following formulas:
   </p>
-  <p>
-    \(t_{ship} = t_{base} \times dist \times {{ const_data.transport_technology["time factor"] }}^{TT} \) &emsp;&emsp;&emsp; \(P_{ship} = \frac{E_{base} \times
-    q_{ship} \times {{ const_data.transport_technology["energy factor"] }}^{TT} }{ t_{base} \times {{ const_data.transport_technology["time factor"] }}^{TT} } \)
-  </p>
-  <p>
-    where \(t_{ship}\) is the shipment duration in hours, \(t_{base}\) is the base value of shipment duration : {{ (5000 / 3600 * (engine.clock_time / 60) ** 0.5) | round(2) }}
-    h/tile, \(dist\) is the distance between buyer and seller, \(TT\) is the level of 
-    {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Transport technology') }}">
-    transport technology</a>{% else %}transport technology{% endif %},
-    \(P_{ship}\) is the power consumed for shipping in kW, \(E_{base}\) is the base energy need of shipments : 
-    5 Wh/kg/tile and \(q_{ship}\) is the quantity of shipped resources.
-  </p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\(t_{ship} = t_{base} \times dist \times {{ const_data.transport_technology["time factor"] }}^{TT} \) &emsp;&emsp;&emsp; \(P_{ship} = \frac{E_{base} \times
+    q_{ship} \times {{ const_data.transport_technology["energy factor"] }}^{TT} }{ t_{base} \times {{ const_data.transport_technology["time factor"] }}^{TT} } \)<br>
+    with:
+    <ul style="list-style: none;"><li>
+      \(t_{ship}\) : shipment duration in hours
+    </li><li>
+      \(t_{base}\) : base value of shipment duration : {{ (5000 / 3600 * (engine.clock_time / 60) ** 0.5) | round(2) }} h/tile
+    </li><li>
+      \(dist\) : distance between buyer and seller in tiles
+    </li><li>
+      \(TT\) : level of <a href="{{ url_for('views.technology', _anchor='Transport technology') }}">transport technology</a>
+    </li><li>
+      \(P_{ship}\) : power consumed for shipping in W
+    </li><li>
+      \(E_{base}\) : base energy need of shipments : 5 Wh/kg/tile
+    </li><li>
+      \(q_{ship}\) : quantity of shipped resources in kg
+    </li></ul>
+  </li></ul>
   <p>
     If the energy demand of the shipment isn't met, it is paused. Upon arrival, if
     the buyer's warehouse lacks sufficient capacity to store the shipped amount, excess resources will be lost.

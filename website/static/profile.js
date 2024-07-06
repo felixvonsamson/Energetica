@@ -105,9 +105,9 @@ function get_active_facilities() {
                             "dismantle": config.base_price * facility.price_multiplier * 0.2,
                         };
                     }
-                    sortTable('power_facilities_table', 'installed_cap');
-                    sortTable('storage_facilities_table', 'installed_cap');
-                    sortTable('extraction_facilities_table', 'extraction_rate');
+                    sortTable('power_facilities_table', 'installed_cap', reorder=false);
+                    sortTable('storage_facilities_table', 'installed_cap', reorder=false);
+                    sortTable('extraction_facilities_table', 'extraction_rate', reorder=false);
                 });
             });
         });
@@ -117,17 +117,19 @@ function get_active_facilities() {
     });
 }
 
-function sortTable(table_name, columnName) {
+function sortTable(table_name, columnName, reorder=true) {
     const table = document.getElementById(table_name);
     let column = table.querySelector(`.${columnName}`);
     let triangle = ' <i class="fa fa-caret-down"></i>';
 
-    // Check if the column is already sorted, toggle sorting order accordingly
-    if (column.innerHTML.includes(triangle)) {
-        decending = !decending;
-        triangle = ' <i class="fa fa-caret-up"></i>';
-    }else{
-        decending = true;
+    if (reorder) {
+        // Check if the column is already sorted, toggle sorting order accordingly
+        if (column.innerHTML.includes(triangle)) {
+            decending = !decending;
+            triangle = ' <i class="fa fa-caret-up"></i>';
+        }else{
+            decending = true;
+        }
     }
 
     // Sort the data based on the selected column

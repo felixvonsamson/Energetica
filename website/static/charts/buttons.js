@@ -178,7 +178,7 @@ function reduce(arr, res) {
     if(res == resolution[4]){
         return arr[3];
     }
-    return arr[3];
+    return arr[4];
 }
 
 function time_unit(res, ct) {

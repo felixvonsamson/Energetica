@@ -4,8 +4,9 @@
         "*.js": "javascript"
     },
     "[jinja-html]": {
-        "editor.wordWrapColumn": 80,
-        "editor.defaultFormatter": "monosans.djlint"
+        "editor.wordWrapColumn": 120,
+        "editor.defaultFormatter": "monosans.djlint",
+        "editor.formatOnSave": false
     },
     "[javascript]": {
         "editor.wordWrapColumn": 120,
@@ -13,5 +14,18 @@
     },
     "files.exclude": {
         "**/__pycache__": true
-    }
+    },
+    "editor.rulers": [
+        80,
+        120
+    ],
+    "[python]": {
+        "editor.rulers": [
+            80,
+            120
+        ]
+    },
+    "pylint.args": [
+        "--max-line-length=120"
+    ]
 }

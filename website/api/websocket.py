@@ -9,9 +9,9 @@ from werkzeug.security import check_password_hash
 from simple_websocket import ConnectionClosed
 
 from website import utils
-from ..database.player import Network, Player
-
-from ..database.map import Hex
+from website.database.map import Hex
+from website.database.player import Network, Player
+from website.technology_effects import package_constructions_page_data
 
 websocket_blueprint = Blueprint("rest_api", __name__)
 
@@ -25,15 +25,14 @@ def add_sock_handlers(sock, engine):
 
     @basic_auth.verify_password
     def verify_password(username, password):
-        engine.log(f"{username} failed to log in via HTTP Basic")
         """Called by flask-HTTPAUth to verify credentials."""
         player = Player.query.filter_by(username=username).first()
         if player:
             if check_password_hash(player.pwhash, password):
-                # engine.log(f"{username} logged in via HTTP Basic")
+                engine.log(f"{username} logged in via WebSocket")
                 return username
             else:
-                engine.log(f"{username} failed to log in via HTTP Basic")
+                engine.log(f"{username} failed to log in via WebSocket")
 
     @websocket_blueprint.before_request
     @basic_auth.login_required
@@ -48,6 +47,7 @@ def add_sock_handlers(sock, engine):
         """Main WebSocket endpoint for API."""
         player = g.player
         engine.log(f"Received WebSocket connection for player {player}")
+        # TODO: Review what data is sent before a tile is selected
         ws.send(rest_get_map())
         ws.send(rest_get_players())
         ws.send(rest_get_current_player(player))
@@ -56,8 +56,9 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_constructions(player))
         ws.send(rest_get_construction_queue(player))
         ws.send(rest_get_weather(engine))
+        ws.send(rest_get_advancements(player))
         if player.tile is not None:
-            rest_init_ws_post_location(engine, ws)
+            rest_init_ws_post_location(engine, player, ws)
         if player.id not in engine.websocket_dict:
             engine.websocket_dict[player.id] = []
         ws.send(rest_setup_complete())
@@ -76,8 +77,10 @@ def add_sock_handlers(sock, engine):
                 case "request":
                     uuid = message["uuid"]
                     rest_parse_request(engine, ws, uuid, message_data)
-                case type:
-                    engine.log(f"Websocket connection from player {player} sent an unkown message of type {type}")
+                case message_type:
+                    engine.log(
+                        f"Websocket connection from player {player} sent an unkown message of type {message_type}"
+                    )
 
 
 def unregister_websocket_connection(player_id, ws):
@@ -86,11 +89,13 @@ def unregister_websocket_connection(player_id, ws):
     g.engine.websocket_dict[player_id].remove(ws)
 
 
-def rest_init_ws_post_location(engine, ws):
-    """Called once the player has selected a location, or immediately after
-    logging in if location was already selected."""
-    # ws.send(rest_get_charts())
-    ws.send(rest_get_facilities_data(engine))
+def rest_init_ws_post_location(engine, player, ws):
+    """
+    Called once the player has selected a location, or immediately after logging
+    in if location was already selected.
+    """
+    # ws.send(rest_get_charts()) # TODO
+    ws.send(rest_get_facilities_data(engine, player))
 
 
 # The following methods generate messages to be sent over websocket connections.
@@ -267,9 +272,22 @@ def rest_get_charts():
     return json.dumps(response)
 
 
-def rest_get_facilities_data(engine):
-    """Gets player's facilities data and returns it as a JSON string"""
-    assets = engine.config[g.player.id]["assets"]
+def rest_get_facilities_data(engine, player: Player):
+    """
+    Gets player's facilities data and returns it as a JSON string
+    """
+    # TODO: Remove this print
+    print(package_constructions_page_data(player)["extraction_facilities"])
+    return json.dumps({"type": "getFacilitiesData", "data": package_constructions_page_data(player)})
+
+
+def rest_get_facilities_data_OLD(engine):
+    """
+    Gets player's facilities data and returns it as a JSON string
+
+    FIXME: All the keys have changed
+    """
+    assets = engine.const_config["assets"]
     # the contents of this are now distributed in a constant and a variable part
     power_facilities_property_keys = [
         "price",
@@ -348,7 +366,7 @@ def rest_get_facilities_data(engine):
 
 
 def rest_get_scoreboard():
-    response = {"type": "getScoreboard", "data": utils.get_scoreboard()}
+    response = {"type": "getScoreboard", "data": Player.package_scoreboard()}
     return json.dumps(response)
 
 
@@ -356,6 +374,17 @@ def rest_get_weather(engine):
     response = {
         "type": "getWeather",
         "data": engine.data["weather"].package(engine.data["total_t"]),
+    }
+    return json.dumps(response)
+
+
+def rest_get_advancements(player: Player):
+    response = {
+        "type": "getAdvancements",
+        "data": {
+            advancement: advancement in player.advancements
+            for advancement in ["network", "technology", "warehouse", "GHG_effect", "storage_overview"]
+        },
     }
     return json.dumps(response)
 
@@ -404,7 +433,7 @@ def rest_parse_request_confirmLocation(engine, ws, uuid, data):
     message = rest_requestResponse(uuid, "confirmLocation", response)
     ws.send(message)
     if response["response"] == "success":
-        rest_init_ws_post_location(engine, ws)
+        rest_init_ws_post_location(engine, g.player, ws)
 
 
 def rest_parse_request_joinNetwork(engine, ws, uuid, data):
@@ -523,3 +552,7 @@ def rest_notify_construction_queue(engine, player):
 def rest_notify_weather(engine):
     message = rest_get_weather(engine)
     rest_notify_all_players(engine, message)
+
+
+def rest_notify_advancements(engine, player: Player):
+    rest_notify_player(engine, player, rest_get_advancements(player))

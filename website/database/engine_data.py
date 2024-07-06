@@ -4,7 +4,9 @@ import math
 from flask import current_app
 import numpy as np
 import requests
-from .player_assets import Active_facilities
+
+from website.database.player_assets import Active_facilities
+from website.config import river_discharge_seasonal
 
 
 class CapacityData:
@@ -140,7 +142,8 @@ class CircularBufferPlayer:
         return 0
 
     def init_new_data(self):
-        """returns a dict with the same structure as the data with 0 and with the last value for the storage and resources"""
+        """Returns a dict with the same structure as the data with 0 and with
+        the last value for the storage and resources"""
         result = {}
         for category, subcategories in self._data.items():
             result[category] = {}
@@ -194,7 +197,9 @@ class WeatherData:
         }
 
     def update_weather(self, engine):
-        """This function upddates the windspeed and irradiation data every 10 minutes using the meteosuisse api and calculates the river discharge for the next 10 min"""
+        """This function upddates the windspeed and irradiation data every 10
+        minutes using the meteosuisse api and calculates the river discharge for
+        the next 10 min"""
         urls = {
             "windspeed": (
                 "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min_en.json",
@@ -212,6 +217,8 @@ class WeatherData:
 
         for weather in urls:
             try:
+                # TODO: add timeout argument for get requests.
+                # This should probably depend on the game clock.
                 response = requests.get(urls[weather][0])
                 if response.status_code == 200:
                     datapoint = json.loads(response.content)["features"][urls[weather][1]]["properties"]["value"]
@@ -233,7 +240,6 @@ class WeatherData:
         month = math.floor((engine.data["total_t"] % 73440) / 6120)
         # One year in game is 73440 ticks
         f = (engine.data["total_t"] % 73440) / 6120 - month
-        from ..config import river_discharge_seasonal
 
         d = river_discharge_seasonal
         power_factor = d[month] + (d[(month + 1) % 12] - d[month]) * f
@@ -268,12 +274,12 @@ class EmissionData:
             "CO2": deque([5.0 * 10**9] * 360, maxlen=360),
         }
 
-    def add(self, type, value):
-        self._data[type][-1] += value
+    def add(self, key, value):
+        self._data[key][-1] += value
 
     def init_new_value(self):
-        for type in self._data:
-            self._data[type].append(self._data[type][-1])
+        for key in self._data:
+            self._data[key].append(self._data[key][-1])
 
-    def __getitem__(self, type):
-        return self._data[type][-1]
+    def __getitem__(self, key):
+        return self._data[key][-1]

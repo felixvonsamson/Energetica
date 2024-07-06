@@ -142,7 +142,7 @@ def add_asset(player, asset, n):
             duration=1,
             suspension_time=None,
             construction_power=0,
-            construction_pollution=technology_effects.construction_pollution(player, asset),
+            construction_pollution=technology_effects.construction_pollution_per_tick(player, asset),
             price_multiplier=technology_effects.price_multiplier(player, asset),
             power_multiplier=technology_effects.power_multiplier(player, asset),
             capacity_multiplier=technology_effects.capacity_multiplier(player, asset),

@@ -77,6 +77,10 @@ canvas {
     color:darkred;
 }
 
+.txt-green {
+    color:darkgreen;
+}
+
 /* Generic */
 .padding-small {
     padding: 4px 8px
@@ -836,6 +840,13 @@ canvas {
     color:#000;
 }
 
+.table_legend_left {
+    width:40px; 
+    transform: rotate(-90deg); 
+    transform-origin: center; 
+    white-space: nowrap;
+}
+
 .table {
     border-collapse: collapse;
     border-spacing: 0;
@@ -905,7 +916,7 @@ canvas {
     color: #0d4d19;
 }
 
-.req_fullfilled {
+.req_fulfilled {
     list-style: none;
     color: #049c20
 }
