@@ -55,6 +55,8 @@ def update_electricity(engine):
             },
             "exports": market["player_exports"],
             "imports": market["player_imports"],
+            "generation": market["generation"],
+            "consumption": market["consumption"],
         }
         engine.data["network_data"][network.id].append_value(new_network_values)
         for player in network.members:
@@ -506,14 +508,51 @@ def market_logic(engine, new_values, market):
     and find the market price of electricity.
     Sell all capacities that are below market price at market price."""
 
+    def sell(row, market_price, quantity=None):
+        player = Player.query.get(row.player_id)
+        generation = new_values[player.id]["generation"]
+        demand = new_values[player.id]["demand"]
+        revenue = new_values[player.id]["revenues"]
+        if quantity is None:
+            quantity = row.capacity
+        if row.price > -5:
+            generation[row.facility] += quantity
+        demand["exports"] += quantity
+        player.money += quantity * market_price / 3600 * engine.clock_time / 1000000
+        revenue["exports"] += quantity * market_price / 3600 * engine.clock_time / 1000000
+
+        if row.player_id in market["player_exports"]:
+            market["player_exports"][row.player_id] += quantity
+        else:
+            market["player_exports"][row.player_id] = quantity
+        if row.facility in market["generation"]:
+            market["generation"][row.facility] += quantity
+        else:
+            market["generation"][row.facility] = quantity
+
+    def buy(row, market_price, quantity=None):
+        player = Player.query.get(row.player_id)
+        generation = new_values[player.id]["generation"]
+        revenue = new_values[player.id]["revenues"]
+        if quantity is None:
+            quantity = row.capacity
+        generation["imports"] += quantity
+        player.money -= quantity * market_price / 3600 * engine.clock_time / 1000000
+        revenue["imports"] -= quantity * market_price / 3600 * engine.clock_time / 1000000
+
+        if row.player_id in market["player_imports"]:
+            market["player_imports"][row.player_id] += quantity
+        else:
+            market["player_imports"][row.player_id] = quantity
+        if row.facility in market["consumption"]:
+            market["consumption"][row.facility] += quantity
+        else:
+            market["consumption"][row.facility] = quantity
+
     market["player_exports"] = {}
     market["player_imports"] = {}
-
-    def add_export_import(type, player_id, quantity):
-        if player_id in market[type]:
-            market[type][player_id] += quantity
-        else:
-            market[type][player_id] = quantity
+    market["generation"] = {}
+    market["consumption"] = {}
 
     offers = market["capacities"]
     offers = offers.sort_values("price").reset_index(drop=True)
@@ -547,8 +586,7 @@ def market_logic(engine, new_values, market):
         if row.cumul_capacities > market_quantity:
             sold_cap = row.capacity - row.cumul_capacities + market_quantity
             if sold_cap > 0.1:
-                sell(engine, new_values, row, market_price, quantity=sold_cap)
-                add_export_import("player_exports", row.player_id, sold_cap)
+                sell(row, market_price, quantity=sold_cap)
             # dumping electricity that is offered for negative price and not sold
             if row.price < 0:
                 dump_cap = max(0.0, min(row.capacity, row.capacity - sold_cap))
@@ -560,15 +598,13 @@ def market_logic(engine, new_values, market):
                 revenue["dumping"] -= dump_cap * 5 / 3600 * engine.clock_time / 1000000
                 continue
             break
-        sell(engine, new_values, row, market_price)
-        add_export_import("player_exports", row.player_id, row.capacity)
+        sell(row, market_price)
     # buy all demands over market price
     for row in demands.itertuples(index=False):
         if row.cumul_capacities > market_quantity:
             bought_cap = row.capacity - row.cumul_capacities + market_quantity
             if bought_cap > 0.1:
-                buy(engine, new_values, row, market_price, quantity=bought_cap)
-                add_export_import("player_imports", row.player_id, bought_cap)
+                buy(row, market_price, quantity=bought_cap)
             # mesures a taken to reduce demand
             reduce_demand(
                 engine,
@@ -579,8 +615,7 @@ def market_logic(engine, new_values, market):
                 max(0.0, bought_cap),
             )
         else:
-            buy(engine, new_values, row, market_price)
-            add_export_import("player_imports", row.player_id, row.capacity)
+            buy(row, market_price)
     market["market_price"] = market_price
     market["market_quantity"] = market_quantity
 
@@ -761,31 +796,6 @@ def bid(market, player_id, demand, price, facility):
         )
         market["demands"] = pd.concat([market["demands"], new_row], ignore_index=True)
     return market
-
-
-def sell(engine, new_values, row, market_price, quantity=None):
-    player = Player.query.get(row.player_id)
-    generation = new_values[player.id]["generation"]
-    demand = new_values[player.id]["demand"]
-    revenue = new_values[player.id]["revenues"]
-    if quantity is None:
-        quantity = row.capacity
-    if row.price > -5:
-        generation[row.facility] += quantity
-    demand["exports"] += quantity
-    player.money += quantity * market_price / 3600 * engine.clock_time / 1000000
-    revenue["exports"] += quantity * market_price / 3600 * engine.clock_time / 1000000
-
-
-def buy(engine, new_values, row, market_price, quantity=None):
-    player = Player.query.get(row.player_id)
-    generation = new_values[player.id]["generation"]
-    revenue = new_values[player.id]["revenues"]
-    if quantity is None:
-        quantity = row.capacity
-    generation["imports"] += quantity
-    player.money -= quantity * market_price / 3600 * engine.clock_time / 1000000
-    revenue["imports"] -= quantity * market_price / 3600 * engine.clock_time / 1000000
 
 
 def resources_and_pollution(engine, new_values, player):

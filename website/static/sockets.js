@@ -94,16 +94,22 @@ socket.on("new_network_values", function (changes) {
         );
         let network_data = JSON.parse(sessionStorage.getItem("network_data"));
         for (var category in changes["network_values"]) {
-            for (var player_id in changes["network_values"][category]) {
-                if(!network_data[category].hasOwnProperty(player_id)){
-                    network_data[category][player_id] = Array.from(
+            for (var group in changes["network_values"][category]) {
+                if(!network_data[category].hasOwnProperty(group)){
+                    network_data[category][group] = Array.from(
                         { length: 5 },
                         () => Array(360).fill(0)
                     );
                 }
-                var value = changes["network_values"][category][player_id];
-                let array = network_data[category][player_id];
+                var value = changes["network_values"][category][group];
+                let array = network_data[category][group];
                 reduce_resolution(value, array, total_t);
+            }
+            for (var group in network_data[category]){
+                if(!changes["network_values"][category].hasOwnProperty(group)){
+                    let array = network_data[category][group];
+                    reduce_resolution(0, array, total_t);
+                }
             }
         }
         sessionStorage.setItem("network_data", JSON.stringify(network_data));

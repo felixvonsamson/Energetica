@@ -165,7 +165,7 @@ def create_player(engine, username, password):
         db.session.commit()
         engine.data["current_data"][new_player.id] = CircularBufferPlayer()
         engine.data["player_capacities"][new_player.id] = CapacityData()
-        add_player_to_data(engine, new_player.id)
+        add_player_to_data(engine, new_player)
         init_table(new_player.id)
         db.session.commit()
         return new_player
@@ -181,6 +181,7 @@ def create_network(engine, name, members):
         db.session.commit()
         Path(f"instance/network_data/{new_network.id}/charts").mkdir(parents=True, exist_ok=True)
         engine.data["network_data"][new_network.id] = CircularBufferNetwork()
+        engine.data["network_capacities"][new_network.id] = CapacityData()
         past_data = data_init_network()
         Path(f"instance/network_data/{new_network.id}").mkdir(parents=True, exist_ok=True)
         with open(

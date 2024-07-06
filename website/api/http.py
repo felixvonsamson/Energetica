@@ -189,6 +189,15 @@ def get_chart_data():
     )
 
 
+@http.route("/get_network_capacities", methods=["GET"])
+def get_network_capacities():
+    """gets the network capacities for the current player"""
+    if current_user.network is None:
+        return "", 404
+    network_capacities = g.engine.data["network_capacities"][current_user.network.id].get_all()
+    return jsonify(network_capacities)
+
+
 # Gets the data from the market for the market graph
 @http.route("/get_market_data", methods=["GET"])
 def get_market_data():
