@@ -43,7 +43,7 @@ def price_multiplier(player, facility):
     # level based facilities and technologies
     engine = current_app.config["engine"]
     if facility in engine.functional_facilities + engine.technologies:
-        mlt *= const_config[facility]["price multiplier"] ** getattr(player, facility)
+        mlt *= const_config[facility]["price_multiplier"] ** getattr(player, facility)
     # knowledge spilling for technologies
     if facility in engine.technologies:
         mlt *= 0.92 ** engine.data["technology_lvls"][facility][getattr(player, facility)]
@@ -84,7 +84,7 @@ def capacity_multiplier(player, facility):
         mlt += const_config["mineral_extraction"]["extract factor"] * player.mineral_extraction
     # Civil engineering
     if facility in ["small_pumped_hydro", "large_pumped_hydro"]:
-        mlt *= const_config["civil_engineering"]["capacity factor"] ** player.civil_engineering
+        mlt *= const_config["civil_engineering"]["capacity_factor"] ** player.civil_engineering
     # calculating the hydro price multiplier linked to the number of hydro facilities
     if facility in ["watermill", "small_water_dam", "large_water_dam"]:
         mlt *= hydro_price_function(efficiency_multiplier(player, facility), player.tile.hydro)
@@ -150,11 +150,11 @@ def construction_time(player, facility):
     duration = const_config[facility]["base_construction_time"] * (engine.clock_time / 60) ** 0.5
     # construction time increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
-        duration *= const_config[facility]["price multiplier"] ** (0.6 * getattr(player, facility))
+        duration *= const_config[facility]["price_multiplier"] ** (0.6 * getattr(player, facility))
     # knowledge spillover and laboratory time reduction
     if facility in engine.technologies:
         duration *= 0.92 ** engine.data["technology_lvls"][facility][getattr(player, facility)]
-        duration *= const_config["laboratory"]["time factor"] ** player.laboratory
+        duration *= const_config["laboratory"]["time_factor"] ** player.laboratory
     # building technology time reduction
     if (
         facility
@@ -164,7 +164,7 @@ def construction_time(player, facility):
         + engine.extraction_facilities
         + engine.functional_facilities
     ):
-        duration *= const_config["building_technology"]["time factor"] ** player.building_technology
+        duration *= const_config["building_technology"]["time_factor"] ** player.building_technology
     return math.ceil(duration / engine.clock_time) * engine.clock_time
 
 
@@ -172,7 +172,7 @@ def construction_power(player, facility):
     """Function that returns the construction power according to the technology level of the player."""
     engine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
-    bt_factor = const_config["building_technology"]["time factor"] ** player.building_technology
+    bt_factor = const_config["building_technology"]["time_factor"] ** player.building_technology
     # construction power in relation of facilities characteristics
     if facility in engine.power_facilities:
         # Materials (in this case it is the energy consumption for construction)
@@ -203,7 +203,7 @@ def construction_power(player, facility):
     power = const_config[facility]["base_construction_energy"] / construction_time(player, facility) * 3600
     # construction power increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
-        power *= const_config[facility]["price multiplier"] ** (1.2 * getattr(player, facility))
+        power *= const_config[facility]["price_multiplier"] ** (1.2 * getattr(player, facility))
     # knowledge spillover
     if facility in engine.technologies:
         power *= 0.92 ** engine.data["technology_lvls"][facility][getattr(player, facility)]
@@ -221,7 +221,7 @@ def construction_pollution_per_tick(player, facility):
     )
     # construction pollution increases with higher levels for functional facilities
     if facility in engine.functional_facilities:
-        pollution *= const_config[facility]["price multiplier"] ** getattr(player, facility)
+        pollution *= const_config[facility]["price_multiplier"] ** getattr(player, facility)
     return pollution
 
 
@@ -446,6 +446,7 @@ def package_extraction_facilities(player: Player):
         "uranium_mine": "uranium",
     }
 
+    # TODO: remove this, let the frontend compute it (since tile resource can change often)
     def tile_resource_amount(tile: Hex, resource: str):
         if resource == "coal":
             return tile.coal
@@ -480,6 +481,146 @@ def package_extraction_facilities(player: Player):
     ]
 
 
+def package_functional_facilities(player: Player):
+    """Gets all data relevant for the functional_facilities frontend"""
+    engine: gameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+
+    def package_change(current, upgraded):
+        """
+        `current` can be `None` to represent a new ability rather than an upgrade.
+        If both values are the same, e.g. lab workers, there is no change, so returns None.
+        """
+        if current == upgraded:
+            return None
+        else:
+            return {"current": current, "upgraded": upgraded}
+
+    def industry_average_consumption_for_level(level):
+        return (
+            const_config_assets["industry"]["base_power_consumption"]
+            * const_config_assets["industry"]["power_factor"] ** level
+        )
+
+    def industry_hourly_revenues_for_level(level):
+        return (
+            const_config_assets["industry"]["base_income"]
+            * const_config_assets["industry"]["income factor"] ** level
+            * 3600
+            / engine.clock_time
+        )
+
+    def player_lab_workers_for_level(level):
+        # TODO: make this method unified and used everywhere this logic is used
+        return (level + 2) // 3
+
+    def warehouse_capacity_for_level(level, resource):
+        return (
+            engine.const_config["warehouse_capacities"][resource]
+            * const_config_assets["warehouse"]["capacity_factor"] ** level
+        )
+
+    def carbon_capture_power_consumption_for_level(level):
+        return (
+            const_config_assets["carbon_capture"]["base_power_consumption"]
+            * const_config_assets["carbon_capture"]["power_factor"] ** level
+        )
+
+    def carbon_capture_absorption(level):
+        return (
+            const_config_assets["carbon_capture"]["base_absorbtion"]
+            * const_config_assets["carbon_capture"]["absorbtion_factor"] ** level
+            * engine.data["emissions"]["CO2"]  # TODO: make this part be a client side computation
+            * 60
+        )
+
+    indsutry_level_including_ongoing_upgrades = (
+        player.industry
+        + Under_construction.query.filter(
+            Under_construction.player_id == player.id,
+            Under_construction.name == "industry",
+        ).count()
+    )
+
+    laboratory_level_including_ongoing_upgrades = (
+        player.laboratory
+        + Under_construction.query.filter(
+            Under_construction.player_id == player.id,
+            Under_construction.name == "laboratory",
+        ).count()
+    )
+
+    warehouse_level_including_ongoing_upgrades = (
+        player.warehouse
+        + Under_construction.query.filter(
+            Under_construction.player_id == player.id,
+            Under_construction.name == "warehouse",
+        ).count()
+    )
+
+    carbon_capture_level_including_ongoing_upgrades = (
+        player.carbon_capture
+        + Under_construction.query.filter(
+            Under_construction.player_id == player.id,
+            Under_construction.name == "carbon_capture",
+        ).count()
+    )
+
+    special_keys = {
+        "industry": {
+            "level": indsutry_level_including_ongoing_upgrades,
+            "average_consumption": package_change(
+                current=industry_average_consumption_for_level(indsutry_level_including_ongoing_upgrades),
+                upgraded=industry_average_consumption_for_level(indsutry_level_including_ongoing_upgrades + 1),
+            ),
+            "revenue_generation": package_change(
+                current=industry_hourly_revenues_for_level(indsutry_level_including_ongoing_upgrades),
+                upgraded=industry_hourly_revenues_for_level(indsutry_level_including_ongoing_upgrades + 1),
+            ),
+        },
+        "laboratory": {
+            "level": laboratory_level_including_ongoing_upgrades,
+            "research_speed_bonus": 100 - const_config_assets["laboratory"]["time_factor"] * 100,
+            "lab_workers": package_change(
+                current=player_lab_workers_for_level(laboratory_level_including_ongoing_upgrades),
+                upgraded=player_lab_workers_for_level(laboratory_level_including_ongoing_upgrades + 1),
+            ),
+        },
+        "warehouse": {
+            "level": warehouse_level_including_ongoing_upgrades,
+            "warehouse_capacities": {
+                resource: package_change(
+                    current=warehouse_capacity_for_level(warehouse_level_including_ongoing_upgrades, resource),
+                    upgraded=warehouse_capacity_for_level(warehouse_level_including_ongoing_upgrades + 1, resource),
+                )
+                for resource in engine.extractable_resources
+            },
+        },
+        "carbon_capture": {
+            "level": carbon_capture_level_including_ongoing_upgrades,
+            "power_consumption": package_change(
+                current=carbon_capture_power_consumption_for_level(carbon_capture_level_including_ongoing_upgrades),
+                upgraded=carbon_capture_power_consumption_for_level(
+                    carbon_capture_level_including_ongoing_upgrades + 1
+                ),
+            ),
+            "co2_absorption": package_change(
+                current=carbon_capture_absorption(carbon_capture_level_including_ongoing_upgrades),
+                upgraded=carbon_capture_absorption(carbon_capture_level_including_ongoing_upgrades + 1),
+            ),
+        },
+    }
+    return [
+        _package_facility_base(player, functional_facility)
+        | {
+            "construction_pollution": const_config_assets[functional_facility]["base_construction_pollution"]
+            * const_config_assets[functional_facility]["price_multiplier"] ** getattr(player, functional_facility),
+        }
+        | special_keys[functional_facility]
+        for functional_facility in engine.functional_facilities
+    ]
+
+
 def package_constructions_page_data(player: Player):
     """
     Gets cost, emissions, max power, etc data for constructions.
@@ -501,6 +642,5 @@ def package_constructions_page_data(player: Player):
         "power_facilities": package_power_facilities(player),
         "storage_facilities": package_storage_facilities(player),
         "extraction_facilities": package_extraction_facilities(player),
-        # TODO: non-power facilities
-        "functional_facilities": [],
+        "functional_facilities": package_functional_facilities(player),
     }

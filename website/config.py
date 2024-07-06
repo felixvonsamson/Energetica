@@ -458,8 +458,8 @@ const_config = {
             "base_construction_time": 5400,  # [s]
             "base_construction_energy": 750000,  # [Wh]
             "base_construction_pollution": 100000,  # [kg]
-            "price multiplier": 1.5,
-            "time factor": 0.9,
+            "price_multiplier": 1.5,
+            "time_factor": 0.9,
             "description": "The laboratory is needed to research Technologies.",
             "wikipedia_link": "",
             "requirements": [],
@@ -471,8 +471,8 @@ const_config = {
             "base_construction_time": 18000,
             "base_construction_energy": 100000,
             "base_construction_pollution": 25000,
-            "price multiplier": 1.5,
-            "capacity factor": 1.5,
+            "price_multiplier": 1.5,
+            "capacity_factor": 1.5,
             "description": "The warehouse stores physical resources.",
             "wikipedia_link": "",
             "requirements": [],
@@ -487,8 +487,8 @@ const_config = {
             "base_power_consumption": 200000,  # [W]
             "base_income": 5.6,  # [¤/tick]
             "universal_income": 1.5,  # [¤/tick]
-            "price multiplier": 1.32,
-            "power factor": 1.4,
+            "price_multiplier": 1.32,
+            "power_factor": 1.4,
             "income factor": 1.35,
             "description": "The industry generates revenue from energy. The Power consumption of the Industry varies daily and seasonally.",
             "wikipedia_link": "",
@@ -504,9 +504,9 @@ const_config = {
             "O&M_factor": 0.00049,  # not used for now
             "base_power_consumption": 10000000,  # [W]
             "base_absorbtion": 0.0000001,  # [fraction of atmospheric CO2 absorbed per minute]
-            "price multiplier": 1.5,
-            "absorbtion factor": 1.55,
-            "power factor": 1.5,
+            "price_multiplier": 1.5,
+            "absorbtion_factor": 1.55,
+            "power_factor": 1.5,
             "description": "Carbon capture consumes energy to absorb and store CO2 underground.",
             "wikipedia_link": "",
             "requirements": [
@@ -597,7 +597,7 @@ const_config = {
             "base_price": 36000,  # [¤]
             "base_construction_time": 18000,  # [s]
             "base_construction_energy": 5000000,  # [Wh]
-            "price multiplier": 1.3,
+            "price_multiplier": 1.3,
             "affected facilities": [],
             "description": "Mathematics is the fundamental tool of science.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173657&",
@@ -609,7 +609,7 @@ const_config = {
             "base_price": 36000,
             "base_construction_time": 18000,
             "base_construction_energy": 5000000,
-            "price multiplier": 1.3,
+            "price_multiplier": 1.3,
             "price factor": 1.15,
             "prod factor": 1.2,
             "affected facilities": [
@@ -635,7 +635,7 @@ const_config = {
             "base_price": 36000,
             "base_construction_time": 18000,
             "base_construction_energy": 5000000,
-            "price multiplier": 1.3,
+            "price_multiplier": 1.3,
             "efficiency_factor": 1 / (1 - 0.075),
             "affected facilities": [
                 "steam_engine",
@@ -661,7 +661,7 @@ const_config = {
             "base_price": 36000,
             "base_construction_time": 18000,
             "base_construction_energy": 5000000,
-            "price multiplier": 1.3,
+            "price_multiplier": 1.3,
             "price factor": 1.15,
             "prod factor": 1.2,
             "affected facilities": [
@@ -685,8 +685,8 @@ const_config = {
             "base_price": 56000,
             "base_construction_time": 28800,
             "base_construction_energy": 16000000,
-            "price multiplier": 1.3,
-            "time factor": 0.9,
+            "price_multiplier": 1.3,
+            "time_factor": 0.9,
             "affected facilities": [],  # (all power and storage facilites)
             "description": "Building technology enables more efficient construction of facilities.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172899&",
@@ -701,7 +701,7 @@ const_config = {
             "base_price": 32000,
             "base_construction_time": 14400,
             "base_construction_energy": 8000000,
-            "price multiplier": 1.4,
+            "price_multiplier": 1.4,
             "price factor": 1.2,
             "extract factor": 0.30,
             "energy factor": 0.25,
@@ -725,8 +725,8 @@ const_config = {
             "base_price": 56000,
             "base_construction_time": 28800,
             "base_construction_energy": 24000000,
-            "price multiplier": 1.4,
-            "time factor": 0.9,
+            "price_multiplier": 1.4,
+            "time_factor": 0.9,
             "energy factor": 1.035,
             "affected facilities": [],
             "description": "Transport technology enables more efficient shipments of natural resources.",
@@ -742,7 +742,7 @@ const_config = {
             "base_price": 84000,
             "base_construction_time": 43200,
             "base_construction_energy": 48000000,
-            "price multiplier": 1.4,
+            "price_multiplier": 1.4,
             "price factor": 0.9,
             "construction energy factor": 0.9,
             "affected facilities": [
@@ -765,10 +765,10 @@ const_config = {
             "base_price": 28000,
             "base_construction_time": 14400,
             "base_construction_energy": 16000000,
-            "price multiplier": 1.5,
+            "price_multiplier": 1.5,
             "price factor": 1.25,
             "prod factor": 1.15,
-            "capacity factor": 1.05,
+            "capacity_factor": 1.05,
             "affected facilities": [
                 "small_water_dam",
                 "large_water_dam",
@@ -789,7 +789,7 @@ const_config = {
             "base_price": 84000,
             "base_construction_time": 43200,
             "base_construction_energy": 60000000,
-            "price multiplier": 1.5,
+            "price_multiplier": 1.5,
             "price factor": 1.15,
             "prod factor": 1.2,
             "affected facilities": [
@@ -810,7 +810,7 @@ const_config = {
             "base_price": 60000,
             "base_construction_time": 28800,
             "base_construction_energy": 40000000,
-            "price multiplier": 1.4,
+            "price_multiplier": 1.4,
             "price factor": 1.25,
             "inefficiency_factor": 0.9,
             "affected facilities": [
@@ -831,7 +831,7 @@ const_config = {
             "base_price": 140000,
             "base_construction_time": 64800,
             "base_construction_energy": 108000000,
-            "price multiplier": 1.5,
+            "price_multiplier": 1.5,
             "price factor": 1.2,
             "prod factor": 1.25,
             "affected facilities": [
@@ -999,7 +999,7 @@ class Config(object):
         # calculating industry energy consumption and income
         assets["industry"]["power consumption"] = (
             const_config["assets"]["industry"]["base_power_consumption"]
-            * const_config["assets"]["industry"]["power factor"] ** player.industry
+            * const_config["assets"]["industry"]["power_factor"] ** player.industry
         )
         assets["industry"]["income"] = (
             const_config["assets"]["industry"]["base_income"]
@@ -1011,11 +1011,11 @@ class Config(object):
         # calculating carbon capture power consumption and CO2 absorbtion
         assets["carbon_capture"]["power consumption"] = (
             const_config["assets"]["carbon_capture"]["base_power_consumption"]
-            * const_config["assets"]["carbon_capture"]["power factor"] ** player.carbon_capture
+            * const_config["assets"]["carbon_capture"]["power_factor"] ** player.carbon_capture
         )
         assets["carbon_capture"]["absorbtion"] = (
             const_config["assets"]["carbon_capture"]["base_absorbtion"]
-            * const_config["assets"]["carbon_capture"]["absorbtion factor"] ** player.carbon_capture
+            * const_config["assets"]["carbon_capture"]["absorbtion_factor"] ** player.carbon_capture
         )
 
         # calculating the maximum storage capacity from the warehouse level
@@ -1025,13 +1025,13 @@ class Config(object):
             else:
                 assets["warehouse_capacities"][resource] = (
                     const_config["warehouse_capacities"][resource]
-                    * const_config["assets"]["warehouse"]["capacity factor"] ** player.warehouse
+                    * const_config["assets"]["warehouse"]["capacity_factor"] ** player.warehouse
                 )
 
         # calculating the transport speed and energy consumption from the level of transport technology
         assets["transport"]["time"] = (
             const_config["transport"]["time"]
-            * const_config["assets"]["transport_technology"]["time factor"] ** player.transport_technology
+            * const_config["assets"]["transport_technology"]["time_factor"] ** player.transport_technology
         )
         assets["transport"]["power consumption"] = (
             const_config["transport"]["power consumption"]

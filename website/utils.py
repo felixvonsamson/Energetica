@@ -534,9 +534,9 @@ def start_project(engine, player, facility, family, force=False):
         real_price = (
             const_config["base_price"]
             * technology_effects.price_multiplier(player, facility)
-            * const_config["price multiplier"] ** ud_count
+            * const_config["price_multiplier"] ** ud_count
         )
-        duration = technology_effects.construction_time(player, facility) * const_config["price multiplier"] ** (
+        duration = technology_effects.construction_time(player, facility) * const_config["price_multiplier"] ** (
             0.6 * ud_count
         )
     else:  # power facitlies, storage facilities, extractions facilities

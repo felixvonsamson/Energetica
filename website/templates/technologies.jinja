@@ -235,7 +235,7 @@
               {% if facility == "building_technology" %}
                 <tr>
                   <td>Construction time</td>
-                  <td class="txt_center">-{{ (100-const_data["time factor"]*100)|int }}%</td>
+                  <td class="txt_center">-{{ (100-const_data["time_factor"]*100)|int }}%</td>
                 </tr>
                 <tr>
                   <td>Constrtruct. workers</td>
@@ -245,11 +245,11 @@
               {% if facility == "transport_technology" %}
                 <tr>
                   <td>Shipment time</td>
-                  <td class="txt_center">-{{ (100-const_data["time factor"]*100)|int }}%</td>
+                  <td class="txt_center">-{{ (100-const_data["time_factor"]*100)|int }}%</td>
                 </tr>
                 <tr>
                   <td>Power consumption</td>
-                  <td class="txt_center">+{{ ((const_data["energy factor"]/const_data["time factor"]-1)*100) | round | int }}%</td>
+                  <td class="txt_center">+{{ ((const_data["energy factor"]/const_data["time_factor"]-1)*100) | round | int }}%</td>
                 </tr>
               {% endif %}
               {% if facility == "mineral_extraction" %}
@@ -264,10 +264,10 @@
                   <td class="txt_center">+{{ (100*const_data["pollution factor"]/(1+const_data["pollution factor"]*user[facility]))|round(0)|int }}%</td>
                 </tr>
               {% endif %}
-              {% if "capacity factor" in const_data %}
+              {% if "capacity_factor" in const_data %}
                 <tr>
                   <td>Storage capacity</td>
-                  <td class="txt_center">+{{ (const_data["capacity factor"]*100-100) | int }}%</td>
+                  <td class="txt_center">+{{ (const_data["capacity_factor"]*100-100) | int }}%</td>
                 </tr>
               {% endif %}
               {% if "inefficiency_factor" in const_data %}

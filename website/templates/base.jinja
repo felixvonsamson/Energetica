@@ -14,7 +14,7 @@
     </div>
     {% if user.warehouse > 0 %}
     {% set warehouse_cap = engine.const_config.warehouse_capacities %}
-    {% set warehouse_mult = engine.const_config.assets.warehouse["capacity factor"] ** user.warehouse %}
+    {% set warehouse_mult = engine.const_config.assets.warehouse["capacity_factor"] ** user.warehouse %}
     <div class="resource_container">
       <div class="resourceJauge-background hover_info">
         <div class="resourceJauge coal" style="--width:{{user.coal / warehouse_cap.coal / warehouse_mult}}"></div>

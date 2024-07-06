@@ -194,8 +194,8 @@
               <tr>
                 <td>Average consumption</td>
                 <td class="txt_center">
-                  <script>display_W({{ const_data["base_power_consumption"] * const_data["power factor"] ** user.industry }});</script> ->
-                  <script>display_W({{ const_data["base_power_consumption"] * const_data["power factor"] ** (user.industry+1) }});</script>
+                  <script>display_W({{ const_data["base_power_consumption"] * const_data["power_factor"] ** user.industry }});</script> ->
+                  <script>display_W({{ const_data["base_power_consumption"] * const_data["power_factor"] ** (user.industry+1) }});</script>
                 </td>
               </tr>
               <tr>
@@ -207,7 +207,7 @@
             {% elif facility == "laboratory" %}
               <tr>
                 <td>Research speed</td>
-                <td class="txt_center">+{{ (100-const_data["time factor"]*100) | int }}%</td>
+                <td class="txt_center">+{{ (100-const_data["time_factor"]*100) | int }}%</td>
               </tr>
               <tr>
                 <td>Lab workers</td>
@@ -233,29 +233,29 @@
                 </tr>
               {% else %}
                 {% set warehouse_cap = engine.const_config.warehouse_capacities %}
-                {% set warehouse_mult = engine.const_config.assets.warehouse["capacity factor"] ** user.warehouse %}
+                {% set warehouse_mult = engine.const_config.assets.warehouse["capacity_factor"] ** user.warehouse %}
                 <tr>
                   <td>Coal capacity</td>
                   <td class="txt_center">
-                    <script>display_upgrade_kg({{ warehouse_cap.coal * warehouse_mult }}, {{ const_data["capacity factor"]}});</script>
+                    <script>display_upgrade_kg({{ warehouse_cap.coal * warehouse_mult }}, {{ const_data["capacity_factor"]}});</script>
                   </td>
                 </tr>
                 <tr>
                   <td>Oil capacity</td>
                   <td class="txt_center">
-                    <script>display_upgrade_kg({{ warehouse_cap.oil * warehouse_mult }}, {{ const_data["capacity factor"]}});</script>
+                    <script>display_upgrade_kg({{ warehouse_cap.oil * warehouse_mult }}, {{ const_data["capacity_factor"]}});</script>
                   </td>
                 </tr>
                 <tr>
                   <td>Gas capacity</td>
                   <td class="txt_center">
-                    <script>display_upgrade_kg({{ warehouse_cap.gas * warehouse_mult }}, {{ const_data["capacity factor"]}});</script>
+                    <script>display_upgrade_kg({{ warehouse_cap.gas * warehouse_mult }}, {{ const_data["capacity_factor"]}});</script>
                   </td>
                 </tr>
                 <tr>
                   <td>Uranium cap.</td>
                   <td class="txt_center">
-                    <script>display_upgrade_kg({{ warehouse_cap.uranium * warehouse_mult }}, {{ const_data["capacity factor"]}});</script>
+                    <script>display_upgrade_kg({{ warehouse_cap.uranium * warehouse_mult }}, {{ const_data["capacity_factor"]}});</script>
                   </td>
                 </tr>
               {% endif %}
@@ -273,13 +273,13 @@
                 <tr>
                   <td>Power consumption</td>
                   <td class="txt_center">
-                    <script>display_upgrade_W({{ const_data["base_power_consumption"] * const_data["power factor"] ** user.carbon_capture }}, {{ const_data["power factor"]}});</script>
+                    <script>display_upgrade_W({{ const_data["base_power_consumption"] * const_data["power_factor"] ** user.carbon_capture }}, {{ const_data["power_factor"]}});</script>
                   </td>
                 </tr>
                 <tr>
                   <td>CO2 absorbed</td>
                   <td class="txt_center">
-                    <script>display_upgrade_kg({{ const_data["base_absorbtion"] * (const_data["absorbtion factor"] ** user.carbon_capture) * engine.data["emissions"]["CO2"] * 60 }}, {{ const_data["absorbtion factor"]}});</script>/h
+                    <script>display_upgrade_kg({{ const_data["base_absorbtion"] * (const_data["absorbtion_factor"] ** user.carbon_capture) * engine.data["emissions"]["CO2"] * 60 }}, {{ const_data["absorbtion_factor"]}});</script>/h
                   </td>
                 </tr>
               {% endif %}

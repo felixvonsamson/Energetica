@@ -60,6 +60,7 @@ class gameEngine(object):
             "uranium_mine",
         ]
 
+        engine.extractable_resources = ["coal", "oil", "gas", "uranium"]
         engine.storage_facilities = [
             "small_pumped_hydro",
             "compressed_air",
@@ -92,9 +93,9 @@ class gameEngine(object):
         ]
 
         engine.functional_facilities = [
+            "industry",
             "laboratory",
             "warehouse",
-            "industry",
             "carbon_capture",
         ]
 

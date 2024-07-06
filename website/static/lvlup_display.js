@@ -32,7 +32,7 @@ function change_info(constructions) {
 
             let price = tile.querySelector("#price");
             let new_price =
-                const_config.assets[name]["base_price"] * const_config.assets[name]["price multiplier"] ** (player_levels[name] + lvls_in_progress[name]);
+                const_config.assets[name]["base_price"] * const_config.assets[name]["price_multiplier"] ** (player_levels[name] + lvls_in_progress[name]);
             price.innerHTML = `${new_price
                 .toFixed(0)
                 .replace(

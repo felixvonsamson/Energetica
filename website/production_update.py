@@ -338,7 +338,7 @@ def industry_demand_and_revenues(engine, player, demand, revenues):
             else:
                 time_fraction = (ud.suspension_time - ud.start_time) / (ud.duration)
             additional_demand = (
-                time_fraction * demand["industry"] * (engine.const_config["assets"]["industry"]["power factor"] - 1)
+                time_fraction * demand["industry"] * (engine.const_config["assets"]["industry"]["power_factor"] - 1)
             )
             additional_revenue = (
                 time_fraction
