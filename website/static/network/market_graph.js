@@ -427,8 +427,96 @@ function network_capacities_sketch(s){
         if (s.graphics_ready) {
             s.image(s.graphics, 0, 0);
             if(s.is_inside){
-                s.rect(0, 0, 10, 10);
+                let x0 = 0.5*(s.graph_w - s.graph_h - margin - 3*s.spacing);
+                if(s.mouseY>0.5*margin && s.mouseY<s.height-0.5*margin){
+                    if(s.mouseX>x0 && s.mouseX<x0+margin){
+                        s.translate(x0 + margin + 10, margin);
+                        display_capacity_information(s.renewables, s.capacities.renewables);
+                    }
+                    if(s.mouseX>x0 + margin + s.spacing && s.mouseX<x0+2*margin+s.spacing){
+                        s.translate(x0 + 2*margin + s.spacing + 10, margin);
+                        display_capacity_information(s.controlables, s.capacities.controlables);
+                    }
+                    if(s.mouseX>x0 + 2*margin + 2*s.spacing && s.mouseX<x0+3*margin+2*s.spacing){
+                        s.translate(x0 + 3*margin + 2*s.spacing + 10, margin);
+                        display_capacity_information(s.storages, s.capacities.storages);
+                    }
+                    if(s.mouseX>s.width-margin-s.spacing-s.graph_h && s.mouseX<s.width-margin-s.spacing){
+                        s.translate(s.width-margin-s.spacing-0.5*s.graph_h-80, margin);
+                        s.push();
+                        s.noStroke();
+                        fill_alt = 0;
+
+                        let keys = Object.keys(temporal_data.generation).reverse();
+                        for (let facility of keys) {
+                            let current_generation = temporal_data.generation[facility][resolution_list[0]][59];
+                            if (current_generation > 0){
+                                alternate_fill(s);
+                                s.rect(0, 0, 160, 17);
+                                s.push();
+                                s.fill(cols_and_names[facility][0]);
+                                s.rect(0, 0, 16, 17);
+                                s.pop();
+                                s.fill(0);
+                                s.textAlign(LEFT, CENTER);
+                                s.text(cols_and_names[facility][1], 20, 5);
+                                s.textAlign(CENTER, CENTER);
+                                let percentage = round(100 * current_generation / temporal_data.network_data.quantity[resolution_list[0]][59]);
+                                s.text(percentage + "%", 132, 5);
+                                s.translate(0, 16);
+                            }
+                        }
+                    }
+                }
             }
+        }
+
+        function display_capacity_information(facility_list, capacity){
+            s.push();
+            s.noStroke();
+            fill_alt = 0;
+            alternate_fill(s);
+            s.rect(0, 0, 216, 17);
+            s.fill(0);
+            s.textFont(balooBold);
+            s.text("facility", 60, 5);
+            s.text("max cap.", 132, 5);
+            s.text("now", 188, 5);
+            s.textFont(font);
+            s.translate(0, 16);
+
+            let power_cumsum = 0;
+            for (let facility of [...facility_list].reverse()) {
+                if (network_capacities[facility]){
+                    let current_generation = 0;
+                    if(temporal_data.generation[facility]){
+                        current_generation = temporal_data.generation[facility][resolution_list[0]][59];
+                    }
+                    power_cumsum += current_generation;
+                    alternate_fill(s);
+                    s.rect(0, 0, 216, 17);
+                    s.push();
+                    s.fill(cols_and_names[facility][0]);
+                    s.rect(0, 0, 16, 17);
+                    s.pop();
+                    s.fill(0);
+                    s.textAlign(LEFT, CENTER);
+                    s.text(cols_and_names[facility][1], 20, 5);
+                    s.textAlign(CENTER, CENTER);
+                    s.text(display_W(network_capacities[facility].power), 132, 5);
+                    s.text(display_W(current_generation), 188, 5);
+                    s.translate(0, 16);
+                }
+            }
+
+            alternate_fill(s);
+            s.rect(0, 0, 216, 17);
+            s.fill(0);
+            s.textFont(balooBold);
+            s.text("TOTAL", 60, 5);
+            s.text(display_W(capacity), 132, 5);
+            s.text(display_W(power_cumsum), 188, 5);
+            s.pop();
         }
     }
 
@@ -459,9 +547,9 @@ function network_capacities_sketch(s){
         s.graphics.background(229, 217, 182);
 
         s.graphics.push();
-        let spacing = min(margin, s.width / 15);
+        s.spacing = min(margin, s.width / 15);
 
-        s.graphics.translate(0.5*(s.graph_w - s.graph_h - margin - 3*spacing), 0.5 * margin + s.graph_h);
+        s.graphics.translate(0.5*(s.graph_w - s.graph_h - margin - 3*s.spacing), 0.5 * margin + s.graph_h);
         for(let renewable of s.renewables){
             if (network_capacities[renewable]){
                 s.capacities.renewables += network_capacities[renewable].power;
@@ -492,7 +580,7 @@ function network_capacities_sketch(s){
         s.graphics.textSize(min(20, s.width / 40));
         s.graphics.text("Renewables", 0.5 * margin, 0.25 * margin);
 
-        s.graphics.translate(margin + spacing, 0);
+        s.graphics.translate(margin + s.spacing, 0);
         for(let controlable of s.controlables){
             if (network_capacities[controlable]){
                 s.capacities.controlables += network_capacities[controlable].power;
@@ -523,7 +611,7 @@ function network_capacities_sketch(s){
         s.graphics.textSize(min(20, s.width / 40));
         s.graphics.text("Controlables", 0.5 * margin, 0.25 * margin);
 
-        s.graphics.translate(margin + spacing, 0);
+        s.graphics.translate(margin + s.spacing, 0);
         for(let storage of s.storages){
             if (network_capacities[storage]){
                 s.capacities.storages += network_capacities[storage].power;
@@ -557,7 +645,7 @@ function network_capacities_sketch(s){
         s.graphics.pop();
 
         s.graphics.push();
-        s.graphics.translate(s.graph_w - 0.5*s.graph_h + margin - spacing, 0.5 * s.height);
+        s.graphics.translate(s.graph_w - 0.5*s.graph_h + margin - s.spacing, 0.5 * s.height);
         let cumul_angle = -0.5 * PI;
         for(let facility in temporal_data.generation){
             let current_generation = temporal_data.generation[facility][resolution_list[0]][59];
