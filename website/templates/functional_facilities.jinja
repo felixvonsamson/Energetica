@@ -20,63 +20,48 @@
     <div class="txt_center margin medium">
       <p>On this page you will find 4 facilities with unique abilites.</p>
       <p>
-        For more information about Functional facilities, refer to the 
-        <a href="{{ url_for('views.wiki', _anchor='Functional_Facilities') }}">
-          Functional facilities section in the wiki
-        </a>.
+        For more information about Functional facilities, refer to the
+        <a href="{{ url_for('views.wiki', _anchor='Functional_Facilities') }}">Functional facilities section in the wiki</a>.
       </p>
     </div>
   </div>
-  <div id="under_construction">
-    {# Facilites under construction will show here #}
-  </div>
+  <div id="under_construction">{# Facilites under construction will show here #}</div>
   {% for facility_data in constructions %}
     {% set facility = facility_data.name %}
     <div id="{{ facility_data.display_name }}"
          class="bone margin facility small"
          onclick="show_construction('{{ facility_data.display_name }}');">
-
       <div class="flex-col flex-grow-1">
-
         <div style="width:100%" class="flex-row">
-
           <img class="img"
-              src="{{ url_for('static', filename='images/functional_facilities/'+facility+'.jpg') }}"
-              width="250"
-              height="167"
-              alt="{{ facility_data.display_name }}">
-
+               src="{{ url_for('static', filename='images/functional_facilities/'+facility+'.jpg') }}"
+               width="250"
+               height="167"
+               alt="{{ facility_data.display_name }}">
           <div class="infotext padding">
-
             <div class="flex-row align-items-center">
-
               {# Facility name #}
               <strong class="large">{{ facility_data.display_name }}</strong>
               &ensp; lvl.&thinsp;<em id="lvl" class="large">{{ facility_data.level }}</em>
               &emsp;&ensp;
-
               {# Construction Cost #}
               <span class="money_font">
                 <script>display_money_long({{ facility_data.price }});</script>
               </span>
-
             </div>
-
             <div class="infobox">
-
               {# Description #}
               <div class="infotext">
                 {% if facility == "laboratory" %}
-                  The laboratory is needed to research 
+                  The laboratory is needed to research
                   <strong><a class="txt-blue" id="technology-link" href="/technology">Technologies</a></strong>.
                 {% elif facility == "warehouse" %}
-                  The warehouse stores physical 
+                  The warehouse stores physical
                   <strong><a class="txt-blue" id="resources-link" href="/extraction_facilities">resources</a></strong>.
                 {% else %}
                   {{ facility_data.description }}
                 {% endif %}
               </div>
-
               {# Requirements #}
               {% if facility_data.locked %}
                 <div class="infobox requirements" id="requirements">
@@ -100,25 +85,21 @@
                   </div>
                 </div>
               {% endif %}
-
             </div>
-
           </div>
-
         </div>
-
         {# Construction information for big screen #}
         <div id="constructionContent" class="hidden">
           <div class="flex-col construction_button_container hidden">
             {% if facility_data.locked %}
               <b class="padding medium margin txt_center white txt-red"
-              onclick="start_construction('{{ facility }}', 'Functional facilities');">
-                  Locked
+                 onclick="start_construction('{{ facility }}', 'Functional facilities');">
+                Locked
               </b>
             {% else %}
               <b class="padding medium button margin txt_center white"
-                  onclick="start_construction('{{ facility }}', 'Functional facilities');">
-                  Start construction
+                 onclick="start_construction('{{ facility }}', 'Functional facilities');">
+                Start construction
               </b>
             {% endif %}
           </div>
@@ -140,23 +121,20 @@
             </strong>
           </div>
         </div>
-
       </div>
-
       <div class="infobox information_container">
-
         {# Construction information for smartphone #}
         <div id="constructionContent_smartphone" class="hidden margin">
           <div class="flex-col">
             {% if facility_data.locked %}
               <b class="padding medium margin txt_center white txt-red"
-              onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Functional facilities');">
-                  Locked
+                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Functional facilities');">
+                Locked
               </b>
             {% else %}
               <b class="padding medium button margin txt_center white"
-                  onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Functional facilities');">
-                  Start construction
+                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Functional facilities');">
+                Start construction
               </b>
             {% endif %}
           </div>
@@ -178,16 +156,14 @@
             </strong>
           </div>
         </div>
-        
-        
         {# Upgrade information #}
-        <div id="infotable" class="{% if facility == 'warehouse' %}minimized minimizable{% endif %}">
-          <table class="table tan_green" {% if facility in ['industry', 'carbon_capture'] %}style="width:350px"{% endif %}>
+        <div id="infotable"
+             class="{% if facility == 'warehouse' %}minimized minimizable{% endif %}">
+          <table class="table tan_green"
+                 {% if facility in ['industry', 'carbon_capture'] %}style="width:350px"{% endif %}>
             <tr>
               <th>Effects :</th>
-              <th id="upgrade" class="txt_center">
-                lvl {{ facility_data.level-1 }} -> lvl {{ facility_data.level }}
-              </th>
+              <th id="upgrade" class="txt_center">lvl {{ facility_data.level-1 }} -> lvl {{ facility_data.level }}</th>
             </tr>
             {% if "average_consumption" in facility_data %}
               <tr>
@@ -203,7 +179,8 @@
                 <td>Revenue generation</td>
                 <td class="txt_center">
                   <script>display_money_upgrade_two_values({{ facility_data.revenue_generation.current }},
-                  {{ facility_data.revenue_generation.upgraded }});</script>
+                  {{ facility_data.revenue_generation.upgraded }});
+                  </script>
                 </td>
               </tr>
             {% endif %}
@@ -213,57 +190,75 @@
                 <td class="txt_center">+{{ facility_data.research_speed_bonus | int }}%</td>
               </tr>
             {% endif %}
-            {% if "lab_workers" in facility_data and facility_data.lab_workers is not none %}   
+            {% if "lab_workers" in facility_data and facility_data.lab_workers is not none %}
               <tr>
                 <td>Lab workers</td>
-                <td class="txt_center">{{ facility_data.lab_workers.current }} -> 
-                {{ facility_data.lab_workers.upgraded }}</td>
+                <td class="txt_center">
+                  {{ facility_data.lab_workers.current }} ->
+                  {{ facility_data.lab_workers.upgraded }}
+                </td>
               </tr>
             {% endif %}
             {% if "warehouse_capacities" in facility_data.keys() %}
               {% set warehouse_capacities = facility_data.warehouse_capacities %}
               <tr>
                 <td>Coal capacity</td>
-                <td class="txt_center"><script>display_upgrade_kg_two_values({{warehouse_capacities.coal.current}},
-                {{warehouse_capacities.coal.upgraded}})</script></td>
+                <td class="txt_center">
+                  <script>display_upgrade_kg_two_values({{warehouse_capacities.coal.current}},
+                {{warehouse_capacities.coal.upgraded}})
+                  </script>
+                </td>
               </tr>
               <tr>
                 <td>Oil capacity</td>
-                <td class="txt_center"><script>display_upgrade_kg_two_values({{warehouse_capacities.oil.current}},
-                {{warehouse_capacities.oil.upgraded}})</script></td>
+                <td class="txt_center">
+                  <script>display_upgrade_kg_two_values({{warehouse_capacities.oil.current}},
+                {{warehouse_capacities.oil.upgraded}})
+                  </script>
+                </td>
               </tr>
               <tr>
                 <td>Gas capacity</td>
-                <td class="txt_center"><script>display_upgrade_kg_two_values({{warehouse_capacities.gas.current}},
-                {{warehouse_capacities.gas.upgraded}})</script></td>
+                <td class="txt_center">
+                  <script>display_upgrade_kg_two_values({{warehouse_capacities.gas.current}},
+                {{warehouse_capacities.gas.upgraded}})
+                  </script>
+                </td>
               </tr>
               <tr>
                 <td>Uranium cap.</td>
-                <td class="txt_center"><script>display_upgrade_kg_two_values({{warehouse_capacities.uranium.current}},
-                {{warehouse_capacities.uranium.upgraded}})</script></td>
+                <td class="txt_center">
+                  <script>display_upgrade_kg_two_values({{warehouse_capacities.uranium.current}},
+                {{warehouse_capacities.uranium.upgraded}})
+                  </script>
+                </td>
               </tr>
             {% endif %}
             {% if "power_consumption" in facility_data.keys() %}
               <tr>
                 <td>Power consumption</td>
                 <td class="txt_center">
-                  <script>display_upgrade_W_two_values({{ facility_data.power_consumption.current}}, 
-                  {{ facility_data.power_consumption.upgraded }});</script>
+                  <script>display_upgrade_W_two_values({{ facility_data.power_consumption.current}},
+                  {{ facility_data.power_consumption.upgraded }});
+                  </script>
                 </td>
               </tr>
             {% endif %}
             {% if "co2_absorption" in facility_data.keys() %}
-            <tr>
-              <td>CO2 absorbed</td>
-              <td class="txt_center"><script>display_upgrade_kg_two_values({{ facility_data.co2_absorption.current }},
-              {{ facility_data.co2_absorption.upgraded }})</script>/h</td>
-            </tr>
+              <tr>
+                <td>CO2 absorbed</td>
+                <td class="txt_center">
+                  <script>display_upgrade_kg_two_values({{ facility_data.co2_absorption.current }},
+              {{ facility_data.co2_absorption.upgraded }})
+                  </script>
+                  /h
+                </td>
+              </tr>
             {% endif %}
           </table>
           <div class="overlay {% if facility != 'warehouse' %}hidden{% endif %}"></div>
         </div>
       </div>
-
     </div>
   {% endfor %}
 {% endblock content %}

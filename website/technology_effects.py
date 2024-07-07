@@ -641,7 +641,6 @@ def package_functional_facilities(player: Player):
         result = list(filter(lambda x: x["name"] != "laboratory", result))
     if "GHG_effect" not in player.advancements:
         result = list(filter(lambda x: x["name"] != "carbon_capture", result))
-    print(json.dumps(result))
     return result
 
 

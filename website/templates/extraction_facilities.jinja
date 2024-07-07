@@ -24,49 +24,36 @@
       </p>
     </div>
   </div>
-  <div id="under_construction">
-    {# Facilites under construction will show here #}
-  </div>
+  <div id="under_construction">{# Facilites under construction will show here #}</div>
   {% for facility_data in constructions %}
     {% set facility = facility_data.name %}
     {% set resource = facility_data.resource_production.name %}
     <div id="{{ facility }}"
          class="bone margin facility small"
          onclick="show_construction('{{ facility }}');">
-
       <div class="flex-col flex-grow-1">
-
         <div style="width:100%" class="flex-row">
-
           <img class="img"
-              src="{{ url_for('static', filename='images/extraction_facilities/'+facility+'.jpg') }}"
-              width="250"
-              height="167"
-              alt="{{ facility_data.display_name }} power plant">
-
+               src="{{ url_for('static', filename='images/extraction_facilities/'+facility+'.jpg') }}"
+               width="250"
+               height="167"
+               alt="{{ facility_data.display_name }} power plant">
           <div class="infotext padding">
-
             <div class="flex-row align-items-center">
-
               {# Facility name #}
               <strong class="large">{{ facility_data.display_name }}</strong>
-
               {# Wikipedia icon #}
               <a class="white wikipedia_icon_container no_deco"
-                href="{{ facility_data.wikipedia_link }}"
-                target="_blank">
+                 href="{{ facility_data.wikipedia_link }}"
+                 target="_blank">
                 <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
               </a>
-
               {# Construction Cost #}
               <span class="money_font">
                 <script>display_money_long({{ facility_data.price }});</script>
               </span>
-
             </div>
-
             <div class="infobox">
-
               {# Description & indicators #}
               <div class="infotext">
                 {{ facility_data.description }}
@@ -74,11 +61,10 @@
                 {# Underground reserves #}
                 <br>
                 <em class="txt-blue">
-                  <i class="fa fa-info-circle"></i> Underground reserves of {{ resource }} : 
+                  <i class="fa fa-info-circle"></i> Underground reserves of {{ resource }} :
                   <strong><script>display_kg({{ user.tile[resource] }});</script></strong>
                 </em>
               </div>
-
               {# Requirements #}
               {% if facility_data.locked %}
                 <div class="infobox requirements" id="requirements">
@@ -97,25 +83,21 @@
                   </div>
                 </div>
               {% endif %}
-
             </div>
-
           </div>
-
         </div>
-
         {# Construction information for big screen #}
         <div id="constructionContent" class="hidden">
           <div class="flex-col construction_button_container hidden">
             {% if facility_data.locked %}
               <b class="padding medium margin txt_center white txt-red"
-              onclick="start_construction('{{ facility }}', 'Extraction facilities');">
-                  Locked
+                 onclick="start_construction('{{ facility }}', 'Extraction facilities');">
+                Locked
               </b>
             {% else %}
               <b class="padding medium button margin txt_center white"
-                  onclick="start_construction('{{ facility }}', 'Extraction facilities');">
-                  Start construction
+                 onclick="start_construction('{{ facility }}', 'Extraction facilities');">
+                Start construction
               </b>
             {% endif %}
           </div>
@@ -137,23 +119,20 @@
             </strong>
           </div>
         </div>
-
       </div>
-
       <div class="infobox information_container">
-
         {# Construction information for smartphone #}
         <div id="constructionContent_smartphone" class="hidden margin">
           <div class="flex-col">
             {% if facility_data.locked %}
               <b class="padding medium margin txt_center white txt-red"
-              onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Extraction facilities');">
-                  Locked
+                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Extraction facilities');">
+                Locked
               </b>
             {% else %}
               <b class="padding medium button margin txt_center white"
-                  onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Extraction facilities');">
-                  Start construction
+                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Extraction facilities');">
+                Start construction
               </b>
             {% endif %}
           </div>
@@ -175,7 +154,6 @@
             </strong>
           </div>
         </div>
-
         {# Power Facility Data #}
         <div id="infotable" class="minimized minimizable">
           <table class="table tan_green">
@@ -219,7 +197,6 @@
         </div>
       </div>
     </div>
-
   {% endfor %}
 {% endblock content %}
 {% block additionnal_script %}

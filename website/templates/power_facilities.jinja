@@ -19,7 +19,8 @@
     <div class="txt_center margin medium">
       <p>On this page you will find all the facilities that generate electricity.</p>
       <p>
-        For more information about how power facilites generate electricity, refer to the <a href="{{ url_for('views.wiki', _anchor='Power_Facilities') }}">Power facilities section in the wiki</a>.
+        For more information about how power facilites generate electricity, refer to the
+        <a href="{{ url_for('views.wiki', _anchor='Power_Facilities') }}">Power facilities section in the wiki</a>.
       </p>
     </div>
   </div>
@@ -29,41 +30,31 @@
     <div id="{{ facility }}"
          class="bone margin facility small"
          onclick="show_construction('{{ facility }}');">
-
       <div class="flex-col flex-grow-1">
-
         <div style="width:100%" class="flex-row">
-
-          {% set image_extension = "png" if facility in ["combined_cycle", "nuclear_reactor_gen4", "steam_engine"] else "jpg" %}  
+          {% set png_extensions = ["combined_cycle", "nuclear_reactor_gen4", "steam_engine"] %}  
+          {% set image_extension = "png" if facility in png_extensions else "jpg" %}
           <img class="img"
-              src="{{ url_for('static', filename='images/power_facilities/'+facility+'.'+image_extension) }}"
-              width="250"
-              height="167"
-              alt="{{ facility_data.display_name }} power plant">
-
+               src="{{ url_for('static', filename='images/power_facilities/'+facility+'.'+image_extension) }}"
+               width="250"
+               height="167"
+               alt="{{ facility_data.display_name }} power plant">
           <div class="infotext padding">
-
             <div class="flex-row align-items-center">
-
               {# Facility name #}
               <strong class="large">{{ facility_data.display_name }}</strong>
-
               {# Wikipedia icon #}
               <a class="white wikipedia_icon_container no_deco"
-                href="{{ facility_data.wikipedia_link }}"
-                target="_blank">
+                 href="{{ facility_data.wikipedia_link }}"
+                 target="_blank">
                 <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
               </a>
-
               {# Construction Cost #}
               <span class="money_font">
                 <script>display_money_long({{ facility_data.price }});</script>
               </span>
-
             </div>
-
             <div class="infobox">
-
               {# Description & indicators #}
               <div class="infotext">
                 {{ facility_data.description }}
@@ -101,7 +92,6 @@
                   {% endif %}
                 {% endfor %}
               </div>
-
               {# Requirements #}
               {% if facility_data.locked %}
                 <div class="infobox requirements" id="requirements">
@@ -125,25 +115,21 @@
                   </div>
                 </div>
               {% endif %}
-
             </div>
-
           </div>
-
         </div>
-
         {# Construction information for big screen #}
         <div id="constructionContent" class="hidden">
           <div class="flex-col construction_button_container hidden">
             {% if facility_data.locked %}
               <b class="padding medium margin txt_center white txt-red"
-              onclick="start_construction('{{ facility }}', 'Power facilities');">
-                  Locked
+                 onclick="start_construction('{{ facility }}', 'Power facilities');">
+                Locked
               </b>
             {% else %}
               <b class="padding medium button margin txt_center white"
-                  onclick="start_construction('{{ facility }}', 'Power facilities');">
-                  Start construction
+                 onclick="start_construction('{{ facility }}', 'Power facilities');">
+                Start construction
               </b>
             {% endif %}
           </div>
@@ -165,23 +151,20 @@
             </strong>
           </div>
         </div>
-
       </div>
-
       <div class="infobox information_container">
-
         {# Construction information for smartphone #}
         <div id="constructionContent_smartphone" class="hidden margin">
           <div class="flex-col">
             {% if facility_data.locked %}
               <b class="padding medium margin txt_center white txt-red"
-              onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
-                  Locked
+                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
+                Locked
               </b>
             {% else %}
               <b class="padding medium button margin txt_center white"
-                  onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
-                  Start construction
+                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
+                Start construction
               </b>
             {% endif %}
           </div>
@@ -203,9 +186,9 @@
             </strong>
           </div>
         </div>
-
         {# Power Facility Data #}
-        <div id="infotable" class="{% if facility_data.ramping_time is not none %}minimized minimizable{% endif %}">
+        <div id="infotable"
+             class="{% if facility_data.ramping_time is not none %}minimized minimizable{% endif %}">
           <table class="table tan_green">
             {# Max Generation #}
             <tr>
@@ -216,14 +199,14 @@
             </tr>
             {# Ramping Speed #}
             {% if facility_data.ramping_time is not none %}
-            <tr>
-              <td>Ramping speed</td>
-              <td class="txt_center">
-                <strong>
-                  <script>display_W({{ facility_data.ramping_time }});</script>/min
-                </strong>
-              </td>
-            </tr>
+              <tr>
+                <td>Ramping speed</td>
+                <td class="txt_center">
+                  <strong>
+                    <script>display_W({{ facility_data.ramping_time }});</script>/min
+                  </strong>
+                </td>
+              </tr>
             {% endif %}
             {# O&M Costs #}
             <tr>
@@ -276,7 +259,6 @@
           <div class="overlay {% if facility_data.ramping_time is not none %}hidden{% endif %}"></div>
         </div>
       </div>
-
     </div>
   {% endfor %}
 {% endblock content %}
