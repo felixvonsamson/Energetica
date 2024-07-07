@@ -22,6 +22,14 @@ let revenue_curves;
 // data for the network capacities graph
 let network_capacities;
 
+// data sorting options
+let decending = {
+    "offers_table": false,
+    "bids_table": true,
+}
+let offer_col = "price_col";
+let bid_col = "price_col";
+
 //resolution buttons
 let resolution_list;
 let res_to_factor;
@@ -775,8 +783,7 @@ function temporal_graph_sketch(s){
                         if(s.categorisation == "type"){
                             s.text(cols_and_names[group][1], 20, 5);
                         }else{
-                            let userObject = players[int(group)];
-                            let username = userObject ? userObject.username : "Loading...";
+                            let username = players[int(group)].username;
                             s.text(username, 20, 5);
                         }
                         s.textAlign(CENTER, CENTER);
@@ -1205,10 +1212,7 @@ function market_chart_sketch(s){
             s.translate(0, -16 * 3);
             s.textAlign(CENTER);
             s.textFont(balooBold);
-            let userObject = players[data["player_id"][i]];
-            let username = userObject
-                ? userObject.username
-                : "Loading...";
+            let username = players[data["player_id"][i]].username;
             s.text(username, 90, 4);
             s.textFont(font);
             s.push();
@@ -1331,44 +1335,44 @@ function show_selected_button(button_id, id){
 }
 
 function fetch_temporal_network_data() {
-    fetch_market_data();
-    fetch_network_capacities();
-    load_chart_data().then((raw_chart_data) => {
-        let imports = raw_chart_data.generation.imports;
-        let exports = raw_chart_data.demand.exports;
-        energy_flux = {};
-        energy_flux[resolution_list[0]] = exports[0].map((num, idx) => num - imports[0][idx]).slice(-60);
-        for (let i = 0; i < resolution_list.length-1; i++) {
-            energy_flux[resolution_list[i+1]] = exports[i].map((num, idx) => num - imports[i][idx]);
-        }
-        let imports_revenue = raw_chart_data.revenues.imports;
-        let exports_revenue = raw_chart_data.revenues.exports;
-        revenue_flux = {};
-        revenue_flux[resolution_list[0]] = exports_revenue[0].map((num, idx) => 60 * clock_time * (num + imports_revenue[0][idx])).slice(-60);
-        for (let i = 0; i < resolution_list.length-1; i++) {
-            revenue_flux[resolution_list[i+1]] = exports_revenue[i].map((num, idx) => 60 * clock_time * (num + imports_revenue[i][idx]));
-        }
-
-        temporal_imports_p5.render_graph();
-    });
-    load_chart_data((network = true)).then((raw_chart_data) => {
-        Object.keys(raw_chart_data).forEach((key) => {
-            Object.keys(raw_chart_data[key]).forEach((subkey) => {
-                temporal_data[key][subkey] = {};
-                temporal_data[key][subkey][resolution_list[0]] = raw_chart_data[key][subkey][0].slice(-60);
-                for (r=0; r<resolution_list.length-1; r++){
-                    temporal_data[key][subkey][resolution_list[r+1]] = raw_chart_data[key][subkey][r];
-                }
-            });
-        });
-        
-        temporal_graph_p5.render_graph();
-    })
-    .catch((error) => {
-        console.error("Error:", error);
-    });
     load_players().then((players_) => {
         players = players_;
+        fetch_market_data();
+        fetch_network_capacities();
+        load_chart_data().then((raw_chart_data) => {
+            let imports = raw_chart_data.generation.imports;
+            let exports = raw_chart_data.demand.exports;
+            energy_flux = {};
+            energy_flux[resolution_list[0]] = exports[0].map((num, idx) => num - imports[0][idx]).slice(-60);
+            for (let i = 0; i < resolution_list.length-1; i++) {
+                energy_flux[resolution_list[i+1]] = exports[i].map((num, idx) => num - imports[i][idx]);
+            }
+            let imports_revenue = raw_chart_data.revenues.imports;
+            let exports_revenue = raw_chart_data.revenues.exports;
+            revenue_flux = {};
+            revenue_flux[resolution_list[0]] = exports_revenue[0].map((num, idx) => 60 * clock_time * (num + imports_revenue[0][idx])).slice(-60);
+            for (let i = 0; i < resolution_list.length-1; i++) {
+                revenue_flux[resolution_list[i+1]] = exports_revenue[i].map((num, idx) => 60 * clock_time * (num + imports_revenue[i][idx]));
+            }
+
+            temporal_imports_p5.render_graph();
+        });
+        load_chart_data((network = true)).then((raw_chart_data) => {
+            Object.keys(raw_chart_data).forEach((key) => {
+                Object.keys(raw_chart_data[key]).forEach((subkey) => {
+                    temporal_data[key][subkey] = {};
+                    temporal_data[key][subkey][resolution_list[0]] = raw_chart_data[key][subkey][0].slice(-60);
+                    for (r=0; r<resolution_list.length-1; r++){
+                        temporal_data[key][subkey][resolution_list[r+1]] = raw_chart_data[key][subkey][r];
+                    }
+                });
+            });
+            
+            temporal_graph_p5.render_graph();
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
     });
 }
 
@@ -1386,6 +1390,8 @@ function fetch_market_data() {
         }
 
         market_chart_p5.render_graph();
+        sortTable("offers_table", offer_col, reorder=false);
+        sortTable("bids_table", bid_col, reorder=false);
     });
 }
 
@@ -1396,6 +1402,98 @@ function fetch_network_capacities() {
         network_capacities = raw_data;
         network_capacities_p5.render_graph();
     });
+}
+
+function sortTable(table_name, columnName, reorder=true) {
+    const table = document.getElementById(table_name);
+    let column = table.querySelector(`.${columnName}`);
+
+    if(reorder){
+        // Check if the column is already sorted, toggle sorting order accordingly
+        decending[table_name] = !decending[table_name];
+    }
+
+    let triangle = ' <i class="fa fa-caret-up"></i>';
+    if(decending[table_name]){
+        triangle = ' <i class="fa fa-caret-down"></i>';
+    }
+
+    let data = transform_data(demand);
+    let last_col = "Satisfied"
+    if (table_name == "offers_table") {
+        data = transform_data(supply);
+        last_col = "Sold";
+        offer_col = columnName;
+    }else{
+        bid_col = columnName;
+    }
+    // Sort the data based on the selected column
+    const sortedData = Object.entries(data).sort((a, b) => {
+        const aValue = a[1][columnName];
+        const bValue = b[1][columnName];
+
+        if (typeof aValue === "string" && typeof bValue === "string") {
+            return decending[table_name] ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
+        } else {
+            return decending[table_name] ? bValue - aValue : aValue - bValue;
+        }
+    });
+
+    let color_map = {
+        "Yes": "green",
+        "Partially": "orange",
+        "No": "red"
+    }
+
+    // Rebuild the HTML table
+    let html = `<tr>
+        <th class="username_col" onclick="sortTable('${table_name}', 'username_col')">Player</th>
+        <th class="facility_col" onclick="sortTable('${table_name}', 'facility_col')">Facility</th>
+        <th class="price_col" onclick="sortTable('${table_name}', 'price_col')">Price</th>
+        <th class="quantity_col" onclick="sortTable('${table_name}', 'quantity_col')">Capacity</th>
+        <th class="sold_col" onclick="sortTable('${table_name}', 'sold_col')">${last_col}</th>
+    </tr>`;
+    for (const [id, capacity] of sortedData) {
+        html += `<tr>
+            <td>${capacity['username_col']}</td>
+            <td>${capacity['facility_col']}</td>
+            <td>${capacity['price_col']}</td>
+            <td>${display_W(capacity['quantity_col'])}</td>
+            <td class="table_${color_map[capacity['sold_col']]}">${capacity['sold_col']}</td>
+            </tr>`;
+    }
+    table.innerHTML = html;
+
+    // Update the sorting indicator
+    column = table.querySelector(`.${columnName}`);
+    column.innerHTML += triangle;
+
+    function transform_data(data){
+        let transformed_data = [];
+        for (let i = 0; i < data.capacity.length; i++) {
+            transformed_data.push({
+                "username_col": players[data.player_id[i]].username,
+                "facility_col": cols_and_names[data.facility[i]][1],
+                "price_col": data.price[i],
+                "quantity_col": data.capacity[i],
+                "sold_col": is_sold(data, i)
+            })
+        }
+        return transformed_data;
+
+        function is_sold(data, i){
+            if (data.cumul_capacities[i]<=mq){
+                return "Yes";
+            }
+            if (i==0){
+                return "Partially";
+            }
+            if (data.cumul_capacities[i-1]<=mq){
+                return "Partially";
+            }
+            return "No";
+        }
+    }
 }
 
 function generate_supply_and_demand_normal(s, view_order, v){
