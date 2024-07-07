@@ -3,6 +3,7 @@ This files contains all the functions to calculate the different parameters of
 facilities according to the technology levels of the player.
 """
 
+import json
 import math
 from flask import current_app
 
@@ -504,8 +505,11 @@ def package_functional_facilities(player: Player):
 
     def industry_hourly_revenues_for_level(level):
         return (
-            const_config_assets["industry"]["base_income"]
-            * const_config_assets["industry"]["income factor"] ** level
+            (
+                const_config_assets["industry"]["base_income"]
+                * const_config_assets["industry"]["income factor"] ** level
+                + const_config_assets["industry"]["universal_income"]
+            )
             * 3600
             / engine.clock_time
         )
@@ -515,24 +519,34 @@ def package_functional_facilities(player: Player):
         return (level + 2) // 3
 
     def warehouse_capacity_for_level(level, resource):
-        return (
-            engine.const_config["warehouse_capacities"][resource]
-            * const_config_assets["warehouse"]["capacity_factor"] ** level
-        )
+        # TODO: make this method unified and used everywhere this logic is used
+        if level == 0:
+            return 0
+        else:
+            return (
+                engine.const_config["warehouse_capacities"][resource]
+                * const_config_assets["warehouse"]["capacity_factor"] ** level
+            )
 
     def carbon_capture_power_consumption_for_level(level):
-        return (
-            const_config_assets["carbon_capture"]["base_power_consumption"]
-            * const_config_assets["carbon_capture"]["power_factor"] ** level
-        )
+        if level == 0:
+            return 0
+        else:
+            return (
+                const_config_assets["carbon_capture"]["base_power_consumption"]
+                * const_config_assets["carbon_capture"]["power_factor"] ** level
+            )
 
     def carbon_capture_absorption(level):
-        return (
-            const_config_assets["carbon_capture"]["base_absorbtion"]
-            * const_config_assets["carbon_capture"]["absorbtion_factor"] ** level
-            * engine.data["emissions"]["CO2"]  # TODO: make this part be a client side computation
-            * 60
-        )
+        if level == 0:
+            return 0
+        else:
+            return (
+                const_config_assets["carbon_capture"]["base_absorbtion"]
+                * const_config_assets["carbon_capture"]["absorbtion_factor"] ** level
+                * engine.data["emissions"]["CO2"]  # TODO: make this part be a client side computation
+                * 60
+            )
 
     indsutry_level_including_ongoing_upgrades = (
         player.industry
@@ -568,7 +582,7 @@ def package_functional_facilities(player: Player):
 
     special_keys = {
         "industry": {
-            "level": indsutry_level_including_ongoing_upgrades,
+            "level": indsutry_level_including_ongoing_upgrades + 1,
             "average_consumption": package_change(
                 current=industry_average_consumption_for_level(indsutry_level_including_ongoing_upgrades),
                 upgraded=industry_average_consumption_for_level(indsutry_level_including_ongoing_upgrades + 1),
@@ -579,15 +593,19 @@ def package_functional_facilities(player: Player):
             ),
         },
         "laboratory": {
-            "level": laboratory_level_including_ongoing_upgrades,
-            "research_speed_bonus": 100 - const_config_assets["laboratory"]["time_factor"] * 100,
+            "level": laboratory_level_including_ongoing_upgrades + 1,
             "lab_workers": package_change(
                 current=player_lab_workers_for_level(laboratory_level_including_ongoing_upgrades),
                 upgraded=player_lab_workers_for_level(laboratory_level_including_ongoing_upgrades + 1),
             ),
-        },
+        }
+        | {
+            "research_speed_bonus": 100 - const_config_assets["laboratory"]["time_factor"] * 100,
+        }
+        if laboratory_level_including_ongoing_upgrades > 0
+        else {},
         "warehouse": {
-            "level": warehouse_level_including_ongoing_upgrades,
+            "level": warehouse_level_including_ongoing_upgrades + 1,
             "warehouse_capacities": {
                 resource: package_change(
                     current=warehouse_capacity_for_level(warehouse_level_including_ongoing_upgrades, resource),
@@ -597,7 +615,7 @@ def package_functional_facilities(player: Player):
             },
         },
         "carbon_capture": {
-            "level": carbon_capture_level_including_ongoing_upgrades,
+            "level": carbon_capture_level_including_ongoing_upgrades + 1,
             "power_consumption": package_change(
                 current=carbon_capture_power_consumption_for_level(carbon_capture_level_including_ongoing_upgrades),
                 upgraded=carbon_capture_power_consumption_for_level(
@@ -610,7 +628,7 @@ def package_functional_facilities(player: Player):
             ),
         },
     }
-    return [
+    result = [
         _package_facility_base(player, functional_facility)
         | {
             "construction_pollution": const_config_assets[functional_facility]["base_construction_pollution"]
@@ -619,6 +637,12 @@ def package_functional_facilities(player: Player):
         | special_keys[functional_facility]
         for functional_facility in engine.functional_facilities
     ]
+    if "technology" not in player.advancements:
+        result = list(filter(lambda x: x["name"] != "laboratory", result))
+    if "GHG_effect" not in player.advancements:
+        result = list(filter(lambda x: x["name"] != "carbon_capture", result))
+    print(json.dumps(result))
+    return result
 
 
 def package_constructions_page_data(player: Player):

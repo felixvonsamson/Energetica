@@ -14,6 +14,7 @@ from .database.player_assets import Resource_on_sale
 from .technology_effects import (
     get_current_technology_values,
     package_extraction_facilities,
+    package_functional_facilities,
     package_power_facilities,
     package_storage_facilities,
 )
@@ -71,6 +72,9 @@ def check_user():
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
         elif page == "extraction_facilities.jinja":
             constructions = package_extraction_facilities(current_user)
+            return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
+        elif page == "functional_facilities.jinja":
+            constructions = package_functional_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
         else:
             return render_template(page, engine=g.engine, user=current_user, data=g.data)

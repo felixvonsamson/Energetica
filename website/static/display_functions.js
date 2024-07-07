@@ -4,7 +4,7 @@ readable format for humans.
 */
 
 // Inserts spaces as a thousands separator and the right unit
-function general_format(value, units, write=false) {
+function general_format(value, units, write = false) {
     let unit_index = 0;
     let isNegative = value < 0;
     value = Math.abs(value);
@@ -16,52 +16,72 @@ function general_format(value, units, write=false) {
     if (isNegative) {
         formatted_value = '-' + formatted_value;
     }
-    if (write){
+    if (write) {
         document.write(formatted_value);
     }
     return formatted_value
 }
 
-// Inserts spaces as a thousands separator and the right unit for current and future value
-function upgrade_format(value, units, factor, constant=0) {
+function upgrade_format_two_values(value1, value2, units) {
     let unit_index = 0;
-    let value2 = value * factor + constant;
-    value += constant;
-    while (value >= 10000 && unit_index < units.length - 1) {
-        value /= 1000;
+    while (value1 >= 10000 && unit_index < units.length - 1) {
+        value1 /= 1000;
         value2 /= 1000;
         unit_index += 1;
     }
     document.write(
-        `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
-            units[unit_index][0]
-        } -> ${value2.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
-            units[unit_index]
+        `${value1.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index][0]
+        } -> ${value2.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]
         }`
     );
 }
 
+// Inserts spaces as a thousands separator and the right unit for current and future value
+function upgrade_format(value1, units, factor, constant = 0) {
+    let value2 = value1 * factor + constant;
+    value1 += constant;
+    upgrade_format_two_values(value1, value2, units)
+}
+
+const _power_units = [" W", " kW", " MW", " GW", " TW"];
+
+// TODO: this method may become deprecated
 function display_upgrade_W(price, factor) {
-    const units = [" W", " kW", " MW", " GW", " TW"];
-    upgrade_format(price, units, factor);
+    upgrade_format(price, _power_units, factor);
 }
 
+function display_upgrade_W_two_values(value1, value2) {
+    upgrade_format_two_values(value1, value2, _power_units);
+}
+
+const _money_units = [
+    " <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/h",
+    "k <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/h",
+    "M <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/h",
+];
+
+// TODO: this method may become deprecated
 function display_upgrade_money(price, factor, constant) {
-    const units = [
-        " <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/h",
-        "k <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/h",
-        "M <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/h",
-    ];
-    upgrade_format(price, units, factor, constant);
+    upgrade_format(price, _money_units, factor, constant);
 }
 
+function display_money_upgrade_two_values(value1, value2) {
+    upgrade_format_two_values(value1, value2, _money_units);
+}
+
+const _mass_units = [" kg", " t", " kt", " Mt"];
+
+// TODO: this method may become deprecated
 function display_upgrade_kg(price, factor) {
-    const units = [" kg", " t", " kt", " Mt"];
-    upgrade_format(price, units, factor);
+    upgrade_format(price, _mass_units, factor);
+}
+
+function display_upgrade_kg_two_values(value1, value2) {
+    upgrade_format_two_values(value1, value2, _mass_units);
 }
 
 // Price :
-function display_money(price, write=true) {
+function display_money(price, write = true) {
     const units = [
         "<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>",
         "k<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>",
@@ -72,44 +92,44 @@ function display_money(price, write=true) {
 }
 
 // Prices for balance display :
-function display_money_long(price, write=true) {
+function display_money_long(price, write = true) {
     formatted_value = `<span id="money">${price
         .toFixed(0)
         .replace(/\B(?=(\d{3})+(?!\d))/g, "'")}</span>
         <img src="/static/images/icons/coin.svg" class="coin" alt="coin">`
-    if(write){
+    if (write) {
         document.write(formatted_value);
     }
     return formatted_value;
-    
+
 }
 
 // Power :
-function display_W(power, write=true) {
+function display_W(power, write = true) {
     const units = [" W", " kW", " MW", " GW", " TW"];
     return general_format(power, units, write);
 }
 
 // Energy :
-function display_Wh(energy, write=true) {
+function display_Wh(energy, write = true) {
     const units = [" Wh", " kWh", " MWh", " GWh", " TWh"];
     return general_format(energy, units, write);
 }
 
 // Mass rate :
-function display_kgh(mass_rate, write=true) {
+function display_kgh(mass_rate, write = true) {
     const units = [" kg/h", " t/h"];
     return general_format(mass_rate, units, write);
 }
 
 // Mass
-function display_kg(mass, write=true) {
+function display_kg(mass, write = true) {
     const units = [" kg", " t", " kt", " Mt"];
     return general_format(mass, units, write);
 }
 
 // Duration :
-function display_duration(seconds, write=true) {
+function display_duration(seconds, write = true) {
     const days = Math.floor(seconds / 86400);
     seconds -= days * 86400;
     const hours = Math.floor(seconds / 3600);
@@ -126,15 +146,15 @@ function display_duration(seconds, write=true) {
     if (minutes > 0) {
         duration += `${minutes}m`;
     }
-    if(write){
+    if (write) {
         document.write(duration.trim());
     }
     return duration.trim();
 }
 
-function display_days(seconds, write=true) {
+function display_days(seconds, write = true) {
     const days = Math.round(seconds / 86400);
-    if(write){
+    if (write) {
         document.write(days);
     }
     return days;
@@ -147,7 +167,7 @@ function calculate_delivery(delta_q, delta_r, trasport_speed) {
     display_duration(dist * trasport_speed);
 }
 
-function formatDateTime(dateTimeString, write=true) {
+function formatDateTime(dateTimeString, write = true) {
     const dateTime = new Date(dateTimeString);
     const now = new Date();
     const date = dateTime.getDate();
@@ -158,7 +178,7 @@ function formatDateTime(dateTimeString, write=true) {
     const months = [
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    
+
     let formated_date;
     if (dateTime.toDateString() === now.toDateString()) {
         // If the date is today, return the time format
@@ -167,11 +187,11 @@ function formatDateTime(dateTimeString, write=true) {
         // If the date is not today, return the date + time format
         formated_date = `${date} ${months[monthIndex]} ${hours}:${minutes}:${seconds}`;
     }
-    if (write){
+    if (write) {
         document.write(formated_date);
     }
     return formated_date;
-  }
+}
 
 function formatted_money(amount) {
     return `${amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`;
@@ -181,10 +201,10 @@ function formatDateString(dateString) {
     var date = new Date(dateString);
     var currentDate = new Date();
     if (date.toDateString() === currentDate.toDateString()) {
-        return date.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Paris'});
+        return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Paris' });
     } else {
         var formattedDate = date.getDate() + ' ' + date.toLocaleString('default', { month: 'short' }) + '. ' +
-                            date.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Paris'});
+            date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Paris' });
         return formattedDate;
     }
 }
