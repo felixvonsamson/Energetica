@@ -419,9 +419,37 @@ function change_smoothed(smoothed_mode){
 function network_capacities_sketch(s){
     s.setup = function() {
         s.is_inside = false;
-        s.renewables = ["watermill", "small_water_dam", "large_water_dam", "windmill", "onshore_wind_turbine", "offshore_wind_turbine", "CSP_solar", "PV_solar"]
-        s.controlables = ["nuclear_reactor", "nuclear_reactor_gen4", "steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle"]
-        s.storages = ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"]
+        s.simplified = "complex";
+        s.data = {
+            simple: {
+                categories : ["Renewables", "Controlables", "Storages"],
+                Renewables: ["watermill", "small_water_dam", "large_water_dam", "windmill", "onshore_wind_turbine", "offshore_wind_turbine", "CSP_solar", "PV_solar"],
+                Controlables: ["nuclear_reactor", "nuclear_reactor_gen4", "steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle"],
+                Storages: ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"],
+                capacities: {
+                    Renewables: 0,
+                    Controlables: 0,
+                    Storages: 0,
+                }
+            },
+            complex: {
+                categories : ["Hydro",  "Wind", "Solar", "Fossil", "Nuclear", "Storages"],
+                Hydro: ["watermill", "small_water_dam", "large_water_dam"],
+                Wind: ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"],
+                Solar: ["CSP_solar", "PV_solar"],
+                Fossil: ["coal_burner", "oil_burner", "gas_burner", "combined_cycle"],
+                Nuclear: ["nuclear_reactor", "nuclear_reactor_gen4"],
+                Storages: ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"],
+                capacities: {
+                    Hydro: 0,
+                    Wind: 0,
+                    Solar: 0,
+                    Fossil: 0,
+                    Nuclear: 0,
+                    Storages: 0,
+                }
+            }
+        }
         s.createCanvas(min(canvas_width, 1200), 0.3 * canvas_width);
         s.noLoop();
         s.textFont(font);
@@ -429,28 +457,33 @@ function network_capacities_sketch(s){
         s.graphics = s.createGraphics(s.width, s.height);
         s.graphics.textAlign(CENTER, CENTER);
         s.graphics.textFont(font);
+        s.spacing = min(margin, s.width / 20);
+        let gauges_w = s.width - margin - s.spacing - s.height;
+        s.bar_sp = gauges_w / 28 * 2;
+        s.bar_w = s.bar_sp * 3 / 2;
+        s.second_margin = 0;
+        if (s.simplified == "simple") {
+            s.spacing = min(2*margin, s.width / 12);
+            gauges_w = s.width - margin - 3 * s.spacing - s.height;
+            s.bar_sp = gauges_w / 5;
+            s.bar_w = s.bar_sp;
+            s.second_margin = s.spacing;
+        }
     }
 
     s.draw = function() {
         if (s.graphics_ready) {
             s.image(s.graphics, 0, 0);
             if(s.is_inside){
-                let x0 = 0.5*(s.graph_w - s.graph_h - margin - 3*s.spacing);
                 if(s.mouseY>0.5*margin && s.mouseY<s.height-0.5*margin){
-                    if(s.mouseX>x0 && s.mouseX<x0+margin){
-                        s.translate(x0 + margin + 10, margin);
-                        display_capacity_information(s.renewables, s.capacities.renewables);
+                    let x0 = margin + s.second_margin - 0.5 * s.bar_sp;
+                    if(s.mouseX>x0 && s.mouseX<s.width-s.height-s.spacing-s.second_margin + 0.5 * s.bar_sp){
+                        let i = Math.floor((s.mouseX - x0) / (s.bar_sp + s.bar_w));
+                        s.translate(x0 + s.bar_w + 10 + i*(s.bar_sp + s.bar_w), margin);
+                        display_capacity_information(s.data[s.simplified][s.data[s.simplified].categories[i]], s.data[s.simplified].capacities[s.data[s.simplified].categories[i]]);
                     }
-                    if(s.mouseX>x0 + margin + s.spacing && s.mouseX<x0+2*margin+s.spacing){
-                        s.translate(x0 + 2*margin + s.spacing + 10, margin);
-                        display_capacity_information(s.controlables, s.capacities.controlables);
-                    }
-                    if(s.mouseX>x0 + 2*margin + 2*s.spacing && s.mouseX<x0+3*margin+2*s.spacing){
-                        s.translate(x0 + 3*margin + 2*s.spacing + 10, margin);
-                        display_capacity_information(s.storages, s.capacities.storages);
-                    }
-                    if(s.mouseX>s.width-margin-s.spacing-s.graph_h && s.mouseX<s.width-margin-s.spacing){
-                        s.translate(s.width-margin-s.spacing-0.5*s.graph_h-80, margin);
+                    if(s.mouseX>s.width-margin-s.second_margin-s.graph_h && s.mouseX<s.width-margin-s.second_margin){
+                        s.translate(s.width-margin-s.second_margin-0.5*s.graph_h-80, margin);
                         s.push();
                         s.noStroke();
                         fill_alt = 0;
@@ -547,113 +580,20 @@ function network_capacities_sketch(s){
     s.render_graph = function(){
         s.graph_h = s.height - margin;
         s.graph_w = s.width - 2 * margin;
-        s.capacities = {
-            renewables: 0,
-            controlables: 0,
-            storages: 0,
-        };
         s.graphics.background(229, 217, 182);
 
         s.graphics.push();
-        s.spacing = min(margin, s.width / 15);
 
-        s.graphics.translate(0.5*(s.graph_w - s.graph_h - margin - 3*s.spacing), 0.5 * margin + s.graph_h);
-        for(let renewable of s.renewables){
-            if (network_capacities[renewable]){
-                s.capacities.renewables += network_capacities[renewable].power;
-            }
+        s.graphics.translate(margin + s.second_margin, 0.5 * margin + s.graph_h);
+        for (let category of s.data[s.simplified].categories) {
+            display_gauge(category, s.data[s.simplified][category]);
+            s.graphics.translate(s.bar_w + s.bar_sp, 0);
         }
-        s.graphics.push();
-        s.graphics.noStroke();
-        s.graphics.fill(242, 236, 219);
-        s.graphics.rect(0, 0, margin, -s.graph_h);
-        for (let renewable of s.renewables) {
-            if(temporal_data.generation[renewable]){
-                let current_generation = temporal_data.generation[renewable][resolution_list[0]][59];
-                if (current_generation>0){
-                    s.graphics.fill(cols_and_names[renewable][0]);
-                    let h = map(current_generation, 0, s.capacities.renewables, 0, -s.graph_h);
-                    s.graphics.rect(0, 0, margin, h-1);
-                    s.graphics.translate(0, h);
-                }
-            }
-        }
-        s.graphics.pop();
-        s.graphics.noFill();
-        s.graphics.strokeWeight(2);
-        s.graphics.rect(0, 0, margin, -s.graph_h);
-        s.graphics.fill(0);
-        s.graphics.textSize(15);
-        s.graphics.text(display_W(s.capacities.renewables), 0.5 * margin, -s.graph_h - 0.25 * margin);
-        s.graphics.textSize(min(20, s.width / 40));
-        s.graphics.text("Renewables", 0.5 * margin, 0.25 * margin);
-
-        s.graphics.translate(margin + s.spacing, 0);
-        for(let controlable of s.controlables){
-            if (network_capacities[controlable]){
-                s.capacities.controlables += network_capacities[controlable].power;
-            }
-        }
-        s.graphics.push();
-        s.graphics.noStroke();
-        s.graphics.fill(242, 236, 219);
-        s.graphics.rect(0, 0, margin, -s.graph_h);
-        for (let controlable of s.controlables) {
-            if(temporal_data.generation[controlable]){
-                let current_generation = temporal_data.generation[controlable][resolution_list[0]][59];
-                if (current_generation>0){
-                    s.graphics.fill(cols_and_names[controlable][0]);
-                    let h = map(current_generation, 0, s.capacities.controlables, 0, -s.graph_h);
-                    s.graphics.rect(0, 0, margin, h-1);
-                    s.graphics.translate(0, h);
-                }
-            }
-        }
-        s.graphics.pop();
-        s.graphics.noFill();
-        s.graphics.strokeWeight(2);
-        s.graphics.rect(0, 0, margin, -s.graph_h);
-        s.graphics.fill(0);
-        s.graphics.textSize(15);
-        s.graphics.text(display_W(s.capacities.controlables), 0.5 * margin, -s.graph_h - 0.25 * margin);
-        s.graphics.textSize(min(20, s.width / 40));
-        s.graphics.text("Controlables", 0.5 * margin, 0.25 * margin);
-
-        s.graphics.translate(margin + s.spacing, 0);
-        for(let storage of s.storages){
-            if (network_capacities[storage]){
-                s.capacities.storages += network_capacities[storage].power;
-            }
-        }
-        s.graphics.push();
-        s.graphics.noStroke();
-        s.graphics.fill(242, 236, 219);
-        s.graphics.rect(0, 0, margin, -s.graph_h);
-        for (let storage of s.storages) {
-            if(temporal_data.generation[storage]){
-                let current_generation = temporal_data.generation[storage][resolution_list[0]][59];
-                if (current_generation>0){
-                    s.graphics.fill(cols_and_names[storage][0]);
-                    let h = map(current_generation, 0, s.capacities.storages, 0, -s.graph_h);
-                    s.graphics.rect(0, 0, margin, h-1);
-                    s.graphics.translate(0, h);
-                }
-            }
-        }
-        s.graphics.pop();
-        s.graphics.noFill();
-        s.graphics.strokeWeight(2);
-        s.graphics.rect(0, 0, margin, -s.graph_h);
-        s.graphics.fill(0);
-        s.graphics.textSize(15);
-        s.graphics.text(display_W(s.capacities.storages), 0.5 * margin, -s.graph_h - 0.25 * margin);
-        s.graphics.textSize(min(20, s.width / 40));
-        s.graphics.text("Storages", 0.5 * margin, 0.25 * margin);
 
         s.graphics.pop();
 
         s.graphics.push();
-        s.graphics.translate(s.graph_w - 0.5*s.graph_h + margin - s.spacing, 0.5 * s.height);
+        s.graphics.translate(s.graph_w - 0.5*s.graph_h + margin - s.second_margin, 0.5 * s.height);
         let cumul_angle = -0.5 * PI;
         for(let facility in temporal_data.generation){
             let current_generation = temporal_data.generation[facility][resolution_list[0]][59];
@@ -669,6 +609,39 @@ function network_capacities_sketch(s){
 
         s.graphics_ready = true;
         s.redraw();
+
+        function display_gauge(category, facilities){
+            let category_capacity = s.data[s.simplified].capacities[category]
+            for(let facility of facilities){
+                if (network_capacities[facility]){
+                    category_capacity += network_capacities[facility].power;
+                }
+            }
+            s.graphics.push();
+            s.graphics.noStroke();
+            s.graphics.fill(242, 236, 219);
+            s.graphics.rect(0, 0, s.bar_w, -s.graph_h);
+            for (let facility of facilities) {
+                if(temporal_data.generation[facility]){
+                    let current_generation = temporal_data.generation[facility][resolution_list[0]][59];
+                    if (current_generation>0){
+                        s.graphics.fill(cols_and_names[facility][0]);
+                        let h = map(current_generation, 0, category_capacity, 0, -s.graph_h);
+                        s.graphics.rect(0, 0, s.bar_w, h-1);
+                        s.graphics.translate(0, h);
+                    }
+                }
+            }
+            s.graphics.pop();
+            s.graphics.noFill();
+            s.graphics.strokeWeight(2);
+            s.graphics.rect(0, 0, s.bar_w, -s.graph_h);
+            s.graphics.fill(0);
+            s.graphics.textSize(15);
+            s.graphics.text(display_W(category_capacity), 0.5 * s.bar_w, -s.graph_h - 0.25 * margin);
+            s.graphics.textSize(min(20, s.width / 40));
+            s.graphics.text(category, 0.5 * s.bar_w, 0.25 * margin);
+        }
     }
 }
 
@@ -678,6 +651,7 @@ function temporal_graph_sketch(s){
         s.price_mode = "normal";
         s.percent = "normal";
         s.categorisation = "type";
+        s.simplified = false;
         s.is_inside = false;
         s.createCanvas(min(canvas_width, 1200), 0.4 * canvas_width);
         s.noLoop();
@@ -708,29 +682,33 @@ function temporal_graph_sketch(s){
                     s.pop();
                 }
 
-                s.push();
-                let sum = s.upper_bounds.quantity;
-                if(s.percent == "percent"){
-                    const groups = Object.keys(temporal_data[s.current_view]);
-                    sum = groups.reduce((acc, group) => {
-                        return acc + (temporal_data[s.current_view][group][res][t_view] || 0);
-                    }, 0);
-                }
-                for (const group in temporal_data[s.current_view]) {
-                    if (temporal_data[s.current_view][group][res][t_view] > 0) {
-                        let h = -temporal_data[s.current_view][group][res][t_view] * s.graph_h / sum;
-                        s.ellipse(0, h, 8, 8);
-                        s.translate(0, h);
-                    }
-                }
-                s.pop();
-                
                 let count = 2 + (s.price_mode != "off");
-                for(const group in temporal_data[s.current_view]){
-                    if(temporal_data[s.current_view][group][res][t_view] > 0){
-                        count += 1;
+
+                if (!s.simplified) {
+                    s.push();
+                    let sum = s.upper_bounds.quantity;
+                    if(s.percent == "percent"){
+                        const groups = Object.keys(temporal_data[s.current_view]);
+                        sum = groups.reduce((acc, group) => {
+                            return acc + (temporal_data[s.current_view][group][res][t_view] || 0);
+                        }, 0);
+                    }
+                    for (const group in temporal_data[s.current_view]) {
+                        if (temporal_data[s.current_view][group][res][t_view] > 0) {
+                            let h = -temporal_data[s.current_view][group][res][t_view] * s.graph_h / sum;
+                            s.ellipse(0, h, 8, 8);
+                            s.translate(0, h);
+                        }
+                    }
+                    s.pop();
+
+                    for(const group in temporal_data[s.current_view]){
+                        if(temporal_data[s.current_view][group][res][t_view] > 0){
+                            count += 1;
+                        }
                     }
                 }
+
                 let tx = -180;
                 let ty = - 0.4 * margin - s.graph_h + s.mouseY;
                 if (ty > - count * 16) {
@@ -765,36 +743,38 @@ function temporal_graph_sketch(s){
                     s.translate(0, 16);
                 }
                 
-                const keys = Object.keys(temporal_data[s.current_view]).reverse();
-                for(const group of keys){
-                    if(temporal_data[s.current_view][group][res][t_view] > 0){
-                        alternate_fill(s);
-                        s.rect(0, 0, 160, 17);
-                        s.push();
-                        if(s.categorisation == "type"){
-                            s.fill(cols_and_names[group][0]);
-                        }else{
-                            s.fill(random_colors[group % random_colors.length]);
+                if (!s.simplified) {
+                    const keys = Object.keys(temporal_data[s.current_view]).reverse();
+                    for(const group of keys){
+                        if(temporal_data[s.current_view][group][res][t_view] > 0){
+                            alternate_fill(s);
+                            s.rect(0, 0, 160, 17);
+                            s.push();
+                            if(s.categorisation == "type"){
+                                s.fill(cols_and_names[group][0]);
+                            }else{
+                                s.fill(random_colors[group % random_colors.length]);
+                            }
+                            s.rect(0, 0, 16, 17);
+                            s.pop();
+                            s.fill(0);
+                            s.textAlign(LEFT, CENTER);
+                            if(s.categorisation == "type"){
+                                s.text(cols_and_names[group][1], 20, 5);
+                            }else{
+                                let username = players[int(group)].username;
+                                s.text(username, 20, 5);
+                            }
+                            s.textAlign(CENTER, CENTER);
+                            s.text(display_W(temporal_data[s.current_view][group][res][t_view]), 132, 5);
+                            s.translate(0, 16);
                         }
-                        s.rect(0, 0, 16, 17);
-                        s.pop();
-                        s.fill(0);
-                        s.textAlign(LEFT, CENTER);
-                        if(s.categorisation == "type"){
-                            s.text(cols_and_names[group][1], 20, 5);
-                        }else{
-                            let username = players[int(group)].username;
-                            s.text(username, 20, 5);
-                        }
-                        s.textAlign(CENTER, CENTER);
-                        s.text(display_W(temporal_data[s.current_view][group][res][t_view]), 132, 5);
-                        s.translate(0, 16);
                     }
-                }
-                if (s.mouseY > 0.4 * margin && s.mouseY < s.height - 0.6 * margin) {
-                    if ((data_len - t_view - 1) * res_to_factor[res] < 1440) {
-                        s.fill(0);
-                        s.text("(click to see market)", 80, 5);
+                    if (s.mouseY > 0.4 * margin && s.mouseY < s.height - 0.6 * margin) {
+                        if ((data_len - t_view - 1) * res_to_factor[res] < 1440) {
+                            s.fill(0);
+                            s.text("(click to see market)", 80, 5);
+                        }
                     }
                 }
                 s.pop();
@@ -855,32 +835,34 @@ function temporal_graph_sketch(s){
         s.graphics.translate(margin, 0.4 * margin + s.graph_h);
         s.graphics.noStroke();
 
-        s.graphics.push();
-        for (let t = 0; t < data_len; t++) {
+        if(!s.simplified){
             s.graphics.push();
-            let sum = s.upper_bounds["quantity"];
-            if(s.percent == "percent"){
-                const goups = Object.keys(temporal_data[s.current_view]);
-                sum = goups.reduce((acc, group) => {
-                    return acc + (temporal_data[s.current_view][group][res][t] || 0);
-                }, 0);
-            }
-            for (const group in temporal_data[s.current_view]) {
-                if (temporal_data[s.current_view][group][res][t] > 0) {
-                    if(s.categorisation == "type"){
-                        s.graphics.fill(cols_and_names[group][0]);
-                    }else{
-                        s.graphics.fill(random_colors[group % random_colors.length]);
-                    }
-                    let h = temporal_data[s.current_view][group][res][t] * s.graph_h / sum;
-                    s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
-                    s.graphics.translate(0, -h);
+            for (let t = 0; t < data_len; t++) {
+                s.graphics.push();
+                let sum = s.upper_bounds["quantity"];
+                if(s.percent == "percent"){
+                    const goups = Object.keys(temporal_data[s.current_view]);
+                    sum = goups.reduce((acc, group) => {
+                        return acc + (temporal_data[s.current_view][group][res][t] || 0);
+                    }, 0);
                 }
+                for (const group in temporal_data[s.current_view]) {
+                    if (temporal_data[s.current_view][group][res][t] > 0) {
+                        if(s.categorisation == "type"){
+                            s.graphics.fill(cols_and_names[group][0]);
+                        }else{
+                            s.graphics.fill(random_colors[group % random_colors.length]);
+                        }
+                        let h = temporal_data[s.current_view][group][res][t] * s.graph_h / sum;
+                        s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
+                        s.graphics.translate(0, -h);
+                    }
+                }
+                s.graphics.pop();
+                s.graphics.translate(s.graph_w / data_len, 0);
             }
             s.graphics.pop();
-            s.graphics.translate(s.graph_w / data_len, 0);
         }
-        s.graphics.pop();
         
         if(s.price_mode != "off"){
             price_curve = [...temporal_data.network_data.price[res]];
@@ -943,6 +925,10 @@ function temporal_graph_sketch(s){
             s.graphics.fill(cols_and_names["price"][0]);
             s.graphics.textAlign(RIGHT, CENTER);
             for (let i in y_ticks) {
+                if(s.simplified){
+                    s.graphics.stroke(0, 0, 0, 30);
+                    s.graphics.line(s.graph_w, -i, 0, -i);
+                }
                 s.graphics.stroke(cols_and_names["price"][0]);
                 s.graphics.line(0, -i, -5, -i);
                 s.graphics.noStroke();
@@ -952,25 +938,27 @@ function temporal_graph_sketch(s){
             s.graphics.pop();
         }
 
-        s.graphics.push();
-        if(s.percent == "percent"){
-            s.upper_bounds["quantity"] = 100;
-        }
-        let y_ticks3 = y_units_bounded(s.graph_h, s.lower_bounds["quantity"], s.upper_bounds["quantity"], divisions=4);
-        s.graphics.fill(0);
-        for (let i in y_ticks3) {
-            s.graphics.stroke(0, 0, 0, 30);
-            s.graphics.line(s.graph_w, -i, 0, -i);
-            s.graphics.stroke(0);
-            s.graphics.line(s.graph_w, -i, s.graph_w + 5, -i);
-            s.graphics.noStroke();
+        if(!s.simplified){
+            s.graphics.push();
             if(s.percent == "percent"){
-                s.graphics.text(y_ticks3[i] + "%", s.graph_w + 0.5 * margin, -i + 3);
-            }else{
-                s.graphics.text(display_W(y_ticks3[i]), s.graph_w + 0.5 * margin, -i - 3);
+                s.upper_bounds["quantity"] = 100;
             }
+            let y_ticks3 = y_units_bounded(s.graph_h, s.lower_bounds["quantity"], s.upper_bounds["quantity"], divisions=4);
+            s.graphics.fill(0);
+            for (let i in y_ticks3) {
+                s.graphics.stroke(0, 0, 0, 30);
+                s.graphics.line(s.graph_w, -i, 0, -i);
+                s.graphics.stroke(0);
+                s.graphics.line(s.graph_w, -i, s.graph_w + 5, -i);
+                s.graphics.noStroke();
+                if(s.percent == "percent"){
+                    s.graphics.text(y_ticks3[i] + "%", s.graph_w + 0.5 * margin, -i + 3);
+                }else{
+                    s.graphics.text(display_W(y_ticks3[i]), s.graph_w + 0.5 * margin, -i - 3);
+                }
+            }
+            s.graphics.pop();
         }
-        s.graphics.pop();
 
         s.graphics.pop();
 
