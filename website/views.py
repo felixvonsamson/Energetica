@@ -64,16 +64,16 @@ def check_user():
                 on_sale=on_sale,
                 data=g.data,
             )
-        elif page == "power_facilities.jinja":
+        elif page == "facilities/power_facilities.jinja":
             constructions = package_power_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
-        elif page == "storage_facilities.jinja":
+        elif page == "facilities/storage_facilities.jinja":
             constructions = package_storage_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
-        elif page == "extraction_facilities.jinja":
+        elif page == "facilities/extraction_facilities.jinja":
             constructions = package_extraction_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
-        elif page == "functional_facilities.jinja":
+        elif page == "facilities/functional_facilities.jinja":
             constructions = package_functional_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
         else:
@@ -122,12 +122,12 @@ def network():
 
 @views.route("/power_facilities")
 def power_facilities():
-    return g.render_template_ctx("power_facilities.jinja")
+    return g.render_template_ctx("facilities/power_facilities.jinja")
 
 
 @views.route("/storage_facilities")
 def storage_facilities():
-    return g.render_template_ctx("storage_facilities.jinja")
+    return g.render_template_ctx("facilities/storage_facilities.jinja")
 
 
 @views.route("/technology")
@@ -139,14 +139,14 @@ def technology():
 
 @views.route("/functional_facilities")
 def functional_facilities():
-    return g.render_template_ctx("functional_facilities.jinja")
+    return g.render_template_ctx("facilities/functional_facilities.jinja")
 
 
 @views.route("/extraction_facilities")
 def extraction_facilities():
     if "warehouse" not in current_user.advancements:
         return redirect("/home", code=302)
-    return g.render_template_ctx("extraction_facilities.jinja")
+    return g.render_template_ctx("facilities/extraction_facilities.jinja")
 
 
 @views.route("/resource_market")
