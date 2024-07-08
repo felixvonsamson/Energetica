@@ -11,6 +11,7 @@ from simple_websocket import ConnectionClosed
 from website import utils
 from website.database.map import Hex
 from website.database.player import Network, Player
+from website.gameEngine import gameEngine
 from website.technology_effects import package_constructions_page_data
 
 websocket_blueprint = Blueprint("rest_api", __name__)
@@ -47,6 +48,7 @@ def add_sock_handlers(sock, engine):
         """Main WebSocket endpoint for API."""
         player = g.player
         engine.log(f"Received WebSocket connection for player {player}")
+        ws.send(rest_get_global_data(engine))
         # TODO: Review what data is sent before a tile is selected
         ws.send(rest_get_map())
         ws.send(rest_get_players())
@@ -136,6 +138,12 @@ def rest_get_players():
 def rest_get_current_player(current_player):
     """Gets the current player's id and returns it as a JSON string."""
     response = {"type": "getCurrentPlayer", "data": current_player.id}
+    return json.dumps(response)
+
+
+def rest_get_global_data(engine: gameEngine):
+    """Gets gloabl engine data and returns it as a JSON string"""
+    response = {"type": "getGlobalData", "data": engine.package_global_data()}
     return json.dumps(response)
 
 
@@ -500,6 +508,7 @@ def rest_notify_all_players(engine, message):
 
 
 def rest_notify_player(engine, player, message):
+    """send `message` to all of `player`'s active wesocket sessions"""
     if player.id not in engine.websocket_dict:
         return
     for ws in engine.websocket_dict[player.id]:
@@ -529,28 +538,40 @@ def rest_notify_network_change(engine):
 
 
 def rest_notify_new_player(engine, player):
+    """Notify to all active sessions the new list of players"""
     rest_notify_all_players(engine, rest_get_players())
     engine.socketio.emit("get_players", Player.package_all())
 
 
+def rest_notify_global_data(engine: gameEngine):
+    """Notify to all ws sessions the new global enginen data"""
+    message = rest_get_global_data(engine)
+    rest_notify_all_players(engine, message)
+
+
 def rest_notify_scoreboard(engine):
+    """Notify to all ws sessions the new scoreboard"""
     message = rest_get_scoreboard()
     rest_notify_all_players(engine, message)
 
 
 def rest_notify_constructions(engine, player):
+    """Notify all `player`'s ws sessions the new constructions data"""
     rest_notify_player(engine, player, rest_get_constructions(player))
     rest_notify_construction_queue(engine, player)
 
 
 def rest_notify_construction_queue(engine, player):
+    """Notify all `player`'s ws sessions the new constructions queue"""
     rest_notify_player(engine, player, rest_get_construction_queue(player))
 
 
 def rest_notify_weather(engine):
+    """Notify to all ws sessions the new weather data"""
     message = rest_get_weather(engine)
     rest_notify_all_players(engine, message)
 
 
 def rest_notify_advancements(engine, player: Player):
+    """Notify all `player`'s ws sessions the new advancements"""
     rest_notify_player(engine, player, rest_get_advancements(player))
