@@ -284,6 +284,7 @@ def power_facility_resource_consumption(player, power_facility):
 
 def get_current_technology_values(player):
     """Function that returns the facility values for the current technology of the player."""
+    # TODO: Deprecate this function
     engine = current_app.config["engine"]
     dict = {}
     for facility in (
@@ -483,6 +484,18 @@ def package_extraction_facilities(player: Player):
     ]
 
 
+def facility_is_hidden(player: Player, facility):
+    """
+    Returns true if the facility is hidden to the player due to lack of advancements.
+    Such facilities should not be shown on the frontend.
+    """
+    if "technology" not in player.advancements and facility == "laboratory":
+        return True
+    if "GHG_effect" not in player.advancements and facility == "carbon_capture":
+        return True
+    return False
+
+
 def package_functional_facilities(player: Player):
     """Gets all data relevant for the functional_facilities frontend"""
     engine: gameEngine = current_app.config["engine"]
@@ -638,11 +651,7 @@ def package_functional_facilities(player: Player):
         | special_keys[functional_facility]
         for functional_facility in engine.functional_facilities
     ]
-    if "technology" not in player.advancements:
-        result = list(filter(lambda x: x["name"] != "laboratory", result))
-    if "GHG_effect" not in player.advancements:
-        result = list(filter(lambda x: x["name"] != "carbon_capture", result))
-    return result
+    return list(filter(lambda facility_data: not facility_is_hidden(player, facility_data["name"]), result))
 
 
 def package_constructions_page_data(player: Player):
