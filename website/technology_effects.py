@@ -18,29 +18,29 @@ def price_multiplier(player, facility):
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Mechanical engineering
-    if facility in const_config["mechanical_engineering"]["affected facilities"]:
-        mlt *= const_config["mechanical_engineering"]["price factor"] ** player.mechanical_engineering
+    if facility in const_config["mechanical_engineering"]["affected_facilities"]:
+        mlt *= const_config["mechanical_engineering"]["price_factor"] ** player.mechanical_engineering
     # Physics
-    if facility in const_config["physics"]["affected facilities"]:
-        mlt *= const_config["physics"]["price factor"] ** player.physics
+    if facility in const_config["physics"]["affected_facilities"]:
+        mlt *= const_config["physics"]["price_factor"] ** player.physics
     # Mineral extraction
-    if facility in const_config["mineral_extraction"]["affected facilities"]:
-        mlt *= const_config["mineral_extraction"]["price factor"] ** player.mineral_extraction
+    if facility in const_config["mineral_extraction"]["affected_facilities"]:
+        mlt *= const_config["mineral_extraction"]["price_factor"] ** player.mineral_extraction
     # Materials
-    if facility in const_config["materials"]["affected facilities"]:
-        mlt *= const_config["materials"]["price factor"] ** player.materials
+    if facility in const_config["materials"]["affected_facilities"]:
+        mlt *= const_config["materials"]["price_factor"] ** player.materials
     # Civil engineering
-    if facility in const_config["civil_engineering"]["affected facilities"]:
-        mlt *= const_config["civil_engineering"]["price factor"] ** player.civil_engineering
+    if facility in const_config["civil_engineering"]["affected_facilities"]:
+        mlt *= const_config["civil_engineering"]["price_factor"] ** player.civil_engineering
     # Aerodynamics
-    if facility in const_config["aerodynamics"]["affected facilities"]:
-        mlt *= const_config["aerodynamics"]["price factor"] ** player.aerodynamics
+    if facility in const_config["aerodynamics"]["affected_facilities"]:
+        mlt *= const_config["aerodynamics"]["price_factor"] ** player.aerodynamics
     # Chemistry
-    if facility in const_config["chemistry"]["affected facilities"]:
-        mlt *= const_config["chemistry"]["price factor"] ** player.chemistry
+    if facility in const_config["chemistry"]["affected_facilities"]:
+        mlt *= const_config["chemistry"]["price_factor"] ** player.chemistry
     # Nuclear engineering
-    if facility in const_config["nuclear_engineering"]["affected facilities"]:
-        mlt *= const_config["nuclear_engineering"]["price factor"] ** player.nuclear_engineering
+    if facility in const_config["nuclear_engineering"]["affected_facilities"]:
+        mlt *= const_config["nuclear_engineering"]["price_factor"] ** player.nuclear_engineering
     # level based facilities and technologies
     engine = current_app.config["engine"]
     if facility in engine.functional_facilities + engine.technologies:
@@ -56,23 +56,23 @@ def power_multiplier(player, facility):
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Mechanical engineering
-    if facility in const_config["mechanical_engineering"]["affected facilities"]:
-        mlt *= const_config["mechanical_engineering"]["prod factor"] ** player.mechanical_engineering
+    if facility in const_config["mechanical_engineering"]["affected_facilities"]:
+        mlt *= const_config["mechanical_engineering"]["prod_factor"] ** player.mechanical_engineering
     # Physics
-    if facility in const_config["physics"]["affected facilities"]:
-        mlt *= const_config["physics"]["prod factor"] ** player.physics
+    if facility in const_config["physics"]["affected_facilities"]:
+        mlt *= const_config["physics"]["prod_factor"] ** player.physics
     # Mineral extraction (in this case it is the energy consumption)
-    if facility in const_config["mineral_extraction"]["affected facilities"]:
-        mlt += const_config["mineral_extraction"]["energy factor"] * player.mineral_extraction
+    if facility in const_config["mineral_extraction"]["affected_facilities"]:
+        mlt += const_config["mineral_extraction"]["energy_factor"] * player.mineral_extraction
     # Civil engineering
-    if facility in const_config["civil_engineering"]["affected facilities"]:
-        mlt *= const_config["civil_engineering"]["prod factor"] ** player.civil_engineering
+    if facility in const_config["civil_engineering"]["affected_facilities"]:
+        mlt *= const_config["civil_engineering"]["prod_factor"] ** player.civil_engineering
     # Aerodynamics
-    if facility in const_config["aerodynamics"]["affected facilities"]:
-        mlt *= const_config["aerodynamics"]["prod factor"] ** player.aerodynamics
+    if facility in const_config["aerodynamics"]["affected_facilities"]:
+        mlt *= const_config["aerodynamics"]["prod_factor"] ** player.aerodynamics
     # Nuclear engineering
-    if facility in const_config["nuclear_engineering"]["affected facilities"]:
-        mlt *= const_config["nuclear_engineering"]["prod factor"] ** player.nuclear_engineering
+    if facility in const_config["nuclear_engineering"]["affected_facilities"]:
+        mlt *= const_config["nuclear_engineering"]["prod_factor"] ** player.nuclear_engineering
     return mlt
 
 
@@ -81,8 +81,8 @@ def capacity_multiplier(player, facility):
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Mineral extraction (in this case it is the extraction rate in fraction of total underground stock per minute)
-    if facility in const_config["mineral_extraction"]["affected facilities"]:
-        mlt += const_config["mineral_extraction"]["extract factor"] * player.mineral_extraction
+    if facility in const_config["mineral_extraction"]["affected_facilities"]:
+        mlt += const_config["mineral_extraction"]["extract_factor"] * player.mineral_extraction
     # Civil engineering
     if facility in ["small_pumped_hydro", "large_pumped_hydro"]:
         mlt *= const_config["civil_engineering"]["capacity_factor"] ** player.civil_engineering
@@ -100,7 +100,7 @@ def efficiency_multiplier(player, facility):
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Thermodynamics
-    if facility in const_config["thermodynamics"]["affected facilities"]:
+    if facility in const_config["thermodynamics"]["affected_facilities"]:
         thermodynamic_factor = const_config["thermodynamics"]["efficiency_factor"] ** player.thermodynamics
         if facility == "compressed_air":
             return (
@@ -114,10 +114,10 @@ def efficiency_multiplier(player, facility):
             )
         mlt *= thermodynamic_factor
     # Mineral extraction (in this case the the multiplicator is for emissions)
-    if facility in const_config["mineral_extraction"]["affected facilities"]:
-        mlt += const_config["mineral_extraction"]["pollution factor"] * player.mineral_extraction
+    if facility in const_config["mineral_extraction"]["affected_facilities"]:
+        mlt += const_config["mineral_extraction"]["pollution_factor"] * player.mineral_extraction
     # Chemistry
-    if facility in const_config["chemistry"]["affected facilities"]:
+    if facility in const_config["chemistry"]["affected_facilities"]:
         chemistry_factor = const_config["chemistry"]["inefficiency_factor"] ** player.chemistry
         if facility == "hydrogen_storage":
             return 0.65 / const_config[facility]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
@@ -178,8 +178,8 @@ def construction_power(player, facility):
     if facility in engine.power_facilities:
         # Materials (in this case it is the energy consumption for construction)
         mlt = 1
-        if facility in const_config["materials"]["affected facilities"]:
-            mlt *= const_config["materials"]["construction energy factor"] ** player.materials
+        if facility in const_config["materials"]["affected_facilities"]:
+            mlt *= const_config["materials"]["construction_energy_factor"] ** player.materials
         return (
             const_config[facility]["base_power_generation"]
             * const_config[facility]["construction_power_factor"]
@@ -521,7 +521,7 @@ def package_functional_facilities(player: Player):
         return (
             (
                 const_config_assets["industry"]["base_income"]
-                * const_config_assets["industry"]["income factor"] ** level
+                * const_config_assets["industry"]["income_factor"] ** level
                 + const_config_assets["industry"]["universal_income"]
             )
             * 3600

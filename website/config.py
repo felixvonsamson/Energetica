@@ -489,7 +489,7 @@ const_config = {
             "universal_income": 1.5,  # [¤/tick]
             "price_multiplier": 1.32,
             "power_factor": 1.4,
-            "income factor": 1.35,
+            "income_factor": 1.35,
             "description": "The industry generates revenue from energy. The Power consumption of the Industry varies daily and seasonally.",
             "wikipedia_link": "",
             "requirements": [],
@@ -598,7 +598,7 @@ const_config = {
             "base_construction_time": 18000,  # [s]
             "base_construction_energy": 5000000,  # [Wh]
             "price_multiplier": 1.3,
-            "affected facilities": [],
+            "affected_facilities": [],
             "description": "Mathematics is the fundamental tool of science.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173657&",
             "requirements": [["laboratory", 1, False]],
@@ -610,9 +610,9 @@ const_config = {
             "base_construction_time": 18000,
             "base_construction_energy": 5000000,
             "price_multiplier": 1.3,
-            "price factor": 1.15,
-            "prod factor": 1.2,
-            "affected facilities": [
+            "price_factor": 1.15,
+            "prod_factor": 1.2,
+            "affected_facilities": [
                 "steam_engine",
                 "watermill",
                 "coal_burner",
@@ -637,7 +637,7 @@ const_config = {
             "base_construction_energy": 5000000,
             "price_multiplier": 1.3,
             "efficiency_factor": 1 / (1 - 0.075),
-            "affected facilities": [
+            "affected_facilities": [
                 "steam_engine",
                 "coal_burner",
                 "oil_burner",
@@ -662,9 +662,9 @@ const_config = {
             "base_construction_time": 18000,
             "base_construction_energy": 5000000,
             "price_multiplier": 1.3,
-            "price factor": 1.15,
-            "prod factor": 1.2,
-            "affected facilities": [
+            "price_factor": 1.15,
+            "prod_factor": 1.2,
+            "affected_facilities": [
                 "CSP_solar",
                 "PV_solar",
                 "hydrogen_storage",
@@ -687,7 +687,7 @@ const_config = {
             "base_construction_energy": 16000000,
             "price_multiplier": 1.3,
             "time_factor": 0.9,
-            "affected facilities": [],  # (all power and storage facilites)
+            "affected_facilities": [],  # (all power and storage facilites)
             "description": "Building technology enables more efficient construction of facilities.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172899&",
             "requirements": [
@@ -702,11 +702,11 @@ const_config = {
             "base_construction_time": 14400,
             "base_construction_energy": 8000000,
             "price_multiplier": 1.4,
-            "price factor": 1.2,
-            "extract factor": 0.30,
-            "energy factor": 0.25,
-            "pollution factor": 0.05,
-            "affected facilities": [
+            "price_factor": 1.2,
+            "extract_factor": 0.30,
+            "energy_factor": 0.25,
+            "pollution_factor": 0.05,
+            "affected_facilities": [
                 "coal_mine",
                 "oil_field",
                 "gas_drilling_site",
@@ -727,8 +727,8 @@ const_config = {
             "base_construction_energy": 24000000,
             "price_multiplier": 1.4,
             "time_factor": 0.9,
-            "energy factor": 1.035,
-            "affected facilities": [],
+            "energy_factor": 1.035,
+            "affected_facilities": [],
             "description": "Transport technology enables more efficient shipments of natural resources.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172788&",
             "requirements": [
@@ -743,9 +743,9 @@ const_config = {
             "base_construction_time": 43200,
             "base_construction_energy": 48000000,
             "price_multiplier": 1.4,
-            "price factor": 0.9,
-            "construction energy factor": 0.9,
-            "affected facilities": [
+            "price_factor": 0.9,
+            "construction_energy_factor": 0.9,
+            "affected_facilities": [
                 "onshore_wind_turbine",
                 "offshore_wind_turbine",
                 "PV_solar",
@@ -766,10 +766,10 @@ const_config = {
             "base_construction_time": 14400,
             "base_construction_energy": 16000000,
             "price_multiplier": 1.5,
-            "price factor": 1.25,
-            "prod factor": 1.15,
+            "price_factor": 1.25,
+            "prod_factor": 1.15,
             "capacity_factor": 1.05,
-            "affected facilities": [
+            "affected_facilities": [
                 "small_water_dam",
                 "large_water_dam",
                 "small_pumped_hydro",
@@ -790,9 +790,9 @@ const_config = {
             "base_construction_time": 43200,
             "base_construction_energy": 60000000,
             "price_multiplier": 1.5,
-            "price factor": 1.15,
-            "prod factor": 1.2,
-            "affected facilities": [
+            "price_factor": 1.15,
+            "prod_factor": 1.2,
+            "affected_facilities": [
                 "windmill",
                 "onshore_wind_turbine",
                 "offshore_wind_turbine",
@@ -811,9 +811,9 @@ const_config = {
             "base_construction_time": 28800,
             "base_construction_energy": 40000000,
             "price_multiplier": 1.4,
-            "price factor": 1.25,
+            "price_factor": 1.25,
             "inefficiency_factor": 0.9,
-            "affected facilities": [
+            "affected_facilities": [
                 "hydrogen_storage",
                 "lithium_ion_batteries",
                 "solid_state_batteries",
@@ -832,9 +832,9 @@ const_config = {
             "base_construction_time": 64800,
             "base_construction_energy": 108000000,
             "price_multiplier": 1.5,
-            "price factor": 1.2,
-            "prod factor": 1.25,
-            "affected facilities": [
+            "price_factor": 1.2,
+            "prod_factor": 1.25,
+            "affected_facilities": [
                 "nuclear_reactor",
                 "nuclear_reactor_gen4",
             ],
@@ -855,7 +855,7 @@ const_config = {
     },
     "transport": {
         "time": 5000,  # [s/distance unit]
-        "power consumption": 5,  # [Wh/kg/distance unit]
+        "power_consumption": 5,  # [Wh/kg/distance unit]
     },
 }
 
@@ -997,19 +997,19 @@ class Config(object):
         player = Player.query.get(player_id)
 
         # calculating industry energy consumption and income
-        assets["industry"]["power consumption"] = (
+        assets["industry"]["power_consumption"] = (
             const_config["assets"]["industry"]["base_power_consumption"]
             * const_config["assets"]["industry"]["power_factor"] ** player.industry
         )
         assets["industry"]["income"] = (
             const_config["assets"]["industry"]["base_income"]
-            * const_config["assets"]["industry"]["income factor"] ** player.industry
+            * const_config["assets"]["industry"]["income_factor"] ** player.industry
         )
         # basic universal income of 1.5 per tick
         assets["industry"]["income"] += const_config["assets"]["industry"]["universal_income"]
 
         # calculating carbon capture power consumption and CO2 absorbtion
-        assets["carbon_capture"]["power consumption"] = (
+        assets["carbon_capture"]["power_consumption"] = (
             const_config["assets"]["carbon_capture"]["base_power_consumption"]
             * const_config["assets"]["carbon_capture"]["power_factor"] ** player.carbon_capture
         )
@@ -1033,9 +1033,9 @@ class Config(object):
             const_config["transport"]["time"]
             * const_config["assets"]["transport_technology"]["time_factor"] ** player.transport_technology
         )
-        assets["transport"]["power consumption"] = (
-            const_config["transport"]["power consumption"]
-            * const_config["assets"]["transport_technology"]["energy factor"] ** player.transport_technology
+        assets["transport"]["power_consumption"] = (
+            const_config["transport"]["power_consumption"]
+            * const_config["assets"]["transport_technology"]["energy_factor"] ** player.transport_technology
             * 3600
             / assets["transport"]["time"]
         )

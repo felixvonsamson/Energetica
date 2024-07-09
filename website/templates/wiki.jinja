@@ -739,7 +739,7 @@
   <h3>The Industry</h3>
   <p>
     The Industry serves as a central element in the game, initially starting at level 1. It generates revenue by consuming
-    electricity. With each level upgrade, revenue increase by {{ ((const_data.industry["income factor"]-1)*100) | round | int }}% 
+    electricity. With each level upgrade, revenue increase by {{ ((const_data.industry["income_factor"]-1)*100) | round | int }}% 
     and electricity demand increases by {{ ((const_data.industry["power_factor"]-1)*100) | round | int }}%. It is worth 
     noting that because of these rates, the industries economic efficiency (in <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh) is decreasing with higher levels of industry.
     Revenues and power demand gradually increase during the upgrade duration.
@@ -957,7 +957,7 @@
   </p>
   <ul style="list-style: none;"><li>
     <i class="fa fa-angle-double-right padding"></i>\(t_{ship} = t_{base} \times dist \times {{ const_data.transport_technology["time_factor"] }}^{TT} \) &emsp;&emsp;&emsp; \(P_{ship} = \frac{E_{base} \times
-    q_{ship} \times {{ const_data.transport_technology["energy factor"] }}^{TT} }{ t_{base} \times {{ const_data.transport_technology["time_factor"] }}^{TT} } \)<br>
+    q_{ship} \times {{ const_data.transport_technology["energy_factor"] }}^{TT} }{ t_{base} \times {{ const_data.transport_technology["time_factor"] }}^{TT} } \)<br>
     with:
     <ul style="list-style: none;"><li>
       \(t_{ship}\) : shipment duration in hours

@@ -337,7 +337,7 @@ def rest_get_facilities_data_OLD(engine):
         "construction power",
         "construction pollution",
         "locked",
-        "power consumption",
+        "power_consumption",
         "O&M cost",
         "pollution",
         "lifespan",

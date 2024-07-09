@@ -327,7 +327,7 @@ def industry_demand_and_revenues(engine, player, demand, revenues):
         engine.industry_demand[t_floor] * (1 - t_rest / tpm)
         + engine.industry_demand[(t_floor + 1) % 1440] * t_rest / tpm
     )
-    demand["industry"] = interpolation * seasonal_factor * assets["industry"]["power consumption"]
+    demand["industry"] = interpolation * seasonal_factor * assets["industry"]["power_consumption"]
     # calculate income of industry
     revenues["industry"] = assets["industry"]["income"]
     for ud in player.under_construction:
@@ -343,7 +343,7 @@ def industry_demand_and_revenues(engine, player, demand, revenues):
             additional_revenue = (
                 time_fraction
                 * (revenues["industry"] - 2000 / 1440)  # the 2000 is to account for the universal basic revenue
-                * (engine.const_config["assets"]["industry"]["income factor"] - 1)
+                * (engine.const_config["assets"]["industry"]["income_factor"] - 1)
             )
             demand["industry"] += additional_demand
             revenues["industry"] += additional_revenue
@@ -365,7 +365,7 @@ def shipment_demand(engine, player, demand):
     transport = engine.config[player.id]["transport"]
     for shipment in player.shipments:
         if shipment.suspension_time is None:
-            demand["transport"] += transport["power consumption"] * shipment.quantity
+            demand["transport"] += transport["power_consumption"] * shipment.quantity
 
 
 def storage_demand(engine, player, demand):
@@ -398,7 +398,7 @@ def calculate_demand(engine, new_values, player):
     shipment_demand(engine, player, demand)
     storage_demand(engine, player, demand)
     if player.carbon_capture > 0:
-        demand["carbon_capture"] = engine.config[player.id]["carbon_capture"]["power consumption"]
+        demand["carbon_capture"] = engine.config[player.id]["carbon_capture"]["power_consumption"]
 
 
 def calculate_generation_without_market(engine, new_values, player):
@@ -843,7 +843,7 @@ def resources_and_pollution(engine, new_values, player):
     # Carbon capture CO2 absorbtion
     if player.carbon_capture > 0:
         assets = engine.config[player.id]
-        satisfaction = demand["carbon_capture"] / assets["carbon_capture"]["power consumption"]
+        satisfaction = demand["carbon_capture"] / assets["carbon_capture"]["power_consumption"]
         captured_CO2 = (
             assets["carbon_capture"]["absorbtion"]
             * engine.data["emissions"]["CO2"]
