@@ -4,7 +4,8 @@
     },
     "[jinja-html]": {
         "editor.wordWrapColumn": 120,
-        "editor.defaultFormatter": "monosans.djlint"
+        "editor.defaultFormatter": "monosans.djlint",
+        "editor.formatOnSave": false
     },
     "files.exclude": {
         "**/__pycache__": true

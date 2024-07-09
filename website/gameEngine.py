@@ -16,7 +16,6 @@ from .database.player_assets import (
     Active_facilities,
 )
 from website import utils
-from website.api import websocket
 
 from .config import config, const_config
 
@@ -60,6 +59,7 @@ class gameEngine(object):
             "uranium_mine",
         ]
 
+        engine.extractable_resources = ["coal", "oil", "gas", "uranium"]
         engine.storage_facilities = [
             "small_pumped_hydro",
             "compressed_air",
@@ -92,9 +92,9 @@ class gameEngine(object):
         ]
 
         engine.functional_facilities = [
+            "industry",
             "laboratory",
             "warehouse",
-            "industry",
             "carbon_capture",
         ]
 
@@ -196,6 +196,14 @@ class gameEngine(object):
     def warn(engine, message):
         engine.console_logger.warn(message)
 
+    def package_global_data(self):
+        """This method packages mutable global engine data as a dict to be sent and used on the frontend"""
+        return {
+            "start_date": self.data["start_date"].timestamp(),
+            "ticks": self.data["total_t"],
+            "co2_emissions": self.data["emissions"]["CO2"],
+        }
+
 
 from .production_update import update_electricity  # noqa: E402
 
@@ -225,8 +233,12 @@ def state_update(engine, app):
         with open("instance/engine_data.pck", "wb") as file:
             pickle.dump(engine.data, file)
     with app.app_context():
+        # TODO: perhaps only run the below code conditionally on there being active ws connections
+        from website.api import websocket
+
         websocket.rest_notify_scoreboard(engine)
         websocket.rest_notify_weather(engine)
+        websocket.rest_notify_global_data(engine)
 
 
 def check_finished_constructions(engine, app):

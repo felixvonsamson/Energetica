@@ -701,19 +701,19 @@
       </tr>
       <tr>
         <td>Coal</td>
-        <td>{{ (const_data.coal_mine.extraction_rate*6000) | round(4) }}% /h</td>
+        <td>{{ (const_data.coal_mine.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
       </tr>
       <tr>
         <td>Oil</td>
-        <td>{{ (const_data.oil_field.extraction_rate*6000) | round(4) }}% /h</td>
+        <td>{{ (const_data.oil_field.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
       </tr>
       <tr>
         <td>Gas</td>
-        <td>{{ (const_data.gas_drilling_site.extraction_rate*6000) | round(4) }}% /h</td>
+        <td>{{ (const_data.gas_drilling_site.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
       </tr>
       <tr>
         <td>Uranium</td>
-        <td>{{ (const_data.uranium_mine.extraction_rate*6000) | round(4) }}% /h</td>
+        <td>{{ (const_data.uranium_mine.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
       </tr>
     </table>
   </div>
@@ -740,7 +740,7 @@
   <p>
     The Industry serves as a central element in the game, initially starting at level 1. It generates revenue by consuming
     electricity. With each level upgrade, revenue increase by {{ ((const_data.industry["income factor"]-1)*100) | round | int }}% 
-    and electricity demand increases by {{ ((const_data.industry["power factor"]-1)*100) | round | int }}%. It is worth 
+    and electricity demand increases by {{ ((const_data.industry["power_factor"]-1)*100) | round | int }}%. It is worth 
     noting that because of these rates, the industries economic efficiency (in <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh) is decreasing with higher levels of industry.
     Revenues and power demand gradually increase during the upgrade duration.
   </p>
@@ -766,13 +766,13 @@
   <h3 id="The_Laboratory">The Laboratory</h3>
   <p>
     The laboratory is needed for researching <a href="#Technology">technologies</a>. Different technology levels require corresponding
-    laboratory levels. It also enhances research speed by {{ ((1-const_data.laboratory["time factor"])*100) | round | int }}% 
+    laboratory levels. It also enhances research speed by {{ ((1-const_data.laboratory["time_factor"])*100) | round | int }}% 
     and for every 3rd upgrade, a new lab worker is unlocked.
   </p>
   <h3 id="The_Warehouse">The Warehouse</h3>
   <p>
     The warehouse is essential for storing natural resources. Each level increment increases the maximum storage
-    capacity by {{ ((const_data.warehouse["capacity factor"]-1)*100) | round | int }}% for all resources. The following 
+    capacity by {{ ((const_data.warehouse["capacity_factor"]-1)*100) | round | int }}% for all resources. The following 
     table defines the initial storage capacities at level 1.
     <div class="flex-col">
     <table class="table bone txt_center">
@@ -802,8 +802,8 @@
   <h3>Carbon Capture</h3>
   <p>
     The carbon capture facility consumes electricity to extract CO2 from the atmosphere and store it underground. 
-    With each level upgrade, CO2 absorbtion increase by {{ ((const_data.carbon_capture["absorbtion factor"]-1)*100) | round | int }}% 
-    and power consumption increases by {{ ((const_data.carbon_capture["power factor"]-1)*100) | round | int }}%.
+    With each level upgrade, CO2 absorbtion increase by {{ ((const_data.carbon_capture["absorbtion_factor"]-1)*100) | round | int }}% 
+    and power consumption increases by {{ ((const_data.carbon_capture["power_factor"]-1)*100) | round | int }}%.
     Contrary to the industry, CO2 absorbtion is more efficient with higher carbon capture levels. 
   </p>
 
@@ -956,8 +956,8 @@
     The shipment duration and electricity consumption are calculated based on the following formulas:
   </p>
   <ul style="list-style: none;"><li>
-    <i class="fa fa-angle-double-right padding"></i>\(t_{ship} = t_{base} \times dist \times {{ const_data.transport_technology["time factor"] }}^{TT} \) &emsp;&emsp;&emsp; \(P_{ship} = \frac{E_{base} \times
-    q_{ship} \times {{ const_data.transport_technology["energy factor"] }}^{TT} }{ t_{base} \times {{ const_data.transport_technology["time factor"] }}^{TT} } \)<br>
+    <i class="fa fa-angle-double-right padding"></i>\(t_{ship} = t_{base} \times dist \times {{ const_data.transport_technology["time_factor"] }}^{TT} \) &emsp;&emsp;&emsp; \(P_{ship} = \frac{E_{base} \times
+    q_{ship} \times {{ const_data.transport_technology["energy factor"] }}^{TT} }{ t_{base} \times {{ const_data.transport_technology["time_factor"] }}^{TT} } \)<br>
     with:
     <ul style="list-style: none;"><li>
       \(t_{ship}\) : shipment duration in hours

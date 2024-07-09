@@ -103,7 +103,7 @@
                         <script>display_money({{ sale.price * 1000 }});</script>
                     </b>/t</span>
                 shipment :
-                <script>calculate_delivery({{ user.tile.q - sale.player.tile.q }}, {{ user.tile.r - sale.player.tile.r }}, {{ engine.const_config.transport.time * engine.const_config.assets.transport_technology["time factor"] ** user.transport_technology }});</script>
+                <script>calculate_delivery({{ user.tile.q - sale.player.tile.q }}, {{ user.tile.r - sale.player.tile.r }}, {{ engine.const_config.transport.time * engine.const_config.assets.transport_technology["time_factor"] ** user.transport_technology }});</script>
             </div>
             <form method="post"
                   autocomplete="off"

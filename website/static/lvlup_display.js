@@ -16,14 +16,14 @@ function retrieve_ud() {
 function change_info(constructions) {
     let lvls_in_progress = {};
     let config = player_config["assets"];
-    for (const key in constructions){
-        if (constructions[key].family == document.title){
+    for (const key in constructions) {
+        if (constructions[key].family == document.title) {
             const name = constructions[key].name;
             lvls_in_progress[name] = (lvls_in_progress[name] || 0) + 1;
         }
     }
     load_const_config().then((const_config) => {
-        for (const name in lvls_in_progress){
+        for (const name in lvls_in_progress) {
             console.log(const_config.assets[name]["name"])
             let tile = document.getElementById(const_config.assets[name]["name"]);
 
@@ -32,7 +32,7 @@ function change_info(constructions) {
 
             let price = tile.querySelector("#price");
             let new_price =
-                const_config.assets[name]["base_price"] * const_config.assets[name]["price multiplier"] ** (player_levels[name] + lvls_in_progress[name]);
+                const_config.assets[name]["base_price"] * const_config.assets[name]["price_multiplier"] ** (player_levels[name] + lvls_in_progress[name]);
             price.innerHTML = `${new_price
                 .toFixed(0)
                 .replace(
@@ -49,33 +49,33 @@ function change_info(constructions) {
 
             if ("requirements" in const_config.assets[name]) {
                 let requirements = tile.querySelector("#requirements");
-                let unfullfilled = [];
+                let unfulfilled = [];
                 for (let i in const_config.assets[name]["requirements"]) {
                     req = const_config.assets[name]["requirements"][i][0];
                     if (
                         player_levels[req] <
                         const_config.assets[name]["requirements"][i][1] + player_levels[name] + lvls_in_progress[name]
                     ) {
-                        unfullfilled.push(req);
+                        unfulfilled.push(req);
                     }
                 }
-                if (unfullfilled.length > 0) {
+                if (unfulfilled.length > 0) {
                     let html =
                         '<div><strong>Upgrade with :</strong><br><ul style="padding:0; margin:0;">';
                     for (let i in const_config.assets[name]["requirements"]) {
                         html += '<li class="margin-small ';
                         req = const_config.assets[name]["requirements"][i][0];
-                        if (unfullfilled.includes(req)) {
+                        if (unfulfilled.includes(req)) {
                             html += "requirement";
                         } else {
-                            html += "req_fullfilled";
+                            html += "req_fulfilled";
                         }
                         html +=
                             '"> - ' +
                             const_config.assets[req]["name"] +
                             " lvl " +
                             (const_config.assets[name]["requirements"][i][1] +
-                            player_levels[name] + lvls_in_progress[name]) +
+                                player_levels[name] + lvls_in_progress[name]) +
                             "</li>";
                     }
                     html += " </ul></div>";
@@ -98,7 +98,7 @@ function change_info(constructions) {
                 let old_E_MS =
                     1 -
                     (1 - const_config.assets["molten_salt"]["base_efficiency"] * multipliers["molten_salt"]["efficiency_multiplier"]) *
-                        0.9 ** (lvls_in_progress[name]);
+                    0.9 ** (lvls_in_progress[name]);
                 let new_E_MS = 10 / old_E_MS - 10;
                 Efficiency_MS.innerHTML = "+" + new_E_MS.toFixed(1) + "%";
             } else if (name == "chemistry") {
@@ -108,14 +108,14 @@ function change_info(constructions) {
                     1 -
                     (1 - const_config.assets["lithium_ion_batteries"]["base_efficiency"] * multipliers["lithium_ion_batteries"]["efficiency_multiplier"]) *
                     const_config.assets[name]["efficiency_factor"] **
-                            (lvls_in_progress[name]);
+                    (lvls_in_progress[name]);
                 let new_E_Li_ion = 10 / old_E_Li_ion - 10;
                 E_Li_ion.innerHTML = "+" + new_E_Li_ion.toFixed(2) + "%";
                 let old_E_SS =
                     1 -
                     (1 - const_config.assets["solid_state_batteries"]["base_efficiency"] * multipliers["solid_state_batteries"]["efficiency_multiplier"]) *
                     const_config.assets[name]["efficiency_factor"] **
-                            (lvls_in_progress[name]);
+                    (lvls_in_progress[name]);
                 let new_E_SS = 10 / old_E_SS - 10;
                 E_SS.innerHTML = "+" + new_E_SS.toFixed(2) + "%";
             }
