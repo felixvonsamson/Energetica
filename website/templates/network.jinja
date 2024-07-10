@@ -65,6 +65,17 @@
         {% set caps = engine.data["player_capacities"][user.id] %}
 
         <div class="flex-center bone large padding" style="margin-top:30px">Imports / Exports</div>
+        <div class="bone flex-center large">
+            <div class="flex-col" style="width:100%; margin-left:3em; justify-content:center;">
+                <img src="{{ url_for('static', filename='images/icons/profile_circle.svg') }}" class="import_overview_circle_icon" alt="Profile icon"/>
+                <div class="txt_pine">{{ user.username }}</div>
+            </div>
+            <div id="import_overview" style="margin-bottom:1.3em;"></div>
+            <div class="flex-col" style="width:100%; margin-right:3em; justify-content:center;">
+                <img src="{{ url_for('static', filename='images/icons/network_circle.svg') }}" class="import_overview_circle_icon" alt="Network icon"/>
+                <div class="txt_pine">{{ user.network.name }}</div>
+            </div>
+        </div>
         <div id="temporal_imports" class="bone flex-center"></div>
 
         <div class="flex-space-between margin" style="flex-wrap:wrap;">

@@ -94,7 +94,7 @@ function preload() {
     coin = loadImage("static/images/icons/coin.svg");
 }
 
-var temporal_graph_p5, market_chart_p5, temporal_imports_p5, network_capacities_p5;
+var temporal_graph_p5, market_chart_p5, temporal_imports_p5, network_capacities_p5, import_overview_p5;
 
 function setup() {
     random_colors = [
@@ -159,6 +159,8 @@ function setup() {
     }
     margin = min(70, canvas_width / 10);
 
+    import_overview_p5 = new p5(import_overview_sketch, "import_overview")
+
     temporal_imports_p5 = new p5(temporal_imports_sketch, "temporal_imports");
 
     network_capacities_p5 = new p5(network_capacities_sketch, "network_capacities");
@@ -168,6 +170,71 @@ function setup() {
     market_chart_p5 = new p5(market_chart_sketch, "market_chart");
  
     fetch_temporal_network_data();
+}
+
+function import_overview_sketch(s){
+    s.setup = function(){
+        s.createCanvas(0.3 * canvas_width, 0.3 * canvas_width);
+        s.noLoop();
+        s.graphics = s.createGraphics(s.width, s.height);
+        s.graphics.textAlign(CENTER, CENTER);
+        s.graphics.textFont(font);
+    }
+
+    s.draw = function(){
+        if (s.graphics_ready) {
+            s.image(s.graphics, 0, 0);
+        }
+    }
+
+    s.render_graph = function(){
+        s.graph_h = s.height - margin;
+        s.graphics.noStroke();
+        s.graphics.background(229, 217, 182);
+        s.graphics.push();
+        let exports = energy_flux[resolution_list[0]][59];
+        let max_exports = max(max(0, ...energy_flux[resolution_list[0]]), -min(0, ...energy_flux[resolution_list[0]]));
+        let arrow_w = map(abs(exports), 0, max_exports, 0.2*margin, 0.6*margin);
+        s.graphics.translate(0.5 * margin, 0.5 * s.graph_h - 0.2*margin);
+        s.graphics.textSize(20);
+        if (exports >= 0){
+            s.graphics.fill(0, 139, 0);
+            s.graphics.text(display_W(abs(exports)), 0.5*s.graph_h, -0.6*margin-5);
+            s.graphics.fill(cols_and_names.exports[0]);
+            s.graphics.triangle(-0.5*arrow_w, 0, 0.5*arrow_w, arrow_w, 0.5*arrow_w, -arrow_w);
+        }else{
+            s.graphics.fill(139, 0, 0);
+            s.graphics.text(display_W(abs(exports)), 0.5*s.graph_h, -0.6*margin-5);
+            s.graphics.fill(cols_and_names.imports[0]);
+            s.graphics.triangle(s.graph_h+0.5*arrow_w, 0, s.graph_h-0.5*arrow_w, arrow_w, s.graph_h-0.5*arrow_w, -arrow_w);
+        }
+        s.graphics.rect(0, -0.5*arrow_w, s.graph_h, arrow_w);
+        s.graphics.translate(0, 1.4*margin);
+        let revenues = revenue_flux[resolution_list[0]][59];
+        let max_revenues = max(max(0, ...revenue_flux[resolution_list[0]]), -min(0, ...revenue_flux[resolution_list[0]]));
+        arrow_w = map(abs(revenues), 0, max_revenues, 0.2*margin, 0.6*margin);
+        if (revenues >= 0){
+            s.graphics.fill(0, 139, 0);
+            s.graphics.textAlign(RIGHT, CENTER);
+            s.graphics.text(display_money(abs(revenues)), 0.5*s.graph_h, -0.6*margin-5);
+            s.graphics.image(coin, 0.5*s.graph_h+5, 0.6*margin-9, 18, 18);
+            s.graphics.text("/h", 0.5*s.graph_h+43, -0.6*margin-5);
+            s.graphics.fill(cols_and_names.exports[0]);
+            s.graphics.triangle(-0.5*arrow_w, 0, 0.5*arrow_w, arrow_w, 0.5*arrow_w, -arrow_w);
+        }else{
+            s.graphics.fill(139, 0, 0);
+            s.graphics.textAlign(RIGHT, CENTER);
+            s.graphics.text(display_money(abs(revenues)), 0.5*s.graph_h, 0.6*margin-5);
+            s.graphics.image(coin, 0.5*s.graph_h+5, 0.6*margin-9, 18, 18);
+            s.graphics.text("/h", 0.5*s.graph_h+43, 0.6*margin-5);
+            s.graphics.fill(cols_and_names.imports[0]);
+            s.graphics.triangle(s.graph_h+0.5*arrow_w, 0, s.graph_h-0.5*arrow_w, arrow_w, s.graph_h-0.5*arrow_w, -arrow_w);
+        }
+        s.graphics.rect(0, -0.5*arrow_w, s.graph_h, arrow_w);
+        s.graphics.pop();
+        s.graphics_ready = true;
+        s.redraw();
+    }
 }
 
 function temporal_imports_sketch(s){
@@ -437,7 +504,7 @@ function network_capacities_sketch(s){
                 Hydro: ["watermill", "small_water_dam", "large_water_dam"],
                 Wind: ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"],
                 Solar: ["CSP_solar", "PV_solar"],
-                Fossil: ["coal_burner", "oil_burner", "gas_burner", "combined_cycle"],
+                Fossil: ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle"],
                 Nuclear: ["nuclear_reactor", "nuclear_reactor_gen4"],
                 Storages: ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"],
                 capacities: {
@@ -1343,6 +1410,7 @@ function fetch_temporal_network_data() {
                 revenue_flux[resolution_list[i+1]] = exports_revenue[i].map((num, idx) => 60 * clock_time * (num + imports_revenue[i][idx]));
             }
 
+            import_overview_p5.render_graph();
             temporal_imports_p5.render_graph();
         });
         load_chart_data((network = true)).then((raw_chart_data) => {

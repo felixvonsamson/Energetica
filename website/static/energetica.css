@@ -427,6 +427,10 @@ canvas {
     -ms-transform: translate(-50%, -50%)
 }
 
+.import_overview_circle_icon {
+    width: 100%;
+}
+
 .game_info {
     position: fixed;
     max-width:800px;
