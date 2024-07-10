@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 from flask import current_app, flash
 
-from website import technology_effects
+from website import gameEngine, technology_effects
 
 from . import db
 from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer
@@ -417,43 +417,58 @@ def add_asset(player_id, construction_id):
 
 def upgrade_facility(player, facility_id):
     """this function is executed when a player upgrades a facility"""
+    engine: gameEngine = current_app.config["engine"]
 
-    extraction_multiplier = {
-        "price_multiplier": "price_multiplier",
-        "extraction_multiplier": "capacity_multiplier",
-        "power_use_multiplier": "power_multiplier",
-        "pollution_multiplier": "efficiency_multiplier",
-    }
-
-    def is_upgradable(facility, new_multipliers):
+    def is_upgradable(facility):
+        """Returns true if any of the attributes of the built facility are outdated compared to current tech levels"""
         if facility.facility in engine.extraction_facilities:
-            for key in extraction_multiplier:
-                if getattr(facility, extraction_multiplier[key]) < new_multipliers[key]:
+            if facility.price_multiplier < technology_effects.price_multiplier(player, facility.facility):
+                return True
+            if facility.capacity_multiplier < technology_effects.capacity_multiplier(player, facility.facility):
+                return True
+            if facility.power_multiplier < technology_effects.power_multiplier(player, facility.facility):
+                return True
+            if facility.efficiency_multiplier < technology_effects.efficiency_multiplier(player, facility.facility):
+                return True
+        else:  # power & storage facilities
+            if facility.price_multiplier < technology_effects.price_multiplier(player, facility.facility):
+                return True
+            if facility.facility in engine.power_facilities + engine.storage_facilities:
+                if facility.power_multiplier < technology_effects.power_multiplier(player, facility.facility):
                     return True
-        else:
-            for key in ["price_multiplier", "power_multiplier", "capacity_multiplier", "efficiency_multiplier"]:
-                if key in new_multipliers:
-                    if getattr(facility, key) < new_multipliers[key]:
-                        return True
+            if facility.facility in engine.storage_facilities:
+                if facility.capacity_multiplier < technology_effects.capacity_multiplier(player, facility.facility):
+                    return True
+            if facility.facility in engine.controllable_facilities + engine.storage_facilities:
+                if facility.efficiency_multiplier < technology_effects.efficiency_multiplier(player, facility.facility):
+                    return True
         return False
 
-    def apply_upgrade(facility, new_multipliers):
+    def apply_upgrade(facility):
+        """Updates the built facilities attributes to match current tech levels"""
         if facility.facility in engine.extraction_facilities:
-            for key in extraction_multiplier:
-                setattr(facility, extraction_multiplier[key], new_multipliers[key])
+            facility.price_multiplier = technology_effects.price_multiplier(player, facility.facility)
+            facility.capacity_multiplier = technology_effects.capacity_multiplier(player, facility.facility)
+            facility.power_multiplier = technology_effects.power_multiplier(player, facility.facility)
+            facility.efficiency_multiplier = technology_effects.efficiency_multiplier(player, facility.facility)
         else:
-            for key in ["price_multiplier", "power_multiplier", "capacity_multiplier", "efficiency_multiplier"]:
-                if key in new_multipliers:
-                    setattr(facility, key, new_multipliers[key])
+            facility.price_multiplier = technology_effects.price_multiplier(player, facility.facility)
+            if facility.facility in engine.power_facilities + engine.storage_facilities:
+                facility.power_multiplier = technology_effects.power_multiplier(player, facility.facility)
+            if facility.facility in engine.storage_facilities:
+                facility.capacity_multiplier = technology_effects.capacity_multiplier(player, facility.facility)
+            if facility.facility in engine.controllable_facilities + engine.storage_facilities:
+                facility.efficiency_multiplier = technology_effects.efficiency_multiplier(player, facility.facility)
         db.session.commit()
 
-    engine = current_app.config["engine"]
     facility = Active_facilities.query.get(facility_id)
-    new_multipliers = technology_effects.get_current_technology_values(player)
+    if facility.facility in engine.technologies + engine.functional_facilities:
+        return {"response": "notUpgradable"}
+
     const_config = engine.const_config["assets"][facility.facility]
 
-    if is_upgradable(facility, new_multipliers[facility.facility]):
-        price_diff = new_multipliers[facility.facility]["price_multiplier"] - facility.price_multiplier
+    if is_upgradable(facility):
+        price_diff = technology_effects.price_multiplier(player, facility.facility) - facility.price_multiplier
         if price_diff > 0:
             upgrade_cost = const_config["base_price"] * price_diff
         else:
@@ -461,7 +476,7 @@ def upgrade_facility(player, facility_id):
         if player.money < upgrade_cost:
             return {"response": "notEnoughMoney"}
         player.money -= upgrade_cost
-        apply_upgrade(facility, new_multipliers[facility.facility])
+        apply_upgrade(facility)
         engine.data["player_capacities"][player.id].update(player.id, facility.facility)
         return {"response": "success", "money": player.money}
     else:
