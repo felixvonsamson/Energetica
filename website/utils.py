@@ -3,27 +3,28 @@ I dumped all small helpful functions here
 """
 
 import math
-import threading
-import pickle
 import os
-import numpy as np
+import pickle
 import shutil
+import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import numpy as np
+from flask import current_app, flash
 
-from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer, CapacityData
-from .database.messages import Chat, Notification, Message
+from website import technology_effects
+
+from . import db
+from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer
+from .database.messages import Chat, Message, Notification
 from .database.player import Network, Player, PlayerUnreadMessages
 from .database.player_assets import (
+    Active_facilities,
     Resource_on_sale,
     Shipment,
     Under_construction,
-    Active_facilities,
 )
-from website import technology_effects
-from . import db
-from flask import current_app, flash
 
 # Helper functions and data initialisation utilities
 
@@ -509,11 +510,10 @@ def remove_asset(player_id, facility, decommissioning=True):
 
 def start_project(engine, player, facility, family, force=False):
     """this function is executed when a player clicks on 'start construction'"""
-    facility_info = technology_effects.get_current_technology_values(player)
     player_cap = engine.data["player_capacities"][player.id]
     const_config = engine.const_config["assets"][facility]
 
-    if facility_info[facility]["locked"]:
+    if technology_effects.player_can_launch_project(player, facility):
         return {"response": "locked"}
 
     if facility in ["small_water_dam", "large_water_dam", "watermill"]:
@@ -526,10 +526,6 @@ def start_project(engine, player, facility, family, force=False):
     ud_count = 0
     if family in ["Functional facilities", "Technologies"]:
         ud_count = Under_construction.query.filter_by(name=facility, player_id=player.id).count()
-        if family == "Technologies":
-            for req in facility_info[facility]["requirements"]:
-                if getattr(player, facility) + ud_count + req[1] > getattr(player, req[0]):
-                    return {"response": "requirementsNotFulfilled"}
         real_price = (
             const_config["base_price"]
             * technology_effects.price_multiplier(player, facility)

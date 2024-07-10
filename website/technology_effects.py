@@ -484,6 +484,11 @@ def package_extraction_facilities(player: Player):
     ]
 
 
+def player_can_launch_project(player: Player, facility):
+    """Returns true if facility is not hidden and if requirements are met"""
+    return not facility_is_hidden(player, facility) and requirements_met(facility_requirements(player, facility))
+
+
 def facility_is_hidden(player: Player, facility):
     """
     Returns true if the facility is hidden to the player due to lack of advancements.

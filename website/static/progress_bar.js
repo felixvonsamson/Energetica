@@ -108,8 +108,6 @@ function start_construction(facility, family, force = false) {
                     } else {
                         addError("Facility is locked");
                     }
-                } else if (response == "requirementsNotFulfilled") {
-                    addError("Requirements not fulfilled for this Technology level");
                 }
             });
         })
