@@ -1051,6 +1051,7 @@ def add_message(player, message, chat_id):
     if not chat_id:
         return {"response": "noChatID"}
     chat = Chat.query.filter_by(id=chat_id).first()
+    # TODO: set a character / size limit on message size
     new_message = Message(
         text=message,
         time=datetime.now(),

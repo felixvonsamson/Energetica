@@ -115,8 +115,8 @@ def get_networks():
 def get_chat_messages():
     """gets the last 20 messages from a chat and returns it as a list"""
     chat_id = request.args.get("chatID")
-    response = current_user.package_chat_messages(chat_id)
-    return jsonify(response)
+    packaged_messages = current_user.package_chat_messages(chat_id)
+    return jsonify({"response": "success", "messages": packaged_messages})
 
 
 @http.route("/get_chat_list", methods=["GET"])
