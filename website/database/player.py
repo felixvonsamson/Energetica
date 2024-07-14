@@ -214,7 +214,7 @@ class Player(db.Model, UserMixin):
             PlayerUnreadMessages.message_id.in_(db.session.query(Message.id).filter(Message.chat_id == chat_id))
         ).delete(synchronize_session=False)
         db.session.commit()
-        return {"response": "success", "messages": messages_list}
+        return messages_list
 
     def package_chat_list(self):
         def chat_name(chat):

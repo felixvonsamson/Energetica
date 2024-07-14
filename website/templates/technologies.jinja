@@ -75,15 +75,15 @@
               <div class="infotext">
                 {{ const_data.description }}
                 <br class="smartphone_hide">
-                {% if const_data["affected facilities"] | length > 0 %}
+                {% if const_data["affected_facilities"] | length > 0 %}
                   {% if not (facility_values[facility]["locked"] and facility in ["materials", "mechanical_engineering", "thermodynamics", "physics"]) %}
                     <br>
                   {% endif %}
                   Affected facilities :
-                  {% for affected in const_data["affected facilities"][:-1] %}
+                  {% for affected in const_data["affected_facilities"][:-1] %}
                     <em class="txt-blue">{{ engine.const_config["assets"][affected].name }}</em> ,
                   {% endfor %}
-                  <em class="txt-blue">{{ engine.const_config["assets"][const_data["affected facilities"][-1]].name }}</em>
+                  <em class="txt-blue">{{ engine.const_config["assets"][const_data["affected_facilities"][-1]].name }}</em>
                 {% endif %}
                 {% if facility == "building_technology" %}
                   <br>
@@ -198,16 +198,16 @@
                   lvl {{ user[facility] }} -> lvl {{ user[facility]+1 }}
                 </th>
               </tr>
-              {% if "prod factor" in const_data %}
+              {% if "prod_factor" in const_data %}
                 <tr>
                   <td>Power generation</td>
-                  <td class="txt_center">+{{ (const_data["prod factor"]*100-100)| round | int }}%</td>
+                  <td class="txt_center">+{{ (const_data["prod_factor"]*100-100)| round | int }}%</td>
                 </tr>
               {% endif %}
-              {% if "extract factor" in const_data %}
+              {% if "extract_factor" in const_data %}
                 <tr>
                   <td>Extraction speed</td>
-                  <td class="txt_center">+{{ (100*const_data["extract factor"]/(1+const_data["extract factor"]*user[facility]))|round(0)|int }}%</td>
+                  <td class="txt_center">+{{ (100*const_data["extract_factor"]/(1+const_data["extract_factor"]*user[facility]))|round(0)|int }}%</td>
                 </tr>
               {% endif %}
               {% if "efficiency_factor" in const_data %}
@@ -249,19 +249,19 @@
                 </tr>
                 <tr>
                   <td>Power consumption</td>
-                  <td class="txt_center">+{{ ((const_data["energy factor"]/const_data["time_factor"]-1)*100) | round | int }}%</td>
+                  <td class="txt_center">+{{ ((const_data["energy_factor"]/const_data["time_factor"]-1)*100) | round | int }}%</td>
                 </tr>
               {% endif %}
               {% if facility == "mineral_extraction" %}
                 <tr>
                   <td>Power consumption</td>
-                  <td class="txt_center">+{{ (100*const_data["energy factor"]/(1+const_data["energy factor"]*user[facility]))|round(0)|int }}%</td>
+                  <td class="txt_center">+{{ (100*const_data["energy_factor"]/(1+const_data["energy_factor"]*user[facility]))|round(0)|int }}%</td>
                 </tr>
               {% endif %}
-              {% if "pollution factor" in const_data %}
+              {% if "pollution_factor" in const_data %}
                 <tr>
                   <td>CO2 emissions</td>
-                  <td class="txt_center">+{{ (100*const_data["pollution factor"]/(1+const_data["pollution factor"]*user[facility]))|round(0)|int }}%</td>
+                  <td class="txt_center">+{{ (100*const_data["pollution_factor"]/(1+const_data["pollution_factor"]*user[facility]))|round(0)|int }}%</td>
                 </tr>
               {% endif %}
               {% if "capacity_factor" in const_data %}
@@ -284,16 +284,16 @@
                   <td id="E_SS" class="txt_center hover_info">+{{ ((1-const_data["inefficiency_factor"])*(1 - engine.const_config["assets"]["solid_state_batteries"]["base_efficiency"] * facility_values["solid_state_batteries"]["efficiency_multiplier"] )*100) | round(1) }}pp<span class="popup_info small">percentage point</span></td>
                 </tr>
               {% endif %}
-              {% if "price factor" in const_data %}
+              {% if "price_factor" in const_data %}
                 <tr>
                   <td>Price</td>
-                  <td class="txt_center">{% if const_data["price factor"] > 1 %}+{% endif %}{{ (const_data["price factor"]*100-100)| round | int }}%</td>
+                  <td class="txt_center">{% if const_data["price_factor"] > 1 %}+{% endif %}{{ (const_data["price_factor"]*100-100)| round | int }}%</td>
                 </tr>
               {% endif %}
-              {% if "construction energy factor" in const_data %}
+              {% if "construction_energy_factor" in const_data %}
                 <tr>
                   <td>Construction power</td>
-                  <td class="txt_center">-{{ (100-const_data["construction energy factor"]*100)|int }}%</td>
+                  <td class="txt_center">-{{ (100-const_data["construction_energy_factor"]*100)|int }}%</td>
                 </tr>
               {% endif %}
             </table>
