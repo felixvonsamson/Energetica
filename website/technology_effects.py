@@ -494,8 +494,6 @@ def facility_is_hidden(player: Player, facility):
     Returns true if the facility is hidden to the player due to lack of advancements.
     Such facilities should not be shown on the frontend.
     """
-    if "technology" not in player.advancements and facility == "laboratory":
-        return True
     if "GHG_effect" not in player.advancements and facility == "carbon_capture":
         return True
     return False
