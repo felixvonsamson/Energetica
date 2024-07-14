@@ -1032,6 +1032,8 @@ def add_message(player, message, chat_id):
     engine = current_app.config["engine"]
     if not chat_id:
         return {"response": "noChatID"}
+    if message.length == 0 :
+        return {"response": "noMessage"}
     chat = Chat.query.filter_by(id=chat_id).first()
     new_message = Message(
         text=message,
@@ -1123,7 +1125,7 @@ def create_network(engine, player, name):
     Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
     engine.data["network_data"][new_network.id] = CircularBufferNetwork()
     engine.data["network_capacities"][new_network.id] = CapacityData()
-    engine.data["network_data"][new_network.id].update(new_network)
+    engine.data["network_capacities"][new_network.id].update_network(new_network)
     past_data = data_init_network()
     Path(f"{network_path}").mkdir(parents=True, exist_ok=True)
     with open(f"{network_path}/time_series.pck", "wb") as file:

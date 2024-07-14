@@ -37,6 +37,8 @@ class Player(db.Model, UserMixin):
     messages = db.relationship("Message", backref="player")
     notifications = db.relationship("Notification", backref="players", lazy="dynamic")
 
+    graph_view = db.Column(db.String(10), default="basic")
+
     # resources :
     money = db.Column(db.Float, default=25000)  # default is 25000
     coal = db.Column(db.Float, default=0)
@@ -144,6 +146,10 @@ class Player(db.Model, UserMixin):
     shipments = db.relationship("Shipment", backref="player")
     active_facilities = db.relationship("Active_facilities", backref="player", lazy="dynamic")
 
+    def change_graph_view(self, view):
+        self.graph_view = view
+        db.session.commit()
+        
     def available_construction_workers(self):
         occupied_workers = (
             Under_construction.query.filter(Under_construction.player_id == self.id)

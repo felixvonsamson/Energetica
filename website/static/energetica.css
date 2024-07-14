@@ -249,8 +249,17 @@ canvas {
     margin: 2px;
 }
 
+.graph_button_views{
+    background-color: #ffffff;
+    color: #285430,
+}
+
 .graph_button.selected {
     background-color: #d3c290;
+}
+
+.graph_button_views.selected {
+    background-color: #D2DFBD;
 }
 
 .graph_button:hover {

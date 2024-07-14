@@ -176,12 +176,14 @@ def create_player(engine, username, password):
 def create_network(engine, name, members):
     n = Network.query.filter_by(name=name).first()
     if n is None:
+        print(members)
         new_network = Network(name=name, members=members)
         db.session.add(new_network)
         db.session.commit()
         Path(f"instance/network_data/{new_network.id}/charts").mkdir(parents=True, exist_ok=True)
         engine.data["network_data"][new_network.id] = CircularBufferNetwork()
         engine.data["network_capacities"][new_network.id] = CapacityData()
+        engine.data["network_capacities"][new_network.id].update_network(new_network)
         past_data = data_init_network()
         Path(f"instance/network_data/{new_network.id}").mkdir(parents=True, exist_ok=True)
         with open(

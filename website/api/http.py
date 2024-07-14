@@ -512,3 +512,11 @@ def new_message():
     chat_id = json["chat_id"]
     response = utils.add_message(current_user, message, chat_id)
     return response
+
+@http.route("change_graph_view", methods=["POST"])
+def change_graph_view():
+    """this endpoint is called when a player changes the view mode for the graphs (basic, normal, expert)"""
+    json = request.get_json()
+    view = json["view"]
+    current_user.change_graph_view(view)
+    return jsonify({"response": "success"})

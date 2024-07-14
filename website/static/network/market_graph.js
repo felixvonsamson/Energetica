@@ -169,7 +169,69 @@ function setup() {
     
     market_chart_p5 = new p5(market_chart_sketch, "market_chart");
  
+    change_page_view(server_saved_view)
     fetch_temporal_network_data();
+}
+
+function change_page_view(view){
+    send_form("/api/change_graph_view", {
+        view: view,
+    }).catch((error) => {
+        console.error(`caught error ${error}`);
+    });
+    show_selected_button("page_view_button_", view);
+    if (view == "basic"){
+        document.getElementById("import_overview_container").style.display = "block";
+        document.getElementById("temporal_imports_container").style.display = "none";
+        document.getElementById("network_capacities").style.display = "block";
+        document.getElementById("temporal_graph_container").style.display = "block";
+        document.getElementById("network_prices_headder").style.display = "block";
+        document.getElementById("percent_buttons_container").style.display = "none";
+        document.getElementById("categorisation_buttons_container").style.display = "none";
+        document.getElementById("export_import_buttons_container").style.display = "none";
+        document.getElementById("price_mode_button_smoothed").classList.add("right");
+        document.getElementById("price_mode_button_off").style.display = "none";
+        document.getElementById("market_chart_container").style.display = "none";
+        document.getElementById("market_offers_tables").style.display = "none";
+        temporal_graph_p5.simplified = true;
+        network_capacities_p5.simplified = "simple";
+        temporal_graph_p5.render_graph();
+        network_capacities_p5.render_graph();
+    }else if (view == "normal"){
+        document.getElementById("import_overview_container").style.display = "none";
+        document.getElementById("temporal_imports_container").style.display = "block";
+        document.getElementById("network_capacities").style.display = "block";
+        document.getElementById("temporal_graph_container").style.display = "block";
+        document.getElementById("network_prices_headder").style.display = "none";
+        document.getElementById("percent_buttons_container").style.display = "block";
+        document.getElementById("categorisation_buttons_container").style.display = "block";
+        document.getElementById("export_import_buttons_container").style.display = "block";
+        document.getElementById("price_mode_button_smoothed").classList.remove("right");
+        document.getElementById("price_mode_button_off").style.display = "block";
+        document.getElementById("market_chart_container").style.display = "block";
+        document.getElementById("market_offers_tables").style.display = "none";
+        temporal_graph_p5.simplified = false;
+        network_capacities_p5.simplified = "simple";
+        temporal_graph_p5.render_graph();
+        network_capacities_p5.render_graph();
+    }else{
+        document.getElementById("import_overview_container").style.display = "none";
+        document.getElementById("temporal_imports_container").style.display = "block";
+        document.getElementById("network_capacities").style.display = "block";
+        document.getElementById("temporal_graph_container").style.display = "block";
+        document.getElementById("network_prices_headder").style.display = "none";
+        document.getElementById("percent_buttons_container").style.display = "block";
+        document.getElementById("categorisation_buttons_container").style.display = "block";
+        document.getElementById("export_import_buttons_container").style.display = "block";
+        document.getElementById("price_mode_button_smoothed").classList.remove("right");
+        document.getElementById("price_mode_button_off").style.display = "block";
+        document.getElementById("market_chart_container").style.display = "none";
+        document.getElementById("market_offers_tables").style.display = "block";
+        temporal_graph_p5.simplified = false;
+        network_capacities_p5.simplified = "complex";
+        temporal_graph_p5.render_graph();
+        network_capacities_p5.render_graph();
+    }
 }
 
 function import_overview_sketch(s){
@@ -216,9 +278,9 @@ function import_overview_sketch(s){
         if (revenues >= 0){
             s.graphics.fill(0, 139, 0);
             s.graphics.textAlign(RIGHT, CENTER);
-            s.graphics.text(display_money(abs(revenues)), 0.5*s.graph_h, -0.6*margin-5);
+            s.graphics.text(display_money(abs(revenues)), 0.5*s.graph_h, 0.6*margin-5);
             s.graphics.image(coin, 0.5*s.graph_h+5, 0.6*margin-9, 18, 18);
-            s.graphics.text("/h", 0.5*s.graph_h+43, -0.6*margin-5);
+            s.graphics.text("/h", 0.5*s.graph_h+43, 0.6*margin-5);
             s.graphics.fill(cols_and_names.exports[0]);
             s.graphics.triangle(-0.5*arrow_w, 0, 0.5*arrow_w, arrow_w, 0.5*arrow_w, -arrow_w);
         }else{
@@ -474,11 +536,11 @@ function temporal_imports_sketch(s){
 
 function change_smoothed(smoothed_mode){
     if (smoothed_mode != "off") {
-        show_selected_button("smoothed_button_", smoothed_mode)
+        show_selected_button("smoothed_button_", smoothed_mode);
         temporal_imports_p5.smoothed = smoothed_mode;
         temporal_imports_p5.render_graph();
     }
-    show_selected_button("price_mode_button_", smoothed_mode)
+    show_selected_button("price_mode_button_", smoothed_mode);
     temporal_graph_p5.price_mode = smoothed_mode;
     temporal_graph_p5.render_graph();
 }
@@ -524,18 +586,6 @@ function network_capacities_sketch(s){
         s.graphics = s.createGraphics(s.width, s.height);
         s.graphics.textAlign(CENTER, CENTER);
         s.graphics.textFont(font);
-        s.spacing = min(margin, s.width / 20);
-        let gauges_w = s.width - margin - s.spacing - s.height;
-        s.bar_sp = gauges_w / 28 * 2;
-        s.bar_w = s.bar_sp * 3 / 2;
-        s.second_margin = 0;
-        if (s.simplified == "simple") {
-            s.spacing = min(2*margin, s.width / 12);
-            gauges_w = s.width - margin - 3 * s.spacing - s.height;
-            s.bar_sp = gauges_w / 5;
-            s.bar_w = s.bar_sp;
-            s.second_margin = s.spacing;
-        }
     }
 
     s.draw = function() {
@@ -645,6 +695,18 @@ function network_capacities_sketch(s){
     }
 
     s.render_graph = function(){
+        s.spacing = min(margin, s.width / 20);
+        let gauges_w = s.width - margin - s.spacing - s.height;
+        s.bar_sp = gauges_w / 28 * 2;
+        s.bar_w = s.bar_sp * 3 / 2;
+        s.second_margin = 0;
+        if (s.simplified == "simple") {
+            s.spacing = min(2*margin, s.width / 12);
+            gauges_w = s.width - margin - 3 * s.spacing - s.height;
+            s.bar_sp = gauges_w / 5;
+            s.bar_w = s.bar_sp;
+            s.second_margin = s.spacing;
+        }
         s.graph_h = s.height - margin;
         s.graph_w = s.width - 2 * margin;
         s.graphics.background(229, 217, 182);
