@@ -253,7 +253,7 @@ class Player(db.Model, UserMixin):
         return {
             chat.id: {
                 "id": chat.id,
-                "participants": chat.participants,
+                "participants": list(map(lambda player: player.id, chat.participants)),
                 "messages": [
                     {
                         "id": message.id,
