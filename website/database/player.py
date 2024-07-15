@@ -248,6 +248,25 @@ class Player(db.Model, UserMixin):
             "last_opened_chat": self.last_opened_chat,
         }
 
+    def package_chats(self):
+        """This method packages chats for the iOS frontend"""
+        return {
+            chat.id: {
+                "id": chat.id,
+                "participants": chat.participants,
+                "messages": [
+                    {
+                        "id": message.id,
+                        "text": message.text,
+                        "date": message.time.timestamp(),
+                        "player_id": message.player_id,
+                    }
+                    for message in chat.messages.order_by(Message.time.desc()).limit(20).all()
+                ],
+            }
+            for chat in self.chats
+        }
+
     def delete_notification(self, notification_id):
         notification = Notification.query.get(notification_id)
         if notification in self.notifications.all():

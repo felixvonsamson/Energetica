@@ -53,6 +53,8 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_map())
         ws.send(rest_get_players())
         ws.send(rest_get_current_player(player))
+        ws.send(rest_get_chats(player))
+        ws.send(rest_get_last_opened_chat(player))
         ws.send(rest_get_networks())
         ws.send(rest_get_scoreboard())
         ws.send(rest_get_constructions(player))
@@ -141,13 +143,25 @@ def rest_get_current_player(current_player):
     return json.dumps(response)
 
 
+def rest_get_chats(player: Player):
+    """Gets the player's chats and returns it as JSON string."""
+    response = {"type": "getChats", "data": player.package_chats()}
+    return json.dumps(response)
+
+
+def rest_get_last_opened_chat(player: Player):
+    """Gets the id of the player's last opened chat and returns is as a JSON string."""
+    response = {"type": "getLastOpenedChat", "data": player.last_opened_chat}
+    return json.dumps(response)
+
+
 def rest_get_global_data(engine: gameEngine):
     """Gets gloabl engine data and returns it as a JSON string"""
     response = {"type": "getGlobalData", "data": engine.package_global_data()}
     return json.dumps(response)
 
 
-def rest_get_constructions(player):
+def rest_get_constructions(player: Player):
     return json.dumps(
         {
             "type": "getConstructions",
