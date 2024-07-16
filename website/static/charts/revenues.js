@@ -33,8 +33,7 @@ const keys_revenues = [
     "dumping",
 ];
 
-
-function revenues_sketch(s){
+function graph_sketch(s){
     s.setup = function() {
         s.percent = "normal";
         s.is_inside = false;
@@ -188,49 +187,62 @@ function revenues_sketch(s){
         s.graph_w = s.width - 2 * margin;
         s.graphics.background(229, 217, 182);
 
-        data_len = data["industry"].length;
-        s.lower_bounds = {
-            price: Math.min(0, ...temporal_data["network_data"]["price"][res]),
-            quantity: 0,
-        };
-        s.upper_bounds = {
-            price: Math.max(...temporal_data["network_data"]["price"][res], -s.lower_bounds["price"]),
-            quantity: Math.max(...temporal_data["network_data"]["quantity"][res]),
-        };
-        s.frac = s.upper_bounds["price"] / (s.upper_bounds["price"] - s.lower_bounds["price"]); // fraction of positive range in the graph
+        data_len = 360;
+        if (res == 0){
+            data_len = 60;
+        }
+
+        const sums = Object.values(data.revenues).concat(Object.values(data.op_costs)).reduce(
+            (acc, arr) => {
+                arr[res].forEach((value, i) => {
+                    if (value > 0) {
+                        acc.positive[i] = (acc.positive[i] || 0) + value;
+                    } else if (value < 0) {
+                        acc.negative[i] = (acc.negative[i] || 0) + value;
+                    }
+                });
+                return acc;
+            },
+            { positive: [], negative: [] }
+        );
+
+        s.lower_bound = Math.min(...Object.values(sums.negative));
+        s.upper_bound = Math.max(...Object.values(sums.positive));
+        if (s.upper_bound == 0) {
+            s.upper_bound = 100;
+        }
+        s.frac = s.upper_bound / (s.upper_bound - s.lower_bound); // fraction of positive range in the graph
 
         s.graphics.push();
         s.graphics.translate(margin, 0.4 * margin + s.graph_h);
         s.graphics.noStroke();
 
-        if(!s.simplified){
+        s.graphics.push();
+        for (let t = 0; t < data_len; t++) {
             s.graphics.push();
-            for (let t = 0; t < data_len; t++) {
-                s.graphics.push();
-                let sum = s.upper_bounds["quantity"];
-                if(s.percent == "percent"){
-                    const goups = Object.keys(temporal_data[s.current_view]);
-                    sum = goups.reduce((acc, group) => {
-                        return acc + (temporal_data[s.current_view][group][res][t] || 0);
-                    }, 0);
-                }
-                for (const group in temporal_data[s.current_view]) {
-                    if (temporal_data[s.current_view][group][res][t] > 0) {
-                        if(s.categorisation == "type"){
-                            s.graphics.fill(cols_and_names[group][0]);
-                        }else{
-                            s.graphics.fill(random_colors[group % random_colors.length]);
-                        }
-                        let h = temporal_data[s.current_view][group][res][t] * s.graph_h / sum;
-                        s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
-                        s.graphics.translate(0, -h);
+            let sum = s.upper_bound;
+            if(s.percent == "percent"){
+                const goups = Object.keys(data.revenues);
+                sum = goups.reduce((acc, group) => {
+                    if (data.revenues[group][res][t] > 0){
+                        return acc + (data.revenues[group][res][t] || 0);
+                    }else{
+                        return acc;
                     }
+                }, 0);
+            }
+            for (const group in data.revenues) {
+                if (data.revenues[group][res][t] > 0) {
+                    s.graphics.fill(cols_and_names[group][0]);
+                    let h = data.revenues[group][res][t] * s.graph_h / sum;
+                    s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
+                    s.graphics.translate(0, -h);
                 }
-                s.graphics.pop();
-                s.graphics.translate(s.graph_w / data_len, 0);
             }
             s.graphics.pop();
+            s.graphics.translate(s.graph_w / data_len, 0);
         }
+        s.graphics.pop();
         
         if(s.price_mode != "off"){
             price_curve = [...temporal_data.network_data.price[res]];

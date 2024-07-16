@@ -27,8 +27,8 @@ let decending = {
     "offers_table": false,
     "bids_table": true,
 }
-let offer_col = "price_col";
-let bid_col = "price_col";
+let offer_col = "price_col"; // current sorting column for offers
+let bid_col = "price_col"; // current sorting column for bids
 
 //resolution buttons
 let resolution_list;
@@ -36,19 +36,14 @@ let res_to_factor;
 let res; // current resolution
 
 //styling variables
-let margin = 40;
+let margin;
 let canvas_width;
 let fill_alt = 0;
-let s1 = 0.25; // size of first chart
-let s2 = 0.25; // size of second chart
-let s3 = 0.1; // size of resolution buttons row
 
 let t_view; // hovered timestamp
 let t_click = 0; // clicked timestamp
 
 let players = {};
-
-let graph;
 
 if (clock_time == 60){
     resolution_list = ["1h", "6h", "36h", "9 days", "2 months", "year"];
@@ -97,6 +92,7 @@ function preload() {
 var temporal_graph_p5, market_chart_p5, temporal_imports_p5, network_capacities_p5, import_overview_p5;
 
 function setup() {
+    noCanvas();
     random_colors = [
         color(166,206,227),
         color(31,120,180),
@@ -170,7 +166,6 @@ function setup() {
     market_chart_p5 = new p5(market_chart_sketch, "market_chart");
  
     change_page_view(server_saved_view)
-    fetch_temporal_network_data();
 }
 
 function change_page_view(view){
@@ -195,8 +190,6 @@ function change_page_view(view){
         document.getElementById("market_offers_tables").style.display = "none";
         temporal_graph_p5.simplified = true;
         network_capacities_p5.simplified = "simple";
-        temporal_graph_p5.render_graph();
-        network_capacities_p5.render_graph();
     }else if (view == "normal"){
         document.getElementById("import_overview_container").style.display = "none";
         document.getElementById("temporal_imports_container").style.display = "block";
@@ -212,8 +205,6 @@ function change_page_view(view){
         document.getElementById("market_offers_tables").style.display = "none";
         temporal_graph_p5.simplified = false;
         network_capacities_p5.simplified = "simple";
-        temporal_graph_p5.render_graph();
-        network_capacities_p5.render_graph();
     }else{
         document.getElementById("import_overview_container").style.display = "none";
         document.getElementById("temporal_imports_container").style.display = "block";
@@ -229,9 +220,8 @@ function change_page_view(view){
         document.getElementById("market_offers_tables").style.display = "block";
         temporal_graph_p5.simplified = false;
         network_capacities_p5.simplified = "complex";
-        temporal_graph_p5.render_graph();
-        network_capacities_p5.render_graph();
     }
+    fetch_temporal_network_data();
 }
 
 function import_overview_sketch(s){
@@ -1485,7 +1475,6 @@ function fetch_temporal_network_data() {
                     }
                 });
             });
-            
             temporal_graph_p5.render_graph();
         })
         .catch((error) => {

@@ -49,24 +49,156 @@ canvas {
     color: #285430;
 }
 
-.coal {
-    color: #fff;
-    background-color: #000000
+.color_watermill {
+    background-color: rgb(0, 180, 216);
 }
 
-.oil {
-    color: #000000;
-    background-color: rgb(166, 99, 204)
+.color_small_water_dam {
+    background-color: rgb(0, 119, 182);
 }
 
-.gas {
-    color: #000000;
-    background-color: rgb(171, 196, 255)
+.color_large_water_dam {
+    background-color: rgb(3, 4, 94);
 }
 
-.uranium {
-    color: #000000;
-    background-color: rgb(191, 210, 0)
+.color_nuclear_reactor {
+    background-color: rgb(191, 210, 0);
+}
+
+.color_nuclear_reactor_gen4 {
+    background-color: rgb(128, 185, 24);
+}
+
+.color_steam_engine {
+    background-color: rgb(151, 157, 172);
+}
+
+.color_coal_burner {
+    background-color: rgb(0, 0, 0);
+}
+
+.color_oil_burner {
+    background-color: rgb(166, 99, 204);
+}
+
+.color_gas_burner {
+    background-color: rgb(171, 196, 255);
+}
+
+.color_combined_cycle {
+    background-color: rgb(92, 77, 125);
+}
+
+.color_windmill {
+    background-color: rgb(156, 197, 161);
+}
+
+.color_onshore_wind_turbine {
+    background-color: rgb(73, 160, 120);
+}
+
+.color_offshore_wind_turbine {
+    background-color: rgb(33, 104, 105);
+}
+
+.color_CSP_solar {
+    background-color: rgb(255, 170, 0);
+}
+
+.color_PV_solar {
+    background-color: rgb(255, 234, 0);
+}
+
+.color_small_pumped_hydro {
+    background-color: rgb(0, 150, 199);
+}
+
+.color_large_pumped_hydro {
+    background-color: rgb(2, 62, 138);
+}
+
+.color_lithium_ion_batteries {
+    background-color: rgb(108, 88, 76);
+}
+
+.color_solid_state_batteries {
+    background-color: rgb(169, 132, 103);
+}
+
+.color_compressed_air {
+    background-color: rgb(255, 179, 198);
+}
+
+.color_molten_salt {
+    background-color: rgb(119, 47, 26);
+}
+
+.color_hydrogen_storage {
+    background-color: rgb(144, 241, 239);
+}
+
+.color_imports {
+    background-color: rgb(255, 89, 94);
+}
+
+.color_exports {
+    background-color: rgb(138, 201, 38);
+}
+
+.color_dumping {
+    background-color: rgb(208, 0, 0);
+}
+
+.color_coal_mine {
+    background-color: rgb(73, 80, 87);
+}
+
+.color_oil_field {
+    background-color: rgb(181, 23, 158);
+}
+
+.color_gas_drilling_site {
+    background-color: rgb(76, 201, 240);
+}
+
+.color_uranium_mine {
+    background-color: rgb(238, 239, 32);
+}
+
+.color_industry {
+    background-color: rgb(188, 108, 37);
+}
+
+.color_research {
+    background-color: rgb(255, 255, 255);
+}
+
+.color_construction {
+    background-color: rgb(255, 123, 0);
+}
+
+.color_transport {
+    background-color: rgb(106, 0, 244);
+}
+
+.color_carbon_capture {
+    background-color: rgb(173, 181, 189);
+}
+
+.color_coal {
+    background-color: rgb(0, 0, 0);
+}
+
+.color_oil {
+    background-color: rgb(166, 99, 204);
+}
+
+.color_gas {
+    background-color: rgb(171, 196, 255);
+}
+
+.color_uranium {
+    background-color: rgb(191, 210, 0);
 }
 
 .txt-blue {
@@ -281,6 +413,65 @@ canvas {
 .graph_button.right {
     border-top-right-radius: 15% 50%;
     border-bottom-right-radius: 15% 50%;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 56px;
+    height: 28px;
+  }
+  
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #f2ecdb;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #285430;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #285430;
+}
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+}
+
+.slider.round {
+    border-radius: 28px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
 }
 
 /* Flex */
