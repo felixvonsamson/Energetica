@@ -1,5 +1,5 @@
-function expand_tile(tile_id) {
-    let additionalContent = document.getElementById("buyForm_"+tile_id);
+function expand_tile(sale_id) {
+    let additionalContent = document.getElementById("buyForm_"+sale_id);
 
     if (additionalContent.classList.contains("expanded-info")) {
         additionalContent.classList.remove("expanded-info");

@@ -188,7 +188,7 @@
         </div>
         {# Power Facility Data #}
         <div id="infotable"
-             class="{% if facility_data.ramping_time is not none %}minimized minimizable{% endif %}">
+             class="{% if facility_data.ramping_speed is not none %}minimized minimizable{% endif %}">
           <table class="table tan_green">
             {# Max Generation #}
             <tr>
@@ -198,12 +198,12 @@
               </td>
             </tr>
             {# Ramping Speed #}
-            {% if facility_data.ramping_time is not none %}
+            {% if facility_data.ramping_speed is not none %}
               <tr>
                 <td>Ramping speed</td>
                 <td class="txt_center">
                   <strong>
-                    <script>display_W({{ facility_data.ramping_time }});</script>/min
+                    <script>display_W({{ facility_data.ramping_speed }});</script>/min
                   </strong>
                 </td>
               </tr>
@@ -256,7 +256,7 @@
               </td>
             </tr>
           </table>
-          <div class="overlay {% if facility_data.ramping_time is not none %}hidden{% endif %}"></div>
+          <div class="overlay {% if facility_data.ramping_speed is not none %}hidden{% endif %}"></div>
         </div>
       </div>
     </div>
