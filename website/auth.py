@@ -88,8 +88,8 @@ def sign_up():
             login_user(new_player, remember=True)
             flash("Account created!", category="message")
             g.engine.log(f"{username} created an account")
-            websocket.rest_notify_scoreboard(current_app.config["engine"])
-            websocket.rest_notify_new_player(current_app.config["engine"], new_player)
+            websocket.rest_notify_scoreboard(g.engine)
+            websocket.rest_notify_new_player(g.engine)
             return redirect(url_for("views.home"))
 
     return render_template("sign_up.jinja", engine=g.engine, user=current_user)
