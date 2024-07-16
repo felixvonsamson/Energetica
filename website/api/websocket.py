@@ -48,6 +48,7 @@ def add_sock_handlers(sock, engine):
         """Main WebSocket endpoint for API."""
         player = g.player
         engine.log(f"Received WebSocket connection for player {player}")
+        ws.send(rest_setup_complete())
         ws.send(rest_get_global_data(engine))
         # TODO: Review what data is sent before a tile is selected
         ws.send(rest_get_map())
@@ -55,17 +56,17 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_current_player(player))
         ws.send(rest_get_chats(player))
         ws.send(rest_get_last_opened_chat(player))
+        ws.send(rest_get_show_chat_disclaimer(player))
         ws.send(rest_get_networks())
-        ws.send(rest_get_scoreboard())
-        ws.send(rest_get_constructions(player))
-        ws.send(rest_get_construction_queue(player))
-        ws.send(rest_get_weather(engine))
+        # ws.send(rest_get_scoreboard())
+        # ws.send(rest_get_constructions(player))
+        # ws.send(rest_get_construction_queue(player))
+        # ws.send(rest_get_weather(engine))
         ws.send(rest_get_advancements(player))
         if player.tile is not None:
             rest_init_ws_post_location(player, ws)
         if player.id not in engine.websocket_dict:
             engine.websocket_dict[player.id] = []
-        ws.send(rest_setup_complete())
         engine.websocket_dict[player.id].append(ws)
         while True:
             try:
@@ -80,7 +81,7 @@ def add_sock_handlers(sock, engine):
                 #     rest_confirm_location(engine, ws, message_data)
                 case "request":
                     uuid = message["uuid"]
-                    rest_parse_request(engine, ws, uuid, message_data)
+                    rest_parse_request(engine, player, ws, uuid, message_data)
                 case message_type:
                     engine.log(
                         f"Websocket connection from player {player} sent an unkown message of type {message_type}"
@@ -158,6 +159,12 @@ def rest_get_last_opened_chat(player: Player):
     return json.dumps(response)
 
 
+def rest_get_show_chat_disclaimer(player: Player):
+    """Gets the flag for if the chat disclaimer should be shown and returns it as a JSON string."""
+    response = {"type": "showChatDisclaimer", "data": player.show_disclamer}
+    return json.dumps(response)
+
+
 def rest_get_global_data(engine: gameEngine):
     """Gets gloabl engine data and returns it as a JSON string"""
     response = {"type": "getGlobalData", "data": engine.package_global_data()}
@@ -191,14 +198,14 @@ def rest_get_networks():
     network_list = Network.query.all()
     response = {
         "type": "getNetworks",
-        "data": [
-            {
+        "data": {
+            network.id: {
                 "id": network.id,
                 "name": network.name,
-                "members": [player.id for player in network.members],
+                "member_ids": [player.id for player in network.members],
             }
             for network in network_list
-        ],
+        },
     }
     return json.dumps(response)
 
@@ -208,7 +215,7 @@ def rest_add_player_location(player):
     JSON string."""
     response = {
         "type": "updatePlayerLocation",
-        "data": {"id": player.id, "tile": player.tile.id},
+        "data": {"player_id": player.id, "cell_id": player.tile.id},
     }
     return json.dumps(response)
 
@@ -345,10 +352,11 @@ def rest_request_response(uuid, endpoint, data):
 ## Client Messages
 
 
-def rest_parse_request(engine, ws, uuid, data):
+def rest_parse_request(engine, player: Player, ws, uuid, data):
     """Interpret a request sent from a REST client"""
     endpoint = data["endpoint"]
     body = data["body"] if "body" in data else None
+    print(f"rest_parse_request({player.username}, {endpoint})")
     match endpoint:
         case "confirmLocation":
             rest_parse_request_confirm_location(ws, uuid, body)
@@ -364,6 +372,8 @@ def rest_parse_request(engine, ws, uuid, data):
             rest_parse_request_pause_unpause_project(ws, uuid, body)
         case "decreaseProjectPriority":
             rest_parse_request_decrease_project_priority(ws, uuid, body)
+        case "dismissChatDisclaimer":
+            utils.hide_chat_disclaimer(player)
         case _:
             engine.warn(f"rest_parse_request got unknown endpoint: {endpoint}")
 

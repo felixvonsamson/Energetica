@@ -989,6 +989,11 @@ def format_mass(mass):
 def hide_chat_disclaimer(player):
     player.show_disclamer = False
     db.session.commit()
+    from website.api import websocket
+
+    engine = current_app.config["engine"]
+    message = websocket.rest_get_show_chat_disclaimer(player)
+    websocket.rest_notify_player(engine, player, message)
 
 
 def create_chat(player, buddy_username):

@@ -12,9 +12,6 @@ class Chat(db.Model):
     name = db.Column(db.String(50))
     messages = db.relationship("Message", backref="chat", lazy="dynamic")
 
-    def is_groupchat(self):
-        return self.participants.count() > 2
-
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)

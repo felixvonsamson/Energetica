@@ -253,6 +253,7 @@ class Player(db.Model, UserMixin):
         return {
             chat.id: {
                 "id": chat.id,
+                "name": chat.name,  # can be None
                 "participants": list(map(lambda player: player.id, chat.participants)),
                 "messages": [
                     {
@@ -328,7 +329,10 @@ class Player(db.Model, UserMixin):
 
     @staticmethod
     def package_all():
-        return {player.id: player.package() for player in Player.query.all()}
+        from typing import List
+
+        players: List[Player] = Player.query.all()
+        return {player.id: player.package() for player in players}
 
     @staticmethod
     def package_scoreboard():
