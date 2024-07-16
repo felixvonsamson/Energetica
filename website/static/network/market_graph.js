@@ -185,7 +185,7 @@ function change_page_view(view){
         document.getElementById("temporal_imports_container").style.display = "none";
         document.getElementById("network_capacities").style.display = "block";
         document.getElementById("temporal_graph_container").style.display = "block";
-        document.getElementById("network_prices_headder").style.display = "block";
+        document.getElementById("network_prices_headder").style.display = "flex";
         document.getElementById("percent_buttons_container").style.display = "none";
         document.getElementById("categorisation_buttons_container").style.display = "none";
         document.getElementById("export_import_buttons_container").style.display = "none";

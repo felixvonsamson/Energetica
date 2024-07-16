@@ -33,6 +33,308 @@ const keys_revenues = [
     "dumping",
 ];
 
+
+function revenues_sketch(s){
+    s.setup = function() {
+        s.percent = "normal";
+        s.is_inside = false;
+        s.createCanvas(min(canvas_width, 1200), 0.6 * canvas_width);
+        s.noLoop();
+        s.textFont(font);
+        s.textAlign(CENTER, CENTER);
+        s.graphics = s.createGraphics(s.width, s.height);
+        s.graphics.textAlign(CENTER, CENTER);
+        s.graphics.textFont(font);
+    }
+
+    s.draw = function() {
+        if (s.graphics_ready) {
+            s.image(s.graphics, 0, 0);
+            if (s.is_inside) {
+                s.push();
+                s.stroke(255);
+                s.strokeWeight(2);
+                let X = min(s.graph_w, max(0, s.mouseX - margin));
+                t_view = floor(map(X, 0, s.graph_w, 0, data_len - 1));
+                s.translate(margin + X, s.graph_h + 0.4 * margin);
+                s.line(0, 0, 0, -s.graph_h);
+                s.noStroke();
+                if (s.price_mode != "off") {
+                    s.push();
+                    s.translate(0, - s.graph_h * (1-s.frac));
+                    let h = (-price_curve[t_view] / s.upper_bounds.price) * s.graph_h * s.frac;
+                    s.ellipse(0, h, 8, 8);
+                    s.pop();
+                }
+
+                let count = 2 + (s.price_mode != "off");
+
+                if (!s.simplified) {
+                    s.push();
+                    let sum = s.upper_bounds.quantity;
+                    if(s.percent == "percent"){
+                        const groups = Object.keys(temporal_data[s.current_view]);
+                        sum = groups.reduce((acc, group) => {
+                            return acc + (temporal_data[s.current_view][group][res][t_view] || 0);
+                        }, 0);
+                    }
+                    for (const group in temporal_data[s.current_view]) {
+                        if (temporal_data[s.current_view][group][res][t_view] > 0) {
+                            let h = -temporal_data[s.current_view][group][res][t_view] * s.graph_h / sum;
+                            s.ellipse(0, h, 8, 8);
+                            s.translate(0, h);
+                        }
+                    }
+                    s.pop();
+
+                    for(const group in temporal_data[s.current_view]){
+                        if(temporal_data[s.current_view][group][res][t_view] > 0){
+                            count += 1;
+                        }
+                    }
+                }
+
+                let tx = -180;
+                let ty = - 0.4 * margin - s.graph_h + s.mouseY;
+                if (ty > - count * 16) {
+                    ty = - count * 16;
+                }
+                if (X < 180) {
+                    tx = 20;
+                }
+                s.translate(tx, ty);
+                fill_alt = 0;
+                alternate_fill(s);
+                s.rect(0, 0, 160, 17);
+                s.fill(0);
+                s.textFont(balooBold);
+                s.text(display_duration((data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+                s.textFont(font);
+                s.translate(0, 16);
+
+                if(s.price_mode != "off"){
+                    alternate_fill(s);
+                    s.rect(0, 0, 160, 17);
+                    s.push();
+                    s.fill(cols_and_names.price[0]);
+                    s.rect(0, 0, 16, 17);
+                    s.pop();
+                    s.fill(0);
+                    s.textAlign(LEFT, CENTER);
+                    s.text(cols_and_names.price[1], 20, 5);
+                    s.textAlign(RIGHT, CENTER);
+                    s.text(display_money(price_curve[t_view]), 137, 5);
+                    s.image(coin, 140, 2, 12, 12);
+                    s.translate(0, 16);
+                }
+                
+                if (!s.simplified) {
+                    const keys = Object.keys(temporal_data[s.current_view]).reverse();
+                    for(const group of keys){
+                        if(temporal_data[s.current_view][group][res][t_view] > 0){
+                            alternate_fill(s);
+                            s.rect(0, 0, 160, 17);
+                            s.push();
+                            if(s.categorisation == "type"){
+                                s.fill(cols_and_names[group][0]);
+                            }else{
+                                s.fill(random_colors[group % random_colors.length]);
+                            }
+                            s.rect(0, 0, 16, 17);
+                            s.pop();
+                            s.fill(0);
+                            s.textAlign(LEFT, CENTER);
+                            if(s.categorisation == "type"){
+                                s.text(cols_and_names[group][1], 20, 5);
+                            }else{
+                                let username = players[int(group)].username;
+                                s.text(username, 20, 5);
+                            }
+                            s.textAlign(CENTER, CENTER);
+                            s.text(display_W(temporal_data[s.current_view][group][res][t_view]), 132, 5);
+                            s.translate(0, 16);
+                        }
+                    }
+                    if (s.mouseY > 0.4 * margin && s.mouseY < s.height - 0.6 * margin) {
+                        if ((data_len - t_view - 1) * res_to_factor[res] < 1440) {
+                            s.fill(0);
+                            s.text("(click to see market)", 80, 5);
+                        }
+                    }
+                }
+                s.pop();
+            }
+        }
+    }
+
+    s.mouseMoved = function() {
+        if (s.mouseX>0 && s.mouseX<s.width && s.mouseY>0 && s.mouseY<s.height){
+            s.is_inside = true;
+            s.redraw();
+        }else{
+            if(s.is_inside){
+                s.is_inside = false;
+                s.redraw();
+            }
+        }
+    }
+
+    s.mouseDragged = function() {
+        s.mouseMoved();
+    }
+
+    s.render_graph = function(){
+        s.graph_h = s.height - margin;
+        s.graph_w = s.width - 2 * margin;
+        s.graphics.background(229, 217, 182);
+
+        data_len = data["industry"].length;
+        s.lower_bounds = {
+            price: Math.min(0, ...temporal_data["network_data"]["price"][res]),
+            quantity: 0,
+        };
+        s.upper_bounds = {
+            price: Math.max(...temporal_data["network_data"]["price"][res], -s.lower_bounds["price"]),
+            quantity: Math.max(...temporal_data["network_data"]["quantity"][res]),
+        };
+        s.frac = s.upper_bounds["price"] / (s.upper_bounds["price"] - s.lower_bounds["price"]); // fraction of positive range in the graph
+
+        s.graphics.push();
+        s.graphics.translate(margin, 0.4 * margin + s.graph_h);
+        s.graphics.noStroke();
+
+        if(!s.simplified){
+            s.graphics.push();
+            for (let t = 0; t < data_len; t++) {
+                s.graphics.push();
+                let sum = s.upper_bounds["quantity"];
+                if(s.percent == "percent"){
+                    const goups = Object.keys(temporal_data[s.current_view]);
+                    sum = goups.reduce((acc, group) => {
+                        return acc + (temporal_data[s.current_view][group][res][t] || 0);
+                    }, 0);
+                }
+                for (const group in temporal_data[s.current_view]) {
+                    if (temporal_data[s.current_view][group][res][t] > 0) {
+                        if(s.categorisation == "type"){
+                            s.graphics.fill(cols_and_names[group][0]);
+                        }else{
+                            s.graphics.fill(random_colors[group % random_colors.length]);
+                        }
+                        let h = temporal_data[s.current_view][group][res][t] * s.graph_h / sum;
+                        s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
+                        s.graphics.translate(0, -h);
+                    }
+                }
+                s.graphics.pop();
+                s.graphics.translate(s.graph_w / data_len, 0);
+            }
+            s.graphics.pop();
+        }
+        
+        if(s.price_mode != "off"){
+            price_curve = [...temporal_data.network_data.price[res]];
+            if (s.price_mode == "smoothed") {
+                let window_size = 5;
+                // Generate Normalized Gaussian kernel
+                let gaussian_kernel = [];
+                for (let i = -window_size; i <= window_size; i++) {
+                    gaussian_kernel.push(Math.exp(-(i ** 2) / 10));
+                }
+                
+                price_curve = []
+                for (let t = 0; t < data_len; t++) {
+                    let start = max(0, t - window_size);
+                    let end = min(data_len - 1, t + window_size);
+                    let sum = 0;
+                    let weight_sum = 0;
+                    for (let i = start; i <= end; i++) {
+                        sum += temporal_data.network_data.price[res][i] * gaussian_kernel[i - t + window_size];
+                        weight_sum += gaussian_kernel[i - t + window_size];
+                    }
+                    price_curve[t] = sum / weight_sum; 
+                }
+            }
+            s.graphics.push();
+            s.graphics.translate(0, -s.graph_h * (1 - s.frac));
+            s.graphics.strokeWeight(3);
+            s.graphics.stroke(cols_and_names["price"][0]);
+            for (let t = 1; t < data_len; t++) {
+                let h1 = (price_curve[t - 1] / s.upper_bounds["price"]) * s.graph_h * s.frac;
+                let h2 = (price_curve[t] / s.upper_bounds["price"]) * s.graph_h * s.frac;
+                s.graphics.line(0, -h1, s.graph_w / data_len, -h2);
+                s.graphics.translate(s.graph_w / (data_len - 1), 0);
+            }
+            s.graphics.pop();
+        }
+
+        s.graphics.stroke(0);
+        s.graphics.line(0, 0, s.graph_w, 0);
+        s.graphics.line(0, 0, 0, -s.graph_h);
+        s.graphics.line(s.graph_w, 0, s.graph_w, -s.graph_h);
+
+        s.graphics.push();
+        let units = time_unit(res, clock_time);
+        s.graphics.fill(0);
+        for (let i = 0; i < units.length; i++) {
+            s.graphics.stroke(0, 0, 0, 30);
+            let x = (i * s.graph_w) / (units.length - 1);
+            s.graphics.line(x, -s.graph_h, x, 0);
+            s.graphics.stroke(0);
+            s.graphics.line(x, 0, x, 5);
+            s.graphics.noStroke();
+            s.graphics.text(units[i], x, 0.26 * margin);
+        }
+        s.graphics.pop();
+
+        if (s.price_mode != "off") {
+            s.graphics.push();
+            let y_ticks = y_units_bounded(s.graph_h, s.lower_bounds["price"], s.upper_bounds["price"]);
+            s.graphics.fill(cols_and_names["price"][0]);
+            s.graphics.textAlign(RIGHT, CENTER);
+            for (let i in y_ticks) {
+                if(s.simplified){
+                    s.graphics.stroke(0, 0, 0, 30);
+                    s.graphics.line(s.graph_w, -i, 0, -i);
+                }
+                s.graphics.stroke(cols_and_names["price"][0]);
+                s.graphics.line(0, -i, -5, -i);
+                s.graphics.noStroke();
+                s.graphics.image(coin, -23, -i - 6, 12, 12);
+                s.graphics.text(display_money(y_ticks[i]), -28, -i - 3);
+            }
+            s.graphics.pop();
+        }
+
+        if(!s.simplified){
+            s.graphics.push();
+            if(s.percent == "percent"){
+                s.upper_bounds["quantity"] = 100;
+            }
+            let y_ticks3 = y_units_bounded(s.graph_h, s.lower_bounds["quantity"], s.upper_bounds["quantity"], divisions=4);
+            s.graphics.fill(0);
+            for (let i in y_ticks3) {
+                s.graphics.stroke(0, 0, 0, 30);
+                s.graphics.line(s.graph_w, -i, 0, -i);
+                s.graphics.stroke(0);
+                s.graphics.line(s.graph_w, -i, s.graph_w + 5, -i);
+                s.graphics.noStroke();
+                if(s.percent == "percent"){
+                    s.graphics.text(y_ticks3[i] + "%", s.graph_w + 0.5 * margin, -i + 3);
+                }else{
+                    s.graphics.text(display_W(y_ticks3[i]), s.graph_w + 0.5 * margin, -i - 3);
+                }
+            }
+            s.graphics.pop();
+        }
+
+        s.graphics.pop();
+
+        s.graphics_ready = true;
+        s.redraw();
+    } 
+}
+
 function draw() {
     if (graph) {
         push();

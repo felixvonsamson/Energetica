@@ -326,3 +326,19 @@ function display_kgh_long(mass_rate) {
     const units = [" kg/h", " t/h"];
     return general_format(mass_rate, units, treshold = 50000);
 }
+
+function fetch_graph_data(){
+    load_chart_data().then((raw_chart_data) => {
+        Object.keys(raw_chart_data).forEach((key) => {
+            Object.keys(raw_chart_data[key]).forEach((subkey) => {
+                data[key][subkey] = {};
+                data[key][subkey][resolution_list[0]] = raw_chart_data[key][subkey][0].slice(-60);
+                for (r=0; r<resolution_list.length-1; r++){
+                    temporal_data[key][subkey][resolution_list[r+1]] = raw_chart_data[key][subkey][r];
+                }
+            });
+        });
+    }).catch((error) => {
+        console.error("Error:", error);
+    });
+}
