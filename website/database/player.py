@@ -317,12 +317,14 @@ class Player(db.Model, UserMixin):
 
     def package(self):
         """Serialize select attributes of self to a dictionary"""
-        payload = {
-            "username": self.username,
-        }
-        if self.tile is not None:
-            payload["tile_id"] = self.tile.id
-        return payload
+        return (
+            {
+                "id": self.id,
+                "username": self.username,
+            }
+            | ({"network_id": self.network_id} if self.network_id is not None else {})
+            | ({"cell_id": self.tile.id} if self.tile is not None else {})
+        )
 
     @staticmethod
     def package_all():
