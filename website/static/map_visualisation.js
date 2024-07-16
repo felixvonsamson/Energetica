@@ -20,7 +20,7 @@ class Hex {
         translate(tx, ty);
         if (hover) {
             fill(104, 45, 55);
-        } else if (this.id == players_ids[current_player_id].tile_id) {
+        } else if (this.id == players_ids[current_player_id].cell_id) {
             fill(color(0, 89, 32));
         } else if (this.owner_id) {
             fill(color(131, 52, 33));
@@ -246,8 +246,8 @@ function general_convert(value, units) {
 }
 
 function calc_dist(id) {
-    const player_tile_id = players_ids[current_player_id].tile_id - 1;
-    let dq = map[id].q - map[player_tile_id].q;
-    let dr = map[id].r - map[player_tile_id].r;
+    const player_cell_id = players_ids[current_player_id].cell_id - 1;
+    let dq = map[id].q - map[player_cell_id].q;
+    let dr = map[id].r - map[player_cell_id].r;
     return round(Math.sqrt(dq * dq + dr * dr + dq * dr), 2);
 }
