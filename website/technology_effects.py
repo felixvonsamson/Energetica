@@ -616,11 +616,13 @@ def package_functional_facilities(player: Player):
                 upgraded=player_lab_workers_for_level(laboratory_level_including_ongoing_upgrades + 1),
             ),
         }
-        | {
-            "research_speed_bonus": 100 - const_config_assets["laboratory"]["time_factor"] * 100,
-        }
-        if laboratory_level_including_ongoing_upgrades > 0
-        else {},
+        | (
+            {
+                "research_speed_bonus": 100 - const_config_assets["laboratory"]["time_factor"] * 100,
+            }
+            if laboratory_level_including_ongoing_upgrades > 0
+            else {}
+        ),
         "warehouse": {
             "level": warehouse_level_including_ongoing_upgrades + 1,
             "warehouse_capacities": {
