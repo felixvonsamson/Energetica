@@ -212,16 +212,13 @@ function graph_sketch(s){
                 }
                 return acc;
             },
-            { positive: [], negative: [] }
+            { positive: [0], negative: [0] }
         );
 
         s.lower_bound = Math.min(...Object.values(sums.negative));
         s.upper_bound = Math.max(...Object.values(sums.positive));
-        if (s.upper_bound == 0) {
+        if (s.upper_bound == 0 && s.lower_bound == 0) {
             s.upper_bound = 1;
-        }
-        if (s.lower_bound == 0) {
-            s.lower_bound = -1;
         }
         s.frac = s.upper_bound / (s.upper_bound - s.lower_bound); // fraction of positive range in the graph
 
@@ -237,7 +234,6 @@ function graph_sketch(s){
                 lower: s.lower_bound,
             };
             if(s.percent == "percent"){
-                const goups = Object.keys(data.revenues).concat(Object.keys(data.op_costs));
                 let sum_revenues = Object.keys(data.revenues).reduce((acc, group) => {
                     let value = data.revenues[group][res_id][t];
                     if(keys_revenues[group] === true && value != 0){

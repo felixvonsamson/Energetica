@@ -115,7 +115,6 @@ function retrieve_chart_data(network = false) {
             sessionStorage.setItem("last_value", JSON.stringify({"total_t" : raw_data["total_t"], "time": currentDate}));
             sessionStorage.setItem("last_value_network", JSON.stringify({"total_t" : raw_data["total_t"], "time": currentDate}));
             sessionStorage.setItem("chart_data", JSON.stringify(raw_data["data"]));
-            console.log(raw_data["network_data"])
             sessionStorage.setItem("network_data", JSON.stringify(raw_data["network_data"]));
             if (network){
                 return raw_data["network_data"];

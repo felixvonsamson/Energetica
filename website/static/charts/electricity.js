@@ -66,7 +66,7 @@ function graph_sketch(s){
         if (s.graphics_ready) {
             s.image(s.graphics, 0, 0);
             if (s.is_inside) {
-                if (s.mouseX < s.width - 1.2 * margin) {
+                if (s.mouseX < s.width - 1.2 * margin || s.view == "consumption") {
                     s.push();
                     s.stroke(255);
                     s.strokeWeight(2);
