@@ -257,13 +257,8 @@ class Player(db.Model, UserMixin):
                 "participants": list(map(lambda player: player.id, chat.participants)),
                 "older_messages_exist": chat.messages.count() > 20,
                 "messages": [
-                    {
-                        "id": message.id,
-                        "text": message.text,
-                        "date": message.time.timestamp(),
-                        "player_id": message.player_id,
-                    }
-                    for message in chat.messages.order_by(Message.time.desc()).limit(20).all()
+                    message.package()
+                    for message in reversed(chat.messages.order_by(Message.time.desc()).limit(20).all())
                 ],
             }
             for chat in self.chats

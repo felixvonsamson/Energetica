@@ -1075,14 +1075,14 @@ def check_existing_chats(participants):
     return False
 
 
-def add_message(player, message, chat_id):
-    engine = current_app.config["engine"]
+def add_message(player, message_text, chat_id):
+    engine: gameEngine = current_app.config["engine"]
     if not chat_id:
         return {"response": "noChatID"}
     chat = Chat.query.filter_by(id=chat_id).first()
     # TODO: set a character / size limit on message size
     new_message = Message(
-        text=message,
+        text=message_text,
         time=datetime.now(),
         player_id=player.id,
         chat_id=chat.id,
@@ -1095,7 +1095,7 @@ def add_message(player, message, chat_id):
         player_read_message = PlayerUnreadMessages(player_id=participant.id, message_id=new_message.id)
         db.session.add(player_read_message)
     db.session.commit()
-    engine.display_new_message(new_message, chat.participants)
+    engine.display_new_message(new_message, chat)
     return {"response": "success"}
 
 

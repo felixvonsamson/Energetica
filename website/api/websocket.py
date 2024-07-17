@@ -10,7 +10,7 @@ from simple_websocket import ConnectionClosed
 
 from website import utils
 from website.database.map import Hex
-from website.database.messages import Chat
+from website.database.messages import Chat, Message
 from website.database.player import Network, Player
 from website.gameEngine import gameEngine
 from website.technology_effects import package_constructions_page_data
@@ -221,6 +221,12 @@ def rest_add_player_location(player):
     return json.dumps(response)
 
 
+def rest_new_chat_message(chat_id: int, message: Message):
+    """Packages a new chat message into a JSON string."""
+    response = {"type": "newChatMessage", "chat_id": chat_id, "new_message": message.package()}
+    return json.dumps(response)
+
+
 def rest_get_charts():
     # !!! current_t HAS BEEN REMOVED !!!
     """Gets the player's chart data and returns it as a JSON string."""
@@ -382,6 +388,10 @@ def rest_parse_request(engine, player: Player, ws, uuid, data):
             chat_name = data["chat_name"]
             participant_ids = data["participant_ids"]
             utils.create_group_chat_2(player, chat_name, participant_ids)
+        case "sendMessage":
+            chat_id = data["chat_id"]
+            message = data["message"]
+            utils.add_message(player, message, chat_id)
         case _:
             engine.warn(f"rest_parse_request got unknown endpoint: {endpoint}")
 

@@ -176,18 +176,22 @@ class gameEngine(object):
     def refresh(engine):
         engine.socketio.emit("refresh")
 
-    def display_new_message(engine, message, players=None):
-        if players:
-            for player in players:
-                player.emit(
-                    "display_new_message",
-                    {
-                        "time": message.time.isoformat(),
-                        "player_id": message.player_id,
-                        "text": message.text,
-                        "chat_id": message.chat_id,
-                    },
-                )
+    def display_new_message(self, message, chat):
+        """Sends chat message to all relevant sources through socketio and websocket"""
+        from website.api import websocket
+
+        websocket_message = websocket.rest_new_chat_message(chat.id, message)
+        for player in chat.participants:
+            player.emit(
+                "display_new_message",
+                {
+                    "time": message.time.isoformat(),
+                    "player_id": message.player_id,
+                    "text": message.text,
+                    "chat_id": message.chat_id,
+                },
+            )
+            websocket.rest_notify_player(self, player, websocket_message)
 
     # logs a message with the current time in the terminal
     def log(engine, message):

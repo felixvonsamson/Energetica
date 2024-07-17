@@ -20,6 +20,14 @@ class Message(db.Model):
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
     chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"))
 
+    def package(self):
+        return {
+            "id": self.id,
+            "text": self.text,
+            "date": self.time.timestamp(),
+            "player_id": self.player_id,
+        }
+
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
