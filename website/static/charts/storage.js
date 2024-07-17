@@ -26,14 +26,14 @@ function graph_sketch(s){
         if (s.graphics_ready) {
             s.image(s.graphics, 0, 0);
             if (s.is_inside) {
-                if (s.mouseX < s.width - 1.75 * margin) {
+                if (s.mouseX < s.width - 1.2 * margin) {
                     s.push();
                     s.stroke(255);
                     s.strokeWeight(2);
                     let X = min(s.graph_w, max(0, s.mouseX - margin));
                     t_view = floor(map(X, 0, s.graph_w, 0, data_len));
                     t_view = min(359, t_view + s.t0);
-                    s.translate(margin + X, s.graph_h + 0.4 * margin);
+                    s.translate(margin + X, s.graph_h + 0.2 * margin);
                     s.line(0, 0, 0, -s.graph_h);
                     s.noStroke();
 
@@ -68,7 +68,7 @@ function graph_sketch(s){
                     }
 
                     let tx = -180;
-                    let ty = - 0.4 * margin - s.graph_h + s.mouseY;
+                    let ty = - 0.2 * margin - s.graph_h + s.mouseY;
                     if (ty > - count * 16) {
                         ty = - count * 16;
                     }
@@ -191,7 +191,7 @@ function graph_sketch(s){
             if (keys_storage[key] === false) {
                 return acc;
             }
-            arr[res_id].forEach((value, i) => {
+            arr[res_id].slice(s.t0).forEach((value, i) => {
                 acc[i] = (acc[i] || 0) + value;
             });
         
@@ -203,7 +203,7 @@ function graph_sketch(s){
         }
 
         s.graphics.push();
-        s.graphics.translate(margin, 0.4 * margin + s.graph_h);
+        s.graphics.translate(margin, 0.2 * margin + s.graph_h);
         s.graphics.noStroke();
 
         s.graphics.push();
@@ -281,7 +281,7 @@ function graph_sketch(s){
         s.graphics.pop();
         load_player_data().then((player_data) => {
             s.graphics.push();
-            s.graphics.translate(s.width - 1.1 * margin, 0.4 * margin);
+            s.graphics.translate(s.width - 1.1 * margin, 0.2 * margin);
             s.graphics.noStroke();
             capacities = {}
             for (const key of Object.keys(keys_storage).reverse()){
@@ -307,7 +307,7 @@ function graph_sketch(s){
             s.graphics.pop();
             s.graphics.push();
             s.graphics.noFill();
-            s.graphics.translate(s.width - 1.1 * margin, 0.4 * margin);
+            s.graphics.translate(s.width - 1.1 * margin, 0.2 * margin);
             s.graphics.rect(0, 0, 0.5 * margin, s.graph_h);
             s.graphics.pop();
 

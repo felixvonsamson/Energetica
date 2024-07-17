@@ -57,7 +57,7 @@ function graph_sketch(s){
                 let X = min(s.graph_w, max(0, s.mouseX - margin));
                 t_view = floor(map(X, 0, s.graph_w, 0, data_len - 1));
                 t_view = min(359, t_view + s.t0);
-                s.translate(margin + X, s.graph_h*s.frac + 0.4 * margin);
+                s.translate(margin + X, s.graph_h*s.frac + 0.2 * margin);
                 s.line(0, s.graph_h*(1-s.frac), 0, -s.graph_h*s.frac);
                 s.noStroke();
 
@@ -110,7 +110,6 @@ function graph_sketch(s){
                     }
                     if (value < 0 && keys_revenues[group]) {
                         let h = value * s.graph_h * (1-s.frac) / sum.negative;
-                        console.log(h);
                         s.ellipse(0, h, 8, 8);
                         s.translate(0, h);
                         count += 1;
@@ -119,7 +118,7 @@ function graph_sketch(s){
                 s.pop();
 
                 let tx = -190;
-                let ty = - 0.4 * margin - s.graph_h + s.mouseY;
+                let ty = - 0.2 * margin - s.graph_h + s.mouseY;
                 if (ty > - count * 16) {
                     ty = - count * 16;
                 }
@@ -203,7 +202,7 @@ function graph_sketch(s){
             (acc, [key, arr]) => {
                 // Skip summing if not displayed
                 if (keys_revenues[key] === true) {
-                    arr[res_id].forEach((value, i) => {
+                    arr[res_id].slice(s.t0).forEach((value, i) => {
                         if (value > 0) {
                             acc.positive[i] = (acc.positive[i] || 0) + value;
                         } else if (value < 0) {
@@ -227,7 +226,7 @@ function graph_sketch(s){
         s.frac = s.upper_bound / (s.upper_bound - s.lower_bound); // fraction of positive range in the graph
 
         s.graphics.push();
-        s.graphics.translate(margin, 0.4 * margin + s.graph_h*s.frac);
+        s.graphics.translate(margin, 0.2 * margin + s.graph_h*s.frac);
         s.graphics.noStroke();
 
         s.graphics.push();
