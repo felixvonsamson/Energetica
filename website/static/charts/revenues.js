@@ -93,7 +93,7 @@ function graph_sketch(s){
                     if (group in data.revenues) {
                         value = data.revenues[group][res_id][t_view];
                     }
-                    if (value > 0) {
+                    if (value > 0 && keys_revenues[group]) {
                         let h = -value * s.graph_h * s.frac / sum.positive;
                         s.ellipse(0, h, 8, 8);
                         s.translate(0, h);
@@ -108,7 +108,7 @@ function graph_sketch(s){
                     }else if (group in data.op_costs) {
                         value = data.op_costs[group][res_id][t_view];
                     }
-                    if (value < 0) {
+                    if (value < 0 && keys_revenues[group]) {
                         let h = value * s.graph_h * (1-s.frac) / sum.negative;
                         console.log(h);
                         s.ellipse(0, h, 8, 8);
@@ -126,7 +126,7 @@ function graph_sketch(s){
                 if (X < 190) {
                     tx = 20;
                 }
-                s.translate(tx, ty);
+                s.translate(tx, ty + (1-s.frac) * s.graph_h);
                 fill_alt = 0;
                 alternate_fill(s);
                 s.rect(0, 0, 170, 17);
@@ -187,7 +187,7 @@ function graph_sketch(s){
         s.mouseMoved();
     }
 
-    s.render_graph = function(){
+    s.render_graph = function(regen_table=true){
         s.graph_h = s.height - margin;
         s.graph_w = s.width - 2 * margin;
         s.graphics.background(229, 217, 182);
@@ -268,7 +268,7 @@ function graph_sketch(s){
                 }else{
                     continue;
                 }
-                if (value > 0) {
+                if (value > 0 && keys_revenues[group]) {
                     s.graphics.fill(cols_and_names[group][0]);
                     let h = value * s.graph_h * s.frac / sum.upper;
                     s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
@@ -285,7 +285,7 @@ function graph_sketch(s){
                 }else{
                     continue;
                 }
-                if (value < 0) {
+                if (value < 0 && keys_revenues[group]) {
                     s.graphics.fill(cols_and_names[group][0]);
                     let h = value * s.graph_h * (1-s.frac) / sum.lower;
                     s.graphics.rect(0, 0, s.graph_w / data_len + 1, h + 1);
@@ -341,6 +341,9 @@ function graph_sketch(s){
 
         s.graphics_ready = true;
         s.redraw();
+        if(regen_table){
+            sortTable(sort_by, reorder=false)
+        }
     } 
 }
 
@@ -351,4 +354,79 @@ function display_coin(s, money, x, y) {
     s.image(coin, x - 26, y + 2, 12, 12);
     s.text("/h", x - 3, y + 6);
     s.pop();
+}
+
+function sortTable(columnName, reorder=true) {
+    const table = document.getElementById("facilities_list");
+    let column = table.querySelector(`.${columnName}`);
+    sort_by = columnName;
+
+    if(reorder){
+        // Check if the column is already sorted, toggle sorting order accordingly
+        decending = !decending;
+    }
+
+    let triangle = ' <i class="fa fa-caret-up"></i>';
+    if(decending){
+        triangle = ' <i class="fa fa-caret-down"></i>';
+    }
+
+    table_content = transform_data();
+    // Sort the data based on the selected column
+    const sortedData = Object.entries(table_content).sort((a, b) => {
+        const aValue = a[1][columnName];
+        const bValue = b[1][columnName];
+
+        if (typeof aValue === "string" && typeof bValue === "string") {
+            return decending ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
+        } else {
+            return decending ? bValue - aValue : aValue - bValue;
+        }
+    });
+
+    // Rebuild the HTML table
+    let html = `<tr>
+        <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
+        <th class="usage_col" onclick="sortTable('usage_col')">Revenues</th>
+        <th class="selected_col">Displayed</th>
+    </tr>`;
+    for (const [id, facility] of sortedData) {
+        html += `<tr>
+            <td>${facility.facility_col}</td>
+            <td>${display_money(facility.usage_col, false)}</td>
+            <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}', ${!keys_revenues[facility.name]})" ${keys_revenues[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
+            </tr>`;
+    }
+    table.innerHTML = html;
+
+    // Update the sorting indicator
+    column = table.querySelector(`.${columnName}`);
+    column.innerHTML += triangle;
+
+    function transform_data(){
+        let transformed_data = [];
+        for (const key in data.revenues) {
+            transformed_data.push({
+                name: key,
+                facility_col: cols_and_names[key][1],
+                usage_col: data.revenues[key][0][359]*3600/clock_time,
+            })
+        }
+        for (const key in data.op_costs) {
+            transformed_data.push({
+                name: key,
+                facility_col: cols_and_names[key][1],
+                usage_col: data.op_costs[key][0][359]*3600/clock_time,
+            })
+        }
+        return transformed_data;
+    }
+}
+
+function toggle_displayed(name, state) {
+    keys_revenues[name] = state;
+    graph_p5.render_graph(regen_table=false);
+    setTimeout(() => {
+        sortTable(sort_by, false);
+    }, 500);
 }

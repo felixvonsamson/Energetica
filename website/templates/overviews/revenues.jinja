@@ -42,6 +42,16 @@
         <button id="res_button_5" class="graph_button right" onclick="change_res(5)">6 months</button>
     </div>
 
+    <div class="flex-col medium" style="margin-bottom:30px;">
+        <table id="facilities_list" class="table bone margin txt_center">
+            <tr>
+                <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
+                <th class="usage_col" onclick="sortTable('usage_col')">Revenues</th>
+                <th class="selected_col">Displayed</th>
+            </tr>
+        </table>
+    </div>
+
 {% endblock content %}
 {% block additionnal_script %}
     <script>let ratio = 0.6;</script>

@@ -70,7 +70,6 @@ def data_init():
     return {
         "revenues": {
             "industry": init_array(),
-            "O&M_costs": init_array(),
             "exports": init_array(),
             "imports": init_array(),
             "dumping": init_array(),
@@ -1032,7 +1031,7 @@ def add_message(player, message, chat_id):
     engine = current_app.config["engine"]
     if not chat_id:
         return {"response": "noChatID"}
-    if message.length == 0 :
+    if message.length == 0:
         return {"response": "noMessage"}
     chat = Chat.query.filter_by(id=chat_id).first()
     new_message = Message(

@@ -46,7 +46,7 @@ let res = resolution_list[res_id]; //current resolution
 
 //table variables 
 let decending = true;
-let sort_by = "capacity_col";
+let sort_by = "usage_col";
 
 let cols_and_names = {};
 
@@ -61,8 +61,6 @@ var graph_p5;
 function setup() {
     noCanvas();
     cols_and_names = {
-        "O&M_costs": [color(106, 4, 15), "O&M costs"],
-
         watermill: [color(0, 180, 216), "Watermill"],
         small_water_dam: [color(0, 119, 182), "Water dam (S)"],
         large_water_dam: [color(3, 4, 94), "Water dam (L)"],
