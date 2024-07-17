@@ -262,6 +262,7 @@ function import_overview_sketch(s){
         }
         s.graphics.rect(0, -0.5*arrow_w, s.graph_h, arrow_w);
         s.graphics.translate(0, 1.4*margin);
+        console.log(revenue_flux);
         let revenues = revenue_flux[resolution_list[0]][59];
         let max_revenues = max(max(0, ...revenue_flux[resolution_list[0]]), -min(0, ...revenue_flux[resolution_list[0]]));
         arrow_w = map(abs(revenues), 0, max_revenues, 0.2*margin, 0.6*margin);
@@ -1456,10 +1457,12 @@ function fetch_temporal_network_data() {
             }
             let imports_revenue = raw_chart_data.revenues.imports;
             let exports_revenue = raw_chart_data.revenues.exports;
+            console.log(exports_revenue);
+            console.log(imports_revenue);
             revenue_flux = {};
-            revenue_flux[resolution_list[0]] = exports_revenue[0].map((num, idx) => 60 * clock_time * (num + imports_revenue[0][idx])).slice(-60);
+            revenue_flux[resolution_list[0]] = exports_revenue[0].map((num, idx) => 3600 / clock_time * (num + imports_revenue[0][idx])).slice(-60);
             for (let i = 0; i < resolution_list.length-1; i++) {
-                revenue_flux[resolution_list[i+1]] = exports_revenue[i].map((num, idx) => 60 * clock_time * (num + imports_revenue[i][idx]));
+                revenue_flux[resolution_list[i+1]] = exports_revenue[i].map((num, idx) => 3600 / clock_time * (num + imports_revenue[i][idx]));
             }
 
             import_overview_p5.render_graph();
