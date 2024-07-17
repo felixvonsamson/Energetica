@@ -37,7 +37,7 @@ function graph_sketch(s){
                     s.line(0, 0, 0, -s.graph_h);
                     s.noStroke();
 
-                    let count = 1;
+                    let count = 2;
 
                     s.push();
                     let sum = s.upper_bound;
@@ -50,11 +50,13 @@ function graph_sketch(s){
                             return acc + data.storage[group][res_id][t_view]
                         }, 0);
                     }
-                    for (const group in data.storage) {
-                        if (data.storage[group][res_id][t_view] > 0 && keys_storage[group]) {
-                            let h = -data.storage[group][res_id][t_view] * s.graph_h / sum;
-                            s.ellipse(0, h, 8, 8);
-                            s.translate(0, h);
+                    for (const group in keys_storage) {
+                        if(group in data.storage){
+                            if (data.storage[group][res_id][t_view] > 0 && keys_storage[group]) {
+                                let h = -data.storage[group][res_id][t_view] * s.graph_h / sum;
+                                s.ellipse(0, h, 8, 8);
+                                s.translate(0, h);
+                            }
                         }
                     }
                     s.pop();
@@ -79,27 +81,36 @@ function graph_sketch(s){
                     s.rect(0, 0, 160, 17);
                     s.fill(0);
                     s.textFont(balooBold);
-                    s.text(display_duration((s.t0 + data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+                    s.text(display_duration_graphs((s.t0 + data_len - t_view - 1) * res_to_factor[res]), 80, 5);
                     s.textFont(font);
                     s.translate(0, 16);
                     
-                    const keys = Object.keys(data.storage).reverse();
-                    for(const group of keys){
-                        if(data.storage[group][res_id][t_view] > 0 && keys_storage[group]){
-                            alternate_fill(s);
-                            s.rect(0, 0, 160, 17);
-                            s.push();
-                            s.fill(cols_and_names[group][0]);
-                            s.rect(0, 0, 16, 17);
-                            s.pop();
-                            s.fill(0);
-                            s.textAlign(LEFT, CENTER);
-                            s.text(cols_and_names[group][1], 20, 5);
-                            s.textAlign(CENTER, CENTER);
-                            s.text(display_Wh(data.storage[group][res_id][t_view]), 132, 5);
-                            s.translate(0, 16);
+                    let cumsum = 0;
+                    for(const group of Object.keys(keys_storage).reverse()){
+                        if(group in data.storage){
+                            if(data.storage[group][res_id][t_view] > 0 && keys_storage[group]){
+                                cumsum += data.storage[group][res_id][t_view];
+                                alternate_fill(s);
+                                s.rect(0, 0, 160, 17);
+                                s.push();
+                                s.fill(cols_and_names[group][0]);
+                                s.rect(0, 0, 16, 17);
+                                s.pop();
+                                s.fill(0);
+                                s.textAlign(LEFT, CENTER);
+                                s.text(cols_and_names[group][1], 20, 5);
+                                s.textAlign(CENTER, CENTER);
+                                s.text(display_Wh(data.storage[group][res_id][t_view], false), 132, 5);
+                                s.translate(0, 16);
+                            }
                         }
                     }
+                    alternate_fill(s);
+                    s.rect(0, 0, 160, 17);
+                    s.fill(0);
+                    s.textFont(balooBold);
+                    s.text("TOTAL :", 40, 5);
+                    s.text(display_Wh(cumsum, false, 50000), 120, 5);
                     s.pop();
 
                 } else {
@@ -115,21 +126,23 @@ function graph_sketch(s){
                     s.text("Total storage capacity", 80, 4);
                     s.textFont(font);
                     let total_cap = 0;
-                    for (key in capacities) {
-                        if (capacities[key] > 0 && keys_storage[key]) {
-                            alternate_fill(s);
-                            s.translate(0, 16);
-                            s.rect(0, 0, 160, 17);
-                            s.push();
-                            s.fill(cols_and_names[key][0]);
-                            s.rect(0, 0, 16, 16);
-                            s.pop();
-                            s.textAlign(LEFT, CENTER);
-                            s.fill(0);
-                            s.text(cols_and_names[key][1], 20, 5);
-                            s.textAlign(CENTER, CENTER);
-                            s.text(display_Wh(capacities[key]), 135, 5);
-                            total_cap += capacities[key];
+                    for(const key of Object.keys(keys_storage).reverse()){
+                        if(key in capacities){
+                            if (capacities[key] > 0 && keys_storage[key]) {
+                                alternate_fill(s);
+                                s.translate(0, 16);
+                                s.rect(0, 0, 160, 17);
+                                s.push();
+                                s.fill(cols_and_names[key][0]);
+                                s.rect(0, 0, 16, 16);
+                                s.pop();
+                                s.textAlign(LEFT, CENTER);
+                                s.fill(0);
+                                s.text(cols_and_names[key][1], 20, 5);
+                                s.textAlign(CENTER, CENTER);
+                                s.text(display_Wh(capacities[key], false), 135, 5);
+                                total_cap += capacities[key];
+                            }
                         }
                     }
                     s.translate(0, 16);
@@ -138,7 +151,7 @@ function graph_sketch(s){
                     s.fill(0);
                     s.textFont(balooBold);
                     s.text("TOTAL :", 40, 5);
-                    s.text(display_Wh_long(total_cap), 120, 5);
+                    s.text(display_Wh(total_cap, false, 50000), 120, 5);
                     s.pop();
                 }
             }
@@ -163,7 +176,7 @@ function graph_sketch(s){
 
     s.render_graph = function(regen_table=true){
         s.graph_h = s.height - margin;
-        s.graph_w = s.width - 3 * margin;
+        s.graph_w = s.width - 2.5 * margin;
         s.graphics.background(229, 217, 182);
 
         data_len = 360;
@@ -207,12 +220,14 @@ function graph_sketch(s){
                     return acc + data.storage[group][res_id][t]
                 }, 0);
             }
-            for (const group in data.storage) {
-                if (data.storage[group][res_id][t] > 0 && keys_storage[group]) {
-                    s.graphics.fill(cols_and_names[group][0]);
-                    let h = data.storage[group][res_id][t] * s.graph_h / sum;
-                    s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
-                    s.graphics.translate(0, -h);
+            for (const group in keys_storage) {
+                if(group in data.storage){
+                    if (data.storage[group][res_id][t] > 0 && keys_storage[group]) {
+                        s.graphics.fill(cols_and_names[group][0]);
+                        let h = data.storage[group][res_id][t] * s.graph_h / sum;
+                        s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
+                        s.graphics.translate(0, -h);
+                    }
                 }
             }
             s.graphics.pop();
@@ -252,25 +267,24 @@ function graph_sketch(s){
             if(s.percent == "percent"){
                 s.graphics.text(y_ticks3[i] + "%", -0.5 * margin, -i + 3);
             }else{
-                s.graphics.text(display_Wh(y_ticks3[i]), -0.5 * margin, -i - 3);
+                s.graphics.text(display_Wh(y_ticks3[i], false), -0.5 * margin, -i - 3);
             }
         }
         s.graphics.pop();
         s.graphics.pop();
 
         s.graphics.push();
-        s.graphics.translate(s.width - 0.3 * margin, 0.5 * s.height);
+        s.graphics.translate(s.width - 0.25 * margin, 0.5 * s.height);
         s.graphics.rotate(radians(90));
         s.graphics.textSize(18);
         s.graphics.text("Total storage capacities", 0, 0);
         s.graphics.pop();
         load_player_data().then((player_data) => {
             s.graphics.push();
-            s.graphics.translate(s.width - 1.5 * margin, 0.4 * margin);
+            s.graphics.translate(s.width - 1.1 * margin, 0.4 * margin);
             s.graphics.noStroke();
-            const keys = Object.keys(keys_storage).reverse();
             capacities = {}
-            for (const key of keys){
+            for (const key of Object.keys(keys_storage).reverse()){
                 if (key in player_data.capacities){
                     capacities[key] = player_data.capacities[key].capacity
                 }
@@ -286,10 +300,15 @@ function graph_sketch(s){
                 if (capacities[key] > 0 && keys_storage[key]) {
                     s.graphics.fill(cols_and_names[key][0]);
                     let h = (capacities[key] / sum) * s.graph_h;
-                    s.graphics.rect(0, 0, 0.8 * margin, h);
+                    s.graphics.rect(0, 0, 0.5 * margin, h);
                     s.graphics.translate(0, h);
                 }
             }
+            s.graphics.pop();
+            s.graphics.push();
+            s.graphics.noFill();
+            s.graphics.translate(s.width - 1.1 * margin, 0.4 * margin);
+            s.graphics.rect(0, 0, 0.5 * margin, s.graph_h);
             s.graphics.pop();
 
             s.graphics_ready = true;
@@ -331,18 +350,23 @@ function sortTable(columnName, reorder=true) {
 
     // Rebuild the HTML table
     let html = `<tr>
-        <th class="color_col">#</th>
         <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
         <th class="usage_col" onclick="sortTable('usage_col')">Stored Energy</th>
         <th class="capacity_col" onclick="sortTable('capacity_col')">Max Capacity</th>
+        <th class="used_cap_col" onclick="sortTable('used_cap_col')">Used Capacity</th>
         <th class="selected_col">Displayed</th>
     </tr>`;
     for (const [id, facility] of sortedData) {
         html += `<tr>
-            <td class="color_${facility.name}"></td>
             <td>${facility.facility_col}</td>
-            <td>${display_Wh(facility.usage_col)}</td>
-            <td>${display_Wh(facility.capacity_col)}</td>
+            <td>${display_Wh(facility.usage_col, false)}</td>
+            <td>${display_Wh(facility.capacity_col, false)}</td>
+            <td>
+                <div class="capacityJauge-background hover_info">
+                    <div class="capacityJauge color_${facility.name}" style="--width:${facility.used_cap_col}"></div>
+                    <div class="capacityJauge-txt">${Math.round(facility.used_cap_col * 100)}%</div>
+                </div>
+            </td>
             <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}', ${!keys_storage[facility.name]})" ${keys_storage[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
             </tr>`;
     }
@@ -360,6 +384,7 @@ function sortTable(columnName, reorder=true) {
                 facility_col: cols_and_names[key][1],
                 usage_col: data.storage[key][0][359],
                 capacity_col: capacities[key],
+                used_cap_col: data.storage[key][0][359] / capacities[key],
             })
         }
         return transformed_data;
@@ -372,5 +397,4 @@ function toggle_displayed(name, state) {
     setTimeout(() => {
         sortTable(sort_by, false);
     }, 500);
-    
 }

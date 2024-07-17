@@ -199,76 +199,6 @@ function y_units_bounded(height, minNumber, maxNumber, divisions=3) {
     return values;
 }
 
-function display_W(power) {
-    const units = [" W", " kW", " MW", " GW", " TW"];
-    return general_format(power, units);
-}
-
-function display_Wh(energy) {
-    const units = [" Wh", " kWh", " MWh", " GWh", " TWh"];
-    return general_format(energy, units);
-}
-
-function display_kgh(mass_rate) {
-    const units = [" kg/h", " t/h"];
-    return general_format(mass_rate, units);
-}
-
-function display_kg(mass) {
-    const units = [" kg", " t", " kt", " Mt"];
-    return general_format(mass, units);
-}
-
-function display_money(amount) {
-    const units = ["", "k", "M"];
-    return general_format(amount, units);
-}
-
-function general_format(value, units, treshold = 10000) {
-    let unit_index = 0;
-    while (Math.abs(value) >= treshold && unit_index < units.length - 1) {
-        value /= 1000;
-        unit_index += 1;
-    }
-    return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
-        units[unit_index]
-    }`;
-}
-
-function display_duration(ticks) {
-    let seconds = ticks * clock_time;
-    if (seconds == 0) {
-        return "now";
-    }
-
-    const months = Math.floor(seconds / 2592000);
-    seconds -= months * 2592000;
-    const days = Math.floor(seconds / 86400);
-    seconds -= days * 86400;
-    const hours = Math.floor(seconds / 3600);
-    seconds -= hours * 3600;
-    const minutes = Math.floor(seconds / 60);
-    seconds -= minutes * 60;
-
-    let duration = "t - ";
-    if (months > 0) {
-        duration += `${months}mo `;
-    }
-    if (days > 0) {
-        duration += `${days}d `;
-    }
-    if (hours > 0) {
-        duration += `${hours}h `;
-    }
-    if (minutes > 0) {
-        duration += `${minutes}m `;
-    }
-    if (seconds > 0) {
-        duration += `${seconds}s`;
-    }
-    return duration.trim();
-}
-
 function alternate_fill(s) {
     if (fill_alt == 1) {
         fill_alt = 0;
@@ -277,26 +207,6 @@ function alternate_fill(s) {
         fill_alt = 1;
         s.fill(229, 217, 182);
     }
-}
-
-function display_W_long(power) {
-    const units = [" W", " kW", " MW", " GW", " TW"];
-    return general_format(power, units, treshold = 50000);
-}
-
-function display_Wh_long(energy) {
-    const units = [" Wh", " kWh", " MWh", " GWh", " TWh"];
-    return general_format(energy, units, treshold = 50000);
-}
-
-function display_kg_long(mass) {
-    const units = [" kg", " t", " kt", " Mt"];
-    return general_format(mass, units, treshold = 50000);
-}
-
-function display_kgh_long(mass_rate) {
-    const units = [" kg/h", " t/h"];
-    return general_format(mass_rate, units, treshold = 50000);
 }
 
 function fetch_graph_data(){

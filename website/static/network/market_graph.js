@@ -251,12 +251,12 @@ function import_overview_sketch(s){
         s.graphics.textSize(20);
         if (exports >= 0){
             s.graphics.fill(0, 139, 0);
-            s.graphics.text(display_W(abs(exports)), 0.5*s.graph_h, -0.6*margin-5);
+            s.graphics.text(display_W(abs(exports), false), 0.5*s.graph_h, -0.6*margin-5);
             s.graphics.fill(cols_and_names.exports[0]);
             s.graphics.triangle(-0.5*arrow_w, 0, 0.5*arrow_w, arrow_w, 0.5*arrow_w, -arrow_w);
         }else{
             s.graphics.fill(139, 0, 0);
-            s.graphics.text(display_W(abs(exports)), 0.5*s.graph_h, -0.6*margin-5);
+            s.graphics.text(display_W(abs(exports), false), 0.5*s.graph_h, -0.6*margin-5);
             s.graphics.fill(cols_and_names.imports[0]);
             s.graphics.triangle(s.graph_h+0.5*arrow_w, 0, s.graph_h-0.5*arrow_w, arrow_w, s.graph_h-0.5*arrow_w, -arrow_w);
         }
@@ -268,7 +268,7 @@ function import_overview_sketch(s){
         if (revenues >= 0){
             s.graphics.fill(0, 139, 0);
             s.graphics.textAlign(RIGHT, CENTER);
-            s.graphics.text(display_money(abs(revenues)), 0.5*s.graph_h, 0.6*margin-5);
+            s.graphics.text(display_money(abs(revenues), false, ""), 0.5*s.graph_h, 0.6*margin-5);
             s.graphics.image(coin, 0.5*s.graph_h+5, 0.6*margin-9, 18, 18);
             s.graphics.text("/h", 0.5*s.graph_h+43, 0.6*margin-5);
             s.graphics.fill(cols_and_names.exports[0]);
@@ -276,7 +276,7 @@ function import_overview_sketch(s){
         }else{
             s.graphics.fill(139, 0, 0);
             s.graphics.textAlign(RIGHT, CENTER);
-            s.graphics.text(display_money(abs(revenues)), 0.5*s.graph_h, 0.6*margin-5);
+            s.graphics.text(display_money(abs(revenues), false, ""), 0.5*s.graph_h, 0.6*margin-5);
             s.graphics.image(coin, 0.5*s.graph_h+5, 0.6*margin-9, 18, 18);
             s.graphics.text("/h", 0.5*s.graph_h+43, 0.6*margin-5);
             s.graphics.fill(cols_and_names.imports[0]);
@@ -335,7 +335,7 @@ function temporal_imports_sketch(s){
                 s.rect(0, 0, 160, 17);
                 s.fill(0);
                 s.textFont(balooBold);
-                s.text(display_duration((data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+                s.text(display_duration_graphs((data_len - t_view - 1) * res_to_factor[res]), 80, 5);
                 s.textFont(font);
                 s.translate(0, 16);
 
@@ -357,7 +357,7 @@ function temporal_imports_sketch(s){
                     s.text("Import", 20, 5);
                 }
                 s.textAlign(CENTER, CENTER);
-                s.text(display_W(abs(energy_flux[res][t_view])), 132, 5);
+                s.text(display_W(abs(energy_flux[res][t_view]), false), 132, 5);
                 s.translate(0, 16);
 
                 alternate_fill(s);
@@ -370,7 +370,7 @@ function temporal_imports_sketch(s){
                 s.textAlign(LEFT, CENTER);
                 s.text(cols_and_names.revenues[1], 20, 5);
                 s.textAlign(RIGHT, CENTER);
-                s.text(display_money(revenue_curve[t_view]), 132, 5);
+                s.text(display_money(revenue_curve[t_view], false, ""), 132, 5);
                 s.text("/h", 158, 5);
                 s.image(coin, 134, 2, 12, 12);
                 
@@ -500,7 +500,7 @@ function temporal_imports_sketch(s){
             s.graphics.line(0, -i, -5, -i);
             s.graphics.noStroke();
             s.graphics.image(coin, -23, -i - 6, 12, 12);
-            s.graphics.text(display_money(y_ticks[i]), -28, -i - 3);
+            s.graphics.text(display_money(y_ticks[i], false, ""), -28, -i - 3);
         }
         s.graphics.pop();
 
@@ -513,7 +513,7 @@ function temporal_imports_sketch(s){
             s.graphics.stroke(0);
             s.graphics.line(s.graph_w, -i, s.graph_w + 5, -i);
             s.graphics.noStroke();
-            s.graphics.text(display_W(y_ticks[i]), s.graph_w + 0.5 * margin, -i - 3);
+            s.graphics.text(display_W(y_ticks[i], false), s.graph_w + 0.5 * margin, -i - 3);
         }
         s.graphics.pop();
 
@@ -651,8 +651,8 @@ function network_capacities_sketch(s){
                     s.textAlign(LEFT, CENTER);
                     s.text(cols_and_names[facility][1], 20, 5);
                     s.textAlign(CENTER, CENTER);
-                    s.text(display_W(network_capacities[facility].power), 132, 5);
-                    s.text(display_W(current_generation), 188, 5);
+                    s.text(display_W(network_capacities[facility].power, false), 132, 5);
+                    s.text(display_W(current_generation, false), 188, 5);
                     s.translate(0, 16);
                 }
             }
@@ -662,8 +662,8 @@ function network_capacities_sketch(s){
             s.fill(0);
             s.textFont(balooBold);
             s.text("TOTAL", 60, 5);
-            s.text(display_W(capacity), 132, 5);
-            s.text(display_W(power_cumsum), 188, 5);
+            s.text(display_W(capacity, false, 50000), 132, 5);
+            s.text(display_W(power_cumsum, false, 50000), 188, 5);
             s.pop();
         }
     }
@@ -757,7 +757,7 @@ function network_capacities_sketch(s){
             s.graphics.rect(0, 0, s.bar_w, -s.graph_h);
             s.graphics.fill(0);
             s.graphics.textSize(15);
-            s.graphics.text(display_W(category_capacity), 0.5 * s.bar_w, -s.graph_h - 0.25 * margin);
+            s.graphics.text(display_W(category_capacity, false), 0.5 * s.bar_w, -s.graph_h - 0.25 * margin);
             s.graphics.textSize(min(20, s.width / 40));
             s.graphics.text(category, 0.5 * s.bar_w, 0.25 * margin);
         }
@@ -842,7 +842,7 @@ function temporal_graph_sketch(s){
                 s.rect(0, 0, 160, 17);
                 s.fill(0);
                 s.textFont(balooBold);
-                s.text(display_duration((data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+                s.text(display_duration_graphs((data_len - t_view - 1) * res_to_factor[res]), 80, 5);
                 s.textFont(font);
                 s.translate(0, 16);
 
@@ -857,7 +857,7 @@ function temporal_graph_sketch(s){
                     s.textAlign(LEFT, CENTER);
                     s.text(cols_and_names.price[1], 20, 5);
                     s.textAlign(RIGHT, CENTER);
-                    s.text(display_money(price_curve[t_view]), 137, 5);
+                    s.text(display_money(price_curve[t_view], false, ""), 137, 5);
                     s.image(coin, 140, 2, 12, 12);
                     s.translate(0, 16);
                 }
@@ -885,7 +885,7 @@ function temporal_graph_sketch(s){
                                 s.text(username, 20, 5);
                             }
                             s.textAlign(CENTER, CENTER);
-                            s.text(display_W(temporal_data[s.current_view][group][res][t_view]), 132, 5);
+                            s.text(display_W(temporal_data[s.current_view][group][res][t_view], false), 132, 5);
                             s.translate(0, 16);
                         }
                     }
@@ -921,7 +921,7 @@ function temporal_graph_sketch(s){
         if (s.mouseX>0 && s.mouseX<s.width && s.mouseY>0.4*margin && s.mouseY<s.height-0.6*margin){
             if ((data_len - t_view - 1) * res_to_factor[res] < 1440) {
                 t_click = (data_len - t_view - 1) * res_to_factor[res];
-                document.getElementById("market_time").innerHTML = display_duration(t_click);
+                document.getElementById("market_time").innerHTML = display_duration_graphs(t_click);
                 fetch_market_data();
             }
         }
@@ -1052,7 +1052,7 @@ function temporal_graph_sketch(s){
                 s.graphics.line(0, -i, -5, -i);
                 s.graphics.noStroke();
                 s.graphics.image(coin, -23, -i - 6, 12, 12);
-                s.graphics.text(display_money(y_ticks[i]), -28, -i - 3);
+                s.graphics.text(display_money(y_ticks[i], false, ""), -28, -i - 3);
             }
             s.graphics.pop();
         }
@@ -1073,7 +1073,7 @@ function temporal_graph_sketch(s){
                 if(s.percent == "percent"){
                     s.graphics.text(y_ticks3[i] + "%", s.graph_w + 0.5 * margin, -i + 3);
                 }else{
-                    s.graphics.text(display_W(y_ticks3[i]), s.graph_w + 0.5 * margin, -i - 3);
+                    s.graphics.text(display_W(y_ticks3[i], false), s.graph_w + 0.5 * margin, -i - 3);
                 }
             }
             s.graphics.pop();
@@ -1289,11 +1289,11 @@ function market_chart_sketch(s){
                     s.translate(0, -16);
                     s.push();
                     s.textAlign(RIGHT, CENTER);
-                    s.text(display_money(mp), 97, 5);
+                    s.text(display_money(mp, false, ""), 97, 5);
                     s.image(coin, 100, 2, 12, 12);
                     s.pop();
                     s.translate(0, 16);
-                    s.text(display_W(mq), 90, 4);
+                    s.text(display_W(mq, false), 90, 4);
                     s.pop();
                 }
             }
@@ -1324,11 +1324,11 @@ function market_chart_sketch(s){
             s.textFont(font);
             s.push();
             s.textAlign(RIGHT, CENTER);
-            s.text(display_money(data["price"][i]), 97, 32 + 5);
+            s.text(display_money(data["price"][i], false, ""), 97, 32 + 5);
             s.image(coin, 100, 32 + 2, 12, 12);
             s.pop();
             let right = [
-                display_W(data["capacity"][i]),
+                display_W(data["capacity"][i], false),
                 "",
                 cols_and_names[data["facility"][i]][1],
             ];
@@ -1403,7 +1403,7 @@ function market_chart_sketch(s){
             s.graphics.line(0, -i, -5, -i);
             s.graphics.noStroke();
             s.graphics.image(coin, -23, -i - 6, 12, 12);
-            s.graphics.text(display_money((interval * i) / y), -28, -i - 3);
+            s.graphics.text(display_money((interval * i) / y, false, ""), -28, -i - 3);
         }
         s.graphics.pop();
         s.graphics.pop();
@@ -1565,7 +1565,7 @@ function sortTable(table_name, columnName, reorder=true) {
             <td>${capacity['username_col']}</td>
             <td>${capacity['facility_col']}</td>
             <td>${capacity['price_col']}</td>
-            <td>${display_W(capacity['quantity_col'])}</td>
+            <td>${display_W(capacity['quantity_col'], false)}</td>
             <td class="table_${color_map[capacity['sold_col']]}">${capacity['sold_col']}</td>
             </tr>`;
     }
@@ -1660,7 +1660,7 @@ function generate_supply_and_demand_normal(s, view_order, v){
         s.graphics.stroke(0);
         s.graphics.line(i, 0, i, 5);
         s.graphics.noStroke();
-        s.graphics.text(display_W((interval * i) / x), i, 0.26 * margin);
+        s.graphics.text(display_W((interval * i) / x, false), i, 0.26 * margin);
     }
     s.graphics.pop();
 }
@@ -1776,8 +1776,8 @@ function generate_supply_and_demand_log(s, view_order, v) {
     s.graphics.push();
     s.graphics.fill(0);
     s.graphics.noStroke();
-    s.graphics.text(display_W(minCap), 0, 0.26 * margin);
-    s.graphics.text(display_W(maxCap), s.graph_w, 0.26 * margin);
+    s.graphics.text(display_W(minCap, false), 0, 0.26 * margin);
+    s.graphics.text(display_W(maxCap, false), s.graph_w, 0.26 * margin);
     s.graphics.stroke(0);
     s.graphics.line(s.graph_w, 0, s.graph_w, 5);
     s.graphics.pop();
@@ -1883,104 +1883,6 @@ function generate_supply_and_demand_zoom(s, view_order, v){
         s.graphics.text(display_W_special(minCap + interval * i / x, interval), i, 0.26 * margin);
     }
     s.graphics.pop();
-}
-
-function display_W(energy) {
-    const units = [" W", " kW", " MW", " GW", " TW"];
-    return general_format(energy, units);
-}
-
-function display_W_special(energy, interval) {
-    const units = [" W", " kW", " MW", " GW", " TW"];
-    let unit_index = 0;
-    while (energy >= 10000 && unit_index < units.length - 1) {
-        energy /= 1000;
-        interval /= 1000;
-        unit_index += 1;
-    }
-    const decimalPlaces = (interval.toString().split(".")[1] || "").length;
-    let [integerPart, decimalPart] = energy.toFixed(decimalPlaces).split('.');
-    integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
-    return `${integerPart}${decimalPart ? '.' + decimalPart : ''}${units[unit_index]}`;
-}
-
-function display_money(price) {
-    const units = ["", "k", "M", "Md"];
-    return general_format(price, units);
-}
-
-function display_duration(ticks) {
-    let seconds = ticks * clock_time;
-    if (seconds == 0) {
-        return "now";
-    }
-
-    const months = Math.floor(seconds / 2592000);
-    seconds -= months * 2592000;
-    const days = Math.floor(seconds / 86400);
-    seconds -= days * 86400;
-    const hours = Math.floor(seconds / 3600);
-    seconds -= hours * 3600;
-    const minutes = Math.floor(seconds / 60);
-    seconds -= minutes * 60;
-
-    let duration = "t - ";
-    if (months > 0) {
-        duration += `${months}mo `;
-    }
-    if (days > 0) {
-        duration += `${days}d `;
-    }
-    if (hours > 0) {
-        duration += `${hours}h `;
-    }
-    if (minutes > 0) {
-        duration += `${minutes}m `;
-    }
-    if (seconds > 0) {
-        duration += `${seconds}s`;
-    }
-    return duration.trim();
-}
-
-function display_time(ticks) {
-    let seconds = ticks * clock_time;
-    if (seconds == 0) {
-        return "Now";
-    }
-    const days = Math.floor(seconds / 86400);
-    seconds -= days * 86400;
-    const hours = Math.floor(seconds / 3600);
-    seconds -= hours * 3600;
-    const minutes = Math.floor(seconds / 60);
-    seconds -= minutes * 60;
-
-    let duration = "";
-    if (days > 0) {
-        duration += `${days}days `;
-    }
-    if (hours > 0) {
-        duration += `${hours}h `;
-    }
-    if (minutes > 0) {
-        duration += `${minutes}min `;
-    }
-    if (seconds > 0) {
-        duration += `${seconds}s`;
-    }
-    duration += " ago";
-    return duration.trim();
-}
-
-function general_format(value, units) {
-    let unit_index = 0;
-    while (abs(value) >= 10000 && unit_index < units.length - 1) {
-        value /= 1000;
-        unit_index += 1;
-    }
-    return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
-        units[unit_index]
-    }`;
 }
 
 function alternate_fill(s) {

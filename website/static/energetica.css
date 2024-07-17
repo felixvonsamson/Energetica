@@ -418,8 +418,8 @@ canvas {
 .switch {
     position: relative;
     display: inline-block;
-    width: 56px;
-    height: 28px;
+    width: 2.6em;
+    height: 1.3em;
   }
   
 .switch input {
@@ -443,10 +443,10 @@ canvas {
 .slider:before {
     position: absolute;
     content: "";
-    height: 20px;
-    width: 20px;
-    left: 4px;
-    bottom: 4px;
+    height: 1em;
+    width: 1em;
+    left: 0.15em;
+    bottom: 0.15em;
     background-color: white;
     -webkit-transition: .4s;
     transition: .4s;
@@ -467,7 +467,7 @@ input:checked + .slider:before {
 }
 
 .slider.round {
-    border-radius: 28px;
+    border-radius: 1em;
 }
 
 .slider.round:before {
@@ -1082,11 +1082,11 @@ input:checked + .slider:before {
 }
 
 .table tbody td {
-    padding: 6px 8px 4px 12px;
+    padding: 6px 12px;
 }
 
 .table tbody th {
-    padding: 6px 8px 4px 12px;
+    padding: 6px 12px;
 }
 
 #scoreboard td {
@@ -1507,6 +1507,25 @@ input:checked + .slider:before {
 
 .weather_level.water{
     background-color: #0c10f2;
+}
+
+.capacityJauge-background {
+    width:150px;
+    background-color: #ffffff99;
+    height: 1.3em;
+}
+
+.capacityJauge {
+    display: flex;
+    height: 100%;
+    width: calc(var(--width, 0) * 100%);
+    max-width: 100%;
+}
+
+.capacityJauge-txt {
+    width: 100%;
+    position: relative;
+    transform: translate(0, -100%);
 }
 
 .priority_list{
