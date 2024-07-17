@@ -998,11 +998,21 @@ def hide_chat_disclaimer(player):
 
 def create_chat(player, buddy_username):
     """creates a chat with 2 players"""
-    if buddy_username == player.username:
-        return {"response": "cannotChatWithYourself"}
+    # TODO: change web frontend to send ID's, then deprecate this function
     buddy = Player.query.filter_by(username=buddy_username).first()
     if buddy is None:
         return {"response": "usernameIsWrong"}
+    return create_chat_2(player, buddy.id)
+
+
+def create_chat_2(player, buddy_id):
+    """creates a chat with 2 players"""
+    buddy = Player.query.get(buddy_id)
+    if buddy is None:
+        # When create_chat calls create_chat_2, this branch is unreachable
+        return {"response": "buddyIDDoesNotExist"}
+    if buddy.id == player.id:
+        return {"response": "cannotChatWithYourself"}
     if check_existing_chats([player, buddy]):
         return {"response": "chatAlreadyExist"}
     new_chat = Chat(
@@ -1013,30 +1023,44 @@ def create_chat(player, buddy_username):
     db.session.commit()
     engine = current_app.config["engine"]
     engine.log(f"{player.username} created a chat with {buddy.username}")
+    from website.api import websocket
+
+    websocket.notify_new_chat(new_chat)
     return {"response": "success"}
 
 
 def create_group_chat(player, title, group):
     """creates a group chat"""
-    if len(title) == 0 or len(title) > 25:
+    # TODO: change web frontend to send ID's, then deprecate this function
+    participants = [Player.query.filter_by(username=username).first() for username in group]
+    participant_ids = [participant.id for participant in participants]
+    create_group_chat_2(player, chat_name=title, participant_ids=participant_ids)
+
+
+def create_group_chat_2(player, chat_name, participant_ids):
+    """creates a group chat"""
+    if len(chat_name) == 0 or len(chat_name) > 25:
         return {"response": "wrongTitleLength"}
-    groupMembers = [player]
-    for username in group:
-        new_member = Player.query.filter_by(username=username).first()
-        if new_member:
-            groupMembers.append(new_member)
-    if len(groupMembers) < 3:
+    participants = [player]
+    for participant_id in participant_ids:
+        participant = Player.query.get(participant_id)
+        if participant is not None:
+            participants.append(participant)
+    if len(participants) < 3:
         return {"response": "groupTooSmall"}
-    if check_existing_chats(groupMembers):
+    if check_existing_chats(participants):
         return {"response": "chatAlreadyExist"}
     new_chat = Chat(
-        name=title,
-        participants=groupMembers,
+        name=chat_name,
+        participants=participants,
     )
     db.session.add(new_chat)
     db.session.commit()
     engine = current_app.config["engine"]
-    engine.log(f"{player.username} created a group chat called {title} with {group}")
+    engine.log(f"{player.username} created a group chat called {chat_name} with {participants}")
+    from website.api import websocket
+
+    websocket.notify_new_chat(new_chat)
     return {"response": "success"}
 
 

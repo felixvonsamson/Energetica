@@ -10,6 +10,7 @@ from simple_websocket import ConnectionClosed
 
 from website import utils
 from website.database.map import Hex
+from website.database.messages import Chat
 from website.database.player import Network, Player
 from website.gameEngine import gameEngine
 from website.technology_effects import package_constructions_page_data
@@ -374,6 +375,13 @@ def rest_parse_request(engine, player: Player, ws, uuid, data):
             rest_parse_request_decrease_project_priority(ws, uuid, body)
         case "dismissChatDisclaimer":
             utils.hide_chat_disclaimer(player)
+        case "createChat":
+            buddy_id = data["buddy_id"]
+            utils.create_chat_2(player, buddy_id)
+        case "createGroupChat":
+            chat_name = data["chat_name"]
+            participant_ids = data["participant_ids"]
+            utils.create_group_chat_2(player, chat_name, participant_ids)
         case _:
             engine.warn(f"rest_parse_request got unknown endpoint: {endpoint}")
 
@@ -522,3 +530,12 @@ def rest_notify_weather(engine):
 def rest_notify_advancements(engine, player: Player):
     """Notify all `player`'s ws sessions the new advancements"""
     rest_notify_player(engine, player, rest_get_advancements(player))
+
+
+def notify_new_chat(chat: Chat):
+    """Notify too all new chat participants the new chat data"""
+    for player in chat.participants:
+        player: Player
+        player.last_opened_chat = chat.id
+        rest_notify_player(g.engine, player, rest_get_chats(player))
+        rest_notify_player(g.engine, player, rest_get_last_opened_chat(player))

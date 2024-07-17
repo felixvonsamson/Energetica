@@ -255,6 +255,7 @@ class Player(db.Model, UserMixin):
                 "id": chat.id,
                 "name": chat.name,  # can be None
                 "participants": list(map(lambda player: player.id, chat.participants)),
+                "older_messages_exist": chat.messages.count() > 20,
                 "messages": [
                     {
                         "id": message.id,
