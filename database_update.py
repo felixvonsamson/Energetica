@@ -6,8 +6,6 @@ from website.database import engine_data
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-print("test")
-
 DATABASE_URI = "sqlite:///instance/database.db"
 engine = create_engine(DATABASE_URI)
 Session = sessionmaker(bind=engine)
@@ -45,7 +43,6 @@ for network in networks:
         old_network_data = pickle.load(file)
         for smth in old_network_data:
             for smth2 in old_network_data[smth]:
-                print(smth, smth2)
         old_network_data["consumption"] = {}
         old_network_data["generation"] = {}
         for facility in old_engine_data["network_capacities"][network.id]._data:
