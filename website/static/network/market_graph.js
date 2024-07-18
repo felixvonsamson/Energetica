@@ -1,10 +1,7 @@
-
 // data of the temporal graph
-let data = {"network_data": {}, "exports": {}, "imports": {}};
+let temporal_data = {"network_data": {}, "exports": {}, "imports": {}, "generation": {}, "consumption": {}};
 let price_curve;
-let f1; // fraction of negative range in the graph
-let view = "exports"; // exports or imports
-let price_mode = "normal"; // normal smoothed or off
+let data_len;
 
 // data for the market graph
 let demand, supply;
@@ -13,12 +10,25 @@ let mp, mq; // market optimum price and quantity
 let maxPrice, minPrice; // price range
 let maxCap, minCap; // capacity range
 let maxCap_sqrt_supply, maxCap_sqrt_demand;
-let f2; // fraction of negative range in the graph
-let graph_h, graph_w;
 let view_market = "supply"; // supply or demand
 let market_mode = "log"; // normal log or zoom
 let categorisation = "facility"; // facility or player
 let ox;
+
+// data for the energy flux graph
+let energy_flux, revenue_flux;
+let revenue_curves;
+
+// data for the network capacities graph
+let network_capacities;
+
+// data sorting options
+let decending = {
+    "offers_table": false,
+    "bids_table": true,
+}
+let offer_col = "price_col"; // current sorting column for offers
+let bid_col = "price_col"; // current sorting column for bids
 
 //resolution buttons
 let resolution_list;
@@ -26,18 +36,14 @@ let res_to_factor;
 let res; // current resolution
 
 //styling variables
-let margin = 40;
+let margin;
+let canvas_width;
 let fill_alt = 0;
-let s1 = 0.25; // size of first chart
-let s2 = 0.25; // size of second chart
-let s3 = 0.1; // size of resolution buttons row
 
 let t_view; // hovered timestamp
 let t_click = 0; // clicked timestamp
 
 let players = {};
-
-let graph;
 
 if (clock_time == 60){
     resolution_list = ["1h", "6h", "36h", "9 days", "2 months", "year"];
@@ -83,7 +89,10 @@ function preload() {
     coin = loadImage("static/images/icons/coin.svg");
 }
 
+var temporal_graph_p5, market_chart_p5, temporal_imports_p5, network_capacities_p5, import_overview_p5;
+
 function setup() {
+    noCanvas();
     random_colors = [
         color(166,206,227),
         color(31,120,180),
@@ -134,621 +143,1554 @@ function setup() {
         carbon_capture: [color(173, 181, 189), "CO2 capture"],
 
         price: [color(139, 0, 0), "Market price"],
+        revenues: [color(0, 0, 139), "Revenues"],
+
+        imports: [color(255, 89, 94), "Imports"],
+        exports: [color(138, 201, 38), "Exports"],
     };
-    let canvas_width = 0.7 * windowWidth;
-    let canvas_height = windowWidth;
+
+    canvas_width = 0.7 * windowWidth;
     if (windowWidth < 1200) {
         canvas_width = windowWidth;
-        canvas_height = 1.43 * windowWidth;
     }
-    let canvas = createCanvas(
-        min(canvas_width, 1200),
-        min(canvas_height, 1714)
-    );
-    margin = min(40, width / 25);
-    graph_h = 0.41 * height - 3 * margin;
-    graph_w = width - 4 * margin;
-    canvas.parent("market_graph");
-    textAlign(CENTER, CENTER);
-    textFont(font);
-    update_graph();
+    margin = min(70, canvas_width / 10);
+
+    import_overview_p5 = new p5(import_overview_sketch, "import_overview")
+
+    temporal_imports_p5 = new p5(temporal_imports_sketch, "temporal_imports");
+
+    network_capacities_p5 = new p5(network_capacities_sketch, "network_capacities");
+
+    temporal_graph_p5 =  new p5(temporal_graph_sketch, "temporal_graph");
+    
+    market_chart_p5 = new p5(market_chart_sketch, "market_chart");
+ 
+    change_page_view(server_saved_view)
 }
 
-function draw() {
-    if (graph) {
-        image(graph, 0, 0);
-        push();
-        stroke(255);
-        strokeWeight(2);
-        let mar = 2 * margin;
-        let X = Math.min(graph_w, Math.max(0, mouseX - mar));
-        if (mouseY > s1 * height && mouseY < (s1+s2) * height) {
-            hover_on_temporal_graph(X, mar);
-        } else if (mouseY > (s1+s2+s3) * height && supply != null) {
-            hover_on_market_graph(X, mar);
-        }
-        pop();
+function change_page_view(view){
+    send_form("/api/change_graph_view", {
+        view: view,
+    }).catch((error) => {
+        console.error(`caught error ${error}`);
+    });
+    show_selected_button("page_view_button_", view);
+    if (view == "basic"){
+        document.getElementById("import_overview_container").style.display = "block";
+        document.getElementById("temporal_imports_container").style.display = "none";
+        document.getElementById("network_capacities").style.display = "block";
+        document.getElementById("temporal_graph_container").style.display = "block";
+        document.getElementById("network_prices_headder").style.display = "flex";
+        document.getElementById("percent_buttons_container").style.display = "none";
+        document.getElementById("categorisation_buttons_container").style.display = "none";
+        document.getElementById("export_import_buttons_container").style.display = "none";
+        document.getElementById("price_mode_button_smoothed").classList.add("right");
+        document.getElementById("price_mode_button_off").style.display = "none";
+        document.getElementById("market_chart_container").style.display = "none";
+        document.getElementById("market_offers_tables").style.display = "none";
+        temporal_graph_p5.simplified = true;
+        network_capacities_p5.simplified = "simple";
+    }else if (view == "normal"){
+        document.getElementById("import_overview_container").style.display = "none";
+        document.getElementById("temporal_imports_container").style.display = "block";
+        document.getElementById("network_capacities").style.display = "block";
+        document.getElementById("temporal_graph_container").style.display = "block";
+        document.getElementById("network_prices_headder").style.display = "none";
+        document.getElementById("percent_buttons_container").style.display = "block";
+        document.getElementById("categorisation_buttons_container").style.display = "block";
+        document.getElementById("export_import_buttons_container").style.display = "block";
+        document.getElementById("price_mode_button_smoothed").classList.remove("right");
+        document.getElementById("price_mode_button_off").style.display = "block";
+        document.getElementById("market_chart_container").style.display = "block";
+        document.getElementById("market_offers_tables").style.display = "none";
+        temporal_graph_p5.simplified = false;
+        network_capacities_p5.simplified = "simple";
+    }else{
+        document.getElementById("import_overview_container").style.display = "none";
+        document.getElementById("temporal_imports_container").style.display = "block";
+        document.getElementById("network_capacities").style.display = "block";
+        document.getElementById("temporal_graph_container").style.display = "block";
+        document.getElementById("network_prices_headder").style.display = "none";
+        document.getElementById("percent_buttons_container").style.display = "block";
+        document.getElementById("categorisation_buttons_container").style.display = "block";
+        document.getElementById("export_import_buttons_container").style.display = "block";
+        document.getElementById("price_mode_button_smoothed").classList.remove("right");
+        document.getElementById("price_mode_button_off").style.display = "block";
+        document.getElementById("market_chart_container").style.display = "none";
+        document.getElementById("market_offers_tables").style.display = "block";
+        temporal_graph_p5.simplified = false;
+        network_capacities_p5.simplified = "complex";
     }
+    fetch_temporal_network_data();
 }
 
-function hover_on_temporal_graph(X, mar) {
-    push();
-    fill_alt = 1;
-    translate(0, s1*height);
-    push();
-    stroke(255);
-    strokeWeight(2);
-    t_view = floor(map(X, 0, graph_w, 0, data_len - 1));
-    X += mar;
-    line(X, 0, X, s2 * height);
-    noStroke();
-    push();
-    translate(X, s2 * height * f1);
-    if (price_mode != "off") {
-        let h = (-price_curve[t_view] / max.price) * s2 * height * f1;
-        ellipse(0, h, 8, 8);
+function import_overview_sketch(s){
+    s.setup = function(){
+        s.createCanvas(0.3 * canvas_width, 0.3 * canvas_width);
+        s.noLoop();
+        s.graphics = s.createGraphics(s.width, s.height);
+        s.graphics.textAlign(CENTER, CENTER);
+        s.graphics.textFont(font);
     }
-    pop();
-    push();
-    translate(X, s2 * height);
-    for (const player_id in data[view]) {
-        if (data[view][player_id][t_view] > 0) {
-            let h = (-data[view][player_id][t_view] / max.quantity) * s2 * height;
-            ellipse(0, h, 8, 8);
-            translate(0, h);
+
+    s.draw = function(){
+        if (s.graphics_ready) {
+            s.image(s.graphics, 0, 0);
         }
     }
-    pop();
 
-    let count = 2 + (price_mode != "off");
-    for(const player_id in data[view]){
-        if(data[view][player_id][t_view] > 0){
-            count += 1;
-        }
-    }
-    let tx = X - 180;
-    let ty = mouseY - s1 * height;
-    if (ty > s2 * height - count * 16) {
-        ty = s2 * height - count * 16;
-    }
-    if (X < 180 + 2 * margin) {
-        tx = X + 20;
-    }
-    translate(tx, ty);
-    alternate_fill();
-    fill_alt = 0;
-    rect(0, 0, 160, 17);
-    fill(0);
-    textFont(balooBold);
-    text(display_duration((data_len - t_view - 1) * res_to_factor[res]), 80, 5);
-    textFont(font);
-    translate(0, 16);
-
-    if(price_mode != "off"){
-        alternate_fill();
-        rect(0, 0, 160, 17);
-        push();
-        fill(cols_and_names.price[0]);
-        rect(0, 0, 16, 17);
-        pop();
-        fill(0);
-        textAlign(LEFT, CENTER);
-        text(cols_and_names.price[1], 20, 5);
-        textAlign(RIGHT, CENTER);
-        text(display_money(data["network_data"].price[t_view]), 137, 5);
-        image(coin, 140, 2, 12, 12);
-        translate(0, 16);
-    }
-
-    const keys = Object.keys(data[view]).reverse();
-    for(const player_id of keys){
-        if(data[view][player_id][t_view] > 0){
-            alternate_fill();
-            rect(0, 0, 160, 17);
-            push();
-            fill(random_colors[player_id % random_colors.length]);
-            rect(0, 0, 16, 17);
-            pop();
-            fill(0);
-            textAlign(LEFT, CENTER);
-            let userObject = players[int(player_id)];
-            let username = userObject ? userObject.username : "Loading...";
-            text(username, 20, 5);
-            textAlign(CENTER, CENTER);
-            text(display_W(data[view][player_id][t_view]), 132, 5);
-            translate(0, 16);
-        }
-    }
-    if ((data_len - t_view - 1) * res_to_factor[res] < 1440) {
-        fill(0);
-        text("(click to see market)", 80, 5);
-    }
-    pop();
-    pop();
-}
-
-function hover_on_market_graph(X, mar) {
-    translate(0, height - 1.8 * margin - graph_h);
-    let c = floor(map(X, 0, graph_w, minCap, maxCap));
-    X += mar;
-    line(X, 0, X, graph_h);
-    translate(X, graph_h * f2);
-    noStroke();
-    let h;
-    if (market_mode == "log") {
-        push();
-        fill_alt = 1;
-        let cumul_capacities_sqrt = 0;
-        if (view_market == "supply") {
-            for (let i = 0; i < sqrt_supply_capacities.length; i++) {
-                cumul_capacities_sqrt += sqrt_supply_capacities[i];
-                if (cumul_capacities_sqrt / maxCap_sqrt_supply * graph_w > X - mar) {
-                    fill(255);
-                    h = map(supply["price"][i], 0, maxPrice, 0, graph_h * f2);
-                    if (h < 0) {
-                        h = Math.min(h, -5);
-                    }
-                    translate(0, -h);
-                    ellipse(0, 0, 8, 8);
-
-                    let tx = -150;
-                    let ty = -110;
-                    if (X - 2 * margin < 150) {
-                        tx = 20;
-                    }
-                    if (h + 110 > graph_h * f2) {
-                        ty = h - graph_h * f2;
-                    }
-                    translate(tx, ty);
-
-                    display_capacity_information("Supply", supply, i)
-                    break;
-                }
-            }
+    s.render_graph = function(){
+        s.graph_h = s.height - margin;
+        s.graphics.noStroke();
+        s.graphics.background(229, 217, 182);
+        s.graphics.push();
+        let exports = energy_flux[resolution_list[0]][59];
+        let max_exports = max(max(0, ...energy_flux[resolution_list[0]]), -min(0, ...energy_flux[resolution_list[0]]));
+        let arrow_w = map(abs(exports), 0, max_exports, 0.2*margin, 0.6*margin);
+        s.graphics.translate(0.5 * margin, 0.5 * s.graph_h - 0.2*margin);
+        s.graphics.textSize(20);
+        if (exports >= 0){
+            s.graphics.fill(0, 139, 0);
+            s.graphics.text(display_W(abs(exports), false), 0.5*s.graph_h, -0.6*margin-5);
+            s.graphics.fill(cols_and_names.exports[0]);
+            s.graphics.triangle(-0.5*arrow_w, 0, 0.5*arrow_w, arrow_w, 0.5*arrow_w, -arrow_w);
         }else{
-            if(sqrt_supply_capacities.length != demand["price"].length){
-                return;
-            }
-            for (let i = 0; i < sqrt_supply_capacities.length; i++) {
-                cumul_capacities_sqrt += sqrt_supply_capacities[i];
-                if (cumul_capacities_sqrt / maxCap_sqrt_supply * graph_w > X - mar) {
-                    fill(255);
-                    h = map(demand["price"][i], 0, maxPrice, 0, graph_h * f2);
-                    translate(0, -h);
-                    ellipse(0, 0, 8, 8);
-
-                    let tx = 20;
-                    let ty = -110;
-                    if (width < X + 2*margin + 150) {
-                        tx = -150;
-                    }
-                    if (h + 110 > graph_h * f2) {
-                        ty = h - graph_h * f2;
-                    }
-                    translate(tx, ty);
-
-                    display_capacity_information("Demand", demand, i)
-                    break;
-                }
-            }
+            s.graphics.fill(139, 0, 0);
+            s.graphics.text(display_W(abs(exports), false), 0.5*s.graph_h, -0.6*margin-5);
+            s.graphics.fill(cols_and_names.imports[0]);
+            s.graphics.triangle(s.graph_h+0.5*arrow_w, 0, s.graph_h-0.5*arrow_w, arrow_w, s.graph_h-0.5*arrow_w, -arrow_w);
         }
-        pop();
-        return;
-    }
-        if(view_market == "supply"){
-            push();
-            fill_alt = 1;
-            for (let i = 0; i < supply["price"].length; i++) {
-                if (supply["cumul_capacities"][i] > c) {
-                    fill(255);
-                    h = map(supply["price"][i], 0, maxPrice, 0, graph_h * f2);
-                    if (h < 0) {
-                        h = Math.min(h, -5);
-                    }
-                    translate(0, -h);
-                    if (h < graph_h * f2) {
-                        ellipse(0, 0, 8, 8);
-                    }
-
-                    let tx = -150;
-                    let ty = -110;
-                    if (X - 2 * margin < 150) {
-                        tx = 20;
-                    }
-                    if (h + 110 > graph_h * f2) {
-                        ty = h - graph_h * f2;
-                    }
-                    translate(tx, ty);
-
-                    display_capacity_information("Supply", supply, i)
-                    break;
-                }
-            }
-            pop();
+        s.graphics.rect(0, -0.5*arrow_w, s.graph_h, arrow_w);
+        s.graphics.translate(0, 1.4*margin);
+        console.log(revenue_flux);
+        let revenues = revenue_flux[resolution_list[0]][59];
+        let max_revenues = max(max(0, ...revenue_flux[resolution_list[0]]), -min(0, ...revenue_flux[resolution_list[0]]));
+        arrow_w = map(abs(revenues), 0, max_revenues, 0.2*margin, 0.6*margin);
+        if (revenues >= 0){
+            s.graphics.fill(0, 139, 0);
+            s.graphics.textAlign(RIGHT, CENTER);
+            s.graphics.text(display_money(abs(revenues), false, ""), 0.5*s.graph_h, 0.6*margin-5);
+            s.graphics.image(coin, 0.5*s.graph_h+5, 0.6*margin-9, 18, 18);
+            s.graphics.text("/h", 0.5*s.graph_h+43, 0.6*margin-5);
+            s.graphics.fill(cols_and_names.exports[0]);
+            s.graphics.triangle(-0.5*arrow_w, 0, 0.5*arrow_w, arrow_w, 0.5*arrow_w, -arrow_w);
+        }else{
+            s.graphics.fill(139, 0, 0);
+            s.graphics.textAlign(RIGHT, CENTER);
+            s.graphics.text(display_money(abs(revenues), false, ""), 0.5*s.graph_h, 0.6*margin-5);
+            s.graphics.image(coin, 0.5*s.graph_h+5, 0.6*margin-9, 18, 18);
+            s.graphics.text("/h", 0.5*s.graph_h+43, 0.6*margin-5);
+            s.graphics.fill(cols_and_names.imports[0]);
+            s.graphics.triangle(s.graph_h+0.5*arrow_w, 0, s.graph_h-0.5*arrow_w, arrow_w, s.graph_h-0.5*arrow_w, -arrow_w);
         }
-        else{
-            push();
-            fill_alt = 1;
-            for (let i = 0; i < demand["price"].length; i++) {
-                if (demand["cumul_capacities"][i] > c) {
-                    fill(255);
-                    h = map(demand["price"][i], 0, maxPrice, 0, graph_h * f2);
-                    translate(0, -h);
-                    if (h < graph_h * f2) {
-                        ellipse(0, 0, 8, 8);
-                    }
-
-                    let tx = 20;
-                    let ty = -110;
-                    if (width < X + 2*margin + 150) {
-                        tx = -150;
-                    }
-                    if (h + 110 > graph_h * f2) {
-                        ty = h - graph_h * f2;
-                    }
-                    translate(tx, ty);
-
-                    display_capacity_information("Demand", demand, i)
-                    break;
-                }
-            }
-            pop();
-    }
-
-    fill_alt = 1;
-    ox = map(mq, minCap, maxCap, 0, graph_w);
-    let oy = map(mp, 0, maxPrice, 0, graph_h * f2);
-    if (abs(X - ox - 2 * margin) < 30) {
-        push();
-        let tx = ox - X + 2*margin - 150;
-        let ty = -oy;
-        if (ox < 150) {
-            tx = 20;
-        }
-        if (oy < 80){
-            ty = -80;
-        }
-        if (h + 10 < -ty && h > -ty - 150) {
-            ty = - h - 170;
-        }
-        translate(tx, ty);
-        for (let j = 0; j < 3; j++) {
-            translate(0, 16);
-            alternate_fill();
-            rect(0, 0, 130, 17);
-        }
-        translate(0, -2 * 16);
-        fill(0);
-        textFont(balooBold);
-        text("Market optimum", 65, 4);
-        textFont(font);
-        textAlign(LEFT);
-        translate(0, 16);
-        text("Price", 5, 4);
-        translate(0, 16);
-        text("Quantity", 5, 4);
-        textAlign(CENTER);
-        translate(0, -16);
-        push();
-        textAlign(RIGHT, CENTER);
-        text(display_money(mp), 97, 5);
-        image(coin, 100, 2, 12, 12);
-        pop();
-        translate(0, 16);
-        text(display_W(mq), 90, 4);
-        pop();
+        s.graphics.rect(0, -0.5*arrow_w, s.graph_h, arrow_w);
+        s.graphics.pop();
+        s.graphics_ready = true;
+        s.redraw();
     }
 }
 
-function display_capacity_information(title, data, i){
-    for (let j = 0; j < 5; j++) {
-        translate(0, 16);
-        alternate_fill();
-        rect(0, 0, 130, 17);
+function temporal_imports_sketch(s){
+    s.setup = function() {
+        s.smoothed = "normal";
+        s.is_inside = false;
+        s.createCanvas(min(canvas_width, 1200), 0.3 * canvas_width);
+        s.noLoop();
+        s.textFont(font);
+        s.textAlign(CENTER, CENTER);
+        s.graphics = s.createGraphics(s.width, s.height);
+        s.graphics.textAlign(CENTER, CENTER);
+        s.graphics.textFont(font);
     }
-    translate(0, -16 * 4);
-    fill(0);
-    textFont(balooBold);
-    text(title, 65, 4);
-    textFont(font);
-    textAlign(LEFT);
-    let left = ["Player", "Capacity", "Price", "facility"];
-    for (let j of left) {
-        translate(0, 16);
-        text(j, 5, 4);
+
+    s.draw = function() {
+        if (s.graphics_ready) {
+            s.image(s.graphics, 0, 0);
+            if (s.is_inside) {
+                s.push();
+                s.stroke(255);
+                s.strokeWeight(2);
+                let X = min(s.graph_w, max(0, s.mouseX - margin));
+                t_view = floor(map(X, 0, s.graph_w, 0, data_len - 1));
+                s.translate(margin + X, s.graph_h + 0.4 * margin);
+                s.line(0, 0, 0, -s.graph_h);
+                s.noStroke();
+
+                let h = map(energy_flux[res][t_view], s.lower_bounds.energy, s.upper_bounds.energy, 0, -s.graph_h);
+                s.ellipse(0, h, 8, 8);
+                h = map(revenue_curve[t_view], s.lower_bounds.revenues, s.upper_bounds.revenues, 0, -s.graph_h);
+                s.ellipse(0, h, 8, 8);
+                
+                let count = 3;
+                let tx = -180;
+                let ty = - 0.4 * margin - s.graph_h + s.mouseY;
+                if (ty > - count * 16) {
+                    ty = - count * 16;
+                }
+                if (X < 180) {
+                    tx = 20;
+                }
+                s.translate(tx, ty);
+                fill_alt = 0;
+                alternate_fill(s);
+                s.rect(0, 0, 160, 17);
+                s.fill(0);
+                s.textFont(balooBold);
+                s.text(display_duration_graphs((data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+                s.textFont(font);
+                s.translate(0, 16);
+
+                alternate_fill(s);
+                s.rect(0, 0, 160, 17);
+                s.push();
+                if(energy_flux[res][t_view] >= 0){
+                    s.fill(cols_and_names.exports[0]);
+                }else{
+                    s.fill(cols_and_names.imports[0]);
+                }
+                s.rect(0, 0, 16, 17);
+                s.pop();
+                s.fill(0);
+                s.textAlign(LEFT, CENTER);
+                if(energy_flux[res][t_view] >= 0){
+                    s.text("Export", 20, 5);
+                }else{
+                    s.text("Import", 20, 5);
+                }
+                s.textAlign(CENTER, CENTER);
+                s.text(display_W(abs(energy_flux[res][t_view]), false), 132, 5);
+                s.translate(0, 16);
+
+                alternate_fill(s);
+                s.rect(0, 0, 160, 17);
+                s.push();
+                s.fill(cols_and_names.revenues[0]);
+                s.rect(0, 0, 16, 17);
+                s.pop();
+                s.fill(0);
+                s.textAlign(LEFT, CENTER);
+                s.text(cols_and_names.revenues[1], 20, 5);
+                s.textAlign(RIGHT, CENTER);
+                s.text(display_money(revenue_curve[t_view], false, ""), 132, 5);
+                s.text("/h", 158, 5);
+                s.image(coin, 134, 2, 12, 12);
+                
+                s.pop();
+            }
+        }
     }
-    translate(0, -16 * 3);
-    textAlign(CENTER);
-    textFont(balooBold);
-    let userObject = players[data["player_id"][i]];
-    let username = userObject
-        ? userObject.username
-        : "Loading...";
-    text(username, 90, 4);
-    textFont(font);
-    push();
-    textAlign(RIGHT, CENTER);
-    text(display_money(data["price"][i]), 97, 32 + 5);
-    image(coin, 100, 32 + 2, 12, 12);
-    pop();
-    let right = [
-        display_W(data["capacity"][i]),
-        "",
-        cols_and_names[data["facility"][i]][1],
-    ];
-    for (let j of right) {
-        translate(0, 16);
-        text(j, 90, 4);
+
+    s.mouseMoved = function() {
+        if (s.mouseX>0 && s.mouseX<s.width && s.mouseY>0 && s.mouseY<s.height){
+            s.is_inside = true;
+            s.redraw();
+        }else{
+            if(s.is_inside){
+                s.is_inside = false;
+                s.redraw();
+            }
+        }
+    }
+
+    s.mouseDragged = function() {
+        s.mouseMoved();
+    }
+
+    s.render_graph = function(){
+        s.graph_h = s.height - margin;
+        s.graph_w = s.width - 2 * margin;
+        s.graphics.background(229, 217, 182);
+
+        data_len = energy_flux[res].length;
+        s.lower_bounds = {
+            energy: min(0, ...energy_flux[res]),
+            revenues: min(0, ...revenue_flux[res]),
+        };
+        s.upper_bounds = {
+            energy: max(0, ...energy_flux[res]),
+            revenues: max(0, ...revenue_flux[res]),
+        };
+        let range_energy = s.upper_bounds.energy - s.lower_bounds.energy;
+        let range_revenues = s.upper_bounds.revenues - s.lower_bounds.revenues;
+        let f1 = s.upper_bounds.energy / range_energy;
+        let f2 = s.upper_bounds.revenues / range_revenues;
+        let max_frac = max(f1, f2);
+        let min_frac = min(f2-1, f1-1);
+        s.lower_bounds.energy = min_frac * range_energy;
+        s.lower_bounds.revenues = min_frac * range_revenues;
+        s.upper_bounds.energy = max_frac * range_energy;
+        s.upper_bounds.revenues = max_frac * range_revenues;
+
+        s.graphics.push();
+        s.graphics.translate(margin, 0.4 * margin + s.graph_h);
+        s.graphics.noStroke();
+        
+        revenue_curve = [...revenue_flux[res]]
+        if (s.smoothed == "smoothed") {
+            let window_size = 5;
+            // Generate Normalized Gaussian kernel
+            let gaussian_kernel = [];
+            for (let i = -window_size; i <= window_size; i++) {
+                gaussian_kernel.push(Math.exp(-(i ** 2) / 10));
+            }
+            
+            revenue_curve = []
+            for (let t = 0; t < data_len; t++) {
+                let start = max(0, t - window_size);
+                let end = min(data_len - 1, t + window_size);
+                let sum = 0;
+                let weight_sum = 0;
+                for (let i = start; i <= end; i++) {
+                    sum += revenue_flux[res][i] * gaussian_kernel[i - t + window_size];
+                    weight_sum += gaussian_kernel[i - t + window_size];
+                }
+                revenue_curve[t] = sum / weight_sum; 
+            }
+        }
+
+        s.graphics.push();
+        let h0 = map(0, s.lower_bounds.energy, s.upper_bounds.energy, 0, -s.graph_h);
+        for (let t = 0; t < data_len; t++) {
+            if (energy_flux[res][t] < 0){
+                s.graphics.fill(cols_and_names.imports[0]);
+            }else{
+                s.graphics.fill(cols_and_names.exports[0]);
+            }
+            let h = map(energy_flux[res][t], s.lower_bounds.energy, s.upper_bounds.energy, 0, s.graph_h);
+            s.graphics.rect(0, -h, s.graph_w / data_len + 1, h0 + h);
+            s.graphics.translate(s.graph_w / data_len, 0);
+        }
+        s.graphics.pop();
+
+        s.graphics.push();
+        s.graphics.strokeWeight(3);
+        s.graphics.stroke(cols_and_names.revenues[0]);
+        for (let t = 1; t < data_len; t++) {
+            let h1 = map(revenue_curve[t - 1], s.lower_bounds.revenues, s.upper_bounds.revenues, 0, s.graph_h);
+            let h2 = map(revenue_curve[t], s.lower_bounds.revenues, s.upper_bounds.revenues, 0, s.graph_h);
+            s.graphics.line(0, -h1, s.graph_w / data_len, -h2);
+            s.graphics.translate(s.graph_w / (data_len - 1), 0);
+        }
+        s.graphics.pop();
+
+        s.graphics.stroke(0);
+        s.graphics.line(0, h0, s.graph_w, h0);
+        s.graphics.line(0, 0, 0, -s.graph_h);
+        s.graphics.line(s.graph_w, 0, s.graph_w, -s.graph_h);
+
+        s.graphics.push();
+        let units = time_unit(res, clock_time);
+        s.graphics.fill(0);
+        for (let i = 0; i < units.length; i++) {
+            s.graphics.stroke(0, 0, 0, 30);
+            let x = (i * s.graph_w) / (units.length - 1);
+            s.graphics.line(x, -s.graph_h, x, 0);
+            s.graphics.stroke(0);
+            s.graphics.line(x, h0, x, h0+5);
+            s.graphics.noStroke();
+            s.graphics.text(units[i], x, 0.26 * margin);
+        }
+        s.graphics.pop();
+
+        s.graphics.push();
+        let y_ticks = y_units_bounded(s.graph_h, s.lower_bounds.revenues, s.upper_bounds.revenues)
+        s.graphics.fill(cols_and_names.revenues[0]);
+        s.graphics.textAlign(RIGHT, CENTER);
+        for (let i in y_ticks) {
+            s.graphics.stroke(cols_and_names.revenues[0]);
+            s.graphics.line(0, -i, -5, -i);
+            s.graphics.noStroke();
+            s.graphics.image(coin, -23, -i - 6, 12, 12);
+            s.graphics.text(display_money(y_ticks[i], false, ""), -28, -i - 3);
+        }
+        s.graphics.pop();
+
+        s.graphics.push();
+        y_ticks =y_units_bounded(s.graph_h, s.lower_bounds.energy, s.upper_bounds.energy)
+        s.graphics.fill(0);
+        for (let i in y_ticks) {
+            s.graphics.stroke(0, 0, 0, 30);
+            s.graphics.line(s.graph_w, -i, 0, -i);
+            s.graphics.stroke(0);
+            s.graphics.line(s.graph_w, -i, s.graph_w + 5, -i);
+            s.graphics.noStroke();
+            s.graphics.text(display_W(y_ticks[i], false), s.graph_w + 0.5 * margin, -i - 3);
+        }
+        s.graphics.pop();
+
+        s.graphics.pop();
+
+        s.graphics_ready = true;
+        s.redraw();
     }
 }
 
-function mousePressed() {
-    let button_size_s = Math.min(120, 0.13 * graph_w);
-    let button_size_m = graph_w / resolution_list.length;
+function change_smoothed(smoothed_mode){
+    if (smoothed_mode != "off") {
+        show_selected_button("smoothed_button_", smoothed_mode);
+        temporal_imports_p5.smoothed = smoothed_mode;
+        temporal_imports_p5.render_graph();
+    }
+    show_selected_button("price_mode_button_", smoothed_mode);
+    temporal_graph_p5.price_mode = smoothed_mode;
+    temporal_graph_p5.render_graph();
+}
 
-    if (
-        (mouseY > (s1+s2+0.5*s3) * height) &&
-        (mouseY < (s1+s2+0.5*s3) * height + margin) &&
-        (mouseX > 2 * margin) &&
-        (mouseX < graph_w + 2 * margin)
-    ) {
-        let i = floor((mouseX - 2 * margin) / button_size_m);
-        res = resolution_list[i];
-        update_graph();
-        return;
-    }
-    else if (
-        (mouseY > (s1+s2+0.2*s3) * height) &&
-        (mouseY < (s1+s2+0.5*s3) * height) &&
-        (mouseX > width - 2 * margin - 2 * button_size_s) &&
-        (mouseX < width - 2 * margin)
-    ) {
-        let i = floor((mouseX - width + 2 * margin + 2 * button_size_s)/ button_size_s);
-        if (i == 0) {
-            view = "exports";
-        } else {  
-            view = "imports";
+function network_capacities_sketch(s){
+    s.setup = function() {
+        s.is_inside = false;
+        s.simplified = "complex";
+        s.data = {
+            simple: {
+                categories : ["Renewables", "Controlables", "Storages"],
+                Renewables: ["watermill", "small_water_dam", "large_water_dam", "windmill", "onshore_wind_turbine", "offshore_wind_turbine", "CSP_solar", "PV_solar"],
+                Controlables: ["nuclear_reactor", "nuclear_reactor_gen4", "steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle"],
+                Storages: ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"],
+                capacities: {
+                    Renewables: 0,
+                    Controlables: 0,
+                    Storages: 0,
+                }
+            },
+            complex: {
+                categories : ["Hydro",  "Wind", "Solar", "Fossil", "Nuclear", "Storages"],
+                Hydro: ["watermill", "small_water_dam", "large_water_dam"],
+                Wind: ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"],
+                Solar: ["CSP_solar", "PV_solar"],
+                Fossil: ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle"],
+                Nuclear: ["nuclear_reactor", "nuclear_reactor_gen4"],
+                Storages: ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"],
+                capacities: {
+                    Hydro: 0,
+                    Wind: 0,
+                    Solar: 0,
+                    Fossil: 0,
+                    Nuclear: 0,
+                    Storages: 0,
+                }
+            }
         }
-        update_graph();
-        return;
+        s.createCanvas(min(canvas_width, 1200), 0.3 * canvas_width);
+        s.noLoop();
+        s.textFont(font);
+        s.textAlign(CENTER, CENTER);
+        s.graphics = s.createGraphics(s.width, s.height);
+        s.graphics.textAlign(CENTER, CENTER);
+        s.graphics.textFont(font);
     }
-    else if (
-        (mouseY > (s1+s2+0.2*s3) * height) &&
-        (mouseY < (s1+s2+0.5*s3) * height) &&
-        (mouseX > 2 * margin) &&
-        (mouseX < 2 * margin + 3 * button_size_s)
-    ) {
-        let i = floor((mouseX - 2 * margin)/ button_size_s);
-        if (i == 0) {
-            price_mode = "normal";
-        } else if (i == 1) {  
-            price_mode = "smoothed";
-        }else {
-            price_mode = "off";
+
+    s.draw = function() {
+        if (s.graphics_ready) {
+            s.image(s.graphics, 0, 0);
+            if(s.is_inside){
+                if(s.mouseY>0.5*margin && s.mouseY<s.height-0.5*margin){
+                    let x0 = margin + s.second_margin - 0.5 * s.bar_sp;
+                    if(s.mouseX>x0 && s.mouseX<s.width-s.height-s.spacing-s.second_margin + 0.5 * s.bar_sp){
+                        let i = Math.floor((s.mouseX - x0) / (s.bar_sp + s.bar_w));
+                        s.translate(x0 + s.bar_w + 10 + i*(s.bar_sp + s.bar_w), margin);
+                        display_capacity_information(s.data[s.simplified][s.data[s.simplified].categories[i]], s.data[s.simplified].capacities[s.data[s.simplified].categories[i]]);
+                    }
+                    if(s.mouseX>s.width-margin-s.second_margin-s.graph_h && s.mouseX<s.width-margin-s.second_margin){
+                        s.translate(s.width-margin-s.second_margin-0.5*s.graph_h-80, margin);
+                        s.push();
+                        s.noStroke();
+                        fill_alt = 0;
+
+                        let keys = Object.keys(temporal_data.generation).reverse();
+                        for (let facility of keys) {
+                            let current_generation = temporal_data.generation[facility][resolution_list[0]][59];
+                            if (current_generation > 0){
+                                alternate_fill(s);
+                                s.rect(0, 0, 160, 17);
+                                s.push();
+                                s.fill(cols_and_names[facility][0]);
+                                s.rect(0, 0, 16, 17);
+                                s.pop();
+                                s.fill(0);
+                                s.textAlign(LEFT, CENTER);
+                                s.text(cols_and_names[facility][1], 20, 5);
+                                s.textAlign(CENTER, CENTER);
+                                let percentage = round(100 * current_generation / temporal_data.network_data.quantity[resolution_list[0]][59]);
+                                s.text(percentage + "%", 132, 5);
+                                s.translate(0, 16);
+                            }
+                        }
+                    }
+                }
+            }
         }
-        update_graph();
-        return;
-    }
-    else if (
-        (mouseY > height-40) &&
-        (mouseY < height) &&
-        (mouseX > width - 2 * margin - 2 * button_size_s) &&
-        (mouseX < width - 2 * margin)
-    ) {
-        let i = floor((mouseX - width + 2 * margin + 2 * button_size_s)/ button_size_s);
-        if (i == 0) {
-            view_market = "supply";
-        } else {  
-            view_market = "demand";
+
+        function display_capacity_information(facility_list, capacity){
+            s.push();
+            s.noStroke();
+            fill_alt = 0;
+            alternate_fill(s);
+            s.rect(0, 0, 216, 17);
+            s.fill(0);
+            s.textFont(balooBold);
+            s.text("facility", 60, 5);
+            s.text("max cap.", 132, 5);
+            s.text("now", 188, 5);
+            s.textFont(font);
+            s.translate(0, 16);
+
+            let power_cumsum = 0;
+            for (let facility of [...facility_list].reverse()) {
+                if (network_capacities[facility]){
+                    let current_generation = 0;
+                    if(temporal_data.generation[facility]){
+                        current_generation = temporal_data.generation[facility][resolution_list[0]][59];
+                    }
+                    power_cumsum += current_generation;
+                    alternate_fill(s);
+                    s.rect(0, 0, 216, 17);
+                    s.push();
+                    s.fill(cols_and_names[facility][0]);
+                    s.rect(0, 0, 16, 17);
+                    s.pop();
+                    s.fill(0);
+                    s.textAlign(LEFT, CENTER);
+                    s.text(cols_and_names[facility][1], 20, 5);
+                    s.textAlign(CENTER, CENTER);
+                    s.text(display_W(network_capacities[facility].power, false), 132, 5);
+                    s.text(display_W(current_generation, false), 188, 5);
+                    s.translate(0, 16);
+                }
+            }
+
+            alternate_fill(s);
+            s.rect(0, 0, 216, 17);
+            s.fill(0);
+            s.textFont(balooBold);
+            s.text("TOTAL", 60, 5);
+            s.text(display_W(capacity, false, 50000), 132, 5);
+            s.text(display_W(power_cumsum, false, 50000), 188, 5);
+            s.pop();
         }
-        update_graph();
-        return;
     }
-    else if (
-        (mouseY > height-40) &&
-        (mouseY < height) &&
-        (mouseX > 2 * margin + 0.5 * graph_w - 0.5 * button_size_s) &&
-        (mouseX < 2 * margin + 0.5 * graph_w + 1.5 * button_size_s)
-    ) {
-        let i = floor((mouseX - 2 * margin - 0.5 * graph_w + 0.5 * button_size_s)/ button_size_s);
-        if (i == 0) {
-            categorisation = "facility";
-        } else {  
-            categorisation = "player";
+
+    s.mouseMoved = function() {
+        if (s.mouseX>0 && s.mouseX<s.width && s.mouseY>0 && s.mouseY<s.height){
+            s.is_inside = true;
+            s.redraw();
+        }else{
+            if(s.is_inside){
+                s.is_inside = false;
+                s.redraw();
+            }
         }
-        update_graph();
-        return;
     }
-    else if (
-        (mouseY > height-40) &&
-        (mouseY < height) &&
-        (mouseX > 2 * margin) &&
-        (mouseX < 2 * margin + 3 * button_size_s)
-    ) {
-        let i = floor((mouseX - 2 * margin)/ button_size_s);
-        if (i == 0) {
-            market_mode = "normal";
-        } else if (i == 1) {  
-            market_mode = "log";
-        }else {
-            market_mode = "zoom";
+
+    s.mouseDragged = function() {
+        s.mouseMoved();
+    }
+
+    s.render_graph = function(){
+        s.spacing = min(margin, s.width / 20);
+        let gauges_w = s.width - margin - s.spacing - s.height;
+        s.bar_sp = gauges_w / 28 * 2;
+        s.bar_w = s.bar_sp * 3 / 2;
+        s.second_margin = 0;
+        if (s.simplified == "simple") {
+            s.spacing = min(2*margin, s.width / 12);
+            gauges_w = s.width - margin - 3 * s.spacing - s.height;
+            s.bar_sp = gauges_w / 5;
+            s.bar_w = s.bar_sp;
+            s.second_margin = s.spacing;
         }
-        update_graph();
-        return;
-    }
-    if (mouseY > s1 * height && mouseY < (s1+s2) * height) {
-        t_click = (data_len - t_view - 1) * res_to_factor[res];
-        update_graph();
+        s.graph_h = s.height - margin;
+        s.graph_w = s.width - 2 * margin;
+        s.graphics.background(229, 217, 182);
+
+        s.graphics.push();
+
+        s.graphics.translate(margin + s.second_margin, 0.5 * margin + s.graph_h);
+        for (let category of s.data[s.simplified].categories) {
+            display_gauge(category, s.data[s.simplified][category]);
+            s.graphics.translate(s.bar_w + s.bar_sp, 0);
+        }
+
+        s.graphics.pop();
+
+        s.graphics.push();
+        s.graphics.translate(s.graph_w - 0.5*s.graph_h + margin - s.second_margin, 0.5 * s.height);
+        let cumul_angle = -0.5 * PI;
+        for(let facility in temporal_data.generation){
+            let current_generation = temporal_data.generation[facility][resolution_list[0]][59];
+            let angle = map(current_generation, 0, temporal_data.network_data.quantity[resolution_list[0]][59], 0, TWO_PI);
+            s.graphics.fill(cols_and_names[facility][0]);
+            s.graphics.arc(0, 0, s.graph_h, s.graph_h, cumul_angle, cumul_angle+angle);
+            cumul_angle += angle;
+        }
+        s.graphics.noFill();
+        s.graphics.strokeWeight(2);
+        s.graphics.ellipse(0, 0, s.graph_h, s.graph_h);
+        s.graphics.pop();
+
+        s.graphics_ready = true;
+        s.redraw();
+
+        function display_gauge(category, facilities){
+            let category_capacity = s.data[s.simplified].capacities[category]
+            for(let facility of facilities){
+                if (network_capacities[facility]){
+                    category_capacity += network_capacities[facility].power;
+                }
+            }
+            s.graphics.push();
+            s.graphics.noStroke();
+            s.graphics.fill(242, 236, 219);
+            s.graphics.rect(0, 0, s.bar_w, -s.graph_h);
+            for (let facility of facilities) {
+                if(temporal_data.generation[facility]){
+                    let current_generation = temporal_data.generation[facility][resolution_list[0]][59];
+                    if (current_generation>0){
+                        s.graphics.fill(cols_and_names[facility][0]);
+                        let h = map(current_generation, 0, category_capacity, 0, -s.graph_h);
+                        s.graphics.rect(0, 0, s.bar_w, h-1);
+                        s.graphics.translate(0, h);
+                    }
+                }
+            }
+            s.graphics.pop();
+            s.graphics.noFill();
+            s.graphics.strokeWeight(2);
+            s.graphics.rect(0, 0, s.bar_w, -s.graph_h);
+            s.graphics.fill(0);
+            s.graphics.textSize(15);
+            s.graphics.text(display_W(category_capacity, false), 0.5 * s.bar_w, -s.graph_h - 0.25 * margin);
+            s.graphics.textSize(min(20, s.width / 40));
+            s.graphics.text(category, 0.5 * s.bar_w, 0.25 * margin);
+        }
     }
 }
 
-function update_graph() {
-    load_chart_data((network = true)).then((raw_chart_data) => {
-        fetch(`/api/get_market_data?t=${t_click}`) // retrieves data from server
-            .then((response) => response.json())
-            .then((raw_data) => {
-                strokeWeight(1);
-                background(229, 217, 182);
-                if (raw_data != null) {
-                    generate_market_graph(raw_data);
-                } else {
-                    supply = null;
+function temporal_graph_sketch(s){
+    s.setup = function() {
+        s.view = "exports";
+        s.price_mode = "normal";
+        s.percent = "normal";
+        s.categorisation = "type";
+        s.simplified = false;
+        s.is_inside = false;
+        s.createCanvas(min(canvas_width, 1200), 0.4 * canvas_width);
+        s.noLoop();
+        s.textFont(font);
+        s.textAlign(CENTER, CENTER);
+        s.graphics = s.createGraphics(s.width, s.height);
+        s.graphics.textAlign(CENTER, CENTER);
+        s.graphics.textFont(font);
+    }
+
+    s.draw = function() {
+        if (s.graphics_ready) {
+            s.image(s.graphics, 0, 0);
+            if (s.is_inside) {
+                s.push();
+                s.stroke(255);
+                s.strokeWeight(2);
+                let X = min(s.graph_w, max(0, s.mouseX - margin));
+                t_view = floor(map(X, 0, s.graph_w, 0, data_len - 1));
+                s.translate(margin + X, s.graph_h + 0.4 * margin);
+                s.line(0, 0, 0, -s.graph_h);
+                s.noStroke();
+                if (s.price_mode != "off") {
+                    s.push();
+                    s.translate(0, - s.graph_h * (1-s.frac));
+                    let h = (-price_curve[t_view] / s.upper_bounds.price) * s.graph_h * s.frac;
+                    s.ellipse(0, h, 8, 8);
+                    s.pop();
                 }
 
-                push();
-                // this is to hide possible overflows of the lower graph
-                fill(229, 217, 182);
-                noStroke();
-                rect(0, 0, width, height - 2 * margin - graph_h);
-                fill(0);
-                textSize(30);
-                text("Market : " + display_time(t_click), width / 2, (s1+s2+s3) * height);
-                pop();
+                let count = 2 + (s.price_mode != "off");
 
-                generate_temporal_graph(raw_chart_data);
+                if (!s.simplified) {
+                    s.push();
+                    let sum = s.upper_bounds.quantity;
+                    if(s.percent == "percent"){
+                        const groups = Object.keys(temporal_data[s.current_view]);
+                        sum = groups.reduce((acc, group) => {
+                            return acc + (temporal_data[s.current_view][group][res][t_view] || 0);
+                        }, 0);
+                    }
+                    for (const group in temporal_data[s.current_view]) {
+                        if (temporal_data[s.current_view][group][res][t_view] > 0) {
+                            let h = -temporal_data[s.current_view][group][res][t_view] * s.graph_h / sum;
+                            s.ellipse(0, h, 8, 8);
+                            s.translate(0, h);
+                        }
+                    }
+                    s.pop();
 
-                push();
-                textSize(30);
-                text("(More information about capacities of the market coming soon)", width / 2, 5 * margin);
-                pop();
+                    for(const group in temporal_data[s.current_view]){
+                        if(temporal_data[s.current_view][group][res][t_view] > 0){
+                            count += 1;
+                        }
+                    }
+                }
 
-                display_buttons();
+                let tx = -180;
+                let ty = - 0.4 * margin - s.graph_h + s.mouseY;
+                if (ty > - count * 16) {
+                    ty = - count * 16;
+                }
+                if (X < 180) {
+                    tx = 20;
+                }
+                s.translate(tx, ty);
+                fill_alt = 0;
+                alternate_fill(s);
+                s.rect(0, 0, 160, 17);
+                s.fill(0);
+                s.textFont(balooBold);
+                s.text(display_duration_graphs((data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+                s.textFont(font);
+                s.translate(0, 16);
 
-                graph = get();
+                if(s.price_mode != "off"){
+                    alternate_fill(s);
+                    s.rect(0, 0, 160, 17);
+                    s.push();
+                    s.fill(cols_and_names.price[0]);
+                    s.rect(0, 0, 16, 17);
+                    s.pop();
+                    s.fill(0);
+                    s.textAlign(LEFT, CENTER);
+                    s.text(cols_and_names.price[1], 20, 5);
+                    s.textAlign(RIGHT, CENTER);
+                    s.text(display_money(price_curve[t_view], false, ""), 137, 5);
+                    s.image(coin, 140, 2, 12, 12);
+                    s.translate(0, 16);
+                }
+                
+                if (!s.simplified) {
+                    const keys = Object.keys(temporal_data[s.current_view]).reverse();
+                    for(const group of keys){
+                        if(temporal_data[s.current_view][group][res][t_view] > 0){
+                            alternate_fill(s);
+                            s.rect(0, 0, 160, 17);
+                            s.push();
+                            if(s.categorisation == "type"){
+                                s.fill(cols_and_names[group][0]);
+                            }else{
+                                s.fill(random_colors[group % random_colors.length]);
+                            }
+                            s.rect(0, 0, 16, 17);
+                            s.pop();
+                            s.fill(0);
+                            s.textAlign(LEFT, CENTER);
+                            if(s.categorisation == "type"){
+                                s.text(cols_and_names[group][1], 20, 5);
+                            }else{
+                                let username = players[int(group)].username;
+                                s.text(username, 20, 5);
+                            }
+                            s.textAlign(CENTER, CENTER);
+                            s.text(display_W(temporal_data[s.current_view][group][res][t_view], false), 132, 5);
+                            s.translate(0, 16);
+                        }
+                    }
+                    if (s.mouseY > 0.4 * margin && s.mouseY < s.height - 0.6 * margin) {
+                        if ((data_len - t_view - 1) * res_to_factor[res] < 1440) {
+                            s.fill(0);
+                            s.text("(click to see market)", 80, 5);
+                        }
+                    }
+                }
+                s.pop();
+            }
+        }
+    }
+
+    s.mouseMoved = function() {
+        if (s.mouseX>0 && s.mouseX<s.width && s.mouseY>0 && s.mouseY<s.height){
+            s.is_inside = true;
+            s.redraw();
+        }else{
+            if(s.is_inside){
+                s.is_inside = false;
+                s.redraw();
+            }
+        }
+    }
+
+    s.mouseDragged = function() {
+        s.mouseMoved();
+    }
+
+    s.mousePressed = function() {
+        if (s.mouseX>0 && s.mouseX<s.width && s.mouseY>0.4*margin && s.mouseY<s.height-0.6*margin){
+            if ((data_len - t_view - 1) * res_to_factor[res] < 1440) {
+                t_click = (data_len - t_view - 1) * res_to_factor[res];
+                document.getElementById("market_time").innerHTML = display_duration_graphs(t_click);
+                fetch_market_data();
+            }
+        }
+    }
+
+
+    s.render_graph = function(){
+        s.graph_h = s.height - margin;
+        s.graph_w = s.width - 2 * margin;
+        s.graphics.background(229, 217, 182);
+        s.current_view = "generation";
+        if (s.categorisation == "player") {
+            s.current_view = s.view;
+        }else if(s.view == "imports"){
+            s.current_view = "consumption";
+        }
+
+        data_len = temporal_data["network_data"]["price"][res].length;
+        s.lower_bounds = {
+            price: Math.min(0, ...temporal_data["network_data"]["price"][res]),
+            quantity: 0,
+        };
+        s.upper_bounds = {
+            price: Math.max(...temporal_data["network_data"]["price"][res], -s.lower_bounds["price"]),
+            quantity: Math.max(...temporal_data["network_data"]["quantity"][res]),
+        };
+        s.frac = s.upper_bounds["price"] / (s.upper_bounds["price"] - s.lower_bounds["price"]); // fraction of positive range in the graph
+
+        s.graphics.push();
+        s.graphics.translate(margin, 0.4 * margin + s.graph_h);
+        s.graphics.noStroke();
+
+        if(!s.simplified){
+            s.graphics.push();
+            for (let t = 0; t < data_len; t++) {
+                s.graphics.push();
+                let sum = s.upper_bounds["quantity"];
+                if(s.percent == "percent"){
+                    const goups = Object.keys(temporal_data[s.current_view]);
+                    sum = goups.reduce((acc, group) => {
+                        return acc + (temporal_data[s.current_view][group][res][t] || 0);
+                    }, 0);
+                }
+                for (const group in temporal_data[s.current_view]) {
+                    if (temporal_data[s.current_view][group][res][t] > 0) {
+                        if(s.categorisation == "type"){
+                            s.graphics.fill(cols_and_names[group][0]);
+                        }else{
+                            s.graphics.fill(random_colors[group % random_colors.length]);
+                        }
+                        let h = temporal_data[s.current_view][group][res][t] * s.graph_h / sum;
+                        s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
+                        s.graphics.translate(0, -h);
+                    }
+                }
+                s.graphics.pop();
+                s.graphics.translate(s.graph_w / data_len, 0);
+            }
+            s.graphics.pop();
+        }
+        
+        if(s.price_mode != "off"){
+            price_curve = [...temporal_data.network_data.price[res]];
+            if (s.price_mode == "smoothed") {
+                let window_size = 5;
+                // Generate Normalized Gaussian kernel
+                let gaussian_kernel = [];
+                for (let i = -window_size; i <= window_size; i++) {
+                    gaussian_kernel.push(Math.exp(-(i ** 2) / 10));
+                }
+                
+                price_curve = []
+                for (let t = 0; t < data_len; t++) {
+                    let start = max(0, t - window_size);
+                    let end = min(data_len - 1, t + window_size);
+                    let sum = 0;
+                    let weight_sum = 0;
+                    for (let i = start; i <= end; i++) {
+                        sum += temporal_data.network_data.price[res][i] * gaussian_kernel[i - t + window_size];
+                        weight_sum += gaussian_kernel[i - t + window_size];
+                    }
+                    price_curve[t] = sum / weight_sum; 
+                }
+            }
+            s.graphics.push();
+            s.graphics.translate(0, -s.graph_h * (1 - s.frac));
+            s.graphics.strokeWeight(3);
+            s.graphics.stroke(cols_and_names["price"][0]);
+            for (let t = 1; t < data_len; t++) {
+                let h1 = (price_curve[t - 1] / s.upper_bounds["price"]) * s.graph_h * s.frac;
+                let h2 = (price_curve[t] / s.upper_bounds["price"]) * s.graph_h * s.frac;
+                s.graphics.line(0, -h1, s.graph_w / data_len, -h2);
+                s.graphics.translate(s.graph_w / (data_len - 1), 0);
+            }
+            s.graphics.pop();
+        }
+
+        s.graphics.stroke(0);
+        s.graphics.line(0, 0, s.graph_w, 0);
+        s.graphics.line(0, 0, 0, -s.graph_h);
+        s.graphics.line(s.graph_w, 0, s.graph_w, -s.graph_h);
+
+        s.graphics.push();
+        let units = time_unit(res, clock_time);
+        s.graphics.fill(0);
+        for (let i = 0; i < units.length; i++) {
+            s.graphics.stroke(0, 0, 0, 30);
+            let x = (i * s.graph_w) / (units.length - 1);
+            s.graphics.line(x, -s.graph_h, x, 0);
+            s.graphics.stroke(0);
+            s.graphics.line(x, 0, x, 5);
+            s.graphics.noStroke();
+            s.graphics.text(units[i], x, 0.26 * margin);
+        }
+        s.graphics.pop();
+
+        if (s.price_mode != "off") {
+            s.graphics.push();
+            let y_ticks = y_units_bounded(s.graph_h, s.lower_bounds["price"], s.upper_bounds["price"]);
+            s.graphics.fill(cols_and_names["price"][0]);
+            s.graphics.textAlign(RIGHT, CENTER);
+            for (let i in y_ticks) {
+                if(s.simplified){
+                    s.graphics.stroke(0, 0, 0, 30);
+                    s.graphics.line(s.graph_w, -i, 0, -i);
+                }
+                s.graphics.stroke(cols_and_names["price"][0]);
+                s.graphics.line(0, -i, -5, -i);
+                s.graphics.noStroke();
+                s.graphics.image(coin, -23, -i - 6, 12, 12);
+                s.graphics.text(display_money(y_ticks[i], false, ""), -28, -i - 3);
+            }
+            s.graphics.pop();
+        }
+
+        if(!s.simplified){
+            s.graphics.push();
+            if(s.percent == "percent"){
+                s.upper_bounds["quantity"] = 100;
+            }
+            let y_ticks3 = y_units_bounded(s.graph_h, s.lower_bounds["quantity"], s.upper_bounds["quantity"], divisions=4);
+            s.graphics.fill(0);
+            for (let i in y_ticks3) {
+                s.graphics.stroke(0, 0, 0, 30);
+                s.graphics.line(s.graph_w, -i, 0, -i);
+                s.graphics.stroke(0);
+                s.graphics.line(s.graph_w, -i, s.graph_w + 5, -i);
+                s.graphics.noStroke();
+                if(s.percent == "percent"){
+                    s.graphics.text(y_ticks3[i] + "%", s.graph_w + 0.5 * margin, -i + 3);
+                }else{
+                    s.graphics.text(display_W(y_ticks3[i], false), s.graph_w + 0.5 * margin, -i - 3);
+                }
+            }
+            s.graphics.pop();
+        }
+
+        s.graphics.pop();
+
+        s.graphics_ready = true;
+        s.redraw();
+    } 
+}
+
+function change_res(i){
+    show_selected_button("res_button_", i);
+    show_selected_button("res_button_2_", i);
+    res = resolution_list[i];
+    temporal_graph_p5.render_graph();
+    temporal_imports_p5.render_graph();
+}
+
+function change_categorisation(categorisation){
+    show_selected_button("categorisation_button_", categorisation)
+    temporal_graph_p5.categorisation = categorisation;
+    temporal_graph_p5.render_graph();
+}
+
+function change_export_import(view){
+    show_selected_button("export_import_button_", view)
+    temporal_graph_p5.view = view;
+    temporal_graph_p5.render_graph();
+}
+
+function change_percent(percent){
+    show_selected_button("percent_button_", percent)
+    temporal_graph_p5.percent = percent;
+    temporal_graph_p5.render_graph();
+}
+
+function market_chart_sketch(s){
+    s.setup = function() {
+        s.view = "supply";
+        s.market_mode = "normal";
+        s.categorisation = "facility";
+        s.is_inside = false;
+        s.createCanvas(min(canvas_width, 1200), 0.5 * canvas_width);
+        s.noLoop();
+        s.textFont(font);
+        s.textAlign(CENTER, CENTER);
+        s.graphics = s.createGraphics(s.width, s.height);
+        s.graphics.textAlign(CENTER, CENTER);
+        s.graphics.textFont(font);
+    }
+
+    s.draw = function() {
+        if (s.graphics_ready) {
+            s.image(s.graphics, 0, 0);
+            if(s.is_inside){
+                s.push();
+                s.stroke(255);
+                s.strokeWeight(2);
+                let X = min(s.graph_w, max(0, s.mouseX - margin));
+                s.translate(margin + X, 0.4 * margin + s.graph_h);
+                let c = floor(map(X, 0, s.graph_w, minCap, maxCap));
+                s.line(0, 0, 0, -s.graph_h);
+                s.translate(0, -s.graph_h * (1 - s.frac));
+                s.noStroke();
+                let h;
+                if (s.market_mode == "log") {
+                    s.push();
+                    fill_alt = 1;
+                    let cumul_capacities_sqrt = 0;
+                    if (s.view == "supply") {
+                        for (let i = 0; i < sqrt_supply_capacities.length; i++) {
+                            cumul_capacities_sqrt += sqrt_supply_capacities[i];
+                            if (cumul_capacities_sqrt / maxCap_sqrt_supply * s.graph_w > X) {
+                                s.fill(255);
+                                h = map(supply["price"][i], 0, maxPrice, 0, s.graph_h * s.frac);
+                                if (h < 0) {
+                                    h = Math.min(h, -5);
+                                }
+                                s.translate(0, -h);
+                                s.ellipse(0, 0, 8, 8);
+
+                                let tx = -150;
+                                let ty = -110;
+                                if (X < 150) {
+                                    tx = 20;
+                                }
+                                if (h + 110 > s.graph_h * s.frac) {
+                                    ty = h - s.graph_h * s.frac;
+                                }
+                                s.translate(tx, ty);
+
+                                display_capacity_information(s, "Supply", supply, i)
+                                break;
+                            }
+                        }
+                    }else{
+                        for (let i = 0; i < sqrt_supply_capacities.length; i++) {
+                            cumul_capacities_sqrt += sqrt_supply_capacities[i];
+                            if (cumul_capacities_sqrt / maxCap_sqrt_supply * s.graph_w > X) {
+                                s.fill(255);
+                                h = map(demand["price"][i], 0, maxPrice, 0, s.graph_h * s.frac);
+                                s.translate(0, -h);
+                                s.ellipse(0, 0, 8, 8);
+
+                                let tx = 20;
+                                let ty = -110;
+                                if (s.width < X + 150) {
+                                    tx = -150;
+                                }
+                                if (h + 110 > s.graph_h * s.frac) {
+                                    ty = h - s.graph_h * s.frac;
+                                }
+                                s.translate(tx, ty);
+
+                                display_capacity_information(s, "Demand", demand, i)
+                                break;
+                            }
+                        }
+                    }
+                    s.pop();
+                }else{
+                    s.push();
+                    fill_alt = 1;
+                    if(s.view == "supply"){
+                        for (let i = 0; i < supply["price"].length; i++) {
+                            if (supply["cumul_capacities"][i] > c) {
+                                s.fill(255);
+                                h = map(supply["price"][i], 0, maxPrice, 0, s.graph_h * s.frac);
+                                if (h < 0) {
+                                    h = Math.min(h, -5);
+                                }
+                                s.translate(0, -h);
+                                if (h < s.graph_h * s.frac) {
+                                    s.ellipse(0, 0, 8, 8);
+                                }
+
+                                let tx = -150;
+                                let ty = -110;
+                                if (X < 150) {
+                                    tx = 20;
+                                }
+                                if (h + 110 > s.graph_h * s.frac) {
+                                    ty = h - s.graph_h * s.frac;
+                                }
+                                s.translate(tx, ty);
+
+                                display_capacity_information(s, "Supply", supply, i)
+                                break;
+                            }
+                        }
+                    }else{
+                        for (let i = 0; i < demand["price"].length; i++) {
+                            if (demand["cumul_capacities"][i] > c) {
+                                s.fill(255);
+                                h = map(demand["price"][i], 0, maxPrice, 0, s.graph_h * s.frac);
+                                s.translate(0, -h);
+                                if (h < s.graph_h * s.frac) {
+                                    s.ellipse(0, 0, 8, 8);
+                                }
+
+                                let tx = 20;
+                                let ty = -110;
+                                if (s.width < X + 150) {
+                                    tx = -150;
+                                }
+                                if (h + 110 > s.graph_h * s.frac) {
+                                    ty = h - s.graph_h * s.frac;
+                                }
+                                s.translate(tx, ty);
+
+                                display_capacity_information(s, "Demand", demand, i)
+                                break;
+                            }
+                        }
+                    }
+                    s.pop();
+                }
+                s.pop();
+
+                fill_alt = 1;
+                let oy = map(mp, 0, maxPrice, 0, s.graph_h * s.frac);
+                let Y = s.graph_h * s.frac + 0.4 * margin - s.mouseY;
+                s.noStroke();
+                if (abs(X - ox) < 50 && abs(Y- oy) < 50) {
+                    s.push();
+                    let tx = ox + margin - 150;
+                    let ty = 0.4 * margin + s.graph_h - oy;
+                    if (ox < 150) {
+                        tx = ox + margin + 20;
+                    }
+                    if (oy < 80){
+                        ty = 0.4 * margin + s.graph_h - 80;
+                    }
+                    s.translate(tx, ty);
+                    for (let j = 0; j < 3; j++) {
+                        s.translate(0, 16);
+                        alternate_fill(s);
+                        s.rect(0, 0, 130, 17);
+                    }
+                    s.translate(0, -2 * 16);
+                    s.fill(0);
+                    s.textFont(balooBold);
+                    s.text("Market optimum", 65, 4);
+                    s.textFont(font);
+                    s.textAlign(LEFT);
+                    s.translate(0, 16);
+                    s.text("Price", 5, 4);
+                    s.translate(0, 16);
+                    s.text("Quantity", 5, 4);
+                    s.textAlign(CENTER);
+                    s.translate(0, -16);
+                    s.push();
+                    s.textAlign(RIGHT, CENTER);
+                    s.text(display_money(mp, false, ""), 97, 5);
+                    s.image(coin, 100, 2, 12, 12);
+                    s.pop();
+                    s.translate(0, 16);
+                    s.text(display_W(mq, false), 90, 4);
+                    s.pop();
+                }
+            }
+        }
+
+        function display_capacity_information(s, title, data, i){
+            for (let j = 0; j < 5; j++) {
+                s.translate(0, 16);
+                alternate_fill(s);
+                s.rect(0, 0, 130, 17);
+            }
+            s.translate(0, -16 * 4);
+            s.fill(0);
+            s.textFont(balooBold);
+            s.text(title, 65, 4);
+            s.textFont(font);
+            s.textAlign(LEFT);
+            let left = ["Player", "Capacity", "Price", "facility"];
+            for (let j of left) {
+                s.translate(0, 16);
+                s.text(j, 5, 4);
+            }
+            s.translate(0, -16 * 3);
+            s.textAlign(CENTER);
+            s.textFont(balooBold);
+            let username = players[data["player_id"][i]].username;
+            s.text(username, 90, 4);
+            s.textFont(font);
+            s.push();
+            s.textAlign(RIGHT, CENTER);
+            s.text(display_money(data["price"][i], false, ""), 97, 32 + 5);
+            s.image(coin, 100, 32 + 2, 12, 12);
+            s.pop();
+            let right = [
+                display_W(data["capacity"][i], false),
+                "",
+                cols_and_names[data["facility"][i]][1],
+            ];
+            for (let j of right) {
+                s.translate(0, 16);
+                s.text(j, 90, 4);
+            }
+        }
+    }
+
+    s.mouseMoved = function() {
+        if (s.mouseX>0 && s.mouseX<s.width && s.mouseY>0 && s.mouseY<s.height){
+            s.is_inside = true;
+            s.redraw();
+        }else{
+            if(s.is_inside){
+                s.is_inside = false;
+                s.redraw();
+            }
+        }
+    }
+
+    s.mouseDragged = function() {
+        s.mouseMoved();
+    }
+
+    s.render_graph = function(){
+        s.graph_h = s.height - margin;
+        s.graph_w = s.width - 2 * margin;
+        s.graphics.background(229, 217, 182);
+
+        if (s.view == "supply") {
+            maxCap = max(...supply["cumul_capacities"], 100);
+            maxPrice = max(...supply["price"], 1 / 1.1) * 1.1;
+            minPrice = min(...supply["price"], 0) * 1.1;
+        }else{
+            maxCap = max(...demand["cumul_capacities"], 100);
+            maxPrice = max(...demand["price"], 1 / 1.1) * 1.1;
+            minPrice = min(...demand["price"], 0) * 1.1;
+        }
+        maxPrice = min(maxPrice, 5000);
+        minCap = 0;
+        s.frac = maxPrice / (maxPrice - minPrice);
+
+        s.graphics.push();
+        s.graphics.translate(margin, 0.4 * margin + s.graph_h);
+        let view_order = [supply, demand];
+        let v = int(s.view == "supply");
+        if (s.market_mode == "normal") {
+            generate_supply_and_demand_normal(s, view_order, v);
+        }
+        else if (s.market_mode == "log") {
+            generate_supply_and_demand_log(s, view_order, v);
+        }
+        else if (s.market_mode == "zoom") {
+            generate_supply_and_demand_zoom(s, view_order, v);
+        }
+        
+        s.graphics.stroke(0);
+        s.graphics.line(0, 0, s.graph_w, 0);
+        s.graphics.line(0, (1 - s.frac) * s.graph_h, 0, -s.graph_h * s.frac);
+
+        s.graphics.push();
+        let interval = y_units_market(maxPrice - minPrice);
+        s.graphics.fill(0);
+        let y = map(interval, 0, maxPrice, 0, s.graph_h * s.frac);
+        s.graphics.textAlign(RIGHT, CENTER);
+        for (let i = 0; i <= s.graph_h * s.frac; i += y) {
+            s.graphics.stroke(0, 0, 0, 30);
+            s.graphics.line(s.graph_w, -i, 0, -i);
+            s.graphics.stroke(0);
+            s.graphics.line(0, -i, -5, -i);
+            s.graphics.noStroke();
+            s.graphics.image(coin, -23, -i - 6, 12, 12);
+            s.graphics.text(display_money((interval * i) / y, false, ""), -28, -i - 3);
+        }
+        s.graphics.pop();
+        s.graphics.pop();
+
+        s.graphics_ready = true;
+        s.redraw();
+    }
+}
+
+function change_market_view(view_market){
+    show_selected_button("market_view_button_", view_market)
+    market_chart_p5.view = view_market;
+    market_chart_p5.render_graph();
+}
+
+function change_market_mode(market_mode){
+    show_selected_button("market_mode_button_", market_mode)
+    market_chart_p5.market_mode = market_mode;
+    market_chart_p5.render_graph();
+}
+
+function change_categorisation_market(categorisation){
+    show_selected_button("categorisation_market_button_", categorisation)
+    market_chart_p5.categorisation = categorisation;
+    market_chart_p5.render_graph();
+}
+
+function show_selected_button(button_id, id){
+    let buttons = document.getElementsByClassName("selected");
+    for (let i = 0; i < buttons.length; i++) {
+        if (buttons[i].id.includes(button_id)) {
+            buttons[i].classList.remove("selected");
+        }
+    }
+    document.getElementById(button_id + id).classList.add("selected");
+}
+
+function fetch_temporal_network_data() {
+    load_players().then((players_) => {
+        players = players_;
+        fetch_market_data();
+        fetch_network_capacities();
+        load_chart_data().then((raw_chart_data) => {
+            let imports = raw_chart_data.generation.imports;
+            let exports = raw_chart_data.demand.exports;
+            energy_flux = {};
+            energy_flux[resolution_list[0]] = exports[0].map((num, idx) => num - imports[0][idx]).slice(-60);
+            for (let i = 0; i < resolution_list.length-1; i++) {
+                energy_flux[resolution_list[i+1]] = exports[i].map((num, idx) => num - imports[i][idx]);
+            }
+            let imports_revenue = raw_chart_data.revenues.imports;
+            let exports_revenue = raw_chart_data.revenues.exports;
+            console.log(exports_revenue);
+            console.log(imports_revenue);
+            revenue_flux = {};
+            revenue_flux[resolution_list[0]] = exports_revenue[0].map((num, idx) => 3600 / clock_time * (num + imports_revenue[0][idx])).slice(-60);
+            for (let i = 0; i < resolution_list.length-1; i++) {
+                revenue_flux[resolution_list[i+1]] = exports_revenue[i].map((num, idx) => 3600 / clock_time * (num + imports_revenue[i][idx]));
+            }
+
+            import_overview_p5.render_graph();
+            temporal_imports_p5.render_graph();
+        });
+        load_chart_data((network = true)).then((raw_chart_data) => {
+            Object.keys(raw_chart_data).forEach((key) => {
+                Object.keys(raw_chart_data[key]).forEach((subkey) => {
+                    temporal_data[key][subkey] = {};
+                    temporal_data[key][subkey][resolution_list[0]] = raw_chart_data[key][subkey][0].slice(-60);
+                    for (r=0; r<resolution_list.length-1; r++){
+                        temporal_data[key][subkey][resolution_list[r+1]] = raw_chart_data[key][subkey][r];
+                    }
+                });
             });
+            temporal_graph_p5.render_graph();
         })
         .catch((error) => {
             console.error("Error:", error);
         });
-    load_players().then((players_) => {
-        players = players_;
     });
 }
 
-function generate_market_graph(raw_data) {
-    supply = raw_data["capacities"];
-    demand = raw_data["demands"];
-    mq = raw_data["market_quantity"];
-    mp = raw_data["market_price"];
-    maxCap = Math.max(
-        ...supply["cumul_capacities"],
-        ...demand["cumul_capacities"],
-        100
-    );
-    minCap = 0;
-    maxPrice =
-        Math.max(...supply["price"], ...demand["price"], 1 / 1.1) *
-        1.1;
-    minPrice =
-        Math.min(...supply["price"], ...demand["price"], 0) * 1.1;
-    f2 = maxPrice / (maxPrice - minPrice);
+function fetch_market_data() {
+    fetch(`/api/get_market_data?t=${t_click}`)
+    .then((response) => response.json())
+    .then((raw_data) => {
+        if (raw_data != null) {
+            supply = raw_data["capacities"];
+            demand = raw_data["demands"];
+            mq = raw_data["market_quantity"];
+            mp = raw_data["market_price"];
+        }else{
+            supply = null;
+        }
 
-    push();
-    let view_order = [supply, demand];;
-    let v = int(view_market == "supply");
-    if (market_mode == "normal") {
-        generate_supply_and_demand_normal(view_order, v);
-    }else if (market_mode == "log") {
-        generate_supply_and_demand_log(view_order, v);
-    }else if (market_mode == "zoom") {
-        generate_supply_and_demand_zoom(view_order, v);
-    }
-
-    stroke(0);
-    line(0, 0, graph_w, 0);
-    line(0, (1 - f2) * graph_h, 0, -graph_h * f2);
-
-    push();
-    let interval = y_units_market(maxPrice - minPrice);
-    fill(0);
-    let y = map(interval, 0, maxPrice, 0, graph_h * f2);
-    textAlign(RIGHT, CENTER);
-    for (let i = 0; i <= graph_h * f2; i += y) {
-        stroke(0, 0, 0, 30);
-        line(graph_w, -i, 0, -i);
-        stroke(0);
-        line(0, -i, -5, -i);
-        noStroke();
-        image(coin, -25, -i - 6, 12, 12);
-        text(display_money((interval * i) / y), -28, -i - 3);
-    }
-    pop();
-    pop();
+        market_chart_p5.render_graph();
+        sortTable("offers_table", offer_col, reorder=false);
+        sortTable("bids_table", bid_col, reorder=false);
+    });
 }
 
-function generate_supply_and_demand_normal(view_order, v){
-    translate(2 * margin, height - 1.8*margin - graph_h * (1 - f2));
-    noStroke();
-    push();
+function fetch_network_capacities() {
+    fetch(`/api/get_network_capacities`)
+    .then((response) => response.json())
+    .then((raw_data) => {
+        network_capacities = raw_data;
+        network_capacities_p5.render_graph();
+    });
+}
+
+function sortTable(table_name, columnName, reorder=true) {
+    const table = document.getElementById(table_name);
+    let column = table.querySelector(`.${columnName}`);
+
+    if(reorder){
+        // Check if the column is already sorted, toggle sorting order accordingly
+        decending[table_name] = !decending[table_name];
+    }
+
+    let triangle = ' <i class="fa fa-caret-up"></i>';
+    if(decending[table_name]){
+        triangle = ' <i class="fa fa-caret-down"></i>';
+    }
+
+    let data = transform_data(demand);
+    let last_col = "Satisfied"
+    if (table_name == "offers_table") {
+        data = transform_data(supply);
+        last_col = "Sold";
+        offer_col = columnName;
+    }else{
+        bid_col = columnName;
+    }
+    // Sort the data based on the selected column
+    const sortedData = Object.entries(data).sort((a, b) => {
+        const aValue = a[1][columnName];
+        const bValue = b[1][columnName];
+
+        if (typeof aValue === "string" && typeof bValue === "string") {
+            return decending[table_name] ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
+        } else {
+            return decending[table_name] ? bValue - aValue : aValue - bValue;
+        }
+    });
+
+    let color_map = {
+        "Yes": "green",
+        "Partially": "orange",
+        "No": "red"
+    }
+
+    // Rebuild the HTML table
+    let html = `<tr>
+        <th class="username_col" onclick="sortTable('${table_name}', 'username_col')">Player</th>
+        <th class="facility_col" onclick="sortTable('${table_name}', 'facility_col')">Facility</th>
+        <th class="price_col" onclick="sortTable('${table_name}', 'price_col')">Price</th>
+        <th class="quantity_col" onclick="sortTable('${table_name}', 'quantity_col')">Capacity</th>
+        <th class="sold_col" onclick="sortTable('${table_name}', 'sold_col')">${last_col}</th>
+    </tr>`;
+    for (const [id, capacity] of sortedData) {
+        html += `<tr>
+            <td>${capacity['username_col']}</td>
+            <td>${capacity['facility_col']}</td>
+            <td>${capacity['price_col']}</td>
+            <td>${display_W(capacity['quantity_col'], false)}</td>
+            <td class="table_${color_map[capacity['sold_col']]}">${capacity['sold_col']}</td>
+            </tr>`;
+    }
+    table.innerHTML = html;
+
+    // Update the sorting indicator
+    column = table.querySelector(`.${columnName}`);
+    column.innerHTML += triangle;
+
+    function transform_data(data){
+        let transformed_data = [];
+        for (let i = 0; i < data.capacity.length; i++) {
+            transformed_data.push({
+                "username_col": players[data.player_id[i]].username,
+                "facility_col": cols_and_names[data.facility[i]][1],
+                "price_col": data.price[i],
+                "quantity_col": data.capacity[i],
+                "sold_col": is_sold(data, i)
+            })
+        }
+        return transformed_data;
+
+        function is_sold(data, i){
+            if (data.cumul_capacities[i]<=mq){
+                return "Yes";
+            }
+            if (i==0){
+                return "Partially";
+            }
+            if (data.cumul_capacities[i-1]<=mq){
+                return "Partially";
+            }
+            return "No";
+        }
+    }
+}
+
+function generate_supply_and_demand_normal(s, view_order, v){
+    s.graphics.translate(0, - s.graph_h * (1 - s.frac));
+    s.graphics.noStroke();
+    s.graphics.push();
     for (i = 0; i < view_order[1-v]["capacity"].length; i++) {
-        let w = map(view_order[1-v]["capacity"][i], 0, maxCap, 0, graph_w);
-        let h = map(view_order[1-v]["price"][i], 0, maxPrice, 0, -graph_h * f2);
+        let w = map(view_order[1-v]["capacity"][i], 0, maxCap, 0, s.graph_w);
+        let h = map(view_order[1-v]["price"][i], 0, maxPrice, 0, -s.graph_h * s.frac);
         if (h < 0) {
             h = Math.min(h, -5);
         }
         if (h > 0) {
             h = Math.max(h, 5);
         }
-        if (categorisation == "facility") {
-            fill(cols_and_names[view_order[1-v]["facility"][i]][0]);
+        if (s.categorisation == "facility") {
+            s.graphics.fill(cols_and_names[view_order[1-v]["facility"][i]][0]);
         } else {
-            fill(random_colors[view_order[1-v]["player_id"][i] % random_colors.length]);
+            s.graphics.fill(random_colors[view_order[1-v]["player_id"][i] % random_colors.length]);
         }
-        rect(0, 0, w - 1, h);
-        translate(w, 0);
+        s.graphics.rect(0, 0, w - 1, h);
+        s.graphics.translate(w, 0);
     }
-    pop();
+    s.graphics.pop();
 
-    push();
-    stroke(255, 0, 0);
-    strokeWeight(3);
+    s.graphics.push();
+    s.graphics.stroke(255, 0, 0);
+    s.graphics.strokeWeight(3);
     for (i = 0; i < view_order[v]["capacity"].length; i++) {
-        let w = map(view_order[v]["capacity"][i], 0, maxCap, 0, graph_w);
-        let h = calc_h(view_order[v]["price"][i]);
-        let h2 = graph_h * (1-f2);
+        let w = map(view_order[v]["capacity"][i], 0, maxCap, 0, s.graph_w);
+        let h = calc_h(s, view_order[v]["price"][i]);
+        let h2 = s.graph_h * (1-s.frac);
         if (v==0){
-            h2 = -graph_h * f2;
+            h2 = -s.height;
         }
         if (i + 1 < view_order[v]["capacity"].length) {
-            h2 = calc_h(view_order[v]["price"][i + 1]);
+            h2 = calc_h(s, view_order[v]["price"][i + 1]);
         }
-        line(0, h, w, h);
-        line(w, h, w, h2);
-        translate(w, 0);
+        s.graphics.line(0, h, w, h);
+        s.graphics.line(w, h, w, h2);
+        s.graphics.translate(w, 0);
     }
-    pop();
+    s.graphics.pop();
 
-    ox = map(mq, 0, maxCap, 0, graph_w);
-    let oy = map(mp, 0, maxPrice, 0, graph_h * f2);
-    fill(255, 0, 0);
-    ellipse(ox, -oy, 10, 10);
+    ox = map(mq, 0, maxCap, 0, s.graph_w);
+    let oy = map(mp, 0, maxPrice, 0, s.graph_h * s.frac);
+    s.graphics.fill(255, 0, 0);
+    s.graphics.ellipse(ox, -oy, 10, 10);
 
-    push();
-    fill(0);
+    s.graphics.push();
+    s.graphics.fill(0);
     let interval = y_units_market(maxCap);
-    let x = map(interval, 0, maxCap, 0, graph_w);
-    for (let i = 0; i <= graph_w; i += x) {
-        stroke(0, 0, 0, 30);
-        line(i, -graph_h * f2, i, (1 - f2) * graph_h);
-        stroke(0);
-        line(i, 0, i, 5);
-        noStroke();
-        text(display_W((interval * i) / x), i, 0.5 * margin - 3);
+    let x = map(interval, 0, maxCap, 0, s.graph_w);
+    for (let i = 0; i <= s.graph_w; i += x) {
+        s.graphics.stroke(0, 0, 0, 30);
+        s.graphics.line(i, -s.graph_h * s.frac, i, (1 - s.frac) * s.graph_h);
+        s.graphics.stroke(0);
+        s.graphics.line(i, 0, i, 5);
+        s.graphics.noStroke();
+        s.graphics.text(display_W((interval * i) / x, false), i, 0.26 * margin);
     }
-    pop();
+    s.graphics.pop();
 }
 
-function generate_supply_and_demand_log(view_order, v) {
-    translate(2 * margin, height - 1.8*margin - graph_h * (1 - f2));
+function generate_supply_and_demand_log(s, view_order, v) {
+    s.graphics.translate(0, - s.graph_h * (1 - s.frac));
     sqrt_supply_capacities = view_order[1-v]["capacity"].map(Math.sqrt);
     sqrt_demand_capacities = view_order[v]["capacity"].map(Math.sqrt);
-    for (let i = 0; i < supply["price"].length; i++) {
-        if (supply["price"][i] == -5) {
-            if(v==1){
-                sqrt_supply_capacities[i] *= 0.2;
+    for (let i = 0; i < view_order[1-v]["price"].length; i++) {
+        if (view_order[1-v]["price"][i] > -5 || view_order[1-v]["cumul_capacities"][i] > mq){
+            if(i > 0){
+                minCap = view_order[1-v]["cumul_capacities"][i-1];
             }else{
-                sqrt_demand_capacities[i] *= 0.2;
+                minCap = 0;
             }
+            break;
+        }else{
+            sqrt_supply_capacities[i] = 0;
+        }
+    }
+    for (let i = 0; i < view_order[v]["price"].length; i++) {
+        if (view_order[v]["cumul_capacities"][i] >= minCap) {
+            let dx = (view_order[v]["cumul_capacities"][i] - minCap)/view_order[v]["capacity"][i];
+            sqrt_demand_capacities[i] = Math.sqrt(view_order[v]["capacity"][i] * dx);
+            break;
+        }else{
+            sqrt_demand_capacities[i] = 0;
         }
     }
     maxCap_sqrt_supply = sum_arr(sqrt_supply_capacities);
@@ -758,12 +1700,12 @@ function generate_supply_and_demand_log(view_order, v) {
     for(let i = 0; i < view_order[1-v]["capacity"].length; i++){
         if (view_order[1-v]["cumul_capacities"][i] >= mq) {
             let cumul_capacities_sqrt = sum_arr(sqrt_supply_capacities.slice(0, i + 1));
+            let overshoot_x = map(cumul_capacities_sqrt, 0, maxCap_sqrt_supply, 0, s.graph_w);
             if (view_order[1-v]["cumul_capacities"][i] == mq) {
-                ox_supply = map(cumul_capacities_sqrt, 0, maxCap_sqrt_supply, 0, graph_w);
+                ox_supply = overshoot_x;
             }else{
-                let overshoot_x = map(cumul_capacities_sqrt, 0, maxCap_sqrt_supply, 0, graph_w);
                 let dx = (view_order[1-v]["cumul_capacities"][i] - mq)/view_order[1-v]["capacity"][i];
-                ox_supply = overshoot_x - dx * sqrt_supply_capacities[i]/maxCap_sqrt_supply*graph_w;
+                ox_supply = overshoot_x - dx * sqrt_supply_capacities[i]/maxCap_sqrt_supply*s.graph_w;
             }
             break;
         }
@@ -773,475 +1715,194 @@ function generate_supply_and_demand_log(view_order, v) {
         if (view_order[v]["cumul_capacities"][i] >= mq) {
             let cumul_capacities_sqrt = sum_arr(sqrt_demand_capacities.slice(0, i + 1));
             if (view_order[v]["cumul_capacities"][i] == mq) {
-                ox_demand = map(cumul_capacities_sqrt, 0, maxCap_sqrt_demand, 0, graph_w);
+                ox_demand = map(cumul_capacities_sqrt, 0, maxCap_sqrt_demand, 0, s.graph_w);
             }else{
-                let overshoot_x = map(cumul_capacities_sqrt, 0, maxCap_sqrt_demand, 0, graph_w);
+                let overshoot_x = map(cumul_capacities_sqrt, 0, maxCap_sqrt_demand, 0, s.graph_w);
                 let dx = (view_order[v]["cumul_capacities"][i] - mq)/view_order[v]["capacity"][i];
-                ox_demand = overshoot_x - dx * sqrt_demand_capacities[i]/maxCap_sqrt_demand*graph_w;
+                ox_demand = overshoot_x - dx * sqrt_demand_capacities[i]/maxCap_sqrt_demand*s.graph_w;
             }
             break;
         }
     }
 
-    ox = Math.min(ox_supply, ox_demand);
+    ox = ox_supply;
     maxCap_sqrt_supply *= ox_supply/ox;
     maxCap_sqrt_demand *= ox_demand/ox;
 
-    noStroke();
-    push();
+    s.graphics.noStroke();
+    s.graphics.push();
     for (i = 0; i < view_order[1-v]["capacity"].length; i++) {
-        let w = map(sqrt_supply_capacities[i], 0, maxCap_sqrt_supply, 0, graph_w);
-        let h = map(view_order[1-v]["price"][i], 0, maxPrice, 0, -graph_h * f2);
+        let w = map(sqrt_supply_capacities[i], 0, maxCap_sqrt_supply, 0, s.graph_w);
+        let h = map(view_order[1-v]["price"][i], 0, maxPrice, 0, -s.graph_h * s.frac);
         if (h < 0) {
-            h = Math.min(h, -5);
+            h = min(h, -5);
         }
         if (h > 0) {
-            h = Math.max(h, 5);
+            h = max(h, 5);
         }
-        if (categorisation == "facility") {
-            fill(cols_and_names[view_order[1-v]["facility"][i]][0]);
+        if (s.categorisation == "facility") {
+            s.graphics.fill(cols_and_names[view_order[1-v]["facility"][i]][0]);
         } else {
-            fill(random_colors[view_order[1-v]["player_id"][i] % random_colors.length]);
+            s.graphics.fill(random_colors[view_order[1-v]["player_id"][i] % random_colors.length]);
         }
-        rect(0, 0, w - 1, h);
-        translate(w, 0);
+        s.graphics.rect(0, 0, w - 1, h);
+        s.graphics.translate(w, 0);
     }
-    pop();
+    s.graphics.pop();
 
-    push();
-    stroke(255, 0, 0);
-    strokeWeight(3);
+    s.graphics.push();
+    s.graphics.stroke(255, 0, 0);
+    s.graphics.strokeWeight(3);
     for (i = 0; i < view_order[v]["capacity"].length; i++) {
-        let w = map(sqrt_demand_capacities[i], 0, maxCap_sqrt_demand, 0, graph_w);
-        let h = calc_h(view_order[v]["price"][i]);
-        let h2 = graph_h * (1-f2);
+        let w = map(sqrt_demand_capacities[i], 0, maxCap_sqrt_demand, 0, s.graph_w);
+        let h = calc_h(s, view_order[v]["price"][i]);
+        let h2 = s.graph_h * (1-s.frac);
         if (v==0){
-            h2 = -graph_h * f2;
+            h2 = -s.height;
         }
         if (i + 1 < view_order[v]["capacity"].length) {
-            h2 = calc_h(view_order[v]["price"][i + 1]);
+            h2 = calc_h(s, view_order[v]["price"][i + 1]);
         }
-        line(0, h, w, h);
-        line(w, h, w, h2);
-        translate(w, 0);
+        s.graphics.line(0, h, w, h);
+        s.graphics.line(w, h, w, h2);
+        s.graphics.translate(w, 0);
     }
-    pop();
+    s.graphics.pop();
 
-    push();
-    noStroke();
-    fill(255, 0, 0);
-    let oy = map(mp, 0, maxPrice, 0, graph_h * f2);
-    ellipse(ox, -oy, 10, 10);
-    pop();
+    s.graphics.push();
+    s.graphics.noStroke();
+    s.graphics.fill(255, 0, 0);
+    let oy = map(mp, 0, maxPrice, 0, s.graph_h * s.frac);
+    s.graphics.ellipse(ox, -oy, 10, 10);
+    s.graphics.pop();
 
-    push();
-    fill(0);
-    noStroke();
-    text(display_W(0), 0, 0.5 * margin - 3);
-    text(display_W(maxCap), graph_w, 0.5 * margin - 3);
-    stroke(0);
-    line(graph_w, 0, graph_w, 5);
-    pop();
+    s.graphics.push();
+    s.graphics.fill(0);
+    s.graphics.noStroke();
+    s.graphics.text(display_W(minCap, false), 0, 0.26 * margin);
+    s.graphics.text(display_W(maxCap, false), s.graph_w, 0.26 * margin);
+    s.graphics.stroke(0);
+    s.graphics.line(s.graph_w, 0, s.graph_w, 5);
+    s.graphics.pop();
+
+    function sum_arr(arr) {
+        return arr.reduce((a, b) => a + b, 0);
+    
+    }
 }
 
-function generate_supply_and_demand_zoom(view_order, v){
-    let window = 50000 * Math.log(mq);
+function generate_supply_and_demand_zoom(s, view_order, v){
+    let window = 100000 * mq**0.17;
     maxCap = mq + window;
     minCap = mq - window;
     maxPrice = Math.min(maxPrice, Math.max(5.5, 2*mp));
-    f2 = maxPrice / (maxPrice - minPrice);
-    translate(2 * margin, height - 1.8*margin - graph_h * (1 - f2));
+    s.frac = maxPrice / (maxPrice - minPrice);
+    s.graphics.translate(0, - s.graph_h * (1 - s.frac));
 
-    noStroke();
-    push();
+    s.graphics.noStroke();
+    s.graphics.push();
     for (i = 0; i < view_order[1-v]["capacity"].length; i++) {
         if (view_order[1-v]["cumul_capacities"][i] > minCap) {
-            let w = map(view_order[1-v]["capacity"][i], 0, maxCap - minCap, 0, graph_w);
+            let w = map(view_order[1-v]["capacity"][i], 0, maxCap - minCap, 0, s.graph_w);
             if (view_order[1-v]["cumul_capacities"][i] - minCap < view_order[1-v]["capacity"][i]) {
-                w = map(view_order[1-v]["cumul_capacities"][i] - minCap, 0, maxCap - minCap, 0, graph_w);
+                w = map(view_order[1-v]["cumul_capacities"][i] - minCap, 0, maxCap - minCap, 0, s.graph_w);
             }
             if (view_order[1-v]["cumul_capacities"][i] > maxCap) {
-                w = map(view_order[1-v]["capacity"][i] - view_order[1-v]["cumul_capacities"][i] + maxCap, 0, maxCap - minCap, 0, graph_w);
+                w = map(view_order[1-v]["capacity"][i] - view_order[1-v]["cumul_capacities"][i] + maxCap, 0, maxCap - minCap, 0, s.graph_w);
                 if (view_order[1-v]["cumul_capacities"][i] - minCap < view_order[1-v]["capacity"][i]) {
-                    w = graph_w;
+                    w = s.graph_w;
                 }
             }
-            let h = map(view_order[1-v]["price"][i], 0, maxPrice, 0, -graph_h * f2);
+            let h = map(view_order[1-v]["price"][i], 0, maxPrice, 0, -s.graph_h * s.frac);
             if (h < 0) {
                 h = Math.min(h, -5);
             }
             if (h > 0) {
                 h = Math.max(h, 5);
             }
-            if (categorisation == "facility") {
-                fill(cols_and_names[view_order[1-v]["facility"][i]][0]);
+            if (s.categorisation == "facility") {
+                s.graphics.fill(cols_and_names[view_order[1-v]["facility"][i]][0]);
             } else {
-                fill(random_colors[view_order[1-v]["player_id"][i] % random_colors.length]);
+                s.graphics.fill(random_colors[view_order[1-v]["player_id"][i] % random_colors.length]);
             }
-            rect(0, 0, w - 1, h);
+            s.graphics.rect(0, 0, w - 1, h);
             if (view_order[1-v]["cumul_capacities"][i] > maxCap) {
                 break;
             }
-            translate(w, 0);
+            s.graphics.translate(w, 0);
         }
     }
-    pop();
+    s.graphics.pop();
 
-    push();
-    stroke(255, 0, 0);
-    strokeWeight(3);
+    s.graphics.push();
+    s.graphics.stroke(255, 0, 0);
+    s.graphics.strokeWeight(3);
     for (i = 0; i < view_order[v]["capacity"].length; i++) {
         if (view_order[v]["cumul_capacities"][i] > minCap) {
-            let w = map(view_order[v]["capacity"][i], 0, maxCap - minCap, 0, graph_w);
+            let w = map(view_order[v]["capacity"][i], 0, maxCap - minCap, 0, s.graph_w);
             if (view_order[v]["cumul_capacities"][i] - minCap < view_order[v]["capacity"][i]) {
-                w = map(view_order[v]["cumul_capacities"][i] - minCap, 0, maxCap - minCap, 0, graph_w);
+                w = map(view_order[v]["cumul_capacities"][i] - minCap, 0, maxCap - minCap, 0, s.graph_w);
             }
             if (view_order[v]["cumul_capacities"][i] > maxCap) {
-                w = map(view_order[v]["capacity"][i] - view_order[v]["cumul_capacities"][i] + maxCap, 0, maxCap - minCap, 0, graph_w);
+                w = map(view_order[v]["capacity"][i] - view_order[v]["cumul_capacities"][i] + maxCap, 0, maxCap - minCap, 0, s.graph_w);
                 if (view_order[v]["cumul_capacities"][i] - minCap < view_order[v]["capacity"][i]) {
-                    w = graph_w;
+                    w = s.graph_w;
                 }
             }
-            let h = calc_h(view_order[v]["price"][i]);
-            let h2 = graph_h * (1-f2);
+            let h = calc_h(s, view_order[v]["price"][i]);
+            let h2 = s.graph_h * (1-s.frac);
             if (v==0){
-                h2 = -graph_h * f2;
+                h2 = -s.height;
             }
             if (i + 1 < view_order[v]["capacity"].length) {
-                h2 = calc_h(view_order[v]["price"][i + 1]);
+                h2 = calc_h(s, view_order[v]["price"][i + 1]);
             }
-            line(0, h, w, h);
+            s.graphics.line(0, h, w, h);
             if (view_order[v]["cumul_capacities"][i] > maxCap) {
                 break;
             }
-            line(w, h, w, h2);
-            translate(w, 0);
+            s.graphics.line(w, h, w, h2);
+            s.graphics.translate(w, 0);
         }
     }
-    pop();
+    s.graphics.pop();
 
-    let ox = map(mq, minCap, maxCap, 0, graph_w);
-    let oy = map(mp, 0, maxPrice, 0, graph_h * f2);
-    fill(255, 0, 0);
-    ellipse(ox, -oy, 10, 10);
+    ox = map(mq, minCap, maxCap, 0, s.graph_w);
+    let oy = map(mp, 0, maxPrice, 0, s.graph_h * s.frac);
+    s.graphics.fill(255, 0, 0);
+    s.graphics.ellipse(ox, -oy, 10, 10);
 
-    push();
-    fill(0);
+    s.graphics.push();
+    s.graphics.fill(0);
     let interval = y_units_market(maxCap-minCap);
-    let x = map(interval, 0, maxCap-minCap, 0, graph_w);
+    let x = map(interval, 0, maxCap-minCap, 0, s.graph_w);
     let mod = 1 - (minCap % interval) / interval;
-    for (let i = x * mod; i <= graph_w; i += x) {
-        stroke(0, 0, 0, 30);
-        line(i, -graph_h * f2, i, (1 - f2) * graph_h);
-        stroke(0);
-        line(i, 0, i, 5);
-        noStroke();
-        text(display_W_special(minCap + interval * i / x, interval), i, 0.5 * margin - 3);
+    for (let i = x * mod; i <= s.graph_w; i += x) {
+        s.graphics.stroke(0, 0, 0, 30);
+        s.graphics.line(i, -s.graph_h * s.frac, i, (1 - s.frac) * s.graph_h);
+        s.graphics.stroke(0);
+        s.graphics.line(i, 0, i, 5);
+        s.graphics.noStroke();
+        s.graphics.text(display_W_special(minCap + interval * i / x, interval), i, 0.26 * margin);
     }
-    pop();
+    s.graphics.pop();
 }
 
-function sum_arr(arr) {
-    return arr.reduce((a, b) => a + b, 0);
-
-}
-
-function generate_temporal_graph(raw_chart_data) {
-    Object.keys(raw_chart_data).forEach((key) => {
-        Object.keys(raw_chart_data[key]).forEach((subkey) => {
-            data[key][subkey] = reduce(raw_chart_data[key][subkey], res);
-        });
-    });
-
-    data_len = data["network_data"]["price"].length;
-    min = {
-        price: Math.min(0, ...data["network_data"]["price"]),
-        quantity: 0,
-    };
-    max = {
-        price: Math.max(...data["network_data"]["price"], -min["price"]),
-        quantity: Math.max(...data["network_data"]["quantity"]),
-    };
-    f1 = max["price"] / (max["price"] - min["price"]);
-
-    push();
-    translate(2 * margin, (s1+s2) * height);
-    noStroke();
-    generate_export_import_graph();
-    if(price_mode != "off"){
-        generate_price_curve(f1);
-    }
-    
-    stroke(0);
-    line(0, 0, graph_w, 0);
-    line(0, 0, 0, -s2 * height);
-    line(graph_w, 0, graph_w, -s2 * height);
-
-    push();
-    let units = time_unit(res, clock_time);
-    fill(0);
-    for (let i = 0; i < units.length; i++) {
-        stroke(0, 0, 0, 30);
-        let x = (i * graph_w) / (units.length - 1);
-        line(x, -s2 * height, x, 0);
-        stroke(0);
-        line(x, 0, x, 5);
-        noStroke();
-        text(units[i], x, 0.5 * margin - 3);
-    }
-    pop();
-
-    if (price_mode != "off") {
-        push();
-        translate(0, -s2 * height * (1 - f1));
-        let y_ticks = y_units(max["price"]);
-        let interval2 = y_ticks[1];
-        fill(cols_and_names.price[0]);
-        let y2 = map(interval2, 0, max["price"], 0, s2 * height * f1);
-        textAlign(RIGHT, CENTER);
-        for (let i = 0; i < y_ticks.length; i++) {
-            stroke(cols_and_names.price[0]);
-            line(0, -y2 * i, -5, -y2 * i);
-            noStroke();
-            image(coin, -25, -y2 * i - 6, 12, 12);
-            text(display_money(y_ticks[i]), -28, -y2 * i - 3);
-        }
-        pop();
-    }
-
-    push();
-    let y_ticks3 = y_units(max["quantity"]);
-    let interval3 = y_ticks3[1];
-    fill(0);
-    let y3 = map(interval3, 0, max["quantity"], 0, s2 * height);
-    for (let i = 0; i < y_ticks3.length; i++) {
-        stroke(0, 0, 0, 30);
-        line(graph_w, -y3 * i, 0, -y3 * i);
-        stroke(0);
-        line(graph_w, -y3 * i, graph_w + 5, -y3 * i);
-        noStroke();
-        text(display_W(y_ticks3[i]), graph_w + 0.75 * margin, -y3 * i - 3);
-    }
-    pop();
-    pop();
-}
-
-function generate_export_import_graph() {
-    push();
-    for (let t = 0; t < data_len; t++) {
-        push();
-        for (const player_id in data[view]) {
-            if (data[view][player_id][t] > 0) {
-                fill(random_colors[player_id % random_colors.length]);
-                let h = (data[view][player_id][t] / max["quantity"]) * s2 * height;
-                rect(0, 0, graph_w / data_len + 1, -h - 1);
-                translate(0, -h);
-            }
-        }
-        pop();
-        translate(graph_w / data_len, 0);
-    }
-    pop();
-}
-
-function generate_price_curve(f1) {
-    price_curve = [...data.network_data.price];
-    if (price_mode == "smoothed") {
-        let window_size = 3;
-        price_curve = []
-        for (let t = 0; t < data_len; t++) {
-            let start = Math.max(0, t - window_size);
-            let end = Math.min(data_len - 1, t + window_size);
-            let sum = 0;
-            for (let i = start; i <= end; i++) {
-                sum += data.network_data.price[i];
-            }
-            price_curve[t] = sum / (end - start + 1);
-        }
-    }
-    push();
-    translate(0, -s2 * height * (1 - f1));
-    strokeWeight(3);
-    stroke(cols_and_names["price"][0]);
-    for (let t = 1; t < data_len; t++) {
-        let h1 = (price_curve[t - 1] / max["price"]) * s2 * height * f1;
-        let h2 = (price_curve[t] / max["price"]) * s2 * height * f1;
-        line(0, -h1, graph_w / data_len, -h2);
-        translate(graph_w / (data_len - 1), 0);
-    }
-    pop();
-}
-
-function display_buttons() {
-    let font_size_s = Math.min(18, 0.02 * graph_w);
-    let font_size_m = Math.min(20, 0.025 * graph_w);
-    let button_size_s = Math.min(120, 0.13 * graph_w);
-    let button_size_m = graph_w / resolution_list.length;
-
-    push();
-    translate(2 * margin + 0.5 * button_size_m, (s1+s2+0.62*s3) * height);
-    display_button_background(res==resolution_list[0], "left", button_size_m, resolution_list[0], font_size_m);
-    for(let i = 1; i < resolution_list.length - 1; i++){
-        translate(button_size_m, 0);
-        display_button_background(res==resolution_list[i], "rect", button_size_m, resolution_list[i], font_size_m);
-    }
-    translate(button_size_m, 0);
-    display_button_background(res==resolution_list[resolution_list.length - 1], "right", button_size_m, resolution_list[resolution_list.length - 1], font_size_m);
-    pop();
-
-    push();
-    translate(width - 2 * margin - 1.5 * button_size_s, (s1+s2+0.32*s3) * height);
-    display_button_background(view == "exports", "left", button_size_s, "exports", font_size_s);
-    translate(button_size_s, 0);
-    display_button_background(view == "imports", "right", button_size_s, "imports", font_size_s);
-    pop();
-
-    push();
-    translate(2 * margin + 0.5 * button_size_s, (s1+s2+0.32*s3) * height);
-    display_button_background(price_mode == "normal", "left", button_size_s, "normal", font_size_s);
-    translate(button_size_s, 0);
-    display_button_background(price_mode == "smoothed", "rect", button_size_s, "smoothed", font_size_s);
-    translate(button_size_s, 0);
-    display_button_background(price_mode == "off", "right", button_size_s, "off", font_size_s);
-    pop();
-
-    push();
-    translate(width - 2 * margin - 1.5 * button_size_s, height-20);
-    display_button_background(view_market == "supply", "left", button_size_s, "supply", font_size_s);
-    translate(button_size_s, 0);
-    display_button_background(view_market == "demand", "right", button_size_s, "demand", font_size_s);
-    pop();
-
-    push();
-    translate(2 * margin + 0.5 * graph_w, height-20);
-    display_button_background(categorisation == "facility", "left", button_size_s, "facility", font_size_s);
-    translate(button_size_s, 0);
-    display_button_background(categorisation == "player", "right", button_size_s, "player", font_size_s);
-    pop();
-
-    push();
-    translate(2 * margin + 0.5 * button_size_s, height-20);
-    display_button_background(market_mode == "normal", "left", button_size_s, "normal", font_size_s);
-    translate(button_size_s, 0);
-    display_button_background(market_mode == "log", "rect", button_size_s, "log", font_size_s);
-    translate(button_size_s, 0);
-    display_button_background(market_mode == "zoom", "right", button_size_s, "zoom", font_size_s);
-    pop();
-}
-
-function display_W(energy) {
-    const units = [" W", " kW", " MW", " GW", " TW"];
-    return general_format(energy, units);
-}
-
-function display_W_special(energy, interval) {
-    const units = [" W", " kW", " MW", " GW", " TW"];
-    let unit_index = 0;
-    while (energy >= 10000 && unit_index < units.length - 1) {
-        energy /= 1000;
-        interval /= 1000;
-        unit_index += 1;
-    }
-    const decimalPlaces = (interval.toString().split(".")[1] || "").length;
-    return `${energy.toFixed(decimalPlaces).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
-        units[unit_index]
-    }`;
-}
-
-function display_money(price) {
-    const units = ["", "k", "M", "Md"];
-    return general_format(price, units);
-}
-
-function display_duration(ticks) {
-    let seconds = ticks * clock_time;
-    if (seconds == 0) {
-        return "now";
-    }
-
-    const months = Math.floor(seconds / 2592000);
-    seconds -= months * 2592000;
-    const days = Math.floor(seconds / 86400);
-    seconds -= days * 86400;
-    const hours = Math.floor(seconds / 3600);
-    seconds -= hours * 3600;
-    const minutes = Math.floor(seconds / 60);
-    seconds -= minutes * 60;
-
-    let duration = "t - ";
-    if (months > 0) {
-        duration += `${months}mo `;
-    }
-    if (days > 0) {
-        duration += `${days}d `;
-    }
-    if (hours > 0) {
-        duration += `${hours}h `;
-    }
-    if (minutes > 0) {
-        duration += `${minutes}m `;
-    }
-    if (seconds > 0) {
-        duration += `${seconds}s`;
-    }
-    return duration.trim();
-}
-
-function display_time(ticks) {
-    let seconds = ticks * clock_time;
-    if (seconds == 0) {
-        return "Now";
-    }
-    const days = Math.floor(seconds / 86400);
-    seconds -= days * 86400;
-    const hours = Math.floor(seconds / 3600);
-    seconds -= hours * 3600;
-    const minutes = Math.floor(seconds / 60);
-    seconds -= minutes * 60;
-
-    let duration = "";
-    if (days > 0) {
-        duration += `${days}days `;
-    }
-    if (hours > 0) {
-        duration += `${hours}h `;
-    }
-    if (minutes > 0) {
-        duration += `${minutes}min `;
-    }
-    if (seconds > 0) {
-        duration += `${seconds}s`;
-    }
-    duration += " ago";
-    return duration.trim();
-}
-
-function general_format(value, units) {
-    let unit_index = 0;
-    while (value >= 10000 && unit_index < units.length - 1) {
-        value /= 1000;
-        unit_index += 1;
-    }
-    return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
-        units[unit_index]
-    }`;
-}
-
-function alternate_fill() {
+function alternate_fill(s) {
     if (fill_alt == 1) {
         fill_alt = 0;
-        fill(214, 199, 154);
+        s.fill(214, 199, 154);
     } else {
         fill_alt = 1;
-        fill(229, 217, 182);
+        s.fill(229, 217, 182);
     }
 }
 
-function calc_h(price) {
+function calc_h(s, price) {
     if (price == null) {
-        return -2 * graph_h;
+        return -2 * s.graph_h;
     } else {
-        return map(price, 0, maxPrice, 0, -graph_h * f2);
+        return map(price, 0, maxPrice, 0, -s.graph_h * s.frac);
     }
 }
 
@@ -1279,35 +1940,21 @@ function time_unit(res, ct) {
     }
 }
 
-function y_units(maxNumber) {
-    let interval = Math.floor(maxNumber / 3);
+function y_units_bounded(height, minNumber, maxNumber, divisions=3) {
+    let interval = Math.floor((maxNumber - minNumber) / divisions);
     const orderOfMagnitude = Math.floor(Math.log10(interval));
     const firstDigit = Math.floor(interval / 10 ** orderOfMagnitude);
     interval = firstDigit * 10 ** orderOfMagnitude;
-    let values = [];
+    let values = {};
     for (let i = 0; i <= maxNumber; i += interval) {
-        values.push(i);
+        let h = map(i, minNumber, maxNumber, 0, height);
+        values[h] = i;
+    }
+    for (let i = -interval; i >= minNumber; i -= interval) {
+        let h = map(i, minNumber, maxNumber, 0, height);
+        values[h] = i;
     }
     return values;
-}
-
-function reduce(arr, res) {
-    if (res == resolution_list[0]) {
-        return arr[0].slice(-60);
-    }
-    if(res == resolution_list[1]){
-        return arr[0];
-    }
-    if(res == resolution_list[2]){
-        return arr[1];
-    }
-    if(res == resolution_list[3]){
-        return arr[2];
-    }
-    if(res == resolution_list[4]){
-        return arr[3];
-    }
-    return arr[4];
 }
 
 function y_units_market(maxNumber) {
@@ -1316,32 +1963,4 @@ function y_units_market(maxNumber) {
     const firstDigit = Math.floor(interval / 10 ** orderOfMagnitude);
     interval = firstDigit * 10 ** orderOfMagnitude;
     return interval;
-}
-
-function display_button_background(active, shape, size, txt, txt_size){
-    push();
-    noStroke();
-    rectMode(CENTER);
-    if (active) {
-        fill(209,189,141);
-    } else {
-        fill(189, 161, 100);
-    }
-    if (shape == "rect") {
-        rect(0, 0, size-3, 0.24*size);
-    }else if (shape == "right") {
-        rect(0, 0, size-3, 0.24*size, 0, 0.12*size, 0.12*size, 0);
-    }else if (shape == "left") {
-        rect(0, 0, size-3, 0.24*size, 0.12*size, 0, 0, 0.12*size);
-    }
-    fill(0);
-    textSize(txt_size);
-    textAlign(CENTER, CENTER);
-    noStroke();
-    if (graph_w < 600) {
-        text(txt, 0, -3);
-    } else {
-        text(txt, 0, -4);
-    }
-    pop();
 }

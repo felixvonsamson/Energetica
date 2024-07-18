@@ -15,16 +15,16 @@ class CapacityData:
     def __init__(self):
         self._data = {}
 
-    def update(self, player_id, facility):
+    def update(self, player, facility):
         """This function updates the capacity data of the player"""
         engine = current_app.config["engine"]
         if facility is None:
-            active_facilities = Active_facilities.query.filter_by(player_id=player_id).all()
+            active_facilities = Active_facilities.query.filter_by(player_id=player.id).all()
             unique_facilities = {af.facility for af in active_facilities}
             for uf in unique_facilities:
                 self.init_facility(engine, uf)
         else:
-            active_facilities = Active_facilities.query.filter_by(player_id=player_id, facility=facility).all()
+            active_facilities = Active_facilities.query.filter_by(player_id=player.id, facility=facility).all()
             if len(active_facilities) == 0 and facility in self._data:
                 del self._data[facility]
                 return
@@ -62,6 +62,21 @@ class CapacityData:
                 effective_values["extraction"] += base_data["extraction_rate"] * facility.capacity_multiplier
                 effective_values["power_use"] += base_data["base_power_consumption"] * facility.power_multiplier
                 effective_values["pollution"] += base_data["base_pollution"] * facility.efficiency_multiplier
+
+        if player.network is not None:
+            engine.data["network_capacities"][player.network.id].update_network(player.network)
+
+    def update_network(self, network):
+        """This function updates the capacity data of the network"""
+        engine = current_app.config["engine"]
+        self._data = {}
+        for player in network.members:
+            player_capacities = engine.data["player_capacities"][player.id].get_all()
+            for facility in player_capacities:
+                if "power" in player_capacities[facility]:
+                    if facility not in self._data:
+                        self._data[facility] = {"power": 0.0}
+                    self._data[facility]["power"] += player_capacities[facility]["power"]
 
     def init_facility(self, engine, facility):
         const_config = engine.const_config["assets"]
@@ -166,23 +181,25 @@ class CircularBufferNetwork:
             },
             "exports": {},
             "imports": {},
+            "generation": {},
+            "consumption": {},
         }
 
     def append_value(self, new_value):
         for category in self._data:
-            for player_id, value in new_value[category].items():
-                if player_id not in self._data[category]:
-                    self._data[category][player_id] = deque([0.0] * 360, maxlen=360)
-                self._data[category][player_id].append(value)
-            for player_id in self._data[category]:
-                if player_id not in new_value[category]:
-                    self._data[category][player_id].append(0.0)
+            for group, value in new_value[category].items():
+                if group not in self._data[category]:
+                    self._data[category][group] = deque([0.0] * 360, maxlen=360)
+                self._data[category][group].append(value)
+            for group in self._data[category]:
+                if group not in new_value[category]:
+                    self._data[category][group].append(0.0)
 
     def get_data(self, t=216):
         result = defaultdict(lambda: defaultdict(dict))
         for category in self._data:
-            for player_id, buffer in self._data[category].items():
-                result[category][player_id] = list(buffer)[-t:]
+            for group, buffer in self._data[category].items():
+                result[category][group] = list(buffer)[-t:]
         return result
 
 

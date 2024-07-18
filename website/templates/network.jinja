@@ -7,8 +7,7 @@
     {% set assets = data["assets"] %}
     {% set SCP = user.self_consumption_priority.split(',') %}
     <div class="flex-row huge title">
-        Network
-        {% if user.network %}: <b>{{ user.network.name }}</b>{% endif %}
+        Network{% if user.network %}:&nbsp;<b>{{ user.network.name }}</b>{% endif %}
         <div class="pine info_icon_container"
              onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
     </div>
@@ -64,12 +63,130 @@
         </div>
     {% else %}
         {% set caps = engine.data["player_capacities"][user.id] %}
-        <div id="market_graph" class="bone" style="padding:30px 0; margin:30px 0;"></div>
+
+        <div class="flex-center margin">
+            <button id="page_view_button_basic" class="graph_button graph_button_views left {% if user.graph_view == 'basic'%}selected{% endif %}" onclick="change_page_view('basic')">Basic view</button>
+            <button id="page_view_button_normal" class="graph_button graph_button_views {% if user.graph_view == 'normal'%}selected{% endif %}" onclick="change_page_view('normal')">Normal view</button>
+            <button id="page_view_button_expert" class="graph_button graph_button_views right {% if user.graph_view == 'expert'%}selected{% endif %}" onclick="change_page_view('expert')">Expert view</button>
+        </div>
+
+        <div id="import_overview_container">
+            <div class="flex-center bone large padding" style="margin-top:30px">Imports / Exports</div>
+            <div class="bone flex-center large">
+                <div class="flex-col" style="width:100%; margin-left:3em; justify-content:center;">
+                    <img src="{{ url_for('static', filename='images/icons/profile_circle.svg') }}" class="import_overview_circle_icon" alt="Profile icon"/>
+                    <div class="txt_pine">{{ user.username }}</div>
+                </div>
+                <div id="import_overview" style="margin-bottom:1.3em;"></div>
+                <div class="flex-col" style="width:100%; margin-right:3em; justify-content:center;">
+                    <img src="{{ url_for('static', filename='images/icons/network_circle.svg') }}" class="import_overview_circle_icon" alt="Network icon"/>
+                    <div class="txt_pine">{{ user.network.name }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="temporal_imports_container">
+            <div id="temporal_imports" class="bone flex-center"></div>
+            <div class="flex-space-between margin" style="flex-wrap:wrap;">
+                <div class="flex-center">
+                    <button id="smoothed_button_normal" class="graph_button small left selected" onclick="change_smoothed('normal')">normal</button>
+                    <button id="smoothed_button_smoothed" class="graph_button small right" onclick="change_smoothed('smoothed')">smoothed</button>
+                </div>
+            </div>
+            <div class="flex-center margin">
+                <button id="res_button_0" class="graph_button left selected" onclick="change_res(0)">30min</button>
+                <button id="res_button_1" class="graph_button" onclick="change_res(1)">3h</button>
+                <button id="res_button_2" class="graph_button" onclick="change_res(2)">18h</button>
+                <button id="res_button_3" class="graph_button" onclick="change_res(3)">4 days</button>
+                <button id="res_button_4" class="graph_button" onclick="change_res(4)">month</button>
+                <button id="res_button_5" class="graph_button right" onclick="change_res(5)">6 months</button>
+            </div>
+        </div>
+
+        <div class="flex-center bone large padding">Network Capacities</div>
+        <div id="network_capacities" class="bone flex-center" style="padding-bottom:30px"></div>
+
+        <div id="temporal_graph_container">
+            <div id="network_prices_headder" class="flex-center bone large padding">Network Prices</div>
+            <div id="temporal_graph" class="bone flex-center"></div>
+            <div class="flex-space-between margin" style="flex-wrap:wrap;">
+                <div class="flex-center">
+                    <button id="price_mode_button_normal" class="graph_button small left selected" onclick="change_smoothed('normal')">normal</button>
+                    <button id="price_mode_button_smoothed" class="graph_button small" onclick="change_smoothed('smoothed')">smoothed</button>
+                    <button id="price_mode_button_off" class="graph_button small right" onclick="change_smoothed('off')">off</button>
+                </div>
+                <div id="percent_buttons_container" class="flex-center">
+                    <button id="percent_button_normal" class="graph_button small left selected" onclick="change_percent('normal')">normal</button>
+                    <button id="percent_button_percent" class="graph_button small right" onclick="change_percent('percent')">percent</button>
+                </div>
+                <div id="categorisation_buttons_container" class="flex-center">
+                    <button id="categorisation_button_type" class="graph_button small left selected" onclick="change_categorisation('type')">type</button>
+                    <button id="categorisation_button_player" class="graph_button small right" onclick="change_categorisation('player')">player</button>
+                </div>
+                <div id="export_import_buttons_container" class="flex-center">
+                    <button id="export_import_button_exports" class="graph_button small left selected" onclick="change_export_import('exports')">exports</button>
+                    <button id="export_import_button_imports" class="graph_button small right" onclick="change_export_import('imports')">imports</button>
+                </div>
+            </div>
+            <div class="flex-center margin">
+                <button id="res_button_2_0" class="graph_button left selected" onclick="change_res(0)">30min</button>
+                <button id="res_button_2_1" class="graph_button" onclick="change_res(1)">3h</button>
+                <button id="res_button_2_2" class="graph_button" onclick="change_res(2)">18h</button>
+                <button id="res_button_2_3" class="graph_button" onclick="change_res(3)">4 days</button>
+                <button id="res_button_2_4" class="graph_button" onclick="change_res(4)">month</button>
+                <button id="res_button_2_5" class="graph_button right" onclick="change_res(5)">6 months</button>
+            </div>
+        </div>
+
+        <div id="market_chart_container">
+            <div class="flex-center bone large padding">Market:&nbsp; <span id="market_time">now</span></div>
+            <div id="market_chart" class="bone flex-center"></div>
+            <div class="flex-space-between margin" style="flex-wrap:wrap;">
+                <div class="flex-center">
+                    <button id="market_mode_button_normal" class="graph_button small left selected" onclick="change_market_mode('normal')">normal</button>
+                    <button id="market_mode_button_log" class="graph_button small" onclick="change_market_mode('log')">log</button>
+                    <button id="market_mode_button_zoom" class="graph_button small right" onclick="change_market_mode('zoom')">zoom</button>
+                </div>
+                <div class="flex-center">
+                    <button id="categorisation_market_button_facility" class="graph_button small selected left" onclick="change_categorisation_market('facility')">facility</button>
+                    <button id="categorisation_market_button_player" class="graph_button small right" onclick="change_categorisation_market('player')">player</button>
+                </div>
+                <div class="flex-center">
+                    <button id="market_view_button_supply" class="graph_button small selected left" onclick="change_market_view('supply')">supply</button>
+                    <button id="market_view_button_demand" class="graph_button small right" onclick="change_market_view('demand')">demand</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="market_offers_tables">
+            <div class="flex-col medium" style="margin-bottom:30px;">
+                <table id="offers_table" class="table bone margin txt_center">
+                    <tr>
+                        <th class="username_col" onclick="sortTable('offers_table', 'username_col')">Player</th>
+                        <th class="facility_col" onclick="sortTable('offers_table', 'facility_col')">Facility</th>
+                        <th class="price_col" onclick="sortTable('offers_table', 'price_col')">Price</th>
+                        <th class="quantity_col" onclick="sortTable('offers_table', 'quantity_col')">Capacity</th>
+                        <th class="sold_col" onclick="sortTable('offers_table', 'sold_col')">Sold</th>
+                    </tr>
+                </table>
+                <table id="bids_table" class="table bone margin txt_center">
+                    <tr>
+                        <th class="username_col" onclick="sortTable('bids_table', 'username_col')">Player</th>
+                        <th class="facility_col" onclick="sortTable('bids_table', 'facility_col')">Facility</th>
+                        <th class="price_col" onclick="sortTable('bids_table', 'price_col')">Price</th>
+                        <th class="quantity_col" onclick="sortTable('bids_table', 'quantity_col')">Capacity</th>
+                        <th class="sold_col" onclick="sortTable('bids_table', 'sold_col')">Satisfied</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        
         <form action="/api/leave_network"
               method="post"
               class="flex-row"
               style="justify-content:center">
-            <button type="submit" class="bone padding medium login-button">Leave Network</button>
+            <button type="submit" class="padding medium login-button">Leave Network</button>
         </form>
         <div class="flex-col medium">
             <table class="table bone margin">
@@ -359,6 +476,7 @@
     <script src="{{ url_for('static', filename='network/network_logic.js') }}"></script>
     <script>expand_menu('community')</script>
     {% if user.network != None %}
+        <script>server_saved_view = "{{user.graph_view}}";</script>
         <script src="{{ url_for('static', filename='network/market_graph.js') }}"></script>
         <script src="{{ url_for('static', filename='network/price_change.js') }}"></script>
     {% endif %}

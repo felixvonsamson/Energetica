@@ -1,7 +1,8 @@
 {
     "editor.formatOnSave": true,
     "files.associations": {
-        "*.jinja": "jinja-html"
+        "*.jinja": "jinja-html",
+        "*.js": "javascript"
     },
     "[jinja-html]": {
         "editor.wordWrapColumn": 120,
@@ -11,6 +12,10 @@
             80,
             120
         ]
+    },
+    "[javascript]": {
+        "editor.wordWrapColumn": 120,
+        "editor.rulers": [120]
     },
     "files.exclude": {
         "**/__pycache__": true

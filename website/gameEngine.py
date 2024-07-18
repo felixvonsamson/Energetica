@@ -116,6 +116,7 @@ class gameEngine(object):
         engine.data = {}
         # All data for the current day will be stored here :
         engine.data["player_capacities"] = {}
+        engine.data["network_capacities"] = {}
         engine.data["current_data"] = {}
         engine.data["network_data"] = {}
         engine.data["weather"] = WeatherData()

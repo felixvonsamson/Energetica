@@ -57,10 +57,10 @@ def init_table(user_id):
         pickle.dump(past_data, file)
 
 
-def add_player_to_data(engine, user_id):
-    engine.data["current_data"][user_id] = CircularBufferPlayer()
-    engine.data["player_capacities"][user_id] = CapacityData()
-    engine.data["player_capacities"][user_id].update(user_id, None)
+def add_player_to_data(engine, user):
+    engine.data["current_data"][user.id] = CircularBufferPlayer()
+    engine.data["player_capacities"][user.id] = CapacityData()
+    engine.data["player_capacities"][user.id].update(user, None)
 
 
 def data_init():
@@ -70,7 +70,6 @@ def data_init():
     return {
         "revenues": {
             "industry": init_array(),
-            "O&M_costs": init_array(),
             "exports": init_array(),
             "imports": init_array(),
             "dumping": init_array(),
@@ -149,10 +148,10 @@ def save_past_data_threaded(app, engine):
 
                 new_data = engine.data["network_data"][network.id].get_data()
                 for category in new_data:
-                    for player_id, buffer in new_data[category].items():
-                        if player_id not in past_data[category]:
-                            past_data[category][player_id] = [[0.0] * 360] * 5
-                        past_el_data = past_data[category][player_id]
+                    for group, buffer in new_data[category].items():
+                        if group not in past_data[category]:
+                            past_data[category][group] = [[0.0] * 360] * 5
+                        past_el_data = past_data[category][group]
                         reduce_resolution(past_el_data, np.array(buffer))
 
                 with open(
@@ -409,9 +408,9 @@ def add_asset(player_id, construction_id):
         db.session.add(new_facility)
         db.session.commit()
     if construction.family == "Technologies":
-        engine.data["player_capacities"][player.id].update(player.id, None)
+        engine.data["player_capacities"][player.id].update(player, None)
     else:
-        engine.data["player_capacities"][player.id].update(player.id, construction.name)
+        engine.data["player_capacities"][player.id].update(player, construction.name)
     engine.config.update_config_for_user(player.id)
 
 
@@ -477,7 +476,7 @@ def upgrade_facility(player, facility_id):
             return {"response": "notEnoughMoney"}
         player.money -= upgrade_cost
         apply_upgrade(facility)
-        engine.data["player_capacities"][player.id].update(player.id, facility.facility)
+        engine.data["player_capacities"][player.id].update(player, facility.facility)
         return {"response": "success", "money": player.money}
     else:
         return {"response": "notUpgradable"}
@@ -518,7 +517,7 @@ def remove_asset(player_id, facility, decommissioning=True):
         engine.log(f"The facility {construction_name} from {player.username} has been decommissioned.")
     else:
         engine.log(f"{player.username} dismanteled the facility {construction_name}.")
-    engine.data["player_capacities"][player.id].update(player.id, facility.facility)
+    engine.data["player_capacities"][player.id].update(player, facility.facility)
     engine.config.update_config_for_user(player.id)
     db.session.commit()
 
@@ -1079,6 +1078,8 @@ def add_message(player, message_text, chat_id):
     engine: gameEngine = current_app.config["engine"]
     if not chat_id:
         return {"response": "noChatID"}
+    if message_text.length == 0:
+        return {"response": "noMessage"}
     chat = Chat.query.filter_by(id=chat_id).first()
     # TODO: set a character / size limit on message size
     new_message = Message(
@@ -1131,7 +1132,7 @@ def confirm_location(engine, player, location):
     )
     db.session.add(steam_engine)
     db.session.commit()
-    add_player_to_data(engine, player.id)
+    add_player_to_data(engine, player)
     init_table(player.id)
     from website.api import websocket
 
@@ -1174,6 +1175,8 @@ def create_network(engine, player, name):
     network_path = f"instance/network_data/{new_network.id}"
     Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
     engine.data["network_data"][new_network.id] = CircularBufferNetwork()
+    engine.data["network_capacities"][new_network.id] = CapacityData()
+    engine.data["network_capacities"][new_network.id].update_network(new_network)
     past_data = data_init_network()
     Path(f"{network_path}").mkdir(parents=True, exist_ok=True)
     with open(f"{network_path}/time_series.pck", "wb") as file:
@@ -1193,6 +1196,8 @@ def data_init_network():
         },
         "exports": {},
         "imports": {},
+        "generation": {},
+        "consumption": {},
     }
 
 
