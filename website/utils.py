@@ -482,6 +482,15 @@ def upgrade_facility(player, facility_id):
         return {"response": "notUpgradable"}
 
 
+def upgrade_all_of_type(player, facility_id):
+    """this function is executed when a player upgrades all facilities of a certain type"""
+    facility_name = Active_facilities.query.get(facility_id).facility
+    facilities = Active_facilities.query.filter_by(player_id=player.id, facility=facility_name).all()
+    for facility in facilities:
+        upgrade_facility(player, facility.id)
+    return {"response": "success", "money": player.money}
+
+
 def dismantle_facility(player, facility_id):
     """this function is executed when a player dismantles a facility"""
     facility = Active_facilities.query.get(facility_id)
@@ -492,6 +501,15 @@ def dismantle_facility(player, facility_id):
     if player.money < cost:
         return {"response": "notEnoughMoney"}
     remove_asset(player.id, facility, decommissioning=False)
+    return {"response": "success", "money": player.money}
+
+
+def dismantle_all_of_type(player, facility_id):
+    """this function is executed when a player dismantles all facilities of a certain type"""
+    facility_name = Active_facilities.query.get(facility_id).facility
+    facilities = Active_facilities.query.filter_by(player_id=player.id, facility=facility_name).all()
+    for facility in facilities:
+        dismantle_facility(player, facility.id)
     return {"response": "success", "money": player.money}
 
 
