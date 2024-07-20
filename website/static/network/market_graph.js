@@ -718,8 +718,10 @@ function network_capacities_sketch(s){
         for(let facility in temporal_data.generation){
             let current_generation = temporal_data.generation[facility][resolution_list[0]][59];
             let angle = map(current_generation, 0, temporal_data.network_data.quantity[resolution_list[0]][59], 0, TWO_PI);
-            s.graphics.fill(cols_and_names[facility][0]);
-            s.graphics.arc(0, 0, s.graph_h, s.graph_h, cumul_angle, cumul_angle+angle);
+            if(angle > 0.001){
+                s.graphics.fill(cols_and_names[facility][0]);
+                s.graphics.arc(0, 0, s.graph_h, s.graph_h, cumul_angle, cumul_angle+angle);
+            }
             cumul_angle += angle;
         }
         s.graphics.noFill();
