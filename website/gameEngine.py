@@ -22,19 +22,19 @@ from .config import config, const_config
 
 # This is the engine object
 class gameEngine(object):
-    def __init__(engine, clock_time):
-        engine.clock_time = clock_time
-        engine.config = config
-        engine.const_config = const_config
-        engine.socketio = None
-        engine.clients = defaultdict(list)
-        engine.websocket_dict = {}
-        engine.console_logger = logging.getLogger("console")  # logs events in the terminal
-        engine.action_logger = logging.getLogger("action_history")  # logs all called functions to a file
-        engine.init_loggers()
-        engine.log("engine created")
+    def __init__(self, clock_time):
+        self.clock_time = clock_time
+        self.config = config
+        self.const_config = const_config
+        self.socketio = None
+        self.clients = defaultdict(list)
+        self.websocket_dict = {}
+        self.console_logger = logging.getLogger("console")  # logs events in the terminal
+        self.action_logger = logging.getLogger("action_history")  # logs all called functions to a file
+        self.init_loggers()
+        self.log("engine created")
 
-        engine.power_facilities = [
+        self.power_facilities = [
             "steam_engine",
             "windmill",
             "watermill",
@@ -52,15 +52,15 @@ class gameEngine(object):
             "nuclear_reactor_gen4",
         ]
 
-        engine.extraction_facilities = [
+        self.extraction_facilities = [
             "coal_mine",
             "oil_field",
             "gas_drilling_site",
             "uranium_mine",
         ]
 
-        engine.extractable_resources = ["coal", "oil", "gas", "uranium"]
-        engine.storage_facilities = [
+        self.extractable_resources = ["coal", "oil", "gas", "uranium"]
+        self.storage_facilities = [
             "small_pumped_hydro",
             "compressed_air",
             "molten_salt",
@@ -70,7 +70,7 @@ class gameEngine(object):
             "solid_state_batteries",
         ]
 
-        engine.controllable_facilities = [
+        self.controllable_facilities = [
             "steam_engine",
             "nuclear_reactor",
             "nuclear_reactor_gen4",
@@ -80,7 +80,7 @@ class gameEngine(object):
             "coal_burner",
         ]
 
-        engine.renewables = [
+        self.renewables = [
             "small_water_dam",
             "large_water_dam",
             "watermill",
@@ -91,14 +91,14 @@ class gameEngine(object):
             "PV_solar",
         ]
 
-        engine.functional_facilities = [
+        self.functional_facilities = [
             "industry",
             "laboratory",
             "warehouse",
             "carbon_capture",
         ]
 
-        engine.technologies = [
+        self.technologies = [
             "mathematics",
             "mechanical_engineering",
             "thermodynamics",
@@ -113,28 +113,28 @@ class gameEngine(object):
             "nuclear_engineering",
         ]
 
-        engine.data = {}
+        self.data = {}
         # All data for the current day will be stored here :
-        engine.data["player_capacities"] = {}
-        engine.data["network_capacities"] = {}
-        engine.data["current_data"] = {}
-        engine.data["network_data"] = {}
-        engine.data["weather"] = WeatherData()
-        engine.data["emissions"] = EmissionData()
-        engine.data["total_t"] = 0
-        engine.data["start_date"] = datetime.today()
+        self.data["player_capacities"] = {}
+        self.data["network_capacities"] = {}
+        self.data["current_data"] = {}
+        self.data["network_data"] = {}
+        self.data["weather"] = WeatherData()
+        self.data["emissions"] = EmissionData()
+        self.data["total_t"] = 0  # Number of simulated game ticks since server start
+        self.data["start_date"] = datetime.today()
         # 0 point of server time
         start_day = datetime(
-            engine.data["start_date"].year,
-            engine.data["start_date"].month,
-            engine.data["start_date"].day,
+            self.data["start_date"].year,
+            self.data["start_date"].month,
+            self.data["start_date"].day,
         )
-        engine.data["delta_t"] = round((engine.data["start_date"] - start_day).total_seconds() // engine.clock_time)
+        self.data["delta_t"] = round((self.data["start_date"] - start_day).total_seconds() // self.clock_time)
         # time shift for daily industry variation
 
         # stored the levels of technology of the server
         # for each tech an array stores [# players with lvl 1, # players with lvl 2, ...]
-        engine.data["technology_lvls"] = {
+        self.data["technology_lvls"] = {
             "mathematics": [0],
             "mechanical_engineering": [0],
             "thermodynamics": [0],
@@ -150,32 +150,32 @@ class gameEngine(object):
         }
 
         with open("website/static/data/industry_demand.pck", "rb") as file:
-            engine.industry_demand = pickle.load(
+            self.industry_demand = pickle.load(
                 file
             )  # array of length 1440 of normalized daily industry demand variations
         with open("website/static/data/industry_demand_year.pck", "rb") as file:
-            engine.industry_seasonal = pickle.load(
+            self.industry_seasonal = pickle.load(
                 file
             )  # array of length 51 of normalized yearly industry demand variations
 
-        engine.data["weather"].update_weather(engine)
+        self.data["weather"].update_weather(self)
 
-    def init_loggers(engine):
-        engine.console_logger.setLevel(logging.INFO)
+    def init_loggers(self):
+        self.console_logger.setLevel(logging.INFO)
         s_handler = logging.StreamHandler()
         s_handler.setLevel(logging.INFO)
         console_format = logging.Formatter("%(asctime)s : %(message)s", datefmt="%H:%M:%S")
         s_handler.setFormatter(console_format)
-        engine.console_logger.addHandler(s_handler)
+        self.console_logger.addHandler(s_handler)
 
-        engine.action_logger.setLevel(logging.INFO)
+        self.action_logger.setLevel(logging.INFO)
         f_handler = logging.FileHandler("instance/actions_history.log")
         f_handler.setLevel(logging.INFO)
-        engine.action_logger.addHandler(f_handler)
+        self.action_logger.addHandler(f_handler)
 
     # reload page for all users
-    def refresh(engine):
-        engine.socketio.emit("refresh")
+    def refresh(self):
+        self.socketio.emit("refresh")
 
     def display_new_message(self, message, chat):
         """Sends chat message to all relevant sources through socketio and websocket"""
@@ -195,11 +195,11 @@ class gameEngine(object):
             websocket.rest_notify_player(self, player, websocket_message)
 
     # logs a message with the current time in the terminal
-    def log(engine, message):
-        engine.console_logger.info(message)
+    def log(self, message):
+        self.console_logger.info(message)
 
-    def warn(engine, message):
-        engine.console_logger.warn(message)
+    def warn(self, message):
+        self.console_logger.warning(message)
 
     def package_global_data(self):
         """This method packages mutable global engine data as a dict to be sent and used on the frontend"""
@@ -231,7 +231,7 @@ def state_update(engine, app):
             }
             engine.action_logger.info(json.dumps(log_entry))
             update_electricity(engine=engine)
-            check_finished_constructions(engine, app)
+            check_finished_constructions(engine)
 
     # save engine every minute in case of server crash
     if engine.data["total_t"] % (60 / engine.clock_time) == 0:
@@ -246,7 +246,7 @@ def state_update(engine, app):
         websocket.rest_notify_global_data(engine)
 
 
-def check_finished_constructions(engine, app):
+def check_finished_constructions(engine):
     """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
     # check if constructions finished
     finished_constructions = Under_construction.query.filter(
