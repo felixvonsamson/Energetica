@@ -8,4 +8,8 @@ flask-httpauth
 eventlet
 requests
 pandas
+<<<<<<< HEAD
 Werkzeug==3.0.*
+=======
+Werkzeug>=3.0.3
+>>>>>>> main
