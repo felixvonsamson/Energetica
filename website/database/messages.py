@@ -12,9 +12,6 @@ class Chat(db.Model):
     name = db.Column(db.String(50))
     messages = db.relationship("Message", backref="chat", lazy="dynamic")
 
-    def is_groupchat(self):
-        return self.participants.count() > 2
-
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -22,6 +19,14 @@ class Message(db.Model):
     time = db.Column(db.DateTime)
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
     chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"))
+
+    def package(self):
+        return {
+            "id": self.id,
+            "text": self.text,
+            "date": self.time.timestamp(),
+            "player_id": self.player_id,
+        }
 
 
 class Notification(db.Model):

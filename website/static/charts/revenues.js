@@ -1,268 +1,427 @@
-const keys_revenues = [
-    "industry",
-    "exports",
+// displayed in the graph
+const keys_revenues = {
+    "industry": true,
+    "exports": true,
     // O&M costs
-    "watermill",
-    "small_water_dam",
-    "large_water_dam",
-    "nuclear_reactor",
-    "nuclear_reactor_gen4",
-    "steam_engine",
-    "coal_burner",
-    "oil_burner",
-    "gas_burner",
-    "combined_cycle",
-    "windmill",
-    "onshore_wind_turbine",
-    "offshore_wind_turbine",
-    "CSP_solar",
-    "PV_solar",
-    "small_pumped_hydro",
-    "large_pumped_hydro",
-    "lithium_ion_batteries",
-    "solid_state_batteries",
-    "compressed_air",
-    "molten_salt",
-    "hydrogen_storage",
-    "coal_mine",
-    "oil_field",
-    "gas_drilling_site",
-    "uranium_mine",
+    "watermill": true,
+    "small_water_dam": true,
+    "large_water_dam": true,
+    "nuclear_reactor": true,
+    "nuclear_reactor_gen4": true,
+    "steam_engine": true,
+    "coal_burner": true,
+    "oil_burner": true,
+    "gas_burner": true,
+    "combined_cycle": true,
+    "windmill": true,
+    "onshore_wind_turbine": true,
+    "offshore_wind_turbine": true,
+    "CSP_solar": true,
+    "PV_solar": true,
+    "small_pumped_hydro": true,
+    "large_pumped_hydro": true,
+    "lithium_ion_batteries": true,
+    "solid_state_batteries": true,
+    "compressed_air": true,
+    "molten_salt": true,
+    "hydrogen_storage": true,
+    "coal_mine": true,
+    "oil_field": true,
+    "gas_drilling_site": true,
+    "uranium_mine": true,
 
-    "imports",
-    "dumping",
-];
+    "imports": true,
+    "dumping": true,
+};
 
-function draw() {
-    if (graph) {
-        push();
-        fill_alt = 1;
-        image(graph, 0, 0);
-        translate(0, 10);
-        push();
-        stroke(255);
-        strokeWeight(2);
-        let X = min(graph_w, max(0, mouseX - 2 * margin));
-        let t = floor(map(X, 0, graph_w, 0, data_len));
-        X += 2 * margin;
-        if (t == data_len) {
-            t = data_len - 1;
-        }
-        line(X, 0, X, graph_h);
-        noStroke();
-        translate(X, graph_h * f);
-        let lines = 1;
-        let h_max = 0;
-        let total_power = 0;
-        push();
-        for (const key of keys_revenues) {
-            if (key in data){
-                if (data[key][t]*3600/clock_time < -1) {
-                    let h = (-data[key][t] / maxSum) * graph_h * f;
-                    ellipse(0, h, 8, 8);
-                    translate(0, h);
-                    lines += 1;
-                    h_max -= h;
-                    total_power += data[key][t] * 3600/clock_time;
-                }
-            }
-        }
-        pop();
-        push();
-        for (const key of keys_revenues) {
-            if (key in data){
-                if (data[key][t]*3600/clock_time > 1) {
-                    let h = (-data[key][t] / maxSum) * graph_h * f;
-                    ellipse(0, h, 8, 8);
-                    translate(0, h);
-                    lines += 1;
-                    h_max -= h;
-                    total_power += data[key][t] * 3600/clock_time;
-                }
-            }
-        }
-        pop();
-        let tx = -180;
-        let ty = mouseY - graph_h * f - 10;
-        if (ty < -graph_h * f) {
-            ty = -graph_h * f;
-        } else if (ty > graph_h * (1 - f) - lines * 16 - 16) {
-            ty = graph_h * (1 - f) - lines * 16 - 16;
-        }
-        if (t / data_len < 180 / graph_w) {
-            tx = 20;
-        }
-        translate(tx, ty);
-        alternate_fill();
-        fill_alt = 1 - (lines % 2);
-        rect(0, 0, 160, 17);
-        fill(0);
-        textFont(balooBold);
-        text(display_duration((data_len - t - 1) * res_to_factor[res]), 80, 5);
-        textFont(font);
-        translate(0, 16 * lines);
-        alternate_fill();
-        rect(0, 0, 160, 17);
-        fill(0);
-        textFont(balooBold);
-        text("TOTAL :", 40, 6);
-        display_coin(formatted_money(total_power), 160, 0);
-        textFont(font);
-        for (const key of keys_revenues) {
-            if (key in data){
-                if (data[key][t]*3600/clock_time < -1 | data[key][t]*3600/clock_time > 1) {
-                    alternate_fill();
-                    translate(0, -16);
-                    rect(0, 0, 160, 17);
-                    push();
-                    fill(cols_and_names[key][0]);
-                    rect(0, 0, 16, 17);
-                    pop();
-                    fill(0);
-                    textAlign(LEFT, CENTER);
-                    text(cols_and_names[key][1], 20, 5);
-                    textAlign(CENTER, CENTER);
-                    display_coin(display_money(data[key][t] * 3600/clock_time), 160, 0);
-                    fill(229, 217, 182);
-                }
-            }
-        }
-        pop();
-        pop();
+function graph_sketch(s){
+    s.setup = function() {
+        s.percent = "normal";
+        s.is_inside = false;
+        s.createCanvas(min(canvas_width, 1200), 0.55 * canvas_width);
+        s.noLoop();
+        s.textFont(font);
+        s.textAlign(CENTER, CENTER);
+        s.graphics = s.createGraphics(s.width, s.height);
+        s.graphics.textAlign(CENTER, CENTER);
+        s.graphics.textFont(font);
     }
-}
 
-function regen(res) {
-    load_chart_data()
-        .then((raw_data) => {
-            background(229, 217, 182);
-            Object.keys(raw_data["revenues"]).forEach((key) => {
-                data[key] = reduce(raw_data["revenues"][key], res);
-            });
-            Object.keys(raw_data["op_costs"]).forEach((key) => {
-                data[key] = reduce(raw_data["op_costs"][key], res);
-            });
-            data_len = data["industry"].length;
-            push();
-            noStroke();
-            const sums = Object.values(data).reduce(
-                (acc, arr) => {
-                    arr.forEach((value, i) => {
+    s.draw = function() {
+        if (s.graphics_ready) {
+            s.image(s.graphics, 0, 0);
+            if (s.is_inside) {
+                s.push();
+                s.stroke(255);
+                s.strokeWeight(2);
+                let X = min(s.graph_w, max(0, s.mouseX - margin));
+                t_view = floor(map(X, 0, s.graph_w, 0, data_len - 1));
+                t_view = min(359, t_view + s.t0);
+                s.translate(margin + X, s.graph_h*s.frac + 0.2 * margin);
+                s.line(0, s.graph_h*(1-s.frac), 0, -s.graph_h*s.frac);
+                s.noStroke();
+
+                let count = 2;
+
+                s.push();
+                let sum = {
+                    positive: s.upper_bound,
+                    negative: s.lower_bound,
+                };
+                if(s.percent == "percent"){
+                    const groups = Object.keys(data.revenues).concat(Object.keys(data.op_costs));
+                    sum = groups.reduce((acc, group) => {
+                        if(keys_revenues[group] === true){
+                            let value;
+                            if (group in data.revenues) {
+                                value = data.revenues[group][res_id][t_view];
+                            }else{
+                                value = data.op_costs[group][res_id][t_view];
+                            }
+                            if (value > 0) {
+                                acc.positive += value;
+                            }else{
+                                acc.negative += value;
+                            }
+                        }
+                        return acc;
+                    }, { positive: 0, negative: 0 });
+                }
+                s.push();
+                for (const group in keys_revenues) {
+                    let value = 0;
+                    if (group in data.revenues) {
+                        value = data.revenues[group][res_id][t_view];
+                    }
+                    if (value > 0 && keys_revenues[group]) {
+                        let h = -value * s.graph_h * s.frac / sum.positive;
+                        s.ellipse(0, h, 8, 8);
+                        s.translate(0, h);
+                        count += 1;
+                    }
+                }
+                s.pop();
+                for (const group in keys_revenues) {
+                    let value = 0;
+                    if (group in data.revenues) {
+                        value = data.revenues[group][res_id][t_view];
+                    }else if (group in data.op_costs) {
+                        value = data.op_costs[group][res_id][t_view];
+                    }
+                    if (value < 0 && keys_revenues[group]) {
+                        let h = value * s.graph_h * (1-s.frac) / sum.negative;
+                        s.ellipse(0, h, 8, 8);
+                        s.translate(0, h);
+                        count += 1;
+                    }
+                }
+                s.pop();
+
+                let tx = -190;
+                let ty = - 0.2 * margin - s.graph_h + s.mouseY;
+                if (ty > - count * 16) {
+                    ty = - count * 16;
+                }
+                if (X < 190) {
+                    tx = 20;
+                }
+                s.translate(tx, ty + (1-s.frac) * s.graph_h);
+                fill_alt = 0;
+                alternate_fill(s);
+                s.rect(0, 0, 170, 17);
+                s.fill(0);
+                s.textFont(balooBold);
+                s.text(display_duration_graphs((s.t0 + data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+                s.textFont(font);
+                s.translate(0, 16);
+                
+                let cumsum = 0;
+                for(const group of Object.keys(keys_revenues).reverse()){
+                    let value = 0;
+                    if (group in data.revenues) {
+                        value = data.revenues[group][res_id][t_view] * 3600 / clock_time;
+                    }else if (group in data.op_costs) {
+                        value = data.op_costs[group][res_id][t_view] * 3600 / clock_time;
+                    }
+                    if(value != 0 && keys_revenues[group]){
+                        cumsum += value;
+                        alternate_fill(s);
+                        s.rect(0, 0, 170, 17);
+                        s.push();
+                        s.fill(cols_and_names[group][0]);
+                        s.rect(0, 0, 16, 17);
+                        s.pop();
+                        s.fill(0);
+                        s.textAlign(LEFT, CENTER);
+                        s.text(cols_and_names[group][1], 20, 5);
+                        s.textAlign(CENTER, CENTER);
+                        display_coin(s, display_money(value, false, ""), 168, 0);
+                        s.translate(0, 16);
+                    }
+                }
+                alternate_fill(s);
+                s.rect(0, 0, 170, 17);
+                s.fill(0);
+                s.textFont(balooBold);
+                s.text("TOTAL :", 40, 5);
+                display_coin(s, display_money(cumsum, false, ""), 168, 0);
+                s.pop();
+            }
+        }
+    }
+
+    s.mouseMoved = function() {
+        if (s.mouseX>0 && s.mouseX<s.width && s.mouseY>0 && s.mouseY<s.height){
+            s.is_inside = true;
+            s.redraw();
+        }else{
+            if(s.is_inside){
+                s.is_inside = false;
+                s.redraw();
+            }
+        }
+    }
+
+    s.mouseDragged = function() {
+        s.mouseMoved();
+    }
+
+    s.render_graph = function(regen_table=true){
+        s.graph_h = s.height - margin;
+        s.graph_w = s.width - 2 * margin;
+        s.graphics.background(229, 217, 182);
+
+        data_len = 360;
+        s.t0 = 0;
+        if (res == resolution_list[0]){
+            data_len = 60;
+            s.t0 = 300;
+        }
+
+        const sums = Object.entries(data.revenues).concat(Object.entries(data.op_costs)).reduce(
+            (acc, [key, arr]) => {
+                // Skip summing if not displayed
+                if (keys_revenues[key] === true) {
+                    arr[res_id].slice(s.t0).forEach((value, i) => {
                         if (value > 0) {
                             acc.positive[i] = (acc.positive[i] || 0) + value;
                         } else if (value < 0) {
                             acc.negative[i] = (acc.negative[i] || 0) + value;
                         }
                     });
+                }
+                return acc;
+            },
+            { positive: [0], negative: [0] }
+        );
+
+        s.lower_bound = Math.min(...Object.values(sums.negative));
+        s.upper_bound = Math.max(...Object.values(sums.positive));
+        if (s.upper_bound == 0 && s.lower_bound == 0) {
+            s.upper_bound = 1;
+        }
+        s.frac = s.upper_bound / (s.upper_bound - s.lower_bound); // fraction of positive range in the graph
+
+        s.graphics.push();
+        s.graphics.translate(margin, 0.2 * margin + s.graph_h*s.frac);
+        s.graphics.noStroke();
+
+        s.graphics.push();
+        for (let t = s.t0; t < s.t0+data_len; t++) {
+            s.graphics.push();
+            let sum = {
+                upper: s.upper_bound,
+                lower: s.lower_bound,
+            };
+            if(s.percent == "percent"){
+                let sum_revenues = Object.keys(data.revenues).reduce((acc, group) => {
+                    let value = data.revenues[group][res_id][t];
+                    if(keys_revenues[group] === true && value != 0){
+                        if (value > 0){
+                            acc.positive += value;
+                        }else{
+                            acc.negative += value;
+                        }
+                    }
                     return acc;
-                },
-                { positive: [], negative: [] }
-            );
-            maxSum = Math.max(...Object.values(sums.positive));
-            minSum = Math.min(...Object.values(sums.negative));
-            if (maxSum == 0) {
-                maxSum = 100;
-            }
-            f = maxSum / (maxSum - minSum);
-            translate(2 * margin, height - 2 * margin - 10 - graph_h * (1 - f));
-            push();
-            for (let t = 0; t < data_len; t++) {
-                push();
-                for (const key of keys_revenues) {
-                    if (key in data){
-                        if (data[key][t]*3600/clock_time > 1) {
-                            fill(cols_and_names[key][0]);
-                            let h = (data[key][t] / maxSum) * graph_h * f;
-                            rect(0, 0, graph_w / data_len + 1, -h);
-                            translate(0, -h);
-                        }
+                }, { positive: 0, negative: 0 });
+                let sum_costs = Object.keys(data.op_costs).reduce((acc, group) => {
+                    let value = data.op_costs[group][res_id][t];
+                    if(keys_revenues[group] === true && value != 0){
+                        acc += value;
                     }
+                    return acc;
+                }, 0);
+                sum.upper = sum_revenues.positive;
+                sum.lower = sum_revenues.negative + sum_costs;
+            }
+            s.graphics.push();
+            for (const group in keys_revenues) {
+                let value;
+                if (group in data.revenues) {
+                    value = data.revenues[group][res_id][t];
+                }else{
+                    continue;
                 }
-                pop();
-                push();
-                for (const key of keys_revenues) {
-                    if (key in data){
-                        if (data[key][t]*3600/clock_time < -1) {
-                            fill(cols_and_names[key][0]);
-                            let h = (data[key][t] / maxSum) * graph_h * f;
-                            rect(0, 0, graph_w / data_len + 1, -h);
-                            translate(0, -h);
-                        }
-                    }
+                if (value > 0 && keys_revenues[group]) {
+                    s.graphics.fill(cols_and_names[group][0]);
+                    let h = value * s.graph_h * s.frac / sum.upper;
+                    s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
+                    s.graphics.translate(0, -h);
                 }
-                pop();
-                translate(graph_w / data_len, 0);
             }
-            pop();
-            stroke(0);
-            line(0, 0, graph_w, 0);
-            line(0, graph_h * (1 - f), 0, -graph_h * f);
+            s.graphics.pop();
+            for (const group in keys_revenues) {
+                let value;
+                if (group in data.revenues) {
+                    value = data.revenues[group][res_id][t];
+                }else if (group in data.op_costs) {
+                    value = data.op_costs[group][res_id][t];
+                }else{
+                    continue;
+                }
+                if (value < 0 && keys_revenues[group]) {
+                    s.graphics.fill(cols_and_names[group][0]);
+                    let h = value * s.graph_h * (1-s.frac) / sum.lower;
+                    s.graphics.rect(0, 0, s.graph_w / data_len + 1, h + 1);
+                    s.graphics.translate(0, h);
+                }
+            }
+            s.graphics.pop();
+            s.graphics.translate(s.graph_w / data_len, 0);
+        }
+        s.graphics.pop();
 
-            push();
-            let units = time_unit(res, clock_time);
-            fill(0);
-            for (let i = 1; i < units.length; i++) {
-                stroke(0, 0, 0, 30);
-                let x = (i * graph_w) / (units.length - 1);
-                line(x, -graph_h, x, 0);
-                stroke(0);
-                line(x, 0, x, 5);
-                noStroke();
-                text(units[i], x, 0.3 * margin);
-            }
-            pop();
+        s.graphics.stroke(0);
+        s.graphics.line(0, 0, s.graph_w, 0);
+        s.graphics.line(0, s.graph_h*(1-s.frac), 0, -s.graph_h*s.frac);
 
-            push();
-            let y_ticks = y_units(maxSum * 3600/clock_time);
-            let interval = y_ticks[1];
-            fill(0);
-            let y = map(interval, 0, maxSum * 3600/clock_time, 0, graph_h * f);
-            for (let i = 0; i <= graph_h * f; i += y) {
-                stroke(0, 0, 0, 30);
-                line(graph_w, -i, 0, -i);
-                stroke(0);
-                line(0, -i, -5, -i);
-                noStroke();
-                display_coin(display_money((interval * i) / y), -8, -i - 10);
-            }
-            for (let i = -y; i >= -graph_h * (1 - f); i -= y) {
-                stroke(0, 0, 0, 30);
-                line(graph_w, -i, 0, -i);
-                stroke(0);
-                line(0, -i, -5, -i);
-                noStroke();
-                display_coin(display_money((interval * i) / y), -8, -i - 10);
-            }
-            pop();
-            pop();
+        s.graphics.push();
+        let units = time_unit(res, clock_time);
+        s.graphics.fill(0);
+        for (let i = 0; i < units.length; i++) {
+            s.graphics.stroke(0, 0, 0, 30);
+            let x = (i * s.graph_w) / (units.length - 1);
+            s.graphics.line(x, -s.graph_h*s.frac, x, s.graph_h*(1-s.frac));
+            s.graphics.stroke(0);
+            s.graphics.line(x, 0, x, 5);
+            s.graphics.noStroke();
+            s.graphics.text(units[i], x, 0.26 * margin);
+        }
+        s.graphics.pop();
 
-            for (let i = 0; i < buttons.length; i++) {
-                push();
-                translate(
-                    1.5 * margin + (i * graph_w) / buttons.length,
-                    height - margin - 10
-                );
-                buttons[i].display_button();
-                pop();
+        s.graphics.push();
+        if(s.percent == "percent"){
+            s.lower_bound = s.lower_bound / s.upper_bound * 100;
+            s.upper_bound = 100;
+        }
+        let y_ticks3 = y_units_bounded(s.graph_h, s.lower_bound, s.upper_bound, divisions=4);
+        s.graphics.translate(0, s.graph_h*(1-s.frac));
+        s.graphics.fill(0);
+        for (let i in y_ticks3) {
+            s.graphics.stroke(0, 0, 0, 30);
+            s.graphics.line(s.graph_w, -i, 0, -i);
+            s.graphics.stroke(0);
+            s.graphics.line(-5, -i, 0, -i);
+            s.graphics.noStroke();
+            if(s.percent == "percent"){
+                s.graphics.text(y_ticks3[i] + "%", -0.5 * margin, -i + 3);
+            }else{
+                display_coin(s.graphics, display_money(y_ticks3[i]*3600/clock_time, false, ""), -8, -i - 8);
             }
+        }
+        s.graphics.pop();
 
-            graph = get();
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-        });
+        s.graphics.pop();
+
+        s.graphics_ready = true;
+        s.redraw();
+        if(regen_table){
+            sortTable(sort_by, reorder=false)
+        }
+    } 
 }
 
-function display_coin(money, x, y) {
-    push();
-    textAlign(RIGHT, CENTER);
-    text(money, x - 29, y + 6);
-    image(coin, x - 26, y + 2, 12, 12);
-    text("/h", x - 3, y + 6);
-    pop();
+function display_coin(s, money, x, y) {
+    s.push();
+    s.textAlign(RIGHT, CENTER);
+    s.text(money, x - 29, y + 6);
+    s.image(coin, x - 26, y + 2, 12, 12);
+    s.text("/h", x - 3, y + 6);
+    s.pop();
 }
 
-function calc_size() {
-    graph_h = height - 2 * margin - 20;
-    graph_w = width - 3 * margin;
+function sortTable(columnName, reorder=true) {
+    const table = document.getElementById("facilities_list");
+    let column = table.querySelector(`.${columnName}`);
+    sort_by = columnName;
+
+    if(reorder){
+        // Check if the column is already sorted, toggle sorting order accordingly
+        decending = !decending;
+    }
+
+    let triangle = ' <i class="fa fa-caret-up"></i>';
+    if(decending){
+        triangle = ' <i class="fa fa-caret-down"></i>';
+    }
+
+    table_content = transform_data();
+    // Sort the data based on the selected column
+    const sortedData = Object.entries(table_content).sort((a, b) => {
+        const aValue = a[1][columnName];
+        const bValue = b[1][columnName];
+
+        if (typeof aValue === "string" && typeof bValue === "string") {
+            return decending ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
+        } else {
+            return decending ? bValue - aValue : aValue - bValue;
+        }
+    });
+
+    // Rebuild the HTML table
+    let html = `<tr>
+        <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
+        <th class="usage_col" onclick="sortTable('usage_col')">Revenues</th>
+        <th class="selected_col">Displayed</th>
+    </tr>`;
+    for (const [id, facility] of sortedData) {
+        html += `<tr>
+            <td>${facility.facility_col}</td>
+            <td>${display_money(facility.usage_col, false)}</td>
+            <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}', ${!keys_revenues[facility.name]})" ${keys_revenues[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
+            </tr>`;
+    }
+    table.innerHTML = html;
+
+    // Update the sorting indicator
+    column = table.querySelector(`.${columnName}`);
+    column.innerHTML += triangle;
+
+    function transform_data(){
+        let transformed_data = [];
+        for (const key in data.revenues) {
+            transformed_data.push({
+                name: key,
+                facility_col: cols_and_names[key][1],
+                usage_col: data.revenues[key][0][359]*3600/clock_time,
+            })
+        }
+        for (const key in data.op_costs) {
+            transformed_data.push({
+                name: key,
+                facility_col: cols_and_names[key][1],
+                usage_col: data.op_costs[key][0][359]*3600/clock_time,
+            })
+        }
+        return transformed_data;
+    }
+}
+
+function toggle_displayed(name, state) {
+    keys_revenues[name] = state;
+    graph_p5.render_graph(regen_table=false);
+    setTimeout(() => {
+        sortTable(sort_by, false);
+    }, 500);
 }

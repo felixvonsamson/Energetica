@@ -17,28 +17,28 @@
     {% set warehouse_mult = engine.const_config.assets.warehouse["capacity_factor"] ** user.warehouse %}
     <div class="resource_container">
       <div class="resourceJauge-background hover_info">
-        <div class="resourceJauge coal" style="--width:{{user.coal / warehouse_cap.coal / warehouse_mult}}"></div>
+        <div class="resourceJauge color_coal" style="--width:{{user.coal / warehouse_cap.coal / warehouse_mult}}"></div>
         <div id="coal" class="resource" style="color:#666">
           <script>display_kg({{ user.coal }});</script>
         </div>
         <span class="popup_info small">Coal stock</span>
       </div>
       <div class="resourceJauge-background hover_info">
-        <div class="resourceJauge oil" style="--width:{{user.oil / warehouse_cap.oil / warehouse_mult}}"></div>
+        <div class="resourceJauge color_oil" style="--width:{{user.oil / warehouse_cap.oil / warehouse_mult}}"></div>
         <div id="oil" class="resource">
           <script>display_kg({{ user.oil }});</script>
         </div>
         <span class="popup_info small">Oil stock</span>
       </div>
       <div class="resourceJauge-background hover_info">
-        <div class="resourceJauge gas" style="--width:{{user.gas / warehouse_cap.gas / warehouse_mult}}"></div>
+        <div class="resourceJauge color_gas" style="--width:{{user.gas / warehouse_cap.gas / warehouse_mult}}"></div>
         <div id="gas" class="resource">
           <script>display_kg({{ user.gas }});</script>
         </div>
         <span class="popup_info small">Gas stock</span>
       </div>
       <div class="resourceJauge-background hover_info">
-        <div class="resourceJauge uranium" style="--width:{{user.uranium / warehouse_cap.uranium / warehouse_mult}}"></div>
+        <div class="resourceJauge color_uranium" style="--width:{{user.uranium / warehouse_cap.uranium / warehouse_mult}}"></div>
         <div id="uranium" class="resource">
           <script>display_kg({{ user.uranium }});</script>
         </div>
@@ -343,7 +343,7 @@
 <a id="changelog_button" class="white button padding-small margin-small medium changelog_button" href="{{ url_for('views.changelog') }}">
   <i class="fa fa-bullhorn"></i>&nbsp;Changelog
 </a>
-<div class="margin-small">beta 0.9.1 (14.06.2024)</div>
+<div class="margin-small">beta 0.9.2 (20.07.2024)</div>
 </div>
 <div id="main_container" class="main_container tan_green">
   {% block content %}

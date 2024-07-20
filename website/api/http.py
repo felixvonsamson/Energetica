@@ -189,6 +189,15 @@ def get_chart_data():
     )
 
 
+@http.route("/get_network_capacities", methods=["GET"])
+def get_network_capacities():
+    """gets the network capacities for the current player"""
+    if current_user.network is None:
+        return "", 404
+    network_capacities = g.engine.data["network_capacities"][current_user.network.id].get_all()
+    return jsonify(network_capacities)
+
+
 # Gets the data from the market for the market graph
 @http.route("/get_market_data", methods=["GET"])
 def get_market_data():
@@ -503,3 +512,11 @@ def new_message():
     chat_id = json["chat_id"]
     response = utils.add_message(current_user, message, chat_id)
     return response
+
+@http.route("change_graph_view", methods=["POST"])
+def change_graph_view():
+    """this endpoint is called when a player changes the view mode for the graphs (basic, normal, expert)"""
+    json = request.get_json()
+    view = json["view"]
+    current_user.change_graph_view(view)
+    return jsonify({"response": "success"})

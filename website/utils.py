@@ -57,10 +57,10 @@ def init_table(user_id):
         pickle.dump(past_data, file)
 
 
-def add_player_to_data(engine, user_id):
-    engine.data["current_data"][user_id] = CircularBufferPlayer()
-    engine.data["player_capacities"][user_id] = CapacityData()
-    engine.data["player_capacities"][user_id].update(user_id, None)
+def add_player_to_data(engine, user):
+    engine.data["current_data"][user.id] = CircularBufferPlayer()
+    engine.data["player_capacities"][user.id] = CapacityData()
+    engine.data["player_capacities"][user.id].update(user, None)
 
 
 def data_init():
@@ -70,7 +70,6 @@ def data_init():
     return {
         "revenues": {
             "industry": init_array(),
-            "O&M_costs": init_array(),
             "exports": init_array(),
             "imports": init_array(),
             "dumping": init_array(),
@@ -149,10 +148,10 @@ def save_past_data_threaded(app, engine):
 
                 new_data = engine.data["network_data"][network.id].get_data()
                 for category in new_data:
-                    for player_id, buffer in new_data[category].items():
-                        if player_id not in past_data[category]:
-                            past_data[category][player_id] = [[0.0] * 360] * 5
-                        past_el_data = past_data[category][player_id]
+                    for group, buffer in new_data[category].items():
+                        if group not in past_data[category]:
+                            past_data[category][group] = [[0.0] * 360] * 5
+                        past_el_data = past_data[category][group]
                         reduce_resolution(past_el_data, np.array(buffer))
 
                 with open(
@@ -409,9 +408,9 @@ def add_asset(player_id, construction_id):
         db.session.add(new_facility)
         db.session.commit()
     if construction.family == "Technologies":
-        engine.data["player_capacities"][player.id].update(player.id, None)
+        engine.data["player_capacities"][player.id].update(player, None)
     else:
-        engine.data["player_capacities"][player.id].update(player.id, construction.name)
+        engine.data["player_capacities"][player.id].update(player, construction.name)
     engine.config.update_config_for_user(player.id)
 
 
@@ -477,7 +476,7 @@ def upgrade_facility(player, facility_id):
             return {"response": "notEnoughMoney"}
         player.money -= upgrade_cost
         apply_upgrade(facility)
-        engine.data["player_capacities"][player.id].update(player.id, facility.facility)
+        engine.data["player_capacities"][player.id].update(player, facility.facility)
         return {"response": "success", "money": player.money}
     else:
         return {"response": "notUpgradable"}
@@ -518,7 +517,7 @@ def remove_asset(player_id, facility, decommissioning=True):
         engine.log(f"The facility {construction_name} from {player.username} has been decommissioned.")
     else:
         engine.log(f"{player.username} dismanteled the facility {construction_name}.")
-    engine.data["player_capacities"][player.id].update(player.id, facility.facility)
+    engine.data["player_capacities"][player.id].update(player, facility.facility)
     engine.config.update_config_for_user(player.id)
     db.session.commit()
 
@@ -989,15 +988,30 @@ def format_mass(mass):
 def hide_chat_disclaimer(player):
     player.show_disclamer = False
     db.session.commit()
+    from website.api import websocket
+
+    engine = current_app.config["engine"]
+    message = websocket.rest_get_show_chat_disclaimer(player)
+    websocket.rest_notify_player(engine, player, message)
 
 
 def create_chat(player, buddy_username):
     """creates a chat with 2 players"""
-    if buddy_username == player.username:
-        return {"response": "cannotChatWithYourself"}
+    # TODO: change web frontend to send ID's, then deprecate this function
     buddy = Player.query.filter_by(username=buddy_username).first()
     if buddy is None:
         return {"response": "usernameIsWrong"}
+    return create_chat_2(player, buddy.id)
+
+
+def create_chat_2(player, buddy_id):
+    """creates a chat with 2 players"""
+    buddy = Player.query.get(buddy_id)
+    if buddy is None:
+        # When create_chat calls create_chat_2, this branch is unreachable
+        return {"response": "buddyIDDoesNotExist"}
+    if buddy.id == player.id:
+        return {"response": "cannotChatWithYourself"}
     if check_existing_chats([player, buddy]):
         return {"response": "chatAlreadyExist"}
     new_chat = Chat(
@@ -1008,30 +1022,44 @@ def create_chat(player, buddy_username):
     db.session.commit()
     engine = current_app.config["engine"]
     engine.log(f"{player.username} created a chat with {buddy.username}")
+    from website.api import websocket
+
+    websocket.notify_new_chat(new_chat)
     return {"response": "success"}
 
 
 def create_group_chat(player, title, group):
     """creates a group chat"""
-    if len(title) == 0 or len(title) > 25:
+    # TODO: change web frontend to send ID's, then deprecate this function
+    participants = [Player.query.filter_by(username=username).first() for username in group]
+    participant_ids = [participant.id for participant in participants]
+    create_group_chat_2(player, chat_name=title, participant_ids=participant_ids)
+
+
+def create_group_chat_2(player, chat_name, participant_ids):
+    """creates a group chat"""
+    if len(chat_name) == 0 or len(chat_name) > 25:
         return {"response": "wrongTitleLength"}
-    groupMembers = [player]
-    for username in group:
-        new_member = Player.query.filter_by(username=username).first()
-        if new_member:
-            groupMembers.append(new_member)
-    if len(groupMembers) < 3:
+    participants = [player]
+    for participant_id in participant_ids:
+        participant = Player.query.get(participant_id)
+        if participant is not None:
+            participants.append(participant)
+    if len(participants) < 3:
         return {"response": "groupTooSmall"}
-    if check_existing_chats(groupMembers):
+    if check_existing_chats(participants):
         return {"response": "chatAlreadyExist"}
     new_chat = Chat(
-        name=title,
-        participants=groupMembers,
+        name=chat_name,
+        participants=participants,
     )
     db.session.add(new_chat)
     db.session.commit()
     engine = current_app.config["engine"]
-    engine.log(f"{player.username} created a group chat called {title} with {group}")
+    engine.log(f"{player.username} created a group chat called {chat_name} with {participants}")
+    from website.api import websocket
+
+    websocket.notify_new_chat(new_chat)
     return {"response": "success"}
 
 
@@ -1046,14 +1074,16 @@ def check_existing_chats(participants):
     return False
 
 
-def add_message(player, message, chat_id):
-    engine = current_app.config["engine"]
+def add_message(player, message_text, chat_id):
+    engine: gameEngine = current_app.config["engine"]
     if not chat_id:
         return {"response": "noChatID"}
+    if message_text.length == 0:
+        return {"response": "noMessage"}
     chat = Chat.query.filter_by(id=chat_id).first()
     # TODO: set a character / size limit on message size
     new_message = Message(
-        text=message,
+        text=message_text,
         time=datetime.now(),
         player_id=player.id,
         chat_id=chat.id,
@@ -1066,7 +1096,7 @@ def add_message(player, message, chat_id):
         player_read_message = PlayerUnreadMessages(player_id=participant.id, message_id=new_message.id)
         db.session.add(player_read_message)
     db.session.commit()
-    engine.display_new_message(new_message, chat.participants)
+    engine.display_new_message(new_message, chat)
     return {"response": "success"}
 
 
@@ -1102,7 +1132,7 @@ def confirm_location(engine, player, location):
     )
     db.session.add(steam_engine)
     db.session.commit()
-    add_player_to_data(engine, player.id)
+    add_player_to_data(engine, player)
     init_table(player.id)
     from website.api import websocket
 
@@ -1145,6 +1175,8 @@ def create_network(engine, player, name):
     network_path = f"instance/network_data/{new_network.id}"
     Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
     engine.data["network_data"][new_network.id] = CircularBufferNetwork()
+    engine.data["network_capacities"][new_network.id] = CapacityData()
+    engine.data["network_capacities"][new_network.id].update_network(new_network)
     past_data = data_init_network()
     Path(f"{network_path}").mkdir(parents=True, exist_ok=True)
     with open(f"{network_path}/time_series.pck", "wb") as file:
@@ -1164,6 +1196,8 @@ def data_init_network():
         },
         "exports": {},
         "imports": {},
+        "generation": {},
+        "consumption": {},
     }
 
 

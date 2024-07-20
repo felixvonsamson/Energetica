@@ -37,6 +37,8 @@ class Player(db.Model, UserMixin):
     messages = db.relationship("Message", backref="player")
     notifications = db.relationship("Notification", backref="players", lazy="dynamic")
 
+    graph_view = db.Column(db.String(10), default="basic")
+
     # resources :
     money = db.Column(db.Float, default=25000)  # default is 25000
     coal = db.Column(db.Float, default=0)
@@ -144,6 +146,10 @@ class Player(db.Model, UserMixin):
     shipments = db.relationship("Shipment", backref="player")
     active_facilities = db.relationship("Active_facilities", backref="player", lazy="dynamic")
 
+    def change_graph_view(self, view):
+        self.graph_view = view
+        db.session.commit()
+        
     def available_construction_workers(self):
         occupied_workers = (
             Under_construction.query.filter(Under_construction.player_id == self.id)
@@ -253,15 +259,12 @@ class Player(db.Model, UserMixin):
         return {
             chat.id: {
                 "id": chat.id,
+                "name": chat.name,  # can be None
                 "participants": list(map(lambda player: player.id, chat.participants)),
+                "older_messages_exist": chat.messages.count() > 20,
                 "messages": [
-                    {
-                        "id": message.id,
-                        "text": message.text,
-                        "date": message.time.timestamp(),
-                        "player_id": message.player_id,
-                    }
-                    for message in chat.messages.order_by(Message.time.desc()).limit(20).all()
+                    message.package()
+                    for message in reversed(chat.messages.order_by(Message.time.desc()).limit(20).all())
                 ],
             }
             for chat in self.chats
@@ -317,16 +320,21 @@ class Player(db.Model, UserMixin):
 
     def package(self):
         """Serialize select attributes of self to a dictionary"""
-        payload = {
-            "username": self.username,
-        }
-        if self.tile is not None:
-            payload["tile_id"] = self.tile.id
-        return payload
+        return (
+            {
+                "id": self.id,
+                "username": self.username,
+            }
+            | ({"network_id": self.network_id} if self.network_id is not None else {})
+            | ({"cell_id": self.tile.id} if self.tile is not None else {})
+        )
 
     @staticmethod
     def package_all():
-        return {player.id: player.package() for player in Player.query.all()}
+        from typing import List
+
+        players: List[Player] = Player.query.all()
+        return {player.id: player.package() for player in players}
 
     @staticmethod
     def package_scoreboard():

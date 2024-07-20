@@ -1,19 +1,18 @@
-let data = {};
-let buttons = [];
+let data;
+let data_len;
+let capacities;
 
-let margin = 40;
-let data_len = 360;
-let graph_h, graph_w;
-let maxSum;
-let graph;
+//styling variables
+let margin;
+let canvas_width;
 let fill_alt = 0;
 
-let resolution;
-let res;
+//resolution buttons
+let resolution_list;
 let res_to_factor;
+let res_id = 0;
 if (clock_time == 60){
-    resolution = ["1h", "6h", "36h", "9 days", "2 months", "year"];
-    res = "1h";
+    resolution_list = ["1h", "6h", "36h", "9 days", "2 months", "year"];
     res_to_factor = {
         "1h": 1,
         "6h": 1,
@@ -23,8 +22,7 @@ if (clock_time == 60){
         "year": 1296,
     };
 }else if(clock_time == 30){
-    resolution = ["30min", "3h", "18h", "4 days", "month", "6 months"];
-    res = "30min";
+    resolution_list = ["30min", "3h", "18h", "4 days", "month", "6 months"];
     res_to_factor = {
         "30min": 1,
         "3h": 1,
@@ -34,40 +32,23 @@ if (clock_time == 60){
         "6 months": 1296,
     };
 }else{
-    resolution = ["×1 (60)", "×1 (360)", "×6", "×36", "×216", "x1296"];
-    res = "×1 (60)";
+    resolution_list = ["×1 (60)", "×1 (360)", "×6", "×36", "×216", "x1296"];
     res_to_factor = {
         "×1 (60)": 1,
         "×1 (360)": 1,
-        "×6)": 6,
+        "×6": 6,
         "×36": 36,
         "×216": 216,
         "×1296": 1296,
     };
 }
+let res = resolution_list[res_id]; //current resolution
+
+//table variables 
+let decending = true;
+let sort_by = "usage_col";
 
 let cols_and_names = {};
-
-class Button {
-    constructor(resolution) {
-        this.res = resolution;
-        this.active = false;
-    }
-    display_button() {
-        push();
-        if (this.active) {
-            fill(220);
-        } else {
-            fill(180);
-        }
-        rect(0, 0, graph_w / resolution.length, margin);
-        fill(0);
-        textSize(20);
-        textAlign(CENTER, CENTER);
-        text(this.res, (0.5 * graph_w) / resolution.length, 0.5 * margin - 5);
-        pop();
-    }
-}
 
 function preload() {
     font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
@@ -75,10 +56,11 @@ function preload() {
     coin = loadImage("static/images/icons/coin.svg");
 }
 
-function setup() {
-    cols_and_names = {
-        "O&M_costs": [color(106, 4, 15), "O&M costs"],
+var graph_p5;
 
+function setup() {
+    noCanvas();
+    cols_and_names = {
         watermill: [color(0, 180, 216), "Watermill"],
         small_water_dam: [color(0, 119, 182), "Water dam (S)"],
         large_water_dam: [color(3, 4, 94), "Water dam (L)"],
@@ -122,60 +104,31 @@ function setup() {
         gas: [color(171, 196, 255), "Gas"],
         uranium: [color(191, 210, 0), "Uranium"],
     };
-    let canvas_width = 0.7 * windowWidth;
-    let canvas_height = 0.7 * ratio * windowWidth;
+
+    canvas_width = 0.7 * windowWidth;
     if (windowWidth < 1200) {
         canvas_width = windowWidth;
-        canvas_height = ratio * windowWidth;
     }
-    let canvas = createCanvas(min(canvas_width, 1200), min(canvas_height, ratio*1200));
-    margin = min(40, width / 25);
-    canvas.parent("graph");
-    textAlign(CENTER, CENTER);
-    textFont(font);
-    for (let i = 0; i < resolution.length; i++) {
-        buttons[i] = new Button(resolution[i]);
-    }
-    buttons[0].active = true;
-    update_graph();
-}
+    margin = min(70, canvas_width / 10);
 
-function update_graph() {
-    calc_size();
-    resetMatrix();
-    regen(res);
-}
-
-function mousePressed() {
-    if (
-        (mouseY > height - margin - 10) &
-        (mouseX > 1.5 * margin) &
-        (mouseX < graph_w + 1.5 * margin)
-    ) {
-        let i = floor(((mouseX - 1.5 * margin) * buttons.length) / graph_w);
-        for (let j = 0; j < buttons.length; j++) {
-            buttons[j].active = false;
-        }
-        buttons[i].active = true;
-        res = buttons[i].res;
-        update_graph();
-    }
+    graph_p5 = new p5(graph_sketch, "graph_sketch");
+    fetch_graph_data();
 }
 
 function reduce(arr, res) {
-    if (res == resolution[0]) {
+    if (res == resolution_list[0]) {
         return arr[0].slice(-60);
     }
-    if(res == resolution[1]){
+    if(res == resolution_list[1]){
         return arr[0];
     }
-    if(res == resolution[2]){
+    if(res == resolution_list[2]){
         return arr[1];
     }
-    if(res == resolution[3]){
+    if(res == resolution_list[3]){
         return arr[2];
     }
-    if(res == resolution[4]){
+    if(res == resolution_list[4]){
         return arr[3];
     }
     return arr[4];
@@ -227,102 +180,61 @@ function y_units(maxNumber) {
     return values;
 }
 
-function display_W(power) {
-    const units = [" W", " kW", " MW", " GW", " TW"];
-    return general_format(power, units);
+function y_units_bounded(height, minNumber, maxNumber, divisions=3) {
+    let interval = Math.floor((maxNumber - minNumber) / divisions);
+    const orderOfMagnitude = Math.floor(Math.log10(interval));
+    const firstDigit = Math.floor(interval / 10 ** orderOfMagnitude);
+    interval = firstDigit * 10 ** orderOfMagnitude;
+    let values = {};
+    for (let i = 0; i <= maxNumber; i += interval) {
+        let h = map(i, minNumber, maxNumber, 0, height);
+        values[h] = i;
+    }
+    for (let i = -interval; i >= minNumber; i -= interval) {
+        let h = map(i, minNumber, maxNumber, 0, height);
+        values[h] = i;
+    }
+    return values;
 }
 
-function display_Wh(energy) {
-    const units = [" Wh", " kWh", " MWh", " GWh", " TWh"];
-    return general_format(energy, units);
-}
-
-function display_kgh(mass_rate) {
-    const units = [" kg/h", " t/h"];
-    return general_format(mass_rate, units);
-}
-
-function display_kg(mass) {
-    const units = [" kg", " t", " kt", " Mt"];
-    return general_format(mass, units);
-}
-
-function display_money(amount) {
-    const units = ["", "k", "M"];
-    return general_format(amount, units);
-}
-
-function general_format(value, units, treshold = 10000) {
-    let unit_index = 0;
-    while (Math.abs(value) >= treshold && unit_index < units.length - 1) {
-        value /= 1000;
-        unit_index += 1;
-    }
-    return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
-        units[unit_index]
-    }`;
-}
-
-function display_duration(ticks) {
-    let seconds = ticks * clock_time;
-    if (seconds == 0) {
-        return "now";
-    }
-
-    const months = Math.floor(seconds / 2592000);
-    seconds -= months * 2592000;
-    const days = Math.floor(seconds / 86400);
-    seconds -= days * 86400;
-    const hours = Math.floor(seconds / 3600);
-    seconds -= hours * 3600;
-    const minutes = Math.floor(seconds / 60);
-    seconds -= minutes * 60;
-
-    let duration = "t - ";
-    if (months > 0) {
-        duration += `${months}mo `;
-    }
-    if (days > 0) {
-        duration += `${days}d `;
-    }
-    if (hours > 0) {
-        duration += `${hours}h `;
-    }
-    if (minutes > 0) {
-        duration += `${minutes}m `;
-    }
-    if (seconds > 0) {
-        duration += `${seconds}s`;
-    }
-    return duration.trim();
-}
-
-function alternate_fill() {
+function alternate_fill(s) {
     if (fill_alt == 1) {
         fill_alt = 0;
-        fill(214, 199, 154);
+        s.fill(214, 199, 154);
     } else {
         fill_alt = 1;
-        fill(229, 217, 182);
+        s.fill(229, 217, 182);
     }
 }
 
-function display_W_long(power) {
-    const units = [" W", " kW", " MW", " GW", " TW"];
-    return general_format(power, units, treshold = 50000);
+function fetch_graph_data(){
+    load_chart_data().then((raw_chart_data) => {
+        data = raw_chart_data;
+        graph_p5.render_graph();
+    }).catch((error) => {
+        console.error("Error:", error);
+    });
 }
 
-function display_Wh_long(energy) {
-    const units = [" Wh", " kWh", " MWh", " GWh", " TWh"];
-    return general_format(energy, units, treshold = 50000);
+function change_res(i){
+    show_selected_button("res_button_", i);
+    res_id = max(0, i-1);
+    res = resolution_list[i];
+    graph_p5.render_graph();
 }
 
-function display_kg_long(mass) {
-    const units = [" kg", " t", " kt", " Mt"];
-    return general_format(mass, units, treshold = 50000);
+function show_selected_button(button_id, id){
+    let buttons = document.getElementsByClassName("selected");
+    for (let i = 0; i < buttons.length; i++) {
+        if (buttons[i].id.includes(button_id)) {
+            buttons[i].classList.remove("selected");
+        }
+    }
+    document.getElementById(button_id + id).classList.add("selected");
 }
 
-function display_kgh_long(mass_rate) {
-    const units = [" kg/h", " t/h"];
-    return general_format(mass_rate, units, treshold = 50000);
+function change_percent(percent){
+    show_selected_button("percent_button_", percent)
+    graph_p5.percent = percent;
+    graph_p5.render_graph();
 }
