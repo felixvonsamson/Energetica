@@ -253,12 +253,12 @@ function import_overview_sketch(s){
             s.graphics.fill(0, 139, 0);
             s.graphics.text(display_W(abs(exports), false), 0.5*s.graph_h, -0.6*margin-5);
             s.graphics.fill(cols_and_names.exports[0]);
-            s.graphics.triangle(-0.5*arrow_w, 0, 0.5*arrow_w, arrow_w, 0.5*arrow_w, -arrow_w);
+            s.graphics.triangle(s.graph_h+0.5*arrow_w, 0, s.graph_h-0.5*arrow_w, arrow_w, s.graph_h-0.5*arrow_w, -arrow_w);
         }else{
             s.graphics.fill(139, 0, 0);
             s.graphics.text(display_W(abs(exports), false), 0.5*s.graph_h, -0.6*margin-5);
             s.graphics.fill(cols_and_names.imports[0]);
-            s.graphics.triangle(s.graph_h+0.5*arrow_w, 0, s.graph_h-0.5*arrow_w, arrow_w, s.graph_h-0.5*arrow_w, -arrow_w);
+            s.graphics.triangle(-0.5*arrow_w, 0, 0.5*arrow_w, arrow_w, 0.5*arrow_w, -arrow_w);
         }
         s.graphics.rect(0, -0.5*arrow_w, s.graph_h, arrow_w);
         s.graphics.translate(0, 1.4*margin);
