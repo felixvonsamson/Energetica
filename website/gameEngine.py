@@ -205,7 +205,8 @@ class gameEngine(object):
         """This method packages mutable global engine data as a dict to be sent and used on the frontend"""
         return {
             "start_date": self.data["start_date"].timestamp(),
-            "ticks": self.data["total_t"],
+            "clock_time": self.clock_time,
+            "current_tick": self.data["total_t"],
             "co2_emissions": self.data["emissions"]["CO2"],
         }
 

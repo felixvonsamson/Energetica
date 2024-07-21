@@ -149,7 +149,7 @@ class Player(db.Model, UserMixin):
     def change_graph_view(self, view):
         self.graph_view = view
         db.session.commit()
-        
+
     def available_construction_workers(self):
         occupied_workers = (
             Under_construction.query.filter(Under_construction.player_id == self.id)
@@ -356,6 +356,7 @@ class Player(db.Model, UserMixin):
         }
 
     def package_constructions(self):
+        """Packages the player's ongoing constructions"""
         return {
             construction.id: {
                 k: getattr(construction, k)
@@ -368,6 +369,7 @@ class Player(db.Model, UserMixin):
                     "suspension_time",
                 ]
             }
+            | {"display_name": current_app.config["engine"].const_config["assets"][construction.name]["name"]}
             for construction in self.under_construction
         }
 

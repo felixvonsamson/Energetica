@@ -12,8 +12,8 @@ class Under_construction(db.Model):
     name = db.Column(db.String(50))
     family = db.Column(db.String(50))
     # to assign the thing to the correct page
-    start_time = db.Column(db.Integer)
-    duration = db.Column(db.Integer)
+    start_time = db.Column(db.Integer)  # in game ticks
+    duration = db.Column(db.Integer)  # in game ticks
     # time at witch the construction has been paused if it has else None
     suspension_time = db.Column(db.Integer)
     # Power consumed and emissions produced by the construction
