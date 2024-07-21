@@ -325,9 +325,8 @@
                         {% if caps[power_facility] %}
                             <tr>
                                 <td>{{ const_config[power_facility].name }}</td>
-                                <td class="txt_center">
-                                    <script>display_W({{ caps[power_facility]["power"] }});</script>
-                                </td>
+                                <td class="txt_center"></td>
+                                <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ caps[power_facility].power }});</script>
                                 <td>
                                     <input type="number"
                                         class="small_input medium txt_center"
@@ -368,9 +367,8 @@
                         {% if caps[storage_facility] %}
                             <tr>
                                 <td>{{ const_config[storage_facility].name }}</td>
-                                <td class="txt_center">
-                                    <script>display_Wh({{ caps[storage_facility]["capacity"] }});</script>
-                                </td>
+                                <td class="txt_center"></td>
+                                <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ caps[power_facility].capacity }});</script>
                                 <td>
                                     <input type="number"
                                         class="small_input medium txt_center"

@@ -100,7 +100,7 @@ function graph_sketch(s){
                 s.rect(0, 0, 160, 17);
                 s.fill(0);
                 s.textFont(balooBold);
-                s.text(display_duration_graphs((s.t0 + data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+                s.text(format_duration_graphs((s.t0 + data_len - t_view - 1) * res_to_factor[res]), 80, 5);
                 s.textFont(font);
                 s.translate(0, 16);
                 
@@ -120,7 +120,7 @@ function graph_sketch(s){
                             s.textAlign(LEFT, CENTER);
                             s.text(cols_and_names[group][1], 20, 5);
                             s.textAlign(CENTER, CENTER);
-                            s.text(display_kgh(value, false), 132, 5);
+                            s.text(format_mass_rate(value), 132, 5);
                             s.translate(0, 16);
                         }
                     }
@@ -130,7 +130,7 @@ function graph_sketch(s){
                 s.fill(0);
                 s.textFont(balooBold);
                 s.text("TOTAL :", 40, 5);
-                s.text(display_kgh(cumsum, false, 50000), 120, 5);
+                s.text(format_mass_rate(cumsum, 50000), 120, 5);
                 s.pop();
             }
         }
@@ -269,7 +269,7 @@ function graph_sketch(s){
             if(s.percent == "percent"){
                 s.graphics.text(y_ticks3[i] + "%", -0.5 * margin, -i + 3);
             }else{
-                s.graphics.text(display_kgh(y_ticks3[i]*3600/clock_time, false), -0.5 * margin, -i - 3);
+                s.graphics.text(format_mass_rate(y_ticks3[i]*3600/clock_time), -0.5 * margin, -i - 3);
             }
         }
         s.graphics.pop();
@@ -320,7 +320,7 @@ function sortTable(columnName, reorder=true) {
     for (const [id, facility] of sortedData) {
         html += `<tr>
             <td>${facility.facility_col}</td>
-            <td>${display_kgh(facility.usage_col, false)}</td>
+            <td>${format_mass_rate(facility.usage_col)}</td>
             <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}', ${!keys_emissions[facility.name]})" ${keys_emissions[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
             </tr>`;
     }

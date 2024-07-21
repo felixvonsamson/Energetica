@@ -10,7 +10,8 @@
 <div class="topRight_info">
   <div class="resources medium tan_green">
     <div class="money_font large money">
-      <script>display_money_long({{ user.money }});</script>
+      <span id="money"></span>
+      <script>document.currentScript.previousElementSibling.innerHTML = format_money_long({{ user.money }});</script>
     </div>
     {% if user.warehouse > 0 %}
     {% set warehouse_cap = engine.const_config.warehouse_capacities %}
@@ -18,30 +19,26 @@
     <div class="resource_container">
       <div class="resourceJauge-background hover_info">
         <div class="resourceJauge color_coal" style="--width:{{user.coal / warehouse_cap.coal / warehouse_mult}}"></div>
-        <div id="coal" class="resource" style="color:#666">
-          <script>display_kg({{ user.coal }});</script>
-        </div>
+        <div id="coal" class="resource" style="color:#666"></div>
+        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.coal }});</script>
         <span class="popup_info small">Coal stock</span>
       </div>
       <div class="resourceJauge-background hover_info">
         <div class="resourceJauge color_oil" style="--width:{{user.oil / warehouse_cap.oil / warehouse_mult}}"></div>
-        <div id="oil" class="resource">
-          <script>display_kg({{ user.oil }});</script>
-        </div>
+        <div id="oil" class="resource"></div>
+        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.oil }});</script>
         <span class="popup_info small">Oil stock</span>
       </div>
       <div class="resourceJauge-background hover_info">
         <div class="resourceJauge color_gas" style="--width:{{user.gas / warehouse_cap.gas / warehouse_mult}}"></div>
-        <div id="gas" class="resource">
-          <script>display_kg({{ user.gas }});</script>
-        </div>
+        <div id="gas" class="resource"></div>
+        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.gas }});</script>
         <span class="popup_info small">Gas stock</span>
       </div>
       <div class="resourceJauge-background hover_info">
         <div class="resourceJauge color_uranium" style="--width:{{user.uranium / warehouse_cap.uranium / warehouse_mult}}"></div>
-        <div id="uranium" class="resource">
-          <script>display_kg({{ user.uranium }});</script>
-        </div>
+        <div id="uranium" class="resource"></div>
+        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.uranium }});</script>
         <span class="popup_info small">Uranium stock</span>
       </div>
     </div>
@@ -86,7 +83,8 @@
   <div id="notification_list" class="notification_list flex-grow-1">
   {% for notification in user.notifications %}
     <div id="notification_{{ notification.id }}" class="{% if notification.read %}read{% endif %} notification padding medium margin-large">
-     <div class="small notification_time"><script>formatDateTime("{{ notification.time }}");</script></div>
+     <div class="small notification_time"></div>
+     <script>document.currentScript.previousElementSibling.innerHTML = formatDateTime("{{ notification.time }}");</script>
       <div class="flex-row align-items-center notification_head">
         <b>{{ notification.title }}{% if not notification.read %}<i class="fa fa-circle small padding"></i>{% endif %}</b>
         <span onclick="delete_notification(this, {{ notification.id }});" class="cross">×</span>

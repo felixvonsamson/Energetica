@@ -460,13 +460,11 @@ def calculate_generation_with_market(engine, new_values, market, player):
     generation = new_values[player.id]["generation"]
     demand = new_values[player.id]["demand"]
 
-    excess_generation = 0
     renewables_generation(engine, player, player_cap, generation)
     minimal_generation(engine, player, player_cap, generation)
     facilities = engine.storage_facilities + engine.power_facilities
     for facility in facilities:
         if player_cap[facility] is not None:
-            excess_generation += generation[facility]
             market = offer(market, player.id, generation[facility], -5, facility)
 
     # bid demand on the market at the set prices
@@ -480,7 +478,7 @@ def calculate_generation_with_market(engine, new_values, market, player):
             price = getattr(player, "price_buy_" + demand_type)
             market = bid(market, player.id, bid_q, price, demand_type)
         else:
-            reduce_demand(engine, new_values, engine.data["current_data"][player.id], demand_type, player.id, 0)
+            reduce_demand(engine, new_values, engine.data["current_data"][player.id], demand_type, player.id, 0.0)
 
     # Sell capacities of remaining facilities on the market
     for facility in player.read_list("rest_of_priorities") + player.read_list("self_consumption_priority"):

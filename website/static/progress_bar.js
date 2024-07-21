@@ -89,7 +89,7 @@ function start_construction(facility, family, force = false) {
                 if (response == "success") {
                     let money = raw_data["money"];
                     var obj = document.getElementById("money");
-                    obj.innerHTML = formatted_money(money);
+                    obj.innerHTML = format_money_long(money);
                     addToast("Construction started");
                     sessionStorage.setItem(
                         "constructions",
@@ -127,7 +127,7 @@ function cancel_construction(construction_id, force = false) {
                 if (response == "success") {
                     let money = raw_data["money"];
                     var obj = document.getElementById("money");
-                    obj.innerHTML = formatted_money(money);
+                    obj.innerHTML = format_money_long(money);
                     addToast("Construction cancelled");
                     sessionStorage.setItem(
                         "constructions",
@@ -415,7 +415,7 @@ function html_for_shipmentBar(id, shipment) {
         playPauseLogo = "fa-play";
     }
     return `<div class="progressbar-container">
-        <div class="progressbar-name medium margin-small">${display_kg(shipment["quantity"], write = false)} ${resource_names[shipment["resource"]]}</div>
+        <div class="progressbar-name medium margin-small">${format_mass(shipment["quantity"])} ${resource_names[shipment["resource"]]}</div>
         <div class="progressbar-background">
             <div id="${id}" class="shipmentbar-bar"></div>
         </div>

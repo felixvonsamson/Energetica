@@ -157,35 +157,43 @@
         </tr>
         <tr>
           <td>Revenues</td>
-          <td class="txt_center"><script>display_money({{ profile.average_revenues }})</script>/h</td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ profile.average_revenues }}) + "/h";</script>
         </tr>
         <tr>
           <td>Max power</td>
-          <td class="txt_center"><script>display_W({{ profile.max_power_consumption }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ profile.max_power_consumption }});</script>
         </tr>
         <tr>
           <td>Max storage</td>
-          <td class="txt_center"><script>display_Wh({{ profile.max_energy_stored }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.max_energy_stored }});</script>
         </tr>
         <tr>
           <td>Imported energy</td>
-          <td class="txt_center"><script>display_Wh({{ profile.imported_energy }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.imported_energy }});</script>
         </tr>
         <tr>
           <td>Exported energy</td>
-          <td class="txt_center"><script>display_Wh({{ profile.exported_energy }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.exported_energy }});</script>
         </tr>
         <tr>
           <td>Extracted resources</td>
-          <td class="txt_center"><script>display_kg({{ profile.extracted_resources }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.extracted_resources }});</script>
         </tr>
         <tr>
           <td>Bought resources</td>
-          <td class="txt_center"><script>display_kg({{ profile.bought_resources }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.bought_resources }});</script>
         </tr>
         <tr>
           <td>Sold resources</td>
-          <td class="txt_center"><script>display_kg({{ profile.sold_resources }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.sold_resources }});</script>
         </tr>
         <tr>
           <td>Technology</td>
@@ -197,11 +205,13 @@
         </tr>
         <tr>
           <td>Emissions</td>
-          <td class="txt_center"><script>display_kg({{ profile.emissions }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.emissions }});</script>
         </tr>
         <tr>
           <td>Captured CO2</td>
-          <td class="txt_center"><script>display_kg({{ profile.captured_CO2 }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.captured_CO2 }});</script>
         </tr>
       </table>
     </div>

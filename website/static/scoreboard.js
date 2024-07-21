@@ -59,11 +59,11 @@ function sortTable(columnName) {
         html += `<tr>
             <td><a href="${href}">${player['username']}</a></td>
             <td>${player['network_name']}</td>
-            <td>${display_money(player['average_hourly_revenues'], write=false)}/h</td>
-            <td>${display_W(player['max_power_consumption'], write=false)}</td>
+            <td>${format_money(player['average_hourly_revenues'])}/h</td>
+            <td>${format_power(player['max_power_consumption'])}</td>
             <td>${player['total_technology_levels']}</td>
             <td>${player['xp']}</td>
-            <td>${display_kg(player['co2_emissions'], write=false)}</td>
+            <td>${format_mass(player['co2_emissions'])}</td>
             </tr>`;
     }
     table.innerHTML = html;

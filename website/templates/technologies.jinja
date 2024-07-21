@@ -63,9 +63,8 @@
               </a>
 
               {# Construction Cost #}
-              <span id="price" class="money_font">
-                <script>display_money_long({{ const_data["base_price"] * facility_values[facility]["price_multiplier"] }});</script>
-              </span>
+              <span id="price" class="money_font"></span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_money_long({{ const_data["base_price"] * facility_values[facility]["price_multiplier"] }});</script>
 
             </div>
 
@@ -143,12 +142,14 @@
           <div class="construction_info">
             <strong class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <script>display_duration({{facility_values[facility]["construction_time"]}});</script>
+              <span></span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_duration({{ facility_values[facility].construction_time }});</script>
               <span class="popup_info small">Duration</span>
             </strong>
             <strong class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <script>display_W({{facility_values[facility]["construction_power"]}});</script>
+              <span></span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_values[facility].construction_power }});</script>
               <span class="popup_info small">Power consumption</span>
             </strong>
           </div>
@@ -176,12 +177,14 @@
           <div class="construction_info">
             <strong class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <script>display_duration({{facility_values[facility]["construction_time"]}});</script>
+              <span></span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_duration({{ facility_values[facility].construction_time }});</script>
               <span class="popup_info small">Duration</span>
             </strong>
             <strong class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <script>display_W({{facility_values[facility]["construction_power"]}});</script>
+              <span></span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_values[facility].construction_power }});</script>
               <span class="popup_info small">Power consumption</span>
             </strong>
           </div>

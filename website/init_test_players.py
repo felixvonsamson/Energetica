@@ -31,7 +31,7 @@ def init_test_players(engine):
         player.uranium = 4500
         player.rest_of_priorities = ""
 
-        add_asset(player, "industry", 11)
+        add_asset(player, "industry", 21)
         add_asset(player, "laboratory", 5)
         add_asset(player, "mathematics", 1)
         add_asset(player, "mineral_extraction", 2)
@@ -61,7 +61,7 @@ def init_test_players(engine):
     if player2:
         Hex.query.filter_by(id=84).first().player_id = player2.id
         player2.rest_of_priorities = ""
-        add_asset(player2, "industry", 9)
+        add_asset(player2, "industry", 19)
         add_asset(player2, "warehouse", 1)
         add_asset(player2, "steam_engine", 10)
         add_asset(player2, "small_water_dam", 1)

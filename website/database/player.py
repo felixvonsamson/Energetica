@@ -310,7 +310,7 @@ class Player(db.Model, UserMixin):
             {
                 "total_t": engine.data["total_t"],
                 "chart_values": new_values,
-                "money": f"{self.money:,.0f}".replace(",", "'"),
+                "money": self.money,
             },
         )
 

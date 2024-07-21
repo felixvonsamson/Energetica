@@ -54,7 +54,7 @@ function graph_sketch(s) {
                     s.rect(0, 0, 130, 17);
                     s.fill(0);
                     s.textFont(balooBold);
-                    s.text(display_duration_graphs((s.t0 + data_len - t_view - 1) * res_to_factor[res]), 65, 5);
+                    s.text(format_duration_graphs((s.t0 + data_len - t_view - 1) * res_to_factor[res]), 65, 5);
                     s.textFont(font);
                     s.translate(0, 16);
                     for (const key of keys_resources) {
@@ -67,7 +67,7 @@ function graph_sketch(s) {
                             s.textAlign(LEFT, CENTER);
                             s.text(cols_and_names[key][1], 20, 5);
                             s.textAlign(CENTER, CENTER);
-                            s.text(display_kg(data.resources[key][res_id][t_view], false), 100, 5);
+                            s.text(format_mass(data.resources[key][res_id][t_view]), 100, 5);
                             s.translate(0, 16);
                         }
                     }
@@ -199,7 +199,7 @@ function graph_sketch(s) {
                     if (s.rates[resource] > 0) {
                         sign = "+";
                     }
-                    s.graphics.text(sign + display_kgh(s.rates[resource], false), 0.3 * margin, 30);
+                    s.graphics.text(sign + format_mass_rate(s.rates[resource]), 0.3 * margin, 30);
                     s.graphics.translate(0, s.bar_h + s.bar_spacing);
                 }
                 s.graphics.pop();
@@ -229,7 +229,7 @@ function show_stored(s, resource, x, y, y_fix) {
     s.fill(0);
     s.text("Stored quantity", 5, 5);
     s.textAlign(CENTER, CENTER);
-    s.text(display_kg(data.resources[resource][0][359], false), 135, 5);
+    s.text(format_mass(data.resources[resource][0][359]), 135, 5);
     s.translate(0, 16);
     alternate_fill(s);
     s.rect(0, 0, 160, 17);
@@ -237,7 +237,7 @@ function show_stored(s, resource, x, y, y_fix) {
     s.fill(0);
     s.text("On sale", 5, 5);
     s.textAlign(CENTER, CENTER);
-    s.text(display_kg(s.on_sale[resource], false), 135, 5);
+    s.text(format_mass(s.on_sale[resource]), 135, 5);
     s.translate(0, 16);
     alternate_fill(s);
     s.rect(0, 0, 160, 17);
@@ -245,7 +245,7 @@ function show_stored(s, resource, x, y, y_fix) {
     s.fill(0);
     s.text("Storage capacity", 5, 5);
     s.textAlign(CENTER, CENTER);
-    s.text(display_kg(capacities[resource], false), 135, 5);
+    s.text(format_mass(capacities[resource]), 135, 5);
     s.translate(0, 16);
     alternate_fill(s);
     s.rect(0, 0, 160, 17);
@@ -253,7 +253,7 @@ function show_stored(s, resource, x, y, y_fix) {
     s.fill(0);
     s.text("Domestic prod.", 5, 5);
     s.textAlign(CENTER, CENTER);
-    s.text(display_kgh(s.rates[resource], false), 135, 5);
+    s.text(format_mass_rate(s.rates[resource]), 135, 5);
     s.pop();
     s.push();
     s.translate(x, y_fix);

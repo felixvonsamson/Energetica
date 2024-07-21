@@ -176,20 +176,20 @@ function build_power_facilities_table(sortedData) {
         let upgrade = "-";
         if(facility.upgrade != null){
             upgrade = `<div class="upgrade_container">
-                    <button class="upgrade_button" onclick="upgrade(${id})">${display_money(facility.upgrade, write=false)}</button>
+                    <button class="upgrade_button" onclick="upgrade(${id})">${format_money(facility.upgrade)}</button>
                     <button class="or_all_button">- or -</button>
                     <button class="upgrade_all_button" onclick="are_you_sure_upgrade_all_of_type(${id}, '${facility.name}')">Upgrade all ${facility.name}</button>
                 </div>`;
         }
         html += `<tr>
             <td>${facility.name}</td>
-            <td>${display_W(facility.installed_cap, write=false)}</td>
-            <td>${display_money(facility.op_cost, write=false)}/h</td>
-            <td>${display_days(facility.remaining_lifespan, write=false)} d</td>
+            <td>${format_power(facility.installed_cap)}</td>
+            <td>${format_money(facility.op_cost)}/h</td>
+            <td>${format_days(facility.remaining_lifespan)} d</td>
             <td>${upgrade}</td>
             <td>
                 <div class="upgrade_container">
-                    <button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${display_money(facility.dismantle, write=false)}</button>
+                    <button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${format_money(facility.dismantle)}</button>
                     <button class="or_all_button">- or -</button>
                     <button class="dismantle_all_button" onclick="are_you_sure_dismantle_all_of_type(${id}, '${facility.name}')">Dismantle all ${facility.name}</button>
                 </div>
@@ -213,21 +213,21 @@ function build_storage_facilities_table(sortedData) {
         let upgrade = "-";
         if(facility.upgrade != null){
             upgrade = `<div class="upgrade_container">
-                    <button class="upgrade_button" onclick="upgrade(${id})">${display_money(facility.upgrade, write=false)}</button>
+                    <button class="upgrade_button" onclick="upgrade(${id})">${format_money(facility.upgrade)}</button>
                     <button class="or_all_button">- or -</button>
                     <button class="upgrade_all_button" onclick="are_you_sure_upgrade_all_of_type(${id}, '${facility.name}')">Upgrade all ${facility.name}</button>
                 </div>`;
         }
         html += `<tr>
             <td>${facility.name}</td>
-            <td>${display_Wh(facility.installed_cap, write=false)}</td>
-            <td>${display_money(facility.op_cost, write=false)}/h</td>
+            <td>${format_energy(facility.installed_cap)}</td>
+            <td>${format_money(facility.op_cost)}/h</td>
             <td>${Math.round(facility.efficiency * 100)}%</td>
-            <td>${display_days(facility.remaining_lifespan, write=false)} d</td>
+            <td>${format_days(facility.remaining_lifespan)} d</td>
             <td>${upgrade}</td>
             <td>
                 <div class="upgrade_container">
-                    <button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${display_money(facility.dismantle, write=false)}</button>
+                    <button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${format_money(facility.dismantle)}</button>
                     <button class="or_all_button">- or -</button>
                     <button class="dismantle_all_button" onclick="are_you_sure_dismantle_all_of_type(${id}, '${facility.name}')">Dismantle all ${facility.name}</button>
                 </div>
@@ -251,21 +251,21 @@ function build_extraction_facilities_table(sortedData) {
         let upgrade = "-";
         if(facility.upgrade != null){
             upgrade = `<div class="upgrade_container">
-                    <button class="upgrade_button" onclick="upgrade(${id})">${display_money(facility.upgrade, write=false)}</button>
+                    <button class="upgrade_button" onclick="upgrade(${id})">${format_money(facility.upgrade)}</button>
                     <button class="or_all_button">- or -</button>
                     <button class="upgrade_all_button" onclick="are_you_sure_upgrade_all_of_type(${id}, '${facility.name}')">Upgrade all ${facility.name}</button>
                 </div>`;
         }
         html += `<tr>
             <td>${facility.name}</td>
-            <td>${display_kgh(facility.extraction_rate, write=false)}</td>
-            <td>${display_money(facility.op_cost, write=false)}/h</td>
-            <td>${display_W(facility.energy_use, write=false)}</td>
-            <td>${display_days(facility.remaining_lifespan, write=false)} d</td>
+            <td>${format_mass_rate(facility.extraction_rate)}</td>
+            <td>${format_money(facility.op_cost)}/h</td>
+            <td>${format_power(facility.energy_use)}</td>
+            <td>${format_days(facility.remaining_lifespan)} d</td>
             <td>${upgrade}</td>
             <td>
                 <div class="upgrade_container">
-                    <button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${display_money(facility.dismantle, write=false)}</button>
+                    <button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${format_money(facility.dismantle)}</button>
                     <button class="or_all_button">- or -</button>
                     <button class="dismantle_all_button" onclick="are_you_sure_dismantle_all_of_type(${id}, '${facility.name}')">Dismantle all ${facility.name}</button>
                 </div>
@@ -278,7 +278,7 @@ function build_extraction_facilities_table(sortedData) {
 function are_you_sure_dismantle_facility(facility_id, cost){
     document.getElementById('are_you_sure_popup').classList.remove('hidden');
     document.getElementById('are_you_sure_content').innerHTML = `Are you sure you want to dismantle this facility?<br>
-    This will cost you ${display_money(cost, write=false)}.`;
+    This will cost you ${format_money(cost)}.`;
     document.getElementById('yes_im_sure').setAttribute('onclick', `dismantle(${facility_id}); hide_are_you_sure()`);
     document.getElementById('no_cancel').innerHTML = '<b>Cancel</b>';
   }
@@ -287,7 +287,7 @@ function are_you_sure_dismantle_all_of_type(facility_id, facility_name){
     let cost = cost_of_action_all_of_type(facility_name, "dismantle");
     document.getElementById('are_you_sure_popup').classList.remove('hidden');
     document.getElementById('are_you_sure_content').innerHTML = `Are you sure you want to dismantle all ${facility_name}?<br>
-    This will cost you ${display_money(cost, write=false)}.`;
+    This will cost you ${format_money(cost)}.`;
     document.getElementById('yes_im_sure').setAttribute('onclick', `dismantle_all_of_type('${facility_id}'); hide_are_you_sure()`);
     document.getElementById('no_cancel').innerHTML = '<b>Cancel</b>';
 }
@@ -296,7 +296,7 @@ function are_you_sure_upgrade_all_of_type(facility_id, facility_name){
     let cost = cost_of_action_all_of_type(facility_name, "upgrade");
     document.getElementById('are_you_sure_popup').classList.remove('hidden');
     document.getElementById('are_you_sure_content').innerHTML = `Are you sure you want to upgrade all ${facility_name}?<br>
-    This will cost you ${display_money(cost, write=false)}.`;
+    This will cost you ${format_money(cost)}.`;
     document.getElementById('yes_im_sure').setAttribute('onclick', `upgrade_all_of_type('${facility_id}'); hide_are_you_sure()`);
     document.getElementById('no_cancel').innerHTML = '<b>Cancel</b>';
 }
@@ -310,7 +310,7 @@ function upgrade(id){
             if (response == "success") {
                 let money = raw_data["money"];
                 var obj = document.getElementById("money");
-                obj.innerHTML = formatted_money(money);
+                obj.innerHTML = format_money_long(money);
                 get_active_facilities();
             }else if(response == "notEnoughMoney"){
                 addError("Not enough money");
@@ -331,7 +331,7 @@ function upgrade_all_of_type(facility_id){
             if (response == "success") {
                 let money = raw_data["money"];
                 var obj = document.getElementById("money");
-                obj.innerHTML = formatted_money(money);
+                obj.innerHTML = format_money_long(money);
                 get_active_facilities();
             }else if(response == "notEnoughMoney"){
                 addError("Not enough money");
@@ -352,7 +352,7 @@ function dismantle(id){
             if (response == "success") {
                 let money = raw_data["money"];
                 var obj = document.getElementById("money");
-                obj.innerHTML = formatted_money(money);
+                obj.innerHTML = format_money_long(money);
                 get_active_facilities();
             }else if(response == "notEnoughMoney"){
                 addError("Not enough money");
@@ -375,7 +375,7 @@ function dismantle_all_of_type(facility_id){
             if (response == "success") {
                 let money = raw_data["money"];
                 var obj = document.getElementById("money");
-                obj.innerHTML = formatted_money(money);
+                obj.innerHTML = format_money_long(money);
                 get_active_facilities();
             }else if(response == "notEnoughMoney"){
                 addError("Not enough money");

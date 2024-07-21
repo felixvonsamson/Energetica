@@ -45,9 +45,8 @@
               &ensp; lvl.&thinsp;<em id="lvl" class="large">{{ facility_data.level }}</em>
               &emsp;&ensp;
               {# Construction Cost #}
-              <span class="money_font">
-                <script>display_money_long({{ facility_data.price }});</script>
-              </span>
+              <span class="money_font"></span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_money_long({{ facility_data.price }});</script>
             </div>
             <div class="infobox">
               {# Description #}
@@ -106,17 +105,20 @@
           <div class="construction_info">
             <strong class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <script>display_duration({{facility_data.construction_time}});</script>
+              <span></span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_duration({{ facility_data.construction_time }});</script>
               <span class="popup_info small">Duration</span>
             </strong>
             <strong class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <script>display_W({{facility_data.construction_power}});</script>
+              <span></span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.construction_power }});</script>
               <span class="popup_info small">Power consumption</span>
             </strong>
             <strong class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <script>display_kg({{facility_data.construction_pollution}});</script> CO2
+              <span></span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO2";</script>
               <span class="popup_info small">CO2 emissions</span>
             </strong>
           </div>
@@ -141,17 +143,20 @@
           <div class="construction_info">
             <strong class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <script>display_duration({{facility_data.construction_time}});</script>
+              <span></span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_duration({{ facility_data.construction_time }});</script>
               <span class="popup_info small">Duration</span>
             </strong>
             <strong class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <script>display_W({{facility_data.construction_power}});</script>
+              <span></span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.construction_power }});</script>
               <span class="popup_info small">Power consumption</span>
             </strong>
             <strong class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <script>display_kg({{facility_data.construction_pollution}});</script> CO2
+              <span></span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO2";</script>
               <span class="popup_info small">CO2 emissions</span>
             </strong>
           </div>
@@ -168,20 +173,15 @@
             {% if "average_consumption" in facility_data %}
               <tr>
                 <td>Average consumption</td>
-                <td class="txt_center">
-                  <script>display_W({{ facility_data.average_consumption.current }});</script> ->
-                  <script>display_W({{ facility_data.average_consumption.upgraded }});</script>
-                </td>
+                <td class="txt_center"></td>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_power({{ facility_data.average_consumption.current }}, {{ facility_data.average_consumption.upgraded }});</script>
               </tr>
             {% endif %}
             {% if "revenue_generation" in facility_data %}
               <tr>
                 <td>Revenue generation</td>
-                <td class="txt_center">
-                  <script>display_money_upgrade_two_values({{ facility_data.revenue_generation.current }},
-                  {{ facility_data.revenue_generation.upgraded }});
-                  </script>
-                </td>
+                <td class="txt_center"></td>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_money({{ facility_data.revenue_generation.current }}, {{ facility_data.revenue_generation.upgraded }});</script>
               </tr>
             {% endif %}
             {% if "research_speed_bonus" in facility_data %}
@@ -203,56 +203,37 @@
               {% set warehouse_capacities = facility_data.warehouse_capacities %}
               <tr>
                 <td>Coal capacity</td>
-                <td class="txt_center">
-                  <script>display_upgrade_kg_two_values({{warehouse_capacities.coal.current}},
-                {{warehouse_capacities.coal.upgraded}})
-                  </script>
-                </td>
+                <td class="txt_center"></td>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.coal.current}}, {{warehouse_capacities.coal.upgraded}});</script>
               </tr>
               <tr>
                 <td>Oil capacity</td>
-                <td class="txt_center">
-                  <script>display_upgrade_kg_two_values({{warehouse_capacities.oil.current}},
-                {{warehouse_capacities.oil.upgraded}})
-                  </script>
-                </td>
+                <td class="txt_center"></td>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.oil.current}}, {{warehouse_capacities.oil.upgraded}});</script>
               </tr>
               <tr>
                 <td>Gas capacity</td>
-                <td class="txt_center">
-                  <script>display_upgrade_kg_two_values({{warehouse_capacities.gas.current}},
-                {{warehouse_capacities.gas.upgraded}})
-                  </script>
-                </td>
+                <td class="txt_center"></td>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.gas.current}}, {{warehouse_capacities.gas.upgraded}});</script>
               </tr>
               <tr>
                 <td>Uranium cap.</td>
-                <td class="txt_center">
-                  <script>display_upgrade_kg_two_values({{warehouse_capacities.uranium.current}},
-                {{warehouse_capacities.uranium.upgraded}})
-                  </script>
-                </td>
+                <td class="txt_center"></td>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.uranium.current}}, {{warehouse_capacities.uranium.upgraded}});</script>
               </tr>
             {% endif %}
             {% if "power_consumption" in facility_data.keys() %}
               <tr>
                 <td>Power consumption</td>
-                <td class="txt_center">
-                  <script>display_upgrade_W_two_values({{ facility_data.power_consumption.current}},
-                  {{ facility_data.power_consumption.upgraded }});
-                  </script>
-                </td>
+                <td class="txt_center"></td>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_power({{ facility_data.power_consumption.current}}, {{ facility_data.power_consumption.upgraded }});</script>
               </tr>
             {% endif %}
             {% if "co2_absorption" in facility_data.keys() %}
               <tr>
                 <td>CO2 absorbed</td>
-                <td class="txt_center">
-                  <script>display_upgrade_kg_two_values({{ facility_data.co2_absorption.current }},
-              {{ facility_data.co2_absorption.upgraded }})
-                  </script>
-                  /h
-                </td>
+                <td class="txt_center"></td>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{ facility_data.co2_absorption.current }}, {{ facility_data.co2_absorption.upgraded }});</script>
               </tr>
             {% endif %}
           </table>
