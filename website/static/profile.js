@@ -1,5 +1,9 @@
 let active_facilities;
-let decending = true;
+let order_by = {
+    "power_facilities_table": ["installed_cap", true],
+    "storage_facilities_table": ["installed_cap", true],
+    "extraction_facilities_table": ["extraction_rate", true],
+}
 
 if (window.location.href.includes("player_id")){
   let profile_headder = document.getElementById("profile_headder");
@@ -7,7 +11,7 @@ if (window.location.href.includes("player_id")){
   profile_headder.classList.add("hidden");
   facilities_list.style.display = "none";
 }else{
-    get_active_facilities();
+    get_active_facilities(reorder=true);
 }
 
 function upgradable(facility, current_multipliers){
@@ -44,7 +48,7 @@ function upgrade_cost(facility, current_multipliers, config){
     }
 }
 
-function get_active_facilities() {
+function get_active_facilities(reorder=false) {
     fetch("/api/get_active_facilities") // retrieves all active facilities of the player
     .then((response) => response.json())
     .then((raw_data) => {
@@ -53,7 +57,6 @@ function get_active_facilities() {
                 fetch("/api/get_resource_reserves")
                 .then((response) => response.json())
                 .then((reserves) => {
-                    decending = false;
                     active_facilities = {
                         "power_facilities": {},
                         "storage_facilities": {},
@@ -105,9 +108,9 @@ function get_active_facilities() {
                             "dismantle": config.base_price * facility.price_multiplier * 0.2,
                         };
                     }
-                    sortTable('power_facilities_table', 'installed_cap', reorder=false);
-                    sortTable('storage_facilities_table', 'installed_cap', reorder=false);
-                    sortTable('extraction_facilities_table', 'extraction_rate', reorder=false);
+                    sortTable('power_facilities_table', order_by.power_facilities_table[0], reorder=reorder);
+                    sortTable('storage_facilities_table', order_by.storage_facilities_table[0], reorder=reorder);
+                    sortTable('extraction_facilities_table', order_by.extraction_facilities_table[0], reorder=reorder);
                 });
             });
         });
@@ -125,10 +128,10 @@ function sortTable(table_name, columnName, reorder=true) {
     if (reorder) {
         // Check if the column is already sorted, toggle sorting order accordingly
         if (column.innerHTML.includes(triangle)) {
-            decending = !decending;
+            order_by[table_name] = [columnName, !order_by[table_name][1]];
             triangle = ' <i class="fa fa-caret-up"></i>';
         }else{
-            decending = true;
+            order_by[table_name] = [columnName, true];
         }
     }
 
@@ -138,9 +141,9 @@ function sortTable(table_name, columnName, reorder=true) {
         const bValue = b[1][columnName];
 
         if (typeof aValue === "string" && typeof bValue === "string") {
-            return decending ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
+            return order_by[table_name][1] ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
         } else {
-            return decending ? bValue - aValue : aValue - bValue;
+            return order_by[table_name][1] ? bValue - aValue : aValue - bValue;
         }
     });
 

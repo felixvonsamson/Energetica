@@ -457,8 +457,7 @@ canvas {
     top: calc(100% + 1.2em);
     left: 50%;
     transform: translateX(-50%);
-    border-radius: 0.5em;
-    padding: 0.2em 0.4em;
+    padding: 0.2em 0.6em;
     z-index: 2;
     background-color: #C8DE9Fdd;
     border: none;
@@ -494,8 +493,7 @@ canvas {
     top: calc(100% + 1.2em);
     left: 50%;
     transform: translateX(-50%);
-    border-radius: 0.5em;
-    padding: 0.2em 0.4em;
+    padding: 0.2em 0.6em;
     z-index: 2;
     background-color: #E8BE9Fdd;
     border: none;
