@@ -150,7 +150,7 @@ function graph_sketch(s){
                     s.fill(0);
                     s.textFont(balooBold);
                     s.text("TOTAL :", 40, 5);
-                    s.text(format_power(cumsum, 50000), 120, 5);
+                    s.text(format_power(cumsum, 50_000), 120, 5);
                     s.pop();
 
                 } else {
@@ -191,7 +191,7 @@ function graph_sketch(s){
                     s.fill(0);
                     s.textFont(balooBold);
                     s.text("TOTAL :", 40, 5);
-                    s.text(format_power(total_cap, 50000), 120, 5);
+                    s.text(format_power(total_cap, 50_000), 120, 5);
                     s.pop();
                 }
             }

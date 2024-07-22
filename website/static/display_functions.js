@@ -13,11 +13,11 @@ const _money_units = [
 const _mass_units = [" kg", " t", " kt", " Mt"];
 const _mass_rate_units = [" g/h", " kg/h", " t/h", " kt/h"]; // !!! starts at g/h and not kg/h
 
-function general_format(value, units, treshold = 10000) {
+function general_format(value, units, treshold = 10_000) {
     // Inserts thousands separator and the right unit
     let unit_index = 0;
     while (Math.abs(value) >= treshold && unit_index < units.length - 1) {
-        value /= 1000;
+        value /= 1_000;
         unit_index += 1;
     }
     formatted_value = `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]}`
@@ -27,9 +27,9 @@ function general_format(value, units, treshold = 10000) {
 function general_upgrade_format(value1, value2, units) {
     // formats two values with the right unit for upgrade display
     let unit_index = 0;
-    while (value1 >= 10000 && unit_index < units.length - 1) {
-        value1 /= 1000;
-        value2 /= 1000;
+    while (value1 >= 10_000 && unit_index < units.length - 1) {
+        value1 /= 1_000;
+        value2 /= 1_000;
         unit_index += 1;
     }
     return `${value1.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index][0]} -> ${
@@ -61,16 +61,16 @@ function format_money_long(price) {
 }
 
 // Power :
-function format_power(power, treshold = 10000) {
+function format_power(power, treshold = 10_000) {
     return general_format(power, _power_units, treshold);
 }
 
 function format_power_special(energy, interval) {
     // Special format for x-ticks for zoomed in market graph with more precision
     let unit_index = 0;
-    while (energy >= 10000 && unit_index < _power_units.length - 1) {
-        energy /= 1000;
-        interval /= 1000;
+    while (energy >= 10_000 && unit_index < _power_units.length - 1) {
+        energy /= 1_000;
+        interval /= 1_000;
         unit_index += 1;
     }
     const decimalPlaces = (interval.toString().split(".")[1] || "").length;
@@ -80,26 +80,26 @@ function format_power_special(energy, interval) {
 }
 
 // Energy :
-function format_energy(energy, treshold = 10000) {
+function format_energy(energy, treshold = 10_000) {
     return general_format(energy, _energy_units, treshold);
 }
 
 // Mass rate :
-function format_mass_rate(mass_rate, treshold = 10000) {
-    return general_format(mass_rate*1000, _mass_rate_units, treshold); // the *1000 is to convert from kg to g
+function format_mass_rate(mass_rate, treshold = 10_000) {
+    return general_format(mass_rate*1_000, _mass_rate_units, treshold); // the *1000 is to convert from kg to g
 }
 
 // Mass
-function format_mass(mass, treshold = 10000) {
+function format_mass(mass, treshold = 10_000) {
     return general_format(mass, _mass_units, treshold);
 }
 
 // Duration :
 function format_duration(seconds) {
-    const days = Math.floor(seconds / 86400);
-    seconds -= days * 86400;
-    const hours = Math.floor(seconds / 3600);
-    seconds -= hours * 3600;
+    const days = Math.floor(seconds / 86_400);
+    seconds -= days * 86_400;
+    const hours = Math.floor(seconds / 3_600);
+    seconds -= hours * 3_600;
     const minutes = Math.round(seconds / 60);
 
     let duration = "";
@@ -116,7 +116,7 @@ function format_duration(seconds) {
 }
 
 function format_days(seconds) {
-    return Math.round(seconds / 86400);
+    return Math.round(seconds / 86_400);
 }
 
 function format_duration_graphs(ticks) {
@@ -125,12 +125,12 @@ function format_duration_graphs(ticks) {
         return "now";
     }
 
-    const months = Math.floor(seconds / 2592000);
-    seconds -= months * 2592000;
-    const days = Math.floor(seconds / 86400);
-    seconds -= days * 86400;
-    const hours = Math.floor(seconds / 3600);
-    seconds -= hours * 3600;
+    const months = Math.floor(seconds / 2_592_000);
+    seconds -= months * 2_592_000;
+    const days = Math.floor(seconds / 86_400);
+    seconds -= days * 86_400;
+    const hours = Math.floor(seconds / 3_600);
+    seconds -= hours * 3_600;
     const minutes = Math.floor(seconds / 60);
     seconds -= minutes * 60;
 

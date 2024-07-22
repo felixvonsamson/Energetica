@@ -24,11 +24,11 @@ def init_test_players(engine):
     if player:
         Hex.query.filter_by(id=1).first().player_id = player.id
 
-        player.money = 1000000
-        player.coal = 450000
-        player.oil = 100000
-        player.gas = 800000
-        player.uranium = 4500
+        player.money = 1_000_000
+        player.coal = 450_000
+        player.oil = 100_000
+        player.gas = 800_000
+        player.uranium = 4_500
         player.rest_of_priorities = ""
 
         add_asset(player, "industry", 21)

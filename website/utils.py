@@ -883,7 +883,7 @@ def buy_resource_from_market(player, quantity, sale_id):
                 sale.player,
             )
         if "trading_3" not in player.achievements:
-            if player.bought_resources >= 10000000:
+            if player.bought_resources >= 10_000_000:
                 player.add_to_list("achievements", "trading_3")
                 player.xp += 10
                 notify(
@@ -892,7 +892,7 @@ def buy_resource_from_market(player, quantity, sale_id):
                     player,
                 )
         if "trading_3" not in sale.player.achievements:
-            if sale.player.sold_resources >= 10000000:
+            if sale.player.sold_resources >= 10_000_000:
                 sale.player.add_to_list("achievements", "trading_3")
                 sale.player.xp += 10
                 notify(
@@ -993,7 +993,7 @@ def display_money(price):
 
 def format_mass(mass):
     """Formats mass in kg into a string with corresponding unit."""
-    if mass < 50000:
+    if mass < 50_000:
         formatted_mass = f"{int(mass):,d}".replace(",", "'") + " kg"
     else:
         formatted_mass = f"{mass / 1000:,.0f}".replace(",", "'") + " t"

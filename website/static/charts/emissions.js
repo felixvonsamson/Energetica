@@ -130,7 +130,7 @@ function graph_sketch(s){
                 s.fill(0);
                 s.textFont(balooBold);
                 s.text("TOTAL :", 40, 5);
-                s.text(format_mass_rate(cumsum, 50000), 120, 5);
+                s.text(format_mass_rate(cumsum, 50_000), 120, 5);
                 s.pop();
             }
         }

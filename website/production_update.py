@@ -119,7 +119,7 @@ def update_player_progress_values(engine, player, new_values):
     player.exported_energy += new_values[player.id]["demand"]["exports"] / 3600 * engine.clock_time  # in Wh
 
     if "network" not in player.advancements:
-        if player.max_power_consumption > 3000000:
+        if player.max_power_consumption > 3_000_000:
             player.add_to_list("advancements", "network")
             notify(
                 "Tutorial",
@@ -129,7 +129,7 @@ def update_player_progress_values(engine, player, new_values):
 
     # check achievements
     if "power_consumption_1" not in player.achievements:
-        if player.max_power_consumption > 1000000:
+        if player.max_power_consumption > 1_000_000:
             player.add_to_list("achievements", "power_consumption_1")
             player.xp += 5
             notify(
@@ -138,7 +138,7 @@ def update_player_progress_values(engine, player, new_values):
                 player,
             )
     elif "power_consumption_2" not in player.achievements:
-        if player.max_power_consumption > 150000000:
+        if player.max_power_consumption > 150_000_000:
             player.add_to_list("achievements", "power_consumption_2")
             player.xp += 10
             notify(
@@ -147,7 +147,7 @@ def update_player_progress_values(engine, player, new_values):
                 player,
             )
     elif "power_consumption_3" not in player.achievements:
-        if player.max_power_consumption > 6500000000:
+        if player.max_power_consumption > 6_500_000_000:
             player.add_to_list("achievements", "power_consumption_3")
             player.xp += 15
             notify(
@@ -156,7 +156,7 @@ def update_player_progress_values(engine, player, new_values):
                 player,
             )
     elif "power_consumption_4" not in player.achievements:
-        if player.max_power_consumption > 100000000000:
+        if player.max_power_consumption > 100_000_000_000:
             player.add_to_list("achievements", "power_consumption_4")
             player.xp += 20
             notify(
@@ -165,7 +165,7 @@ def update_player_progress_values(engine, player, new_values):
                 player,
             )
     elif "power_consumption_5" not in player.achievements:
-        if player.max_power_consumption > 3000000000000:
+        if player.max_power_consumption > 3_000_000_000_000:
             player.add_to_list("achievements", "power_consumption_5")
             player.xp += 25
             notify(
@@ -174,7 +174,7 @@ def update_player_progress_values(engine, player, new_values):
                 player,
             )
     if "energy_storage_1" not in player.achievements:
-        if player.max_energy_stored > 8000000000:
+        if player.max_energy_stored > 8_000_000_000:
             player.add_to_list("achievements", "energy_storage_1")
             player.xp += 5
             notify(
@@ -183,7 +183,7 @@ def update_player_progress_values(engine, player, new_values):
                 player,
             )
     elif "energy_storage_2" not in player.achievements:
-        if player.max_energy_stored > 160000000000:
+        if player.max_energy_stored > 160_000_000_000:
             player.add_to_list("achievements", "energy_storage_2")
             player.xp += 10
             notify(
@@ -192,7 +192,7 @@ def update_player_progress_values(engine, player, new_values):
                 player,
             )
     elif "energy_storage_3" not in player.achievements:
-        if player.max_energy_stored > 5000000000000:
+        if player.max_energy_stored > 5_000_000_000_000:
             player.add_to_list("achievements", "energy_storage_3")
             player.xp += 20
             notify(
@@ -201,7 +201,7 @@ def update_player_progress_values(engine, player, new_values):
                 player,
             )
     if "mineral_extraction_1" not in player.achievements:
-        if player.extracted_resources > 1000000:
+        if player.extracted_resources > 1_000_000:
             player.add_to_list("achievements", "mineral_extraction_1")
             player.xp += 5
             notify(
@@ -210,7 +210,7 @@ def update_player_progress_values(engine, player, new_values):
                 player,
             )
     elif "mineral_extraction_2" not in player.achievements:
-        if player.extracted_resources > 50000000:
+        if player.extracted_resources > 50_000_000:
             player.add_to_list("achievements", "mineral_extraction_2")
             player.xp += 10
             notify(
@@ -219,7 +219,7 @@ def update_player_progress_values(engine, player, new_values):
                 player,
             )
     if "network_import_1" not in player.achievements:
-        if player.imported_energy > 10000000000:
+        if player.imported_energy > 10_000_000_000:
             player.add_to_list("achievements", "network_import_1")
             player.xp += 5
             notify(
@@ -228,7 +228,7 @@ def update_player_progress_values(engine, player, new_values):
                 player,
             )
     elif "network_import_2" not in player.achievements:
-        if player.imported_energy > 1000000000000:
+        if player.imported_energy > 1_000_000_000_000:
             player.add_to_list("achievements", "network_import_2")
             player.xp += 10
             notify(
@@ -237,7 +237,7 @@ def update_player_progress_values(engine, player, new_values):
                 player,
             )
     if "network_export_1" not in player.achievements:
-        if player.exported_energy > 10000000000:
+        if player.exported_energy > 10_000_000_000:
             player.add_to_list("achievements", "network_export_1")
             player.xp += 5
             notify(
@@ -246,7 +246,7 @@ def update_player_progress_values(engine, player, new_values):
                 player,
             )
     elif "network_export_2" not in player.achievements:
-        if player.exported_energy > 1000000000000:
+        if player.exported_energy > 1_000_000_000_000:
             player.add_to_list("achievements", "network_export_2")
             player.xp += 10
             notify(
@@ -516,8 +516,8 @@ def market_logic(engine, new_values, market):
         if row.price > -5:
             generation[row.facility] += quantity
         demand["exports"] += quantity
-        player.money += quantity * market_price / 3600 * engine.clock_time / 1000000
-        revenue["exports"] += quantity * market_price / 3600 * engine.clock_time / 1000000
+        player.money += quantity * market_price / 3600 * engine.clock_time / 1_000_000
+        revenue["exports"] += quantity * market_price / 3600 * engine.clock_time / 1_000_000
 
         if row.player_id in market["player_exports"]:
             market["player_exports"][row.player_id] += quantity
@@ -535,8 +535,8 @@ def market_logic(engine, new_values, market):
         if quantity is None:
             quantity = row.capacity
         generation["imports"] += quantity
-        player.money -= quantity * market_price / 3600 * engine.clock_time / 1000000
-        revenue["imports"] -= quantity * market_price / 3600 * engine.clock_time / 1000000
+        player.money -= quantity * market_price / 3600 * engine.clock_time / 1_000_000
+        revenue["imports"] -= quantity * market_price / 3600 * engine.clock_time / 1_000_000
 
         if row.player_id in market["player_imports"]:
             market["player_imports"][row.player_id] += quantity
@@ -591,9 +591,9 @@ def market_logic(engine, new_values, market):
                 player = Player.query.get(row.player_id)
                 demand = new_values[row.player_id]["demand"]
                 demand["dumping"] += dump_cap
-                player.money -= dump_cap * 5 / 3600 * engine.clock_time / 1000000
+                player.money -= dump_cap * 5 / 3600 * engine.clock_time / 1_000_000
                 revenue = new_values[row.player_id]["revenues"]
-                revenue["dumping"] -= dump_cap * 5 / 3600 * engine.clock_time / 1000000
+                revenue["dumping"] -= dump_cap * 5 / 3600 * engine.clock_time / 1_000_000
                 continue
             break
         sell(row, market_price)
@@ -813,7 +813,7 @@ def resources_and_pollution(engine, new_values, player):
                 * generation[facility]
                 / 3600
                 * engine.clock_time
-                / 1000000
+                / 1_000_000
             )
             add_emissions(engine, new_values, player, facility, facility_emmissions)
 
