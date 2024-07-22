@@ -1091,7 +1091,7 @@ def add_message(player, message_text, chat_id):
     engine: gameEngine = current_app.config["engine"]
     if not chat_id:
         return {"response": "noChatID"}
-    if message_text.length == 0:
+    if len(message_text) == 0:
         return {"response": "noMessage"}
     chat = Chat.query.filter_by(id=chat_id).first()
     # TODO: set a character / size limit on message size
