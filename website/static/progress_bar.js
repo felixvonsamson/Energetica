@@ -221,8 +221,7 @@ load_constructions().then((constructions) => {
             const id = progressBar.id;
             const construction = constructions_data[0][id];
             const now = new Date().getTime() / 1000;
-            const round_up = server_start % clock_time;
-            const current_time = (now - server_start + round_up) / clock_time;
+            const current_time = (now - server_start) / clock_time;
             let new_width;
             let time_remaining;
             if (construction.suspension_time) {
@@ -263,8 +262,7 @@ load_constructions().then((constructions) => {
             const id = shipmentBar.id;
             const shipment = shipment_data[id];
             const now = new Date().getTime() / 1000;
-            const round_up = server_start % clock_time;
-            const current_time = (now - server_start + round_up) / clock_time;
+            const current_time = (now - server_start) / clock_time;
             let new_width;
             let time_remaining;
             if (shipment["suspension_time"]) {

@@ -181,7 +181,6 @@ def create_player(engine, username, password):
 def create_network(engine, name, members):
     n = Network.query.filter_by(name=name).first()
     if n is None:
-        print(members)
         new_network = Network(name=name, members=members)
         db.session.add(new_network)
         db.session.commit()

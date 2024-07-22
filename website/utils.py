@@ -325,11 +325,6 @@ def add_asset(player_id, construction_id):
     project_priorities = player.read_list(priority_list_name)
     for priority_index, project_id in enumerate(project_priorities[:]):
         next_construction = Under_construction.query.get(project_id)
-        if next_construction is None:
-            print(
-                f"DATABASE MISMATCH : CONSTRUCTION {project_id} OF PLAYER {player.username} DOES NOT EXIST IN UNDER_CONSTRUCTION DATABASE !!!"
-            )
-            break
         if next_construction.suspension_time is not None:
             if next_construction.family in [
                 "Functional facilities",
