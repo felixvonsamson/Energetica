@@ -4,6 +4,7 @@ Here is the logic for the engine of the game
 
 from collections import defaultdict
 from datetime import datetime
+import math
 import pickle
 import json
 import logging
@@ -204,11 +205,28 @@ class gameEngine(object):
     def package_global_data(self):
         """This method packages mutable global engine data as a dict to be sent and used on the frontend"""
         return {
-            "start_date": self.data["start_date"].timestamp(),
+            "first_tick_date": self.first_tick_date().timestamp(),
             "clock_time": self.clock_time,
-            "current_tick": self.data["total_t"],
+            "total_ticks": self.data["total_t"],
             "co2_emissions": self.data["emissions"]["CO2"],
         }
+    
+    def first_tick_date(self) -> datetime:
+        """This method returns the (theoretical) datetime of the first tick"""
+        start_date = self.data["start_date"]
+        clock_time = self.clock_time # intervals in seconds between ticks
+        # Convert start_date to seconds since the epoch (January 1, 1970, 00:00:00 UTC)
+        start_timestamp = start_date.timestamp()
+        # Calculate the timestamp for the first tick by:
+        # 1. Dividing the start timestamp by the clock time interval
+        # 2. Rounding up to the nearest whole number to find the next interval
+        # 3. Multiplying back by the clock time to get the exact time in seconds for the next tick
+        next_tick_timestamp = math.ceil(start_timestamp / clock_time) * clock_time
+        # Convert the next tick timestamp back to a datetime object
+        first_tick = datetime.fromtimestamp(next_tick_timestamp)
+        print(f"start_date: %s", start_date)
+        print(f"first_tick: %s", first_tick)
+        return first_tick
 
 
 from .production_update import update_electricity  # noqa: E402
