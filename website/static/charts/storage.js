@@ -81,7 +81,7 @@ function graph_sketch(s){
                     s.rect(0, 0, 160, 17);
                     s.fill(0);
                     s.textFont(balooBold);
-                    s.text(display_duration_graphs((s.t0 + data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+                    s.text(format_duration_graphs((s.t0 + data_len - t_view - 1) * res_to_factor[res]), 80, 5);
                     s.textFont(font);
                     s.translate(0, 16);
                     
@@ -100,7 +100,7 @@ function graph_sketch(s){
                                 s.textAlign(LEFT, CENTER);
                                 s.text(cols_and_names[group][1], 20, 5);
                                 s.textAlign(CENTER, CENTER);
-                                s.text(display_Wh(data.storage[group][res_id][t_view], false), 132, 5);
+                                s.text(format_energy(data.storage[group][res_id][t_view]), 132, 5);
                                 s.translate(0, 16);
                             }
                         }
@@ -110,7 +110,7 @@ function graph_sketch(s){
                     s.fill(0);
                     s.textFont(balooBold);
                     s.text("TOTAL :", 40, 5);
-                    s.text(display_Wh(cumsum, false, 50000), 120, 5);
+                    s.text(format_energy(cumsum, 50_000), 120, 5);
                     s.pop();
 
                 } else {
@@ -140,7 +140,7 @@ function graph_sketch(s){
                                 s.fill(0);
                                 s.text(cols_and_names[key][1], 20, 5);
                                 s.textAlign(CENTER, CENTER);
-                                s.text(display_Wh(capacities[key], false), 135, 5);
+                                s.text(format_energy(capacities[key]), 135, 5);
                                 total_cap += capacities[key];
                             }
                         }
@@ -151,7 +151,7 @@ function graph_sketch(s){
                     s.fill(0);
                     s.textFont(balooBold);
                     s.text("TOTAL :", 40, 5);
-                    s.text(display_Wh(total_cap, false, 50000), 120, 5);
+                    s.text(format_energy(total_cap, 50_000), 120, 5);
                     s.pop();
                 }
             }
@@ -267,7 +267,7 @@ function graph_sketch(s){
             if(s.percent == "percent"){
                 s.graphics.text(y_ticks3[i] + "%", -0.5 * margin, -i + 3);
             }else{
-                s.graphics.text(display_Wh(y_ticks3[i], false), -0.5 * margin, -i - 3);
+                s.graphics.text(format_energy(y_ticks3[i]), -0.5 * margin, -i - 3);
             }
         }
         s.graphics.pop();
@@ -359,8 +359,8 @@ function sortTable(columnName, reorder=true) {
     for (const [id, facility] of sortedData) {
         html += `<tr>
             <td>${facility.facility_col}</td>
-            <td>${display_Wh(facility.usage_col, false)}</td>
-            <td>${display_Wh(facility.capacity_col, false)}</td>
+            <td>${format_energy(facility.usage_col)}</td>
+            <td>${format_energy(facility.capacity_col)}</td>
             <td>
                 <div class="capacityJauge-background hover_info">
                     <div class="capacityJauge color_${facility.name}" style="--width:${facility.used_cap_col}"></div>

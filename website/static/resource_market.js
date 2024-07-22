@@ -25,9 +25,9 @@ function updateToPay(saleId, basePrice) {
             totalPrice % 1 === 0
                 ? totalPrice.toFixed(0)
                 : totalPrice.toFixed(2);
-        toPaySpan.innerHTML = `( ${display_money(parseFloat(totalPrice), write=false)} )`;
+        toPaySpan.innerHTML = `( ${format_money(parseFloat(totalPrice))} )`;
     } else {
-        toPaySpan.innerHTML = display_money(0, write=false);
+        toPaySpan.innerHTML = format_money(0);
     }
 }
 
@@ -42,12 +42,12 @@ function buy_resource(saleId){
         response.json().then((raw_data) => {
             let response = raw_data["response"];
             if (response == "success") {
-                addToast(`You bought ${display_kg(raw_data["quantity"], write=false)} of ${raw_data["resource"]} from ${raw_data["seller"]} for a total cost of ${display_money(raw_data["total_price"], write=false)}`);
+                addToast(`You bought ${format_mass(raw_data["quantity"])} of ${raw_data["resource"]} from ${raw_data["seller"]} for a total cost of ${format_money(raw_data["total_price"])}`);
                 if(raw_data["available_quantity"] == 0){
                     document.getElementById("tile_" + saleId).remove();
                 }else{
                     available_quantity = document.getElementById("available_quantitiy_" + saleId);
-                    available_quantity.innerHTML = display_kg(raw_data["available_quantity"], write=false) + raw_data["resource"];
+                    available_quantity.innerHTML = format_mass(raw_data["available_quantity"]) + raw_data["resource"];
                 }
                 sessionStorage.setItem(
                     "shipments",
@@ -63,9 +63,9 @@ function buy_resource(saleId){
                     document.getElementById("tile_" + saleId).remove();
                 }else{
                     available_quantity = document.getElementById("available_quantitiy_" + saleId);
-                    available_quantity.innerHTML = display_kg(raw_data["available_quantity"], write=false) + raw_data["resource"];
+                    available_quantity.innerHTML = format_mass(raw_data["available_quantity"]) + raw_data["resource"];
                 }
-                addToast(`You removed ${display_kg(raw_data["quantity"], write=false)} of ${raw_data["resource"]} from the market`);
+                addToast(`You removed ${format_mass(raw_data["quantity"])} of ${raw_data["resource"]} from the market`);
             }
         });
     })

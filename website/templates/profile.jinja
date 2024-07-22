@@ -29,18 +29,20 @@
   </div>
 
   <div id="facilities_list" class="flex-col medium margin">
-    <b class="large">Power facilities</b>
-    <table id="power_facilities_table" class="table bone txt_center margin-small">
-        <tr>
-            <th class="facility" onclick="sortTable('power_facilities_table', 'facility')">Name</th>
-            <th class="installed_cap" onclick="sortTable('power_facilities_table', 'installed_cap')">Max power</th>
-            <th class="op_cost" onclick="sortTable('power_facilities_table', 'op_cost')">O&M cost</th>
-            <th class="remaining_lifespan" onclick="sortTable('power_facilities_table', 'remaining_lifespan')">Lifespan left</th>
-            <th class="upgrade" onclick="sortTable('power_facilities_table', 'upgrade')">Upgrade</th>
-            <th class="dismantle" onclick="sortTable('power_facilities_table', 'dismantle')">Dismantle</th>
-        </tr>
-    </table>
     {% set caps = engine.data["player_capacities"][user.id] %}
+    {% if caps["steam_engine"] or caps["windmill"] or caps["watermill"] or caps["coal_burner"] or caps["oil_burner"] or caps["gas_burner"] or caps["small_water_dam"] or caps["onshore_wind_turbine"] or caps["combined_cycle"] or caps["nuclear_reactor"] or caps["large_water_dam"] or caps["CSP_solar"] or caps["PV_solar"] or caps["offshore_wind_turbine"] or caps["nuclear_reactor_gen4"] %}
+      <b class="large">Power facilities</b>
+      <table id="power_facilities_table" class="table bone txt_center margin-small">
+          <tr>
+              <th class="facility" onclick="sortTable('power_facilities_table', 'facility')">Name</th>
+              <th class="installed_cap" onclick="sortTable('power_facilities_table', 'installed_cap')">Max power</th>
+              <th class="op_cost" onclick="sortTable('power_facilities_table', 'op_cost')">O&M cost</th>
+              <th class="remaining_lifespan" onclick="sortTable('power_facilities_table', 'remaining_lifespan')">Lifespan left</th>
+              <th class="upgrade" onclick="sortTable('power_facilities_table', 'upgrade')">Upgrade</th>
+              <th class="dismantle" onclick="sortTable('power_facilities_table', 'dismantle')">Dismantle</th>
+          </tr>
+      </table>
+    {% endif %}
     {% if caps["small_pumped_hydro"] or caps["compressed_air"] or caps["molten_salt"] or caps["large_pumped_hydro"] or caps["hydrogen_storage"] or caps["lithium_ion_batteries"] or caps["solid_state_batteries"] %}
       <b class="large margin-top">Storage facilities</b>
       <table id="storage_facilities_table" class="table bone txt_center margin-small">
@@ -155,35 +157,43 @@
         </tr>
         <tr>
           <td>Revenues</td>
-          <td class="txt_center"><script>display_money({{ profile.average_revenues }})</script>/h</td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ profile.average_revenues }}) + "/h";</script>
         </tr>
         <tr>
           <td>Max power</td>
-          <td class="txt_center"><script>display_W({{ profile.max_power_consumption }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ profile.max_power_consumption }});</script>
         </tr>
         <tr>
           <td>Max storage</td>
-          <td class="txt_center"><script>display_Wh({{ profile.max_energy_stored }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.max_energy_stored }});</script>
         </tr>
         <tr>
           <td>Imported energy</td>
-          <td class="txt_center"><script>display_Wh({{ profile.imported_energy }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.imported_energy }});</script>
         </tr>
         <tr>
           <td>Exported energy</td>
-          <td class="txt_center"><script>display_Wh({{ profile.exported_energy }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.exported_energy }});</script>
         </tr>
         <tr>
           <td>Extracted resources</td>
-          <td class="txt_center"><script>display_kg({{ profile.extracted_resources }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.extracted_resources }});</script>
         </tr>
         <tr>
           <td>Bought resources</td>
-          <td class="txt_center"><script>display_kg({{ profile.bought_resources }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.bought_resources }});</script>
         </tr>
         <tr>
           <td>Sold resources</td>
-          <td class="txt_center"><script>display_kg({{ profile.sold_resources }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.sold_resources }});</script>
         </tr>
         <tr>
           <td>Technology</td>
@@ -195,11 +205,13 @@
         </tr>
         <tr>
           <td>Emissions</td>
-          <td class="txt_center"><script>display_kg({{ profile.emissions }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.emissions }});</script>
         </tr>
         <tr>
           <td>Captured CO2</td>
-          <td class="txt_center"><script>display_kg({{ profile.captured_CO2 }})</script></td>
+          <td class="txt_center"></td>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.captured_CO2 }});</script>
         </tr>
       </table>
     </div>

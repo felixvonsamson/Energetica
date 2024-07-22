@@ -139,6 +139,7 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
             id="state_update",
             trigger="cron",
             second=f"*/{clock_time}" if clock_time != 60 else "0",
+            misfire_grace_time=10,
         )
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())

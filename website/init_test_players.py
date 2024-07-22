@@ -24,14 +24,14 @@ def init_test_players(engine):
     if player:
         Hex.query.filter_by(id=1).first().player_id = player.id
 
-        player.money = 1000000
-        player.coal = 450000
-        player.oil = 100000
-        player.gas = 800000
-        player.uranium = 4500
+        player.money = 1_000_000
+        player.coal = 450_000
+        player.oil = 100_000
+        player.gas = 800_000
+        player.uranium = 4_500
         player.rest_of_priorities = ""
 
-        add_asset(player, "industry", 11)
+        add_asset(player, "industry", 21)
         add_asset(player, "laboratory", 5)
         add_asset(player, "mathematics", 1)
         add_asset(player, "mineral_extraction", 2)
@@ -44,19 +44,24 @@ def init_test_players(engine):
         add_asset(player, "hydrogen_storage", 1)
         # add_asset(player, "onshore_wind_turbine", 1)
         # add_asset(player, "offshore_wind_turbine", 2)
-        add_asset(player, "nuclear_reactor_gen4", 1)
+        add_asset(player, "nuclear_reactor_gen4", 10)
+        add_asset(player, "nuclear_reactor", 5)
         add_asset(player, "combined_cycle", 2)
         add_asset(player, "gas_burner", 5)
-        add_asset(player, "steam_engine", 1)
+        add_asset(player, "steam_engine", 5)
         add_asset(player, "chemistry", 2)
         add_asset(player, "carbon_capture", 4)
+        add_asset(player, "mechanical_engineering", 3)
+        add_asset(player, "physics", 2)
+        add_asset(player, "thermodynamics", 2)
+        add_asset(player, "nuclear_engineering", 3)
         db.session.commit()
 
     player2 = create_player(engine, "user2", "password")
     if player2:
         Hex.query.filter_by(id=84).first().player_id = player2.id
         player2.rest_of_priorities = ""
-        add_asset(player2, "industry", 9)
+        add_asset(player2, "industry", 19)
         add_asset(player2, "warehouse", 1)
         add_asset(player2, "steam_engine", 10)
         add_asset(player2, "small_water_dam", 1)
@@ -176,7 +181,6 @@ def create_player(engine, username, password):
 def create_network(engine, name, members):
     n = Network.query.filter_by(name=name).first()
     if n is None:
-        print(members)
         new_network = Network(name=name, members=members)
         db.session.add(new_network)
         db.session.commit()

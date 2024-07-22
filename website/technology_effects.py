@@ -3,7 +3,6 @@ This files contains all the functions to calculate the different parameters of
 facilities according to the technology levels of the player.
 """
 
-import json
 import math
 from flask import current_app
 

@@ -304,46 +304,47 @@
             <div class="flex-row" style="justify-content:center;">
                 <b class="margin white button padding" onclick="change_prices();">Save changes</b>
             </div>
-            <b class="margin large" style="margin-top:24px">Production capacity prices</b>
-            <table class="table bone">
-                <tr>
-                    <th>Power facility</th>
-                    <th>Installed capacity</th>
-                    <th>Min selling price</th>
-                </tr>
-                {% macro power_facility_price(power_facility) -%}
-                    {{ 'price_'+power_facility }}
-                {%- endmacro %}
-                {% macro power_facility_price_value(power_facility) -%}
-                    {{ user[power_facility_price(power_facility) ] }}
-                {%- endmacro %}
-                {% macro power_facility_SCP(power_facility) -%}
-                    {{ 'SCP_'+power_facility }}
-                {%- endmacro %}
-                {% for power_facility in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
-                    {% if caps[power_facility] %}
-                        <tr>
-                            <td>{{ const_config[power_facility].name }}</td>
-                            <td class="txt_center">
-                                <script>display_W({{ caps[power_facility]["power"] }});</script>
-                            </td>
-                            <td>
-                                <input type="number"
-                                    class="small_input medium txt_center"
-                                    value="{{ power_facility_price_value(power_facility) }}"
-                                    id="{{ power_facility_price(power_facility) }}"
-                                    name="{{ power_facility_price(power_facility) }}"
-                                    min="-4.9"/>
-                                <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
-                                /MWh
-                            </td>
-                        </tr>
-                    {% endif %}
-                {% endfor %}
-            </table>
-            <div class="flex-row" style="justify-content:center;">
-                <b class="margin white button padding" onclick="change_prices();">Save changes</b>
-            </div>
+            {% if caps["steam_engine"] or caps["windmill"] or caps["watermill"] or caps["coal_burner"] or caps["oil_burner"] or caps["gas_burner"] or caps["small_water_dam"] or caps["onshore_wind_turbine"] or caps["combined_cycle"] or caps["nuclear_reactor"] or caps["large_water_dam"] or caps["CSP_solar"] or caps["PV_solar"] or caps["offshore_wind_turbine"] or caps["nuclear_reactor_gen4"] %}
+                <b class="margin large" style="margin-top:24px">Production capacity prices</b>
+                <table class="table bone">
+                    <tr>
+                        <th>Power facility</th>
+                        <th>Installed capacity</th>
+                        <th>Min selling price</th>
+                    </tr>
+                    {% macro power_facility_price(power_facility) -%}
+                        {{ 'price_'+power_facility }}
+                    {%- endmacro %}
+                    {% macro power_facility_price_value(power_facility) -%}
+                        {{ user[power_facility_price(power_facility) ] }}
+                    {%- endmacro %}
+                    {% macro power_facility_SCP(power_facility) -%}
+                        {{ 'SCP_'+power_facility }}
+                    {%- endmacro %}
+                    {% for power_facility in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
+                        {% if caps[power_facility] %}
+                            <tr>
+                                <td>{{ const_config[power_facility].name }}</td>
+                                <td class="txt_center"></td>
+                                <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ caps[power_facility].power }});</script>
+                                <td>
+                                    <input type="number"
+                                        class="small_input medium txt_center"
+                                        value="{{ power_facility_price_value(power_facility) }}"
+                                        id="{{ power_facility_price(power_facility) }}"
+                                        name="{{ power_facility_price(power_facility) }}"
+                                        min="-4.9"/>
+                                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                                    /MWh
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </table>
+                <div class="flex-row" style="justify-content:center;">
+                    <b class="margin white button padding" onclick="change_prices();">Save changes</b>
+                </div>
+            {% endif %}
             {% if caps["small_pumped_hydro"] or caps["compressed_air"] or caps["molten_salt"] or caps["large_pumped_hydro"] or caps["hydrogen_storage"] or caps["lithium_ion_batteries"] or caps["solid_state_batteries"] %}
                 <b class="margin large" style="margin-top:24px">Storage capacity prices</b>
                 <table class="table bone">
@@ -366,9 +367,8 @@
                         {% if caps[storage_facility] %}
                             <tr>
                                 <td>{{ const_config[storage_facility].name }}</td>
-                                <td class="txt_center">
-                                    <script>display_Wh({{ caps[storage_facility]["capacity"] }});</script>
-                                </td>
+                                <td class="txt_center"></td>
+                                <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ caps[power_facility].capacity }});</script>
                                 <td>
                                     <input type="number"
                                         class="small_input medium txt_center"

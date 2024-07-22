@@ -415,6 +415,98 @@ canvas {
     border-bottom-right-radius: 15% 50%;
 }
 
+.upgrade_button{
+    display:block;
+    color: #285430;
+    background-color: #ffffff;
+    border: none;
+    padding: 4px 8px;
+    font-size: inherit;
+}
+
+.upgrade_button:hover{
+    cursor: pointer;
+    color: #000;
+    background-color: #a4be7b
+}
+
+.dismantle_button{
+    color:darkred;
+    background-color: #ffffff;
+    border: none;
+    padding: 4px 8px;
+    font-size: inherit;
+}
+
+.dismantle_button:hover{
+    cursor: pointer;
+    color: #000;
+    background-color: #dd9696
+}
+
+.upgrade_container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.upgrade_all_button {
+    display: none;
+    position: absolute;
+    top: calc(100% + 1.2em);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.2em 0.6em;
+    z-index: 2;
+    background-color: #C8DE9Fdd;
+    border: none;
+    white-space: nowrap; 
+}
+
+.or_all_button{
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0 3em;
+    z-index: 2;
+    background-color: #ffffff00;
+    border: none;
+    white-space: nowrap; 
+}
+
+.upgrade_all_button:hover {
+    cursor: pointer;
+    background-color: #285430;
+    color:#fff
+}
+
+.upgrade_container:hover .upgrade_all_button, .upgrade_container:hover .dismantle_all_button, .upgrade_container:hover .or_all_button {
+    display: block;
+}
+
+.dismantle_all_button {
+    display: none;
+    position: absolute;
+    top: calc(100% + 1.2em);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.2em 0.6em;
+    z-index: 2;
+    background-color: #E8BE9Fdd;
+    border: none;
+    white-space: nowrap; 
+}
+
+.dismantle_all_button:hover {
+    cursor: pointer;
+    background-color: darkred;
+    color:#fff
+}
+
+
 .switch {
     position: relative;
     display: inline-block;

@@ -387,12 +387,30 @@ def request_upgrade_facility():
     return jsonify(response)
 
 
+@http.route("/request_upgrade_all_of_type", methods=["POST"])
+@log_action
+def request_upgrade_all_of_type():
+    json = request.get_json()
+    facility_id = json["facility_id"]
+    response = utils.upgrade_all_of_type(player=current_user, facility_id=facility_id)
+    return jsonify(response)
+
+
 @http.route("/request_dismantle_facility", methods=["POST"])
 @log_action
 def request_dismantle_facility():
     json = request.get_json()
     facility_id = json["facility_id"]
     response = utils.dismantle_facility(player=current_user, facility_id=facility_id)
+    return jsonify(response)
+
+
+@http.route("/request_dismantle_all_of_type", methods=["POST"])
+@log_action
+def request_dismantle_all_of_type():
+    json = request.get_json()
+    facility_id = json["facility_id"]
+    response = utils.dismantle_all_of_type(player=current_user, facility_id=facility_id)
     return jsonify(response)
 
 
@@ -512,6 +530,7 @@ def new_message():
     chat_id = json["chat_id"]
     response = utils.add_message(current_user, message, chat_id)
     return response
+
 
 @http.route("change_graph_view", methods=["POST"])
 def change_graph_view():

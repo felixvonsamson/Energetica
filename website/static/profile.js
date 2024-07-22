@@ -1,5 +1,9 @@
 let active_facilities;
-let decending = true;
+let order_by = {
+    "power_facilities_table": ["installed_cap", true],
+    "storage_facilities_table": ["installed_cap", true],
+    "extraction_facilities_table": ["extraction_rate", true],
+}
 
 if (window.location.href.includes("player_id")){
   let profile_headder = document.getElementById("profile_headder");
@@ -7,7 +11,7 @@ if (window.location.href.includes("player_id")){
   profile_headder.classList.add("hidden");
   facilities_list.style.display = "none";
 }else{
-    get_active_facilities();
+    get_active_facilities(reorder=true);
 }
 
 function upgradable(facility, current_multipliers){
@@ -44,7 +48,7 @@ function upgrade_cost(facility, current_multipliers, config){
     }
 }
 
-function get_active_facilities() {
+function get_active_facilities(reorder=false) {
     fetch("/api/get_active_facilities") // retrieves all active facilities of the player
     .then((response) => response.json())
     .then((raw_data) => {
@@ -53,7 +57,6 @@ function get_active_facilities() {
                 fetch("/api/get_resource_reserves")
                 .then((response) => response.json())
                 .then((reserves) => {
-                    decending = false;
                     active_facilities = {
                         "power_facilities": {},
                         "storage_facilities": {},
@@ -105,9 +108,9 @@ function get_active_facilities() {
                             "dismantle": config.base_price * facility.price_multiplier * 0.2,
                         };
                     }
-                    sortTable('power_facilities_table', 'installed_cap', reorder=false);
-                    sortTable('storage_facilities_table', 'installed_cap', reorder=false);
-                    sortTable('extraction_facilities_table', 'extraction_rate', reorder=false);
+                    sortTable('power_facilities_table', order_by.power_facilities_table[0], reorder=reorder);
+                    sortTable('storage_facilities_table', order_by.storage_facilities_table[0], reorder=reorder);
+                    sortTable('extraction_facilities_table', order_by.extraction_facilities_table[0], reorder=reorder);
                 });
             });
         });
@@ -125,10 +128,10 @@ function sortTable(table_name, columnName, reorder=true) {
     if (reorder) {
         // Check if the column is already sorted, toggle sorting order accordingly
         if (column.innerHTML.includes(triangle)) {
-            decending = !decending;
+            order_by[table_name] = [columnName, !order_by[table_name][1]];
             triangle = ' <i class="fa fa-caret-up"></i>';
         }else{
-            decending = true;
+            order_by[table_name] = [columnName, true];
         }
     }
 
@@ -138,9 +141,9 @@ function sortTable(table_name, columnName, reorder=true) {
         const bValue = b[1][columnName];
 
         if (typeof aValue === "string" && typeof bValue === "string") {
-            return decending ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
+            return order_by[table_name][1] ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
         } else {
-            return decending ? bValue - aValue : aValue - bValue;
+            return order_by[table_name][1] ? bValue - aValue : aValue - bValue;
         }
     });
 
@@ -172,15 +175,25 @@ function build_power_facilities_table(sortedData) {
     for (const [id, facility] of sortedData) {
         let upgrade = "-";
         if(facility.upgrade != null){
-            upgrade = `<button class="upgrade_button" onclick="upgrade(${id})">${display_money(facility.upgrade, write=false)}</button>`;
+            upgrade = `<div class="upgrade_container">
+                    <button class="upgrade_button" onclick="upgrade(${id})">${format_money(facility.upgrade)}</button>
+                    <button class="or_all_button">- or -</button>
+                    <button class="upgrade_all_button" onclick="are_you_sure_upgrade_all_of_type(${id}, '${facility.name}')">Upgrade all ${facility.name}</button>
+                </div>`;
         }
         html += `<tr>
             <td>${facility.name}</td>
-            <td>${display_W(facility.installed_cap, write=false)}</td>
-            <td>${display_money(facility.op_cost, write=false)}/h</td>
-            <td>${display_days(facility.remaining_lifespan, write=false)} d</td>
+            <td>${format_power(facility.installed_cap)}</td>
+            <td>${format_money(facility.op_cost)}/h</td>
+            <td>${format_days(facility.remaining_lifespan)} d</td>
             <td>${upgrade}</td>
-            <td><button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${display_money(facility.dismantle, write=false)}</button></td>
+            <td>
+                <div class="upgrade_container">
+                    <button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${format_money(facility.dismantle)}</button>
+                    <button class="or_all_button">- or -</button>
+                    <button class="dismantle_all_button" onclick="are_you_sure_dismantle_all_of_type(${id}, '${facility.name}')">Dismantle all ${facility.name}</button>
+                </div>
+            </td>
             </tr>`;
     }
     return html;
@@ -199,16 +212,26 @@ function build_storage_facilities_table(sortedData) {
     for (const [id, facility] of sortedData) {
         let upgrade = "-";
         if(facility.upgrade != null){
-            upgrade = `<button class="upgrade_button" onclick="upgrade(${id})">${display_money(facility.upgrade, write=false)}</button>`;
+            upgrade = `<div class="upgrade_container">
+                    <button class="upgrade_button" onclick="upgrade(${id})">${format_money(facility.upgrade)}</button>
+                    <button class="or_all_button">- or -</button>
+                    <button class="upgrade_all_button" onclick="are_you_sure_upgrade_all_of_type(${id}, '${facility.name}')">Upgrade all ${facility.name}</button>
+                </div>`;
         }
         html += `<tr>
             <td>${facility.name}</td>
-            <td>${display_Wh(facility.installed_cap, write=false)}</td>
-            <td>${display_money(facility.op_cost, write=false)}/h</td>
+            <td>${format_energy(facility.installed_cap)}</td>
+            <td>${format_money(facility.op_cost)}/h</td>
             <td>${Math.round(facility.efficiency * 100)}%</td>
-            <td>${display_days(facility.remaining_lifespan, write=false)} d</td>
+            <td>${format_days(facility.remaining_lifespan)} d</td>
             <td>${upgrade}</td>
-            <td><button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${display_money(facility.dismantle, write=false)}</button></td>
+            <td>
+                <div class="upgrade_container">
+                    <button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${format_money(facility.dismantle)}</button>
+                    <button class="or_all_button">- or -</button>
+                    <button class="dismantle_all_button" onclick="are_you_sure_dismantle_all_of_type(${id}, '${facility.name}')">Dismantle all ${facility.name}</button>
+                </div>
+            </td>
             </tr>`;
     }
     return html;
@@ -227,16 +250,26 @@ function build_extraction_facilities_table(sortedData) {
     for (const [id, facility] of sortedData) {
         let upgrade = "-";
         if(facility.upgrade != null){
-            upgrade = `<button class="upgrade_button" onclick="upgrade(${id})">${display_money(facility.upgrade, write=false)}</button>`;
+            upgrade = `<div class="upgrade_container">
+                    <button class="upgrade_button" onclick="upgrade(${id})">${format_money(facility.upgrade)}</button>
+                    <button class="or_all_button">- or -</button>
+                    <button class="upgrade_all_button" onclick="are_you_sure_upgrade_all_of_type(${id}, '${facility.name}')">Upgrade all ${facility.name}</button>
+                </div>`;
         }
         html += `<tr>
             <td>${facility.name}</td>
-            <td>${display_kgh(facility.extraction_rate, write=false)}</td>
-            <td>${display_money(facility.op_cost, write=false)}/h</td>
-            <td>${display_W(facility.energy_use, write=false)}</td>
-            <td>${display_days(facility.remaining_lifespan, write=false)} d</td>
+            <td>${format_mass_rate(facility.extraction_rate)}</td>
+            <td>${format_money(facility.op_cost)}/h</td>
+            <td>${format_power(facility.energy_use)}</td>
+            <td>${format_days(facility.remaining_lifespan)} d</td>
             <td>${upgrade}</td>
-            <td><button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${display_money(facility.dismantle, write=false)}</button></td>
+            <td>
+                <div class="upgrade_container">
+                    <button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${format_money(facility.dismantle)}</button>
+                    <button class="or_all_button">- or -</button>
+                    <button class="dismantle_all_button" onclick="are_you_sure_dismantle_all_of_type(${id}, '${facility.name}')">Dismantle all ${facility.name}</button>
+                </div>
+            </td>
             </tr>`;
     }
     return html;
@@ -245,10 +278,28 @@ function build_extraction_facilities_table(sortedData) {
 function are_you_sure_dismantle_facility(facility_id, cost){
     document.getElementById('are_you_sure_popup').classList.remove('hidden');
     document.getElementById('are_you_sure_content').innerHTML = `Are you sure you want to dismantle this facility?<br>
-    This will cost you ${display_money(cost, write=false)}.`;
+    This will cost you ${format_money(cost)}.`;
     document.getElementById('yes_im_sure').setAttribute('onclick', `dismantle(${facility_id}); hide_are_you_sure()`);
     document.getElementById('no_cancel').innerHTML = '<b>Cancel</b>';
   }
+
+function are_you_sure_dismantle_all_of_type(facility_id, facility_name){
+    let cost = cost_of_action_all_of_type(facility_name, "dismantle");
+    document.getElementById('are_you_sure_popup').classList.remove('hidden');
+    document.getElementById('are_you_sure_content').innerHTML = `Are you sure you want to dismantle all ${facility_name}?<br>
+    This will cost you ${format_money(cost)}.`;
+    document.getElementById('yes_im_sure').setAttribute('onclick', `dismantle_all_of_type('${facility_id}'); hide_are_you_sure()`);
+    document.getElementById('no_cancel').innerHTML = '<b>Cancel</b>';
+}
+
+function are_you_sure_upgrade_all_of_type(facility_id, facility_name){
+    let cost = cost_of_action_all_of_type(facility_name, "upgrade");
+    document.getElementById('are_you_sure_popup').classList.remove('hidden');
+    document.getElementById('are_you_sure_content').innerHTML = `Are you sure you want to upgrade all ${facility_name}?<br>
+    This will cost you ${format_money(cost)}.`;
+    document.getElementById('yes_im_sure').setAttribute('onclick', `upgrade_all_of_type('${facility_id}'); hide_are_you_sure()`);
+    document.getElementById('no_cancel').innerHTML = '<b>Cancel</b>';
+}
 
 function upgrade(id){
     send_form("/api/request_upgrade_facility", {
@@ -259,7 +310,28 @@ function upgrade(id){
             if (response == "success") {
                 let money = raw_data["money"];
                 var obj = document.getElementById("money");
-                obj.innerHTML = formatted_money(money);
+                obj.innerHTML = format_money_long(money);
+                get_active_facilities();
+            }else if(response == "notEnoughMoney"){
+                addError("Not enough money");
+            }
+        });
+    })
+    .catch((error) => {
+        console.error(`caught error ${error}`);
+    });
+}
+
+function upgrade_all_of_type(facility_id){
+    send_form("/api/request_upgrade_all_of_type", {
+        facility_id: facility_id,
+    }).then((response) => {
+        response.json().then((raw_data) => {
+            let response = raw_data["response"];
+            if (response == "success") {
+                let money = raw_data["money"];
+                var obj = document.getElementById("money");
+                obj.innerHTML = format_money_long(money);
                 get_active_facilities();
             }else if(response == "notEnoughMoney"){
                 addError("Not enough money");
@@ -280,7 +352,7 @@ function dismantle(id){
             if (response == "success") {
                 let money = raw_data["money"];
                 var obj = document.getElementById("money");
-                obj.innerHTML = formatted_money(money);
+                obj.innerHTML = format_money_long(money);
                 get_active_facilities();
             }else if(response == "notEnoughMoney"){
                 addError("Not enough money");
@@ -294,3 +366,35 @@ function dismantle(id){
     });
 }
 
+function dismantle_all_of_type(facility_id){
+    send_form("/api/request_dismantle_all_of_type", {
+        facility_id: facility_id,
+    }).then((response) => {
+        response.json().then((raw_data) => {
+            let response = raw_data["response"];
+            if (response == "success") {
+                let money = raw_data["money"];
+                var obj = document.getElementById("money");
+                obj.innerHTML = format_money_long(money);
+                get_active_facilities();
+            }else if(response == "notEnoughMoney"){
+                addError("Not enough money");
+            }
+        });
+    })
+    .catch((error) => {
+        console.error(`caught error ${error}`);
+    });
+}
+
+function cost_of_action_all_of_type(facility_name, action){
+    let cost = 0;
+    for (const family in active_facilities){
+        for (const [id, facility] of Object.entries(active_facilities[family])) {
+            if (facility.name == facility_name){
+                cost += facility[action];
+            }
+        }
+    }
+    return cost;
+}

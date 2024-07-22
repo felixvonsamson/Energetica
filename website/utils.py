@@ -325,11 +325,6 @@ def add_asset(player_id, construction_id):
     project_priorities = player.read_list(priority_list_name)
     for priority_index, project_id in enumerate(project_priorities[:]):
         next_construction = Under_construction.query.get(project_id)
-        if next_construction is None:
-            print(
-                f"DATABASE MISMATCH : CONSTRUCTION {project_id} OF PLAYER {player.username} DOES NOT EXIST IN UNDER_CONSTRUCTION DATABASE !!!"
-            )
-            break
         if next_construction.suspension_time is not None:
             if next_construction.family in [
                 "Functional facilities",
@@ -482,6 +477,15 @@ def upgrade_facility(player, facility_id):
         return {"response": "notUpgradable"}
 
 
+def upgrade_all_of_type(player, facility_id):
+    """this function is executed when a player upgrades all facilities of a certain type"""
+    facility_name = Active_facilities.query.get(facility_id).facility
+    facilities = Active_facilities.query.filter_by(player_id=player.id, facility=facility_name).all()
+    for facility in facilities:
+        upgrade_facility(player, facility.id)
+    return {"response": "success", "money": player.money}
+
+
 def dismantle_facility(player, facility_id):
     """this function is executed when a player dismantles a facility"""
     facility = Active_facilities.query.get(facility_id)
@@ -492,6 +496,15 @@ def dismantle_facility(player, facility_id):
     if player.money < cost:
         return {"response": "notEnoughMoney"}
     remove_asset(player.id, facility, decommissioning=False)
+    return {"response": "success", "money": player.money}
+
+
+def dismantle_all_of_type(player, facility_id):
+    """this function is executed when a player dismantles all facilities of a certain type"""
+    facility_name = Active_facilities.query.get(facility_id).facility
+    facilities = Active_facilities.query.filter_by(player_id=player.id, facility=facility_name).all()
+    for facility in facilities:
+        dismantle_facility(player, facility.id)
     return {"response": "success", "money": player.money}
 
 
@@ -865,7 +878,7 @@ def buy_resource_from_market(player, quantity, sale_id):
                 sale.player,
             )
         if "trading_3" not in player.achievements:
-            if player.bought_resources >= 10000000:
+            if player.bought_resources >= 10_000_000:
                 player.add_to_list("achievements", "trading_3")
                 player.xp += 10
                 notify(
@@ -874,7 +887,7 @@ def buy_resource_from_market(player, quantity, sale_id):
                     player,
                 )
         if "trading_3" not in sale.player.achievements:
-            if sale.player.sold_resources >= 10000000:
+            if sale.player.sold_resources >= 10_000_000:
                 sale.player.add_to_list("achievements", "trading_3")
                 sale.player.xp += 10
                 notify(
@@ -975,7 +988,7 @@ def display_money(price):
 
 def format_mass(mass):
     """Formats mass in kg into a string with corresponding unit."""
-    if mass < 50000:
+    if mass < 50_000:
         formatted_mass = f"{int(mass):,d}".replace(",", "'") + " kg"
     else:
         formatted_mass = f"{mass / 1000:,.0f}".replace(",", "'") + " t"
@@ -1078,7 +1091,7 @@ def add_message(player, message_text, chat_id):
     engine: gameEngine = current_app.config["engine"]
     if not chat_id:
         return {"response": "noChatID"}
-    if message_text.length == 0:
+    if len(message_text) == 0:
         return {"response": "noMessage"}
     chat = Chat.query.filter_by(id=chat_id).first()
     # TODO: set a character / size limit on message size

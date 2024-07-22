@@ -89,7 +89,7 @@ function start_construction(facility, family, force = false) {
                 if (response == "success") {
                     let money = raw_data["money"];
                     var obj = document.getElementById("money");
-                    obj.innerHTML = formatted_money(money);
+                    obj.innerHTML = format_money_long(money);
                     addToast("Construction started");
                     sessionStorage.setItem(
                         "constructions",
@@ -127,7 +127,7 @@ function cancel_construction(construction_id, force = false) {
                 if (response == "success") {
                     let money = raw_data["money"];
                     var obj = document.getElementById("money");
-                    obj.innerHTML = formatted_money(money);
+                    obj.innerHTML = format_money_long(money);
                     addToast("Construction cancelled");
                     sessionStorage.setItem(
                         "constructions",
@@ -221,8 +221,7 @@ load_constructions().then((constructions) => {
             const id = progressBar.id;
             const construction = constructions_data[0][id];
             const now = new Date().getTime() / 1000;
-            const round_up = server_start % clock_time;
-            const current_time = (now - server_start + round_up) / clock_time;
+            const current_time = (now - server_start) / clock_time;
             let new_width;
             let time_remaining;
             if (construction.suspension_time) {
@@ -263,8 +262,7 @@ load_constructions().then((constructions) => {
             const id = shipmentBar.id;
             const shipment = shipment_data[id];
             const now = new Date().getTime() / 1000;
-            const round_up = server_start % clock_time;
-            const current_time = (now - server_start + round_up) / clock_time;
+            const current_time = (now - server_start) / clock_time;
             let new_width;
             let time_remaining;
             if (shipment["suspension_time"]) {
@@ -415,7 +413,7 @@ function html_for_shipmentBar(id, shipment) {
         playPauseLogo = "fa-play";
     }
     return `<div class="progressbar-container">
-        <div class="progressbar-name medium margin-small">${display_kg(shipment["quantity"], write = false)} ${resource_names[shipment["resource"]]}</div>
+        <div class="progressbar-name medium margin-small">${format_mass(shipment["quantity"])} ${resource_names[shipment["resource"]]}</div>
         <div class="progressbar-background">
             <div id="${id}" class="shipmentbar-bar"></div>
         </div>

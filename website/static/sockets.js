@@ -41,7 +41,7 @@ socket.on("get_players", function (players) {
 socket.on("new_values", function (changes) {
     let money = document.getElementById("money");
     if (money != null) {
-        money.innerHTML = changes["money"];
+        money.innerHTML = format_money_long(changes["money"]);
     }
     let total_t = changes["total_t"];
     console.log("received new values : " + total_t);
@@ -153,7 +153,7 @@ socket.on("new_notification", function (notification) {
     notification_list = document.getElementById("notification_list");
     if (notification_list != null) {
         notification_list.innerHTML += `<div id="notification_${notification["id"]}" class="notification padding medium margin-large">
-        <div class="small notification_time">${formatDateTime(notification["time"], write=false)}</div>
+        <div class="small notification_time">${formatDateTime(notification["time"])}</div>
          <div class="flex-row align-items-center notification_head">
            <b>${notification["title"]}<i class="fa fa-circle small padding"></i></b>
            <span onclick="delete_notification(this, ${notification["id"]});" class="cross">×</span></div>

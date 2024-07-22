@@ -60,9 +60,9 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_show_chat_disclaimer(player))
         ws.send(rest_get_networks())
         # ws.send(rest_get_scoreboard())
-        # ws.send(rest_get_constructions(player))
-        # ws.send(rest_get_construction_queue(player))
-        # ws.send(rest_get_weather(engine))
+        ws.send(rest_get_constructions(player))
+        ws.send(rest_get_construction_queue(player))
+        ws.send(rest_get_weather(engine))
         ws.send(rest_get_advancements(player))
         if player.tile is not None:
             rest_init_ws_post_location(player, ws)
