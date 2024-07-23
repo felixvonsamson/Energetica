@@ -1357,6 +1357,11 @@ input:checked + .slider:before {
     visibility: hidden;
 }
 
+#web_push_notification_switch {
+    top: 95%;
+    border-radius: 8px;
+}
+
 .create_chat_input {
     padding: 8px;
     display: block;

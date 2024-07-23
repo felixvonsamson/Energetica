@@ -48,6 +48,17 @@ def notify(title, message, player):
         },
     )
     db.session.commit()
+    if player.notifications.count() > 1:
+        if (
+            new_notification.content == player.notifications[-2].content
+            and new_notification.time == player.notifications[-2].time
+        ):
+            return
+    notification_data = {
+        "title": new_notification.title,
+        "body": new_notification.content,
+    }
+    player.send_notification(notification_data)
 
 
 def init_table(user_id):

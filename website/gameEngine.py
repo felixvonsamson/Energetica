@@ -29,6 +29,7 @@ class gameEngine(object):
         self.config = config
         self.const_config = const_config
         self.socketio = None
+        self.notification_subscriptions = defaultdict(list)
         self.clients = defaultdict(list)
         self.websocket_dict = {}
         self.console_logger = logging.getLogger("console")  # logs events in the terminal

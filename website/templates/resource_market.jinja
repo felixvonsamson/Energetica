@@ -97,13 +97,15 @@
                      src="{{ url_for('static', filename='images/resources/'+sale.resource+'_img.jpg') }}">
                 <div id="infos" class="flex-col medium">
                     <span id="available_quantitiy_{{ sale.id }}" class="large"></span>
-                    <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ sale.quantity }}) + " " + {{ sale.resource }};</script>
+                    <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ sale.quantity }}) + " {{ sale.resource }}";</script>
                     <span class="large"><b></b>
                     <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ sale.price * 1000 }});</script>
                     /t</span>
-                shipment :
-                <span></span>
-                <script>document.currentScript.previousElementSibling.innerHTML = calculate_delivery({{ user.tile.q - sale.player.tile.q }}, {{ user.tile.r - sale.player.tile.r }}, {{ engine.const_config.transport.time * engine.const_config.assets.transport_technology["time_factor"] ** user.transport_technology }});</script>
+                <span>
+                    shipment :
+                    <span></span>
+                    <script>document.currentScript.previousElementSibling.innerHTML = calculate_delivery({{ user.tile.q - sale.player.tile.q }}, {{ user.tile.r - sale.player.tile.r }}, {{ engine.const_config.transport.time * engine.const_config.assets.transport_technology["time_factor"] ** user.transport_technology }});</script>
+                </span>
             </div>
             <form method="post"
                   autocomplete="off"

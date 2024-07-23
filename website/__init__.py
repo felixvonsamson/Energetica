@@ -8,12 +8,12 @@ import eventlet
 eventlet.monkey_patch(thread=True, time=True)
 
 import socket
-from flask import Flask  # noqa: E402
+from flask import Flask, request, jsonify  # noqa: E402
 from flask_sqlalchemy import SQLAlchemy  # noqa: E402
 import os  # noqa: E402
 import csv  # noqa: E402
 import pickle  # noqa: E402
-from flask_login import LoginManager  # noqa: E402
+from flask_login import LoginManager, current_user  # noqa: E402
 from flask_httpauth import HTTPBasicAuth  # noqa: E402
 from werkzeug.security import check_password_hash
 from flask_socketio import SocketIO  # noqa: E402
@@ -29,7 +29,7 @@ from .database.player import Player  # noqa: E402
 from website.gameEngine import gameEngine  # noqa: E402
 
 
-def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
+def create_app(clock_time, run_init_test_players, rm_instance):
     # gets lock to avoid multiple instances
     if platform.system() == "Linux":
         lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -39,6 +39,9 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     app = Flask(__name__)
     app.config["SECRET_KEY"] = "psdfjfdf7ehsfdxxnvezartylfzutzngpssdw98w23"
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
+    app.config["VAPID_PUBLIC_KEY"] = open("public_key.txt", "r+").readline().strip("\n")
+    app.config["VAPID_PRIVATE_KEY"] = open("private_key.txt", "r+").readline().strip("\n")
+    app.config["VAPID_CLAIMS"] = {"sub": "mailto:felixvonsamson@gmail.com"}
     db.init_app(app)
 
     # creates the engine (and loading the save if it exists)
@@ -80,6 +83,27 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
     app.register_blueprint(auth, url_prefix="/")
     app.register_blueprint(http, url_prefix="/api/")
     app.register_blueprint(websocket_blueprint, url_prefix="/api/")
+
+    @app.route("/subscribe", methods=["GET", "POST"])
+    def subscribe():
+        """
+        POST creates a new subscription
+        GET returns vapid public key
+        """
+        if request.method == "GET":
+            return jsonify({"public_key": app.config["VAPID_PUBLIC_KEY"]})
+        subscription = request.json
+        engine.notification_subscriptions[current_user.id].append(subscription)
+        return jsonify({"response": "Subscription successful"})
+
+    @app.route("/unsubscribe", methods=["POST"])
+    def unsubscribe():
+        """
+        POST removes a subscription
+        """
+        subscription = request.json
+        engine.notification_subscriptions[current_user.id].remove(subscription)
+        return jsonify({"response": "Unsubscription successful"})
 
     from .database.map import Hex
 
@@ -143,41 +167,6 @@ def create_app(clock_time, run_init_test_players, rm_instance, repair_database):
         )
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
-
-        if repair_database:
-            from .database.player_assets import Under_construction
-
-            print("repairing database")
-            with app.app_context():
-                players = Player.query.all()
-                for player in players:
-                    construction_list = player.read_list("construction_priorities")
-                    research_priorities = player.read_list("research_priorities")
-                    for contruction_id in construction_list:
-                        const = Under_construction.query.get(contruction_id)
-                        if const is None:
-                            player.remove_from_list("construction_priorities", contruction_id)
-                            print(
-                                f"removed construction {contruction_id} from construction priorities ({player.username})"
-                            )
-                    for contruction_id in research_priorities:
-                        const = Under_construction.query.get(contruction_id)
-                        if const is None:
-                            player.remove_from_list("research_priorities", contruction_id)
-                            print(f"removed construction {contruction_id} from research priorities ({player.username})")
-                constructions = Under_construction.query.all()
-                for construction in constructions:
-                    found = False
-                    for player in players:
-                        construction_list = player.read_list("construction_priorities")
-                        research_priorities = player.read_list("research_priorities")
-                        if construction.id in construction_list + research_priorities:
-                            found = True
-                            break
-                    if not found:
-                        db.session.delete(construction)
-                        print(f"removed construction {construction.name} from Under_construction ({player.username})")
-                db.session.commit()
 
         if run_init_test_players:
             engine.log("running init_test_players")

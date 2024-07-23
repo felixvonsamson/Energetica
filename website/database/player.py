@@ -7,6 +7,8 @@ from website.database.player_assets import (
 
 from flask import current_app
 from flask_login import UserMixin
+from pywebpush import webpush, WebPushException
+import json
 
 from website.database.messages import (
     Chat,
@@ -313,6 +315,19 @@ class Player(db.Model, UserMixin):
                 "money": self.money,
             },
         )
+
+    def send_notification(self, notification_data):
+        engine = current_app.config["engine"]
+        for subscription in engine.notification_subscriptions[self.id]:
+            try:
+                webpush(
+                    subscription_info=subscription,
+                    data=json.dumps(notification_data),
+                    vapid_private_key=current_app.config["VAPID_PRIVATE_KEY"],
+                    vapid_claims=current_app.config["VAPID_CLAIMS"],
+                )
+            except WebPushException as ex:
+                print(f"Failed to send notification: {repr(ex)}")
 
     # prints out the object as a sting with the players username for debugging
     def __repr__(self):

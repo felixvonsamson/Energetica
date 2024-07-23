@@ -4,6 +4,26 @@ This code contains the functions to acess frontend data and retrieve it if it is
 
 if (window.location.pathname != "/login" && window.location.pathname != "/sign-up"){
     check_new_connection();
+    if (!sessionStorage.getItem("player_id")){
+        fetch("/api/get_player_id")
+        .then((response) => response.json())
+        .then((player_id) => {
+            sessionStorage.setItem("player_id", player_id);
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+    }
+    if (!sessionStorage.getItem('applicationServerPublicKey')){
+        fetch("/subscribe")
+        .then((response) => response.json())
+        .then((data) => {
+            sessionStorage.setItem('applicationServerPublicKey', data.public_key);
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+    }
 }
 
 function check_new_connection(){
@@ -31,16 +51,6 @@ function retrieve_all(){
     retrieve_players();
     retrieve_player_data();
     retrieve_chats();
-    if (!sessionStorage.getItem("player_id")){
-        fetch("/api/get_player_id")
-            .then((response) => response.json())
-            .then((player_id) => {
-                sessionStorage.setItem("player_id", player_id);
-            })
-            .catch((error) => {
-                console.error("Error:", error);
-            });
-    }
 }
 
 function load_constructions() {
