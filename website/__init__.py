@@ -102,7 +102,8 @@ def create_app(clock_time, run_init_test_players, rm_instance):
         POST removes a subscription
         """
         subscription = request.json
-        engine.notification_subscriptions[current_user.id].remove(subscription)
+        if subscription in engine.notification_subscriptions[current_user.id]:
+            engine.notification_subscriptions[current_user.id].remove(subscription)
         return jsonify({"response": "Unsubscription successful"})
 
     from .database.map import Hex
