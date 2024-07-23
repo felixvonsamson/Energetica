@@ -1162,7 +1162,7 @@ input:checked + .slider:before {
 }
 
 .table.tan_green {
-    width: 257px;
+    width: 265px;
 }
 
 .table tbody tr:nth-child(even) {
@@ -1461,7 +1461,7 @@ input:checked + .slider:before {
 
 #infotable{
     overflow: hidden;
-    margin: 14px 20px 14px 0px;
+    margin: 14px 14px 14px 0px;
     position: relative;
 }
 
