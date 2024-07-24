@@ -391,6 +391,11 @@ def _package_power_storage_extraction_facility_base(player: Player, facility):
         "construction_pollution": const_config_assets[facility]["base_construction_pollution"],
         "operating_costs": const_config_assets[facility]["base_price"]
         * price_multiplier(player, facility)
+        * (
+            capacity_multiplier(player, facility)
+            if facility in ["watermill", "small_water_dam", "large_water_dam"]
+            else 1.0
+        )
         * const_config_assets[facility]["O&M_factor"]
         * 3600
         / engine.clock_time,
