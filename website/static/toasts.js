@@ -80,8 +80,16 @@ function subscribeUserToPush() {
             headers: {
                 'Content-Type': 'application/json'
             }
+        }).then((response) => {
+            response.json().then((raw_data) => {
+                let response = raw_data["response"];
+                if (response == "Subscription successful") {
+                    isSubscribed = true;
+                }else{
+                    addError("Browser notification subscription not possible");
+                }
+            });
         });
-        isSubscribed = true;
     }).catch(function(error) {
         console.error('Failed to subscribe user:', error);
     });
