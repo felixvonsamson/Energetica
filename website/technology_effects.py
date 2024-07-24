@@ -85,6 +85,9 @@ def capacity_multiplier(player, facility):
     # Civil engineering
     if facility in ["small_pumped_hydro", "large_pumped_hydro"]:
         mlt *= const_config["civil_engineering"]["capacity_factor"] ** player.civil_engineering
+    # calculating the hydro price multiplier linked to the number of hydro facilities
+    if facility in ["watermill", "small_water_dam", "large_water_dam"]:
+        mlt *= hydro_price_function(efficiency_multiplier(player, facility), player.tile.hydro)
     # calculating the wind speed multiplier linked to the number of wind turbines
     if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
         mlt *= wind_speed_multiplier(efficiency_multiplier(player, facility), player.tile.wind)
@@ -300,9 +303,7 @@ def get_current_technology_values(player):
     for facility in engine.controllable_facilities + engine.storage_facilities:
         dict[facility]["efficiency_multiplier"] = efficiency_multiplier(player, facility)
     for facility in ["watermill", "small_water_dam", "large_water_dam"]:
-        dict[facility]["special_price_multiplier"] = hydro_price_function(
-            efficiency_multiplier(player, facility), player.tile.hydro
-        )
+        dict[facility]["special_price_multiplier"] = capacity_multiplier(player, facility)
     for facility in engine.storage_facilities:
         dict[facility]["capacity_multiplier"] = capacity_multiplier(player, facility)
     for facility in engine.extraction_facilities:
@@ -354,7 +355,7 @@ def _package_facility_base(player: Player, facility):
         "price": const_config_assets[facility]["base_price"]
         * price_multiplier(player, facility)
         * (
-            hydro_price_function(efficiency_multiplier(player, facility), player.tile.hydro)
+            capacity_multiplier(player, facility)
             if facility in ["watermill", "small_water_dam", "large_water_dam"]
             else 1.0
         ),
@@ -390,11 +391,6 @@ def _package_power_storage_extraction_facility_base(player: Player, facility):
         "construction_pollution": const_config_assets[facility]["base_construction_pollution"],
         "operating_costs": const_config_assets[facility]["base_price"]
         * price_multiplier(player, facility)
-        * (
-            hydro_price_function(efficiency_multiplier(player, facility), player.tile.hydro)
-            if facility in ["watermill", "small_water_dam", "large_water_dam"]
-            else 1.0
-        )
         * const_config_assets[facility]["O&M_factor"]
         * 3600
         / engine.clock_time,
