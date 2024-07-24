@@ -250,13 +250,15 @@
               {% endif %}
             {% endfor %}
             {# CO2 Emssions #}
-            <tr>
-              <td>CO2 emissions</td>
-              <td class="txt_center">
-                <strong></strong>
-                <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.pollution }}) + "/MWh";</script>
-              </td>
-            </tr>
+            {% if facility_data.pollution is defined %}
+              <tr>
+                <td>CO2 emissions</td>
+                <td class="txt_center">
+                  <strong></strong>
+                  <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.pollution }}) + "/MWh";</script>
+                </td>
+              </tr>
+            {% endif %}
             {# lifespan #}
             <tr>
               <td>Lifespan</td>
