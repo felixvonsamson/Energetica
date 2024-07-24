@@ -50,8 +50,8 @@ def notify(title, message, player):
     db.session.commit()
     if player.notifications.count() > 1:
         if (
-            new_notification.content == player.notifications[-2].content
-            and new_notification.time == player.notifications[-2].time
+            new_notification.content == player.notifications[player.notifications.count() - 2].content
+            and new_notification.time == player.notifications[player.notifications.count() - 2].time
         ):
             return
     notification_data = {
