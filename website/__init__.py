@@ -108,6 +108,14 @@ def create_app(clock_time, run_init_test_players, rm_instance):
             engine.notification_subscriptions[current_user.id].remove(subscription)
         return jsonify({"response": "Unsubscription successful"})
 
+    @app.route("/apple-app-site-association")
+    def apple_app_site_association():
+        """
+        Returns the apple-app-site-association JSON data needed for supporting
+        associated domains needed for shared webcredentials
+        """
+        return {"webcredentials": {"apps": ["776YBR3ZGA.ThinkDumbIndustries.Energetica"]}}
+
     from .database.map import Hex
 
     # initialize database :
