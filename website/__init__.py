@@ -8,7 +8,7 @@ import eventlet
 eventlet.monkey_patch(thread=True, time=True)
 
 import socket
-from flask import Flask, request, jsonify  # noqa: E402
+from flask import Flask, request, jsonify, send_file  # noqa: E402
 from flask_sqlalchemy import SQLAlchemy  # noqa: E402
 import os  # noqa: E402
 import csv  # noqa: E402
@@ -114,7 +114,7 @@ def create_app(clock_time, run_init_test_players, rm_instance):
         Returns the apple-app-site-association JSON data needed for supporting
         associated domains needed for shared webcredentials
         """
-        return {"webcredentials": {"apps": ["776YBR3ZGA.ThinkDumbIndustries.Energetica"]}}
+        return send_file("static/apple-app-site-association", as_attachment=True)
 
     from .database.map import Hex
 
