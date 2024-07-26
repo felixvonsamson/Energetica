@@ -314,13 +314,13 @@ function sortTable(columnName, reorder=true) {
     // Rebuild the HTML table
     let html = `<tr>
         <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-        <th class="usage_col" onclick="sortTable('usage_col')">Stored Energy</th>
+        <th class="usage_col hover_info" onclick="sortTable('usage_col')">CO2 Emissions<span class="popup_info small">over the last ${res}</span></th>
         <th class="selected_col">Displayed</th>
     </tr>`;
     for (const [id, facility] of sortedData) {
         html += `<tr>
             <td>${facility.facility_col}</td>
-            <td>${format_mass_rate(facility.usage_col)}</td>
+            <td>${format_mass(facility.usage_col)}</td>
             <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}', ${!keys_emissions[facility.name]})" ${keys_emissions[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
             </tr>`;
     }
@@ -336,10 +336,19 @@ function sortTable(columnName, reorder=true) {
             transformed_data.push({
                 name: key,
                 facility_col: cols_and_names[key][1],
-                usage_col: data.emissions[key][0][359]*3600/clock_time,
+                usage_col: integrate(data.emissions[key][res_id].slice(graph_p5.t0),  res_to_factor[res]),
             })
         }
         return transformed_data;
+    }
+
+    function integrate(array, delta){
+        // integrated the energy over the array. delta is the time step in hours
+        let sum = 0;
+        for (let i = 0; i < array.length; i++){
+            sum += array[i] * delta;
+        }
+        return sum;
     }
 }
 

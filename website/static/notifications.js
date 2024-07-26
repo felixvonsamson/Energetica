@@ -16,6 +16,7 @@ function read_notifications(){
     badge.style.display='none';
   }
   document.getElementById('notification_popup').classList.add('hidden');
+  document.getElementById('web_push_notification_switch').classList.add('hidden');
   fetch("/api/request_marked_as_read")
   .catch((error) => {
       console.error(`caught error ${error}`);

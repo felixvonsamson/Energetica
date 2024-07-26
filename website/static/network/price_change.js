@@ -2,7 +2,7 @@ function change_prices() {
     const inputElements = document.querySelectorAll("input");
     let prices = {};
     inputElements.forEach((input) => {
-        if ((input.id == "invite_player") | (input.id == "network_name")) {
+        if ((input.id == "invite_player") || (input.id == "network_name") || (input.id == "web_push_notifications-checkbox")) {
             return;
         }
         prices[input.id] = float(input.value);

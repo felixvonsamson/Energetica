@@ -46,7 +46,7 @@ socket.on("new_values", function (changes) {
     let total_t = changes["total_t"];
     console.log("received new values : " + total_t);
     let last_value = JSON.parse(sessionStorage.getItem("last_value"));
-    if (!last_value) {
+    if (!last_value || total_t==1) {
         retrieve_all();
     } else if (last_value["total_t"] + 1 != total_t) {
         retrieve_all();

@@ -109,7 +109,7 @@ function format_duration(seconds) {
     if (hours > 0) {
         duration += `${hours}h `;
     }
-    if (minutes > 0) {
+    if (minutes >= 0) {
         duration += `${minutes}m`;
     }
     return duration.trim();

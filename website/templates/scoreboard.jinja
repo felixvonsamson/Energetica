@@ -21,17 +21,19 @@
         </div>
     </div>
     <div class="flex-col medium">
-        <table id="scoreboard" class="table bone margin txt_center">
-            <tr>
-                <th id="username" onclick="sortTable('username')">Username</th>
-                <th id="network" onclick="sortTable('network')">Network</th>
-                <th id="average_hourly_revenues" onclick="sortTable('average_hourly_revenues')">Revenues</th>
-                <th id="max_power_consumption" onclick="sortTable('max_power_consumption')">Max power</th>
-                <th id="total_technology_levels" onclick="sortTable('total_technology_levels')">Technology</th>
-                <th id="xp" onclick="sortTable('xp')">xp</th>
-                <th id="co2_emissions" onclick="sortTable('co2_emissions')">Emissions</th>
-            </tr>
-        </table>
+        <div class="table_container">
+            <table id="scoreboard" class="table bone margin txt_center">
+                <tr>
+                    <th id="username" onclick="sortTable('username')">Username</th>
+                    <th id="network" onclick="sortTable('network')">Network</th>
+                    <th id="average_hourly_revenues" onclick="sortTable('average_hourly_revenues')">Revenues</th>
+                    <th id="max_power_consumption" onclick="sortTable('max_power_consumption')">Max power</th>
+                    <th id="total_technology_levels" onclick="sortTable('total_technology_levels')">Technology</th>
+                    <th id="xp" onclick="sortTable('xp')">xp</th>
+                    <th id="co2_emissions" onclick="sortTable('co2_emissions')">Emissions</th>
+                </tr>
+            </table>
+        </div>
     </div>
 {% endblock content %}
 {% block additionnal_script %}

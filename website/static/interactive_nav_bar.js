@@ -33,7 +33,8 @@ function expand_menu(id) {
 }
 
 function show_notification_list(){
-    document.getElementById('notification_popup').classList.remove('hidden');
+    document.getElementById('web_push_notification_switch').classList.toggle('hidden');
+    document.getElementById('notification_popup').classList.toggle('hidden');
     let notification_list = document.getElementById('notification_list');
     notification_list.scrollTop = notification_list.scrollHeight;
 }

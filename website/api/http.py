@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from functools import wraps
 from website import utils
+from ..config import wind_power_curve
 from ..database.map import Hex
 from ..database.player import Network, Player
 from ..technology_effects import get_current_technology_values
@@ -77,6 +78,12 @@ def request_marked_as_read():
 def get_const_config():
     """Gets constant config data"""
     return jsonify(g.engine.const_config)
+
+
+@http.route("/get_wind_power_curve", methods=["GET"])
+def get_wind_power_curve():
+    """Gets the wind power curve"""
+    return jsonify(wind_power_curve)
 
 
 # gets the map data from the database and returns it as a array of dictionaries :

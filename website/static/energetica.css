@@ -1148,6 +1148,13 @@ input:checked + .slider:before {
     color:#000;
 }
 
+.table_container{
+    width: 100%;
+    overflow-x: auto;
+    display: flex;
+    justify-content:space-around
+}
+
 .table_legend_left {
     width:40px; 
     transform: rotate(-90deg); 
@@ -1162,7 +1169,7 @@ input:checked + .slider:before {
 }
 
 .table.tan_green {
-    width: 257px;
+    width: 265px;
 }
 
 .table tbody tr:nth-child(even) {
@@ -1175,10 +1182,12 @@ input:checked + .slider:before {
 
 .table tbody td {
     padding: 6px 12px;
+    white-space: nowrap;
 }
 
 .table tbody th {
     padding: 6px 12px;
+    white-space: nowrap;
 }
 
 #scoreboard td {
@@ -1357,6 +1366,11 @@ input:checked + .slider:before {
     visibility: hidden;
 }
 
+#web_push_notification_switch {
+    top: 95%;
+    border-radius: 8px;
+}
+
 .create_chat_input {
     padding: 8px;
     display: block;
@@ -1456,7 +1470,7 @@ input:checked + .slider:before {
 
 #infotable{
     overflow: hidden;
-    margin: 14px 20px 14px 0px;
+    margin: 14px 14px 14px 0px;
     position: relative;
 }
 

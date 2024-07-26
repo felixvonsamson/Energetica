@@ -8,4 +8,5 @@ flask-httpauth
 eventlet
 requests
 pandas
+pywebpush
 Werkzeug>=3.0.3

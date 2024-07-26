@@ -25,11 +25,6 @@ parser.add_argument(
     help="Remvove the instance folder",
     action="store_true",
 )
-parser.add_argument(
-    "--repair_database",
-    help="Repair database in case of mismatch betwen construction lists",
-    action="store_true",
-)
 
 args = parser.parse_args()
 
@@ -37,7 +32,6 @@ socketio, sock, app = create_app(
     clock_time=args.clock_time,
     run_init_test_players=args.run_init_test_players,
     rm_instance=args.rm_instance,
-    repair_database=args.repair_database,
 )
 
 if __name__ == "__main__":
