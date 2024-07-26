@@ -402,7 +402,7 @@ function sortTable(columnName, reorder=true) {
     if (graph_p5.view == "consumption") {
         html = `<tr>
             <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-            <th class="usage_col" onclick="sortTable('usage_col')">Generation</th>
+            <th class="usage_col hover_info" onclick="sortTable('usage_col')">Consumed<span class="popup_info small">over the last ${res}</span></th>
             <th class="selected_col">Displayed</th>
         </tr>`;
         for (const [id, facility] of sortedData) {
@@ -415,7 +415,7 @@ function sortTable(columnName, reorder=true) {
     }else{
         html = `<tr>
             <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-            <th class="usage_col" onclick="sortTable('usage_col')">Generation</th>
+            <th class="usage_col hover_info" onclick="sortTable('usage_col')">Generated<span class="popup_info small">over the last ${res}</span></th>
             <th class="capacity_col" onclick="sortTable('capacity_col')">Installed Cap.</th>
             <th class="used_cap_col" onclick="sortTable('used_cap_col')">Used Capacity</th>
             <th class="selected_col">Displayed</th>
@@ -423,12 +423,12 @@ function sortTable(columnName, reorder=true) {
         for (const [id, facility] of sortedData) {
             html += `<tr>
                 <td>${facility.facility_col}</td>
-                <td>${format_power(facility.usage_col)}</td>
+                <td>${format_energy(facility.usage_col)}</td>
                 <td>${facility.capacity_col === null ? '-' : format_power(facility.capacity_col)}</td>
                 <td>
                     ${facility.used_cap_col === null 
                         ? '-'
-                        : `<div class="capacityJauge-background hover_info">
+                        : `<div class="capacityJauge-background">
                                 <div class="capacityJauge color_${facility.name}" style="--width:${facility.used_cap_col}"></div>
                                 <div class="capacityJauge-txt">${Math.round(facility.used_cap_col * 100)}%</div>
                             </div>`
@@ -451,7 +451,7 @@ function sortTable(columnName, reorder=true) {
                 transformed_data.push({
                     name: key,
                     facility_col: cols_and_names[key][1],
-                    usage_col: graph_p5.current_data[key][0][359],
+                    usage_col: integrate(graph_p5.current_data[key][res_id].slice(graph_p5.t0), res_to_factor[res] * clock_time / 3600),
                 })
             }
         } else {
@@ -463,13 +463,22 @@ function sortTable(columnName, reorder=true) {
                 transformed_data.push({
                     name: key,
                     facility_col: cols_and_names[key][1],
-                    usage_col: graph_p5.current_data[key][0][359],
+                    usage_col: integrate(graph_p5.current_data[key][res_id].slice(graph_p5.t0), res_to_factor[res] * clock_time / 3600),
                     capacity_col: cap === 0 ? null : cap,
                     used_cap_col: cap === 0 ? null : graph_p5.current_data[key][0][359] / cap,
                 })
             }
         }
         return transformed_data;
+    }
+
+    function integrate(array, delta){
+        // integrated the energy over the array. delta is the time step in hours
+        let sum = 0;
+        for (let i = 0; i < array.length; i++){
+            sum += array[i] * delta;
+        }
+        return sum;
     }
 }
 

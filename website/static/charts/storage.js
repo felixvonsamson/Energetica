@@ -351,7 +351,8 @@ function sortTable(columnName, reorder=true) {
     // Rebuild the HTML table
     let html = `<tr>
         <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-        <th class="usage_col" onclick="sortTable('usage_col')">Stored Energy</th>
+        <th class="cumul_charging_col hover_info" onclick="sortTable('cumul_charging_col')">Cumul Charging<span class="popup_info small">over the last ${res}</span></th>
+        <th class="cumul_discharging_col hover_info" onclick="sortTable('cumul_discharging_col')">Cumul Discharging<span class="popup_info small">over the last ${res}</span></th>
         <th class="capacity_col" onclick="sortTable('capacity_col')">Max Capacity</th>
         <th class="used_cap_col" onclick="sortTable('used_cap_col')">Used Capacity</th>
         <th class="selected_col">Displayed</th>
@@ -359,7 +360,8 @@ function sortTable(columnName, reorder=true) {
     for (const [id, facility] of sortedData) {
         html += `<tr>
             <td>${facility.facility_col}</td>
-            <td>${format_energy(facility.usage_col)}</td>
+            <td>${format_energy(facility.cumul_charging_col)}</td>
+            <td>${format_energy(facility.cumul_discharging_col)}</td>
             <td>${format_energy(facility.capacity_col)}</td>
             <td>
                 <div class="capacityJauge-background hover_info">
@@ -382,12 +384,21 @@ function sortTable(columnName, reorder=true) {
             transformed_data.push({
                 name: key,
                 facility_col: cols_and_names[key][1],
-                usage_col: data.storage[key][0][359],
+                cumul_charging_col: integrate(data.demand[key][res_id].slice(graph_p5.t0), res_to_factor[res] * clock_time / 3600),
+                cumul_discharging_col: integrate(data.generation[key][res_id].slice(graph_p5.t0), res_to_factor[res] * clock_time / 3600),
                 capacity_col: capacities[key],
                 used_cap_col: data.storage[key][0][359] / capacities[key],
             })
         }
         return transformed_data;
+    }
+    function integrate(array, delta){
+        // integrated the energy over the array. delta is the time step in hours
+        let sum = 0;
+        for (let i = 0; i < array.length; i++){
+            sum += array[i] * delta;
+        }
+        return sum;
     }
 }
 
