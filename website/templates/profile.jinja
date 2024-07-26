@@ -36,6 +36,7 @@
           <tr>
               <th class="facility" onclick="sortTable('power_facilities_table', 'facility')">Name</th>
               <th class="installed_cap" onclick="sortTable('power_facilities_table', 'installed_cap')">Max power</th>
+              <th class="used_capacity" onclick="sortTable('power_facilities_table', 'used_capacity')">Used Capacity</th>
               <th class="op_cost" onclick="sortTable('power_facilities_table', 'op_cost')">O&M cost</th>
               <th class="remaining_lifespan" onclick="sortTable('power_facilities_table', 'remaining_lifespan')">Lifespan left</th>
               <th class="upgrade" onclick="sortTable('power_facilities_table', 'upgrade')">Upgrade</th>
@@ -48,7 +49,8 @@
       <table id="storage_facilities_table" class="table bone txt_center margin-small">
           <tr>
               <th class="facility" onclick="sortTable('storage_facilities_table', 'facility')">Name</th>
-              <th class="installed_cap" onclick="sortTable('storage_facilities_table', 'installed_cap')">Capacity</th>
+              <th class="installed_cap" onclick="sortTable('storage_facilities_table', 'installed_cap')">Max Storage</th>
+              <th class="used_capacity" onclick="sortTable('storage_facilities_table', 'used_capacity')">State of Charge</th>
               <th class="op_cost" onclick="sortTable('storage_facilities_table', 'op_cost')">O&M cost</th>
               <th class="efficiency" onclick="sortTable('storage_facilities_table', 'efficiency')">Efficiency</th>
               <th class="remaining_lifespan" onclick="sortTable('storage_facilities_table', 'remaining_lifespan')">Lifespan left</th>
@@ -63,6 +65,7 @@
           <tr>
               <th class="facility" onclick="sortTable('extraction_facilities_table', 'facility')">Name</th>
               <th class="extraction_rate" onclick="sortTable('extraction_facilities_table', 'extraction_rate')">Extra. rate</th>
+              <th class="used_capacity" onclick="sortTable('extraction_facilities_table', 'used_capacity')">Used Capacity</th>
               <th class="op_cost" onclick="sortTable('extraction_facilities_table', 'op_cost')">O&M cost</th>
               <th class="energy_use" onclick="sortTable('extraction_facilities_table', 'energy_use')">Energy cons.</th>
               <th class="remaining_lifespan" onclick="sortTable('extraction_facilities_table', 'remaining_lifespan')">Lifespan left</th>
@@ -221,5 +224,6 @@
   <br>
 {% endblock content %}
 {% block additionnal_script %}
+  <script>const current_wind_speed = {{ engine.data["weather"]["windspeed"] }}</script>
   <script src="{{ url_for('static', filename='profile.js') }}"></script>
 {% endblock additionnal_script %}

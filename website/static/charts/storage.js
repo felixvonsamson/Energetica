@@ -353,8 +353,8 @@ function sortTable(columnName, reorder=true) {
         <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
         <th class="cumul_charging_col hover_info" onclick="sortTable('cumul_charging_col')">Cumul Charging<span class="popup_info small">over the last ${res}</span></th>
         <th class="cumul_discharging_col hover_info" onclick="sortTable('cumul_discharging_col')">Cumul Discharging<span class="popup_info small">over the last ${res}</span></th>
-        <th class="capacity_col" onclick="sortTable('capacity_col')">Max Capacity</th>
-        <th class="used_cap_col" onclick="sortTable('used_cap_col')">Used Capacity</th>
+        <th class="capacity_col" onclick="sortTable('capacity_col')">Max Storage</th>
+        <th class="used_cap_col" onclick="sortTable('used_cap_col')">State of Charge</th>
         <th class="selected_col">Displayed</th>
     </tr>`;
     for (const [id, facility] of sortedData) {

@@ -247,3 +247,21 @@ function show_unread_badges(){
         }
     }
 }
+
+function load_wind_power_curve() {
+    if (typeof(Storage) !== "undefined") {
+        const wind_power_curve = sessionStorage.getItem("wind_power_curve");
+        if (wind_power_curve) {
+            return Promise.resolve(JSON.parse(wind_power_curve));
+        }
+    }
+    return fetch("/api/get_wind_power_curve")
+        .then((response) => response.json())
+        .then((raw_data) => {
+            sessionStorage.setItem("wind_power_curve", JSON.stringify(raw_data));
+            return raw_data;
+        })
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
+}

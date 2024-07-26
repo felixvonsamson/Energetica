@@ -48,76 +48,99 @@ function upgrade_cost(facility, current_multipliers, config){
     }
 }
 
-function get_active_facilities(reorder=false) {
-    fetch("/api/get_active_facilities") // retrieves all active facilities of the player
-    .then((response) => response.json())
-    .then((raw_data) => {
-        load_const_config().then((const_config) => {
-            load_player_data().then((player_data) => {
-                fetch("/api/get_resource_reserves")
-                .then((response) => response.json())
-                .then((reserves) => {
-                    active_facilities = {
-                        "power_facilities": {},
-                        "storage_facilities": {},
-                        "extraction_facilities": {},
-                    }
-                    let last_value = JSON.parse(sessionStorage.getItem("last_value"));
-                    for (const [id, facility] of Object.entries(raw_data.power_facilities)) {
-                        let config = const_config.assets[facility.facility];
-                        let tot_cost = config.base_price * facility.price_multiplier;
-                        if (["watermill", "small_water_dam", "large_water_dam"].includes(facility.facility)) {
-                            tot_cost *= facility.capacity_multiplier;
-                        }
-                        active_facilities.power_facilities[id] = {
-                            "name": config.name,
-                            "installed_cap": config.base_power_generation * facility.power_multiplier,
-                            "op_cost": tot_cost * config["O&M_factor"] * 3600 / clock_time,
-                            "remaining_lifespan": (facility.end_of_life - last_value["total_t"]) * clock_time,
-                            "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
-                            "dismantle": tot_cost * 0.2,
-                        };
-                    }
-                    for (const [id, facility] of Object.entries(raw_data.storage_facilities)) {
-                        let config = const_config.assets[facility.facility];
-                        active_facilities.storage_facilities[id] = {
-                            "name": config.name,
-                            "installed_cap": config.base_storage_capacity * facility.capacity_multiplier,
-                            "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor"] * 3600 / clock_time,
-                            "efficiency": config.base_efficiency * facility.efficiency_multiplier,
-                            "remaining_lifespan": (facility.end_of_life - last_value["total_t"]) * clock_time,
-                            "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
-                            "dismantle": config.base_price * facility.price_multiplier * 0.2,
-                        };
-                    }
-                    let facility_to_resource = {
-                        "coal_mine": "coal",
-                        "oil_field": "oil",
-                        "gas_drilling_site": "gas",
-                        "uranium_mine": "uranium",
-                    }
-                    for (const [id, facility] of Object.entries(raw_data.extraction_facilities)) {
-                        let config = const_config.assets[facility.facility];
-                        active_facilities.extraction_facilities[id] = {
-                            "name": config.name,
-                            "extraction_rate": config.extraction_rate * facility.capacity_multiplier * reserves[facility_to_resource[facility.facility]] * 3600 / clock_time,
-                            "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor"] * 3600 / clock_time,
-                            "energy_use": config.base_power_consumption * facility.power_multiplier,
-                            "remaining_lifespan": (facility.end_of_life - last_value["total_t"]) * clock_time,
-                            "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
-                            "dismantle": config.base_price * facility.price_multiplier * 0.2,
-                        };
-                    }
-                    sortTable('power_facilities_table', order_by.power_facilities_table[0], reorder=reorder);
-                    sortTable('storage_facilities_table', order_by.storage_facilities_table[0], reorder=reorder);
-                    sortTable('extraction_facilities_table', order_by.extraction_facilities_table[0], reorder=reorder);
-                });
-            });
-        });
-    })
-    .catch((error) => {
+async function get_active_facilities(reorder=false) {
+    try {
+        const raw_data = await fetch("/api/get_active_facilities").then((response) => response.json());
+        const const_config = await load_const_config();
+        const player_data = await load_player_data();
+        const wind_power_curve = await load_wind_power_curve();
+        const raw_chart_data = await load_chart_data();
+        const reserves = await fetch("/api/get_resource_reserves").then((response) => response.json());
+
+        active_facilities = {
+            "power_facilities": {},
+            "storage_facilities": {},
+            "extraction_facilities": {},
+        }
+        let last_value = JSON.parse(sessionStorage.getItem("last_value"));
+        for (const [id, facility] of Object.entries(raw_data.power_facilities)) {
+            let config = const_config.assets[facility.facility];
+            let tot_cost = config.base_price * facility.price_multiplier;
+            if (["watermill", "small_water_dam", "large_water_dam"].includes(facility.facility)) {
+                tot_cost *= facility.capacity_multiplier;
+            }
+            let generating = raw_chart_data.generation[facility.facility][0][359] / player_data.capacities[facility.facility].power
+            if (["windmill", "onshore_wind_turbine", "offshore_wind_turbine"].includes(facility.facility)) {
+                generating = interpolate_wind_power_curve(wind_power_curve, current_wind_speed * facility.capacity_multiplier);
+            }
+            active_facilities.power_facilities[id] = {
+                "facility": facility.facility,
+                "name": config.name,
+                "installed_cap": config.base_power_generation * facility.power_multiplier,
+                "used_capacity": generating,
+                "op_cost": tot_cost * config["O&M_factor"] * 3600 / clock_time,
+                "remaining_lifespan": (facility.end_of_life - last_value["total_t"]) * clock_time,
+                "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
+                "dismantle": tot_cost * 0.2,
+            };
+        }
+        for (const [id, facility] of Object.entries(raw_data.storage_facilities)) {
+            let config = const_config.assets[facility.facility];
+            active_facilities.storage_facilities[id] = {
+                "facility": facility.facility,
+                "name": config.name,
+                "installed_cap": config.base_storage_capacity * facility.capacity_multiplier,
+                "used_capacity": raw_chart_data.storage[facility.facility][0][359] / player_data.capacities[facility.facility].capacity,
+                "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor"] * 3600 / clock_time,
+                "efficiency": config.base_efficiency * facility.efficiency_multiplier,
+                "remaining_lifespan": (facility.end_of_life - last_value["total_t"]) * clock_time,
+                "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
+                "dismantle": config.base_price * facility.price_multiplier * 0.2,
+            };
+        }
+        let facility_to_resource = {
+            "coal_mine": "coal",
+            "oil_field": "oil",
+            "gas_drilling_site": "gas",
+            "uranium_mine": "uranium",
+        }
+        let cumul_demand = {
+            "coal_mine": 0,
+            "oil_field": 0,
+            "gas_drilling_site": 0,
+            "uranium_mine": 0,
+        }
+        for (const [id, facility] of Object.entries(raw_data.extraction_facilities)) {
+            let config = const_config.assets[facility.facility];
+            cumul_demand[facility.facility] += config.base_power_consumption * facility.power_multiplier;
+        }
+        for (const [id, facility] of Object.entries(raw_data.extraction_facilities)) {
+            let config = const_config.assets[facility.facility];
+            active_facilities.extraction_facilities[id] = {
+                "facility": facility.facility,
+                "name": config.name,
+                "extraction_rate": config.extraction_rate * facility.capacity_multiplier * reserves[facility_to_resource[facility.facility]] * 3600 / clock_time,
+                "used_capacity": raw_chart_data.demand[facility.facility][0][359] / cumul_demand[facility.facility],
+                "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor"] * 3600 / clock_time,
+                "energy_use": config.base_power_consumption * facility.power_multiplier,
+                "remaining_lifespan": (facility.end_of_life - last_value["total_t"]) * clock_time,
+                "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
+                "dismantle": config.base_price * facility.price_multiplier * 0.2,
+            };
+        }
+        sortTable('power_facilities_table', order_by.power_facilities_table[0], reorder=reorder);
+        sortTable('storage_facilities_table', order_by.storage_facilities_table[0], reorder=reorder);
+        sortTable('extraction_facilities_table', order_by.extraction_facilities_table[0], reorder=reorder);
+    } catch (error) {
         console.error("Error:", error);
-    });
+    }
+
+    function interpolate_wind_power_curve(wind_power_curve, wind_speed){
+        let curve_index = Math.floor(wind_speed);
+        let curve_fraction = wind_speed - curve_index;
+        let power = wind_power_curve[curve_index] * (1 - curve_fraction) + wind_power_curve[curve_index + 1] * curve_fraction;
+        return power;
+    }
 }
 
 function sortTable(table_name, columnName, reorder=true) {
@@ -167,6 +190,7 @@ function build_power_facilities_table(sortedData) {
     let html = `<tr>
         <th class="name" onclick="sortTable('power_facilities_table', 'name')">Name</th>
         <th class="installed_cap" onclick="sortTable('power_facilities_table', 'installed_cap')">Max power</th>
+        <th class="used_capacity" onclick="sortTable('power_facilities_table', 'used_capacity')">Used Capacity</th>
         <th class="op_cost" onclick="sortTable('power_facilities_table', 'op_cost')">O&M costs</th>
         <th class="remaining_lifespan" onclick="sortTable('power_facilities_table', 'remaining_lifespan')">Lifespan left</th>
         <th class="upgrade" onclick="sortTable('power_facilities_table', 'upgrade')">Upgrade</th>
@@ -184,6 +208,12 @@ function build_power_facilities_table(sortedData) {
         html += `<tr>
             <td>${facility.name}</td>
             <td>${format_power(facility.installed_cap)}</td>
+            <td>
+                <div class="capacityJauge-background">
+                    <div class="capacityJauge color_${facility.facility}" style="--width:${facility.used_capacity}"></div>
+                    <div class="capacityJauge-txt">${Math.round(facility.used_capacity * 100)}%</div>
+                </div>
+            </td>
             <td>${format_money(facility.op_cost)}/h</td>
             <td>${format_days(facility.remaining_lifespan)} d</td>
             <td>${upgrade}</td>
@@ -203,6 +233,7 @@ function build_storage_facilities_table(sortedData) {
     let html = `<tr>
         <th class="name" onclick="sortTable('storage_facilities_table', 'name')">Name</th>
         <th class="installed_cap" onclick="sortTable('storage_facilities_table', 'installed_cap')">Max storage</th>
+        <th class="used_capacity" onclick="sortTable('storage_facilities_table', 'used_capacity')">State of Charge</th>
         <th class="op_cost" onclick="sortTable('storage_facilities_table', 'op_cost')">O&M costs</th>
         <th class="efficiency" onclick="sortTable('storage_facilities_table', 'efficiency')">Efficiency</th>
         <th class="remaining_lifespan" onclick="sortTable('storage_facilities_table', 'remaining_lifespan')">Lifespan left</th>
@@ -221,6 +252,12 @@ function build_storage_facilities_table(sortedData) {
         html += `<tr>
             <td>${facility.name}</td>
             <td>${format_energy(facility.installed_cap)}</td>
+            <td>
+                <div class="capacityJauge-background">
+                    <div class="capacityJauge color_${facility.facility}" style="--width:${facility.used_capacity}"></div>
+                    <div class="capacityJauge-txt">${Math.round(facility.used_capacity * 100)}%</div>
+                </div>
+            </td>
             <td>${format_money(facility.op_cost)}/h</td>
             <td>${Math.round(facility.efficiency * 100)}%</td>
             <td>${format_days(facility.remaining_lifespan)} d</td>
@@ -241,6 +278,7 @@ function build_extraction_facilities_table(sortedData) {
     let html = `<tr>
         <th class="name" onclick="sortTable('extraction_facilities_table', 'name')">Name</th>
         <th class="extraction_rate" onclick="sortTable('extraction_facilities_table', 'extraction_rate')">Extraction rate</th>
+        <th class="used_capacity" onclick="sortTable('extraction_facilities_table', 'used_capacity')">Used Capacity</th>
         <th class="op_cost" onclick="sortTable('extraction_facilities_table', 'op_cost')">O&M costs</th>
         <th class="energy_use" onclick="sortTable('extraction_facilities_table', 'energy_use')">Energy use</th>
         <th class="remaining_lifespan" onclick="sortTable('extraction_facilities_table', 'remaining_lifespan')">Lifespan left</th>
@@ -259,6 +297,12 @@ function build_extraction_facilities_table(sortedData) {
         html += `<tr>
             <td>${facility.name}</td>
             <td>${format_mass_rate(facility.extraction_rate)}</td>
+            <td>
+                <div class="capacityJauge-background">
+                    <div class="capacityJauge color_${facility.facility}" style="--width:${facility.used_capacity}"></div>
+                    <div class="capacityJauge-txt">${Math.round(facility.used_capacity * 100)}%</div>
+                </div>
+            </td>
             <td>${format_money(facility.op_cost)}/h</td>
             <td>${format_power(facility.energy_use)}</td>
             <td>${format_days(facility.remaining_lifespan)} d</td>
