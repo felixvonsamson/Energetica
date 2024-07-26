@@ -32,51 +32,57 @@
     {% set caps = engine.data["player_capacities"][user.id] %}
     {% if caps["steam_engine"] or caps["windmill"] or caps["watermill"] or caps["coal_burner"] or caps["oil_burner"] or caps["gas_burner"] or caps["small_water_dam"] or caps["onshore_wind_turbine"] or caps["combined_cycle"] or caps["nuclear_reactor"] or caps["large_water_dam"] or caps["CSP_solar"] or caps["PV_solar"] or caps["offshore_wind_turbine"] or caps["nuclear_reactor_gen4"] %}
       <b class="large">Power facilities</b>
-      <table id="power_facilities_table" class="table bone txt_center margin-small">
-          <tr>
-              <th class="facility" onclick="sortTable('power_facilities_table', 'facility')">Name</th>
-              <th class="installed_cap" onclick="sortTable('power_facilities_table', 'installed_cap')">Max power</th>
-              <th class="used_capacity" onclick="sortTable('power_facilities_table', 'used_capacity')">Used Capacity</th>
-              <th class="op_cost" onclick="sortTable('power_facilities_table', 'op_cost')">O&M cost</th>
-              <th class="remaining_lifespan" onclick="sortTable('power_facilities_table', 'remaining_lifespan')">Lifespan left</th>
-              <th class="upgrade" onclick="sortTable('power_facilities_table', 'upgrade')">Upgrade</th>
-              <th class="dismantle" onclick="sortTable('power_facilities_table', 'dismantle')">Dismantle</th>
-          </tr>
-      </table>
+      <div class="table_container">
+        <table id="power_facilities_table" class="table bone txt_center margin-small">
+            <tr>
+                <th class="facility" onclick="sortTable('power_facilities_table', 'facility')">Name</th>
+                <th class="installed_cap" onclick="sortTable('power_facilities_table', 'installed_cap')">Max power</th>
+                <th class="used_capacity" onclick="sortTable('power_facilities_table', 'used_capacity')">Used Capacity</th>
+                <th class="op_cost" onclick="sortTable('power_facilities_table', 'op_cost')">O&M cost</th>
+                <th class="remaining_lifespan" onclick="sortTable('power_facilities_table', 'remaining_lifespan')">Lifespan left</th>
+                <th class="upgrade" onclick="sortTable('power_facilities_table', 'upgrade')">Upgrade</th>
+                <th class="dismantle" onclick="sortTable('power_facilities_table', 'dismantle')">Dismantle</th>
+            </tr>
+        </table>
+      </div>
     {% endif %}
     {% if caps["small_pumped_hydro"] or caps["compressed_air"] or caps["molten_salt"] or caps["large_pumped_hydro"] or caps["hydrogen_storage"] or caps["lithium_ion_batteries"] or caps["solid_state_batteries"] %}
       <b class="large margin-top">Storage facilities</b>
-      <table id="storage_facilities_table" class="table bone txt_center margin-small">
-          <tr>
-              <th class="facility" onclick="sortTable('storage_facilities_table', 'facility')">Name</th>
-              <th class="installed_cap" onclick="sortTable('storage_facilities_table', 'installed_cap')">Max Storage</th>
-              <th class="used_capacity" onclick="sortTable('storage_facilities_table', 'used_capacity')">State of Charge</th>
-              <th class="op_cost" onclick="sortTable('storage_facilities_table', 'op_cost')">O&M cost</th>
-              <th class="efficiency" onclick="sortTable('storage_facilities_table', 'efficiency')">Efficiency</th>
-              <th class="remaining_lifespan" onclick="sortTable('storage_facilities_table', 'remaining_lifespan')">Lifespan left</th>
-              <th class="upgrade" onclick="sortTable('storage_facilities_table', 'upgrade')">Upgrade</th>
-              <th class="dismantle" onclick="sortTable('storage_facilities_table', 'dismantle')">Dismantle</th>
-          </tr>
-      </table>
+      <div class="table_container">
+        <table id="storage_facilities_table" class="table bone txt_center margin-small">
+            <tr>
+                <th class="facility" onclick="sortTable('storage_facilities_table', 'facility')">Name</th>
+                <th class="installed_cap" onclick="sortTable('storage_facilities_table', 'installed_cap')">Max Storage</th>
+                <th class="used_capacity" onclick="sortTable('storage_facilities_table', 'used_capacity')">State of Charge</th>
+                <th class="op_cost" onclick="sortTable('storage_facilities_table', 'op_cost')">O&M cost</th>
+                <th class="efficiency" onclick="sortTable('storage_facilities_table', 'efficiency')">Efficiency</th>
+                <th class="remaining_lifespan" onclick="sortTable('storage_facilities_table', 'remaining_lifespan')">Lifespan left</th>
+                <th class="upgrade" onclick="sortTable('storage_facilities_table', 'upgrade')">Upgrade</th>
+                <th class="dismantle" onclick="sortTable('storage_facilities_table', 'dismantle')">Dismantle</th>
+            </tr>
+        </table>
+      </div>
     {% endif %}
     {% if caps["coal_mine"] or caps["oil_field"] or caps["gas_drilling_site"] or caps["uranium_mine"] %}
       <b class="large margin-top">Extraction facilities</b>
-      <table id="extraction_facilities_table" class="table bone txt_center margin-small">
-          <tr>
-              <th class="facility" onclick="sortTable('extraction_facilities_table', 'facility')">Name</th>
-              <th class="extraction_rate" onclick="sortTable('extraction_facilities_table', 'extraction_rate')">Extra. rate</th>
-              <th class="used_capacity" onclick="sortTable('extraction_facilities_table', 'used_capacity')">Used Capacity</th>
-              <th class="op_cost" onclick="sortTable('extraction_facilities_table', 'op_cost')">O&M cost</th>
-              <th class="energy_use" onclick="sortTable('extraction_facilities_table', 'energy_use')">Energy cons.</th>
-              <th class="remaining_lifespan" onclick="sortTable('extraction_facilities_table', 'remaining_lifespan')">Lifespan left</th>
-              <th class="upgrade" onclick="sortTable('extraction_facilities_table', 'upgrade')">Upgrade</th>
-              <th class="dismantle" onclick="sortTable('extraction_facilities_table', 'dismantle')">Dismantle</th>
-          </tr>
-      </table>
+      <div class="table_container">
+        <table id="extraction_facilities_table" class="table bone txt_center margin-small">
+            <tr>
+                <th class="facility" onclick="sortTable('extraction_facilities_table', 'facility')">Name</th>
+                <th class="extraction_rate" onclick="sortTable('extraction_facilities_table', 'extraction_rate')">Extra. rate</th>
+                <th class="used_capacity" onclick="sortTable('extraction_facilities_table', 'used_capacity')">Used Capacity</th>
+                <th class="op_cost" onclick="sortTable('extraction_facilities_table', 'op_cost')">O&M cost</th>
+                <th class="energy_use" onclick="sortTable('extraction_facilities_table', 'energy_use')">Energy cons.</th>
+                <th class="remaining_lifespan" onclick="sortTable('extraction_facilities_table', 'remaining_lifespan')">Lifespan left</th>
+                <th class="upgrade" onclick="sortTable('extraction_facilities_table', 'upgrade')">Upgrade</th>
+                <th class="dismantle" onclick="sortTable('extraction_facilities_table', 'dismantle')">Dismantle</th>
+            </tr>
+        </table>
+      </div>
     {% endif %}
   </div>
 
-  <div class="medium flex-space-evenly">
+  <div class="medium flex-space-evenly" style="overflow-x: auto;">
     <div class="flex-col">
       <b>Functional facilities</b>
       <table class="table bone margin-small">

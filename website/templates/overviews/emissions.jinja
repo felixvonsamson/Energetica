@@ -43,13 +43,15 @@
     </div>
 
     <div class="flex-col medium" style="margin-bottom:30px;">
-        <table id="facilities_list" class="table bone margin txt_center">
-            <tr>
-                <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-                <th class="usage_col hover_info" onclick="sortTable('usage_col')">CO2 Emissions<span class="popup_info small">over the last 30min</span></th>
-                <th class="selected_col">Displayed</th>
-            </tr>
-        </table>
+        <div class="table_container">
+            <table id="facilities_list" class="table bone margin txt_center">
+                <tr>
+                    <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
+                    <th class="usage_col hover_info" onclick="sortTable('usage_col')">CO2 Emissions<span class="popup_info small">over the last 30min</span></th>
+                    <th class="selected_col">Displayed</th>
+                </tr>
+            </table>
+        </div>
     </div>
 
 </div>

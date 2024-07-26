@@ -1148,6 +1148,13 @@ input:checked + .slider:before {
     color:#000;
 }
 
+.table_container{
+    width: 100%;
+    overflow-x: auto;
+    display: flex;
+    justify-content:space-around
+}
+
 .table_legend_left {
     width:40px; 
     transform: rotate(-90deg); 
@@ -1175,10 +1182,12 @@ input:checked + .slider:before {
 
 .table tbody td {
     padding: 6px 12px;
+    white-space: nowrap;
 }
 
 .table tbody th {
     padding: 6px 12px;
+    white-space: nowrap;
 }
 
 #scoreboard td {
