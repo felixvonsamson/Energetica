@@ -319,6 +319,10 @@ class Player(db.Model, UserMixin):
     def send_notification(self, notification_data):
         engine = current_app.config["engine"]
         for subscription in engine.notification_subscriptions[self.id]:
+            audience = "https://fcm.googleapis.com"
+            if "https://updates.push.services.mozilla.com" in subscription["endpoint"]:
+                audience = "https://updates.push.services.mozilla.com"
+            current_app.config["VAPID_CLAIMS"]["aud"] = audience
             try:
                 webpush(
                     subscription_info=subscription,
