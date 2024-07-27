@@ -546,3 +546,10 @@ def change_graph_view():
     view = json["view"]
     current_user.change_graph_view(view)
     return jsonify({"response": "success"})
+
+
+@http.route("test_notification", methods=["POST"])
+def test_notification():
+    """this endpoint is used to send a dummy notification to the player"""
+    current_user.send_notification("Test notification", f"{g.engine.data["current_t"]} ({datetime.now()})")
+    return jsonify({"response": "success"})
