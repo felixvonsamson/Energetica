@@ -548,7 +548,7 @@ def change_graph_view():
     return jsonify({"response": "success"})
 
 
-@http.route("test_notification", methods=["POST"])
+@http.route("test_notification", methods=["GET"])
 def test_notification():
     """this endpoint is used to send a dummy notification to the player"""
     notification_data = {
