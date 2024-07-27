@@ -41,7 +41,7 @@ def create_app(clock_time, run_init_test_players, rm_instance):
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     app.config["VAPID_PUBLIC_KEY"] = open("public_key.txt", "r+").readline().strip("\n")
     app.config["VAPID_PRIVATE_KEY"] = open("private_key.txt", "r+").readline().strip("\n")
-    app.config["VAPID_CLAIMS"] = {"sub": "mailto:felixvonsamson@gmail.com"}
+    app.config["VAPID_CLAIMS"] = {"sub": "mailto:felixvonsamson@gmail.com", "aud": "https://fcm.googleapis.com"}
     db.init_app(app)
 
     # creates the engine (and loading the save if it exists)
