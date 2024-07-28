@@ -254,9 +254,9 @@ class WeatherData:
             except Exception as e:
                 log_error(e, weather)
 
-        month = math.floor((engine.data["total_t"] % 73440) / 6120)
-        # One year in game is 73440 ticks
-        f = (engine.data["total_t"] % 73440) / 6120 - month
+        month = math.floor((engine.data["total_t"] % 25920) / 2160)
+        # One year in game is 25920 ticks
+        f = (engine.data["total_t"] % 25920) / 2160 - month
 
         d = river_discharge_seasonal
         power_factor = d[month] + (d[(month + 1) % 12] - d[month]) * f
@@ -275,7 +275,7 @@ class WeatherData:
 
     def package(self, total_t):
         return {
-            "month_number": ((total_t % 73440) // 6120),
+            "month_number": ((total_t % 25920) // 2160),
             "irradiance": self["irradiance"],
             "wind_speed": self["windspeed"],
             "river_discharge": self["river_discharge"],

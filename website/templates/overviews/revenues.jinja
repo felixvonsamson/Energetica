@@ -34,12 +34,12 @@
         </div>
     </div>
     <div class="flex-center margin">
-        <button id="res_button_0" class="graph_button left selected" onclick="change_res(0)">30min</button>
-        <button id="res_button_1" class="graph_button" onclick="change_res(1)">3h</button>
-        <button id="res_button_2" class="graph_button" onclick="change_res(2)">18h</button>
-        <button id="res_button_3" class="graph_button" onclick="change_res(3)">4 days</button>
-        <button id="res_button_4" class="graph_button" onclick="change_res(4)">month</button>
-        <button id="res_button_5" class="graph_button right" onclick="change_res(5)">6 months</button>
+        <button id="res_button_0" class="graph_button left selected" onclick="change_res(0)">4h</button>
+        <button id="res_button_1" class="graph_button" onclick="change_res(1)">24h</button>
+        <button id="res_button_2" class="graph_button" onclick="change_res(2)">6 days</button>
+        <button id="res_button_3" class="graph_button" onclick="change_res(3)">6 months</button>
+        <button id="res_button_4" class="graph_button" onclick="change_res(4)">3 years</button>
+        <button id="res_button_5" class="graph_button right" onclick="change_res(5)">18 years</button>
     </div>
 
     <div class="flex-col medium" style="margin-bottom:30px;">
@@ -47,7 +47,7 @@
             <table id="facilities_list" class="table bone margin txt_center">
                 <tr>
                     <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-                    <th class="usage_col hover_info" onclick="sortTable('usage_col')">Revenues<span class="popup_info small">over the last ${res}</span></th>
+                    <th class="usage_col hover_info" onclick="sortTable('usage_col')">Revenues<span class="popup_info small">over the last 4h</span></th>
                     <th class="selected_col">Displayed</th>
                 </tr>
             </table>

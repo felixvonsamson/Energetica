@@ -239,7 +239,7 @@ function graph_sketch(s){
         s.graphics.line(0, 0, s.graph_w, 0);
         s.graphics.line(0, s.graph_h*(1-s.frac), 0, -s.graph_h*s.frac);
         s.graphics.push();
-        let units = time_unit(res, clock_time);
+        let units = time_unit(res);
         s.graphics.fill(0);
         for (let i = 0; i < units.length; i++) {
             s.graphics.stroke(0, 0, 0, 30);

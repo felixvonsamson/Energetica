@@ -854,7 +854,7 @@ const_config = {
         "uranium": 5_000 / 1.5,
     },
     "transport": {
-        "time": 5_000,  # [s/distance unit]
+        "time": 80,  # [tick/distance unit]
         "power_consumption": 5,  # [Wh/kg/distance unit]
     },
 }
