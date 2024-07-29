@@ -16,14 +16,14 @@ load_players().then((players_) => {
     sortedNames = usernames.sort();
 });
 
-function refresh_chats(){
+function refresh_chats() {
     load_chats().then((data) => {
         let chats = data.chat_list;
         let chat_list_container = document.getElementById("chat_list_container");
         chat_list_container.innerHTML = "";
-        for(chat_id in chats){
+        for (chat_id in chats) {
             badge = ""
-            if(chats[chat_id].unread_messages > 0){
+            if (chats[chat_id].unread_messages > 0) {
                 badge = `<span id="unread_badge_chat" class="unread_badge messages padding-small pine">${chats[chat_id].unread_messages}</span>`
             }
             chat_list_container.innerHTML += `<div id="chat_${chat_id}" onclick="openChat(${chat_id})" class="margin-small white button position_relative">
@@ -32,13 +32,13 @@ function refresh_chats(){
                 ${badge}
             </div>`
         }
-        if(data.last_opened_chat != null){
+        if (data.last_opened_chat != null) {
             openChat(data.last_opened_chat);
         }
     })
-    .catch((error) => {
-        console.error("Error:", error);
-    });
+        .catch((error) => {
+            console.error("Error:", error);
+        });
 }
 
 let input1 = document.getElementById("add_chat_username");
@@ -145,18 +145,18 @@ function removePlayer(name) {
     document.getElementById("groupMember_" + name).remove();
 }
 
-function hide_disclaimer(){
+function hide_disclaimer() {
     checkmark = document.getElementById("dont_show_disclaimer")
-    if(checkmark.checked){
+    if (checkmark.checked) {
         fetch("/api/hide_chat_disclaimer")
-        .catch((error) => {
-            console.error(`caught error ${error}`);
-        });
+            .catch((error) => {
+                console.error(`caught error ${error}`);
+            });
     }
     document.getElementById('disclamer').classList.add('hidden');
 }
 
-function createChat(){
+function createChat() {
     username = document.getElementById("add_chat_username").value
     send_form("/api/create_chat", {
         buddy_username: username,
@@ -166,25 +166,25 @@ function createChat(){
             if (response == "success") {
                 retrieve_chats();
                 document.getElementById('add_chat').classList.add('hidden');
-            }else if(response == "cannotChatWithYourself"){
+            } else if (response == "cannotChatWithYourself") {
                 addError("Cannot create a chat with yourself");
-            }else if(response == "usernameIsWrong"){
+            } else if (response == "usernameIsWrong") {
                 addError("No Player with this username");
-            }else if(response == "chatAlreadyExist"){
+            } else if (response == "chatAlreadyExist") {
                 addError("This chat already exists");
             }
         });
     })
-    .catch((error) => {
-        console.error(`caught error ${error}`);
-    });
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
 }
 
 function createGroupChat() {
     let title = document.getElementById("chat_title").value;
     send_form("/api/create_group_chat", {
         chat_title: title,
-        group_memebers: group,
+        group_members: group,
     }).then((response) => {
         response.json().then((raw_data) => {
             let response = raw_data["response"];
@@ -192,23 +192,23 @@ function createGroupChat() {
                 retrieve_chats();
                 document.getElementById('add_group_chat').classList.add('hidden');
                 group = [];
-            }else if(response == "wrongTitleLength"){
+            } else if (response == "wrongTitleLength") {
                 addError("The chat title cannot be empty and cannot have more than 25 characters");
-            }else if(response == "groupTooSmall"){
+            } else if (response == "groupTooSmall") {
                 addError("Group chats have to have at least 3 members");
-            }else if(response == "chatAlreadyExist"){
+            } else if (response == "chatAlreadyExist") {
                 addError("This chat already exists");
             }
         });
     })
-    .catch((error) => {
-        console.error(`caught error ${error}`);
-    });
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
 }
 
-function newMessage(){
+function newMessage() {
     let message_field = document.getElementById("new_message");
-    if (!current_chat_id){
+    if (!current_chat_id) {
         addError("No chat has been selected")
     }
     send_form("/api/new_message", {
@@ -222,9 +222,9 @@ function newMessage(){
             }
         });
     })
-    .catch((error) => {
-        console.error(`caught error ${error}`);
-    });
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
 }
 
 function openChat(chatID) {
@@ -232,7 +232,7 @@ function openChat(chatID) {
     let html = ``;
     load_chats().then((chat_data) => {
         let chats = chat_data.chat_list;
-        if (chat_data.chat_list[chatID].unread_messages > 0){
+        if (chat_data.chat_list[chatID].unread_messages > 0) {
             chat_data.chat_list[chatID].unread_messages = 0
             chat_data.unread_chats -= 1;
             document.getElementById(`chat_${chatID}`).querySelector("#unread_badge_chat").classList.add("hidden");
@@ -241,36 +241,36 @@ function openChat(chatID) {
         sessionStorage.setItem("chats", JSON.stringify(chat_data));
         show_unread_badges();
         fetch(`/api/get_chat_messages?chatID=${chatID}`)
-        .then((response) => response.json())
-        .then((data) => {
-            load_players().then((players) => {
-                let messages = data.messages;
-                let chat_title = document.getElementById("chat_title_div");
-                chat_title.innerHTML = `<b>${chats[chatID].name}</b>`;
-                document.getElementById("message_input_field").classList.remove("hidden");
-                for (let i = 0; i < messages.length; i++) {
-                    let alignment = "left";
-                    let username = "";
-                    if(messages[i].player_id == sessionStorage.getItem("player_id")){
-                        alignment = "right";
-                    }else if(chats[chatID].group_chat){
-                        username = players[messages[i].player_id].username + "&emsp;";
-                    }
-                    html += `<div class="message ${alignment}">
+            .then((response) => response.json())
+            .then((data) => {
+                load_players().then((players) => {
+                    let messages = data.messages;
+                    let chat_title = document.getElementById("chat_title_div");
+                    chat_title.innerHTML = `<b>${chats[chatID].name}</b>`;
+                    document.getElementById("message_input_field").classList.remove("hidden");
+                    for (let i = 0; i < messages.length; i++) {
+                        let alignment = "left";
+                        let username = "";
+                        if (messages[i].player_id == sessionStorage.getItem("player_id")) {
+                            alignment = "right";
+                        } else if (chats[chatID].group_chat) {
+                            username = players[messages[i].player_id].username + "&emsp;";
+                        }
+                        html += `<div class="message ${alignment}">
                         <div class="message_infos">
                             <span>${username}</span>
                             <span class="txt_pine">${formatDateString(messages[i].time)}</span></div>
                         <div class="message_text bone ${alignment}">${messages[i].text}</div>
                     </div>`;
-                }
-                let message_container = document.getElementById("message_container")
-                message_container.innerHTML = html;
-                message_container.scrollTop = message_container.scrollHeight;
-                document.getElementById("new_message").focus();
+                    }
+                    let message_container = document.getElementById("message_container")
+                    message_container.innerHTML = html;
+                    message_container.scrollTop = message_container.scrollHeight;
+                    document.getElementById("new_message").focus();
+                })
             })
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-        });
+            .catch((error) => {
+                console.error("Error:", error);
+            });
     });
 }

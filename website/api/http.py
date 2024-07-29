@@ -530,8 +530,8 @@ def create_group_chat():
     """this endpoint is called when a player creates a group chat"""
     request_data = request.get_json()
     chat_title = request_data["chat_title"]
-    group_memebers = request_data["group_memebers"]
-    response = utils.create_group_chat(current_user, chat_title, group_memebers)
+    group_members = request_data["group_members"]
+    response = utils.create_group_chat(current_user, chat_title, group_members)
     return jsonify(response)
 
 
