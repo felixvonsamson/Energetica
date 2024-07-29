@@ -712,7 +712,9 @@ def calculate_prod(
     """
     max_resources = np.inf
     ramping_speed = (
-        player_cap[facility]["power"] / engine.const_config["assets"][facility]["ramping_time"] * engine.clock_time / 60
+        player_cap[facility]["power"]
+        / engine.const_config["assets"][facility]["ramping_time"]
+        * engine.in_game_seconds_per_tick
     )
     if not storage:
         for resource, amount in player_cap[facility]["fuel_use"].items():
@@ -855,8 +857,8 @@ def resources_and_pollution(engine, new_values, player):
         captured_CO2 = (
             assets["carbon_capture"]["absorbtion"]
             * engine.data["emissions"]["CO2"]
-            / 60
-            * engine.clock_time
+            * engine.in_game_seconds_per_tick
+            / 86400
             * satisfaction
         )
         player.captured_CO2 += captured_CO2

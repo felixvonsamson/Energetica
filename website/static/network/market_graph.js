@@ -30,11 +30,6 @@ let decending = {
 let offer_col = "price_col"; // current sorting column for offers
 let bid_col = "price_col"; // current sorting column for bids
 
-//resolution buttons
-let resolution_list;
-let res_to_factor;
-let res; // current resolution
-
 //styling variables
 let margin;
 let canvas_width;
@@ -45,40 +40,17 @@ let t_click = 0; // clicked timestamp
 
 let players = {};
 
-if (clock_time == 60){
-    resolution_list = ["1h", "6h", "36h", "9 days", "2 months", "year"];
-    res = "1h";
-    res_to_factor = {
-        "1h": 1,
-        "6h": 1,
-        "36h": 6,
-        "9 days": 36,
-        "2 months": 216,
-        "year": 1296,
+//resolution buttons
+let res = "4h"; //current resolution
+let resolution_list = ["4h", "24h", "6 days", "6 months", "3 years", "18 years"];
+let res_to_factor = {
+        "4h": 1,
+        "24h": 1,
+        "6 days": 6,
+        "6 months": 36,
+        "3 years": 216,
+        "18 years": 1296,
     };
-}else if(clock_time == 30){
-    resolution_list = ["30min", "3h", "18h", "4 days", "month", "6 months"];
-    res = "30min";
-    res_to_factor = {
-        "30min": 1,
-        "3h": 1,
-        "18h": 6,
-        "4 days": 36,
-        "month": 216,
-        "6 months": 1296,
-    };
-}else{
-    resolution_list = ["×1 (60)", "×1 (360)", "×6", "×36", "×216", "×1296"];
-    res = "×1 (60)";
-    res_to_factor = {
-        "×1 (60)": 1,
-        "×1 (360)": 1,
-        "×6": 6,
-        "×36": 36,
-        "×216": 216,
-        "×1296": 1296,
-    };
-}
 
 let cols_and_names = {};
 let random_colors = [];
@@ -478,7 +450,7 @@ function temporal_imports_sketch(s){
         s.graphics.line(s.graph_w, 0, s.graph_w, -s.graph_h);
 
         s.graphics.push();
-        let units = time_unit(res, clock_time);
+        let units = time_unit(res);
         s.graphics.fill(0);
         for (let i = 0; i < units.length; i++) {
             s.graphics.stroke(0, 0, 0, 30);
@@ -1027,7 +999,7 @@ function temporal_graph_sketch(s){
         s.graphics.line(s.graph_w, 0, s.graph_w, -s.graph_h);
 
         s.graphics.push();
-        let units = time_unit(res, clock_time);
+        let units = time_unit(res);
         s.graphics.fill(0);
         for (let i = 0; i < units.length; i++) {
             s.graphics.stroke(0, 0, 0, 30);
@@ -1905,37 +1877,19 @@ function calc_h(s, price) {
     }
 }
 
-function time_unit(res, ct) {
-    if(ct == 60){
-        if (res == "1h") {
-            return ["1h", "50min", "40min", "30min", "20min", "10min", "now"];
-        } else if (res == "6h") {
-            return ["6h", "5h", "4h", "3h", "2h", "1h", "now"];
-        } else if (res == "36h") {
-            return ["36h", "30h", "24h", "18h", "12h", "6h", "now"];
-        } else if (res == "9 days") {
-            return ["9d", "7.5d", "6d", "4.5d", "3d", "1.5d", "now"];
-        } else if (res == "2 months") {
-            return ["54d", "45d", "36d", "27d", "18d", "9d", "now"];
-        } else if (res == "year") {
-            return ["12m", "10m", "8m", "6m", "4m", "2m", "now"];
-        }
-    }else if(ct == 30){
-        if (res == "30min") {
-            return ["30min", "25min", "20min", "15min", "10min", "5min", "now"];
-        } else if (res == "3h") {
-            return ["3h", "2h30", "2h", "1h30", "1h", "30min", "now"];
-        } else if (res == "18h") {
-            return ["18h", "15h", "12h", "9h", "6h", "3h", "now"];
-        } else if (res == "4 days") {
-            return ["108h", "90h", "72h", "54h", "36h", "18h", "now"];
-        } else if (res == "month") {
-            return ["27d", "22.5d", "18d", "13.5d", "9d", "4.5d", "now"];
-        } else if (res == "6 months") {
-            return ["6m", "5m", "4m", "3m", "2m", "1m", "now"];
-        }
-    }else{
-        return [res, "", "", "", "", "", "now"];
+function time_unit(res) {
+    if (res == "4h") {
+        return ["4h", "3h20", "2h40", "2h", "1h20", "40min", "now"];
+    } else if (res == "24h") {
+        return ["24h", "20h", "16h", "12h", "8h", "4h", "now"];
+    } else if (res == "6 days") {
+        return ["6d", "5d", "4d", "3d", "2d", "1d", "now"];
+    } else if (res == "6 months") {
+        return ["6m", "5m", "4m", "3m", "2m", "1m (6d)", "now"];
+    } else if (res == "3 years") {
+        return ["3y", "2.5y", "2y", "1.5y", "1y", "6m", "now"];
+    } else if (res == "18 years") {
+        return ["18y", "15y", "12y", "9y", "6y", "3y", "now"];
     }
 }
 

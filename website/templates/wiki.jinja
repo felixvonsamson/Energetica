@@ -74,6 +74,56 @@
     <li><a href="#climate_change_impacts">Climate Change Impacts</a></li>
   </ul>
 
+  <h2 id="Game_Time">Game Time</h2>
+  <p>
+    The game operates on a clock that updates every {{ engine.clock_time }} seconds, referred to as a "tick". This means 
+    the game values are updated every {{ engine.clock_time }} seconds.
+  </p>
+  <p>
+    To enhance the gaming experience, game time is significantly faster than real-time. 1 in-game day corresponds to 3 
+    real-time hours and an in-game year has only 72 in-game days. The following table shows the conversion between ticks, 
+    in-game time, and real-time:
+  </p>
+  <div class="flex-center align-items-center">
+    <table class="table bone txt_center">
+        <tr>
+          <th>Game Ticks</th>
+          <th>In-game Time</th>
+          <th>Real Time</th>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>4 min</td>
+          <td>{{ engine.clock_time }} sec</td>
+        </tr>
+        <tr>
+          <td>15</td>
+          <td>1 hour</td>
+          <td>{{(0.25 * engine.clock_time) | round() | int }} min</td>
+        </tr>
+        <tr>
+          <td>360</td>
+          <td>1 day / 24h</td>
+          <td>{{(0.1 * engine.clock_time) | round() | int }} hours</td>
+        </tr>
+        <tr>
+          <td>2160</td>
+          <td>1 month / 6d</td>
+          <td>{{(0.6 * engine.clock_time) | round() | int }} hours</td>
+        </tr>
+        <tr>
+          <td>25920</td>
+          <td>1 year / 12m</td>
+          <td>{{(0.3 * engine.clock_time) | round() | int }} days</td>
+        </tr>
+        <tr>
+          <td>259200</td>
+          <td>10 years</td>
+          <td>{{(0.1 * engine.clock_time) | round() | int }} months</td>
+        </tr>
+    </table>
+  </div>
+
   <h2 id="Map">The Map</h2>
   <p>
     Upon creating an account, your initial task is to select a location on the map. It's crucial to note that this 
@@ -530,8 +580,9 @@
   <p>Formula for total power generation of hydropower facilty type i:</p>
   <ul style="list-style: none;"><li>
     <i class="fa fa-angle-double-right padding"></i>\(P_i = sv(t) \times P_{max,i} \times n_i \)<br>
-    where \(sv()\) is the seasonal variation shown in the graph, \(t\) is the in-game date (in-game years have only 
-    {{(51 / 60 * engine.clock_time) | round() | int }} days), \(P_{max,i}\) is the max power generation of the facility 
+    where \(sv()\) is the seasonal variation shown in the graph, \(t\) is the in-game date 
+    (<a href="#Game_Time">1 in-game year = {{(0.3 * engine.clock_time) | round() | int }} real-time days</a>), 
+    \(P_{max,i}\) is the max power generation of the facility 
     type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
   </li></ul>
 
@@ -701,21 +752,22 @@
       </tr>
       <tr>
         <td>Coal</td>
-        <td>{{ (const_data.coal_mine.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
+        <td>{{ (const_data.coal_mine.extraction_rate*36000) | round(4) }}% /day (ig)</td>
       </tr>
       <tr>
         <td>Oil</td>
-        <td>{{ (const_data.oil_field.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
+        <td>{{ (const_data.oil_field.extraction_rate*36000) | round(4) }}% /day (ig)</td>
       </tr>
       <tr>
         <td>Gas</td>
-        <td>{{ (const_data.gas_drilling_site.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
+        <td>{{ (const_data.gas_drilling_site.extraction_rate*36000) | round(4) }}% /day (ig)</td>
       </tr>
       <tr>
         <td>Uranium</td>
-        <td>{{ (const_data.uranium_mine.extraction_rate*360000/engine.clock_time) | round(4) }}% /h</td>
+        <td>{{ (const_data.uranium_mine.extraction_rate*36000) | round(4) }}% /day (ig)</td>
       </tr>
     </table>
+    <span>ig = <a href="Game_Time">in-game time</a></span>
   </div>
   <p>
     Resources extracted from these facilities are stored in the <a href="#The_Warehouse">warehouse</a>. Extraction facilities cease operation when the
@@ -752,7 +804,7 @@
     <i class="fa fa-angle-double-right padding"></i>\( D = D_{base} \times dv(t) \times sv(t) \)<br>
     with \(D_{base}\) the base demand as indicated on the page <a href="{{ url_for('views.functional_facilities') }}">Functional
     facilities</a>, \(dv()\) the daily variations shown in the following graph, \(sv()\) the seasonal variations shown
-    in the following graph and \(t\) the in-game date and time (in-game years have only {{(51 / 60 * engine.clock_time) | round() | int }} days).
+    in the following graph and \(t\) the in-game date and time (<a href="#Game_Time">1 in-game year = {{(0.3 * engine.clock_time) | round() | int }} real-time days</a>).
   </li></ul>
   <div class="graph-container">
     <img style="height:350px"
@@ -962,7 +1014,7 @@
     <ul style="list-style: none;"><li>
       \(t_{ship}\) : shipment duration in hours
     </li><li>
-      \(t_{base}\) : base value of shipment duration : {{ (5000 / 3600 * (engine.clock_time / 60) ** 0.5) | round(2) }} h/tile
+      \(t_{base}\) : base value of shipment duration : {{ (80 / 15) | round(1) }} h/tile (<a href="#Game_Time">in-game time</a>) or {{ (80 * engine.clock_time / 60) | int }} min/tile (real-time)
     </li><li>
       \(dist\) : distance between buyer and seller in tiles
     </li><li>

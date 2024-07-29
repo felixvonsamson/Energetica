@@ -24,8 +24,9 @@ from .config import config, const_config
 
 # This is the engine object
 class gameEngine(object):
-    def __init__(self, clock_time):
+    def __init__(self, clock_time, in_game_seconds_per_tick):
         self.clock_time = clock_time
+        self.in_game_seconds_per_tick = in_game_seconds_per_tick
         self.config = config
         self.const_config = const_config
         self.socketio = None

@@ -143,11 +143,11 @@ def efficiency_multiplier(player, facility):
 
 
 def construction_time(player, facility):
-    """Function that returns the construction time according to the technology level of the player."""
+    """Function that returns the construction time in ticks according to the technology level of the player."""
     engine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
-    # dilatation foactor dependent on clock_time
-    duration = const_config[facility]["base_construction_time"] * (engine.clock_time / 60) ** 0.5
+    # transforming in game seconds in ticks
+    duration = const_config[facility]["base_construction_time"] / engine.in_game_seconds_per_tick
     # construction time increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
         duration *= const_config[facility]["price_multiplier"] ** (0.6 * getattr(player, facility))
@@ -165,11 +165,11 @@ def construction_time(player, facility):
         + engine.functional_facilities
     ):
         duration *= const_config["building_technology"]["time_factor"] ** player.building_technology
-    return math.ceil(duration / engine.clock_time) * engine.clock_time
+    return math.ceil(duration)
 
 
 def construction_power(player, facility):
-    """Function that returns the construction power according to the technology level of the player."""
+    """Function that returns the construction power in W according to the technology level of the player."""
     engine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
     bt_factor = const_config["building_technology"]["time_factor"] ** player.building_technology
@@ -200,7 +200,12 @@ def construction_power(player, facility):
             * capacity_multiplier(player, facility)
             / bt_factor
         )
-    power = const_config[facility]["base_construction_energy"] / construction_time(player, facility) * 3600
+    power = (
+        const_config[facility]["base_construction_energy"]
+        / construction_time(player, facility)
+        / engine.in_game_seconds_per_tick
+        * 3600
+    )
     # construction power increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
         power *= const_config[facility]["price_multiplier"] ** (1.2 * getattr(player, facility))
@@ -216,9 +221,7 @@ def construction_pollution_per_tick(player, facility):
     const_config = engine.const_config["assets"]
     if facility in engine.technologies:
         return 0
-    pollution = (
-        const_config[facility]["base_construction_pollution"] / construction_time(player, facility) * engine.clock_time
-    )
+    pollution = const_config[facility]["base_construction_pollution"] / construction_time(player, facility)
     # construction pollution increases with higher levels for functional facilities
     if facility in engine.functional_facilities:
         pollution *= const_config[facility]["price_multiplier"] ** getattr(player, facility)
@@ -397,9 +400,8 @@ def _package_power_storage_extraction_facility_base(player: Player, facility):
             else 1.0
         )
         * const_config_assets[facility]["O&M_factor"]
-        * 3600
-        / engine.clock_time,
-        "lifespan": const_config_assets[facility]["lifespan"] * (engine.clock_time / 60) ** 0.5,
+        / 24,
+        "lifespan": const_config_assets[facility]["lifespan"] / engine.in_game_seconds_per_tick,
     }
 
 
@@ -484,8 +486,7 @@ def package_extraction_facilities(player: Player):
                 "rate": const_config_assets[extraction_facility]["extraction_rate"]
                 * capacity_multiplier(player, extraction_facility)
                 * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
-                / engine.clock_time
-                * 3600,
+                / 24,
             },
         }
         for extraction_facility in engine.extraction_facilities
@@ -530,14 +531,9 @@ def package_functional_facilities(player: Player):
 
     def industry_hourly_revenues_for_level(level):
         return (
-            (
-                const_config_assets["industry"]["base_income"]
-                * const_config_assets["industry"]["income_factor"] ** level
-                + const_config_assets["industry"]["universal_income"]
-            )
-            * 3600
-            / engine.clock_time
-        )
+            const_config_assets["industry"]["base_income"] * const_config_assets["industry"]["income_factor"] ** level
+            + const_config_assets["industry"]["universal_income"]
+        ) / 24
 
     def player_lab_workers_for_level(level):
         # TODO: make this method unified and used everywhere this logic is used

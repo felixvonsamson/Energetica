@@ -33,7 +33,13 @@ class CapacityData:
         for facility in active_facilities:
             base_data = engine.const_config["assets"][facility.facility]
             effective_values = self._data[facility.facility]
-            op_costs = base_data["base_price"] * facility.price_multiplier * base_data["O&M_factor"]
+            op_costs = (
+                base_data["base_price"]
+                * facility.price_multiplier
+                * base_data["O&M_factor"]
+                * engine.in_game_seconds_per_tick
+                / 86400
+            )
             if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
                 op_costs *= facility.capacity_multiplier
             effective_values["O&M_cost"] += op_costs
@@ -254,9 +260,9 @@ class WeatherData:
             except Exception as e:
                 log_error(e, weather)
 
-        month = math.floor((engine.data["total_t"] % 73440) / 6120)
-        # One year in game is 73440 ticks
-        f = (engine.data["total_t"] % 73440) / 6120 - month
+        month = math.floor((engine.data["total_t"] % 25920) / 2160)
+        # One year in game is 25920 ticks
+        f = (engine.data["total_t"] % 25920) / 2160 - month
 
         d = river_discharge_seasonal
         power_factor = d[month] + (d[(month + 1) % 12] - d[month]) * f
@@ -275,7 +281,7 @@ class WeatherData:
 
     def package(self, total_t):
         return {
-            "month_number": ((total_t % 73440) // 6120),
+            "month_number": ((total_t % 25920) // 2160),
             "irradiance": self["irradiance"],
             "wind_speed": self["windspeed"],
             "river_discharge": self["river_discharge"],
