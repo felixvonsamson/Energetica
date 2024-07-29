@@ -23,7 +23,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--rm_instance",
-    help="Remvove the instance folder",
+    help="remove the instance folder",
     action="store_true",
 )
 

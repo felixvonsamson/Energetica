@@ -26,7 +26,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--rm_instance",
-    help="remvove the instance folder",
+    help="remove the instance folder",
     action="store_true",
 )
 args = parser.parse_args()
