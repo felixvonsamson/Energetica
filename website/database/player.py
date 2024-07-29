@@ -33,7 +33,7 @@ class Player(db.Model, UserMixin):
     network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
 
     # Chats :
-    show_disclamer = db.Column(db.Boolean, default=True)
+    show_disclaimer = db.Column(db.Boolean, default=True)
     chats = db.relationship("Chat", secondary=player_chats, backref="participants")
     last_opened_chat = db.Column(db.Integer, default=None)
     messages = db.relationship("Message", backref="player")

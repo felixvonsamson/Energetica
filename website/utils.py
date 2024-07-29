@@ -1010,7 +1010,7 @@ def format_mass(mass):
 
 
 def hide_chat_disclaimer(player):
-    player.show_disclamer = False
+    player.show_disclaimer = False
     db.session.commit()
     from website.api import websocket
 

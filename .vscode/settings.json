@@ -36,11 +36,15 @@
     ],
     "cSpell.words": [
         "Energetica",
+        "httpauth",
         "isort",
         "jsonify",
         "lvls",
+        "pwhash",
         "Pylint",
         "pyproject",
-        "subarrays"
+        "solars",
+        "subarrays",
+        "werkzeug"
     ]
 }
