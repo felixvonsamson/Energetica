@@ -50,13 +50,14 @@ options:
                         Clock time interval in seconds (default is 60)
   --run_init_test_players
                         run the init_test_players function
-  --rm_instance         remvove the instance folder
-  --repair_database     repair database in case of mismatch betwen construction lists
+  --rm_instance         remove the instance folder
+  --repair_database     repair database in case of mismatch between construction lists
 ```
 
-## Source Code Formattting and Linting
+## Source Code Formatting and Linting
 
 Use [Ruff](https://github.com/astral-sh/ruff), [Pylint](https://marketplace.visualstudio.com/items?itemName=ms-python.pylint) and [isort](https://marketplace.visualstudio.com/items?itemName=ms-python.isort) for Python.
 Use [djLint](https://github.com/djlint/djLint) for Jinja.
 Use [Better Jinja](https://marketplace.visualstudio.com/items?itemName=samuelcolvin.jinjahtml) for code highlighting in vscode.
 Both specified through `pyproject.toml`.
+Use [Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker) for spell checking
