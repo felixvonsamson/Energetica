@@ -54,13 +54,18 @@ def log_action(func):
 @http.before_request
 @combined_authenticator
 def check_user():
+    """Sets `g.engine` to point to the engine object. Executed before all
+    `@http` request"""
     g.engine = current_app.config["engine"]
 
 
 @http.route("/request_delete_notification", methods=["POST"])
 def request_delete_notification():
-    """
-    this function is executed when a player deletes a notification
+    """Endpoint for requesting the deletion of a notification
+    Request Payload:
+        {
+            "id": int  # The ID of the notification to be deleted
+        }
     """
     request_data = request.get_json()
     notification_id = request_data["id"]
@@ -70,9 +75,7 @@ def request_delete_notification():
 
 @http.route("/request_marked_as_read", methods=["GET"])
 def request_marked_as_read():
-    """
-    this function is executed when a player read the notifications
-    """
+    """Endpoint for marking all notification as read"""
     current_user.notifications_read()
     return jsonify({"response": "success"})
 
