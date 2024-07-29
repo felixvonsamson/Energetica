@@ -264,8 +264,8 @@ def get_players():
     return jsonify(Player.package_all())
 
 
-@http.route("/get_generation_prioirity", methods=["GET"])
-def get_generation_prioirity():
+@http.route("/get_generation_priority", methods=["GET"])
+def get_generation_priority():
     """Gets generation and demand priority for this player"""
     renewable_priorities = current_user.read_list("self_consumption_priority")
     rest_of_priorities = current_user.read_list("rest_of_priorities")
@@ -511,7 +511,7 @@ def leave_network():
 
 @http.route("hide_chat_disclaimer", methods=["GET"])
 def hide_chat_disclaimer():
-    """this endpoint is called when a player selects 'don't show again' on the chat disclamer"""
+    """this endpoint is called when a player selects 'don't show again' on the chat disclaimer"""
     utils.hide_chat_disclaimer(current_user)
     return jsonify({"response": "success"})
 
