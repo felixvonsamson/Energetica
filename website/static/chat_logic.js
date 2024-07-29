@@ -27,7 +27,7 @@ function refresh_chats() {
                 badge = `<span id="unread_badge_chat" class="unread_badge messages padding-small pine">${chats[chat_id].unread_messages}</span>`
             }
             chat_list_container.innerHTML += `<div id="chat_${chat_id}" onclick="openChat(${chat_id})" class="margin-small white button position_relative">
-                <div class="proile-icon green large">${chats[chat_id].name[0]}</div>
+                <div class="profile-icon green large">${chats[chat_id].name[0]}</div>
                 <b class="medium padding test">${chats[chat_id].name}</b>
                 ${badge}
             </div>`
@@ -123,13 +123,13 @@ function removeElements() {
 
 function addPlayer() {
     let player = input2.value;
-    //add player to the goup members only if they actually exist
+    //add player to the group members only if they actually exist
     if (sortedNames.includes(player) && !group.includes(player)) {
         group.push(player);
         let groupMember = document.createElement("li");
         groupMember.classList.add("group_member");
         groupMember.style.cursor = "pointer";
-        groupMember.setAttribute("id", "groupMember_" + player); //so that they can be removed afretwards
+        groupMember.setAttribute("id", "groupMember_" + player); //so that they can be removed afterwards
         groupMember.setAttribute("onclick", "removePlayer('" + player + "')");
         groupMember.innerHTML = player;
         document.querySelector(".group_members").appendChild(groupMember);
@@ -146,14 +146,14 @@ function removePlayer(name) {
 }
 
 function hide_disclaimer() {
-    checkmark = document.getElementById("dont_show_disclaimer")
-    if (checkmark.checked) {
+    let checkbox = document.getElementById("dont_show_disclaimer")
+    if (checkbox.checked) {
         fetch("/api/hide_chat_disclaimer")
             .catch((error) => {
                 console.error(`caught error ${error}`);
             });
     }
-    document.getElementById('disclamer').classList.add('hidden');
+    document.getElementById('disclaimer').classList.add('hidden');
 }
 
 function createChat() {

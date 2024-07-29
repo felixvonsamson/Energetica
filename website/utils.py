@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 from flask import current_app, flash
 
-from website import gameEngine, technology_effects
+from website import Game_engine, technology_effects
 
 from . import db
 from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer
@@ -26,10 +26,11 @@ from .database.player_assets import (
     Under_construction,
 )
 
-# Helper functions and data initialisation utilities
+# Helper functions and data initialization utilities
 
 
 def flash_error(msg):
+    """Helper function to flash an error message"""
     return flash(msg, category="error")
 
 
@@ -69,12 +70,15 @@ def init_table(user_id):
 
 
 def add_player_to_data(engine, user):
+    """Helper function to add a new player to the engine data"""
     engine.data["current_data"][user.id] = CircularBufferPlayer()
     engine.data["player_capacities"][user.id] = CapacityData()
     engine.data["player_capacities"][user.id].update(user, None)
 
 
 def data_init():
+    """Initializes the data structure for a new player"""
+
     def init_array():
         return [[0.0] * 360] * 5
 
@@ -178,7 +182,7 @@ def save_past_data_threaded(app, engine):
             ).delete()
             db.session.commit()
 
-            engine.log("last 216 datapoints have been saved to files")
+            engine.log("last 216 data points have been saved to files")
 
     def reduce_resolution(array, new_values):
         """reduces resolution of current array x6, x36, x216 and x1296"""
@@ -227,7 +231,7 @@ def add_asset(player_id, construction_id):
                     player.add_to_list("advancements", "technology")
                     notify(
                         "Tutorial",
-                        "You have built a laboratory, you can now reseach <a href='/technology'>technologies</a> to unlock and upgrade facilities.",
+                        "You have built a laboratory, you can now research <a href='/technology'>technologies</a> to unlock and upgrade facilities.",
                         player,
                     )
             if "warehouse" not in player.advancements:
@@ -237,7 +241,7 @@ def add_asset(player_id, construction_id):
                     player.add_to_list("advancements", "warehouse")
                     notify(
                         "Tutorial",
-                        "You have built a warehouse to store natural resources, you can now buy resources on the <a href='/resource_market'>resources market</a> or invest in <a href='/extraction_facilities'>extraction facilites</a> to extract your own resources from the ground.",
+                        "You have built a warehouse to store natural resources, you can now buy resources on the <a href='/resource_market'>resources market</a> or invest in <a href='/extraction_facilities'>extraction facilities</a> to extract your own resources from the ground.",
                         player,
                     )
             if "GHG_effect" not in player.advancements:
@@ -245,7 +249,7 @@ def add_asset(player_id, construction_id):
                     player.add_to_list("advancements", "GHG_effect")
                     notify(
                         "Tutorial",
-                        "Scientists have discovered the greenhouse effect and have shown that climate change increases the risks of natural and social catastrophies. You can now monitor your emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph</a>.",
+                        "Scientists have discovered the greenhouse effect and have shown that climate change increases the risks of natural and social catastrophes. You can now monitor your emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph</a>.",
                         player,
                     )
 
@@ -420,7 +424,7 @@ def add_asset(player_id, construction_id):
 
 def upgrade_facility(player, facility_id):
     """this function is executed when a player upgrades a facility"""
-    engine: gameEngine = current_app.config["engine"]
+    engine: Game_engine = current_app.config["engine"]
 
     def is_upgradable(facility):
         """Returns true if any of the attributes of the built facility are outdated compared to current tech levels"""
@@ -518,7 +522,7 @@ def dismantle_all_of_type(player, facility_id):
 
 
 def remove_asset(player_id, facility, decommissioning=True):
-    """this function is executed when a facility is decomissioned. The removal of the facility is logged and the"""
+    """this function is executed when a facility is decommissioned. The removal of the facility is logged and the"""
     engine = current_app.config["engine"]
     if facility.facility in engine.technologies + engine.functional_facilities:
         return
@@ -538,7 +542,7 @@ def remove_asset(player_id, facility, decommissioning=True):
         )
         engine.log(f"The facility {construction_name} from {player.username} has been decommissioned.")
     else:
-        engine.log(f"{player.username} dismanteled the facility {construction_name}.")
+        engine.log(f"{player.username} dismantled the facility {construction_name}.")
     engine.data["player_capacities"][player.id].update(player, facility.facility)
     engine.config.update_config_for_user(player.id)
     db.session.commit()
@@ -570,7 +574,7 @@ def start_project(engine, player, facility, family, force=False):
         duration = technology_effects.construction_time(player, facility) * const_config["price_multiplier"] ** (
             0.6 * ud_count
         )
-    else:  # power facitlies, storage facilities, extractions facilities
+    else:  # power facilities, storage facilities, extractions facilities
         real_price = const_config["base_price"] * technology_effects.price_multiplier(player, facility)
         if facility in ["small_water_dam", "large_water_dam", "watermill"]:
             real_price *= technology_effects.capacity_multiplier(player, facility)
@@ -943,7 +947,7 @@ def buy_resource_from_market(player, quantity, sale_id):
 
 
 def store_import(player, resource, quantity):
-    """This function is executed when a resource shippment arrives"""
+    """This function is executed when a resource shipment arrives"""
     engine = current_app.config["engine"]
     max_cap = engine.config[player.id]["warehouse_capacities"][resource]
     if getattr(player, resource) + quantity > max_cap:
@@ -1010,6 +1014,7 @@ def format_mass(mass):
 
 
 def hide_chat_disclaimer(player):
+    """Stores the player's choice to not show the chat disclaimer anymore"""
     player.show_disclaimer = False
     db.session.commit()
     from website.api import websocket
@@ -1053,7 +1058,8 @@ def create_chat_2(player, buddy_id):
 
 
 def create_group_chat(player, title, group):
-    """Creates a group chat with specified name and participants
+    """
+    Creates a group chat with specified name and participants
 
     :param player: the Player object which requested the group chat creation
 
@@ -1075,7 +1081,8 @@ def create_group_chat(player, title, group):
 
 
 def create_group_chat_2(player, chat_name, participant_ids):
-    """Creates a group chat with specified name and participants
+    """
+    Creates a group chat with specified name and participants
 
     :param player: the Player object which requested the group chat creation
 
@@ -1127,13 +1134,15 @@ def check_existing_chats(participants):
 
 
 def add_message(player, message_text, chat_id):
-    engine: gameEngine = current_app.config["engine"]
+    """This function is called when a player sends a message in a chat. It returns either success or an error."""
+    engine: Game_engine = current_app.config["engine"]
     if not chat_id:
         return {"response": "noChatID"}
     if len(message_text) == 0:
         return {"response": "noMessage"}
+    if len(message_text) > 500:
+        return {"response": "messageTooLong", "message": message_text}
     chat = Chat.query.filter_by(id=chat_id).first()
-    # TODO: set a character / size limit on message size
     new_message = Message(
         text=message_text,
         time=datetime.now(),
@@ -1156,10 +1165,12 @@ def add_message(player, message_text, chat_id):
 
 
 def confirm_location(engine, player, location):
-    """This function is called when a player choses a location. It returns
+    """
+    This function is called when a player choses a location. It returns
     either success or an explanatory error message in the form of a dictionary.
     It is called when a web client uses the choose_location socket.io endpoint,
-    or the REST websocket API."""
+    or the REST websocket API.
+    """
     if location.player_id is not None:
         # Location already taken
         return {"response": "locationOccupied", "by": location.player_id}
@@ -1239,6 +1250,7 @@ def create_network(engine, player, name):
 
 
 def data_init_network():
+    """Initializes the data for a new network."""
     return {
         "network_data": {
             "price": [[0.0] * 360] * 5,
@@ -1272,7 +1284,7 @@ def leave_network(engine, player):
 
 
 def set_network_prices(engine, player, prices={}):
-    """this function is executed when a player changes the value the enegy selling prices"""
+    """this function is executed when a player changes the value the energy selling prices"""
 
     def sort_priority(priority_list, prefix="price_"):
         return sorted(priority_list, key=lambda x: getattr(player, prefix + x))
@@ -1304,6 +1316,10 @@ def set_network_prices(engine, player, prices={}):
 
 
 def change_facility_priority(engine, player, priority):
+    """
+    This function is executed when the facilities priority is changed either by changing the order in the interactive
+    table. The function reassigns the selling prices of the facilities according to the new order.
+    """
     price_list = []
     for facility in priority:
         price_list.append(getattr(player, "price_" + facility))

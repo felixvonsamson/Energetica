@@ -1276,7 +1276,7 @@ input:checked + .slider:before {
     display: none;
 }
 
-.proile-icon {
+.profile-icon {
     height: 42px;
     width: 42px;
     display: inline-block;

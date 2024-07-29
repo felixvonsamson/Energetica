@@ -1,13 +1,11 @@
-"""
-This code is run once at the start of the game
-"""
+"""This code is run once at the start of the game"""
 
+import socket
 import platform
 import eventlet
 
 eventlet.monkey_patch(thread=True, time=True)
 
-import socket
 from flask import Flask, request, jsonify, send_file  # noqa: E402
 from flask_sqlalchemy import SQLAlchemy  # noqa: E402
 import os  # noqa: E402
@@ -26,10 +24,11 @@ import shutil  # noqa: E402
 db = SQLAlchemy()
 
 from .database.player import Player  # noqa: E402
-from website.gameEngine import gameEngine  # noqa: E402
+from website.Game_engine import Game_engine  # noqa: E402
 
 
 def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_instance):
+    """This function sets up the app and the game engine"""
     # gets lock to avoid multiple instances
     if platform.system() == "Linux":
         lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -45,7 +44,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     db.init_app(app)
 
     # creates the engine (and loading the save if it exists)
-    engine = gameEngine(clock_time, in_game_seconds_per_tick)
+    engine = Game_engine(clock_time, in_game_seconds_per_tick)
 
     if rm_instance:
         engine.log("removing instance")
@@ -164,7 +163,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        from .gameEngine import state_update
+        from .Game_engine import state_update
 
         scheduler = APScheduler()
         scheduler.init_app(app)

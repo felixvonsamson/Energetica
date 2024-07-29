@@ -1,6 +1,4 @@
-"""
-Here is the logic for the engine of the game
-"""
+"""Here is the logic for the engine of the game"""
 
 from collections import defaultdict
 from datetime import datetime
@@ -23,7 +21,9 @@ from .config import config, const_config
 
 
 # This is the engine object
-class gameEngine(object):
+class Game_engine(object):
+    """This class is the engine of the game. It contains all the data and methods to run the game."""
+
     def __init__(self, clock_time, in_game_seconds_per_tick):
         self.clock_time = clock_time
         self.in_game_seconds_per_tick = in_game_seconds_per_tick
@@ -162,6 +162,7 @@ class gameEngine(object):
         self.data["weather"].update_weather(self)
 
     def init_loggers(self):
+        """Initializes the loggers for the engine"""
         self.console_logger.setLevel(logging.INFO)
         s_handler = logging.StreamHandler()
         s_handler.setLevel(logging.INFO)
@@ -174,8 +175,9 @@ class gameEngine(object):
         f_handler.setLevel(logging.INFO)
         self.action_logger.addHandler(f_handler)
 
-    # reload page for all users
     def refresh(self):
+        """Sends a refresh signal to all clients"""
+        # TODO: Do we need this method?
         self.socketio.emit("refresh")
 
     def display_new_message(self, message, chat):
@@ -215,8 +217,8 @@ class gameEngine(object):
 from .production_update import update_electricity  # noqa: E402
 
 
-# function that is executed once every 1 minute :
 def state_update(engine, app):
+    """This function is called every tick to update the state of the game"""
     total_t = (time.time() - engine.data["start_date"]) / engine.clock_time
     while engine.data["total_t"] < total_t - 1:
         engine.data["total_t"] += 1
@@ -273,7 +275,7 @@ def check_finished_constructions(engine):
             db.session.delete(a_s)
         db.session.commit()
 
-    # check end of lifespan of facilites
+    # check end of lifespan of facilities
     eolt_facilities = Active_facilities.query.filter(Active_facilities.end_of_life <= engine.data["total_t"]).all()
     if eolt_facilities:
         for facility in eolt_facilities:

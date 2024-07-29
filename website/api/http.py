@@ -21,6 +21,9 @@ http = Blueprint("http", __name__)
 
 
 def combined_authenticator(func):
+    """This decorator checks if the user is authenticated either through httpauth or flask_login"""
+
+    # TODO: This still need to be tested
     @wraps(func)
     def wrapper(*args, **kwargs):
         if not current_user.is_authenticated:
@@ -31,6 +34,8 @@ def combined_authenticator(func):
 
 
 def log_action(func):
+    """This decorator logs all endpoint actions of the players"""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         log_entry = {
@@ -52,14 +57,17 @@ def log_action(func):
 @http.before_request
 @combined_authenticator
 def check_user():
-    """Sets `g.engine` to point to the engine object. Executed before all
-    `@http` request"""
+    """
+    Sets `g.engine` to point to the engine object. Executed before all
+    `@http` request
+    """
     g.engine = current_app.config["engine"]
 
 
 @http.route("/request_delete_notification", methods=["POST"])
 def request_delete_notification():
-    """Endpoint for requesting the deletion of a notification
+    """
+    Endpoint for requesting the deletion of a notification
     Request Payload:
         {
             "id": int  # The ID of the notification to be deleted
@@ -117,6 +125,7 @@ def get_map():
 # gets all the network names and returns it as a list :
 @http.route("/get_networks", methods=["GET"])
 def get_networks():
+    """gets all the network names and returns it as a list"""
     network_list = Network.query.with_entities(Network.name).all()
     network_list = [name[0] for name in network_list]
     return jsonify(network_list)
@@ -132,6 +141,7 @@ def get_chat_messages():
 
 @http.route("/get_chat_list", methods=["GET"])
 def get_chat_list():
+    """gets the list of chats for the current player"""
     response = current_user.package_chat_list()
     return jsonify(response)
 
@@ -148,6 +158,8 @@ def get_resource_data():
 # Gets the data for the overview charts
 @http.route("/get_chart_data", methods=["GET"])
 def get_chart_data():
+    """gets the data for the charts"""
+
     def calculate_mean_subarrays(array, x):
         return [np.mean(array[i : i + x]) for i in range(0, len(array), x)]
 
@@ -212,6 +224,7 @@ def get_network_capacities():
 # Gets the data from the market for the market graph
 @http.route("/get_market_data", methods=["GET"])
 def get_market_data():
+    """gets the data for the market graph at a specific tick"""
     market_data = {}
     if current_user.network is None:
         return "", 404
@@ -247,6 +260,7 @@ def get_player_data():
 
 @http.route("/get_resource_reserves", methods=["GET"])
 def get_resource_reserves():
+    """Gets the natural resources reserves for this player"""
     reserves = current_user.get_reserves()
     return jsonify(reserves)
 
@@ -259,6 +273,7 @@ def get_player_id():
 
 @http.route("/get_players", methods=["GET"])
 def get_players():
+    """Gets all the players information"""
     return jsonify(Player.package_all())
 
 
@@ -343,9 +358,7 @@ def request_start_project():
 @http.route("/request_cancel_project", methods=["POST"])
 @log_action
 def request_cancel_project():
-    """
-    this function is executed when a player cancels an ongoing construction or upgrade
-    """
+    """This function is executed when a player cancels an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = request_data["id"]
     force = request_data["force"]
@@ -356,9 +369,7 @@ def request_cancel_project():
 @http.route("/request_pause_project", methods=["POST"])
 @log_action
 def request_pause_project():
-    """
-    this function is executed when a player pauses or unpauses an ongoing construction or upgrade
-    """
+    """This function is executed when a player pauses or unpauses an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = request_data["id"]
     response = utils.pause_project(player=current_user, construction_id=construction_id)
@@ -368,9 +379,7 @@ def request_pause_project():
 @http.route("/request_pause_shipment", methods=["POST"])
 @log_action
 def request_pause_shipment():
-    """
-    this function is executed when a player pauses or unpauses an ongoing construction or upgrade
-    """
+    """This function is executed when a player pauses or unpauses an ongoing construction or upgrade."""
     request_data = request.get_json()
     shipment_id = request_data["id"]
     response = utils.pause_shipment(player=current_user, shipment_id=shipment_id)
@@ -380,9 +389,7 @@ def request_pause_shipment():
 @http.route("/request_decrease_project_priority", methods=["POST"])
 @log_action
 def request_decrease_project_priority():
-    """
-    this function is executed when a player changes the order of ongoing constructions or upgrades
-    """
+    """This function is executed when a player changes the order of ongoing constructions or upgrades."""
     request_data = request.get_json()
     construction_id = request_data["id"]
     response = utils.decrease_project_priority(player=current_user, construction_id=construction_id)
@@ -392,6 +399,7 @@ def request_decrease_project_priority():
 @http.route("/request_upgrade_facility", methods=["POST"])
 @log_action
 def request_upgrade_facility():
+    """This function is executed when a player wants to upgrades a facility"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     response = utils.upgrade_facility(player=current_user, facility_id=facility_id)
@@ -401,6 +409,7 @@ def request_upgrade_facility():
 @http.route("/request_upgrade_all_of_type", methods=["POST"])
 @log_action
 def request_upgrade_all_of_type():
+    """This function is executed when a player wants to upgrades all facilities of a certain type"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     response = utils.upgrade_all_of_type(player=current_user, facility_id=facility_id)
@@ -410,6 +419,7 @@ def request_upgrade_all_of_type():
 @http.route("/request_dismantle_facility", methods=["POST"])
 @log_action
 def request_dismantle_facility():
+    """This function is executed when a player wants to dismantle a facility"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     response = utils.dismantle_facility(player=current_user, facility_id=facility_id)
@@ -419,6 +429,7 @@ def request_dismantle_facility():
 @http.route("/request_dismantle_all_of_type", methods=["POST"])
 @log_action
 def request_dismantle_all_of_type():
+    """This function is executed when a player wants to dismantle all facilities of a certain type"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     response = utils.dismantle_all_of_type(player=current_user, facility_id=facility_id)
@@ -428,8 +439,7 @@ def request_dismantle_all_of_type():
 @http.route("/change_network_prices", methods=["POST"])
 @log_action
 def change_network_prices():
-    """this function is executed when a player changes the prices for anything
-    on the network"""
+    """this function is executed when a player changes the prices for anything on the network"""
     request_data = request.get_json()
     prices = request_data["prices"]
     response = utils.set_network_prices(engine=g.engine, player=current_user, prices=prices)

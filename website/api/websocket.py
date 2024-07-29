@@ -12,7 +12,7 @@ from website import utils
 from website.database.map import Hex
 from website.database.messages import Chat, Message
 from website.database.player import Network, Player
-from website.gameEngine import gameEngine
+from website.Game_engine import Game_engine
 from website.technology_effects import package_constructions_page_data
 
 websocket_blueprint = Blueprint("rest_api", __name__)
@@ -166,7 +166,7 @@ def rest_get_show_chat_disclaimer(player: Player):
     return json.dumps(response)
 
 
-def rest_get_global_data(engine: gameEngine):
+def rest_get_global_data(engine: Game_engine):
     """Gets global engine data and returns it as a JSON string"""
     response = {"type": "getGlobalData", "data": engine.package_global_data()}
     return json.dumps(response)
@@ -508,7 +508,7 @@ def rest_notify_new_player(engine):
     engine.socketio.emit("get_players", Player.package_all())
 
 
-def rest_notify_global_data(engine: gameEngine):
+def rest_notify_global_data(engine: Game_engine):
     """Notify to all ws sessions the new global engine data"""
     message = rest_get_global_data(engine)
     rest_notify_all_players(engine, message)

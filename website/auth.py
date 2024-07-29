@@ -1,6 +1,4 @@
-"""
-This file contains the functions for authentification and sign-up of users
-"""
+"""This file contains the functions for authentication and sign-up of users."""
 
 from flask import (
     Blueprint,
@@ -23,12 +21,14 @@ auth = Blueprint("auth", __name__)
 
 @auth.before_request
 def check_user():
+    """This function is called before every request"""
     g.engine = current_app.config["engine"]
 
 
 # logic for the login :
 @auth.route("/login", methods=["GET", "POST"])
 def login():
+    """This is the endpoint for an attempt to log in"""
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
@@ -55,6 +55,7 @@ def login():
 @auth.route("/logout")
 @login_required
 def logout():
+    """This is the endpoint for logging out"""
     g.engine.log(f"{current_user.username} logged out")
     logout_user()
     return redirect(url_for("auth.login"))
@@ -63,6 +64,7 @@ def logout():
 # logic for the sign-up :
 @auth.route("/sign-up", methods=["GET", "POST"])
 def sign_up():
+    """This is the endpoint for creating a new account"""
     if request.method == "POST":
         username = request.form.get("username")
         username = username.strip()

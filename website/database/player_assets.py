@@ -1,6 +1,4 @@
-"""
-Here are defined the classes for the items stored in the database
-"""
+"""Here are defined the classes for the items stored in the database"""
 
 from .. import db
 
@@ -19,7 +17,7 @@ class Under_construction(db.Model):
     # Power consumed and emissions produced by the construction
     construction_power = db.Column(db.Float)
     construction_pollution = db.Column(db.Float)
-    # multipliers to keep track of the technology level at the time of the start of the constuction
+    # multipliers to keep track of the technology level at the time of the start of the construction
     price_multiplier = db.Column(db.Float, default=1)
     power_multiplier = db.Column(db.Float, default=1)
     capacity_multiplier = db.Column(db.Float, default=1)
@@ -29,13 +27,13 @@ class Under_construction(db.Model):
 
 
 class Active_facilities(db.Model):
-    """Class that stores the facilites on the server and their end of life time."""
+    """Class that stores the facilities on the server and their end of life time."""
 
     id = db.Column(db.Integer, primary_key=True)
     facility = db.Column(db.String(50))
-    # time at witch the facility will be decomissioned
+    # time at witch the facility will be decommissioned
     end_of_life = db.Column(db.Integer)
-    # multiply the base values by the folowing values
+    # multiply the base values by the following values
     price_multiplier = db.Column(db.Float)
     power_multiplier = db.Column(db.Float)
     capacity_multiplier = db.Column(db.Float)
