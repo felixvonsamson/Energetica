@@ -59,8 +59,8 @@ def request_delete_notification():
     """
     this function is executed when a player deletes a notification
     """
-    json = request.get_json()
-    notification_id = json["id"]
+    request_data = request.get_json()
+    notification_id = request_data["id"]
     current_user.delete_notification(notification_id)
     return jsonify({"response": "success"})
 
@@ -307,8 +307,8 @@ def get_active_facilities():
 @log_action
 def choose_location():
     """this function is executed when a player choses a location"""
-    json = request.get_json()
-    selected_id = json["selected_id"]
+    request_data = request.get_json()
+    selected_id = request_data["selected_id"]
     location = Hex.query.get(selected_id + 1)
     confirm_location_response = utils.confirm_location(engine=g.engine, player=current_user, location=location)
     return jsonify(confirm_location_response)
@@ -322,10 +322,10 @@ def request_start_project():
     * initiates the construction or upgrades a building or facility
     * starts a technology research
     """
-    json = request.get_json()
-    facility = json["facility"]
-    family = json["family"]
-    force = json["force"]
+    request_data = request.get_json()
+    facility = request_data["facility"]
+    family = request_data["family"]
+    force = request_data["force"]
     response = utils.start_project(
         engine=g.engine,
         player=current_user,
@@ -342,9 +342,9 @@ def request_cancel_project():
     """
     this function is executed when a player cancels an ongoing construction or upgrade
     """
-    json = request.get_json()
-    construction_id = json["id"]
-    force = json["force"]
+    request_data = request.get_json()
+    construction_id = request_data["id"]
+    force = request_data["force"]
     response = utils.cancel_project(player=current_user, construction_id=construction_id, force=force)
     return jsonify(response)
 
@@ -355,8 +355,8 @@ def request_pause_project():
     """
     this function is executed when a player pauses or unpauses an ongoing construction or upgrade
     """
-    json = request.get_json()
-    construction_id = json["id"]
+    request_data = request.get_json()
+    construction_id = request_data["id"]
     response = utils.pause_project(player=current_user, construction_id=construction_id)
     return jsonify(response)
 
@@ -367,8 +367,8 @@ def request_pause_shipment():
     """
     this function is executed when a player pauses or unpauses an ongoing construction or upgrade
     """
-    json = request.get_json()
-    shipment_id = json["id"]
+    request_data = request.get_json()
+    shipment_id = request_data["id"]
     response = utils.pause_shipment(player=current_user, shipment_id=shipment_id)
     return jsonify(response)
 
@@ -379,8 +379,8 @@ def request_decrease_project_priority():
     """
     this function is executed when a player changes the order of ongoing constructions or upgrades
     """
-    json = request.get_json()
-    construction_id = json["id"]
+    request_data = request.get_json()
+    construction_id = request_data["id"]
     response = utils.decrease_project_priority(player=current_user, construction_id=construction_id)
     return jsonify(response)
 
@@ -388,8 +388,8 @@ def request_decrease_project_priority():
 @http.route("/request_upgrade_facility", methods=["POST"])
 @log_action
 def request_upgrade_facility():
-    json = request.get_json()
-    facility_id = json["facility_id"]
+    request_data = request.get_json()
+    facility_id = request_data["facility_id"]
     response = utils.upgrade_facility(player=current_user, facility_id=facility_id)
     return jsonify(response)
 
@@ -397,8 +397,8 @@ def request_upgrade_facility():
 @http.route("/request_upgrade_all_of_type", methods=["POST"])
 @log_action
 def request_upgrade_all_of_type():
-    json = request.get_json()
-    facility_id = json["facility_id"]
+    request_data = request.get_json()
+    facility_id = request_data["facility_id"]
     response = utils.upgrade_all_of_type(player=current_user, facility_id=facility_id)
     return jsonify(response)
 
@@ -406,8 +406,8 @@ def request_upgrade_all_of_type():
 @http.route("/request_dismantle_facility", methods=["POST"])
 @log_action
 def request_dismantle_facility():
-    json = request.get_json()
-    facility_id = json["facility_id"]
+    request_data = request.get_json()
+    facility_id = request_data["facility_id"]
     response = utils.dismantle_facility(player=current_user, facility_id=facility_id)
     return jsonify(response)
 
@@ -415,8 +415,8 @@ def request_dismantle_facility():
 @http.route("/request_dismantle_all_of_type", methods=["POST"])
 @log_action
 def request_dismantle_all_of_type():
-    json = request.get_json()
-    facility_id = json["facility_id"]
+    request_data = request.get_json()
+    facility_id = request_data["facility_id"]
     response = utils.dismantle_all_of_type(player=current_user, facility_id=facility_id)
     return jsonify(response)
 
@@ -426,8 +426,8 @@ def request_dismantle_all_of_type():
 def change_network_prices():
     """this function is executed when a player changes the prices for anything
     on the network"""
-    json = request.get_json()
-    prices = json["prices"]
+    request_data = request.get_json()
+    prices = request_data["prices"]
     response = utils.set_network_prices(engine=g.engine, player=current_user, prices=prices)
     return jsonify(response)
 
@@ -436,8 +436,8 @@ def change_network_prices():
 @log_action
 def request_change_facility_priority():
     """this function is executed when a player changes the generation priority"""
-    json = request.get_json()
-    priority = json["priority"]
+    request_data = request.get_json()
+    priority = request_data["priority"]
     response = utils.change_facility_priority(engine=g.engine, player=current_user, priority=priority)
     return jsonify(response)
 
@@ -457,9 +457,9 @@ def put_resource_on_sale():
 @log_action
 def buy_resource():
     """Parse the HTTP form for buying resources"""
-    json = request.get_json()
-    sale_id = int(json["id"])
-    quantity = float(json["quantity"]) * 1000
+    request_data = request.get_json()
+    sale_id = int(request_data["id"])
+    quantity = float(request_data["quantity"]) * 1000
     response = utils.buy_resource_from_market(current_user, quantity, sale_id)
     return jsonify(response)
 
@@ -513,8 +513,8 @@ def hide_chat_disclaimer():
 @http.route("create_chat", methods=["POST"])
 def create_chat():
     """this endpoint is called when a player creates a chat with one other player"""
-    json = request.get_json()
-    buddy_username = json["buddy_username"]
+    request_data = request.get_json()
+    buddy_username = request_data["buddy_username"]
     response = utils.create_chat(current_user, buddy_username)
     return jsonify(response)
 
@@ -522,9 +522,9 @@ def create_chat():
 @http.route("create_group_chat", methods=["POST"])
 def create_group_chat():
     """this endpoint is called when a player creates a group chat"""
-    json = request.get_json()
-    chat_title = json["chat_title"]
-    group_memebers = json["group_memebers"]
+    request_data = request.get_json()
+    chat_title = request_data["chat_title"]
+    group_memebers = request_data["group_memebers"]
     response = utils.create_group_chat(current_user, chat_title, group_memebers)
     return jsonify(response)
 
@@ -532,9 +532,9 @@ def create_group_chat():
 @http.route("new_message", methods=["POST"])
 def new_message():
     """this endpoint is called when a player writes a new message"""
-    json = request.get_json()
-    message = json["new_message"]
-    chat_id = json["chat_id"]
+    request_data = request.get_json()
+    message = request_data["new_message"]
+    chat_id = request_data["chat_id"]
     response = utils.add_message(current_user, message, chat_id)
     return response
 
@@ -542,8 +542,8 @@ def new_message():
 @http.route("change_graph_view", methods=["POST"])
 def change_graph_view():
     """this endpoint is called when a player changes the view mode for the graphs (basic, normal, expert)"""
-    json = request.get_json()
-    view = json["view"]
+    request_data = request.get_json()
+    view = request_data["view"]
     current_user.change_graph_view(view)
     return jsonify({"response": "success"})
 
@@ -553,7 +553,7 @@ def test_notification():
     """this endpoint is used to send a dummy notification to the player"""
     notification_data = {
         "title": "Test notification",
-        "body": f"{g.engine.data["total_t"]} ({datetime.now()})",
+        "body": f"{g.engine.data['total_t']} ({datetime.now()})",
     }
     current_user.send_notification(notification_data)
     return jsonify({"response": "success"})
