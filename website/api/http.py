@@ -2,19 +2,22 @@
 These functions make the link between the website and the database
 """
 
-from flask import Blueprint, request, flash, jsonify, g, current_app, redirect
-from flask_login import current_user
-import pickle
 import json
-import numpy as np
+import pickle
 from datetime import datetime
-from pathlib import Path
 from functools import wraps
+from pathlib import Path
+
+import numpy as np
+from flask import Blueprint, current_app, flash, g, jsonify, redirect, request
+from flask_login import current_user
+
 from website import utils
-from ..config import wind_power_curve
-from ..database.map import Hex
-from ..database.player import Network, Player
-from ..technology_effects import get_current_technology_values
+
+from website.config import wind_power_curve
+from website.database.map import Hex
+from website.database.player import Network, Player
+from website.technology_effects import get_current_technology_values
 
 http = Blueprint("http", __name__)
 
