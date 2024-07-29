@@ -29,7 +29,7 @@ from .database.player import Player  # noqa: E402
 from website.gameEngine import gameEngine  # noqa: E402
 
 
-def create_app(clock_time, run_init_test_players, rm_instance):
+def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_instance):
     # gets lock to avoid multiple instances
     if platform.system() == "Linux":
         lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -45,7 +45,7 @@ def create_app(clock_time, run_init_test_players, rm_instance):
     db.init_app(app)
 
     # creates the engine (and loading the save if it exists)
-    engine = gameEngine(clock_time)
+    engine = gameEngine(clock_time, in_game_seconds_per_tick)
 
     if rm_instance:
         engine.log("removing instance")

@@ -398,9 +398,7 @@ def add_asset(player_id, construction_id):
         "Storage facilities",
     ]:
         eol = engine.data["total_t"] + math.ceil(
-            engine.const_config["assets"][construction.name]["lifespan"]
-            * technology_effects.time_multiplier()
-            / engine.clock_time
+            engine.const_config["assets"][construction.name]["lifespan"] / engine.in_game_seconds_per_tick
         )
         new_facility = Active_facilities(
             facility=construction.name,
@@ -909,7 +907,7 @@ def buy_resource_from_market(player, quantity, sale_id):
         dq = player.tile.q - sale.player.tile.q
         dr = player.tile.r - sale.player.tile.r
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
-        shipment_duration = distance * engine.config[player.id]["transport"]["time"]
+        shipment_duration = distance * engine.config[player.id]["transport"]["time"] / engine.in_game_seconds_per_tick
         shipment_duration = math.ceil(shipment_duration / engine.clock_time)
         new_shipment = Shipment(
             resource=sale.resource,
@@ -1141,9 +1139,7 @@ def confirm_location(engine, player, location):
     # Checks have succeeded, proceed
     location.player_id = player.id
     eol = engine.data["total_t"] + math.ceil(
-        engine.const_config["assets"]["steam_engine"]["lifespan"]
-        * technology_effects.time_multiplier()
-        / engine.clock_time
+        engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick
     )
     steam_engine = Active_facilities(
         facility="steam_engine",
