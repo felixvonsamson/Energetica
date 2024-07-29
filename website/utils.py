@@ -1053,15 +1053,43 @@ def create_chat_2(player, buddy_id):
 
 
 def create_group_chat(player, title, group):
-    """creates a group chat"""
+    """Creates a group chat with specified name and participants
+
+    :param player: the Player object which requested the group chat creation
+
+    :param chat_name: a string for the name of the chat
+
+    :param participant_ids: a list of numbers corresponding to player ids
+
+    :return: '{"response": X}' where X can be
+     * "success" if all is well
+     * "wrongTitleLength" if the `chat_name` is too long or too short
+     * "groupTooSmall" if there are fewer than 3 participants (including player)
+     * "chatAlreadyExist" if there is an existing group chat with the same
+       participants
+    """
     # TODO: change web frontend to send ID's, then deprecate this function
     participants = [Player.query.filter_by(username=username).first() for username in group]
     participant_ids = [participant.id for participant in participants]
-    create_group_chat_2(player, chat_name=title, participant_ids=participant_ids)
+    return create_group_chat_2(player, chat_name=title, participant_ids=participant_ids)
 
 
 def create_group_chat_2(player, chat_name, participant_ids):
-    """creates a group chat"""
+    """Creates a group chat with specified name and participants
+
+    :param player: the Player object which requested the group chat creation
+
+    :param chat_name: a string for the name of the chat
+
+    :param participant_ids: a list of numbers corresponding to player ids
+
+    :return: '{"response": X}' where X can be
+     * "success" if all is well
+     * "wrongTitleLength" if the `chat_name` is too long or too short
+     * "groupTooSmall" if there are fewer than 3 participants (including player)
+     * "chatAlreadyExist" if there is an existing group chat with the same
+       participants
+    """
     if len(chat_name) == 0 or len(chat_name) > 25:
         return {"response": "wrongTitleLength"}
     participants = [player]
