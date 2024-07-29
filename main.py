@@ -4,8 +4,9 @@
 This code launches the game
 """
 
-from website import create_app
 import argparse
+
+from website import create_app
 
 parser = argparse.ArgumentParser()
 parser.add_argument(

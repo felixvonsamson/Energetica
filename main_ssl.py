@@ -1,7 +1,15 @@
 #!/bin/env python3
 
-from website import create_app
+"""
+This code launches the game, with SSL encryption. This is currently not being
+used in production, as we are using reverse proxy instead (httpd).
+"""
+# TODO: depcreate / remove this file entirely
+# TODO: regenerate a new public/private key pair and stop tracking it it git
+
 import argparse
+
+from website import create_app
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
