@@ -1,12 +1,10 @@
-"""
-These functions make the link between the website and the database
-"""
+"""These functions make the link between the website and the database"""
 
 import json
-import pickle
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
+import pickle
 
 import numpy as np
 from flask import Blueprint, current_app, flash, g, jsonify, redirect, request

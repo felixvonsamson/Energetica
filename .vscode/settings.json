@@ -38,7 +38,9 @@
         "Energetica",
         "isort",
         "jsonify",
+        "lvls",
         "Pylint",
-        "pyproject"
+        "pyproject",
+        "subarrays"
     ]
 }
