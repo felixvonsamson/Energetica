@@ -483,7 +483,7 @@ def package_extraction_facilities(player: Player):
             * efficiency_multiplier(player, extraction_facility),
             "resource_production": {
                 "name": facility_to_resource[extraction_facility],
-                "rate": const_config_assets[extraction_facility]["extraction_rate"]
+                "rate": const_config_assets[extraction_facility]["base_extraction_rate_per_day"]
                 * capacity_multiplier(player, extraction_facility)
                 * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
                 / 24,
@@ -531,8 +531,9 @@ def package_functional_facilities(player: Player):
 
     def industry_hourly_revenues_for_level(level):
         return (
-            const_config_assets["industry"]["base_income"] * const_config_assets["industry"]["income_factor"] ** level
-            + const_config_assets["industry"]["universal_income"]
+            const_config_assets["industry"]["base_income_per_day"]
+            * const_config_assets["industry"]["income_factor"] ** level
+            + const_config_assets["industry"]["universal_income_per_day"]
         ) / 24
 
     def player_lab_workers_for_level(level):
@@ -563,8 +564,8 @@ def package_functional_facilities(player: Player):
             return 0
         else:
             return (
-                const_config_assets["carbon_capture"]["base_absorbtion"]
-                * const_config_assets["carbon_capture"]["absorbtion_factor"] ** level
+                const_config_assets["carbon_capture"]["base_absorption_per_day"]
+                * const_config_assets["carbon_capture"]["absorption_factor"] ** level
                 * engine.data["emissions"]["CO2"]  # TODO: make this part be a client side computation
                 * 60
             )

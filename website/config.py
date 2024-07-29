@@ -486,8 +486,8 @@ const_config = {
             "base_construction_energy": 40_000,
             "base_construction_pollution": 4_000,
             "base_power_consumption": 200_000,  # [W]
-            "base_income": 2_000,  # [¤/in-game day]
-            "universal_income": 540,  # [¤/in-game day]
+            "base_income_per_day": 2_000,  # [¤/in-game day]
+            "universal_income_per_day": 540,  # [¤/in-game day]
             "price_multiplier": 1.32,
             "power_factor": 1.4,
             "income_factor": 1.35,
@@ -504,9 +504,9 @@ const_config = {
             "base_construction_pollution": 250_000,
             "O&M_factor": 0.000_49,  # not used for now
             "base_power_consumption": 10_000_000,  # [W]
-            "base_absorbtion": 0.000_036,  # [fraction of atmospheric CO2 absorbed per in-game day]
+            "base_absorption_per_day": 0.000_036,  # [fraction of atmospheric CO2 absorbed per in-game day]
             "price_multiplier": 1.5,
-            "absorbtion_factor": 1.55,
+            "absorption_factor": 1.55,
             "power_factor": 1.5,
             "description": "Carbon capture consumes energy to absorb and store CO2 underground.",
             "wikipedia_link": "",
@@ -527,7 +527,7 @@ const_config = {
             "base_power_consumption": 3_000_000,  # [W]
             "base_pollution": 0.065,  # [kg CO2/kg extracted]
             "lifespan": timedelta(days=161).total_seconds(),  # [in-game seconds]
-            "extraction_rate": 0.000_005,  # [fraction of total stock that can be extracted every in-game day by one mine]
+            "base_extraction_rate_per_day": 0.000_005,  # [fraction of total stock that can be extracted every in-game day by one mine]
             "description": "The coal mine extracts coal from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Coal_mining",
             "requirements": [
@@ -546,7 +546,7 @@ const_config = {
             "base_power_consumption": 7_300_000,
             "base_pollution": 0.302,
             "lifespan": timedelta(days=84).total_seconds(),
-            "extraction_rate": 0.000_05,
+            "base_extraction_rate_per_day": 0.000_05,
             "description": "The oil field extracts oil from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Extraction_of_petroleum",
             "requirements": [
@@ -565,7 +565,7 @@ const_config = {
             "base_power_consumption": 5_100_000,
             "base_pollution": 0.523,
             "lifespan": timedelta(days=70).total_seconds(),
-            "extraction_rate": 0.000_04,
+            "base_extraction_rate_per_day": 0.000_04,
             "description": "The gas drilling site extracts gas from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Natural_gas",
             "requirements": [
@@ -584,7 +584,7 @@ const_config = {
             "base_power_consumption": 18_000_000,
             "base_pollution": 86,
             "lifespan": timedelta(days=126).total_seconds(),
-            "extraction_rate": 0.000_005,
+            "base_extraction_rate_per_day": 0.000_005,
             "description": "The uranium mine extracts uranium from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Uranium_mining",
             "requirements": [
@@ -855,7 +855,7 @@ const_config = {
         "uranium": 5_000 / 1.5,
     },
     "transport": {
-        "time": timedelta(hours=5, minutes=20).total_seconds(),  # [in-game seconds/distance unit]
+        "time_per_tile": timedelta(hours=5, minutes=20).total_seconds(),  # [in-game seconds/distance unit]
         "power_consumption": 5,  # [Wh/kg/distance unit]
     },
 }
@@ -1003,20 +1003,20 @@ class Config(object):
             * const_config["assets"]["industry"]["power_factor"] ** player.industry
         )
         assets["industry"]["income"] = (
-            const_config["assets"]["industry"]["base_income"]
+            const_config["assets"]["industry"]["base_income_per_day"]
             * const_config["assets"]["industry"]["income_factor"] ** player.industry
         )
         # basic universal income of 540 per in-game day
-        assets["industry"]["income"] += const_config["assets"]["industry"]["universal_income"]
+        assets["industry"]["income"] += const_config["assets"]["industry"]["universal_income_per_day"]
 
-        # calculating carbon capture power consumption and CO2 absorbtion
+        # calculating carbon capture power consumption and CO2 absorption
         assets["carbon_capture"]["power_consumption"] = (
             const_config["assets"]["carbon_capture"]["base_power_consumption"]
             * const_config["assets"]["carbon_capture"]["power_factor"] ** player.carbon_capture
         )
-        assets["carbon_capture"]["absorbtion"] = (
-            const_config["assets"]["carbon_capture"]["base_absorbtion"]
-            * const_config["assets"]["carbon_capture"]["absorbtion_factor"] ** player.carbon_capture
+        assets["carbon_capture"]["absorption"] = (
+            const_config["assets"]["carbon_capture"]["base_absorption_per_day"]
+            * const_config["assets"]["carbon_capture"]["absorption_factor"] ** player.carbon_capture
         )
 
         # calculating the maximum storage capacity from the warehouse level
@@ -1030,15 +1030,15 @@ class Config(object):
                 )
 
         # calculating the transport speed and energy consumption from the level of transport technology
-        assets["transport"]["time"] = (
-            const_config["transport"]["time"]
+        assets["transport"]["time_per_tile"] = (
+            const_config["transport"]["time_per_tile"]
             * const_config["assets"]["transport_technology"]["time_factor"] ** player.transport_technology
         )
-        assets["transport"]["power_consumption"] = (
-            const_config["transport"]["power_consumption"]
+        assets["transport"]["power_per_kg"] = (
+            const_config["transport"]["energy_per_kg_per_tile"]
             * const_config["assets"]["transport_technology"]["energy_factor"] ** player.transport_technology
             * 3600
-            / assets["transport"]["time"]
+            / assets["transport"]["time_per_tile"]
         )
 
         # setting the number of workers

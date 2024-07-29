@@ -367,7 +367,7 @@ def shipment_demand(engine, player, demand):
     transport = engine.config[player.id]["transport"]
     for shipment in player.shipments:
         if shipment.suspension_time is None:
-            demand["transport"] += transport["power_consumption"] * shipment.quantity
+            demand["transport"] += transport["power_per_kg"] * shipment.quantity
 
 
 def storage_demand(engine, player, demand):
@@ -850,12 +850,12 @@ def resources_and_pollution(engine, new_values, player):
                 )
             new_values["resources"][resource] = getattr(player, resource)
 
-    # Carbon capture CO2 absorbtion
+    # Carbon capture CO2 absorption
     if player.carbon_capture > 0:
         assets = engine.config[player.id]
         satisfaction = demand["carbon_capture"] / assets["carbon_capture"]["power_consumption"]
         captured_CO2 = (
-            assets["carbon_capture"]["absorbtion"]
+            assets["carbon_capture"]["absorption"]
             * engine.data["emissions"]["CO2"]
             * engine.in_game_seconds_per_tick
             / 86400
