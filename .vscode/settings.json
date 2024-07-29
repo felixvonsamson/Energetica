@@ -8,35 +8,26 @@
         "editor.wordWrapColumn": 120,
         "editor.defaultFormatter": "monosans.djlint",
         "editor.formatOnSave": false,
-        "editor.rulers": [
-            80,
-            120
-        ]
+        "editor.rulers": [80, 120]
     },
     "[javascript]": {
         "editor.wordWrapColumn": 120,
-        "editor.rulers": [
-            120
-        ]
+        "editor.rulers": [120]
     },
     "files.exclude": {
         "**/__pycache__": true
     },
-    "editor.rulers": [
-        80
-    ],
+    "editor.rulers": [80],
     "[python]": {
-        "editor.rulers": [
-            80,
-            120
-        ]
+        "editor.rulers": [80, 120]
     },
-    "pylint.args": [
-        "--max-line-length=120"
-    ],
+    "pylint.args": ["--max-line-length=120"],
     "cSpell.words": [
+        "cumsum",
+        "cumul",
         "Energetica",
         "httpauth",
+        "iloc",
         "isort",
         "jsonify",
         "lvls",

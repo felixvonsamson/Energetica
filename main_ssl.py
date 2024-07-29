@@ -33,6 +33,7 @@ args = parser.parse_args()
 
 socketio, sock, app = create_app(
     clock_time=args.clock_time,
+    in_game_seconds_per_tick=args.in_game_seconds_per_tick,
     run_init_test_players=args.run_init_test_players,
     rm_instance=args.rm_instance,
 )
