@@ -1,6 +1,5 @@
 """This code is run once at the start of the game"""
 
-# eventlet.monkey_patch(thread=True, time=True) # Was needed at some point
 import atexit
 import csv
 import os
@@ -11,6 +10,8 @@ import socket
 from pathlib import Path
 
 import eventlet
+
+eventlet.monkey_patch(thread=True, time=True)
 from flask import Flask, jsonify, request, send_file
 from flask_apscheduler import APScheduler
 from flask_httpauth import HTTPBasicAuth
