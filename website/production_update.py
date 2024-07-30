@@ -729,7 +729,7 @@ def calculate_prod(
             max_resources = min(p_max_resources, max_resources)
     else:
         if filling:
-            E = (
+            energy_capacity = (
                 max(
                     0.0,
                     player_cap[facility]["capacity"] - past_values.get_last_data("storage", facility),
@@ -739,14 +739,16 @@ def calculate_prod(
                 * (player_cap[facility]["efficiency"] ** 0.5)
             )  # max remaining storage space
         else:
-            E = max(
+            energy_capacity = max(
                 0.0,
                 past_values.get_last_data("storage", facility)
                 * 3600
                 / engine.clock_time
                 * (player_cap[facility]["efficiency"] ** 0.5),
             )  # max available storage content
-        max_resources = max(0.0, min(E, (2 * E * ramping_speed) ** 0.5 - 0.5 * ramping_speed))  # ramping down
+        max_resources = max(
+            0.0, min(energy_capacity, (2 * energy_capacity * ramping_speed) ** 0.5 - 0.5 * ramping_speed)
+        )  # ramping down
     if minmax == "max":
         if filling:
             max_ramping = past_values.get_last_data("demand", facility) + ramping_speed
