@@ -7,7 +7,7 @@ import math
 
 from flask import current_app
 
-import website.game_engine
+import website.game_engine as game_engine
 from website.database.map import Hex
 from website.database.player import Player
 
@@ -350,7 +350,7 @@ def get_current_technology_values(player):
 
 def _package_facility_base(player: Player, facility):
     """Gets data shared between power, storage, extraction, and functional facilities"""
-    engine: GameEngine = current_app.config["engine"]
+    engine: game_engine.GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
         "name": facility,
@@ -373,7 +373,7 @@ def _package_facility_base(player: Player, facility):
 
 def _package_power_generating_facility_base(player: Player, facility):
     """Gets all data shared by power and storage facilities"""
-    engine: GameEngine = current_app.config["engine"]
+    engine: game_engine.GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
         "power_generation": const_config_assets[facility]["base_power_generation"] * power_multiplier(player, facility),
@@ -390,7 +390,7 @@ def _package_power_generating_facility_base(player: Player, facility):
 
 def _package_power_storage_extraction_facility_base(player: Player, facility):
     """Gets all data shared by power, storage, and extraction facilities"""
-    engine: GameEngine = current_app.config["engine"]
+    engine: game_engine.GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
         "construction_pollution": const_config_assets[facility]["base_construction_pollution"],
@@ -410,7 +410,7 @@ def _package_power_storage_extraction_facility_base(player: Player, facility):
 def package_power_facilities(player: Player):
     """Gets all data relevant for the power_facilities frontend"""
     # TODO: add wind and hydro potential
-    engine: GameEngine = current_app.config["engine"]
+    engine: game_engine.GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return [
         _package_facility_base(player, power_facility)
@@ -433,7 +433,7 @@ def package_power_facilities(player: Player):
 
 def package_storage_facilities(player: Player):
     """Gets all data relevant for the storage_facilities frontend"""
-    engine: GameEngine = current_app.config["engine"]
+    engine: game_engine.GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return [
         _package_facility_base(player, storage_facility)
@@ -452,7 +452,7 @@ def package_storage_facilities(player: Player):
 
 def package_extraction_facilities(player: Player):
     """Gets all data relevant for the extraction_facilities frontend"""
-    engine: GameEngine = current_app.config["engine"]
+    engine: game_engine.GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     facility_to_resource = {
         "coal_mine": "coal",
@@ -512,7 +512,7 @@ def facility_is_hidden(player: Player, facility):
 
 def package_functional_facilities(player: Player):
     """Gets all data relevant for the functional_facilities frontend"""
-    engine: GameEngine = current_app.config["engine"]
+    engine: game_engine.GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
 
     def package_change(current, upgraded):
