@@ -17,10 +17,10 @@ void generate_table(){
     newRow.setFloat("solar", h.resources[0]); 
     newRow.setFloat("wind", h.resources[1]); 
     newRow.setFloat("hydro", h.resources[2]);
-    newRow.setFloat("coal", h.resources[3]*500000000);
-    newRow.setFloat("oil", h.resources[5]*24000000);
-    newRow.setFloat("gas", h.resources[4]*140000000);
-    newRow.setFloat("uranium", h.resources[6]*2000000);
+    newRow.setFloat("coal", h.resources[3]*2000000000);
+    newRow.setFloat("oil", h.resources[5]*100000000);
+    newRow.setFloat("gas", h.resources[4]*600000000);
+    newRow.setFloat("uranium", h.resources[6]*8000000);
   }
   saveTable(table, "map.csv");
 }

@@ -134,10 +134,10 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
                         solar=float(row["solar"]),
                         wind=float(row["wind"]),
                         hydro=float(row["hydro"]),
-                        coal=float(row["coal"]) * engine.clock_time / 60,
-                        oil=float(row["oil"]) * engine.clock_time / 60,
-                        gas=float(row["gas"]) * engine.clock_time / 60,
-                        uranium=float(row["uranium"]) * engine.clock_time / 60,
+                        coal=float(row["coal"]),
+                        oil=float(row["oil"]),
+                        gas=float(row["gas"]),
+                        uranium=float(row["uranium"]),
                     )
                     db.session.add(hex)
                 db.session.commit()

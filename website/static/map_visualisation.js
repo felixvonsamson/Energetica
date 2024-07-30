@@ -1,8 +1,8 @@
 /* 
-This code is the p5.js script that eshows the map in the home screen
+This code is the p5.js script that shows the map in the home screen
 */
 
-max_q = [1, 1, 1, 500_000_000*clock_time/60, 140_000_000*clock_time/60, 24_000_000*clock_time/60, 2_000_000*clock_time/60];
+max_q = [1, 1, 1, 2_000_000_000, 600_000_000, 100_000_000, 8_000_000];
 // Tile item :
 class Hex {
     constructor(_id, _q, _r, _resources, player_id) {
@@ -215,7 +215,7 @@ function mousePressed() {
         let player_id = map[id].owner_id;
         if (player_id == current_player_id) {
             window.location.href = `/profile`;
-        }else if (player_id) {
+        } else if (player_id) {
             window.location.href = `/profile?player_id=${player_id}`;
         }
     }
@@ -240,9 +240,8 @@ function general_convert(value, units) {
         value /= 1000;
         unit_index += 1;
     }
-    return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
-        units[unit_index]
-    }`;
+    return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]
+        }`;
 }
 
 function calc_dist(id) {
