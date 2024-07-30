@@ -218,7 +218,7 @@ def add_asset(player_id, construction_id):
                 current_data.new_subcategory("demand", construction.name)
                 current_data.new_subcategory("emissions", construction.name)
                 player.add_to_list("demand_priorities", construction.name)
-                set_network_prices(engine, player)
+                reorder_facility_priorities(engine, player)
             if construction.name == "warehouse":
                 for resource in ["coal", "oil", "gas", "uranium"]:
                     current_data.new_subcategory("resources", resource)
@@ -228,7 +228,7 @@ def add_asset(player_id, construction_id):
             if "technology" not in player.advancements:
                 if construction.name == "laboratory":
                     player.add_to_list("demand_priorities", "research")
-                    set_network_prices(engine, player)
+                    reorder_facility_priorities(engine, player)
                     player.add_to_list("advancements", "technology")
                     notify(
                         "Tutorial",
@@ -240,7 +240,7 @@ def add_asset(player_id, construction_id):
             if "warehouse" not in player.advancements:
                 if construction.name == "warehouse":
                     player.add_to_list("demand_priorities", "transport")
-                    set_network_prices(engine, player)
+                    reorder_facility_priorities(engine, player)
                     player.add_to_list("advancements", "warehouse")
                     notify(
                         "Tutorial",
@@ -310,13 +310,13 @@ def add_asset(player_id, construction_id):
             current_data.new_subcategory("emissions", construction.name)
         if construction.name in engine.extraction_facilities + engine.storage_facilities:
             player.add_to_list("demand_priorities", construction.name)
-            set_network_prices(engine, player)
+            reorder_facility_priorities(engine, player)
         if construction.name in engine.renewables:
             player.add_to_list("self_consumption_priority", construction.name)
-            set_network_prices(engine, player)
+            reorder_facility_priorities(engine, player)
         if construction.name in engine.storage_facilities + engine.controllable_facilities:
             player.add_to_list("rest_of_priorities", construction.name)
-            set_network_prices(engine, player)
+            reorder_facility_priorities(engine, player)
         db.session.commit()
 
         # update advancements
@@ -1287,43 +1287,38 @@ def leave_network(engine, player):
     return {"response": "success"}
 
 
-def set_network_prices(engine, player, updated_prices={}):
-    """this function is executed when a player changes the value the energy selling prices"""
-    # TODO: this method gets called many times with an empty `updated_prices`
-    # argument. The reason for this is to run the code after the for loop which
-    # updates the `rest_list`, `scp_list`, and `demand_list`, and not to
-    # actually update the prices. I suggest:
-    # * Moving this code and logic (after the for loop) into its own function,
-    #   with an appropriate name
-    # * Calling this new function at the end of this function
-    # * Calling this new function wherever `set_network_prices` is called
-    #   without the `updated_prices` argument
-    # - Max
-
-    def sort_priority(priority_list, prefix="price_"):
-        return sorted(priority_list, key=lambda x: getattr(player, prefix + x))
-
-    def sort_scp(scp_list):
-        return sorted(scp_list, key=lambda x: engine.renewables.index(x))
+def set_network_prices(engine, player, updated_prices):
+    """Updates network prices for that player"""
 
     for key, updated_price in updated_prices.items():
         if updated_price <= -5:
             return {"response": "priceTooLow"}
         setattr(player, key, updated_price)
 
+    engine.log(f"{player.username} updated their prices")
+    reorder_facility_priorities(engine, player)
+    return {"response": "success"}
+
+
+def reorder_facility_priorities(engine: game_engine.GameEngine, player: Player):
+    """Reorders the player's `rest_of_priorities`, `self_consumption_priority`
+    and `demand_priorities` according to network prices"""
+
+    def sort_priority(priority_list, prefix="price_"):
+        return sorted(priority_list, key=lambda x: getattr(player, prefix + x))
+
+    def sort_scp(scp_list):
+        return sorted(scp_list, key=engine.renewables.index)
+
     rest_list = sort_priority(player.read_list("rest_of_priorities"))
     scp_list = sort_scp(player.read_list("self_consumption_priority"))
     demand_list = sort_priority(player.read_list("demand_priorities"), prefix="price_buy_")
     demand_list.reverse()
-
-    engine.log(f"{player.username} updated their prices")
-
     comma = ","
     player.self_consumption_priority = comma.join(scp_list)
     player.rest_of_priorities = comma.join(rest_list)
     player.demand_priorities = comma.join(demand_list)
     db.session.commit()
-    return {"response": "success"}
 
 
 # Misc
