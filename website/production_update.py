@@ -200,7 +200,7 @@ def update_player_progress_values(engine, player, new_values):
             player.xp += 20
             notify(
                 "Achievements",
-                "You have stored 5TWh of energy, enough to power switzerland " "for a month. (+20 xp)",
+                "You have stored 5TWh of energy, enough to power switzerland for a month. (+20 xp)",
                 player,
             )
     if "mineral_extraction_1" not in player.achievements:
@@ -725,8 +725,8 @@ def calculate_prod(
     if not storage:
         for resource, amount in player_cap[facility]["fuel_use"].items():
             available_resource = getattr(player, resource) - getattr(player, resource + "_on_sale")
-            P_max_resources = available_resource / amount * player_cap[facility]["power"]
-            max_resources = min(P_max_resources, max_resources)
+            p_max_resources = available_resource / amount * player_cap[facility]["power"]
+            max_resources = min(p_max_resources, max_resources)
     else:
         if filling:
             E = (
@@ -863,23 +863,24 @@ def resources_and_pollution(engine, new_values, player):
     if player.carbon_capture > 0:
         assets = engine.config[player.id]
         satisfaction = demand["carbon_capture"] / assets["carbon_capture"]["power_consumption"]
-        captured_CO2 = (
+        captured_co2 = (
             assets["carbon_capture"]["absorption"]
             * engine.data["emissions"]["CO2"]
             * engine.in_game_seconds_per_tick
             / 86400
             * satisfaction
         )
-        player.captured_CO2 += captured_CO2
+        player.captured_CO2 += captured_co2
         db.session.commit()
-        add_emissions(engine, new_values, player, "carbon_capture", -captured_CO2)
+        add_emissions(engine, new_values, player, "carbon_capture", -captured_co2)
 
     construction_emissions(engine, new_values, player)
 
     # O&M costs
     for facility in engine.power_facilities + engine.storage_facilities + engine.extraction_facilities:
         if player_cap[facility] is not None:
-            # the proportion of fixed cost is 100% for renewable and storage facilities, 50% for nuclear reactors and 20% for the rest
+            # the proportion of fixed cost is 100% for renewable and storage facilities,
+            # 50% for nuclear reactors and 20% for the rest
             operational_cost = player_cap[facility]["O&M_cost"]
             if facility in engine.controllable_facilities + engine.extraction_facilities:
                 fc = 0.2
@@ -938,7 +939,8 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
                 )
                 notify(
                     "Energy shortage",
-                    f"The construction of the facility {engine.const_config['assets'][construction.name]['name']} has been suspended because of a lack of electricity.",
+                    f"The construction of the facility {engine.const_config['assets'][construction.name]['name']} "
+                    "has been suspended because of a lack of electricity.",
                     player,
                 )
         db.session.commit()
@@ -963,7 +965,8 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
                 )
                 notify(
                     "Energy shortage",
-                    f"The research of the technology {engine.const_config['assets'][construction.name]['name']} has been suspended because of a lack of electricity.",
+                    f"The research of the technology {engine.const_config['assets'][construction.name]['name']} "
+                    "has been suspended because of a lack of electricity.",
                     player,
                 )
         db.session.commit()
