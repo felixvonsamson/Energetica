@@ -13,19 +13,14 @@ from pathlib import Path
 import numpy as np
 from flask import current_app, flash
 
-import website.game_engine
+import website.Game_engine
 import website.technology_effects
 
 from . import db
 from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer
 from .database.messages import Chat, Message, Notification
 from .database.player import Network, Player, PlayerUnreadMessages
-from .database.player_assets import (
-    ActiveFacilities,
-    ResourceOnSale,
-    Shipment,
-    UnderConstruction,
-)
+from .database.player_assets import ActiveFacilities, ResourceOnSale, Shipment, UnderConstruction
 
 # Helper functions and data initialization utilities
 
