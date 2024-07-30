@@ -25,7 +25,7 @@ from werkzeug.security import check_password_hash
 
 db = SQLAlchemy()
 
-from website.Game_engine import Game_engine  # noqa: E402
+from website.game_engine import GameEngine  # noqa: E402
 
 from .database.player import Player  # noqa: E402
 
@@ -39,6 +39,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
 
     # creates the app :
     app = Flask(__name__)
+    # TODO: move secret key to untracked file
     app.config["SECRET_KEY"] = "psdfjfdf7ehsfdxxnvezartylfzutzngpssdw98w23"
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     app.config["VAPID_PUBLIC_KEY"] = open("public_key.txt", "r+").readline().strip("\n")
@@ -47,7 +48,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     db.init_app(app)
 
     # creates the engine (and loading the save if it exists)
-    engine = Game_engine(clock_time, in_game_seconds_per_tick)
+    engine = GameEngine(clock_time, in_game_seconds_per_tick)
 
     if rm_instance:
         engine.log("removing instance")
@@ -166,7 +167,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        from .Game_engine import state_update
+        from .game_engine import state_update
 
         scheduler = APScheduler()
         scheduler.init_app(app)

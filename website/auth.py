@@ -2,19 +2,21 @@
 
 from flask import (
     Blueprint,
+    current_app,
+    flash,
+    g,
+    redirect,
     render_template,
     request,
-    flash,
-    redirect,
     url_for,
-    g,
 )
-from flask import current_app
-from .database.player import Player
-from werkzeug.security import generate_password_hash, check_password_hash
-from . import db
-from flask_login import login_user, login_required, logout_user, current_user
+from flask_login import current_user, login_required, login_user, logout_user
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from website.api import websocket
+
+from . import db
+from .database.player import Player
 
 auth = Blueprint("auth", __name__)
 
@@ -44,7 +46,10 @@ def login():
                 flash("Incorrect password, try again.", category="error")
         else:
             flash(
-                "Username does not exist.<br><b>All accounts created before the 13.06.2024 have been<br>deleted due to a server reset for the 0.9 update.<br>If your account has been deleted, please create a new one.</b>",
+                "Username does not exist.<br><b>All accounts created before "
+                "the 13.06.2024 have been<br>deleted due to a server reset for "
+                "the 0.9 update.<br>If your account has been deleted, please "
+                "create a new one.</b>",
                 category="error",
             )
 

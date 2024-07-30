@@ -1,14 +1,11 @@
 """In this file, the main routes of the website are managed"""
 
-from flask import Blueprint, redirect, render_template, request
-from flask import g, current_app
-from flask_login import login_required, current_user
+from flask import Blueprint, current_app, g, redirect, render_template, request
+from flask_login import current_user, login_required
 
 from .database.messages import Chat
-
 from .database.player import Player
 from .database.player_assets import ResourceOnSale
-
 from .technology_effects import (
     get_current_technology_values,
     package_extraction_facilities,
@@ -88,7 +85,7 @@ def home():
 
 
 @views.route("/map")
-def map():
+def map_view():
     return g.render_template_ctx("map.jinja")
 
 

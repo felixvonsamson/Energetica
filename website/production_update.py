@@ -1,14 +1,15 @@
 """The game states update functions are defined here"""
 
-import pickle
 import math
-import pandas as pd
-import numpy as np
+import pickle
 
-from .database.player import Network, Player
-from .database.player_assets import UnderConstruction, Shipment, ActiveFacilities
-from .config import wind_power_curve
+import numpy as np
+import pandas as pd
+
 from . import db
+from .config import wind_power_curve
+from .database.player import Network, Player
+from .database.player_assets import ActiveFacilities, Shipment, UnderConstruction
 from .utils import notify
 
 resource_to_extraction = {
@@ -122,7 +123,9 @@ def update_player_progress_values(engine, player, new_values):
             player.add_to_list("advancements", "network")
             notify(
                 "Tutorial",
-                "Your generation capabilities are now big enough to join a Network and trade electricity. See <b>Community</b> > <b><a href='/network'>Network</a></b>.",
+                "Your generation capabilities are now big enough to join a "
+                "Network and trade electricity. See <b>Community</b> > "
+                "<b><a href='/network'>Network</a></b>.",
                 player,
             )
 
@@ -169,7 +172,8 @@ def update_player_progress_values(engine, player, new_values):
             player.xp += 25
             notify(
                 "Achievements",
-                "You have passed the 3TW mark, you consume as much electricity as the entire world population. (+25 xp)",
+                "You have passed the 3TW mark, you consume as much electricity "
+                "as the entire world population. (+25 xp)",
                 player,
             )
     if "energy_storage_1" not in player.achievements:
@@ -196,7 +200,7 @@ def update_player_progress_values(engine, player, new_values):
             player.xp += 20
             notify(
                 "Achievements",
-                "You have stored 5TWh of energy, enough to power switzerland for a month. (+20 xp)",
+                "You have stored 5TWh of energy, enough to power switzerland " "for a month. (+20 xp)",
                 player,
             )
     if "mineral_extraction_1" not in player.achievements:

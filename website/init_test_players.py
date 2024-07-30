@@ -1,20 +1,18 @@
 """This module is used to initialize the database with test players and networks."""
 
-from werkzeug.security import generate_password_hash
+import pickle
 from pathlib import Path
 
-from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer, CapacityData
+from werkzeug.security import generate_password_hash
 
-from .database.map import Hex
-
-from .database.player import Network, Player
-from .database.player_assets import (
-    UnderConstruction,
-)
-from . import db
-import pickle
-from .utils import data_init_network, init_table, add_player_to_data
 from website import technology_effects
+
+from . import db
+from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer
+from .database.map import Hex
+from .database.player import Network, Player
+from .database.player_assets import UnderConstruction
+from .utils import add_player_to_data, data_init_network, init_table
 
 
 def init_test_players(engine):

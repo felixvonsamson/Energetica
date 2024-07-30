@@ -1,27 +1,27 @@
 """Here is the logic for the engine of the game"""
 
-from collections import defaultdict
-from datetime import datetime
-import math
-import time
-import pickle
 import json
 import logging
+import math
+import pickle
+import time
+from collections import defaultdict
+from datetime import datetime
 
-from .database.engine_data import EmissionData, WeatherData
-from . import db
-from .database.player_assets import (
-    UnderConstruction,
-    Shipment,
-    ActiveFacilities,
-)
 from website import utils
 
+from . import db
 from .config import config, const_config
+from .database.engine_data import EmissionData, WeatherData
+from .database.player_assets import (
+    ActiveFacilities,
+    Shipment,
+    UnderConstruction,
+)
 
 
 # This is the engine object
-class Game_engine(object):
+class GameEngine(object):
     """This class is the engine of the game. It contains all the data and methods to run the game."""
 
     def __init__(self, clock_time, in_game_seconds_per_tick):
@@ -130,7 +130,7 @@ class Game_engine(object):
         last_midnight = self.data["start_date"].replace(hour=0, minute=0, second=0, microsecond=0)
         # time shift for daily industry variation
         self.data["delta_t"] = round((self.data["start_date"] - last_midnight).total_seconds() // self.clock_time)
-        # transform start_date to a seconds timestamp coresponding to the time of the first tick
+        # transform start_date to a seconds timestamp corresponding to the time of the first tick
         self.data["start_date"] = math.floor(self.data["start_date"].timestamp() / clock_time) * clock_time
 
         # stored the levels of technology of the server

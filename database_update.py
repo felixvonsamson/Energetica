@@ -1,23 +1,21 @@
-from pathlib import Path
-import pickle
 import math
+import pickle
 from collections import deque
-
-from website.database import engine_data
+from pathlib import Path
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+
+from website.database import engine_data
 
 # DATABASE_URI = "sqlite:///instance/database.db"
 # engine = create_engine(DATABASE_URI)
 # Session = sessionmaker(bind=engine)
 # session = Session()
-
 # # Add the new column with a default value
 # session.execute(text("ALTER TABLE player ADD COLUMN graph_view STRING DEFAULT 'basic'"))
 # session.commit()
-
-from website.database.player import Player, Network
+from website.database.player import Network, Player
 
 with open("instance/engine_data.pck", "rb") as old_file:
     old_engine_data = pickle.load(old_file)
@@ -55,7 +53,7 @@ old_engine_data["start_date"] = math.floor(old_engine_data["start_date"].timesta
 #         with open(f"instance/network_data/{network.id}/time_series.pck", "wb") as file:
 #             pickle.dump(old_network_data, file)
 
-# # remove obselete O&M data
+# # remove obsolete O&M data
 # players = session.query(Player).all()
 # for player in players:
 #     if Path(f"instance/player_data/player_{player.id}.pck").is_file():

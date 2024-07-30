@@ -4,11 +4,13 @@ facilities according to the technology levels of the player.
 """
 
 import math
+
 from flask import current_app
 
-from website import Game_engine
+from website import GameEngine
 from website.database.map import Hex
 from website.database.player import Player
+
 from .database.player_assets import ActiveFacilities, UnderConstruction
 
 
@@ -112,7 +114,7 @@ def efficiency_multiplier(player, facility):
                 + 1 / thermodynamic_factor
             )
         mlt *= thermodynamic_factor
-    # Mineral extraction (in this case the the multiplicator is for emissions)
+    # Mineral extraction (in this case the the multiplier is for emissions)
     if facility in const_config["mineral_extraction"]["affected_facilities"]:
         mlt += const_config["mineral_extraction"]["pollution_factor"] * player.mineral_extraction
     # Chemistry
@@ -229,7 +231,7 @@ def construction_pollution_per_tick(player, facility):
 
 
 def time_multiplier():
-    """dilatation foactor dependent on clock_time"""
+    """dilatation factor dependent on clock_time"""
     return (current_app.config["engine"].clock_time / 60) ** 0.5
 
 
@@ -264,7 +266,7 @@ def requirements_met(requirements):
 
 
 def facility_requirements_and_locked(player, facility):
-    """Returns a dictionnary with both requirements and locked status"""
+    """Returns a dictionary with both requirements and locked status"""
     requirements = facility_requirements(player, facility)
     locked = requirements_met(requirements)
     return {"requirements": requirements, "locked": locked}
@@ -348,7 +350,7 @@ def get_current_technology_values(player):
 
 def _package_facility_base(player: Player, facility):
     """Gets data shared between power, storage, extraction, and functional facilities"""
-    engine: Game_engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
         "name": facility,
@@ -371,7 +373,7 @@ def _package_facility_base(player: Player, facility):
 
 def _package_power_generating_facility_base(player: Player, facility):
     """Gets all data shared by power and storage facilities"""
-    engine: Game_engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
         "power_generation": const_config_assets[facility]["base_power_generation"] * power_multiplier(player, facility),
@@ -388,7 +390,7 @@ def _package_power_generating_facility_base(player: Player, facility):
 
 def _package_power_storage_extraction_facility_base(player: Player, facility):
     """Gets all data shared by power, storage, and extraction facilities"""
-    engine: Game_engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
         "construction_pollution": const_config_assets[facility]["base_construction_pollution"],
@@ -408,7 +410,7 @@ def _package_power_storage_extraction_facility_base(player: Player, facility):
 def package_power_facilities(player: Player):
     """Gets all data relevant for the power_facilities frontend"""
     # TODO: add wind and hydro potential
-    engine: Game_engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return [
         _package_facility_base(player, power_facility)
@@ -431,7 +433,7 @@ def package_power_facilities(player: Player):
 
 def package_storage_facilities(player: Player):
     """Gets all data relevant for the storage_facilities frontend"""
-    engine: Game_engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return [
         _package_facility_base(player, storage_facility)
@@ -450,7 +452,7 @@ def package_storage_facilities(player: Player):
 
 def package_extraction_facilities(player: Player):
     """Gets all data relevant for the extraction_facilities frontend"""
-    engine: Game_engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     facility_to_resource = {
         "coal_mine": "coal",
@@ -470,7 +472,7 @@ def package_extraction_facilities(player: Player):
         elif resource == "uranium":
             return tile.uranium
         else:
-            raise ValueError(f"unkown resource {resource}")
+            raise ValueError(f"unknown resource {resource}")
 
     return [
         _package_facility_base(player, extraction_facility)
@@ -510,7 +512,7 @@ def facility_is_hidden(player: Player, facility):
 
 def package_functional_facilities(player: Player):
     """Gets all data relevant for the functional_facilities frontend"""
-    engine: Game_engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
 
     def package_change(current, upgraded):
@@ -570,7 +572,7 @@ def package_functional_facilities(player: Player):
                 * 60
             )
 
-    indsutry_level_including_ongoing_upgrades = (
+    industry_level_including_ongoing_upgrades = (
         player.industry
         + UnderConstruction.query.filter(
             UnderConstruction.player_id == player.id,
@@ -604,14 +606,14 @@ def package_functional_facilities(player: Player):
 
     special_keys = {
         "industry": {
-            "level": indsutry_level_including_ongoing_upgrades + 1,
+            "level": industry_level_including_ongoing_upgrades + 1,
             "average_consumption": package_change(
-                current=industry_average_consumption_for_level(indsutry_level_including_ongoing_upgrades),
-                upgraded=industry_average_consumption_for_level(indsutry_level_including_ongoing_upgrades + 1),
+                current=industry_average_consumption_for_level(industry_level_including_ongoing_upgrades),
+                upgraded=industry_average_consumption_for_level(industry_level_including_ongoing_upgrades + 1),
             ),
             "revenue_generation": package_change(
-                current=industry_hourly_revenues_for_level(indsutry_level_including_ongoing_upgrades),
-                upgraded=industry_hourly_revenues_for_level(indsutry_level_including_ongoing_upgrades + 1),
+                current=industry_hourly_revenues_for_level(industry_level_including_ongoing_upgrades),
+                upgraded=industry_hourly_revenues_for_level(industry_level_including_ongoing_upgrades + 1),
             ),
         },
         "laboratory": {

@@ -52,6 +52,7 @@
         "pyproject",
         "pywebpush",
         "renewables",
+        "sessionmaker",
         "solars",
         "sqlalchemy",
         "subarrays",

@@ -5,14 +5,14 @@ import pickle
 
 from flask import Blueprint, current_app, g
 from flask_httpauth import HTTPBasicAuth
-from werkzeug.security import check_password_hash
 from simple_websocket import ConnectionClosed
+from werkzeug.security import check_password_hash
 
 from website import utils
 from website.database.map import Hex
 from website.database.messages import Chat, Message
 from website.database.player import Network, Player
-from website.Game_engine import Game_engine
+from website.game_engine import GameEngine
 from website.technology_effects import package_constructions_page_data
 
 websocket_blueprint = Blueprint("rest_api", __name__)
@@ -166,7 +166,7 @@ def rest_get_show_chat_disclaimer(player: Player):
     return json.dumps(response)
 
 
-def rest_get_global_data(engine: Game_engine):
+def rest_get_global_data(engine: GameEngine):
     """Gets global engine data and returns it as a JSON string"""
     response = {"type": "getGlobalData", "data": engine.package_global_data()}
     return json.dumps(response)
@@ -508,7 +508,7 @@ def rest_notify_new_player(engine):
     engine.socketio.emit("get_players", Player.package_all())
 
 
-def rest_notify_global_data(engine: Game_engine):
+def rest_notify_global_data(engine: GameEngine):
     """Notify to all ws sessions the new global engine data"""
     message = rest_get_global_data(engine)
     rest_notify_all_players(engine, message)

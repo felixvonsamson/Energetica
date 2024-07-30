@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 from flask import current_app, flash
 
-from website import Game_engine, technology_effects
+from website import GameEngine, technology_effects
 
 from . import db
 from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer
@@ -63,7 +63,9 @@ def notify(title, message, player):
 
 
 def init_table(user_id):
-    """initialize data table for new user and stores it as a .pck in the 'player_data' repo"""
+    """initialize data table for new user and stores it as a .pck in the
+    'player_data' repo
+    """
     past_data = data_init()
     with open(f"instance/player_data/player_{user_id}.pck", "wb") as file:
         pickle.dump(past_data, file)
@@ -114,7 +116,9 @@ def data_init():
 
 
 def save_past_data_threaded(app, engine):
-    """Saves the past production data to files every hour AND remove network data older than 24h"""
+    """Saves the past production data to files every hour AND remove network
+    data older than 24h
+    """
 
     def save_data():
         with app.app_context():
@@ -231,7 +235,9 @@ def add_asset(player_id, construction_id):
                     player.add_to_list("advancements", "technology")
                     notify(
                         "Tutorial",
-                        "You have built a laboratory, you can now research <a href='/technology'>technologies</a> to unlock and upgrade facilities.",
+                        "You have built a laboratory, you can now research "
+                        "<a href='/technology'>technologies</a> to unlock and "
+                        "upgrade facilities.",
                         player,
                     )
             if "warehouse" not in player.advancements:
@@ -241,7 +247,12 @@ def add_asset(player_id, construction_id):
                     player.add_to_list("advancements", "warehouse")
                     notify(
                         "Tutorial",
-                        "You have built a warehouse to store natural resources, you can now buy resources on the <a href='/resource_market'>resources market</a> or invest in <a href='/extraction_facilities'>extraction facilities</a> to extract your own resources from the ground.",
+                        "You have built a warehouse to store natural "
+                        "resources, you can now buy resources on the "
+                        "<a href='/resource_market'>resources market</a> or "
+                        "invest in <a href='/extraction_facilities'>extraction "
+                        "facilities</a> to extract your own resources from the "
+                        "ground.",
                         player,
                     )
             if "GHG_effect" not in player.advancements:
@@ -249,7 +260,11 @@ def add_asset(player_id, construction_id):
                     player.add_to_list("advancements", "GHG_effect")
                     notify(
                         "Tutorial",
-                        "Scientists have discovered the greenhouse effect and have shown that climate change increases the risks of natural and social catastrophes. You can now monitor your emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph</a>.",
+                        "Scientists have discovered the greenhouse effect and "
+                        "have shown that climate change increases the risks of "
+                        "natural and social catastrophes. You can now monitor "
+                        "your emissions of CO2 in the "
+                        "<a href='/production_overview/emissions'>emissions graph</a>.",
                         player,
                     )
 
@@ -313,7 +328,9 @@ def add_asset(player_id, construction_id):
                 player.add_to_list("advancements", "storage_overview")
                 notify(
                     "Tutorial",
-                    "You have built your first storage facility, you can monitor the stored energy in the <a href='/production_overview/storage'>storage graph</a>.",
+                    "You have built your first storage facility, you can "
+                    "monitor the stored energy in the "
+                    "<a href='/production_overview/storage'>storage graph</a>.",
                     player,
                 )
 
@@ -424,7 +441,7 @@ def add_asset(player_id, construction_id):
 
 def upgrade_facility(player, facility_id):
     """this function is executed when a player upgrades a facility"""
-    engine: Game_engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
 
     def is_upgradable(facility):
         """Returns true if any of the attributes of the built facility are outdated compared to current tech levels"""
@@ -537,7 +554,10 @@ def remove_asset(player_id, facility, decommissioning=True):
     if decommissioning:
         notify(
             "Decommissioning",
-            f"The facility {construction_name} reached the end of its operational lifespan and had to be decommissioned. The cost of this operation was {round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>.",
+            f"The facility {construction_name} reached the end of its "
+            "operational lifespan and had to be decommissioned. The cost of "
+            "this operation was "
+            "{round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>.",
             player,
         )
         engine.log(f"The facility {construction_name} from {player.username} has been decommissioned.")
@@ -825,7 +845,8 @@ def put_resource_on_market(player, resource, quantity, price):
         db.session.add(new_sale)
         db.session.commit()
         flash(
-            f"You put {quantity/1000}t of {resource} on sale for {price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
+            f"You put {quantity/1000}t of {resource} on sale for "
+            "{price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
             category="message",
         )
 
@@ -925,11 +946,14 @@ def buy_resource_from_market(player, quantity, sale_id):
         db.session.add(new_shipment)
         notify(
             "Resource transaction",
-            f"{player.username} bought {format_mass(quantity)} of {sale.resource} for a total cost of {display_money(total_price)}.",
+            f"{player.username} bought {format_mass(quantity)} of "
+            "{sale.resource} for a total cost of {display_money(total_price)}.",
             sale.player,
         )
         engine.log(
-            f"{player.username} bought {format_mass(quantity)} of {sale.resource} from {sale.player.username} for a total cost of {display_money(total_price)}."
+            f"{player.username} bought {format_mass(quantity)} of "
+            "{sale.resource} from {sale.player.username} for a total cost of "
+            "{display_money(total_price)}."
         )
         if sale.quantity == 0:
             # Player is purchasing all available quantity
@@ -960,11 +984,16 @@ def store_import(player, resource, quantity):
         )
         notify(
             "Shipments",
-            f"A shipment of {format_mass(quantity)} {resource} arrived, but only {format_mass(max_cap - getattr(player, resource))} could be stored in your warehouse.",
+            f"A shipment of {format_mass(quantity)} {resource} arrived, but "
+            "only {format_mass(max_cap - getattr(player, resource))} could be "
+            "stored in your warehouse.",
             player,
         )
         engine.log(
-            f"{player.username} received a shipment of {format_mass(quantity)} {resource}, but could only store {format_mass(max_cap - getattr(player, resource))} in their warehouse."
+            f"{player.username} received a shipment of {format_mass(quantity)} "
+            "{resource}, but could only store "
+            "{format_mass(max_cap - getattr(player, resource))} "
+            "in their warehouse."
         )
     else:
         setattr(player, resource, getattr(player, resource) + quantity)
@@ -1135,7 +1164,7 @@ def check_existing_chats(participants):
 
 def add_message(player, message_text, chat_id):
     """This function is called when a player sends a message in a chat. It returns either success or an error."""
-    engine: Game_engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     if not chat_id:
         return {"response": "noChatID"}
     if len(message_text) == 0:
@@ -1289,8 +1318,8 @@ def set_network_prices(engine, player, prices={}):
     def sort_priority(priority_list, prefix="price_"):
         return sorted(priority_list, key=lambda x: getattr(player, prefix + x))
 
-    def sort_SCP(SCP_list):
-        return sorted(SCP_list, key=lambda x: engine.renewables.index(x))
+    def sort_scp(scp_list):
+        return sorted(scp_list, key=lambda x: engine.renewables.index(x))
 
     for price in prices:
         if prices[price] <= -5:
@@ -1298,14 +1327,14 @@ def set_network_prices(engine, player, prices={}):
         setattr(player, price, prices[price])
 
     rest_list = sort_priority(player.read_list("rest_of_priorities"))
-    SCP_list = sort_SCP(player.read_list("self_consumption_priority"))
+    scp_list = sort_scp(player.read_list("self_consumption_priority"))
     demand_list = sort_priority(player.read_list("demand_priorities"), prefix="price_buy_")
     demand_list.reverse()
 
     engine.log(f"{player.username} updated their prices")
 
     comma = ","
-    player.self_consumption_priority = comma.join(SCP_list)
+    player.self_consumption_priority = comma.join(scp_list)
     player.rest_of_priorities = comma.join(rest_list)
     player.demand_priorities = comma.join(demand_list)
     db.session.commit()
