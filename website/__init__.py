@@ -42,13 +42,13 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     # TODO: move secret key to untracked file
     app.config["SECRET_KEY"] = "psdfjfdf7ehsfdxxnvezartylfzutzngpssdw98w23"
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
-    app.config["VAPID_PUBLIC_KEY"] = open("public_key.txt", "r+").readline().strip("\n")
-    app.config["VAPID_PRIVATE_KEY"] = open("private_key.txt", "r+").readline().strip("\n")
+    app.config["VAPID_PUBLIC_KEY"] = open("public_key.txt", "r+", encoding="utf-8").readline().strip("\n")
+    app.config["VAPID_PRIVATE_KEY"] = open("private_key.txt", "r+", encoding="utf-8").readline().strip("\n")
     app.config["VAPID_CLAIMS"] = {"sub": "mailto:felixvonsamson@gmail.com"}
     db.init_app(app)
 
     # creates the engine (and loading the save if it exists)
-    engine = Game_engine.GameEngine(clock_time, in_game_seconds_per_tick)
+    engine = website.Game_engine.GameEngine(clock_time, in_game_seconds_per_tick)
 
     if rm_instance:
         engine.log("removing instance")

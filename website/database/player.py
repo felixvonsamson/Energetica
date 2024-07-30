@@ -8,16 +8,8 @@ from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
 from website import db
-from website.database.messages import (
-    Chat,
-    Message,
-    Notification,
-    player_chats,
-)
-from website.database.player_assets import (
-    ActiveFacilities,
-    UnderConstruction,
-)
+from website.database.messages import Chat, Message, Notification, player_chats
+from website.database.player_assets import ActiveFacilities, UnderConstruction
 
 
 class Player(db.Model, UserMixin):
