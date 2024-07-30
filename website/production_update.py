@@ -307,8 +307,7 @@ def extraction_facility_demand(engine, new_values, player, player_cap, demand):
     """Calculate power consumption of extraction facilities"""
     player_resources = new_values["resources"]
     warehouse_caps = engine.config[player.id]["warehouse_capacities"]
-    for resource in resource_to_extraction:
-        facility = resource_to_extraction[resource]
+    for resource, facility in resource_to_extraction.items():
         if player_cap[facility] is not None:
             max_warehouse = warehouse_caps[resource] - player_resources[resource]
             max_prod = player_cap[facility]["extraction"] * getattr(player.tile, resource)

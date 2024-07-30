@@ -13,8 +13,8 @@ from pathlib import Path
 import numpy as np
 from flask import current_app, flash
 
-import website.game_engine
-import website.technology_effects
+import website.game_engine as game_engine
+import website.technology_effects as technology_effects
 
 from . import db
 from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer
@@ -437,7 +437,7 @@ def add_asset(player_id, construction_id):
 
 def upgrade_facility(player, facility_id):
     """this function is executed when a player upgrades a facility"""
-    engine: GameEngine = current_app.config["engine"]
+    engine: game_engine.GameEngine = current_app.config["engine"]
 
     def is_upgradable(facility):
         """Returns true if any of the attributes of the built facility are outdated compared to current tech levels"""
@@ -1160,7 +1160,7 @@ def check_existing_chats(participants):
 
 def add_message(player, message_text, chat_id):
     """This function is called when a player sends a message in a chat. It returns either success or an error."""
-    engine: GameEngine = current_app.config["engine"]
+    engine: game_engine.GameEngine = current_app.config["engine"]
     if not chat_id:
         return {"response": "noChatID"}
     if len(message_text) == 0:
