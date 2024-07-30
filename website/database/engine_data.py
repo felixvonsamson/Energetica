@@ -1,3 +1,6 @@
+"""This file contains the classes for `CapacityData`, `CircularBufferPlayer`,
+`CircularBufferNetwork`, `WeatherData`, and `EmissionData`"""
+
 from collections import defaultdict, deque
 import json
 import math
@@ -194,19 +197,19 @@ class CircularBufferNetwork:
         }
 
     def append_value(self, new_value):
-        for category in self._data:
+        for category, category_value in self._data.items():
             for group, value in new_value[category].items():
-                if group not in self._data[category]:
-                    self._data[category][group] = deque([0.0] * 360, maxlen=360)
-                self._data[category][group].append(value)
-            for group in self._data[category]:
+                if group not in category_value:
+                    category_value[group] = deque([0.0] * 360, maxlen=360)
+                category_value[group].append(value)
+            for group, value in category_value.items():
                 if group not in new_value[category]:
-                    self._data[category][group].append(0.0)
+                    value.append(0.0)
 
     def get_data(self, t=216):
         result = defaultdict(lambda: defaultdict(dict))
-        for category in self._data:
-            for group, buffer in self._data[category].items():
+        for category, value in self._data.items():
+            for group, buffer in value.items():
                 result[category][group] = list(buffer)[-t:]
         return result
 
@@ -222,16 +225,24 @@ class WeatherData:
         }
 
     def update_weather(self, engine):
-        """This function upddates the windspeed and irradiation data every 10
-        minutes using the meteosuisse api and calculates the river discharge for
+        """This function updates the windspeed and irradiation data every 10
+        minutes using the MétéoSuisse api and calculates the river discharge for
         the next 10 min"""
         urls = {
             "windspeed": (
-                "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min/ch.meteoschweiz.messwerte-windgeschwindigkeit-kmh-10min_en.json",
+                (
+                    "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-"  # cspell:disable-line
+                    "windgeschwindigkeit-kmh-10min/ch.meteoschweiz.messwerte-"  # cspell:disable-line
+                    "windgeschwindigkeit-kmh-10min_en.json"  # cspell:disable-line
+                ),
                 107,
             ),
             "irradiance": (
-                "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-globalstrahlung-10min/ch.meteoschweiz.messwerte-globalstrahlung-10min_en.json",
+                (
+                    "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-"  # cspell:disable-line
+                    "globalstrahlung-10min/ch.meteoschweiz.messwerte-"  # cspell:disable-line
+                    "globalstrahlung-10min_en.json"  # cspell:disable-line
+                ),
                 65,
             ),
         }
@@ -240,15 +251,17 @@ class WeatherData:
             engine.log("An error occurred:" + str(e))
             self._data[weather].extend([self._data[weather][-1]] * round(600 / engine.clock_time))
 
-        for weather in urls:
+        for weather, url_and_offset in urls.items():
             try:
+                url = url_and_offset[0]
+                offset = url_and_offset[1]
                 # TODO: add timeout argument for get requests.
                 # This should probably depend on the game clock.
-                response = requests.get(urls[weather][0])
+                response = requests.get(url)
                 if response.status_code == 200:
-                    datapoint = json.loads(response.content)["features"][urls[weather][1]]["properties"]["value"]
+                    datapoint = json.loads(response.content)["features"][offset]["properties"]["value"]
                     if weather == "windspeed":
-                        datapoint *= 1.3  # increasing wind speed because windspeed in Zurich is lower than elswere
+                        datapoint *= 1.3  # increasing wind speed because windspeed in Zurich is lower than elsewhere
                     if datapoint > 2000:
                         datapoint = self._data[weather][-1]
                     interpolation = np.linspace(
@@ -303,8 +316,8 @@ class EmissionData:
         self._data[key][-1] += value
 
     def init_new_value(self):
-        for key in self._data:
-            self._data[key].append(self._data[key][-1])
+        for value in self._data.values():
+            value.append(value[-1])
 
     def __getitem__(self, key):
         return self._data[key][-1]
