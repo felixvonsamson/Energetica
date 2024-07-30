@@ -13,6 +13,7 @@ from pathlib import Path
 import numpy as np
 from flask import current_app, flash
 
+import website.api.websocket as websocket
 import website.game_engine as game_engine
 import website.technology_effects as technology_effects
 
@@ -643,8 +644,6 @@ def start_project(engine, player, facility, family, force=False):
     if suspension_time is None:
         player.project_max_priority(priority_list_name, new_construction.id)
     engine.log(f"{player.username} started the construction {facility}")
-    from website.api import websocket
-
     websocket.rest_notify_constructions(engine, player)
     return {
         "response": "success",
@@ -686,8 +685,6 @@ def cancel_project(player, construction_id, force=False):
     db.session.delete(construction)
     engine.log(f"{player.username} cancelled the construction {construction.name}")
     db.session.commit()
-    from website.api import websocket
-
     websocket.rest_notify_constructions(engine, player)
     return {
         "response": "success",
@@ -740,8 +737,6 @@ def pause_project(player, construction_id):
         construction.start_time += engine.data["total_t"] - construction.suspension_time
         construction.suspension_time = None
     db.session.commit()
-    from website.api import websocket
-
     websocket.rest_notify_constructions(engine, player)
     return {
         "response": "success",
@@ -796,8 +791,6 @@ def decrease_project_priority(player, construction_id, pausing=False):
         )
         setattr(player, attr, ",".join(map(str, id_list)))
         db.session.commit()
-        from website.api import websocket
-
         websocket.rest_notify_constructions(engine, player)
 
     return {
@@ -1042,8 +1035,6 @@ def hide_chat_disclaimer(player):
     """Stores the player's choice to not show the chat disclaimer anymore"""
     player.show_disclaimer = False
     db.session.commit()
-    from website.api import websocket
-
     engine = current_app.config["engine"]
     message = websocket.rest_get_show_chat_disclaimer(player)
     websocket.rest_notify_player(engine, player, message)
@@ -1076,8 +1067,6 @@ def create_chat_2(player, buddy_id):
     db.session.commit()
     engine = current_app.config["engine"]
     engine.log(f"{player.username} created a chat with {buddy.username}")
-    from website.api import websocket
-
     websocket.notify_new_chat(new_chat)
     return {"response": "success"}
 
@@ -1141,8 +1130,6 @@ def create_group_chat_2(player, chat_name, participant_ids):
     db.session.commit()
     engine = current_app.config["engine"]
     engine.log(f"{player.username} created a group chat called {chat_name} with {participants}")
-    from website.api import websocket
-
     websocket.notify_new_chat(new_chat)
     return {"response": "success"}
 
@@ -1220,8 +1207,6 @@ def confirm_location(engine, player, location):
     db.session.commit()
     add_player_to_data(engine, player)
     init_table(player.id)
-    from website.api import websocket
-
     websocket.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
     return {"response": "success"}
@@ -1241,8 +1226,6 @@ def join_network(engine, player, network):
     player.network = network
     db.session.commit()
     engine.log(f"{player.username} joined the network {network.name}")
-    from website.api import websocket
-
     websocket.rest_notify_network_change(engine)
     return {"response": "success"}
 
@@ -1268,8 +1251,6 @@ def create_network(engine, player, name):
     with open(f"{network_path}/time_series.pck", "wb") as file:
         pickle.dump(past_data, file)
     engine.log(f"{player.username} created the network {name}")
-    from website.api import websocket
-
     websocket.rest_notify_network_change(engine)
     return {"response": "success"}
 
@@ -1302,8 +1283,6 @@ def leave_network(engine, player):
         db.session.delete(network)
     db.session.commit()
     engine.log(f"{player.username} left the network {network.name}")
-    from website.api import websocket
-
     websocket.rest_notify_network_change(engine)
     return {"response": "success"}
 
