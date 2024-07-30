@@ -1,33 +1,30 @@
 """This code is run once at the start of the game"""
 
+# eventlet.monkey_patch(thread=True, time=True) # Was needed at some point
+import atexit
+import csv
+import os
+import pickle
 import platform
+import shutil
 import socket
+from pathlib import Path
 
 import eventlet
-
-eventlet.monkey_patch(thread=True, time=True)
-
-import atexit  # noqa: E402
-import csv  # noqa: E402
-import os  # noqa: E402
-import pickle  # noqa: E402
-import shutil  # noqa: E402
-from pathlib import Path  # noqa: E402
-
-from flask import Flask, jsonify, request, send_file  # noqa: E402
-from flask_apscheduler import APScheduler  # noqa: E402
-from flask_httpauth import HTTPBasicAuth  # noqa: E402
-from flask_login import LoginManager, current_user  # noqa: E402
-from flask_sock import Sock  # noqa: E402
-from flask_socketio import SocketIO  # noqa: E402
-from flask_sqlalchemy import SQLAlchemy  # noqa: E402
+from flask import Flask, jsonify, request, send_file
+from flask_apscheduler import APScheduler
+from flask_httpauth import HTTPBasicAuth
+from flask_login import LoginManager, current_user
+from flask_sock import Sock
+from flask_socketio import SocketIO
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash
 
 db = SQLAlchemy()
 
 import website.game_engine
 
-from .database.player import Player  # noqa: E402
+from .database.player import Player
 
 
 def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_instance):

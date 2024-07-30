@@ -8,6 +8,7 @@ import time
 from collections import defaultdict
 from datetime import datetime
 
+import website.production_update as production_update
 import website.utils as utils
 
 from . import db
@@ -214,9 +215,6 @@ class GameEngine(object):
         }
 
 
-from .production_update import update_electricity  # noqa: E402
-
-
 def state_update(engine, app):
     """This function is called every tick to update the state of the game"""
     total_t = (time.time() - engine.data["start_date"]) / engine.clock_time
@@ -234,7 +232,7 @@ def state_update(engine, app):
                 "total_t": engine.data["total_t"],
             }
             engine.action_logger.info(json.dumps(log_entry))
-            update_electricity(engine=engine)
+            production_update.update_electricity(engine=engine)
             check_finished_constructions(engine)
 
     # save engine every minute in case of server crash
