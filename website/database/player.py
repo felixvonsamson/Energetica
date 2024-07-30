@@ -1,24 +1,23 @@
 """This module contains the classes that define the players and networks"""
 
+import json
 from itertools import chain
-from website import db
-from website.database.player_assets import (
-    UnderConstruction,
-)
-
 
 from flask import current_app
 from flask_login import UserMixin
-from pywebpush import webpush, WebPushException
-import json
+from pywebpush import WebPushException, webpush
 
+from website import db
 from website.database.messages import (
     Chat,
     Message,
     Notification,
     player_chats,
 )
-from website.database.player_assets import ActiveFacilities
+from website.database.player_assets import (
+    ActiveFacilities,
+    UnderConstruction,
+)
 
 
 class Player(db.Model, UserMixin):
@@ -185,33 +184,34 @@ class Player(db.Model, UserMixin):
         else:
             return priority_list
 
-    def add_to_list(self, attr, id):
+    def add_to_list(self, attr, value):
         """Helper method that adds an element to a list stored as a string"""
         if getattr(self, attr) == "":
-            setattr(self, attr, str(id))
+            setattr(self, attr, str(value))
         else:
-            setattr(self, attr, getattr(self, attr) + f",{id}")
+            setattr(self, attr, getattr(self, attr) + f",{value}")
         db.session.commit()
         if attr == "advancements":
+            # TODO: I don't like how this is done. -Max
             from website.api.websocket import rest_notify_advancements
 
             engine = current_app.config["engine"]
             rest_notify_advancements(engine, self)
 
-    def remove_from_list(self, attr, id):
+    def remove_from_list(self, attr, value):
         """Helper method that removes an element from a list stored as a string"""
         id_list = getattr(self, attr).split(",")
-        id_list.remove(str(id))
+        id_list.remove(str(value))
         setattr(self, attr, ",".join(id_list))
         db.session.commit()
 
-    def project_max_priority(self, attr, id):
+    def project_max_priority(self, attr, project_id):
         """the project with the corresponding id will be moved to the top of the priority list"""
-        self.remove_from_list(attr, id)
+        self.remove_from_list(attr, project_id)
         if getattr(self, attr) == "":
-            setattr(self, attr, str(id))
+            setattr(self, attr, str(project_id))
         else:
-            setattr(self, attr, f"{id}," + getattr(self, attr))
+            setattr(self, attr, f"{project_id}," + getattr(self, attr))
         db.session.commit()
 
     def package_chat_messages(self, chat_id):
@@ -378,7 +378,7 @@ class Player(db.Model, UserMixin):
     @staticmethod
     def package_scoreboard():
         """Gets the scoreboard data for settled players"""
-        players = Player.query.filter(Player.tile != None)  # noqa: E711
+        players = Player.query.filter(Player.tile.isnot(None))
         return {
             player.id: {
                 "username": player.username,
