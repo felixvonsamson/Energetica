@@ -25,7 +25,7 @@ from werkzeug.security import check_password_hash
 
 db = SQLAlchemy()
 
-from website.game_engine import GameEngine  # noqa: E402
+import website.game_engine
 
 from .database.player import Player  # noqa: E402
 
@@ -48,7 +48,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     db.init_app(app)
 
     # creates the engine (and loading the save if it exists)
-    engine = GameEngine(clock_time, in_game_seconds_per_tick)
+    engine = game_engine.GameEngine(clock_time, in_game_seconds_per_tick)
 
     if rm_instance:
         engine.log("removing instance")

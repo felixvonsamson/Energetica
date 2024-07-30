@@ -8,7 +8,7 @@ import time
 from collections import defaultdict
 from datetime import datetime
 
-from website import utils
+import website.utils as utils
 
 from . import db
 from .config import config, const_config

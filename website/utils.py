@@ -13,7 +13,8 @@ from pathlib import Path
 import numpy as np
 from flask import current_app, flash
 
-from website import GameEngine, technology_effects
+import website.game_engine
+import website.technology_effects
 
 from . import db
 from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer
