@@ -9,19 +9,19 @@ let fill_alt = 0;
 
 //resolution buttons
 let res_id = 0;
-let resolution_list = ["4h", "24h", "6 days", "6 months", "3 years", "18 years"];
+let resolution_list = [60, 360, 2_160, 12_960, 77_760, 466_560];
 let res_to_factor = {
-        "4h": 1,
-        "24h": 1,
-        "6 days": 6,
-        "6 months": 36,
-        "3 years": 216,
-        "18 years": 1296,
-    };
+    60: 1,
+    360: 1,
+    2_160: 6,
+    12_960: 36,
+    77_760: 216,
+    466_560: 1296,
+};
 let res = resolution_list[res_id]; //current resolution
 
 //table variables 
-let decending = true;
+let descending = true;
 let sort_by = "usage_col";
 
 let cols_and_names = {};
@@ -31,6 +31,8 @@ function preload() {
     balooBold = loadFont("static/fonts/Baloo2-SemiBold.ttf");
     coin = loadImage("static/images/icons/coin.svg");
 }
+
+update_resolution_button_text(in_game_seconds_per_tick);
 
 var graph_p5;
 
@@ -95,36 +97,71 @@ function reduce(arr, res) {
     if (res == resolution_list[0]) {
         return arr[0].slice(-60);
     }
-    if(res == resolution_list[1]){
+    if (res == resolution_list[1]) {
         return arr[0];
     }
-    if(res == resolution_list[2]){
+    if (res == resolution_list[2]) {
         return arr[1];
     }
-    if(res == resolution_list[3]){
+    if (res == resolution_list[3]) {
         return arr[2];
     }
-    if(res == resolution_list[4]){
+    if (res == resolution_list[4]) {
         return arr[3];
     }
     return arr[4];
 }
 
 function time_unit(res) {
-    if (res == "4h") {
-        return ["4h", "3h20", "2h40", "2h", "1h20", "40min", "now"];
-    } else if (res == "24h") {
-        return ["24h", "20h", "16h", "12h", "8h", "4h", "now"];
-    } else if (res == "6 days") {
-        return ["6d", "5d", "4d", "3d", "2d", "1d", "now"];
-    } else if (res == "6 months") {
-        return ["6m", "5m", "4m", "3m", "2m", "1m (6d)", "now"];
-    } else if (res == "3 years") {
-        return ["3y", "2.5y", "2y", "1.5y", "1y", "6m", "now"];
-    } else if (res == "18 years") {
-        return ["18y", "15y", "12y", "9y", "6y", "3y", "now"];
+    let time_units = [];
+    for (let i = 6; i >= 0; i--) {
+        let ticks = res / 6 * i;
+        time_units.push(ticks_to_time(ticks, ""));
     }
+    return time_units;
 }
+
+function ticks_to_time(ticks, prefix = "t - ") {
+    let minutes = Math.floor(ticks * in_game_seconds_per_tick / 60);
+    let hours = Math.floor(minutes / 60);
+    let days = Math.floor(hours / 24);
+    let years = Math.floor(days / 72);
+
+    if (res * in_game_seconds_per_tick >= 3600 * 360) {
+        minutes = 0;
+    }
+    if (res * in_game_seconds_per_tick >= 3600 * 360 * 24) {
+        hours = 0;
+    }
+    days = days % 72;
+    hours = hours % 24;
+    minutes = minutes % 60;
+
+    let time_sting = prefix;
+    if (years > 0) {
+        time_sting += years + "y ";
+    }
+    if (days > 0) {
+        time_sting += days + "d ";
+    }
+    if (hours > 0) {
+        time_sting += hours + "h ";
+    }
+    if (minutes > 0) {
+        time_sting += minutes + "m ";
+    }
+    if (time_sting == prefix) {
+        time_sting = "now";
+    }
+    if (time_sting == "1y ") {
+        time_sting += "(72d)";
+    }
+    if (time_sting == "1d ") {
+        time_sting += "(24h)";
+    }
+    return time_sting.trim();
+}
+
 
 function y_units(maxNumber) {
     let interval = Math.floor(maxNumber / 5);
@@ -138,7 +175,7 @@ function y_units(maxNumber) {
     return values;
 }
 
-function y_units_bounded(height, minNumber, maxNumber, divisions=3) {
+function y_units_bounded(height, minNumber, maxNumber, divisions = 3) {
     let interval = Math.floor((maxNumber - minNumber) / divisions);
     const orderOfMagnitude = Math.floor(Math.log10(interval));
     const firstDigit = Math.floor(interval / 10 ** orderOfMagnitude);
@@ -165,7 +202,7 @@ function alternate_fill(s) {
     }
 }
 
-function fetch_graph_data(){
+function fetch_graph_data() {
     load_chart_data().then((raw_chart_data) => {
         data = raw_chart_data;
         graph_p5.render_graph();
@@ -174,14 +211,14 @@ function fetch_graph_data(){
     });
 }
 
-function change_res(i){
+function change_res(i) {
     show_selected_button("res_button_", i);
-    res_id = max(0, i-1);
+    res_id = max(0, i - 1);
     res = resolution_list[i];
     graph_p5.render_graph();
 }
 
-function show_selected_button(button_id, id){
+function show_selected_button(button_id, id) {
     let buttons = document.getElementsByClassName("selected");
     for (let i = 0; i < buttons.length; i++) {
         if (buttons[i].id.includes(button_id)) {
@@ -191,7 +228,7 @@ function show_selected_button(button_id, id){
     document.getElementById(button_id + id).classList.add("selected");
 }
 
-function change_percent(percent){
+function change_percent(percent) {
     show_selected_button("percent_button_", percent)
     graph_p5.percent = percent;
     graph_p5.render_graph();

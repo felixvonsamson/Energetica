@@ -32,8 +32,7 @@ function general_upgrade_format(value1, value2, units) {
         value2 /= 1_000;
         unit_index += 1;
     }
-    return `${value1.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index][0]} -> ${
-        value2.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]}`;
+    return `${value1.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index][0]} -> ${value2.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]}`;
 }
 
 function format_upgrade_power(value1, value2) {
@@ -49,7 +48,7 @@ function format_upgrade_mass(value1, value2) {
 }
 
 // Price :
-function format_money(price, coin="<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>") {
+function format_money(price, coin = "<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>") {
     const units = [coin, "k" + coin, "M" + coin, "Md" + coin];
     return general_format(price, units);
 }
@@ -86,7 +85,7 @@ function format_energy(energy, treshold = 10_000) {
 
 // Mass rate :
 function format_mass_rate(mass_rate, treshold = 10_000) {
-    return general_format(mass_rate*1_000, _mass_rate_units, treshold); // the *1000 is to convert from kg to g
+    return general_format(mass_rate * 1_000, _mass_rate_units, treshold); // the *1000 is to convert from kg to g
 }
 
 // Mass
@@ -117,40 +116,6 @@ function format_duration(seconds) {
 
 function format_days(seconds) {
     return Math.round(seconds / 86_400);
-}
-
-function format_duration_graphs(ticks) {
-    let seconds = ticks * clock_time;
-    if (seconds == 0) {
-        return "now";
-    }
-
-    const months = Math.floor(seconds / 2_592_000);
-    seconds -= months * 2_592_000;
-    const days = Math.floor(seconds / 86_400);
-    seconds -= days * 86_400;
-    const hours = Math.floor(seconds / 3_600);
-    seconds -= hours * 3_600;
-    const minutes = Math.floor(seconds / 60);
-    seconds -= minutes * 60;
-
-    let duration = "t - ";
-    if (months > 0) {
-        duration += `${months}mo `;
-    }
-    if (days > 0) {
-        duration += `${days}d `;
-    }
-    if (hours > 0) {
-        duration += `${hours}h `;
-    }
-    if (minutes > 0) {
-        duration += `${minutes}m `;
-    }
-    if (seconds > 0) {
-        duration += `${seconds}s`;
-    }
-    return duration.trim();
 }
 
 function calculate_delivery(delta_q, delta_r, trasport_speed) {
@@ -193,5 +158,32 @@ function formatDateString(dateString) {
         var formattedDate = date.getDate() + ' ' + date.toLocaleString('default', { month: 'short' }) + '. ' +
             date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Paris' });
         return formattedDate;
+    }
+}
+
+function update_resolution_button_text(in_game_seconds_per_tick) {
+    resolution_categories = {
+        30: ["30min", "3h", "18h", "4 days", "27 days", "2 years"],
+        60: ["1h", "6h", "36h", "9 days", "9 months", "4 years"],
+        120: ["2h", "12h", "3 days", "18 days", "16 months", "9 years"],
+        240: ["4h", "24h", "6 days", "36 days", "3 years", "18 years"],
+        300: ["5h", "30h", "7 days", "45 days", "4 years", "22 years"],
+        360: ["6h", "36h", "9 days", "54 days", "4 years", "27 years"],
+        420: ["7h", "42h", "10 days", "63 days", "5 years", "31 years"],
+        480: ["8h", "2 days", "12 days", "1 year", "6 years", "36 years"],
+        540: ["9h", "2 days", "13 days", "1 year", "7 years", "40 years"],
+        600: ["10h", "2.5 days", "15 days", "1 year", "7 years", "45 years"],
+        900: ["15h", "4 days", "22 days", "2 year", "11 years", "67 years"],
+        1200: ["20h", "5 days", "30 days", "2 years", "14 years", "89 years"],
+        1800: ["30h", "7 days", "45 days", "3 years", "22 years", "135 years"],
+        3600: ["60h", "15 days", "1 year", "7 years", "45 years", "270 years"],
+    }
+    for (let i = 0; i < 6; i++) {
+        let res_button = document.getElementById(`res_button_${i}`);
+        res_button.innerHTML = resolution_categories[in_game_seconds_per_tick][i];
+        let res_button_2 = document.getElementById(`res_button_2_${i}`);
+        if (res_button_2) {
+            res_button_2.innerHTML = resolution_categories[in_game_seconds_per_tick][i];
+        }
     }
 }

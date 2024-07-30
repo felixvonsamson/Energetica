@@ -1,5 +1,5 @@
 let data;
-let decending = true;
+let descending = true;
 get_data();
 
 function get_data() {
@@ -21,10 +21,10 @@ function sortTable(columnName) {
 
     // Check if the column is already sorted, toggle sorting order accordingly
     if (column.innerHTML.includes(triangle)) {
-        decending = !decending;
+        descending = !descending;
         triangle = ' <i class="fa fa-caret-up"></i>';
-    }else{
-        decending = true;
+    } else {
+        descending = true;
     }
 
     // Sort the data based on the selected column
@@ -33,9 +33,9 @@ function sortTable(columnName) {
         const bValue = b[1][columnName];
 
         if (typeof aValue === "string" && typeof bValue === "string") {
-            return decending ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
+            return descending ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
         } else {
-            return decending ? bValue - aValue : aValue - bValue;
+            return descending ? bValue - aValue : aValue - bValue;
         }
     });
 
@@ -51,9 +51,9 @@ function sortTable(columnName) {
         </tr>`;
     let current_player_id = sessionStorage.getItem("player_id");
     for (const [id, player] of sortedData) {
-        if (id == current_player_id){
+        if (id == current_player_id) {
             href = "/profile";
-        }else{
+        } else {
             href = `/profile?player_id=${id}`;
         }
         html += `<tr>
