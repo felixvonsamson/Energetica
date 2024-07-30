@@ -1,15 +1,16 @@
 """This file contains the classes for `CapacityData`, `CircularBufferPlayer`,
 `CircularBufferNetwork`, `WeatherData`, and `EmissionData`"""
 
-from collections import defaultdict, deque
 import json
 import math
-from flask import current_app
+from collections import defaultdict, deque
+
 import numpy as np
 import requests
+from flask import current_app
 
-from website.database.player_assets import ActiveFacilities
 from website.config import river_discharge_seasonal
+from website.database.player_assets import ActiveFacilities
 
 
 class CapacityData:
@@ -56,9 +57,9 @@ class CapacityData:
             op_costs = (
                 base_data["base_price"]
                 * facility.price_multiplier
-                * base_data["O&M_factor"]
+                * base_data["O&M_factor_per_day"]
                 * engine.in_game_seconds_per_tick
-                / 86400
+                / (24 * 3600)
             )
             if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
                 op_costs *= facility.capacity_multiplier
@@ -71,9 +72,9 @@ class CapacityData:
                         base_data["consumed_resource"][fuel]
                         / facility.efficiency_multiplier
                         * power_gen
-                        * engine.clock_time
+                        * engine.in_game_seconds_per_tick
                         / 3600
-                        / 10**6
+                        / 1_000_000
                     )
             elif facility.facility in engine.storage_facilities:
                 power_gen = base_data["base_power_generation"] * facility.power_multiplier

@@ -451,7 +451,7 @@ function sortTable(columnName, reorder = true) {
                 transformed_data.push({
                     name: key,
                     facility_col: cols_and_names[key][1],
-                    usage_col: integrate(graph_p5.current_data[key][res_id].slice(graph_p5.t0), res_to_factor[res] * clock_time / 3600),
+                    usage_col: integrate(graph_p5.current_data[key][res_id].slice(graph_p5.t0), res_to_factor[res] * in_game_seconds_per_tick / 3600),
                 })
             }
         } else {
@@ -463,7 +463,7 @@ function sortTable(columnName, reorder = true) {
                 transformed_data.push({
                     name: key,
                     facility_col: cols_and_names[key][1],
-                    usage_col: integrate(graph_p5.current_data[key][res_id].slice(graph_p5.t0), res_to_factor[res] * clock_time / 3600),
+                    usage_col: integrate(graph_p5.current_data[key][res_id].slice(graph_p5.t0), res_to_factor[res] * in_game_seconds_per_tick / 3600),
                     capacity_col: cap === 0 ? null : cap,
                     used_cap_col: cap === 0 ? null : graph_p5.current_data[key][0][359] / cap,
                 })

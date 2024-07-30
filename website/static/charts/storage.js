@@ -384,8 +384,8 @@ function sortTable(columnName, reorder = true) {
             transformed_data.push({
                 name: key,
                 facility_col: cols_and_names[key][1],
-                cumul_charging_col: integrate(data.demand[key][res_id].slice(graph_p5.t0), res_to_factor[res] * clock_time / 3600),
-                cumul_discharging_col: integrate(data.generation[key][res_id].slice(graph_p5.t0), res_to_factor[res] * clock_time / 3600),
+                cumul_charging_col: integrate(data.demand[key][res_id].slice(graph_p5.t0), res_to_factor[res] * in_game_seconds_per_tick / 3600),
+                cumul_discharging_col: integrate(data.generation[key][res_id].slice(graph_p5.t0), res_to_factor[res] * in_game_seconds_per_tick / 3600),
                 capacity_col: capacities[key],
                 used_cap_col: data.storage[key][0][359] / capacities[key],
             })

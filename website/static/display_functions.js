@@ -94,28 +94,34 @@ function format_mass(mass, treshold = 10_000) {
 }
 
 // Duration :
-function format_duration(seconds) {
-    const days = Math.floor(seconds / 86_400);
-    seconds -= days * 86_400;
-    const hours = Math.floor(seconds / 3_600);
-    seconds -= hours * 3_600;
-    const minutes = Math.round(seconds / 60);
-
-    let duration = "";
-    if (days > 0) {
-        duration += `${days}d `;
+function format_duration(ticks) {
+    function format_minutes(total_minutes) {
+        const days = Math.floor(total_minutes / 1440);
+        total_minutes -= days * 1440;
+        const hours = Math.floor(total_minutes / 60);
+        total_minutes -= hours * 60;
+        const minutes = Math.floor(total_minutes);
+        let duration = "";
+        if (days > 0) {
+            duration += `${days}d `;
+        }
+        if (hours > 0) {
+            duration += `${hours}h `;
+        }
+        if (minutes > 0) {
+            duration += `${minutes}m `;
+        }
+        return duration.trim();
     }
-    if (hours > 0) {
-        duration += `${hours}h `;
-    }
-    if (minutes >= 0) {
-        duration += `${minutes}m`;
-    }
-    return duration.trim();
+    const in_game_minutes = ticks * in_game_seconds_per_tick / 60;
+    const real_minutes = ticks * clock_time / 60;
+    const in_game_time = format_minutes(in_game_minutes);
+    const real_time = format_minutes(real_minutes);
+    return `${in_game_time} &ensp; <span class="transparency_txt dark">(${real_time})</span`;
 }
 
-function format_days(seconds) {
-    return Math.round(seconds / 86_400);
+function format_days(ticks) {
+    return Math.round(ticks * in_game_seconds_per_tick / 86_400);
 }
 
 function calculate_delivery(delta_q, delta_r, trasport_speed) {

@@ -230,11 +230,6 @@ def construction_pollution_per_tick(player, facility):
     return pollution
 
 
-def time_multiplier():
-    """dilatation factor dependent on clock_time"""
-    return (current_app.config["engine"].clock_time / 60) ** 0.5
-
-
 def hydro_price_function(count, potential):
     """price multiplier coefficient, for the `count`th hydro facility of a particular type, given the hydro potential"""
     return 0.6 + (math.e ** (0.6 * (count + 1 - 3 * potential) / (0.3 + potential)))
@@ -401,7 +396,7 @@ def _package_power_storage_extraction_facility_base(player: Player, facility):
             if facility in ["watermill", "small_water_dam", "large_water_dam"]
             else 1.0
         )
-        * const_config_assets[facility]["O&M_factor"]
+        * const_config_assets[facility]["O&M_factor_per_day"]
         / 24,
         "lifespan": const_config_assets[facility]["lifespan"] / engine.in_game_seconds_per_tick,
     }

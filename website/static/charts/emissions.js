@@ -107,7 +107,7 @@ function graph_sketch(s) {
                 let cumsum = 0;
                 for (const group of Object.keys(keys_emissions).reverse()) {
                     if (group in data.emissions) {
-                        let value = data.emissions[group][res_id][t_view] * 3600 / clock_time;
+                        let value = data.emissions[group][res_id][t_view] * 3600 / in_game_seconds_per_tick;
                         if (value != 0 && keys_emissions[group]) {
                             cumsum += value;
                             alternate_fill(s);
@@ -269,7 +269,7 @@ function graph_sketch(s) {
             if (s.percent == "percent") {
                 s.graphics.text(y_ticks3[i] + "%", -0.5 * margin, -i + 3);
             } else {
-                s.graphics.text(format_mass_rate(y_ticks3[i] * 3600 / clock_time), -0.5 * margin, -i - 3);
+                s.graphics.text(format_mass_rate(y_ticks3[i] * 3600 / in_game_seconds_per_tick), -0.5 * margin, -i - 3);
             }
         }
         s.graphics.pop();

@@ -1434,9 +1434,9 @@ function fetch_temporal_network_data() {
             let imports_revenue = raw_chart_data.revenues.imports;
             let exports_revenue = raw_chart_data.revenues.exports;
             revenue_flux = {};
-            revenue_flux[resolution_list[0]] = exports_revenue[0].map((num, idx) => 3600 / clock_time * (num + imports_revenue[0][idx])).slice(-60);
+            revenue_flux[resolution_list[0]] = exports_revenue[0].map((num, idx) => 3600 / in_game_seconds_per_tick * (num + imports_revenue[0][idx])).slice(-60);
             for (let i = 0; i < resolution_list.length - 1; i++) {
-                revenue_flux[resolution_list[i + 1]] = exports_revenue[i].map((num, idx) => 3600 / clock_time * (num + imports_revenue[i][idx]));
+                revenue_flux[resolution_list[i + 1]] = exports_revenue[i].map((num, idx) => 3600 / in_game_seconds_per_tick * (num + imports_revenue[i][idx]));
             }
 
             import_overview_p5.render_graph();

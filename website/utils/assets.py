@@ -447,7 +447,7 @@ def start_project(engine, player, facility, family, force=False):
             suspension_time = None
 
     player.money -= real_price
-    duration = math.ceil(duration / engine.clock_time)
+    duration = math.ceil(duration)
     new_construction = UnderConstruction(
         name=facility,
         family=family,

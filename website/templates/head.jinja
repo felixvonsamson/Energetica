@@ -26,6 +26,8 @@
     <link rel="icon"
           href="{{ url_for('static', filename='images/icon.svg') }}"
           type="image/x-icon">
+    <script>let clock_time = {{engine.clock_time}};</script>
+    <script>let in_game_seconds_per_tick = {{engine.in_game_seconds_per_tick}};</script>
     <script type="text/javascript"
             src="{{ url_for('static', filename='display_functions.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
@@ -60,8 +62,6 @@
           integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
           crossorigin="anonymous"></script>
     <script>var socket = io();</script>
-    <script>let clock_time = {{engine.clock_time}};</script>
-    <script>let in_game_seconds_per_tick = {{engine.in_game_seconds_per_tick}};</script>
     <script src="{{ url_for('static', filename='toasts.js') }}"></script>
     <script src="{{ url_for('static', filename='sockets.js') }}"></script>
     <script src="{{ url_for('static', filename='frontend_data.js') }}"></script>

@@ -121,7 +121,7 @@ def buy_resource_from_market(player, quantity, sale_id):
         shipment_duration = (
             distance * engine.config[player.id]["transport"]["time_per_tile"] / engine.in_game_seconds_per_tick
         )
-        shipment_duration = math.ceil(shipment_duration / engine.clock_time)
+        shipment_duration = math.ceil(shipment_duration)
         new_shipment = Shipment(
             resource=sale.resource,
             quantity=quantity,

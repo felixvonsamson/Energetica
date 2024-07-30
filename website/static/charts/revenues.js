@@ -139,9 +139,9 @@ function graph_sketch(s) {
                 for (const group of Object.keys(keys_revenues).reverse()) {
                     let value = 0;
                     if (group in data.revenues) {
-                        value = data.revenues[group][res_id][t_view] * 3600 / clock_time;
+                        value = data.revenues[group][res_id][t_view] * 3600 / in_game_seconds_per_tick;
                     } else if (group in data.op_costs) {
-                        value = data.op_costs[group][res_id][t_view] * 3600 / clock_time;
+                        value = data.op_costs[group][res_id][t_view] * 3600 / in_game_seconds_per_tick;
                     }
                     if (value != 0 && keys_revenues[group]) {
                         cumsum += value;
@@ -327,7 +327,7 @@ function graph_sketch(s) {
             if (s.percent == "percent") {
                 s.graphics.text(y_ticks3[i] + "%", -0.5 * margin, -i + 3);
             } else {
-                display_coin(s.graphics, format_money(y_ticks3[i] * 3600 / clock_time, ""), -8, -i - 8);
+                display_coin(s.graphics, format_money(y_ticks3[i] * 3600 / in_game_seconds_per_tick, ""), -8, -i - 8);
             }
         }
         s.graphics.pop();

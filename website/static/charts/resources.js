@@ -116,7 +116,7 @@ function graph_sketch(s) {
                 capacities = {};
                 for (const key of keys_resources) {
                     capacities[key] = player_data.config.warehouse_capacities[key]
-                    s.rates[key] = (data.resources[key][0].at(-1) - data.resources[key][0].at(-2)) * 3600 / clock_time;
+                    s.rates[key] = (data.resources[key][0].at(-1) - data.resources[key][0].at(-2)) * 3600 / in_game_seconds_per_tick;
                 }
 
                 s.graphics.push();
