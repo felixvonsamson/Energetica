@@ -1,4 +1,5 @@
 """This file contains all the data needed for the game"""
+
 from datetime import timedelta
 from .database.player import Player
 

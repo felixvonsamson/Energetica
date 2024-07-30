@@ -1,30 +1,33 @@
 """This code is run once at the start of the game"""
 
-import socket
 import platform
+import socket
+
 import eventlet
 
 eventlet.monkey_patch(thread=True, time=True)
 
-from flask import Flask, request, jsonify, send_file  # noqa: E402
-from flask_sqlalchemy import SQLAlchemy  # noqa: E402
-import os  # noqa: E402
-import csv  # noqa: E402
-import pickle  # noqa: E402
-from flask_login import LoginManager, current_user  # noqa: E402
-from flask_httpauth import HTTPBasicAuth  # noqa: E402
-from werkzeug.security import check_password_hash
-from flask_socketio import SocketIO  # noqa: E402
-from flask_sock import Sock  # noqa: E402
 import atexit  # noqa: E402
-from flask_apscheduler import APScheduler  # noqa: E402
-from pathlib import Path  # noqa: E402
+import csv  # noqa: E402
+import os  # noqa: E402
+import pickle  # noqa: E402
 import shutil  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+from flask import Flask, jsonify, request, send_file  # noqa: E402
+from flask_apscheduler import APScheduler  # noqa: E402
+from flask_httpauth import HTTPBasicAuth  # noqa: E402
+from flask_login import LoginManager, current_user  # noqa: E402
+from flask_sock import Sock  # noqa: E402
+from flask_socketio import SocketIO  # noqa: E402
+from flask_sqlalchemy import SQLAlchemy  # noqa: E402
+from werkzeug.security import check_password_hash
 
 db = SQLAlchemy()
 
-from .database.player import Player  # noqa: E402
 from website.Game_engine import Game_engine  # noqa: E402
+
+from .database.player import Player  # noqa: E402
 
 
 def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_instance):
@@ -72,10 +75,10 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     add_sock_handlers(sock=sock, engine=engine)
 
     # add blueprints (website repositories) :
-    from .views import views, overviews
-    from .auth import auth
     from .api.http import http
     from .api.websocket import websocket_blueprint
+    from .auth import auth
+    from .views import overviews, views
 
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")
