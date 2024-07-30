@@ -144,10 +144,10 @@ class Player(db.Model, UserMixin):
     # * "storage_overview"
     achievements = db.Column(db.Text, default="")
 
-    under_construction = db.relationship("Under_construction")
-    resource_on_sale = db.relationship("Resource_on_sale", backref="player")
+    under_construction = db.relationship("UnderConstruction")
+    resource_on_sale = db.relationship("ResourceOnSale", backref="player")
     shipments = db.relationship("Shipment", backref="player")
-    active_facilities = db.relationship("Active_facilities", backref="player", lazy="dynamic")
+    active_facilities = db.relationship("ActiveFacilities", backref="player", lazy="dynamic")
 
     def change_graph_view(self, view):
         """Helper method to set the network graph view of the player (basic/normal/expert)"""
@@ -378,7 +378,7 @@ class Player(db.Model, UserMixin):
     @staticmethod
     def package_scoreboard():
         """Gets the scoreboard data for settled players"""
-        players = Player.query.filter(Player.tile.isnot(None))
+        players = Player.query.filter(Player.tile != None)
         return {
             player.id: {
                 "username": player.username,
