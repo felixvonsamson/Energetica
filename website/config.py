@@ -852,7 +852,7 @@ const_config = {
     },
     "transport": {
         "time_per_tile": timedelta(hours=5, minutes=20).total_seconds(),  # [in-game seconds/distance unit]
-        "power_consumption": 5,  # [Wh/kg/distance unit]
+        "energy_per_kg_per_tile": 5,  # [Wh/kg/distance unit]
     },
 }
 
