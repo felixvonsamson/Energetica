@@ -84,7 +84,7 @@ def home():
     return g.render_template_ctx("home.jinja")
 
 
-@views.route("/map")
+@views.route("/map_view")
 def map_view():
     return g.render_template_ctx("map.jinja")
 

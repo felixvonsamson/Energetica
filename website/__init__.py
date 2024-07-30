@@ -25,7 +25,7 @@ from werkzeug.security import check_password_hash
 
 db = SQLAlchemy()
 
-import website.Game_engine
+import website.game_engine
 
 from .database.player import Player  # noqa: E402
 
@@ -48,7 +48,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     db.init_app(app)
 
     # creates the engine (and loading the save if it exists)
-    engine = website.Game_engine.GameEngine(clock_time, in_game_seconds_per_tick)
+    engine = website.game_engine.GameEngine(clock_time, in_game_seconds_per_tick)
 
     if rm_instance:
         engine.log("removing instance")
@@ -167,7 +167,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        from .Game_engine import state_update
+        from .game_engine import state_update
 
         scheduler = APScheduler()
         scheduler.init_app(app)

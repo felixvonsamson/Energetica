@@ -12,7 +12,7 @@ from website import utils
 from website.database.map import Hex
 from website.database.messages import Chat, Message
 from website.database.player import Network, Player
-from website.Game_engine import GameEngine
+from website.game_engine import GameEngine
 from website.technology_effects import package_constructions_page_data
 
 websocket_blueprint = Blueprint("rest_api", __name__)

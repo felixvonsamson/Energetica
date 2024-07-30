@@ -7,7 +7,7 @@ import math
 
 from flask import current_app
 
-import website.Game_engine
+import website.game_engine
 from website.database.map import Hex
 from website.database.player import Player
 
