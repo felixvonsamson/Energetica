@@ -7,7 +7,7 @@ from .database.map import Hex
 
 from .database.player import Network, Player
 from .database.player_assets import (
-    Under_construction,
+    UnderConstruction,
 )
 from . import db
 import pickle
@@ -140,7 +140,7 @@ def add_asset(player, asset, n):
     if asset_to_family[asset] == "Technologies":
         priority_list_name = "research_priorities"
     for i in range(n):
-        new_construction = Under_construction(
+        new_construction = UnderConstruction(
             name=asset,
             family=asset_to_family[asset],
             start_time=0,

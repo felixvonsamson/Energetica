@@ -7,7 +7,7 @@ from flask_login import login_required, current_user
 from .database.messages import Chat
 
 from .database.player import Player
-from .database.player_assets import Resource_on_sale
+from .database.player_assets import ResourceOnSale
 
 from .technology_effects import (
     get_current_technology_values,
@@ -55,7 +55,7 @@ def check_user():
                 data=g.data,
             )
         elif page == "resource_market.jinja":
-            on_sale = Resource_on_sale.query.all()
+            on_sale = ResourceOnSale.query.all()
             return render_template(
                 page,
                 engine=g.engine,

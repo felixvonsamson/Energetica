@@ -9,7 +9,7 @@ from flask import current_app
 from website import Game_engine
 from website.database.map import Hex
 from website.database.player import Player
-from .database.player_assets import Active_facilities, Under_construction
+from .database.player_assets import ActiveFacilities, UnderConstruction
 
 
 def price_multiplier(player, facility):
@@ -130,8 +130,8 @@ def efficiency_multiplier(player, facility):
         "onshore_wind_turbine",
         "offshore_wind_turbine",
     ]:
-        active_facilities = Active_facilities.query.filter_by(facility=facility, player_id=player.id).all()
-        under_construction = Under_construction.query.filter_by(name=facility, player_id=player.id).all()
+        active_facilities = ActiveFacilities.query.filter_by(facility=facility, player_id=player.id).all()
+        under_construction = UnderConstruction.query.filter_by(name=facility, player_id=player.id).all()
         # Create a set of used efficiency multipliers
         used_locations = {af.efficiency_multiplier for af in active_facilities}
         used_locations.update(uc.efficiency_multiplier for uc in under_construction)
@@ -572,33 +572,33 @@ def package_functional_facilities(player: Player):
 
     indsutry_level_including_ongoing_upgrades = (
         player.industry
-        + Under_construction.query.filter(
-            Under_construction.player_id == player.id,
-            Under_construction.name == "industry",
+        + UnderConstruction.query.filter(
+            UnderConstruction.player_id == player.id,
+            UnderConstruction.name == "industry",
         ).count()
     )
 
     laboratory_level_including_ongoing_upgrades = (
         player.laboratory
-        + Under_construction.query.filter(
-            Under_construction.player_id == player.id,
-            Under_construction.name == "laboratory",
+        + UnderConstruction.query.filter(
+            UnderConstruction.player_id == player.id,
+            UnderConstruction.name == "laboratory",
         ).count()
     )
 
     warehouse_level_including_ongoing_upgrades = (
         player.warehouse
-        + Under_construction.query.filter(
-            Under_construction.player_id == player.id,
-            Under_construction.name == "warehouse",
+        + UnderConstruction.query.filter(
+            UnderConstruction.player_id == player.id,
+            UnderConstruction.name == "warehouse",
         ).count()
     )
 
     carbon_capture_level_including_ongoing_upgrades = (
         player.carbon_capture
-        + Under_construction.query.filter(
-            Under_construction.player_id == player.id,
-            Under_construction.name == "carbon_capture",
+        + UnderConstruction.query.filter(
+            UnderConstruction.player_id == player.id,
+            UnderConstruction.name == "carbon_capture",
         ).count()
     )
 

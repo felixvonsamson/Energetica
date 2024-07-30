@@ -11,9 +11,9 @@ import logging
 from .database.engine_data import EmissionData, WeatherData
 from . import db
 from .database.player_assets import (
-    Under_construction,
+    UnderConstruction,
     Shipment,
-    Active_facilities,
+    ActiveFacilities,
 )
 from website import utils
 
@@ -253,9 +253,9 @@ def state_update(engine, app):
 def check_finished_constructions(engine):
     """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
     # check if constructions finished
-    finished_constructions = Under_construction.query.filter(
-        Under_construction.suspension_time.is_(None),
-        Under_construction.start_time + Under_construction.duration <= engine.data["total_t"],
+    finished_constructions = UnderConstruction.query.filter(
+        UnderConstruction.suspension_time.is_(None),
+        UnderConstruction.start_time + UnderConstruction.duration <= engine.data["total_t"],
     ).all()
     if finished_constructions:
         for fc in finished_constructions:
@@ -276,7 +276,7 @@ def check_finished_constructions(engine):
         db.session.commit()
 
     # check end of lifespan of facilities
-    eolt_facilities = Active_facilities.query.filter(Active_facilities.end_of_life <= engine.data["total_t"]).all()
+    eolt_facilities = ActiveFacilities.query.filter(ActiveFacilities.end_of_life <= engine.data["total_t"]).all()
     if eolt_facilities:
         for facility in eolt_facilities:
             utils.remove_asset(facility.player_id, facility)

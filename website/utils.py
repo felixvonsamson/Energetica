@@ -20,10 +20,10 @@ from .database.engine_data import CapacityData, CircularBufferNetwork, CircularB
 from .database.messages import Chat, Message, Notification
 from .database.player import Network, Player, PlayerUnreadMessages
 from .database.player_assets import (
-    Active_facilities,
-    Resource_on_sale,
+    ActiveFacilities,
+    ResourceOnSale,
     Shipment,
-    Under_construction,
+    UnderConstruction,
 )
 
 # Helper functions and data initialization utilities
@@ -208,7 +208,7 @@ def add_asset(player_id, construction_id):
     """this function is executed when a construction of research project has finished"""
     engine = current_app.config["engine"]
     player: Player = Player.query.get(player_id)
-    construction = Under_construction.query.get(construction_id)
+    construction = UnderConstruction.query.get(construction_id)
 
     if construction.family in ["Technologies", "Functional facilities"]:
         if getattr(player, construction.name) == 0:
@@ -283,7 +283,7 @@ def add_asset(player_id, construction_id):
                     player,
                 )
 
-    if Active_facilities.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
+    if ActiveFacilities.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
         # initialize array for facility if it is the first one built
         current_data = engine.data["current_data"][player.id]
         if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
@@ -319,35 +319,35 @@ def add_asset(player_id, construction_id):
 
     priority_list_name = "construction_priorities"
     project_index = (
-        Under_construction.query.filter(
-            Under_construction.family != "Technologies",
-            Under_construction.player_id == player.id,
-            Under_construction.suspension_time.is_(None),
+        UnderConstruction.query.filter(
+            UnderConstruction.family != "Technologies",
+            UnderConstruction.player_id == player.id,
+            UnderConstruction.suspension_time.is_(None),
         ).count()
         - 1
     )
     if construction.family == "Technologies":
         priority_list_name = "research_priorities"
         project_index = (
-            Under_construction.query.filter(
-                Under_construction.family == "Technologies",
-                Under_construction.player_id == player.id,
-                Under_construction.suspension_time.is_(None),
+            UnderConstruction.query.filter(
+                UnderConstruction.family == "Technologies",
+                UnderConstruction.player_id == player.id,
+                UnderConstruction.suspension_time.is_(None),
             ).count()
             - 1
         )
     player.remove_from_list(priority_list_name, construction_id)
     project_priorities = player.read_list(priority_list_name)
     for priority_index, project_id in enumerate(project_priorities[:]):
-        next_construction = Under_construction.query.get(project_id)
+        next_construction = UnderConstruction.query.get(project_id)
         if next_construction.suspension_time is not None:
             if next_construction.family in [
                 "Functional facilities",
                 "Technologies",
             ]:
                 first_lvl = (
-                    Under_construction.query.filter_by(name=next_construction.name, player_id=player.id)
-                    .order_by(Under_construction.duration)
+                    UnderConstruction.query.filter_by(name=next_construction.name, player_id=player.id)
+                    .order_by(UnderConstruction.duration)
                     .first()
                 )
                 if first_lvl.suspension_time is None:
@@ -355,8 +355,8 @@ def add_asset(player_id, construction_id):
                         continue
                     else:
                         second_lvl = (
-                            Under_construction.query.filter_by(name=next_construction.name, player_id=player.id)
-                            .order_by(Under_construction.duration)
+                            UnderConstruction.query.filter_by(name=next_construction.name, player_id=player.id)
+                            .order_by(UnderConstruction.duration)
                             .offset(1)
                             .first()
                         )
@@ -404,7 +404,7 @@ def add_asset(player_id, construction_id):
         eol = engine.data["total_t"] + math.ceil(
             engine.const_config["assets"][construction.name]["lifespan"] / engine.in_game_seconds_per_tick
         )
-        new_facility = Active_facilities(
+        new_facility = ActiveFacilities(
             facility=construction.name,
             end_of_life=eol,
             player_id=player.id,
@@ -468,7 +468,7 @@ def upgrade_facility(player, facility_id):
                 facility.efficiency_multiplier = technology_effects.efficiency_multiplier(player, facility.facility)
         db.session.commit()
 
-    facility = Active_facilities.query.get(facility_id)
+    facility = ActiveFacilities.query.get(facility_id)
     if facility.facility in engine.technologies + engine.functional_facilities:
         return {"response": "notUpgradable"}
 
@@ -492,8 +492,8 @@ def upgrade_facility(player, facility_id):
 
 def upgrade_all_of_type(player, facility_id):
     """this function is executed when a player upgrades all facilities of a certain type"""
-    facility_name = Active_facilities.query.get(facility_id).facility
-    facilities = Active_facilities.query.filter_by(player_id=player.id, facility=facility_name).all()
+    facility_name = ActiveFacilities.query.get(facility_id).facility
+    facilities = ActiveFacilities.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
         upgrade_facility(player, facility.id)
     return {"response": "success", "money": player.money}
@@ -501,7 +501,7 @@ def upgrade_all_of_type(player, facility_id):
 
 def dismantle_facility(player, facility_id):
     """this function is executed when a player dismantles a facility"""
-    facility = Active_facilities.query.get(facility_id)
+    facility = ActiveFacilities.query.get(facility_id)
     base_price = current_app.config["engine"].const_config["assets"][facility.facility]["base_price"]
     cost = 0.2 * base_price * facility.price_multiplier
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
@@ -514,8 +514,8 @@ def dismantle_facility(player, facility_id):
 
 def dismantle_all_of_type(player, facility_id):
     """this function is executed when a player dismantles all facilities of a certain type"""
-    facility_name = Active_facilities.query.get(facility_id).facility
-    facilities = Active_facilities.query.filter_by(player_id=player.id, facility=facility_name).all()
+    facility_name = ActiveFacilities.query.get(facility_id).facility
+    facilities = ActiveFacilities.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
         dismantle_facility(player, facility.id)
     return {"response": "success", "money": player.money}
@@ -565,7 +565,7 @@ def start_project(engine, player, facility, family, force=False):
 
     ud_count = 0
     if family in ["Functional facilities", "Technologies"]:
-        ud_count = Under_construction.query.filter_by(name=facility, player_id=player.id).count()
+        ud_count = UnderConstruction.query.filter_by(name=facility, player_id=player.id).count()
         real_price = (
             const_config["base_price"]
             * technology_effects.price_multiplier(player, facility)
@@ -607,7 +607,7 @@ def start_project(engine, player, facility, family, force=False):
 
     player.money -= real_price
     duration = math.ceil(duration / engine.clock_time)
-    new_construction = Under_construction(
+    new_construction = UnderConstruction(
         name=facility,
         family=family,
         start_time=engine.data["total_t"],
@@ -640,7 +640,7 @@ def start_project(engine, player, facility, family, force=False):
 def cancel_project(player, construction_id, force=False):
     """this function is executed when a player cancels an ongoing construction"""
     engine = current_app.config["engine"]
-    construction = Under_construction.query.get(int(construction_id))
+    construction = UnderConstruction.query.get(int(construction_id))
 
     priority_list_name = "construction_priorities"
     if construction.family == "Technologies":
@@ -683,7 +683,7 @@ def cancel_project(player, construction_id, force=False):
 def pause_project(player, construction_id):
     """this function is executed when a player pauses or unpauses an ongoing construction"""
     engine = current_app.config["engine"]
-    construction = Under_construction.query.get(int(construction_id))
+    construction = UnderConstruction.query.get(int(construction_id))
 
     if construction.suspension_time is None:
         while construction.suspension_time is None:
@@ -699,8 +699,8 @@ def pause_project(player, construction_id):
     else:
         if construction.family in ["Functional facilities", "Technologies"]:
             first_lvl = (
-                Under_construction.query.filter_by(name=construction.name, player_id=player.id)
-                .order_by(Under_construction.duration)
+                UnderConstruction.query.filter_by(name=construction.name, player_id=player.id)
+                .order_by(UnderConstruction.duration)
                 .first()
             )
             if first_lvl.suspension_time is None:
@@ -713,13 +713,13 @@ def pause_project(player, construction_id):
             player.project_max_priority("research_priorities", int(construction_id))
             if player.available_lab_workers() == 0:
                 research_priorities = player.read_list("research_priorities")
-                project_to_pause = Under_construction.query.get(research_priorities[player.lab_workers])
+                project_to_pause = UnderConstruction.query.get(research_priorities[player.lab_workers])
                 project_to_pause.suspension_time = engine.data["total_t"]
         else:
             player.project_max_priority("construction_priorities", int(construction_id))
             if player.available_construction_workers() == 0:
                 construction_priorities = player.read_list("construction_priorities")
-                project_to_pause = Under_construction.query.get(construction_priorities[player.construction_workers])
+                project_to_pause = UnderConstruction.query.get(construction_priorities[player.construction_workers])
                 project_to_pause.suspension_time = engine.data["total_t"]
         construction.start_time += engine.data["total_t"] - construction.suspension_time
         construction.suspension_time = None
@@ -736,7 +736,7 @@ def pause_project(player, construction_id):
 def decrease_project_priority(player, construction_id, pausing=False):
     """this function is executed when a player changes the order of ongoing constructions"""
     engine = current_app.config["engine"]
-    construction = Under_construction.query.get(int(construction_id))
+    construction = UnderConstruction.query.get(int(construction_id))
 
     if construction.family == "Technologies":
         attr = "research_priorities"
@@ -746,8 +746,8 @@ def decrease_project_priority(player, construction_id, pausing=False):
     id_list = player.read_list(attr)
     index = id_list.index(construction_id)
     if index >= 0 and index < len(id_list) - 1:
-        construction_1 = Under_construction.query.get(id_list[index])
-        construction_2 = Under_construction.query.get(id_list[index + 1])
+        construction_1 = UnderConstruction.query.get(id_list[index])
+        construction_2 = UnderConstruction.query.get(id_list[index + 1])
         if construction_1.suspension_time is None and construction_2.suspension_time is not None:
             construction_1.suspension_time = engine.data["total_t"]
             if pausing:
@@ -757,8 +757,8 @@ def decrease_project_priority(player, construction_id, pausing=False):
                 "Technologies",
             ]:
                 first_lvl = (
-                    Under_construction.query.filter_by(name=construction_2.name, player_id=player.id)
-                    .order_by(Under_construction.duration)
+                    UnderConstruction.query.filter_by(name=construction_2.name, player_id=player.id)
+                    .order_by(UnderConstruction.duration)
                     .first()
                 )
                 if first_lvl.suspension_time is None:
@@ -815,7 +815,7 @@ def put_resource_on_market(player, resource, quantity, price):
             resource + "_on_sale",
             getattr(player, resource + "_on_sale") + quantity,
         )
-        new_sale = Resource_on_sale(
+        new_sale = ResourceOnSale(
             resource=resource,
             quantity=quantity,
             price=price,
@@ -833,7 +833,7 @@ def put_resource_on_market(player, resource, quantity, price):
 def buy_resource_from_market(player, quantity, sale_id):
     """Buy an offer from the resource market"""
     engine = current_app.config["engine"]
-    sale = Resource_on_sale.query.filter_by(id=sale_id).first()
+    sale = ResourceOnSale.query.filter_by(id=sale_id).first()
     if quantity is None or quantity <= 0 or quantity > sale.quantity:
         return {"response": "invalidQuantity"}
     total_price = sale.price * quantity
@@ -841,7 +841,7 @@ def buy_resource_from_market(player, quantity, sale_id):
         # Player is buying their own resource
         sale.quantity -= quantity
         if sale.quantity == 0:
-            Resource_on_sale.query.filter_by(id=sale_id).delete()
+            ResourceOnSale.query.filter_by(id=sale_id).delete()
         setattr(
             player,
             sale.resource + "_on_sale",
@@ -933,7 +933,7 @@ def buy_resource_from_market(player, quantity, sale_id):
         )
         if sale.quantity == 0:
             # Player is purchasing all available quantity
-            Resource_on_sale.query.filter_by(id=sale_id).delete()
+            ResourceOnSale.query.filter_by(id=sale_id).delete()
         db.session.commit()
         return {
             "response": "success",
@@ -1182,7 +1182,7 @@ def confirm_location(engine, player, location):
     eol = engine.data["total_t"] + math.ceil(
         engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick
     )
-    steam_engine = Active_facilities(
+    steam_engine = ActiveFacilities(
         facility="steam_engine",
         end_of_life=eol,
         player_id=player.id,

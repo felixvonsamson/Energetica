@@ -3,7 +3,7 @@
 from itertools import chain
 from website import db
 from website.database.player_assets import (
-    Under_construction,
+    UnderConstruction,
 )
 
 
@@ -18,7 +18,7 @@ from website.database.messages import (
     Notification,
     player_chats,
 )
-from website.database.player_assets import Active_facilities
+from website.database.player_assets import ActiveFacilities
 
 
 class Player(db.Model, UserMixin):
@@ -158,9 +158,9 @@ class Player(db.Model, UserMixin):
     def available_construction_workers(self):
         """Returns the number of available construction workers"""
         occupied_workers = (
-            Under_construction.query.filter(Under_construction.player_id == self.id)
-            .filter(Under_construction.family != "Technologies")
-            .filter(Under_construction.suspension_time.is_(None))
+            UnderConstruction.query.filter(UnderConstruction.player_id == self.id)
+            .filter(UnderConstruction.family != "Technologies")
+            .filter(UnderConstruction.suspension_time.is_(None))
             .count()
         )
         return self.construction_workers - occupied_workers
@@ -168,9 +168,9 @@ class Player(db.Model, UserMixin):
     def available_lab_workers(self):
         """Returns the number of available lab workers"""
         occupied_workers = (
-            Under_construction.query.filter(Under_construction.player_id == self.id)
-            .filter(Under_construction.family == "Technologies")
-            .filter(Under_construction.suspension_time.is_(None))
+            UnderConstruction.query.filter(UnderConstruction.player_id == self.id)
+            .filter(UnderConstruction.family == "Technologies")
+            .filter(UnderConstruction.suspension_time.is_(None))
             .count()
         )
         return self.lab_workers - occupied_workers
@@ -435,7 +435,7 @@ class Player(db.Model, UserMixin):
         """Packages the player's active facilities"""
 
         def get_facility_data(facilities):
-            sub_facilities = self.active_facilities.filter(Active_facilities.facility.in_(facilities)).all()
+            sub_facilities = self.active_facilities.filter(ActiveFacilities.facility.in_(facilities)).all()
             return {
                 facility.id: {
                     k: getattr(facility, k)

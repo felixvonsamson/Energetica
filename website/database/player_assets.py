@@ -1,9 +1,9 @@
 """Here are defined the classes for the items stored in the database"""
 
-from .. import db
+from website import db
 
 
-class Under_construction(db.Model):
+class UnderConstruction(db.Model):
     """class that stores the things currently under construction"""
 
     id = db.Column(db.Integer, primary_key=True)
@@ -26,7 +26,7 @@ class Under_construction(db.Model):
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
 
-class Active_facilities(db.Model):
+class ActiveFacilities(db.Model):
     """Class that stores the facilities on the server and their end of life time."""
 
     id = db.Column(db.Integer, primary_key=True)
@@ -56,7 +56,7 @@ class Shipment(db.Model):
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player
 
 
-class Resource_on_sale(db.Model):
+class ResourceOnSale(db.Model):
     """Class that stores resources currently on sale"""
 
     id = db.Column(db.Integer, primary_key=True)
