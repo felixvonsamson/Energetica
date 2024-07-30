@@ -13,7 +13,24 @@ from website.config import river_discharge_seasonal
 
 
 class CapacityData:
-    """Class that stores the capacity data"""
+    """
+    Class that stores precalculated maximum values per facility type of a player according to its active facilities.
+    The data structure is as follows:
+    {
+        "facility_type": {
+            "O&M_cost":         [¤/tick]                        # All facilities
+            "power":            [W]                             # Power and storage facilities
+            "fuel_use": {
+                "resource":     [kg/tick]                       # Controllable facilities
+            }
+            "capacity":         [Wh]                            # Storage facilities
+            "efficiency": (effective efficiency from 0 to 1),   # Storage facilities
+            "extraction":       [kg/tick]                       # Extraction facilities
+            "power_use":        [W]                             # Extraction facilities
+            "pollution":        [kg/tick]                       # Extraction facilities
+        }
+    }
+    """
 
     def __init__(self):
         self._data = {}
@@ -90,6 +107,7 @@ class CapacityData:
                     self._data[facility]["power"] += player_capacities[facility]["power"]
 
     def init_facility(self, engine, facility):
+        """This function initializes the capacity data of a facility"""
         const_config = engine.const_config["assets"]
         if facility in engine.power_facilities:
             self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "fuel_use": {}}
@@ -109,14 +127,15 @@ class CapacityData:
         return self._data[facility]
 
     def get_all(self):
+        """Returns the capacity data"""
         return self._data
 
 
 class CircularBufferPlayer:
-    """Class that stores the active data of a player"""
+    """Class that stores the active data of a player (last 360 ticks of the graph data)"""
 
     def __init__(self):
-        self._data = {
+        self._data = {  # v - added dynamically - v
             "revenues": {
                 "industry": deque([0.0] * 360, maxlen=360),
                 "exports": deque([0.0] * 360, maxlen=360),
@@ -124,11 +143,11 @@ class CircularBufferPlayer:
                 "dumping": deque([0.0] * 360, maxlen=360),
             },
             "op_costs": {
-                "steam_engine": deque([0.0] * 360, maxlen=360),
+                "steam_engine": deque([0.0] * 360, maxlen=360),  # + other facilities
             },
             "generation": {
                 "steam_engine": deque([0.0] * 360, maxlen=360),
-                "imports": deque([0.0] * 360, maxlen=360),
+                "imports": deque([0.0] * 360, maxlen=360),  # + other power and storage facilities
             },
             "demand": {
                 "industry": deque([0.0] * 360, maxlen=360),
@@ -136,26 +155,29 @@ class CircularBufferPlayer:
                 "research": deque([0.0] * 360, maxlen=360),
                 "transport": deque([0.0] * 360, maxlen=360),
                 "exports": deque([0.0] * 360, maxlen=360),
-                "dumping": deque([0.0] * 360, maxlen=360),
+                "dumping": deque([0.0] * 360, maxlen=360),  # + storage and extraction facilities
             },
-            "storage": {},
-            "resources": {},
+            "storage": {},  # + storage facilities
+            "resources": {},  # + all resources when warehouse is built
             "emissions": {
                 "steam_engine": deque([0.0] * 360, maxlen=360),
-                "construction": deque([0.0] * 360, maxlen=360),
+                "construction": deque([0.0] * 360, maxlen=360),  # + other controllable facilities
             },
         }
 
     def append_value(self, new_value):
+        """Adds one new tick of data to the buffer"""
         for category, subcategories in new_value.items():
             for subcategory, value in subcategories.items():
                 self._data[category][subcategory].append(value)
 
     def new_subcategory(self, category, subcategory):
+        """Adds a new subcategory to the data"""
         if subcategory not in self._data[category]:
             self._data[category][subcategory] = deque([0.0] * 360, maxlen=360)
 
     def get_data(self, t=216):
+        """Returns the last t ticks of the data"""
         result = defaultdict(lambda: defaultdict(dict))
         for category, subcategories in self._data.items():
             for subcategory, buffer in subcategories.items():
@@ -163,6 +185,7 @@ class CircularBufferPlayer:
         return result
 
     def get_last_data(self, category, subcategory):
+        """Returns the last value of a subcategory"""
         if category in self._data and subcategory in self._data[category]:
             return self._data[category][subcategory][-1]
         return 0
@@ -190,13 +213,14 @@ class CircularBufferNetwork:
                 "price": deque([0.0] * 360, maxlen=360),
                 "quantity": deque([0.0] * 360, maxlen=360),
             },
-            "exports": {},
-            "imports": {},
-            "generation": {},
-            "consumption": {},
+            "exports": {},  # exports for each player
+            "imports": {},  # imports for each player
+            "generation": {},  # generation for each type (ex: "steam_engine")
+            "consumption": {},  # consumption for each type (ex: "industry")
         }
 
     def append_value(self, new_value):
+        """Adds one new tick of data to the buffer"""
         for category, category_value in self._data.items():
             for group, value in new_value[category].items():
                 if group not in category_value:
@@ -207,6 +231,7 @@ class CircularBufferNetwork:
                     value.append(0.0)
 
     def get_data(self, t=216):
+        """Returns the last t ticks of the data"""
         result = defaultdict(lambda: defaultdict(dict))
         for category, value in self._data.items():
             for group, buffer in value.items():
@@ -225,9 +250,11 @@ class WeatherData:
         }
 
     def update_weather(self, engine):
-        """This function updates the windspeed and irradiation data every 10
+        """
+        This function updates the windspeed and irradiation data every 10
         minutes using the MétéoSuisse api and calculates the river discharge for
-        the next 10 min"""
+        the next 10 min
+        """
         urls = {
             "windspeed": (
                 (
@@ -295,6 +322,7 @@ class WeatherData:
         return self._data[weather][i]
 
     def package(self, total_t):
+        """Returns the weather data for the current tick"""
         return {
             "month_number": ((total_t % 25920) // 2160),
             "irradiance": self["irradiance"],
@@ -304,18 +332,19 @@ class WeatherData:
 
 
 class EmissionData:
-    """Class that stores the emission data"""
+    """Class that stores the emission and climate data of the server"""
 
     def __init__(self):
         self._data = {
-            # base value of 5Mt of CO2 in the atmosphere
-            "CO2": deque([5.0 * 10**9] * 360, maxlen=360),
+            "CO2": deque([5.0 * 10**9] * 360, maxlen=360),  # base value of 5Mt of CO2 in the atmosphere
         }
 
     def add(self, key, value):
+        """Adds a value to the data. Increasing the CO2 levels"""
         self._data[key][-1] += value
 
     def init_new_value(self):
+        """Set a new value of the data equal to the previous one. Keeping CO2 levels form one tick to the next"""
         for value in self._data.values():
             value.append(value[-1])
 
