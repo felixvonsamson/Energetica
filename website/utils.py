@@ -1308,8 +1308,18 @@ def leave_network(engine, player):
     return {"response": "success"}
 
 
-def set_network_prices(engine, player, prices={}):
+def set_network_prices(engine, player, updated_prices={}):
     """this function is executed when a player changes the value the energy selling prices"""
+    # TODO: this method gets called many times with an empty `updated_prices`
+    # argument. The reason for this is to run the code after the for loop which
+    # updates the `rest_list`, `scp_list`, and `demand_list`, and not to
+    # actually update the prices. I suggest:
+    # * Moving this code and logic (after the for loop) into its own function,
+    #   with an appropriate name
+    # * Calling this new function at the end of this function
+    # * Calling this new function wherever `set_network_prices` is called
+    #   without the `updated_prices` argument
+    # - Max
 
     def sort_priority(priority_list, prefix="price_"):
         return sorted(priority_list, key=lambda x: getattr(player, prefix + x))
@@ -1317,10 +1327,10 @@ def set_network_prices(engine, player, prices={}):
     def sort_scp(scp_list):
         return sorted(scp_list, key=lambda x: engine.renewables.index(x))
 
-    for price in prices:
-        if prices[price] <= -5:
+    for key, updated_price in updated_prices.items():
+        if updated_price <= -5:
             return {"response": "priceTooLow"}
-        setattr(player, price, prices[price])
+        setattr(player, key, updated_price)
 
     rest_list = sort_priority(player.read_list("rest_of_priorities"))
     scp_list = sort_scp(player.read_list("self_consumption_priority"))

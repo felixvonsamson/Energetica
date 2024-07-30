@@ -1,17 +1,16 @@
 """These functions make the link between the website and the database"""
 
 import json
+import pickle
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
-import pickle
 
 import numpy as np
 from flask import Blueprint, current_app, flash, g, jsonify, redirect, request
 from flask_login import current_user
 
 from website import utils
-
 from website.config import wind_power_curve
 from website.database.map import Hex
 from website.database.player import Network, Player
@@ -441,8 +440,8 @@ def request_dismantle_all_of_type():
 def change_network_prices():
     """this function is executed when a player changes the prices for anything on the network"""
     request_data = request.get_json()
-    prices = request_data["prices"]
-    response = utils.set_network_prices(engine=g.engine, player=current_user, prices=prices)
+    updated_prices = request_data["prices"]
+    response = utils.set_network_prices(engine=g.engine, player=current_user, updated_prices=updated_prices)
     return jsonify(response)
 
 
