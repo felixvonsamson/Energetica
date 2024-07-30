@@ -185,7 +185,6 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
                 # Temporary automated player creation for testing
                 from .init_test_players import init_test_players
 
-                # edit_database(engine)
                 init_test_players(engine)
 
     return socketio, sock, app
