@@ -10,11 +10,15 @@ import numpy as np
 from flask import Blueprint, current_app, flash, g, jsonify, redirect, request
 from flask_login import current_user
 
-from website import utils
+import website.utils.assets
+import website.utils.chat
+import website.utils.network
+import website.utils.resource_market
 from website.config import wind_power_curve
 from website.database.map import Hex
 from website.database.player import Network, Player
 from website.technology_effects import get_current_technology_values
+from website.utils import misc
 
 http = Blueprint("http", __name__)
 
@@ -328,7 +332,7 @@ def choose_location():
     request_data = request.get_json()
     selected_id = request_data["selected_id"]
     location = Hex.query.get(selected_id + 1)
-    confirm_location_response = utils.confirm_location(engine=g.engine, player=current_user, location=location)
+    confirm_location_response = misc.confirm_location(engine=g.engine, player=current_user, location=location)
     return jsonify(confirm_location_response)
 
 
@@ -344,7 +348,7 @@ def request_start_project():
     facility = request_data["facility"]
     family = request_data["family"]
     force = request_data["force"]
-    response = utils.start_project(
+    response = website.utils.assets.start_project(
         engine=g.engine,
         player=current_user,
         facility=facility,
@@ -361,7 +365,7 @@ def request_cancel_project():
     request_data = request.get_json()
     construction_id = request_data["id"]
     force = request_data["force"]
-    response = utils.cancel_project(player=current_user, construction_id=construction_id, force=force)
+    response = website.utils.assets.cancel_project(player=current_user, construction_id=construction_id, force=force)
     return jsonify(response)
 
 
@@ -371,7 +375,7 @@ def request_pause_project():
     """This function is executed when a player pauses or unpauses an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = request_data["id"]
-    response = utils.pause_project(player=current_user, construction_id=construction_id)
+    response = website.utils.assets.pause_project(player=current_user, construction_id=construction_id)
     return jsonify(response)
 
 
@@ -381,7 +385,7 @@ def request_pause_shipment():
     """This function is executed when a player pauses or unpauses an ongoing construction or upgrade."""
     request_data = request.get_json()
     shipment_id = request_data["id"]
-    response = utils.pause_shipment(player=current_user, shipment_id=shipment_id)
+    response = website.utils.resource_market.pause_shipment(player=current_user, shipment_id=shipment_id)
     return jsonify(response)
 
 
@@ -391,7 +395,7 @@ def request_decrease_project_priority():
     """This function is executed when a player changes the order of ongoing constructions or upgrades."""
     request_data = request.get_json()
     construction_id = request_data["id"]
-    response = utils.decrease_project_priority(player=current_user, construction_id=construction_id)
+    response = website.utils.assets.decrease_project_priority(player=current_user, construction_id=construction_id)
     return jsonify(response)
 
 
@@ -401,7 +405,7 @@ def request_upgrade_facility():
     """This function is executed when a player wants to upgrades a facility"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    response = utils.upgrade_facility(player=current_user, facility_id=facility_id)
+    response = website.utils.assets.upgrade_facility(player=current_user, facility_id=facility_id)
     return jsonify(response)
 
 
@@ -411,7 +415,7 @@ def request_upgrade_all_of_type():
     """This function is executed when a player wants to upgrades all facilities of a certain type"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    response = utils.upgrade_all_of_type(player=current_user, facility_id=facility_id)
+    response = website.utils.assets.upgrade_all_of_type(player=current_user, facility_id=facility_id)
     return jsonify(response)
 
 
@@ -421,7 +425,7 @@ def request_dismantle_facility():
     """This function is executed when a player wants to dismantle a facility"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    response = utils.dismantle_facility(player=current_user, facility_id=facility_id)
+    response = website.utils.assets.dismantle_facility(player=current_user, facility_id=facility_id)
     return jsonify(response)
 
 
@@ -431,7 +435,7 @@ def request_dismantle_all_of_type():
     """This function is executed when a player wants to dismantle all facilities of a certain type"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    response = utils.dismantle_all_of_type(player=current_user, facility_id=facility_id)
+    response = website.utils.assets.dismantle_all_of_type(player=current_user, facility_id=facility_id)
     return jsonify(response)
 
 
@@ -441,7 +445,9 @@ def change_network_prices():
     """this function is executed when a player changes the prices for anything on the network"""
     request_data = request.get_json()
     updated_prices = request_data["prices"]
-    response = utils.set_network_prices(engine=g.engine, player=current_user, updated_prices=updated_prices)
+    response = website.utils.network.set_network_prices(
+        engine=g.engine, player=current_user, updated_prices=updated_prices
+    )
     return jsonify(response)
 
 
@@ -451,7 +457,7 @@ def request_change_facility_priority():
     """this function is executed when a player changes the generation priority"""
     request_data = request.get_json()
     priority = request_data["priority"]
-    response = utils.change_facility_priority(engine=g.engine, player=current_user, priority=priority)
+    response = website.utils.network.change_facility_priority(engine=g.engine, player=current_user, priority=priority)
     return jsonify(response)
 
 
@@ -462,7 +468,7 @@ def put_resource_on_sale():
     resource = request.form.get("resource")
     quantity = float(request.form.get("quantity")) * 1000
     price = float(request.form.get("price")) / 1000
-    utils.put_resource_on_market(current_user, resource, quantity, price)
+    website.utils.resource_market.put_resource_on_market(current_user, resource, quantity, price)
     return redirect("/resource_market", code=303)
 
 
@@ -473,7 +479,7 @@ def buy_resource():
     request_data = request.get_json()
     sale_id = int(request_data["id"])
     quantity = float(request_data["quantity"]) * 1000
-    response = utils.buy_resource_from_market(current_user, quantity, sale_id)
+    response = website.utils.resource_market.buy_resource_from_market(current_user, quantity, sale_id)
     return jsonify(response)
 
 
@@ -483,7 +489,7 @@ def join_network():
     """player is trying to join a network"""
     network_name = request.form.get("choose_network")
     network = Network.query.filter_by(name=network_name).first()
-    utils.join_network(g.engine, current_user, network)
+    website.utils.network.join_network(g.engine, current_user, network)
     flash(f"You joined the network {network_name}", category="message")
     g.engine.log(f"{current_user.username} joined the network {current_user.network.name}")
     return redirect("/network", code=303)
@@ -494,7 +500,7 @@ def join_network():
 def create_network():
     """This endpoint is used when a player creates a network"""
     network_name = request.form.get("network_name")
-    response = utils.create_network(g.engine, current_user, network_name)
+    response = website.utils.network.create_network(g.engine, current_user, network_name)
     if response["response"] == "nameLengthInvalid":
         flash("Network name must be between 3 and 40 characters", category="error")
         return redirect("/network", code=303)
@@ -510,7 +516,7 @@ def create_network():
 def leave_network():
     """this endpoint is called when a player leaves their network"""
     network = current_user.network
-    response = utils.leave_network(g.engine, current_user)
+    response = website.utils.network.leave_network(g.engine, current_user)
     if response["response"] == "success":
         flash(f"You left network {network.name}", category="message")
     return redirect("/network", code=303)
@@ -519,7 +525,7 @@ def leave_network():
 @http.route("hide_chat_disclaimer", methods=["GET"])
 def hide_chat_disclaimer():
     """this endpoint is called when a player selects 'don't show again' on the chat disclaimer"""
-    utils.hide_chat_disclaimer(current_user)
+    website.utils.chat.hide_chat_disclaimer(current_user)
     return jsonify({"response": "success"})
 
 
@@ -528,7 +534,7 @@ def create_chat():
     """this endpoint is called when a player creates a chat with one other player"""
     request_data = request.get_json()
     buddy_username = request_data["buddy_username"]
-    response = utils.create_chat(current_user, buddy_username)
+    response = website.utils.chat.create_chat(current_user, buddy_username)
     return jsonify(response)
 
 
@@ -538,7 +544,7 @@ def create_group_chat():
     request_data = request.get_json()
     chat_title = request_data["chat_title"]
     group_members = request_data["group_members"]
-    response = utils.create_group_chat(current_user, chat_title, group_members)
+    response = website.utils.chat.create_group_chat(current_user, chat_title, group_members)
     return jsonify(response)
 
 
@@ -548,7 +554,7 @@ def new_message():
     request_data = request.get_json()
     message = request_data["new_message"]
     chat_id = request_data["chat_id"]
-    response = utils.add_message(current_user, message, chat_id)
+    response = website.utils.chat.add_message(current_user, message, chat_id)
     return response
 
 

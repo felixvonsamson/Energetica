@@ -1,24 +1,13 @@
 """Here is the logic for the engine of the game"""
 
-import json
 import logging
 import math
 import pickle
-import time
 from collections import defaultdict
 from datetime import datetime
 
-import website.production_update as production_update
-import website.utils as utils
-
-from . import db
 from .config import config, const_config
 from .database.engine_data import EmissionData, WeatherData
-from .database.player_assets import (
-    ActiveFacilities,
-    Shipment,
-    UnderConstruction,
-)
 
 
 # This is the engine object
@@ -181,23 +170,6 @@ class GameEngine(object):
         # TODO: Do we need this method?
         self.socketio.emit("refresh")
 
-    def display_new_message(self, message, chat):
-        """Sends chat message to all relevant sources through socketio and websocket"""
-        from website.api import websocket
-
-        websocket_message = websocket.rest_new_chat_message(chat.id, message)
-        for player in chat.participants:
-            player.emit(
-                "display_new_message",
-                {
-                    "time": message.time.isoformat(),
-                    "player_id": message.player_id,
-                    "text": message.text,
-                    "chat_id": message.chat_id,
-                },
-            )
-            websocket.rest_notify_player(self, player, websocket_message)
-
     # logs a message with the current time in the terminal
     def log(self, message):
         self.console_logger.info(message)
@@ -213,69 +185,3 @@ class GameEngine(object):
             "total_ticks": self.data["total_t"],
             "co2_emissions": self.data["emissions"]["CO2"],
         }
-
-
-def state_update(engine, app):
-    """This function is called every tick to update the state of the game"""
-    total_t = (time.time() - engine.data["start_date"]) / engine.clock_time
-    while engine.data["total_t"] < total_t - 1:
-        engine.data["total_t"] += 1
-        engine.log(f"t = {engine.data['total_t']}")
-        if engine.data["total_t"] % 216 == 0:
-            utils.save_past_data_threaded(app, engine)
-        with app.app_context():
-            if engine.data["total_t"] % (600 / engine.clock_time) == 0:
-                engine.data["weather"].update_weather(engine)
-            log_entry = {
-                "timestamp": datetime.now().isoformat(),
-                "endpoint": "update_electricity",
-                "total_t": engine.data["total_t"],
-            }
-            engine.action_logger.info(json.dumps(log_entry))
-            production_update.update_electricity(engine=engine)
-            check_finished_constructions(engine)
-
-    # save engine every minute in case of server crash
-    if engine.data["total_t"] % (60 / engine.clock_time) == 0:
-        with open("instance/engine_data.pck", "wb") as file:
-            pickle.dump(engine.data, file)
-    with app.app_context():
-        # TODO: perhaps only run the below code conditionally on there being active ws connections
-        from website.api import websocket
-
-        websocket.rest_notify_scoreboard(engine)
-        websocket.rest_notify_weather(engine)
-        websocket.rest_notify_global_data(engine)
-
-
-def check_finished_constructions(engine):
-    """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
-    # check if constructions finished
-    finished_constructions = UnderConstruction.query.filter(
-        UnderConstruction.suspension_time.is_(None),
-        UnderConstruction.start_time + UnderConstruction.duration <= engine.data["total_t"],
-    ).all()
-    if finished_constructions:
-        for fc in finished_constructions:
-            utils.add_asset(fc.player_id, fc.id)
-            db.session.delete(fc)
-        db.session.commit()
-
-    # check if shipment arrived
-    arrived_shipments = Shipment.query.filter(
-        Shipment.departure_time.isnot(None),
-        Shipment.suspension_time.is_(None),
-        Shipment.departure_time + Shipment.duration <= engine.data["total_t"],
-    ).all()
-    if arrived_shipments:
-        for a_s in arrived_shipments:
-            utils.store_import(a_s.player, a_s.resource, a_s.quantity)
-            db.session.delete(a_s)
-        db.session.commit()
-
-    # check end of lifespan of facilities
-    eolt_facilities = ActiveFacilities.query.filter(ActiveFacilities.end_of_life <= engine.data["total_t"]).all()
-    if eolt_facilities:
-        for facility in eolt_facilities:
-            utils.remove_asset(facility.player_id, facility)
-        db.session.commit()

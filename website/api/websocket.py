@@ -8,7 +8,6 @@ from flask_httpauth import HTTPBasicAuth
 from simple_websocket import ConnectionClosed
 from werkzeug.security import check_password_hash
 
-from website import utils
 from website.database.map import Hex
 from website.database.messages import Chat, Message
 from website.database.player import Network, Player

@@ -6,7 +6,7 @@ import pickle
 import numpy as np
 import pandas as pd
 
-import website.utils as utils
+import website.utils.misc
 
 from . import db
 from .config import wind_power_curve
@@ -122,7 +122,7 @@ def update_player_progress_values(engine, player, new_values):
     if "network" not in player.advancements:
         if player.max_power_consumption > 3_000_000:
             player.add_to_list("advancements", "network")
-            utils.notify(
+            website.utils.misc.notify(
                 "Tutorial",
                 "Your generation capabilities are now big enough to join a "
                 "Network and trade electricity. See <b>Community</b> > "
@@ -135,7 +135,7 @@ def update_player_progress_values(engine, player, new_values):
         if player.max_power_consumption > 1_000_000:
             player.add_to_list("achievements", "power_consumption_1")
             player.xp += 5
-            utils.notify(
+            website.utils.misc.notify(
                 "Achievements",
                 "You have passed the 1MW mark, you consume as much electricity as a small village in Europe. (+5 xp)",
                 player,
@@ -144,7 +144,7 @@ def update_player_progress_values(engine, player, new_values):
         if player.max_power_consumption > 150_000_000:
             player.add_to_list("achievements", "power_consumption_2")
             player.xp += 10
-            utils.notify(
+            website.utils.misc.notify(
                 "Achievements",
                 "You have passed the 150MW mark, you consume as much electricity as the city of Basel. (+10 xp)",
                 player,
@@ -153,7 +153,7 @@ def update_player_progress_values(engine, player, new_values):
         if player.max_power_consumption > 6_500_000_000:
             player.add_to_list("achievements", "power_consumption_3")
             player.xp += 15
-            utils.notify(
+            website.utils.misc.notify(
                 "Achievements",
                 "You have passed the 6.5GW mark, you consume as much electricity as Switzerland. (+15 xp)",
                 player,
@@ -162,7 +162,7 @@ def update_player_progress_values(engine, player, new_values):
         if player.max_power_consumption > 100_000_000_000:
             player.add_to_list("achievements", "power_consumption_4")
             player.xp += 20
-            utils.notify(
+            website.utils.misc.notify(
                 "Achievements",
                 "You have passed the 100GW mark, you consume as much electricity as Japan. (+20 xp)",
                 player,
@@ -171,7 +171,7 @@ def update_player_progress_values(engine, player, new_values):
         if player.max_power_consumption > 3_000_000_000_000:
             player.add_to_list("achievements", "power_consumption_5")
             player.xp += 25
-            utils.notify(
+            website.utils.misc.notify(
                 "Achievements",
                 "You have passed the 3TW mark, you consume as much electricity "
                 "as the entire world population. (+25 xp)",
@@ -181,7 +181,7 @@ def update_player_progress_values(engine, player, new_values):
         if player.max_energy_stored > 8_000_000_000:
             player.add_to_list("achievements", "energy_storage_1")
             player.xp += 5
-            utils.notify(
+            website.utils.misc.notify(
                 "Achievements",
                 "You have stored 8GWh of energy, enough to power Zurich for a day. (+5 xp)",
                 player,
@@ -190,7 +190,7 @@ def update_player_progress_values(engine, player, new_values):
         if player.max_energy_stored > 160_000_000_000:
             player.add_to_list("achievements", "energy_storage_2")
             player.xp += 10
-            utils.notify(
+            website.utils.misc.notify(
                 "Achievements",
                 "You have stored 160GWh of energy, enough to power switzerland for a day. (+10 xp)",
                 player,
@@ -199,7 +199,7 @@ def update_player_progress_values(engine, player, new_values):
         if player.max_energy_stored > 5_000_000_000_000:
             player.add_to_list("achievements", "energy_storage_3")
             player.xp += 20
-            utils.notify(
+            website.utils.misc.notify(
                 "Achievements",
                 "You have stored 5TWh of energy, enough to power switzerland for a month. (+20 xp)",
                 player,
@@ -208,7 +208,7 @@ def update_player_progress_values(engine, player, new_values):
         if player.extracted_resources > 1_000_000:
             player.add_to_list("achievements", "mineral_extraction_1")
             player.xp += 5
-            utils.notify(
+            website.utils.misc.notify(
                 "Achievements",
                 "You have extracted 1000 tons of resources. (+5 xp)",
                 player,
@@ -217,7 +217,7 @@ def update_player_progress_values(engine, player, new_values):
         if player.extracted_resources > 50_000_000:
             player.add_to_list("achievements", "mineral_extraction_2")
             player.xp += 10
-            utils.notify(
+            website.utils.misc.notify(
                 "Achievements",
                 "You have extracted 50'000 tons of resources. (+10 xp)",
                 player,
@@ -226,7 +226,7 @@ def update_player_progress_values(engine, player, new_values):
         if player.imported_energy > 10_000_000_000:
             player.add_to_list("achievements", "network_import_1")
             player.xp += 5
-            utils.notify(
+            website.utils.misc.notify(
                 "Achievements",
                 "You have imported more than 10GWh on the market. (+5 xp)",
                 player,
@@ -235,7 +235,7 @@ def update_player_progress_values(engine, player, new_values):
         if player.imported_energy > 1_000_000_000_000:
             player.add_to_list("achievements", "network_import_2")
             player.xp += 10
-            utils.notify(
+            website.utils.misc.notify(
                 "Achievements",
                 "You have imported more than 1TWh on the market. (+10 xp)",
                 player,
@@ -244,7 +244,7 @@ def update_player_progress_values(engine, player, new_values):
         if player.exported_energy > 10_000_000_000:
             player.add_to_list("achievements", "network_export_1")
             player.xp += 5
-            utils.notify(
+            website.utils.misc.notify(
                 "Achievements",
                 "You have exported more than 10GWh on the market. (+5 xp)",
                 player,
@@ -253,7 +253,7 @@ def update_player_progress_values(engine, player, new_values):
         if player.exported_energy > 1_000_000_000_000:
             player.add_to_list("achievements", "network_export_2")
             player.xp += 10
-            utils.notify(
+            website.utils.misc.notify(
                 "Achievements",
                 "You have exported more than 1TWh on the market. (+10 xp)",
                 player,
@@ -476,7 +476,9 @@ def calculate_generation_with_market(engine, new_values, market, player):
     demand_priorities = player.demand_priorities.split(",")
 
     if player.money <= 0:
-        utils.notify("Not Enough Money", "You dont have enough money to buy electricity on the market", player)
+        website.utils.misc.notify(
+            "Not Enough Money", "You dont have enough money to buy electricity on the market", player
+        )
     for demand_type in demand_priorities:
         if player.money > 0:
             bid_q = demand[demand_type]
@@ -939,7 +941,7 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
                         "suspension_time": engine.data["total_t"],
                     },
                 )
-                utils.notify(
+                website.utils.misc.notify(
                     "Energy shortage",
                     f"The construction of the facility {engine.const_config['assets'][construction.name]['name']} "
                     "has been suspended because of a lack of electricity.",
@@ -965,7 +967,7 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
                         "suspension_time": engine.data["total_t"],
                     },
                 )
-                utils.notify(
+                website.utils.misc.notify(
                     "Energy shortage",
                     f"The research of the technology {engine.const_config['assets'][construction.name]['name']} "
                     "has been suspended because of a lack of electricity.",
@@ -991,7 +993,7 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
                     "suspension_time": engine.data["total_t"],
                 },
             )
-            utils.notify(
+            website.utils.misc.notify(
                 "Energy shortage",
                 f"The shipment of {last_shipment.resource} has been suspended because of a lack of electricity.",
                 player,

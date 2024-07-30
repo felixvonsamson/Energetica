@@ -165,7 +165,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        from .game_engine import state_update
+        from .utils.game_engine import state_update
 
         scheduler = APScheduler()
         scheduler.init_app(app)

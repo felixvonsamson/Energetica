@@ -12,7 +12,8 @@ from .database.engine_data import CapacityData, CircularBufferNetwork, CircularB
 from .database.map import Hex
 from .database.player import Network, Player
 from .database.player_assets import UnderConstruction
-from .utils import add_player_to_data, data_init_network, init_table
+from .utils.misc import add_player_to_data, init_table
+from .utils.network import data_init_network
 
 
 def init_test_players(engine):
