@@ -1,16 +1,11 @@
-"""
-In this file, the main routes of the website are managed
-"""
+"""In this file, the main routes of the website are managed"""
 
-from flask import Blueprint, redirect, render_template, request
-from flask import g, current_app
-from flask_login import login_required, current_user
+from flask import Blueprint, current_app, g, redirect, render_template, request
+from flask_login import current_user, login_required
 
 from .database.messages import Chat
-
 from .database.player import Player
-from .database.player_assets import Resource_on_sale
-
+from .database.player_assets import ResourceOnSale
 from .technology_effects import (
     get_current_technology_values,
     package_extraction_facilities,
@@ -28,6 +23,7 @@ overviews = Blueprint("overviews", __name__, static_folder="static")
 @overviews.before_request
 @login_required
 def check_user():
+    """This function is called before every request"""
     g.engine = current_app.config["engine"]
     if current_user.tile is not None:
         g.data = get_current_technology_values(current_user)
@@ -56,7 +52,7 @@ def check_user():
                 data=g.data,
             )
         elif page == "resource_market.jinja":
-            on_sale = Resource_on_sale.query.all()
+            on_sale = ResourceOnSale.query.all()
             return render_template(
                 page,
                 engine=g.engine,
@@ -88,13 +84,17 @@ def home():
     return g.render_template_ctx("home.jinja")
 
 
-@views.route("/map")
-def map():
+@views.route("/map_view")
+def map_view():
     return g.render_template_ctx("map.jinja")
 
 
 @views.route("/profile")
 def profile():
+    """
+    This is the endpoint for the profile page.
+    When players are on their own profile page, it can see more information about their account
+    """
     player_id = request.args.get("player_id")
     if player_id is None:
         player_id = current_user.id

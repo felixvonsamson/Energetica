@@ -1,3 +1,6 @@
+"""This file contains the `Hex` class, which contains resource information, and
+which makes up the map"""
+
 from website import db
 
 

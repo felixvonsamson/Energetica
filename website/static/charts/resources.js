@@ -16,16 +16,16 @@ function graph_sketch(s) {
     }
 
     s.draw = function () {
-        if(s.graphics_ready){
+        if (s.graphics_ready) {
             s.image(s.graphics, 0, 0);
-            if(s.is_inside){
+            if (s.is_inside) {
                 if (s.mouseX < s.width - 1.75 * margin) {
                     s.push();
                     s.stroke(255);
                     s.strokeWeight(2);
                     let X = min(s.graph_w, max(0, s.mouseX - margin));
                     t_view = floor(map(X, 0, s.graph_w, 0, data_len - 1));
-                    t_view = min(359, t_view+s.t0);
+                    t_view = min(359, t_view + s.t0);
                     s.translate(margin + X, s.graph_h + 0.2 * margin);
                     s.line(0, 0, 0, -s.graph_h);
                     s.noStroke();
@@ -33,7 +33,7 @@ function graph_sketch(s) {
                     let count = 4;
 
                     for (const key of keys_resources) {
-                        if(key in data.resources){
+                        if (key in data.resources) {
                             s.fill(cols_and_names[key][0]);
                             let h = (data.resources[key][res_id][t_view] / capacities[key]) * s.graph_h;
                             s.ellipse(0, -h, 8, 8);
@@ -54,11 +54,11 @@ function graph_sketch(s) {
                     s.rect(0, 0, 130, 17);
                     s.fill(0);
                     s.textFont(balooBold);
-                    s.text(format_duration_graphs((s.t0 + data_len - t_view - 1) * res_to_factor[res]), 65, 5);
+                    s.text(ticks_to_time((s.t0 + data_len - t_view - 1) * res_to_factor[res]), 65, 5);
                     s.textFont(font);
                     s.translate(0, 16);
                     for (const key of keys_resources) {
-                        if(key in data.resources){
+                        if (key in data.resources) {
                             alternate_fill(s);
                             s.rect(0, 0, 130, 17);
                             s.fill(cols_and_names[key][0]);
@@ -72,41 +72,41 @@ function graph_sketch(s) {
                         }
                     }
                     s.pop();
-                }else if (s.mouseY < 0.2 * margin + s.bar_h + s.bar_spacing){
+                } else if (s.mouseY < 0.2 * margin + s.bar_h + s.bar_spacing) {
                     show_stored(s, "coal", s.width - 1.5 * margin, s.mouseY, 0.5 * s.bar_h);
-                }else if (s.mouseY < 0.2 * margin + 2 * (s.bar_h + s.bar_spacing)){
+                } else if (s.mouseY < 0.2 * margin + 2 * (s.bar_h + s.bar_spacing)) {
                     show_stored(s, "gas", s.width - 1.5 * margin, s.mouseY, 1.5 * s.bar_h + s.bar_spacing);
-                }else{
+                } else {
                     show_stored(s, "uranium", s.width - 1.5 * margin, s.mouseY, 2.5 * s.bar_h + 2 * s.bar_spacing);
                 }
             }
         }
     }
 
-    s.mouseMoved = function() {
-        if (s.mouseX>0 && s.mouseX<s.width && s.mouseY>0 && s.mouseY<s.height){
+    s.mouseMoved = function () {
+        if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0 && s.mouseY < s.height) {
             s.is_inside = true;
             s.redraw();
-        }else{
-            if(s.is_inside){
+        } else {
+            if (s.is_inside) {
                 s.is_inside = false;
                 s.redraw();
             }
         }
     }
 
-    s.mouseDragged = function() {
+    s.mouseDragged = function () {
         s.mouseMoved();
     }
 
-    s.render_graph = function (regen_table=true) {
+    s.render_graph = function (regen_table = true) {
         s.graph_h = s.height - margin;
         s.graph_w = s.width - 3 * margin;
         s.graphics.background(229, 217, 182);
 
         data_len = 360;
         s.t0 = 0;
-        if (res == resolution_list[0]){
+        if (res == resolution_list[0]) {
             data_len = 60;
             s.t0 = 300;
         }
@@ -114,9 +114,9 @@ function graph_sketch(s) {
         retrieve_resource_data().then(() => {
             load_player_data().then((player_data) => {
                 capacities = {};
-                for (const key of keys_resources){
+                for (const key of keys_resources) {
                     capacities[key] = player_data.config.warehouse_capacities[key]
-                    s.rates[key] = (data.resources[key][0].at(-1) - data.resources[key][0].at(-2)) * 3600 / clock_time;
+                    s.rates[key] = (data.resources[key][0].at(-1) - data.resources[key][0].at(-2)) * 3600 / in_game_seconds_per_tick;
                 }
 
                 s.graphics.push();
@@ -125,7 +125,7 @@ function graph_sketch(s) {
                 s.graphics.push();
                 s.graphics.strokeWeight(3);
                 for (const key of keys_resources) {
-                    if(key in data.resources){
+                    if (key in data.resources) {
                         s.graphics.stroke(cols_and_names[key][0]);
                         s.graphics.push();
                         for (let t = 1 + s.t0; t < data_len + s.t0; t++) {
@@ -158,7 +158,7 @@ function graph_sketch(s) {
                 s.graphics.pop();
 
                 s.graphics.push();
-                let y_ticks = y_units_bounded(s.graph_h, 0, 100, divisions=4);
+                let y_ticks = y_units_bounded(s.graph_h, 0, 100, divisions = 4);
                 s.graphics.fill(0);
                 for (let i in y_ticks) {
                     s.graphics.stroke(0, 0, 0, 30);
@@ -259,7 +259,7 @@ function show_stored(s, resource, x, y, y_fix) {
     s.translate(x, y_fix);
     s.fill(229, 217, 182);
     s.noStroke();
-    s.rect(-5, 0, 0.6*margin + 10, 20);
+    s.rect(-5, 0, 0.6 * margin + 10, 20);
     s.textFont(balooBold);
     s.fill(0);
     s.text(

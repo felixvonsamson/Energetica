@@ -1,25 +1,32 @@
-"""
-These functions make the link between the website and the database
-"""
+"""These functions make the link between the website and the database"""
 
-from flask import Blueprint, request, flash, jsonify, g, current_app, redirect
-from flask_login import current_user
-import pickle
 import json
-import numpy as np
+import pickle
 from datetime import datetime
-from pathlib import Path
 from functools import wraps
-from website import utils
-from ..config import wind_power_curve
-from ..database.map import Hex
-from ..database.player import Network, Player
-from ..technology_effects import get_current_technology_values
+from pathlib import Path
+
+import numpy as np
+from flask import Blueprint, current_app, flash, g, jsonify, redirect, request
+from flask_login import current_user
+
+import website.utils.assets
+import website.utils.chat
+import website.utils.network
+import website.utils.resource_market
+from website.config import wind_power_curve
+from website.database.map import Hex
+from website.database.player import Network, Player
+from website.technology_effects import get_current_technology_values
+from website.utils import misc
 
 http = Blueprint("http", __name__)
 
 
 def combined_authenticator(func):
+    """This decorator checks if the user is authenticated either through httpauth or flask_login"""
+
+    # TODO: This still need to be tested
     @wraps(func)
     def wrapper(*args, **kwargs):
         if not current_user.is_authenticated:
@@ -30,6 +37,8 @@ def combined_authenticator(func):
 
 
 def log_action(func):
+    """This decorator logs all endpoint actions of the players"""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         log_entry = {
@@ -51,25 +60,31 @@ def log_action(func):
 @http.before_request
 @combined_authenticator
 def check_user():
+    """
+    Sets `g.engine` to point to the engine object. Executed before all
+    `@http` request
+    """
     g.engine = current_app.config["engine"]
 
 
 @http.route("/request_delete_notification", methods=["POST"])
 def request_delete_notification():
     """
-    this function is executed when a player deletes a notification
+    Endpoint for requesting the deletion of a notification
+    Request Payload:
+        {
+            "id": int  # The ID of the notification to be deleted
+        }
     """
-    json = request.get_json()
-    notification_id = json["id"]
+    request_data = request.get_json()
+    notification_id = request_data["id"]
     current_user.delete_notification(notification_id)
     return jsonify({"response": "success"})
 
 
 @http.route("/request_marked_as_read", methods=["GET"])
 def request_marked_as_read():
-    """
-    this function is executed when a player read the notifications
-    """
+    """Endpoint for marking all notification as read"""
     current_user.notifications_read()
     return jsonify({"response": "success"})
 
@@ -113,6 +128,7 @@ def get_map():
 # gets all the network names and returns it as a list :
 @http.route("/get_networks", methods=["GET"])
 def get_networks():
+    """gets all the network names and returns it as a list"""
     network_list = Network.query.with_entities(Network.name).all()
     network_list = [name[0] for name in network_list]
     return jsonify(network_list)
@@ -128,6 +144,7 @@ def get_chat_messages():
 
 @http.route("/get_chat_list", methods=["GET"])
 def get_chat_list():
+    """gets the list of chats for the current player"""
     response = current_user.package_chat_list()
     return jsonify(response)
 
@@ -144,6 +161,8 @@ def get_resource_data():
 # Gets the data for the overview charts
 @http.route("/get_chart_data", methods=["GET"])
 def get_chart_data():
+    """gets the data for the charts"""
+
     def calculate_mean_subarrays(array, x):
         return [np.mean(array[i : i + x]) for i in range(0, len(array), x)]
 
@@ -208,6 +227,7 @@ def get_network_capacities():
 # Gets the data from the market for the market graph
 @http.route("/get_market_data", methods=["GET"])
 def get_market_data():
+    """gets the data for the market graph at a specific tick"""
     market_data = {}
     if current_user.network is None:
         return "", 404
@@ -243,6 +263,7 @@ def get_player_data():
 
 @http.route("/get_resource_reserves", methods=["GET"])
 def get_resource_reserves():
+    """Gets the natural resources reserves for this player"""
     reserves = current_user.get_reserves()
     return jsonify(reserves)
 
@@ -255,11 +276,12 @@ def get_player_id():
 
 @http.route("/get_players", methods=["GET"])
 def get_players():
+    """Gets all the players information"""
     return jsonify(Player.package_all())
 
 
-@http.route("/get_generation_prioirity", methods=["GET"])
-def get_generation_prioirity():
+@http.route("/get_generation_priority", methods=["GET"])
+def get_generation_priority():
     """Gets generation and demand priority for this player"""
     renewable_priorities = current_user.read_list("self_consumption_priority")
     rest_of_priorities = current_user.read_list("rest_of_priorities")
@@ -307,10 +329,10 @@ def get_active_facilities():
 @log_action
 def choose_location():
     """this function is executed when a player choses a location"""
-    json = request.get_json()
-    selected_id = json["selected_id"]
+    request_data = request.get_json()
+    selected_id = request_data["selected_id"]
     location = Hex.query.get(selected_id + 1)
-    confirm_location_response = utils.confirm_location(engine=g.engine, player=current_user, location=location)
+    confirm_location_response = misc.confirm_location(engine=g.engine, player=current_user, location=location)
     return jsonify(confirm_location_response)
 
 
@@ -322,11 +344,11 @@ def request_start_project():
     * initiates the construction or upgrades a building or facility
     * starts a technology research
     """
-    json = request.get_json()
-    facility = json["facility"]
-    family = json["family"]
-    force = json["force"]
-    response = utils.start_project(
+    request_data = request.get_json()
+    facility = request_data["facility"]
+    family = request_data["family"]
+    force = request_data["force"]
+    response = website.utils.assets.start_project(
         engine=g.engine,
         player=current_user,
         facility=facility,
@@ -339,96 +361,93 @@ def request_start_project():
 @http.route("/request_cancel_project", methods=["POST"])
 @log_action
 def request_cancel_project():
-    """
-    this function is executed when a player cancels an ongoing construction or upgrade
-    """
-    json = request.get_json()
-    construction_id = json["id"]
-    force = json["force"]
-    response = utils.cancel_project(player=current_user, construction_id=construction_id, force=force)
+    """This function is executed when a player cancels an ongoing construction or upgrade."""
+    request_data = request.get_json()
+    construction_id = request_data["id"]
+    force = request_data["force"]
+    response = website.utils.assets.cancel_project(player=current_user, construction_id=construction_id, force=force)
     return jsonify(response)
 
 
 @http.route("/request_pause_project", methods=["POST"])
 @log_action
 def request_pause_project():
-    """
-    this function is executed when a player pauses or unpauses an ongoing construction or upgrade
-    """
-    json = request.get_json()
-    construction_id = json["id"]
-    response = utils.pause_project(player=current_user, construction_id=construction_id)
+    """This function is executed when a player pauses or unpauses an ongoing construction or upgrade."""
+    request_data = request.get_json()
+    construction_id = request_data["id"]
+    response = website.utils.assets.pause_project(player=current_user, construction_id=construction_id)
     return jsonify(response)
 
 
 @http.route("/request_pause_shipment", methods=["POST"])
 @log_action
 def request_pause_shipment():
-    """
-    this function is executed when a player pauses or unpauses an ongoing construction or upgrade
-    """
-    json = request.get_json()
-    shipment_id = json["id"]
-    response = utils.pause_shipment(player=current_user, shipment_id=shipment_id)
+    """This function is executed when a player pauses or unpauses an ongoing construction or upgrade."""
+    request_data = request.get_json()
+    shipment_id = request_data["id"]
+    response = website.utils.resource_market.pause_shipment(player=current_user, shipment_id=shipment_id)
     return jsonify(response)
 
 
 @http.route("/request_decrease_project_priority", methods=["POST"])
 @log_action
 def request_decrease_project_priority():
-    """
-    this function is executed when a player changes the order of ongoing constructions or upgrades
-    """
-    json = request.get_json()
-    construction_id = json["id"]
-    response = utils.decrease_project_priority(player=current_user, construction_id=construction_id)
+    """This function is executed when a player changes the order of ongoing constructions or upgrades."""
+    request_data = request.get_json()
+    construction_id = request_data["id"]
+    response = website.utils.assets.decrease_project_priority(player=current_user, construction_id=construction_id)
     return jsonify(response)
 
 
 @http.route("/request_upgrade_facility", methods=["POST"])
 @log_action
 def request_upgrade_facility():
-    json = request.get_json()
-    facility_id = json["facility_id"]
-    response = utils.upgrade_facility(player=current_user, facility_id=facility_id)
+    """This function is executed when a player wants to upgrades a facility"""
+    request_data = request.get_json()
+    facility_id = request_data["facility_id"]
+    response = website.utils.assets.upgrade_facility(player=current_user, facility_id=facility_id)
     return jsonify(response)
 
 
 @http.route("/request_upgrade_all_of_type", methods=["POST"])
 @log_action
 def request_upgrade_all_of_type():
-    json = request.get_json()
-    facility_id = json["facility_id"]
-    response = utils.upgrade_all_of_type(player=current_user, facility_id=facility_id)
+    """This function is executed when a player wants to upgrades all facilities of a certain type"""
+    request_data = request.get_json()
+    facility_id = request_data["facility_id"]
+    response = website.utils.assets.upgrade_all_of_type(player=current_user, facility_id=facility_id)
     return jsonify(response)
 
 
 @http.route("/request_dismantle_facility", methods=["POST"])
 @log_action
 def request_dismantle_facility():
-    json = request.get_json()
-    facility_id = json["facility_id"]
-    response = utils.dismantle_facility(player=current_user, facility_id=facility_id)
+    """This function is executed when a player wants to dismantle a facility"""
+    request_data = request.get_json()
+    facility_id = request_data["facility_id"]
+    response = website.utils.assets.dismantle_facility(player=current_user, facility_id=facility_id)
     return jsonify(response)
 
 
 @http.route("/request_dismantle_all_of_type", methods=["POST"])
 @log_action
 def request_dismantle_all_of_type():
-    json = request.get_json()
-    facility_id = json["facility_id"]
-    response = utils.dismantle_all_of_type(player=current_user, facility_id=facility_id)
+    """This function is executed when a player wants to dismantle all facilities of a certain type"""
+    request_data = request.get_json()
+    facility_id = request_data["facility_id"]
+    response = website.utils.assets.dismantle_all_of_type(player=current_user, facility_id=facility_id)
     return jsonify(response)
 
 
 @http.route("/change_network_prices", methods=["POST"])
 @log_action
 def change_network_prices():
-    """this function is executed when a player changes the prices for anything
-    on the network"""
-    json = request.get_json()
-    prices = json["prices"]
-    response = utils.set_network_prices(engine=g.engine, player=current_user, prices=prices)
+    """this function is executed when a player changes the prices for anything on the network"""
+    request_data = request.get_json()
+    updated_prices = request_data["prices"]
+    response = website.utils.network.set_network_prices(
+        engine=g.engine, player=current_user, updated_prices=updated_prices
+    )
     return jsonify(response)
 
 
@@ -436,9 +455,9 @@ def change_network_prices():
 @log_action
 def request_change_facility_priority():
     """this function is executed when a player changes the generation priority"""
-    json = request.get_json()
-    priority = json["priority"]
-    response = utils.change_facility_priority(engine=g.engine, player=current_user, priority=priority)
+    request_data = request.get_json()
+    priority = request_data["priority"]
+    response = website.utils.network.change_facility_priority(engine=g.engine, player=current_user, priority=priority)
     return jsonify(response)
 
 
@@ -449,7 +468,7 @@ def put_resource_on_sale():
     resource = request.form.get("resource")
     quantity = float(request.form.get("quantity")) * 1000
     price = float(request.form.get("price")) / 1000
-    utils.put_resource_on_market(current_user, resource, quantity, price)
+    website.utils.resource_market.put_resource_on_market(current_user, resource, quantity, price)
     return redirect("/resource_market", code=303)
 
 
@@ -457,10 +476,10 @@ def put_resource_on_sale():
 @log_action
 def buy_resource():
     """Parse the HTTP form for buying resources"""
-    json = request.get_json()
-    sale_id = int(json["id"])
-    quantity = float(json["quantity"]) * 1000
-    response = utils.buy_resource_from_market(current_user, quantity, sale_id)
+    request_data = request.get_json()
+    sale_id = int(request_data["id"])
+    quantity = float(request_data["quantity"]) * 1000
+    response = website.utils.resource_market.buy_resource_from_market(current_user, quantity, sale_id)
     return jsonify(response)
 
 
@@ -470,7 +489,7 @@ def join_network():
     """player is trying to join a network"""
     network_name = request.form.get("choose_network")
     network = Network.query.filter_by(name=network_name).first()
-    utils.join_network(g.engine, current_user, network)
+    website.utils.network.join_network(g.engine, current_user, network)
     flash(f"You joined the network {network_name}", category="message")
     g.engine.log(f"{current_user.username} joined the network {current_user.network.name}")
     return redirect("/network", code=303)
@@ -481,7 +500,7 @@ def join_network():
 def create_network():
     """This endpoint is used when a player creates a network"""
     network_name = request.form.get("network_name")
-    response = utils.create_network(g.engine, current_user, network_name)
+    response = website.utils.network.create_network(g.engine, current_user, network_name)
     if response["response"] == "nameLengthInvalid":
         flash("Network name must be between 3 and 40 characters", category="error")
         return redirect("/network", code=303)
@@ -497,7 +516,7 @@ def create_network():
 def leave_network():
     """this endpoint is called when a player leaves their network"""
     network = current_user.network
-    response = utils.leave_network(g.engine, current_user)
+    response = website.utils.network.leave_network(g.engine, current_user)
     if response["response"] == "success":
         flash(f"You left network {network.name}", category="message")
     return redirect("/network", code=303)
@@ -505,44 +524,55 @@ def leave_network():
 
 @http.route("hide_chat_disclaimer", methods=["GET"])
 def hide_chat_disclaimer():
-    """this endpoint is called when a player selects 'don't show again' on the chat disclamer"""
-    utils.hide_chat_disclaimer(current_user)
+    """this endpoint is called when a player selects 'don't show again' on the chat disclaimer"""
+    website.utils.chat.hide_chat_disclaimer(current_user)
     return jsonify({"response": "success"})
 
 
 @http.route("create_chat", methods=["POST"])
 def create_chat():
     """this endpoint is called when a player creates a chat with one other player"""
-    json = request.get_json()
-    buddy_username = json["buddy_username"]
-    response = utils.create_chat(current_user, buddy_username)
+    request_data = request.get_json()
+    buddy_username = request_data["buddy_username"]
+    response = website.utils.chat.create_chat(current_user, buddy_username)
     return jsonify(response)
 
 
 @http.route("create_group_chat", methods=["POST"])
 def create_group_chat():
     """this endpoint is called when a player creates a group chat"""
-    json = request.get_json()
-    chat_title = json["chat_title"]
-    group_memebers = json["group_memebers"]
-    response = utils.create_group_chat(current_user, chat_title, group_memebers)
+    request_data = request.get_json()
+    chat_title = request_data["chat_title"]
+    group_members = request_data["group_members"]
+    response = website.utils.chat.create_group_chat(current_user, chat_title, group_members)
     return jsonify(response)
 
 
 @http.route("new_message", methods=["POST"])
 def new_message():
     """this endpoint is called when a player writes a new message"""
-    json = request.get_json()
-    message = json["new_message"]
-    chat_id = json["chat_id"]
-    response = utils.add_message(current_user, message, chat_id)
+    request_data = request.get_json()
+    message = request_data["new_message"]
+    chat_id = request_data["chat_id"]
+    response = website.utils.chat.add_message(current_user, message, chat_id)
     return response
 
 
 @http.route("change_graph_view", methods=["POST"])
 def change_graph_view():
     """this endpoint is called when a player changes the view mode for the graphs (basic, normal, expert)"""
-    json = request.get_json()
-    view = json["view"]
+    request_data = request.get_json()
+    view = request_data["view"]
     current_user.change_graph_view(view)
+    return jsonify({"response": "success"})
+
+
+@http.route("test_notification", methods=["GET"])
+def test_notification():
+    """this endpoint is used to send a dummy notification to the player"""
+    notification_data = {
+        "title": "Test notification",
+        "body": f"{g.engine.data['total_t']} ({datetime.now()})",
+    }
+    current_user.send_notification(notification_data)
     return jsonify({"response": "success"})

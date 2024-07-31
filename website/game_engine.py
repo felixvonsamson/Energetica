@@ -1,29 +1,19 @@
-"""
-Here is the logic for the engine of the game
-"""
+"""Here is the logic for the engine of the game"""
 
+import logging
+import math
+import pickle
 from collections import defaultdict
 from datetime import datetime
-import math
-import time
-import pickle
-import json
-import logging
-
-from .database.engine_data import EmissionData, WeatherData
-from . import db
-from .database.player_assets import (
-    Under_construction,
-    Shipment,
-    Active_facilities,
-)
-from website import utils
 
 from .config import config, const_config
+from .database.engine_data import EmissionData, WeatherData
 
 
 # This is the engine object
-class gameEngine(object):
+class GameEngine(object):
+    """This class is the engine of the game. It contains all the data and methods to run the game."""
+
     def __init__(self, clock_time, in_game_seconds_per_tick):
         self.clock_time = clock_time
         self.in_game_seconds_per_tick = in_game_seconds_per_tick
@@ -130,7 +120,7 @@ class gameEngine(object):
         last_midnight = self.data["start_date"].replace(hour=0, minute=0, second=0, microsecond=0)
         # time shift for daily industry variation
         self.data["delta_t"] = round((self.data["start_date"] - last_midnight).total_seconds() // self.clock_time)
-        # transform start_date to a seconds timestamp coresponding to the time of the first tick
+        # transform start_date to a seconds timestamp corresponding to the time of the first tick
         self.data["start_date"] = math.floor(self.data["start_date"].timestamp() / clock_time) * clock_time
 
         # stored the levels of technology of the server
@@ -162,6 +152,7 @@ class gameEngine(object):
         self.data["weather"].update_weather(self)
 
     def init_loggers(self):
+        """Initializes the loggers for the engine"""
         self.console_logger.setLevel(logging.INFO)
         s_handler = logging.StreamHandler()
         s_handler.setLevel(logging.INFO)
@@ -174,26 +165,10 @@ class gameEngine(object):
         f_handler.setLevel(logging.INFO)
         self.action_logger.addHandler(f_handler)
 
-    # reload page for all users
     def refresh(self):
+        """Sends a refresh signal to all clients"""
+        # TODO: Do we need this method?
         self.socketio.emit("refresh")
-
-    def display_new_message(self, message, chat):
-        """Sends chat message to all relevant sources through socketio and websocket"""
-        from website.api import websocket
-
-        websocket_message = websocket.rest_new_chat_message(chat.id, message)
-        for player in chat.participants:
-            player.emit(
-                "display_new_message",
-                {
-                    "time": message.time.isoformat(),
-                    "player_id": message.player_id,
-                    "text": message.text,
-                    "chat_id": message.chat_id,
-                },
-            )
-            websocket.rest_notify_player(self, player, websocket_message)
 
     # logs a message with the current time in the terminal
     def log(self, message):
@@ -210,72 +185,3 @@ class gameEngine(object):
             "total_ticks": self.data["total_t"],
             "co2_emissions": self.data["emissions"]["CO2"],
         }
-
-
-from .production_update import update_electricity  # noqa: E402
-
-
-# function that is executed once every 1 minute :
-def state_update(engine, app):
-    total_t = (time.time() - engine.data["start_date"]) / engine.clock_time
-    while engine.data["total_t"] < total_t - 1:
-        engine.data["total_t"] += 1
-        engine.log(f"t = {engine.data['total_t']}")
-        if engine.data["total_t"] % 216 == 0:
-            utils.save_past_data_threaded(app, engine)
-        with app.app_context():
-            if engine.data["total_t"] % (600 / engine.clock_time) == 0:
-                engine.data["weather"].update_weather(engine)
-            log_entry = {
-                "timestamp": datetime.now().isoformat(),
-                "endpoint": "update_electricity",
-                "total_t": engine.data["total_t"],
-            }
-            engine.action_logger.info(json.dumps(log_entry))
-            update_electricity(engine=engine)
-            check_finished_constructions(engine)
-
-    # save engine every minute in case of server crash
-    if engine.data["total_t"] % (60 / engine.clock_time) == 0:
-        with open("instance/engine_data.pck", "wb") as file:
-            pickle.dump(engine.data, file)
-    with app.app_context():
-        # TODO: perhaps only run the below code conditionally on there being active ws connections
-        from website.api import websocket
-
-        websocket.rest_notify_scoreboard(engine)
-        websocket.rest_notify_weather(engine)
-        websocket.rest_notify_global_data(engine)
-
-
-def check_finished_constructions(engine):
-    """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
-    # check if constructions finished
-    finished_constructions = Under_construction.query.filter(
-        Under_construction.suspension_time.is_(None),
-        Under_construction.start_time + Under_construction.duration <= engine.data["total_t"],
-    ).all()
-    if finished_constructions:
-        for fc in finished_constructions:
-            utils.add_asset(fc.player_id, fc.id)
-            db.session.delete(fc)
-        db.session.commit()
-
-    # check if shipment arrived
-    arrived_shipments = Shipment.query.filter(
-        Shipment.departure_time.isnot(None),
-        Shipment.suspension_time.is_(None),
-        Shipment.departure_time + Shipment.duration <= engine.data["total_t"],
-    ).all()
-    if arrived_shipments:
-        for a_s in arrived_shipments:
-            utils.store_import(a_s.player, a_s.resource, a_s.quantity)
-            db.session.delete(a_s)
-        db.session.commit()
-
-    # check end of lifespan of facilites
-    eolt_facilities = Active_facilities.query.filter(Active_facilities.end_of_life <= engine.data["total_t"]).all()
-    if eolt_facilities:
-        for facility in eolt_facilities:
-            utils.remove_asset(facility.player_id, facility)
-        db.session.commit()

@@ -4,12 +4,14 @@ facilities according to the technology levels of the player.
 """
 
 import math
+
 from flask import current_app
 
-from website import gameEngine
+import website.game_engine as game_engine
 from website.database.map import Hex
 from website.database.player import Player
-from .database.player_assets import Active_facilities, Under_construction
+
+from .database.player_assets import ActiveFacilities, UnderConstruction
 
 
 def price_multiplier(player, facility):
@@ -112,7 +114,7 @@ def efficiency_multiplier(player, facility):
                 + 1 / thermodynamic_factor
             )
         mlt *= thermodynamic_factor
-    # Mineral extraction (in this case the the multiplicator is for emissions)
+    # Mineral extraction (in this case the the multiplier is for emissions)
     if facility in const_config["mineral_extraction"]["affected_facilities"]:
         mlt += const_config["mineral_extraction"]["pollution_factor"] * player.mineral_extraction
     # Chemistry
@@ -130,8 +132,8 @@ def efficiency_multiplier(player, facility):
         "onshore_wind_turbine",
         "offshore_wind_turbine",
     ]:
-        active_facilities = Active_facilities.query.filter_by(facility=facility, player_id=player.id).all()
-        under_construction = Under_construction.query.filter_by(name=facility, player_id=player.id).all()
+        active_facilities = ActiveFacilities.query.filter_by(facility=facility, player_id=player.id).all()
+        under_construction = UnderConstruction.query.filter_by(name=facility, player_id=player.id).all()
         # Create a set of used efficiency multipliers
         used_locations = {af.efficiency_multiplier for af in active_facilities}
         used_locations.update(uc.efficiency_multiplier for uc in under_construction)
@@ -228,11 +230,6 @@ def construction_pollution_per_tick(player, facility):
     return pollution
 
 
-def time_multiplier():
-    """dilatation foactor dependent on clock_time"""
-    return (current_app.config["engine"].clock_time / 60) ** 0.5
-
-
 def hydro_price_function(count, potential):
     """price multiplier coefficient, for the `count`th hydro facility of a particular type, given the hydro potential"""
     return 0.6 + (math.e ** (0.6 * (count + 1 - 3 * potential) / (0.3 + potential)))
@@ -264,7 +261,7 @@ def requirements_met(requirements):
 
 
 def facility_requirements_and_locked(player, facility):
-    """Returns a dictionnary with both requirements and locked status"""
+    """Returns a dictionary with both requirements and locked status"""
     requirements = facility_requirements(player, facility)
     locked = requirements_met(requirements)
     return {"requirements": requirements, "locked": locked}
@@ -348,7 +345,7 @@ def get_current_technology_values(player):
 
 def _package_facility_base(player: Player, facility):
     """Gets data shared between power, storage, extraction, and functional facilities"""
-    engine: gameEngine = current_app.config["engine"]
+    engine: game_engine.GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
         "name": facility,
@@ -370,8 +367,8 @@ def _package_facility_base(player: Player, facility):
 
 
 def _package_power_generating_facility_base(player: Player, facility):
-    """Gets all data shared by power and storage facilites"""
-    engine: gameEngine = current_app.config["engine"]
+    """Gets all data shared by power and storage facilities"""
+    engine: game_engine.GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
         "power_generation": const_config_assets[facility]["base_power_generation"] * power_multiplier(player, facility),
@@ -381,14 +378,15 @@ def _package_power_generating_facility_base(player: Player, facility):
         "ramping_speed": const_config_assets[facility]["base_power_generation"]
         * power_multiplier(player, facility)
         / const_config_assets[facility]["ramping_time"]
+        * 60
         if const_config_assets[facility]["ramping_time"] != 0
         else None,
     }
 
 
 def _package_power_storage_extraction_facility_base(player: Player, facility):
-    """Gets all data shared by power, storage, and extraction facilites"""
-    engine: gameEngine = current_app.config["engine"]
+    """Gets all data shared by power, storage, and extraction facilities"""
+    engine: game_engine.GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
         "construction_pollution": const_config_assets[facility]["base_construction_pollution"],
@@ -399,7 +397,7 @@ def _package_power_storage_extraction_facility_base(player: Player, facility):
             if facility in ["watermill", "small_water_dam", "large_water_dam"]
             else 1.0
         )
-        * const_config_assets[facility]["O&M_factor"]
+        * const_config_assets[facility]["O&M_factor_per_day"]
         / 24,
         "lifespan": const_config_assets[facility]["lifespan"] / engine.in_game_seconds_per_tick,
     }
@@ -408,7 +406,7 @@ def _package_power_storage_extraction_facility_base(player: Player, facility):
 def package_power_facilities(player: Player):
     """Gets all data relevant for the power_facilities frontend"""
     # TODO: add wind and hydro potential
-    engine: gameEngine = current_app.config["engine"]
+    engine: game_engine.GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return [
         _package_facility_base(player, power_facility)
@@ -431,7 +429,7 @@ def package_power_facilities(player: Player):
 
 def package_storage_facilities(player: Player):
     """Gets all data relevant for the storage_facilities frontend"""
-    engine: gameEngine = current_app.config["engine"]
+    engine: game_engine.GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return [
         _package_facility_base(player, storage_facility)
@@ -450,7 +448,7 @@ def package_storage_facilities(player: Player):
 
 def package_extraction_facilities(player: Player):
     """Gets all data relevant for the extraction_facilities frontend"""
-    engine: gameEngine = current_app.config["engine"]
+    engine: game_engine.GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     facility_to_resource = {
         "coal_mine": "coal",
@@ -470,7 +468,7 @@ def package_extraction_facilities(player: Player):
         elif resource == "uranium":
             return tile.uranium
         else:
-            raise ValueError(f"unkown resource {resource}")
+            raise ValueError(f"unknown resource {resource}")
 
     return [
         _package_facility_base(player, extraction_facility)
@@ -483,7 +481,7 @@ def package_extraction_facilities(player: Player):
             * efficiency_multiplier(player, extraction_facility),
             "resource_production": {
                 "name": facility_to_resource[extraction_facility],
-                "rate": const_config_assets[extraction_facility]["extraction_rate"]
+                "rate": const_config_assets[extraction_facility]["base_extraction_rate_per_day"]
                 * capacity_multiplier(player, extraction_facility)
                 * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
                 / 24,
@@ -510,7 +508,7 @@ def facility_is_hidden(player: Player, facility):
 
 def package_functional_facilities(player: Player):
     """Gets all data relevant for the functional_facilities frontend"""
-    engine: gameEngine = current_app.config["engine"]
+    engine: game_engine.GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
 
     def package_change(current, upgraded):
@@ -531,8 +529,9 @@ def package_functional_facilities(player: Player):
 
     def industry_hourly_revenues_for_level(level):
         return (
-            const_config_assets["industry"]["base_income"] * const_config_assets["industry"]["income_factor"] ** level
-            + const_config_assets["industry"]["universal_income"]
+            const_config_assets["industry"]["base_income_per_day"]
+            * const_config_assets["industry"]["income_factor"] ** level
+            + const_config_assets["industry"]["universal_income_per_day"]
         ) / 24
 
     def player_lab_workers_for_level(level):
@@ -563,54 +562,54 @@ def package_functional_facilities(player: Player):
             return 0
         else:
             return (
-                const_config_assets["carbon_capture"]["base_absorbtion"]
-                * const_config_assets["carbon_capture"]["absorbtion_factor"] ** level
+                const_config_assets["carbon_capture"]["base_absorption_per_day"]
+                * const_config_assets["carbon_capture"]["absorption_factor"] ** level
                 * engine.data["emissions"]["CO2"]  # TODO: make this part be a client side computation
                 * 60
             )
 
-    indsutry_level_including_ongoing_upgrades = (
+    industry_level_including_ongoing_upgrades = (
         player.industry
-        + Under_construction.query.filter(
-            Under_construction.player_id == player.id,
-            Under_construction.name == "industry",
+        + UnderConstruction.query.filter(
+            UnderConstruction.player_id == player.id,
+            UnderConstruction.name == "industry",
         ).count()
     )
 
     laboratory_level_including_ongoing_upgrades = (
         player.laboratory
-        + Under_construction.query.filter(
-            Under_construction.player_id == player.id,
-            Under_construction.name == "laboratory",
+        + UnderConstruction.query.filter(
+            UnderConstruction.player_id == player.id,
+            UnderConstruction.name == "laboratory",
         ).count()
     )
 
     warehouse_level_including_ongoing_upgrades = (
         player.warehouse
-        + Under_construction.query.filter(
-            Under_construction.player_id == player.id,
-            Under_construction.name == "warehouse",
+        + UnderConstruction.query.filter(
+            UnderConstruction.player_id == player.id,
+            UnderConstruction.name == "warehouse",
         ).count()
     )
 
     carbon_capture_level_including_ongoing_upgrades = (
         player.carbon_capture
-        + Under_construction.query.filter(
-            Under_construction.player_id == player.id,
-            Under_construction.name == "carbon_capture",
+        + UnderConstruction.query.filter(
+            UnderConstruction.player_id == player.id,
+            UnderConstruction.name == "carbon_capture",
         ).count()
     )
 
     special_keys = {
         "industry": {
-            "level": indsutry_level_including_ongoing_upgrades + 1,
+            "level": industry_level_including_ongoing_upgrades + 1,
             "average_consumption": package_change(
-                current=industry_average_consumption_for_level(indsutry_level_including_ongoing_upgrades),
-                upgraded=industry_average_consumption_for_level(indsutry_level_including_ongoing_upgrades + 1),
+                current=industry_average_consumption_for_level(industry_level_including_ongoing_upgrades),
+                upgraded=industry_average_consumption_for_level(industry_level_including_ongoing_upgrades + 1),
             ),
             "revenue_generation": package_change(
-                current=industry_hourly_revenues_for_level(indsutry_level_including_ongoing_upgrades),
-                upgraded=industry_hourly_revenues_for_level(indsutry_level_including_ongoing_upgrades + 1),
+                current=industry_hourly_revenues_for_level(industry_level_including_ongoing_upgrades),
+                upgraded=industry_hourly_revenues_for_level(industry_level_including_ongoing_upgrades + 1),
             ),
         },
         "laboratory": {

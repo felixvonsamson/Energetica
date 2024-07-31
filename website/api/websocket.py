@@ -5,14 +5,13 @@ import pickle
 
 from flask import Blueprint, current_app, g
 from flask_httpauth import HTTPBasicAuth
-from werkzeug.security import check_password_hash
 from simple_websocket import ConnectionClosed
+from werkzeug.security import check_password_hash
 
-from website import utils
 from website.database.map import Hex
 from website.database.messages import Chat, Message
 from website.database.player import Network, Player
-from website.gameEngine import gameEngine
+from website.game_engine import GameEngine
 from website.technology_effects import package_constructions_page_data
 
 websocket_blueprint = Blueprint("rest_api", __name__)
@@ -85,7 +84,7 @@ def add_sock_handlers(sock, engine):
                     rest_parse_request(engine, player, ws, uuid, message_data)
                 case message_type:
                     engine.log(
-                        f"Websocket connection from player {player} sent an unkown message of type {message_type}"
+                        f"Websocket connection from player {player} sent an unknown message of type {message_type}"
                     )
 
 
@@ -162,12 +161,12 @@ def rest_get_last_opened_chat(player: Player):
 
 def rest_get_show_chat_disclaimer(player: Player):
     """Gets the flag for if the chat disclaimer should be shown and returns it as a JSON string."""
-    response = {"type": "showChatDisclaimer", "data": player.show_disclamer}
+    response = {"type": "showChatDisclaimer", "data": player.show_disclaimer}
     return json.dumps(response)
 
 
-def rest_get_global_data(engine: gameEngine):
-    """Gets gloabl engine data and returns it as a JSON string"""
+def rest_get_global_data(engine: GameEngine):
+    """Gets global engine data and returns it as a JSON string"""
     response = {"type": "getGlobalData", "data": engine.package_global_data()}
     return json.dumps(response)
 
@@ -473,7 +472,7 @@ def rest_notify_all_players(engine, message):
 
 
 def rest_notify_player(engine, player, message):
-    """send `message` to all of `player`'s active wesocket sessions"""
+    """send `message` to all of `player`'s active websocket sessions"""
     if player.id not in engine.websocket_dict:
         return
     for ws in engine.websocket_dict[player.id]:
@@ -484,7 +483,7 @@ def rest_notify_player(engine, player, message):
 
 
 def rest_notify_player_location(engine, player):
-    """This mehtod is called when player (argument) has chosen a location. This
+    """This method is called when player (argument) has chosen a location. This
     information needs to be relayed to clients, and this methods returns a JSON
     string with this information."""
     message = rest_add_player_location(player)
@@ -494,7 +493,7 @@ def rest_notify_player_location(engine, player):
 
 
 def rest_notify_network_change(engine):
-    """This mehtod is called any change to the state of any network is made.
+    """This method is called any change to the state of any network is made.
     This includes when a network is created, when a player joins a network, and
     when a player leaves a network. These changes are relayed to all connected
     REST clients."""
@@ -508,8 +507,8 @@ def rest_notify_new_player(engine):
     engine.socketio.emit("get_players", Player.package_all())
 
 
-def rest_notify_global_data(engine: gameEngine):
-    """Notify to all ws sessions the new global enginen data"""
+def rest_notify_global_data(engine: GameEngine):
+    """Notify to all ws sessions the new global engine data"""
     message = rest_get_global_data(engine)
     rest_notify_all_players(engine, message)
 

@@ -1,25 +1,23 @@
-from werkzeug.security import generate_password_hash
+"""This module is used to initialize the database with test players and networks."""
+
+import pickle
 from pathlib import Path
 
-from .database.engine_data import CircularBufferNetwork, CircularBufferPlayer, CapacityData
+from werkzeug.security import generate_password_hash
 
-from .database.map import Hex
-
-from .database.player import Network, Player
-from .database.player_assets import (
-    Under_construction,
-)
-from . import db
-import pickle
-from .utils import data_init_network, init_table, add_player_to_data
 from website import technology_effects
 
-
-def edit_database(engine):
-    pass
+from . import db
+from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer
+from .database.map import Hex
+from .database.player import Network, Player
+from .database.player_assets import UnderConstruction
+from .utils.misc import add_player_to_data, init_table
+from .utils.network import data_init_network
 
 
 def init_test_players(engine):
+    """This function initializes the database with test players and networks."""
     player = create_player(engine, "user", "password")
     if player:
         Hex.query.filter_by(id=1).first().player_id = player.id
@@ -92,6 +90,7 @@ def init_test_players(engine):
 
 
 def add_asset(player, asset, n):
+    """This function adds an asset as an instant construction."""
     asset_to_family = {
         "coal_mine": "Extraction facilities",
         "oil_field": "Extraction facilities",
@@ -140,7 +139,7 @@ def add_asset(player, asset, n):
     if asset_to_family[asset] == "Technologies":
         priority_list_name = "research_priorities"
     for i in range(n):
-        new_construction = Under_construction(
+        new_construction = UnderConstruction(
             name=asset,
             family=asset_to_family[asset],
             start_time=0,
@@ -160,6 +159,7 @@ def add_asset(player, asset, n):
 
 
 def create_player(engine, username, password):
+    """This function creates and initializes a player."""
     p = Player.query.filter_by(username=username).first()
     if p is None:
         new_player = Player(
@@ -179,6 +179,7 @@ def create_player(engine, username, password):
 
 
 def create_network(engine, name, members):
+    """This function creates and initializes a network."""
     n = Network.query.filter_by(name=name).first()
     if n is None:
         new_network = Network(name=name, members=members)

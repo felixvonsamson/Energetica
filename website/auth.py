@@ -1,34 +1,36 @@
-"""
-This file contains the functions for authentification and sign-up of users
-"""
+"""This file contains the functions for authentication and sign-up of users."""
 
 from flask import (
     Blueprint,
+    current_app,
+    flash,
+    g,
+    redirect,
     render_template,
     request,
-    flash,
-    redirect,
     url_for,
-    g,
 )
-from flask import current_app
-from .database.player import Player
-from werkzeug.security import generate_password_hash, check_password_hash
-from . import db
-from flask_login import login_user, login_required, logout_user, current_user
+from flask_login import current_user, login_required, login_user, logout_user
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from website.api import websocket
+
+from . import db
+from .database.player import Player
 
 auth = Blueprint("auth", __name__)
 
 
 @auth.before_request
 def check_user():
+    """This function is called before every request"""
     g.engine = current_app.config["engine"]
 
 
 # logic for the login :
 @auth.route("/login", methods=["GET", "POST"])
 def login():
+    """This is the endpoint for an attempt to log in"""
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
@@ -44,7 +46,10 @@ def login():
                 flash("Incorrect password, try again.", category="error")
         else:
             flash(
-                "Username does not exist.<br><b>All accounts created before the 13.06.2024 have been<br>deleted due to a server reset for the 0.9 update.<br>If your account has been deleted, please create a new one.</b>",
+                "Username does not exist.<br><b>All accounts created before "
+                "the 13.06.2024 have been<br>deleted due to a server reset for "
+                "the 0.9 update.<br>If your account has been deleted, please "
+                "create a new one.</b>",
                 category="error",
             )
 
@@ -55,6 +60,7 @@ def login():
 @auth.route("/logout")
 @login_required
 def logout():
+    """This is the endpoint for logging out"""
     g.engine.log(f"{current_user.username} logged out")
     logout_user()
     return redirect(url_for("auth.login"))
@@ -63,6 +69,7 @@ def logout():
 # logic for the sign-up :
 @auth.route("/sign-up", methods=["GET", "POST"])
 def sign_up():
+    """This is the endpoint for creating a new account"""
     if request.method == "POST":
         username = request.form.get("username")
         username = username.strip()

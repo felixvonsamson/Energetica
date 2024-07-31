@@ -1,35 +1,38 @@
-"""
-This code is run once at the start of the game
-"""
+"""This code is run once at the start of the game"""
 
-import platform
 import eventlet
 
 eventlet.monkey_patch(thread=True, time=True)
+# pylint: disable=wrong-import-order,wrong-import-position
+# ruff: noqa: E402
 
+import atexit
+import csv
+import os
+import pickle
+import platform
+import shutil
 import socket
-from flask import Flask, request, jsonify, send_file  # noqa: E402
-from flask_sqlalchemy import SQLAlchemy  # noqa: E402
-import os  # noqa: E402
-import csv  # noqa: E402
-import pickle  # noqa: E402
-from flask_login import LoginManager, current_user  # noqa: E402
-from flask_httpauth import HTTPBasicAuth  # noqa: E402
+from pathlib import Path
+
+from flask import Flask, jsonify, request, send_file
+from flask_apscheduler import APScheduler
+from flask_httpauth import HTTPBasicAuth
+from flask_login import LoginManager, current_user
+from flask_sock import Sock
+from flask_socketio import SocketIO
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash
-from flask_socketio import SocketIO  # noqa: E402
-from flask_sock import Sock  # noqa: E402
-import atexit  # noqa: E402
-from flask_apscheduler import APScheduler  # noqa: E402
-from pathlib import Path  # noqa: E402
-import shutil  # noqa: E402
 
 db = SQLAlchemy()
 
-from .database.player import Player  # noqa: E402
-from website.gameEngine import gameEngine  # noqa: E402
+import website.game_engine
+
+from .database.player import Player
 
 
 def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_instance):
+    """This function sets up the app and the game engine"""
     # gets lock to avoid multiple instances
     if platform.system() == "Linux":
         lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -37,15 +40,16 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
 
     # creates the app :
     app = Flask(__name__)
+    # TODO: move secret key to untracked file
     app.config["SECRET_KEY"] = "psdfjfdf7ehsfdxxnvezartylfzutzngpssdw98w23"
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
-    app.config["VAPID_PUBLIC_KEY"] = open("public_key.txt", "r+").readline().strip("\n")
-    app.config["VAPID_PRIVATE_KEY"] = open("private_key.txt", "r+").readline().strip("\n")
+    app.config["VAPID_PUBLIC_KEY"] = open("public_key.txt", "r+", encoding="utf-8").readline().strip("\n")
+    app.config["VAPID_PRIVATE_KEY"] = open("private_key.txt", "r+", encoding="utf-8").readline().strip("\n")
     app.config["VAPID_CLAIMS"] = {"sub": "mailto:felixvonsamson@gmail.com"}
     db.init_app(app)
 
     # creates the engine (and loading the save if it exists)
-    engine = gameEngine(clock_time, in_game_seconds_per_tick)
+    engine = website.game_engine.GameEngine(clock_time, in_game_seconds_per_tick)
 
     if rm_instance:
         engine.log("removing instance")
@@ -73,10 +77,10 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     add_sock_handlers(sock=sock, engine=engine)
 
     # add blueprints (website repositories) :
-    from .views import views, overviews
-    from .auth import auth
     from .api.http import http
     from .api.websocket import websocket_blueprint
+    from .auth import auth
+    from .views import overviews, views
 
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")
@@ -93,7 +97,8 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
         if request.method == "GET":
             return jsonify({"public_key": app.config["VAPID_PUBLIC_KEY"]})
         subscription = request.json
-        if not subscription.endpoint:
+        print(subscription)
+        if "endpoint" not in subscription:
             return jsonify({"response": "Invalid subscription"})
         engine.notification_subscriptions[current_user.id].append(subscription)
         return jsonify({"response": "Subscription successful"})
@@ -132,10 +137,10 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
                         solar=float(row["solar"]),
                         wind=float(row["wind"]),
                         hydro=float(row["hydro"]),
-                        coal=float(row["coal"]) * engine.clock_time / 60,
-                        oil=float(row["oil"]) * engine.clock_time / 60,
-                        gas=float(row["gas"]) * engine.clock_time / 60,
-                        uranium=float(row["uranium"]) * engine.clock_time / 60,
+                        coal=float(row["coal"]),
+                        oil=float(row["oil"]),
+                        gas=float(row["gas"]),
+                        uranium=float(row["uranium"]),
                     )
                     db.session.add(hex)
                 db.session.commit()
@@ -163,7 +168,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        from .gameEngine import state_update
+        from .utils.game_engine import state_update
 
         scheduler = APScheduler()
         scheduler.init_app(app)
@@ -185,7 +190,6 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
                 # Temporary automated player creation for testing
                 from .init_test_players import init_test_players
 
-                # edit_database(engine)
                 init_test_players(engine)
 
     return socketio, sock, app

@@ -15,8 +15,8 @@ const keys_emissions = {
     "uranium_mine": true,
 };
 
-function graph_sketch(s){
-    s.setup = function() {
+function graph_sketch(s) {
+    s.setup = function () {
         s.percent = "normal";
         s.is_inside = false;
         s.createCanvas(min(canvas_width, 1200), 0.55 * canvas_width);
@@ -28,7 +28,7 @@ function graph_sketch(s){
         s.graphics.textFont(font);
     }
 
-    s.draw = function() {
+    s.draw = function () {
         if (s.graphics_ready) {
             s.image(s.graphics, 0, 0);
             if (s.is_inside) {
@@ -38,8 +38,8 @@ function graph_sketch(s){
                 let X = min(s.graph_w, max(0, s.mouseX - margin));
                 t_view = floor(map(X, 0, s.graph_w, 0, data_len));
                 t_view = min(359, t_view + s.t0);
-                s.translate(margin + X, s.graph_h*s.frac + 0.2 * margin);
-                s.line(0, s.graph_h*(1-s.frac), 0, -s.graph_h*s.frac);
+                s.translate(margin + X, s.graph_h * s.frac + 0.2 * margin);
+                s.line(0, s.graph_h * (1 - s.frac), 0, -s.graph_h * s.frac);
                 s.noStroke();
 
                 let count = 2;
@@ -49,13 +49,13 @@ function graph_sketch(s){
                     positive: s.upper_bound,
                     negative: s.lower_bound,
                 };
-                if(s.percent == "percent"){
+                if (s.percent == "percent") {
                     sum = Object.keys(data.emissions).reduce((acc, group) => {
                         if (keys_emissions[group] === true) {
                             let value = data.emissions[group][res_id][t_view];
-                            if(value > 0){
+                            if (value > 0) {
                                 acc.positive += value;
-                            }else if(value < 0){
+                            } else if (value < 0) {
                                 acc.negative += value;
                             }
                         }
@@ -64,9 +64,9 @@ function graph_sketch(s){
                 }
                 s.push();
                 for (const group in keys_emissions) {
-                    if(group in data.emissions){
+                    if (group in data.emissions) {
                         if (data.emissions[group][res_id][t_view] > 0 && keys_emissions[group]) {
-                            let h = -data.emissions[group][res_id][t_view] * s.graph_h*s.frac / sum.positive;
+                            let h = -data.emissions[group][res_id][t_view] * s.graph_h * s.frac / sum.positive;
                             s.ellipse(0, h, 8, 8);
                             s.translate(0, h);
                             count += 1;
@@ -75,9 +75,9 @@ function graph_sketch(s){
                 }
                 s.pop();
                 for (const group in keys_emissions) {
-                    if(group in data.emissions){
+                    if (group in data.emissions) {
                         if (data.emissions[group][res_id][t_view] < 0 && keys_emissions[group]) {
-                            let h = data.emissions[group][res_id][t_view] * s.graph_h*(1-s.frac) / sum.negative;
+                            let h = data.emissions[group][res_id][t_view] * s.graph_h * (1 - s.frac) / sum.negative;
                             s.ellipse(0, h, 8, 8);
                             s.translate(0, h);
                             count += 1;
@@ -94,21 +94,21 @@ function graph_sketch(s){
                 if (X < 180) {
                     tx = 20;
                 }
-                s.translate(tx, ty + (1-s.frac) * s.graph_h);
+                s.translate(tx, ty + (1 - s.frac) * s.graph_h);
                 fill_alt = 0;
                 alternate_fill(s);
                 s.rect(0, 0, 160, 17);
                 s.fill(0);
                 s.textFont(balooBold);
-                s.text(format_duration_graphs((s.t0 + data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+                s.text(ticks_to_time((s.t0 + data_len - t_view - 1) * res_to_factor[res]), 80, 5);
                 s.textFont(font);
                 s.translate(0, 16);
-                
+
                 let cumsum = 0;
-                for(const group of Object.keys(keys_emissions).reverse()){
-                    if(group in data.emissions){
-                        let value = data.emissions[group][res_id][t_view]*3600/clock_time;
-                        if(value != 0 && keys_emissions[group]){
+                for (const group of Object.keys(keys_emissions).reverse()) {
+                    if (group in data.emissions) {
+                        let value = data.emissions[group][res_id][t_view] * 3600 / in_game_seconds_per_tick;
+                        if (value != 0 && keys_emissions[group]) {
                             cumsum += value;
                             alternate_fill(s);
                             s.rect(0, 0, 160, 17);
@@ -136,30 +136,30 @@ function graph_sketch(s){
         }
     }
 
-    s.mouseMoved = function() {
-        if (s.mouseX>0 && s.mouseX<s.width && s.mouseY>0 && s.mouseY<s.height){
+    s.mouseMoved = function () {
+        if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0 && s.mouseY < s.height) {
             s.is_inside = true;
             s.redraw();
-        }else{
-            if(s.is_inside){
+        } else {
+            if (s.is_inside) {
                 s.is_inside = false;
                 s.redraw();
             }
         }
     }
 
-    s.mouseDragged = function() {
+    s.mouseDragged = function () {
         s.mouseMoved();
     }
 
-    s.render_graph = function(regen_table=true){
+    s.render_graph = function (regen_table = true) {
         s.graph_h = s.height - margin;
         s.graph_w = s.width - 2 * margin;
         s.graphics.background(229, 217, 182);
 
         data_len = 360;
         s.t0 = 0;
-        if (res == resolution_list[0]){
+        if (res == resolution_list[0]) {
             data_len = 60;
             s.t0 = 300;
         }
@@ -185,21 +185,21 @@ function graph_sketch(s){
         s.frac = s.upper_bound / (s.upper_bound - s.lower_bound); // fraction of positive range in the graph
 
         s.graphics.push();
-        s.graphics.translate(margin, 0.2 * margin + s.graph_h*s.frac);
+        s.graphics.translate(margin, 0.2 * margin + s.graph_h * s.frac);
         s.graphics.noStroke();
 
         s.graphics.push();
-        for (let t = s.t0; t < s.t0+data_len; t++) {
+        for (let t = s.t0; t < s.t0 + data_len; t++) {
             s.graphics.push();
             let sum = {
                 upper: s.upper_bound,
                 lower: s.lower_bound,
             };
-            if(s.percent == "percent"){
+            if (s.percent == "percent") {
                 sum = Object.keys(data.emissions).reduce((acc, group) => {
                     let value = data.emissions[group][res_id][t];
-                    if(keys_emissions[group] === true && value !=0){
-                        if(value > 0){
+                    if (keys_emissions[group] === true && value != 0) {
+                        if (value > 0) {
                             acc.upper += value;
                         } else {
                             acc.lower += value;
@@ -210,10 +210,10 @@ function graph_sketch(s){
             }
             s.graphics.push();
             for (const group in keys_emissions) {
-                if(group in data.emissions){
+                if (group in data.emissions) {
                     if (data.emissions[group][res_id][t] > 0 && keys_emissions[group]) {
                         s.graphics.fill(cols_and_names[group][0]);
-                        let h = data.emissions[group][res_id][t] * s.graph_h*s.frac / sum.upper;
+                        let h = data.emissions[group][res_id][t] * s.graph_h * s.frac / sum.upper;
                         s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
                         s.graphics.translate(0, -h);
                     }
@@ -221,10 +221,10 @@ function graph_sketch(s){
             }
             s.graphics.pop();
             for (const group in keys_emissions) {
-                if(group in data.emissions){
+                if (group in data.emissions) {
                     if (data.emissions[group][res_id][t] < 0 && keys_emissions[group]) {
                         s.graphics.fill(cols_and_names[group][0]);
-                        let h = data.emissions[group][res_id][t] * s.graph_h*(1-s.frac) / sum.lower;
+                        let h = data.emissions[group][res_id][t] * s.graph_h * (1 - s.frac) / sum.lower;
                         s.graphics.rect(0, 0, s.graph_w / data_len + 1, h - 1);
                         s.graphics.translate(0, -h);
                     }
@@ -237,14 +237,14 @@ function graph_sketch(s){
 
         s.graphics.stroke(0);
         s.graphics.line(0, 0, s.graph_w, 0);
-        s.graphics.line(0, s.graph_h*(1-s.frac), 0, -s.graph_h*s.frac);
+        s.graphics.line(0, s.graph_h * (1 - s.frac), 0, -s.graph_h * s.frac);
         s.graphics.push();
         let units = time_unit(res);
         s.graphics.fill(0);
         for (let i = 0; i < units.length; i++) {
             s.graphics.stroke(0, 0, 0, 30);
             let x = (i * s.graph_w) / (units.length - 1);
-            s.graphics.line(x, -s.graph_h*s.frac, x, s.graph_h*(1-s.frac));
+            s.graphics.line(x, -s.graph_h * s.frac, x, s.graph_h * (1 - s.frac));
             s.graphics.stroke(0);
             s.graphics.line(x, 0, x, 5);
             s.graphics.noStroke();
@@ -253,12 +253,12 @@ function graph_sketch(s){
         s.graphics.pop();
 
         s.graphics.push();
-        if(s.percent == "percent"){
+        if (s.percent == "percent") {
             s.lower_bound = s.lower_bound / s.upper_bound * 100;
             s.upper_bound = 100;
         }
-        let y_ticks3 = y_units_bounded(s.graph_h, s.lower_bound, s.upper_bound, divisions=4);
-        s.graphics.translate(0, s.graph_h*(1-s.frac));
+        let y_ticks3 = y_units_bounded(s.graph_h, s.lower_bound, s.upper_bound, divisions = 4);
+        s.graphics.translate(0, s.graph_h * (1 - s.frac));
         s.graphics.fill(0);
         for (let i in y_ticks3) {
             s.graphics.stroke(0, 0, 0, 30);
@@ -266,10 +266,10 @@ function graph_sketch(s){
             s.graphics.stroke(0);
             s.graphics.line(0, -i, -5, -i);
             s.graphics.noStroke();
-            if(s.percent == "percent"){
+            if (s.percent == "percent") {
                 s.graphics.text(y_ticks3[i] + "%", -0.5 * margin, -i + 3);
-            }else{
-                s.graphics.text(format_mass_rate(y_ticks3[i]*3600/clock_time), -0.5 * margin, -i - 3);
+            } else {
+                s.graphics.text(format_mass_rate(y_ticks3[i] * 3600 / in_game_seconds_per_tick), -0.5 * margin, -i - 3);
             }
         }
         s.graphics.pop();
@@ -277,24 +277,24 @@ function graph_sketch(s){
 
         s.graphics_ready = true;
         s.redraw();
-        if(regen_table){
-            sortTable(sort_by, reorder=false)
+        if (regen_table) {
+            sortTable(sort_by, reorder = false)
         }
-    } 
+    }
 }
 
-function sortTable(columnName, reorder=true) {
+function sortTable(columnName, reorder = true) {
     const table = document.getElementById("facilities_list");
     let column = table.querySelector(`.${columnName}`);
     sort_by = columnName;
 
-    if(reorder){
+    if (reorder) {
         // Check if the column is already sorted, toggle sorting order accordingly
-        decending = !decending;
+        descending = !descending;
     }
 
     let triangle = ' <i class="fa fa-caret-up"></i>';
-    if(decending){
+    if (descending) {
         triangle = ' <i class="fa fa-caret-down"></i>';
     }
 
@@ -305,16 +305,16 @@ function sortTable(columnName, reorder=true) {
         const bValue = b[1][columnName];
 
         if (typeof aValue === "string" && typeof bValue === "string") {
-            return decending ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
+            return descending ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
         } else {
-            return decending ? bValue - aValue : aValue - bValue;
+            return descending ? bValue - aValue : aValue - bValue;
         }
     });
 
     // Rebuild the HTML table
     let html = `<tr>
         <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-        <th class="usage_col hover_info" onclick="sortTable('usage_col')">CO2 Emissions<span class="popup_info small">over the last ${res}</span></th>
+        <th class="usage_col hover_info" onclick="sortTable('usage_col')">CO2 Emissions<span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span></th>
         <th class="selected_col">Displayed</th>
     </tr>`;
     for (const [id, facility] of sortedData) {
@@ -330,22 +330,22 @@ function sortTable(columnName, reorder=true) {
     column = table.querySelector(`.${columnName}`);
     column.innerHTML += triangle;
 
-    function transform_data(){
+    function transform_data() {
         let transformed_data = [];
         for (const key in data.emissions) {
             transformed_data.push({
                 name: key,
                 facility_col: cols_and_names[key][1],
-                usage_col: integrate(data.emissions[key][res_id].slice(graph_p5.t0),  res_to_factor[res]),
+                usage_col: integrate(data.emissions[key][res_id].slice(graph_p5.t0), res_to_factor[res]),
             })
         }
         return transformed_data;
     }
 
-    function integrate(array, delta){
+    function integrate(array, delta) {
         // integrated the energy over the array. delta is the time step in hours
         let sum = 0;
-        for (let i = 0; i < array.length; i++){
+        for (let i = 0; i < array.length; i++) {
             sum += array[i] * delta;
         }
         return sum;
@@ -354,7 +354,7 @@ function sortTable(columnName, reorder=true) {
 
 function toggle_displayed(name, state) {
     keys_emissions[name] = state;
-    graph_p5.render_graph(regen_table=false);
+    graph_p5.render_graph(regen_table = false);
     setTimeout(() => {
         sortTable(sort_by, false);
     }, 500);

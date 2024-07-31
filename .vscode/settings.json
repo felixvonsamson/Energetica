@@ -8,28 +8,68 @@
         "editor.wordWrapColumn": 120,
         "editor.defaultFormatter": "monosans.djlint",
         "editor.formatOnSave": false,
-        "editor.rulers": [
-            80,
-            120
-        ]
+        "editor.rulers": [ 80, 120 ]
     },
     "[javascript]": {
         "editor.wordWrapColumn": 120,
-        "editor.rulers": [120]
+        "editor.rulers": [ 120 ]
     },
     "files.exclude": {
         "**/__pycache__": true
     },
-    "editor.rulers": [
-        80
-    ],
+    "editor.rulers": [ 80 ],
     "[python]": {
-        "editor.rulers": [
-            80,
-            120
-        ]
+        "editor.rulers": [ 80, 120 ],
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "always"
+        },
     },
-    "pylint.args": [
-        "--max-line-length=120"
-    ]
+    "pylint.args": [ "--max-line-length=120" ],
+    "cSpell.words": [
+        "apscheduler",
+        "backref",
+        "Baloo",
+        "Compr",
+        "cumsum",
+        "cumul",
+        "datapoint",
+        "DGRAM",
+        "dont",
+        "emsp",
+        "Energetica",
+        "engineio",
+        "ensp",
+        "eventlet",
+        "httpauth",
+        "Hydrostrg",
+        "iloc",
+        "isnot",
+        "isort",
+        "itertuples",
+        "jsonify",
+        "lvls",
+        "Météo",
+        "minmax",
+        "Photovoltaics",
+        "pwhash",
+        "Pylint",
+        "pyproject",
+        "pywebpush",
+        "regen",
+        "renewables",
+        "sessionmaker",
+        "solars",
+        "sqlalchemy",
+        "subarrays",
+        "Unsubscription",
+        "Uran",
+        "uselist",
+        "webcredentials",
+        "webpush",
+        "werkzeug",
+        "wght",
+        "windspeed"
+    ],
+    "json.format.keepLines": true,
+    "python.analysis.autoImportCompletions": true
 }

@@ -1,22 +1,15 @@
-from itertools import chain
-from website import db
-from website.database.player_assets import (
-    Under_construction,
-)
+"""This module contains the classes that define the players and networks"""
 
+import json
+from itertools import chain
 
 from flask import current_app
 from flask_login import UserMixin
-from pywebpush import webpush, WebPushException
-import json
+from pywebpush import WebPushException, webpush
 
-from website.database.messages import (
-    Chat,
-    Message,
-    Notification,
-    player_chats,
-)
-from website.database.player_assets import Active_facilities
+from website import db
+from website.database.messages import Chat, Message, Notification, player_chats
+from website.database.player_assets import ActiveFacilities, UnderConstruction
 
 
 class Player(db.Model, UserMixin):
@@ -24,7 +17,7 @@ class Player(db.Model, UserMixin):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # Authentification :
+    # Authentication :
     username = db.Column(db.String(25), unique=True)
     pwhash = db.Column(db.String(50))
 
@@ -33,7 +26,7 @@ class Player(db.Model, UserMixin):
     network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
 
     # Chats :
-    show_disclamer = db.Column(db.Boolean, default=True)
+    show_disclaimer = db.Column(db.Boolean, default=True)
     chats = db.relationship("Chat", secondary=player_chats, backref="participants")
     last_opened_chat = db.Column(db.Integer, default=None)
     messages = db.relationship("Message", backref="player")
@@ -143,34 +136,38 @@ class Player(db.Model, UserMixin):
     # * "storage_overview"
     achievements = db.Column(db.Text, default="")
 
-    under_construction = db.relationship("Under_construction")
-    resource_on_sale = db.relationship("Resource_on_sale", backref="player")
+    under_construction = db.relationship("UnderConstruction")
+    resource_on_sale = db.relationship("ResourceOnSale", backref="player")
     shipments = db.relationship("Shipment", backref="player")
-    active_facilities = db.relationship("Active_facilities", backref="player", lazy="dynamic")
+    active_facilities = db.relationship("ActiveFacilities", backref="player", lazy="dynamic")
 
     def change_graph_view(self, view):
+        """Helper method to set the network graph view of the player (basic/normal/expert)"""
         self.graph_view = view
         db.session.commit()
 
     def available_construction_workers(self):
+        """Returns the number of available construction workers"""
         occupied_workers = (
-            Under_construction.query.filter(Under_construction.player_id == self.id)
-            .filter(Under_construction.family != "Technologies")
-            .filter(Under_construction.suspension_time.is_(None))
+            UnderConstruction.query.filter(UnderConstruction.player_id == self.id)
+            .filter(UnderConstruction.family != "Technologies")
+            .filter(UnderConstruction.suspension_time.is_(None))
             .count()
         )
         return self.construction_workers - occupied_workers
 
     def available_lab_workers(self):
+        """Returns the number of available lab workers"""
         occupied_workers = (
-            Under_construction.query.filter(Under_construction.player_id == self.id)
-            .filter(Under_construction.family == "Technologies")
-            .filter(Under_construction.suspension_time.is_(None))
+            UnderConstruction.query.filter(UnderConstruction.player_id == self.id)
+            .filter(UnderConstruction.family == "Technologies")
+            .filter(UnderConstruction.suspension_time.is_(None))
             .count()
         )
         return self.lab_workers - occupied_workers
 
     def read_list(self, attr):
+        """Helper method thar returns a list of any player list that is stored as a string"""
         if getattr(self, attr) == "":
             return []
         priority_list = getattr(self, attr).split(",")
@@ -179,34 +176,38 @@ class Player(db.Model, UserMixin):
         else:
             return priority_list
 
-    def add_to_list(self, attr, id):
+    def add_to_list(self, attr, value):
+        """Helper method that adds an element to a list stored as a string"""
         if getattr(self, attr) == "":
-            setattr(self, attr, str(id))
+            setattr(self, attr, str(value))
         else:
-            setattr(self, attr, getattr(self, attr) + f",{id}")
+            setattr(self, attr, getattr(self, attr) + f",{value}")
         db.session.commit()
         if attr == "advancements":
+            # TODO: I don't like how this is done. -Max
             from website.api.websocket import rest_notify_advancements
 
             engine = current_app.config["engine"]
             rest_notify_advancements(engine, self)
 
-    def remove_from_list(self, attr, id):
+    def remove_from_list(self, attr, value):
+        """Helper method that removes an element from a list stored as a string"""
         id_list = getattr(self, attr).split(",")
-        id_list.remove(str(id))
+        id_list.remove(str(value))
         setattr(self, attr, ",".join(id_list))
         db.session.commit()
 
-    def project_max_priority(self, attr, id):
-        """the project with the corresponding id will be moved to the top of the prioirty list"""
-        self.remove_from_list(attr, id)
+    def project_max_priority(self, attr, project_id):
+        """the project with the corresponding id will be moved to the top of the priority list"""
+        self.remove_from_list(attr, project_id)
         if getattr(self, attr) == "":
-            setattr(self, attr, str(id))
+            setattr(self, attr, str(project_id))
         else:
-            setattr(self, attr, f"{id}," + getattr(self, attr))
+            setattr(self, attr, f"{project_id}," + getattr(self, attr))
         db.session.commit()
 
     def package_chat_messages(self, chat_id):
+        """This method packages the last 20 messages of a chat"""
         chat = Chat.query.filter_by(id=chat_id).first()
         messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
         messages_list = [
@@ -225,6 +226,8 @@ class Player(db.Model, UserMixin):
         return messages_list
 
     def package_chat_list(self):
+        """This method packages the chats of a player"""
+
         def chat_name(chat):
             if chat.name is not None:
                 return chat.name
@@ -273,20 +276,24 @@ class Player(db.Model, UserMixin):
         }
 
     def delete_notification(self, notification_id):
+        """This method deletes a notification"""
         notification = Notification.query.get(notification_id)
         if notification in self.notifications.all():
             db.session.delete(notification)
             db.session.commit()
 
     def notifications_read(self):
+        """This method marks all notifications as read"""
         for notification in self.unread_notifications():
             notification.read = True
         db.session.commit()
 
     def unread_notifications(self):
+        """This method returns all unread notifications"""
         return self.notifications.filter_by(read=False).all()
 
     def get_lvls(self):
+        """This method returns the levels of functional facilities and technologies of a player"""
         engine = current_app.config["engine"]
         attributes = chain(
             engine.functional_facilities,
@@ -295,17 +302,20 @@ class Player(db.Model, UserMixin):
         return {attr: getattr(self, attr) for attr in attributes}
 
     def get_reserves(self):
+        """This method returns the natural resources reserves of a player"""
         reserves = {}
         for resource in ["coal", "oil", "gas", "uranium"]:
             reserves[resource] = getattr(self.tile, resource)
         return reserves
 
     def emit(self, event, *args):
+        """This method emits a socketio event to the player's clients"""
         engine = current_app.config["engine"]
         for sid in engine.clients[self.id]:
             engine.socketio.emit(event, *args, room=sid)
 
     def send_new_data(self, new_values):
+        """This method sends the new data to the player's clients"""
         engine = current_app.config["engine"]
         self.emit(
             "new_values",
@@ -317,8 +327,13 @@ class Player(db.Model, UserMixin):
         )
 
     def send_notification(self, notification_data):
+        """This method sends a notification to the player's clients and subscribed browsers"""
         engine = current_app.config["engine"]
         for subscription in engine.notification_subscriptions[self.id]:
+            audience = "https://fcm.googleapis.com"
+            if "https://updates.push.services.mozilla.com" in subscription["endpoint"]:
+                audience = "https://updates.push.services.mozilla.com"
+            current_app.config["VAPID_CLAIMS"]["aud"] = audience
             try:
                 webpush(
                     subscription_info=subscription,
@@ -346,6 +361,7 @@ class Player(db.Model, UserMixin):
 
     @staticmethod
     def package_all():
+        """Gets the package data for all players"""
         from typing import List
 
         players: List[Player] = Player.query.all()
@@ -353,10 +369,8 @@ class Player(db.Model, UserMixin):
 
     @staticmethod
     def package_scoreboard():
-        """
-        Gets the scoreboard data for settled players
-        """
-        players = Player.query.filter(Player.tile != None)  # noqa: E711
+        """Gets the scoreboard data for settled players"""
+        players = Player.query.filter(Player.tile != None)
         return {
             player.id: {
                 "username": player.username,
@@ -389,6 +403,7 @@ class Player(db.Model, UserMixin):
         }
 
     def package_shipments(self):
+        """Packages the player's ongoing shipments"""
         return {
             shipment.id: {
                 k: getattr(shipment, k)
@@ -405,11 +420,14 @@ class Player(db.Model, UserMixin):
         }
 
     def package_construction_queue(self):
+        """Packages the player's construction queue (list of construction_ids)"""
         return self.read_list("construction_priorities")
 
     def package_active_facilities(self):
+        """Packages the player's active facilities"""
+
         def get_facility_data(facilities):
-            sub_facilities = self.active_facilities.filter(Active_facilities.facility.in_(facilities)).all()
+            sub_facilities = self.active_facilities.filter(ActiveFacilities.facility.in_(facilities)).all()
             return {
                 facility.id: {
                     k: getattr(facility, k)

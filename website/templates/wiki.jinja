@@ -123,6 +123,9 @@
         </tr>
     </table>
   </div>
+  <p>
+    All durations in the game are given in in-game time and in some cases the equivalent real time might be indicated in parenthesis
+  </p>
 
   <h2 id="Map">The Map</h2>
   <p>
@@ -489,7 +492,7 @@
     <li>Nuclear reactor &ensp;<span class="txt_pine">(Uranium)</span></li>
     <li>Gen4 Nuclear &ensp;<span class="txt_pine">(Uranium)</span></li>
   </ul>
-  <p>These facilites are controllable, emit CO2, and require fuel for operation (except for the steam engine).</p>
+  <p>These facilities are controllable, emit CO2, and require fuel for operation (except for the steam engine).</p>
   <h4>Wind Family</h4>
   <ul>
     <li>Windmill</li>
@@ -601,7 +604,7 @@
     <a href="#Prioritazation_of_Facilities">Prioritazation of Facilities</a> for details.
   </p>
   <h4>Use of Resources</h4>
-  <p>Except for the steam engine, controllable power facilites consume resources (fuel) for operation.</p>
+  <p>Except for the steam engine, controllable power facilities consume resources (fuel) for operation.</p>
   <p>
     The fuel usage is measured in kg/MWh, indicating that fuel consumption is proportionate to the electricity
     generated. In cases where a facility lacks sufficient fuel to produce a specific amount of electricity, it will cap its
@@ -752,19 +755,19 @@
       </tr>
       <tr>
         <td>Coal</td>
-        <td>{{ (const_data.coal_mine.extraction_rate*36000) | round(4) }}% /day (ig)</td>
+        <td>{{ (const_data.coal_mine.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
       </tr>
       <tr>
         <td>Oil</td>
-        <td>{{ (const_data.oil_field.extraction_rate*36000) | round(4) }}% /day (ig)</td>
+        <td>{{ (const_data.oil_field.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
       </tr>
       <tr>
         <td>Gas</td>
-        <td>{{ (const_data.gas_drilling_site.extraction_rate*36000) | round(4) }}% /day (ig)</td>
+        <td>{{ (const_data.gas_drilling_site.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
       </tr>
       <tr>
         <td>Uranium</td>
-        <td>{{ (const_data.uranium_mine.extraction_rate*36000) | round(4) }}% /day (ig)</td>
+        <td>{{ (const_data.uranium_mine.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
       </tr>
     </table>
     <span>ig = <a href="Game_Time">in-game time</a></span>
@@ -854,9 +857,9 @@
   <h3>Carbon Capture</h3>
   <p>
     The carbon capture facility consumes electricity to extract CO2 from the atmosphere and store it underground. 
-    With each level upgrade, CO2 absorbtion increase by {{ ((const_data.carbon_capture["absorbtion_factor"]-1)*100) | round | int }}% 
+    With each level upgrade, CO2 absorption increase by {{ ((const_data.carbon_capture["absorption_factor"]-1)*100) | round | int }}% 
     and power consumption increases by {{ ((const_data.carbon_capture["power_factor"]-1)*100) | round | int }}%.
-    Contrary to the industry, CO2 absorbtion is more efficient with higher carbon capture levels. 
+    Contrary to the industry, CO2 absorption is more efficient with higher carbon capture levels. 
   </p>
 
   <h2 id="Technology">Technology</h2>
@@ -923,7 +926,7 @@
     <li>Constructions</li>
     <li>Research</li>
     <li>Shipments</li>
-    <li>Extraction facilites</li>
+    <li>Extraction facilities</li>
   </ul>
   <p>
     If the max buying price for one of these demand components is below market price, mesures will be taken to reduce this demand 

@@ -22,13 +22,13 @@
             {% if user.network == None %}
                 <p>
                     Here you can join or create a network. You will also find tables where you can set the prices for the demand
-                    and the power and storage facilites. These prices will define the priority lists of facilites for the power
+                    and the power and storage facilities. These prices will define the priority lists of facilities for the power
                     generation logic.
                 </p>
             {% else %}
                 <p>
                     On this page you will find informations about your network and tables where you can set the prices for the
-                    demand and the power and storage facilites.
+                    demand and the power and storage facilities.
                 </p>
                 <p>
                     The top graph shows the market price and quantity over time and the lower graph shows the current market
@@ -119,9 +119,9 @@
                     <button id="percent_button_normal" class="graph_button small left selected" onclick="change_percent('normal')">normal</button>
                     <button id="percent_button_percent" class="graph_button small right" onclick="change_percent('percent')">percent</button>
                 </div>
-                <div id="categorisation_buttons_container" class="flex-center">
-                    <button id="categorisation_button_type" class="graph_button small left selected" onclick="change_categorisation('type')">type</button>
-                    <button id="categorisation_button_player" class="graph_button small right" onclick="change_categorisation('player')">player</button>
+                <div id="categorization_buttons_container" class="flex-center">
+                    <button id="categorization_button_type" class="graph_button small left selected" onclick="change_categorization('type')">type</button>
+                    <button id="categorization_button_player" class="graph_button small right" onclick="change_categorization('player')">player</button>
                 </div>
                 <div id="export_import_buttons_container" class="flex-center">
                     <button id="export_import_button_exports" class="graph_button small left selected" onclick="change_export_import('exports')">exports</button>
@@ -148,8 +148,8 @@
                     <button id="market_mode_button_zoom" class="graph_button small right" onclick="change_market_mode('zoom')">zoom</button>
                 </div>
                 <div class="flex-center">
-                    <button id="categorisation_market_button_facility" class="graph_button small selected left" onclick="change_categorisation_market('facility')">facility</button>
-                    <button id="categorisation_market_button_player" class="graph_button small right" onclick="change_categorisation_market('player')">player</button>
+                    <button id="categorization_market_button_facility" class="graph_button small selected left" onclick="change_categorization_market('facility')">facility</button>
+                    <button id="categorization_market_button_player" class="graph_button small right" onclick="change_categorization_market('player')">player</button>
                 </div>
                 <div class="flex-center">
                     <button id="market_view_button_supply" class="graph_button small selected left" onclick="change_market_view('supply')">supply</button>

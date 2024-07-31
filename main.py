@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-"""
-This code launches the game
-"""
+"""This code launches the game"""
+# TODO: regenerate a new public/private key pair and stop tracking it it git
+
+import argparse
 
 from website import create_app
-import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -29,7 +29,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--rm_instance",
-    help="Remvove the instance folder",
+    help="remove the instance folder",
     action="store_true",
 )
 

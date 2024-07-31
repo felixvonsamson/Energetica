@@ -19,7 +19,7 @@
     <div class="txt_center margin medium">
       <p>On this page you will find all the facilities that generate electricity.</p>
       <p>
-        For more information about how power facilites generate electricity, refer to the
+        For more information about how power facilities generate electricity, refer to the
         <a href="{{ url_for('views.wiki', _anchor='Power_Facilities') }}">Power facilities section in the wiki</a>.
       </p>
     </div>
@@ -134,24 +134,24 @@
             {% endif %}
           </div>
           <div class="construction_info">
-            <strong class="hover_info">
+            <span class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <span></span>
+              <strong></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_duration({{ facility_data.construction_time }});</script>
-              <span class="popup_info small">Duration</span>
-            </strong>
-            <strong class="hover_info">
+              <span class="popup_info small">Duration in-game (real)</span>
+            </span>
+            <span class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <span></span>
+              <strong></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.construction_power }});</script>
               <span class="popup_info small">Power consumption</span>
-            </strong>
-            <strong class="hover_info">
+            </span>
+            <span class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <span></span>
+              <strong></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO2";</script>
               <span class="popup_info small">CO2 emissions</span>
-            </strong>
+            </span>
           </div>
         </div>
       </div>
@@ -172,24 +172,24 @@
             {% endif %}
           </div>
           <div class="construction_info">
-            <strong class="hover_info">
+            <span class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <span></span>
+              <strong></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_duration({{ facility_data.construction_time }});</script>
-              <span class="popup_info small">Duration</span>
-            </strong>
-            <strong class="hover_info">
+              <span class="popup_info small">Duration in-game (real)</span>
+            </span>
+            <span class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <span></span>
+              <strong></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.construction_power }});</script>
               <span class="popup_info small">Power consumption</span>
-            </strong>
-            <strong class="hover_info">
+            </span>
+            <span class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <span></span>
+              <strong></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO2";</script>
               <span class="popup_info small">CO2 emissions</span>
-            </strong>
+            </span>
           </div>
         </div>
         {# Power Facility Data #}

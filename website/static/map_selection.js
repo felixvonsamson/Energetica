@@ -3,7 +3,7 @@ This code is the p5.js script that enables the player to choose a location on an
 interactive map just after having registerd to the game.
 */
 
-max_q = [1, 1, 1, 500_000_000*clock_time/60, 140_000_000*clock_time/60, 24_000_000*clock_time/60, 2_000_000*clock_time/60];
+max_q = [1, 1, 1, 2_000_000_000, 600_000_000, 100_000_000, 8_000_000];
 // Tile item :
 class Hex {
     constructor(_id, _q, _r, _resources, player_id) {
@@ -141,58 +141,58 @@ function setup() {
     textAlign(CENTER, CENTER);
     //filling map
     fetch("/api/get_map") // retrieves map data from the database using api.py
-    .then((response) => response.json())
-    .then((data) => {
-        load_players().then((_players_ids) => {
-            players_ids = _players_ids;
-            for (let i = 0; i < data.length; i++) {
-                let resources = [
-                    data[i].solar,
-                    data[i].wind,
-                    data[i].hydro,
-                    data[i].coal,
-                    data[i].gas,
-                    data[i].oil,
-                    data[i].uranium,
-                ];
-                map.push(
-                    new Hex(
-                        data[i].id,
-                        data[i].q,
-                        data[i].r,
-                        resources,
-                        data[i].player_id
-                    )
-                );
-            }
+        .then((response) => response.json())
+        .then((data) => {
+            load_players().then((_players_ids) => {
+                players_ids = _players_ids;
+                for (let i = 0; i < data.length; i++) {
+                    let resources = [
+                        data[i].solar,
+                        data[i].wind,
+                        data[i].hydro,
+                        data[i].coal,
+                        data[i].gas,
+                        data[i].oil,
+                        data[i].uranium,
+                    ];
+                    map.push(
+                        new Hex(
+                            data[i].id,
+                            data[i].q,
+                            data[i].r,
+                            resources,
+                            data[i].player_id
+                        )
+                    );
+                }
 
-            for (let i = 0; i < button_names.length; i++) {
-                buttons[i] = new Button(
-                    button_names[i],
-                    i,
-                    button_colors[i],
-                    0.11 * width - 100,
-                    0.1 * height * (i + 2),
-                    (sx = 0.1 * width),
+                for (let i = 0; i < button_names.length; i++) {
+                    buttons[i] = new Button(
+                        button_names[i],
+                        i,
+                        button_colors[i],
+                        0.11 * width - 100,
+                        0.1 * height * (i + 2),
+                        (sx = 0.1 * width),
+                        (sy = 0.07 * height)
+                    );
+                }
+                validate = new Button(
+                    "Choose this location",
+                    7,
+                    24,
+                    0.8 * width,
+                    0.93 * height - 0.02 * width,
+                    (sx = 0.18 * width),
                     (sy = 0.07 * height)
                 );
-            }
-            validate = new Button(
-                "Choose this location",
-                7,
-                24,
-                0.8 * width,
-                0.93 * height - 0.02 * width,
-                (sx = 0.18 * width),
-                (sy = 0.07 * height)
-            );
 
-            newdraw();
+                newdraw();
+            });
+        })
+        .catch((error) => {
+            console.error("Error:", error);
         });
-    })
-    .catch((error) => {
-        console.error("Error:", error);
-    });
 }
 
 function draw() {
@@ -237,7 +237,7 @@ function newdraw_monitor() {
     fill(color(83, 35, 75));
     noStroke();
     rect(0, 0, 390, 100);
-    if(logo.height != 0){
+    if (logo.height != 0) {
         image(logo, 25, 10, 82, 80);
     }
     textFont(font_logo, 50);
@@ -328,12 +328,12 @@ function newdraw_monitor() {
         );
         text(
             round(pow(map[selected_id].resources[1], 0.5) * 50) +
-                " km/h windspeed",
+            " km/h windspeed",
             mw - 20,
             height / 9.5 + 0.1 * height
         );
         text(
-            round(map[selected_id].resources[2]*150) + " m³/s river discharge",
+            round(map[selected_id].resources[2] * 150) + " m³/s river discharge",
             mw - 20,
             height / 9.5 + 0.2 * height
         );
@@ -343,8 +343,8 @@ function newdraw_monitor() {
             fill(0, 99, 66);
             text(
                 "This tile is already occupied by " +
-                    players_ids[map[selected_id].owner_id].username +
-                    " !",
+                players_ids[map[selected_id].owner_id].username +
+                " !",
                 0.5 * mw,
                 0.92 * height
             );
@@ -371,7 +371,7 @@ function newdraw_smartphone() {
             0.09 * (height - width)
         );
     }
-    if(validate){
+    if (validate) {
         validate.change_values(
             width * 0.15,
             height - 0.12 * (height - width),
@@ -384,7 +384,7 @@ function newdraw_smartphone() {
     fill(color(83, 35, 75));
     noStroke();
     rect(0, 0, 80, 80, 0, 0, 25, 0);
-    if(logo.height != 0){
+    if (logo.height != 0) {
         image(logo, 4, 5, 72, 70);
     }
     pop();
@@ -477,12 +477,12 @@ function newdraw_smartphone() {
         );
         text(
             round(pow(map[selected_id].resources[1], 0.5) * 50) +
-                " km/h windspeed",
+            " km/h windspeed",
             width - 15,
             mh / 7.5 + 0.1 * mh
         );
         text(
-            round(map[selected_id].resources[2]*150) + " m³/s river discharge",
+            round(map[selected_id].resources[2] * 150) + " m³/s river discharge",
             width - 15,
             mh / 7.5 + 0.2 * mh
         );
@@ -493,7 +493,7 @@ function newdraw_smartphone() {
             text(
                 "This tile is already occupied by " +
                 players_ids[this.owner_id].username +
-                    " !",
+                " !",
                 0.5 * width,
                 0.9 * mh
             );
@@ -709,7 +709,6 @@ function general_convert(value, units) {
         value /= 1000;
         unit_index += 1;
     }
-    return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${
-        units[unit_index]
-    }`;
+    return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]
+        }`;
 }

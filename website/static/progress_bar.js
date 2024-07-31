@@ -54,8 +54,17 @@ resource_names = {
     "uranium": "Uranium",
 }
 
-function formatSeconds(totalSeconds) {
-    totalSeconds = totalSeconds * clock_time;
+function format_ticks(ticks) {
+    totalSeconds = ticks * in_game_seconds_per_tick;
+    return format_seconds(totalSeconds, show_seconds = false);
+}
+
+function format_ticks_real_time(ticks) {
+    totalSeconds = ticks * clock_time;
+    return format_seconds(totalSeconds);
+}
+
+function format_seconds(totalSeconds, show_seconds = true) {
     const days = Math.floor(totalSeconds / (3600 * 24));
     const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -71,7 +80,9 @@ function formatSeconds(totalSeconds) {
     if (days > 0 || hours > 0 || minutes > 0) {
         formattedTime += `${minutes}m `;
     }
-    formattedTime += `${seconds}s`;
+    if (show_seconds) {
+        formattedTime += `${seconds}s`;
+    }
 
     return formattedTime.trim();
 }
@@ -255,8 +266,9 @@ load_constructions().then((constructions) => {
                     });
                 }, 1000);
             }
-            const time = formatSeconds(time_remaining);
-            progressBar.innerHTML = "&nbsp; " + time;
+            const time = format_ticks(time_remaining);
+            const real_time = format_ticks_real_time(time_remaining);
+            progressBar.innerHTML = `&nbsp; <span class="hover_info">${time}<span class="popup_info small">in-game time</span></span> &ensp; <span class="transparency_txt hover_info">(${real_time})<span class="popup_info small">real time</span></span>`;
         }
         for (const shipmentBar of shipmentBars) {
             const id = shipmentBar.id;
@@ -296,8 +308,9 @@ load_constructions().then((constructions) => {
                     });
                 }, 1000);
             }
-            const time = formatSeconds(time_remaining);
-            shipmentBar.innerHTML = "&nbsp; " + time;
+            const time = format_ticks(time_remaining);
+            const real_time = format_ticks_real_time(time_remaining);
+            shipmentBar.innerHTML = `&nbsp; <span class="hover_info">${time}<span class="popup_info small">in-game time</span></span> &ensp; <span class="transparency_txt hover_info">(${real_time})<span class="popup_info small">real time</span></span>`;
         }
     }, 100);
 });

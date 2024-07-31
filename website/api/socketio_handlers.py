@@ -1,12 +1,12 @@
-"""
-This code contains the main functions that communicate with the server (server side)
-"""
+"""This code contains the main functions that communicate with the server (server side)"""
 
 from flask import request
 from flask_login import current_user
 
 
 def add_handlers(socketio, engine):
+    """This function handles connection and disconnection of clients"""
+
     @socketio.on("connect")
     def handle_connect():
         if current_user.is_anonymous:
