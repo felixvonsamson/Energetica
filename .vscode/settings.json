@@ -55,6 +55,7 @@
         "Pylint",
         "pyproject",
         "pywebpush",
+        "regen",
         "renewables",
         "sessionmaker",
         "solars",
