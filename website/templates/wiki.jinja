@@ -123,6 +123,9 @@
         </tr>
     </table>
   </div>
+  <p>
+    All durations in the game are given in in-game time and in some cases the equivalent real time might be indicated in parenthesis
+  </p>
 
   <h2 id="Map">The Map</h2>
   <p>
@@ -752,19 +755,19 @@
       </tr>
       <tr>
         <td>Coal</td>
-        <td>{{ (const_data.coal_mine.extraction_rate*36000) | round(4) }}% /day (ig)</td>
+        <td>{{ (const_data.coal_mine.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
       </tr>
       <tr>
         <td>Oil</td>
-        <td>{{ (const_data.oil_field.extraction_rate*36000) | round(4) }}% /day (ig)</td>
+        <td>{{ (const_data.oil_field.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
       </tr>
       <tr>
         <td>Gas</td>
-        <td>{{ (const_data.gas_drilling_site.extraction_rate*36000) | round(4) }}% /day (ig)</td>
+        <td>{{ (const_data.gas_drilling_site.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
       </tr>
       <tr>
         <td>Uranium</td>
-        <td>{{ (const_data.uranium_mine.extraction_rate*36000) | round(4) }}% /day (ig)</td>
+        <td>{{ (const_data.uranium_mine.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
       </tr>
     </table>
     <span>ig = <a href="Game_Time">in-game time</a></span>
