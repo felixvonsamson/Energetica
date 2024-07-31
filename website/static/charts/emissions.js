@@ -314,7 +314,7 @@ function sortTable(columnName, reorder = true) {
     // Rebuild the HTML table
     let html = `<tr>
         <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-        <th class="usage_col hover_info" onclick="sortTable('usage_col')">CO2 Emissions<span class="popup_info small">over the last ${res}</span></th>
+        <th class="usage_col hover_info" onclick="sortTable('usage_col')">CO2 Emissions<span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span></th>
         <th class="selected_col">Displayed</th>
     </tr>`;
     for (const [id, facility] of sortedData) {

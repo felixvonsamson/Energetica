@@ -925,6 +925,7 @@ input:checked+.slider:before {
     bottom: 130%;
     left: 50%;
     transform: translate(-50%, 0);
+    pointer-events: none;
 }
 
 .hover_info .popup_info::after {
@@ -938,8 +939,19 @@ input:checked+.slider:before {
     border-color: black transparent transparent transparent;
 }
 
+.hover_info .popup_info.bottom {
+    bottom: -80%;
+    font-weight: normal;
+}
+
+.hover_info .popup_info.bottom::after {
+    top: -30%;
+    border-color: transparent transparent black transparent;
+}
+
 .hover_info:hover .popup_info {
     visibility: visible;
+    pointer-events: auto;
 }
 
 /* Progress bar */
@@ -1169,7 +1181,8 @@ input:checked+.slider:before {
     width: 100%;
     overflow-x: auto;
     display: flex;
-    justify-content: space-around
+    justify-content: space-around;
+    position: relative;
 }
 
 .table_legend_left {

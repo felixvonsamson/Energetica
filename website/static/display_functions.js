@@ -143,15 +143,15 @@ function formatDateTime(dateTimeString) {
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
 
-    let formated_date;
+    let formatted_date;
     if (dateTime.toDateString() === now.toDateString()) {
         // If the date is today, return the time format
-        formated_date = `${hours}:${minutes}:${seconds}`;
+        formatted_date = `${hours}:${minutes}:${seconds}`;
     } else {
         // If the date is not today, return the date + time format
-        formated_date = `${date} ${months[monthIndex]} ${hours}:${minutes}:${seconds}`;
+        formatted_date = `${date} ${months[monthIndex]} ${hours}:${minutes}:${seconds}`;
     }
-    return formated_date;
+    return formatted_date;
 }
 
 function formatDateString(dateString) {

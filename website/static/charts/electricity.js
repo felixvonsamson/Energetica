@@ -402,7 +402,7 @@ function sortTable(columnName, reorder = true) {
     if (graph_p5.view == "consumption") {
         html = `<tr>
             <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-            <th class="usage_col hover_info" onclick="sortTable('usage_col')">Consumed<span class="popup_info small">over the last ${res}</span></th>
+            <th class="usage_col hover_info" onclick="sortTable('usage_col')">Consumed<span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span></th>
             <th class="selected_col">Displayed</th>
         </tr>`;
         for (const [id, facility] of sortedData) {
@@ -415,7 +415,7 @@ function sortTable(columnName, reorder = true) {
     } else {
         html = `<tr>
             <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-            <th class="usage_col hover_info" onclick="sortTable('usage_col')">Generated<span class="popup_info small">over the last ${res}</span></th>
+            <th class="usage_col hover_info" onclick="sortTable('usage_col')">Generated<span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span></th>
             <th class="capacity_col" onclick="sortTable('capacity_col')">Installed Cap.</th>
             <th class="used_cap_col" onclick="sortTable('used_cap_col')">Used Capacity</th>
             <th class="selected_col">Displayed</th>
