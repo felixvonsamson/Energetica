@@ -1,23 +1,9 @@
 // displayed in the graph
 const keys_revenues = {
-    "industry": true,
     "exports": true,
-    // O&M costs
-    "watermill": true,
-    "small_water_dam": true,
-    "large_water_dam": true,
-    "nuclear_reactor": true,
-    "nuclear_reactor_gen4": true,
-    "steam_engine": true,
-    "coal_burner": true,
-    "oil_burner": true,
-    "gas_burner": true,
-    "combined_cycle": true,
-    "windmill": true,
-    "onshore_wind_turbine": true,
-    "offshore_wind_turbine": true,
-    "CSP_solar": true,
-    "PV_solar": true,
+    "industry": true,
+    // O&M costs :
+    // storages :
     "small_pumped_hydro": true,
     "large_pumped_hydro": true,
     "lithium_ion_batteries": true,
@@ -25,6 +11,24 @@ const keys_revenues = {
     "compressed_air": true,
     "molten_salt": true,
     "hydrogen_storage": true,
+    // renewables :
+    "watermill": true,
+    "small_water_dam": true,
+    "large_water_dam": true,
+    "windmill": true,
+    "onshore_wind_turbine": true,
+    "offshore_wind_turbine": true,
+    "CSP_solar": true,
+    "PV_solar": true,
+    // controllable :
+    "nuclear_reactor": true,
+    "nuclear_reactor_gen4": true,
+    "steam_engine": true,
+    "coal_burner": true,
+    "oil_burner": true,
+    "gas_burner": true,
+    "combined_cycle": true,
+    // extraction
     "coal_mine": true,
     "oil_field": true,
     "gas_drilling_site": true,
@@ -88,7 +92,7 @@ function graph_sketch(s) {
                     }, { positive: 0, negative: 0 });
                 }
                 s.push();
-                for (const group in keys_revenues) {
+                for (const group of Object.keys(keys_revenues).reverse()) {
                     let value = 0;
                     if (group in data.revenues) {
                         value = data.revenues[group][res_id][t_view];
@@ -136,7 +140,7 @@ function graph_sketch(s) {
                 s.translate(0, 16);
 
                 let cumsum = 0;
-                for (const group of Object.keys(keys_revenues).reverse()) {
+                for (const group in keys_revenues) {
                     let value = 0;
                     if (group in data.revenues) {
                         value = data.revenues[group][res_id][t_view] * 3600 / in_game_seconds_per_tick;
@@ -256,7 +260,7 @@ function graph_sketch(s) {
                 sum.lower = sum_revenues.negative + sum_costs;
             }
             s.graphics.push();
-            for (const group in keys_revenues) {
+            for (const group of Object.keys(keys_revenues).reverse()) {
                 let value;
                 if (group in data.revenues) {
                     value = data.revenues[group][res_id][t];
