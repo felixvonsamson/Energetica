@@ -489,8 +489,8 @@ const_config = {
             "base_construction_energy": 40_000,
             "base_construction_pollution": 4_000,
             "base_power_consumption": 200_000,  # [W]
-            "base_income_per_day": 2_000,  # [¤/in-game day]
-            "universal_income_per_day": 540,  # [¤/in-game day]
+            "base_income_per_day": 8_000,  # [¤/in-game day]
+            "universal_income_per_day": 4_400,  # [¤/in-game day]
             "price_multiplier": 1.32,
             "power_factor": 1.4,
             "income_factor": 1.35,

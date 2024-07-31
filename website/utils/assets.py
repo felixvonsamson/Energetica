@@ -15,7 +15,7 @@ from website.utils.network import reorder_facility_priorities
 
 
 def add_asset(player_id, construction_id):
-    """this function is executed when a construction of research project has finished"""
+    """this function is executed when a construction or research project has finished"""
     engine = current_app.config["engine"]
     player: Player = Player.query.get(player_id)
     construction = UnderConstruction.query.get(construction_id)
@@ -243,6 +243,7 @@ def add_asset(player_id, construction_id):
     else:
         engine.data["player_capacities"][player.id].update(player, construction.name)
     engine.config.update_config_for_user(player.id)
+    player.emit("retrieve_player_data")
 
 
 # Utilities relating to managing facilities and assets

@@ -79,7 +79,7 @@ async function get_active_facilities(reorder = false) {
                 "installed_cap": config.base_power_generation * facility.power_multiplier,
                 "used_capacity": generating,
                 "op_cost": tot_cost * config["O&M_factor_per_day"] / 24,
-                "remaining_lifespan": (facility.end_of_life - last_value["total_t"]) * in_game_seconds_per_tick,
+                "remaining_lifespan": facility.end_of_life - last_value["total_t"],
                 "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
                 "dismantle": tot_cost * 0.2,
             };
@@ -93,7 +93,7 @@ async function get_active_facilities(reorder = false) {
                 "used_capacity": raw_chart_data.storage[facility.facility][0][359] / player_data.capacities[facility.facility].capacity,
                 "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor_per_day"] / 24,
                 "efficiency": config.base_efficiency * facility.efficiency_multiplier,
-                "remaining_lifespan": (facility.end_of_life - last_value["total_t"]) * in_game_seconds_per_tick,
+                "remaining_lifespan": facility.end_of_life - last_value["total_t"],
                 "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
                 "dismantle": config.base_price * facility.price_multiplier * 0.2,
             };
@@ -123,7 +123,7 @@ async function get_active_facilities(reorder = false) {
                 "used_capacity": raw_chart_data.demand[facility.facility][0][359] / cumul_demand[facility.facility],
                 "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor_per_day"] / 24,
                 "energy_use": config.base_power_consumption * facility.power_multiplier,
-                "remaining_lifespan": (facility.end_of_life - last_value["total_t"]) * in_game_seconds_per_tick,
+                "remaining_lifespan": facility.end_of_life - last_value["total_t"],
                 "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
                 "dismantle": config.base_price * facility.price_multiplier * 0.2,
             };
