@@ -492,12 +492,16 @@ def calculate_generation_with_market(engine, new_values, market, player):
     # bid demand on the market at the set prices
     demand_priorities = player.demand_priorities.split(",")
 
-    if player.money <= 0:
+    # allow a maximum overdraft of the equivalent of the daily income of the industry
+    max_overdraft = -engine.config[player.id]["industry"]["income_per_day"]
+    if player.money < max_overdraft:
         website.utils.misc.notify(
-            "Not Enough Money", "You dont have enough money to buy electricity on the market", player
+            "Not Enough Money",
+            "You exceeded your credit limit, you can't buy electricity on the market anymore.",
+            player,
         )
     for demand_type in demand_priorities:
-        if player.money > 0:
+        if player.money >= max_overdraft:
             bid_q = demand[demand_type]
             price = getattr(player, "price_buy_" + demand_type)
             market = bid(market, player.id, bid_q, price, demand_type)
