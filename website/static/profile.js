@@ -355,7 +355,9 @@ function upgrade(id) {
                 let money = raw_data["money"];
                 var obj = document.getElementById("money");
                 obj.innerHTML = format_money_long(money);
-                get_active_facilities();
+                retrieve_player_data().then(() => {
+                    get_active_facilities();
+                });
             } else if (response == "notEnoughMoney") {
                 addError("Not enough money");
             }
@@ -376,7 +378,9 @@ function upgrade_all_of_type(facility_id) {
                 let money = raw_data["money"];
                 var obj = document.getElementById("money");
                 obj.innerHTML = format_money_long(money);
-                get_active_facilities();
+                retrieve_player_data().then(() => {
+                    get_active_facilities();
+                });
             } else if (response == "notEnoughMoney") {
                 addError("Not enough money");
             }

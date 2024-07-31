@@ -84,6 +84,9 @@ socket.on("new_values", function (changes) {
             fetch_temporal_network_data();
         }
     }
+    if (window.location.href.includes("/profile") && !window.location.href.includes("player_id")) {
+        get_active_facilities();
+    }
 });
 
 // receive new network values from the server
