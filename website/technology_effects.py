@@ -378,6 +378,7 @@ def _package_power_generating_facility_base(player: Player, facility):
         "ramping_speed": const_config_assets[facility]["base_power_generation"]
         * power_multiplier(player, facility)
         / const_config_assets[facility]["ramping_time"]
+        * 60
         if const_config_assets[facility]["ramping_time"] != 0
         else None,
     }
