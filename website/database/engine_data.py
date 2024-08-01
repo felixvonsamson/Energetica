@@ -136,9 +136,9 @@ class CircularBufferPlayer:
     """Class that stores the active data of a player (last 360 ticks of the graph data)"""
 
     def __init__(self):
-        self._data = {  # v - added dynamically - v
+        self._data = {
             "revenues": {
-                "industry": deque([0.0] * 360, maxlen=360),
+                "industry": deque([0.0] * 360, maxlen=360),  # v - added dynamically - v
                 "exports": deque([0.0] * 360, maxlen=360),
                 "imports": deque([0.0] * 360, maxlen=360),
                 "dumping": deque([0.0] * 360, maxlen=360),
@@ -335,9 +335,14 @@ class WeatherData:
 class EmissionData:
     """Class that stores the emission and climate data of the server"""
 
-    def __init__(self):
+    def __init__(self, delta_t, spt):
         self._data = {
-            "CO2": deque([5.0 * 10**9] * 360, maxlen=360),  # base value of 5Mt of CO2 in the atmosphere
+            "CO2": deque([5e9] * 360, maxlen=360),  # base value of 5Mt of CO2 in the atmosphere
+            "reference_temperature": deque(
+                [calculate_reference_GAT(t, spt) for t in range(delta_t - 360, delta_t)],
+                maxlen=360,
+            ),
+            "temperature_deviation": deque([0.0] * 360, maxlen=360),
         }
 
     def add(self, key, value):
@@ -345,9 +350,28 @@ class EmissionData:
         self._data[key][-1] += value
 
     def init_new_value(self):
-        """Set a new value of the data equal to the previous one. Keeping CO2 levels form one tick to the next"""
-        for value in self._data.values():
-            value.append(value[-1])
+        """Generates the new values for CO2, reference temperature and temperature deviation"""
+        # Keeping the CO2 leves form one tick to the next
+        self._data["CO2"].append(self._data["CO2"][-1])
+        # Calculating new temperatures
+        engine = current_app.config["engine"]
+        self._data["reference_temperature"].append(
+            calculate_reference_GAT(engine.data["total_t"], engine.in_game_seconds_per_tick)
+        )
+        self._data["temperature_deviation"].append(calculate_temperature_deviation(self._data["CO2"][-1]))
 
     def __getitem__(self, key):
         return self._data[key][-1]
+
+
+def calculate_reference_GAT(tick, seconds_per_tick):
+    """Function for the servers reference global average temperature"""
+    month = tick * seconds_per_tick / 518_400
+    return 13.65 - math.sin((month + 2) * math.pi / 6) * 1.9
+
+
+def calculate_temperature_deviation(CO2_levels):
+    """Function that calculates the GAT deviation from the CO2 levels"""
+    temperature_deviation = (CO2_levels - 5e9) / 1.67e9
+    perlin_disturbance = 0
+    return temperature_deviation + perlin_disturbance
