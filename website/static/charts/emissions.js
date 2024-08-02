@@ -15,6 +15,49 @@ const keys_emissions = {
     "uranium_mine": true,
 };
 
+function climate_graph() {
+    s.setup = function () {
+        s.relative = "absolute";
+        s.is_inside = false;
+        s.createCanvas(1200, 0.4 * 1200);
+        s.noLoop();
+        s.textFont(font);
+        s.textAlign(CENTER, CENTER);
+        s.graphics = s.createGraphics(s.width, s.height);
+        s.graphics.textAlign(CENTER, CENTER);
+        s.graphics.textFont(font);
+    }
+
+    s.draw = function () {
+        if (s.graphics_ready) {
+            s.image(s.graphics, 0, 0);
+            if (s.is_inside) {
+                nothing = 0;
+            }
+        }
+    }
+
+    s.mouseMoved = function () {
+        if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0 && s.mouseY < s.height) {
+            s.is_inside = true;
+            s.redraw();
+        } else {
+            if (s.is_inside) {
+                s.is_inside = false;
+                s.redraw();
+            }
+        }
+    }
+
+    s.mouseDragged = function () {
+        s.mouseMoved();
+    }
+
+    s.render_graph = function () {
+        s.graphics.background(229, 217, 182);
+    }
+}
+
 function graph_sketch(s) {
     s.setup = function () {
         s.percent = "normal";
