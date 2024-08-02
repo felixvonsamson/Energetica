@@ -20,35 +20,36 @@ def init_test_players(engine):
     """This function initializes the database with test players and networks."""
     player = create_player(engine, "user", "password")
     if player:
-        Hex.query.filter_by(id=1).first().player_id = player.id
+        Hex.query.filter_by(id=35).first().player_id = player.id
 
         player.money = 1_000_000
-        player.coal = 450_000
+        player.coal = 4_500_000
         player.oil = 100_000
-        player.gas = 800_000
+        player.gas = 80_000_000
         player.uranium = 4_500
         player.rest_of_priorities = ""
 
         add_asset(player, "industry", 21)
         add_asset(player, "laboratory", 5)
         add_asset(player, "mathematics", 1)
-        add_asset(player, "mineral_extraction", 2)
+        add_asset(player, "mineral_extraction", 5)
         add_asset(player, "building_technology", 1)
         add_asset(player, "civil_engineering", 1)
-        add_asset(player, "coal_mine", 1)
+        add_asset(player, "coal_mine", 10)
+        add_asset(player, "coal_burner", 25)
         # add_asset(player, "uranium_mine", 1)
-        add_asset(player, "warehouse", 2)
+        add_asset(player, "warehouse", 10)
         add_asset(player, "small_pumped_hydro", 1)
         add_asset(player, "hydrogen_storage", 1)
         add_asset(player, "onshore_wind_turbine", 15)
         # add_asset(player, "offshore_wind_turbine", 2)
-        add_asset(player, "nuclear_reactor_gen4", 1)
-        add_asset(player, "nuclear_reactor", 1)
-        add_asset(player, "combined_cycle", 4)
+        # add_asset(player, "nuclear_reactor_gen4", 1)
+        # add_asset(player, "nuclear_reactor", 1)
+        add_asset(player, "combined_cycle", 8)
         add_asset(player, "gas_burner", 5)
         add_asset(player, "steam_engine", 1)
         add_asset(player, "chemistry", 2)
-        add_asset(player, "carbon_capture", 4)
+        # add_asset(player, "carbon_capture", 4)
         add_asset(player, "mechanical_engineering", 3)
         add_asset(player, "physics", 2)
         add_asset(player, "thermodynamics", 2)

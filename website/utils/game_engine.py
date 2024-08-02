@@ -80,7 +80,7 @@ def state_update(engine, app):
         websocket.rest_notify_global_data(engine)
 
 
-def data_init_climate(seconds_per_tick, random_seed):
+def data_init_climate(seconds_per_tick, random_seed, delta_t):
     """Initializes the data for the climate."""
     ref_temp = []
     temp_deviation = []
@@ -88,9 +88,13 @@ def data_init_climate(seconds_per_tick, random_seed):
         ref_temp.append([])
         temp_deviation.append([])
         for j in range(360):
-            ref_temp[i].append(calculate_reference_gta(-(360 - j) * pow(6, i), seconds_per_tick))
+            if i == 0 and j > 300:
+                print(
+                    f"res_id = {i}, tick = {delta_t - (359 - j) * pow(6, i)}, spt = {seconds_per_tick}, random_seed = {random_seed}, value = {calculate_temperature_deviation(delta_t - (359 - j) * pow(6, i), seconds_per_tick, 5e9, random_seed)}"
+                )
+            ref_temp[i].append(calculate_reference_gta(delta_t - (359 - j) * pow(6, i), seconds_per_tick))
             temp_deviation[i].append(
-                calculate_temperature_deviation(-(360 - j) * pow(6, i), seconds_per_tick, 5e9, random_seed)
+                calculate_temperature_deviation(delta_t - (359 - j) * pow(6, i), seconds_per_tick, 5e9, random_seed)
             )
 
     return {

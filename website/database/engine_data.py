@@ -4,6 +4,7 @@
 import json
 import math
 from collections import defaultdict, deque
+from weakref import ref
 
 import noise
 import numpy as np
@@ -336,17 +337,23 @@ class WeatherData:
 class EmissionData:
     """Class that stores the emission and climate data of the server"""
 
-    def __init__(self, delta_t, spt):
+    def __init__(self, delta_t, spt, random_seed):
+        ref_temp = []
+        temp_deviation = []
+        for t in range(delta_t - 360, delta_t):
+            if t > delta_t - 60:
+                print(
+                    f"tick = {t+1}, spt = {spt}, random_seed = {random_seed}, value = {calculate_temperature_deviation(t + 1, spt, 5e9, random_seed)}"
+                )
+            ref_temp.append(calculate_reference_gta(t + 1, spt))
+            temp_deviation.append(calculate_temperature_deviation(t + 1, spt, 5e9, random_seed))
         self._data = {
             "emissions": {
                 "CO2": deque([5e9] * 360, maxlen=360),  # base value of 5Mt of CO2 in the atmosphere
             },
             "temperature": {
-                "reference": deque(
-                    [calculate_reference_gta(t, spt) for t in range(delta_t - 360, delta_t)],
-                    maxlen=360,
-                ),
-                "deviation": deque([0.0] * 360, maxlen=360),
+                "reference": deque(ref_temp, maxlen=360),
+                "deviation": deque(temp_deviation, maxlen=360),
             },
         }
 
@@ -368,19 +375,28 @@ class EmissionData:
         self._data["emissions"]["CO2"].append(self._data["emissions"]["CO2"][-1])
         # Calculating new temperatures
         engine = current_app.config["engine"]
-        self._data["temperature"]["reference"].append(
-            calculate_reference_gta(engine.data["total_t"], engine.in_game_seconds_per_tick)
-        )
+        t = engine.data["total_t"] + engine.data["delta_t"]
+        self._data["temperature"]["reference"].append(calculate_reference_gta(t, engine.in_game_seconds_per_tick))
         self._data["temperature"]["deviation"].append(
             calculate_temperature_deviation(
-                engine.data["total_t"],
+                t,
                 engine.in_game_seconds_per_tick,
-                self._data["emissions"]["CO2"][-1],
+                self._data["emissions"]["CO2"][0],
                 engine.data["random_seed"],
             )
         )
 
+    def get_last_data(self):
+        """Returns the last value for each subcategory"""
+        last_values = {}
+        for category, subcategories in self._data.items():
+            last_values[category] = {}
+            for subcategory, values in subcategories.items():
+                last_values[category][subcategory] = values[-1]
+        return last_values
+
     def get_co2(self):
+        """Returns the last value of the CO2 levels"""
         return self._data["emissions"]["CO2"][-1]
 
 
@@ -396,5 +412,5 @@ def calculate_temperature_deviation(tick, seconds_per_tick, co2_levels, random_s
     temperature_deviation = (co2_levels - 5e9) / 1.67e9
     perlin1 = noise.pnoise1(tick / ticks_per_year, base=random_seed)
     perlin2 = noise.pnoise1(tick / ticks_per_year * 6, base=random_seed)
-    perlin_disturbance = 0.5 * perlin1 + 0.1 * perlin2
+    perlin_disturbance = 0.4 * perlin1 + 0.1 * perlin2
     return temperature_deviation + perlin_disturbance

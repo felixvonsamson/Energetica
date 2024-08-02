@@ -44,6 +44,23 @@ socket.on("retrieve_player_data", function () {
 
 // receive new values from the server
 socket.on("new_values", function (changes) {
+
+    function integrate_new_values(old_values, new_values) {
+        for (var category in new_values) {
+            for (var subcategory in new_values[category]) {
+                if (!old_values[category].hasOwnProperty(subcategory)) {
+                    old_values[category][subcategory] = Array.from(
+                        { length: 5 },
+                        () => Array(360).fill(0)
+                    );
+                }
+                var value = new_values[category][subcategory];
+                var array = old_values[category][subcategory];
+                reduce_resolution(value, array, total_t);
+            }
+        }
+    }
+
     let money = document.getElementById("money");
     if (money != null) {
         money.innerHTML = format_money_long(changes["money"]);
@@ -61,22 +78,14 @@ socket.on("new_values", function (changes) {
             "last_value",
             JSON.stringify({ total_t: total_t, time: currentDate })
         );
+        let climate_data = JSON.parse(sessionStorage.getItem("climate_data"));
+        integrate_new_values(climate_data, changes.climate_values);
+        sessionStorage.setItem("climate_data", JSON.stringify(climate_data));
+
         let chart_data = JSON.parse(sessionStorage.getItem("chart_data"));
-        for (var category in changes["chart_values"]) {
-            var subcategories = changes["chart_values"][category];
-            for (var subcategory in subcategories) {
-                if (!chart_data[category].hasOwnProperty(subcategory)) {
-                    chart_data[category][subcategory] = Array.from(
-                        { length: 5 },
-                        () => Array(360).fill(0)
-                    );
-                }
-                var value = subcategories[subcategory];
-                var array = chart_data[category][subcategory];
-                reduce_resolution(value, array, total_t);
-            }
-        }
+        integrate_new_values(chart_data, changes.chart_values);
         sessionStorage.setItem("chart_data", JSON.stringify(chart_data));
+
         if (typeof fetch_graph_data === "function") {
             fetch_graph_data();
         }

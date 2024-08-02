@@ -34,7 +34,74 @@ function climate_graph(s) {
         if (s.graphics_ready) {
             s.image(s.graphics, 0, 0);
             if (s.is_inside) {
-                nothing = 0;
+                s.push();
+                s.stroke(255);
+                s.strokeWeight(2);
+                let X = min(s.graph_w, max(0, s.mouseX - margin));
+                t_view = floor(map(X, 0, s.graph_w, 0, data_len - 1));
+                s.translate(margin + X, s.graph_h + 0.4 * margin);
+                s.line(0, 0, 0, -s.graph_h);
+                s.noStroke();
+
+                s.push();
+                let h = map(s.active_curve[t_view], s.lower_bound, s.upper_bound, 0, s.graph_h);
+                s.ellipse(0, -h, 8, 8);
+                h = map(s.ref_curve[t_view], s.lower_bound, s.upper_bound, 0, s.graph_h);
+                s.ellipse(0, -h, 8, 8);
+                s.pop();
+
+                let count = 4;
+
+                let tx = -180;
+                let ty = - 0.4 * margin - s.graph_h + s.mouseY;
+                if (ty > - count * 16) {
+                    ty = - count * 16;
+                }
+                if (X < 180) {
+                    tx = 20;
+                }
+                s.translate(tx, ty);
+                fill_alt = 0;
+                alternate_fill(s);
+                s.rect(0, 0, 160, 17);
+                s.fill(0);
+                s.textFont(balooBold);
+                s.text(ticks_to_time((data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+                s.textFont(font);
+                s.translate(0, 16);
+                alternate_fill(s);
+                s.rect(0, 0, 160, 17);
+                s.fill(cols_and_names.temperature[0]);
+                s.rect(0, 0, 16, 17);
+                s.fill(0);
+                s.textAlign(LEFT, CENTER);
+                s.text(cols_and_names.temperature[1], 20, 5);
+                s.textAlign(CENTER, CENTER);
+                s.text(format_temperature(s.active_curve[t_view]), 137, 5);
+                s.translate(0, 16);
+                alternate_fill(s);
+                s.rect(0, 0, 160, 17);
+                s.fill(cols_and_names.ref_temperature[0]);
+                s.rect(0, 0, 16, 17);
+                s.fill(0);
+                s.textAlign(LEFT, CENTER);
+                s.text(cols_and_names.ref_temperature[1], 20, 5);
+                s.textAlign(CENTER, CENTER);
+                s.text(format_temperature(s.ref_curve[t_view]), 137, 5);
+                s.translate(0, 16);
+                alternate_fill(s);
+                s.rect(0, 0, 160, 17);
+                s.fill(0);
+                s.textAlign(LEFT, CENTER);
+                s.text("Climate change", 20, 5);
+                s.textAlign(CENTER, CENTER);
+                let sign = "+";
+                if (s.active_curve[t_view] - s.ref_curve[t_view] < 0) {
+                    sign = "";
+                }
+                s.text(sign + format_temperature(s.active_curve[t_view] - s.ref_curve[t_view]), 137, 5);
+
+                s.pop();
             }
         }
     }
@@ -69,15 +136,15 @@ function climate_graph(s) {
         load_climate_data().then((climate_data) => {
             if (s.relative == "relative") {
                 s.active_curve = climate_data.temperature.deviation[res_id].slice(s.t0);
-                s.ref_curve = [0] * data_len;
+                s.ref_curve = Array(data_len).fill(0);
             } else {
                 let ref_temp = climate_data.temperature.reference[res_id].slice(s.t0);
                 let temp_deviation = climate_data.temperature.deviation[res_id].slice(s.t0);
                 s.active_curve = temp_deviation.map((value, index) => value + ref_temp[index]);
                 s.ref_curve = ref_temp;
             }
-            s.lower_bound = Math.min(...s.active_curve, ...s.ref_curve);
-            s.upper_bound = Math.max(...s.active_curve, ...s.ref_curve);
+            s.lower_bound = 0.98 * Math.min(...s.active_curve, ...s.ref_curve);
+            s.upper_bound = 1.02 * Math.max(...s.active_curve, ...s.ref_curve);
 
             s.graphics.push();
             s.graphics.translate(margin, 0.4 * margin + s.graph_h);
@@ -103,12 +170,50 @@ function climate_graph(s) {
                 s.graphics.translate(s.graph_w / (data_len - 1), 0);
             }
             s.graphics.pop();
+
+            s.graphics.strokeWeight(1);
+            s.graphics.stroke(0);
+            s.graphics.line(0, 0, s.graph_w, 0);
+            s.graphics.line(0, 0, 0, -s.graph_h);
+
+            s.graphics.push();
+            let units = time_unit(res);
+            s.graphics.fill(0);
+            for (let i = 0; i < units.length; i++) {
+                s.graphics.stroke(0, 0, 0, 30);
+                let x = (i * s.graph_w) / (units.length - 1);
+                s.graphics.line(x, -s.graph_h, x, 0);
+                s.graphics.stroke(0);
+                s.graphics.line(x, 0, x, 5);
+                s.graphics.noStroke();
+                s.graphics.text(units[i], x, 0.26 * margin);
+            }
+            s.graphics.pop();
+
+            s.graphics.push();
+            let y_ticks = y_units_temperature(s.graph_h, s.lower_bound, s.upper_bound);
+            for (let i in y_ticks.ticks) {
+                s.graphics.stroke(0, 0, 0, 30);
+                s.graphics.line(s.graph_w, -i, 0, -i);
+                s.graphics.stroke(0);
+                s.graphics.line(0, -i, -5, -i);
+                s.graphics.noStroke();
+                s.graphics.text(format_temperature(y_ticks.ticks[i], max(0, -y_ticks.magnitude)), -28, -i - 3);
+            }
+            s.graphics.pop();
+
             s.graphics.pop();
 
             s.graphics_ready = true;
             s.redraw();
         });
     }
+}
+
+function change_relative(relative) {
+    show_selected_button("relative_button_", relative)
+    climate_graph_p5.relative = relative;
+    climate_graph_p5.render_graph();
 }
 
 function graph_sketch(s) {

@@ -43,7 +43,7 @@ Command line options are available to help with debugging:
 ```bash
 python main.py --help
 usage: main.py [-h] [--clock_time {60,30,20,15,12,10,6,5,4,3,2,1}] [--in_game_seconds_per_tick {3600, 1800, 1200, 900, 600, 540, 480, 420, 360, 300, 240, 180, 120,
-60, 30}] [--run_init_test_players] [--rm_instance]
+60, 30}] [--random_seed] [--run_init_test_players] [--rm_instance] 
 
 options:
   -h, --help            show this help message and exit
@@ -51,6 +51,7 @@ options:
                         Clock time interval in seconds (default is 60)
   --in_game_seconds_per_tick {3600, 1800, 1200, 900, 600, 540, 480, 420, 360, 300, 240, 180, 120, 60, 30}
                         Number of in-game seconds in a game tick (default is 240)
+  --random_seed         sets the random seed of the game
   --run_init_test_players
                         run the init_test_players function
   --rm_instance         remove the instance folder

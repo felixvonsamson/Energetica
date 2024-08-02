@@ -82,7 +82,7 @@ function setup() {
         gas: [color(171, 196, 255), "Gas"],
         uranium: [color(191, 210, 0), "Uranium"],
 
-        temperature: [color(220, 15, 15), "Global average temp."],
+        temperature: [color(220, 15, 15), "Global avr. temp."],
         ref_temperature: [color(252, 161, 3), "Reference GAT"],
         CO2: [color(55, 55, 55), "CO2"],
     };
@@ -194,6 +194,20 @@ function y_units_bounded(height, minNumber, maxNumber, divisions = 3) {
         values[h] = i;
     }
     return values;
+}
+
+function y_units_temperature(height, minNumber, maxNumber) {
+    let interval = (maxNumber - minNumber) / 4;
+    const orderOfMagnitude = Math.floor(Math.log10(interval));
+    const firstDigit = Math.floor(interval / 10 ** orderOfMagnitude);
+    interval = firstDigit * 10 ** orderOfMagnitude;
+    let values = {};
+    let i_min = Math.floor(minNumber / interval) + 1;
+    for (let i = i_min * interval; i <= maxNumber; i += interval) {
+        let h = map(i, minNumber, maxNumber, 0, height);
+        values[h] = i;
+    }
+    return { ticks: values, magnitude: orderOfMagnitude };
 }
 
 function alternate_fill(s) {

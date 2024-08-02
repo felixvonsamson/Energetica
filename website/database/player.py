@@ -322,6 +322,7 @@ class Player(db.Model, UserMixin):
             {
                 "total_t": engine.data["total_t"],
                 "chart_values": new_values,
+                "climate_values": engine.data["current_climate_data"].get_last_data(),
                 "money": self.money,
             },
         )
