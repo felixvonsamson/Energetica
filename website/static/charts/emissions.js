@@ -15,11 +15,13 @@ const keys_emissions = {
     "uranium_mine": true,
 };
 
-function climate_graph() {
+var climate_graph_p5;
+
+function climate_graph(s) {
     s.setup = function () {
         s.relative = "absolute";
         s.is_inside = false;
-        s.createCanvas(1200, 0.4 * 1200);
+        s.createCanvas(min(canvas_width, 1200), 0.4 * min(canvas_width, 1200));
         s.noLoop();
         s.textFont(font);
         s.textAlign(CENTER, CENTER);
@@ -54,12 +56,64 @@ function climate_graph() {
     }
 
     s.render_graph = function () {
+        s.graph_h = s.height - margin;
+        s.graph_w = s.width - 2 * margin;
         s.graphics.background(229, 217, 182);
+        data_len = 360;
+        s.t0 = 0;
+        if (res == resolution_list[0]) {
+            data_len = 60;
+            s.t0 = 300;
+        }
+
+        load_climate_data().then((climate_data) => {
+            if (s.relative == "relative") {
+                s.active_curve = climate_data.temperature.deviation[res_id].slice(s.t0);
+                s.ref_curve = [0] * data_len;
+            } else {
+                let ref_temp = climate_data.temperature.reference[res_id].slice(s.t0);
+                let temp_deviation = climate_data.temperature.deviation[res_id].slice(s.t0);
+                s.active_curve = temp_deviation.map((value, index) => value + ref_temp[index]);
+                s.ref_curve = ref_temp;
+            }
+            s.lower_bound = Math.min(...s.active_curve, ...s.ref_curve);
+            s.upper_bound = Math.max(...s.active_curve, ...s.ref_curve);
+
+            s.graphics.push();
+            s.graphics.translate(margin, 0.4 * margin + s.graph_h);
+            s.graphics.noStroke();
+
+
+            s.graphics.strokeWeight(3);
+            s.graphics.push();
+            s.graphics.stroke(cols_and_names.ref_temperature[0]);
+            for (let t = 1; t < data_len; t++) {
+                let h1 = map(s.ref_curve[t - 1], s.lower_bound, s.upper_bound, 0, s.graph_h);
+                let h2 = map(s.ref_curve[t], s.lower_bound, s.upper_bound, 0, s.graph_h);
+                s.graphics.line(0, -h1, s.graph_w / data_len, -h2);
+                s.graphics.translate(s.graph_w / (data_len - 1), 0);
+            }
+            s.graphics.pop();
+            s.graphics.push();
+            s.graphics.stroke(cols_and_names.temperature[0]);
+            for (let t = 1; t < data_len; t++) {
+                let h1 = map(s.active_curve[t - 1], s.lower_bound, s.upper_bound, 0, s.graph_h);
+                let h2 = map(s.active_curve[t], s.lower_bound, s.upper_bound, 0, s.graph_h);
+                s.graphics.line(0, -h1, s.graph_w / data_len, -h2);
+                s.graphics.translate(s.graph_w / (data_len - 1), 0);
+            }
+            s.graphics.pop();
+            s.graphics.pop();
+
+            s.graphics_ready = true;
+            s.redraw();
+        });
     }
 }
 
 function graph_sketch(s) {
     s.setup = function () {
+        climate_graph_p5 = new p5(climate_graph, "climate_graph_sketch");
         s.percent = "normal";
         s.is_inside = false;
         s.createCanvas(min(canvas_width, 1200), 0.55 * canvas_width);
@@ -196,6 +250,8 @@ function graph_sketch(s) {
     }
 
     s.render_graph = function (regen_table = true) {
+        climate_graph_p5.render_graph();
+
         s.graph_h = s.height - margin;
         s.graph_w = s.width - 2 * margin;
         s.graphics.background(229, 217, 182);

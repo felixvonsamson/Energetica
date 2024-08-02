@@ -9,6 +9,7 @@ import website.api.websocket as websocket
 import website.production_update as production_update
 import website.utils.assets as assets
 from website import db
+from website.database.engine_data import calculate_reference_gta, calculate_temperature_deviation
 from website.database.player_assets import ActiveFacilities, Shipment, UnderConstruction
 from website.utils.assets import remove_asset
 from website.utils.misc import save_past_data_threaded
@@ -77,3 +78,27 @@ def state_update(engine, app):
         websocket.rest_notify_scoreboard(engine)
         websocket.rest_notify_weather(engine)
         websocket.rest_notify_global_data(engine)
+
+
+def data_init_climate(seconds_per_tick, random_seed):
+    """Initializes the data for the climate."""
+    ref_temp = []
+    temp_deviation = []
+    for i in range(5):
+        ref_temp.append([])
+        temp_deviation.append([])
+        for j in range(360):
+            ref_temp[i].append(calculate_reference_gta(-(360 - j) * pow(6, i), seconds_per_tick))
+            temp_deviation[i].append(
+                calculate_temperature_deviation(-(360 - j) * pow(6, i), seconds_per_tick, 5e9, random_seed)
+            )
+
+    return {
+        "emissions": {
+            "CO2": [[5e9] * 360] * 5,
+        },
+        "temperature": {
+            "reference": ref_temp,
+            "deviation": temp_deviation,
+        },
+    }

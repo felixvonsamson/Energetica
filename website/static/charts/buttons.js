@@ -81,6 +81,10 @@ function setup() {
         oil: [color(166, 99, 204), "Oil"],
         gas: [color(171, 196, 255), "Gas"],
         uranium: [color(191, 210, 0), "Uranium"],
+
+        temperature: [color(220, 15, 15), "Global average temp."],
+        ref_temperature: [color(252, 161, 3), "Reference GAT"],
+        CO2: [color(55, 55, 55), "CO2"],
     };
 
     canvas_width = 0.7 * windowWidth;

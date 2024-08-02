@@ -55,7 +55,14 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
         engine.log("removing instance")
         shutil.rmtree("instance")
 
+    from .utils.game_engine import data_init_climate
+
     Path("instance/player_data").mkdir(parents=True, exist_ok=True)
+    Path("instance/server_data").mkdir(parents=True, exist_ok=True)
+    with open("instance/server_data/climate_data.pck", "wb") as file:
+        climate_data = data_init_climate(in_game_seconds_per_tick, engine.data["random_seed"])
+        pickle.dump(climate_data, file)
+
     if os.path.isfile("instance/engine_data.pck"):
         with open("instance/engine_data.pck", "rb") as file:
             engine.data = pickle.load(file)

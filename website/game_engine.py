@@ -3,6 +3,7 @@
 import logging
 import math
 import pickle
+import random
 from collections import defaultdict
 from datetime import datetime
 
@@ -108,7 +109,7 @@ class GameEngine(object):
         ]
 
         self.data = {}
-
+        self.data["random_seed"] = random.randint(0, 1000000)
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
         self.data["start_date"] = datetime.now()  # 0 point of server time
         last_midnight = self.data["start_date"].replace(hour=0, minute=0, second=0, microsecond=0)
@@ -123,7 +124,7 @@ class GameEngine(object):
         self.data["current_data"] = {}
         self.data["network_data"] = {}
         self.data["weather"] = WeatherData()
-        self.data["emissions"] = EmissionData(self.data["delta_t"], in_game_seconds_per_tick)
+        self.data["current_climate_data"] = EmissionData(self.data["delta_t"], in_game_seconds_per_tick)
 
         # stored the levels of technology of the server
         # for each tech an array stores [# players with lvl 1, # players with lvl 2, ...]
@@ -185,5 +186,4 @@ class GameEngine(object):
             "first_tick_date": self.data["start_date"],
             "tick_length": self.clock_time,
             "total_ticks": self.data["total_t"],
-            "co2_emissions": self.data["emissions"]["CO2"],
         }

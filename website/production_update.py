@@ -30,8 +30,8 @@ extraction_to_resource = {
 
 def update_electricity(engine):
     """Update the electricity generation and storage status for all players"""
-    # keep CO2 values for next t
-    engine.data["emissions"].init_new_value()
+    # calculate new co2 and temperature values
+    engine.data["current_climate_data"].init_new_value()
     players = Player.query.all()
     networks = Network.query.all()
 
@@ -905,7 +905,7 @@ def resources_and_pollution(engine, new_values, player):
         satisfaction = demand["carbon_capture"] / assets["carbon_capture"]["power_consumption"]
         captured_co2 = (
             assets["carbon_capture"]["absorption"]
-            * engine.data["emissions"]["CO2"]
+            * engine.data["current_climate_data"].get_co2()
             * engine.in_game_seconds_per_tick
             / 86400
             * satisfaction
@@ -1042,4 +1042,4 @@ def add_emissions(engine, new_values, player, facility, amount):
     """Helper function to add emissions to the data"""
     new_values["emissions"][facility] += amount
     player.emissions += amount
-    engine.data["emissions"].add("CO2", amount)
+    engine.data["current_climate_data"].add("CO2", amount)

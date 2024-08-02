@@ -4,7 +4,7 @@
 {% endblock title %}
 {% block content %}
     <div class="flex-row huge title">
-        Emissions overview
+        Emissions & Climate Overview
         <div class="pine info_icon_container"
              onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
     </div>
@@ -23,6 +23,9 @@
             </p>
         </div>
     </div>
+
+    <div class="flex-center bone large padding">Global Average Temperatures</div>
+    <div id="climate_graph_sketch" class="bone"></div>
     
     <div class="flex-center bone large padding">Emissions</div>
     <div id="graph_sketch" class="bone"></div>
