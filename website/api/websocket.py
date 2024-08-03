@@ -13,6 +13,10 @@ from website.database.messages import Chat, Message
 from website.database.player import Network, Player
 from website.game_engine import GameEngine
 from website.technology_effects import package_constructions_page_data
+from website.utils.assets import decrease_project_priority, pause_project, start_project
+from website.utils.chat import add_message, create_chat_2, create_group_chat_2, hide_chat_disclaimer
+from website.utils.misc import confirm_location
+from website.utils.network import create_network, join_network, leave_network
 
 websocket_blueprint = Blueprint("rest_api", __name__)
 
@@ -379,18 +383,18 @@ def rest_parse_request(engine, player: Player, ws, uuid, data):
         case "decreaseProjectPriority":
             rest_parse_request_decrease_project_priority(ws, uuid, body)
         case "dismissChatDisclaimer":
-            utils.hide_chat_disclaimer(player)
+            hide_chat_disclaimer(player)
         case "createChat":
             buddy_id = data["buddy_id"]
-            utils.create_chat_2(player, buddy_id)
+            create_chat_2(player, buddy_id)
         case "createGroupChat":
             chat_name = data["chat_name"]
             participant_ids = data["participant_ids"]
-            utils.create_group_chat_2(player, chat_name, participant_ids)
+            create_group_chat_2(player, chat_name, participant_ids)
         case "sendMessage":
             chat_id = data["chat_id"]
             message = data["message"]
-            utils.add_message(player, message, chat_id)
+            add_message(player, message, chat_id)
         case _:
             engine.warn(f"rest_parse_request got unknown endpoint: {endpoint}")
 
@@ -398,7 +402,7 @@ def rest_parse_request(engine, player: Player, ws, uuid, data):
 def rest_parse_request_confirm_location(ws, uuid, data):
     """Interpret message sent from a client when they chose a location."""
     cell_id = data
-    response = utils.confirm_location(engine=g.engine, player=g.player, location=Hex.query.get(cell_id))
+    response = confirm_location(engine=g.engine, player=g.player, location=Hex.query.get(cell_id))
     print(f"ws is {ws} and we're sending rest_respond_confirmLocation")
     message = rest_request_response(uuid, "confirmLocation", response)
     ws.send(message)
@@ -410,14 +414,14 @@ def rest_parse_request_join_network(engine, ws, uuid, data):
     """Interpret message sent from a client when they join a network."""
     network_id = data
     network = Network.query.get(network_id)
-    response = utils.join_network(engine, g.player, network)
+    response = join_network(engine, g.player, network)
     message = rest_request_response(uuid, "joinNetwork", response)
     ws.send(message)
 
 
 def rest_parse_request_leave_network(engine, ws, uuid):
     """Interpret message sent from a client when they leave a network"""
-    response = utils.leave_network(engine, g.player)
+    response = leave_network(engine, g.player)
     message = rest_request_response(uuid, "leaveNetwork", response)
     ws.send(message)
 
@@ -425,7 +429,7 @@ def rest_parse_request_leave_network(engine, ws, uuid):
 def rest_parse_request_create_network(engine, ws, uuid, data):
     """Interpret message sent from a client when they create a network"""
     network_name = data
-    response = utils.create_network(engine, g.player, network_name)
+    response = create_network(engine, g.player, network_name)
     message = rest_request_response(uuid, "createNetwork", response)
     ws.send(message)
 
@@ -435,7 +439,7 @@ def rest_parse_request_start_project(engine, ws, uuid, data):
     facility = data["facility"]
     family = data["family"]
     print(f"rest_parse_request_startProject got: family = {family}, facility = {facility}")
-    response = utils.start_project(engine, g.player, facility, family)
+    response = start_project(engine, g.player, facility, family)
     message = rest_request_response(uuid, "startProject", response)
     ws.send(message)
 
@@ -444,7 +448,7 @@ def rest_parse_request_pause_unpause_project(ws, uuid, data):
     """Interpret message sent from a client when they pause or unpause a
     project"""
     construction_id = data
-    response = utils.pause_project(g.player, construction_id)
+    response = pause_project(g.player, construction_id)
     message = rest_request_response(uuid, "pauseUnpauseProject", response)
     ws.send(message)
 
@@ -453,7 +457,7 @@ def rest_parse_request_decrease_project_priority(ws, uuid, data):
     """Interpret message sent from a client when they decrease a project's
     priority"""
     construction_id = data
-    response = utils.decrease_project_priority(g.player, construction_id)
+    response = decrease_project_priority(g.player, construction_id)
     message = rest_request_response(uuid, "decreaseProjectPriority", response)
     ws.send(message)
 
