@@ -31,12 +31,7 @@ def check_user():
     def render_template_ctx(page):
         if page in ["wiki.jinja", "changelog.jinja"]:
             if current_user.tile is not None:
-                return render_template(
-                    page,
-                    engine=g.engine,
-                    user=current_user,
-                    data=g.data,
-                )
+                return render_template(page, engine=g.engine, user=current_user, data=g.data)
             return render_template("wiki.jinja", engine=g.engine, user=None)
         # show location choice if player didn't choose yet
         if current_user.tile is None:
@@ -44,22 +39,10 @@ def check_user():
         # render template with or without player production data
         if page == "messages.jinja":
             chats = Chat.query.filter(Chat.participants.any(id=current_user.id)).all()
-            return render_template(
-                page,
-                engine=g.engine,
-                user=current_user,
-                chats=chats,
-                data=g.data,
-            )
+            return render_template(page, engine=g.engine, user=current_user, chats=chats, data=g.data)
         elif page == "resource_market.jinja":
             on_sale = ResourceOnSale.query.all()
-            return render_template(
-                page,
-                engine=g.engine,
-                user=current_user,
-                on_sale=on_sale,
-                data=g.data,
-            )
+            return render_template(page, engine=g.engine, user=current_user, on_sale=on_sale, data=g.data)
         elif page == "facilities/power_facilities.jinja":
             constructions = package_power_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
