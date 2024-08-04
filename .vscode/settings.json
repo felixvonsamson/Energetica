@@ -29,6 +29,8 @@
         "apscheduler",
         "backref",
         "Baloo",
+        "coldwave",
+        "coldwaves",
         "Compr",
         "cumsum",
         "cumul",
