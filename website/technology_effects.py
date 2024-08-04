@@ -7,14 +7,14 @@ import math
 
 from flask import current_app
 
-import website.game_engine as game_engine
 from website.database.map import Hex
 from website.database.player import Player
+from website.game_engine import GameEngine
 
 from .database.player_assets import ActiveFacilities, UnderConstruction
 
 
-def price_multiplier(player, facility):
+def price_multiplier(player: Player, facility):
     """Function that returns the price multiplier according to the technology level of the player."""
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
@@ -43,7 +43,7 @@ def price_multiplier(player, facility):
     if facility in const_config["nuclear_engineering"]["affected_facilities"]:
         mlt *= const_config["nuclear_engineering"]["price_factor"] ** player.nuclear_engineering
     # level based facilities and technologies
-    engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     if facility in engine.functional_facilities + engine.technologies:
         mlt *= const_config[facility]["price_multiplier"] ** getattr(player, facility)
     # knowledge spilling for technologies
@@ -52,7 +52,7 @@ def price_multiplier(player, facility):
     return mlt
 
 
-def power_multiplier(player, facility):
+def power_multiplier(player: Player, facility):
     """Function that returns the power multiplier according to the technology level of the player."""
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
@@ -77,7 +77,7 @@ def power_multiplier(player, facility):
     return mlt
 
 
-def capacity_multiplier(player, facility):
+def capacity_multiplier(player: Player, facility):
     """Function that returns the capacity multiplier according to the technology level of the player."""
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
@@ -96,7 +96,7 @@ def capacity_multiplier(player, facility):
     return mlt
 
 
-def efficiency_multiplier(player, facility):
+def efficiency_multiplier(player: Player, facility):
     """Function that returns the efficiency multiplier according to the technology level of the player."""
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
@@ -144,9 +144,9 @@ def efficiency_multiplier(player, facility):
     return mlt
 
 
-def construction_time(player, facility):
+def construction_time(player: Player, facility):
     """Function that returns the construction time in ticks according to the technology level of the player."""
-    engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
     # transforming in game seconds in ticks
     duration = const_config[facility]["base_construction_time"] / engine.in_game_seconds_per_tick
@@ -170,9 +170,9 @@ def construction_time(player, facility):
     return math.ceil(duration)
 
 
-def construction_power(player, facility):
+def construction_power(player: Player, facility):
     """Function that returns the construction power in W according to the technology level of the player."""
-    engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
     bt_factor = const_config["building_technology"]["time_factor"] ** player.building_technology
     # construction power in relation of facilities characteristics
@@ -217,9 +217,9 @@ def construction_power(player, facility):
     return power
 
 
-def construction_pollution_per_tick(player, facility):
+def construction_pollution_per_tick(player: Player, facility):
     """Function that returns the construction pollution per tick according to the technology level of the player."""
-    engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
     if facility in engine.technologies:
         return 0
@@ -240,7 +240,7 @@ def wind_speed_multiplier(count, potential):
     return 1 / (math.log(math.e + (count * (1 / (9 * potential + 1))) ** 2))
 
 
-def facility_requirements(player, facility):
+def facility_requirements(player: Player, facility):
     """Returns the list of requirements (name, level, and boolean for met) for the specified facility"""
     const_config = current_app.config["engine"].const_config["assets"]
     requirements = const_config[facility]["requirements"].copy()
@@ -260,14 +260,14 @@ def requirements_met(requirements):
     return any(requirement["fulfilled"] is False for requirement in requirements)
 
 
-def facility_requirements_and_locked(player, facility):
+def facility_requirements_and_locked(player: Player, facility):
     """Returns a dictionary with both requirements and locked status"""
     requirements = facility_requirements(player, facility)
     locked = requirements_met(requirements)
     return {"requirements": requirements, "locked": locked}
 
 
-def power_facility_resource_consumption(player, power_facility):
+def power_facility_resource_consumption(player: Player, power_facility):
     """Returns a dictionary of the resources consumed by the power_facility for this player"""
     # TODO: perhaps rejig how this information is packaged.
     # Namely, switch from a dictionary with the system resource name as a key and a float for the amount as a value
@@ -281,10 +281,10 @@ def power_facility_resource_consumption(player, power_facility):
     return consumed_resources
 
 
-def get_current_technology_values(player):
+def get_current_technology_values(player: Player):
     """Function that returns the facility values for the current technology of the player."""
     # TODO: Deprecate this function
-    engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     dict = {}
     for facility in (
         engine.power_facilities
@@ -345,7 +345,7 @@ def get_current_technology_values(player):
 
 def _package_facility_base(player: Player, facility):
     """Gets data shared between power, storage, extraction, and functional facilities"""
-    engine: game_engine.GameEngine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
         "name": facility,
@@ -368,7 +368,7 @@ def _package_facility_base(player: Player, facility):
 
 def _package_power_generating_facility_base(player: Player, facility):
     """Gets all data shared by power and storage facilities"""
-    engine: game_engine.GameEngine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
         "power_generation": const_config_assets[facility]["base_power_generation"] * power_multiplier(player, facility),
@@ -386,7 +386,7 @@ def _package_power_generating_facility_base(player: Player, facility):
 
 def _package_power_storage_extraction_facility_base(player: Player, facility):
     """Gets all data shared by power, storage, and extraction facilities"""
-    engine: game_engine.GameEngine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
         "construction_pollution": const_config_assets[facility]["base_construction_pollution"],
@@ -406,7 +406,7 @@ def _package_power_storage_extraction_facility_base(player: Player, facility):
 def package_power_facilities(player: Player):
     """Gets all data relevant for the power_facilities frontend"""
     # TODO: add wind and hydro potential
-    engine: game_engine.GameEngine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return [
         _package_facility_base(player, power_facility)
@@ -429,7 +429,7 @@ def package_power_facilities(player: Player):
 
 def package_storage_facilities(player: Player):
     """Gets all data relevant for the storage_facilities frontend"""
-    engine: game_engine.GameEngine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return [
         _package_facility_base(player, storage_facility)
@@ -448,7 +448,7 @@ def package_storage_facilities(player: Player):
 
 def package_extraction_facilities(player: Player):
     """Gets all data relevant for the extraction_facilities frontend"""
-    engine: game_engine.GameEngine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     facility_to_resource = {
         "coal_mine": "coal",
@@ -508,7 +508,7 @@ def facility_is_hidden(player: Player, facility):
 
 def package_functional_facilities(player: Player):
     """Gets all data relevant for the functional_facilities frontend"""
-    engine: game_engine.GameEngine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
 
     def package_change(current, upgraded):
