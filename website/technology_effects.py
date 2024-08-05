@@ -12,7 +12,7 @@ from website.database.map import Hex
 from website.database.player import Player
 from website.game_engine import GameEngine
 
-from .database.player_assets import ActiveFacilities, UnderConstruction
+from .database.player_assets import ActiveFacility, UnderConstruction
 
 
 def price_multiplier(player: Player, facility):
@@ -133,7 +133,7 @@ def efficiency_multiplier(player: Player, facility):
         "onshore_wind_turbine",
         "offshore_wind_turbine",
     ]:
-        active_facilities = ActiveFacilities.query.filter_by(facility=facility, player_id=player.id).all()
+        active_facilities = ActiveFacility.query.filter_by(facility=facility, player_id=player.id).all()
         under_construction: List[UnderConstruction] = UnderConstruction.query.filter_by(
             name=facility, player_id=player.id
         ).all()

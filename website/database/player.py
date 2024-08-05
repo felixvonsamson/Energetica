@@ -9,7 +9,7 @@ from pywebpush import WebPushException, webpush
 
 from website import db
 from website.database.messages import Chat, Message, Notification, player_chats
-from website.database.player_assets import ActiveFacilities, UnderConstruction
+from website.database.player_assets import ActiveFacility, UnderConstruction
 
 
 class Player(db.Model, UserMixin):
@@ -139,7 +139,7 @@ class Player(db.Model, UserMixin):
     under_construction = db.relationship("UnderConstruction")
     resource_on_sale = db.relationship("ResourceOnSale", backref="player")
     shipments = db.relationship("Shipment", backref="player")
-    active_facilities = db.relationship("ActiveFacilities", backref="player", lazy="dynamic")
+    active_facilities = db.relationship("ActiveFacility", backref="player", lazy="dynamic")
 
     def change_graph_view(self, view):
         """Helper method to set the network graph view of the player (basic/normal/expert)"""
@@ -427,7 +427,7 @@ class Player(db.Model, UserMixin):
         """Packages the player's active facilities"""
 
         def get_facility_data(facilities):
-            sub_facilities = self.active_facilities.filter(ActiveFacilities.facility.in_(facilities)).all()
+            sub_facilities = self.active_facilities.filter(ActiveFacility.facility.in_(facilities)).all()
             return {
                 facility.id: {
                     k: getattr(facility, k)

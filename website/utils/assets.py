@@ -9,7 +9,7 @@ import website.game_engine as game_engine
 import website.technology_effects as technology_effects
 from website import db
 from website.database.player import Player
-from website.database.player_assets import ActiveFacilities, UnderConstruction
+from website.database.player_assets import ActiveFacility, UnderConstruction
 from website.utils.misc import notify
 from website.utils.network import reorder_facility_priorities
 
@@ -104,7 +104,7 @@ def add_asset(player_id, construction_id):
                     player,
                 )
 
-    if ActiveFacilities.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
+    if ActiveFacility.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
         # initialize array for facility if it is the first one built
         current_data = engine.data["current_data"][player.id]
         if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
@@ -227,7 +227,7 @@ def add_asset(player_id, construction_id):
         eol = engine.data["total_t"] + math.ceil(
             engine.const_config["assets"][construction.name]["lifespan"] / engine.in_game_seconds_per_tick
         )
-        new_facility = ActiveFacilities(
+        new_facility = ActiveFacility(
             facility=construction.name,
             end_of_life=eol,
             player_id=player.id,
@@ -295,7 +295,7 @@ def upgrade_facility(player, facility_id):
                 facility.efficiency_multiplier = technology_effects.efficiency_multiplier(player, facility.facility)
         db.session.commit()
 
-    facility = ActiveFacilities.query.get(facility_id)
+    facility = ActiveFacility.query.get(facility_id)
     if facility.facility in engine.technologies + engine.functional_facilities:
         return {"response": "notUpgradable"}
 
@@ -319,8 +319,8 @@ def upgrade_facility(player, facility_id):
 
 def upgrade_all_of_type(player, facility_id):
     """this function is executed when a player upgrades all facilities of a certain type"""
-    facility_name = ActiveFacilities.query.get(facility_id).facility
-    facilities = ActiveFacilities.query.filter_by(player_id=player.id, facility=facility_name).all()
+    facility_name = ActiveFacility.query.get(facility_id).facility
+    facilities = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
         upgrade_facility(player, facility.id)
     return {"response": "success", "money": player.money}
@@ -358,7 +358,7 @@ def remove_asset(player_id, facility, decommissioning=True):
 
 def dismantle_facility(player, facility_id):
     """this function is executed when a player dismantles a facility"""
-    facility = ActiveFacilities.query.get(facility_id)
+    facility = ActiveFacility.query.get(facility_id)
     base_price = current_app.config["engine"].const_config["assets"][facility.facility]["base_price"]
     cost = 0.2 * base_price * facility.price_multiplier
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
@@ -371,8 +371,8 @@ def dismantle_facility(player, facility_id):
 
 def dismantle_all_of_type(player, facility_id):
     """this function is executed when a player dismantles all facilities of a certain type"""
-    facility_name = ActiveFacilities.query.get(facility_id).facility
-    facilities = ActiveFacilities.query.filter_by(player_id=player.id, facility=facility_name).all()
+    facility_name = ActiveFacility.query.get(facility_id).facility
+    facilities = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
         dismantle_facility(player, facility.id)
     return {"response": "success", "money": player.money}

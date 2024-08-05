@@ -10,7 +10,7 @@ import requests
 from flask import current_app
 
 from website.config import river_discharge_seasonal
-from website.database.player_assets import ActiveFacilities
+from website.database.player_assets import ActiveFacility
 
 
 class CapacityData:
@@ -40,12 +40,12 @@ class CapacityData:
         """This function updates the capacity data of the player"""
         engine = current_app.config["engine"]
         if facility is None:
-            active_facilities = ActiveFacilities.query.filter_by(player_id=player.id).all()
+            active_facilities = ActiveFacility.query.filter_by(player_id=player.id).all()
             unique_facilities = {af.facility for af in active_facilities}
             for uf in unique_facilities:
                 self.init_facility(engine, uf)
         else:
-            active_facilities = ActiveFacilities.query.filter_by(player_id=player.id, facility=facility).all()
+            active_facilities = ActiveFacility.query.filter_by(player_id=player.id, facility=facility).all()
             if len(active_facilities) == 0 and facility in self._data:
                 del self._data[facility]
                 return

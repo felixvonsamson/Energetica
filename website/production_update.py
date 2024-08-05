@@ -11,7 +11,7 @@ import website.utils.misc
 from . import db
 from .config import wind_power_curve
 from .database.player import Network, Player
-from .database.player_assets import ActiveFacilities, Shipment, UnderConstruction
+from .database.player_assets import ActiveFacility, Shipment, UnderConstruction
 
 resource_to_extraction = {
     "coal": "coal_mine",
@@ -706,7 +706,7 @@ def wind_generation(engine, player, player_cap, generation):
     """Each wind facility has its own wind speed multiplier and therefore generates a different amount of power"""
     for facility_type in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
         if player_cap[facility_type] is not None:
-            wind_facilities = ActiveFacilities.query.filter_by(player_id=player.id, facility=facility_type).all()
+            wind_facilities = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_type).all()
             for facility in wind_facilities:
                 wind_speed_factor = facility.capacity_multiplier
                 max_power = (

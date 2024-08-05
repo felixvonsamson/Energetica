@@ -10,7 +10,7 @@ import website.api.websocket as websocket
 import website.production_update as production_update
 import website.utils.assets as assets
 from website import db
-from website.database.player_assets import ActiveFacilities, Shipment, UnderConstruction
+from website.database.player_assets import ActiveFacility, Shipment, UnderConstruction
 from website.utils.assets import remove_asset
 from website.utils.misc import save_past_data_threaded
 from website.utils.resource_market import store_import
@@ -42,7 +42,7 @@ def check_finished_constructions(engine):
         db.session.commit()
 
     # check end of lifespan of facilities
-    eolt_facilities = ActiveFacilities.query.filter(ActiveFacilities.end_of_life <= engine.data["total_t"]).all()
+    eolt_facilities = ActiveFacility.query.filter(ActiveFacility.end_of_life <= engine.data["total_t"]).all()
     if eolt_facilities:
         for facility in eolt_facilities:
             remove_asset(facility.player_id, facility)

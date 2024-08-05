@@ -26,7 +26,7 @@ class UnderConstruction(db.Model):
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
 
-class ActiveFacilities(db.Model):
+class ActiveFacility(db.Model):
     """Class that stores the facilities on the server and their end of life time."""
 
     id = db.Column(db.Integer, primary_key=True)
