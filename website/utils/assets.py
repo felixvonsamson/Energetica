@@ -18,7 +18,7 @@ def add_asset(player_id, construction_id):
     """this function is executed when a construction or research project has finished"""
     engine = current_app.config["engine"]
     player: Player = Player.query.get(player_id)
-    construction = UnderConstruction.query.get(construction_id)
+    construction: UnderConstruction = UnderConstruction.query.get(construction_id)
 
     if construction.family in ["Technologies", "Functional facilities"]:
         if getattr(player, construction.name) == 0:
@@ -162,13 +162,13 @@ def add_asset(player_id, construction_id):
     player.remove_from_list(priority_list_name, construction_id)
     project_priorities = player.read_list(priority_list_name)
     for priority_index, project_id in enumerate(project_priorities[:]):
-        next_construction = UnderConstruction.query.get(project_id)
+        next_construction: UnderConstruction = UnderConstruction.query.get(project_id)
         if next_construction.suspension_time is not None:
             if next_construction.family in [
                 "Functional facilities",
                 "Technologies",
             ]:
-                first_lvl = (
+                first_lvl: UnderConstruction = (
                     UnderConstruction.query.filter_by(name=next_construction.name, player_id=player.id)
                     .order_by(UnderConstruction.duration)
                     .first()
@@ -177,7 +177,7 @@ def add_asset(player_id, construction_id):
                     if first_lvl.start_time + first_lvl.duration >= engine.data["total_t"]:
                         continue
                     else:
-                        second_lvl = (
+                        second_lvl: UnderConstruction = (
                             UnderConstruction.query.filter_by(name=next_construction.name, player_id=player.id)
                             .order_by(UnderConstruction.duration)
                             .offset(1)
@@ -449,7 +449,7 @@ def start_project(engine, player, facility, family, force=False):
 
     player.money -= real_price
     duration = math.ceil(duration)
-    new_construction = UnderConstruction(
+    new_construction: UnderConstruction = UnderConstruction(
         name=facility,
         family=family,
         start_time=engine.data["total_t"],
@@ -480,7 +480,7 @@ def start_project(engine, player, facility, family, force=False):
 def cancel_project(player, construction_id, force=False):
     """this function is executed when a player cancels an ongoing construction"""
     engine = current_app.config["engine"]
-    construction = UnderConstruction.query.get(int(construction_id))
+    construction: UnderConstruction = UnderConstruction.query.get(int(construction_id))
 
     priority_list_name = "construction_priorities"
     if construction.family == "Technologies":
@@ -521,7 +521,7 @@ def cancel_project(player, construction_id, force=False):
 def decrease_project_priority(player, construction_id, pausing=False):
     """this function is executed when a player changes the order of ongoing constructions"""
     engine = current_app.config["engine"]
-    construction = UnderConstruction.query.get(int(construction_id))
+    construction: UnderConstruction = UnderConstruction.query.get(int(construction_id))
 
     if construction.family == "Technologies":
         attr = "research_priorities"
@@ -531,8 +531,8 @@ def decrease_project_priority(player, construction_id, pausing=False):
     id_list = player.read_list(attr)
     index = id_list.index(construction_id)
     if index >= 0 and index < len(id_list) - 1:
-        construction_1 = UnderConstruction.query.get(id_list[index])
-        construction_2 = UnderConstruction.query.get(id_list[index + 1])
+        construction_1: UnderConstruction = UnderConstruction.query.get(id_list[index])
+        construction_2: UnderConstruction = UnderConstruction.query.get(id_list[index + 1])
         if construction_1.suspension_time is None and construction_2.suspension_time is not None:
             construction_1.suspension_time = engine.data["total_t"]
             if pausing:
@@ -541,7 +541,7 @@ def decrease_project_priority(player, construction_id, pausing=False):
                 "Functional facilities",
                 "Technologies",
             ]:
-                first_lvl = (
+                first_lvl: UnderConstruction = (
                     UnderConstruction.query.filter_by(name=construction_2.name, player_id=player.id)
                     .order_by(UnderConstruction.duration)
                     .first()
@@ -576,7 +576,7 @@ def decrease_project_priority(player, construction_id, pausing=False):
 def pause_project(player, construction_id):
     """this function is executed when a player pauses or unpauses an ongoing construction"""
     engine = current_app.config["engine"]
-    construction = UnderConstruction.query.get(int(construction_id))
+    construction: UnderConstruction = UnderConstruction.query.get(int(construction_id))
 
     if construction.suspension_time is None:
         while construction.suspension_time is None:
@@ -591,7 +591,7 @@ def pause_project(player, construction_id):
                 construction.suspension_time = engine.data["total_t"]
     else:
         if construction.family in ["Functional facilities", "Technologies"]:
-            first_lvl = (
+            first_lvl: UnderConstruction = (
                 UnderConstruction.query.filter_by(name=construction.name, player_id=player.id)
                 .order_by(UnderConstruction.duration)
                 .first()
@@ -606,13 +606,17 @@ def pause_project(player, construction_id):
             player.project_max_priority("research_priorities", int(construction_id))
             if player.available_lab_workers() == 0:
                 research_priorities = player.read_list("research_priorities")
-                project_to_pause = UnderConstruction.query.get(research_priorities[player.lab_workers])
+                project_to_pause: UnderConstruction = UnderConstruction.query.get(
+                    research_priorities[player.lab_workers]
+                )
                 project_to_pause.suspension_time = engine.data["total_t"]
         else:
             player.project_max_priority("construction_priorities", int(construction_id))
             if player.available_construction_workers() == 0:
                 construction_priorities = player.read_list("construction_priorities")
-                project_to_pause = UnderConstruction.query.get(construction_priorities[player.construction_workers])
+                project_to_pause: UnderConstruction = UnderConstruction.query.get(
+                    construction_priorities[player.construction_workers]
+                )
                 project_to_pause.suspension_time = engine.data["total_t"]
         construction.start_time += engine.data["total_t"] - construction.suspension_time
         construction.suspension_time = None

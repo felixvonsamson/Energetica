@@ -4,6 +4,7 @@ facilities according to the technology levels of the player.
 """
 
 import math
+from typing import List
 
 from flask import current_app
 
@@ -133,7 +134,9 @@ def efficiency_multiplier(player: Player, facility):
         "offshore_wind_turbine",
     ]:
         active_facilities = ActiveFacilities.query.filter_by(facility=facility, player_id=player.id).all()
-        under_construction = UnderConstruction.query.filter_by(name=facility, player_id=player.id).all()
+        under_construction: List[UnderConstruction] = UnderConstruction.query.filter_by(
+            name=facility, player_id=player.id
+        ).all()
         # Create a set of used efficiency multipliers
         used_locations = {af.efficiency_multiplier for af in active_facilities}
         used_locations.update(uc.efficiency_multiplier for uc in under_construction)

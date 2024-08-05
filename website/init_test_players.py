@@ -139,7 +139,7 @@ def add_asset(player, asset, n):
     if asset_to_family[asset] == "Technologies":
         priority_list_name = "research_priorities"
     for i in range(n):
-        new_construction = UnderConstruction(
+        new_construction: UnderConstruction = UnderConstruction(
             name=asset,
             family=asset_to_family[asset],
             start_time=0,

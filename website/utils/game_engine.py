@@ -4,6 +4,7 @@ import json
 import pickle
 import time
 from datetime import datetime
+from typing import List
 
 import website.api.websocket as websocket
 import website.production_update as production_update
@@ -18,7 +19,7 @@ from website.utils.resource_market import store_import
 def check_finished_constructions(engine):
     """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
     # check if constructions finished
-    finished_constructions = UnderConstruction.query.filter(
+    finished_constructions: List[UnderConstruction] = UnderConstruction.query.filter(
         UnderConstruction.suspension_time.is_(None),
         UnderConstruction.start_time + UnderConstruction.duration <= engine.data["total_t"],
     ).all()

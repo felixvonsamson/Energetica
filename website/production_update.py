@@ -964,7 +964,7 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
         cumul_demand = 0.0
         for i in range(min(len(construction_priorities), player.construction_workers)):
             construction_id = construction_priorities[i]
-            construction = UnderConstruction.query.get(construction_id)
+            construction: UnderConstruction = UnderConstruction.query.get(construction_id)
             if construction.suspension_time is not None:
                 continue
             cumul_demand += construction.construction_power
@@ -990,7 +990,7 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
         cumul_demand = 0.0
         for i in range(min(len(research_priorities), player.lab_workers)):
             construction_id = research_priorities[i]
-            construction = UnderConstruction.query.get(construction_id)
+            construction: UnderConstruction = UnderConstruction.query.get(construction_id)
             if construction.suspension_time is not None:
                 continue
             cumul_demand += construction.construction_power
