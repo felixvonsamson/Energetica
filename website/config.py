@@ -1077,8 +1077,8 @@ climate_events = {
             "combined_cycle": 0.02,
             "nuclear_reactor": 0.01,  # not a dangerous accident but the plant has to be shut down permanently for safety reasons
             "nuclear_reactor_gen4": 0.005,  # not a dangerous accident but the plant has to be shut down permanently for safety reasons
-            "industry": 0.5,  # level down by 1
         },
+        "industry_destruction_chance": 0.5,  # chance of leveling down the industry
     },
     "heat_wave": {
         "name": "Heat wave",
@@ -1091,6 +1091,7 @@ climate_events = {
             "lithium_ion_batteries": 0.05,
             "solid_state_batteries": 0.02,
         },
+        "industry_destruction_chance": 0,
     },
     "cold_wave": {
         "name": "Cold wave",
@@ -1100,6 +1101,7 @@ climate_events = {
         "duration": timedelta(days=3).total_seconds(),
         "affected_tiles": 2,  # (a radius of 2 so 7 tiles)
         "destruction_chance": {},
+        "industry_destruction_chance": 0,
     },
     "hurricane": {
         "name": "Hurricane",
@@ -1114,8 +1116,8 @@ climate_events = {
             "offshore_wind_turbine": 0.15,
             "PV_solar": 0.05,
             "CSP_solar": 0.1,
-            "industry": 0.9,
         },
+        "industry_destruction_chance": 0.9,
     },
     "wildfire": {
         "name": "Wildfire",
@@ -1135,7 +1137,7 @@ climate_events = {
             "combined_cycle": 0.02,
             "PV_solar": 0.1,
             "CSP_solar": 0.02,
-            "industry": 0.3,
         },
+        "industry_destruction_chance": 0.3,
     },
 }

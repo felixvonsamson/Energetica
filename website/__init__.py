@@ -108,7 +108,6 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
         if request.method == "GET":
             return jsonify({"public_key": app.config["VAPID_PUBLIC_KEY"]})
         subscription = request.json
-        print(subscription)
         if "endpoint" not in subscription:
             return jsonify({"response": "Invalid subscription"})
         engine.notification_subscriptions[current_user.id].append(subscription)

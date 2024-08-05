@@ -1,8 +1,6 @@
 """Utils relating to player assets"""
 
 import math
-import re
-from email.mime import base
 
 from flask import current_app
 
@@ -107,7 +105,7 @@ def add_asset(player_id, construction_id):
                     player,
                 )
 
-    if ActiveFacilities.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
+    elif ActiveFacilities.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
         # initialize array for facility if it is the first one built
         current_data = engine.data["current_data"][player.id]
         if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:

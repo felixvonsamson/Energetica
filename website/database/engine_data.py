@@ -341,10 +341,6 @@ class EmissionData:
         ref_temp = []
         temp_deviation = []
         for t in range(delta_t - 360, delta_t):
-            if t > delta_t - 60:
-                print(
-                    f"tick = {t+1}, spt = {spt}, random_seed = {random_seed}, value = {calculate_temperature_deviation(t + 1, spt, 5e9, random_seed)}"
-                )
             ref_temp.append(calculate_reference_gta(t + 1, spt))
             temp_deviation.append(calculate_temperature_deviation(t + 1, spt, 5e9, random_seed))
         self._data = {

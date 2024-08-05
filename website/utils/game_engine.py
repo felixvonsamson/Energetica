@@ -1,30 +1,27 @@
 """Util functions relating to the GameEngine class"""
 
 import json
+import math
 import pickle
 import random
-import math
 import time
 from datetime import datetime
-from sqlalchemy.sql import func
+
 import numpy as np
 
-import website
 import website.api.websocket as websocket
-from website.database.player import Player
 import website.production_update as production_update
 import website.utils.assets as assets
 from website import db
 from website.config import climate_events
-from website.database.engine_data import (calculate_reference_gta,
-                                          calculate_temperature_deviation)
+from website.database.engine_data import calculate_reference_gta, calculate_temperature_deviation
 from website.database.map import Hex
-from website.database.player_assets import (ActiveFacilities, Shipment,
-                                            UnderConstruction, ClimateEventRecovery)
-from website.utils.assets import remove_asset
+from website.database.player import Player
+from website.database.player_assets import ActiveFacilities, ClimateEventRecovery, Shipment, UnderConstruction
+from website.utils.assets import facility_destroyed, remove_asset
+from website.utils.formatting import display_money
 from website.utils.misc import notify, save_past_data_threaded
 from website.utils.resource_market import store_import
-from website.utils.formatting import display_money
 
 
 def state_update(engine, app):
@@ -101,45 +98,44 @@ def check_climate_events(engine):
     # floods
     flood_probability = climate_events["flood"]["base_probability"] * climate_change**2
     if random.random() < flood_probability:
-        while True:
-            # TODO: this is not efficient, but it's not a big deal
-            random_tile_id = random.randint(1, Hex.query.count() + 1)
-            if Hex.query.get(random_tile_id).hydro > 0.2:
-                break
-        tile = Hex.query.get(random_tile_id)
-        flood_impact(engine, tile)
+        # the hydro value for a flood needs to be above 20%
+        hydro_tiles = Hex.query.filter(Hex.hydro > 0.2).all()
+        tile = random.choice(hydro_tiles)
+        climate_event_impact(engine, tile, "flood")
 
     # heatwaves
     heatwave_probability = 0
     if ref_temp > 15:
-        heatwave_probability += climate_events["heat_wave"]["base_probability"] * (ref_temp-15) * climate_change**2
+        heatwave_probability += climate_events["heat_wave"]["base_probability"] * (ref_temp - 15) * climate_change**2
     if real_temp > 15:
-        heatwave_probability += climate_events["heat_wave"]["base_probability"] * (real_temp-15)**2
+        heatwave_probability += climate_events["heat_wave"]["base_probability"] * (real_temp - 15) ** 2
     if random.random() < heatwave_probability:
+        # the tile for the heatwave is chosen based on a normal distribution around the equator
         random_latitude = max(-10, min(10, round(np.random.normal(0, 4))))
-        # TODO: this is not efficient, but it's not a big deal
-        tile = Hex.query.filter(Hex.r == random_latitude).order_by(func.random()).first()
+        latitude_tiles = Hex.query.filter(Hex.r == random_latitude).all()
+        tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
-            heatwave_impact(engine, affected_tile)
+            climate_event_impact(engine, affected_tile, "heat_wave")
 
     # coldwaves
     coldwave_probability = 0
     if ref_temp < 12.5:
-        coldwave_probability += climate_events["cold_wave"]["base_probability"] * (12.5-ref_temp) * climate_change**2
+        coldwave_probability += climate_events["cold_wave"]["base_probability"] * (12.5 - ref_temp) * climate_change**2
     if real_temp < 12.5:
-        coldwave_probability += climate_events["cold_wave"]["base_probability"] * (12.5-real_temp)**2
+        coldwave_probability += climate_events["cold_wave"]["base_probability"] * (12.5 - real_temp) ** 2
     if random.random() < coldwave_probability:
+        # the tile for the coldwave is chosen based on a normal distribution around the poles
         random_normal = max(-10, min(10, np.random.normal(0, 5)))
         if random_normal < 0:
             random_latitude = round(10 + random_normal)
         else:
             random_latitude = round(-10 + random_normal)
-        # TODO: this is not efficient, but it's not a big deal
-        tile = Hex.query.filter(Hex.r == random_latitude).order_by(func.random()).first()
+        latitude_tiles = Hex.query.filter(Hex.r == random_latitude).all()
+        tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
-            coldwave_impact(engine, affected_tile)
+            climate_event_impact(engine, affected_tile, "cold_wave")
 
     # hurricanes
     hurricane_probability = climate_events["hurricane"]["base_probability"] * climate_change**2
@@ -148,30 +144,35 @@ def check_climate_events(engine):
         tile = Hex.query.get(random_tile_id)
         affected_tiles = tile.get_neighbors(n=2)
         for affected_tile in affected_tiles:
-            hurricane_impact(engine, affected_tile)
+            climate_event_impact(engine, affected_tile, "hurricane")
 
     # wildfires
     wildfire_probability = 0
     if real_temp > 14:
-        wildfire_probability += climate_events["wildfire"]["base_probability"] * (real_temp-14)**2
+        wildfire_probability += climate_events["wildfire"]["base_probability"] * (real_temp - 14) ** 2
     if random.random() < wildfire_probability:
+        # the tile for the wildfire is chosen based on a normal distribution around the equator
         random_latitude = max(-10, min(10, round(np.random.normal(0, 5.5))))
-        tile = Hex.query.filter(Hex.r == random_latitude).order_by(func.random()).first()
+        latitude_tiles = Hex.query.filter(Hex.r == random_latitude).all()
+        tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
-            wildfire_impact(engine, affected_tile)
+            climate_event_impact(engine, affected_tile, "wildfire")
 
 
-def flood_impact(engine, tile):
-    engine.log(f"Flood on tile {tile.id}")
+def climate_event_impact(engine, tile, event):
+    """Creates a ClimateEventRecovery object for the event and some facilities may be destroyed by the climate event."""
+    engine.log(f"{climate_events[event]['name']} on tile {tile.id}")
     if not tile.player_id:
         return
-    player:Player = tile.player
+    player: Player = tile.player
     ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
-    recovery_cost = climate_events["flood"]["cost_fraction"] * engine.config[player.id]["industry"]["income_per_day"] / ticks_per_day # [¤/tick]
-    duration_ticks = math.ceil(climate_events["flood"]["duration"] / engine.in_game_seconds_per_tick)
+    recovery_cost = (
+        climate_events[event]["cost_fraction"] * engine.config[player.id]["industry"]["income_per_day"] / ticks_per_day
+    )  # [¤/tick]
+    duration_ticks = math.ceil(climate_events[event]["duration"] / engine.in_game_seconds_per_tick)
     new_climate_event = ClimateEventRecovery(
-        event="flood",
+        event=event,
         start_time=engine.data["total_t"],
         duration=duration_ticks,
         recovery_cost=recovery_cost,
@@ -179,40 +180,43 @@ def flood_impact(engine, tile):
     )
     db.session.add(new_climate_event)
     db.session.commit()
-    notify(climate_events["flood"]["name"],
-           climate_events["flood"]["description"].format(
-               duration=round(climate_events["flood"]["duration"]/3600/24),
-               cost=display_money(recovery_cost * ticks_per_day / 24)+"/h",
-            ),
-            player)
+    notify(
+        climate_events[event]["name"],
+        climate_events[event]["description"].format(
+            duration=round(climate_events[event]["duration"] / 3600 / 24),
+            cost=display_money(recovery_cost * ticks_per_day / 24) + "/h",
+        ),
+        player,
+    )
 
     # check destructions
-    facilities_list = list(climate_events["flood"]["destruction_chance"].keys())
-    facilities_at_risk = ActiveFacilities.query.filter(ActiveFacilities.player_id == player.id, ActiveFacilities.facility.in_(facilities_list)).all()
+    if random.random() < climate_events[event]["industry_destruction_chance"]:
+        player.industry -= 1
+        db.session.commit()
+        engine.config.update_config_for_user(player.id)
+        notify(
+            "Destruction",
+            f"Your industry hs been levelled down by 1 due to the {climate_events[event]['name']} event.",
+            player,
+        )
+        engine.log(f"{player.username} : Industry levelled down by {climate_events[event]['name']}.")
+    facilities_list = list(climate_events[event]["destruction_chance"].keys())
+    facilities_at_risk = ActiveFacilities.query.filter(
+        ActiveFacilities.player_id == player.id, ActiveFacilities.facility.in_(facilities_list)
+    ).all()
     for facility in facilities_at_risk:
-        if random.random() < climate_events["flood"]["destruction_chance"][facility.facility]:
-            remove_asset(player, facility, climate_events["flood"]["name"])
+        if random.random() < climate_events[event]["destruction_chance"][facility.facility]:
+            facility_destroyed(player, facility, climate_events[event]["name"])
             # if a water dam is destroyed it will flood downstream tiles
             if facility.facility == "small_water_dam":
                 affected_tiles = tile.get_downstream_tiles(3)
                 for affected_tile in affected_tiles:
-                    flood_impact(engine, affected_tile)
+                    climate_event_impact(engine, affected_tile, "flood")
             elif facility.facility == "large_water_dam":
                 affected_tiles = tile.get_downstream_tiles(15)
                 for affected_tile in affected_tiles:
-                    flood_impact(engine, affected_tile)
+                    climate_event_impact(engine, affected_tile, "flood")
 
-def heatwave_impact(engine, tile):
-    engine.log(f"Heatwave on tile {tile.id}")
-
-def coldwave_impact(engine, tile):
-    engine.log(f"Coldwave on tile {tile.id}")
-
-def hurricane_impact(engine, tile):
-    engine.log(f"Hurricane on tile {tile.id}")
-
-def wildfire_impact(engine, tile):
-    engine.log(f"Wildfire on tile {tile.id}")
 
 def data_init_climate(seconds_per_tick, random_seed, delta_t):
     """Initializes the data for the climate."""
@@ -222,10 +226,6 @@ def data_init_climate(seconds_per_tick, random_seed, delta_t):
         ref_temp.append([])
         temp_deviation.append([])
         for j in range(360):
-            if i == 0 and j > 300:
-                print(
-                    f"res_id = {i}, tick = {delta_t - (359 - j) * pow(6, i)}, spt = {seconds_per_tick}, random_seed = {random_seed}, value = {calculate_temperature_deviation(delta_t - (359 - j) * pow(6, i), seconds_per_tick, 5e9, random_seed)}"
-                )
             ref_temp[i].append(calculate_reference_gta(delta_t - (359 - j) * pow(6, i), seconds_per_tick))
             temp_deviation[i].append(
                 calculate_temperature_deviation(delta_t - (359 - j) * pow(6, i), seconds_per_tick, 5e9, random_seed)
@@ -239,5 +239,4 @@ def data_init_climate(seconds_per_tick, random_seed, delta_t):
             "reference": ref_temp,
             "deviation": temp_deviation,
         },
-    }
     }
