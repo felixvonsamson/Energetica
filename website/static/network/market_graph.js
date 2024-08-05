@@ -154,7 +154,7 @@ function change_page_view(view) {
         document.getElementById("temporal_imports_container").style.display = "none";
         document.getElementById("network_capacities").style.display = "block";
         document.getElementById("temporal_graph_container").style.display = "block";
-        document.getElementById("network_prices_headder").style.display = "flex";
+        document.getElementById("network_prices_header").style.display = "flex";
         document.getElementById("percent_buttons_container").style.display = "none";
         document.getElementById("categorization_buttons_container").style.display = "none";
         document.getElementById("export_import_buttons_container").style.display = "none";
@@ -169,7 +169,7 @@ function change_page_view(view) {
         document.getElementById("temporal_imports_container").style.display = "block";
         document.getElementById("network_capacities").style.display = "block";
         document.getElementById("temporal_graph_container").style.display = "block";
-        document.getElementById("network_prices_headder").style.display = "none";
+        document.getElementById("network_prices_header").style.display = "none";
         document.getElementById("percent_buttons_container").style.display = "block";
         document.getElementById("categorization_buttons_container").style.display = "block";
         document.getElementById("export_import_buttons_container").style.display = "block";
@@ -184,7 +184,7 @@ function change_page_view(view) {
         document.getElementById("temporal_imports_container").style.display = "block";
         document.getElementById("network_capacities").style.display = "block";
         document.getElementById("temporal_graph_container").style.display = "block";
-        document.getElementById("network_prices_headder").style.display = "none";
+        document.getElementById("network_prices_header").style.display = "none";
         document.getElementById("percent_buttons_container").style.display = "block";
         document.getElementById("categorization_buttons_container").style.display = "block";
         document.getElementById("export_import_buttons_container").style.display = "block";
@@ -937,8 +937,8 @@ function temporal_graph_sketch(s) {
                 s.graphics.push();
                 let sum = s.upper_bounds["quantity"];
                 if (s.percent == "percent") {
-                    const goups = Object.keys(temporal_data[s.current_view]);
-                    sum = goups.reduce((acc, group) => {
+                    const groups = Object.keys(temporal_data[s.current_view]);
+                    sum = groups.reduce((acc, group) => {
                         return acc + (temporal_data[s.current_view][group][res][t] || 0);
                     }, 0);
                 }

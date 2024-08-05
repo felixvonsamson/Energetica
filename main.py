@@ -32,6 +32,12 @@ parser.add_argument(
     help="remove the instance folder",
     action="store_true",
 )
+parser.add_argument(
+    "--random_seed",
+    type=int,
+    default=42,
+    help="Set the random seed",
+)
 
 args = parser.parse_args()
 
@@ -40,6 +46,7 @@ socketio, sock, app = create_app(
     in_game_seconds_per_tick=args.in_game_seconds_per_tick,
     run_init_test_players=args.run_init_test_players,
     rm_instance=args.rm_instance,
+    random_seed=args.random_seed,
 )
 
 if __name__ == "__main__":

@@ -65,3 +65,14 @@ class ResourceOnSale(db.Model):
     price = db.Column(db.Float)
     creation_date = db.Column(db.DateTime)
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player
+
+
+class ClimateEventRecovery(db.Model):
+    """Class that stores the climate events players are recovering from"""
+
+    id = db.Column(db.Integer, primary_key=True)
+    event = db.Column(db.String(20))
+    start_time = db.Column(db.Integer)
+    duration = db.Column(db.Integer)
+    recovery_cost = db.Column(db.Float)
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player

@@ -116,8 +116,8 @@ function load_chart_data(network = false) {
     return retrieve_chart_data(network);
 }
 
-function retrieve_chart_data(network = false) {
-    console.log("Feching chart data from the server")
+function retrieve_chart_data(network = false, climate = false) {
+    console.log("Fetching chart data from the server")
     return fetch("/api/get_chart_data")
         .then((response) => response.json())
         .then((raw_data) => {
@@ -126,11 +126,14 @@ function retrieve_chart_data(network = false) {
             sessionStorage.setItem("last_value_network", JSON.stringify({ "total_t": raw_data["total_t"], "time": currentDate }));
             sessionStorage.setItem("chart_data", JSON.stringify(raw_data["data"]));
             sessionStorage.setItem("network_data", JSON.stringify(raw_data["network_data"]));
+            sessionStorage.setItem("climate_data", JSON.stringify(raw_data["climate_data"]));
+            if (climate) {
+                return raw_data["climate_data"];
+            }
             if (network) {
                 return raw_data["network_data"];
-            } else {
-                return raw_data["data"];
             }
+            return raw_data["data"];
         })
         .catch((error) => {
             console.error(`caught error ${error}`);
@@ -170,7 +173,7 @@ function load_player_data() {
 }
 
 function retrieve_player_data() {
-    console.log("Feching player data from the server")
+    console.log("Fetching player data from the server")
     return fetch("/api/get_player_data")
         .then((response) => response.json())
         .then((raw_data) => {
@@ -264,4 +267,14 @@ function load_wind_power_curve() {
         .catch((error) => {
             console.error(`caught error ${error}`);
         });
+}
+
+function load_climate_data() {
+    if (typeof (Storage) !== "undefined") {
+        const climate_data = sessionStorage.getItem("climate_data");
+        if (climate_data) {
+            return Promise.resolve(JSON.parse(climate_data));
+        }
+    }
+    return retrieve_chart_data(false, true);
 }

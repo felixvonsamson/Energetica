@@ -67,6 +67,7 @@ function preload() {
             current_player_id = sessionStorage.getItem("player_id");
             load_players().then((_players_ids) => {
                 players_ids = _players_ids;
+                console.log(players_ids, current_player_id);
             });
             for (let i = 0; i < data.length; i++) {
                 let resources = [

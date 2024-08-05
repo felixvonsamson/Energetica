@@ -3,6 +3,7 @@
 import logging
 import math
 import pickle
+import random
 from collections import defaultdict
 from datetime import datetime
 
@@ -14,7 +15,7 @@ from .database.engine_data import EmissionData, WeatherData
 class GameEngine(object):
     """This class is the engine of the game. It contains all the data and methods to run the game."""
 
-    def __init__(self, clock_time, in_game_seconds_per_tick):
+    def __init__(self, clock_time, in_game_seconds_per_tick, random_seed):
         self.clock_time = clock_time
         self.in_game_seconds_per_tick = in_game_seconds_per_tick
         self.config = config
@@ -108,20 +109,24 @@ class GameEngine(object):
         ]
 
         self.data = {}
+        self.data["random_seed"] = random_seed
+        self.data["total_t"] = 0  # Number of simulated game ticks since server start
+        self.data["start_date"] = datetime.now()  # 0 point of server time
+        last_midnight = self.data["start_date"].replace(hour=0, minute=0, second=0, microsecond=0)
+        # time shift in ticks. Defines the number of ticks between the first simulated tick and the beginning of in-game year 0.
+        self.data["delta_t"] = round((self.data["start_date"] - last_midnight).total_seconds() // self.clock_time)
+        # transform start_date to a seconds timestamp corresponding to the time of the first tick
+        self.data["start_date"] = math.floor(self.data["start_date"].timestamp() / clock_time) * clock_time
+
         # All data for the current day will be stored here :
         self.data["player_capacities"] = {}
         self.data["network_capacities"] = {}
         self.data["current_data"] = {}
         self.data["network_data"] = {}
         self.data["weather"] = WeatherData()
-        self.data["emissions"] = EmissionData()
-        self.data["total_t"] = 0  # Number of simulated game ticks since server start
-        self.data["start_date"] = datetime.now()  # 0 point of server time
-        last_midnight = self.data["start_date"].replace(hour=0, minute=0, second=0, microsecond=0)
-        # time shift for daily industry variation
-        self.data["delta_t"] = round((self.data["start_date"] - last_midnight).total_seconds() // self.clock_time)
-        # transform start_date to a seconds timestamp corresponding to the time of the first tick
-        self.data["start_date"] = math.floor(self.data["start_date"].timestamp() / clock_time) * clock_time
+        self.data["current_climate_data"] = EmissionData(
+            self.data["delta_t"], in_game_seconds_per_tick, self.data["random_seed"]
+        )
 
         # stored the levels of technology of the server
         # for each tech an array stores [# players with lvl 1, # players with lvl 2, ...]
@@ -183,5 +188,4 @@ class GameEngine(object):
             "first_tick_date": self.data["start_date"],
             "tick_length": self.clock_time,
             "total_ticks": self.data["total_t"],
-            "co2_emissions": self.data["emissions"]["CO2"],
         }

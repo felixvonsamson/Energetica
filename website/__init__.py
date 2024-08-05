@@ -1,6 +1,7 @@
 """This code is run once at the start of the game"""
 
 import eventlet
+from scipy import rand
 
 eventlet.monkey_patch(thread=True, time=True)
 # pylint: disable=wrong-import-order,wrong-import-position
@@ -31,7 +32,7 @@ import website.game_engine
 from .database.player import Player
 
 
-def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_instance):
+def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_instance, random_seed):
     """This function sets up the app and the game engine"""
     # gets lock to avoid multiple instances
     if platform.system() == "Linux":
@@ -49,13 +50,23 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     db.init_app(app)
 
     # creates the engine (and loading the save if it exists)
-    engine = website.game_engine.GameEngine(clock_time, in_game_seconds_per_tick)
+    engine = website.game_engine.GameEngine(clock_time, in_game_seconds_per_tick, random_seed)
 
     if rm_instance:
         engine.log("removing instance")
         shutil.rmtree("instance")
 
+    from .utils.game_engine import data_init_climate
+
     Path("instance/player_data").mkdir(parents=True, exist_ok=True)
+    if not os.path.isfile("instance/server_data/climate_data.pck"):
+        Path("instance/server_data").mkdir(parents=True, exist_ok=True)
+        with open("instance/server_data/climate_data.pck", "wb") as file:
+            climate_data = data_init_climate(
+                in_game_seconds_per_tick, engine.data["random_seed"], engine.data["delta_t"]
+            )
+            pickle.dump(climate_data, file)
+
     if os.path.isfile("instance/engine_data.pck"):
         with open("instance/engine_data.pck", "rb") as file:
             engine.data = pickle.load(file)
@@ -97,7 +108,6 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
         if request.method == "GET":
             return jsonify({"public_key": app.config["VAPID_PUBLIC_KEY"]})
         subscription = request.json
-        print(subscription)
         if "endpoint" not in subscription:
             return jsonify({"response": "Invalid subscription"})
         engine.notification_subscriptions[current_user.id].append(subscription)

@@ -2,6 +2,7 @@
 
 import json
 import pickle
+from calendar import c
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
@@ -158,10 +159,9 @@ def get_resource_data():
     return jsonify(on_sale)
 
 
-# Gets the data for the overview charts
 @http.route("/get_chart_data", methods=["GET"])
 def get_chart_data():
-    """gets the data for the charts"""
+    """gets the data for the overview charts"""
 
     def calculate_mean_subarrays(array, x):
         return [np.mean(array[i : i + x]) for i in range(0, len(array), x)]
@@ -206,11 +206,17 @@ def get_chart_data():
             network_data = pickle.load(file)
         concat_slices(network_data, current_network_data)
 
+    current_climate_data = g.engine.data["current_climate_data"].get_data(t=total_t % 216 + 1)
+    with open("instance/server_data/climate_data.pck", "rb") as file:
+        climate_data = pickle.load(file)
+    concat_slices(climate_data, current_climate_data)
+
     return jsonify(
         {
             "total_t": total_t,
             "data": data,
             "network_data": network_data,
+            "climate_data": climate_data,
         }
     )
 
@@ -224,7 +230,6 @@ def get_network_capacities():
     return jsonify(network_capacities)
 
 
-# Gets the data from the market for the market graph
 @http.route("/get_market_data", methods=["GET"])
 def get_market_data():
     """gets the data for the market graph at a specific tick"""

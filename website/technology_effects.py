@@ -564,7 +564,7 @@ def package_functional_facilities(player: Player):
             return (
                 const_config_assets["carbon_capture"]["base_absorption_per_day"]
                 * const_config_assets["carbon_capture"]["absorption_factor"] ** level
-                * engine.data["emissions"]["CO2"]  # TODO: make this part be a client side computation
+                * engine.data["current_climate_data"].get_co2()  # TODO: make this part be a client side computation
                 * 60
             )
 

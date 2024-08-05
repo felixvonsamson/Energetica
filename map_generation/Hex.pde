@@ -30,6 +30,7 @@ class Hex{
       text(0.01*round(resources[active_vew]*100), 0, 0);
     }else{
       text(id, 0, 0);
+      //text(r, 0, 0);
     }
   }
 }

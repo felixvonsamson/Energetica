@@ -5,6 +5,7 @@ import os
 import pickle
 import threading
 from datetime import datetime, timedelta
+from hmac import new
 
 import numpy as np
 from flask import flash
@@ -65,6 +66,7 @@ def data_init():
             "exports": init_array(),
             "imports": init_array(),
             "dumping": init_array(),
+            "climate_events": init_array(),
         },
         "op_costs": {
             "steam_engine": init_array(),
@@ -91,9 +93,7 @@ def data_init():
 
 
 def init_table(user_id):
-    """initialize data table for new user and stores it as a .pck in the
-    'player_data' repo
-    """
+    """initialize data table for new user and stores it as a .pck in the 'player_data' repo"""
     past_data = data_init()
     with open(f"instance/player_data/player_{user_id}.pck", "wb") as file:
         pickle.dump(past_data, file)
@@ -107,12 +107,25 @@ def add_player_to_data(engine, user):
 
 
 def save_past_data_threaded(app, engine):
-    """Saves the past production data to files every hour AND remove network
+    """Saves the past production data to files every 216 ticks AND remove network
     data older than 24h
     """
 
     def save_data():
         with app.app_context():
+            # save climate data
+            with open("instance/server_data/climate_data.pck", "rb") as file:
+                past_climate_data = pickle.load(file)
+            new_climate_data = engine.data["current_climate_data"].get_data()
+            for category in new_climate_data:
+                for element in new_climate_data[category]:
+                    new_el_data = new_climate_data[category][element]
+                    past_el_data = past_climate_data[category][element]
+                    reduce_resolution(past_el_data, np.array(new_el_data))
+            with open("instance/server_data/climate_data.pck", "wb") as file:
+                pickle.dump(past_climate_data, file)
+
+            # save player data
             players = Player.query.all()
             for player in players:
                 if player.tile is None:

@@ -5,6 +5,7 @@ import json
 import math
 from collections import defaultdict, deque
 
+import noise
 import numpy as np
 import requests
 from flask import current_app
@@ -136,12 +137,13 @@ class CircularBufferPlayer:
     """Class that stores the active data of a player (last 360 ticks of the graph data)"""
 
     def __init__(self):
-        self._data = {  # v - added dynamically - v
-            "revenues": {
+        self._data = {
+            "revenues": {  # v - added dynamically - v
                 "industry": deque([0.0] * 360, maxlen=360),
                 "exports": deque([0.0] * 360, maxlen=360),
                 "imports": deque([0.0] * 360, maxlen=360),
                 "dumping": deque([0.0] * 360, maxlen=360),
+                "climate_events": deque([0.0] * 360, maxlen=360),
             },
             "op_costs": {
                 "steam_engine": deque([0.0] * 360, maxlen=360),  # + other facilities
@@ -335,19 +337,76 @@ class WeatherData:
 class EmissionData:
     """Class that stores the emission and climate data of the server"""
 
-    def __init__(self):
+    def __init__(self, delta_t, spt, random_seed):
+        ref_temp = []
+        temp_deviation = []
+        for t in range(delta_t - 360, delta_t):
+            ref_temp.append(calculate_reference_gta(t + 1, spt))
+            temp_deviation.append(calculate_temperature_deviation(t + 1, spt, 5e9, random_seed))
         self._data = {
-            "CO2": deque([5.0 * 10**9] * 360, maxlen=360),  # base value of 5Mt of CO2 in the atmosphere
+            "emissions": {
+                "CO2": deque([5e9] * 360, maxlen=360),  # base value of 5Mt of CO2 in the atmosphere
+            },
+            "temperature": {
+                "reference": deque(ref_temp, maxlen=360),
+                "deviation": deque(temp_deviation, maxlen=360),
+            },
         }
+
+    def get_data(self, t=216):
+        """Returns the last t ticks of the data"""
+        result = defaultdict(lambda: defaultdict(dict))
+        for category, subcategories in self._data.items():
+            for subcategory, buffer in subcategories.items():
+                result[category][subcategory] = list(buffer)[-t:]
+        return result
 
     def add(self, key, value):
         """Adds a value to the data. Increasing the CO2 levels"""
-        self._data[key][-1] += value
+        self._data["emissions"][key][-1] += value
 
     def init_new_value(self):
-        """Set a new value of the data equal to the previous one. Keeping CO2 levels form one tick to the next"""
-        for value in self._data.values():
-            value.append(value[-1])
+        """Generates the new values for CO2, reference temperature and temperature deviation"""
+        # Keeping the CO2 levels form one tick to the next
+        self._data["emissions"]["CO2"].append(self._data["emissions"]["CO2"][-1])
+        # Calculating new temperatures
+        engine = current_app.config["engine"]
+        t = engine.data["total_t"] + engine.data["delta_t"]
+        self._data["temperature"]["reference"].append(calculate_reference_gta(t, engine.in_game_seconds_per_tick))
+        self._data["temperature"]["deviation"].append(
+            calculate_temperature_deviation(
+                t,
+                engine.in_game_seconds_per_tick,
+                self._data["emissions"]["CO2"][0],
+                engine.data["random_seed"],
+            )
+        )
 
-    def __getitem__(self, key):
-        return self._data[key][-1]
+    def get_last_data(self):
+        """Returns the last value for each subcategory"""
+        last_values = {}
+        for category, subcategories in self._data.items():
+            last_values[category] = {}
+            for subcategory, values in subcategories.items():
+                last_values[category][subcategory] = values[-1]
+        return last_values
+
+    def get_co2(self):
+        """Returns the last value of the CO2 levels"""
+        return self._data["emissions"]["CO2"][-1]
+
+
+def calculate_reference_gta(tick, seconds_per_tick):
+    """Function for the servers reference global average temperature"""
+    month = tick * seconds_per_tick / 518_400
+    return 13.65 - math.sin((month + 2) * math.pi / 6) * 1.9
+
+
+def calculate_temperature_deviation(tick, seconds_per_tick, co2_levels, random_seed):
+    """Function that calculates the GAT deviation from the CO2 levels"""
+    ticks_per_year = 60 * 60 * 24 * 72 / seconds_per_tick
+    temperature_deviation = (co2_levels - 5e9) / 1.67e9
+    perlin1 = noise.pnoise1(tick / ticks_per_year, base=random_seed)
+    perlin2 = noise.pnoise1(tick / ticks_per_year * 6, base=random_seed)
+    perlin_disturbance = 0.4 * perlin1 + 0.1 * perlin2
+    return temperature_deviation + perlin_disturbance

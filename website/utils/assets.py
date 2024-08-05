@@ -41,9 +41,10 @@ def add_asset(player_id, construction_id):
                     player.add_to_list("advancements", "technology")
                     notify(
                         "Tutorial",
-                        "You have built a laboratory, you can now research "
-                        "<a href='/technology'>technologies</a> to unlock and "
-                        "upgrade facilities.",
+                        (
+                            "You have built a laboratory, you can now research <a href='/technology'>technologies</a> "
+                            "to unlock and upgrade facilities."
+                        ),
                         player,
                     )
             if "warehouse" not in player.advancements:
@@ -53,12 +54,12 @@ def add_asset(player_id, construction_id):
                     player.add_to_list("advancements", "warehouse")
                     notify(
                         "Tutorial",
-                        "You have built a warehouse to store natural "
-                        "resources, you can now buy resources on the "
-                        "<a href='/resource_market'>resources market</a> or "
-                        "invest in <a href='/extraction_facilities'>extraction "
-                        "facilities</a> to extract your own resources from the "
-                        "ground.",
+                        (
+                            "You have built a warehouse to store natural resources, you can now buy resources on the "
+                            "<a href='/resource_market'>resources market</a> or invest in "
+                            "<a href='/extraction_facilities'>extraction facilities</a> to extract your own resources "
+                            "from the ground."
+                        ),
                         player,
                     )
             if "GHG_effect" not in player.advancements:
@@ -66,11 +67,11 @@ def add_asset(player_id, construction_id):
                     player.add_to_list("advancements", "GHG_effect")
                     notify(
                         "Tutorial",
-                        "Scientists have discovered the greenhouse effect and "
-                        "have shown that climate change increases the risks of "
-                        "natural and social catastrophes. You can now monitor "
-                        "your emissions of CO2 in the "
-                        "<a href='/production_overview/emissions'>emissions graph</a>.",
+                        (
+                            "Scientists have discovered the greenhouse effect and have shown that climate change "
+                            "increases the risks of natural and social catastrophes. You can now monitor your "
+                            "emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph</a>."
+                        ),
                         player,
                     )
 
@@ -104,7 +105,7 @@ def add_asset(player_id, construction_id):
                     player,
                 )
 
-    if ActiveFacilities.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
+    elif ActiveFacilities.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
         # initialize array for facility if it is the first one built
         current_data = engine.data["current_data"][player.id]
         if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
@@ -134,9 +135,10 @@ def add_asset(player_id, construction_id):
                 player.add_to_list("advancements", "storage_overview")
                 notify(
                     "Tutorial",
-                    "You have built your first storage facility, you can "
-                    "monitor the stored energy in the "
-                    "<a href='/production_overview/storage'>storage graph</a>.",
+                    (
+                        "You have built your first storage facility, you can monitor the stored energy in the "
+                        "<a href='/production_overview/storage'>storage graph</a>."
+                    ),
                     player,
                 )
 
@@ -327,10 +329,10 @@ def upgrade_all_of_type(player, facility_id):
 
 
 def remove_asset(player_id, facility, decommissioning=True):
-    """this function is executed when a facility is decommissioned. The removal of the facility is logged and the"""
+    """this function is executed when a facility is decommissioned."""
     engine = current_app.config["engine"]
     if facility.facility in engine.technologies + engine.functional_facilities:
-        return
+        return {"response": "notRemovable"}
     player = Player.query.get(player_id)
     db.session.delete(facility)
     # The cost of decommissioning is 20% of the building cost.
@@ -338,22 +340,44 @@ def remove_asset(player_id, facility, decommissioning=True):
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
         cost *= facility.capacity_multiplier
     player.money -= cost
-    construction_name = engine.const_config["assets"][facility.facility]["name"]
+    facility_name = engine.const_config["assets"][facility.facility]["name"]
     if decommissioning:
         notify(
             "Decommissioning",
-            f"The facility {construction_name} reached the end of its "
-            "operational lifespan and had to be decommissioned. The cost of "
-            "this operation was "
-            "{round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>.",
+            (
+                f"The facility {facility_name} reached the end of its operational lifespan and had to be "
+                "decommissioned. The cost of this operation was "
+                f"{round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>."
+            ),
             player,
         )
-        engine.log(f"The facility {construction_name} from {player.username} has been decommissioned.")
-    else:
-        engine.log(f"{player.username} dismantled the facility {construction_name}.")
+        engine.log(f"The facility {facility_name} from {player.username} has been decommissioned.")
     engine.data["player_capacities"][player.id].update(player, facility.facility)
     engine.config.update_config_for_user(player.id)
     db.session.commit()
+    return {
+        "response": "success",
+        "facility_name": facility_name,
+        "money": player.money,
+    }
+
+
+def facility_destroyed(player, facility, event_name):
+    """this function is executed when a facility is destroyed by a climate event"""
+    base_price = current_app.config["engine"].const_config["assets"][facility.facility]["base_price"]
+    cost = 0.1 * base_price * facility.price_multiplier
+    if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
+        cost *= facility.capacity_multiplier
+    response = remove_asset(player.id, facility, decommissioning=False)
+    notify(
+        "Destruction",
+        (
+            f"The facility {response['facility_name']} was destroyed by the {event_name}. The cost of the cleanup was "
+            f"{round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>."
+        ),
+        player,
+    )
+    current_app.config["engine"].log(f"{player.username} : {response['facility_name']} destroyed by {event_name}.")
 
 
 def dismantle_facility(player, facility_id):
@@ -365,8 +389,9 @@ def dismantle_facility(player, facility_id):
         cost *= facility.capacity_multiplier
     if player.money < cost:
         return {"response": "notEnoughMoney"}
-    remove_asset(player.id, facility, decommissioning=False)
-    return {"response": "success", "money": player.money}
+    response = remove_asset(player.id, facility, decommissioning=False)
+    current_app.config["engine"].log(f"{player.username} dismantled the facility {response['facility_name']}.")
+    return response
 
 
 def dismantle_all_of_type(player, facility_id):

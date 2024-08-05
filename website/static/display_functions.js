@@ -13,10 +13,10 @@ const _money_units = [
 const _mass_units = [" kg", " t", " kt", " Mt"];
 const _mass_rate_units = [" g/h", " kg/h", " t/h", " kt/h"]; // !!! starts at g/h and not kg/h
 
-function general_format(value, units, treshold = 10_000) {
+function general_format(value, units, threshold = 10_000) {
     // Inserts thousands separator and the right unit
     let unit_index = 0;
-    while (Math.abs(value) >= treshold && unit_index < units.length - 1) {
+    while (Math.abs(value) >= threshold && unit_index < units.length - 1) {
         value /= 1_000;
         unit_index += 1;
     }
@@ -60,8 +60,8 @@ function format_money_long(price) {
 }
 
 // Power :
-function format_power(power, treshold = 10_000) {
-    return general_format(power, _power_units, treshold);
+function format_power(power, threshold = 10_000) {
+    return general_format(power, _power_units, threshold);
 }
 
 function format_power_special(energy, interval) {
@@ -79,18 +79,23 @@ function format_power_special(energy, interval) {
 }
 
 // Energy :
-function format_energy(energy, treshold = 10_000) {
-    return general_format(energy, _energy_units, treshold);
+function format_energy(energy, threshold = 10_000) {
+    return general_format(energy, _energy_units, threshold);
 }
 
 // Mass rate :
-function format_mass_rate(mass_rate, treshold = 10_000) {
-    return general_format(mass_rate * 1_000, _mass_rate_units, treshold); // the *1000 is to convert from kg to g
+function format_mass_rate(mass_rate, threshold = 10_000) {
+    return general_format(mass_rate * 1_000, _mass_rate_units, threshold); // the *1000 is to convert from kg to g
 }
 
-// Mass
-function format_mass(mass, treshold = 10_000) {
-    return general_format(mass, _mass_units, treshold);
+// Mass :
+function format_mass(mass, threshold = 10_000) {
+    return general_format(mass, _mass_units, threshold);
+}
+
+// Temperature :
+function format_temperature(temperature, decimals = 2) {
+    return `${temperature.toFixed(decimals)}°C`;
 }
 
 // Duration :
