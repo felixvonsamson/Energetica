@@ -18,76 +18,77 @@ from .utils.network import data_init_network
 
 def init_test_players(engine):
     """This function initializes the database with test players and networks."""
-    player = create_player(engine, "user", "password")
-    if player:
-        Hex.query.filter_by(id=35).first().player_id = player.id
+    climate_events_scenario(engine)
+    # player = create_player(engine, "user", "password")
+    # if player:
+    #     Hex.query.filter_by(id=35).first().player_id = player.id
 
-        player.money = 1_000_000
-        player.coal = 4_500_000
-        player.oil = 100_000
-        player.gas = 80_000_000
-        player.uranium = 4_500
-        player.rest_of_priorities = ""
+    #     player.money = 1_000_000
+    #     player.coal = 4_500_000
+    #     player.oil = 100_000
+    #     player.gas = 80_000_000
+    #     player.uranium = 4_500
+    #     player.rest_of_priorities = ""
 
-        add_asset(player, "industry", 21)
-        add_asset(player, "laboratory", 5)
-        add_asset(player, "mathematics", 1)
-        add_asset(player, "mineral_extraction", 5)
-        add_asset(player, "building_technology", 1)
-        add_asset(player, "civil_engineering", 1)
-        add_asset(player, "coal_mine", 10)
-        add_asset(player, "coal_burner", 25)
-        # add_asset(player, "uranium_mine", 1)
-        add_asset(player, "warehouse", 10)
-        add_asset(player, "small_pumped_hydro", 1)
-        add_asset(player, "hydrogen_storage", 1)
-        add_asset(player, "onshore_wind_turbine", 15)
-        # add_asset(player, "offshore_wind_turbine", 2)
-        # add_asset(player, "nuclear_reactor_gen4", 1)
-        # add_asset(player, "nuclear_reactor", 1)
-        add_asset(player, "combined_cycle", 8)
-        add_asset(player, "gas_burner", 5)
-        add_asset(player, "steam_engine", 1)
-        add_asset(player, "chemistry", 2)
-        # add_asset(player, "carbon_capture", 4)
-        add_asset(player, "mechanical_engineering", 3)
-        add_asset(player, "physics", 2)
-        add_asset(player, "thermodynamics", 2)
-        add_asset(player, "nuclear_engineering", 3)
-        db.session.commit()
+    #     add_asset(player, "industry", 21)
+    #     add_asset(player, "laboratory", 5)
+    #     add_asset(player, "mathematics", 1)
+    #     add_asset(player, "mineral_extraction", 5)
+    #     add_asset(player, "building_technology", 1)
+    #     add_asset(player, "civil_engineering", 1)
+    #     add_asset(player, "coal_mine", 10)
+    #     add_asset(player, "coal_burner", 25)
+    #     # add_asset(player, "uranium_mine", 1)
+    #     add_asset(player, "warehouse", 10)
+    #     add_asset(player, "small_pumped_hydro", 1)
+    #     add_asset(player, "hydrogen_storage", 1)
+    #     add_asset(player, "onshore_wind_turbine", 15)
+    #     # add_asset(player, "offshore_wind_turbine", 2)
+    #     # add_asset(player, "nuclear_reactor_gen4", 1)
+    #     # add_asset(player, "nuclear_reactor", 1)
+    #     add_asset(player, "combined_cycle", 8)
+    #     add_asset(player, "gas_burner", 5)
+    #     add_asset(player, "steam_engine", 1)
+    #     add_asset(player, "chemistry", 2)
+    #     # add_asset(player, "carbon_capture", 4)
+    #     add_asset(player, "mechanical_engineering", 3)
+    #     add_asset(player, "physics", 2)
+    #     add_asset(player, "thermodynamics", 2)
+    #     add_asset(player, "nuclear_engineering", 3)
+    #     db.session.commit()
 
-    player2 = create_player(engine, "user2", "password")
-    if player2:
-        Hex.query.filter_by(id=84).first().player_id = player2.id
-        player2.rest_of_priorities = ""
-        add_asset(player2, "industry", 19)
-        add_asset(player2, "warehouse", 1)
-        add_asset(player2, "steam_engine", 10)
-        add_asset(player2, "small_water_dam", 1)
-        db.session.commit()
+    # player2 = create_player(engine, "user2", "password")
+    # if player2:
+    #     Hex.query.filter_by(id=84).first().player_id = player2.id
+    #     player2.rest_of_priorities = ""
+    #     add_asset(player2, "industry", 19)
+    #     add_asset(player2, "warehouse", 1)
+    #     add_asset(player2, "steam_engine", 10)
+    #     add_asset(player2, "small_water_dam", 1)
+    #     db.session.commit()
 
-    player3 = create_player(engine, "user3", "password")
-    if player3:
-        Hex.query.filter_by(id=143).first().player_id = player3.id
-        player3.rest_of_priorities = ""
-        add_asset(player3, "industry", 8)
-        add_asset(player3, "onshore_wind_turbine", 5)
-        db.session.commit()
+    # player3 = create_player(engine, "user3", "password")
+    # if player3:
+    #     Hex.query.filter_by(id=143).first().player_id = player3.id
+    #     player3.rest_of_priorities = ""
+    #     add_asset(player3, "industry", 8)
+    #     add_asset(player3, "onshore_wind_turbine", 5)
+    #     db.session.commit()
 
-    player4 = create_player(engine, "user4", "password")
-    if player4:
-        Hex.query.filter_by(id=28).first().player_id = player4.id
-        player4.rest_of_priorities = ""
-        add_asset(player4, "warehouse", 1)
-        add_asset(player4, "watermill", 1)
-        add_asset(player4, "steam_engine", 1)
-        add_asset(player4, "small_pumped_hydro", 1)
-        add_asset(player4, "coal_burner", 1)
-        add_asset(player4, "coal_mine", 1)
-        db.session.commit()
+    # player4 = create_player(engine, "user4", "password")
+    # if player4:
+    #     Hex.query.filter_by(id=28).first().player_id = player4.id
+    #     player4.rest_of_priorities = ""
+    #     add_asset(player4, "warehouse", 1)
+    #     add_asset(player4, "watermill", 1)
+    #     add_asset(player4, "steam_engine", 1)
+    #     add_asset(player4, "small_pumped_hydro", 1)
+    #     add_asset(player4, "coal_burner", 1)
+    #     add_asset(player4, "coal_mine", 1)
+    #     db.session.commit()
 
-    create_network(engine, "net", [player, player2, player3])
-    db.session.commit()
+    # create_network(engine, "net", [player, player2, player3])
+    # db.session.commit()
 
 
 def add_asset(player, asset, n):
@@ -197,3 +198,28 @@ def create_network(engine, name, members):
             "wb",
         ) as file:
             pickle.dump(past_data, file)
+
+
+def climate_events_scenario(engine):
+    """This scenario fills the map with players that use coal to see climate change events."""
+    for i in range(1, 33):
+        print("creating player", i)
+        player = create_player(engine, f"user{i}", "password")
+        if player:
+            Hex.query.filter_by(id=i).first().player_id = player.id
+
+            player.money = 1_000_000
+            player.coal = 100_000_000
+            player.oil = 100_000
+            player.gas = 30_000_000
+            player.uranium = 4_500
+            player.rest_of_priorities = ""
+
+            add_asset(player, "industry", 18)
+            add_asset(player, "laboratory", 5)
+            add_asset(player, "mineral_extraction", 5)
+            add_asset(player, "coal_mine", 10)
+            add_asset(player, "coal_burner", 25)
+            add_asset(player, "warehouse", 10)
+            add_asset(player, "chemistry", 2)
+    db.session.commit()

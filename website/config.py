@@ -1061,7 +1061,7 @@ config = Config()
 climate_events = {
     "flood": {
         "name": "Flood",
-        "base_probability": 0.000_1,  # [probability per tick]
+        "base_probability": 0.000_6,  # [probability per tick]
         "description": "A flood has occurred and destroyed some parts of the infrastructure. The recovery from this event will take {duration} days and cost {cost}.",
         "cost_fraction": 0.6,  # fraction of the player's industry revenue that he has to pay
         "duration": timedelta(days=6).total_seconds(),  # [in-game seconds]

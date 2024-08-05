@@ -340,14 +340,14 @@ def remove_asset(player_id, facility, decommissioning=True):
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
         cost *= facility.capacity_multiplier
     player.money -= cost
+    facility_name = engine.const_config["assets"][facility.facility]["name"]
     if decommissioning:
-        facility_name = engine.const_config["assets"][facility.facility]["name"]
         notify(
             "Decommissioning",
             (
                 f"The facility {facility_name} reached the end of its operational lifespan and had to be "
                 "decommissioned. The cost of this operation was "
-                "{round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>."
+                f"{round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>."
             ),
             player,
         )
@@ -373,7 +373,7 @@ def facility_destroyed(player, facility, event_name):
         "Destruction",
         (
             f"The facility {response['facility_name']} was destroyed by the {event_name}. The cost of the cleanup was "
-            "{round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>."
+            f"{round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>."
         ),
         player,
     )

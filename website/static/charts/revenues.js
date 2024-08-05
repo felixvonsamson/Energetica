@@ -35,6 +35,7 @@ const keys_revenues = {
     "uranium_mine": true,
 
     "imports": true,
+    "climate_events": true,
     "dumping": true,
 };
 
