@@ -71,5 +71,5 @@
         "windspeed"
     ],
     "json.format.keepLines": true,
-    "python.analysis.autoImportCompletions": true
+    "python.analysis.autoImportCompletions": false
 }
