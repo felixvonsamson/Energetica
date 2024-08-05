@@ -94,9 +94,10 @@ def check_climate_events(engine):
     climate_change = engine.data["current_climate_data"].get_last_data()["temperature"]["deviation"]
     ref_temp = engine.data["current_climate_data"].get_last_data()["temperature"]["reference"]
     real_temp = climate_change + ref_temp
+    ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
 
     # floods
-    flood_probability = climate_events["flood"]["base_probability"] * climate_change**2
+    flood_probability = climate_events["flood"]["base_probability"] / ticks_per_day * climate_change**2
     if random.random() < flood_probability:
         # the hydro value for a flood needs to be above 20%
         hydro_tiles = Hex.query.filter(Hex.hydro > 0.2).all()
@@ -106,9 +107,11 @@ def check_climate_events(engine):
     # heatwaves
     heatwave_probability = 0
     if ref_temp > 15:
-        heatwave_probability += climate_events["heat_wave"]["base_probability"] * (ref_temp - 15) * climate_change**2
+        heatwave_probability += (
+            climate_events["heat_wave"]["base_probability"] / ticks_per_day * (ref_temp - 15) * climate_change**2
+        )
     if real_temp > 15:
-        heatwave_probability += climate_events["heat_wave"]["base_probability"] * (real_temp - 15) ** 2
+        heatwave_probability += climate_events["heat_wave"]["base_probability"] / ticks_per_day * (real_temp - 15) ** 2
     if random.random() < heatwave_probability:
         # the tile for the heatwave is chosen based on a normal distribution around the equator
         random_latitude = max(-10, min(10, round(np.random.normal(0, 4))))
@@ -121,9 +124,13 @@ def check_climate_events(engine):
     # coldwaves
     coldwave_probability = 0
     if ref_temp < 12.5:
-        coldwave_probability += climate_events["cold_wave"]["base_probability"] * (12.5 - ref_temp) * climate_change**2
+        coldwave_probability += (
+            climate_events["cold_wave"]["base_probability"] / ticks_per_day * (12.5 - ref_temp) * climate_change**2
+        )
     if real_temp < 12.5:
-        coldwave_probability += climate_events["cold_wave"]["base_probability"] * (12.5 - real_temp) ** 2
+        coldwave_probability += (
+            climate_events["cold_wave"]["base_probability"] / ticks_per_day * (12.5 - real_temp) ** 2
+        )
     if random.random() < coldwave_probability:
         # the tile for the coldwave is chosen based on a normal distribution around the poles
         random_normal = max(-10, min(10, np.random.normal(0, 5)))
@@ -138,7 +145,7 @@ def check_climate_events(engine):
             climate_event_impact(engine, affected_tile, "cold_wave")
 
     # hurricanes
-    hurricane_probability = climate_events["hurricane"]["base_probability"] * climate_change**2
+    hurricane_probability = climate_events["hurricane"]["base_probability"] / ticks_per_day * climate_change**2
     if random.random() < hurricane_probability:
         random_tile_id = random.randint(1, Hex.query.count() + 1)
         tile = Hex.query.get(random_tile_id)
@@ -149,7 +156,7 @@ def check_climate_events(engine):
     # wildfires
     wildfire_probability = 0
     if real_temp > 14:
-        wildfire_probability += climate_events["wildfire"]["base_probability"] * (real_temp - 14) ** 2
+        wildfire_probability += climate_events["wildfire"]["base_probability"] / ticks_per_day * (real_temp - 14) ** 2
     if random.random() < wildfire_probability:
         # the tile for the wildfire is chosen based on a normal distribution around the equator
         random_latitude = max(-10, min(10, round(np.random.normal(0, 5.5))))

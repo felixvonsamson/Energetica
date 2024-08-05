@@ -1061,7 +1061,7 @@ config = Config()
 climate_events = {
     "flood": {
         "name": "Flood",
-        "base_probability": 0.000_6,  # [probability per tick]
+        "base_probability": 0.2,  # [probability per in-game day]
         "description": "A flood has occurred and destroyed some parts of the infrastructure. The recovery from this event will take {duration} days and cost {cost}.",
         "cost_fraction": 0.6,  # fraction of the player's industry revenue that he has to pay
         "duration": timedelta(days=6).total_seconds(),  # [in-game seconds]
@@ -1082,7 +1082,7 @@ climate_events = {
     },
     "heat_wave": {
         "name": "Heat wave",
-        "base_probability": 0.001,
+        "base_probability": 0.35,
         "description": "A heat wave has occurred and is impacting the population. The recovery from this event will take {duration} days and cost {cost}.",
         "cost_fraction": 0.5,
         "duration": timedelta(days=3).total_seconds(),
@@ -1095,7 +1095,7 @@ climate_events = {
     },
     "cold_wave": {
         "name": "Cold wave",
-        "base_probability": 0.001,
+        "base_probability": 0.35,
         "description": "A cold wave has occurred and is impacting the population. The recovery from this event will take {duration} days and cost {cost}.",
         "cost_fraction": 0.5,
         "duration": timedelta(days=3).total_seconds(),
@@ -1105,7 +1105,7 @@ climate_events = {
     },
     "hurricane": {
         "name": "Hurricane",
-        "base_probability": 0.000_2,
+        "base_probability": 0.07,
         "description": "A hurricane has occurred and destroyed some parts of the infrastructure. The recovery from this event will take {duration} days and cost {cost}.",
         "cost_fraction": 0.8,
         "duration": timedelta(days=9).total_seconds(),
@@ -1121,7 +1121,7 @@ climate_events = {
     },
     "wildfire": {
         "name": "Wildfire",
-        "base_probability": 0.000_7,
+        "base_probability": 0.25,
         "description": "A wildfire has occurred and destroyed some parts of the infrastructure. The recovery from this event will take {duration} days and cost {cost}.",
         "cost_fraction": 0.3,
         "duration": timedelta(days=3).total_seconds(),
