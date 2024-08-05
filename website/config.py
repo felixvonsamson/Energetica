@@ -770,8 +770,8 @@ const_config = {
             "base_construction_time": timedelta(hours=20).total_seconds(),
             "base_construction_energy": 16_000_000,
             "price_multiplier": 1.5,
-            "price_factor": 1.25,
-            "prod_factor": 1.15,
+            "price_factor": 1.2,
+            "prod_factor": 1.2,
             "capacity_factor": 1.05,
             "affected_facilities": [
                 "small_water_dam",
