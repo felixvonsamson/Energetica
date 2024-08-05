@@ -233,7 +233,7 @@ def confirm_location(engine, player, location):
     eol = engine.data["total_t"] + math.ceil(
         engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick
     )
-    steam_engine = ActiveFacility(
+    steam_engine: ActiveFacility = ActiveFacility(
         facility="steam_engine",
         end_of_life=eol,
         player_id=player.id,

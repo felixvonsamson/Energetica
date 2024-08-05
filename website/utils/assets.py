@@ -1,6 +1,7 @@
 """Utils relating to player assets"""
 
 import math
+from typing import List
 
 from flask import current_app
 
@@ -227,7 +228,7 @@ def add_asset(player_id, construction_id):
         eol = engine.data["total_t"] + math.ceil(
             engine.const_config["assets"][construction.name]["lifespan"] / engine.in_game_seconds_per_tick
         )
-        new_facility = ActiveFacility(
+        new_facility: ActiveFacility = ActiveFacility(
             facility=construction.name,
             end_of_life=eol,
             player_id=player.id,
@@ -295,7 +296,7 @@ def upgrade_facility(player, facility_id):
                 facility.efficiency_multiplier = technology_effects.efficiency_multiplier(player, facility.facility)
         db.session.commit()
 
-    facility = ActiveFacility.query.get(facility_id)
+    facility: ActiveFacility = ActiveFacility.query.get(facility_id)
     if facility.facility in engine.technologies + engine.functional_facilities:
         return {"response": "notUpgradable"}
 
@@ -320,7 +321,7 @@ def upgrade_facility(player, facility_id):
 def upgrade_all_of_type(player, facility_id):
     """this function is executed when a player upgrades all facilities of a certain type"""
     facility_name = ActiveFacility.query.get(facility_id).facility
-    facilities = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
+    facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
         upgrade_facility(player, facility.id)
     return {"response": "success", "money": player.money}
@@ -358,7 +359,7 @@ def remove_asset(player_id, facility, decommissioning=True):
 
 def dismantle_facility(player, facility_id):
     """this function is executed when a player dismantles a facility"""
-    facility = ActiveFacility.query.get(facility_id)
+    facility: ActiveFacility = ActiveFacility.query.get(facility_id)
     base_price = current_app.config["engine"].const_config["assets"][facility.facility]["base_price"]
     cost = 0.2 * base_price * facility.price_multiplier
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
@@ -372,7 +373,7 @@ def dismantle_facility(player, facility_id):
 def dismantle_all_of_type(player, facility_id):
     """this function is executed when a player dismantles all facilities of a certain type"""
     facility_name = ActiveFacility.query.get(facility_id).facility
-    facilities = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
+    facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
         dismantle_facility(player, facility.id)
     return {"response": "success", "money": player.money}

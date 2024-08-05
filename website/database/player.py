@@ -2,6 +2,7 @@
 
 import json
 from itertools import chain
+from typing import List
 
 from flask import current_app
 from flask_login import UserMixin
@@ -427,7 +428,9 @@ class Player(db.Model, UserMixin):
         """Packages the player's active facilities"""
 
         def get_facility_data(facilities):
-            sub_facilities = self.active_facilities.filter(ActiveFacility.facility.in_(facilities)).all()
+            sub_facilities: List[ActiveFacility] = self.active_facilities.filter(
+                ActiveFacility.facility.in_(facilities)
+            ).all()
             return {
                 facility.id: {
                     k: getattr(facility, k)

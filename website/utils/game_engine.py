@@ -42,8 +42,11 @@ def check_finished_constructions(engine):
         db.session.commit()
 
     # check end of lifespan of facilities
-    eolt_facilities = ActiveFacility.query.filter(ActiveFacility.end_of_life <= engine.data["total_t"]).all()
-    if eolt_facilities:
+    eolt_facilities: List[ActiveFacility] = ActiveFacility.query.filter(
+        ActiveFacility.end_of_life <= engine.data["total_t"]
+    ).all()
+    if eolt_facilities:  # This check should not be needed. If there are no such
+        # facilities, the list will be empty and the for loop will not do anything
         for facility in eolt_facilities:
             remove_asset(facility.player_id, facility)
         db.session.commit()
