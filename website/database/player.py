@@ -140,6 +140,7 @@ class Player(db.Model, UserMixin):
     resource_on_sale = db.relationship("ResourceOnSale", backref="player")
     shipments = db.relationship("Shipment", backref="player")
     active_facilities = db.relationship("ActiveFacilities", backref="player", lazy="dynamic")
+    climate_events = db.relationship("ClimateEventRecovery", backref="player")
 
     def change_graph_view(self, view):
         """Helper method to set the network graph view of the player (basic/normal/expert)"""

@@ -66,6 +66,7 @@ function setup() {
         imports: [color(255, 89, 94), "Imports"],
         exports: [color(138, 201, 38), "Exports"],
         dumping: [color(208, 0, 0), "Dumping"],
+        climate_events: [color(176, 15, 220), "Climate events"],
 
         coal_mine: [color(73, 80, 87), "Coal mines"],
         oil_field: [color(181, 23, 158), "Oil fields"],

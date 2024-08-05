@@ -66,6 +66,7 @@ def data_init():
             "exports": init_array(),
             "imports": init_array(),
             "dumping": init_array(),
+            "climate_events": init_array(),
         },
         "op_costs": {
             "steam_engine": init_array(),

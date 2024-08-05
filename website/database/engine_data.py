@@ -4,7 +4,6 @@
 import json
 import math
 from collections import defaultdict, deque
-from weakref import ref
 
 import noise
 import numpy as np
@@ -139,11 +138,12 @@ class CircularBufferPlayer:
 
     def __init__(self):
         self._data = {
-            "revenues": {
-                "industry": deque([0.0] * 360, maxlen=360),  # v - added dynamically - v
+            "revenues": {  # v - added dynamically - v
+                "industry": deque([0.0] * 360, maxlen=360),
                 "exports": deque([0.0] * 360, maxlen=360),
                 "imports": deque([0.0] * 360, maxlen=360),
                 "dumping": deque([0.0] * 360, maxlen=360),
+                "climate_events": deque([0.0] * 360, maxlen=360),
             },
             "op_costs": {
                 "steam_engine": deque([0.0] * 360, maxlen=360),  # + other facilities

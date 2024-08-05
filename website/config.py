@@ -1061,7 +1061,7 @@ config = Config()
 climate_events = {
     "flood": {
         "name": "Flood",
-        "base_probability": 0.001,  # [probability per tick]
+        "base_probability": 0.000_1,  # [probability per tick]
         "description": "A flood has occurred and destroyed some parts of the infrastructure. The recovery from this event will take {duration} days and cost {cost}.",
         "cost_fraction": 0.6,  # fraction of the player's industry revenue that he has to pay
         "duration": timedelta(days=6).total_seconds(),  # [in-game seconds]
@@ -1069,7 +1069,14 @@ climate_events = {
         "destruction_chance": {  # chance of destruction for each facility type
             "watermill": 0.6,
             "small_water_dam": 0.05,  # destruction affects the 3 downstream tiles
-            "large_water_dam": 0.01,  # destruction affects all downstream tiles
+            "large_water_dam": 0.01,  # destruction affects the 15 downstream tiles
+            "steam_engine": 0.05,
+            "coal_burner": 0.03,
+            "oil_burner": 0.03,
+            "gas_burner": 0.03,
+            "combined_cycle": 0.02,
+            "nuclear_reactor": 0.01,  # not a dangerous accident but the plant has to be shut down permanently for safety reasons
+            "nuclear_reactor_gen4": 0.005,  # not a dangerous accident but the plant has to be shut down permanently for safety reasons
             "industry": 0.5,  # level down by 1
         },
     },
