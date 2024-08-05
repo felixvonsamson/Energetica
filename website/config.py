@@ -1109,9 +1109,9 @@ climate_events = {
         "duration": timedelta(days=9).total_seconds(),
         "affected_tiles": 3,  # (a radius of 3 so 19 tiles)
         "destruction_chance": {
-            "windmill": 0.4,
-            "onshore_wind_turbine": 0.2,
-            "offshore_wind_turbine": 0.1,
+            "windmill": 0.5,
+            "onshore_wind_turbine": 0.3,
+            "offshore_wind_turbine": 0.15,
             "PV_solar": 0.05,
             "CSP_solar": 0.1,
             "industry": 0.9,

@@ -410,10 +410,10 @@ def calculate_demand(engine, new_values, player):
     industry_demand_and_revenues(engine, player, demand, revenues)
     construction_demand(player, demand)
     shipment_demand(engine, player, demand)
-    storage_demand(player, demand)
+    storage_demand(engine, player, demand)
 
     # consider cost of climate events if any
-    climate_event_recovery_cost(engine, player, revenues)
+    climate_event_recovery_cost(player, revenues)
 
     if player.carbon_capture > 0:
         demand["carbon_capture"] = engine.config[player.id]["carbon_capture"]["power_consumption"]

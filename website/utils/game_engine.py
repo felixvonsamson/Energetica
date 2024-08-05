@@ -11,6 +11,7 @@ import numpy as np
 
 import website
 import website.api.websocket as websocket
+from website.database.player import Player
 import website.production_update as production_update
 import website.utils.assets as assets
 from website import db
@@ -101,6 +102,7 @@ def check_climate_events(engine):
     flood_probability = climate_events["flood"]["base_probability"] * climate_change**2
     if random.random() < flood_probability:
         while True:
+            # TODO: this is not efficient, but it's not a big deal
             random_tile_id = random.randint(1, Hex.query.count() + 1)
             if Hex.query.get(random_tile_id).hydro > 0.2:
                 break
@@ -115,6 +117,7 @@ def check_climate_events(engine):
         heatwave_probability += climate_events["heat_wave"]["base_probability"] * (real_temp-15)**2
     if random.random() < heatwave_probability:
         random_latitude = max(-10, min(10, round(np.random.normal(0, 4))))
+        # TODO: this is not efficient, but it's not a big deal
         tile = Hex.query.filter(Hex.r == random_latitude).order_by(func.random()).first()
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
@@ -132,6 +135,7 @@ def check_climate_events(engine):
             random_latitude = round(10 + random_normal)
         else:
             random_latitude = round(-10 + random_normal)
+        # TODO: this is not efficient, but it's not a big deal
         tile = Hex.query.filter(Hex.r == random_latitude).order_by(func.random()).first()
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
@@ -162,7 +166,7 @@ def flood_impact(engine, tile):
     engine.log(f"Flood on tile {tile.id}")
     if not tile.player_id:
         return
-    player = tile.player
+    player:Player = tile.player
     ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
     recovery_cost = climate_events["flood"]["cost_fraction"] * engine.config[player.id]["industry"]["income_per_day"] / ticks_per_day # [¤/tick]
     duration_ticks = math.ceil(climate_events["flood"]["duration"] / engine.in_game_seconds_per_tick)

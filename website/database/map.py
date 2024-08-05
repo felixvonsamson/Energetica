@@ -1,6 +1,10 @@
 """This file contains the `Hex` class, which contains resource information, and
 which makes up the map"""
 
+from __future__ import annotations
+
+from typing import List
+
 from website import db
 
 
@@ -24,7 +28,7 @@ class Hex(db.Model):
     def __repr__(self):
         return f"<Tile {self.id} wind {self.wind}>"
 
-    def get_neighbors(self, n=1):
+    def get_neighbors(self, n=1) -> List[Hex]:
         """returns the neighbors of the tile plus the tile itself"""
 
         def get_hex_at_distance(q, r, distance):
@@ -43,8 +47,8 @@ class Hex(db.Model):
                 neighbors.append(neighbor)
         return neighbors
 
-    def get_downstream_tiles(self, n):
-        """returns the tiles that are downstream (related to hydro) from the current tile"""
+    def get_downstream_tiles(self, n) -> List[Hex]:
+        """returns up to `n` many tiles that are downstream (related to hydro) from the current tile"""
         downstream_tiles = []
 
         def find_downstream(tile, n):
