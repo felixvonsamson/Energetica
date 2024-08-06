@@ -237,12 +237,12 @@ def data_init_climate(seconds_per_tick, random_seed, delta_t):
         for j in range(360):
             ref_temp[i].append(calculate_reference_gta(delta_t - (359 - j) * pow(6, i), seconds_per_tick))
             temp_deviation[i].append(
-                calculate_temperature_deviation(delta_t - (359 - j) * pow(6, i), seconds_per_tick, 5e9, random_seed)
+                calculate_temperature_deviation(delta_t - (359 - j) * pow(6, i), seconds_per_tick, 4e10, random_seed)
             )
 
     return {
         "emissions": {
-            "CO2": [[5e9] * 360] * 5,
+            "CO2": [[4e10] * 360] * 5,
         },
         "temperature": {
             "reference": ref_temp,

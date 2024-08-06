@@ -342,10 +342,10 @@ class EmissionData:
         temp_deviation = []
         for t in range(delta_t - 360, delta_t):
             ref_temp.append(calculate_reference_gta(t + 1, spt))
-            temp_deviation.append(calculate_temperature_deviation(t + 1, spt, 5e9, random_seed))
+            temp_deviation.append(calculate_temperature_deviation(t + 1, spt, 4e10, random_seed))
         self._data = {
             "emissions": {
-                "CO2": deque([5e9] * 360, maxlen=360),  # base value of 5Mt of CO2 in the atmosphere
+                "CO2": deque([4e10] * 360, maxlen=360),  # base value of 5Mt of CO2 in the atmosphere
             },
             "temperature": {
                 "reference": deque(ref_temp, maxlen=360),
@@ -405,7 +405,7 @@ def calculate_reference_gta(tick, seconds_per_tick):
 def calculate_temperature_deviation(tick, seconds_per_tick, co2_levels, random_seed):
     """Function that calculates the GAT deviation from the CO2 levels"""
     ticks_per_year = 60 * 60 * 24 * 72 / seconds_per_tick
-    temperature_deviation = (co2_levels - 5e9) / 1.67e9
+    temperature_deviation = (co2_levels - 4e10) / 1.33e10
     perlin1 = noise.pnoise1(tick / ticks_per_year, base=random_seed)
     perlin2 = noise.pnoise1(tick / ticks_per_year * 6, base=random_seed)
     perlin_disturbance = 0.4 * perlin1 + 0.1 * perlin2

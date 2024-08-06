@@ -15,7 +15,214 @@ const keys_emissions = {
     "uranium_mine": true,
 };
 
-var climate_graph_p5;
+var climate_graph_p5, CO2_graph_p5;
+
+function CO2_graph(s) {
+    s.setup = function () {
+        s.concentration = "concentration";
+        s.is_inside = false;
+        s.createCanvas(min(canvas_width, 1200), 0.4 * min(canvas_width, 1200));
+        s.noLoop();
+        s.textFont(font);
+        s.textAlign(CENTER, CENTER);
+        s.graphics = s.createGraphics(s.width, s.height);
+        s.graphics.textAlign(CENTER, CENTER);
+        s.graphics.textFont(font);
+    }
+
+    s.draw = function () {
+        if (s.graphics_ready) {
+            s.image(s.graphics, 0, 0);
+            if (s.is_inside) {
+                s.push();
+                s.stroke(255);
+                s.strokeWeight(2);
+                let X = min(s.graph_w, max(0, s.mouseX - margin));
+                t_view = floor(map(X, 0, s.graph_w, 0, data_len - 1));
+                s.translate(margin + X, s.graph_h + 0.4 * margin);
+                s.line(0, 0, 0, -s.graph_h);
+                s.noStroke();
+
+                s.push();
+                let h = map(s.CO2_curve[t_view], s.lower_bound, s.upper_bound, 0, s.graph_h);
+                s.ellipse(0, -h, 8, 8);
+                h = map(s.ref_curve[t_view], s.lower_bound, s.upper_bound, 0, s.graph_h);
+                s.ellipse(0, -h, 8, 8);
+                s.pop();
+
+                let count = 4;
+
+                format_function = format_mass;
+                if (s.concentration == "concentration") {
+                    format_function = format_concentration;
+                }
+
+                let tx = -180;
+                let ty = - 0.4 * margin - s.graph_h + s.mouseY;
+                if (ty > - count * 16) {
+                    ty = - count * 16;
+                }
+                if (X < 180) {
+                    tx = 20;
+                }
+                s.translate(tx, ty);
+                fill_alt = 0;
+                alternate_fill(s);
+                s.rect(0, 0, 160, 17);
+                s.fill(0);
+                s.textFont(balooBold);
+                s.text(ticks_to_time((data_len - t_view - 1) * res_to_factor[res]), 80, 5);
+                s.textFont(font);
+                s.translate(0, 16);
+                alternate_fill(s);
+                s.rect(0, 0, 160, 17);
+                s.fill(cols_and_names.CO2[0]);
+                s.rect(0, 0, 16, 17);
+                s.fill(0);
+                s.textAlign(LEFT, CENTER);
+                s.text(cols_and_names.CO2[1], 20, 5);
+                s.textAlign(CENTER, CENTER);
+                s.text(format_function(s.CO2_curve[t_view]), 137, 5);
+                s.translate(0, 16);
+                alternate_fill(s);
+                s.rect(0, 0, 160, 17);
+                s.fill(cols_and_names.ref_CO2[0]);
+                s.rect(0, 0, 16, 17);
+                s.fill(0);
+                s.textAlign(LEFT, CENTER);
+                s.text(cols_and_names.ref_CO2[1], 20, 5);
+                s.textAlign(CENTER, CENTER);
+                s.text(format_function(s.ref_curve[t_view]), 137, 5);
+                s.translate(0, 16);
+                alternate_fill(s);
+                s.rect(0, 0, 160, 17);
+                s.fill(0);
+                s.textAlign(LEFT, CENTER);
+                if (s.CO2_curve[t_view] > s.ref_curve[t_view]) {
+                    s.text("excess CO2", 20, 5);
+                } else {
+                    s.text("CO2 deficit", 20, 5);
+                }
+                s.textAlign(CENTER, CENTER);
+                s.text(format_function(abs(s.CO2_curve[t_view] - s.ref_curve[t_view])), 137, 5);
+
+                s.pop();
+            }
+        }
+    }
+
+    s.mouseMoved = function () {
+        if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0 && s.mouseY < s.height) {
+            s.is_inside = true;
+            s.redraw();
+        } else {
+            if (s.is_inside) {
+                s.is_inside = false;
+                s.redraw();
+            }
+        }
+    }
+
+    s.mouseDragged = function () {
+        s.mouseMoved();
+    }
+
+    s.render_graph = function () {
+        s.graph_h = s.height - margin;
+        s.graph_w = s.width - 2 * margin;
+        s.graphics.background(229, 217, 182);
+        data_len = 360;
+        s.t0 = 0;
+        if (res == resolution_list[0]) {
+            data_len = 60;
+            s.t0 = 300;
+        }
+
+        load_climate_data().then((climate_data) => {
+            s.CO2_curve = climate_data.emissions.CO2[res_id].slice(s.t0);
+            s.ref_curve = Array(data_len).fill(4e10);
+            if (s.concentration == "concentration") {
+                // convert from kg to ppm
+                s.CO2_curve = s.CO2_curve.map((value) => value / 4e10 * 300);
+                s.ref_curve = Array(data_len).fill(300);
+            }
+            s.lower_bound = 0;
+            s.upper_bound = 1.05 * Math.max(...s.CO2_curve, ...s.ref_curve);
+
+            s.graphics.push();
+            s.graphics.translate(margin, 0.4 * margin + s.graph_h);
+            s.graphics.noStroke();
+
+            s.graphics.strokeWeight(3);
+            s.graphics.push();
+            s.graphics.stroke(cols_and_names.ref_CO2[0]);
+            for (let t = 1; t < data_len; t++) {
+                let h1 = map(s.ref_curve[t - 1], s.lower_bound, s.upper_bound, 0, s.graph_h);
+                let h2 = map(s.ref_curve[t], s.lower_bound, s.upper_bound, 0, s.graph_h);
+                s.graphics.line(0, -h1, s.graph_w / data_len, -h2);
+                s.graphics.translate(s.graph_w / (data_len - 1), 0);
+            }
+            s.graphics.pop();
+            s.graphics.push();
+            s.graphics.stroke(cols_and_names.CO2[0]);
+            for (let t = 1; t < data_len; t++) {
+                let h1 = map(s.CO2_curve[t - 1], s.lower_bound, s.upper_bound, 0, s.graph_h);
+                let h2 = map(s.CO2_curve[t], s.lower_bound, s.upper_bound, 0, s.graph_h);
+                s.graphics.line(0, -h1, s.graph_w / data_len, -h2);
+                s.graphics.translate(s.graph_w / (data_len - 1), 0);
+            }
+            s.graphics.pop();
+
+            s.graphics.strokeWeight(1);
+            s.graphics.stroke(0);
+            s.graphics.line(0, 0, s.graph_w, 0);
+            s.graphics.line(0, 0, 0, -s.graph_h);
+
+            s.graphics.push();
+            let units = time_unit(res);
+            s.graphics.fill(0);
+            for (let i = 0; i < units.length; i++) {
+                s.graphics.stroke(0, 0, 0, 30);
+                let x = (i * s.graph_w) / (units.length - 1);
+                s.graphics.line(x, -s.graph_h, x, 0);
+                s.graphics.stroke(0);
+                s.graphics.line(x, 0, x, 5);
+                s.graphics.noStroke();
+                s.graphics.text(units[i], x, 0.26 * margin);
+            }
+            s.graphics.pop();
+
+            s.graphics.push();
+            let y_ticks = y_units_bounded(s.graph_h, 0, s.upper_bound);
+            for (let i in y_ticks) {
+                s.graphics.stroke(0, 0, 0, 30);
+                s.graphics.line(s.graph_w, -i, 0, -i);
+                s.graphics.stroke(0);
+                s.graphics.line(0, -i, -5, -i);
+                s.graphics.noStroke();
+                if (s.concentration == "concentration") {
+                    s.graphics.text(format_concentration(y_ticks[i]), -0.5 * margin, -i - 3);
+                } else {
+                    s.graphics.text(format_mass(y_ticks[i]), -0.5 * margin, -i - 3);
+                }
+            }
+            s.graphics.pop();
+
+            s.graphics.pop();
+
+            s.graphics_ready = true;
+            s.redraw();
+        });
+    }
+}
+
+
+function change_concentration(concentration) {
+    show_selected_button("concentration_button_", concentration)
+    CO2_graph_p5.concentration = concentration;
+    CO2_graph_p5.render_graph();
+}
+
 
 function climate_graph(s) {
     s.setup = function () {
@@ -150,7 +357,6 @@ function climate_graph(s) {
             s.graphics.translate(margin, 0.4 * margin + s.graph_h);
             s.graphics.noStroke();
 
-
             s.graphics.strokeWeight(3);
             s.graphics.push();
             s.graphics.stroke(cols_and_names.ref_temperature[0]);
@@ -198,7 +404,7 @@ function climate_graph(s) {
                 s.graphics.stroke(0);
                 s.graphics.line(0, -i, -5, -i);
                 s.graphics.noStroke();
-                s.graphics.text(format_temperature(y_ticks.ticks[i], max(0, -y_ticks.magnitude)), -28, -i - 3);
+                s.graphics.text(format_temperature(y_ticks.ticks[i], max(0, -y_ticks.magnitude)), -0.5 * margin, -i - 3);
             }
             s.graphics.pop();
 
@@ -218,6 +424,7 @@ function change_relative(relative) {
 
 function graph_sketch(s) {
     s.setup = function () {
+        CO2_graph_p5 = new p5(CO2_graph, "CO2_graph_sketch");
         climate_graph_p5 = new p5(climate_graph, "climate_graph_sketch");
         s.percent = "normal";
         s.is_inside = false;
@@ -355,6 +562,7 @@ function graph_sketch(s) {
     }
 
     s.render_graph = function (regen_table = true) {
+        CO2_graph_p5.render_graph();
         climate_graph_p5.render_graph();
 
         s.graph_h = s.height - margin;

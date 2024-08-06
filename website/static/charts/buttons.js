@@ -86,6 +86,7 @@ function setup() {
         temperature: [color(220, 15, 15), "Global avr. temp."],
         ref_temperature: [color(252, 161, 3), "Reference GAT"],
         CO2: [color(55, 55, 55), "CO2"],
+        ref_CO2: [color(180, 180, 180), "Reference CO2"],
     };
 
     canvas_width = 0.7 * windowWidth;
