@@ -5,8 +5,6 @@
 
 from datetime import timedelta
 
-from website.technology_effects import player_lab_workers_for_level, warehouse_capacity_for_level
-
 from .database.player import Player
 
 const_config = {
@@ -984,6 +982,23 @@ river_discharge_seasonal = [
     0.35,
     0.3,
 ]  # from january to december
+
+
+def player_lab_workers_for_level(lab_level: int) -> int:
+    """Returns how many lab workers are available for the specified lab level"""
+    return (lab_level + 2) // 3
+
+
+def warehouse_capacity_for_level(warehouse_level, resource):
+    """Returns how much capacity in kg a player with a warehouse with
+    `warehouse_level` has for the specified `resource`"""
+    if warehouse_level == 0:
+        return 0
+    else:
+        return (
+            const_config["warehouse_capacities"][resource]
+            * const_config["assets"]["warehouse"]["capacity_factor"] ** warehouse_level
+        )
 
 
 class Config(object):
