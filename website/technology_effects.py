@@ -1,6 +1,6 @@
 """
-This files contains all the functions to calculate the different parameters of
-facilities according to the technology levels of the player.
+This files contains all the functions to calculate the different parameters of facilities according to the technology
+levels of the player.
 """
 
 import math
@@ -14,6 +14,20 @@ from website.database.player import Player
 from website.game_engine import GameEngine
 
 from .database.player_assets import ActiveFacility, UnderConstruction
+
+# This dictionary describes what multipliers are stored where.
+# See also the docstring for the individual multiplier functions.
+# {
+#     "power_production_multiplier": "multiplier_1",
+#     "power_consumption_multiplier": "multiplier_1",
+#     "capacity_multiplier": "multiplier_2",
+#     "wind_speed_multiplier": "multiplier_2",
+#     "hydro_price_multiplier": "multiplier_2",
+#     "extraction_rate_multiplier": "multiplier_2",
+#     "efficiency_multiplier": "multiplier_3",
+#     "next_available_location": "multiplier_3",
+#     "extraction_emissions_multiplier": "multiplier_3",
+# }
 
 
 def price_multiplier(player: Player, facility) -> float:
@@ -55,9 +69,10 @@ def price_multiplier(player: Player, facility) -> float:
 
 
 def multiplier_1(player: Player, facility) -> float:
-    """Returns the first multiplier according to the technology level of the
-    player. This multiplier can be either the `power_production_multiplier` or
-    the `power_consumption_multiplier`."""
+    """
+    Returns the first multiplier according to the technology level of the player. This multiplier can be either the
+    `power_production_multiplier` or the `power_consumption_multiplier`.
+    """
     const_config = current_app.config["engine"].const_config["assets"]
     if facility in const_config["mineral_extraction"]["affected_facilities"]:
         return power_consumption_multiplier(player, facility)
@@ -66,8 +81,10 @@ def multiplier_1(player: Player, facility) -> float:
 
 
 def power_production_multiplier(player: Player, facility: str) -> float:
-    """Returns by how much the `facility`'s `base_power_generation` should be
-    multiplied, according to the `player`'s currently researched technologies"""
+    """
+    Returns by how much the `facility`'s `base_power_generation` should be multiplied, according to the `player`'s
+    currently researched technologies
+    """
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Mechanical engineering
@@ -89,8 +106,10 @@ def power_production_multiplier(player: Player, facility: str) -> float:
 
 
 def power_consumption_multiplier(player: Player, facility: str) -> float:
-    """Returns by how much the `facility`'s `base_power_consumption` should be
-    multiplied, according to the `player`'s currently researched technologies"""
+    """
+    Returns by how much the `facility`'s `base_power_consumption` should be multiplied, according to the `player`'s
+    currently researched technologies
+    """
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Mineral extraction (in this case it is the energy consumption)
@@ -100,10 +119,10 @@ def power_consumption_multiplier(player: Player, facility: str) -> float:
 
 
 def multiplier_2(player: Player, facility) -> float:
-    """Returns the second multiplier according to the technology level of the
-    player. This multiplier can be either the `extraction_rate_multiplier`, the
-    `hydro_price_multiplier`, the `wind_speed_multiplier` or the
-    `capacity_multiplier`."""
+    """
+    Returns the second multiplier according to the technology level of the player. This multiplier can be either the
+    `extraction_rate_multiplier`, the `hydro_price_multiplier`, the `wind_speed_multiplier` or the `capacity_multiplier`
+    """
     const_config = current_app.config["engine"].const_config["assets"]
     if facility in const_config["mineral_extraction"]["affected_facilities"]:
         return extraction_rate_multiplier(player, facility)
@@ -115,9 +134,10 @@ def multiplier_2(player: Player, facility) -> float:
 
 
 def capacity_multiplier(player: Player, facility) -> float:
-    """For storage facilities, returns by how much the `facility`'s
-    `base_storage_capacity` should be multiplied, according to the `player`'s
-    currently researched technologies"""
+    """
+    For storage facilities, returns by how much the `facility`'s `base_storage_capacity` should be multiplied, according
+    to the `player`'s currently researched technologies
+    """
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Civil engineering
@@ -127,9 +147,10 @@ def capacity_multiplier(player: Player, facility) -> float:
 
 
 def extraction_rate_multiplier(player: Player, facility) -> float:
-    """For extraction facilities, returns by how much the `facility`'s
-    `base_extraction_rate_per_day` should be multiplied, according to the
-    `player`'s currently researched technologies"""
+    """
+    For extraction facilities, returns by how much the `facility`'s `base_extraction_rate_per_day` should be multiplied,
+    according to the `player`'s currently researched technologies
+    """
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     if facility in const_config["mineral_extraction"]["affected_facilities"]:
@@ -138,9 +159,10 @@ def extraction_rate_multiplier(player: Player, facility) -> float:
 
 
 def hydro_price_multiplier(player: Player, facility) -> float:
-    """For hydro power facilities, returns by how much the `facility`'s
-    `base_price` should be multiplied, according to the `player`'s currently
-    researched technologies"""
+    """
+    For hydro power facilities, returns by how much the `facility`'s `base_price` should be multiplied, according to the
+    `player`'s currently researched technologies
+    """
     mlt = 1
     # calculating the hydro price multiplier linked to the number of hydro facilities
     if facility in ["watermill", "small_water_dam", "large_water_dam"]:
@@ -149,9 +171,10 @@ def hydro_price_multiplier(player: Player, facility) -> float:
 
 
 def wind_speed_multiplier(player: Player, facility) -> float:
-    """For wind power facilities, returns by how much the `facility`'s
-    `base_power_generation` should be multiplied, according to the `player`'s
-    currently researched technologies"""
+    """
+    For wind power facilities, returns by how much the `facility`'s `base_power_generation` should be multiplied,
+    according to the `player`'s currently researched technologies
+    """
     mlt = 1
     # calculating the wind speed multiplier linked to the number of wind turbines
     if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
@@ -160,9 +183,10 @@ def wind_speed_multiplier(player: Player, facility) -> float:
 
 
 def multiplier_3(player: Player, facility) -> float:
-    """Returns the third multiplier according to the technology level of the
-    player. This multiplier can be either the `efficiency_multiplier`, the
-    `extraction_emissions_multiplier`, or the `next_available_location`."""
+    """
+    Returns the third multiplier according to the technology level of the player. This multiplier can be either the
+    `efficiency_multiplier`, the `extraction_emissions_multiplier`, or the `next_available_location`
+    """
     const_config = current_app.config["engine"].const_config["assets"]
     if facility in const_config["mineral_extraction"]["affected_facilities"]:
         return extraction_emissions_multiplier(player, facility)
@@ -179,12 +203,13 @@ def multiplier_3(player: Player, facility) -> float:
 
 
 def efficiency_multiplier(player: Player, facility):
-    """For storage facilities, returns by how much the `facility`'s
-    `base_efficiency` should be multiplied, according to the technology level of
-    the `player`.
+    """
+    For storage facilities, returns by how much the `facility`'s `base_efficiency` should be multiplied, according to
+    the technology level of the `player`.
 
-    For power facilities, returns by how much the `facility`'s `base_pollution`
-    should be multiplied, according to the technology level of the `player`."""
+    For power facilities, returns by how much the `facility`'s `base_pollution` should be multiplied, according to the
+    technology level of the `player`.
+    """
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Thermodynamics
@@ -211,9 +236,10 @@ def efficiency_multiplier(player: Player, facility):
 
 
 def extraction_emissions_multiplier(player: Player, facility) -> float:
-    """For extraction facilities, returns by how much the `facility`'s
-    `base_pollution` should be multiplied, according to the technology level of
-    the `player`."""
+    """
+    For extraction facilities, returns by how much the `facility`'s `base_pollution` should be multiplied, according to
+    the technology level of the `player`
+    """
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Mineral extraction (in this case the the multiplier is for emissions)
