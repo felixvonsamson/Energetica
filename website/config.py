@@ -5,6 +5,8 @@
 
 from datetime import timedelta
 
+from website.technology_effects import player_lab_workers_for_level, warehouse_capacity_for_level
+
 from .database.player import Player
 
 const_config = {
@@ -999,7 +1001,7 @@ class Config(object):
             "transport": {},
         }
         assets = self.for_player[player_id]
-        player = Player.query.get(player_id)
+        player: Player = Player.query.get(player_id)
 
         # calculating industry energy consumption and income
         assets["industry"]["power_consumption"] = (
@@ -1025,13 +1027,7 @@ class Config(object):
 
         # calculating the maximum storage capacity from the warehouse level
         for resource in const_config["warehouse_capacities"]:
-            if player.warehouse == 0:
-                assets["warehouse_capacities"][resource] = 0
-            else:
-                assets["warehouse_capacities"][resource] = (
-                    const_config["warehouse_capacities"][resource]
-                    * const_config["assets"]["warehouse"]["capacity_factor"] ** player.warehouse
-                )
+            assets["warehouse_capacities"][resource] = warehouse_capacity_for_level(player.warehouse, resource)
 
         # calculating the transport speed and energy consumption from the level of transport technology
         assets["transport"]["time_per_tile"] = (
@@ -1047,7 +1043,7 @@ class Config(object):
 
         # setting the number of workers
         player.construction_workers = player.building_technology + 1
-        player.lab_workers = (player.laboratory + 2) // 3
+        player.lab_workers = player_lab_workers_for_level(player.laboratory)
 
     def __getitem__(self, player_id):
         if player_id not in self.for_player:

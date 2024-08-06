@@ -375,6 +375,25 @@ def power_facility_resource_consumption(player: Player, power_facility):
     return consumed_resources
 
 
+def player_lab_workers_for_level(lab_level: int) -> int:
+    """Returns how many lab workers are available for the specified lab level"""
+    return (lab_level + 2) // 3
+
+
+def warehouse_capacity_for_level(warehouse_level, resource):
+    """Returns how much capacity in kg a player with a warehouse with
+    `warehouse_level` has for the specified `resource`"""
+    if warehouse_level == 0:
+        return 0
+    else:
+        engine: GameEngine = current_app.config["engine"]
+        const_config_assets = engine.const_config["assets"]
+        return (
+            engine.const_config["warehouse_capacities"][resource]
+            * const_config_assets["warehouse"]["capacity_factor"] ** warehouse_level
+        )
+
+
 def get_current_technology_values(player: Player):
     """Function that returns the facility values for the current technology of the player."""
     # TODO: Deprecate this function
@@ -628,20 +647,6 @@ def package_functional_facilities(player: Player):
             * const_config_assets["industry"]["income_factor"] ** level
             + const_config_assets["industry"]["universal_income_per_day"]
         ) / 24
-
-    def player_lab_workers_for_level(level):
-        # TODO: make this method unified and used everywhere this logic is used
-        return (level + 2) // 3
-
-    def warehouse_capacity_for_level(level, resource):
-        # TODO: make this method unified and used everywhere this logic is used
-        if level == 0:
-            return 0
-        else:
-            return (
-                engine.const_config["warehouse_capacities"][resource]
-                * const_config_assets["warehouse"]["capacity_factor"] ** level
-            )
 
     def carbon_capture_power_consumption_for_level(level):
         if level == 0:
