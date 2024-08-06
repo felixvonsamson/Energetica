@@ -13,7 +13,7 @@ from website.database.map import Hex
 from website.database.player import Player
 from website.game_engine import GameEngine
 
-from .database.player_assets import ActiveFacility, UnderConstruction
+from .database.player_assets import ActiveFacility, OngoingConstruction
 
 # This dictionary describes what multipliers are stored where.
 # See also the docstring for the individual multiplier functions.
@@ -253,7 +253,7 @@ def next_available_location(player: Player, facility) -> int:
     active_facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(
         facility=facility, player_id=player.id
     ).all()
-    under_construction: List[UnderConstruction] = UnderConstruction.query.filter_by(
+    under_construction: List[OngoingConstruction] = OngoingConstruction.query.filter_by(
         name=facility, player_id=player.id
     ).all()
     # Create a set of used efficiency multipliers
@@ -678,33 +678,33 @@ def package_functional_facilities(player: Player):
 
     industry_level_including_ongoing_upgrades = (
         player.industry
-        + UnderConstruction.query.filter(
-            UnderConstruction.player_id == player.id,
-            UnderConstruction.name == "industry",
+        + OngoingConstruction.query.filter(
+            OngoingConstruction.player_id == player.id,
+            OngoingConstruction.name == "industry",
         ).count()
     )
 
     laboratory_level_including_ongoing_upgrades = (
         player.laboratory
-        + UnderConstruction.query.filter(
-            UnderConstruction.player_id == player.id,
-            UnderConstruction.name == "laboratory",
+        + OngoingConstruction.query.filter(
+            OngoingConstruction.player_id == player.id,
+            OngoingConstruction.name == "laboratory",
         ).count()
     )
 
     warehouse_level_including_ongoing_upgrades = (
         player.warehouse
-        + UnderConstruction.query.filter(
-            UnderConstruction.player_id == player.id,
-            UnderConstruction.name == "warehouse",
+        + OngoingConstruction.query.filter(
+            OngoingConstruction.player_id == player.id,
+            OngoingConstruction.name == "warehouse",
         ).count()
     )
 
     carbon_capture_level_including_ongoing_upgrades = (
         player.carbon_capture
-        + UnderConstruction.query.filter(
-            UnderConstruction.player_id == player.id,
-            UnderConstruction.name == "carbon_capture",
+        + OngoingConstruction.query.filter(
+            OngoingConstruction.player_id == player.id,
+            OngoingConstruction.name == "carbon_capture",
         ).count()
     )
 

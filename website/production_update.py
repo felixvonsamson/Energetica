@@ -12,7 +12,7 @@ import website.utils.misc
 from . import db
 from .config import wind_power_curve
 from .database.player import Network, Player
-from .database.player_assets import ActiveFacility, Shipment, UnderConstruction
+from .database.player_assets import ActiveFacility, OngoingConstruction, Shipment
 
 resource_to_extraction = {
     "coal": "coal_mine",
@@ -974,7 +974,7 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
         cumul_demand = 0.0
         for i in range(min(len(construction_priorities), player.construction_workers)):
             construction_id = construction_priorities[i]
-            construction: UnderConstruction = UnderConstruction.query.get(construction_id)
+            construction: OngoingConstruction = OngoingConstruction.query.get(construction_id)
             if construction.suspension_time is not None:
                 continue
             cumul_demand += construction.construction_power
@@ -1000,7 +1000,7 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
         cumul_demand = 0.0
         for i in range(min(len(research_priorities), player.lab_workers)):
             construction_id = research_priorities[i]
-            construction: UnderConstruction = UnderConstruction.query.get(construction_id)
+            construction: OngoingConstruction = OngoingConstruction.query.get(construction_id)
             if construction.suspension_time is not None:
                 continue
             cumul_demand += construction.construction_power

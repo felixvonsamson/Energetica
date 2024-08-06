@@ -10,7 +10,7 @@ from pywebpush import WebPushException, webpush
 
 from website import db
 from website.database.messages import Chat, Message, Notification, player_chats
-from website.database.player_assets import ActiveFacility, UnderConstruction
+from website.database.player_assets import ActiveFacility, OngoingConstruction
 
 
 class Player(db.Model, UserMixin):
@@ -137,7 +137,7 @@ class Player(db.Model, UserMixin):
     # * "storage_overview"
     achievements = db.Column(db.Text, default="")
 
-    under_construction = db.relationship("UnderConstruction")
+    under_construction = db.relationship("OngoingConstruction")
     resource_on_sale = db.relationship("ResourceOnSale", backref="player")
     shipments = db.relationship("Shipment", backref="player")
     active_facilities = db.relationship("ActiveFacility", backref="player", lazy="dynamic")
@@ -151,9 +151,9 @@ class Player(db.Model, UserMixin):
     def available_construction_workers(self):
         """Returns the number of available construction workers"""
         occupied_workers = (
-            UnderConstruction.query.filter(UnderConstruction.player_id == self.id)
-            .filter(UnderConstruction.family != "Technologies")
-            .filter(UnderConstruction.suspension_time.is_(None))
+            OngoingConstruction.query.filter(OngoingConstruction.player_id == self.id)
+            .filter(OngoingConstruction.family != "Technologies")
+            .filter(OngoingConstruction.suspension_time.is_(None))
             .count()
         )
         return self.construction_workers - occupied_workers
@@ -161,9 +161,9 @@ class Player(db.Model, UserMixin):
     def available_lab_workers(self):
         """Returns the number of available lab workers"""
         occupied_workers = (
-            UnderConstruction.query.filter(UnderConstruction.player_id == self.id)
-            .filter(UnderConstruction.family == "Technologies")
-            .filter(UnderConstruction.suspension_time.is_(None))
+            OngoingConstruction.query.filter(OngoingConstruction.player_id == self.id)
+            .filter(OngoingConstruction.family == "Technologies")
+            .filter(OngoingConstruction.suspension_time.is_(None))
             .count()
         )
         return self.lab_workers - occupied_workers

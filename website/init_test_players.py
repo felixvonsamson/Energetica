@@ -11,7 +11,7 @@ from . import db
 from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer
 from .database.map import Hex
 from .database.player import Network, Player
-from .database.player_assets import UnderConstruction
+from .database.player_assets import OngoingConstruction
 from .utils.misc import add_player_to_data, init_table
 from .utils.network import data_init_network
 
@@ -143,7 +143,7 @@ def add_asset(player, asset, n):
 
     new_constructions = []
     for i in range(n):
-        new_construction: UnderConstruction = UnderConstruction(
+        new_construction: OngoingConstruction = OngoingConstruction(
             name=asset,
             family=asset_to_family[asset],
             start_time=0,

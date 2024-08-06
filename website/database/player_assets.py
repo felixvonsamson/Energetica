@@ -3,7 +3,7 @@
 from website import db
 
 
-class UnderConstruction(db.Model):
+class OngoingConstruction(db.Model):
     """class that stores the things currently under construction"""
 
     id = db.Column(db.Integer, primary_key=True)
