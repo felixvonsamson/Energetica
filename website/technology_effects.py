@@ -100,12 +100,12 @@ def power_consumption_multiplier(player: Player, facility: str) -> float:
 
 def multiplier_2(player: Player, facility) -> float:
     """Returns the second multiplier according to the technology level of the
-    player. This multiplier can be either the `extraction_multiplier`, the
+    player. This multiplier can be either the `extraction_rate_multiplier`, the
     `hydro_price_multiplier`, the `wind_speed_multiplier` or the
     `capacity_multiplier`."""
     const_config = current_app.config["engine"].const_config["assets"]
     if facility in const_config["mineral_extraction"]["affected_facilities"]:
-        return extraction_multiplier(player, facility)
+        return extraction_rate_multiplier(player, facility)
     if facility in ["watermill", "small_water_dam", "large_water_dam"]:
         return hydro_price_multiplier(player, facility)
     if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
@@ -125,11 +125,10 @@ def capacity_multiplier(player: Player, facility) -> float:
     return mlt
 
 
-def extraction_multiplier(player: Player, facility) -> float:
+def extraction_rate_multiplier(player: Player, facility) -> float:
     """For extraction facilities, returns by how much the `facility`'s
     `base_extraction_rate_per_day` should be multiplied, according to the
     `player`'s currently researched technologies"""
-    # TODO: rename this method to `extraction_rate_multiplier`
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     if facility in const_config["mineral_extraction"]["affected_facilities"]:
@@ -162,10 +161,10 @@ def wind_speed_multiplier(player: Player, facility) -> float:
 def multiplier_3(player: Player, facility) -> float:
     """Returns the third multiplier according to the technology level of the
     player. This multiplier can be either the `efficiency_multiplier`, the
-    `emissions_multiplier`, or the `next_available_location`."""
+    `extraction_emissions_multiplier`, or the `next_available_location`."""
     const_config = current_app.config["engine"].const_config["assets"]
     if facility in const_config["mineral_extraction"]["affected_facilities"]:
-        return emissions_multiplier(player, facility)
+        return extraction_emissions_multiplier(player, facility)
     if facility in [
         "watermill",
         "small_water_dam",
@@ -210,11 +209,10 @@ def efficiency_multiplier(player: Player, facility):
     return mlt
 
 
-def emissions_multiplier(player: Player, facility) -> float:
+def extraction_emissions_multiplier(player: Player, facility) -> float:
     """For extraction facilities, returns by how much the `facility`'s
     `base_pollution` should be multiplied, according to the technology level of
     the `player`."""
-    # TODO: rename this method to `extraction_emissions_multiplier`
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Mineral extraction (in this case the the multiplier is for emissions)
@@ -403,11 +401,9 @@ def get_current_technology_values(player: Player):
     for facility in engine.storage_facilities:
         dict[facility]["capacity_multiplier"] = capacity_multiplier(player, facility)
     for facility in engine.extraction_facilities:
-        dict[facility]["extraction_multiplier"] = extraction_multiplier(player, facility)
-        # TODO: rename `power_use_multiplier` to `power_consumption_multiplier`
-        dict[facility]["power_use_multiplier"] = power_consumption_multiplier(player, facility)
-        # TODO: resolve `pollution_multiplier` & `emissions_multiplier` naming discrepancy
-        dict[facility]["pollution_multiplier"] = emissions_multiplier(player, facility)
+        dict[facility]["extraction_rate_multiplier"] = extraction_rate_multiplier(player, facility)
+        dict[facility]["power_consumption_multiplier"] = power_consumption_multiplier(player, facility)
+        dict[facility]["extraction_emissions_multiplier"] = extraction_emissions_multiplier(player, facility)
     for facility in engine.technologies:
         dict[facility] = {
             "price_multiplier": price_multiplier(player, facility),
@@ -577,11 +573,11 @@ def package_extraction_facilities(player: Player):
             * power_consumption_multiplier(player, extraction_facility),
             "pollution": const_config_assets[extraction_facility]["base_pollution"]
             * 1000
-            * emissions_multiplier(player, extraction_facility),
+            * extraction_emissions_multiplier(player, extraction_facility),
             "resource_production": {
                 "name": facility_to_resource[extraction_facility],
                 "rate": const_config_assets[extraction_facility]["base_extraction_rate_per_day"]
-                * extraction_multiplier(player, extraction_facility)
+                * extraction_rate_multiplier(player, extraction_facility)
                 * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
                 / 24,
             },

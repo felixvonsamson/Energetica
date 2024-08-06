@@ -8,13 +8,13 @@ let order_by = {
 let multiplier_table = {
     "price_multiplier": "price_multiplier",
     "power_multiplier": "multiplier_1",
-    "power_use_multiplier": "multiplier_1",
+    "power_consumption_multiplier": "multiplier_1",
     "capacity_multiplier": "multiplier_2",
-    "extraction_multiplier": "multiplier_2",
+    "extraction_rate_multiplier": "multiplier_2",
     "hydro_price_multiplier": "multiplier_2",
     "wind_speed_multiplier": "multiplier_2",
     "efficiency_multiplier": "multiplier_3",
-    "pollution_multiplier": "multiplier_3",
+    "extraction_emissions_multiplier": "multiplier_3",
 }
 
 if (window.location.href.includes("player_id")) {
@@ -122,7 +122,7 @@ async function get_active_facilities(reorder = false) {
             active_facilities.extraction_facilities[id] = {
                 "facility": facility.facility,
                 "name": config.name,
-                "extraction_rate": config.base_extraction_rate_per_day * facility[multiplier_table.extraction_multiplier] * reserves[facility_to_resource[facility.facility]] / 24,
+                "extraction_rate": config.base_extraction_rate_per_day * facility[multiplier_table.extraction_rate_multiplier] * reserves[facility_to_resource[facility.facility]] / 24,
                 "used_capacity": raw_chart_data.demand[facility.facility][0][359] / cumul_demand[facility.facility],
                 "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor_per_day"] / 24,
                 "energy_use": config.base_power_consumption * facility.multiplier_1,
