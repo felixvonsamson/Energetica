@@ -1,12 +1,13 @@
 import math
 import pickle
-from collections import deque
-from pathlib import Path
 
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+# from collections import deque
+# from pathlib import Path
 
-from website.database import engine_data
+# from sqlalchemy import create_engine, text
+# from sqlalchemy.orm import sessionmaker
+
+# from website.database import engine_data
 
 # DATABASE_URI = "sqlite:///instance/database.db"
 # engine = create_engine(DATABASE_URI)
@@ -15,7 +16,7 @@ from website.database import engine_data
 # # Add the new column with a default value
 # session.execute(text("ALTER TABLE player ADD COLUMN graph_view STRING DEFAULT 'basic'"))
 # session.commit()
-from website.database.player import Network, Player
+# from website.database.player import Network, Player
 
 with open("instance/engine_data.pck", "rb") as old_file:
     old_engine_data = pickle.load(old_file)

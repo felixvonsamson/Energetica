@@ -5,7 +5,6 @@ import os
 import pickle
 import threading
 from datetime import datetime, timedelta
-from hmac import new
 
 import numpy as np
 from flask import flash

@@ -5,10 +5,8 @@ from typing import List
 
 from flask import current_app
 
-import website.api.websocket as websocket
-import website.game_engine as game_engine
-import website.technology_effects as technology_effects
-from website import db
+from website import db, game_engine, technology_effects
+from website.api import websocket
 from website.database.player import Player
 from website.database.player_assets import ActiveFacility, UnderConstruction
 from website.utils.misc import notify

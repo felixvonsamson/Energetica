@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 """This code launches the game"""
-# TODO: regenerate a new public/private key pair and stop tracking it it git
 
 import argparse
 

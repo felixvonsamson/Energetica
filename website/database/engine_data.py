@@ -4,6 +4,7 @@
 import json
 import math
 from collections import defaultdict, deque
+from typing import List
 
 import noise
 import numpy as np

@@ -4,18 +4,18 @@ from datetime import datetime
 
 from flask import current_app
 
-import website.api.websocket as websocket
-import website.game_engine as game_engine
 from website import db
+from website.api import websocket
 from website.database.messages import Chat, Message
 from website.database.player import Player, PlayerUnreadMessages
+from website.game_engine import GameEngine
 
 
 def hide_chat_disclaimer(player):
     """Stores the player's choice to not show the chat disclaimer anymore"""
     player.show_disclaimer = False
     db.session.commit()
-    engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     message = websocket.rest_get_show_chat_disclaimer(player)
     websocket.rest_notify_player(engine, player, message)
 
@@ -47,7 +47,7 @@ def create_chat_2(player, buddy_id):
     )
     db.session.add(new_chat)
     db.session.commit()
-    engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     engine.log(f"{player.username} created a chat with {buddy.username}")
     websocket.notify_new_chat(new_chat)
     return {"response": "success"}
@@ -96,7 +96,7 @@ def create_group_chat_2(player, chat_name, participant_ids):
     )
     db.session.add(new_chat)
     db.session.commit()
-    engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     engine.log(f"{player.username} created a group chat called {chat_name} with {participants}")
     websocket.notify_new_chat(new_chat)
     return {"response": "success"}
@@ -127,7 +127,7 @@ def create_group_chat(player, title, group):
 
 def add_message(player, message_text, chat_id):
     """This function is called when a player sends a message in a chat. It returns either success or an error."""
-    engine: game_engine.GameEngine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
     if not chat_id:
         return {"response": "noChatID"}
     if len(message_text) == 0:
