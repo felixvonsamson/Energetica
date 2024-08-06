@@ -63,4 +63,6 @@ Use [Ruff](https://github.com/astral-sh/ruff), [Pylint](https://marketplace.visu
 Use [djLint](https://github.com/djlint/djLint) for Jinja.
 Use [Better Jinja](https://marketplace.visualstudio.com/items?itemName=samuelcolvin.jinjahtml) for code highlighting in vscode.
 Both specified through `pyproject.toml`.
-Use [Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker) for spell checking
+Use [Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker) for spell checking. 
+Keep lines to a maximum of 120 characters.
+For Python docstrings, fit the opening and closing triple double quotes on the same line as the docstring if it all fits in one line, otherwise keep both the opening and closing triple double quotes on their own line.
