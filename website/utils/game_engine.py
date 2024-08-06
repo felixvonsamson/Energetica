@@ -44,6 +44,7 @@ def state_update(engine, app):
             production_update.update_electricity(engine=engine)
             check_finished_constructions(engine)
             check_climate_events(engine)
+            db.session.commit()
 
     # save engine every minute in case of server crash
     if engine.data["total_t"] % (60 / engine.clock_time) == 0:
@@ -67,7 +68,6 @@ def check_finished_constructions(engine):
         for fc in finished_constructions:
             assets.add_asset(fc.player_id, fc.id)
             db.session.delete(fc)
-        db.session.commit()
 
     # check if shipment arrived
     arrived_shipments = Shipment.query.filter(
@@ -79,14 +79,12 @@ def check_finished_constructions(engine):
         for a_s in arrived_shipments:
             store_import(a_s.player, a_s.resource, a_s.quantity)
             db.session.delete(a_s)
-        db.session.commit()
 
     # check end of lifespan of facilities
     eolt_facilities = ActiveFacilities.query.filter(ActiveFacilities.end_of_life <= engine.data["total_t"]).all()
     if eolt_facilities:
         for facility in eolt_facilities:
             remove_asset(facility.player_id, facility)
-        db.session.commit()
 
 
 def check_climate_events(engine):

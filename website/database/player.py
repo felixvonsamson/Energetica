@@ -183,7 +183,6 @@ class Player(db.Model, UserMixin):
             setattr(self, attr, str(value))
         else:
             setattr(self, attr, getattr(self, attr) + f",{value}")
-        db.session.commit()
         if attr == "advancements":
             # TODO: I don't like how this is done. -Max
             from website.api.websocket import rest_notify_advancements
@@ -196,7 +195,6 @@ class Player(db.Model, UserMixin):
         id_list = getattr(self, attr).split(",")
         id_list.remove(str(value))
         setattr(self, attr, ",".join(id_list))
-        db.session.commit()
 
     def project_max_priority(self, attr, project_id):
         """the project with the corresponding id will be moved to the top of the priority list"""
@@ -205,7 +203,6 @@ class Player(db.Model, UserMixin):
             setattr(self, attr, str(project_id))
         else:
             setattr(self, attr, f"{project_id}," + getattr(self, attr))
-        db.session.commit()
 
     def package_chat_messages(self, chat_id):
         """This method packages the last 20 messages of a chat"""

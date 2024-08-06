@@ -32,7 +32,6 @@ def notify(title, message, player):
             "content": new_notification.content,
         },
     )
-    db.session.commit()
     if player.notifications.count() > 1:
         if (
             new_notification.content == player.notifications[player.notifications.count() - 2].content

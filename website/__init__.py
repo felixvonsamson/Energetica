@@ -1,7 +1,9 @@
 """This code is run once at the start of the game"""
 
+import cProfile
+import pstats
+
 import eventlet
-from scipy import rand
 
 eventlet.monkey_patch(thread=True, time=True)
 # pylint: disable=wrong-import-order,wrong-import-position
@@ -202,4 +204,10 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
 
                 init_test_players(engine)
 
+                # # Profiling
+                # profiler = cProfile.Profile()
+                # profiler.runctx("state_update(engine, app)", globals(), locals())
+                # profiler.dump_stats("restats")
+                # p = pstats.Stats("restats")
+                # p.sort_stats("cumulative").print_stats(20)
     return socketio, sock, app

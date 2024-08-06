@@ -31,7 +31,6 @@ def add_asset(player_id, construction_id):
             if construction.name == "warehouse":
                 for resource in ["coal", "oil", "gas", "uranium"]:
                     current_data.new_subcategory("resources", resource)
-            db.session.commit()
 
             # update advancements
             if "technology" not in player.advancements:
@@ -76,7 +75,6 @@ def add_asset(player_id, construction_id):
                     )
 
         setattr(player, construction.name, getattr(player, construction.name) + 1)
-        db.session.commit()
         # check achievement
         if (
             construction.name == "laboratory"
@@ -127,7 +125,6 @@ def add_asset(player_id, construction_id):
         if construction.name in engine.storage_facilities + engine.controllable_facilities:
             player.add_to_list("rest_of_priorities", construction.name)
             reorder_facility_priorities(engine, player)
-        db.session.commit()
 
         # update advancements
         if "storage_overview" not in player.advancements:
@@ -200,7 +197,6 @@ def add_asset(player_id, construction_id):
                         project_priorities[project_index],
                         project_priorities[index_first_lvl],
                     )
-                    db.session.commit()
                     break
             next_construction.start_time += engine.data["total_t"] - next_construction.suspension_time
             next_construction.suspension_time = None
@@ -208,7 +204,6 @@ def add_asset(player_id, construction_id):
                 project_priorities[project_index],
                 project_priorities[priority_index],
             )
-            db.session.commit()
             break
 
     construction_name = engine.const_config["assets"][construction.name]["name"]
@@ -239,7 +234,6 @@ def add_asset(player_id, construction_id):
             efficiency_multiplier=construction.efficiency_multiplier,
         )
         db.session.add(new_facility)
-        db.session.commit()
     if construction.family == "Technologies":
         engine.data["player_capacities"][player.id].update(player, None)
     else:

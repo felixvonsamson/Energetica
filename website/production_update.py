@@ -90,9 +90,6 @@ def update_electricity(engine):
         # send new data to clients
         player.send_new_data(new_values[player.id])
 
-    # save changes
-    db.session.commit()
-
 
 def update_player_progress_values(engine, player, new_values):
     """This function updates the player progress values and checks for new unlocks and achievements"""
