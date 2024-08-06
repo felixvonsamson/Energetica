@@ -1,23 +1,26 @@
 """This code is run once at the start of the game"""
 
-import cProfile
-import pstats
-
 import eventlet
 
 eventlet.monkey_patch(thread=True, time=True)
+
 # pylint: disable=wrong-import-order,wrong-import-position
 # ruff: noqa: E402
 
 import atexit
+import base64
+import cProfile
 import csv
 import os
 import pickle
 import platform
+import pstats
+import secrets
 import shutil
 import socket
 from pathlib import Path
 
+from ecdsa import NIST256p, SigningKey
 from flask import Flask, jsonify, request, send_file
 from flask_apscheduler import APScheduler
 from flask_httpauth import HTTPBasicAuth
@@ -34,6 +37,50 @@ import website.game_engine
 from .database.player import Player
 
 
+def get_or_create_flask_secret_key() -> str:
+    """SECRET_KEY for Flask. Loads it from disk if it exists, creates one and stores it otherwise"""
+    filepath = "flask_secret_key.txt"
+    if os.path.exists(filepath):
+        with open(filepath, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    else:
+        secret_key = secrets.token_hex()
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(secret_key)
+        return secret_key
+
+
+def get_or_create_vapid_keys() -> type[str, str]:
+    """
+    Public private key pair for vapid push notifications. Loads these from disk if they exists, creates a new pair and
+    stores it otherwise
+    """
+    public_key_filepath = "vapid_public_key.txt"
+    private_key_filepath = "vapid_private_key.txt"
+    if os.path.exists(public_key_filepath) and os.path.exists(private_key_filepath):
+        with open(public_key_filepath, "r", encoding="utf-8") as f:
+            public_key = f.read().strip()
+        with open(private_key_filepath, "r", encoding="utf-8") as f:
+            private_key = f.read().strip()
+        return public_key, private_key
+    else:
+        # Generate a new ECDSA key pair
+        private_key_obj = SigningKey.generate(curve=NIST256p)
+        public_key_obj = private_key_obj.get_verifying_key()
+
+        # Encode the keys using URL- and filename-safe base64 without padding
+        private_key = base64.urlsafe_b64encode(private_key_obj.to_string()).rstrip(b"=").decode("utf-8")
+        public_key = base64.urlsafe_b64encode(b"\x04" + public_key_obj.to_string()).rstrip(b"=").decode("utf-8")
+
+        # Write the keys to their respective files
+        with open(public_key_filepath, "w", encoding="utf-8") as f:
+            f.write(public_key)
+        with open(private_key_filepath, "w", encoding="utf-8") as f:
+            f.write(private_key)
+
+        return public_key, private_key
+
+
 def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_instance, random_seed):
     """This function sets up the app and the game engine"""
     # gets lock to avoid multiple instances
@@ -43,11 +90,9 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
 
     # creates the app :
     app = Flask(__name__)
-    # TODO: move secret key to untracked file
-    app.config["SECRET_KEY"] = "psdfjfdf7ehsfdxxnvezartylfzutzngpssdw98w23"
+    app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
-    app.config["VAPID_PUBLIC_KEY"] = open("public_key.txt", "r+", encoding="utf-8").readline().strip("\n")
-    app.config["VAPID_PRIVATE_KEY"] = open("private_key.txt", "r+", encoding="utf-8").readline().strip("\n")
+    (app.config["VAPID_PUBLIC_KEY"], app.config["VAPID_PRIVATE_KEY"]) = get_or_create_vapid_keys()
     app.config["VAPID_CLAIMS"] = {"sub": "mailto:felixvonsamson@gmail.com"}
     db.init_app(app)
 
