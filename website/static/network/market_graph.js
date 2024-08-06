@@ -519,11 +519,6 @@ function network_capacities_sketch(s) {
                 Renewables: ["watermill", "small_water_dam", "large_water_dam", "windmill", "onshore_wind_turbine", "offshore_wind_turbine", "CSP_solar", "PV_solar"],
                 Controlables: ["nuclear_reactor", "nuclear_reactor_gen4", "steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle"],
                 Storages: ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"],
-                capacities: {
-                    Renewables: 0,
-                    Controlables: 0,
-                    Storages: 0,
-                }
             },
             complex: {
                 categories: ["Hydro", "Wind", "Solar", "Fossil", "Nuclear", "Storages"],
@@ -533,14 +528,6 @@ function network_capacities_sketch(s) {
                 Fossil: ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle"],
                 Nuclear: ["nuclear_reactor", "nuclear_reactor_gen4"],
                 Storages: ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"],
-                capacities: {
-                    Hydro: 0,
-                    Wind: 0,
-                    Solar: 0,
-                    Fossil: 0,
-                    Nuclear: 0,
-                    Storages: 0,
-                }
             }
         }
         s.createCanvas(min(canvas_width, 1200), 0.3 * canvas_width);
@@ -561,7 +548,7 @@ function network_capacities_sketch(s) {
                     if (s.mouseX > x0 && s.mouseX < s.width - s.height - s.spacing - s.second_margin + 0.5 * s.bar_sp) {
                         let i = Math.floor((s.mouseX - x0) / (s.bar_sp + s.bar_w));
                         s.translate(x0 + s.bar_w + 10 + i * (s.bar_sp + s.bar_w), margin);
-                        display_capacity_information(s.data[s.simplified][s.data[s.simplified].categories[i]], s.data[s.simplified].capacities[s.data[s.simplified].categories[i]]);
+                        display_capacity_information(s.data[s.simplified][s.data[s.simplified].categories[i]]);
                     }
                     if (s.mouseX > s.width - margin - s.second_margin - s.graph_h && s.mouseX < s.width - margin - s.second_margin) {
                         s.translate(s.width - margin - s.second_margin - 0.5 * s.graph_h - 80, margin);
@@ -593,7 +580,7 @@ function network_capacities_sketch(s) {
             }
         }
 
-        function display_capacity_information(facility_list, capacity) {
+        function display_capacity_information(facility_list) {
             s.push();
             s.noStroke();
             fill_alt = 0;
@@ -608,6 +595,7 @@ function network_capacities_sketch(s) {
             s.translate(0, 16);
 
             let power_cumsum = 0;
+            let capacity = 0;
             for (let facility of [...facility_list].reverse()) {
                 if (network_capacities[facility]) {
                     let current_generation = 0;
@@ -615,6 +603,7 @@ function network_capacities_sketch(s) {
                         current_generation = temporal_data.generation[facility][resolution_list[0]][59];
                     }
                     power_cumsum += current_generation;
+                    capacity += network_capacities[facility].power;
                     alternate_fill(s);
                     s.rect(0, 0, 216, 17);
                     s.push();
@@ -706,7 +695,7 @@ function network_capacities_sketch(s) {
         s.redraw();
 
         function display_gauge(category, facilities) {
-            let category_capacity = s.data[s.simplified].capacities[category]
+            let category_capacity = 0;
             for (let facility of facilities) {
                 if (network_capacities[facility]) {
                     category_capacity += network_capacities[facility].power;
