@@ -2,6 +2,7 @@
 
 import json
 from itertools import chain
+from typing import List
 
 from flask import current_app
 from flask_login import UserMixin
@@ -9,7 +10,7 @@ from pywebpush import WebPushException, webpush
 
 from website import db
 from website.database.messages import Chat, Message, Notification, player_chats
-from website.database.player_assets import ActiveFacilities, UnderConstruction
+from website.database.player_assets import ActiveFacility, UnderConstruction
 
 
 class Player(db.Model, UserMixin):
@@ -139,7 +140,7 @@ class Player(db.Model, UserMixin):
     under_construction = db.relationship("UnderConstruction")
     resource_on_sale = db.relationship("ResourceOnSale", backref="player")
     shipments = db.relationship("Shipment", backref="player")
-    active_facilities = db.relationship("ActiveFacilities", backref="player", lazy="dynamic")
+    active_facilities = db.relationship("ActiveFacility", backref="player", lazy="dynamic")
     climate_events = db.relationship("ClimateEventRecovery", backref="player")
 
     def change_graph_view(self, view):
@@ -429,7 +430,9 @@ class Player(db.Model, UserMixin):
         """Packages the player's active facilities"""
 
         def get_facility_data(facilities):
-            sub_facilities = self.active_facilities.filter(ActiveFacilities.facility.in_(facilities)).all()
+            sub_facilities: List[ActiveFacility] = self.active_facilities.filter(
+                ActiveFacility.facility.in_(facilities)
+            ).all()
             return {
                 facility.id: {
                     k: getattr(facility, k)
@@ -437,9 +440,9 @@ class Player(db.Model, UserMixin):
                         "facility",
                         "end_of_life",
                         "price_multiplier",
-                        "power_multiplier",
-                        "capacity_multiplier",
-                        "efficiency_multiplier",
+                        "multiplier_1",
+                        "multiplier_2",
+                        "multiplier_3",
                     ]
                 }
                 for facility in sub_facilities

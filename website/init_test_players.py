@@ -141,7 +141,7 @@ def add_asset(player, asset, n):
     if asset_to_family[asset] == "Technologies":
         priority_list_name = "research_priorities"
     for i in range(n):
-        new_construction = UnderConstruction(
+        new_construction: UnderConstruction = UnderConstruction(
             name=asset,
             family=asset_to_family[asset],
             start_time=0,
@@ -150,9 +150,9 @@ def add_asset(player, asset, n):
             construction_power=0,
             construction_pollution=technology_effects.construction_pollution_per_tick(player, asset),
             price_multiplier=technology_effects.price_multiplier(player, asset),
-            power_multiplier=technology_effects.power_multiplier(player, asset),
-            capacity_multiplier=technology_effects.capacity_multiplier(player, asset),
-            efficiency_multiplier=technology_effects.efficiency_multiplier(player, asset),
+            multiplier_1=technology_effects.multiplier_1(player, asset),
+            multiplier_2=technology_effects.multiplier_2(player, asset),
+            multiplier_3=technology_effects.multiplier_3(player, asset),
             player_id=player.id,
         )
         db.session.add(new_construction)

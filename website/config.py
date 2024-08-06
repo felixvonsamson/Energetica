@@ -984,6 +984,23 @@ river_discharge_seasonal = [
 ]  # from january to december
 
 
+def player_lab_workers_for_level(lab_level: int) -> int:
+    """Returns how many lab workers are available for the specified lab level"""
+    return (lab_level + 2) // 3
+
+
+def warehouse_capacity_for_level(warehouse_level, resource):
+    """Returns how much capacity in kg a player with a warehouse with
+    `warehouse_level` has for the specified `resource`"""
+    if warehouse_level == 0:
+        return 0
+    else:
+        return (
+            const_config["warehouse_capacities"][resource]
+            * const_config["assets"]["warehouse"]["capacity_factor"] ** warehouse_level
+        )
+
+
 class Config(object):
     """Config object that contains the modified data for a specific player considering the technologies he owns"""
 
@@ -999,7 +1016,7 @@ class Config(object):
             "transport": {},
         }
         assets = self.for_player[player_id]
-        player = Player.query.get(player_id)
+        player: Player = Player.query.get(player_id)
 
         # calculating industry energy consumption and income
         assets["industry"]["power_consumption"] = (
@@ -1025,13 +1042,7 @@ class Config(object):
 
         # calculating the maximum storage capacity from the warehouse level
         for resource in const_config["warehouse_capacities"]:
-            if player.warehouse == 0:
-                assets["warehouse_capacities"][resource] = 0
-            else:
-                assets["warehouse_capacities"][resource] = (
-                    const_config["warehouse_capacities"][resource]
-                    * const_config["assets"]["warehouse"]["capacity_factor"] ** player.warehouse
-                )
+            assets["warehouse_capacities"][resource] = warehouse_capacity_for_level(player.warehouse, resource)
 
         # calculating the transport speed and energy consumption from the level of transport technology
         assets["transport"]["time_per_tile"] = (
@@ -1047,7 +1058,7 @@ class Config(object):
 
         # setting the number of workers
         player.construction_workers = player.building_technology + 1
-        player.lab_workers = (player.laboratory + 2) // 3
+        player.lab_workers = player_lab_workers_for_level(player.laboratory)
 
     def __getitem__(self, player_id):
         if player_id not in self.for_player:

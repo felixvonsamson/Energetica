@@ -15,7 +15,7 @@ from website import db
 from website.database.engine_data import CapacityData, CircularBufferPlayer
 from website.database.messages import Notification
 from website.database.player import Network, Player
-from website.database.player_assets import ActiveFacilities
+from website.database.player_assets import ActiveFacility
 
 
 def notify(title, message, player):
@@ -246,14 +246,14 @@ def confirm_location(engine, player, location):
     eol = engine.data["total_t"] + math.ceil(
         engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick
     )
-    steam_engine = ActiveFacilities(
+    steam_engine: ActiveFacility = ActiveFacility(
         facility="steam_engine",
         end_of_life=eol,
         player_id=player.id,
         price_multiplier=1.0,
-        power_multiplier=1.0,
-        capacity_multiplier=1.0,
-        efficiency_multiplier=1.0,
+        multiplier_1=1.0,
+        multiplier_2=1.0,
+        multiplier_3=1.0,
     )
     db.session.add(steam_engine)
     db.session.commit()

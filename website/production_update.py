@@ -2,6 +2,7 @@
 
 import math
 import pickle
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -11,7 +12,7 @@ import website.utils.misc
 from . import db
 from .config import wind_power_curve
 from .database.player import Network, Player
-from .database.player_assets import ActiveFacilities, Shipment, UnderConstruction
+from .database.player_assets import ActiveFacility, Shipment, UnderConstruction
 
 resource_to_extraction = {
     "coal": "coal_mine",
@@ -716,11 +717,13 @@ def wind_generation(engine, player, player_cap, generation):
     """Each wind facility has its own wind speed multiplier and therefore generates a different amount of power"""
     for facility_type in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
         if player_cap[facility_type] is not None:
-            wind_facilities = ActiveFacilities.query.filter_by(player_id=player.id, facility=facility_type).all()
+            wind_facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(
+                player_id=player.id, facility=facility_type
+            ).all()
             for facility in wind_facilities:
-                wind_speed_factor = facility.capacity_multiplier
+                wind_speed_factor = facility.multiplier_2
                 max_power = (
-                    engine.const_config["assets"][facility_type]["base_power_generation"] * facility.power_multiplier
+                    engine.const_config["assets"][facility_type]["base_power_generation"] * facility.multiplier_1
                 )
                 generation[facility_type] += interpolate_wind(engine, wind_speed_factor) * max_power
 
@@ -974,7 +977,7 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
         cumul_demand = 0.0
         for i in range(min(len(construction_priorities), player.construction_workers)):
             construction_id = construction_priorities[i]
-            construction = UnderConstruction.query.get(construction_id)
+            construction: UnderConstruction = UnderConstruction.query.get(construction_id)
             if construction.suspension_time is not None:
                 continue
             cumul_demand += construction.construction_power
@@ -1000,7 +1003,7 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
         cumul_demand = 0.0
         for i in range(min(len(research_priorities), player.lab_workers)):
             construction_id = research_priorities[i]
-            construction = UnderConstruction.query.get(construction_id)
+            construction: UnderConstruction = UnderConstruction.query.get(construction_id)
             if construction.suspension_time is not None:
                 continue
             cumul_demand += construction.construction_power
