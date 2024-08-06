@@ -259,9 +259,9 @@ def upgrade_facility(player, facility_id):
         if facility.facility in engine.extraction_facilities:
             if facility.price_multiplier < technology_effects.price_multiplier(player, facility.facility):
                 return True
-            if facility.multiplier_2 < technology_effects.multiplier_2(player, facility.facility):
-                return True
             if facility.multiplier_1 < technology_effects.multiplier_1(player, facility.facility):
+                return True
+            if facility.multiplier_2 < technology_effects.multiplier_2(player, facility.facility):
                 return True
             if facility.multiplier_3 < technology_effects.multiplier_3(player, facility.facility):
                 return True
@@ -400,9 +400,9 @@ def start_project(engine, player, facility, family, force=False):
         return {"response": "locked"}
 
     if facility in ["small_water_dam", "large_water_dam", "watermill"]:
-        price_factor = technology_effects.price_multiplier(player, facility) * technology_effects.multiplier_2(
+        price_factor = technology_effects.price_multiplier(
             player, facility
-        )
+        ) * technology_effects.hydro_price_multiplier(player, facility)
         if player.money < const_config["base_price"] * price_factor:
             return {"response": "notEnoughMoneyError"}
 
@@ -420,7 +420,7 @@ def start_project(engine, player, facility, family, force=False):
     else:  # power facilities, storage facilities, extractions facilities
         real_price = const_config["base_price"] * technology_effects.price_multiplier(player, facility)
         if facility in ["small_water_dam", "large_water_dam", "watermill"]:
-            real_price *= technology_effects.multiplier_2(player, facility)
+            real_price *= technology_effects.hydro_price_multiplier(player, facility)
         duration = technology_effects.construction_time(player, facility)
 
     if player.money < real_price:
