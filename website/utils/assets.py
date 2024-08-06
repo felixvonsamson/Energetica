@@ -233,9 +233,9 @@ def add_asset(player_id, construction_id):
             end_of_life=eol,
             player_id=player.id,
             price_multiplier=construction.price_multiplier,
-            power_multiplier=construction.power_multiplier,
-            capacity_multiplier=construction.capacity_multiplier,
-            efficiency_multiplier=construction.efficiency_multiplier,
+            multiplier_1=construction.multiplier_1,
+            multiplier_2=construction.multiplier_2,
+            multiplier_3=construction.multiplier_3,
         )
         db.session.add(new_facility)
         db.session.commit()
@@ -254,46 +254,46 @@ def upgrade_facility(player, facility_id):
     """this function is executed when a player upgrades a facility"""
     engine: game_engine.GameEngine = current_app.config["engine"]
 
-    def is_upgradable(facility):
+    def is_upgradable(facility: ActiveFacility):
         """Returns true if any of the attributes of the built facility are outdated compared to current tech levels"""
         if facility.facility in engine.extraction_facilities:
             if facility.price_multiplier < technology_effects.price_multiplier(player, facility.facility):
                 return True
-            if facility.capacity_multiplier < technology_effects.capacity_multiplier(player, facility.facility):
+            if facility.multiplier_2 < technology_effects.multiplier_2(player, facility.facility):
                 return True
-            if facility.power_multiplier < technology_effects.power_multiplier(player, facility.facility):
+            if facility.multiplier_1 < technology_effects.multiplier_1(player, facility.facility):
                 return True
-            if facility.efficiency_multiplier < technology_effects.efficiency_multiplier(player, facility.facility):
+            if facility.multiplier_3 < technology_effects.multiplier_3(player, facility.facility):
                 return True
         else:  # power & storage facilities
             if facility.price_multiplier < technology_effects.price_multiplier(player, facility.facility):
                 return True
             if facility.facility in engine.power_facilities + engine.storage_facilities:
-                if facility.power_multiplier < technology_effects.power_multiplier(player, facility.facility):
+                if facility.multiplier_1 < technology_effects.multiplier_1(player, facility.facility):
                     return True
             if facility.facility in engine.storage_facilities:
-                if facility.capacity_multiplier < technology_effects.capacity_multiplier(player, facility.facility):
+                if facility.multiplier_2 < technology_effects.multiplier_2(player, facility.facility):
                     return True
             if facility.facility in engine.controllable_facilities + engine.storage_facilities:
-                if facility.efficiency_multiplier < technology_effects.efficiency_multiplier(player, facility.facility):
+                if facility.multiplier_3 < technology_effects.multiplier_3(player, facility.facility):
                     return True
         return False
 
-    def apply_upgrade(facility):
+    def apply_upgrade(facility: ActiveFacility):
         """Updates the built facilities attributes to match current tech levels"""
         if facility.facility in engine.extraction_facilities:
             facility.price_multiplier = technology_effects.price_multiplier(player, facility.facility)
-            facility.capacity_multiplier = technology_effects.capacity_multiplier(player, facility.facility)
-            facility.power_multiplier = technology_effects.power_multiplier(player, facility.facility)
-            facility.efficiency_multiplier = technology_effects.efficiency_multiplier(player, facility.facility)
+            facility.multiplier_1 = technology_effects.multiplier_1(player, facility.facility)
+            facility.multiplier_2 = technology_effects.multiplier_2(player, facility.facility)
+            facility.multiplier_3 = technology_effects.multiplier_3(player, facility.facility)
         else:
             facility.price_multiplier = technology_effects.price_multiplier(player, facility.facility)
             if facility.facility in engine.power_facilities + engine.storage_facilities:
-                facility.power_multiplier = technology_effects.power_multiplier(player, facility.facility)
+                facility.multiplier_1 = technology_effects.multiplier_1(player, facility.facility)
             if facility.facility in engine.storage_facilities:
-                facility.capacity_multiplier = technology_effects.capacity_multiplier(player, facility.facility)
+                facility.multiplier_2 = technology_effects.multiplier_2(player, facility.facility)
             if facility.facility in engine.controllable_facilities + engine.storage_facilities:
-                facility.efficiency_multiplier = technology_effects.efficiency_multiplier(player, facility.facility)
+                facility.multiplier_3 = technology_effects.multiplier_3(player, facility.facility)
         db.session.commit()
 
     facility: ActiveFacility = ActiveFacility.query.get(facility_id)
@@ -363,7 +363,7 @@ def dismantle_facility(player, facility_id):
     base_price = current_app.config["engine"].const_config["assets"][facility.facility]["base_price"]
     cost = 0.2 * base_price * facility.price_multiplier
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
-        cost *= facility.capacity_multiplier
+        cost *= facility.multiplier_2
     if player.money < cost:
         return {"response": "notEnoughMoney"}
     remove_asset(player.id, facility, decommissioning=False)
@@ -400,7 +400,7 @@ def start_project(engine, player, facility, family, force=False):
         return {"response": "locked"}
 
     if facility in ["small_water_dam", "large_water_dam", "watermill"]:
-        price_factor = technology_effects.price_multiplier(player, facility) * technology_effects.capacity_multiplier(
+        price_factor = technology_effects.price_multiplier(player, facility) * technology_effects.multiplier_2(
             player, facility
         )
         if player.money < const_config["base_price"] * price_factor:
@@ -420,7 +420,7 @@ def start_project(engine, player, facility, family, force=False):
     else:  # power facilities, storage facilities, extractions facilities
         real_price = const_config["base_price"] * technology_effects.price_multiplier(player, facility)
         if facility in ["small_water_dam", "large_water_dam", "watermill"]:
-            real_price *= technology_effects.capacity_multiplier(player, facility)
+            real_price *= technology_effects.multiplier_2(player, facility)
         duration = technology_effects.construction_time(player, facility)
 
     if player.money < real_price:
@@ -459,9 +459,9 @@ def start_project(engine, player, facility, family, force=False):
         construction_power=construction_power,
         construction_pollution=technology_effects.construction_pollution_per_tick(player, facility),
         price_multiplier=technology_effects.price_multiplier(player, facility),
-        power_multiplier=technology_effects.power_multiplier(player, facility),
-        capacity_multiplier=technology_effects.capacity_multiplier(player, facility),
-        efficiency_multiplier=technology_effects.efficiency_multiplier(player, facility),
+        multiplier_1=technology_effects.multiplier_1(player, facility),
+        multiplier_2=technology_effects.multiplier_2(player, facility),
+        multiplier_3=technology_effects.multiplier_3(player, facility),
         player_id=player.id,
     )
     db.session.add(new_construction)
@@ -505,7 +505,7 @@ def cancel_project(player, construction_id, force=False):
         * (1 - time_fraction)
     )
     if construction.name in ["small_water_dam", "large_water_dam", "watermill"]:
-        refund *= construction.capacity_multiplier
+        refund *= construction.multiplier_2
     player.money += refund
     player.remove_from_list(priority_list_name, construction_id)
     db.session.delete(construction)

@@ -19,9 +19,9 @@ class UnderConstruction(db.Model):
     construction_pollution = db.Column(db.Float)
     # multipliers to keep track of the technology level at the time of the start of the construction
     price_multiplier = db.Column(db.Float, default=1)
-    power_multiplier = db.Column(db.Float, default=1)
-    capacity_multiplier = db.Column(db.Float, default=1)
-    efficiency_multiplier = db.Column(db.Float, default=1)
+    multiplier_1 = db.Column(db.Float, default=1)
+    multiplier_2 = db.Column(db.Float, default=1)
+    multiplier_3 = db.Column(db.Float, default=1)
     # can access player directly with .player
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
@@ -35,9 +35,9 @@ class ActiveFacility(db.Model):
     end_of_life = db.Column(db.Integer)
     # multiply the base values by the following values
     price_multiplier = db.Column(db.Float)
-    power_multiplier = db.Column(db.Float)
-    capacity_multiplier = db.Column(db.Float)
-    efficiency_multiplier = db.Column(db.Float)
+    multiplier_1 = db.Column(db.Float)
+    multiplier_2 = db.Column(db.Float)
+    multiplier_3 = db.Column(db.Float)
     # percentage of the facility that is currently used
     usage = db.Column(db.Float, default=0)
 

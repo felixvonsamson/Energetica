@@ -5,6 +5,18 @@ let order_by = {
     "extraction_facilities_table": ["extraction_rate", true],
 }
 
+let multiplier_table = {
+    "price_multiplier": "price_multiplier",
+    "power_multiplier": "multiplier_1",
+    "power_use_multiplier": "multiplier_1",
+    "capacity_multiplier": "multiplier_2",
+    "extraction_multiplier": "multiplier_2",
+    "hydro_price_multiplier": "multiplier_2",
+    "wind_speed_multiplier": "multiplier_2",
+    "efficiency_multiplier": "multiplier_3",
+    "pollution_multiplier": "multiplier_3",
+}
+
 if (window.location.href.includes("player_id")) {
     let profile_headder = document.getElementById("profile_headder");
     let facilities_list = document.getElementById("facilities_list");
@@ -15,15 +27,6 @@ if (window.location.href.includes("player_id")) {
 }
 
 function upgradable(facility, current_multipliers) {
-    let multiplier_table = {
-        "price_multiplier": "price_multiplier",
-        "power_multiplier": "power_multiplier",
-        "efficiency_multiplier": "efficiency_multiplier",
-        "capacity_multiplier": "capacity_multiplier",
-        "extraction_multiplier": "capacity_multiplier",
-        "power_use_multiplier": "power_multiplier",
-        "pollution_multiplier": "efficiency_multiplier",
-    }
     for (let [key, value] of Object.entries(current_multipliers)) {
         if (facility[multiplier_table[key]] < value) {
             return true;
@@ -37,7 +40,7 @@ function upgrade_cost(facility, current_multipliers, config) {
         const price_diff = current_multipliers.price_multiplier - facility.price_multiplier
         if (price_diff > 0) {
             if (["watermill", "small_water_dam", "large_water_dam"].includes(facility.facility)) {
-                return price_diff * config.base_price * facility.capacity_multiplier;
+                return price_diff * config.base_price * facility[multiplier_table.hydro_price_multiplier];
             }
             return price_diff * config.base_price;
         } else {
@@ -67,16 +70,16 @@ async function get_active_facilities(reorder = false) {
             let config = const_config.assets[facility.facility];
             let tot_cost = config.base_price * facility.price_multiplier;
             if (["watermill", "small_water_dam", "large_water_dam"].includes(facility.facility)) {
-                tot_cost *= facility.capacity_multiplier;
+                tot_cost *= facility[multiplier_table.hydro_price_multiplier];
             }
             let generating = raw_chart_data.generation[facility.facility][0][359] / player_data.capacities[facility.facility].power
             if (["windmill", "onshore_wind_turbine", "offshore_wind_turbine"].includes(facility.facility)) {
-                generating = interpolate_wind_power_curve(wind_power_curve, current_wind_speed * facility.capacity_multiplier);
+                generating = interpolate_wind_power_curve(wind_power_curve, current_wind_speed * facility[multiplier_table.wind_speed_multiplier]);
             }
             active_facilities.power_facilities[id] = {
                 "facility": facility.facility,
                 "name": config.name,
-                "installed_cap": config.base_power_generation * facility.power_multiplier,
+                "installed_cap": config.base_power_generation * facility.multiplier_1,
                 "used_capacity": generating,
                 "op_cost": tot_cost * config["O&M_factor_per_day"] / 24,
                 "remaining_lifespan": facility.end_of_life - last_value["total_t"],
@@ -89,10 +92,10 @@ async function get_active_facilities(reorder = false) {
             active_facilities.storage_facilities[id] = {
                 "facility": facility.facility,
                 "name": config.name,
-                "installed_cap": config.base_storage_capacity * facility.capacity_multiplier,
+                "installed_cap": config.base_storage_capacity * facility[multiplier_table.capacity_multiplier],
                 "used_capacity": raw_chart_data.storage[facility.facility][0][359] / player_data.capacities[facility.facility].capacity,
                 "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor_per_day"] / 24,
-                "efficiency": config.base_efficiency * facility.efficiency_multiplier,
+                "efficiency": config.base_efficiency * facility[multiplier_table.efficiency_multiplier],
                 "remaining_lifespan": facility.end_of_life - last_value["total_t"],
                 "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
                 "dismantle": config.base_price * facility.price_multiplier * 0.2,
@@ -112,17 +115,17 @@ async function get_active_facilities(reorder = false) {
         }
         for (const [id, facility] of Object.entries(raw_data.extraction_facilities)) {
             let config = const_config.assets[facility.facility];
-            cumul_demand[facility.facility] += config.base_power_consumption * facility.power_multiplier;
+            cumul_demand[facility.facility] += config.base_power_consumption * facility.multiplier_1;
         }
         for (const [id, facility] of Object.entries(raw_data.extraction_facilities)) {
             let config = const_config.assets[facility.facility];
             active_facilities.extraction_facilities[id] = {
                 "facility": facility.facility,
                 "name": config.name,
-                "extraction_rate": config.base_extraction_rate_per_day * facility.capacity_multiplier * reserves[facility_to_resource[facility.facility]] / 24,
+                "extraction_rate": config.base_extraction_rate_per_day * facility[multiplier_table.extraction_multiplier] * reserves[facility_to_resource[facility.facility]] / 24,
                 "used_capacity": raw_chart_data.demand[facility.facility][0][359] / cumul_demand[facility.facility],
                 "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor_per_day"] / 24,
-                "energy_use": config.base_power_consumption * facility.power_multiplier,
+                "energy_use": config.base_power_consumption * facility.multiplier_1,
                 "remaining_lifespan": facility.end_of_life - last_value["total_t"],
                 "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
                 "dismantle": config.base_price * facility.price_multiplier * 0.2,

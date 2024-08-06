@@ -711,9 +711,9 @@ def wind_generation(engine, player, player_cap, generation):
                 player_id=player.id, facility=facility_type
             ).all()
             for facility in wind_facilities:
-                wind_speed_factor = facility.capacity_multiplier
+                wind_speed_factor = facility.multiplier_2
                 max_power = (
-                    engine.const_config["assets"][facility_type]["base_power_generation"] * facility.power_multiplier
+                    engine.const_config["assets"][facility_type]["base_power_generation"] * facility.multiplier_1
                 )
                 generation[facility_type] += interpolate_wind(engine, wind_speed_factor) * max_power
 

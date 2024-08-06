@@ -438,9 +438,9 @@ class Player(db.Model, UserMixin):
                         "facility",
                         "end_of_life",
                         "price_multiplier",
-                        "power_multiplier",
-                        "capacity_multiplier",
-                        "efficiency_multiplier",
+                        "multiplier_1",
+                        "multiplier_2",
+                        "multiplier_3",
                     ]
                 }
                 for facility in sub_facilities

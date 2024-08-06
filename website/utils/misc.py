@@ -238,9 +238,9 @@ def confirm_location(engine, player, location):
         end_of_life=eol,
         player_id=player.id,
         price_multiplier=1.0,
-        power_multiplier=1.0,
-        capacity_multiplier=1.0,
-        efficiency_multiplier=1.0,
+        multiplier_1=1.0,
+        multiplier_2=1.0,
+        multiplier_3=1.0,
     )
     db.session.add(steam_engine)
     db.session.commit()

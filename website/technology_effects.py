@@ -53,7 +53,7 @@ def price_multiplier(player: Player, facility):
     return mlt
 
 
-def power_multiplier(player: Player, facility):
+def multiplier_1(player: Player, facility):
     """Function that returns the power multiplier according to the technology level of the player."""
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
@@ -78,7 +78,7 @@ def power_multiplier(player: Player, facility):
     return mlt
 
 
-def capacity_multiplier(player: Player, facility):
+def multiplier_2(player: Player, facility):
     """Function that returns the capacity multiplier according to the technology level of the player."""
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
@@ -90,14 +90,14 @@ def capacity_multiplier(player: Player, facility):
         mlt *= const_config["civil_engineering"]["capacity_factor"] ** player.civil_engineering
     # calculating the hydro price multiplier linked to the number of hydro facilities
     if facility in ["watermill", "small_water_dam", "large_water_dam"]:
-        mlt *= hydro_price_function(efficiency_multiplier(player, facility), player.tile.hydro)
+        mlt *= hydro_price_function(multiplier_3(player, facility), player.tile.hydro)
     # calculating the wind speed multiplier linked to the number of wind turbines
     if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
-        mlt *= wind_speed_multiplier(efficiency_multiplier(player, facility), player.tile.wind)
+        mlt *= wind_speed_multiplier(multiplier_3(player, facility), player.tile.wind)
     return mlt
 
 
-def efficiency_multiplier(player: Player, facility):
+def multiplier_3(player: Player, facility):
     """Function that returns the efficiency multiplier according to the technology level of the player."""
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
@@ -140,8 +140,8 @@ def efficiency_multiplier(player: Player, facility):
             name=facility, player_id=player.id
         ).all()
         # Create a set of used efficiency multipliers
-        used_locations = {af.efficiency_multiplier for af in active_facilities}
-        used_locations.update(uc.efficiency_multiplier for uc in under_construction)
+        used_locations = {af.multiplier_3 for af in active_facilities}
+        used_locations.update(uc.multiplier_3 for uc in under_construction)
         i = 0
         while i in used_locations:
             i += 1
@@ -189,7 +189,7 @@ def construction_power(player: Player, facility):
         return (
             const_config[facility]["base_power_generation"]
             * const_config[facility]["construction_power_factor"]
-            * power_multiplier(player, facility)
+            * multiplier_1(player, facility)
             * mlt
             / bt_factor
         )
@@ -197,14 +197,14 @@ def construction_power(player: Player, facility):
         return (
             const_config[facility]["base_power_consumption"]
             * const_config[facility]["construction_power_factor"]
-            * capacity_multiplier(player, facility)
+            * multiplier_2(player, facility)
             / bt_factor
         )
     if facility in engine.storage_facilities:
         return (
             const_config[facility]["base_storage_capacity"]
             * const_config[facility]["construction_power_factor"]
-            * capacity_multiplier(player, facility)
+            * multiplier_2(player, facility)
             / bt_factor
         )
     power = (
@@ -278,7 +278,7 @@ def power_facility_resource_consumption(player: Player, power_facility):
     # Namely, switch from a dictionary with the system resource name as a key and a float for the amount as a value
     # to an array of dictionaries with keys ranging in "name", "display_name", "amount"
     consumed_resources = current_app.config["engine"].const_config["assets"][power_facility]["consumed_resource"].copy()
-    multiplier = efficiency_multiplier(player, power_facility)
+    multiplier = multiplier_3(player, power_facility)
     if multiplier == 0:
         multiplier = 1
     for resource in consumed_resources:
@@ -304,17 +304,17 @@ def get_current_technology_values(player: Player):
             "construction_pollution": construction_pollution_per_tick(player, facility),
         }
     for facility in engine.power_facilities + engine.storage_facilities:
-        dict[facility]["power_multiplier"] = power_multiplier(player, facility)
+        dict[facility]["power_multiplier"] = multiplier_1(player, facility)
     for facility in engine.controllable_facilities + engine.storage_facilities:
-        dict[facility]["efficiency_multiplier"] = efficiency_multiplier(player, facility)
+        dict[facility]["efficiency_multiplier"] = multiplier_3(player, facility)
     for facility in ["watermill", "small_water_dam", "large_water_dam"]:
-        dict[facility]["special_price_multiplier"] = capacity_multiplier(player, facility)
+        dict[facility]["special_price_multiplier"] = multiplier_2(player, facility)
     for facility in engine.storage_facilities:
-        dict[facility]["capacity_multiplier"] = capacity_multiplier(player, facility)
+        dict[facility]["capacity_multiplier"] = multiplier_2(player, facility)
     for facility in engine.extraction_facilities:
-        dict[facility]["extraction_multiplier"] = capacity_multiplier(player, facility)
-        dict[facility]["power_use_multiplier"] = power_multiplier(player, facility)
-        dict[facility]["pollution_multiplier"] = efficiency_multiplier(player, facility)
+        dict[facility]["extraction_multiplier"] = multiplier_2(player, facility)
+        dict[facility]["power_use_multiplier"] = multiplier_1(player, facility)
+        dict[facility]["pollution_multiplier"] = multiplier_3(player, facility)
     for facility in engine.technologies:
         dict[facility] = {
             "price_multiplier": price_multiplier(player, facility),
@@ -359,11 +359,7 @@ def _package_facility_base(player: Player, facility):
         "wikipedia_link": const_config_assets[facility]["wikipedia_link"],
         "price": const_config_assets[facility]["base_price"]
         * price_multiplier(player, facility)
-        * (
-            capacity_multiplier(player, facility)
-            if facility in ["watermill", "small_water_dam", "large_water_dam"]
-            else 1.0
-        ),
+        * (multiplier_2(player, facility) if facility in ["watermill", "small_water_dam", "large_water_dam"] else 1.0),
         "construction_power": construction_power(player, facility),
         "construction_time": construction_time(player, facility),
         "locked": requirements_met(facility_requirements(player, facility)),
@@ -376,12 +372,12 @@ def _package_power_generating_facility_base(player: Player, facility):
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
-        "power_generation": const_config_assets[facility]["base_power_generation"] * power_multiplier(player, facility),
+        "power_generation": const_config_assets[facility]["base_power_generation"] * multiplier_1(player, facility),
         "ramping_time": const_config_assets[facility]["ramping_time"]
         if const_config_assets[facility]["ramping_time"] != 0
         else None,
         "ramping_speed": const_config_assets[facility]["base_power_generation"]
-        * power_multiplier(player, facility)
+        * multiplier_1(player, facility)
         / const_config_assets[facility]["ramping_time"]
         * 60
         if const_config_assets[facility]["ramping_time"] != 0
@@ -397,11 +393,7 @@ def _package_power_storage_extraction_facility_base(player: Player, facility):
         "construction_pollution": const_config_assets[facility]["base_construction_pollution"],
         "operating_costs": const_config_assets[facility]["base_price"]
         * price_multiplier(player, facility)
-        * (
-            capacity_multiplier(player, facility)
-            if facility in ["watermill", "small_water_dam", "large_water_dam"]
-            else 1.0
-        )
+        * (multiplier_2(player, facility) if facility in ["watermill", "small_water_dam", "large_water_dam"] else 1.0)
         * const_config_assets[facility]["O&M_factor_per_day"]
         / 24,
         "lifespan": const_config_assets[facility]["lifespan"] / engine.in_game_seconds_per_tick,
@@ -421,10 +413,7 @@ def package_power_facilities(player: Player):
             "consumed_resources": power_facility_resource_consumption(player, power_facility),
         }
         | (
-            {
-                "pollution": const_config_assets[power_facility]["base_pollution"]
-                / efficiency_multiplier(player, power_facility)
-            }
+            {"pollution": const_config_assets[power_facility]["base_pollution"] / multiplier_3(player, power_facility)}
             if power_facility in engine.controllable_facilities + engine.storage_facilities
             else {}
         )
@@ -442,9 +431,9 @@ def package_storage_facilities(player: Player):
         | _package_power_storage_extraction_facility_base(player, storage_facility)
         | {
             "storage_capacity": const_config_assets[storage_facility]["base_storage_capacity"]
-            * capacity_multiplier(player, storage_facility),
+            * multiplier_2(player, storage_facility),
             "efficiency": const_config_assets[storage_facility]["base_efficiency"]
-            * efficiency_multiplier(player, storage_facility)
+            * multiplier_3(player, storage_facility)
             * 100,
         }
         for storage_facility in engine.storage_facilities
@@ -480,14 +469,14 @@ def package_extraction_facilities(player: Player):
         | _package_power_storage_extraction_facility_base(player, extraction_facility)
         | {
             "power_consumption": const_config_assets[extraction_facility]["base_power_consumption"]
-            * power_multiplier(player, extraction_facility),
+            * multiplier_1(player, extraction_facility),
             "pollution": const_config_assets[extraction_facility]["base_pollution"]
             * 1000
-            * efficiency_multiplier(player, extraction_facility),
+            * multiplier_3(player, extraction_facility),
             "resource_production": {
                 "name": facility_to_resource[extraction_facility],
                 "rate": const_config_assets[extraction_facility]["base_extraction_rate_per_day"]
-                * capacity_multiplier(player, extraction_facility)
+                * multiplier_2(player, extraction_facility)
                 * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
                 / 24,
             },
