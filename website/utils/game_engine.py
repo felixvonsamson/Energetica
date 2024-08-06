@@ -6,6 +6,7 @@ import pickle
 import random
 import time
 from datetime import datetime
+from typing import List
 
 import numpy as np
 
@@ -17,7 +18,7 @@ from website.config import climate_events
 from website.database.engine_data import calculate_reference_gta, calculate_temperature_deviation
 from website.database.map import Hex
 from website.database.player import Player
-from website.database.player_assets import ActiveFacilities, ClimateEventRecovery, Shipment, UnderConstruction
+from website.database.player_assets import ActiveFacility, ClimateEventRecovery, Shipment, UnderConstruction
 from website.utils.assets import facility_destroyed, remove_asset
 from website.utils.formatting import display_money
 from website.utils.misc import notify, save_past_data_threaded
@@ -60,7 +61,7 @@ def state_update(engine, app):
 def check_finished_constructions(engine):
     """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
     # check if constructions finished
-    finished_constructions = UnderConstruction.query.filter(
+    finished_constructions: List[UnderConstruction] = UnderConstruction.query.filter(
         UnderConstruction.suspension_time.is_(None),
         UnderConstruction.start_time + UnderConstruction.duration <= engine.data["total_t"],
     ).all()
@@ -81,8 +82,11 @@ def check_finished_constructions(engine):
             db.session.delete(a_s)
 
     # check end of lifespan of facilities
-    eolt_facilities = ActiveFacilities.query.filter(ActiveFacilities.end_of_life <= engine.data["total_t"]).all()
-    if eolt_facilities:
+    eolt_facilities: List[ActiveFacility] = ActiveFacility.query.filter(
+        ActiveFacility.end_of_life <= engine.data["total_t"]
+    ).all()
+    if eolt_facilities:  # This check should not be needed. If there are no such
+        # facilities, the list will be empty and the for loop will not do anything
         for facility in eolt_facilities:
             remove_asset(facility.player_id, facility)
 
@@ -206,8 +210,8 @@ def climate_event_impact(engine, tile, event):
         )
         engine.log(f"{player.username} : Industry levelled down by {climate_events[event]['name']}.")
     facilities_list = list(climate_events[event]["destruction_chance"].keys())
-    facilities_at_risk = ActiveFacilities.query.filter(
-        ActiveFacilities.player_id == player.id, ActiveFacilities.facility.in_(facilities_list)
+    facilities_at_risk = ActiveFacility.query.filter(
+        ActiveFacility.player_id == player.id, ActiveFacility.facility.in_(facilities_list)
     ).all()
     for facility in facilities_at_risk:
         if random.random() < climate_events[event]["destruction_chance"][facility.facility]:
