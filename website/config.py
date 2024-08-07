@@ -1122,7 +1122,7 @@ climate_events = {
         "base_probability": 0.35,
         "description": "A heat wave has occurred and is impacting the population. The recovery from this event will "
         "take {duration} days and cost {cost}.",
-        "cost_fraction": 0.5,
+        "cost_fraction": 0.25,
         "duration": timedelta(days=3).total_seconds(),
         "affected_tiles": 2,  # (a radius of 2 so 7 tiles)
         "destruction_chance": {
@@ -1136,7 +1136,7 @@ climate_events = {
         "base_probability": 0.35,
         "description": "A cold wave has occurred and is impacting the population. The recovery from this event will "
         "take {duration} days and cost {cost}.",
-        "cost_fraction": 0.5,
+        "cost_fraction": 0.25,
         "duration": timedelta(days=3).total_seconds(),
         "affected_tiles": 2,  # (a radius of 2 so 7 tiles)
         "destruction_chance": {},

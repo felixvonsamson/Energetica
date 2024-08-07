@@ -321,7 +321,7 @@
       {% endif %}
 
       <li class="nav-item">
-        <a class="navbar_item tan_green flex-row" id="wiki" href="{{ url_for('views.wiki') }}">
+        <a class="navbar_item tan_green flex-row" id="wiki" href="{{ url_for('wiki.render_template_wiki', template_name='introduction') }}">
           <img src="{{ url_for('static', filename='images/icons/wiki.png') }}"
                 class="navbar_icon margin-small" />
           <span style="padding:8px 0">Energetica wiki</span>
@@ -342,10 +342,10 @@
 {% endif %}
 
 <div class="version medium">
-<a id="changelog_button" class="white button padding-small margin-small medium changelog_button" href="{{ url_for('views.changelog') }}">
-  <i class="fa fa-bullhorn"></i>&nbsp;Changelog
-</a>
-<div class="margin-small">beta 0.9.3 (27.07.2024)</div>
+  <a id="changelog_button" class="white button padding-small margin-small medium changelog_button" href="{{ url_for('views.changelog') }}">
+    <i class="fa fa-bullhorn"></i>&nbsp;Changelog
+  </a>
+  <div class="margin-small">beta 0.9.3 (27.07.2024)</div>
 </div>
 <div id="main_container" class="main_container tan_green">
   {% block content %}

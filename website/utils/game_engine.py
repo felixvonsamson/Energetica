@@ -43,7 +43,7 @@ def state_update(engine, app):
             }
             engine.action_logger.info(json.dumps(log_entry))
             production_update.update_electricity(engine=engine)
-            check_finished_constructions(engine)
+            check_events_completion(engine)
             check_climate_events(engine)
             db.session.commit()
 
@@ -58,17 +58,16 @@ def state_update(engine, app):
         websocket.rest_notify_global_data(engine)
 
 
-def check_finished_constructions(engine):
+def check_events_completion(engine):
     """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
     # check if constructions finished
     finished_constructions: List[OngoingConstruction] = OngoingConstruction.query.filter(
         OngoingConstruction.suspension_time.is_(None),
         OngoingConstruction.start_time + OngoingConstruction.duration <= engine.data["total_t"],
     ).all()
-    if finished_constructions:
-        for fc in finished_constructions:
-            assets.add_asset(fc.player_id, fc.id)
-            db.session.delete(fc)
+    for fc in finished_constructions:
+        assets.add_asset(fc.player_id, fc.id)
+        db.session.delete(fc)
 
     # check if shipment arrived
     arrived_shipments = Shipment.query.filter(
@@ -76,19 +75,23 @@ def check_finished_constructions(engine):
         Shipment.suspension_time.is_(None),
         Shipment.departure_time + Shipment.duration <= engine.data["total_t"],
     ).all()
-    if arrived_shipments:
-        for a_s in arrived_shipments:
-            store_import(a_s.player, a_s.resource, a_s.quantity)
-            db.session.delete(a_s)
+    for a_s in arrived_shipments:
+        store_import(a_s.player, a_s.resource, a_s.quantity)
+        db.session.delete(a_s)
 
     # check end of lifespan of facilities
     eolt_facilities: List[ActiveFacility] = ActiveFacility.query.filter(
         ActiveFacility.end_of_life <= engine.data["total_t"]
     ).all()
-    if eolt_facilities:  # This check should not be needed. If there are no such
-        # facilities, the list will be empty and the for loop will not do anything
-        for facility in eolt_facilities:
-            remove_asset(facility.player_id, facility)
+    for facility in eolt_facilities:
+        remove_asset(facility.player_id, facility)
+
+    # check end of climate events
+    finished_climate_events: List[ClimateEventRecovery] = ClimateEventRecovery.query.filter(
+        ClimateEventRecovery.start_time + ClimateEventRecovery.duration <= engine.data["total_t"]
+    ).all()
+    for fce in finished_climate_events:
+        db.session.delete(fce)
 
 
 def check_climate_events(engine):

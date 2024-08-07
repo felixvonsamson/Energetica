@@ -148,6 +148,9 @@ async function get_active_facilities(reorder = false) {
 
 function sortTable(table_name, columnName, reorder = true) {
     const table = document.getElementById(table_name);
+    if (table == null) {
+        return;
+    }
     let column = table.querySelector(`.${columnName}`);
     let triangle = ' <i class="fa fa-caret-down"></i>';
 

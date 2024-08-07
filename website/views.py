@@ -16,11 +16,13 @@ from .technology_effects import (
 
 views = Blueprint("views", __name__)
 overviews = Blueprint("overviews", __name__, static_folder="static")
+wiki = Blueprint("wiki", __name__, static_folder="static")
 
 
 # this function is executed once before every request :
 @views.before_request
 @overviews.before_request
+@wiki.before_request
 @login_required
 def check_user():
     """This function is called before every request"""
@@ -29,10 +31,10 @@ def check_user():
         g.data = get_current_technology_values(current_user)
 
     def render_template_ctx(page):
-        if page in ["wiki.jinja", "changelog.jinja"]:
+        if page == "changelog.jinja" or "wiki" in page:
             if current_user.tile is not None:
                 return render_template(page, engine=g.engine, user=current_user, data=g.data)
-            return render_template("wiki.jinja", engine=g.engine, user=None)
+            return render_template(page, engine=g.engine, user=None)
         # show location choice if player didn't choose yet
         if current_user.tile is None:
             return render_template("location_choice.jinja", engine=g.engine)
@@ -144,11 +146,6 @@ def scoreboard():
     return g.render_template_ctx("scoreboard.jinja")
 
 
-@views.route("/wiki")
-def wiki():
-    return g.render_template_ctx("wiki.jinja")
-
-
 @views.route("/changelog")
 def changelog():
     return g.render_template_ctx("changelog.jinja")
@@ -183,3 +180,26 @@ def emissions():
     if "GHG_effect" not in current_user.advancements:
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/emissions.jinja")
+
+
+@wiki.route("/<template_name>")
+def render_template_wiki(template_name):
+    valid_templates = [
+        "introduction",
+        "game_time",
+        "map",
+        "power_facilities",
+        "storage_facilities",
+        "extraction_facilities",
+        "functional_facilities",
+        "technologies",
+        "power_management",
+        "network",
+        "resources",
+        "climate_effects",
+    ]
+
+    if template_name in valid_templates:
+        return g.render_template_ctx(f"wiki/{template_name}.jinja")
+    else:
+        return "404 Not Found", 404

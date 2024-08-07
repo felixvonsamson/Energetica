@@ -3,7 +3,6 @@
 import logging
 import math
 import pickle
-import random
 from collections import defaultdict
 from datetime import datetime
 

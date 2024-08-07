@@ -138,10 +138,11 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     from .api.http import http
     from .api.websocket import websocket_blueprint
     from .auth import auth
-    from .views import overviews, views
+    from .views import overviews, views, wiki
 
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")
+    app.register_blueprint(wiki, url_prefix="/wiki")
     app.register_blueprint(auth, url_prefix="/")
     app.register_blueprint(http, url_prefix="/api/")
     app.register_blueprint(websocket_blueprint, url_prefix="/api/")
