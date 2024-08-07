@@ -206,7 +206,7 @@ def create_network(engine, name, members):
 
 def climate_events_scenario(engine):
     """This scenario fills the map with players that use coal to see climate change events."""
-    for i in range(1, 100):
+    for i in range(1, 38):
         print("creating player", i)
         player = create_player(engine, f"user{i}", "password")
         if player:

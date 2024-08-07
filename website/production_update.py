@@ -312,7 +312,12 @@ def extraction_facility_demand(engine, new_values, player, player_cap, demand):
     for resource, facility in resource_to_extraction.items():
         if player_cap[facility] is not None:
             max_warehouse = warehouse_caps[resource] - player_resources[resource]
-            max_prod = player_cap[facility]["extraction"] * getattr(player.tile, resource)
+            max_prod = (
+                player_cap[facility]["extraction_rate_per_day"]
+                * getattr(player.tile, resource)
+                * engine.in_game_seconds_per_tick
+                / 86400  # 86400 seconds in a day
+            )
             power_factor = min(1.0, max_warehouse / max(1.0, max_prod))
             demand[facility] = player_cap[facility]["power_use"] * power_factor
 
@@ -885,7 +890,11 @@ def resources_and_pollution(engine, new_values, player):
                 max_demand = player_cap[extraction_facility]["power_use"]
                 production_factor = demand[extraction_facility] / max_demand
                 extracted_quantity = (
-                    production_factor * player_cap[extraction_facility]["extraction"] * getattr(player.tile, resource)
+                    production_factor
+                    * player_cap[extraction_facility]["extraction_rate_per_day"]
+                    * getattr(player.tile, resource)
+                    * engine.in_game_seconds_per_tick
+                    / 86400  # 86400 seconds in a day
                 )
                 setattr(
                     player.tile,

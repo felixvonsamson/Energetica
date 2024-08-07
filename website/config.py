@@ -541,7 +541,7 @@ const_config = {
             "base_power_consumption": 3_000_000,  # [W]
             "base_pollution": 0.065,  # [kg CO2/kg extracted]
             "lifespan": timedelta(days=161).total_seconds(),  # [in-game seconds]
-            "base_extraction_rate_per_day": 0.000_005,  # [fraction of total stock that can be extracted every in-game
+            "base_extraction_rate_per_day": 0.001_8,  # [fraction of total stock that can be extracted every in-game
             # day by one mine]
             "description": "The coal mine extracts coal from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Coal_mining",
@@ -561,7 +561,7 @@ const_config = {
             "base_power_consumption": 7_300_000,
             "base_pollution": 0.302,
             "lifespan": timedelta(days=84).total_seconds(),
-            "base_extraction_rate_per_day": 0.000_05,
+            "base_extraction_rate_per_day": 0.018,
             "description": "The oil field extracts oil from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Extraction_of_petroleum",
             "requirements": [
@@ -580,7 +580,7 @@ const_config = {
             "base_power_consumption": 5_100_000,
             "base_pollution": 0.523,
             "lifespan": timedelta(days=70).total_seconds(),
-            "base_extraction_rate_per_day": 0.000_04,
+            "base_extraction_rate_per_day": 0.015,
             "description": "The gas drilling site extracts gas from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Natural_gas",
             "requirements": [
@@ -599,7 +599,7 @@ const_config = {
             "base_power_consumption": 18_000_000,
             "base_pollution": 86,
             "lifespan": timedelta(days=126).total_seconds(),
-            "base_extraction_rate_per_day": 0.000_005,
+            "base_extraction_rate_per_day": 0.001_8,
             "description": "The uranium mine extracts uranium from the ground using electricity.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Uranium_mining",
             "requirements": [

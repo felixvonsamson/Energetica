@@ -28,7 +28,7 @@ class CapacityData:
             }
             "capacity":         [Wh]                            # Storage facilities
             "efficiency": (effective efficiency from 0 to 1),   # Storage facilities
-            "extraction":       [kg/tick]                       # Extraction facilities
+            "extraction_rate_per_day": [kg/tick]                # Extraction facilities
             "power_use":        [W]                             # Extraction facilities
             "pollution":        [kg/tick]                       # Extraction facilities
         }
@@ -90,7 +90,9 @@ class CapacityData:
                 effective_values["power"] += power_gen
                 effective_values["capacity"] += base_data["base_storage_capacity"] * facility.multiplier_2
             elif facility.facility in engine.extraction_facilities:
-                effective_values["extraction"] += base_data["base_extraction_rate_per_day"] * facility.multiplier_2
+                effective_values["extraction_rate_per_day"] += (
+                    base_data["base_extraction_rate_per_day"] * facility.multiplier_2
+                )
                 effective_values["power_use"] += base_data["base_power_consumption"] * facility.multiplier_1
                 effective_values["pollution"] += base_data["base_pollution"] * facility.multiplier_3
 
@@ -122,7 +124,7 @@ class CapacityData:
             self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "capacity": 0.0, "efficiency": 0.0}
             return
         if facility in engine.extraction_facilities:
-            self._data[facility] = {"O&M_cost": 0.0, "extraction": 0.0, "power_use": 0.0, "pollution": 0.0}
+            self._data[facility] = {"O&M_cost": 0.0, "extraction_rate_per_day": 0.0, "power_use": 0.0, "pollution": 0.0}
 
     def __getitem__(self, facility):
         if facility not in self._data:
