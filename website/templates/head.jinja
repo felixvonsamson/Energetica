@@ -38,6 +38,13 @@
     </title>
   </head>
   <body class="green">
+    <div class="version medium">
+      <div id="login_wiki_button"></div>
+      <a id="changelog_button" class="white button padding-small margin-small medium changelog_button" href="{{ url_for('changelog.render_changelog') }}">
+        <i class="fa fa-bullhorn"></i>&nbsp;Changelog
+      </a>
+      <div class="margin-small">beta 0.9.3 (27.07.2024)</div>
+    </div>
     {% block base %}
     {% endblock base %}
     <!--Toasts-->

@@ -1312,6 +1312,14 @@ input:checked+.slider:before {
     z-index: 1;
 }
 
+.wiki_login {
+    position: fixed;
+    bottom: 4px;
+    right: 16px;
+    font-family: 'Cabin Condensed', sans-serif;
+    z-index: 1;
+}
+
 /* messages */
 .chat_sidebar {
     width: 230px;

@@ -2,14 +2,13 @@
 
 import json
 import pickle
-from calendar import c
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
 
 import numpy as np
 from flask import Blueprint, current_app, flash, g, jsonify, redirect, request
-from flask_login import current_user
+from flask_login import current_user, login_required
 
 import website.utils.assets
 import website.utils.chat
@@ -22,19 +21,6 @@ from website.technology_effects import get_current_technology_values
 from website.utils import misc
 
 http = Blueprint("http", __name__)
-
-
-def combined_authenticator(func):
-    """This decorator checks if the user is authenticated either through httpauth or flask_login"""
-
-    # TODO: This still need to be tested
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if not current_user.is_authenticated:
-            return current_app.config["engine"].auth.login_required(func)(*args, **kwargs)
-        return func(*args, **kwargs)
-
-    return wrapper
 
 
 def log_action(func):
@@ -59,7 +45,7 @@ def log_action(func):
 
 
 @http.before_request
-@combined_authenticator
+@login_required
 def check_user():
     """
     Sets `g.engine` to point to the engine object. Executed before all

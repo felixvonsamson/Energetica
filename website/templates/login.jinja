@@ -10,6 +10,7 @@
     <img src="{{ url_for('static', filename='images/icon.svg') }}"
          class="logo" />
   </div>
+
   <div class="game_info bone medium padding txt_center">
     Shape your energy future! Manage electricity generation, balance resources, and combat emissions in <b>Energetica</b> - 
     the multiplayer game where your decisions impact the world.
@@ -38,3 +39,12 @@
          onclick="window.location.href = '/sign-up';">Create account</div>
   </div>
 {% endblock base %}
+
+{% block scripts %}
+  <script>
+    let wiki_button = document.getElementById('login_wiki_button');
+    wiki_button.innerHTML = `<a class="white button padding-small margin-small medium changelog_button" href="{{ url_for('wiki.render_template_wiki', template_name='introduction') }}" style="bottom:14px">
+      <i class="fa fa-book"></i>&nbsp;Game Wiki
+      </a>`;
+  </script>
+{% endblock scripts %}

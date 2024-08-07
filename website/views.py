@@ -17,12 +17,12 @@ from .technology_effects import (
 views = Blueprint("views", __name__)
 overviews = Blueprint("overviews", __name__, static_folder="static")
 wiki = Blueprint("wiki", __name__, static_folder="static")
+changelog = Blueprint("changelog", __name__, static_folder="static")
 
 
 # this function is executed once before every request :
 @views.before_request
 @overviews.before_request
-@wiki.before_request
 @login_required
 def check_user():
     """This function is called before every request"""
@@ -31,10 +31,6 @@ def check_user():
         g.data = get_current_technology_values(current_user)
 
     def render_template_ctx(page):
-        if page == "changelog.jinja" or "wiki" in page:
-            if current_user.tile is not None:
-                return render_template(page, engine=g.engine, user=current_user, data=g.data)
-            return render_template(page, engine=g.engine, user=None)
         # show location choice if player didn't choose yet
         if current_user.tile is None:
             return render_template("location_choice.jinja", engine=g.engine)
@@ -59,6 +55,24 @@ def check_user():
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
         else:
             return render_template(page, engine=g.engine, user=current_user, data=g.data)
+
+    g.render_template_ctx = render_template_ctx
+
+
+@wiki.before_request
+@changelog.before_request
+def check_user_no_login():
+    """This function is called before every request"""
+    g.engine = current_app.config["engine"]
+    g.data = None
+    if current_user.is_authenticated:
+        if current_user.tile is not None:
+            g.data = get_current_technology_values(current_user)
+
+    def render_template_ctx(page):
+        if g.data is not None:
+            return render_template(page, engine=g.engine, user=current_user, data=g.data)
+        return render_template(page, engine=g.engine, user=None)
 
     g.render_template_ctx = render_template_ctx
 
@@ -146,11 +160,6 @@ def scoreboard():
     return g.render_template_ctx("scoreboard.jinja")
 
 
-@views.route("/changelog")
-def changelog():
-    return g.render_template_ctx("changelog.jinja")
-
-
 @overviews.route("/revenues")
 def revenues():
     return g.render_template_ctx("overviews/revenues.jinja")
@@ -203,3 +212,8 @@ def render_template_wiki(template_name):
         return g.render_template_ctx(f"wiki/{template_name}.jinja")
     else:
         return "404 Not Found", 404
+
+
+@changelog.route("/changelog")
+def render_changelog():
+    return g.render_template_ctx("changelog.jinja")
