@@ -1,0 +1,48 @@
+{% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica wiki{% endblock %} {% block wiki_content %}
+
+{% set const_data = engine.const_config["assets"] %}
+
+<div class="flex-row huge title">Wiki - Power Management</div>
+
+<div class="medium margin-large">
+
+  <p>
+    Power management is only available to the player once he has unlocked the network advancement (Generating more than 
+    3MW). Before that, the priorities of power generation and consumption are managed by the game.
+  </p>
+  <p>
+    If a player is part of a Network, facility prioritization for generation and consumption is determined by market logic. 
+    See <a href="{{ url_for('wiki.render_template_wiki', template_name='network') }}">Network</a> for details.
+  </p>
+  <p>
+    Otherwise, if a player is not part of a Network, generation and consumption priorities are managed via an interactive 
+    list on the <a href="{{ url_for('views.network') }}">Network page</a>. This list contains all relevant facilities and 
+    processes involved in electricity generation or consumption. Note that storage facilities are listed twice, once as 
+    generators and once as consumers.
+  </p>
+  <p>
+    The list operates in two directions. Energy generation is prioritized from top to bottom, meaning facilities at the 
+    top have higher priority for power generation. Conversely, power consumption is prioritized from bottom to top, with 
+    components at the bottom having higher satisfaction priority. Additionally, a generation facility in the list only 
+    provides power to consumption components listed below it, and vice versa for consumption components, that only 
+    accept power form failites listed above them. Renewable facilities remain fixed in the list as their output is 
+    non-controllable and must be used with the highest priority.
+  </p>
+  <div class="flex-col">
+    <img src="{{ url_for('static', filename='images/wiki/prioritization_example.png') }}"
+         alt="Example of prioritization of facilities"
+         style="width:600px">
+  </div>
+  <p>
+    For example, in the above list, the coal burner and small pumped hydro (discharge) are positioned after the demand 
+    component for constructions. Consequently, these facilities will never be used to generate power for constructions. 
+    If the power supplied by the Watermill and steam engine is insufficient to meet the needs of Industry and 
+    constructions, ongoing constructions will be paused, even if there is available capacity from the coal burner or small 
+    pumped hydro. However, if the power provided by the windmill and steam engine isn't enough for Industry alone, the 
+    coal burner will begin generating, possibly followed by the small pumped hydro, since they are listed before 
+    Industry. A generation facility placed at the very end of the list will never be used.
+  </p>
+
+</div>
+
+{% endblock wiki_content %}

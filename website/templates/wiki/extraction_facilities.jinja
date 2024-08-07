@@ -1,0 +1,86 @@
+{% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica wiki{% endblock %} {% block wiki_content %}
+
+{% set const_data = engine.const_config["assets"] %}
+
+<div class="flex-row huge title">Wiki - Extraction Facilities</div>
+
+<div class="medium margin-large">
+
+  <p>
+    Extraction facilities play a pivotal role in acquiring fossil resources within Energetica. Each of the three natural
+    resources (Coal, Gas, and Uranium) has a dedicated extraction facility. Unlocking these facilities requires different
+    levels of {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
+    mineral extraction</a>{% else %}mineral extraction{% endif %} technology and <a href="{{ url_for('views.functional_facilities', _anchor='Warehouse') }}">warehouse</a>.
+  </p>
+  <ul>
+    <li>
+      <strong>Power Consumption:</strong> Maximum power consumption of the facility. This consumption is proportional to
+      the amount of resources extracted. When an extraction facility is inactive, it doesn't consume any power.
+    </li>
+    <li>
+      <strong>Resource Production:</strong> Extraction speed of one facility measured in kg or tons per hour 
+      (<a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game time</a>). The extraction speed is
+      influenced by the extraction rate, available resources in the ground, and the level of {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
+      mineral extraction</a>{% else %}mineral extraction{% endif %}.
+    </li>
+    <li>
+      <strong>Operation cost:</strong> Operational cost of the extraction facility consisting of 20% fixed costs and 80% variable cost.
+    </li>
+    <li>
+      <strong>CO2 Emissions:</strong> Amount of CO2 emitted during resource extraction. Emissions are proportional to
+      the resource production and measured in kg of CO2 per ton of extracted resource.
+    </li>
+    <li>
+      <strong>Lifespan:</strong> Lifespan of the extraction facility.
+    </li>
+  </ul>
+  <p>The formula for extraction speed of natural resource i is:</p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\(es_i = er_i \times q_i \times 1.4^{ME} \times n_{ef,i} \)<br>
+    where \(es_i\) is the extraction speed in tons/h, \(er_i\) is the base extraction rate in h\(^{-1}\), \(q_i\) is the amount of the
+    resource i in the ground on the player's tile in tons, \(ME\) is the level of the technology 
+    {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
+    mineral extraction</a>{% else %}mineral extraction{% endif %}, and \(n_{ef,i}\) is the number of extraction
+    facilities for the resource i owned by the player.
+  </li></ul>
+  <p>
+    Base extraction rates are fixed and determine the fraction of underground resources extractable per day by one
+    facility. They are given in the following table :
+  </p>
+  <div class="flex-col">
+    <table class="table bone txt_center">
+      <tr>
+        <th class="padding">Resource</th>
+        <th class="padding">Extraction Rate</th>
+      </tr>
+      <tr>
+        <td>Coal</td>
+        <td>{{ (const_data.coal_mine.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
+      </tr>
+      <tr>
+        <td>Oil</td>
+        <td>{{ (const_data.oil_field.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
+      </tr>
+      <tr>
+        <td>Gas</td>
+        <td>{{ (const_data.gas_drilling_site.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
+      </tr>
+      <tr>
+        <td>Uranium</td>
+        <td>{{ (const_data.uranium_mine.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
+      </tr>
+    </table>
+    <span>ig = <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game time</a></span>
+  </div>
+  <p>
+    Resources extracted from these facilities are stored in the <a href="{{ url_for('wiki.render_template_wiki', template_name='functional_facilities', _anchor='The_Warehouse') }}">Warehouse</a>. Extraction facilities cease operation when the
+    warehouse reach full capacity.
+  </p>
+  <p>
+    The construction process for an extraction facility aligns with that of power facilities, detailed in the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities', _anchor='Construction_of_a_Plant') }}">Construction of a Facility</a> section.
+  </p>
+
+</div>
+
+{% endblock wiki_content %}

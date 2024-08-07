@@ -1,0 +1,95 @@
+{% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica wiki{% endblock %} {% block wiki_content %}
+
+{% set const_data = engine.const_config["assets"] %}
+
+<div class="flex-row huge title">Wiki - Functional Facilities</div>
+
+<div class="medium margin-large">
+
+  <p>
+    Functional facilities in Energetica are distinct from power, storage, and extraction facilities as they operate on
+    a level-based system. Each upgrade to a higher level incurs increasing costs in terms of construction price, time, and energy.
+  </p>
+  <p>
+    The construction process for functional facilities works the same way as for power facilities 
+    (<a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities', _anchor='Construction_of_a_Plant') }}">Construction of a Facility</a>) 
+    except for the fact that consecutive upgrades of the same facility cannot be parallelized.
+  </p>
+  <p>
+    There are four unique functional facilities:
+  </p>
+  <h2>The Industry</h2>
+  <p>
+    The Industry serves as a central element in the game, initially starting at level 1. It generates revenue by consuming
+    electricity. With each level upgrade, revenue increase by {{ ((const_data.industry["income_factor"]-1)*100) | round | int }}% 
+    and electricity demand increases by {{ ((const_data.industry["power_factor"]-1)*100) | round | int }}%. It is worth 
+    noting that because of these rates, the industries economic efficiency (in <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh) is decreasing with higher levels of industry.
+    Revenues and power demand gradually increase during the upgrade duration.
+  </p>
+  <p>
+    The electricity demand of the industry fluctuates daily and yearly (in-game time), following specific cycles represented in the following graphs.
+    Energy demand is calculated based on these factors as follows :
+  </p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\( D = D_{base} \times dv(t) \times sv(t) \)<br>
+    with \(D_{base}\) the base demand as indicated on the page <a href="{{ url_for('views.functional_facilities') }}">Functional
+    facilities</a>, \(dv()\) the daily variations shown in the following graph, \(sv()\) the seasonal variations shown
+    in the following graph and \(t\) the in-game date and time (<a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">
+    1 in-game year = {{(engine.clock_time / engine.in_game_seconds_per_tick * 72) | round() | int }} real-time days</a>).
+  </li></ul>
+  <div class="graph-container">
+    <img style="height:350px"
+         src="{{ url_for('static', filename='images/wiki/daily_variation_industry.jpg') }}"
+         alt="Daily variation of the industry demand">
+    <img style="height:350px"
+         src="{{ url_for('static', filename='images/wiki/seasonal_variation_industry.jpg') }}"
+         alt="Seasonal variation of the industry demand">
+  </div>
+  <p>If the industry's demand isn't met, revenues are proportional to the satisfaction level.</p>
+  <h2 id="The_Laboratory">The Laboratory</h2>
+  <p>
+    The laboratory is needed for researching <a href="{{ url_for('wiki.render_template_wiki', template_name='technologies') }}">technologies</a>. Different technology levels require corresponding
+    laboratory levels. It also enhances research speed by {{ ((1-const_data.laboratory["time_factor"])*100) | round | int }}% 
+    and for every 3rd upgrade, a new lab worker is unlocked.
+  </p>
+  <h2 id="The_Warehouse">The Warehouse</h2>
+  <p>
+    The warehouse is essential for storing natural resources. Each level increment increases the maximum storage
+    capacity by {{ ((const_data.warehouse["capacity_factor"]-1)*100) | round | int }}% for all resources. The following 
+    table defines the initial storage capacities at level 1.
+    <div class="flex-col">
+    <table class="table bone txt_center">
+      <tr>
+        <th class="padding">Resource</th>
+        <th class="padding">Initial capacity</th>
+      </tr>
+      <tr>
+        <td>Coal</td>
+        <td>3'000 tons</td>
+      </tr>
+      <tr>
+        <td>Oil</td>
+        <td>300 tons</td>
+      </tr>
+      <tr>
+        <td>Gas</td>
+        <td>1'000 tons</td>
+      </tr>
+      <tr>
+        <td>Uranium</td>
+        <td>5 tons</td>
+      </tr>
+    </table>
+  </div>
+  </p>
+  <h2>Carbon Capture</h2>
+  <p>
+    The carbon capture facility consumes electricity to extract CO2 from the atmosphere and store it underground. 
+    With each level upgrade, CO2 absorption increase by {{ ((const_data.carbon_capture["absorption_factor"]-1)*100) | round | int }}% 
+    and power consumption increases by {{ ((const_data.carbon_capture["power_factor"]-1)*100) | round | int }}%.
+    Contrary to the industry, CO2 absorption is more efficient with higher carbon capture levels. 
+  </p>
+
+</div>
+
+{% endblock wiki_content %}

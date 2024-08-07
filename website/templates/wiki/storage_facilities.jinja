@@ -1,0 +1,44 @@
+{% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica wiki{% endblock %} {% block wiki_content %}
+
+<div class="flex-row huge title">Wiki - Storage Facilities</div>
+
+<div class="medium margin-large">
+
+  <p>
+    Storage facilities play a crucial role in storing energy within Energetica. Initially, only the small water dam is
+    accessible, but as you research technologies, other storage facilities can be unlocked. Despite working on the same
+    principle, each storage facility possesses unique characteristics:
+  </p>
+  <ul>
+    <li>
+      <strong>Storage Capacity:</strong> Maximum amount of stored energy.
+    </li>
+    <li>
+      <strong>Max Generation:</strong> Maximum electricity generation and usage for charging. Determines the maximum
+      charge and discharge speed of the storage facilities.
+    </li>
+    <li>
+      <strong>Ramping Speed:</strong> Defines the maximum rate of change for charging and discharging. For further
+      information, refer to the <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities', _anchor='Power_Generation_of_Controllable_Plants') }}">Controllable Facility Power
+      Generation</a> section. (Currently there is no ramping down constraint for storage facilities during charging, meaning that a storage facility can go from 100% charging rate to 0% instantly)
+    </li>
+    <li>
+      <strong>Efficiency:</strong> Roundtrip efficiency of the storage facility. Efficiency losses occur during both
+      charging and discharging. For instance, if the roundtrip efficiency is 0.81, the charging and discharging
+      efficiencies would be \( \sqrt{0.81} = 0.9 \) (10% loss during charging and 10% more during discharging). Improvements in
+      efficiency are possible through certain technologies.
+    </li>
+    <li>
+      <strong>Operation cost:</strong> Operational cost of the facility that consist of 100% fixed costs.
+    </li>
+    <li>
+      <strong>Lifespan:</strong> Lifespan of the facility.
+    </li>
+  </ul>
+  <p>
+    The construction process for a storage facility mirrors that of power facilities, as described in the <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities', _anchor='Construction_of_a_Plant') }}">Construction of a Facility</a> section.
+  </p>
+
+</div>
+
+{% endblock wiki_content %}

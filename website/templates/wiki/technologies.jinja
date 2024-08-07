@@ -1,0 +1,24 @@
+{% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica wiki{% endblock %} {% block wiki_content %}
+
+{% set const_data = engine.const_config["assets"] %}
+
+<div class="flex-row huge title">Wiki - Technology</div>
+
+<div class="medium margin-large">
+
+  <p>
+    Technological advancements in Energetica are made possible through research conducted at the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='functional_facilities', _anchor='The_Laboratory') }}">laboratory</a>. 
+    These technologies are needed to unlock more advanced facilities and offer improvements to specific aspects of your
+    production within the game. Each technology has a unique effect tailored to a particular set of facilities.
+  </p>
+  <p>
+    Researching technologies involves electricity consumption without direct CO2 emissions. The technology research is 
+    carried out by the lab workers and it follows the same principle as the constructions with the construction workers 
+    (<a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities', _anchor='Construction_of_a_Plant') }}">Construction of a Facility</a>). 
+    Consecutive upgrades of the same technology are not parallelizable.
+  </p>
+
+</div>
+
+{% endblock wiki_content %}

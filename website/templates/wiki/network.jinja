@@ -1,0 +1,92 @@
+{% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica wiki{% endblock %} {% block wiki_content %}
+
+{% set const_data = engine.const_config["assets"] %}
+
+<div class="flex-row huge title">Wiki - Network</div>
+
+<div class="medium margin-large">
+
+  <p>
+    In Energetica, players initially operate independently, generating precisely what they need. However, after they 
+    unlock the network advancement (generating more than 3MW), they have the option to join or create a network with 
+    other players, facilitating electricity trading and potentially enhancing supply security.
+  </p>
+  <p>
+    If a player is part of a network, three tables enable them to set buying and selling prices within the {% if "network" in user.advancements %}
+    <a href="{{ url_for('views.network') }}">network page</a>{% else %}network page{% endif %}:
+  </p>
+  <h3>Demand Prices</h3>
+  <p>
+    The first table is to set maximum buying prices for electricity components within your demand:
+  </p>
+  <ul>
+    <li>Industry</li>
+    <li>Constructions</li>
+    <li>Research</li>
+    <li>Shipments</li>
+    <li>Extraction facilities</li>
+  </ul>
+  <p>
+    If the max buying price for one of these demand components is below market price, their demand will not be satisfied.
+    This can lead to halt ongoing constructions, researches, or shipments, reduceed industry activity or 
+    a decreased extraction rates.
+  </p>
+  <h3>Production Capacity Prices</h3>
+  <p>In the second table, you can set the minimum selling prices for your controllable power facilities. When the
+      market price exceeds this set price, any producible capacity with the facility will be sold at market price.</p>
+  <h3>Storage Capacity Prices</h3>
+  <p>
+    In the third table, you can specify both the maximum buying price and the minimum selling price for your storage
+    facilities:
+  </p>
+  <ul>
+    <li>
+      <strong>Buying Price:</strong> Determines the maximum price you're willing to pay for purchasing electricity to
+      charge your storage facilities. If the market price is below the set price, electricity will be bought to charge the storage facility.
+    </li>
+    <li>
+      <strong>Selling Price:</strong> Sets the minimum price at which you will sell any capacity producible by your
+      storage facility. If the market price exceeds the set price, the storage facility will be discharged and the generated power sold on the market.
+    </li>
+  </ul>
+  <h2 id="Obligatory_Generation">Obligatory Electricity Generation</h2>
+  <p>Obligatory electricity generation includes:</p>
+  <ul>
+    <li>
+      <strong>Non-controllable Renewable Power Facilities:</strong> Generation from these facilities cannot be
+      controlled and contributes to the overall electricity output.
+    </li>
+    <li>
+      <strong>Minimal generation of Controllable Facilities:</strong> Due to ramping down constraints, a minimal
+      generation from controllable facilities is obligatory.
+    </li>
+  </ul>
+  <p>
+    If surplus electricity from these obligatory sources is not needed domestically, it is put on the market at a fixed price of
+    -5/MWh, coresponding to the cost to dump excess electricity. If it cannot be sold, it will be dumped.
+  </p>
+  <h2 id="Market_Logic">Market Logic</h2>
+  <p>The electricity market operates automatically and follows specific steps:</p>
+  <ol>
+    <li>
+      <strong>Calculate Capacities:</strong> Calculate available generation capacities and demand from all players in
+      the market.
+    </li>
+    <li>
+      <strong>Order Capacities:</strong> Organize available capacities and demand in ascending and descending price
+      order, respectively.
+    </li>
+    <li>
+      <strong>Find Market Equilibrium:</strong> Determine the point where the supply and demand curves intersect to
+      find the market quantity and price.
+    </li>
+    <li>
+      <strong>Transaction:</strong> Capacities below the market price are sold at market price, while demands above
+      the market price are bought at market price.
+    </li>
+  </ol>
+  <p>This automatic process ensures fair transactions based on market supply and demand dynamics.</p>
+
+</div>
+
+{% endblock wiki_content %}

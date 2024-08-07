@@ -643,6 +643,7 @@ input:checked+.slider:before {
     display: flex;
     text-decoration: none;
     align-items: center;
+    transition: background-color 0.3s ease;
 }
 
 .navbar_item.active {
@@ -691,6 +692,36 @@ input:checked+.slider:before {
 
 .main_dropdown {
     display: none;
+}
+
+/* wiki navigation */
+
+.navigation {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+}
+
+.nav-button {
+    display: inline-block;
+    padding: 10px 20px;
+    text-decoration: none;
+    color: #000;
+    background-color: #e5d9b6;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.nav-button:hover {
+    color: #fff;
+    background-color: #5f8d4e;
+}
+
+.nav-button.active {
+    color: #fff;
+    background-color: #285430
 }
 
 .logo_container {

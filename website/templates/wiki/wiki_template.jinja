@@ -1,0 +1,32 @@
+{% extends "base.jinja" %}
+
+{% block content %}
+
+{% block wiki_content %}
+{% endblock wiki_content %}
+
+<h1 class="txt_center">Navigation</h1>
+<div class="navigation medium" style="margin-bottom:100px">
+  <a href="{{ url_for('wiki.render_template_wiki', template_name='introduction') }}" class="nav-button" data-page="introduction">Introduction</a>
+  <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}" class="nav-button" data-page="game_time">Game Time</a>
+  <a href="{{ url_for('wiki.render_template_wiki', template_name='map') }}" class="nav-button" data-page="map">The Map</a>
+  <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities') }}" class="nav-button" data-page="power_facilities">Power Facilities</a>
+  <a href="{{ url_for('wiki.render_template_wiki', template_name='storage_facilities') }}" class="nav-button" data-page="storage_facilities">Storage Facilities</a>
+  <a href="{{ url_for('wiki.render_template_wiki', template_name='extraction_facilities') }}" class="nav-button" data-page="extraction_facilities">Extraction Facilities</a>
+  <a href="{{ url_for('wiki.render_template_wiki', template_name='functional_facilities') }}" class="nav-button" data-page="functional_facilities">Functional Facilities</a>
+  <a href="{{ url_for('wiki.render_template_wiki', template_name='technologies') }}" class="nav-button" data-page="technologies">Technology</a>
+  <a href="{{ url_for('wiki.render_template_wiki', template_name='power_management') }}" class="nav-button" data-page="power_management">Power Management</a>
+  <a href="{{ url_for('wiki.render_template_wiki', template_name='network') }}" class="nav-button" data-page="network">Network</a>
+  <a href="{{ url_for('wiki.render_template_wiki', template_name='resources') }}" class="nav-button" data-page="resources">Resources</a>
+  <a href="{{ url_for('wiki.render_template_wiki', template_name='climate_effects') }}" class="nav-button" data-page="climate_effects">Climate Change</a>
+</div>
+
+{% endblock content %}
+
+{% block additionnal_script %}
+  <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script"
+          async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock additionnal_script %}

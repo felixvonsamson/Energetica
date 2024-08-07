@@ -1,0 +1,361 @@
+{% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica wiki{% endblock %} {% block wiki_content %}
+
+<div class="flex-row huge title">Wiki - The Map</div>
+
+<div class="medium margin-large">
+
+  <p>
+    Upon creating an account, your initial task is to select a location on the map. It's crucial to note that this 
+    choice is <strong>permanent</strong>; there won't be any opportunity to expand or alter your chosen tile. Choose 
+    wisely.
+  </p>
+  <p>
+    The map consists of a hexagonal grid comprising 331 tiles, visualized on Community > <a href="/map_view">Map</a>.
+  </p>
+  <p>
+    The distance between your location and another player's tile directly impacts resource shipment times when engaging 
+    in trade. For more insights, refer to the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='resources') }}">Resource</a> section.
+  </p>
+  <p>
+    Each tile offers a specific assortment of resources—seven distinct resources categorized into renewable and fossil 
+    fuel types:
+  </p>
+
+  <h2 id="Renewable_resources">Renewable Resources</h2>
+  <p>
+    <i>Note:</i> In the following subsections, the concept of "locations" is used to explain how wind/hydro potential works. 
+    Players do not see the specific locations of the facilities.
+  </p>
+
+  <h3 id="solar_potential">Solar Potential</h3>
+  <p>
+    The solar potential is expressed in Watts per square meter (W/m²), indicating the maximum irradiance achievable at 
+    this latitude. The higher this maximum irradiance, the greater the power production of photovoltaic (PV) and 
+    concentrated solar power (CSP) plants. See 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities', _anchor='Solar_Power_Generation') }}">
+    solar power generation</a> for more information.
+  </p>
+
+  <h3 id="wind_potential">Wind Potential</h3>
+  <p>
+    Wind potential is a percentage value that represents the suitability of each tile for installing wind facilities 
+    (windmills, onshore, and offshore wind turbines). The initial wind facility is always placed in the most optimal 
+    location, which has a wind speed multiplier close to 1. However, as players build more wind facilities, the wind 
+    potential in new locations decreases, resulting in a lower wind speed multiplier for each subsequent facility. 
+    This decrease happens more rapidly for tiles with lower wind potential.
+  </p>
+  <p>
+    The following table illustrates the <b>wind speed multipliers</b> applied to facilities based on different wind potentials 
+    (columns) and the number of facilities built (rows):
+  </p>
+  <div class="flex-center align-items-center">
+    <div class="table_legend_left">
+      <b style="transform: translate(-50%, -70%); position: absolute;">Existing facilities</b>
+    </div>
+    <table class="table bone txt_center">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="padding" colspan="6">Wind potential</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th></th>
+          <th style="width:50px">0%</th>
+          <th style="width:50px">20%</th>
+          <th style="width:50px">40%</th>
+          <th style="width:50px">60%</th>
+          <th style="width:50px">80%</th>
+          <th style="width:50px">100%</th>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td class="txt-green">76%</td>
+          <td class="txt-green">96%</td>
+          <td class="txt-green">98%</td>
+          <td class="txt-green">99%</td>
+          <td class="txt-green">99%</td>
+          <td class="txt-green">100%</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>52%</td>
+          <td class="txt-green">85%</td>
+          <td class="txt-green">94%</td>
+          <td class="txt-green">97%</td>
+          <td class="txt-green">98%</td>
+          <td class="txt-green">99%</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td class="txt-red">41%</td>
+          <td>74%</td>
+          <td class="txt-green">87%</td>
+          <td class="txt-green">93%</td>
+          <td class="txt-green">95%</td>
+          <td class="txt-green">97%</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td class="txt-red">34%</td>
+          <td>64%</td>
+          <td class="txt-green">80%</td>
+          <td class="txt-green">88%</td>
+          <td class="txt-green">92%</td>
+          <td class="txt-green">95%</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td class="txt-red">30%</td>
+          <td>56%</td>
+          <td>73%</td>
+          <td class="txt-green">83%</td>
+          <td class="txt-green">89%</td>
+          <td class="txt-green">92%</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td class="txt-red">27%</td>
+          <td>50%</td>
+          <td>67%</td>
+          <td class="txt-green">78%</td>
+          <td class="txt-green">85%</td>
+          <td class="txt-green">89%</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td class="txt-red">25%</td>
+          <td class="txt-red">46%</td>
+          <td>62%</td>
+          <td>73%</td>
+          <td class="txt-green">81%</td>
+          <td class="txt-green">86%</td>
+        </tr>
+        <tr>
+          <th>7</th>
+          <td class="txt-red">24%</td>
+          <td class="txt-red">42%</td>
+          <td>57%</td>
+          <td>69%</td>
+          <td class="txt-green">77%</td>
+          <td class="txt-green">83%</td>
+        </tr>
+        <tr>
+          <th>8</th>
+          <td class="txt-red">23%</td>
+          <td class="txt-red">39%</td>
+          <td>53%</td>
+          <td>65%</td>
+          <td>73%</td>
+          <td class="txt-green">79%</td>
+        </tr>
+        <tr>
+          <th>9</th>
+          <td class="txt-red">22%</td>
+          <td class="txt-red">37%</td>
+          <td class="txt-red">50%</td>
+          <td>61%</td>
+          <td>70%</td>
+          <td class="txt-green">76%</td>
+        </tr>
+        <tr>
+          <th>10</th>
+          <td class="txt-red">21%</td>
+          <td class="txt-red">35%</td>
+          <td class="txt-red">47%</td>
+          <td>58%</td>
+          <td>66%</td>
+          <td>73%</td>
+        </tr>
+        <tr>
+          <th>11</th>
+          <td class="txt-red">20%</td>
+          <td class="txt-red">33%</td>
+          <td class="txt-red">44%</td>
+          <td>55%</td>
+          <td>63%</td>
+          <td>70%</td>
+        </tr>
+        <tr>
+          <th>12</th>
+          <td class="txt-red">19%</td>
+          <td class="txt-red">31%</td>
+          <td class="txt-red">42%</td>
+          <td>52%</td>
+          <td>60%</td>
+          <td>67%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    The wind speed formula for the n<sup>th</sup> instance of a facility i at time t is:
+  </p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\(ws_{t,n} = ws_{t,serv} \times wsm(wp, n_i)\) <br>
+    With \(ws_{t,serv}\) being the server wind speed as indicated in the home page, and \(wsm(wp, n_i)\) the wind speed 
+    multiplier as a function of the wind potential \(wp\) and the number of installed facilities \(n_i\) (see table above).
+  </li></ul>
+  {# \(wsm(wp, n_i) = ln(e+(n_i \times \frac{1}{9 \times wp + 1} )²)^{-1}\) #}
+  <p>
+    For more information about the power generation of wind facilities, refer to 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities', _anchor='Wind_Power_Generation') }}">Wind Power Generation</a>.
+  </p>
+  
+  <h3 id="hydro_potential">Hydro Potential</h3>
+  <p>
+    Hydro potential is expressed as a percentage and indicates how suitable each tile is for the installation of hydro 
+    facilities (watermills, small and large dams). The first facility is built in the most accessible location, keeping 
+    costs low. As more hydro facilities are constructed, the investment and operational costs increase, modeling the 
+    difficulty to build an do maintenance in less suitable locations. This increase is more pronounced for tiles with 
+    low hydro potential. 
+  </p>
+  <p>
+    Note that pumped hydro facilities are not affected by hydro potential.
+  </p>
+  <p>
+    The following table shows the <b>cost multipliers</b> applied to hydro facilities based on different hydro potentials 
+    (columns) and the number of facilities built (rows):  
+  </p>
+  <div class="flex-center align-items-center">
+    <div class="table_legend_left">
+      <b style="transform: translate(-50%, -70%); position: absolute;">Existing facilities</b>
+    </div>
+  <table class="table bone txt_center">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="padding" colspan="6">Hydro potential</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th></th>
+          <th style="width:50px">0%</th>
+          <th style="width:50px">20%</th>
+          <th style="width:50px">40%</th>
+          <th style="width:50px">60%</th>
+          <th style="width:50px">80%</th>
+          <th style="width:50px">100%</th>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>8.0</td>
+          <td class="txt-green">2.2</td>
+          <td class="txt-green">1.4</td>
+          <td class="txt-green">1.2</td>
+          <td class="txt-green">1.1</td>
+          <td class="txt-green">1.0</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td class="txt-red">55</td>
+          <td>6.0</td>
+          <td class="txt-green">2.6</td>
+          <td class="txt-green">1.7</td>
+          <td class="txt-green">1.4</td>
+          <td class="txt-green">1.2</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">18</td>
+          <td>5.3</td>
+          <td class="txt-green">2.8</td>
+          <td class="txt-green">2.0</td>
+          <td class="txt-green">1.6</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">60</td>
+          <td>12</td>
+          <td>4.9</td>
+          <td class="txt-green">3.0</td>
+          <td class="txt-green">2.2</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">27</td>
+          <td>9.0</td>
+          <td>4.7</td>
+          <td class="txt-green">3.1</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">62</td>
+          <td class="txt-red">17</td>
+          <td>7.7</td>
+          <td>4.6</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">33</td>
+          <td>13</td>
+          <td>6.9</td>
+        </tr>
+        <tr>
+          <th>7</th>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">99+</td>
+          <td class="txt-red">63</td>
+          <td class="txt-red">22</td>
+          <td>10.6</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    The formula for the price of the n<sup>th</sup> instance of facility i is:
+  </p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\(p_{i,n} = p_{i,base} \times pm(hp, n_i)\) <br>
+    With \(p_{i,base}\) being the base price of the facility i, and \(pm(hp, n_i)\) the price multiplier as a function 
+    of the hydro potential \(hp\) and the number of installed facilities \(n_i\) (see table above).
+  </li></ul>
+  {# \(pm(hp, n_i) = 0.6 + e^{0.6 \times \frac{n_i + 1 - 3 \times hp}{0.3 + hp}}\) #}
+  <p>
+    Similarly, the operation and maintenance cost of the n<sup>th</sup> instance of facility i is:
+  </p>
+  <ul style="list-style: none;"><li>
+      <i class="fa fa-angle-double-right padding"></i>\(omc_{i,n} = omc_{i,base} \times pm(hp, n_i)\)
+  </li></ul>
+  <p>
+    For more information about the power generation of hydro facilities, refer to 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities', _anchor='Hydro_Power_Generation') }}">Hydropower Generation</a>.
+  </p>
+
+  <h3>General Notes</h3>
+  <ul>
+    <li>
+      For both wind and hydro facilities, when a facility is dismantled or decommissioned, its location is freed, making 
+      it available for a new facility with the same potential.
+    </li>
+    <li>
+      When a facility is built, the optimal location is always chosen first, reflecting the best potential for energy 
+      production or cost efficiency.
+    </li>
+  </ul>
+  
+  <h2 id="Fossil_fuels">Fossil Fuels</h2>
+  <ul>
+    <li>
+      <strong>Coal, Oil, Gas, and Uranium:</strong> These indicate the quantity of each resource stored underground on
+      a specific tile. Extraction facilities allow you to extract these resources. For detailed procedures, consult the
+      <a href="{{ url_for('wiki.render_template_wiki', template_name='extraction_facilities') }}">extraction facilities</a> section.
+    </li>
+  </ul>
+
+</div>
+
+{% endblock wiki_content %}

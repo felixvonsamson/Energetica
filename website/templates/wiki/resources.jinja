@@ -1,0 +1,70 @@
+{% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica wiki{% endblock %} {% block wiki_content %}
+
+{% set const_data = engine.const_config["assets"] %}
+
+<div class="flex-row huge title">Wiki - Resources</div>
+
+<div class="medium margin-large">
+
+  <p>
+    This page focuses on the natural resources available in Energetica : Coal, Gas and Uranium. These resources are 
+    generated on the <a href="{{ url_for('wiki.render_template_wiki', template_name='map') }}">Map</a>, can be extracted 
+    by <a href="{{ url_for('wiki.render_template_wiki', template_name='extraction_facilities') }}">Extraction Facilities</a> 
+    and are used as fuel for some <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities') }}">Power Facilities</a>.
+  </p>
+
+  <h2 id="Resource_Market">Resource Market</h2>
+  <p>The resource market serves as a marketplace for natural resources.</p>
+  <p>
+    To add an offer for a specific quantity of a resource at a chosen price, users can click on the "Put on sale"
+    button on the market. This offer will be displayed as a new tile on the page. The amount put up for sale is stored
+    in your warehouse but cannot be consumed until sold (visible as "on sale" in the {% if "network" in user.advancements %}<a href="{{ url_for('overviews.resources') }}">resource graph</a>{% else %}resource graph{% endif %}).
+  </p>
+  <p>
+    Once another player buys a portion of your offer, you receive the money, and the sold amount is shipped. To remove
+    offers from the market, users can repurchase their own resources without losing money, thereby regaining access to
+    the resources.
+  </p>
+  <p>
+    If users wish to purchase resources from another player, they can click on the tile of interest, specify the
+    desired amount within the available offer, and click "buy". The purchased resources will be shipped to their
+    location (refer to <a href="#Resource_shipment">resource shipment</a>).
+  </p>
+  <h3 id="Resource_shipment">Resource Shipment</h3>
+  <p>
+    When a certain amount of a natural resource is bought on the market, it is shipped from the seller to the buyer.
+    The shipment duration and electricity consumption are calculated based on the following formulas:
+  </p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\(t_{ship} = t_{base} \times dist \times {{ const_data.transport_technology["time_factor"] }}^{TT} \) &emsp;&emsp;&emsp; \(P_{ship} = \frac{E_{base} \times
+    q_{ship} \times {{ const_data.transport_technology["energy_factor"] }}^{TT} }{ t_{base} \times {{ const_data.transport_technology["time_factor"] }}^{TT} } \)<br>
+    with:
+    <ul style="list-style: none;"><li>
+      \(t_{ship}\) : shipment duration in hours
+    </li><li>
+      \(t_{base}\) : base value of shipment duration : {{ (80 / 15) | round(1) }} h/tile 
+      (<a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game time</a>) or 
+      {{ (80 * engine.clock_time / 60) | int }} min/tile (real-time)
+    </li><li>
+      \(dist\) : distance between buyer and seller in tiles
+    </li><li>
+      \(TT\) : level of <a href="{{ url_for('views.technology', _anchor='Transport technology') }}">transport technology</a>
+    </li><li>
+      \(P_{ship}\) : power consumed for shipping in W
+    </li><li>
+      \(E_{base}\) : base energy need of shipments : 5 Wh/kg/tile
+    </li><li>
+      \(q_{ship}\) : quantity of shipped resources in kg
+    </li></ul>
+  </li></ul>
+  <p>
+    If the energy demand of the shipment isn't met, it is paused. 
+  </p>
+  <p>
+    Upon arrival, if the buyer's warehouse lacks sufficient capacity to store the shipped amount, excess resources will 
+    be lost.
+  </p>
+
+</div>
+
+{% endblock wiki_content %}
