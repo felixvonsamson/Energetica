@@ -5,6 +5,7 @@ flask-SQLAlchemy
 flask-login
 flask-apscheduler
 flask-httpauth
+ecdsa
 eventlet
 requests
 pandas
