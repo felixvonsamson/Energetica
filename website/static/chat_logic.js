@@ -30,7 +30,9 @@ function refresh_chats() {
                 badge = `<span id="unread_badge_chat" class="unread_badge messages padding-small pine">${chats[chat_id].unread_messages}</span>`
             }
             let profile_icon;
-            if (chats[chat_id].group_chat) {
+            if (chat_id == 1) {
+                profile_icon = '<div class="profile-icon green large"><i class="fa fa-star"></i></div>'
+            } else if (chats[chat_id].group_chat) {
                 profile_icon = '<div class="profile-icon green">';
                 for (let initial of chats[chat_id].initials) {
                     profile_icon += `<span class="small_letter">${initial}</span>`
@@ -45,9 +47,7 @@ function refresh_chats() {
                 ${badge}
                 </div>`
         }
-        if (data.last_opened_chat != null) {
-            openChat(data.last_opened_chat);
-        }
+        openChat(data.last_opened_chat);
     }).catch((error) => {
         console.error("Error:", error);
     });

@@ -181,6 +181,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
         return send_file("static/apple-app-site-association", as_attachment=True)
 
     from .database.map import Hex
+    from .database.messages import Chat
 
     # initialize database :
     with app.app_context():
@@ -202,7 +203,16 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
                         uranium=float(row["uranium"]),
                     )
                     db.session.add(hex)
-                db.session.commit()
+
+        # creating general chat
+        if Chat.query.count() == 0:
+            new_chat = Chat(
+                name="General Chat",
+                participants=[],
+            )
+            db.session.add(new_chat)
+
+        db.session.commit()
 
     # initialize login manager
     login_manager = LoginManager()

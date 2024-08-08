@@ -12,7 +12,7 @@ from flask import flash
 import website.api.websocket as websocket
 from website import db
 from website.database.engine_data import CapacityData, CircularBufferPlayer
-from website.database.messages import Notification
+from website.database.messages import Chat, Notification
 from website.database.player import Network, Player
 from website.database.player_assets import ActiveFacility
 
@@ -254,6 +254,8 @@ def confirm_location(engine, player, location):
         multiplier_3=1.0,
     )
     db.session.add(steam_engine)
+    general_chat = Chat.query.get(1)
+    player.chats.append(general_chat)
     db.session.commit()
     add_player_to_data(engine, player)
     init_table(player.id)

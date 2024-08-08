@@ -29,7 +29,7 @@ class Player(db.Model, UserMixin):
     # Chats :
     show_disclaimer = db.Column(db.Boolean, default=True)
     chats = db.relationship("Chat", secondary=player_chats, backref="participants")
-    last_opened_chat = db.Column(db.Integer, default=None)
+    last_opened_chat = db.Column(db.Integer, default=1)
     messages = db.relationship("Message", backref="player")
     notifications = db.relationship("Notification", backref="players", lazy="dynamic")
 

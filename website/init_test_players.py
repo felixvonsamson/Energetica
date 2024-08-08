@@ -10,6 +10,7 @@ from website import technology_effects
 from . import db
 from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer
 from .database.map import Hex
+from .database.messages import Chat
 from .database.player import Network, Player
 from .database.player_assets import OngoingConstruction
 from .utils.misc import add_player_to_data, init_table
@@ -173,6 +174,8 @@ def create_player(engine, username, password):
             pwhash=generate_password_hash(password, method="scrypt"),
         )
         db.session.add(new_player)
+        general_chat = Chat.query.get(1)
+        new_player.chats.append(general_chat)
         db.session.commit()
         engine.data["current_data"][new_player.id] = CircularBufferPlayer()
         engine.data["player_capacities"][new_player.id] = CapacityData()
