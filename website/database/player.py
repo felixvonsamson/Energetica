@@ -235,6 +235,18 @@ class Player(db.Model, UserMixin):
                     return participant.username
             return None
 
+        def find_initials(chat):
+            if chat.name is None:
+                for participant in chat.participants:
+                    if participant != self:
+                        return participant.username[0]
+            initials = []
+            for participant in chat.participants:
+                initials.append(participant.username[0])
+                if len(initials) == 4:
+                    break
+            return initials
+
         def unread_message_count(chat):
             unread_messages_count = (
                 PlayerUnreadMessages.query.join(Message, PlayerUnreadMessages.message_id == Message.id)
@@ -247,6 +259,7 @@ class Player(db.Model, UserMixin):
         chat_dict = {
             chat.id: {
                 "name": chat_name(chat),
+                "initials": find_initials(chat),
                 "group_chat": chat.name is not None,
                 "unread_messages": unread_message_count(chat),
             }

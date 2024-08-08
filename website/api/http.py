@@ -524,8 +524,8 @@ def hide_chat_disclaimer():
 def create_chat():
     """this endpoint is called when a player creates a chat with one other player"""
     request_data = request.get_json()
-    buddy_username = request_data["buddy_username"]
-    response = website.utils.chat.create_chat(current_user, buddy_username)
+    buddy_id = request_data["buddy_id"]
+    response = website.utils.chat.create_chat(current_user, buddy_id)
     return jsonify(response)
 
 

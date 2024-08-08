@@ -629,6 +629,11 @@ input:checked+.slider:before {
     align-items: center;
 }
 
+.txt_overflow-hidden {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
 /* Navbar */
 .navbar {
     display: block;
@@ -1349,8 +1354,39 @@ input:checked+.slider:before {
 .profile-icon {
     height: 42px;
     width: 42px;
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
     text-align: center;
+    flex-shrink: 0;
+}
+
+.small_letter {
+    width: 21px;
+    height: 21px;
+    font-size: 18px;
+    position: absolute;
+}
+
+.profile-icon .small_letter:nth-child(1) {
+    top: 2px;
+    left: 2px;
+}
+
+.profile-icon .small_letter:nth-child(2) {
+    top: 2px;
+    right: 2px;
+}
+
+.profile-icon .small_letter:nth-child(3) {
+    bottom: 2px;
+    left: 2px;
+}
+
+.profile-icon .small_letter:nth-child(4) {
+    bottom: 2px;
+    right: 2px;
 }
 
 .message_input {

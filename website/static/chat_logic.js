@@ -8,15 +8,18 @@ let current_chat_id;
 
 refresh_chats();
 
+/* Load all players and sort them by username */
 load_players().then((players_) => {
     const player_id = sessionStorage.getItem("player_id")
-    const usernames = Object.entries(players_)
+    const playerArray = Object.entries(players_)
         .filter(([id, user]) => id != player_id)
-        .map(([id, user]) => user.username);
-    sortedNames = usernames.sort();
+        .map(([id, user]) => ({ id, username: user.username }));
+    playerArray.sort((a, b) => a.username.localeCompare(b.username));
+    sortedNames = playerArray;
 });
 
 function refresh_chats() {
+    /* Retrieves chat list and displays it. Displays unread badges and opens last opened chat. */
     load_chats().then((data) => {
         let chats = data.chat_list;
         let chat_list_container = document.getElementById("chat_list_container");
@@ -26,37 +29,48 @@ function refresh_chats() {
             if (chats[chat_id].unread_messages > 0) {
                 badge = `<span id="unread_badge_chat" class="unread_badge messages padding-small pine">${chats[chat_id].unread_messages}</span>`
             }
-            chat_list_container.innerHTML += `<div id="chat_${chat_id}" onclick="openChat(${chat_id})" class="margin-small white button position_relative">
-                <div class="profile-icon green large">${chats[chat_id].name[0]}</div>
-                <b class="medium padding test">${chats[chat_id].name}</b>
+            let profile_icon;
+            if (chats[chat_id].group_chat) {
+                profile_icon = '<div class="profile-icon green">';
+                for (let initial of chats[chat_id].initials) {
+                    profile_icon += `<span class="small_letter">${initial}</span>`
+                }
+                profile_icon += "</div>"
+            } else {
+                profile_icon = `<div class="profile-icon green large">${chats[chat_id].initials}</div>`
+            }
+            chat_list_container.innerHTML += `<div id="chat_${chat_id}" onclick="openChat(${chat_id})" class="margin-small white button position_relative flex-row">
+                ${profile_icon}
+                <b class="medium padding txt_overflow-hidden">${chats[chat_id].name}</b>
                 ${badge}
-            </div>`
+                </div>`
         }
         if (data.last_opened_chat != null) {
             openChat(data.last_opened_chat);
         }
-    })
-        .catch((error) => {
-            console.error("Error:", error);
-        });
+    }).catch((error) => {
+        console.error("Error:", error);
+    });
 }
 
 let input1 = document.getElementById("add_chat_username");
 let input2 = document.getElementById("add_player");
 
 input1.addEventListener("input", (e) => {
-    //Initially remove all elements (so if user erases a letter or adds new letter then clean previous outputs)
+    /* interactive search for a player to write a message to */
     removeElements();
-    for (let i of sortedNames) {
-        //convert input to lowercase and compare with each string
-        if (i.toLowerCase().startsWith(input1.value.toLowerCase())) {
+    const input_value = input1.value.toLowerCase();
+    for (let player of sortedNames) {
+        const username = player.username.toLowerCase();
+        //compare input with each username in the sorted list
+        if (username.startsWith(input_value)) {
             let listItem = document.createElement("li");
             listItem.classList.add("suggestions-items", "white", "medium");
             listItem.style.cursor = "pointer";
-            listItem.setAttribute("onclick", "displayNames1('" + i + "')");
+            listItem.setAttribute("onclick", `displayNames1('${player.id}')`);
             //Display matched part in bold
-            let word = "<b>" + i.substr(0, input1.value.length) + "</b>";
-            word += i.substr(input1.value.length);
+            let word = `<b>${player.username.substr(0, input_value.length)}</b>`;
+            word += player.username.substr(input_value.length);
             //display the value in array
             listItem.innerHTML = word;
             document.querySelector(".suggestions1").appendChild(listItem);
@@ -65,21 +79,23 @@ input1.addEventListener("input", (e) => {
 });
 
 input2.addEventListener("input", (e) => {
-    //Initially remove all elements (so if user erases a letter or adds new letter then clean previous outputs)
+    /* interactive search for a player to add to a group chat */
     removeElements();
-    for (let i of sortedNames) {
+    const inputValue = input2.value.toLowerCase();
+    for (let player of sortedNames) {
+        const username = player.username.toLowerCase();
         //convert input to lowercase and compare with each string
-        if (group.includes(i)) {
+        if (group.includes(player.id)) {
             continue;
         }
-        if (i.toLowerCase().startsWith(input2.value.toLowerCase())) {
+        if (username.startsWith(inputValue)) {
             let listItem = document.createElement("li");
             listItem.classList.add("suggestions-items", "white", "medium");
             listItem.style.cursor = "pointer";
-            listItem.setAttribute("onclick", "displayNames2('" + i + "')");
+            listItem.setAttribute("onclick", `displayNames2('${player.id}')`);
             //Display matched part in bold
-            let word = "<b>" + i.substr(0, input2.value.length) + "</b>";
-            word += i.substr(input2.value.length);
+            let word = `<b>${player.username.substr(0, inputValue.length)}</b>`;
+            word += player.username.substr(inputValue.length);
             //display the value in array
             listItem.innerHTML = word;
             document.querySelector(".suggestions2").appendChild(listItem);
@@ -102,13 +118,15 @@ message_input.addEventListener("keydown", (e) => {
     }
 });
 
-function displayNames1(value) {
-    input1.value = value;
+function displayNames1(id) {
+    const username = sortedNames.find(player => player.id === id).username;
+    input1.value = username;
     removeElements();
 }
 
-function displayNames2(value) {
-    input2.value = value;
+function displayNames2(id) {
+    const username = sortedNames.find(player => player.id === id).username;
+    input2.value = username;
     removeElements();
     addPlayer();
 }
@@ -122,30 +140,38 @@ function removeElements() {
 }
 
 function addPlayer() {
-    let player = input2.value;
+    /* Add a player to the list of group chat members */
+    const inputUsername = input2.value;
+    const playerObj = sortedNames.find(player => player.username === inputUsername);
     //add player to the group members only if they actually exist
-    if (sortedNames.includes(player) && !group.includes(player)) {
-        group.push(player);
-        let groupMember = document.createElement("li");
-        groupMember.classList.add("group_member");
-        groupMember.style.cursor = "pointer";
-        groupMember.setAttribute("id", "groupMember_" + player); //so that they can be removed afterwards
-        groupMember.setAttribute("onclick", "removePlayer('" + player + "')");
-        groupMember.innerHTML = player;
-        document.querySelector(".group_members").appendChild(groupMember);
-        input2.value = "";
-    } else {
-        addError("This player is already in the list or doesn't exist");
+    if (playerObj === undefined) {
+        addError("This player does not exist");
+        return;
     }
+    if (group.some(memberId => memberId === playerObj.id)) {
+        addError("This player is already in the list");
+        return;
+    }
+    group.push(playerObj.id);
+    let groupMember = document.createElement("li");
+    groupMember.classList.add("group_member");
+    groupMember.style.cursor = "pointer";
+    groupMember.setAttribute("id", "groupMember_" + playerObj.id); //so that they can be removed afterwards
+    groupMember.setAttribute("onclick", `removePlayer('${playerObj.id}')`);
+    groupMember.innerHTML = playerObj.username;
+    document.querySelector(".group_members").appendChild(groupMember);
+    input2.value = "";
+    removeElements();
 }
 
-function removePlayer(name) {
-    //remove one of the group members
-    group = group.filter((i) => i != name);
-    document.getElementById("groupMember_" + name).remove();
+function removePlayer(id) {
+    /* Remove a player from the list of group chat members */
+    group = group.filter((i) => i != id);
+    document.getElementById("groupMember_" + id).remove();
 }
 
 function hide_disclaimer() {
+    /* Hide the chat disclaimer and send the "dont show again" information to the server */
     let checkbox = document.getElementById("dont_show_disclaimer")
     if (checkbox.checked) {
         fetch("/api/hide_chat_disclaimer")
@@ -156,31 +182,47 @@ function hide_disclaimer() {
     document.getElementById('disclaimer').classList.add('hidden');
 }
 
-function createChat() {
-    username = document.getElementById("add_chat_username").value
-    send_form("/api/create_chat", {
-        buddy_username: username,
-    }).then((response) => {
-        response.json().then((raw_data) => {
-            let response = raw_data["response"];
-            if (response == "success") {
-                retrieve_chats();
-                document.getElementById('add_chat').classList.add('hidden');
-            } else if (response == "cannotChatWithYourself") {
-                addError("Cannot create a chat with yourself");
-            } else if (response == "usernameIsWrong") {
-                addError("No Player with this username");
-            } else if (response == "chatAlreadyExist") {
-                addError("This chat already exists");
-            }
-        });
-    })
-        .catch((error) => {
-            console.error(`caught error ${error}`);
-        });
+function getIdByUsername(username) {
+    /* Get the player ID from its username */
+    for (let player of sortedNames) {
+        if (player.username === username) {
+            return player.id;
+        }
+    }
+    return null;
+}
+
+async function createChat() {
+    /* Create a chat with a player */
+    const username = document.getElementById("add_chat_username").value
+    const buddy_id = getIdByUsername(username)
+    if (buddy_id == null) {
+        addError("No Player with this username");
+        return;
+    }
+
+    try {
+        const response = await send_form("/api/create_chat", { buddy_id: buddy_id });
+        const raw_data = await response.json();
+        const responseMessage = raw_data["response"];
+
+        if (responseMessage === "success") {
+            retrieve_chats();
+            document.getElementById('add_chat').classList.add('hidden');
+        } else if (responseMessage === "cannotChatWithYourself") {
+            addError("Cannot create a chat with yourself");
+        } else if (responseMessage === "buddyIDDoesNotExist") {
+            addError("This player does not exist");
+        } else if (responseMessage === "chatAlreadyExist") {
+            addError("This chat already exists");
+        }
+    } catch (error) {
+        console.error(`caught error: ${error}`);
+    }
 }
 
 function createGroupChat() {
+    /* Create a group chat with the selected players */
     let title = document.getElementById("chat_title").value;
     send_form("/api/create_group_chat", {
         chat_title: title,
@@ -190,6 +232,7 @@ function createGroupChat() {
             let response = raw_data["response"];
             if (response == "success") {
                 retrieve_chats();
+                document.querySelector(".group_members").innerHTML = "";
                 document.getElementById('add_group_chat').classList.add('hidden');
                 group = [];
             } else if (response == "wrongTitleLength") {
@@ -207,6 +250,7 @@ function createGroupChat() {
 }
 
 function newMessage() {
+    /* Send a new message to the current chat */
     let message_field = document.getElementById("new_message");
     if (!current_chat_id) {
         addError("No chat has been selected")
@@ -228,6 +272,7 @@ function newMessage() {
 }
 
 function openChat(chatID) {
+    /* Open a chat and display its messages */
     current_chat_id = chatID;
     let html = ``;
     load_chats().then((chat_data) => {

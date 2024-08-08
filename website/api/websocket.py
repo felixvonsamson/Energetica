@@ -14,7 +14,7 @@ from website.database.player import Network, Player
 from website.game_engine import GameEngine
 from website.technology_effects import package_constructions_page_data
 from website.utils.assets import decrease_project_priority, pause_project, start_project
-from website.utils.chat import add_message, create_chat_2, create_group_chat_2, hide_chat_disclaimer
+from website.utils.chat import add_message, create_chat, create_group_chat, hide_chat_disclaimer
 from website.utils.misc import confirm_location
 from website.utils.network import create_network, join_network, leave_network
 
@@ -386,11 +386,11 @@ def rest_parse_request(engine, player: Player, ws, uuid, data):
             hide_chat_disclaimer(player)
         case "createChat":
             buddy_id = data["buddy_id"]
-            create_chat_2(player, buddy_id)
+            create_chat(player, buddy_id)
         case "createGroupChat":
             chat_name = data["chat_name"]
             participant_ids = data["participant_ids"]
-            create_group_chat_2(player, chat_name, participant_ids)
+            create_group_chat(player, chat_name, participant_ids)
         case "sendMessage":
             chat_id = data["chat_id"]
             message = data["message"]

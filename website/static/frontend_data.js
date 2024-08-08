@@ -88,7 +88,7 @@ function load_shipments() {
 }
 
 function retrieve_shipments() {
-    console.log("Feching shipments data from the server")
+    console.log("Fetching shipments data from the server")
     return fetch("/api/get_shipments")
         .then((response) => response.json())
         .then((raw_data) => {

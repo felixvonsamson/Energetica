@@ -9,6 +9,7 @@ from website.api import websocket
 from website.database.messages import Chat, Message
 from website.database.player import Player, PlayerUnreadMessages
 from website.game_engine import GameEngine
+from website.utils.misc import display_new_message
 
 
 def hide_chat_disclaimer(player):
@@ -31,11 +32,10 @@ def check_existing_chats(participants):
     return False
 
 
-def create_chat_2(player, buddy_id):
+def create_chat(player, buddy_id):
     """creates a chat with 2 players"""
     buddy = Player.query.get(buddy_id)
     if buddy is None:
-        # When create_chat calls create_chat_2, this branch is unreachable
         return {"response": "buddyIDDoesNotExist"}
     if buddy.id == player.id:
         return {"response": "cannotChatWithYourself"}
@@ -53,16 +53,7 @@ def create_chat_2(player, buddy_id):
     return {"response": "success"}
 
 
-def create_chat(player, buddy_username):
-    """creates a chat with 2 players"""
-    # TODO: change web frontend to send ID's, then deprecate this function
-    buddy = Player.query.filter_by(username=buddy_username).first()
-    if buddy is None:
-        return {"response": "usernameIsWrong"}
-    return create_chat_2(player, buddy.id)
-
-
-def create_group_chat_2(player, chat_name, participant_ids):
+def create_group_chat(player, chat_name, participant_ids):
     """
     Creates a group chat with specified name and participants
 
@@ -102,29 +93,6 @@ def create_group_chat_2(player, chat_name, participant_ids):
     return {"response": "success"}
 
 
-def create_group_chat(player, title, group):
-    """
-    Creates a group chat with specified name and participants
-
-    :param player: the Player object which requested the group chat creation
-
-    :param chat_name: a string for the name of the chat
-
-    :param participant_ids: a list of numbers corresponding to player ids
-
-    :return: '{"response": X}' where X can be
-     * "success" if all is well
-     * "wrongTitleLength" if the `chat_name` is too long or too short
-     * "groupTooSmall" if there are fewer than 3 participants (including player)
-     * "chatAlreadyExist" if there is an existing group chat with the same
-       participants
-    """
-    # TODO: change web frontend to send ID's, then deprecate this function
-    participants = [Player.query.filter_by(username=username).first() for username in group]
-    participant_ids = [participant.id for participant in participants]
-    return create_group_chat_2(player, chat_name=title, participant_ids=participant_ids)
-
-
 def add_message(player, message_text, chat_id):
     """This function is called when a player sends a message in a chat. It returns either success or an error."""
     engine: GameEngine = current_app.config["engine"]
@@ -149,5 +117,5 @@ def add_message(player, message_text, chat_id):
         player_read_message = PlayerUnreadMessages(player_id=participant.id, message_id=new_message.id)
         db.session.add(player_read_message)
     db.session.commit()
-    engine.display_new_message(new_message, chat)
+    display_new_message(engine, new_message, chat)
     return {"response": "success"}
