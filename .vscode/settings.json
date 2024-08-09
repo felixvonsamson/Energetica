@@ -1,23 +1,30 @@
 {
+    // General
     "editor.formatOnSave": true,
     "files.associations": {
         "*.jinja": "jinja-html",
         "*.js": "javascript"
     },
+    "editor.rulers": [ 80 ],
+    // Jinja
     "[jinja-html]": {
         "editor.wordWrapColumn": 120,
         "editor.defaultFormatter": "monosans.djlint",
+        "editor.rulers": [ 80, 120 ],
         "editor.formatOnSave": false,
-        "editor.rulers": [ 80, 120 ]
+        "djlint.enableLinting": true,
+        "djlint.profile": "jinja"
     },
+    "djlint.maxLineLength": 120,
+    // Javascfript
     "[javascript]": {
         "editor.wordWrapColumn": 120,
         "editor.rulers": [ 120 ]
     },
+    // Python
     "files.exclude": {
         "**/__pycache__": true
     },
-    "editor.rulers": [ 80 ],
     "[python]": {
         "editor.rulers": [ 120 ],
         "editor.codeActionsOnSave": {
@@ -25,6 +32,10 @@
         },
     },
     "pylint.args": [ "--max-line-length=120" ],
+    "python.analysis.autoImportCompletions": false,
+    // JSON
+    "json.format.keepLines": true,
+    // cSpell
     "cSpell.words": [
         "apscheduler",
         "backref",
@@ -75,7 +86,5 @@
         "werkzeug",
         "wght",
         "windspeed"
-    ],
-    "json.format.keepLines": true,
-    "python.analysis.autoImportCompletions": false
+    ]
 }
