@@ -123,7 +123,7 @@ function CO2_graph(s) {
                 if (evolution_rate < 0) {
                     sign = "";
                 }
-                s.text(sign + format_function(abs(evolution_rate)) + "/h", 132, 5);
+                s.text(sign + format_function(evolution_rate) + "/h", 132, 5);
 
                 s.pop();
             }

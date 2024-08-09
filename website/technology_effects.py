@@ -673,7 +673,7 @@ def package_functional_facilities(player: Player):
                 const_config_assets["carbon_capture"]["base_absorption_per_day"]
                 * const_config_assets["carbon_capture"]["absorption_factor"] ** level
                 * engine.data["current_climate_data"].get_co2()  # TODO: make this part be a client side computation
-                * 60
+                / 24
             )
 
     industry_level_including_ongoing_upgrades = (

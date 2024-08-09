@@ -518,7 +518,7 @@ const_config = {
             "base_construction_pollution": 250_000,
             "O&M_factor_per_day": 0.000_49,  # not used for now
             "base_power_consumption": 10_000_000,  # [W]
-            "base_absorption_per_day": 0.000_036,  # [fraction of atmospheric CO2 absorbed per in-game day]
+            "base_absorption_per_day": 0.000_025,  # [fraction of atmospheric CO2 absorbed per in-game day]
             "price_multiplier": 1.5,
             "absorption_factor": 1.55,
             "power_factor": 1.5,

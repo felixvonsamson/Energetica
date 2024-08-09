@@ -48,6 +48,10 @@ function format_upgrade_mass(value1, value2) {
     return general_upgrade_format(value1, value2, _mass_units);
 }
 
+function format_upgrade_mass_rate(value1, value2) {
+    return general_upgrade_format(value1 * 1000, value2 * 1000, _mass_rate_units);
+}
+
 // Price :
 function format_money(price, coin = "<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>") {
     const units = [coin, "k" + coin, "M" + coin, "Md" + coin];
