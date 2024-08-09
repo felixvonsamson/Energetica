@@ -286,7 +286,7 @@
                 <b>New Profile Page</b>: Now accessible directly from the navbar. Tables for Power, Storage, and Extraction facilities list all active instances, with options to upgrade or dismantle specific instances for a cost.
             </li>
             <li class="li_padding">
-                <b>CO2 Absorbtion</b>: Servers start with 5Mt of CO2 in the atmosphere. The carbon capture rate is now proportional to the atmospheric CO2 amount, similar to extraction facilities.
+                <b>CO<sub>2</sub> Absorbtion</b>: Servers start with 5Mt of CO<sub>2</sub> in the atmosphere. The carbon capture rate is now proportional to the atmospheric CO<sub>2</sub> amount, similar to extraction facilities.
             </li>
             <li class="li_padding">
                 <b>Construction Power</b>: Remains constant during the construction period.
@@ -385,6 +385,21 @@
         <ul>
             <li class="li_padding">
                 <b>In-game Time</b>: One in-game day is not equal to one real day anymore. The in-game time now runs 8 times faster than real time. Additonally, one in-game year is now 72 days long, so one in-game month has 6 days. All times in the game will now be displayed as in-game times and in some cases the equivalent real time might be indicated in parenthesis. For more information, see the <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">wiki</a>.
+            </li>
+            <li class="li_padding">
+                <b>Climate Change</b>: 
+                <ul>
+                    <li><b>In-game Climate</b>: The servers global average temperature (GAT) is now modelled. It evolves with a seasonal and a random component and is also affected by the CO<sub>2</sub> consentration of the server.</sub></li>
+                    <li><b>Climate events</b>: 5 natural events have been introduced that have various negative effects and their probability of occurence increase with unstable climate conditions.</li>
+                    <li><b>New Graphs</b>: Two new graphs have been added in the emissions overview page. One shows the CO<sub>2</sub> concentration in the atmosphere and the other the global average temperature and the temperature anomaly.</li>
+                    <li>Read the <a href="{{ url_for('wiki.render_template_wiki', template_name='climate_effects') }}">Climate Change</a> section in the wiki for more information.</li>
+                </ul>
+            </li>
+            <li class="li_padding">
+                <b>General Chat</b>: A general chat has been added to the game where all players are added automatically.
+            </li>
+            <li class="li_padding">
+                <b>Restructured Wiki</b>: The wiki has been restructured in different pages for better readability. The wiki is now also accessible from the login page and doesn't require to be signed in to be read.
             </li>
         </ul>
     </div>

@@ -229,7 +229,7 @@
                     </td>
                   </tr>
                   <tr>
-                    <td>CO2 emissions</td>
+                    <td>CO<sub>2</sub> emissions</td>
                     <td id="emissons" class="txt_center">
                       -{{ ((const_data["efficiency_factor"]-1)/const_data["efficiency_factor"]*100)|round(1) }}%
                     </td>
@@ -288,7 +288,7 @@
                 {% endif %}
                 {% if "pollution_factor" in const_data %}
                   <tr>
-                    <td>CO2 emissions</td>
+                    <td>CO<sub>2</sub> emissions</td>
                     <td class="txt_center">
                       +{{ (100*const_data["pollution_factor"]/(1+const_data["pollution_factor"]*user[facility]))
                       |round(0) |int }}%

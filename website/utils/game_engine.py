@@ -163,6 +163,8 @@ def check_climate_events(engine):
     if real_temp > 14:
         wildfire_probability += climate_events["wildfire"]["base_probability"] / ticks_per_day * (real_temp - 14) ** 2
     if random.random() < wildfire_probability:
+        # releasing 10 kt of CO2 in the atmosphere
+        engine.data["current_climate_data"].add("CO2", 10e6)
         # the tile for the wildfire is chosen based on a normal distribution around the equator
         random_latitude = max(-10, min(10, round(np.random.normal(0, 5.5))))
         latitude_tiles = Hex.query.filter(Hex.r == random_latitude).all()

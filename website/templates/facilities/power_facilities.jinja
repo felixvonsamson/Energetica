@@ -149,8 +149,8 @@
             <span class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
               <strong></strong>
-              <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO2";</script>
-              <span class="popup_info small">CO2 emissions</span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO<sub>2</sub>";</script>
+              <span class="popup_info small">CO<sub>2</sub> emissions</span>
             </span>
           </div>
         </div>
@@ -187,8 +187,8 @@
             <span class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
               <strong></strong>
-              <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO2";</script>
-              <span class="popup_info small">CO2 emissions</span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO<sub>2</sub>";</script>
+              <span class="popup_info small">CO<sub>2</sub> emissions</span>
             </span>
           </div>
         </div>
@@ -252,7 +252,7 @@
             {# CO2 Emssions #}
             {% if facility_data.pollution is defined %}
               <tr>
-                <td>CO2 emissions</td>
+                <td>CO<sub>2</sub> emissions</td>
                 <td class="txt_center">
                   <strong></strong>
                   <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.pollution }}) + "/MWh";</script>

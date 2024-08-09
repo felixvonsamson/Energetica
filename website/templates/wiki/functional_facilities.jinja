@@ -82,13 +82,37 @@
     </table>
   </div>
   </p>
-  <h2>Carbon Capture</h2>
+  <h2 id="Carbon_Capture">Carbon Capture</h2>
   <p>
-    The carbon capture facility consumes electricity to extract CO2 from the atmosphere and store it underground. 
-    With each level upgrade, CO2 absorption increase by {{ ((const_data.carbon_capture["absorption_factor"]-1)*100) | round | int }}% 
+    The carbon capture facility consumes electricity to extract CO<sub>2</sub> from the atmosphere and store it underground. 
+    With each level upgrade, CO<sub>2</sub> absorption increase by {{ ((const_data.carbon_capture["absorption_factor"]-1)*100) | round | int }}% 
     and power consumption increases by {{ ((const_data.carbon_capture["power_factor"]-1)*100) | round | int }}%.
-    Contrary to the industry, CO2 absorption is more efficient with higher carbon capture levels. 
+    Contrary to the industry, CO<sub>2</sub> absorption is more efficient with higher carbon capture levels.
+    The absorbtion rate of CO<sub>2</sub> is proportional to the amount of CO<sub>2</sub> in the atmosphere witch make it harder to absorb CO<sub>2</sub> 
+    when its concentration is low.
+    The CO<sub>2</sub> absorbtion rate and power consumption with carbon capture levels higher than 0 is calculated as follows: <br>
+    
   </p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\( ar_{CO_2} = ar_{base} \times q_{CO_2,atm} \times 1.55^{CC}  \) 
+    &emsp;&emsp;&emsp; \( P_{CC} = P_{base} \times 1.5^{CC} \)<br>
+    with:
+    <ul style="list-style: none;"><li>
+      \(ar_{CO_2}\) : CO<sub>2</sub> absorption rate in kg/h
+    </li><li>
+      \(ar_{base}\) : base value for fraction of CO<sub>2</sub> that can be absorbed from the atmosphere : {{ const_data.carbon_capture["base_absorption_per_day"] / 24 }}/h
+    </li><li>
+      \(q_{CO_2,atm}\) : amount of CO<sub>2</sub> in the atmosphere in kg
+    </li><li>
+      \(CC\) : level of <a href="{{ url_for('views.functional_facilities', _anchor='Carbon capture') }}">Carbon Capture</a>
+    </li><li>
+      \(P_{CC}\) : power consumed by carbon capture
+    </li><li>
+      \(P_{base}\) : base power consumption of carbon capture : <span></span>
+      <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ const_data.carbon_capture["base_power_consumption"] }});</script>
+    </li>
+    </ul>
+  </li></ul>
 
 </div>
 

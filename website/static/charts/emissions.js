@@ -347,7 +347,7 @@ function climate_graph(s) {
                 s.rect(0, 0, 160, 17);
                 s.fill(0);
                 s.textAlign(LEFT, CENTER);
-                s.text("Climate change", 20, 5);
+                s.text("Temp. anomaly", 20, 5);
                 s.textAlign(CENTER, CENTER);
                 sign = "+";
                 if (s.active_curve[t_view] - s.ref_curve[t_view] < 0) {

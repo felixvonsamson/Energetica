@@ -69,7 +69,7 @@ def add_asset(player_id, construction_id):
                         (
                             "Scientists have discovered the greenhouse effect and have shown that climate change "
                             "increases the risks of natural and social catastrophes. You can now monitor your "
-                            "emissions of CO2 in the <a href='/production_overview/emissions'>emissions graph</a>."
+                            "emissions of CO<sub>2</sub> in the <a href='/production_overview/emissions'>emissions graph</a>."
                         ),
                         player,
                     )

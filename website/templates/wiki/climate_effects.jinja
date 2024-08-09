@@ -6,8 +6,596 @@
 
 <div class="medium margin-large">
 
-  <p>Not implemented in the game yet...</p>
+  <p>
+    Once a player unlocks the climate change advancement (Research chemistry lvl 1), they will have acess to the page 
+    <a href="{{ url_for('overviews.emissions') }}">Emissions</a> in the production overviews. There they will see the 
+    servers CO<sub>2</sub> concentration, the servers climate and their personal emissions.
+  </p>
 
-</div>
+  <h2>CO<sub>2</sub> Emissions</h2>
+  <p>
+    Sources of CO<sub>2</sub> emissions are constructions and all facilities that consume fuel plus the steam engine (controllable 
+    facilities). Aditionally, the functional facility <a href="{{ url_for('wiki.render_template_wiki', template_name='functional_facilities', _anchor='Carbon_Capture') }}">Carbon Capture</a>
+    can absorb CO<sub>2</sub> from the atmosphere and store it. 
+  </p>
+  <p>
+    The atmosphere is shared between all players and the CO<sub>2</sub> emitted by all players will increase the servers CO<sub>2</sub> concentration.
+    The reference value for the servers "natural" CO<sub>2</sub> concentration is <span class="hover_info">300 ppm
+    <span class="popup_info small">parts per million</span></span> wich corresponds to a base value of 40 Mt of CO<sub>2</sub> in the atmosphere.
+  </p>
+
+  <h2>Climate</h2>
+  <p>
+    The servers climate is represented by the global average temperature (GAT). The GAT has a natural seasonal variation 
+    due to the asymetric distribution of land and water on the planet. Due to the important role of CO<sub>2</sub> in the
+    greenhouse effect, the servers climate will be affected by the servers CO<sub>2</sub> concentration. 
+  </p>
+  <p>
+    The so called 
+    <i>global temperature anomaly</i> is the difference between the servers GAT and the reference GAT. This temperature 
+    anomaly has a random component due to natural climate variability and a deterministic component proportional to the 
+    servers CO<sub>2</sub> concentration. The atmosphere will warm up by one degree for every <span class="hover_info">100 ppm
+    <span class="popup_info small">parts per million</span></span> of additional CO<sub>2</sub> concentration with some 
+    delay.
+  </p>
+
+  <h2>Climate Events</h2>
+  <p>
+    Climate events have a low chance of occuring naturally every game tick however, the probability of their occurence 
+    increases with climate change. Climate events are always negative and can have a wide range of consequences. 
+  </p>
+
+  <h3>Heatwaves</h3>
+
+  <p>
+    Heatwaves have a higher chance of occuring with higher global temperatures. They have a big impact on the population, 
+    especially the elderly and the sick. Heatwaves can also have a negative impact on battery storage technologies and 
+    can cause overheating and in some cases permanent damage.
+  </p>
+
+  <div class="flex-col">
+    <table class="table bone">
+      <tr>
+        <th>Rcovery time</th>
+        <td>3 days</td>
+      </tr>
+      <tr>
+        <th>Rcovery cost</th>
+        <td>25% of current industry revenues</td>
+      </tr>
+      <tr>
+        <th>Affected tiles</th>
+        <td>7 (1 and its 6 neigbours)</td>
+      </tr>
+      <tr>
+        <th>Destruction<br>chances</th>
+        <td>
+            Lithium-ion batteries: 5%<br>
+            Solid state batteries: 2%
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <p>
+    The probability of the occurence of a heatwave is affected by both the global temperature anomaly (the bigger the 
+    deviation the higher the risk) and the servers current GAT (the higher the temperature the higher the risk). The 
+    following table shows the expected occurence of heatwaves per 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    Reference GAT and the temperature anomaly.
+  </p>
+
+  <div class="flex-center align-items-center">
+    <div class="table_legend_left">
+      <b style="transform: translate(-50%, -70%); position: absolute;">Temperature Anomaly</b>
+    </div>
+    <table class="table bone txt_center">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="padding" colspan="6">Reference Temperature</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th></th>
+          <th>13°C</th>
+          <th>13.5°C</th>
+          <th>14°C</th>
+          <th>14.5°C</th>
+          <th>15°C</th>
+          <th>15.5°C</th>
+        </tr>
+        <tr>
+          <th>-4°C</th>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-red">2.80</td>
+        </tr>
+        <tr>
+          <th>-3°C</th>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-red">1.58</td>
+        </tr>
+        <tr>
+          <th>-2°C</th>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td>0.70</td>
+        </tr>
+        <tr>
+          <th>-1°C</th>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td>0.18</td>
+        </tr>
+        <tr>
+          <th>0°C</th>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td>0.09</td>
+        </tr>
+        <tr>
+          <th>+1°C</th>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td>0.09</td>
+          <td>0.35</td>
+          <td>0.96</td>
+        </tr>
+        <tr>
+          <th>+2°C</th>
+          <td class="txt-green">0</td>
+          <td>0.09</td>
+          <td>0.35</td>
+          <td>0.79</td>
+          <td>1.40</td>
+          <td class="txt-red">2.89</td>
+        </tr>
+        <tr>
+          <th>+3°C</th>
+          <td>0.35</td>
+          <td>0.79</td>
+          <td>1.40</td>
+          <td class="txt-red">2.19</td>
+          <td class="txt-red">3.15</td>
+          <td class="txt-red">5.86</td>
+        </tr>
+        <tr>
+          <th>+4°C</th>
+          <td>1.40</td>
+          <td class="txt-red">2.19</td>
+          <td class="txt-red">3.15</td>
+          <td class="txt-red">4.29</td>
+          <td class="txt-red">5.60</td>
+          <td class="txt-red">9.89</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    When a heatwave occurs, the tile it will affect (with it's neigbours) is chosen randomly following a normal 
+    distribution around the equator. This means that the risk is higher in tiles near the equator and almost zero in 
+    tiles near the poles. The following figure shows the probability distribution overlayed on the map.
+  </p>
+
+  [INSERT FIGURE HERE]
+
+  <h3>Coldwaves</h3>
+
+  <p>
+    Coldwaves have a higher chance of occuring with lower global temperatures. They have a big impact on the population, 
+    especially the elderly.
+  </p>
+
+  <div class="flex-col">
+    <table class="table bone">
+      <tr>
+        <th>Rcovery time</th>
+        <td>3 days</td>
+      </tr>
+      <tr>
+        <th>Rcovery cost</th>
+        <td>25% of current industry revenues</td>
+      </tr>
+      <tr>
+        <th>Affected tiles</th>
+        <td>7 (1 and its 6 neigbours)</td>
+      </tr>
+      <tr>
+        <th>Destruction<br>chances</th>
+        <td>none</td>
+    </table>
+  </div>
+
+  <p>
+    The probability of the occurence of a coldwave is affected by both the global temperature anomaly (the bigger the 
+    deviation the higher the risk) and the servers current GAT (the lower the temperature the higher the risk). The 
+    following table shows the expected occurence of coldwaves per 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    Reference GAT and the temperature anomaly.
+  </p>
+
+  <div class="flex-center align-items-center">
+    <div class="table_legend_left">
+      <b style="transform: translate(-50%, -70%); position: absolute;">Temperature Anomaly</b>
+    </div>
+    <table class="table bone txt_center">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="padding" colspan="6">Reference Temperature</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th></th>
+          <th>11.5°C</th>
+          <th>12°C</th>
+          <th>12.5°C</th>
+          <th>13°C</th>
+          <th>13.5°C</th>
+          <th>14°C</th>
+        </tr>
+        <tr>
+          <th>-4°C</th>
+          <td class="txt-red">14.35</td>
+          <td class="txt-red">9.89</td>
+          <td class="txt-red">5.60</td>
+          <td class="txt-red">4.29</td>
+          <td class="txt-red">3.15</td>
+          <td class="txt-red">2.19</td>
+        </tr>
+        <tr>
+          <th>-3°C</th>
+          <td class="txt-red">8.75</td>
+          <td class="txt-red">5.86</td>
+          <td class="txt-red">3.15</td>
+          <td class="txt-red">2.19</td>
+          <td>1.40</td>
+          <td>0.79</td>
+        </tr>
+        <tr>
+          <th>-2°C</th>
+          <td class="txt-red">4.55</td>
+          <td class="txt-red">2.89</td>
+          <td>1.40</td>
+          <td>0.79</td>
+          <td>0.35</td>
+          <td>0.09</td>
+        </tr>
+        <tr>
+          <th>-1°C</th>
+          <td class="txt-red">1.75</td>
+          <td>0.96</td>
+          <td>0.35</td>
+          <td>0.09</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+        </tr>
+        <tr>
+          <th>0°C</th>
+          <td>0.35</td>
+          <td>0.09</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+        </tr>
+        <tr>
+          <th>+1°C</th>
+          <td>0.35</td>
+          <td>0.18</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+        </tr>
+        <tr>
+          <th>+2°C</th>
+          <td>1.40</td>
+          <td>0.70</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+        </tr>
+        <tr>
+          <th>+3°C</th>
+          <td class="txt-red">3.15</td>
+          <td class="txt-red">1.58</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+        </tr>
+        <tr>
+          <th>+4°C</th>
+          <td class="txt-red">5.60</td>
+          <td class="txt-red">2.80</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    When a coldwave occurs, the tile it will affect (with it's neigbours) is chosen randomly following a normal 
+    distribution around the poles. This means that the risk is higher in tiles near the poles and almost zero in 
+    tiles near the equator. The following figure shows the probability distribution overlayed on the map.
+  </p>
+
+  [INSERT FIGURE HERE]
+
+  <h3>Wildfire</h3>
+
+  <p>
+    Wildfires have a higher chance of occuring with higher global temperatures. They can damage facilities near forests 
+    and have a chance of cause an important reduction of the industries productivity. In addition to that, wildfires 
+    will release important amounts of CO<sub>2</sub> in the atmosphere (10 kt).
+  </p>
+
+  <div class="flex-col">
+    <table class="table bone">
+      <tr>
+        <th>Rcovery time</th>
+        <td>3 days</td>
+      </tr>
+      <tr>
+        <th>Rcovery cost</th>
+        <td>30% of current industry revenues</td>
+      </tr>
+      <tr>
+        <th>Affected tiles</th>
+        <td>7 (1 and its 6 neigbours)</td>
+      </tr>
+      <tr>
+        <th>Destruction<br>chances</th>
+        <td>
+          Industry downgrade: 30%<br>
+          Steam engine: 2%<br>
+          Watermill: 5%<br>
+          Windmill: 10%<br>
+          Onshore wind turbine: 5%<br>          
+          Coal burner: 2%<br>
+          Oil burner: 2%<br>
+          Gas burner: 2%<br>
+          Combined cycle: 2%<br>
+          Concentrated solar power: 2%<br>
+          Photovoltaics: 5%
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <p>
+    The probability of the occurence of a wildfire is affected by the servers current GAT, the higher the temperature 
+    the higher the risk. The following table shows the expected occurence of wildfires per 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    Reference GAT and the temperature anomaly.
+  </p>
+
+  <div class="flex-center align-items-center">
+    <div class="table_legend_left">
+      <b style="transform: translate(-50%, -70%); position: absolute;">Temperature Anomaly</b>
+    </div>
+    <table class="table bone txt_center">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="padding" colspan="6">Reference Temperature</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th></th>
+          <th>13°C</th>
+          <th>13.5°C</th>
+          <th>14°C</th>
+          <th>14.5°C</th>
+          <th>15°C</th>
+          <th>15.5°C</th>
+        </tr>
+        <tr>
+          <th>-2°C</th>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+        </tr>
+        <tr>
+          <th>-1°C</th>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td>0.06</td>
+        </tr>
+        <tr>
+          <th>0°C</th>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td class="txt-green">0</td>
+          <td>0.06</td>
+          <td>0.25</td>
+          <td>0.56</td>
+        </tr>
+        <tr>
+          <th>+1°C</th>
+          <td class="txt-green">0</td>
+          <td>0.06</td>
+          <td>0.25</td>
+          <td>0.56</td>
+          <td>1.00</td>
+          <td class="txt-red">1.56</td>
+        </tr>
+        <tr>
+          <th>+2°C</th>
+          <td>0.25</td>
+          <td>0.56</td>
+          <td>1.00</td>
+          <td class="txt-red">1.56</td>
+          <td class="txt-red">2.25</td>
+          <td class="txt-red">3.06</td>
+        </tr>
+        <tr>
+          <th>+3°C</th>
+          <td>1.00</td>
+          <td class="txt-red">1.56</td>
+          <td class="txt-red">2.25</td>
+          <td class="txt-red">3.06</td>
+          <td class="txt-red">4.00</td>
+          <td class="txt-red">5.06</td>
+        </tr>
+        <tr>
+          <th>+4°C</th>
+          <td class="txt-red">2.25</td>
+          <td class="txt-red">3.06</td>
+          <td class="txt-red">4.00</td>
+          <td class="txt-red">5.06</td>
+          <td class="txt-red">6.25</td>
+          <td class="txt-red">7.56</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    When a wildfire occurs, the tile it will affect (with it's neigbours) is chosen randomly following a normal 
+    distribution around the equator. This means that the risk is higher in tiles near the equator and lower in
+    tiles near the poles. The following figure shows the probability distribution overlayed on the map.
+  </p>
+
+  [INSERT FIGURE HERE]
+
+  <h3>Flood</h3>
+
+  <p>
+    Floods can only occur in tiles with a hydro potential higher than 20% and have a higher chance of occuring with 
+    higher global temperatures anomaly. They can damage facilities near rivers and have a chance of cause an important 
+    reduction of the industries productivity. Floods might destroy water dams and if this happens, the flood will be 
+    propagated to the downstream tiles.
+  </p>
+
+  <div class="flex-col">
+    <table class="table bone">
+      <tr>
+        <th>Rcovery time</th>
+        <td>6 days</td>
+      </tr>
+      <tr>
+        <th>Rcovery cost</th>
+        <td>60% of current industry revenues</td>
+      </tr>
+      <tr>
+        <th>Affected tiles</th>
+        <td>1</td>
+      </tr>
+      <tr>
+        <th>Destruction<br>chances</th>
+        <td>
+          Industry downgrade: 50%<br>
+          Watermill: 60%<br>
+          Small water dam: 5%<br>
+          Large water dam: 2%<br>
+          Steam engine: 5%<br>
+          Coal burner: 3%<br>
+          Oil burner: 3%<br>
+          Gas burner: 3%<br>
+          Combined cycle: 2%<br>
+          Nuclear reactor: 1%<br>
+          4th generation nuclear: 0.5%<br>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <p>
+    The probability of the occurence of a flood is affected by the servers current temperature anomaly, the higher the
+    deviation the higher the risk. The following graph shows the expected occurence of floods per 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    temperature anomaly.
+  </p>
+
+  [INSERT GRAPH HERE]
+
+  <p>
+    When a flood occurs, the tile it will affect is chosen randomly among the tiles with a hydro potential higher than 
+    20%.
+  </p>
+
+  <h3>Huricane</h3>
+
+  <p>
+    The huricane is the most destructive climate event. It can ocurr anywhere on the map and will affect a large area.
+    Huricanes can destroy facilities and have a high chance of cause an important reduction of the industries 
+    productivity.
+  </p>
+
+  <div class="flex-col">
+    <table class="table bone">
+      <tr>
+        <th>Rcovery time</th>
+        <td>9 days</td>
+      </tr>
+      <tr>
+        <th>Rcovery cost</th>
+        <td>80% of current industry revenues</td>
+      </tr>
+      <tr>
+        <th>Affected tiles</th>
+        <td>19 (a radius of 3 tiles)</td>
+      </tr>
+      <tr>
+        <th>Destruction<br>chances</th>
+        <td>
+          Industry downgrade: 90%<br>
+          windmill: 50%<br>
+          Onshore wind turbine: 30%<br>
+          Offshore wind turbine: 20%<br>
+          Photovoltaics: 10%<br>
+          Concentrated solar power: 15%<br>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <p>
+    The probability of the occurence of a huricane is affected by the servers current temperature anomaly, the higher the
+    deviation the higher the risk. The following graph shows the expected occurence of huricanes per 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    temperature anomaly.
+  </p>
+
+  [INSERT GRAPH HERE]
+
+  <p>
+    When a huricane occurs, the tile it will affect is chosen randomly among all tiles.
+  </p>
+
 
 {% endblock wiki_content %}
