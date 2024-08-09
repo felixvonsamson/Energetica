@@ -12,7 +12,16 @@
     servers CO<sub>2</sub> concentration, the servers climate and their personal emissions.
   </p>
 
-  <h2>CO<sub>2</sub> Emissions</h2>
+  <div class="txt_center margin"><strong>Quick links:</strong></div>
+  <div class="navigation medium">
+    <a href="#heatwave" class="nav-button">Heatwave</a>
+    <a href="#coldwave" class="nav-button">Coldwave</a>
+    <a href="#wildfire" class="nav-button">Wildfire</a>
+    <a href="#flood" class="nav-button">Flood</a>
+    <a href="#huricane" class="nav-button">Huricane</a>
+  </div>
+
+  <h2 id="co2_emissions">CO<sub>2</sub> Emissions</h2>
   <p>
     Sources of CO<sub>2</sub> emissions are constructions and all facilities that consume fuel plus the steam engine (controllable 
     facilities). Aditionally, the functional facility <a href="{{ url_for('wiki.render_template_wiki', template_name='functional_facilities', _anchor='Carbon_Capture') }}">Carbon Capture</a>
@@ -24,7 +33,7 @@
     <span class="popup_info small">parts per million</span></span> wich corresponds to a base value of 40 Mt of CO<sub>2</sub> in the atmosphere.
   </p>
 
-  <h2>Climate</h2>
+  <h2 id="climate">Climate</h2>
   <p>
     The servers climate is represented by the global average temperature (GAT). The GAT has a natural seasonal variation 
     due to the asymetric distribution of land and water on the planet. Due to the important role of CO<sub>2</sub> in the
@@ -39,13 +48,13 @@
     delay.
   </p>
 
-  <h2>Climate Events</h2>
+  <h2 id="climate_events">Climate Events</h2>
   <p>
     Climate events have a low chance of occuring naturally every game tick however, the probability of their occurence 
     increases with climate change. Climate events are always negative and can have a wide range of consequences. 
   </p>
 
-  <h3>Heatwaves</h3>
+  <h3 id="heatwave">Heatwave</h3>
 
   <p>
     Heatwaves have a higher chance of occuring with higher global temperatures. They have a big impact on the population, 
@@ -199,7 +208,7 @@
 
   [INSERT FIGURE HERE]
 
-  <h3>Coldwaves</h3>
+  <h3 id="coldwave">Coldwave</h3>
 
   <p>
     Coldwaves have a higher chance of occuring with lower global temperatures. They have a big impact on the population, 
@@ -348,7 +357,7 @@
 
   [INSERT FIGURE HERE]
 
-  <h3>Wildfire</h3>
+  <h3 id="wildfire">Wildfire</h3>
 
   <p>
     Wildfires have a higher chance of occuring with higher global temperatures. They can damage facilities near forests 
@@ -492,7 +501,7 @@
 
   [INSERT FIGURE HERE]
 
-  <h3>Flood</h3>
+  <h3 id="flood">Flood</h3>
 
   <p>
     Floods can only occur in tiles with a hydro potential higher than 20% and have a higher chance of occuring with 
@@ -548,7 +557,7 @@
     20%.
   </p>
 
-  <h3>Huricane</h3>
+  <h3 id="huricane">Huricane</h3>
 
   <p>
     The huricane is the most destructive climate event. It can ocurr anywhere on the map and will affect a large area.
