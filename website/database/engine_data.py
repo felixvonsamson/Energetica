@@ -210,6 +210,36 @@ class CircularBufferPlayer:
         return result
 
 
+class CumulativeEmissionsData:
+    """
+    This class stores the cumulative emissions of all facilities of a player
+    """
+
+    def __init__(self):
+        self._data = {
+            "steam_engine": 0.0,
+            "construction": 0.0,
+        }
+
+    def add(self, facility, value):
+        """Adds a value to the data"""
+        self._data[facility] += value
+
+    def new_category(self, facility):
+        """Adds a new category to the data"""
+        if facility not in self._data:
+            self._data[facility] = 0.0
+
+    def __getitem__(self, facility):
+        if facility not in self._data:
+            return None
+        return self._data[facility]
+
+    def get_all(self):
+        """Returns the data"""
+        return self._data
+
+
 class CircularBufferNetwork:
     """Class that stores the active data of a Network"""
 

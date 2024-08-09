@@ -1431,7 +1431,7 @@ function fetch_temporal_network_data() {
             import_overview_p5.render_graph();
             temporal_imports_p5.render_graph();
         });
-        load_chart_data((network = true)).then((raw_chart_data) => {
+        load_chart_data("network_data").then((raw_chart_data) => {
             Object.keys(raw_chart_data).forEach((key) => {
                 Object.keys(raw_chart_data[key]).forEach((subkey) => {
                     temporal_data[key][subkey] = {};

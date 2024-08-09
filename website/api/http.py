@@ -197,12 +197,15 @@ def get_chart_data():
         climate_data = pickle.load(file)
     concat_slices(climate_data, current_climate_data)
 
+    cumulative_emissions = g.engine.data["player_cumul_emissions"][current_user.id].get_all()
+
     return jsonify(
         {
             "total_t": total_t,
             "data": data,
             "network_data": network_data,
             "climate_data": climate_data,
+            "cumulative_emissions": cumulative_emissions,
         }
     )
 

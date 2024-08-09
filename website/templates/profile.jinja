@@ -215,7 +215,7 @@
         <tr>
           <td>Emissions</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.emissions }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.calculate_net_emissions() }});</script>
         </tr>
         <tr>
           <td>Captured CO2</td>

@@ -119,6 +119,7 @@ class GameEngine(object):
 
         # All data for the current day will be stored here :
         self.data["player_capacities"] = {}
+        self.data["player_cumul_emissions"] = {}
         self.data["network_capacities"] = {}
         self.data["current_data"] = {}
         self.data["network_data"] = {}

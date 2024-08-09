@@ -29,8 +29,13 @@
         <span class="medium">(affected by all players)</span>
     </div>
     <div id="CO2_graph_sketch" class="bone"></div>
+    <div id="ppm_legend" class="flex-col bone small padding" style="margin-top:-12px;">‰ = parts per thousand &emsp;&emsp;&emsp; ppm = parts per million &emsp;&emsp;&emsp; ppb = parts per billion</div>
 
     <div class="flex-space-between margin" style="flex-wrap:wrap; flex">
+        <div class="flex-center">
+            <button id="relative_co2_button_absolute" class="graph_button small left selected" onclick="change_relative_co2('absolute')">absolute</button>
+            <button id="relative_co2_button_relative" class="graph_button small right" onclick="change_relative_co2('relative')">relative</button>
+        </div>
         <div class="flex-center">
             <button id="concentration_button_concentration" class="graph_button small left selected" onclick="change_concentration('concentration')">concentration</button>
             <button id="concentration_button_quantitiy" class="graph_button small right" onclick="change_concentration('quantitiy')">quantitiy</button>
@@ -54,6 +59,10 @@
         <div class="flex-center">
             <button id="percent_button_normal" class="graph_button small left selected" onclick="change_percent('normal')">normal</button>
             <button id="percent_button_percent" class="graph_button small right" onclick="change_percent('percent')">percent</button>
+        </div>
+        <div class="flex-center">
+            <button id="cumulative_button_rates" class="graph_button small left selected" onclick="change_cumulative('rates')">rates</button>
+            <button id="cumulative_button_cumulative" class="graph_button small right" onclick="change_cumulative('cumulative')">cumulative</button>
         </div>
     </div>
     <div class="flex-center margin">

@@ -116,7 +116,6 @@ class Player(db.Model, UserMixin):
 
     # player progression data :
     xp = db.Column(db.Integer, default=0)
-    emissions = db.Column(db.Float, default=0)
     average_revenues = db.Column(db.Float, default=0)
     max_power_consumption = db.Column(db.Float, default=0)
     max_energy_stored = db.Column(db.Float, default=0)
@@ -335,6 +334,7 @@ class Player(db.Model, UserMixin):
                 "total_t": engine.data["total_t"],
                 "chart_values": new_values,
                 "climate_values": engine.data["current_climate_data"].get_last_data(),
+                "cumulative_emissions": engine.data["player_cumul_emissions"][self.id].get_all(),
                 "money": self.money,
             },
         )
@@ -356,6 +356,14 @@ class Player(db.Model, UserMixin):
                 )
             except WebPushException as ex:
                 print(f"Failed to send notification: {repr(ex)}")
+
+    def calculate_net_emissions(self):
+        """Calculates the net emissions of the player"""
+        cumulative_emissions = current_app.config["engine"].data["player_cumul_emissions"][self.id].get_all()
+        net_emissions = 0
+        for value in cumulative_emissions.values():
+            net_emissions += value
+        return net_emissions
 
     # prints out the object as a sting with the players username for debugging
     def __repr__(self):
@@ -392,7 +400,7 @@ class Player(db.Model, UserMixin):
                 "max_power_consumption": player.max_power_consumption,
                 "total_technology_levels": player.total_technologies,
                 "xp": player.xp,
-                "co2_emissions": player.emissions,
+                "co2_emissions": player.calculate_net_emissions(),
             }
             for player in players
         }

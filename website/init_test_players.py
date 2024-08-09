@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash
 from website import technology_effects
 
 from . import db
-from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer
+from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer, CumulativeEmissionsData
 from .database.map import Hex
 from .database.messages import Chat
 from .database.player import Network, Player
@@ -179,6 +179,7 @@ def create_player(engine, username, password):
         db.session.commit()
         engine.data["current_data"][new_player.id] = CircularBufferPlayer()
         engine.data["player_capacities"][new_player.id] = CapacityData()
+        engine.data["player_cumul_emissions"][new_player.id] = CumulativeEmissionsData()
         add_player_to_data(engine, new_player)
         init_table(new_player.id)
         db.session.commit()

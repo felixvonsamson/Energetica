@@ -86,6 +86,8 @@ socket.on("new_values", function (changes) {
         integrate_new_values(chart_data, changes.chart_values);
         sessionStorage.setItem("chart_data", JSON.stringify(chart_data));
 
+        sessionStorage.setItem("cumulative_emissions", JSON.stringify(changes.cumulative_emissions));
+
         if (typeof fetch_graph_data === "function") {
             fetch_graph_data();
         }

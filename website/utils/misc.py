@@ -11,7 +11,7 @@ from flask import flash
 
 import website.api.websocket as websocket
 from website import db
-from website.database.engine_data import CapacityData, CircularBufferPlayer
+from website.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData
 from website.database.messages import Chat, Notification
 from website.database.player import Network, Player
 from website.database.player_assets import ActiveFacility
@@ -101,6 +101,7 @@ def add_player_to_data(engine, user):
     """Helper function to add a new player to the engine data"""
     engine.data["current_data"][user.id] = CircularBufferPlayer()
     engine.data["player_capacities"][user.id] = CapacityData()
+    engine.data["player_cumul_emissions"][user.id] = CumulativeEmissionsData()
     engine.data["player_capacities"][user.id].update(user, None)
 
 

@@ -25,6 +25,7 @@ def add_asset(player_id, construction_id):
             if construction.name == "carbon_capture":
                 current_data.new_subcategory("demand", construction.name)
                 current_data.new_subcategory("emissions", construction.name)
+                engine.data["player_cumul_emissions"][player.id].new_category(construction.name)
                 player.add_to_list("demand_priorities", construction.name)
                 reorder_facility_priorities(engine, player)
             if construction.name == "warehouse":
@@ -115,6 +116,7 @@ def add_asset(player_id, construction_id):
             current_data.new_subcategory("storage", construction.name)
         if construction.name in engine.controllable_facilities + engine.extraction_facilities:
             current_data.new_subcategory("emissions", construction.name)
+            engine.data["player_cumul_emissions"][player.id].new_category(construction.name)
         if construction.name in engine.extraction_facilities + engine.storage_facilities:
             player.add_to_list("demand_priorities", construction.name)
             reorder_facility_priorities(engine, player)

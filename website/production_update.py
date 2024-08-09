@@ -1060,5 +1060,5 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
 def add_emissions(engine, new_values, player, facility, amount):
     """Helper function to add emissions to the data"""
     new_values["emissions"][facility] += amount
-    player.emissions += amount
+    engine.data["player_cumul_emissions"][player.id].add(facility, amount)
     engine.data["current_climate_data"].add("CO2", amount)

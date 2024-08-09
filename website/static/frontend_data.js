@@ -101,11 +101,11 @@ function retrieve_shipments() {
         });
 }
 
-function load_chart_data(network = false) {
+function load_chart_data(return_data = "data") {
     if (typeof (Storage) !== "undefined") {
         const chart_data = sessionStorage.getItem("chart_data");
         if (chart_data) {
-            if (network) {
+            if (return_data == "network_data") {
                 const network_data = sessionStorage.getItem("network_data");
                 return Promise.resolve(JSON.parse(network_data));
             } else {
@@ -113,10 +113,10 @@ function load_chart_data(network = false) {
             }
         }
     }
-    return retrieve_chart_data(network);
+    return retrieve_chart_data(return_data);
 }
 
-function retrieve_chart_data(network = false, climate = false) {
+function retrieve_chart_data(return_data = "data") {
     console.log("Fetching chart data from the server")
     return fetch("/api/get_chart_data")
         .then((response) => response.json())
@@ -127,13 +127,8 @@ function retrieve_chart_data(network = false, climate = false) {
             sessionStorage.setItem("chart_data", JSON.stringify(raw_data["data"]));
             sessionStorage.setItem("network_data", JSON.stringify(raw_data["network_data"]));
             sessionStorage.setItem("climate_data", JSON.stringify(raw_data["climate_data"]));
-            if (climate) {
-                return raw_data["climate_data"];
-            }
-            if (network) {
-                return raw_data["network_data"];
-            }
-            return raw_data["data"];
+            sessionStorage.setItem("cumulative_emissions", JSON.stringify(raw_data["cumulative_emissions"]));
+            return raw_data[return_data];
         })
         .catch((error) => {
             console.error(`caught error ${error}`);
@@ -276,5 +271,15 @@ function load_climate_data() {
             return Promise.resolve(JSON.parse(climate_data));
         }
     }
-    return retrieve_chart_data(false, true);
+    return retrieve_chart_data("climate_data");
+}
+
+function load_cumulative_emissions() {
+    if (typeof (Storage) !== "undefined") {
+        const cumulative_emissions = sessionStorage.getItem("cumulative_emissions");
+        if (cumulative_emissions) {
+            return Promise.resolve(JSON.parse(cumulative_emissions));
+        }
+    }
+    return retrieve_chart_data("cumulative_emissions");
 }

@@ -12,7 +12,7 @@ const _money_units = [
 ];
 const _mass_units = [" kg", " t", " kt", " Mt"];
 const _mass_rate_units = [" g/h", " kg/h", " t/h", " kt/h"]; // !!! starts at g/h and not kg/h
-const _concentration_units = [" ppm", " ‰"];
+const _concentration_units = [" ppb", " ppm", " ‰"];
 
 function general_format(value, units, threshold = 10_000) {
     // Inserts thousands separator and the right unit
