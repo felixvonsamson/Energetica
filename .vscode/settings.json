@@ -30,6 +30,7 @@
         "editor.codeActionsOnSave": {
             "source.organizeImports": "always"
         },
+        "editor.defaultFormatter": "charliermarsh.ruff"
     },
     "pylint.args": [ "--max-line-length=120" ],
     "python.analysis.autoImportCompletions": false,
