@@ -17,39 +17,39 @@
   <div class="flex-center align-items-center">
     <table class="table bone txt_center">
         <tr>
-          <th>Game Ticks</th>
-          <th>In-game Time</th>
           <th>Real Time</th>
+          <th>In-game Time</th>
+          <th>Game Ticks</th>
         </tr>
         <tr>
-          <td>1</td>
-          <td>4 min</td>
           <td>{{ engine.clock_time }} sec</td>
+          <td>4 min</td>
+          <td>1</td>
         </tr>
         <tr>
-          <td>15</td>
-          <td>1 hour</td>
           <td>{{(0.25 * engine.clock_time) | round() | int }} min</td>
+          <td>1 hour</td>
+          <td>15</td>
         </tr>
         <tr>
-          <td>360</td>
-          <td>1 day / 24h</td>
           <td>{{(0.1 * engine.clock_time) | round() | int }} hours</td>
+          <td>1 day / 24h</td>
+          <td>360</td>
         </tr>
         <tr>
-          <td>2160</td>
-          <td>1 month / 6d</td>
           <td>{{(0.6 * engine.clock_time) | round() | int }} hours</td>
+          <td>1 month / 6d</td>
+          <td>2160</td>
         </tr>
         <tr>
-          <td>25920</td>
-          <td>1 year / 12m</td>
           <td>{{(0.3 * engine.clock_time) | round() | int }} days</td>
+          <td>1 year / 12m</td>
+          <td>25920</td>
         </tr>
         <tr>
-          <td>259200</td>
-          <td>10 years</td>
           <td>{{(0.1 * engine.clock_time) | round() | int }} months</td>
+          <td>10 years</td>
+          <td>259200</td>
         </tr>
     </table>
   </div>

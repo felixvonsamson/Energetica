@@ -1643,6 +1643,10 @@ input:checked+.slider:before {
     max-width: 600px;
 }
 
+.graph-container img.small {
+    max-width: 450px;
+}
+
 .info_icon {
     width: 0.4em;
     height: auto;

@@ -206,7 +206,11 @@
     tiles near the poles. The following figure shows the probability distribution overlayed on the map.
   </p>
 
-  [INSERT FIGURE HERE]
+  <div class="graph-container">
+    <img src="{{ url_for('static', filename='images/wiki/heatwave_probability_distribution.jpg') }}"
+         alt="Characteristic curve of wind turbine"
+         class="small">
+  </div>
 
   <h3 id="coldwave">Coldwave</h3>
 
@@ -355,7 +359,11 @@
     tiles near the equator. The following figure shows the probability distribution overlayed on the map.
   </p>
 
-  [INSERT FIGURE HERE]
+  <div class="graph-container">
+    <img src="{{ url_for('static', filename='images/wiki/coldwave_probability_distribution.jpg') }}"
+         alt="Characteristic curve of wind turbine"
+         class="small">
+  </div>
 
   <h3 id="wildfire">Wildfire</h3>
 
@@ -499,7 +507,11 @@
     tiles near the poles. The following figure shows the probability distribution overlayed on the map.
   </p>
 
-  [INSERT FIGURE HERE]
+  <div class="graph-container">
+    <img src="{{ url_for('static', filename='images/wiki/wildfire_probability_distribution.jpg') }}"
+         alt="Characteristic curve of wind turbine"
+         class="small">
+  </div>
 
   <h3 id="flood">Flood</h3>
 
@@ -550,7 +562,10 @@
     temperature anomaly.
   </p>
 
-  [INSERT GRAPH HERE]
+  <div class="graph-container">
+    <img src="{{ url_for('static', filename='images/wiki/expected_occurence_flood.jpg') }}"
+         alt="Characteristic curve of wind turbine">
+  </div>
 
   <p>
     When a flood occurs, the tile it will affect is chosen randomly among the tiles with a hydro potential higher than 
@@ -600,7 +615,10 @@
     temperature anomaly.
   </p>
 
-  [INSERT GRAPH HERE]
+  <div class="graph-container">
+    <img src="{{ url_for('static', filename='images/wiki/expected_occurence_huricane.jpg') }}"
+         alt="Characteristic curve of wind turbine">
+  </div>
 
   <p>
     When a huricane occurs, the tile it will affect is chosen randomly among all tiles.

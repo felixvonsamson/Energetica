@@ -119,7 +119,7 @@ def check_climate_events(engine):
         heatwave_probability += climate_events["heat_wave"]["base_probability"] / ticks_per_day * (real_temp - 15) ** 2
     if random.random() < heatwave_probability:
         # the tile for the heatwave is chosen based on a normal distribution around the equator
-        random_latitude = max(-10, min(10, round(np.random.normal(0, 4))))
+        random_latitude = max(-10, min(10, round(np.random.normal(0, 3))))
         latitude_tiles = Hex.query.filter(Hex.r == random_latitude).all()
         tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
@@ -138,7 +138,7 @@ def check_climate_events(engine):
         )
     if random.random() < coldwave_probability:
         # the tile for the coldwave is chosen based on a normal distribution around the poles
-        random_normal = max(-10, min(10, np.random.normal(0, 5)))
+        random_normal = max(-10, min(10, np.random.normal(0, 4)))
         if random_normal < 0:
             random_latitude = round(10 + random_normal)
         else:
@@ -166,7 +166,7 @@ def check_climate_events(engine):
         # releasing 10 kt of CO2 in the atmosphere
         engine.data["current_climate_data"].add("CO2", 10e6)
         # the tile for the wildfire is chosen based on a normal distribution around the equator
-        random_latitude = max(-10, min(10, round(np.random.normal(0, 5.5))))
+        random_latitude = max(-10, min(10, round(np.random.normal(0, 4.5))))
         latitude_tiles = Hex.query.filter(Hex.r == random_latitude).all()
         tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
