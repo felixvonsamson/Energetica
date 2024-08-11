@@ -7,7 +7,9 @@
   <div class="flex-row huge title">
     Technologies
     <div class="pine info_icon_container"
-         onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
+         onclick="document.getElementById('info_popup').classList.remove('hidden');">
+      {{ wikiImage() }}
+    </div>
   </div>
   <div id="info_popup" class="popup hidden green">
     <div class="flex-row margin-small align-items-center">
@@ -26,350 +28,247 @@
       <p>
         For more information about Technologies, refer to the
         <a href="{{ url_for('wiki.render_template_wiki', template_name='technologies') }}">Technology section in the
-          wiki</a>.
-        </p>
-      </div>
+          wiki
+        </a>.
+      </p>
     </div>
-    <div id="under_construction">{# Technologies currently researched will show here #}</div>
-    {% for facility in ["mathematics", "mechanical_engineering", "thermodynamics", "physics", "building_technology",
-      "mineral_extraction", "transport_technology", "materials", "civil_engineering", "aerodynamics", "chemistry",
-      "nuclear_engineering"] %}
-      {% set technology_data = available_technologies[facility] %} 
-      {% set technology = facility %}
-      {# TODO: remove the above for loop and replace this line #}
-      {% set const_data = engine.const_config["assets"][facility] %}
-      <div id="{{ technology_data.display_name }}"
-           class="bone margin facility small"
-           onclick="show_construction('{{ technology_data.display_name }}');">
-        <div class="flex-col flex-grow-1">
-          <div style="width:100%" class="flex-row">
-            <img class="img"
-                 src="{{ url_for('static', filename='images/technologies/'+technology+'.jpg') }}"
-                 width="250"
-                 height="167"
-                 alt="{{ technology_data.display_name }} power plant">
-            <div class="infotext padding">
-              <div class="flex-row align-items-center">
-                {# Technology name #}
-                <strong class="large">{{ technology_data.display_name }}</strong>
-                &ensp; lvl.&thinsp;<em id="lvl" class="large">{{ technology_data.level }}</em>
-                {# Wikipedia icon #}
-                <a class="white wikipedia_icon_container no_deco"
-                   href="{{ technology_data.wikipedia_link }}"
-                   target="_blank">
-                  <img src='/static/images/icons/vvz.ico' class='coin'>
-                </a>
-                {# Construction Cost #}
-                <span id="price" class="money_font"></span>
-                <script>document.currentScript.previousElementSibling.innerHTML = format_money_long(
+  </div>
+  <div id="under_construction">
+    {# Technologies currently researched will show here #}
+  </div>
+  {% for facility in ["mathematics", "mechanical_engineering", "thermodynamics", "physics", "building_technology",
+    "mineral_extraction", "transport_technology", "materials", "civil_engineering", "aerodynamics", "chemistry",
+    "nuclear_engineering"] %}
+    {% set technology_data = available_technologies[facility] %}
+    {% set technology = facility %}
+    {# TODO: remove the above for loop and replace this line #}
+    {% set const_data = engine.const_config["assets"][facility] %}
+    <div id="{{ technology_data.display_name }}"
+         class="bone margin facility small"
+         onclick="show_construction('{{ technology_data.display_name }}');">
+      <div class="flex-col flex-grow-1">
+        <div style="width:100%" class="flex-row">
+          <img class="img"
+               src="{{ url_for('static', filename='images/technologies/'+technology+'.jpg') }}"
+               width="250"
+               height="167"
+               alt="{{ technology_data.display_name }} power plant">
+          <div class="infotext padding">
+            <div class="flex-row align-items-center">
+              {# Technology name #}
+              <strong class="large">{{ technology_data.display_name }}</strong>
+              &ensp; lvl.&thinsp;<em id="lvl" class="large">{{ technology_data.level }}</em>
+              {# Wikipedia icon #}
+              <a class="white wikipedia_icon_container no_deco"
+                 href="{{ technology_data.wikipedia_link }}"
+                 target="_blank">
+                <img src='/static/images/icons/vvz.ico' class='coin'>
+              </a>
+              {# Construction Cost #}
+              <span id="price" class="money_font"></span>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_money_long(
                 {{ technology_data.price }}
                 );
-                </script>
-              </div>
-              <div class="infobox">
-                {# Description & affected facilities #}
-                <div class="infotext">
-                  {{ technology_data.description }}
-                  <br class="smartphone_hide">
-                  {% if technology_data.affected_facilities | length > 0 %}
-                    {% if not (technology_data.locked and technology in
-                      ["materials", "mechanical_engineering", "thermodynamics", "physics"]) %}
-                      <br>
-                    {% endif %}
-                    Affected facilities :
-                    {% for affected in technology_data.affected_facilities[:-1] %}
-                      <em class="txt-blue">{{ affected }}</em> ,
-                    {% endfor %}
-                    <em class="txt-blue">
-                    {{ technology_data.affected_facilities[-1] }}
-                    </em>
-                  {% endif %}
-                  {% if technology == "building_technology" %}
+              </script>
+            </div>
+            <div class="infobox">
+              {# Description & affected facilities #}
+              <div class="infotext">
+                {{ technology_data.description }}
+                <br class="smartphone_hide">
+                {% if technology_data.affected_facilities | length > 0 %}
+                  {% if not (technology_data.locked and technology in
+                    ["materials", "mechanical_engineering", "thermodynamics", "physics"]) %}
                     <br>
-                    Affected facilities :
-                    <em class="txt-blue">All power, storage, extraction and functional facilities</em>
                   {% endif %}
-                  {% if technology == "transport_technology" %}
-                    <br>
-                    Affects : <em class="txt-blue">Shipments of resources</em>
-                  {% endif %}
-                </div>
-                {# Requirements #}
-                {% if technology_data["locked"] %}
-                  <div id="requirements" class="infobox requirements">
-                    <div>
-                      <strong>Unlock with :</strong>
-                      <br>
-                      <ul class="navbar-nav">
-                        {% for req in facility_values[facility]["requirements"] %}
-                          {% if req[0] == "mechanical_engineering" %}
-                            {% set tech_name = "Mech. engineering" %}
-                          {% else %}
-                            {% set tech_name = engine.const_config["assets"][req[0]]["name"] %}
-                          {% endif %}
-                          {% if req[2] %}
-                            <li class="padding-small req_fulfilled">
-                            - {{ tech_name }} lvl {{ req[1] + user[facility] }}
-                            </li>
-                          {% else %}
-                            <li class="padding-small requirement">
-                            - {{ tech_name }} lvl {{ req[1] + user[facility] }}
-                            </li>
-                          {% endif %}
-                        {% endfor %}
-                      </ul>
-                    </div>
-                  </div>
+                  Affected facilities :
+                  {% for affected in technology_data.affected_facilities[:-1] %}
+                    <em class="txt-blue">{{ affected }}</em> ,
+                  {% endfor %}
+                  <em class="txt-blue">{{ technology_data.affected_facilities[-1] }}</em>
+                {% endif %}
+                {% if technology == "building_technology" %}
+                  <br>
+                  Affected facilities :
+                  <em class="txt-blue">All power, storage, extraction and functional facilities</em>
+                {% endif %}
+                {% if technology == "transport_technology" %}
+                  <br>
+                  Affects : <em class="txt-blue">Shipments of resources</em>
                 {% endif %}
               </div>
-            </div>
-          </div>
-          {# Construction information for big screen #}
-          <div id="constructionContent" class="hidden">
-            <div class="flex-col construction_button_container hidden">
-              {% if technology_data.locked %}
-                <b class="padding medium margin txt_center white txt-red"
-                   onclick="start_construction('{{ technology }}', 'Technologies');">
-                  Locked
-                </b>
-              {% else %}
-                <b class="padding medium button margin txt_center white"
-                   onclick="start_construction('{{ technology }}', 'Technologies');">
-                  Start research
-                </b>
+              {# Requirements #}
+              {% if technology_data["locked"] %}
+                <div id="requirements" class="infobox requirements">
+                  <div>
+                    <strong>Unlock with :</strong>
+                    <br>
+                    <ul class="navbar-nav">
+                      {% for req in facility_values[facility]["requirements"] %}
+                        {% if req[0] == "mechanical_engineering" %}
+                          {% set tech_name = "Mech. engineering" %}
+                        {% else %}
+                          {% set tech_name = engine.const_config["assets"][req[0]]["name"] %}
+                        {% endif %}
+                        {% if req[2] %}
+                          <li class="padding-small req_fulfilled">
+                            - {{ tech_name }} lvl {{ req[1] + user[facility] }}
+                          </li>
+                        {% else %}
+                          <li class="padding-small requirement">
+                            - {{ tech_name }} lvl {{ req[1] + user[facility] }}
+                          </li>
+                        {% endif %}
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </div>
               {% endif %}
-            </div>
-            <div class="construction_info">
-              <span class="hover_info">
-                <i class="fa fa-clock-o"></i>&ensp;
-                <strong></strong>
-                <script>document.currentScript.previousElementSibling.innerHTML = format_duration(
-                {{ technology_data.construction_time }}
-                );
-                </script>
-                <span class="popup_info small">Duration in-game (real)</span>
-              </span>
-              <span class="hover_info">
-                <i class="fa fa-bolt"></i>&ensp;
-                <strong></strong>
-                <script>document.currentScript.previousElementSibling.innerHTML = format_power(
-                {{ technology_data.construction_power }}
-                );
-                </script>
-                <span class="popup_info small">Power consumption</span>
-              </span>
             </div>
           </div>
         </div>
-        <div class="infobox information_container">
-          {# Construction information for smartphone #}
-          <div id="constructionContent_smartphone" class="hidden margin">
-            <div class="flex-col">
-              {% if technology_data.locked %}
-                <b class="padding medium margin txt_center white txt-red"
-                   onclick="event.stopPropagation(); start_construction('{{ technology }}', 'Technologies');">
-                  Locked
-                </b>
-              {% else %}
-                <b class="padding medium button margin txt_center white"
-                   onclick="event.stopPropagation(); start_construction('{{ technology }}', 'Technologies');">
-                  Start research
-                </b>
-              {% endif %}
-            </div>
-            <div class="construction_info">
-              <span class="hover_info">
-                <i class="fa fa-clock-o"></i>&ensp;
-                <strong></strong>
-                <script>document.currentScript.previousElementSibling.innerHTML = format_duration(
+        {# Construction information for big screen #}
+        <div id="constructionContent" class="hidden">
+          <div class="flex-col construction_button_container hidden">
+            {% if technology_data.locked %}
+              <b class="padding medium margin txt_center white txt-red"
+                 onclick="start_construction('{{ technology }}', 'Technologies');">
+                Locked
+              </b>
+            {% else %}
+              <b class="padding medium button margin txt_center white"
+                 onclick="start_construction('{{ technology }}', 'Technologies');">
+                Start research
+              </b>
+            {% endif %}
+          </div>
+          <div class="construction_info">
+            <span class="hover_info">
+              <i class="fa fa-clock-o"></i>&ensp;
+              <strong></strong>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_duration(
                 {{ technology_data.construction_time }}
                 );
-                </script>
-                <span class="popup_info small">Duration in-game (real)</span>
-              </span>
-              <span class="hover_info">
-                <i class="fa fa-bolt"></i>&ensp;
-                <strong></strong>
-                <script>document.currentScript.previousElementSibling.innerHTML = format_power(
+              </script>
+              <span class="popup_info small">Duration in-game (real)</span>
+            </span>
+            <span class="hover_info">
+              <i class="fa fa-bolt"></i>&ensp;
+              <strong></strong>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_power(
                 {{ technology_data.construction_power }}
                 );
-                </script>
-                <span class="popup_info small">Power consumption</span>
-              </span>
-            </div>
-          </div>
-          {# Upgrade information #}
-          <div id="infotable"
-               class="{% if technology in ['thermodynamics', 'mineral_extraction', 'chemistry'] %}
-                minimized minimizable {% endif %}">
-            {% if technology != "mathematics" %}
-              <table class="table tan_green">
-                <tr>
-                  <th>Effects :</th>
-                  <th id="upgrade" class="txt_center">
-                  lvl {{ technology_data.level-1 }} -> lvl {{ technology_data.level }}
-                  </th>
-                </tr>
-                {% if "power_generation_bonus" in technology_data %}
-                  <tr>
-                    <td>Power generation</td>
-                    <td class="txt_center">+{{ technology_data.power_generation_bonus | round | int }}%</td>
-                  </tr>
-                {% endif %}
-                {% if "extraction_speed_bonus" in technology_data %}
-                  <tr>
-                    <td>Extraction speed</td>
-                    <td class="txt_center">
-                      +{{ 
-                        technology_data.extraction_speed_bonus |round(0) |int
-                      }}%
-                    </td>
-                  </tr>
-                {% endif %}
-                {% if "fuel_use_reduction_bonus" in technology_data%}
-                  <tr>
-                    <td>Fuel use</td>
-                    <td id="fuel_use" class="txt_center">
-                      -{{ technology_data.fuel_use_reduction_bonus | round(1) }}%
-                    </td>
-                  </tr>
-                {% endif %}
-                {% if "co2_emissions_reduction_bonus" in technology_data%}
-                  <tr>
-                    <td>CO<sub>2</sub> emissions</td>
-                    <td id="emissons" class="txt_center">
-                      -{{ technology_data.co2_emissions_reduction_bonus |round(1) }}%
-                    </td>
-                  </tr>
-                {% endif %}
-                {% if "compressed_air_efficiency_bonus" in technology_data%}
-                  <tr>
-                    <td>Effic. comp. air</td>
-                    <td id="Efficiency_CA" class="txt_center hover_info">
-                      +{{ technology_data.compressed_air_efficiency_bonus | round(1) }}pp
-                      <span class="popup_info small">percentage point</span>
-                    </td>
-                  </tr>
-                {% endif %}
-                {% if "molten_salt_efficiency_bonus" in technology_data%}
-                  <tr>
-                    <td>Effic. molten salt</td>
-                    <td id="Efficiency_MS" class="txt_center hover_info">
-                      +{{ technology_data.molten_salt_efficiency_bonus | round(1) }}pp
-                      <span class="popup_info small">percentage point</span>
-                    </td>
-                  </tr>
-                {% endif %}
-                {% if "construction_time_reduction_bonus" in technology_data %}
-                  <tr>
-                    <td>Construction time</td>
-                    <td class="txt_center">-{{ technology_data.construction_time_reduction_bonus | int }}%</td>
-                  </tr>
-                {% endif %}
-                {% if "construction_workers" in technology_data %}
-                  <tr>
-                    <td>Constrtruct. workers</td>
-                    <td class="txt_center">{{ technology_data.construction_workers.current }} -> 
-                    {{ technology_data.construction_workers.upgraded }}</td>
-                  </tr>
-                {% endif %}
-                {% if "shipment_time_reduction_bonus" in technology_data %}
-                  <tr>
-                    <td>Shipment time</td>
-                    <td class="txt_center">-{{ technology_data.shipment_time_reduction_bonus |int }}%</td>
-                  </tr>
-                {% endif %}
-                {% if "power_consumption_reduction_bonus" in technology_data %}
-                  <tr>
-                    <td>Power consumption</td>
-                    <td class="txt_center">
-                      +{{ technology_data.power_consumption_reduction_bonus | round | int }}%
-                    </td>
-                  </tr>
-                {% endif %}
-                {% if "power_consumption_penalty" in technology_data %}
-                  <tr>
-                    <td>Power consumption</td>
-                    <td class="txt_center">
-                      +{{ technology_data.power_consumption_penalty | round(0) |int }}%
-                    </td>
-                  </tr>
-                {% endif %}
-                {% if "co2_emissions_penalty" in technology_data %}
-                  <tr>
-                    <td>CO<sub>2</sub> emissions</td>
-                    <td class="txt_center">
-                      +{{ technology_data.co2_emissions_penalty | round(0) |int }}%
-                    </td>
-                  </tr>
-                {% endif %}
-                {% if "storage_capacity_bonus" in technology_data %}
-                  <tr>
-                    <td>Storage capacity</td>
-                    <td class="txt_center">+{{ technology_data.storage_capacity_bonus | int }}%</td>
-                  </tr>
-                {% endif %}
-                {% if "hydrogen_efficiency_bonus" in technology_data %}
-                  <tr>
-                    <td>Efficiency hydrogen</td>
-                    <td class="txt_center hover_info">
-                      +{{ technology_data.hydrogen_efficiency_bonus | round(2) }}pp
-                      <span class="popup_info small">percentage point</span>
-                    </td>
-                  </tr>
-                {% endif %}
-                {% if "lithium_ion_efficiency_bonus" in technology_data %}
-                  <tr>
-                    <td>Efficiency Li-ion</td>
-                    <td id="E_Li_ion" class="txt_center hover_info">
-                      +{{ technology_data.lithium_ion_efficiency_bonus | round(2) }}
-                      pp<span class="popup_info small">percentage point</span>
-                    </td>
-                  </tr>
-                {% endif %}
-                {% if "solid_state_efficiency_bonus" in technology_data %}
-                  <tr>
-                    <td>Efficiency solid state</td>
-                    <td id="E_SS" class="txt_center hover_info">
-                      +{{ technology_data.solid_state_efficiency_bonus | round(2) }}
-                      pp<span class="popup_info small">percentage point</span>
-                    </td>
-                  </tr>
-                {% endif %}
-                {% if "price_penalty" in technology_data %}
-                  <tr>
-                    <td>Price</td>
-                    <td class="txt_center">
-                      +{{ technology_data.price_penalty | round | int }}%
-                    </td>
-                  </tr>
-                {% endif %}
-                {% if "price_reduction_bonus" in technology_data %}
-                  <tr>
-                    <td>Price</td>
-                    <td class="txt_center">
-                      {{ technology_data.price_reduction_bonus | round | int }}%
-                    </td>
-                  </tr>
-                {% endif %}
-                {% if "construction_power_reduction_bonus" in technology_data %}
-                  <tr>
-                    <td>Construction power</td>
-                    <td class="txt_center">-{{ technology_data.construction_power_reduction_bonus |int }}%</td>
-                  </tr>
-                {% endif %}
-              </table>
-              <div class="overlay {% if facility not in ['thermodynamics', 'mineral_extraction', 'chemistry'] %}
-              hidden{% endif %}">
-              </div>
-            {% endif %}
+              </script>
+              <span class="popup_info small">Power consumption</span>
+            </span>
           </div>
         </div>
       </div>
-    {% endfor %}
-  {% endblock content %}
-  {% block additionnal_script %}
-    <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
-    <script src="{{ url_for('static', filename='lvlup_display.js') }}"></script>
-    <script>refresh_progressBar()</script>
-  {% endblock additionnal_script %}
+      <div class="infobox information_container">
+        {# Construction information for smartphone #}
+        <div id="constructionContent_smartphone" class="hidden margin">
+          <div class="flex-col">
+            {% if technology_data.locked %}
+              <b class="padding medium margin txt_center white txt-red"
+                 onclick="event.stopPropagation(); start_construction('{{ technology }}', 'Technologies');">
+                Locked
+              </b>
+            {% else %}
+              <b class="padding medium button margin txt_center white"
+                 onclick="event.stopPropagation(); start_construction('{{ technology }}', 'Technologies');">
+                Start research
+              </b>
+            {% endif %}
+          </div>
+          <div class="construction_info">
+            <span class="hover_info">
+              <i class="fa fa-clock-o"></i>&ensp;
+              <strong></strong>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_duration(
+                {{ technology_data.construction_time }}
+                );
+              </script>
+              <span class="popup_info small">Duration in-game (real)</span>
+            </span>
+            <span class="hover_info">
+              <i class="fa fa-bolt"></i>&ensp;
+              <strong></strong>
+              <script>document.currentScript.previousElementSibling.innerHTML = format_power(
+                {{ technology_data.construction_power }}
+                );
+              </script>
+              <span class="popup_info small">Power consumption</span>
+            </span>
+          </div>
+        </div>
+        {# Upgrade information #}
+        <div id="infotable"
+             class="{% if technology in ['thermodynamics', 'mineral_extraction', 'chemistry'] %} minimized minimizable {% endif %}">
+          {% if technology != "mathematics" %}
+            <table class="table tan_green">
+              <tr>
+                <th>Effects :</th>
+                <th id="upgrade" class="txt_center">
+                  lvl {{ technology_data.level-1 }} -> lvl {{ technology_data.level }}
+                </th>
+              </tr>
+              {% macro render_effect_row(label, data_key, sign="+", precision=0, suffix="%", hover_info="", round_value=True) %}
+                {% if data_key in technology_data %}
+                  <tr>
+                    <td>{{ label }}</td>
+                    <td class="txt_center{% if hover_info %} hover_info{% endif %}">
+                      {% if round_value %}
+                        {{ sign }}{{ technology_data[data_key] | round(precision) }}{{ suffix }}
+                      {% else %}
+                        {{ sign }}{{ technology_data[data_key] }}{{ suffix }}
+                      {% endif %}
+                      {% if hover_info %}
+                        <span class="popup_info small">{{ hover_info }}</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endif %}
+              {% endmacro %}
+              {% macro render_change_row(label, current_key, upgraded_key) %}
+                {% if current_key in technology_data and upgraded_key in technology_data %}
+                  <tr>
+                    <td>{{ label }}</td>
+                    <td class="txt_center">
+                      {{ technology_data[current_key] }} -> {{ technology_data[upgraded_key] }}
+                    </td>
+                  </tr>
+                {% endif %}
+              {% endmacro %}
+              {{ render_effect_row('Power generation', 'power_generation_bonus') }}
+              {{ render_effect_row('Extraction speed', 'extraction_speed_bonus') }}
+              {{ render_effect_row("Fuel use", "fuel_use_reduction_bonus", sign="-", precision=1) }}
+              {{ render_effect_row("CO<sub>2</sub> emissions", "co2_emissions_reduction_bonus", sign="-", precision=1) }}
+              {{ render_effect_row("Effic. comp. air", "compressed_air_efficiency_bonus", suffix="pp", precision=1, hover_info="percentage point") }}
+              {{ render_effect_row("Effic. molten salt", "molten_salt_efficiency_bonus", suffix="pp", precision=1, hover_info="percentage point") }}
+              {{ render_effect_row("Construction time", "construction_time_reduction_bonus", sign="-") }}
+              {{ render_change_row('Constrtruct. workers', 'construction_workers.current', 'construction_workers.upgraded') }}
+              {{ render_effect_row("Shipment time", "shipment_time_reduction_bonus", sign="-") }}
+              {{ render_effect_row("Power consumption", "power_consumption_reduction_bonus", sign="+") }}
+              {{ render_effect_row("Power consumption", "power_consumption_penalty", sign="+") }}
+              {{ render_effect_row("CO<sub>2</sub> emissions", "co2_emissions_penalty", sign="+") }}
+              {{ render_effect_row('Storage capacity', 'storage_capacity_bonus') }}
+              {{ render_effect_row("Efficiency hydrogen", "hydrogen_efficiency_bonus", suffix="pp", precision=2, hover_info="percentage point") }}
+              {{ render_effect_row("Efficiency Li-ion", "lithium_ion_efficiency_bonus", suffix="pp", precision=2, hover_info="percentage point") }}
+              {{ render_effect_row("Efficiency solid state", "solid_state_efficiency_bonus", suffix="pp", precision=2, hover_info="percentage point") }}
+              {{ render_effect_row("Price", "price_penalty", sign="+") }}
+              {{ render_effect_row("Price", "price_reduction_bonus", sign="") }}
+              {{ render_effect_row("Construction power", "construction_power_reduction_bonus", sign="-") }}
+            </table>
+            <div class="overlay {% if facility not in ['thermodynamics', 'mineral_extraction', 'chemistry'] %}hidden{% endif %}">
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% endblock content %}
+{% block additionnal_script %}
+  <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
+  <script src="{{ url_for('static', filename='lvlup_display.js') }}"></script>
+  <script>refresh_progressBar()</script>
+{% endblock additionnal_script %}

@@ -13,9 +13,11 @@
         "editor.rulers": [ 80, 120 ],
         "editor.formatOnSave": false,
         "djlint.enableLinting": true,
-        "djlint.profile": "jinja"
+        // "djlint.profile": "jinja"
     },
-    "djlint.maxLineLength": 120,
+    "djlint.useEditorIndentation": true,
+    "djlint.maxLineLength": 80,
+    "djlint.maxAttributeLength": 80,
     // Javascfript
     "[javascript]": {
         "editor.wordWrapColumn": 120,
