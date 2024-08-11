@@ -8,6 +8,7 @@ from .database.player import Player
 from .database.player_assets import ResourceOnSale
 from .technology_effects import (
     get_current_technology_values,
+    package_available_technologies,
     package_extraction_facilities,
     package_functional_facilities,
     package_power_facilities,
@@ -42,17 +43,28 @@ def check_user():
             on_sale = ResourceOnSale.query.all()
             return render_template(page, engine=g.engine, user=current_user, on_sale=on_sale, data=g.data)
         elif page == "facilities/power_facilities.jinja":
+            # TODO: rename constructions to power_facilities
             constructions = package_power_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
         elif page == "facilities/storage_facilities.jinja":
+            # TODO: rename constructions to storage_facilities
             constructions = package_storage_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
         elif page == "facilities/extraction_facilities.jinja":
+            # TODO: rename constructions to extraction_facilities
             constructions = package_extraction_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
         elif page == "facilities/functional_facilities.jinja":
+            # TODO: rename constructions to functional_facilities
             constructions = package_functional_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
+        elif page == "technologies.jinja":
+            available_technologies = package_available_technologies(current_user)
+            print(available_technologies)
+            # TODO: remove `data` from the next line
+            return render_template(
+                page, engine=g.engine, user=current_user, data=g.data, available_technologies=available_technologies
+            )
         else:
             return render_template(page, engine=g.engine, user=current_user, data=g.data)
 
