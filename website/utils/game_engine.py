@@ -111,12 +111,14 @@ def check_climate_events(engine):
 
     # heatwaves
     heatwave_probability = 0
-    if ref_temp > 15:
+    if ref_temp > 14.8:
         heatwave_probability += (
-            climate_events["heat_wave"]["base_probability"] / ticks_per_day * (ref_temp - 15) * climate_change**2
+            climate_events["heat_wave"]["base_probability"] / ticks_per_day * (ref_temp - 14.8) * climate_change**2
         )
-    if real_temp > 15:
-        heatwave_probability += climate_events["heat_wave"]["base_probability"] / ticks_per_day * (real_temp - 15) ** 2
+    if real_temp > 14.8:
+        heatwave_probability += (
+            climate_events["heat_wave"]["base_probability"] / ticks_per_day * (real_temp - 14.8) ** 2
+        )
     if random.random() < heatwave_probability:
         # the tile for the heatwave is chosen based on a normal distribution around the equator
         random_latitude = max(-10, min(10, round(np.random.normal(0, 3))))
@@ -140,9 +142,9 @@ def check_climate_events(engine):
         # the tile for the coldwave is chosen based on a normal distribution around the poles
         random_normal = max(-10, min(10, np.random.normal(0, 4)))
         if random_normal < 0:
-            random_latitude = round(10 + random_normal)
+            random_latitude = math.ceil(10 + random_normal)
         else:
-            random_latitude = round(-10 + random_normal)
+            random_latitude = math.floor(-10 + random_normal)
         latitude_tiles = Hex.query.filter(Hex.r == random_latitude).all()
         tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()

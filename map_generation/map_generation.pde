@@ -1,13 +1,11 @@
 float h, w;
-int size_param = 10; //indicates the size of the map
-float s = 0.25*800/size_param; //displayed size of the hexagon tiles
-int mapsize = size_param*(size_param+1)*3+1; //lenght of the list that contains the hexagon tiles
-Hex[] map = new Hex[mapsize];
-Button[] buttons = new Button[8];
-int[] button_colors = {42, 132, 169, 0, 227, 195, 77, 20};
-PVector[] directions = {new PVector(1, 0), new PVector(0, 1), new PVector(-1, 1), new PVector(-1, 0), new PVector(0, -1), new PVector(1, -1)};
+float s = 20; //displayed size of the hexagon tiles
+Hex[] map;
+Button[] buttons = new Button[9];
+int[] button_colors = {42, 132, 169, 0, 227, 195, 77, 227, 20};
 int active_vew = -1;
 int selected_id = 0;
+int mapID = 0;
 
 PVector id_to_coords(int n){
   if (n == 0) {
@@ -53,6 +51,35 @@ int sgn(int i){
 }
 
 
+void loadMap(int m){
+  Table table = loadTable("map"+m+".csv", "header");
+    
+  map = new Hex[table.getRowCount()];
+  
+  for (int i = 0; i < table.getRowCount(); i++) {
+    TableRow row = table.getRow(i);
+    
+    int q = row.getInt("q");
+    int r = row.getInt("r");
+    float solar = row.getFloat("solar");
+    float wind = row.getFloat("wind");
+    float hydro = row.getFloat("hydro");
+    float coal = row.getFloat("coal") / 2000000000.0;
+    float oil = row.getFloat("oil") / 100000000.0;
+    float gas = row.getFloat("gas") / 600000000.0;
+    float uranium = row.getFloat("uranium") / 8000000.0;
+    float risk = row.getFloat("risk");
+    float score = row.getFloat("score");
+    
+    int id = coords_to_id(q, r);
+    // Create new Hex object with these values
+    Hex h = new Hex(id, q, r, new float[] { solar, wind, hydro, coal, oil, gas, uranium,risk,score });
+    
+    // Store Hex object in map array
+    map[i] = h;
+  }
+}
+
 void setup(){
   size(800,800);
   background(255);
@@ -60,7 +87,7 @@ void setup(){
   colorMode(HSB);
   //noLoop();
   
-  String[] button_names = {"solar", "wind", "hydro", "coal", "oil", "gas", "uranium", "total"};
+  String[] button_names = {"solar", "wind", "hydro", "coal", "oil", "gas", "uranium", "climate risk", "total"};
   for(int i = 0; i<buttons.length; i++){
     buttons[i] = new Button(button_names[i], i, button_colors[i]);
   }
@@ -68,18 +95,7 @@ void setup(){
   h = 2*s;
   w = sqrt(3)*s;
   
-  //filling map
-  for(int i = 0; i<mapsize; i++){
-    PVector coords = id_to_coords(i);
-    map[i] = new Hex(i, int(coords.x), int(coords.y));
-  }
-  
-  generate_hydro();
-  generate_coal();
-  generate_oil_gas();
-  generate_uranium();
-  generate_background_resources();
-  generate_wind();
+  loadMap(mapID);
   redraw();
 }
 
@@ -87,17 +103,17 @@ void draw(){
 }
 
 void redraw(){
-  int[] bars = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  background(255);
+  int[] bars = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  background(59, 89, 191);
   pushMatrix();
   translate(0.5*width, 0.5*(height-2*s));
   for(int i = 0; i<map.length; i++){
     Hex h = map[i];
     if(active_vew >= 0){
-      if(active_vew == 7){
-        bars[min(10,floor((h.resources[active_vew]-1)*6))] ++;
+      if(active_vew == buttons.length-1){
+        bars[min(9,floor(h.resources[active_vew]*10))] ++;
       }else{
-        bars[floor(h.resources[active_vew]*10)] ++;
+        bars[min(9,floor(h.resources[active_vew]*10))] ++;
       }
     }
     pushMatrix();
@@ -119,14 +135,16 @@ void redraw(){
   popStyle();
   popMatrix();
   popMatrix();
+  float barw = width / (bars.length);
   if(active_vew >= 0){
     for(int i = 0; i<bars.length; i++){
       pushMatrix();
-      translate(20*i, height-2*s);
-      fill(button_colors[active_vew], 255, 255);
-      rect(0, -4*bars[i], 20, 4*bars[i]);
+      translate(i * barw, height-2*s);
+      fill(button_colors[active_vew], log(bars[i])*44, 255);
+      rect(0, 0, barw, -s);
       fill(0);
-      text(bars[i], 10, -4*bars[i]-10);
+      text(bars[i], 0.5 * barw, -s-10);
+      text(10*i + "% - " + 10*(i+1) + "%", 0.5 * barw, -0.5*s-3);
       popMatrix();
     }
   }
@@ -144,15 +162,16 @@ void redraw(){
   }
   for(int i = 0; i<buttons.length; i++){
     pushMatrix();
-    translate(i*width/8.0, height-2*s);
+    translate(i*width/buttons.length, height-2*s);
     buttons[i].display_button();
     popMatrix();
   }
+  text("Map " + mapID, width-23, 10);
 }
 
 void mousePressed() {
   if (mouseY > height - 2*s) {
-    int i = floor(mouseX * 8 / width);
+    int i = floor(mouseX * buttons.length / width);
     if (buttons[i].active) {
       buttons[i].active = false;
       active_vew = -1;
@@ -185,21 +204,9 @@ void mousePressed() {
 }
 
 void keyPressed(){
-  if(key == 's'){
-    generate_table();
-  }
   if(key == 'r'){
-    for(int i = 0; i<mapsize; i++){
-      for(int j = 1; j< map[i].resources.length; j++){
-        map[i].resources[j] = 0;
-      }
-    }
-    generate_hydro();
-    generate_coal();
-    generate_oil_gas();
-    generate_uranium();
-    generate_background_resources();
-    generate_wind();
+    mapID = (mapID+1)%10;
+    loadMap(mapID);
     redraw();
   }
 }

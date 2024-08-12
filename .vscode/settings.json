@@ -62,6 +62,7 @@
         "itertuples",
         "jsonify",
         "lvls",
+        "mapsize",
         "Météo",
         "minmax",
         "perlin",
