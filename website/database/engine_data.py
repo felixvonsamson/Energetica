@@ -430,7 +430,7 @@ class EmissionData:
 
 
 def calculate_reference_gta(tick, seconds_per_tick):
-    """Function for the servers reference global average temperature"""
+    """Function for the server's reference global average temperature"""
     month = tick * seconds_per_tick / 518_400
     return 13.65 - math.sin((month + 2) * math.pi / 6) * 1.9
 
