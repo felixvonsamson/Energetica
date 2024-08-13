@@ -865,7 +865,7 @@ input:checked+.slider:before {
     }
 
     .resourceJauge-background {
-        width: 21%;
+        width: 30%;
         background-color: #e5d9b6;
         height: 1.3em;
         margin: 0.5em 2%;
