@@ -18,7 +18,7 @@
   <p>
     There are four unique functional facilities:
   </p>
-  <h2>The Industry</h2>
+  <h2 id="The_Industry">The Industry</h2>
   <p>
     The Industry serves as a central element in the game, initially starting at level 1. It generates revenue by consuming
     electricity. With each level upgrade, revenue increase by {{ ((const_data.industry["income_factor"]-1)*100) | round | int }}% 
@@ -100,7 +100,7 @@
     </li><li>
       \(q_{CO_2,atm}\) : amount of CO<sub>2</sub> in the atmosphere in kg
     </li><li>
-      \(CC\) : level of <a href="{{ url_for('views.functional_facilities', _anchor='Carbon capture') }}">Carbon Capture</a>
+      \(CC\) : level of <a href="{{ url_for('views.functional_facilities', _anchor='Carbon Capture') }}">Carbon Capture</a>
     </li><li>
       \(P_{CC}\) : power consumed by carbon capture
     </li><li>

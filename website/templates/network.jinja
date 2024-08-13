@@ -260,7 +260,7 @@
                     </td>
                 </tr>
                 {% macro extraction_facility_display_name(extraction_facility) -%}
-                    {{ {"coal_mine": "Coal mines", "gas_drilling_site": "Gas extraction", "uranium_mine": "Uranium mines"}[extraction_facility] }}
+                    {{ {"coal_mine": "Coal Mines", "gas_drilling_site": "Gas Extraction", "uranium_mine": "Uranium Mines"}[extraction_facility] }}
                 {%- endmacro %}
                 {% macro extraction_facility_price_buy(extraction_facility) -%}
                     {{ 'price_buy_'+extraction_facility }}
@@ -287,7 +287,7 @@
                 {% endfor %}
                 {% if user.carbon_capture > 0 %}
                     <tr>
-                        <td>Carbon capture</td>
+                        <td>Carbon Capture</td>
                         <td>
                             <input type="number"
                                 class="small_input medium txt_center"
