@@ -4,11 +4,15 @@ levels of the player.
 """
 
 import math
-from typing import List
+from typing import Dict, List
 
 from flask import current_app
 
-from website.config import player_lab_workers_for_level, warehouse_capacity_for_level
+from website.config import (
+    player_construction_workers_for_level,
+    player_lab_workers_for_level,
+    warehouse_capacity_for_level,
+)
 from website.database.map import Hex
 from website.database.player import Player
 from website.game_engine import GameEngine
@@ -125,7 +129,7 @@ def multiplier_2(player: Player, facility) -> float:
     """
     const_config = current_app.config["engine"].const_config["assets"]
     if facility in const_config["mineral_extraction"]["affected_facilities"]:
-        return extraction_rate_multiplier(player, facility)
+        return extraction_rate_multiplier(player)
     if facility in ["watermill", "small_water_dam", "large_water_dam"]:
         return hydro_price_multiplier(player, facility)
     if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
@@ -146,16 +150,15 @@ def capacity_multiplier(player: Player, facility) -> float:
     return mlt
 
 
-def extraction_rate_multiplier(player: Player, facility) -> float:
+def extraction_rate_multiplier(player: Player, level: int = None) -> float:
     """
-    For extraction facilities, returns by how much the `facility`'s `base_extraction_rate_per_day` should be multiplied,
-    according to the `player`'s currently researched technologies
+    For extraction facilities, returns by how much the `facility`'s `base_extraction_rate_per_day` should be multiplied.
+    If `level` is not provided, the `player`'s current `mineral_extraction` level is used.
     """
+    if level is None:
+        level = player.mineral_extraction
     const_config = current_app.config["engine"].const_config["assets"]
-    mlt = 1
-    if facility in const_config["mineral_extraction"]["affected_facilities"]:
-        mlt += const_config["mineral_extraction"]["extract_factor"] * player.mineral_extraction
-    return mlt
+    return 1 + const_config["mineral_extraction"]["extract_factor"] * level
 
 
 def hydro_price_multiplier(player: Player, facility) -> float:
@@ -202,7 +205,7 @@ def multiplier_3(player: Player, facility) -> float:
     return efficiency_multiplier(player, facility)
 
 
-def efficiency_multiplier(player: Player, facility):
+def efficiency_multiplier(player: Player, facility: str) -> float:
     """
     For storage facilities, returns by how much the `facility`'s `base_efficiency` should be multiplied, according to
     the technology level of the `player`.
@@ -211,28 +214,48 @@ def efficiency_multiplier(player: Player, facility):
     technology level of the `player`.
     """
     const_config = current_app.config["engine"].const_config["assets"]
-    mlt = 1
     # Thermodynamics
     if facility in const_config["thermodynamics"]["affected_facilities"]:
-        thermodynamic_factor = const_config["thermodynamics"]["efficiency_factor"] ** player.thermodynamics
-        if facility == "compressed_air":
-            return (
-                0.8 / const_config[facility]["initial_efficiency"] * (1 - 1 / thermodynamic_factor)
-                + 1 / thermodynamic_factor
-            )
-        if facility == "molten_salt":
-            return (
-                1 / const_config[facility]["initial_efficiency"] * (1 - 1 / thermodynamic_factor)
-                + 1 / thermodynamic_factor
-            )
-        mlt *= thermodynamic_factor
+        return efficiency_multiplier_thermodynamics(player, facility)
     # Chemistry
     if facility in const_config["chemistry"]["affected_facilities"]:
-        chemistry_factor = const_config["chemistry"]["inefficiency_factor"] ** player.chemistry
-        if facility == "hydrogen_storage":
-            return 0.65 / const_config[facility]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
-        return 1 / const_config[facility]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
-    return mlt
+        return efficiency_multiplier_chemistry(player, facility)
+    return 1
+
+
+def efficiency_multiplier_thermodynamics(player: Player, facility: str, level: int = None) -> float:
+    """
+    For facilities in the `"affected_facilities"` list for `thermodynamics`, returns the `efficiency_multiplier`.
+    If `level` is not provided, the `player`'s current `thermodynamics` level is used.
+    """
+    if level is None:
+        level = player.thermodynamics
+    const_config = current_app.config["engine"].const_config["assets"]
+    thermodynamic_factor = const_config["thermodynamics"]["efficiency_factor"] ** level
+    if facility == "compressed_air":
+        return (
+            0.8 / const_config[facility]["initial_efficiency"] * (1 - 1 / thermodynamic_factor)
+            + 1 / thermodynamic_factor
+        )
+    if facility == "molten_salt":
+        return (
+            1 / const_config[facility]["initial_efficiency"] * (1 - 1 / thermodynamic_factor) + 1 / thermodynamic_factor
+        )
+    return thermodynamic_factor
+
+
+def efficiency_multiplier_chemistry(player: Player, facility: str, level: int = None) -> float:
+    """
+    For facilities in the `"affected_facilities"` list for `chemistry`, returns the `efficiency_multiplier`.
+    If `level` is not provided, the `player`'s current `chemistry` level is used.
+    """
+    if level is None:
+        level = player.thermodynamics
+    const_config = current_app.config["engine"].const_config["assets"]
+    chemistry_factor = const_config["chemistry"]["inefficiency_factor"] ** level
+    if facility == "hydrogen_storage":
+        return 0.65 / const_config[facility]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
+    return 1 / const_config[facility]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
 
 
 def extraction_emissions_multiplier(player: Player, facility) -> float:
@@ -428,7 +451,7 @@ def get_current_technology_values(player: Player):
     for facility in engine.storage_facilities:
         dict[facility]["capacity_multiplier"] = capacity_multiplier(player, facility)
     for facility in engine.extraction_facilities:
-        dict[facility]["extraction_rate_multiplier"] = extraction_rate_multiplier(player, facility)
+        dict[facility]["extraction_rate_multiplier"] = extraction_rate_multiplier(player)
         dict[facility]["power_consumption_multiplier"] = power_consumption_multiplier(player, facility)
         dict[facility]["extraction_emissions_multiplier"] = extraction_emissions_multiplier(player, facility)
     for facility in engine.technologies:
@@ -604,7 +627,7 @@ def package_extraction_facilities(player: Player):
             "resource_production": {
                 "name": facility_to_resource[extraction_facility],
                 "rate": const_config_assets[extraction_facility]["base_extraction_rate_per_day"]
-                * extraction_rate_multiplier(player, extraction_facility)
+                * extraction_rate_multiplier(player)
                 * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
                 / 24,
             },
@@ -628,20 +651,33 @@ def facility_is_hidden(player: Player, facility):
     return False
 
 
+def next_level(player: Player, facility_or_technology: str) -> int:
+    """Returns the level of the next `facility_or_technology` upgrade, e.g. current level + # ongoing upgrades + one"""
+    return (
+        getattr(player, facility_or_technology)
+        + OngoingConstruction.query.filter(
+            OngoingConstruction.player_id == player.id,
+            OngoingConstruction.name == facility_or_technology,
+        ).count()
+        + 1
+    )
+
+
+def package_change(current, upgraded):
+    """
+    `current` can be `None` to represent a new ability rather than an upgrade.
+    If both values are the same, e.g. lab workers, there is no change, so returns None.
+    """
+    if current == upgraded:
+        return None
+    else:
+        return {"current": current, "upgraded": upgraded}
+
+
 def package_functional_facilities(player: Player):
     """Gets all data relevant for the functional_facilities frontend"""
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
-
-    def package_change(current, upgraded):
-        """
-        `current` can be `None` to represent a new ability rather than an upgrade.
-        If both values are the same, e.g. lab workers, there is no change, so returns None.
-        """
-        if current == upgraded:
-            return None
-        else:
-            return {"current": current, "upgraded": upgraded}
 
     def industry_average_consumption_for_level(level):
         return (
@@ -676,85 +712,56 @@ def package_functional_facilities(player: Player):
                 / 24
             )
 
-    industry_level_including_ongoing_upgrades = (
-        player.industry
-        + OngoingConstruction.query.filter(
-            OngoingConstruction.player_id == player.id,
-            OngoingConstruction.name == "industry",
-        ).count()
-    )
-
-    laboratory_level_including_ongoing_upgrades = (
-        player.laboratory
-        + OngoingConstruction.query.filter(
-            OngoingConstruction.player_id == player.id,
-            OngoingConstruction.name == "laboratory",
-        ).count()
-    )
-
-    warehouse_level_including_ongoing_upgrades = (
-        player.warehouse
-        + OngoingConstruction.query.filter(
-            OngoingConstruction.player_id == player.id,
-            OngoingConstruction.name == "warehouse",
-        ).count()
-    )
-
-    carbon_capture_level_including_ongoing_upgrades = (
-        player.carbon_capture
-        + OngoingConstruction.query.filter(
-            OngoingConstruction.player_id == player.id,
-            OngoingConstruction.name == "carbon_capture",
-        ).count()
-    )
+    next_industry_level = next_level(player, "industry")
+    next_laboratory_level = next_level(player, "laboratory")
+    next_warehouse_level = next_level(player, "warehouse")
+    next_carbon_capture_level = next_level(player, "carbon_capture")
 
     special_keys = {
         "industry": {
-            "level": industry_level_including_ongoing_upgrades + 1,
+            "level": next_industry_level,
             "average_consumption": package_change(
-                current=industry_average_consumption_for_level(industry_level_including_ongoing_upgrades),
-                upgraded=industry_average_consumption_for_level(industry_level_including_ongoing_upgrades + 1),
+                current=industry_average_consumption_for_level(next_industry_level - 1),
+                upgraded=industry_average_consumption_for_level(next_industry_level),
             ),
             "revenue_generation": package_change(
-                current=industry_hourly_revenues_for_level(industry_level_including_ongoing_upgrades),
-                upgraded=industry_hourly_revenues_for_level(industry_level_including_ongoing_upgrades + 1),
+                current=industry_hourly_revenues_for_level(next_industry_level - 1),
+                upgraded=industry_hourly_revenues_for_level(next_industry_level),
             ),
         },
         "laboratory": {
-            "level": laboratory_level_including_ongoing_upgrades + 1,
+            "level": next_laboratory_level,
             "lab_workers": package_change(
-                current=player_lab_workers_for_level(laboratory_level_including_ongoing_upgrades),
-                upgraded=player_lab_workers_for_level(laboratory_level_including_ongoing_upgrades + 1),
+                current=player_lab_workers_for_level(next_laboratory_level - 1),
+                upgraded=player_lab_workers_for_level(next_laboratory_level),
             ),
         }
         | (
             {
                 "research_speed_bonus": 100 - const_config_assets["laboratory"]["time_factor"] * 100,
             }
-            if laboratory_level_including_ongoing_upgrades > 0
+            if next_laboratory_level > 1  # Don't show for research_speed_bonus 0 -> 1, only for 1 -> 2 onwards
             else {}
         ),
         "warehouse": {
-            "level": warehouse_level_including_ongoing_upgrades + 1,
+            "level": next_warehouse_level,
             "warehouse_capacities": {
                 resource: package_change(
-                    current=warehouse_capacity_for_level(warehouse_level_including_ongoing_upgrades, resource),
-                    upgraded=warehouse_capacity_for_level(warehouse_level_including_ongoing_upgrades + 1, resource),
+                    current=warehouse_capacity_for_level(next_warehouse_level - 1, resource),
+                    upgraded=warehouse_capacity_for_level(next_warehouse_level, resource),
                 )
                 for resource in engine.extractable_resources
             },
         },
         "carbon_capture": {
-            "level": carbon_capture_level_including_ongoing_upgrades + 1,
+            "level": next_carbon_capture_level,
             "power_consumption": package_change(
-                current=carbon_capture_power_consumption_for_level(carbon_capture_level_including_ongoing_upgrades),
-                upgraded=carbon_capture_power_consumption_for_level(
-                    carbon_capture_level_including_ongoing_upgrades + 1
-                ),
+                current=carbon_capture_power_consumption_for_level(next_carbon_capture_level - 1),
+                upgraded=carbon_capture_power_consumption_for_level(next_carbon_capture_level),
             ),
             "co2_absorption": package_change(
-                current=carbon_capture_absorption(carbon_capture_level_including_ongoing_upgrades),
-                upgraded=carbon_capture_absorption(carbon_capture_level_including_ongoing_upgrades + 1),
+                current=carbon_capture_absorption(next_carbon_capture_level - 1),
+                upgraded=carbon_capture_absorption(next_carbon_capture_level),
             ),
         },
     }
@@ -792,4 +799,183 @@ def package_constructions_page_data(player: Player):
         "storage_facilities": package_storage_facilities(player),
         "extraction_facilities": package_extraction_facilities(player),
         "functional_facilities": package_functional_facilities(player),
+    }
+
+
+def package_available_technologies(player: Player):
+    engine: GameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    # TODO: This `technologies` list should be stored somewhere else, e.g. in config
+    technologies: List[str] = [
+        "mathematics",
+        "mechanical_engineering",
+        "thermodynamics",
+        "physics",
+        "building_technology",
+        "mineral_extraction",
+        "transport_technology",
+        "materials",
+        "civil_engineering",
+        "aerodynamics",
+        "chemistry",
+        "nuclear_engineering",
+    ]
+    levels: Dict[str, int] = {technology: next_level(player, technology) for technology in technologies}
+    return {
+        technology: _package_facility_base(player, technology)
+        | {
+            "level": levels[technology],
+            "affected_facilities": [
+                const_config_assets[facility]["name"]
+                for facility in const_config_assets[technology]["affected_facilities"]
+            ],
+        }
+        | (
+            {
+                "power_generation_bonus": const_config_assets[technology]["prod_factor"] * 100 - 100,
+                "price_penalty": (const_config_assets[technology]["price_factor"] * 100 - 100),
+            }
+            if technology == "mechanical_engineering"
+            else {}
+        )
+        | (
+            {
+                "fuel_use_reduction_bonus": (const_config_assets[technology]["efficiency_factor"] - 1)
+                / const_config_assets[technology]["efficiency_factor"]
+                * 100,
+                "co2_emissions_reduction_bonus": (const_config_assets[technology]["efficiency_factor"] - 1)
+                / const_config_assets[technology]["efficiency_factor"]
+                * 100,
+                "compressed_air_efficiency_bonus": (1 - 1 / const_config_assets[technology]["efficiency_factor"])
+                * (
+                    0.8
+                    - engine.const_config["assets"]["compressed_air"]["base_efficiency"]
+                    * efficiency_multiplier_thermodynamics(player, "compressed_air", level=levels[technology] - 1)
+                )
+                * 100,
+                "molten_salt_efficiency_bonus": (
+                    (1 - 1 / const_config_assets[technology]["efficiency_factor"])
+                    * (
+                        1
+                        - engine.const_config["assets"]["molten_salt"]["base_efficiency"]
+                        * efficiency_multiplier_thermodynamics(player, "molten_salt", level=levels[technology] - 1)
+                    )
+                    * 100
+                ),
+            }
+            if technology == "thermodynamics"
+            else {}
+        )
+        | (
+            {
+                "price_penalty": (const_config_assets[technology]["price_factor"] * 100 - 100),
+                "power_generation_bonus": const_config_assets[technology]["prod_factor"] * 100 - 100,
+            }
+            if technology == "physics"
+            else {}
+        )
+        | (
+            {
+                "construction_time_reduction_bonus": (100 - const_config_assets[technology]["time_factor"] * 100),
+                "construction_workers": package_change(
+                    player_construction_workers_for_level(levels[technology] - 1),
+                    player_construction_workers_for_level(levels[technology]),
+                ),
+            }
+            if technology == "building_technology"
+            else {}
+        )
+        | (
+            {
+                "extraction_speed_bonus": 100
+                * extraction_rate_multiplier(player, levels[technology])
+                / extraction_rate_multiplier(player, levels[technology] - 1)
+                - 100,
+                "power_consumption_penalty": 100
+                * const_config_assets[technology]["energy_factor"]
+                / (1 + const_config_assets[technology]["energy_factor"] * (levels[technology] - 1)),
+                "co2_emissions_penalty": 100
+                * const_config_assets[technology]["pollution_factor"]
+                / (1 + const_config_assets[technology]["pollution_factor"] * (levels[technology] - 1)),
+                "price_penalty": (const_config_assets[technology]["price_factor"] * 100 - 100),
+            }
+            if technology == "mineral_extraction"
+            else {}
+        )
+        | (
+            {
+                "shipment_time_reduction_bonus": 100 - const_config_assets[technology]["time_factor"] * 100,
+                "power_consumption_reduction_bonus": (
+                    const_config_assets[technology]["energy_factor"] / const_config_assets[technology]["time_factor"]
+                    - 1
+                )
+                * 100,
+            }
+            if technology == "transport_technology"
+            else {}
+        )
+        | (
+            {
+                "price_reduction_bonus": (const_config_assets[technology]["price_factor"] * 100 - 100),
+                "construction_power_reduction_bonus": 100
+                - const_config_assets[technology]["construction_energy_factor"] * 100,
+            }
+            if technology == "materials"
+            else {}
+        )
+        | (
+            {
+                "storage_capacity_bonus": const_config_assets[technology]["capacity_factor"] * 100 - 100,
+                "power_generation_bonus": const_config_assets[technology]["prod_factor"] * 100 - 100,
+                "price_penalty": (const_config_assets[technology]["price_factor"] * 100 - 100),
+            }
+            if technology == "civil_engineering"
+            else {}
+        )
+        | (
+            {
+                "power_generation_bonus": const_config_assets[technology]["prod_factor"] * 100 - 100,
+                "price_penalty": (const_config_assets[technology]["price_factor"] * 100 - 100),
+            }
+            if technology == "aerodynamics"
+            else {}
+        )
+        | (
+            {
+                "hydrogen_efficiency_bonus": (1 - const_config_assets[technology]["inefficiency_factor"])
+                * (
+                    0.65
+                    - engine.const_config["assets"]["hydrogen_storage"]["base_efficiency"]
+                    * efficiency_multiplier_chemistry(player, "hydrogen_storage", level=levels[technology] - 1)
+                )
+                * 100,
+                "lithium_ion_efficiency_bonus": (1 - const_config_assets[technology]["inefficiency_factor"])
+                * (
+                    1
+                    - engine.const_config["assets"]["lithium_ion_batteries"]["base_efficiency"]
+                    * efficiency_multiplier_chemistry(player, "lithium_ion_batteries", level=levels[technology] - 1)
+                )
+                * 100,
+                "solid_state_efficiency_bonus": (1 - const_config_assets[technology]["inefficiency_factor"])
+                * (
+                    1
+                    - engine.const_config["assets"]["solid_state_batteries"]["base_efficiency"]
+                    * efficiency_multiplier_chemistry(player, "solid_state_batteries", level=levels[technology] - 1)
+                )
+                * 100,
+                "price_penalty": (const_config_assets[technology]["price_factor"] * 100 - 100),
+            }
+            if technology == "chemistry"
+            else {}
+        )
+        | (
+            {
+                "power_generation_bonus": const_config_assets[technology]["prod_factor"] * 100 - 100,
+                "price_penalty": (const_config_assets[technology]["price_factor"] * 100 - 100),
+            }
+            if technology == "nuclear_engineering"
+            else {}
+        )
+        # price_reduction_bonus
+        for technology in technologies
     }

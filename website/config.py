@@ -1012,6 +1012,11 @@ def player_lab_workers_for_level(lab_level: int) -> int:
     return (lab_level + 2) // 3
 
 
+def player_construction_workers_for_level(building_technology_level: int) -> int:
+    """Returns how many construction workers are available for the specified building technology level"""
+    return building_technology_level + 1
+
+
 def warehouse_capacity_for_level(warehouse_level, resource):
     """Returns how much capacity in kg a player with a warehouse with
     `warehouse_level` has for the specified `resource`"""
@@ -1080,7 +1085,7 @@ class Config(object):
         )
 
         # setting the number of workers
-        player.construction_workers = player.building_technology + 1
+        player.construction_workers = player_construction_workers_for_level(player.building_technology)
         player.lab_workers = player_lab_workers_for_level(player.laboratory)
 
     def __getitem__(self, player_id):
