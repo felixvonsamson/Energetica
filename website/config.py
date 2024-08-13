@@ -311,7 +311,7 @@ const_config = {
             "lifespan": timedelta(days=525).total_seconds(),  # [in-game seconds]
             "image_extension": "png",
             "initial_efficiency": 0.75,
-            "description": "",
+            "description": "The small pumped hydro storage pumps water to a higher reservoir to store energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity",
             "requirements": [],
         },
@@ -330,7 +330,7 @@ const_config = {
             "lifespan": timedelta(days=105).total_seconds(),
             "image_extension": "jpg",
             "initial_efficiency": 0.63,
-            "description": "",
+            "description": "The molten salt storage stores energy in the form of high temperature molten salt.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Thermal_energy_storage",
             "requirements": [
                 ["mechanical_engineering", 2, False],
@@ -352,7 +352,7 @@ const_config = {
             "lifespan": timedelta(days=630).total_seconds(),
             "image_extension": "jpg",
             "initial_efficiency": 0.8,
-            "description": "",
+            "description": "The large pumped hydro storage pumps water to a higher reservoir to store large amounts of energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity",
             "requirements": [["civil_engineering", 3, False]],
         },
@@ -371,7 +371,8 @@ const_config = {
             "lifespan": timedelta(days=315).total_seconds(),
             "image_extension": "jpg",
             "initial_efficiency": 0.33,
-            "description": "",
+            "description": "The hydrogen storage facility uses electricity to produce hydrogen by electrolysis of water. "
+            "This hydrogen can be used to generate electricity in a fuel cell.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydrogen_storage",
             "requirements": [["chemistry", 3, False], ["materials", 3, False]],
         },
@@ -390,7 +391,7 @@ const_config = {
             "lifespan": timedelta(days=112).total_seconds(),
             "image_extension": "jpg",
             "initial_efficiency": 0.69,
-            "description": "",
+            "description": "The lithium-ion batteries store energy with a high efficiency in the form of chemical energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Lithium-ion_battery",
             "requirements": [["chemistry", 4, False], ["materials", 4, False]],
         },
@@ -409,7 +410,7 @@ const_config = {
             "lifespan": timedelta(days=210).total_seconds(),
             "image_extension": "jpg",
             "initial_efficiency": 0.79,
-            "description": "",
+            "description": "The solid state batteries store energy with a high efficiency in the form of chemical energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Solid-state_battery",
             "requirements": [
                 ["chemistry", 6, False],
@@ -426,7 +427,7 @@ const_config = {
             "base_construction_pollution": 100_000,  # [kg]
             "price_multiplier": 1.5,
             "time_factor": 0.9,
-            "description": "The laboratory is needed to research Technologies.",
+            "description": "The laboratory is needed to research Technologies.<br>+1 lab worker every 3rd level.",
             "wikipedia_link": "",
             "requirements": [],
         },
@@ -548,7 +549,7 @@ const_config = {
             "base_construction_energy": 5_000_000,  # [Wh]
             "price_multiplier": 1.3,
             "affected_facilities": [],
-            "description": "",
+            "description": "Mathematics is a prerequisite for many other technologies.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173657&",  # cspell:disable-line
             "requirements": [["laboratory", 1, False]],
@@ -570,7 +571,7 @@ const_config = {
                 "combined_cycle",
                 "molten_salt",
             ],
-            "description": "",
+            "description": "Mechanical Engineering is the branch of engineering for machines and mechanical systems.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172711&",  # cspell:disable-line
             "requirements": [
@@ -595,7 +596,7 @@ const_config = {
                 "nuclear_reactor_gen4",
                 "molten_salt",
             ],
-            "description": "",
+            "description": "Thermodynamics is the study of heat and energy transfer in systems.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173159&",  # cspell:disable-line
             "requirements": [
@@ -619,7 +620,7 @@ const_config = {
                 "lithium_ion_batteries",
                 "solid_state_batteries",
             ],
-            "description": "",
+            "description": "Physics is the study of matter, energy, and the fundamental forces of nature.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2024S&ansicht=ALLE&lerneinheitId=177068&",  # cspell:disable-line
             "requirements": [
@@ -637,7 +638,7 @@ const_config = {
             "price_multiplier": 1.3,
             "time_factor": 0.9,
             "affected_facilities": [],  # (all power and storage facilities)
-            "description": "",
+            "description": "Building Technology enables more efficient construction of facilities.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172899&",  # cspell:disable-line
             "requirements": [
@@ -661,7 +662,7 @@ const_config = {
                 "gas_drilling_site",
                 "uranium_mine",
             ],
-            "description": "",
+            "description": "Mineral Extraction improves the efficiency of the extraction of natural resources.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173723&",  # cspell:disable-line
             "requirements": [
@@ -679,7 +680,7 @@ const_config = {
             "time_factor": 0.9,
             "energy_factor": 1.035,
             "affected_facilities": [],
-            "description": "",
+            "description": "Transport Technology enables more efficient shipping of natural resources.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172788&",  # cspell:disable-line
             "requirements": [
@@ -703,7 +704,7 @@ const_config = {
                 "lithium_ion_batteries",
                 "solid_state_batteries",
             ],
-            "description": "",
+            "description": "Materials sciences are essential for the development of new improved materials.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2024S&ansicht=ALLE&lerneinheitId=178386&",  # cspell:disable-line
             "requirements": [
@@ -727,7 +728,7 @@ const_config = {
                 "small_pumped_hydro",
                 "large_pumped_hydro",
             ],
-            "description": "",
+            "description": "Civil Engineering is the branch of engineering for large infrastructure projects.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173564&",  # cspell:disable-line
             "requirements": [
@@ -750,7 +751,7 @@ const_config = {
                 "onshore_wind_turbine",
                 "offshore_wind_turbine",
             ],
-            "description": "",
+            "description": "Aerodynamics is the study of the motion of air and other gases.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172719&",  # cspell:disable-line
             "requirements": [
@@ -772,7 +773,7 @@ const_config = {
                 "lithium_ion_batteries",
                 "solid_state_batteries",
             ],
-            "description": "",
+            "description": "Nuclear Engineering is the branch of engineering for nuclear power plants.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=174071&",  # cspell:disable-line
             "requirements": [
