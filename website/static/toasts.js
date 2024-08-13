@@ -24,21 +24,24 @@ let swRegistration = null;
 
 if ('serviceWorker' in navigator && 'PushManager' in window) {
     navigator.serviceWorker.register('/static/service-worker.js')
-    .then(function(registration) {
-        swRegistration = registration;
-        update_switch();
-    }).catch(function(error) {
-        console.error('Service Worker registration failed:', error);
-    });
-}else{
+        .then(function (registration) {
+            swRegistration = registration;
+            update_switch();
+        }).catch(function (error) {
+            console.error('Service Worker registration failed:', error);
+        });
+} else {
     const browserNotification = document.getElementById('web_push_notification_switch');
     browserNotification.innerHTML = "Browser notifications not supported";
 }
 
-function update_switch(){
+function update_switch() {
     const checkbox = document.getElementById('web_push_notifications-checkbox');
 
-    checkbox.addEventListener('change', function() {
+    if (checkbox == null) {
+        return;
+    }
+    checkbox.addEventListener('change', function () {
         if (this.checked) {
             requestNotificationPermission();
         } else {
@@ -47,16 +50,16 @@ function update_switch(){
     });
 
     swRegistration.pushManager.getSubscription()
-    .then(function(subscription) {
-        isSubscribed = !(subscription === null);
-        if (isSubscribed) {
-            checkbox.checked = true;
-        }
-    });
+        .then(function (subscription) {
+            isSubscribed = !(subscription === null);
+            if (isSubscribed) {
+                checkbox.checked = true;
+            }
+        });
 };
 
 function requestNotificationPermission() {
-    Notification.requestPermission().then(function(permission) {
+    Notification.requestPermission().then(function (permission) {
         if (permission === 'granted') {
             subscribeUserToPush();
         }
@@ -71,7 +74,7 @@ function subscribeUserToPush() {
         userVisibleOnly: true,
         applicationServerKey: convertedVapidKey
 
-    }).then(function(subscription) {
+    }).then(function (subscription) {
 
         // Send subscription to your server
         fetch('/subscribe', {
@@ -85,20 +88,20 @@ function subscribeUserToPush() {
                 let response = raw_data["response"];
                 if (response == "Subscription successful") {
                     isSubscribed = true;
-                }else{
+                } else {
                     addError("Browser notification subscription not possible");
                 }
             });
         });
-    }).catch(function(error) {
+    }).catch(function (error) {
         console.error('Failed to subscribe user:', error);
     });
 }
 
 function unsubscribeUserFromPush() {
-    swRegistration.pushManager.getSubscription().then(function(subscription) {
+    swRegistration.pushManager.getSubscription().then(function (subscription) {
         if (subscription) {
-            subscription.unsubscribe().then(function() {
+            subscription.unsubscribe().then(function () {
                 // notify the server about the unsubscription
                 fetch('/unsubscribe', {
                     method: 'POST',
@@ -107,7 +110,7 @@ function unsubscribeUserFromPush() {
                         'Content-Type': 'application/json'
                     }
                 });
-            }).catch(function(error) {
+            }).catch(function (error) {
                 console.error('Failed to unsubscribe user:', error);
             });
         }

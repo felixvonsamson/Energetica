@@ -104,6 +104,7 @@ def get_map():
             "coal": tile.coal,
             "gas": tile.gas,
             "uranium": tile.uranium,
+            "climate_risk": tile.climate_risk,
             "player_id": tile.player.id if tile.player else None,
         }
         for tile in hex_map

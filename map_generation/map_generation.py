@@ -174,7 +174,7 @@ def generate_hydro(map):
             start_tile = sources.pop(0)
             start_tile.hydro = hydro_value
             hydro_value -= 0.01
-            if hydro_value <= 0:
+            if hydro_value <= 0.2:
                 break
             possible_upstream_tiles = start_tile.get_neighbors()
             filtered_tiles = []
@@ -184,7 +184,7 @@ def generate_hydro(map):
                 filtered_tiles.append(tile)
             if len(filtered_tiles) >= 3 and random.random() < 0.5 - 0.3 * hydro_value:
                 hydro_value -= 0.05
-                if hydro_value <= 0:
+                if hydro_value <= 0.2:
                     break
                 next_tiles = non_adjacent_tiles(filtered_tiles)
                 sources.append(next_tiles[0])
@@ -355,7 +355,7 @@ def generate_wind(map):
         tile.score = tile.solar + tile.hydro + tile.coal + tile.gas + tile.uranium - tile.risk
 
     for tile in map:
-        tile.wind = min(1, max(0.05 * random.random(), 1.2 - tile.score + 0.2 * random.random()))
+        tile.wind = min(1, max(0.01 + 0.05 * random.random(), 1.2 - tile.score + 0.2 * random.random()))
 
 
 def generate_background_resources(map):

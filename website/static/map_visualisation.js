@@ -53,7 +53,7 @@ let mapsize = size_param * (size_param + 1) * 3 + 1; //lenght of the list that c
 let map = [];
 let resources = ["Solar", "Wind", "Hydro", "Coal", "Gas", "Uranium", "Climate risk"];
 let validate;
-let resource_colors = [59, 186, 239, 0, 320, 275, 109];
+let resource_colors = [59, 186, 239, 0, 275, 109, 320];
 let players_ids;
 let current_player_id;
 
@@ -77,6 +77,7 @@ function preload() {
                     data[i].coal,
                     data[i].gas,
                     data[i].uranium,
+                    data[i].climate_risk,
                 ];
                 map.push(
                     new Hex(
@@ -152,7 +153,7 @@ function draw() {
             fill(255);
             textSize(15);
             text(resources[i], 10, 45 + 32 * i);
-            if (i > 2) {
+            if ([3, 4, 5].includes(i)) {
                 textAlign(RIGHT);
                 textSize(15);
                 text(
@@ -173,6 +174,7 @@ function draw() {
         text(round(map[id].resources[0] * 1000) + " W/m²", 190, 45);
         text(round(pow(map[id].resources[1], 0.5) * 50) + " km/h", 190, 77);
         text(round(map[id].resources[2] * 150) + " m³/s", 190, 109);
+        text(map[id].resources[6] + " / 10", 190, 237);
         textAlign(CENTER);
         textSize(18);
         text("Distance : " + calc_dist(id) + " tiles", 100, 275);

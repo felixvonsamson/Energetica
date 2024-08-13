@@ -67,7 +67,7 @@ void loadMap(int m){
     float coal = row.getFloat("coal") / 2000000000.0;
     float gas = row.getFloat("gas") / 600000000.0;
     float uranium = row.getFloat("uranium") / 8000000.0;
-    float risk = row.getFloat("risk");
+    float risk = row.getFloat("climate_risk") / 10.0;
     float score = row.getFloat("score");
     
     int id = coords_to_id(q, r);
