@@ -46,7 +46,6 @@ function setup() {
         nuclear_reactor_gen4: [color(128, 185, 24), "Gen 4 Nuclear"],
         steam_engine: [color(151, 157, 172), "Steam engine"],
         coal_burner: [color(0, 0, 0), "Coal burner"],
-        oil_burner: [color(166, 99, 204), "Oil burner"],
         gas_burner: [color(171, 196, 255), "Gas burner"],
         combined_cycle: [color(92, 77, 125), "Combined cycle"],
         windmill: [color(156, 197, 161), "Windmill"],
@@ -59,7 +58,6 @@ function setup() {
         large_pumped_hydro: [color(2, 62, 138), "Hydrostrg. (L)"],
         lithium_ion_batteries: [color(108, 88, 76), "Li-ion batteries"],
         solid_state_batteries: [color(169, 132, 103), "SS batteries"],
-        compressed_air: [color(255, 179, 198), "Compr. air"],
         molten_salt: [color(119, 47, 26), "Molten salt"],
         hydrogen_storage: [color(144, 241, 239), "H2 storage"],
 
@@ -69,7 +67,6 @@ function setup() {
         climate_events: [color(176, 15, 220), "Climate events"],
 
         coal_mine: [color(73, 80, 87), "Coal mines"],
-        oil_field: [color(181, 23, 158), "Oil fields"],
         gas_drilling_site: [color(76, 201, 240), "Gas fields"],
         uranium_mine: [color(238, 239, 32), "Uran. mines"],
         industry: [color(188, 108, 37), "Industry"],
@@ -79,7 +76,6 @@ function setup() {
         carbon_capture: [color(173, 181, 189), "CO2 capture"],
 
         coal: [color(0, 0, 0), "Coal"],
-        oil: [color(166, 99, 204), "Oil"],
         gas: [color(171, 196, 255), "Gas"],
         uranium: [color(191, 210, 0), "Uranium"],
 

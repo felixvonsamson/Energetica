@@ -1,8 +1,8 @@
 float h, w;
 float s = 20; //displayed size of the hexagon tiles
 Hex[] map;
-Button[] buttons = new Button[9];
-int[] button_colors = {42, 132, 169, 0, 227, 195, 77, 227, 20};
+Button[] buttons = new Button[8];
+int[] button_colors = {42, 132, 169, 0, 195, 77, 227, 20};
 int active_vew = -1;
 int selected_id = 0;
 int mapID = 0;
@@ -65,7 +65,6 @@ void loadMap(int m){
     float wind = row.getFloat("wind");
     float hydro = row.getFloat("hydro");
     float coal = row.getFloat("coal") / 2000000000.0;
-    float oil = row.getFloat("oil") / 100000000.0;
     float gas = row.getFloat("gas") / 600000000.0;
     float uranium = row.getFloat("uranium") / 8000000.0;
     float risk = row.getFloat("risk");
@@ -73,7 +72,7 @@ void loadMap(int m){
     
     int id = coords_to_id(q, r);
     // Create new Hex object with these values
-    Hex h = new Hex(id, q, r, new float[] { solar, wind, hydro, coal, oil, gas, uranium,risk,score });
+    Hex h = new Hex(id, q, r, new float[] { solar, wind, hydro, coal, gas, uranium,risk,score });
     
     // Store Hex object in map array
     map[i] = h;
@@ -87,7 +86,7 @@ void setup(){
   colorMode(HSB);
   //noLoop();
   
-  String[] button_names = {"solar", "wind", "hydro", "coal", "oil", "gas", "uranium", "climate risk", "total"};
+  String[] button_names = {"solar", "wind", "hydro", "coal", "gas", "uranium", "climate risk", "total"};
   for(int i = 0; i<buttons.length; i++){
     buttons[i] = new Button(button_names[i], i, button_colors[i]);
   }

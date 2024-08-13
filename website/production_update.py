@@ -16,14 +16,12 @@ from .database.player_assets import ActiveFacility, OngoingConstruction, Shipmen
 
 resource_to_extraction = {
     "coal": "coal_mine",
-    "oil": "oil_field",
     "gas": "gas_drilling_site",
     "uranium": "uranium_mine",
 }
 
 extraction_to_resource = {
     "coal_mine": "coal",
-    "oil_field": "oil",
     "gas_drilling_site": "gas",
     "uranium_mine": "uranium",
 }
@@ -426,7 +424,6 @@ def reset_resource_reservations():
     """Helper function to reset resource reservations to 0"""
     return {
         "coal": 0,
-        "oil": 0,
         "gas": 0,
         "uranium": 0,
     }

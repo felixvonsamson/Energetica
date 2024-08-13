@@ -30,7 +30,7 @@
 
   <div id="facilities_list" class="flex-col medium margin">
     {% set caps = engine.data["player_capacities"][user.id] %}
-    {% if caps["steam_engine"] or caps["windmill"] or caps["watermill"] or caps["coal_burner"] or caps["oil_burner"] or caps["gas_burner"] or caps["small_water_dam"] or caps["onshore_wind_turbine"] or caps["combined_cycle"] or caps["nuclear_reactor"] or caps["large_water_dam"] or caps["CSP_solar"] or caps["PV_solar"] or caps["offshore_wind_turbine"] or caps["nuclear_reactor_gen4"] %}
+    {% if caps["steam_engine"] or caps["windmill"] or caps["watermill"] or caps["coal_burner"] or caps["gas_burner"] or caps["small_water_dam"] or caps["onshore_wind_turbine"] or caps["combined_cycle"] or caps["nuclear_reactor"] or caps["large_water_dam"] or caps["CSP_solar"] or caps["PV_solar"] or caps["offshore_wind_turbine"] or caps["nuclear_reactor_gen4"] %}
       <b class="large">Power facilities</b>
       <div class="table_container">
         <table id="power_facilities_table" class="table bone txt_center margin-small">
@@ -46,7 +46,7 @@
         </table>
       </div>
     {% endif %}
-    {% if caps["small_pumped_hydro"] or caps["compressed_air"] or caps["molten_salt"] or caps["large_pumped_hydro"] or caps["hydrogen_storage"] or caps["lithium_ion_batteries"] or caps["solid_state_batteries"] %}
+    {% if caps["small_pumped_hydro"] or caps["molten_salt"] or caps["large_pumped_hydro"] or caps["hydrogen_storage"] or caps["lithium_ion_batteries"] or caps["solid_state_batteries"] %}
       <b class="large margin-top">Storage facilities</b>
       <div class="table_container">
         <table id="storage_facilities_table" class="table bone txt_center margin-small">
@@ -63,7 +63,7 @@
         </table>
       </div>
     {% endif %}
-    {% if caps["coal_mine"] or caps["oil_field"] or caps["gas_drilling_site"] or caps["uranium_mine"] %}
+    {% if caps["coal_mine"] or caps["gas_drilling_site"] or caps["uranium_mine"] %}
       <b class="large margin-top">Extraction facilities</b>
       <div class="table_container">
         <table id="extraction_facilities_table" class="table bone txt_center margin-small">

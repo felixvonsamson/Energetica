@@ -2,7 +2,7 @@ class Hex{
   int id;
   int q, r;
   boolean selected;
-  //float solar, wind, hydro, coal, oil, gas, uranium, risk, score;
+  //float solar, wind, hydro, coal, gas, uranium, risk, score;
   float[] resources;
   Hex(int _id, int _q, int _r, float[] _resources){
     id = _id;

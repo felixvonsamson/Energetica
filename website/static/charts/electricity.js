@@ -7,7 +7,6 @@ const keys_generation = {
     "nuclear_reactor_gen4": true,
     "steam_engine": true,
     "coal_burner": true,
-    "oil_burner": true,
     "gas_burner": true,
     "combined_cycle": true,
     "windmill": true,
@@ -19,17 +18,15 @@ const keys_generation = {
     "large_pumped_hydro": true,
     "lithium_ion_batteries": true,
     "solid_state_batteries": true,
-    "compressed_air": true,
     "molten_salt": true,
     "hydrogen_storage": true,
     "imports": true,
 };
 
-const storage_keys = ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"];
+const storage_keys = ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "molten_salt", "hydrogen_storage"];
 
 const keys_demand = {
     "coal_mine": true,
-    "oil_field": true,
     "gas_drilling_site": true,
     "uranium_mine": true,
     "industry": true,
@@ -41,7 +38,6 @@ const keys_demand = {
     "large_pumped_hydro": true,
     "lithium_ion_batteries": true,
     "solid_state_batteries": true,
-    "compressed_air": true,
     "molten_salt": true,
     "hydrogen_storage": true,
     "exports": true,

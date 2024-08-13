@@ -22,7 +22,6 @@ class Tile:
         self.wind = 0
         self.hydro = 0
         self.coal = 0
-        self.oil = 0
         self.gas = 0
         self.uranium = 0
         self.risk = 0
@@ -133,10 +132,10 @@ def coordinates_to_id(x, y):
 def save_as_csv(map, m):
     """Saves the map as a csv file."""
     with open(f"map{m}.csv", "w") as f:
-        f.write("q,r,solar,wind,hydro,coal,oil,gas,uranium,risk,score\n")
+        f.write("q,r,solar,wind,hydro,coal,gas,uranium,climate_risk,score\n")
         for tile in map:
             f.write(
-                f"{tile.q},{tile.r},{tile.solar},{tile.wind},{tile.hydro},{tile.coal * 2_000_000_000},{tile.oil * 100_000_000},{tile.gas * 600_000_000},{tile.uranium * 8_000_000},{tile.risk},{tile.score}\n"
+                f"{tile.q},{tile.r},{tile.solar},{tile.wind},{tile.hydro},{tile.coal * 2_000_000_000},{tile.gas * 600_000_000},{tile.uranium * 8_000_000},{math.floor(tile.risk*10.9)},{tile.score}\n"
             )
     print(f"Map {m} saved.")
 
@@ -415,7 +414,7 @@ for m in range(10):
     max_score = 0
     min_score = 0
     for tile in map:
-        tile.score = tile.solar + tile.wind + tile.hydro + tile.coal + tile.oil + tile.gas + tile.uranium - tile.risk
+        tile.score = tile.solar + tile.wind + tile.hydro + tile.coal + tile.gas + tile.uranium - tile.risk
         if tile.score > max_score:
             max_score = tile.score
         if tile.score < min_score:

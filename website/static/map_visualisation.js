@@ -2,7 +2,7 @@
 This code is the p5.js script that shows the map in the home screen
 */
 
-max_q = [1, 1, 1, 2_000_000_000, 600_000_000, 100_000_000, 8_000_000];
+max_q = [1, 1, 1, 2_000_000_000, 600_000_000, 8_000_000, 10];
 // Tile item :
 class Hex {
     constructor(_id, _q, _r, _resources, player_id) {
@@ -10,7 +10,7 @@ class Hex {
         this.q = _q; // q coordinate
         this.r = _r; // r coordinate
         this.s = -this.q - this.r; // s coordinate
-        this.resources = _resources; // array with amount of resources on the tile. Format : [solar, wind, hydro, coal, oil, gas, uranium]
+        this.resources = _resources; // array with amount of resources on the tile. Format : [solar, wind, hydro, coal, gas, uranium, climate_risk]
         this.owner_id = player_id;
     }
     display_tile(hover = false) {
@@ -51,7 +51,7 @@ let size_param = 10; //indicates the size of the map
 let s = 280 / size_param; //displayed size of the hexagon tiles
 let mapsize = size_param * (size_param + 1) * 3 + 1; //lenght of the list that contains the hexagon tiles
 let map = [];
-let resources = ["Solar", "Wind", "Hydro", "Coal", "Gas", "Oil", "Uranium"];
+let resources = ["Solar", "Wind", "Hydro", "Coal", "Gas", "Uranium", "Climate risk"];
 let validate;
 let resource_colors = [59, 186, 239, 0, 320, 275, 109];
 let players_ids;
@@ -76,7 +76,6 @@ function preload() {
                     data[i].hydro,
                     data[i].coal,
                     data[i].gas,
-                    data[i].oil,
                     data[i].uranium,
                 ];
                 map.push(

@@ -24,12 +24,6 @@
         <span class="popup_info small">Coal stock</span>
       </div>
       <div class="resourceJauge-background hover_info">
-        <div class="resourceJauge color_oil" style="--width:{{user.oil / warehouse_cap.oil / warehouse_mult}}"></div>
-        <div id="oil" class="resource"></div>
-        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.oil }});</script>
-        <span class="popup_info small">Oil stock</span>
-      </div>
-      <div class="resourceJauge-background hover_info">
         <div class="resourceJauge color_gas" style="--width:{{user.gas / warehouse_cap.gas / warehouse_mult}}"></div>
         <div id="gas" class="resource"></div>
         <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.gas }});</script>

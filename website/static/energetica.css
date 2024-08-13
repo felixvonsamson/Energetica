@@ -77,10 +77,6 @@ canvas {
     background-color: rgb(0, 0, 0);
 }
 
-.color_oil_burner {
-    background-color: rgb(166, 99, 204);
-}
-
 .color_gas_burner {
     background-color: rgb(171, 196, 255);
 }
@@ -125,10 +121,6 @@ canvas {
     background-color: rgb(169, 132, 103);
 }
 
-.color_compressed_air {
-    background-color: rgb(255, 179, 198);
-}
-
 .color_molten_salt {
     background-color: rgb(119, 47, 26);
 }
@@ -151,10 +143,6 @@ canvas {
 
 .color_coal_mine {
     background-color: rgb(73, 80, 87);
-}
-
-.color_oil_field {
-    background-color: rgb(181, 23, 158);
 }
 
 .color_gas_drilling_site {
@@ -187,10 +175,6 @@ canvas {
 
 .color_coal {
     background-color: rgb(0, 0, 0);
-}
-
-.color_oil {
-    background-color: rgb(166, 99, 204);
 }
 
 .color_gas {

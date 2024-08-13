@@ -89,7 +89,6 @@ function setup() {
         nuclear_reactor_gen4: [color(128, 185, 24), "Gen 4 Nuclear"],
         steam_engine: [color(151, 157, 172), "Steam engine"],
         coal_burner: [color(0, 0, 0), "Coal burner"],
-        oil_burner: [color(166, 99, 204), "Oil burner"],
         gas_burner: [color(171, 196, 255), "Gas burner"],
         combined_cycle: [color(92, 77, 125), "Combined cycle"],
         windmill: [color(156, 197, 161), "Windmill"],
@@ -102,12 +101,10 @@ function setup() {
         large_pumped_hydro: [color(2, 62, 138), "Hydrostrg. (L)"],
         lithium_ion_batteries: [color(108, 88, 76), "Li-ion batteries"],
         solid_state_batteries: [color(169, 132, 103), "SS batteries"],
-        compressed_air: [color(255, 179, 198), "Compr. air"],
         molten_salt: [color(119, 47, 26), "Molten salt"],
         hydrogen_storage: [color(144, 241, 239), "H2 storage"],
 
         coal_mine: [color(73, 80, 87), "Coal mines"],
-        oil_field: [color(181, 23, 158), "Oil fields"],
         gas_drilling_site: [color(76, 201, 240), "Gas fields"],
         uranium_mine: [color(238, 239, 32), "Uran. mines"],
         industry: [color(188, 108, 37), "Industry"],
@@ -515,19 +512,19 @@ function network_capacities_sketch(s) {
         s.simplified = "complex";
         s.data = {
             simple: {
-                categories: ["Renewables", "Controlables", "Storages"],
+                categories: ["Renewables", "Controllable", "Storages"],
                 Renewables: ["watermill", "small_water_dam", "large_water_dam", "windmill", "onshore_wind_turbine", "offshore_wind_turbine", "CSP_solar", "PV_solar"],
-                Controlables: ["nuclear_reactor", "nuclear_reactor_gen4", "steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle"],
-                Storages: ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"],
+                Controllable: ["nuclear_reactor", "nuclear_reactor_gen4", "steam_engine", "coal_burner", "gas_burner", "combined_cycle"],
+                Storages: ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "molten_salt", "hydrogen_storage"],
             },
             complex: {
                 categories: ["Hydro", "Wind", "Solar", "Fossil", "Nuclear", "Storages"],
                 Hydro: ["watermill", "small_water_dam", "large_water_dam"],
                 Wind: ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"],
                 Solar: ["CSP_solar", "PV_solar"],
-                Fossil: ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle"],
+                Fossil: ["steam_engine", "coal_burner", "gas_burner", "combined_cycle"],
                 Nuclear: ["nuclear_reactor", "nuclear_reactor_gen4"],
-                Storages: ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"],
+                Storages: ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "molten_salt", "hydrogen_storage"],
             }
         }
         s.createCanvas(min(canvas_width, 1200), 0.3 * canvas_width);

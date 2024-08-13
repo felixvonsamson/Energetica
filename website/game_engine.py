@@ -33,7 +33,6 @@ class GameEngine(object):
             "windmill",
             "watermill",
             "coal_burner",
-            "oil_burner",
             "gas_burner",
             "small_water_dam",
             "onshore_wind_turbine",
@@ -48,15 +47,13 @@ class GameEngine(object):
 
         self.extraction_facilities = [
             "coal_mine",
-            "oil_field",
             "gas_drilling_site",
             "uranium_mine",
         ]
 
-        self.extractable_resources = ["coal", "oil", "gas", "uranium"]
+        self.extractable_resources = ["coal", "gas", "uranium"]
         self.storage_facilities = [
             "small_pumped_hydro",
-            "compressed_air",
             "molten_salt",
             "large_pumped_hydro",
             "hydrogen_storage",
@@ -70,7 +67,6 @@ class GameEngine(object):
             "nuclear_reactor_gen4",
             "combined_cycle",
             "gas_burner",
-            "oil_burner",
             "coal_burner",
         ]
 

@@ -102,7 +102,6 @@ def get_map():
             "wind": tile.wind,
             "hydro": tile.hydro,
             "coal": tile.coal,
-            "oil": tile.oil,
             "gas": tile.gas,
             "uranium": tile.uranium,
             "player_id": tile.player.id if tile.player else None,
@@ -140,7 +139,7 @@ def get_chat_list():
 def get_resource_data():
     """gets production rates and quantity on sale for every resource"""
     on_sale = {}
-    for resource in ["coal", "oil", "gas", "uranium"]:
+    for resource in ["coal", "gas", "uranium"]:
         on_sale[resource] = getattr(current_user, resource + "_on_sale")
     return jsonify(on_sale)
 

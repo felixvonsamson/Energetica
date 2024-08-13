@@ -26,7 +26,6 @@ def init_test_players(engine):
 
     #     player.money = 1_000_000
     #     player.coal = 4_500_000
-    #     player.oil = 100_000
     #     player.gas = 80_000_000
     #     player.uranium = 4_500
     #     player.rest_of_priorities = ""
@@ -96,11 +95,9 @@ def add_asset(player, asset, n):
     """This function adds an asset as an instant construction."""
     asset_to_family = {
         "coal_mine": "Extraction facilities",
-        "oil_field": "Extraction facilities",
         "gas_drilling_site": "Extraction facilities",
         "uranium_mine": "Extraction facilities",
         "small_pumped_hydro": "Storage facilities",
-        "compressed_air": "Storage facilities",
         "molten_salt": "Storage facilities",
         "large_pumped_hydro": "Storage facilities",
         "hydrogen_storage": "Storage facilities",
@@ -111,7 +108,6 @@ def add_asset(player, asset, n):
         "nuclear_reactor_gen4": "Power facilities",
         "combined_cycle": "Power facilities",
         "gas_burner": "Power facilities",
-        "oil_burner": "Power facilities",
         "coal_burner": "Power facilities",
         "small_water_dam": "Power facilities",
         "large_water_dam": "Power facilities",
@@ -218,7 +214,6 @@ def climate_events_scenario(engine):
 
             player.money = 1_000_000_000_000
             player.coal = 100_000_000
-            player.oil = 100_000
             player.gas = 30_000_000
             player.uranium = 4_500
             player.rest_of_priorities = ""

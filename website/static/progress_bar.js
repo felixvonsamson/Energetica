@@ -7,7 +7,6 @@ asset_names = {
     "windmill": "Windmill",
     "watermill": "Watermill",
     "coal_burner": "Coal burner",
-    "oil_burner": "Oil burner",
     "gas_burner": "Gas burner",
     "small_water_dam": "Small water dam",
     "onshore_wind_turbine": "Onshore wind turbine",
@@ -19,7 +18,6 @@ asset_names = {
     "offshore_wind_turbine": "Offshore wind turbine",
     "nuclear_reactor_gen4": "4th generation nuclear",
     "small_pumped_hydro": "Small pumped hydro",
-    "compressed_air": "Compressed air",
     "molten_salt": "Molten salt",
     "large_pumped_hydro": "Large pumped hydro",
     "hydrogen_storage": "Hydrogen hydrolysis",
@@ -30,7 +28,6 @@ asset_names = {
     "industry": "Industry",
     "carbon_capture": "Carbon capture",
     "coal_mine": "Coal mine",
-    "oil_field": "Oil field",
     "gas_drilling_site": "Gas drilling site",
     "uranium_mine": "Uranium mine",
     "mathematics": "Mathematics",
@@ -50,7 +47,6 @@ asset_names = {
 resource_names = {
     "coal": "Coal",
     "gas": "Gas",
-    "oil": "Oil",
     "uranium": "Uranium",
 }
 

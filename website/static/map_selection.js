@@ -3,7 +3,7 @@ This code is the p5.js script that enables the player to choose a location on an
 interactive map just after having registerd to the game.
 */
 
-max_q = [1, 1, 1, 2_000_000_000, 600_000_000, 100_000_000, 8_000_000];
+max_q = [1, 1, 1, 2_000_000_000, 600_000_000, 8_000_000, 10];
 // Tile item :
 class Hex {
     constructor(_id, _q, _r, _resources, player_id) {
@@ -12,7 +12,7 @@ class Hex {
         this.r = _r; // r coordinate
         this.s = -this.q - this.r; // s coordinate
         this.selected = false; // true if tile is selected
-        this.resources = _resources; // array with amount of resources on the tile. Format : [solar, wind, hydro, coal, oil, gas, uranium]
+        this.resources = _resources; // array with amount of resources on the tile. Format : [solar, wind, hydro, coal, gas, uranium, climate_risk]
         this.owner_id = player_id;
     }
     display_tile() {
@@ -126,7 +126,7 @@ let button_colors = [59, 186, 239, 0, 320, 275, 109];
 let active_vew = -1;
 let players_ids;
 let selected_id = null;
-let button_names = ["Solar", "Wind", "Hydro", "Coal", "Gas", "Oil", "Uranium"];
+let button_names = ["Solar", "Wind", "Hydro", "Coal", "Gas", "Uranium", "Climate risk"];
 
 function preload() {
     font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
@@ -152,7 +152,6 @@ function setup() {
                         data[i].hydro,
                         data[i].coal,
                         data[i].gas,
-                        data[i].oil,
                         data[i].uranium,
                     ];
                     map.push(

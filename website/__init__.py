@@ -198,9 +198,9 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
                         wind=float(row["wind"]),
                         hydro=float(row["hydro"]),
                         coal=float(row["coal"]),
-                        oil=float(row["oil"]),
                         gas=float(row["gas"]),
                         uranium=float(row["uranium"]),
+                        climate_risk=float(row["climate_risk"]),
                     )
                     db.session.add(hex)
 

@@ -2,7 +2,6 @@ const sortableList = document.querySelector(".priority_list");
 
 const storageCharging = [
     "buy_small_pumped_hydro",
-    "buy_compressed_air",
     "buy_molten_salt",
     "buy_large_pumped_hydro",
     "buy_hydrogen_storage",

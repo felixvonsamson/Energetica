@@ -38,12 +38,10 @@ class Player(db.Model, UserMixin):
     # resources :
     money = db.Column(db.Float, default=25000)  # default is 25000
     coal = db.Column(db.Float, default=0)
-    oil = db.Column(db.Float, default=0)
     gas = db.Column(db.Float, default=0)
     uranium = db.Column(db.Float, default=0)
 
     coal_on_sale = db.Column(db.Float, default=0)
-    oil_on_sale = db.Column(db.Float, default=0)
     gas_on_sale = db.Column(db.Float, default=0)
     uranium_on_sale = db.Column(db.Float, default=0)
 
@@ -81,7 +79,6 @@ class Player(db.Model, UserMixin):
     # Production capacity prices [¤/MWh]
     price_steam_engine = db.Column(db.Float, default=125)
     price_coal_burner = db.Column(db.Float, default=600)
-    price_oil_burner = db.Column(db.Float, default=550)
     price_gas_burner = db.Column(db.Float, default=500)
     price_combined_cycle = db.Column(db.Float, default=450)
     price_nuclear_reactor = db.Column(db.Float, default=275)
@@ -90,8 +87,6 @@ class Player(db.Model, UserMixin):
     # Storage capacity prices [¤/MWh]
     price_buy_small_pumped_hydro = db.Column(db.Float, default=210)
     price_small_pumped_hydro = db.Column(db.Float, default=790)
-    price_buy_compressed_air = db.Column(db.Float, default=270)
-    price_compressed_air = db.Column(db.Float, default=860)
     price_buy_molten_salt = db.Column(db.Float, default=190)
     price_molten_salt = db.Column(db.Float, default=830)
     price_buy_large_pumped_hydro = db.Column(db.Float, default=200)
@@ -109,7 +104,6 @@ class Player(db.Model, UserMixin):
     price_buy_research = db.Column(db.Float, default=1200)
     price_buy_transport = db.Column(db.Float, default=1050)
     price_buy_coal_mine = db.Column(db.Float, default=960)
-    price_buy_oil_field = db.Column(db.Float, default=970)
     price_buy_gas_drilling_site = db.Column(db.Float, default=980)
     price_buy_uranium_mine = db.Column(db.Float, default=990)
     price_buy_carbon_capture = db.Column(db.Float, default=660)
@@ -315,7 +309,7 @@ class Player(db.Model, UserMixin):
     def get_reserves(self):
         """This method returns the natural resources reserves of a player"""
         reserves = {}
-        for resource in ["coal", "oil", "gas", "uranium"]:
+        for resource in ["coal", "gas", "uranium"]:
             reserves[resource] = getattr(self.tile, resource)
         return reserves
 

@@ -29,7 +29,7 @@ def add_asset(player_id, construction_id):
                 player.add_to_list("demand_priorities", construction.name)
                 reorder_facility_priorities(engine, player)
             if construction.name == "warehouse":
-                for resource in ["coal", "oil", "gas", "uranium"]:
+                for resource in ["coal", "gas", "uranium"]:
                     current_data.new_subcategory("resources", resource)
 
             # update advancements

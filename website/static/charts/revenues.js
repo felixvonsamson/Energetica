@@ -8,7 +8,6 @@ const keys_revenues = {
     "large_pumped_hydro": true,
     "lithium_ion_batteries": true,
     "solid_state_batteries": true,
-    "compressed_air": true,
     "molten_salt": true,
     "hydrogen_storage": true,
     // renewables :
@@ -25,12 +24,10 @@ const keys_revenues = {
     "nuclear_reactor_gen4": true,
     "steam_engine": true,
     "coal_burner": true,
-    "oil_burner": true,
     "gas_burner": true,
     "combined_cycle": true,
     // extraction
     "coal_mine": true,
-    "oil_field": true,
     "gas_drilling_site": true,
     "uranium_mine": true,
 

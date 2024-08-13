@@ -260,7 +260,7 @@
                     </td>
                 </tr>
                 {% macro extraction_facility_display_name(extraction_facility) -%}
-                    {{ {"coal_mine": "Coal mines", "oil_field": "Oil fields", "gas_drilling_site": "Gas extraction", "uranium_mine": "Uranium mines"}[extraction_facility] }}
+                    {{ {"coal_mine": "Coal mines", "gas_drilling_site": "Gas extraction", "uranium_mine": "Uranium mines"}[extraction_facility] }}
                 {%- endmacro %}
                 {% macro extraction_facility_price_buy(extraction_facility) -%}
                     {{ 'price_buy_'+extraction_facility }}
@@ -268,7 +268,7 @@
                 {% macro extraction_facility_price_buy_value(extraction_facility) -%}
                     {{ user[extraction_facility_price_buy(extraction_facility) ] }}
                 {%- endmacro %}
-                {% for extraction_facility in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"] %}
+                {% for extraction_facility in ["coal_mine", "gas_drilling_site", "uranium_mine"] %}
                     {% if caps[extraction_facility] %}
                         <tr>
                             <td>{{ extraction_facility_display_name(extraction_facility) }}</td>
@@ -304,7 +304,7 @@
             <div class="flex-row" style="justify-content:center;">
                 <b class="margin white button padding" onclick="change_prices();">Save changes</b>
             </div>
-            {% if caps["steam_engine"] or caps["windmill"] or caps["watermill"] or caps["coal_burner"] or caps["oil_burner"] or caps["gas_burner"] or caps["small_water_dam"] or caps["onshore_wind_turbine"] or caps["combined_cycle"] or caps["nuclear_reactor"] or caps["large_water_dam"] or caps["CSP_solar"] or caps["PV_solar"] or caps["offshore_wind_turbine"] or caps["nuclear_reactor_gen4"] %}
+            {% if caps["steam_engine"] or caps["windmill"] or caps["watermill"] or caps["coal_burner"] or caps["gas_burner"] or caps["small_water_dam"] or caps["onshore_wind_turbine"] or caps["combined_cycle"] or caps["nuclear_reactor"] or caps["large_water_dam"] or caps["CSP_solar"] or caps["PV_solar"] or caps["offshore_wind_turbine"] or caps["nuclear_reactor_gen4"] %}
                 <b class="margin large" style="margin-top:24px">Production capacity prices</b>
                 <table class="table bone">
                     <tr>
@@ -321,7 +321,7 @@
                     {% macro power_facility_SCP(power_facility) -%}
                         {{ 'SCP_'+power_facility }}
                     {%- endmacro %}
-                    {% for power_facility in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
+                    {% for power_facility in ["steam_engine", "coal_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
                         {% if caps[power_facility] %}
                             <tr>
                                 <td>{{ const_config[power_facility].name }}</td>
@@ -345,7 +345,7 @@
                     <b class="margin white button padding" onclick="change_prices();">Save changes</b>
                 </div>
             {% endif %}
-            {% if caps["small_pumped_hydro"] or caps["compressed_air"] or caps["molten_salt"] or caps["large_pumped_hydro"] or caps["hydrogen_storage"] or caps["lithium_ion_batteries"] or caps["solid_state_batteries"] %}
+            {% if caps["small_pumped_hydro"] or caps["molten_salt"] or caps["large_pumped_hydro"] or caps["hydrogen_storage"] or caps["lithium_ion_batteries"] or caps["solid_state_batteries"] %}
                 <b class="margin large" style="margin-top:24px">Storage capacity prices</b>
                 <table class="table bone">
                     <tr>
@@ -363,7 +363,7 @@
                     {% macro storage_facility_SCP(storage_facility) -%}
                         {{ 'SCP_'+storage_facility }}
                     {%- endmacro %}
-                    {% for storage_facility in ["small_pumped_hydro", "compressed_air", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
+                    {% for storage_facility in ["small_pumped_hydro", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
                         {% if caps[storage_facility] %}
                             <tr>
                                 <td>{{ const_config[storage_facility].name }}</td>

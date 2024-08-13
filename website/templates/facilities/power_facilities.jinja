@@ -80,9 +80,9 @@
                   </em>
                 {% endif %}
                 {# Resource Indicator #}
-                {% for resource in ["gas", "coal", "oil", "uranium"] %}
+                {% for resource in ["gas", "coal", "uranium"] %}
                   {# TODO: change the following line to use facility_data.consumed_resources #}
-                  {% if facility in {"gas": ["gas_burner", "combined_cycle"], "coal": ["coal_burner", "combined_cycle"], "oil": ["oil_burner"], "uranium": ["nuclear_reactor", "nuclear_reactor_gen4"]}[resource] %}
+                  {% if facility in {"gas": ["gas_burner", "combined_cycle"], "coal": ["coal_burner", "combined_cycle"], "uranium": ["nuclear_reactor", "nuclear_reactor_gen4"]}[resource] %}
                     <br>
                     <em class="txt-blue">
                       <i class="fa fa-info-circle"></i> Current stock of {{ resource }} :
@@ -224,7 +224,7 @@
             </tr>
             {# Resource Consumption #}
             {% for resource, amount in facility_data.consumed_resources.items() %}
-              {% if resource in ["coal", "oil", "gas", "uranium"] %}
+              {% if resource in ["coal", "gas", "uranium"] %}
                 <tr>
                   {# TODO: simplify the below using a dictionary to get the display name #}
                   {% if resource == "uranium" %}
