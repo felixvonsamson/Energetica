@@ -490,6 +490,7 @@ def start_project(engine, player, facility, family, force=False):
         player.project_max_priority(priority_list_name, new_construction.id)
     engine.log(f"{player.username} started the construction {facility}")
     websocket.rest_notify_constructions(engine, player)
+    db.session.commit()
     return {
         "response": "success",
         "money": player.money,

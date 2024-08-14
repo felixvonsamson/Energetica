@@ -126,14 +126,14 @@
 
       <li class="nav-item">
         <a class="navbar_item tan_green flex-row" id="home" href="{{ url_for('views.home') }}">
-          <img src="{{ url_for('static', filename='images/icons/home.png') }}"
+          <img src="{{ url_for('static', filename='images/icons/dashboard.png') }}"
                 class="navbar_icon margin-small" />
-          <span style="padding:8px 0">Home</span>
+          <span style="padding:8px 0">Dashboard</span>
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="navbar_item tan_green flex-row" id="home" href="{{ url_for('views.profile') }}">
+        <a class="navbar_item tan_green flex-row" id="profile" href="{{ url_for('views.profile') }}">
           <img src="{{ url_for('static', filename='images/icons/profile.png') }}"
                 class="navbar_icon margin-small" />
           <span style="padding:8px 0">Profile</span>
@@ -343,7 +343,6 @@
 {% block scripts %}
   <script>let server_start = {{engine.data['start_date']}};</script>
   <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}"></script>
-  <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
   <script src="{{ url_for('static', filename='notifications.js') }}"></script>
   {% block additionnal_script %}
   {% endblock additionnal_script %}

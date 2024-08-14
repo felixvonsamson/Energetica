@@ -314,6 +314,8 @@ load_constructions().then((constructions) => {
 function refresh_progressBar() {
     load_constructions().then((construction_list) => {
         load_shipments().then((shipment_list) => {
+            console.log(construction_list);
+            console.log(shipment_list);
             constructions_data = construction_list;
             shipment_data = shipment_list;
             display_progressBars(constructions_data, shipment_data);
@@ -322,7 +324,7 @@ function refresh_progressBar() {
 }
 
 function display_progressBars(construction_data, shipment_data) {
-    if (document.title == "Home") {
+    if (document.title == "Dashboard") {
         if (construction_data != null) {
             const uc = document.getElementById("under_construction");
             const ur = document.getElementById("under_research");
@@ -331,10 +333,10 @@ function display_progressBars(construction_data, shipment_data) {
             construction_priority = construction_data[1];
             research_priority = construction_data[2];
             if (construction_priority.length > 0) {
-                uc.innerHTML = "<h1>&emsp;Constructions</h1>";
+                uc.innerHTML = "<h1>&ensp;<img src='/static/images/icons/construction.png' class='icon'/>&nbsp;Ongoing Constructions</h1>";
             }
             if (research_priority.length > 0) {
-                ur.innerHTML = "<h1>&emsp;Researches</h1>";
+                ur.innerHTML = "<h1>&ensp;<img src='/static/images/icons/technology.png' class='icon'/>&nbsp;Ongoing Researches</h1>";
             }
             for (const [index, c_id] of research_priority.entries()) {
                 construction = construction_data[0][c_id];
@@ -349,7 +351,7 @@ function display_progressBars(construction_data, shipment_data) {
             const us = document.getElementById("shipments");
             us.innerHTML = "";
             if (Object.keys(shipment_data).length > 0) {
-                us.innerHTML = "<h1>&emsp;Shipments</h1>";
+                us.innerHTML = "<h1>&ensp;<img src='/static/images/icons/resource_market.png' class='icon'/>&nbsp;Ongoing Shipments</h1>";
             }
             for (var id in shipment_data) {
                 shipment = shipment_data[id];

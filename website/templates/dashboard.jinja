@@ -6,11 +6,11 @@
 {% set discharge = engine.data["weather"]["river_discharge"] %}
 {% extends "base.jinja" %}
 {% block title %}
-    Home
+    Dashboard
 {% endblock title %}
 {% block content %}
     <div class="flex-row huge title">
-        Home
+        Dashboard
         <div class="pine info_icon_container"
              onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
     </div>
@@ -42,7 +42,7 @@
     </div>
 
     <div class="bone padding margin">
-        <h1>Current weather conditions</h1>
+        <h1 class="txt_center">Current weather conditions</h1>
         <div class="flex-row flex-space-around margin medium">
             <div class="flex-col flex-grow-1 padding weather_info_container">
                 <div>Month: <b>{{ month }}</b></div>
@@ -79,49 +79,40 @@
     <div id="shipments">
       {# Shipments on their way will show here #}
     </div>
-    {% if "network" in user.advancements %}
-    {% if not user.network %}
-    <div class="flex-row huge title">Prioritization of facilities</div>
-    <div class="txt_center medium txt_pine">Drag and drop facilities in the list</div>
-    <div class="flex-row flex-center align-items-center">
-        <span class="medium priority_list_txt left">Consumption priority</span>
-        <img src="{{ url_for('static', filename='images/others/arrow_red.png') }}" alt="arrow-up" class="priority_arrow_img up">
-        <ul class="priority_list flex-col"></ul>
-        <img src="{{ url_for('static', filename='images/others/arrow_blue.png') }}" alt="arrow-up" class="priority_arrow_img">
-        <span class="medium priority_list_txt right">Generation priority</span>
-    </div>
-    <p class="txt_center medium">To have a better understanding how this priority list works, please refer to <a href="{{ url_for('wiki.render_template_wiki', template_name='power_management') }}">this sction of the wiki</a>.</p>
-    <br><br>
-    {% else %}
-    <div class="txt_center medium margin-large">
-        (Prioritization of facilities are managed on the <a href="{{ url_for('views.network') }}">Network page</a>)
-    </div>
-    {% endif %}
-    {% else %}
-    <div class="padding margin">
-        <h1>Beginners guide</h1>
-        <p class="medium">Welcome to Energetica!<br>
+    {% if "network" not in user.advancements %}
+    <div class="padding margin medium">
+        <h2>Beginners guide</h2>
+        <p>
+            Welcome to Energetica!
+        </p>
+        <p>
             You begin your journey with <b>1 steam engine</b> and a small <b>industry</b>, generating revenues. You can monitor their 
             <a href='/production_overview/electricity'>power generation and consumption</a> as well as your 
             <a href='/production_overview/revenues'>revenues</a> under the <i>Production overview</i> tab in the 
-            <span class="smartphone_hide">left</span><span class="display_hide">top</span> menu.<br>
+            <span class="smartphone_hide">left</span><span class="display_hide">top</span> menu.
+        </p>
+        <p>
             The first thing you will probably want to do is to <b>expand your production</b> by investing in 
             <a href='/power_facilities'>Power facilities</a> and upgrading your industry on the <a href='/functional_facilities'>Functional facilities</a> page.
-            You also have acess to <a href='/storage_facilities'>Storage facilities</a> to store energy.<br>
-            Engage with other players via the <i>Community</i> tab. <br>
+            You also have acess to <a href='/storage_facilities'>Storage facilities</a> to store energy. You will unlock 
+            new technologies and more game mechanics as you progress.
+        </p>
+        <p>
+            Engage with other players via the <i>Community</i> tab.
+        </p>
+        <p>
             If your are lost, click on the
             <img style="width: 0.8em; height: auto; padding:0 4px;" src="{{ url_for('static', filename='images/icons/wiki.png') }}" width="91" height="96" alt="Help page" />
             icon on the right side of the title, you will find explanations about the 
-            content of the page. For detailed explanations on any game mechanics, consult the <a href='/wiki'>wiki</a>.<br>
+            content of the page. For detailed explanations on any game mechanics, consult the <a href='/wiki'>wiki</a>.
+        </p>
+        <p>
             Best of luck in your energy adventure!
         </p>
-        <p class="medium">Tip : Keep in mind, every construction project <b>consumes electricity</b> during its construction phase. 
-        While you might have enough money for a build, inadequate power generation can halt the construction process. 
-        Don't build a watermill or windmill until you have enough power generation capacity.</p>
     </div>
     {% endif %}
 {% endblock content %}
 {% block additionnal_script %}
-  <script>refresh_progressBar();</script>
-  <script src="{{ url_for('static', filename='home.js') }}"></script>
+    <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
+    <script>refresh_progressBar();</script>
 {% endblock additionnal_script %}

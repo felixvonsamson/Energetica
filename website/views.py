@@ -60,7 +60,6 @@ def check_user():
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
         elif page == "technologies.jinja":
             available_technologies = package_available_technologies(current_user)
-            print(available_technologies)
             # TODO: remove `data` from the next line
             return render_template(
                 page, engine=g.engine, user=current_user, data=g.data, available_technologies=available_technologies
@@ -92,7 +91,7 @@ def check_user_no_login():
 @views.route("/")
 @views.route("/home")
 def home():
-    return g.render_template_ctx("home.jinja")
+    return g.render_template_ctx("dashboard.jinja")
 
 
 @views.route("/map_view")
