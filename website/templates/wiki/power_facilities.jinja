@@ -144,7 +144,7 @@
     maximal production according to the available fuel stocks.
   </p>
   <p>
-    {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Thermodynamics') }}">
+    {% if "Unlock Technologies" in user.achievements %}<a href="{{ url_for('views.technology', _anchor='Thermodynamics') }}">
     Thermodynamics</a>{% else %}Thermodynamics{% endif %} 
     influences facility efficiency, decreasing fuel consumption per unit of energy.
   </p>
@@ -181,7 +181,7 @@
   <p>If the energy demand for constructions isn't met, it is paused, except for the initial phase, during which a ramping up period is allowed. 
   During this period, it's acceptable for the satisfaction level to be lower as long as the power consumption increases by at least 5% per minute.</p>
   <p>
-    Researching {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Building Technology') }}">
+    Researching {% if "Unlock Technologies" in user.achievements %}<a href="{{ url_for('views.technology', _anchor='Building Technology') }}">
     building technology</a>{% else %}building technology{% endif %} will unlock additional construction workers and 
     increase the speed of construction projects.
   </p>

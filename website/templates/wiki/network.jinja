@@ -8,11 +8,11 @@
 
   <p>
     In Energetica, players initially operate independently, generating precisely what they need. However, after they 
-    unlock the network advancement (generating more than 3MW), they have the option to join or create a network with 
+    unlock the network achievement (generating more than 3MW), they have the option to join or create a network with 
     other players, facilitating electricity trading and potentially enhancing supply security.
   </p>
   <p>
-    If a player is part of a network, three tables enable them to set buying and selling prices within the {% if "network" in user.advancements %}
+    If a player is part of a network, three tables enable them to set buying and selling prices within the {% if "Unlock Network" in user.achievements %}
     <a href="{{ url_for('views.network') }}">network page</a>{% else %}network page{% endif %}:
   </p>
   <h3>Demand Prices</h3>

@@ -25,7 +25,7 @@
             <p>
                 This is the home page of your account. Here you will find the current weather information and the 
                 in-game time of the year. Ongoing or planned construction and research projects as well as ongoing 
-                shipments will also show on the home page{% if "network" in user.advancements %} and,
+                shipments will also show on the home page{% if "Unlock Network" in user.achievements %} and,
                 if you are not part of a Network, you will find a priorritization list for generation and consumption{% endif %}.
             </p>
         </div>
@@ -79,7 +79,7 @@
     <div id="shipments">
       {# Shipments on their way will show here #}
     </div>
-    {% if "network" not in user.advancements %}
+    {% if "Unlock Network" not in user.achievements %}
     <div class="padding margin medium">
         <h2>Beginners guide</h2>
         <p>

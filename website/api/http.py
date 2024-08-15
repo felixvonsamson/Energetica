@@ -14,7 +14,7 @@ import website.utils.assets
 import website.utils.chat
 import website.utils.network
 import website.utils.resource_market
-from website.config import wind_power_curve
+from website.config.assets import wind_power_curve
 from website.database.map import Hex
 from website.database.player import Network, Player
 from website.technology_effects import get_current_technology_values

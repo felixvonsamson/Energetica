@@ -8,7 +8,7 @@ from flask import current_app, flash
 from website import db
 from website.database.player_assets import ResourceOnSale, Shipment
 from website.utils.formatting import format_mass
-from website.utils.misc import flash_error, notify
+from website.utils.misc import flash_error
 
 
 def put_resource_on_market(player, resource, quantity, price):
@@ -80,41 +80,7 @@ def buy_resource_from_market(player, quantity, sale_id):
         )
         sale.player.sold_resources += quantity
         player.bought_resources += quantity
-        # check achievements
-        if "trading_1" not in player.achievements:
-            player.add_to_list("achievements", "trading_1")
-            player.xp += 5
-            notify(
-                "Achievements",
-                "You have bought a resources on the market. (+5 xp)",
-                player,
-            )
-        if "trading_2" not in sale.player.achievements:
-            sale.player.add_to_list("achievements", "trading_2")
-            sale.player.xp += 5
-            notify(
-                "Achievements",
-                "You have sold a resources on the market. (+5 xp)",
-                sale.player,
-            )
-        if "trading_3" not in player.achievements:
-            if player.bought_resources >= 10_000_000:
-                player.add_to_list("achievements", "trading_3")
-                player.xp += 10
-                notify(
-                    "Achievements",
-                    "You have bought more than 10'000 tons of resources. (+10 xp)",
-                    player,
-                )
-        if "trading_3" not in sale.player.achievements:
-            if sale.player.sold_resources >= 10_000_000:
-                sale.player.add_to_list("achievements", "trading_3")
-                sale.player.xp += 10
-                notify(
-                    "Achievements",
-                    "You have sold more than 10'000 tons of resources. (+10 xp)",
-                    sale.player,
-                )
+        player.check_trading_achievement()
         dq = player.tile.q - sale.player.tile.q
         dr = player.tile.r - sale.player.tile.r
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
@@ -130,11 +96,10 @@ def buy_resource_from_market(player, quantity, sale_id):
             player_id=player.id,
         )
         db.session.add(new_shipment)
-        notify(
+        sale.player.notify(
             "Resource transaction",
             f"{player.username} bought {format_mass(quantity)} of "
             "{sale.resource} for a total cost of {display_money(total_price)}.",
-            sale.player,
         )
         engine.log(
             f"{player.username} bought {format_mass(quantity)} of "
@@ -168,12 +133,11 @@ def store_import(player, resource, quantity):
             resource,
             getattr(player.tile, resource) + getattr(player, resource) + quantity - max_cap,
         )
-        notify(
+        sale.player.notify(
             "Shipments",
             f"A shipment of {format_mass(quantity)} {resource} arrived, but "
             "only {format_mass(max_cap - getattr(player, resource))} could be "
             "stored in your warehouse.",
-            player,
         )
         engine.log(
             f"{player.username} received a shipment of {format_mass(quantity)} "
@@ -183,10 +147,9 @@ def store_import(player, resource, quantity):
         )
     else:
         setattr(player, resource, getattr(player, resource) + quantity)
-        notify(
+        sale.player.notify(
             "Shipments",
             f"A shipment of {format_mass(quantity)} {resource} arrived.",
-            player,
         )
         engine.log(f"{player.username} received a shipment of {format_mass(quantity)} {resource}.")
 

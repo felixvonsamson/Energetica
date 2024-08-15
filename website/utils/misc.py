@@ -15,35 +15,6 @@ from website.database.engine_data import CapacityData, CircularBufferPlayer, Cum
 from website.database.messages import Chat, Notification
 from website.database.player import Network, Player
 from website.database.player_assets import ActiveFacility
-
-
-def notify(title, message, player):
-    """Creates a new notification"""
-    new_notification = Notification(title=title, content=message, time=datetime.now(), player_id=player.id)
-    db.session.add(new_notification)
-    player.notifications.append(new_notification)
-    player.emit(
-        "new_notification",
-        {
-            "id": new_notification.id,
-            "time": str(new_notification.time),
-            "title": new_notification.title,
-            "content": new_notification.content,
-        },
-    )
-    if player.notifications.count() > 1:
-        if (
-            new_notification.content == player.notifications[player.notifications.count() - 2].content
-            and new_notification.time == player.notifications[player.notifications.count() - 2].time
-        ):
-            return
-    notification_data = {
-        "title": new_notification.title,
-        "body": new_notification.content,
-    }
-    player.send_notification(notification_data)
-
-
 # Helper functions and data initialization utilities
 
 

@@ -14,14 +14,14 @@ import website.api.websocket as websocket
 import website.production_update as production_update
 import website.utils.assets as assets
 from website import db
-from website.config import climate_events
+from website.config.climate_events import climate_events
 from website.database.engine_data import calculate_reference_gta, calculate_temperature_deviation
 from website.database.map import Hex
 from website.database.player import Player
 from website.database.player_assets import ActiveFacility, ClimateEventRecovery, OngoingConstruction, Shipment
 from website.utils.assets import facility_destroyed, remove_asset
 from website.utils.formatting import display_money
-from website.utils.misc import notify, save_past_data_threaded
+from website.utils.misc import save_past_data_threaded
 from website.utils.resource_market import store_import
 
 
@@ -196,13 +196,12 @@ def climate_event_impact(engine, tile, event):
     )
     db.session.add(new_climate_event)
     db.session.commit()
-    notify(
+    player.notify(
         climate_events[event]["name"],
         climate_events[event]["description"].format(
             duration=round(climate_events[event]["duration"] / 3600 / 24),
             cost=display_money(recovery_cost * ticks_per_day / 24) + "/h",
         ),
-        player,
     )
 
     # check destructions
@@ -210,10 +209,9 @@ def climate_event_impact(engine, tile, event):
         player.industry -= 1
         db.session.commit()
         engine.config.update_config_for_user(player.id)
-        notify(
+        player.notify(
             "Destruction",
             f"Your industry hs been levelled down by 1 due to the {climate_events[event]['name']} event.",
-            player,
         )
         engine.log(f"{player.username} : Industry levelled down by {climate_events[event]['name']}.")
     facilities_list = list(climate_events[event]["destruction_chance"].keys())

@@ -6,7 +6,7 @@ import pickle
 from collections import defaultdict
 from datetime import datetime
 
-from .config import config, const_config
+from .config.assets import config, const_config
 from .database.engine_data import EmissionData, WeatherData
 
 

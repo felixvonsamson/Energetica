@@ -66,7 +66,7 @@ def add_sock_handlers(sock, engine):
         ws.send(rest_get_constructions(player))
         ws.send(rest_get_construction_queue(player))
         ws.send(rest_get_weather(engine))
-        ws.send(rest_get_advancements(player))
+        ws.send(rest_get_achievements(player))
         if player.tile is not None:
             rest_init_ws_post_location(player, ws)
         if player.id not in engine.websocket_dict:
@@ -331,13 +331,20 @@ def rest_get_weather(engine):
     return json.dumps(response)
 
 
-def rest_get_advancements(player: Player):
-    """Gets the player's advancements and returns it as a JSON string"""
+def rest_get_achievements(player: Player):
+    """Gets the player's achievements and returns it as a JSON string"""
+    # TODO : This only treats a subset of achievements, precise the role of the function - Felix
     response = {
         "type": "getAdvancements",
         "data": {
-            advancement: advancement in player.advancements
-            for advancement in ["network", "technology", "warehouse", "GHG_effect", "storage_overview"]
+            achievement: achievement in player.achievements
+            for achievement in [
+                "Unlock Network",
+                "Unlock Technologies",
+                "Unlock Natural Resources",
+                "Discover the Greenhouse Effect",
+                "First Storage Facility",
+            ]
         },
     }
     return json.dumps(response)
@@ -535,9 +542,9 @@ def rest_notify_weather(engine):
     rest_notify_all_players(engine, message)
 
 
-def rest_notify_advancements(engine, player: Player):
-    """Notify all `player`'s ws sessions the new advancements"""
-    rest_notify_player(engine, player, rest_get_advancements(player))
+def rest_notify_achievements(engine, player: Player):
+    """Notify all `player`'s ws sessions the new achievements"""
+    rest_notify_player(engine, player, rest_get_achievements(player))
 
 
 def notify_new_chat(chat: Chat):
