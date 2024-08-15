@@ -111,6 +111,44 @@
         </p>
     </div>
     {% endif %}
+
+    {# overview infos and liks #}
+    <div class="dashboard_overview_container">
+        <a href="/production_overview/revenues">
+            <h2 class="txt_center">Revenues</h2>
+        </a>
+        <a href="/production_overview/electricity">
+            <h2 class="txt_center">Power Production</h2>
+        </a>
+        <a href="/production_overview/storage">
+            <h2 class="txt_center">Stored Energy</h2>
+        </a>
+        <a href="/production_overview/emissions">
+            <h2 class="txt_center">Emissions</h2>
+        </a>
+        <a href="/network">
+            <h2 class="txt_center">Market Prices</h2>
+        </a>
+        <a href="/resource_market">
+            <h2 class="txt_center">Resource Market</h2>
+        </a>
+        <a href="/scoreboard">
+            <h2 class="txt_center">Ranking</h2>
+        </a>
+    </div>
+
+    {# achievements progression #}
+    <h1>&ensp;<img src='/static/images/icons/scoreboard.png' class='icon'/>&nbsp;Achievement Progression</h1>
+    
+    
+    {# daily quiz #}
+    <h1>&ensp;<img src='/static/images/icons/quiz.png' class='icon'/>&nbsp;Daily Quiz</h1>
+
+    <br>
+    <br>
+    <br>
+    <br>
+
 {% endblock content %}
 {% block additionnal_script %}
     <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>

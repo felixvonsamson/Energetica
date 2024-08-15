@@ -1592,6 +1592,29 @@ input:checked+.slider:before {
     opacity: 0;
 }
 
+.dashboard_overview_container {
+    padding: 16px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 32px;
+}
+
+.dashboard_overview_container a {
+    text-decoration: none;
+    color: #000;
+    width: 250px;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #e5d9b6;
+    border-radius: 16px;
+    border: #285430 4px solid;
+}
+
 .resource_market_container {
     width: 100%;
     display: flex;
