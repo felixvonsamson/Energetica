@@ -74,11 +74,9 @@
                         {% else %}
                           {% set tech_name = requirement.display_name %}
                         {% endif %}
-                        {% if requirement.fulfilled %}
-                          <li class="padding-small req_fulfilled">- {{ tech_name }} lvl {{ requirement.level }}</li>
-                        {% else %}
-                          <li class="padding-small requirement">- {{ tech_name }} lvl {{ requirement.level }}</li>
-                        {% endif %}
+                        <li class="padding-small requirement-{{ requirement.status }}">
+                        - {{ tech_name }} lvl {{ requirement.level }}
+                        </li>
                       {% endfor %}
                     </ul>
                   </div>

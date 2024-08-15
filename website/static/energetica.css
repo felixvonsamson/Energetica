@@ -1,5 +1,7 @@
 /* CSS document for the project "Energetica" by Felix von Samson */
 
+/* TODO: class selector names should use kebab case */
+
 html {
     -ms-text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%
@@ -1299,12 +1301,17 @@ input:checked+.slider:before {
     color: #0d4d19;
 }
 
-.req_fulfilled {
+.requirement-satisfied {
     list-style: none;
     color: #049c20
 }
 
-.requirement {
+.requirement-queued {
+    list-style: none;
+    color: #fc8d56
+}
+
+.requirement-unsatisfied {
     list-style: none;
     color: #990303
 }

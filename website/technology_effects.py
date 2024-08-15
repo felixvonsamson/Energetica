@@ -384,16 +384,26 @@ def wind_speed_function(count, potential):
     return 1 / (math.log(math.e + (count * (1 / (9 * potential + 1))) ** 2))
 
 
-def facility_requirements(player: Player, facility):
+def facility_requirements(player: Player, facility: str):
     """Returns the list of requirements (name, level, and boolean for met) for the specified facility"""
     const_config = current_app.config["engine"].const_config["assets"]
     requirements = const_config[facility]["requirements"].copy()
+    engine: GameEngine = current_app.config["engine"]
+    level_offset = 0
+    if facility in engine.functional_facilities or facility in engine.technologies:
+        level_offset = next_level(player, facility) - 1
     return [
         {
             "name": requirement[0],
             "display_name": const_config[requirement[0]]["name"],
-            "level": requirement[1],
-            "fulfilled": getattr(player, requirement[0]) >= requirement[1],
+            "level": requirement[1] + level_offset,
+            "status": (
+                "satisfied"
+                if getattr(player, requirement[0]) >= requirement[1] + level_offset
+                else "queued"
+                if next_level(player, requirement[0]) - 1 >= requirement[1] + level_offset
+                else "unsatisfied"
+            ),
         }
         for requirement in requirements
     ]
@@ -401,7 +411,7 @@ def facility_requirements(player: Player, facility):
 
 def requirements_met(requirements):
     """Returns True (meaning locked) if any requirements are not met, otherwise False (not locked)"""
-    return any(requirement["fulfilled"] is False for requirement in requirements)
+    return any(requirement["status"] == "unsatisfied" for requirement in requirements)
 
 
 def facility_requirements_and_locked(player: Player, facility):
@@ -805,22 +815,8 @@ def package_constructions_page_data(player: Player):
 def package_available_technologies(player: Player):
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
-    # TODO: This `technologies` list should be stored somewhere else, e.g. in config
-    technologies: List[str] = [
-        "mathematics",
-        "mechanical_engineering",
-        "thermodynamics",
-        "physics",
-        "building_technology",
-        "mineral_extraction",
-        "transport_technology",
-        "materials",
-        "civil_engineering",
-        "aerodynamics",
-        "chemistry",
-        "nuclear_engineering",
-    ]
-    levels: Dict[str, int] = {technology: next_level(player, technology) for technology in technologies}
+    engine: GameEngine = current_app.config["engine"]
+    levels: Dict[str, int] = {technology: next_level(player, technology) for technology in engine.technologies}
     return {
         technology: _package_facility_base(player, technology)
         | {
@@ -977,5 +973,5 @@ def package_available_technologies(player: Player):
             else {}
         )
         # price_reduction_bonus
-        for technology in technologies
+        for technology in engine.technologies
     }
