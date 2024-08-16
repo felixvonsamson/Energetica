@@ -1007,6 +1007,7 @@ input:checked+.slider:before {
     text-align: right;
 }
 
+.achievement-progression,
 .progressbar-bar,
 .shipmentbar-bar {
     display: flex;

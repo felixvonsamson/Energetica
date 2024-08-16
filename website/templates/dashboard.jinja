@@ -139,7 +139,9 @@
 
     {# achievements progression #}
     <h1>&ensp;<img src='/static/images/icons/scoreboard.png' class='icon'/>&nbsp;Achievement Progression</h1>
-    
+    <div id="achievement_progression">
+      {# Achievement porgression will show here #}
+    </div>
     
     {# daily quiz #}
     <h1>&ensp;<img src='/static/images/icons/quiz.png' class='icon'/>&nbsp;Daily Quiz</h1>
@@ -152,5 +154,7 @@
 {% endblock content %}
 {% block additionnal_script %}
     <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
+    <script src="{{ url_for('static', filename='achievement_progress.js') }}"></script>
     <script>refresh_progressBar();</script>
+    <script>refresh_achievements();</script>
 {% endblock additionnal_script %}

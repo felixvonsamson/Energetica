@@ -447,6 +447,36 @@ class Player(db.Model, UserMixin):
                     )
                     self.notify("Achievement", message)
 
+    def package_upcoming_achievements(self):
+        """Packages the progress information for the upcoming achievements"""
+        upcoming_achievements = {}
+        for achievement, achievement_data in achievements.items():
+            if achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
+                if achievement_data["name"] not in self.achievements:
+                    upcoming_achievements[achievement] = {
+                        "name": achievement_data["name"],
+                        "reward": achievement_data["reward"],
+                        "objective": 1,
+                        "status": 0,
+                    }
+            else:
+                for i, value in enumerate(achievement_data["milestones"]):
+                    if f"{achievement_data['name']} {i+1}" not in self.achievements:
+                        if achievement == "trading":
+                            status = getattr(self, achievement_data["metric"][0]) + getattr(
+                                self, achievement_data["metric"][1]
+                            )
+                        else:
+                            status = getattr(self, achievement_data["metric"])
+                        upcoming_achievements[achievement] = {
+                            "name": f"{achievement_data['name']} {i+1}",
+                            "reward": achievement_data["rewards"][i],
+                            "objective": value,
+                            "status": round(status),
+                        }
+                        break
+        return upcoming_achievements
+
     # prints out the object as a sting with the players username for debugging
     def __repr__(self):
         return f"<Player {self.id} '{self.username}'>"

@@ -306,6 +306,12 @@ def get_shipments():
     return jsonify(current_user.package_shipments())
 
 
+@http.route("/get_upcoming_achievements", methods=["GET"])
+def get_upcoming_achievements():
+    """Gets the upcoming achievements for this player"""
+    return jsonify(current_user.package_upcoming_achievements())
+
+
 # gets scoreboard data :
 @http.route("/get_scoreboard", methods=["GET"])
 def get_scoreboard():
