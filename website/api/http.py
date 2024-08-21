@@ -12,6 +12,7 @@ from flask_login import current_user, login_required
 
 import website.utils.assets
 import website.utils.chat
+import website.utils.misc
 import website.utils.network
 import website.utils.resource_market
 from website.config.assets import wind_power_curve
@@ -312,11 +313,25 @@ def get_upcoming_achievements():
     return jsonify(current_user.package_upcoming_achievements())
 
 
-# gets scoreboard data :
 @http.route("/get_scoreboard", methods=["GET"])
 def get_scoreboard():
     """Gets the scoreboard data"""
     return jsonify(Player.package_scoreboard())
+
+
+@http.route("/get_quiz_question", methods=["GET"])
+def get_quiz_question():
+    """Gets the daily quiz question"""
+    return jsonify(website.utils.misc.get_quiz_question(g.engine, current_user))
+
+
+@http.route("/submit_quiz_answer", methods=["POST"])
+def submit_quiz_answer():
+    """Submits the daily quiz answer from a player"""
+    request_data = request.get_json()
+    answer = request_data["answer"]
+    response = website.utils.misc.submit_quiz_answer(g.engine, current_user, answer)
+    return jsonify(response)
 
 
 @http.route("/get_active_facilities", methods=["GET"])

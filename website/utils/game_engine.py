@@ -28,14 +28,16 @@ from website.utils.resource_market import store_import
 def state_update(engine, app):
     """This function is called every tick to update the state of the game"""
     total_t = (time.time() - engine.data["start_date"]) / engine.clock_time
-    while engine.data["total_t"] < total_t - 1:
-        engine.data["total_t"] += 1
-        engine.log(f"t = {engine.data['total_t']}")
-        if engine.data["total_t"] % 216 == 0:
-            save_past_data_threaded(app, engine)
-        with app.app_context():
+    with app.app_context():
+        while engine.data["total_t"] < total_t - 1:
+            engine.data["total_t"] += 1
+            engine.log(f"t = {engine.data['total_t']}")
+            if engine.data["total_t"] % 216 == 0:
+                save_past_data_threaded(app, engine)
             if engine.data["total_t"] % (600 / engine.clock_time) == 0:
                 engine.data["weather"].update_weather(engine)
+            if (engine.data["total_t"] + engine.data["delta_t"]) % (24 * 60 * 60 / engine.clock_time) == 0:
+                engine.new_daily_question()
             log_entry = {
                 "timestamp": datetime.now().isoformat(),
                 "endpoint": "update_electricity",

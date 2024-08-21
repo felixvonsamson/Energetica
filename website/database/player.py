@@ -26,23 +26,24 @@ class Player(db.Model, UserMixin):
 
     # Position :
     tile = db.relationship("Hex", uselist=False, backref="player")
-    network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
 
     # Chats :
     show_disclaimer = db.Column(db.Boolean, default=True)
     chats = db.relationship("Chat", secondary=player_chats, backref="participants")
     last_opened_chat = db.Column(db.Integer, default=1)
     messages = db.relationship("Message", backref="player")
+
     notifications = db.relationship("Notification", backref="players", lazy="dynamic")
 
+    # misc :
     graph_view = db.Column(db.String(10), default="basic")
+    network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
 
     # resources :
     money = db.Column(db.Float, default=25000)  # default is 25000
     coal = db.Column(db.Float, default=0)
     gas = db.Column(db.Float, default=0)
     uranium = db.Column(db.Float, default=0)
-
     coal_on_sale = db.Column(db.Float, default=0)
     gas_on_sale = db.Column(db.Float, default=0)
     uranium_on_sale = db.Column(db.Float, default=0)

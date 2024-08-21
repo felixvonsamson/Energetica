@@ -1752,6 +1752,56 @@ input:checked+.slider:before {
     transform: translate(0, -100%);
 }
 
+.quiz_question_container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 32px 16px;
+    padding: 20px;
+    background-color: #e5d9b6;
+    border-radius: 16px;
+    max-width: 800px;
+}
+
+.quiz_question {
+    margin: 0 16px;
+}
+
+.quiz_answers_container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    margin: 16px 0;
+}
+
+.quiz_answer {
+    width: 30%;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background-color: #285430;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+}
+
+.quiz_answer:disabled {
+    cursor: not-allowed;
+}
+
+.quiz_answer:disabled.correct {
+    background-color: #5f8d4e;
+}
+
+.quiz_answer:disabled.incorrect {
+    background-color: #8d4e4e;
+}
+
+.quiz_answer:hover {
+    background-color: #5f8d4e;
+}
+
 .priority_list {
     padding: 0;
 }

@@ -13,8 +13,8 @@ import website.api.websocket as websocket
 from website import db
 from website.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData
 from website.database.messages import Chat, Notification
-from website.database.player import Network, Player
 from website.database.player_assets import ActiveFacility
+
 # Helper functions and data initialization utilities
 
 
@@ -82,85 +82,84 @@ def save_past_data_threaded(app, engine):
     """
 
     def save_data():
-        with app.app_context():
-            # save climate data
-            with open("instance/server_data/climate_data.pck", "rb") as file:
-                past_climate_data = pickle.load(file)
-            new_climate_data = engine.data["current_climate_data"].get_data()
-            for category in new_climate_data:
-                for element in new_climate_data[category]:
-                    new_el_data = new_climate_data[category][element]
-                    past_el_data = past_climate_data[category][element]
+        # save climate data
+        with open("instance/server_data/climate_data.pck", "rb") as file:
+            past_climate_data = pickle.load(file)
+        new_climate_data = engine.data["current_climate_data"].get_data()
+        for category in new_climate_data:
+            for element in new_climate_data[category]:
+                new_el_data = new_climate_data[category][element]
+                past_el_data = past_climate_data[category][element]
+                reduce_resolution(past_el_data, np.array(new_el_data))
+        with open("instance/server_data/climate_data.pck", "wb") as file:
+            pickle.dump(past_climate_data, file)
+
+        # save player data
+        players = Player.query.all()
+        for player in players:
+            if player.tile is None:
+                continue
+            past_data = {}
+            with open(
+                f"instance/player_data/player_{player.id}.pck",
+                "rb",
+            ) as file:
+                past_data = pickle.load(file)
+            new_data = engine.data["current_data"][player.id].get_data()
+            for category in new_data:
+                for element in new_data[category]:
+                    new_el_data = new_data[category][element]
+                    if element not in past_data[category]:
+                        # if facility didn't exist in past data, initialize it
+                        past_data[category][element] = [[0.0] * 360] * 5
+                    past_el_data = past_data[category][element]
                     reduce_resolution(past_el_data, np.array(new_el_data))
-            with open("instance/server_data/climate_data.pck", "wb") as file:
-                pickle.dump(past_climate_data, file)
 
-            # save player data
-            players = Player.query.all()
-            for player in players:
-                if player.tile is None:
-                    continue
-                past_data = {}
-                with open(
-                    f"instance/player_data/player_{player.id}.pck",
-                    "rb",
-                ) as file:
-                    past_data = pickle.load(file)
-                new_data = engine.data["current_data"][player.id].get_data()
-                for category in new_data:
-                    for element in new_data[category]:
-                        new_el_data = new_data[category][element]
-                        if element not in past_data[category]:
-                            # if facility didn't exist in past data, initialize it
-                            past_data[category][element] = [[0.0] * 360] * 5
-                        past_el_data = past_data[category][element]
-                        reduce_resolution(past_el_data, np.array(new_el_data))
+            with open(
+                f"instance/player_data/player_{player.id}.pck",
+                "wb",
+            ) as file:
+                pickle.dump(past_data, file)
 
-                with open(
-                    f"instance/player_data/player_{player.id}.pck",
-                    "wb",
-                ) as file:
-                    pickle.dump(past_data, file)
+        # remove old network files AND save past prices
+        networks = Network.query.all()
+        for network in networks:
+            network_dir = f"instance/network_data/{network.id}/charts/"
+            files = os.listdir(network_dir)
+            for filename in files:
+                t_value = int(filename.split("market_t")[1].split(".pck")[0])
+                if t_value < engine.data["total_t"] - 1440:
+                    os.remove(os.path.join(network_dir, filename))
 
-            # remove old network files AND save past prices
-            networks = Network.query.all()
-            for network in networks:
-                network_dir = f"instance/network_data/{network.id}/charts/"
-                files = os.listdir(network_dir)
-                for filename in files:
-                    t_value = int(filename.split("market_t")[1].split(".pck")[0])
-                    if t_value < engine.data["total_t"] - 1440:
-                        os.remove(os.path.join(network_dir, filename))
+            past_data = {}
+            with open(
+                f"instance/network_data/{network.id}/time_series.pck",
+                "rb",
+            ) as file:
+                past_data = pickle.load(file)
 
-                past_data = {}
-                with open(
-                    f"instance/network_data/{network.id}/time_series.pck",
-                    "rb",
-                ) as file:
-                    past_data = pickle.load(file)
+            new_data = engine.data["network_data"][network.id].get_data()
+            for category in new_data:
+                for group, buffer in new_data[category].items():
+                    if group not in past_data[category]:
+                        past_data[category][group] = [[0.0] * 360] * 5
+                    past_el_data = past_data[category][group]
+                    reduce_resolution(past_el_data, np.array(buffer))
 
-                new_data = engine.data["network_data"][network.id].get_data()
-                for category in new_data:
-                    for group, buffer in new_data[category].items():
-                        if group not in past_data[category]:
-                            past_data[category][group] = [[0.0] * 360] * 5
-                        past_el_data = past_data[category][group]
-                        reduce_resolution(past_el_data, np.array(buffer))
+            with open(
+                f"instance/network_data/{network.id}/time_series.pck",
+                "wb",
+            ) as file:
+                pickle.dump(past_data, file)
 
-                with open(
-                    f"instance/network_data/{network.id}/time_series.pck",
-                    "wb",
-                ) as file:
-                    pickle.dump(past_data, file)
+        # remove old notifications
+        Notification.query.filter(
+            Notification.title != "Tutorial",
+            Notification.time < datetime.now() - timedelta(weeks=2),
+        ).delete()
+        db.session.commit()
 
-            # remove old notifications
-            Notification.query.filter(
-                Notification.title != "Tutorial",
-                Notification.time < datetime.now() - timedelta(weeks=2),
-            ).delete()
-            db.session.commit()
-
-            engine.log("last 216 data points have been saved to files")
+        engine.log("last 216 data points have been saved to files")
 
     def reduce_resolution(array, new_values):
         """reduces resolution of current array x6, x36, x216 and x1296"""
@@ -234,3 +233,36 @@ def confirm_location(engine, player, location):
     websocket.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
     return {"response": "success"}
+
+
+# Quiz
+
+
+def submit_quiz_answer(engine, player, answer):
+    """
+    This function is called when a player submits an answer to a quiz question.
+    It returns the new data for the quiz question in the form of a dictionary.
+    """
+    quiz_data = engine.data["daily_question"]
+    if player.id in quiz_data["player_answers"]:
+        return {"response": "quizAlreadyAnswered"}
+    quiz_data["player_answers"][player.id] = answer
+    if answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":
+        player.xp += 1
+        db.session.commit()
+        engine.log(f"{player.username} answered the quiz correctly")
+        return {"response": "correct", "question_data": get_quiz_question(engine, player)}
+    engine.log(f"{player.username} answered the quiz incorrectly")
+    return {"response": "incorrect", "question_data": get_quiz_question(engine, player)}
+
+
+def get_quiz_question(engine, player):
+    """
+    This function returns the data for the quiz question in the form of a dictionary with only the answer of the
+    current player.
+    """
+    question_data = engine.data["daily_question"].copy()
+    if player.id in question_data["player_answers"]:
+        question_data["player_answer"] = question_data["player_answers"][player.id]
+    del question_data["player_answers"]
+    return question_data
