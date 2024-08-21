@@ -31,7 +31,7 @@ function display_achievement_progress(upcoming_achievements) {
     <div class="progressbar-background">
         <div class="achievement-progression ${upcoming_achievement.status == 0 ? '' : 'pine'}" style="--width:${100 * upcoming_achievement.status / upcoming_achievement.objective}">&nbsp;${format(upcoming_achievement.status)} / ${format(upcoming_achievement.objective)}</div>
     </div>
-    <div class="progressbar-name medium margin-small">(+${upcoming_achievement.reward} XP)</div>`
+    <div class="progressbar-name medium txt_center" style="width:60px">+${upcoming_achievement.reward} XP</div>`
   });
 }
 
