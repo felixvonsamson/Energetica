@@ -26,7 +26,6 @@ def init_test_players(engine):
 
     #     player.money = 1_000_000
     #     player.coal = 4_500_000
-    #     player.oil = 100_000
     #     player.gas = 80_000_000
     #     player.uranium = 4_500
     #     player.rest_of_priorities = ""
@@ -96,11 +95,9 @@ def add_asset(player, asset, n):
     """This function adds an asset as an instant construction."""
     asset_to_family = {
         "coal_mine": "Extraction facilities",
-        "oil_field": "Extraction facilities",
         "gas_drilling_site": "Extraction facilities",
         "uranium_mine": "Extraction facilities",
         "small_pumped_hydro": "Storage facilities",
-        "compressed_air": "Storage facilities",
         "molten_salt": "Storage facilities",
         "large_pumped_hydro": "Storage facilities",
         "hydrogen_storage": "Storage facilities",
@@ -111,7 +108,6 @@ def add_asset(player, asset, n):
         "nuclear_reactor_gen4": "Power facilities",
         "combined_cycle": "Power facilities",
         "gas_burner": "Power facilities",
-        "oil_burner": "Power facilities",
         "coal_burner": "Power facilities",
         "small_water_dam": "Power facilities",
         "large_water_dam": "Power facilities",
@@ -218,25 +214,14 @@ def climate_events_scenario(engine):
 
             player.money = 1_000_000_000_000
             player.coal = 100_000_000
-            player.oil = 100_000
             player.gas = 30_000_000
             player.uranium = 4_500
             player.rest_of_priorities = ""
 
             add_asset(player, "industry", 18)
-            add_asset(player, "laboratory", 33)
-            add_asset(player, "mathematics", 35)
-            add_asset(player, "mechanical_engineering", 32)
-            add_asset(player, "thermodynamics", 32)
-            add_asset(player, "physics", 31)
-            add_asset(player, "building_technology", 35)
+            add_asset(player, "laboratory", 5)
             add_asset(player, "mineral_extraction", 5)
-            add_asset(player, "transport_technology", 30)
-            add_asset(player, "materials", 27)
-            add_asset(player, "civil_engineering", 13)
-            add_asset(player, "aerodynamics", 24)
-            add_asset(player, "chemistry", 28)
-            add_asset(player, "nuclear_engineering", 23)
+            add_asset(player, "chemistry", 2)
             add_asset(player, "coal_mine", 10)
             add_asset(player, "coal_burner", 25)
             add_asset(player, "warehouse", 10)

@@ -24,12 +24,6 @@
         <span class="popup_info small">Coal stock</span>
       </div>
       <div class="resourceJauge-background hover_info">
-        <div class="resourceJauge color_oil" style="--width:{{user.oil / warehouse_cap.oil / warehouse_mult}}"></div>
-        <div id="oil" class="resource"></div>
-        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.oil }});</script>
-        <span class="popup_info small">Oil stock</span>
-      </div>
-      <div class="resourceJauge-background hover_info">
         <div class="resourceJauge color_gas" style="--width:{{user.gas / warehouse_cap.gas / warehouse_mult}}"></div>
         <div id="gas" class="resource"></div>
         <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.gas }});</script>
@@ -132,14 +126,14 @@
 
       <li class="nav-item">
         <a class="navbar_item tan_green flex-row" id="home" href="{{ url_for('views.home') }}">
-          <img src="{{ url_for('static', filename='images/icons/home.png') }}"
+          <img src="{{ url_for('static', filename='images/icons/dashboard.png') }}"
                 class="navbar_icon margin-small" />
-          <span style="padding:8px 0">Home</span>
+          <span style="padding:8px 0">Dashboard</span>
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="navbar_item tan_green flex-row" id="home" href="{{ url_for('views.profile') }}">
+        <a class="navbar_item tan_green flex-row" id="profile" href="{{ url_for('views.profile') }}">
           <img src="{{ url_for('static', filename='images/icons/profile.png') }}"
                 class="navbar_icon margin-small" />
           <span style="padding:8px 0">Profile</span>
@@ -173,7 +167,7 @@
             <span style="padding:8px 0">Electricity</span>
           </a>
 
-          {% if "storage_overview" in user.advancements %}
+          {% if "First Storage Facility" in user.achievements %}
           <a class="navbar_item bone flex-row"
               id="production_overview"
               href="{{ url_for('overviews.storage') }}">
@@ -183,7 +177,7 @@
           </a>
           {% endif %}
 
-          {% if "warehouse" in user.advancements %}
+          {% if "Unlock Natural Resources" in user.achievements %}
           <a class="navbar_item bone flex-row"
               id="production_overview"
               href="{{ url_for('overviews.resources') }}">
@@ -193,7 +187,7 @@
           </a>
           {% endif %}
 
-          {% if "GHG_effect" in user.advancements %}
+          {% if "Discover the Greenhouse Effect" in user.achievements %}
           <a class="navbar_item bone flex-row"
               id="production_overview"
               href="{{ url_for('overviews.emissions') }}">
@@ -233,7 +227,7 @@
             <span style="padding:8px 0">Storage facilities</span>
           </a>
           
-          {% if "warehouse" in user.advancements %}
+          {% if "Unlock Natural Resources" in user.achievements %}
           <a class="navbar_item bone flex-row"
               id="extraction_facilities"
               href="{{ url_for('views.extraction_facilities') }}">
@@ -271,7 +265,7 @@
             <span style="padding:8px 0">Messages</span>
           </a>
 
-          {% if "network" in user.advancements %}
+          {% if "Unlock Network" in user.achievements %}
           <a class="navbar_item bone flex-row" id="network" href="{{ url_for('views.network') }}">
             <img src="{{ url_for('static', filename='images/icons/network.png') }}"
                 class="navbar_icon margin-small" />
@@ -296,7 +290,7 @@
         </div>
       </li>
 
-      {% if "technology" in user.advancements %}
+      {% if "Unlock Technologies" in user.achievements %}
       <li class="nav-item">
         <a class="navbar_item tan_green flex-row"
             id="technology"
@@ -308,7 +302,7 @@
       </li>
       {% endif %}
 
-      {% if "warehouse" in user.advancements %}
+      {% if "Unlock Natural Resources" in user.achievements %}
       <li class="nav-item">
         <a class="navbar_item tan_green flex-row"
             id="resource_market"
@@ -349,7 +343,6 @@
 {% block scripts %}
   <script>let server_start = {{engine.data['start_date']}};</script>
   <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}"></script>
-  <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
   <script src="{{ url_for('static', filename='notifications.js') }}"></script>
   {% block additionnal_script %}
   {% endblock additionnal_script %}

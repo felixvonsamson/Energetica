@@ -1,12 +1,13 @@
 """Here is the logic for the engine of the game"""
 
+import csv
 import logging
 import math
 import pickle
 from collections import defaultdict
 from datetime import datetime
 
-from .config import config, const_config
+from .config.assets import config, const_config
 from .database.engine_data import EmissionData, WeatherData
 
 
@@ -33,7 +34,6 @@ class GameEngine(object):
             "windmill",
             "watermill",
             "coal_burner",
-            "oil_burner",
             "gas_burner",
             "small_water_dam",
             "onshore_wind_turbine",
@@ -48,15 +48,13 @@ class GameEngine(object):
 
         self.extraction_facilities = [
             "coal_mine",
-            "oil_field",
             "gas_drilling_site",
             "uranium_mine",
         ]
 
-        self.extractable_resources = ["coal", "oil", "gas", "uranium"]
+        self.extractable_resources = ["coal", "gas", "uranium"]
         self.storage_facilities = [
             "small_pumped_hydro",
-            "compressed_air",
             "molten_salt",
             "large_pumped_hydro",
             "hydrogen_storage",
@@ -70,7 +68,6 @@ class GameEngine(object):
             "nuclear_reactor_gen4",
             "combined_cycle",
             "gas_burner",
-            "oil_burner",
             "coal_burner",
         ]
 
@@ -127,6 +124,8 @@ class GameEngine(object):
         self.data["current_climate_data"] = EmissionData(
             self.data["delta_t"], in_game_seconds_per_tick, self.data["random_seed"]
         )
+        self.data["daily_question"] = {}
+        self.new_daily_question(init=True)
 
         # stored the levels of technology of the server
         # for each tech an array stores [# players with lvl 1, # players with lvl 2, ...]
@@ -189,3 +188,15 @@ class GameEngine(object):
             "tick_length": self.clock_time,
             "total_ticks": self.data["total_t"],
         }
+
+    def new_daily_question(self, init=False):
+        """Loads a new daily question from the csv file."""
+        with open("website/static/data/daily_quiz_questions.csv", "r") as file:
+            csv_reader = list(csv.DictReader(file))
+            if init:
+                question_id = 0
+            else:
+                question_id = (self.data["daily_question"]["id"] + 1) % len(csv_reader)
+            self.data["daily_question"] = csv_reader[question_id]
+            self.data["daily_question"]["id"] = question_id
+            self.data["daily_question"]["player_answers"] = {}

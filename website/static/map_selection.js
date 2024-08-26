@@ -3,7 +3,7 @@ This code is the p5.js script that enables the player to choose a location on an
 interactive map just after having registerd to the game.
 */
 
-max_q = [1, 1, 1, 2_000_000_000, 600_000_000, 100_000_000, 8_000_000];
+max_q = [1, 1, 1, 2_000_000_000, 600_000_000, 8_000_000, 10];
 // Tile item :
 class Hex {
     constructor(_id, _q, _r, _resources, player_id) {
@@ -12,7 +12,7 @@ class Hex {
         this.r = _r; // r coordinate
         this.s = -this.q - this.r; // s coordinate
         this.selected = false; // true if tile is selected
-        this.resources = _resources; // array with amount of resources on the tile. Format : [solar, wind, hydro, coal, oil, gas, uranium]
+        this.resources = _resources; // array with amount of resources on the tile. Format : [solar, wind, hydro, coal, gas, uranium, climate_risk]
         this.owner_id = player_id;
     }
     display_tile() {
@@ -24,7 +24,9 @@ class Hex {
             ts1 = width / 115;
             ts2 = width / 90;
         }
-        if (active_vew >= 0) {
+        if (this.owner_id) {
+            fill(color(131, 52, 33));
+        } else if (active_vew >= 0) {
             fill(
                 color(
                     button_colors[active_vew],
@@ -32,8 +34,6 @@ class Hex {
                     100
                 )
             );
-        } else if (this.owner_id) {
-            fill(color(131, 52, 33));
         } else {
             fill(color(45, 21, 90));
         }
@@ -49,18 +49,20 @@ class Hex {
         vertex(-0.5 * w, 0.5 * s);
         endShape(CLOSE);
         fill(0);
-        if (active_vew >= 0) {
-            textSize(ts1);
-            if ((active_vew == 0) | (active_vew == 1) | (active_vew == 2)) {
-                text(round(this.resources[active_vew] * 100) + "%", 0, -3);
-            } else {
-                text(convert_kg(this.resources[active_vew]), 0, -3);
-            }
-        } else if (this.owner_id) {
+        if (this.owner_id) {
             textSize(ts2);
             fill(255);
             const first_letters = players_ids[this.owner_id].username.slice(0, 3);
             text(first_letters, 0, -4);
+        } else if (active_vew >= 0) {
+            textSize(ts1);
+            if ([0, 1, 2].includes(active_vew)) {
+                text(round(this.resources[active_vew] * 100) + "%", 0, -3);
+            } else if ([3, 4, 5].includes(active_vew)) {
+                text(convert_kg(this.resources[active_vew]), 0, -3);
+            } else {
+                text(this.resources[active_vew], 0, -3);
+            }
         }
     }
 }
@@ -122,11 +124,11 @@ let mapsize = size_param * (size_param + 1) * 3 + 1; //lenght of the list that c
 let map = [];
 let buttons = [];
 let validate;
-let button_colors = [59, 186, 239, 0, 320, 275, 109];
+let button_colors = [59, 186, 239, 0, 275, 109, 320];
 let active_vew = -1;
 let players_ids;
 let selected_id = null;
-let button_names = ["Solar", "Wind", "Hydro", "Coal", "Gas", "Oil", "Uranium"];
+let button_names = ["Solar", "Wind", "Hydro", "Coal", "Gas", "Uranium", "Climate risk"];
 
 function preload() {
     font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
@@ -152,8 +154,8 @@ function setup() {
                         data[i].hydro,
                         data[i].coal,
                         data[i].gas,
-                        data[i].oil,
                         data[i].uranium,
+                        data[i].climate_risk,
                     ];
                     map.push(
                         new Hex(
@@ -220,10 +222,8 @@ function draw() {
 
 function newdraw() {
     if (width < 1200) {
-        console.log("smartphone");
         newdraw_smartphone();
     } else {
-        console.log("monitor");
         newdraw_monitor();
     }
 }
@@ -299,7 +299,7 @@ function newdraw_monitor() {
             fill(0);
             textSize(width / 80);
             text(buttons[i].name, 20, height / 10 + (height / 10) * i);
-            if (i > 2) {
+            if ([3, 4, 5].includes(i)) {
                 textAlign(RIGHT);
                 textSize(width / 115);
                 text(
@@ -336,6 +336,11 @@ function newdraw_monitor() {
             round(map[selected_id].resources[2] * 150) + " m³/s river discharge",
             mw - 20,
             height / 9.5 + 0.2 * height
+        );
+        text(
+            map[selected_id].resources[6] + " / 10 score (high is bad)",
+            mw - 20,
+            height / 9.5 + 0.6 * height
         );
         textAlign(CENTER);
         if (map[selected_id].owner_id) {
@@ -443,7 +448,7 @@ function newdraw_smartphone() {
             fill(0);
             textSize(width / 20);
             text(buttons[i].name, 0.22 * width, mh / 7 + (mh / 10) * i);
-            if (i > 2) {
+            if ([3, 4, 5].includes(i)) {
                 textSize(width / 35);
                 text(
                     convert_kg_long(
@@ -485,6 +490,11 @@ function newdraw_smartphone() {
             round(map[selected_id].resources[2] * 150) + " m³/s river discharge",
             width - 15,
             mh / 7.5 + 0.2 * mh
+        );
+        text(
+            map[selected_id].resources[6] + " / 10 score (high is bad)",
+            width - 15,
+            mh / 7.5 + 0.6 * mh
         );
         textAlign(CENTER);
         if (map[selected_id].owner_id) {

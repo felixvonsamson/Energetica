@@ -2,7 +2,7 @@
 This code is the p5.js script that shows the map in the home screen
 */
 
-max_q = [1, 1, 1, 2_000_000_000, 600_000_000, 100_000_000, 8_000_000];
+max_q = [1, 1, 1, 2_000_000_000, 600_000_000, 8_000_000, 10];
 // Tile item :
 class Hex {
     constructor(_id, _q, _r, _resources, player_id) {
@@ -10,7 +10,7 @@ class Hex {
         this.q = _q; // q coordinate
         this.r = _r; // r coordinate
         this.s = -this.q - this.r; // s coordinate
-        this.resources = _resources; // array with amount of resources on the tile. Format : [solar, wind, hydro, coal, oil, gas, uranium]
+        this.resources = _resources; // array with amount of resources on the tile. Format : [solar, wind, hydro, coal, gas, uranium, climate_risk]
         this.owner_id = player_id;
     }
     display_tile(hover = false) {
@@ -51,9 +51,9 @@ let size_param = 10; //indicates the size of the map
 let s = 280 / size_param; //displayed size of the hexagon tiles
 let mapsize = size_param * (size_param + 1) * 3 + 1; //lenght of the list that contains the hexagon tiles
 let map = [];
-let resources = ["Solar", "Wind", "Hydro", "Coal", "Gas", "Oil", "Uranium"];
+let resources = ["Solar", "Wind", "Hydro", "Coal", "Gas", "Uranium", "Climate risk"];
 let validate;
-let resource_colors = [59, 186, 239, 0, 320, 275, 109];
+let resource_colors = [59, 186, 239, 0, 275, 109, 320];
 let players_ids;
 let current_player_id;
 
@@ -76,8 +76,8 @@ function preload() {
                     data[i].hydro,
                     data[i].coal,
                     data[i].gas,
-                    data[i].oil,
                     data[i].uranium,
+                    data[i].climate_risk,
                 ];
                 map.push(
                     new Hex(
@@ -153,7 +153,7 @@ function draw() {
             fill(255);
             textSize(15);
             text(resources[i], 10, 45 + 32 * i);
-            if (i > 2) {
+            if ([3, 4, 5].includes(i)) {
                 textAlign(RIGHT);
                 textSize(15);
                 text(
@@ -174,6 +174,7 @@ function draw() {
         text(round(map[id].resources[0] * 1000) + " W/m²", 190, 45);
         text(round(pow(map[id].resources[1], 0.5) * 50) + " km/h", 190, 77);
         text(round(map[id].resources[2] * 150) + " m³/s", 190, 109);
+        text(map[id].resources[6] + " / 10", 190, 237);
         textAlign(CENTER);
         textSize(18);
         text("Distance : " + calc_dist(id) + " tiles", 100, 275);

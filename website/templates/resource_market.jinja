@@ -47,7 +47,6 @@
                         required>
                     <option value="" disabled selected>select resource</option>
                     <option value="coal">Coal</option>
-                    <option value="oil">Oil</option>
                     <option value="gas">Gas</option>
                     <option value="uranium">Uranium</option>
                 </select>
@@ -143,5 +142,6 @@
 {% endblock content %}
 {% block additionnal_script %}
     <script src="{{ url_for('static', filename='resource_market.js') }}"></script>
+    <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
     <script>refresh_progressBar()</script>
 {% endblock additionnal_script %}

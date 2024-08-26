@@ -53,7 +53,8 @@
               <div class="infotext">
                 {% if facility == "laboratory" %}
                   The laboratory is needed to research
-                  <strong><a class="txt-blue" id="technology-link" href="/technology">Technologies</a></strong>.
+                  <strong><a class="txt-blue" id="technology-link" href="/technology">Technologies</a></strong>.<br>
+                   +1 lab worker every 3rd level.
                 {% elif facility == "warehouse" %}
                   The warehouse stores physical
                   <strong><a class="txt-blue" id="resources-link" href="/extraction_facilities">resources</a></strong>.
@@ -205,11 +206,6 @@
                 <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.coal.current}}, {{warehouse_capacities.coal.upgraded}});</script>
               </tr>
               <tr>
-                <td>Oil capacity</td>
-                <td class="txt_center"></td>
-                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.oil.current}}, {{warehouse_capacities.oil.upgraded}});</script>
-              </tr>
-              <tr>
                 <td>Gas capacity</td>
                 <td class="txt_center"></td>
                 <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.gas.current}}, {{warehouse_capacities.gas.upgraded}});</script>
@@ -244,5 +240,6 @@
 {% block additionnal_script %}
   <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
   <script src="{{ url_for('static', filename='lvlup_display.js') }}"></script>
+  <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
   <script>refresh_progressBar();</script>
 {% endblock additionnal_script %}

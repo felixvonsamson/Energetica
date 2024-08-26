@@ -13,13 +13,8 @@
     The map consists of a hexagonal grid comprising 331 tiles, visualized on Community > <a href="/map_view">Map</a>.
   </p>
   <p>
-    The distance between your location and another player's tile directly impacts resource shipment times when engaging 
-    in trade. For more insights, refer to the 
-    <a href="{{ url_for('wiki.render_template_wiki', template_name='resources') }}">Resource</a> section.
-  </p>
-  <p>
-    Each tile offers a specific assortment of resources—seven distinct resources categorized into renewable and fossil 
-    fuel types:
+    Each tile offers a specific assortment of resources and location specific climate risks. The six natural resources 
+    can be categorized into renewable and fossil fuel types:
   </p>
 
   <h2 id="Renewable_resources">Renewable Resources</h2>
@@ -350,11 +345,19 @@
   <h2 id="Fossil_fuels">Fossil Fuels</h2>
   <ul>
     <li>
-      <strong>Coal, Oil, Gas, and Uranium:</strong> These indicate the quantity of each resource stored underground on
+      <strong>Coal, Gas, and Uranium:</strong> These indicate the quantity of each resource stored underground on
       a specific tile. Extraction facilities allow you to extract these resources. For detailed procedures, consult the
       <a href="{{ url_for('wiki.render_template_wiki', template_name='extraction_facilities') }}">extraction facilities</a> section.
     </li>
   </ul>
+
+  <h2 id="Climate_risks">Climate Risks</h2>
+  <p>
+    Each tile has a specific climate risk score, which indicates the likelihood and severity of climate-related events (higher means higher risks). 
+    For example, heatwaves will be more frequent in tiles near the equator, while cold waves will be more common in 
+    polar regions. For more information, refer to the section on 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='climate_effects', _anchor='climate_events') }}">Climate Events</a> 
+    for more information.
 
 </div>
 

@@ -8,7 +8,7 @@ from typing import Dict, List
 
 from flask import current_app
 
-from website.config import (
+from website.config.assets import (
     player_construction_workers_for_level,
     player_lab_workers_for_level,
     warehouse_capacity_for_level,
@@ -232,11 +232,6 @@ def efficiency_multiplier_thermodynamics(player: Player, facility: str, level: i
         level = player.thermodynamics
     const_config = current_app.config["engine"].const_config["assets"]
     thermodynamic_factor = const_config["thermodynamics"]["efficiency_factor"] ** level
-    if facility == "compressed_air":
-        return (
-            0.8 / const_config[facility]["initial_efficiency"] * (1 - 1 / thermodynamic_factor)
-            + 1 / thermodynamic_factor
-        )
     if facility == "molten_salt":
         return (
             1 / const_config[facility]["initial_efficiency"] * (1 - 1 / thermodynamic_factor) + 1 / thermodynamic_factor
@@ -607,7 +602,6 @@ def package_extraction_facilities(player: Player):
     const_config_assets = engine.const_config["assets"]
     facility_to_resource = {
         "coal_mine": "coal",
-        "oil_field": "oil",
         "gas_drilling_site": "gas",
         "uranium_mine": "uranium",
     }
@@ -616,8 +610,6 @@ def package_extraction_facilities(player: Player):
     def tile_resource_amount(tile: Hex, resource: str):
         if resource == "coal":
             return tile.coal
-        elif resource == "oil":
-            return tile.oil
         elif resource == "gas":
             return tile.gas
         elif resource == "uranium":
@@ -653,10 +645,10 @@ def player_can_launch_project(player: Player, facility):
 
 def facility_is_hidden(player: Player, facility):
     """
-    Returns true if the facility is hidden to the player due to lack of advancements.
+    Returns true if the facility is hidden to the player due to lack of achievements.
     Such facilities should not be shown on the frontend.
     """
-    if "GHG_effect" not in player.advancements and facility == "carbon_capture":
+    if "Discover the Greenhouse Effect" not in player.achievements and facility == "carbon_capture":
         return True
     return False
 
@@ -841,13 +833,6 @@ def package_available_technologies(player: Player):
                 * 100,
                 "co2_emissions_reduction_bonus": (const_config_assets[technology]["efficiency_factor"] - 1)
                 / const_config_assets[technology]["efficiency_factor"]
-                * 100,
-                "compressed_air_efficiency_bonus": (1 - 1 / const_config_assets[technology]["efficiency_factor"])
-                * (
-                    0.8
-                    - engine.const_config["assets"]["compressed_air"]["base_efficiency"]
-                    * efficiency_multiplier_thermodynamics(player, "compressed_air", level=levels[technology] - 1)
-                )
                 * 100,
                 "molten_salt_efficiency_bonus": (
                     (1 - 1 / const_config_assets[technology]["efficiency_factor"])

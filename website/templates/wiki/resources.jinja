@@ -18,7 +18,7 @@
   <p>
     To add an offer for a specific quantity of a resource at a chosen price, users can click on the "Put on sale"
     button on the market. This offer will be displayed as a new tile on the page. The amount put up for sale is stored
-    in your warehouse but cannot be consumed until sold (visible as "on sale" in the {% if "network" in user.advancements %}<a href="{{ url_for('overviews.resources') }}">resource graph</a>{% else %}resource graph{% endif %}).
+    in your warehouse but cannot be consumed until sold (visible as "on sale" in the {% if "Unlock Network" in user.achievements %}<a href="{{ url_for('overviews.resources') }}">resource graph</a>{% else %}resource graph{% endif %}).
   </p>
   <p>
     Once another player buys a portion of your offer, you receive the money, and the sold amount is shipped. To remove

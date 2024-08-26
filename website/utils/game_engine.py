@@ -14,28 +14,30 @@ import website.api.websocket as websocket
 import website.production_update as production_update
 import website.utils.assets as assets
 from website import db
-from website.config import climate_events
+from website.config.climate_events import climate_events
 from website.database.engine_data import calculate_reference_gta, calculate_temperature_deviation
 from website.database.map import Hex
 from website.database.player import Player
 from website.database.player_assets import ActiveFacility, ClimateEventRecovery, OngoingConstruction, Shipment
 from website.utils.assets import facility_destroyed, remove_asset
 from website.utils.formatting import display_money
-from website.utils.misc import notify, save_past_data_threaded
+from website.utils.misc import save_past_data_threaded
 from website.utils.resource_market import store_import
 
 
 def state_update(engine, app):
     """This function is called every tick to update the state of the game"""
     total_t = (time.time() - engine.data["start_date"]) / engine.clock_time
-    while engine.data["total_t"] < total_t - 1:
-        engine.data["total_t"] += 1
-        engine.log(f"t = {engine.data['total_t']}")
-        if engine.data["total_t"] % 216 == 0:
-            save_past_data_threaded(app, engine)
-        with app.app_context():
+    with app.app_context():
+        while engine.data["total_t"] < total_t - 1:
+            engine.data["total_t"] += 1
+            engine.log(f"t = {engine.data['total_t']}")
+            if engine.data["total_t"] % 216 == 0:
+                save_past_data_threaded(app, engine)
             if engine.data["total_t"] % (600 / engine.clock_time) == 0:
                 engine.data["weather"].update_weather(engine)
+            if (engine.data["total_t"] + engine.data["delta_t"]) % (24 * 60 * 60 / engine.clock_time) == 0:
+                engine.new_daily_question()
             log_entry = {
                 "timestamp": datetime.now().isoformat(),
                 "endpoint": "update_electricity",
@@ -111,12 +113,14 @@ def check_climate_events(engine):
 
     # heatwaves
     heatwave_probability = 0
-    if ref_temp > 15:
+    if ref_temp > 14.8:
         heatwave_probability += (
-            climate_events["heat_wave"]["base_probability"] / ticks_per_day * (ref_temp - 15) * climate_change**2
+            climate_events["heat_wave"]["base_probability"] / ticks_per_day * (ref_temp - 14.8) * climate_change**2
         )
-    if real_temp > 15:
-        heatwave_probability += climate_events["heat_wave"]["base_probability"] / ticks_per_day * (real_temp - 15) ** 2
+    if real_temp > 14.8:
+        heatwave_probability += (
+            climate_events["heat_wave"]["base_probability"] / ticks_per_day * (real_temp - 14.8) ** 2
+        )
     if random.random() < heatwave_probability:
         # the tile for the heatwave is chosen based on a normal distribution around the equator
         random_latitude = max(-10, min(10, round(np.random.normal(0, 3))))
@@ -140,9 +144,9 @@ def check_climate_events(engine):
         # the tile for the coldwave is chosen based on a normal distribution around the poles
         random_normal = max(-10, min(10, np.random.normal(0, 4)))
         if random_normal < 0:
-            random_latitude = round(10 + random_normal)
+            random_latitude = math.ceil(10 + random_normal)
         else:
-            random_latitude = round(-10 + random_normal)
+            random_latitude = math.floor(-10 + random_normal)
         latitude_tiles = Hex.query.filter(Hex.r == random_latitude).all()
         tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
@@ -194,13 +198,12 @@ def climate_event_impact(engine, tile, event):
     )
     db.session.add(new_climate_event)
     db.session.commit()
-    notify(
+    player.notify(
         climate_events[event]["name"],
         climate_events[event]["description"].format(
             duration=round(climate_events[event]["duration"] / 3600 / 24),
             cost=display_money(recovery_cost * ticks_per_day / 24) + "/h",
         ),
-        player,
     )
 
     # check destructions
@@ -208,10 +211,9 @@ def climate_event_impact(engine, tile, event):
         player.industry -= 1
         db.session.commit()
         engine.config.update_config_for_user(player.id)
-        notify(
+        player.notify(
             "Destruction",
             f"Your industry hs been levelled down by 1 due to the {climate_events[event]['name']} event.",
-            player,
         )
         engine.log(f"{player.username} : Industry levelled down by {climate_events[event]['name']}.")
     facilities_list = list(climate_events[event]["destruction_chance"].keys())

@@ -11,7 +11,7 @@ parser.add_argument(
     "--clock_time",
     type=int,
     choices=[60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1],
-    default=60,
+    default=30,
     help="Set the clock time interval in seconds (default: 60)",
 )
 parser.add_argument(

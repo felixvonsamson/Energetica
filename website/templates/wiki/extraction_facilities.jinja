@@ -9,7 +9,7 @@
   <p>
     Extraction facilities play a pivotal role in acquiring fossil resources within Energetica. Each of the three natural
     resources (Coal, Gas, and Uranium) has a dedicated extraction facility. Unlocking these facilities requires different
-    levels of {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
+    levels of {% if "Unlock Technologies" in user.achievements %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
     mineral extraction</a>{% else %}mineral extraction{% endif %} technology and <a href="{{ url_for('views.functional_facilities', _anchor='Warehouse') }}">warehouse</a>.
   </p>
   <ul>
@@ -20,7 +20,7 @@
     <li>
       <strong>Resource Production:</strong> Extraction speed of one facility measured in kg or tons per hour 
       (<a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game time</a>). The extraction speed is
-      influenced by the extraction rate, available resources in the ground, and the level of {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
+      influenced by the extraction rate, available resources in the ground, and the level of {% if "Unlock Technologies" in user.achievements %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
       mineral extraction</a>{% else %}mineral extraction{% endif %}.
     </li>
     <li>
@@ -39,7 +39,7 @@
     <i class="fa fa-angle-double-right padding"></i>\(es_i = er_i \times q_i \times 1.4^{ME} \times n_{ef,i} \)<br>
     where \(es_i\) is the extraction speed in tons/h, \(er_i\) is the base extraction rate in h\(^{-1}\), \(q_i\) is the amount of the
     resource i in the ground on the player's tile in tons, \(ME\) is the level of the technology 
-    {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
+    {% if "Unlock Technologies" in user.achievements %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
     mineral extraction</a>{% else %}mineral extraction{% endif %}, and \(n_{ef,i}\) is the number of extraction
     facilities for the resource i owned by the player.
   </li></ul>
@@ -56,10 +56,6 @@
       <tr>
         <td>Coal</td>
         <td>{{ (const_data.coal_mine.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
-      </tr>
-      <tr>
-        <td>Oil</td>
-        <td>{{ (const_data.oil_field.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
       </tr>
       <tr>
         <td>Gas</td>

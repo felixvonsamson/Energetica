@@ -3,7 +3,6 @@ const keys_storage = {
     "small_pumped_hydro": true,
     "large_pumped_hydro": true,
     "hydrogen_storage": true,
-    "compressed_air": true,
     "molten_salt": true,
     "lithium_ion_batteries": true,
     "solid_state_batteries": true,

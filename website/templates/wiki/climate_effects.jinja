@@ -7,7 +7,7 @@
 <div class="medium margin-large">
 
   <p>
-    Once a player unlocks the climate change advancement (Research chemistry lvl 1), they will have acess to the page 
+    Once a player unlocks the climate change achievement (Research chemistry lvl 1), they will have acess to the page 
     <a href="{{ url_for('overviews.emissions') }}">Emissions</a> in the production overviews. There they will see the 
     servers CO<sub>2</sub> concentration, the server's climate and their personal emissions.
   </p>
@@ -53,6 +53,10 @@
     Climate events have a low chance of occuring naturally every game tick however, the probability of their occurence 
     increases with climate change. Climate events are always negative and can have a wide range of consequences. 
   </p>
+  <p>
+    All tiles do not have the same risk of being affected by a climate event. A climate risk score is visible in the 
+    <a href="/map_view">Map</a> that indicates the probaility and the severity of the climate events in each tile.
+  </p>
 
   <h3 id="heatwave">Heatwave</h3>
 
@@ -79,8 +83,8 @@
       <tr>
         <th>Destruction<br>chances</th>
         <td>
-            Lithium-ion batteries: 5%<br>
-            Solid state batteries: 2%
+            Lithium-Ion Batteries: 5%<br>
+            Solid State Batteries: 2%
         </td>
       </tr>
     </table>
@@ -96,105 +100,135 @@
 
   <div class="flex-center align-items-center">
     <div class="table_legend_left">
-      <b style="transform: translate(-50%, -70%); position: absolute;">Temperature Anomaly</b>
+      <b style="transform: translate(-50%, -70%); position: absolute;">Reference Temperature</b>
     </div>
     <table class="table bone txt_center">
-      <thead>
+      <thead class="tan_green">
         <tr>
           <th></th>
-          <th class="padding" colspan="6">Reference Temperature</th>
+          <th class="padding" colspan="9">Temperature Anomaly</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <th></th>
-          <th>13°C</th>
-          <th>13.5°C</th>
-          <th>14°C</th>
-          <th>14.5°C</th>
-          <th>15°C</th>
-          <th>15.5°C</th>
-        </tr>
-        <tr>
           <th>-4°C</th>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-red">2.80</td>
-        </tr>
-        <tr>
           <th>-3°C</th>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-red">1.58</td>
-        </tr>
-        <tr>
           <th>-2°C</th>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td>0.70</td>
-        </tr>
-        <tr>
           <th>-1°C</th>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td>0.18</td>
-        </tr>
-        <tr>
           <th>0°C</th>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td>0.09</td>
-        </tr>
-        <tr>
           <th>+1°C</th>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td>0.09</td>
-          <td>0.35</td>
-          <td>0.96</td>
-        </tr>
-        <tr>
           <th>+2°C</th>
-          <td class="txt-green">0</td>
-          <td>0.09</td>
-          <td>0.35</td>
-          <td>0.79</td>
-          <td>1.40</td>
-          <td class="txt-red">2.89</td>
-        </tr>
-        <tr>
           <th>+3°C</th>
-          <td>0.35</td>
-          <td>0.79</td>
-          <td>1.40</td>
-          <td class="txt-red">2.19</td>
-          <td class="txt-red">3.15</td>
-          <td class="txt-red">5.86</td>
+          <th>+4°C</th>
         </tr>
         <tr>
-          <th>+4°C</th>
-          <td>1.40</td>
-          <td class="txt-red">2.19</td>
-          <td class="txt-red">3.15</td>
-          <td class="txt-red">4.29</td>
-          <td class="txt-red">5.60</td>
-          <td class="txt-red">9.89</td>
+          <th>11.75°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.32</td>
+        </tr>
+        <tr>
+          <th>12°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.01</td>
+          <td>0.50</td>
+        </tr>
+        <tr>
+          <th>12.5°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.17</td>
+          <td class="txt-red">1.01</td>
+        </tr>
+        <tr>
+          <th>13°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.01</td>
+          <td>0.50</td>
+          <td class="txt-red">1.69</td>
+        </tr>
+        <tr>
+          <th>13.5°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.17</td>
+          <td class="txt-red">1.01</td>
+          <td class="txt-red">2.55</td>
+        </tr>
+        <tr>
+          <th>14°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.01</td>
+          <td>0.50</td>
+          <td class="txt-red">1.69</td>
+          <td class="txt-red">3.58</td>
+        </tr>
+        <tr>
+          <th>14.5°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.17</td>
+          <td class="txt-red">1.01</td>
+          <td class="txt-red">2.55</td>
+          <td class="txt-red">4.79</td>
+        </tr>
+        <tr>
+          <th>15°C</th>
+          <td class="txt-red">1.12</td>
+          <td>0.63</td>
+          <td>0.28</td>
+          <td>0.07</td>
+          <td>0.01</td>
+          <td>0.57</td>
+          <td class="txt-red">1.97</td>
+          <td class="txt-red">4.21</td>
+          <td class="txt-red">7.29</td>
+        </tr>
+        <tr>
+          <th>15.55°C</th>
+          <td class="txt-red">4.20</td>
+          <td class="txt-red">2.36</td>
+          <td class="txt-red">1.05</td>
+          <td>0.26</td>
+          <td>0.20</td>
+          <td class="txt-red">1.33</td>
+          <td class="txt-red">3.70</td>
+          <td class="txt-red">7.28</td>
+          <td class="txt-red">12.10</td>
         </tr>
       </tbody>
     </table>
@@ -208,7 +242,7 @@
 
   <div class="graph-container">
     <img src="{{ url_for('static', filename='images/wiki/heatwave_probability_distribution.jpg') }}"
-         alt="Characteristic curve of wind turbine"
+         alt="Probability distribution of heatwaves"
          class="small">
   </div>
 
@@ -249,105 +283,135 @@
 
   <div class="flex-center align-items-center">
     <div class="table_legend_left">
-      <b style="transform: translate(-50%, -70%); position: absolute;">Temperature Anomaly</b>
+      <b style="transform: translate(-50%, -70%); position: absolute;">Reference Temperature</b>
     </div>
     <table class="table bone txt_center">
-      <thead>
+      <thead class="tan_green">
         <tr>
           <th></th>
-          <th class="padding" colspan="6">Reference Temperature</th>
+          <th class="padding" colspan="9">Temperature Anomaly</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <th></th>
-          <th>11.5°C</th>
-          <th>12°C</th>
-          <th>12.5°C</th>
-          <th>13°C</th>
-          <th>13.5°C</th>
-          <th>14°C</th>
-        </tr>
-        <tr>
           <th>-4°C</th>
-          <td class="txt-red">14.35</td>
-          <td class="txt-red">9.89</td>
-          <td class="txt-red">5.60</td>
-          <td class="txt-red">4.29</td>
-          <td class="txt-red">3.15</td>
-          <td class="txt-red">2.19</td>
-        </tr>
-        <tr>
           <th>-3°C</th>
-          <td class="txt-red">8.75</td>
-          <td class="txt-red">5.86</td>
-          <td class="txt-red">3.15</td>
-          <td class="txt-red">2.19</td>
-          <td>1.40</td>
-          <td>0.79</td>
-        </tr>
-        <tr>
           <th>-2°C</th>
-          <td class="txt-red">4.55</td>
-          <td class="txt-red">2.89</td>
-          <td>1.40</td>
-          <td>0.79</td>
-          <td>0.35</td>
-          <td>0.09</td>
-        </tr>
-        <tr>
           <th>-1°C</th>
-          <td class="txt-red">1.75</td>
-          <td>0.96</td>
-          <td>0.35</td>
-          <td>0.09</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-        </tr>
-        <tr>
           <th>0°C</th>
-          <td>0.35</td>
-          <td>0.09</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-        </tr>
-        <tr>
           <th>+1°C</th>
-          <td>0.35</td>
-          <td>0.18</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-        </tr>
-        <tr>
           <th>+2°C</th>
-          <td>1.40</td>
-          <td>0.70</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-        </tr>
-        <tr>
           <th>+3°C</th>
-          <td class="txt-red">3.15</td>
-          <td class="txt-red">1.58</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
+          <th>+4°C</th>
         </tr>
         <tr>
-          <th>+4°C</th>
-          <td class="txt-red">5.60</td>
+          <th>11.75°C</th>
+          <td class="txt-red">12.10</td>
+          <td class="txt-red">7.28</td>
+          <td class="txt-red">3.70</td>
+          <td class="txt-red">1.33</td>
+          <td>0.20</td>
+          <td>0.26</td>
+          <td class="txt-red">1.05</td>
+          <td class="txt-red">2.36</td>
+          <td class="txt-red">4.20</td>
+        </tr>
+        <tr>
+          <th>12°C</th>
+          <td class="txt-red">9.89</td>
+          <td class="txt-red">5.86</td>
+          <td class="txt-red">2.89</td>
+          <td>0.96</td>
+          <td>0.09</td>
+          <td>0.18</td>
+          <td>0.70</td>
+          <td class="txt-red">1.58</td>
           <td class="txt-red">2.80</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
+        </tr>
+        <tr>
+          <th>12.5°C</th>
+          <td class="txt-red">5.60</td>
+          <td class="txt-red">3.15</td>
+          <td class="txt-red">1.40</td>
+          <td>0.35</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+        </tr>
+        <tr>
+          <th>13°C</th>
+          <td class="txt-red">4.29</td>
+          <td class="txt-red">2.19</td>
+          <td>0.79</td>
+          <td>0.09</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+        </tr>
+        <tr>
+          <th>13.5°C</th>
+          <td class="txt-red">3.15</td>
+          <td class="txt-red">1.40</td>
+          <td>0.35</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+        </tr>
+        <tr>
+          <th>14°C</th>
+          <td class="txt-red">2.19</td>
+          <td>0.79</td>
+          <td>0.09</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+        </tr>
+        <tr>
+          <th>14.5°C</th>
+          <td class="txt-red">1.40</td>
+          <td>0.35</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+        </tr>
+        <tr>
+          <th>15°C</th>
+          <td>0.79</td>
+          <td>0.09</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+        </tr>
+        <tr>
+          <th>15.55°C</th>
+          <td>0.32</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
         </tr>
       </tbody>
     </table>
@@ -361,7 +425,7 @@
 
   <div class="graph-container">
     <img src="{{ url_for('static', filename='images/wiki/coldwave_probability_distribution.jpg') }}"
-         alt="Characteristic curve of wind turbine"
+         alt="Probability distribution of coldwaves"
          class="small">
   </div>
 
@@ -377,11 +441,11 @@
     <table class="table bone">
       <tr>
         <th>Rcovery time</th>
-        <td>3 days</td>
+        <td>2 days</td>
       </tr>
       <tr>
         <th>Rcovery cost</th>
-        <td>30% of current industry revenues</td>
+        <td>60% of current industry revenues</td>
       </tr>
       <tr>
         <th>Affected tiles</th>
@@ -391,15 +455,14 @@
         <th>Destruction<br>chances</th>
         <td>
           Industry downgrade: 30%<br>
-          Steam engine: 2%<br>
+          Steam Engine: 2%<br>
           Watermill: 5%<br>
           Windmill: 10%<br>
-          Onshore wind turbine: 5%<br>          
-          Coal burner: 2%<br>
-          Oil burner: 2%<br>
-          Gas burner: 2%<br>
-          Combined cycle: 2%<br>
-          Concentrated solar power: 2%<br>he server's
+          Onshore Wind Turbine: 5%<br>          
+          Coal Burner: 2%<br>
+          Gas Burner: 2%<br>
+          Combined Cycle: 2%<br>
+          Concentrated Solar Power: 2%<br>
           Photovoltaics: 5%
         </td>
       </tr>
@@ -415,87 +478,115 @@
 
   <div class="flex-center align-items-center">
     <div class="table_legend_left">
-      <b style="transform: translate(-50%, -70%); position: absolute;">Temperature Anomaly</b>
+      <b style="transform: translate(-50%, -70%); position: absolute;">Reference Temperature</b>
     </div>
     <table class="table bone txt_center">
-      <thead>
+      <thead class="tan_green">
         <tr>
           <th></th>
-          <th class="padding" colspan="6">Reference Temperature</th>
+          <th class="padding" colspan="9">Temperature Anomaly</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <th></th>
-          <th>13°C</th>
-          <th>13.5°C</th>
-          <th>14°C</th>
-          <th>14.5°C</th>
-          <th>15°C</th>
-          <th>15.5°C</th>
-        </tr>
-        <tr>
           <th>-2°C</th>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-        </tr>
-        <tr>
           <th>-1°C</th>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td>0.06</td>
-        </tr>
-        <tr>
           <th>0°C</th>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td class="txt-green">0</td>
-          <td>0.06</td>
-          <td>0.25</td>
-          <td>0.56</td>
-        </tr>
-        <tr>
           <th>+1°C</th>
-          <td class="txt-green">0</td>
-          <td>0.06</td>
-          <td>0.25</td>
-          <td>0.56</td>
-          <td>1.00</td>
-          <td class="txt-red">1.56</td>
-        </tr>
-        <tr>
           <th>+2°C</th>
-          <td>0.25</td>
-          <td>0.56</td>
-          <td>1.00</td>
-          <td class="txt-red">1.56</td>
-          <td class="txt-red">2.25</td>
-          <td class="txt-red">3.06</td>
-        </tr>
-        <tr>
           <th>+3°C</th>
-          <td>1.00</td>
-          <td class="txt-red">1.56</td>
-          <td class="txt-red">2.25</td>
-          <td class="txt-red">3.06</td>
-          <td class="txt-red">4.00</td>
-          <td class="txt-red">5.06</td>
+          <th>+4°C</th>
         </tr>
         <tr>
-          <th>+4°C</th>
-          <td class="txt-red">2.25</td>
-          <td class="txt-red">3.06</td>
-          <td class="txt-red">4.00</td>
-          <td class="txt-red">5.06</td>
-          <td class="txt-red">6.25</td>
-          <td class="txt-red">7.56</td>
+          <th>11.75°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.20</td>
+          <td class="txt-red">1.07</td>
+        </tr>
+        <tr>
+          <th>12°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.35</td>
+          <td class="txt-red">1.40</td>
+        </tr>
+        <tr>
+          <th>12.5°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.09</td>
+          <td>0.79</td>
+          <td class="txt-red">2.19</td>
+        </tr>
+        <tr>
+          <th>13°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.35</td>
+          <td class="txt-red">1.40</td>
+          <td class="txt-red">3.15</td>
+        </tr>
+        <tr>
+          <th>13.5°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.09</td>
+          <td>0.79</td>
+          <td class="txt-red">2.19</td>
+          <td class="txt-red">4.29</td>
+        </tr>
+        <tr>
+          <th>14°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.35</td>
+          <td class="txt-red">1.40</td>
+          <td class="txt-red">3.15</td>
+          <td class="txt-red">5.60</td>
+        </tr>
+        <tr>
+          <th>14.5°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.09</td>
+          <td>0.79</td>
+          <td class="txt-red">2.19</td>
+          <td class="txt-red">4.29</td>
+          <td class="txt-red">7.09</td>
+        </tr>
+        <tr>
+          <th>15°C</th>
+          <td class="txt-green">-</td>
+          <td class="txt-green">-</td>
+          <td>0.35</td>
+          <td class="txt-red">1.40</td>
+          <td class="txt-red">3.15</td>
+          <td class="txt-red">5.60</td>
+          <td class="txt-red">8.75</td>
+        </tr>
+        <tr>
+          <th>15.55°C</th>
+          <td class="txt-green">-</td>
+          <td>0.11</td>
+          <td>0.84</td>
+          <td class="txt-red">2.28</td>
+          <td class="txt-red">4.41</td>
+          <td class="txt-red">7.25</td>
+          <td class="txt-red">10.78</td>
         </tr>
       </tbody>
     </table>
@@ -509,7 +600,7 @@
 
   <div class="graph-container">
     <img src="{{ url_for('static', filename='images/wiki/wildfire_probability_distribution.jpg') }}"
-         alt="Characteristic curve of wind turbine"
+         alt="Probability distribution of wildfires"
          class="small">
   </div>
 
@@ -530,7 +621,7 @@
       </tr>
       <tr>
         <th>Rcovery cost</th>
-        <td>60% of current industry revenues</td>
+        <td>50% of current industry revenues</td>
       </tr>
       <tr>
         <th>Affected tiles</th>
@@ -541,15 +632,14 @@
         <td>
           Industry downgrade: 50%<br>
           Watermill: 60%<br>
-          Small water dam: 5%<br>
-          Large water dam: 2%<br>
-          Steam engine: 5%<br>
-          Coal burner: 3%<br>he server's
-          Oil burner: 3%<br>
-          Gas burner: 3%<br>
-          Combined cycle: 2%<br>
-          Nuclear reactor: 1%<br>
-          4th generation nuclear: 0.5%<br>
+          Small Water Dam: 5%<br>
+          Large Water Dam: 2%<br>
+          Steam Engine: 5%<br>
+          Coal Burner: 3%<br>
+          Gas Burner: 3%<br>
+          Combined Cycle: 2%<br>
+          Nuclear Reactor: 1%<br>
+          4th Generation Nuclear: 0.5%<br>
         </td>
       </tr>
     </table>
@@ -564,7 +654,7 @@
 
   <div class="graph-container">
     <img src="{{ url_for('static', filename='images/wiki/expected_occurence_flood.jpg') }}"
-         alt="Characteristic curve of wind turbine">
+         alt="Expected occurence graph for floods">
   </div>
 
   <p>
@@ -584,7 +674,7 @@
     <table class="table bone">
       <tr>
         <th>Rcovery time</th>
-        <td>9 days</td>
+        <td>7 days</td>
       </tr>
       <tr>
         <th>Rcovery cost</th>
@@ -599,10 +689,10 @@
         <td>
           Industry downgrade: 90%<br>
           windmill: 50%<br>
-          Onshore wind turbine: 30%<br>
-          Offshore wind turbine: 20%<br>
+          Onshore Wind Turbine: 30%<br>
+          Offshore Wind Turbine: 20%<br>
           Photovoltaics: 10%<br>
-          Concentrated solar power: 15%<br>
+          Concentrated Solar Power: 15%<br>
         </td>
       </tr>
     </table>
@@ -617,7 +707,7 @@
 
   <div class="graph-container">
     <img src="{{ url_for('static', filename='images/wiki/expected_occurence_huricane.jpg') }}"
-         alt="Characteristic curve of wind turbine">
+         alt="Expected occurence graph for huricanes">
   </div>
 
   <p>

@@ -12,9 +12,10 @@ from flask_login import current_user, login_required
 
 import website.utils.assets
 import website.utils.chat
+import website.utils.misc
 import website.utils.network
 import website.utils.resource_market
-from website.config import wind_power_curve
+from website.config.assets import wind_power_curve
 from website.database.map import Hex
 from website.database.player import Network, Player
 from website.technology_effects import get_current_technology_values
@@ -102,9 +103,9 @@ def get_map():
             "wind": tile.wind,
             "hydro": tile.hydro,
             "coal": tile.coal,
-            "oil": tile.oil,
             "gas": tile.gas,
             "uranium": tile.uranium,
+            "climate_risk": tile.climate_risk,
             "player_id": tile.player.id if tile.player else None,
         }
         for tile in hex_map
@@ -140,7 +141,7 @@ def get_chat_list():
 def get_resource_data():
     """gets production rates and quantity on sale for every resource"""
     on_sale = {}
-    for resource in ["coal", "oil", "gas", "uranium"]:
+    for resource in ["coal", "gas", "uranium"]:
         on_sale[resource] = getattr(current_user, resource + "_on_sale")
     return jsonify(on_sale)
 
@@ -306,11 +307,31 @@ def get_shipments():
     return jsonify(current_user.package_shipments())
 
 
-# gets scoreboard data :
+@http.route("/get_upcoming_achievements", methods=["GET"])
+def get_upcoming_achievements():
+    """Gets the upcoming achievements for this player"""
+    return jsonify(current_user.package_upcoming_achievements())
+
+
 @http.route("/get_scoreboard", methods=["GET"])
 def get_scoreboard():
     """Gets the scoreboard data"""
     return jsonify(Player.package_scoreboard())
+
+
+@http.route("/get_quiz_question", methods=["GET"])
+def get_quiz_question():
+    """Gets the daily quiz question"""
+    return jsonify(website.utils.misc.get_quiz_question(g.engine, current_user))
+
+
+@http.route("/submit_quiz_answer", methods=["POST"])
+def submit_quiz_answer():
+    """Submits the daily quiz answer from a player"""
+    request_data = request.get_json()
+    answer = request_data["answer"]
+    response = website.utils.misc.submit_quiz_answer(g.engine, current_user, answer)
+    return jsonify(response)
 
 
 @http.route("/get_active_facilities", methods=["GET"])

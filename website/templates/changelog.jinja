@@ -184,7 +184,7 @@
                 The game runs at twice the speed (this might be temporary)
             </li>
             <li class="li_padding">
-                Steam engine produces 4 times more power and base industry generates 4 times more revenue and players start with 25000 to accelerate the early game
+                Steam Engine produces 4 times more power and base industry generates 4 times more revenue and players start with 25000 to accelerate the early game
             </li>
             <li class="li_padding">
                 Map generation has been changed : a small amount of resources are now available on almost every tile
@@ -392,6 +392,7 @@
                     <li><b>In-game Climate</b>: The server's global average temperature (GAT) is now modelled. It evolves with a seasonal and a random component and is also affected by the CO<sub>2</sub> consentration of the server.</sub></li>
                     <li><b>Climate events</b>: 5 natural events have been introduced that have various negative effects and their probability of occurence increase with unstable climate conditions.</li>
                     <li><b>New Graphs</b>: Two new graphs have been added in the emissions overview page. One shows the CO<sub>2</sub> concentration in the atmosphere and the other the global average temperature and the temperature anomaly.</li>
+                    <li><b>Climate Risk Score</b>: A new metric has been added on the map that indicates the risk of climate events on the tile.</li>
                     <li>Read the <a href="{{ url_for('wiki.render_template_wiki', template_name='climate_effects') }}">Climate Change</a> section in the wiki for more information.</li>
                 </ul>
             </li>
@@ -399,7 +400,25 @@
                 <b>General Chat</b>: A general chat has been added to the game where all players are added automatically.
             </li>
             <li class="li_padding">
+                <b>Removed Oil & Compressed Air</b>: The oil resource, oil burner, oil field and compressed air storage have been removed from the game.
+            </li>
+            <li class="li_padding">
+                <b>Dashboard Page</b>: The Home page has been renamed to Dashboard. The interactive priority list that appeared on the home page when a player was not in a network has been moved to the network page.
+            </li>
+            <li class="li_padding">
+                <b>Daily Quiz</b>: At the bottom of the dashboard page, there is now a question that changes every day. Answering the question correctly will give you 1 XP.
+            </li>
+            <li class="li_padding">
+                <b>Achievement Progression</b>: The list of achievements and the progression towards them is now displayed on the dashboard page.
+            </li>
+            <li class="li_padding">
                 <b>Restructured Wiki</b>: The wiki has been restructured in different pages for better readability. The wiki is now also accessible from the login page and doesn't require to be signed in to be read.
+            </li>
+            <li class="li_padding">
+                <b>Map Generation</b>: The resource generation on the map has slightly changed. There should be more high concentrated resources tiles now. The rivers now flow from the inland to the sea (considering the map is an island).
+            </li>
+            <li class="li_padding">
+                <b>Facility Description</b>: The description given for each facility should be more informative now.
             </li>
         </ul>
     </div>

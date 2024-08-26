@@ -47,10 +47,10 @@
             <div class="txt_center padding">
             <b>You are currently not connected to a network.</b>
             </div>
-            <div class="padding" style="max-width:650px">
+            <div class="padding small" style="max-width:740px">
                 Joining or establishing a network enables you to trade electricity with its members, providing opportunities 
-                to profit from exporting electricity or ensuring energy supply during energy-intensive construction projects, 
-                by importing energy from other network members. You'll have the freedom to set your own buying and selling prices.
+                to profit from exporting electricity or ensuring energy supply during energy-intensive construction projects. 
+                You'll have the freedom to set your own buying and selling prices.
             </div>
          </div>
         <div class="flex-row" style="justify-content:center;">
@@ -61,6 +61,18 @@
                onclick="document.getElementById('create_network').classList.remove('hidden');">Create
             Network</b>
         </div>
+
+        <h1 class="txt_center">Prioritization of facilities</h1>
+        <div class="txt_center medium txt_pine">Drag and drop facilities in the list</div>
+        <div class="flex-row flex-center align-items-center">
+            <span class="medium priority_list_txt left">Consumption priority</span>
+            <img src="{{ url_for('static', filename='images/others/arrow_red.png') }}" alt="arrow-up" class="priority_arrow_img up">
+            <ul class="priority_list flex-col"></ul>
+            <img src="{{ url_for('static', filename='images/others/arrow_blue.png') }}" alt="arrow-up" class="priority_arrow_img">
+            <span class="medium priority_list_txt right">Generation priority</span>
+        </div>
+        <p class="txt_center medium">To have a better understanding how this priority list works, please refer to the <a href="{{ url_for('wiki.render_template_wiki', template_name='power_management') }}">Power Management</a> section of the wiki.</p>
+        <br><br><br><br>
     {% else %}
         {% set caps = engine.data["player_capacities"][user.id] %}
 
@@ -260,7 +272,7 @@
                     </td>
                 </tr>
                 {% macro extraction_facility_display_name(extraction_facility) -%}
-                    {{ {"coal_mine": "Coal mines", "oil_field": "Oil fields", "gas_drilling_site": "Gas extraction", "uranium_mine": "Uranium mines"}[extraction_facility] }}
+                    {{ {"coal_mine": "Coal Mines", "gas_drilling_site": "Gas Extraction", "uranium_mine": "Uranium Mines"}[extraction_facility] }}
                 {%- endmacro %}
                 {% macro extraction_facility_price_buy(extraction_facility) -%}
                     {{ 'price_buy_'+extraction_facility }}
@@ -268,7 +280,7 @@
                 {% macro extraction_facility_price_buy_value(extraction_facility) -%}
                     {{ user[extraction_facility_price_buy(extraction_facility) ] }}
                 {%- endmacro %}
-                {% for extraction_facility in ["coal_mine", "oil_field", "gas_drilling_site", "uranium_mine"] %}
+                {% for extraction_facility in ["coal_mine", "gas_drilling_site", "uranium_mine"] %}
                     {% if caps[extraction_facility] %}
                         <tr>
                             <td>{{ extraction_facility_display_name(extraction_facility) }}</td>
@@ -287,7 +299,7 @@
                 {% endfor %}
                 {% if user.carbon_capture > 0 %}
                     <tr>
-                        <td>Carbon capture</td>
+                        <td>Carbon Capture</td>
                         <td>
                             <input type="number"
                                 class="small_input medium txt_center"
@@ -304,7 +316,7 @@
             <div class="flex-row" style="justify-content:center;">
                 <b class="margin white button padding" onclick="change_prices();">Save changes</b>
             </div>
-            {% if caps["steam_engine"] or caps["windmill"] or caps["watermill"] or caps["coal_burner"] or caps["oil_burner"] or caps["gas_burner"] or caps["small_water_dam"] or caps["onshore_wind_turbine"] or caps["combined_cycle"] or caps["nuclear_reactor"] or caps["large_water_dam"] or caps["CSP_solar"] or caps["PV_solar"] or caps["offshore_wind_turbine"] or caps["nuclear_reactor_gen4"] %}
+            {% if caps["steam_engine"] or caps["windmill"] or caps["watermill"] or caps["coal_burner"] or caps["gas_burner"] or caps["small_water_dam"] or caps["onshore_wind_turbine"] or caps["combined_cycle"] or caps["nuclear_reactor"] or caps["large_water_dam"] or caps["CSP_solar"] or caps["PV_solar"] or caps["offshore_wind_turbine"] or caps["nuclear_reactor_gen4"] %}
                 <b class="margin large" style="margin-top:24px">Production capacity prices</b>
                 <table class="table bone">
                     <tr>
@@ -321,7 +333,7 @@
                     {% macro power_facility_SCP(power_facility) -%}
                         {{ 'SCP_'+power_facility }}
                     {%- endmacro %}
-                    {% for power_facility in ["steam_engine", "coal_burner", "oil_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
+                    {% for power_facility in ["steam_engine", "coal_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
                         {% if caps[power_facility] %}
                             <tr>
                                 <td>{{ const_config[power_facility].name }}</td>
@@ -345,7 +357,7 @@
                     <b class="margin white button padding" onclick="change_prices();">Save changes</b>
                 </div>
             {% endif %}
-            {% if caps["small_pumped_hydro"] or caps["compressed_air"] or caps["molten_salt"] or caps["large_pumped_hydro"] or caps["hydrogen_storage"] or caps["lithium_ion_batteries"] or caps["solid_state_batteries"] %}
+            {% if caps["small_pumped_hydro"] or caps["molten_salt"] or caps["large_pumped_hydro"] or caps["hydrogen_storage"] or caps["lithium_ion_batteries"] or caps["solid_state_batteries"] %}
                 <b class="margin large" style="margin-top:24px">Storage capacity prices</b>
                 <table class="table bone">
                     <tr>
@@ -363,7 +375,7 @@
                     {% macro storage_facility_SCP(storage_facility) -%}
                         {{ 'SCP_'+storage_facility }}
                     {%- endmacro %}
-                    {% for storage_facility in ["small_pumped_hydro", "compressed_air", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
+                    {% for storage_facility in ["small_pumped_hydro", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
                         {% if caps[storage_facility] %}
                             <tr>
                                 <td>{{ const_config[storage_facility].name }}</td>
@@ -474,10 +486,10 @@
 {% endblock content %}
 {% block additionnal_script %}
     <script src="{{ url_for('static', filename='network/network_logic.js') }}"></script>
+    <script src="{{ url_for('static', filename='network/price_change.js') }}"></script>
     <script>expand_menu('community')</script>
     {% if user.network != None %}
         <script>server_saved_view = "{{user.graph_view}}";</script>
-        <script src="{{ url_for('static', filename='network/market_graph.js') }}"></script>
-        <script src="{{ url_for('static', filename='network/price_change.js') }}"></script>
+        <script src="{{ url_for('static', filename='network/market_graph.js') }}"></script> 
     {% endif %}
 {% endblock additionnal_script %}

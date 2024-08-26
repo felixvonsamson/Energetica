@@ -103,13 +103,11 @@ async function get_active_facilities(reorder = false) {
         }
         let facility_to_resource = {
             "coal_mine": "coal",
-            "oil_field": "oil",
             "gas_drilling_site": "gas",
             "uranium_mine": "uranium",
         }
         let cumul_demand = {
             "coal_mine": 0,
-            "oil_field": 0,
             "gas_drilling_site": 0,
             "uranium_mine": 0,
         }

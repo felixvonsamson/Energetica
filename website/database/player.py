@@ -1,6 +1,7 @@
 """This module contains the classes that define the players and networks"""
 
 import json
+from datetime import datetime
 from itertools import chain
 from typing import List
 
@@ -9,6 +10,7 @@ from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
 from website import db
+from website.config.achievements import achievements
 from website.database.messages import Chat, Message, Notification, player_chats
 from website.database.player_assets import ActiveFacility, OngoingConstruction
 
@@ -24,26 +26,25 @@ class Player(db.Model, UserMixin):
 
     # Position :
     tile = db.relationship("Hex", uselist=False, backref="player")
-    network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
 
     # Chats :
     show_disclaimer = db.Column(db.Boolean, default=True)
     chats = db.relationship("Chat", secondary=player_chats, backref="participants")
     last_opened_chat = db.Column(db.Integer, default=1)
     messages = db.relationship("Message", backref="player")
+
     notifications = db.relationship("Notification", backref="players", lazy="dynamic")
 
+    # misc :
     graph_view = db.Column(db.String(10), default="basic")
+    network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
 
     # resources :
     money = db.Column(db.Float, default=25000)  # default is 25000
     coal = db.Column(db.Float, default=0)
-    oil = db.Column(db.Float, default=0)
     gas = db.Column(db.Float, default=0)
     uranium = db.Column(db.Float, default=0)
-
     coal_on_sale = db.Column(db.Float, default=0)
-    oil_on_sale = db.Column(db.Float, default=0)
     gas_on_sale = db.Column(db.Float, default=0)
     uranium_on_sale = db.Column(db.Float, default=0)
 
@@ -81,7 +82,6 @@ class Player(db.Model, UserMixin):
     # Production capacity prices [¤/MWh]
     price_steam_engine = db.Column(db.Float, default=125)
     price_coal_burner = db.Column(db.Float, default=600)
-    price_oil_burner = db.Column(db.Float, default=550)
     price_gas_burner = db.Column(db.Float, default=500)
     price_combined_cycle = db.Column(db.Float, default=450)
     price_nuclear_reactor = db.Column(db.Float, default=275)
@@ -90,8 +90,6 @@ class Player(db.Model, UserMixin):
     # Storage capacity prices [¤/MWh]
     price_buy_small_pumped_hydro = db.Column(db.Float, default=210)
     price_small_pumped_hydro = db.Column(db.Float, default=790)
-    price_buy_compressed_air = db.Column(db.Float, default=270)
-    price_compressed_air = db.Column(db.Float, default=860)
     price_buy_molten_salt = db.Column(db.Float, default=190)
     price_molten_salt = db.Column(db.Float, default=830)
     price_buy_large_pumped_hydro = db.Column(db.Float, default=200)
@@ -109,7 +107,6 @@ class Player(db.Model, UserMixin):
     price_buy_research = db.Column(db.Float, default=1200)
     price_buy_transport = db.Column(db.Float, default=1050)
     price_buy_coal_mine = db.Column(db.Float, default=960)
-    price_buy_oil_field = db.Column(db.Float, default=970)
     price_buy_gas_drilling_site = db.Column(db.Float, default=980)
     price_buy_uranium_mine = db.Column(db.Float, default=990)
     price_buy_carbon_capture = db.Column(db.Float, default=660)
@@ -127,13 +124,6 @@ class Player(db.Model, UserMixin):
     exported_energy = db.Column(db.Float, default=0)
     captured_CO2 = db.Column(db.Float, default=0)
 
-    advancements = db.Column(db.Text, default="")
-    # advancements include
-    # * "network"
-    # * "technology"
-    # * "warehouse"
-    # * "GHG_effect"
-    # * "storage_overview"
     achievements = db.Column(db.Text, default="")
 
     under_construction = db.relationship("OngoingConstruction")
@@ -183,12 +173,12 @@ class Player(db.Model, UserMixin):
             setattr(self, attr, str(value))
         else:
             setattr(self, attr, getattr(self, attr) + f",{value}")
-        if attr == "advancements":
+        if attr == "achievements":
             # TODO: I don't like how this is done. -Max
-            from website.api.websocket import rest_notify_advancements
+            from website.api.websocket import rest_notify_achievements
 
             engine = current_app.config["engine"]
-            rest_notify_advancements(engine, self)
+            rest_notify_achievements(engine, self)
 
     def remove_from_list(self, attr, value):
         """Helper method that removes an element from a list stored as a string"""
@@ -315,7 +305,7 @@ class Player(db.Model, UserMixin):
     def get_reserves(self):
         """This method returns the natural resources reserves of a player"""
         reserves = {}
-        for resource in ["coal", "oil", "gas", "uranium"]:
+        for resource in ["coal", "gas", "uranium"]:
             reserves[resource] = getattr(self.tile, resource)
         return reserves
 
@@ -339,8 +329,30 @@ class Player(db.Model, UserMixin):
             },
         )
 
-    def send_notification(self, notification_data):
-        """This method sends a notification to the player's clients and subscribed browsers"""
+    def notify(self, title, message):
+        """Creates a new notification and sends it to the player's subscribed browsers"""
+        new_notification = Notification(title=title, content=message, time=datetime.now(), player_id=self.id)
+        db.session.add(new_notification)
+        self.notifications.append(new_notification)
+        self.emit(
+            "new_notification",
+            {
+                "id": new_notification.id,
+                "time": str(new_notification.time),
+                "title": new_notification.title,
+                "content": new_notification.content,
+            },
+        )
+        if self.notifications.count() > 1:
+            if (
+                new_notification.content == self.notifications[self.notifications.count() - 2].content
+                and new_notification.time == self.notifications[self.notifications.count() - 2].time
+            ):
+                return
+        notification_data = {
+            "title": new_notification.title,
+            "body": new_notification.content,
+        }
         engine = current_app.config["engine"]
         for subscription in engine.notification_subscriptions[self.id]:
             audience = "https://fcm.googleapis.com"
@@ -364,6 +376,107 @@ class Player(db.Model, UserMixin):
         for value in cumulative_emissions.values():
             net_emissions += value
         return net_emissions
+
+    def check_continuous_achievements(self):
+        """Check for player achievements that are linked to values that are updated every tick"""
+        for achievement in [
+            "power_consumption",
+            "energy_storage",
+            "mineral_extraction",
+            "network_import",
+            "network_export",
+            "network",
+        ]:
+            for i, value in enumerate(achievements[achievement]["milestones"]):
+                achievement_name = achievements[achievement]["name"]
+                if f"{achievement_name} {i+1}" not in self.achievements:
+                    if getattr(self, achievements[achievement]["metric"]) >= value:
+                        self.add_to_list("achievements", f"{achievement_name} {i+1}")
+                        self.xp += achievements[achievement]["rewards"][i]
+                        message = achievements[achievement]["message"]
+                        if achievement == "network":
+                            message = message.format(reward=achievements[achievement]["rewards"][i])
+                        elif "comparisons" in achievements[achievement]:
+                            message = message.format(
+                                value=value,
+                                reward=achievements[achievement]["rewards"][i],
+                                comparison=achievements[achievement]["comparisons"][i],
+                            )
+                        else:
+                            message = message.format(value=value, reward=achievements[achievement]["rewards"][i])
+                        self.notify("Achievement", message)
+                    break
+
+    def check_construction_achievements(self, construction_name):
+        """Check for player achievements that may be unlocked by a construction"""
+        for achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
+            achievement_name = achievements[achievement]["name"]
+            if achievement_name not in self.achievements:
+                if construction_name in achievements[achievement]["unlocked_with"]:
+                    self.add_to_list("achievements", achievement_name)
+                    self.xp += achievements[achievement]["reward"]
+                    message = achievements[achievement]["message"].format(reward=achievements[achievement]["reward"])
+                    self.notify("Achievement", message)
+
+    def check_technology_achievement(self):
+        """Check for technology achievement"""
+        achievement_name = achievements["technology"]["name"]
+        for i, value in enumerate(achievements["technology"]["milestones"]):
+            if f"{achievement_name} {i+1}" not in self.achievements:
+                if getattr(self, achievements["technology"]["metric"]) >= value:
+                    self.add_to_list("achievements", f"{achievement_name} {i+1}")
+                    self.xp += achievements["technology"]["rewards"][i]
+                    message = achievements["technology"]["message"].format(
+                        value=value, reward=achievements["technology"]["rewards"][i]
+                    )
+                    self.notify("Achievement", message)
+
+    def check_trading_achievement(self):
+        """Check for trading achievement"""
+        achievement_name = achievements["trading"]["name"]
+        for i, value in enumerate(achievements["trading"]["milestones"]):
+            if f"{achievement_name} {i+1}" not in self.achievements:
+                if (
+                    getattr(self, achievements["trading"]["metric"][0])
+                    + getattr(self, achievements["trading"]["metric"][1])
+                    >= value
+                ):
+                    self.add_to_list("achievements", f"{achievement_name} {i+1}")
+                    self.xp += achievements["trading"]["rewards"][i]
+                    message = achievements["trading"]["message"].format(
+                        value=value, reward=achievements["trading"]["rewards"][i]
+                    )
+                    self.notify("Achievement", message)
+
+    def package_upcoming_achievements(self):
+        """Packages the progress information for the upcoming achievements"""
+        upcoming_achievements = {}
+        for achievement, achievement_data in achievements.items():
+            if achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
+                if achievement_data["name"] not in self.achievements:
+                    upcoming_achievements[achievement] = {
+                        "name": achievement_data["name"],
+                        "reward": achievement_data["reward"],
+                        "objective": 1,
+                        "status": 0,
+                    }
+            else:
+                for i, value in enumerate(achievement_data["milestones"]):
+                    if f"{achievement_data['name']} {i+1}" not in self.achievements:
+                        if achievement == "trading":
+                            status = getattr(self, achievement_data["metric"][0]) + getattr(
+                                self, achievement_data["metric"][1]
+                            )
+                        else:
+                            status = getattr(self, achievement_data["metric"])
+                        upcoming_achievements[achievement] = {
+                            "name": f"{achievement_data['name']} {i+1}",
+                            "reward": achievement_data["rewards"][i],
+                            "objective": value,
+                            "status": round(status),
+                        }
+                        break
+        return upcoming_achievements
 
     # prints out the object as a sting with the players username for debugging
     def __repr__(self):

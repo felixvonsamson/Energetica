@@ -14,10 +14,8 @@ from website.database.player import Network, Player
 def join_network(engine, player, network):
     """shared API method to join a network."""
     if network is None:
-        # print("utils.join_network: argument network was `None`")
         return {"response": "noSuchNetwork"}
     if player.network is not None:
-        # print("utils.join_network: argument network was `None`")
         return {"response": "playerAlreadyInNetwork"}
     player.network = network
     db.session.commit()

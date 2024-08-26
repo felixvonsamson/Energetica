@@ -7,7 +7,6 @@ const keys_generation = {
     "nuclear_reactor_gen4": true,
     "steam_engine": true,
     "coal_burner": true,
-    "oil_burner": true,
     "gas_burner": true,
     "combined_cycle": true,
     "windmill": true,
@@ -19,17 +18,15 @@ const keys_generation = {
     "large_pumped_hydro": true,
     "lithium_ion_batteries": true,
     "solid_state_batteries": true,
-    "compressed_air": true,
     "molten_salt": true,
     "hydrogen_storage": true,
     "imports": true,
 };
 
-const storage_keys = ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "compressed_air", "molten_salt", "hydrogen_storage"];
+const storage_keys = ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "molten_salt", "hydrogen_storage"];
 
 const keys_demand = {
     "coal_mine": true,
-    "oil_field": true,
     "gas_drilling_site": true,
     "uranium_mine": true,
     "industry": true,
@@ -41,7 +38,6 @@ const keys_demand = {
     "large_pumped_hydro": true,
     "lithium_ion_batteries": true,
     "solid_state_batteries": true,
-    "compressed_air": true,
     "molten_salt": true,
     "hydrogen_storage": true,
     "exports": true,
@@ -92,7 +88,7 @@ function graph_sketch(s) {
                     }
                     for (const group in s.keys) {
                         if (group in s.current_data) {
-                            if (s.current_data[group][res_id][t_view] > 0 && s.keys[group]) {
+                            if (s.current_data[group][res_id][t_view] > 1 && s.keys[group]) {
                                 let h = -s.current_data[group][res_id][t_view] * s.graph_h / sum;
                                 s.ellipse(0, h, 8, 8);
                                 s.translate(0, h);
@@ -102,7 +98,7 @@ function graph_sketch(s) {
                     s.pop();
 
                     for (const group in s.current_data) {
-                        if (s.current_data[group][res_id][t_view] > 0 && s.keys[group]) {
+                        if (s.current_data[group][res_id][t_view] > 1 && s.keys[group]) {
                             count += 1;
                         }
                     }
@@ -128,7 +124,7 @@ function graph_sketch(s) {
                     let cumsum = 0;
                     for (const group of Object.keys(s.keys).reverse()) {
                         if (group in s.current_data) {
-                            if (s.current_data[group][res_id][t_view] > 0 && s.keys[group]) {
+                            if (s.current_data[group][res_id][t_view] > 1 && s.keys[group]) {
                                 cumsum += s.current_data[group][res_id][t_view];
                                 alternate_fill(s);
                                 s.rect(0, 0, 160, 17);
@@ -168,7 +164,7 @@ function graph_sketch(s) {
                     let total_cap = 0;
                     for (const key of Object.keys(s.keys).reverse()) {
                         if (key in capacities) {
-                            if (capacities[key] > 0 && s.keys[key] && !(storage_keys.includes(key))) {
+                            if (capacities[key] > 1 && s.keys[key] && !(storage_keys.includes(key))) {
                                 alternate_fill(s);
                                 s.translate(0, 16);
                                 s.rect(0, 0, 160, 17);
@@ -268,7 +264,7 @@ function graph_sketch(s) {
             }
             for (const group in s.keys) {
                 if (group in s.current_data) {
-                    if (s.current_data[group][res_id][t] > 0 && s.keys[group]) {
+                    if (s.current_data[group][res_id][t] > 1 && s.keys[group]) {
                         s.graphics.fill(cols_and_names[group][0]);
                         let h = s.current_data[group][res_id][t] * s.graph_h / sum;
                         s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
@@ -345,7 +341,7 @@ function graph_sketch(s) {
                         return acc + currentValue
                     }, 0);
                 for (const key in capacities) {
-                    if (capacities[key] > 0 && s.keys[key] && !(storage_keys.includes(key))) {
+                    if (capacities[key] > 1 && s.keys[key] && !(storage_keys.includes(key))) {
                         s.graphics.fill(cols_and_names[key][0]);
                         let h = (capacities[key] / sum) * s.graph_h;
                         s.graphics.rect(0, 0, 0.5 * margin, h);

@@ -8,7 +8,6 @@ const keys_revenues = {
     "large_pumped_hydro": true,
     "lithium_ion_batteries": true,
     "solid_state_batteries": true,
-    "compressed_air": true,
     "molten_salt": true,
     "hydrogen_storage": true,
     // renewables :
@@ -25,12 +24,10 @@ const keys_revenues = {
     "nuclear_reactor_gen4": true,
     "steam_engine": true,
     "coal_burner": true,
-    "oil_burner": true,
     "gas_burner": true,
     "combined_cycle": true,
     // extraction
     "coal_mine": true,
-    "oil_field": true,
     "gas_drilling_site": true,
     "uranium_mine": true,
 
@@ -83,7 +80,7 @@ function graph_sketch(s) {
                             } else {
                                 value = data.op_costs[group][res_id][t_view];
                             }
-                            if (value > 0) {
+                            if (value > 0.1) {
                                 acc.positive += value;
                             } else {
                                 acc.negative += value;
@@ -98,7 +95,7 @@ function graph_sketch(s) {
                     if (group in data.revenues) {
                         value = data.revenues[group][res_id][t_view];
                     }
-                    if (value > 0 && keys_revenues[group]) {
+                    if (value > 0.1 && keys_revenues[group]) {
                         let h = -value * s.graph_h * s.frac / sum.positive;
                         s.ellipse(0, h, 8, 8);
                         s.translate(0, h);
@@ -113,7 +110,7 @@ function graph_sketch(s) {
                     } else if (group in data.op_costs) {
                         value = data.op_costs[group][res_id][t_view];
                     }
-                    if (value < 0 && keys_revenues[group]) {
+                    if (value < -0.1 && keys_revenues[group]) {
                         let h = value * s.graph_h * (1 - s.frac) / sum.negative;
                         s.ellipse(0, h, 8, 8);
                         s.translate(0, h);
@@ -148,7 +145,7 @@ function graph_sketch(s) {
                     } else if (group in data.op_costs) {
                         value = data.op_costs[group][res_id][t_view] * 3600 / in_game_seconds_per_tick;
                     }
-                    if (value != 0 && keys_revenues[group]) {
+                    if (abs(value) > 0.1 && keys_revenues[group]) {
                         cumsum += value;
                         alternate_fill(s);
                         s.rect(0, 0, 170, 17);
@@ -208,9 +205,9 @@ function graph_sketch(s) {
                 // Skip summing if not displayed
                 if (keys_revenues[key] === true) {
                     arr[res_id].slice(s.t0).forEach((value, i) => {
-                        if (value > 0) {
+                        if (value > 0.1) {
                             acc.positive[i] = (acc.positive[i] || 0) + value;
-                        } else if (value < 0) {
+                        } else if (value < -0.1) {
                             acc.negative[i] = (acc.negative[i] || 0) + value;
                         }
                     });
@@ -241,8 +238,8 @@ function graph_sketch(s) {
             if (s.percent == "percent") {
                 let sum_revenues = Object.keys(data.revenues).reduce((acc, group) => {
                     let value = data.revenues[group][res_id][t];
-                    if (keys_revenues[group] === true && value != 0) {
-                        if (value > 0) {
+                    if (keys_revenues[group] === true && abs(value) > 0.1) {
+                        if (value > 0.1) {
                             acc.positive += value;
                         } else {
                             acc.negative += value;
@@ -252,7 +249,7 @@ function graph_sketch(s) {
                 }, { positive: 0, negative: 0 });
                 let sum_costs = Object.keys(data.op_costs).reduce((acc, group) => {
                     let value = data.op_costs[group][res_id][t];
-                    if (keys_revenues[group] === true && value != 0) {
+                    if (keys_revenues[group] === true && abs(value) > 0.1) {
                         acc += value;
                     }
                     return acc;
@@ -268,7 +265,7 @@ function graph_sketch(s) {
                 } else {
                     continue;
                 }
-                if (value > 0 && keys_revenues[group]) {
+                if (value > 0.1 && keys_revenues[group]) {
                     s.graphics.fill(cols_and_names[group][0]);
                     let h = value * s.graph_h * s.frac / sum.upper;
                     s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
@@ -285,7 +282,7 @@ function graph_sketch(s) {
                 } else {
                     continue;
                 }
-                if (value < 0 && keys_revenues[group]) {
+                if (value < -0.1 && keys_revenues[group]) {
                     s.graphics.fill(cols_and_names[group][0]);
                     let h = value * s.graph_h * (1 - s.frac) / sum.lower;
                     s.graphics.rect(0, 0, s.graph_w / data_len + 1, h + 1);

@@ -18,9 +18,9 @@ class Hex(db.Model):
     wind = db.Column(db.Float)
     hydro = db.Column(db.Float)
     coal = db.Column(db.Float)
-    oil = db.Column(db.Float)
     gas = db.Column(db.Float)
     uranium = db.Column(db.Float)
+    climate_risk = db.Column(db.Integer)
     player_id = db.Column(
         db.Integer, db.ForeignKey("player.id"), unique=True, nullable=True
     )  # ID of the owner of the tile

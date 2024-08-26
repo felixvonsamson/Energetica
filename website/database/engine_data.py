@@ -11,7 +11,7 @@ import numpy as np
 import requests
 from flask import current_app
 
-from website.config import river_discharge_seasonal
+from website.config.assets import river_discharge_seasonal
 from website.database.player_assets import ActiveFacility
 
 

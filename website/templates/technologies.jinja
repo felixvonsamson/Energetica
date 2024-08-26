@@ -237,7 +237,6 @@
               {{ render_effect_row('Extraction speed', 'extraction_speed_bonus') }}
               {{ render_effect_row("Fuel use", "fuel_use_reduction_bonus", sign="-", precision=1) }}
               {{ render_effect_row("CO<sub>2</sub> emissions", "co2_emissions_reduction_bonus", sign="-", precision=1) }}
-              {{ render_effect_row("Effic. comp. air", "compressed_air_efficiency_bonus", suffix="pp", precision=1, hover_info="percentage point") }}
               {{ render_effect_row("Effic. molten salt", "molten_salt_efficiency_bonus", suffix="pp", precision=1, hover_info="percentage point") }}
               {{ render_effect_row("Construction time", "construction_time_reduction_bonus", sign="-") }}
               {{ render_change_row('Constrtruct. workers', 'construction_workers.current', 'construction_workers.upgraded') }}
@@ -264,5 +263,6 @@
 {% block additionnal_script %}
   <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
   <script src="{{ url_for('static', filename='lvlup_display.js') }}"></script>
+  <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
   <script>refresh_progressBar()</script>
 {% endblock additionnal_script %}

@@ -1,4 +1,5 @@
 {% extends "head.jinja" %}
+{% block title %}Location choice{% endblock title %}
 {% block base %}
     <div style="position:fixed;
                 justify-content:center;
@@ -26,7 +27,7 @@
                     choose wisely.
                 </p>
                 <p>
-                    For more detailed information about the map and the resources you can find on it, refer to the <a href="{{ url_for('wiki.render_template_wiki', template_name='map') }}">Map section in the wiki</a>.
+                    For more detailed information about the map, the resources you can find on it and the climate risks, refer to the <a href="{{ url_for('wiki.render_template_wiki', template_name='map') }}">Map section in the wiki</a>.
                 </p>
             </div>
         </div>
@@ -34,6 +35,5 @@
 {% endblock base %}
 {% block scripts %}
     <script src="{{ url_for('static', filename='sockets.js') }}"></script>
-    <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
     <script src="{{ url_for('static', filename='map_selection.js') }}"></script>
 {% endblock scripts %}

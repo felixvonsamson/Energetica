@@ -15,20 +15,19 @@
   </p>
   <h3>Fossil Fuel Family</h3>
   <ul>
-    <li>Steam engine</li>
-    <li>Coal burner &ensp;<span class="txt_pine">(Coal)</span></li>
-    <li>Oil burner  &ensp;<span class="txt_pine">(Oil)</span></li>
-    <li>Gas burner &ensp;<span class="txt_pine">(Gas)</span></li>
-    <li>Combined cycle &ensp;<span class="txt_pine">(Gas + Coal)</span></li>
-    <li>Nuclear reactor &ensp;<span class="txt_pine">(Uranium)</span></li>
+    <li>Steam Engine</li>
+    <li>Coal Burner &ensp;<span class="txt_pine">(Coal)</span></li>
+    <li>Gas Burner &ensp;<span class="txt_pine">(Gas)</span></li>
+    <li>Combined Cycle &ensp;<span class="txt_pine">(Gas + Coal)</span></li>
+    <li>Nuclear Reactor &ensp;<span class="txt_pine">(Uranium)</span></li>
     <li>Gen4 Nuclear &ensp;<span class="txt_pine">(Uranium)</span></li>
   </ul>
   <p>These facilities are controllable, emit CO<sub>2</sub>, and require fuel for operation (except for the steam engine).</p>
   <h3>Wind Family</h3>
   <ul>
     <li>Windmill</li>
-    <li>Onshore wind turbine</li>
-    <li>Offshore wind turbine</li>
+    <li>Onshore Wind Turbine</li>
+    <li>Offshore Wind Turbine</li>
   </ul>
   <p>
     These facilities are non-controllable, do not emit pollutants during operation, and their power output varies based 
@@ -37,8 +36,8 @@
   <h3>Hydro Family</h3>
   <ul>
     <li>Watermill</li>
-    <li>Small water dam</li>
-    <li>Large water dam</li>
+    <li>Small Water Dam</li>
+    <li>Large Water Dam</li>
   </ul>
   <p>
     Similar to wind facilities, these are non-controllable, emission-free during operation, and their output varies 
@@ -46,7 +45,7 @@
   </p>
   <h3>Solar Family</h3>
   <ul>
-    <li>Concentrated solar power</li>
+    <li>Concentrated Solar Power</li>
     <li>Photovoltaics</li>
   </ul>
   <p>
@@ -145,7 +144,7 @@
     maximal production according to the available fuel stocks.
   </p>
   <p>
-    {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Thermodynamics') }}">
+    {% if "Unlock Technologies" in user.achievements %}<a href="{{ url_for('views.technology', _anchor='Thermodynamics') }}">
     Thermodynamics</a>{% else %}Thermodynamics{% endif %} 
     influences facility efficiency, decreasing fuel consumption per unit of energy.
   </p>
@@ -182,7 +181,7 @@
   <p>If the energy demand for constructions isn't met, it is paused, except for the initial phase, during which a ramping up period is allowed. 
   During this period, it's acceptable for the satisfaction level to be lower as long as the power consumption increases by at least 5% per minute.</p>
   <p>
-    Researching {% if "technology" in user.advancements %}<a href="{{ url_for('views.technology', _anchor='Building Technology') }}">
+    Researching {% if "Unlock Technologies" in user.achievements %}<a href="{{ url_for('views.technology', _anchor='Building Technology') }}">
     building technology</a>{% else %}building technology{% endif %} will unlock additional construction workers and 
     increase the speed of construction projects.
   </p>

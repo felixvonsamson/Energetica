@@ -2,7 +2,7 @@
 This code contains the functions to acess frontend data and retrieve it if it is not avalable. 
 */
 
-if (window.location.pathname != "/login" && window.location.pathname != "/sign-up") {
+if (window.location.pathname != "/login" && window.location.pathname != "/sign-up" && document.title != "Location choice") {
     check_new_connection();
     if (!sessionStorage.getItem("player_id")) {
         fetch("/api/get_player_id")
