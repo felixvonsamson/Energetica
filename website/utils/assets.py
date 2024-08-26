@@ -13,7 +13,12 @@ from website.utils.network import reorder_facility_priorities
 
 
 def add_asset(player_id, construction_id):
-    """this function is executed when a construction or research project has finished"""
+    """
+    This function is executed when a construction or research project has finished. The effects indlude:
+    * For facilities which create demands, e.g. carbon capture, adds demands to the demand priorities
+    * For technologies and functional facilities, checks for achievements
+    * Removes from the relevant contruction / research list and priority list
+    """
     engine = current_app.config["engine"]
     player: Player = Player.query.get(player_id)
     construction: OngoingConstruction = OngoingConstruction.query.get(construction_id)

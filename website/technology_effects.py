@@ -164,7 +164,7 @@ def extraction_rate_multiplier(player: Player, level: int = None) -> float:
 def hydro_price_multiplier(player: Player, facility) -> float:
     """
     For hydro power facilities, returns by how much the `facility`'s `base_price` should be multiplied, according to the
-    `player`'s currently researched technologies
+    `player`'s currently researched technologies. Otherwise, returns 1.
     """
     mlt = 1
     # calculating the hydro price multiplier linked to the number of hydro facilities
@@ -405,7 +405,10 @@ def facility_requirements(player: Player, facility: str):
 
 
 def requirements_met(requirements):
-    """Returns True (meaning locked) if any requirements are not met, otherwise False (not locked)"""
+    """
+    Returns True (meaning locked) if any requirements is "unsatisfied"
+    Returns False (not locked) if all requirements are either "satisfied" or "queued"
+    """
     return any(requirement["status"] == "unsatisfied" for requirement in requirements)
 
 
