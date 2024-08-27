@@ -2,10 +2,13 @@
 
 import math
 import pickle
+from datetime import datetime, timedelta
 from typing import List
 
 import numpy as np
 import pandas as pd
+from noise import pnoise3
+from pvlib.location import Location
 
 from . import db
 from .config.assets import wind_power_curve
@@ -77,6 +80,7 @@ def update_electricity(engine):
         if player.network is None:
             calculate_demand(engine, new_values[player.id], player)
             calculate_generation_without_market(engine, new_values, player)
+        set_facilities_usage(engine, new_values[player.id], player)
         calculate_net_import(new_values[player.id])
         update_storage_lvls(engine, new_values[player.id], player)
         resources_and_pollution(engine, new_values[player.id], player)
@@ -86,6 +90,37 @@ def update_electricity(engine):
         update_player_progress_values(engine, player, new_values)
         # send new data to clients
         player.send_new_data(new_values[player.id])
+
+
+def set_facilities_usage(engine, new_values, player):
+    """Set the usage of the facilities to the database"""
+    for facility in engine.controllable_facilities:
+        if facility in new_values["generation"]:
+            ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
+                {
+                    ActiveFacility.usage: new_values["generation"][facility]
+                    / engine.data["player_capacities"][player.id][facility]["power"]
+                },
+                synchronize_session=False,
+            )
+    for facility in engine.storage_facilities:
+        if facility in new_values["storage"]:
+            ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
+                {
+                    ActiveFacility.usage: new_values["storage"][facility]
+                    / engine.data["player_capacities"][player.id][facility]["capacity"]
+                },
+                synchronize_session=False,
+            )
+    for facility in engine.extraction_facilities:
+        if facility in new_values["demand"]:
+            ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
+                {
+                    ActiveFacility.usage: new_values["demand"][facility]
+                    / engine.data["player_capacities"][player.id][facility]["power_use"]
+                },
+                synchronize_session=False,
+            )
 
 
 def update_player_progress_values(engine, player, new_values):
@@ -554,20 +589,59 @@ def market_optimum(offers_og, demands_og):
 
 def renewables_generation(engine, player, player_cap, generation):
     """Generation of non controllable facilities is calculated from weather data"""
-    # WIND (wind generation is more complex and deserves its own function)
+    # WIND
     wind_generation(engine, player, player_cap, generation)
     # SOLAR
-    power_factor = (
-        engine.data["weather"]["irradiance"] / 875 * player.tile.solar
-    )  # 875 W/m2 is the maximum irradiation in Zürich
-    for facility in ["CSP_solar", "PV_solar"]:
-        if player_cap[facility] is not None:
-            generation[facility] = power_factor * player_cap[facility]["power"]
+    solar_generation(engine, player, player_cap, generation)
     # HYDRO
     power_factor = engine.data["weather"]["river_discharge"]
     for facility in ["watermill", "small_water_dam", "large_water_dam"]:
         if player_cap[facility] is not None:
             generation[facility] = power_factor * player_cap[facility]["power"]
+        ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
+            {ActiveFacility.usage: power_factor}, synchronize_session=False
+        )
+
+
+def solar_generation(engine, player, player_cap, generation):
+    """Each instance of facility generates a different amount of power depending on the position of the facility"""
+
+    def transformation(x, threshold=0, smoothness=2):
+        """Sigmoid transformation"""
+        return 1 / (1 + np.exp(-(x - threshold) * 10 / smoothness))
+
+    # Calculate the real day and time in a year for a given tick
+    start_date = datetime(2023, 1, 1)
+    day_of_year = int(
+        ((engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick / 3600 / 24 / 72) % 1 * 365
+    )
+    time_of_day = ((engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick) % (3600 * 24)
+    weather_datetime = pd.DatetimeIndex([start_date + timedelta(days=day_of_year) + timedelta(seconds=time_of_day)])
+
+    for facility_type in ["CSP_solar", "PV_solar"]:
+        if player_cap[facility_type] is not None:
+            solar_facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(
+                player_id=player.id, facility=facility_type
+            ).all()
+            for facility in solar_facilities:
+                x, y = facility.pos_x, facility.pos_y
+                x_noise = x + engine.data["total_t"] * engine.in_game_seconds_per_tick / 2400
+                y_noise = y + engine.data["total_t"] * engine.in_game_seconds_per_tick / 4000
+                t = engine.data["total_t"] * engine.in_game_seconds_per_tick / 3600 / 24
+                regional_noise = pnoise3(x_noise / 50, y_noise / 50, t, octaves=2, persistence=0.5, lacunarity=2.0)
+                regional_noise = transformation(regional_noise, smoothness=1) * 2 - 1
+                cloud_cover_noise = pnoise3(x_noise, y_noise, t, octaves=6, persistence=0.5, lacunarity=2.0)
+                cloud_cover_noise = transformation(
+                    cloud_cover_noise, threshold=0.5 * regional_noise, smoothness=max(0.3, 1 - regional_noise)
+                )
+                csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
+                loc = Location(8 * y, 0)
+                clear_sky = loc.get_clearsky(weather_datetime)["ghi"][0]
+                max_power = (
+                    engine.const_config["assets"][facility_type]["base_power_generation"] * facility.multiplier_1
+                )
+                facility.usage = clear_sky * csi / 1000
+                generation[facility_type] += clear_sky * csi / 1000 * max_power
 
 
 def wind_generation(engine, player, player_cap, generation):
@@ -582,7 +656,8 @@ def wind_generation(engine, player, player_cap, generation):
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"] * facility.multiplier_1
                 )
-                generation[facility_type] += interpolate_wind(engine, wind_speed_factor) * max_power
+                facility.usage = interpolate_wind(engine, wind_speed_factor)
+                generation[facility_type] += facility.usage * max_power
 
 
 def interpolate_wind(engine, wind_speed_factor):

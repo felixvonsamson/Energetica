@@ -56,8 +56,6 @@ async function get_active_facilities(reorder = false) {
         const raw_data = await fetch("/api/get_active_facilities").then((response) => response.json());
         const const_config = await load_const_config();
         const player_data = await load_player_data();
-        const wind_power_curve = await load_wind_power_curve();
-        const raw_chart_data = await load_chart_data();
         const reserves = await fetch("/api/get_resource_reserves").then((response) => response.json());
 
         active_facilities = {
@@ -72,15 +70,11 @@ async function get_active_facilities(reorder = false) {
             if (["watermill", "small_water_dam", "large_water_dam"].includes(facility.facility)) {
                 tot_cost *= facility[multiplier_table.hydro_price_multiplier];
             }
-            let generating = raw_chart_data.generation[facility.facility][0][359] / player_data.capacities[facility.facility].power
-            if (["windmill", "onshore_wind_turbine", "offshore_wind_turbine"].includes(facility.facility)) {
-                generating = interpolate_wind_power_curve(wind_power_curve, current_wind_speed * facility[multiplier_table.wind_speed_multiplier]);
-            }
             active_facilities.power_facilities[id] = {
                 "facility": facility.facility,
                 "name": config.name,
                 "installed_cap": config.base_power_generation * facility.multiplier_1,
-                "used_capacity": generating,
+                "used_capacity": facility.usage,
                 "op_cost": tot_cost * config["O&M_factor_per_day"] / 24,
                 "remaining_lifespan": facility.end_of_life - last_value["total_t"],
                 "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
@@ -93,7 +87,7 @@ async function get_active_facilities(reorder = false) {
                 "facility": facility.facility,
                 "name": config.name,
                 "installed_cap": config.base_storage_capacity * facility[multiplier_table.capacity_multiplier],
-                "used_capacity": raw_chart_data.storage[facility.facility][0][359] / player_data.capacities[facility.facility].capacity,
+                "used_capacity": facility.usage,
                 "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor_per_day"] / 24,
                 "efficiency": config.base_efficiency * facility[multiplier_table.efficiency_multiplier],
                 "remaining_lifespan": facility.end_of_life - last_value["total_t"],
@@ -121,7 +115,7 @@ async function get_active_facilities(reorder = false) {
                 "facility": facility.facility,
                 "name": config.name,
                 "extraction_rate": config.base_extraction_rate_per_day * facility[multiplier_table.extraction_rate_multiplier] * reserves[facility_to_resource[facility.facility]] / 24,
-                "used_capacity": raw_chart_data.demand[facility.facility][0][359] / cumul_demand[facility.facility],
+                "used_capacity": facility.usage,
                 "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor_per_day"] / 24,
                 "energy_use": config.base_power_consumption * facility.multiplier_1,
                 "remaining_lifespan": facility.end_of_life - last_value["total_t"],

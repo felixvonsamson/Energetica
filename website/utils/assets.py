@@ -1,6 +1,7 @@
 """Utils relating to player assets"""
 
 import math
+import random
 from typing import List
 
 from flask import current_app
@@ -158,8 +159,12 @@ def add_asset(player_id, construction_id):
         eol = engine.data["total_t"] + math.ceil(
             engine.const_config["assets"][construction.name]["lifespan"] / engine.in_game_seconds_per_tick
         )
+        position_x = player.tile.q + 0.5 * player.tile.r + random.uniform(-0.5, 0.5)
+        position_y = player.tile.r + random.uniform(-0.5, 0.5)
         new_facility: ActiveFacility = ActiveFacility(
             facility=construction.name,
+            pos_x=position_x,
+            pos_y=position_y,
             end_of_life=eol,
             player_id=player.id,
             price_multiplier=construction.price_multiplier,

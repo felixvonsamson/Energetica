@@ -148,12 +148,9 @@ class CircularBufferPlayer:
                 "dumping": deque([0.0] * 360, maxlen=360),
                 "climate_events": deque([0.0] * 360, maxlen=360),
             },
-            "op_costs": {
-                "steam_engine": deque([0.0] * 360, maxlen=360),  # + other facilities
-            },
+            "op_costs": {},  # + all facilities
             "generation": {
-                "steam_engine": deque([0.0] * 360, maxlen=360),
-                "imports": deque([0.0] * 360, maxlen=360),  # + other power and storage facilities
+                "imports": deque([0.0] * 360, maxlen=360),  # + power and storage facilities
             },
             "demand": {
                 "industry": deque([0.0] * 360, maxlen=360),
@@ -166,8 +163,7 @@ class CircularBufferPlayer:
             "storage": {},  # + storage facilities
             "resources": {},  # + all resources when warehouse is built
             "emissions": {
-                "steam_engine": deque([0.0] * 360, maxlen=360),
-                "construction": deque([0.0] * 360, maxlen=360),  # + other controllable facilities
+                "construction": deque([0.0] * 360, maxlen=360),  # + controllable facilities
             },
         }
 

@@ -218,12 +218,13 @@ def climate_events_scenario(engine):
             player.uranium = 4_500
             player.rest_of_priorities = ""
 
-            add_asset(player, "industry", 18)
+            add_asset(player, "industry", 12)
             add_asset(player, "laboratory", 5)
             add_asset(player, "mineral_extraction", 5)
             add_asset(player, "chemistry", 2)
-            add_asset(player, "coal_mine", 10)
-            add_asset(player, "coal_burner", 25)
+            add_asset(player, "coal_mine", 2)
+            add_asset(player, "coal_burner", 5)
             add_asset(player, "warehouse", 10)
-            add_asset(player, "carbon_capture", 7)
+            add_asset(player, "carbon_capture", 1)
+            add_asset(player, "PV_solar", 5)
     db.session.commit()
