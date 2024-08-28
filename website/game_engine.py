@@ -120,7 +120,6 @@ class GameEngine(object):
         self.data["network_capacities"] = {}
         self.data["current_data"] = {}
         self.data["network_data"] = {}
-        self.data["weather"] = WeatherData()
         self.data["current_climate_data"] = EmissionData(
             self.data["delta_t"], in_game_seconds_per_tick, self.data["random_seed"]
         )
@@ -152,8 +151,6 @@ class GameEngine(object):
             self.industry_seasonal = pickle.load(
                 file
             )  # array of length 51 of normalized yearly industry demand variations
-
-        self.data["weather"].update_weather(self)
 
     def init_loggers(self):
         """Initializes the loggers for the engine"""

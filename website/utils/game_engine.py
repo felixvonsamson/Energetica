@@ -34,8 +34,6 @@ def state_update(engine, app):
             engine.log(f"t = {engine.data['total_t']}")
             if engine.data["total_t"] % 216 == 0:
                 save_past_data_threaded(app, engine)
-            if engine.data["total_t"] % (600 / engine.clock_time) == 0:
-                engine.data["weather"].update_weather(engine)
             if (engine.data["total_t"] + engine.data["delta_t"]) % (24 * 60 * 60 / engine.clock_time) == 0:
                 engine.new_daily_question()
             log_entry = {

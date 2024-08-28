@@ -12,7 +12,7 @@ from pvlib.location import Location
 from scipy.stats import norm
 
 from . import db
-from .config.assets import wind_power_curve
+from .config.assets import river_discharge_seasonal, wind_power_curve
 from .database.player import Network, Player
 from .database.player_assets import ActiveFacility, OngoingConstruction, Shipment
 
@@ -285,7 +285,6 @@ def storage_demand(engine, player, demand):
                 facility,
                 engine.data["current_data"][player.id],
                 resource_reservations=None,
-                storage=True,
                 filling=True,
             )
 
@@ -372,7 +371,6 @@ def calculate_generation_without_market(engine, new_values, player):
                 facility,
                 engine.data["current_data"][player.id],
                 resource_reservations,
-                storage=facility in engine.storage_facilities,
             )
             price = getattr(player, "price_" + facility)
             capacity = max_prod - generation[facility]
@@ -425,7 +423,6 @@ def calculate_generation_with_market(engine, new_values, market, player):
                     facility,
                     engine.data["current_data"][player.id],
                     resource_reservations,
-                    storage=facility in engine.storage_facilities,
                 )
                 price = getattr(player, "price_" + facility)
                 capacity = max_prod - generation[facility]
@@ -590,12 +587,17 @@ def market_optimum(offers_og, demands_og):
 
 def renewables_generation(engine, player, player_cap, generation):
     """Generation of non controllable facilities is calculated from weather data"""
+    in_game_seconds_passed = (engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick
     # WIND
-    wind_generation(engine, player, player_cap, generation)
+    wind_generation(engine, player, player_cap, generation, in_game_seconds_passed)
     # SOLAR
-    solar_generation(engine, player, player_cap, generation)
+    solar_generation(engine, player, player_cap, generation, in_game_seconds_passed)
     # HYDRO
-    power_factor = engine.data["weather"]["river_discharge"]
+    days_since_start = math.floor(in_game_seconds_passed / 3600 / 24)
+    current_day_fraction = (in_game_seconds_passed % (3600 * 24)) / (3600 * 24)
+    power_factor = river_discharge_seasonal[days_since_start % 72] + current_day_fraction * (
+        river_discharge_seasonal[(days_since_start + 1) % 72] - river_discharge_seasonal[days_since_start % 72]
+    )
     for facility in ["watermill", "small_water_dam", "large_water_dam"]:
         if player_cap[facility] is not None:
             generation[facility] = power_factor * player_cap[facility]["power"]
@@ -604,7 +606,7 @@ def renewables_generation(engine, player, player_cap, generation):
         )
 
 
-def solar_generation(engine, player, player_cap, generation):
+def solar_generation(engine, player, player_cap, generation, in_game_seconds_passed):
     """
     Each instance of facility generates a different amount of power depending on the position of the facility.
     The clear sky index is calculated using a 3D perlin noise that moves over time, simulating the movement of clouds.
@@ -618,10 +620,8 @@ def solar_generation(engine, player, player_cap, generation):
 
     # Calculate the real day and time in a year for a given tick
     start_date = datetime(2023, 1, 1)
-    day_of_year = int(
-        ((engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick / 3600 / 24 / 72) % 1 * 365
-    )
-    time_of_day = ((engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick) % (3600 * 24)
+    day_of_year = int((in_game_seconds_passed / 3600 / 24 / 72) % 1 * 365)
+    time_of_day = in_game_seconds_passed % (3600 * 24)
     weather_datetime = pd.DatetimeIndex([start_date + timedelta(days=day_of_year) + timedelta(seconds=time_of_day)])
 
     for facility_type in ["CSP_solar", "PV_solar"]:
@@ -650,7 +650,7 @@ def solar_generation(engine, player, player_cap, generation):
                 generation[facility_type] += clear_sky * csi / 1000 * max_power
 
 
-def wind_generation(engine, player, player_cap, generation):
+def wind_generation(engine, player, player_cap, generation, in_game_seconds_passed):
     """
     Each instance of facility generates a different amount of power depending on the position of the facility.
     The wind speed is calculated using a 3D perlin noise that with a superposition of specific frequencies.
@@ -675,7 +675,7 @@ def wind_generation(engine, player, player_cap, generation):
             ).all()
             for facility in wind_facilities:
                 x, y = facility.pos_x, facility.pos_y
-                t = (engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick / 60
+                t = in_game_seconds_passed / 60
                 wind_speed_noise = (
                     0.9 * pnoise3(x / 20, y / 20, t / 5760)
                     + 0.06 * pnoise3(x, y, t / 360)
@@ -785,7 +785,6 @@ def minimal_generation(engine, player, player_cap, generation, resource_reservat
                 facility,
                 engine.data["current_data"][player.id],
                 resource_reservations,
-                storage=facility in engine.storage_facilities,
             )
 
 

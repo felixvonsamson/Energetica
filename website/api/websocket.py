@@ -324,6 +324,7 @@ def rest_get_scoreboard():
 
 def rest_get_weather(engine):
     """Gets the weather and returns it as a JSON string"""
+    # TODO: engine.data["weather"] has been removed !!!
     response = {
         "type": "getWeather",
         "data": engine.data["weather"].package(engine.data["total_t"]),

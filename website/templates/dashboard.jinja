@@ -1,9 +1,6 @@
 {% set month_number = (((engine.data["total_t"] + engine.data["delta_t"]) % 25920) // 2160) %}
 {% set month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] %}
 {% set month = month_names[month_number] %}
-{% set irradiance = engine.data["weather"]["irradiance"] %}
-{% set windspeed = engine.data["weather"]["windspeed"] %}
-{% set discharge = engine.data["weather"]["river_discharge"] %}
 {% extends "base.jinja" %}
 {% block title %}
     Dashboard
