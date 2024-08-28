@@ -423,16 +423,16 @@ def facility_requirements(player: Player, facility: str):
 
 def requirements_met(requirements):
     """
-    Returns True (meaning locked) if any requirements is "unsatisfied"
-    Returns False (not locked) if all requirements are either "satisfied" or "queued"
+    Returns False (meaning locked) if any requirements is "unsatisfied"
+    Returns True (not locked) if all requirements are either "satisfied" or "queued"
     """
-    return any(requirement["status"] == "unsatisfied" for requirement in requirements)
+    return all(requirement["status"] != "unsatisfied" for requirement in requirements)
 
 
 def facility_requirements_and_locked(player: Player, facility):
     """Returns a dictionary with both requirements and locked status"""
     requirements = facility_requirements(player, facility)
-    locked = requirements_met(requirements)
+    locked = not requirements_met(requirements)
     return {"requirements": requirements, "locked": locked}
 
 
@@ -462,7 +462,7 @@ def get_current_technology_values(player: Player):
         + engine.functional_facilities
     ):
         dict[facility] = {
-            "price_multiplier": price_multiplier(facility, player.current_levels),
+            "price_multiplier": price_multiplier(player, facility),
             "construction_time": construction_time(player, facility),
             "construction_power": construction_power(player, facility),
             "construction_pollution": construction_pollution_per_tick(player, facility),
@@ -481,7 +481,7 @@ def get_current_technology_values(player: Player):
         dict[facility]["extraction_emissions_multiplier"] = extraction_emissions_multiplier(player, facility)
     for facility in engine.technologies:
         dict[facility] = {
-            "price_multiplier": price_multiplier(facility, player.current_levels),
+            "price_multiplier": price_multiplier(player, facility),
             "construction_time": construction_time(player, facility),
             "construction_power": construction_power(player, facility),
         }
@@ -524,7 +524,7 @@ def _package_facility_base(player: Player, facility):
         "price": construction_price(player, facility),
         "construction_power": construction_power(player, facility),
         "construction_time": construction_time(player, facility),
-        "locked": requirements_met(facility_requirements(player, facility)),
+        "locked": not requirements_met(facility_requirements(player, facility)),
         "requirements": facility_requirements(player, facility),
     }
 

@@ -350,14 +350,11 @@ def start_project(engine, player, facility, family, force=False):
     """this function is executed when a player clicks on 'start construction'"""
     player_cap = engine.data["player_capacities"][player.id]
 
-    if technology_effects.player_can_launch_project(player, facility):
+    if not technology_effects.player_can_launch_project(player, facility):
         return {"response": "locked"}
 
     real_price = technology_effects.construction_price(player, facility)
     duration = technology_effects.construction_time(player, facility)
-    ud_count = 0
-    if family in ["Functional facilities", "Technologies"]:
-        ud_count = OngoingConstruction.query.filter_by(name=facility, player_id=player.id).count()
 
     if player.money < real_price:
         return {"response": "notEnoughMoneyError"}
@@ -374,18 +371,29 @@ def start_project(engine, player, facility, family, force=False):
                 "construction_power": construction_power,
             }
 
-    priority_list_name = "construction_priorities"
-    suspension_time = engine.data["total_t"]
     if family == "Technologies":
         priority_list_name = "research_priorities"
-        if player.available_lab_workers() > 0 and ud_count == 0:
-            suspension_time = None
     else:
-        if player.available_construction_workers() > 0 and ud_count == 0:
-            suspension_time = None
+        priority_list_name = "construction_priorities"
+
+    def can_start_immediately():
+        if family == "Technologies" and player.available_lab_workers() == 0:
+            return False  # No available workers
+        if family != "Technologies" and player.available_construction_workers() == 0:
+            return False  # No available workers
+        if (
+            family in ["Functional facilities", "Technologies"]
+            and OngoingConstruction.query.filter_by(name=facility, player_id=player.id).count() > 0
+        ):
+            return False  # Another level is already ongoing
+        return True
+
+    if can_start_immediately():
+        suspension_time = None
+    else:
+        suspension_time = engine.data["total_t"]
 
     player.money -= real_price
-    duration = math.ceil(duration)
     new_construction: OngoingConstruction = OngoingConstruction(
         name=facility,
         family=family,
