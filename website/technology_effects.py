@@ -306,11 +306,12 @@ def construction_time(player: Player, facility):
     duration = const_config[facility]["base_construction_time"] / engine.in_game_seconds_per_tick
     # construction time increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
-        duration *= const_config[facility]["price_multiplier"] ** (0.6 * getattr(player, facility))
-    # knowledge spillover and laboratory time reduction
-    if facility in engine.technologies:
-        duration *= 0.92 ** engine.data["technology_lvls"][facility][getattr(player, facility)]
-        duration *= const_config["laboratory"]["time_factor"] ** player.laboratory
+        level_with_constructions = OngoingConstruction.query.filter_by(name=facility, player_id=player.id).count()
+        duration *= const_config[facility]["price_multiplier"] ** (0.6 * level_with_constructions)
+        # knowledge spillover and laboratory time reduction
+        if facility in engine.technologies:
+            duration *= 0.92 ** engine.data["technology_lvls"][facility][level_with_constructions]
+            duration *= const_config["laboratory"]["time_factor"] ** player.laboratory
     # building technology time reduction
     if (
         facility
