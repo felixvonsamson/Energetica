@@ -636,7 +636,7 @@ def wind_generation(engine, player, player_cap, generation, in_game_seconds_pass
         i = math.floor(wind_speed)
         f = wind_speed - i
         pc = wind_power_curve
-        return pc[i] + (pc[(i + 1) % 100] - pc[i]) * f
+        return pc[i] + (pc[(i + 1) % 80] - pc[i]) * f
 
     for facility_type in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
         if player_cap[facility_type] is not None:
