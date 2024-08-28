@@ -160,7 +160,7 @@ def add_asset(player_id, construction_id):
             engine.const_config["assets"][construction.name]["lifespan"] / engine.in_game_seconds_per_tick
         )
         position_x = player.tile.q + 0.5 * player.tile.r + random.uniform(-0.5, 0.5)
-        position_y = player.tile.r + random.uniform(-0.5, 0.5)
+        position_y = (player.tile.r + random.uniform(-0.5, 0.5)) * 0.5 * 3**0.5
         new_facility: ActiveFacility = ActiveFacility(
             facility=construction.name,
             pos_x=position_x,

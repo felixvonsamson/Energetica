@@ -2,19 +2,16 @@
 
 import math
 import pickle
-from datetime import datetime, timedelta
 from typing import List
 
 import numpy as np
 import pandas as pd
-from noise import pnoise3
-from pvlib.location import Location
-from scipy.stats import norm
 
 from . import db
-from .config.assets import river_discharge_seasonal, wind_power_curve
+from .config.assets import wind_power_curve
 from .database.player import Network, Player
 from .database.player_assets import ActiveFacility, OngoingConstruction, Shipment
+from .utils.misc import calculate_river_discharge, calculate_solar_irradiance, calculate_wind_speed
 
 resource_to_extraction = {
     "coal": "coal_mine",
@@ -593,11 +590,7 @@ def renewables_generation(engine, player, player_cap, generation):
     # SOLAR
     solar_generation(engine, player, player_cap, generation, in_game_seconds_passed)
     # HYDRO
-    days_since_start = math.floor(in_game_seconds_passed / 3600 / 24)
-    current_day_fraction = (in_game_seconds_passed % (3600 * 24)) / (3600 * 24)
-    power_factor = river_discharge_seasonal[days_since_start % 72] + current_day_fraction * (
-        river_discharge_seasonal[(days_since_start + 1) % 72] - river_discharge_seasonal[days_since_start % 72]
-    )
+    power_factor = calculate_river_discharge(in_game_seconds_passed) / 150
     for facility in ["watermill", "small_water_dam", "large_water_dam"]:
         if player_cap[facility] is not None:
             generation[facility] = power_factor * player_cap[facility]["power"]
@@ -613,48 +606,25 @@ def solar_generation(engine, player, player_cap, generation, in_game_seconds_pas
     The csi is then multiplied by the clear sky value from pvlib to get the actual irradiance at the location.
     The effective power of the solar facility is then calculated as irradiance / 1000 * max_power.
     """
-
-    def transformation(x, threshold=0, smoothness=2):
-        """Sigmoid transformation"""
-        return 1 / (1 + np.exp(-(x - threshold) * 10 / smoothness))
-
-    # Calculate the real day and time in a year for a given tick
-    start_date = datetime(2023, 1, 1)
-    day_of_year = int((in_game_seconds_passed / 3600 / 24 / 72) % 1 * 365)
-    time_of_day = in_game_seconds_passed % (3600 * 24)
-    weather_datetime = pd.DatetimeIndex([start_date + timedelta(days=day_of_year) + timedelta(seconds=time_of_day)])
-
     for facility_type in ["CSP_solar", "PV_solar"]:
         if player_cap[facility_type] is not None:
             solar_facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(
                 player_id=player.id, facility=facility_type
             ).all()
             for facility in solar_facilities:
-                x, y = facility.pos_x, facility.pos_y
-                x_noise = x + engine.data["total_t"] * engine.in_game_seconds_per_tick / 2400
-                y_noise = y + engine.data["total_t"] * engine.in_game_seconds_per_tick / 4000
-                t = engine.data["total_t"] * engine.in_game_seconds_per_tick / 3600 / 24
-                regional_noise = pnoise3(x_noise / 50, y_noise / 50, t, octaves=2, persistence=0.5, lacunarity=2.0)
-                regional_noise = transformation(regional_noise, smoothness=1) * 2 - 1
-                cloud_cover_noise = pnoise3(x_noise, y_noise, t, octaves=6, persistence=0.5, lacunarity=2.0)
-                cloud_cover_noise = transformation(
-                    cloud_cover_noise, threshold=0.5 * regional_noise, smoothness=max(0.3, 1 - regional_noise)
-                )
-                csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
-                loc = Location(8 * y, 0)
-                clear_sky = loc.get_clearsky(weather_datetime)["ghi"][0]
+                irradiance = calculate_solar_irradiance(facility.pos_x, facility.pos_y, in_game_seconds_passed)
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"] * facility.multiplier_1
                 )
-                facility.usage = clear_sky * csi / 1000
-                generation[facility_type] += clear_sky * csi / 1000 * max_power
+                facility.usage = irradiance / 1000
+                generation[facility_type] += facility.usage * max_power
 
 
 def wind_generation(engine, player, player_cap, generation, in_game_seconds_passed):
     """
     Each instance of facility generates a different amount of power depending on the position of the facility.
-    The wind speed is calculated using a 3D perlin noise that with a superposition of specific frequencies.
-    Two sinusoidal functions are added to the wind speed to simulate the day-night cycle and the seasonal cycle.
+    The wind speed is calculated using a 3D perlin noise with a superposition of specific frequencies.
+    Two sinusoidal functions are multiplied to the wind speed to simulate the day-night cycle and the seasonal cycle.
     A multiplier is applied to the wind speed depending on the 'performance' of the facility linked to its position.
     The characteristic power curve of wind facilities is interpolated to get the power generated by the facility.
     """
@@ -674,28 +644,12 @@ def wind_generation(engine, player, player_cap, generation, in_game_seconds_pass
                 player_id=player.id, facility=facility_type
             ).all()
             for facility in wind_facilities:
-                x, y = facility.pos_x, facility.pos_y
-                t = in_game_seconds_passed / 60
-                wind_speed_noise = (
-                    0.9 * pnoise3(x / 20, y / 20, t / 5760)
-                    + 0.06 * pnoise3(x, y, t / 360)
-                    + 0.03 * pnoise3(x * 3, y * 3, t / 90)
-                    + 0.007 * pnoise3(x * 18, y * 18, t / 15)
-                    + 0.003 * pnoise3(x * 108, y * 108, t / 2.5)
-                )
-                wind_speed_noise = norm.cdf(wind_speed_noise, loc=0, scale=0.15)
-                wind_speed_noise = (1 - (1 - wind_speed_noise) ** 0.1282) ** 0.4673
-                wind_speed = (
-                    wind_speed_noise
-                    * (1 + 0.4 * math.sin(t / 60 / 24 / 72 * math.pi * 2 + 0.5 * math.pi))
-                    * (1 + 0.2 * math.sin(t / 60 / 24 * math.pi * 2 + 0.4 * math.pi))
-                    * 80
-                    * facility.multiplier_2  # wind speed factor linked to the position of the facility
-                )
+                wind_speed = calculate_wind_speed(facility.pos_x, facility.pos_y, in_game_seconds_passed)
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"] * facility.multiplier_1
                 )
-                facility.usage = interpolate_wind(wind_speed)
+                # multiplier_2 is the wind speed factor linked to the position of the facility:
+                facility.usage = interpolate_wind(wind_speed * facility.multiplier_2)
                 generation[facility_type] += facility.usage * max_power
 
 

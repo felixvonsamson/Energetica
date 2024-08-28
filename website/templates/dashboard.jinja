@@ -1,6 +1,3 @@
-{% set month_number = (((engine.data["total_t"] + engine.data["delta_t"]) % 25920) // 2160) %}
-{% set month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] %}
-{% set month = month_names[month_number] %}
 {% extends "base.jinja" %}
 {% block title %}
     Dashboard
@@ -40,31 +37,8 @@
 
     <div class="bone padding margin">
         <h1 class="txt_center">Current weather conditions</h1>
-        <div class="flex-row flex-space-around margin medium">
-            <div class="flex-col flex-grow-1 padding weather_info_container">
-                <div>Month: <b>{{ month }}</b></div>
-                <div class="year-background margin-small">
-                    <div class="current-date-dot" style="left: calc({{ ((engine.data['total_t'] + engine.data['delta_t']) % 25920)/25920 }} * 100%);"></div>
-                </div>
-            </div>
-            <div class="flex-col flex-grow-1 padding weather_info_container">
-                <div>Irradiance: <b>{{ irradiance | round | int }} W/m²</b></div>
-                <div class="year-background margin-small">
-                    <div class="weather_level solar" style="width: calc({{ irradiance/875 }} * 100%);"></div>
-                </div>
-            </div>
-            <div class="flex-col flex-grow-1 padding weather_info_container">
-                <div>Wind speed: <b>{{ windspeed | round | int }} km/h</b></div>
-                <div class="year-background margin-small">
-                    <div class="weather_level wind" style="width: calc({{ windspeed/100 }} * 100%);"></div>
-                </div>
-            </div>
-            <div class="flex-col flex-grow-1 padding weather_info_container">
-                <div>River discharge: <b>{{ (discharge * 150) | round | int }} m³/s</b></div>
-                <div class="year-background margin-small">
-                    <div class="weather_level water" style="width: calc({{ discharge }} * 100%);"></div>
-                </div>
-            </div>
+        <div id="current_weather_conditions" class="flex-row flex-space-around margin medium">
+            {# Weather conditions will show here #}
         </div>
     </div>
     <div id="under_construction">
@@ -155,6 +129,7 @@
 {% block additionnal_script %}
     <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
     <script src="{{ url_for('static', filename='achievement_progress.js') }}"></script>
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
     <script>refresh_progressBar();</script>
     <script>refresh_achievements();</script>
 {% endblock additionnal_script %}

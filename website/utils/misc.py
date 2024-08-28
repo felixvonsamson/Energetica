@@ -7,10 +7,15 @@ import threading
 from datetime import datetime, timedelta
 
 import numpy as np
+import pandas as pd
 from flask import flash
+from noise import pnoise3
+from pvlib.location import Location
+from scipy.stats import norm
 
 import website.api.websocket as websocket
 from website import db
+from website.config.assets import river_discharge_seasonal
 from website.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData
 from website.database.messages import Chat, Notification
 from website.database.player import Network, Player
@@ -273,3 +278,103 @@ def get_quiz_question(engine, player):
         question_data["player_answer"] = question_data["player_answers"][player.id]
     del question_data["player_answers"]
     return question_data
+
+
+# Weather
+
+
+def calculate_solar_irradiance(x, y, total_seconds):
+    """
+    The clear sky index is derived from a 3d perlin noise function that moves in time to simulate the cloud cover.
+    The clear sky index is then multiplied by the clear sky irradiance from pvlib to get the solar irradiance.
+    The irradiance is capped at 1000 W/m^2.
+    """
+
+    def transformation(x, threshold=0, smoothness=2):
+        """Sigmoid transformation"""
+        return 1 / (1 + np.exp(-(x - threshold) * 10 / smoothness))
+
+    # Calculate the real day and time in a year for a given tick
+    start_date = datetime(2023, 1, 1)
+    day_of_year = int((total_seconds / 3600 / 24 / 72) % 1 * 365)
+    time_of_day = total_seconds % (3600 * 24)
+    weather_datetime = pd.DatetimeIndex([start_date + timedelta(days=day_of_year) + timedelta(seconds=time_of_day)])
+
+    x_noise = x + total_seconds / 2400
+    y_noise = y + total_seconds / 4000
+    t = total_seconds / 3600 / 24
+    regional_noise = pnoise3(x_noise / 50, y_noise / 50, t, octaves=2, persistence=0.5, lacunarity=2.0)
+    regional_noise = transformation(regional_noise, smoothness=1) * 2 - 1
+    cloud_cover_noise = pnoise3(x_noise, y_noise, t, octaves=6, persistence=0.5, lacunarity=2.0)
+    cloud_cover_noise = transformation(
+        cloud_cover_noise, threshold=0.5 * regional_noise, smoothness=max(0.3, 1 - regional_noise)
+    )
+    csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
+    loc = Location(8 * y, 0)
+    clear_sky = loc.get_clearsky(weather_datetime)["ghi"][0]
+    return min(1000, csi * clear_sky)
+
+
+def calculate_wind_speed(x, y, total_seconds):
+    """
+    The wind speed is derived from a 3d perlin noise function with a superposition of specific frequencies.
+    Two sinusoidal functions are multiplied to the noise to simulate the diurnal and seasonal wind patterns.
+    """
+    t = total_seconds / 60
+    wind_speed_noise = (
+        0.9 * pnoise3(x / 20, y / 20, t / 5760)
+        + 0.06 * pnoise3(x, y, t / 360)
+        + 0.03 * pnoise3(x * 3, y * 3, t / 90)
+        + 0.007 * pnoise3(x * 18, y * 18, t / 15)
+        + 0.003 * pnoise3(x * 108, y * 108, t / 2.5)
+    )
+    wind_speed_noise = norm.cdf(wind_speed_noise, loc=0, scale=0.15)
+    wind_speed_noise = (1 - (1 - wind_speed_noise) ** 0.1282) ** 0.4673
+    wind_speed = (
+        wind_speed_noise
+        * (1 + 0.4 * math.sin(t / 60 / 24 / 72 * math.pi * 2 + 0.5 * math.pi))
+        * (1 + 0.2 * math.sin(t / 60 / 24 * math.pi * 2 + 0.4 * math.pi))
+        * 80
+    )
+    return wind_speed
+
+
+def calculate_river_discharge(total_seconds):
+    """Calculate the river discharge by interpolating the values from the seasonal variation"""
+    days_since_start = math.floor(total_seconds / 3600 / 24)
+    current_day_fraction = (total_seconds % (3600 * 24)) / (3600 * 24)
+    discharge_factor = river_discharge_seasonal[days_since_start % 72] + current_day_fraction * (
+        river_discharge_seasonal[(days_since_start + 1) % 72] - river_discharge_seasonal[days_since_start % 72]
+    )
+    return discharge_factor * 150  # in m^3/s
+
+
+def package_weather_data(engine, player):
+    """Package date and weather data for a player"""
+    x = player.tile.q + 0.5 * player.tile.r
+    y = player.tile.r * 0.5 * 3**0.5
+    total_seconds = (engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick
+    solar_irradiance = calculate_solar_irradiance(x, y, total_seconds)
+    wind_speed = calculate_wind_speed(x, y, total_seconds)
+    river_discharge = calculate_river_discharge(total_seconds)
+    months = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ]
+    return {
+        "year_progress": (total_seconds / 3600 / 24 / 72) % 1,
+        "month": months[math.floor((total_seconds / 3600 / 24 / 6) % 12)],
+        "solar_irradiance": solar_irradiance,
+        "wind_speed": wind_speed,
+        "river_discharge": river_discharge,
+    }
