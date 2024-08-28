@@ -965,6 +965,7 @@ class Config(object):
 
     def update_config_for_user(self, player_id):
         """This function updates the config values according to the players technology level"""
+        # TODO: deprecate this method eventually
         self.for_player[player_id] = {
             "industry": {},
             "carbon_capture": {},

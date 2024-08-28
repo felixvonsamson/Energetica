@@ -354,28 +354,14 @@ def start_project(engine, player, facility, family, force=False):
     if technology_effects.player_can_launch_project(player, facility):
         return {"response": "locked"}
 
-    if facility in ["small_water_dam", "large_water_dam", "watermill"]:
-        price_factor = technology_effects.price_multiplier(
-            player, facility
-        ) * technology_effects.hydro_price_multiplier(player, facility)
-        if player.money < const_config["base_price"] * price_factor:
-            return {"response": "notEnoughMoneyError"}
-
+    real_price = technology_effects.construction_price(player, facility)
     ud_count = 0
     if family in ["Functional facilities", "Technologies"]:
         ud_count = OngoingConstruction.query.filter_by(name=facility, player_id=player.id).count()
-        real_price = (
-            const_config["base_price"]
-            * technology_effects.price_multiplier(player, facility)
-            * const_config["price_multiplier"] ** ud_count
-        )
         duration = technology_effects.construction_time(player, facility) * const_config["price_multiplier"] ** (
             0.6 * ud_count
         )
     else:  # power facilities, storage facilities, extractions facilities
-        real_price = const_config["base_price"] * technology_effects.price_multiplier(player, facility)
-        if facility in ["small_water_dam", "large_water_dam", "watermill"]:
-            real_price *= technology_effects.hydro_price_multiplier(player, facility)
         duration = technology_effects.construction_time(player, facility)
 
     if player.money < real_price:

@@ -65,10 +65,10 @@ def price_multiplier(player: Player, facility) -> float:
     # level based facilities and technologies
     engine: GameEngine = current_app.config["engine"]
     if facility in engine.functional_facilities + engine.technologies:
-        mlt *= const_config[facility]["price_multiplier"] ** getattr(player, facility)
+        mlt *= const_config[facility]["price_multiplier"] ** (next_level(player, facility) - 1)
     # knowledge spilling for technologies
     if facility in engine.technologies:
-        mlt *= 0.92 ** engine.data["technology_lvls"][facility][getattr(player, facility)]
+        mlt *= 0.92 ** engine.data["technology_lvls"][facility][(next_level(player, facility) - 1)]
     return mlt
 
 
@@ -283,6 +283,21 @@ def next_available_location(player: Player, facility) -> int:
     return i
 
 
+def construction_price(player: Player, facility: str):
+    """
+    Returns the (real) cost of the construciton of `factility` for `player`; be it power, storage, extraction,
+    functional facility, or technolgy; for functional facilities and technologies: be it for the immediate next level
+    when no other levels are queued, or or a level far in advance when many levels are already in progress and queued
+    """
+    engine: GameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    return (
+        const_config_assets[facility]["base_price"]
+        * price_multiplier(player, facility)
+        * hydro_price_multiplier(player, facility)
+    )
+
+
 def construction_time(player: Player, facility):
     """Function that returns the construction time in ticks according to the technology level of the player."""
     engine: GameEngine = current_app.config["engine"]
@@ -381,6 +396,7 @@ def wind_speed_function(count, potential):
 
 def facility_requirements(player: Player, facility: str):
     """Returns the list of requirements (name, level, and boolean for met) for the specified facility"""
+    # TODO: update docstring, met is no longer a boolean, and is called status
     const_config = current_app.config["engine"].const_config["assets"]
     requirements = const_config[facility]["requirements"].copy()
     engine: GameEngine = current_app.config["engine"]
@@ -445,7 +461,7 @@ def get_current_technology_values(player: Player):
         + engine.functional_facilities
     ):
         dict[facility] = {
-            "price_multiplier": price_multiplier(player, facility),
+            "price_multiplier": price_multiplier(facility, player.current_levels),
             "construction_time": construction_time(player, facility),
             "construction_power": construction_power(player, facility),
             "construction_pollution": construction_pollution_per_tick(player, facility),
@@ -464,7 +480,7 @@ def get_current_technology_values(player: Player):
         dict[facility]["extraction_emissions_multiplier"] = extraction_emissions_multiplier(player, facility)
     for facility in engine.technologies:
         dict[facility] = {
-            "price_multiplier": price_multiplier(player, facility),
+            "price_multiplier": price_multiplier(facility, player.current_levels),
             "construction_time": construction_time(player, facility),
             "construction_power": construction_power(player, facility),
         }
@@ -504,13 +520,7 @@ def _package_facility_base(player: Player, facility):
         "display_name": const_config_assets[facility]["name"],
         "description": const_config_assets[facility]["description"],
         "wikipedia_link": const_config_assets[facility]["wikipedia_link"],
-        "price": const_config_assets[facility]["base_price"]
-        * price_multiplier(player, facility)
-        * (
-            hydro_price_multiplier(player, facility)
-            if facility in ["watermill", "small_water_dam", "large_water_dam"]
-            else 1.0
-        ),
+        "price": construction_price(player, facility),
         "construction_power": construction_power(player, facility),
         "construction_time": construction_time(player, facility),
         "locked": requirements_met(facility_requirements(player, facility)),
@@ -787,17 +797,6 @@ def package_constructions_page_data(player: Player):
     Gets cost, emissions, max power, etc data for constructions.
     Takes into account base config prices and multipliers for the specified player.
     Returns a dictionary with the relevant data for constructions.
-    Example:
-        {
-            'power_facilities': {
-                'steam_engine': {
-                    'price': 123.4
-                    ...
-                }
-                ...
-            }
-        }
-    ```
     """
     return {
         "power_facilities": package_power_facilities(player),
@@ -808,6 +807,7 @@ def package_constructions_page_data(player: Player):
 
 
 def package_available_technologies(player: Player):
+    """Gets all data relevant for the frontend for technologies"""
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     engine: GameEngine = current_app.config["engine"]
