@@ -60,32 +60,33 @@
 
   <h3 id="Solar_Power_Generation">Solar Power Generation</h3>
   <p>
-    The power generation of solar facilities is influenced by the current irradiance level, visible on the 
-    <a href="/home">Home</a> page.
+    The power generation of solar facilities is influenced by the irradiance level at the facilities location. The 
+    irradiance is variable in time and space so different instance of a facility might generate different amounts of
+    electricity. The irradiance at the center of the player's tile is visible on the 
+    <a href="/home">Dashboard</a>. For more information about the weather simulation, see 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='solar_irradiance') }}">Solar Irradiance</a>.
   </p>
-  <p>
-    <i>Note:</i> The server's irradiance level is updated with live data from the Uetilberg (Zürich) weather station.
-  </p>
-  <p>The formula for total power generation of solar facilty type i is:</p>
+  <p>The formula for total power generation of solar facilties:</p>
   <ul style="list-style: none;"><li>
-    <i class="fa fa-angle-double-right padding"></i>\(P_i = \frac{ irr_{serv} }{875W/m²} \times sp \times P_{max,i} \times n_i \)<br>
-    where \(irr_{serv}\) is the current server irradiance in W/m², \(sp\) is the solar potential on the players tile in percent, 
-    \(875 W/m²\)  is the maximal theoretical irradiance in Zürich, \(P_{max,i}\) is the max power generation of the
-    facility type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
+    <i class="fa fa-angle-double-right padding"></i>\(P_s(t) = \sum_{n} \frac{ irr_{n}(t) }{1000W/m²} \times P_{max,n} \)<br>
+    where \(irr_{n}\) is the current irradiance at the loaction of facility \(n\) in W/m², 
+    \(1000 W/m²\) is the maximal irradiance and \(P_{max,n}\) is the max power generation of the
+    facility \(n\).
   </li></ul>
 
   <h3 id="Wind_Power_Generation">Wind Power Generation</h3>
   <p>
-    Wind facilities are the only power facilities for which each instance produces a different amount of electricity. 
-    The power production of wind facilities is influenced by the current wind speed on the server visible on the 
-    <a href="/home">Home</a> page. However, each wind facility instance has its own instantaneous wind 
-    speed, reflecting its specific location's exposure to wind. See 
-    <a href="{{ url_for('wiki.render_template_wiki', template_name='map', _anchor='wind_potential') }}">Wind Potential</a> 
-    for more details. 
+    The power production of wind facilities is influenced by the current wind speed at the facility's location. The wind
+    speed is variable in time and space so different instances of a facility might generate different amounts of 
+    electricity. The wind speed at the center of the player's tile is visible on the <a href="/home">Dashboard</a>.
+    For more information about the weather simulation, see 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='wind_speed') }}">Wind Speed</a>.
   </p>
   <p>
-    <i>Note:</i> The server's wind speed is updated with live data from the Uetilberg (Zürich) weather station. The wind 
-    speed is then increased by 30% to account for Zürich not being the windiest location on earth.
+    In addition to this, each wind speed instance has an attributed wind speed multiplier that represents the exposure 
+    of the location to wind. The more wind facilities a player builds, the less efficient they will be. See 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='map', _anchor='wind_potential') }}">Wind Potential</a> 
+    for more details. 
   </p>
   <p>
     The power production of a wind facility is calculated using a characteristic function:
@@ -94,13 +95,13 @@
     <img src="{{ url_for('static', filename='images/wiki/char_func_wind.jpg') }}"
          alt="Characteristic curve of wind turbine">
   </div>
-  <p>The formula for the power generation at time t of all wind facilities of type i is:</p>
+  <p>The formula for the power generation at time t of all wind facilities is:</p>
   <ul style="list-style: none;"><li>
-    <i class="fa fa-angle-double-right padding"></i>\(P_{t,i} = \sum_{n} cf(ws_{t,n}) \times P_{max,i} \)<br>
-    where \(cf()\) is the characteristic function shown in the graph above, \(ws_{t,n}\) the current wind speed for the 
-    specific instance \(n\) of this facility type (see 
+    <i class="fa fa-angle-double-right padding"></i>\(P_w(t) = \sum_{n} cf(ws_{n}(t)) \times P_{max,n} \)<br>
+    where \(cf()\) is the characteristic function shown in the graph above, \(ws_{n}\) the current wind speed for the 
+    specific instance \(n\) (see 
     <a href="{{ url_for('wiki.render_template_wiki', template_name='map', _anchor='wind_potential') }}">Wind Potential</a>) 
-    and \(P_{max,i}\) is the max power generation for the facility type i as indicated in the power facilities page.
+    and \(P_{max,n}\) is the max power generation of the facility.
   </li></ul>
   
   <h3 id="Hydro_Power_Generation">Hydropower Generation</h3>
@@ -110,16 +111,16 @@
   </p>
   <div class="graph-container">
     <img src="{{ url_for('static', filename='images/wiki/seasonal_variation_rivers.jpg') }}"
-         alt="Seasonal variataions of river discharges">
+         alt="Seasonal variataions of river discharges"
+         id="seasonal_variation_rivers_graph">
   </div>
   <p>Formula for total power generation of hydropower facilty type i:</p>
   <ul style="list-style: none;"><li>
-    <i class="fa fa-angle-double-right padding"></i>\(P_i = sv(t) \times P_{max,i} \times n_i \)<br>
-    where \(sv()\) is the seasonal variation shown in the graph, \(t\) is the in-game date 
-    (<a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">
-    1 in-game year = {{(engine.clock_time / engine.in_game_seconds_per_tick * 72) | round() | int }} real-time days</a>), 
-    \(P_{max,i}\) is the max power generation of the facility 
-    type i as indicated in the power facilities page and \(n_i\) is the number of facilities of type i owned by the player.
+    <i class="fa fa-angle-double-right padding"></i>\(P_h(t) = \sum_{n} sv(t) \times P_{max,n} \)<br>
+    where \(sv\) is the seasonal variation shown in the graph, \(t\) is the in-game date 
+    (<a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">
+    1 in-game year = {{(engine.clock_time / engine.in_game_seconds_per_tick * 72) | round() | int }} real-time days</a>) 
+    and \(P_{max,n}\) is the max power generation of the facility instance n.
   </li></ul>
 
   <h2 id="Power_Generation_of_Controllable_Plants">Power Generation of Controllable Facilities</h2>
@@ -129,7 +130,7 @@
   </p>
   <p>
     For instance, a controllable facility with a ramping speed of 10 kW/min, generating 100 kW, can vary its output
-    between 90 and 110 kW in the following minute (<a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game time</a>). 
+    between 90 and 110 kW in the following minute (<a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game time</a>). 
     Unused minimal power may need to be dumped to satisfy the ramping down constraint.
   </p>
   <p>
@@ -184,6 +185,10 @@
     Researching {% if "Unlock Technologies" in user.achievements %}<a href="{{ url_for('views.technology', _anchor='Building Technology') }}">
     building technology</a>{% else %}building technology{% endif %} will unlock additional construction workers and 
     increase the speed of construction projects.
+  </p>
+  <p>
+    When a facility is buit, a random location inside the player's tile is assigned to it. This is especially important 
+    for wind and solar facilities, as their output is influenced by the weather conditions at their location.
   </p>
 
   <h3>Lifespan of a Facility</h3>

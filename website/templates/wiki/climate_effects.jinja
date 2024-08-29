@@ -94,7 +94,7 @@
     The probability of the occurence of a heatwave is affected by both the global temperature anomaly (the bigger the 
     deviation the higher the risk) and the server's current GAT (the higher the temperature the higher the risk). The 
     following table shows the expected occurence of heatwaves per 
-    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     Reference GAT and the temperature anomaly.
   </p>
 
@@ -283,7 +283,7 @@
     The probability of the occurence of a coldwave is affected by both the global temperature anomaly (the bigger the 
     deviation the higher the risk) and the servers current GAT (the lower the temperature the higher the risk). The 
     following table shows the expected occurence of coldwaves per 
-    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     Reference GAT and the temperature anomaly.
   </p>
 
@@ -478,7 +478,7 @@
   <p>
     The probability of the occurence of a wildfire is affected by the servers current GAT, the higher the temperature 
     the higher the risk. The following table shows the expected occurence of wildfires per 
-    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     Reference GAT and the temperature anomaly.
   </p>
 
@@ -654,7 +654,7 @@
   <p>
     The probability of the occurence of a flood is affected by the servers current temperature anomaly, the higher the
     deviation the higher the risk. The following graph shows the expected occurence of floods per 
-    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     temperature anomaly.
   </p>
 
@@ -707,7 +707,7 @@
   <p>
     The probability of the occurence of a huricane is affected by the servers current temperature anomaly, the higher the
     deviation the higher the risk. The following graph shows the expected occurence of huricanes per 
-    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     temperature anomaly.
   </p>
 

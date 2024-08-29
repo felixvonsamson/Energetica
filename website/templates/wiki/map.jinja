@@ -191,8 +191,8 @@
     The wind speed formula for the n<sup>th</sup> instance of a facility i at time t is:
   </p>
   <ul style="list-style: none;"><li>
-    <i class="fa fa-angle-double-right padding"></i>\(ws_{t,n} = ws_{t,serv} \times wsm(wp, n_i)\) <br>
-    With \(ws_{t,serv}\) being the server wind speed as indicated in the home page, and \(wsm(wp, n_i)\) the wind speed 
+    <i class="fa fa-angle-double-right padding"></i>\(ws_{n}(t) = ws_{loc}(t) \times wsm(wp, n_i)\) <br>
+    With \(ws_{loc}\) being the wind speed at the facilities location, and \(wsm(wp, n_i)\) the wind speed 
     multiplier as a function of the wind potential \(wp\) and the number of installed facilities \(n_i\) (see table above).
   </li></ul>
   {# \(wsm(wp, n_i) = ln(e+(n_i \times \frac{1}{9 \times wp + 1} )²)^{-1}\) #}

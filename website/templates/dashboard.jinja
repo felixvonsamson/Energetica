@@ -10,16 +10,16 @@
     </div>
     <div id="info_popup" class="popup hidden green">
         <div class="flex-row margin-small align-items-center">
-            <div class="large txt_center flex-grow-1">Help : Home</div>
+            <div class="large txt_center flex-grow-1">Help : Dashboard</div>
             <div onclick="document.getElementById('info_popup').classList.add('hidden');"
                  class="cross pine margin-small"
                  style="width:39px">×</div>
         </div>
         <div class="txt_center margin medium">
             <p>
-                This is the home page of your account. Here you will find the current weather information and the 
+                This is the dashboard of your account. Here you will find the current weather information and the 
                 in-game time of the year. Ongoing or planned construction and research projects as well as ongoing 
-                shipments will also show on the home page{% if "Unlock Network" in user.achievements %} and,
+                shipments will also show on the dashboard{% if "Unlock Network" in user.achievements %} and,
                 if you are not part of a Network, you will find a priorritization list for generation and consumption{% endif %}.
             </p>
         </div>

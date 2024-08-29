@@ -1,0 +1,121 @@
+{% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica wiki{% endblock %} {% block wiki_content %}
+
+<div class="flex-row huge title">Wiki - Time and Weather</div>
+
+<div class="medium margin-large">
+
+  <h2 id="game_time">Game Time</h2>
+
+  <p>
+    The game operates on a clock that updates every {{ engine.clock_time }} seconds, referred to as a "tick". This means 
+    the game values are updated every {{ engine.clock_time }} seconds.
+  </p>
+  <p>
+    To enhance the gaming experience, game time is significantly faster than real-time. There are 
+    {{ (engine.in_game_seconds_per_tick / engine.clock_time) | round() | int }} in-game days in a real-time day and an 
+    in-game year has only 72 in-game days. The following table shows the conversion between ticks, in-game time, and 
+    real-time:
+  </p>
+  <div class="flex-center align-items-center">
+    <table class="table bone txt_center">
+        <tr>
+          <th>Real Time</th>
+          <th>In-game Time</th>
+          <th>Game Ticks</th>
+        </tr>
+        <tr>
+          <td>{{(240 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} sec</td>
+          <td>4 min</td>
+          <td>{{ (240 / engine.in_game_seconds_per_tick) | round() | int }}</td>
+        </tr>
+        <tr>
+          <td>{{(60 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} min</td>
+          <td>1 hour</td>
+          <td>{{ (3600 / engine.in_game_seconds_per_tick) | round() | int }}</td>
+        </tr>
+        <tr>
+          <td>{{(24 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} hours</td>
+          <td>1 day / 24h</td>
+          <td>{{ (3600 * 24 / engine.in_game_seconds_per_tick) | round() | int }}</td>
+        </tr>
+        <tr>
+          <td>{{(144 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} hours</td>
+          <td>1 month / 6d</td>
+          <td>{{ (3600 * 24 * 6 / engine.in_game_seconds_per_tick) | round() | int }}</td>
+        </tr>
+        <tr>
+          <td>{{(72 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} days</td>
+          <td>1 year / 12m</td>
+          <td>{{ (3600 * 24 * 72 / engine.in_game_seconds_per_tick) | round() | int }}</td>
+        </tr>
+        <tr>
+          <td>{{(24 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} months</td>
+          <td>10 years</td>
+          <td>{{ (3600 * 24 * 720 / engine.in_game_seconds_per_tick) | round() | int }}</td>
+        </tr>
+    </table>
+  </div>
+  <p>
+    All durations in the game are given in in-game time and in some cases the equivalent real time might be indicated in parenthesis
+  </p>
+
+  <h2 id="in_game_weather">Weather Simulation</h2>
+
+  <p>
+    The current in-game weather conditions, consisting of solar iradiance, wind speed and river discharge rates are 
+    displayed on the <a href="{{ url_for('views.home') }}">Dashboard</a>. The weather is simulated with the intention of 
+    providing a realistic representation of the real weather conditions. 
+  </p>
+
+  <h3 id="solar_irradiance">Solar Irradiance</h3>
+
+  <p>
+    The solar irradiance is used to calculate the electricity production of 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities', _anchor='Solar_Power_Generation') }}">solar power facilities</a>.
+  </p>
+  <p>
+    Solar irradiance is the power per unit area received from the sun and is measured in watts per square meter (W/m²). 
+    The solar irradiance is influenced by the time of day, the season, the geographical location and the cloud coverage 
+    of the sky. The seasonal, diurnal and geographical influence can be modelled with a clear sky irradiance model,
+    however the cloud coverage is much more stochastic. The game generates a tree dimentional perlin noise moving in 
+    time to simulate the moving clouds with some regions with high cloud coverage and some with low or no cloud coverage.
+    The following image shows how this cloud coverage over the map looks like.
+  </p>
+
+  <div class="graph-container">
+    <img src="{{ url_for('static', filename='images/wiki/cloud_coverage.png') }}"
+         alt="Cloud coverage of the sky">
+  </div>
+
+  <p>
+    When a facility is built, a random location inside the player's tile is attributed to the facility. This means that 
+    each solar power facility has a different solar irradiance value.
+  </p>
+
+  <h3 id="wind_speed">Wind Speed</h3>
+
+  <p>
+    The wind speed is used to calculate the electricity production of 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities', _anchor='Wind_Power_Generation') }}">wind power facilities</a>.
+  </p>
+  <p>
+    The wind speed is given in kilometers per hour (km/h) and varies with different frequencies. In the game it is 
+    modelled with a tree dimentional perlin noise superposed with a sinusoidal function to simulate the daily and 
+    seasonal variations. In general the wind is stronger during the night and in winter than during the day and in 
+    summer but the exact values are random and vary from one location to another.
+  </p>
+
+  <h3 id="river_discharge">River Discharge</h3>
+
+  <p>
+    The river discharge is used to calculate the electricity production of 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities', _anchor='Hydro_Power_Generation') }}">hydropower facilities</a>.
+  </p>
+  <p>
+    The river discharge is given in cubic meters per second (m³/s) and varies seasonally (see 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities', _anchor='seasonal_variation_rivers_graph') }}">figure</a>).
+  </p>
+
+</div>
+
+{% endblock wiki_content %}
