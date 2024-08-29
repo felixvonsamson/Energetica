@@ -7,8 +7,8 @@ import pickle
 from collections import defaultdict
 from datetime import datetime
 
-from .config.assets import config, const_config
-from .database.engine_data import EmissionData, WeatherData
+from website.config.assets import config, const_config
+from website.database.engine_data import EmissionData, WeatherData
 
 
 # This is the engine object

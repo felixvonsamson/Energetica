@@ -15,8 +15,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from website.api import websocket
 
-from . import db
-from .database.player import Player
+from website. import db
+from website.database.player import Player
 
 auth = Blueprint("auth", __name__)
 

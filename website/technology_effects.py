@@ -15,9 +15,8 @@ from website.config.assets import (
 )
 from website.database.map import Hex
 from website.database.player import Player
+from website.database.player_assets import ActiveFacility, OngoingConstruction
 from website.game_engine import GameEngine
-
-from .database.player_assets import ActiveFacility, OngoingConstruction
 
 # This dictionary describes what multipliers are stored where.
 # See also the docstring for the individual multiplier functions.

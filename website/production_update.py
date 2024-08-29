@@ -7,10 +7,10 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from . import db
-from .config.assets import wind_power_curve
-from .database.player import Network, Player
-from .database.player_assets import ActiveFacility, OngoingConstruction, Shipment
+from website. import db
+from website.config.assets import wind_power_curve
+from website.database.player import Network, Player
+from website.database.player_assets import ActiveFacility, OngoingConstruction, Shipment
 
 resource_to_extraction = {
     "coal": "coal_mine",

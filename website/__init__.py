@@ -33,8 +33,7 @@ from werkzeug.security import check_password_hash
 db = SQLAlchemy()
 
 import website.game_engine
-
-from .database.player import Player
+from website.database.player import Player
 
 
 def get_or_create_flask_secret_key() -> str:
@@ -103,7 +102,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
         engine.log("removing instance")
         shutil.rmtree("instance")
 
-    from .utils.game_engine import data_init_climate
+    from website.utils.game_engine import data_init_climate
 
     Path("instance/player_data").mkdir(parents=True, exist_ok=True)
     if not os.path.isfile("instance/server_data/climate_data.pck"):
@@ -123,22 +122,22 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     # initialize socketio :
     socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
     engine.socketio = socketio
-    from .api.socketio_handlers import add_handlers
+    from website.api.socketio_handlers import add_handlers
 
     add_handlers(socketio=socketio, engine=engine)
 
     # initialize sock for WebSockets:
     sock = Sock(app)
     engine.sock = sock
-    from .api.websocket import add_sock_handlers
+    from website.api.websocket import add_sock_handlers
 
     add_sock_handlers(sock=sock, engine=engine)
 
     # add blueprints (website repositories) :
-    from .api.http import http
-    from .api.websocket import websocket_blueprint
-    from .auth import auth
-    from .views import changelog, overviews, views, wiki
+    from website.api.http import http
+    from website.api.websocket import websocket_blueprint
+    from website.auth import auth
+    from website.views import changelog, overviews, views, wiki
 
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")
@@ -180,8 +179,8 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
         """
         return send_file("static/apple-app-site-association", as_attachment=True)
 
-    from .database.map import Hex
-    from .database.messages import Chat
+    from website.database.map import Hex
+    from website.database.messages import Chat
 
     # initialize database :
     with app.app_context():
@@ -237,7 +236,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        from .utils.game_engine import state_update
+        from website.utils.game_engine import state_update
 
         scheduler = APScheduler()
         scheduler.init_app(app)
@@ -257,7 +256,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
             engine.log("running init_test_players")
             with app.app_context():
                 # Temporary automated player creation for testing
-                from .init_test_players import init_test_players
+                from website.init_test_players import init_test_players
 
                 init_test_players(engine)
 
