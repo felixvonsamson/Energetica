@@ -8,7 +8,7 @@ from collections import defaultdict
 from datetime import datetime
 
 from .config.assets import config, const_config
-from .database.engine_data import EmissionData, WeatherData
+from .database.engine_data import EmissionData
 
 
 # This is the engine object

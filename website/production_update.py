@@ -612,7 +612,9 @@ def solar_generation(engine, player, player_cap, generation, in_game_seconds_pas
                 player_id=player.id, facility=facility_type
             ).all()
             for facility in solar_facilities:
-                irradiance = calculate_solar_irradiance(facility.pos_x, facility.pos_y, in_game_seconds_passed)
+                irradiance = calculate_solar_irradiance(
+                    facility.pos_x, facility.pos_y, in_game_seconds_passed, engine.data["random_seed"]
+                )
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"] * facility.multiplier_1
                 )
@@ -644,7 +646,9 @@ def wind_generation(engine, player, player_cap, generation, in_game_seconds_pass
                 player_id=player.id, facility=facility_type
             ).all()
             for facility in wind_facilities:
-                wind_speed = calculate_wind_speed(facility.pos_x, facility.pos_y, in_game_seconds_passed)
+                wind_speed = calculate_wind_speed(
+                    facility.pos_x, facility.pos_y, in_game_seconds_passed, engine.data["random_seed"]
+                )
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"] * facility.multiplier_1
                 )

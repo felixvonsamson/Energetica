@@ -187,6 +187,16 @@ def check_climate_events(engine):
 def climate_event_impact(engine, tile, event):
     """Creates a ClimateEventRecovery object for the event and some facilities may be destroyed by the climate event."""
     engine.log(f"{climate_events[event]['name']} on tile {tile.id}")
+    engine.action_logger.info(
+        json.dumps(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "endpoint": "climate_event_impact",
+                "tile_id": tile.id,
+                "event": event,
+            }
+        )
+    )
     if not tile.player_id:
         return
     player: Player = tile.player

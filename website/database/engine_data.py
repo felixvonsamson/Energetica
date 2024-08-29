@@ -1,17 +1,13 @@
 """This file contains the classes for `CapacityData`, `CircularBufferPlayer`,
-`CircularBufferNetwork`, `WeatherData`, and `EmissionData`"""
+`CircularBufferNetwork`, and `EmissionData`"""
 
-import json
 import math
 from collections import defaultdict, deque
 from typing import List
 
 import noise
-import numpy as np
-import requests
 from flask import current_app
 
-from website.config.assets import river_discharge_seasonal
 from website.database.player_assets import ActiveFacility
 
 
@@ -269,17 +265,6 @@ class CircularBufferNetwork:
             for group, buffer in value.items():
                 result[category][group] = list(buffer)[-t:]
         return result
-
-
-class WeatherData:
-    """Class that stores the weather data"""
-
-    def __init__(self):
-        self._data = {
-            "windspeed": deque([0.0] * 600, maxlen=600),
-            "irradiance": deque([0.0] * 600, maxlen=600),
-            "river_discharge": deque([0.0] * 600, maxlen=600),
-        }
 
 
 class EmissionData:

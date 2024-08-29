@@ -283,7 +283,7 @@ def get_quiz_question(engine, player):
 # Weather
 
 
-def calculate_solar_irradiance(x, y, total_seconds):
+def calculate_solar_irradiance(x, y, total_seconds, random_seed):
     """
     The clear sky index is derived from a 3d perlin noise function that moves in time to simulate the cloud cover.
     The clear sky index is then multiplied by the clear sky irradiance from pvlib to get the solar irradiance.
@@ -303,9 +303,11 @@ def calculate_solar_irradiance(x, y, total_seconds):
     x_noise = x + total_seconds / 2400
     y_noise = y + total_seconds / 4000
     t = total_seconds / 3600 / 24
-    regional_noise = pnoise3(x_noise / 50, y_noise / 50, t, octaves=2, persistence=0.5, lacunarity=2.0)
+    regional_noise = pnoise3(
+        x_noise / 50, y_noise / 50, t, octaves=2, persistence=0.5, lacunarity=2.0, base=random_seed
+    )
     regional_noise = transformation(regional_noise, smoothness=1) * 2 - 1
-    cloud_cover_noise = pnoise3(x_noise, y_noise, t, octaves=6, persistence=0.5, lacunarity=2.0)
+    cloud_cover_noise = pnoise3(x_noise, y_noise, t, octaves=6, persistence=0.5, lacunarity=2.0, base=random_seed)
     cloud_cover_noise = transformation(
         cloud_cover_noise, threshold=0.5 * regional_noise, smoothness=max(0.3, 1 - regional_noise)
     )
@@ -315,25 +317,25 @@ def calculate_solar_irradiance(x, y, total_seconds):
     return min(1000, csi * clear_sky)
 
 
-def calculate_wind_speed(x, y, total_seconds):
+def calculate_wind_speed(x, y, total_seconds, random_seed):
     """
     The wind speed is derived from a 3d perlin noise function with a superposition of specific frequencies.
     Two sinusoidal functions are multiplied to the noise to simulate the diurnal and seasonal wind patterns.
     """
     t = total_seconds / 60
     wind_speed_noise = (
-        0.9 * pnoise3(x / 20, y / 20, t / 5760)
-        + 0.06 * pnoise3(x, y, t / 360)
-        + 0.03 * pnoise3(x * 3, y * 3, t / 90)
-        + 0.007 * pnoise3(x * 18, y * 18, t / 15)
-        + 0.003 * pnoise3(x * 108, y * 108, t / 2.5)
+        0.9 * pnoise3(x / 20, y / 20, t / 5760, base=random_seed)
+        + 0.06 * pnoise3(x, y, t / 360, base=random_seed)
+        + 0.03 * pnoise3(x * 3, y * 3, t / 90, base=random_seed)
+        + 0.007 * pnoise3(x * 18, y * 18, t / 15, base=random_seed)
+        + 0.003 * pnoise3(x * 108, y * 108, t / 2.5, base=random_seed)
     )
     wind_speed_noise = norm.cdf(wind_speed_noise, loc=0, scale=0.15)
     wind_speed_noise = (1 - (1 - wind_speed_noise) ** 0.1282) ** 0.4673
     wind_speed = (
         wind_speed_noise
         * (1 + 0.4 * math.sin(t / 60 / 24 / 72 * math.pi * 2 + 0.5 * math.pi))
-        * (1 + 0.2 * math.sin(t / 60 / 24 * math.pi * 2 + 0.4 * math.pi))
+        * (1 + 0.1 * math.sin(t / 60 / 24 * math.pi * 2 + 0.4 * math.pi))
         * 75
     )
     return wind_speed
@@ -354,8 +356,9 @@ def package_weather_data(engine, player):
     x = player.tile.q + 0.5 * player.tile.r
     y = player.tile.r * 0.5 * 3**0.5
     total_seconds = (engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick
-    solar_irradiance = calculate_solar_irradiance(x, y, total_seconds)
-    wind_speed = calculate_wind_speed(x, y, total_seconds)
+    random_seed = engine.data["random_seed"]
+    solar_irradiance = calculate_solar_irradiance(x, y, total_seconds, random_seed)
+    wind_speed = calculate_wind_speed(x, y, total_seconds, random_seed)
     river_discharge = calculate_river_discharge(total_seconds)
     months = [
         "January",
