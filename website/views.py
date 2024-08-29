@@ -3,10 +3,10 @@
 from flask import Blueprint, current_app, g, redirect, render_template, request
 from flask_login import current_user, login_required
 
-from website.database.messages import Chat
-from website.database.player import Player
-from website.database.player_assets import ResourceOnSale
-from website.technology_effects import (
+from .database.messages import Chat
+from .database.player import Player
+from .database.player_assets import ResourceOnSale
+from .technology_effects import (
     get_current_technology_values,
     package_available_technologies,
     package_extraction_facilities,

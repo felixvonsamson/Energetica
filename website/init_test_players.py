@@ -7,14 +7,14 @@ from werkzeug.security import generate_password_hash
 
 from website import technology_effects
 
-from website. import db
-from website.database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer, CumulativeEmissionsData
-from website.database.map import Hex
-from website.database.messages import Chat
-from website.database.player import Network, Player
-from website.database.player_assets import OngoingConstruction
-from website.utils.misc import add_player_to_data, init_table
-from website.utils.network import data_init_network
+from . import db
+from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer, CumulativeEmissionsData
+from .database.map import Hex
+from .database.messages import Chat
+from .database.player import Network, Player
+from .database.player_assets import OngoingConstruction
+from .utils.misc import add_player_to_data, init_table
+from .utils.network import data_init_network
 
 
 def init_test_players(engine):

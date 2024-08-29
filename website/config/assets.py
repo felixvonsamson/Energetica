@@ -4,7 +4,7 @@
 
 from datetime import timedelta
 
-from website.database.player import Player
+from ..database.player import Player
 
 const_config = {
     "assets": {
