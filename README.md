@@ -6,6 +6,7 @@ Try out Energetica online at [http://energetica.ethz.ch](http://energetica.ethz.
 
 ## License
 
+Copyright (c) 2024 Felix von Samson, Maximilien Tirard, Yassir Akram
 This project is licensed under the GNU Affero General Public License (AGPL) - see the [LICENSE](LICENSE) file for details.
 
 ## Technology Stack
