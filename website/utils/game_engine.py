@@ -96,6 +96,14 @@ def check_events_completion(engine):
 
 def check_climate_events(engine):
     """function that checks if a climate event happens on this tick"""
+
+    def inv_cdf_sigmoid(p, inverse=False):
+        latitude = 3 * np.log(math.exp(11.44 * p - 0.88) / 3 - math.exp(-1 / 3))
+        return round(-latitude) if inverse else round(latitude)
+
+    def inv_cdf_normal(p):
+        return round(2.5 - 3.5 * np.log(1 / (0.88 * (p + 0.02 / 0.88)) - 1))
+
     climate_change = engine.data["current_climate_data"].get_last_data()["temperature"]["deviation"]
     ref_temp = engine.data["current_climate_data"].get_last_data()["temperature"]["reference"]
     real_temp = climate_change + ref_temp
@@ -120,8 +128,8 @@ def check_climate_events(engine):
             climate_events["heat_wave"]["base_probability"] / ticks_per_day * (real_temp - 14.8) ** 2
         )
     if random.random() < heatwave_probability:
-        # the tile for the heatwave is chosen based on a normal distribution around the equator
-        random_latitude = max(-10, min(10, round(np.random.normal(0, 3))))
+        # the tile for the heatwave is chosen based on a sigmoid distribution around the equator
+        random_latitude = inv_cdf_sigmoid(random.random())
         latitude_tiles = Hex.query.filter(Hex.r == random_latitude).all()
         tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
@@ -139,8 +147,8 @@ def check_climate_events(engine):
             climate_events["cold_wave"]["base_probability"] / ticks_per_day * (12.5 - real_temp) ** 2
         )
     if random.random() < coldwave_probability:
-        # the tile for the coldwave is chosen based on a normal distribution around the poles
-        random_normal = max(-10, min(10, np.random.normal(0, 4)))
+        # the tile for the coldwave is chosen based on a sigmoid distribution around the north pole
+        random_normal = inv_cdf_sigmoid(random.random(), inverse=True)
         if random_normal < 0:
             random_latitude = math.ceil(10 + random_normal)
         else:
@@ -168,7 +176,7 @@ def check_climate_events(engine):
         # releasing 10 kt of CO2 in the atmosphere
         engine.data["current_climate_data"].add("CO2", 10e6)
         # the tile for the wildfire is chosen based on a normal distribution around the equator
-        random_latitude = max(-10, min(10, round(np.random.normal(0, 4.5))))
+        random_latitude = inv_cdf_normal(random.random())
         latitude_tiles = Hex.query.filter(Hex.r == random_latitude).all()
         tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()

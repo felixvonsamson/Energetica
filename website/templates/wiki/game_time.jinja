@@ -22,34 +22,34 @@
           <th>Game Ticks</th>
         </tr>
         <tr>
-          <td>{{ engine.clock_time }} sec</td>
+          <td>{{(240 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} sec</td>
           <td>4 min</td>
-          <td>1</td>
+          <td>{{ (240 / engine.in_game_seconds_per_tick) | round() | int }}</td>
         </tr>
         <tr>
-          <td>{{(0.25 * engine.clock_time) | round() | int }} min</td>
+          <td>{{(60 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} min</td>
           <td>1 hour</td>
-          <td>15</td>
+          <td>{{ (3600 / engine.in_game_seconds_per_tick) | round() | int }}</td>
         </tr>
         <tr>
-          <td>{{(0.1 * engine.clock_time) | round() | int }} hours</td>
+          <td>{{(24 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} hours</td>
           <td>1 day / 24h</td>
-          <td>360</td>
+          <td>{{ (3600 * 24 / engine.in_game_seconds_per_tick) | round() | int }}</td>
         </tr>
         <tr>
-          <td>{{(0.6 * engine.clock_time) | round() | int }} hours</td>
+          <td>{{(144 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} hours</td>
           <td>1 month / 6d</td>
-          <td>2160</td>
+          <td>{{ (3600 * 24 * 6 / engine.in_game_seconds_per_tick) | round() | int }}</td>
         </tr>
         <tr>
-          <td>{{(0.3 * engine.clock_time) | round() | int }} days</td>
+          <td>{{(72 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} days</td>
           <td>1 year / 12m</td>
-          <td>25920</td>
+          <td>{{ (3600 * 24 * 72 / engine.in_game_seconds_per_tick) | round() | int }}</td>
         </tr>
         <tr>
-          <td>{{(0.1 * engine.clock_time) | round() | int }} months</td>
+          <td>{{(24 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} months</td>
           <td>10 years</td>
-          <td>259200</td>
+          <td>{{ (3600 * 24 * 720 / engine.in_game_seconds_per_tick) | round() | int }}</td>
         </tr>
     </table>
   </div>

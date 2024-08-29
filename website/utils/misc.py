@@ -298,7 +298,7 @@ def calculate_solar_irradiance(x, y, total_seconds):
     start_date = datetime(2023, 1, 1)
     day_of_year = int((total_seconds / 3600 / 24 / 72) % 1 * 365)
     time_of_day = total_seconds % (3600 * 24)
-    weather_datetime = pd.DatetimeIndex([start_date + timedelta(days=day_of_year) + timedelta(seconds=time_of_day)])
+    weather_datetime = pd.DatetimeIndex([start_date + timedelta(days=day_of_year, seconds=time_of_day)])
 
     x_noise = x + total_seconds / 2400
     y_noise = y + total_seconds / 4000
@@ -310,7 +310,7 @@ def calculate_solar_irradiance(x, y, total_seconds):
         cloud_cover_noise, threshold=0.5 * regional_noise, smoothness=max(0.3, 1 - regional_noise)
     )
     csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
-    loc = Location(8 * y, 0)
+    loc = Location((y - 10) * 85 / 21, 0)
     clear_sky = loc.get_clearsky(weather_datetime)["ghi"][0]
     return min(1000, csi * clear_sky)
 
