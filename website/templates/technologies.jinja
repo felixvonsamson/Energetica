@@ -98,27 +98,21 @@
                 {% endif %}
               </div>
               {# Requirements #}
-              {% if technology_data["locked"] %}
-                <div id="requirements" class="infobox requirements">
+              {% if true %}
+                <div class="infobox requirements" id="requirements">
                   <div>
                     <strong>Unlock with :</strong>
                     <br>
                     <ul class="navbar-nav">
-                      {% for req in facility_values[facility]["requirements"] %}
-                        {% if req[0] == "mechanical_engineering" %}
+                      {% for requirement in technology_data.requirements %}
+                        {% if requirement.name == "mechanical_engineering" %}
                           {% set tech_name = "Mech. engineering" %}
                         {% else %}
-                          {% set tech_name = engine.const_config["assets"][req[0]]["name"] %}
+                          {% set tech_name = requirement.display_name %}
                         {% endif %}
-                        {% if req[2] %}
-                          <li class="padding-small req_fulfilled">
-                            - {{ tech_name }} lvl {{ req[1] + user[facility] }}
-                          </li>
-                        {% else %}
-                          <li class="padding-small requirement">
-                            - {{ tech_name }} lvl {{ req[1] + user[facility] }}
-                          </li>
-                        {% endif %}
+                        <li class="padding-small requirement-{{ requirement.status }}">
+                        - {{ tech_name }} lvl {{ requirement.level }}
+                        </li>
                       {% endfor %}
                     </ul>
                   </div>

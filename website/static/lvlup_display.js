@@ -14,6 +14,7 @@ function retrieve_ud() {
 }
 
 function change_info(constructions) {
+    // TODO: review how requirements are updated
     let lvls_in_progress = {};
     let config = player_config["assets"];
     for (const key in constructions) {

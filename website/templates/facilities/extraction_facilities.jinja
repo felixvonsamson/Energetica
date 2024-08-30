@@ -73,11 +73,14 @@
                     <br>
                     <ul class="navbar-nav">
                       {% for requirement in facility_data["requirements"] %}
-                        {% if requirement.fulfilled %}
-                          <li class="padding-small req_fulfilled">- {{ requirement.display_name }} lvl {{ requirement.level }}</li>
+                        {% if requirement.name == "mechanical_engineering" %}
+                          {% set tech_name = "Mech. engineering" %}
                         {% else %}
-                          <li class="padding-small requirement">- {{ requirement.display_name }} lvl {{ requirement.level }}</li>
+                          {% set tech_name = requirement.display_name %}
                         {% endif %}
+                        <li class="padding-small requirement-{{ requirement.status }}">
+                        - {{ tech_name }} lvl {{ requirement.level }}
+                        </li>
                       {% endfor %}
                     </ul>
                   </div>

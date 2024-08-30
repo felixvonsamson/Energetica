@@ -14,7 +14,12 @@ from website.utils.network import reorder_facility_priorities
 
 
 def add_asset(player_id, construction_id):
-    """this function is executed when a construction or research project has finished"""
+    """
+    This function is executed when a construction or research project has finished. The effects indlude:
+    * For facilities which create demands, e.g. carbon capture, adds demands to the demand priorities
+    * For technologies and functional facilities, checks for achievements
+    * Removes from the relevant contruction / research list and priority list
+    """
     engine = current_app.config["engine"]
     player: Player = Player.query.get(player_id)
     construction: OngoingConstruction = OngoingConstruction.query.get(construction_id)
@@ -350,34 +355,12 @@ def package_projects_data(player):
 def start_project(engine, player, facility, family, force=False):
     """this function is executed when a player clicks on 'start construction'"""
     player_cap = engine.data["player_capacities"][player.id]
-    const_config = engine.const_config["assets"][facility]
 
-    if technology_effects.player_can_launch_project(player, facility):
+    if not technology_effects.player_can_launch_project(player, facility):
         return {"response": "locked"}
 
-    if facility in ["small_water_dam", "large_water_dam", "watermill"]:
-        price_factor = technology_effects.price_multiplier(
-            player, facility
-        ) * technology_effects.hydro_price_multiplier(player, facility)
-        if player.money < const_config["base_price"] * price_factor:
-            return {"response": "notEnoughMoneyError"}
-
-    ud_count = 0
-    if family in ["Functional facilities", "Technologies"]:
-        ud_count = OngoingConstruction.query.filter_by(name=facility, player_id=player.id).count()
-        real_price = (
-            const_config["base_price"]
-            * technology_effects.price_multiplier(player, facility)
-            * const_config["price_multiplier"] ** ud_count
-        )
-        duration = technology_effects.construction_time(player, facility) * const_config["price_multiplier"] ** (
-            0.6 * ud_count
-        )
-    else:  # power facilities, storage facilities, extractions facilities
-        real_price = const_config["base_price"] * technology_effects.price_multiplier(player, facility)
-        if facility in ["small_water_dam", "large_water_dam", "watermill"]:
-            real_price *= technology_effects.hydro_price_multiplier(player, facility)
-        duration = technology_effects.construction_time(player, facility)
+    real_price = technology_effects.construction_price(player, facility)
+    duration = technology_effects.construction_time(player, facility)
 
     if player.money < real_price:
         return {"response": "notEnoughMoneyError"}
@@ -394,18 +377,29 @@ def start_project(engine, player, facility, family, force=False):
                 "construction_power": construction_power,
             }
 
-    priority_list_name = "construction_priorities"
-    suspension_time = engine.data["total_t"]
     if family == "Technologies":
         priority_list_name = "research_priorities"
-        if player.available_lab_workers() > 0 and ud_count == 0:
-            suspension_time = None
     else:
-        if player.available_construction_workers() > 0 and ud_count == 0:
-            suspension_time = None
+        priority_list_name = "construction_priorities"
+
+    def can_start_immediately():
+        if family == "Technologies" and player.available_lab_workers() == 0:
+            return False  # No available workers
+        if family != "Technologies" and player.available_construction_workers() == 0:
+            return False  # No available workers
+        if (
+            family in ["Functional facilities", "Technologies"]
+            and OngoingConstruction.query.filter_by(name=facility, player_id=player.id).count() > 0
+        ):
+            return False  # Another level is already ongoing
+        return True
+
+    if can_start_immediately():
+        suspension_time = None
+    else:
+        suspension_time = engine.data["total_t"]
 
     player.money -= real_price
-    duration = math.ceil(duration)
     new_construction: OngoingConstruction = OngoingConstruction(
         name=facility,
         family=family,

@@ -296,10 +296,7 @@ class Player(db.Model, UserMixin):
     def get_lvls(self):
         """This method returns the levels of functional facilities and technologies of a player"""
         engine = current_app.config["engine"]
-        attributes = chain(
-            engine.functional_facilities,
-            engine.technologies,
-        )
+        attributes = chain(engine.functional_facilities, engine.technologies)
         return {attr: getattr(self, attr) for attr in attributes}
 
     def get_reserves(self):

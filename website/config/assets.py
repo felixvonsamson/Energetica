@@ -1,10 +1,10 @@
 """This file contains all the data needed for the game"""
 
-# TODO: it would be better to store the relevant data in a non-code file
+# TODO: it would be better to store the relevant data in a non-code file. Maybe a JSON
 
 from datetime import timedelta
 
-from ..database.player import Player
+from website.database.player import Player
 
 const_config = {
     "assets": {
@@ -24,7 +24,7 @@ const_config = {
             "wikipedia_link": "https://en.wikipedia.org/wiki/Steam_engine",
             "description": "The O&M costs of the steam engine are composed of 20% fixed costs and 80% variable costs.",
             "danger_description": "Risk of steam explosion",
-            "requirements": [],
+            "requirements": {},
         },
         "windmill": {
             "name": "Windmill",
@@ -43,7 +43,7 @@ const_config = {
             "the wind and the wind potential of the location. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Windmill",
             "danger_description": "Risk of structural failure in high winds",
-            "requirements": [],
+            "requirements": {},
         },
         "watermill": {
             "name": "Watermill",
@@ -62,7 +62,7 @@ const_config = {
             "discharge rate that fluctuates with the seasons. (<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Watermill",
             "danger_description": "Risk of structural failure due to floods",
-            "requirements": [],
+            "requirements": {},
         },
         "coal_burner": {
             "name": "Coal Burner",
@@ -79,11 +79,7 @@ const_config = {
             "lifespan": timedelta(days=210).total_seconds(),
             "description": "The O&M costs of the coal burner are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Coal-fired_power_station",
-            "requirements": [
-                ["mechanical_engineering", 1, False],
-                ["thermodynamics", 1, False],
-                ["warehouse", 1, False],
-            ],
+            "requirements": {"mechanical_engineering": 1, "thermodynamics": 1, "warehouse": 1},
         },
         "gas_burner": {
             "name": "Gas Burner",
@@ -101,11 +97,7 @@ const_config = {
             "description": "The O&M costs of the gas burner are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Gas-fired_power_facility",
             "danger_description": "Risk of gas leaks",
-            "requirements": [
-                ["mechanical_engineering", 1, False],
-                ["thermodynamics", 1, False],
-                ["warehouse", 1, False],
-            ],
+            "requirements": {"mechanical_engineering": 1, "thermodynamics": 1, "warehouse": 1},
         },
         "small_water_dam": {
             "name": "Small Water Dam",
@@ -124,7 +116,7 @@ const_config = {
             "discharge rate that fluctuates with the seasons. (<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
             "danger_description": "Risk of structural failure due to floods",
-            "requirements": [["civil_engineering", 1, False]],
+            "requirements": {"civil_engineering": 1},
         },
         "onshore_wind_turbine": {
             "name": "Onshore Wind Turbine",
@@ -143,11 +135,7 @@ const_config = {
             "the wind and the wind potential of the location. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
             "danger_description": "Risk of structural failure in high winds",
-            "requirements": [
-                ["aerodynamics", 1, False],
-                ["materials", 2, False],
-                ["mechanical_engineering", 3, False],
-            ],
+            "requirements": {"aerodynamics": 1, "materials": 2, "mechanical_engineering": 3},
         },
         "combined_cycle": {
             "name": "Combined Cycle",
@@ -165,11 +153,7 @@ const_config = {
             "description": "The O&M costs of the combined cycle are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Combined_cycle_power_facility",
             "danger_description": "Risk of gas leaks",
-            "requirements": [
-                ["thermodynamics", 3, False],
-                ["mechanical_engineering", 3, False],
-                ["warehouse", 2, False],
-            ],
+            "requirements": {"thermodynamics": 3, "mechanical_engineering": 3, "warehouse": 2},
         },
         "nuclear_reactor": {
             "name": "Nuclear Reactor",
@@ -187,11 +171,7 @@ const_config = {
             "description": "The O&M costs of the nuclear reactor are composed of 50% fixed costs and 50% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Nuclear_power_facility",
             "danger_description": "Risk of reactor meltdown",
-            "requirements": [
-                ["chemistry", 3, False],
-                ["nuclear_engineering", 1, False],
-                ["warehouse", 3, False],
-            ],
+            "requirements": {"chemistry": 3, "nuclear_engineering": 1, "warehouse": 3},
         },
         "large_water_dam": {
             "name": "Large Water Dam",
@@ -210,7 +190,7 @@ const_config = {
             "discharge rate that fluctuates with the seasons. (<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
             "danger_description": "Risk of structural failure due to floods",
-            "requirements": [["civil_engineering", 4, False]],
+            "requirements": {"civil_engineering": 4},
         },
         "CSP_solar": {
             "name": "Concentrated Solar Power",
@@ -228,10 +208,7 @@ const_config = {
             "description": "The amount of electricity generated by the concentrated solar power will vary according to the "
             "level of irradiance. (<a href='/wiki/power_facilities#Solar_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Concentrated_solar_power",
-            "requirements": [
-                ["physics", 5, False],
-                ["thermodynamics", 5, False],
-            ],
+            "requirements": {"physics": 5, "thermodynamics": 5},
         },
         "PV_solar": {
             "name": "Photovoltaics",
@@ -249,7 +226,7 @@ const_config = {
             "description": "The amount of electricity generated by the photovoltaic panels will vary according to the "
             "level of irradiance. (<a href='/wiki/power_facilities#Solar_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Photovoltaics",
-            "requirements": [["physics", 6, False], ["materials", 4, False]],
+            "requirements": {"physics": 6, "materials": 4},
         },
         "offshore_wind_turbine": {
             "name": "Offshore Wind Turbine",
@@ -268,11 +245,7 @@ const_config = {
             "the wind and the wind potential of the location. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
             "danger_description": "Risk of structural failure due to storms",
-            "requirements": [
-                ["aerodynamics", 3, False],
-                ["materials", 4, False],
-                ["mechanical_engineering", 6, False],
-            ],
+            "requirements": {"aerodynamics": 3, "materials": 4, "mechanical_engineering": 6},
         },
         "nuclear_reactor_gen4": {
             "name": "4th Generation Nuclear",
@@ -290,11 +263,7 @@ const_config = {
             "description": "The O&M costs of the 4th generation nuclear reactor are composed of 50% fixed costs and 50% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Generation_IV_reactor",
             "danger_description": "Risk of reactor meltdown",
-            "requirements": [
-                ["chemistry", 5, False],
-                ["nuclear_engineering", 5, False],
-                ["warehouse", 3, False],
-            ],
+            "requirements": {"chemistry": 5, "nuclear_engineering": 5, "warehouse": 3},
         },
         "small_pumped_hydro": {
             "name": "Small Pumped Hydro",
@@ -313,7 +282,7 @@ const_config = {
             "initial_efficiency": 0.75,
             "description": "The small pumped hydro storage pumps water to a higher reservoir to store energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity",
-            "requirements": [],
+            "requirements": {},
         },
         "molten_salt": {
             "name": "Molten Salt",
@@ -332,10 +301,7 @@ const_config = {
             "initial_efficiency": 0.63,
             "description": "The molten salt storage stores energy in the form of high temperature molten salt.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Thermal_energy_storage",
-            "requirements": [
-                ["mechanical_engineering", 2, False],
-                ["thermodynamics", 3, False],
-            ],
+            "requirements": {"mechanical_engineering": 2, "thermodynamics": 3},
         },
         "large_pumped_hydro": {
             "name": "Large Pumped Hydro",
@@ -354,7 +320,7 @@ const_config = {
             "initial_efficiency": 0.8,
             "description": "The large pumped hydro storage pumps water to a higher reservoir to store large amounts of energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity",
-            "requirements": [["civil_engineering", 3, False]],
+            "requirements": {"civil_engineering": 3},
         },
         "hydrogen_storage": {
             "name": "Hydrogen Hydrolysis",
@@ -374,7 +340,7 @@ const_config = {
             "description": "The hydrogen storage facility uses electricity to produce hydrogen by electrolysis of water. "
             "This hydrogen can be used to generate electricity in a fuel cell.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydrogen_storage",
-            "requirements": [["chemistry", 3, False], ["materials", 3, False]],
+            "requirements": {"chemistry": 3, "materials": 3},
         },
         "lithium_ion_batteries": {
             "name": "Lithium-Ion Batteries",
@@ -393,7 +359,7 @@ const_config = {
             "initial_efficiency": 0.69,
             "description": "The lithium-ion batteries store energy with a high efficiency in the form of chemical energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Lithium-ion_battery",
-            "requirements": [["chemistry", 4, False], ["materials", 4, False]],
+            "requirements": {"chemistry": 4, "materials": 4},
         },
         "solid_state_batteries": {
             "name": "Solid State Batteries",
@@ -412,11 +378,7 @@ const_config = {
             "initial_efficiency": 0.79,
             "description": "The solid state batteries store energy with a high efficiency in the form of chemical energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Solid-state_battery",
-            "requirements": [
-                ["chemistry", 6, False],
-                ["materials", 5, False],
-                ["physics", 6, False],
-            ],
+            "requirements": {"chemistry": 6, "materials": 5, "physics": 6},
         },
         "laboratory": {
             "name": "Laboratory",
@@ -429,7 +391,7 @@ const_config = {
             "time_factor": 0.9,
             "description": "The laboratory is needed to research Technologies.<br>+1 lab worker every 3rd level.",
             "wikipedia_link": "",
-            "requirements": [],
+            "requirements": {},
         },
         "warehouse": {
             "name": "Warehouse",
@@ -442,7 +404,7 @@ const_config = {
             "capacity_factor": 1.5,
             "description": "The warehouse stores physical resources.",
             "wikipedia_link": "",
-            "requirements": [],
+            "requirements": {},
         },
         "industry": {
             "name": "Industry",
@@ -460,7 +422,7 @@ const_config = {
             "description": "The industry generates revenue from energy. The Power consumption of the Industry varies "
             "daily and seasonally. (<a href='/wiki/functional_facilities#The_Industry'>See wiki</a>)",
             "wikipedia_link": "",
-            "requirements": [],
+            "requirements": {},
         },
         "carbon_capture": {
             "name": "Carbon Capture",
@@ -477,11 +439,7 @@ const_config = {
             "power_factor": 1.5,
             "description": "Carbon Capture consumes energy to absorb and store CO2 underground.",
             "wikipedia_link": "",
-            "requirements": [
-                ["mathematics", 3, False],
-                ["physics", 3, False],
-                ["chemistry", 3, False],
-            ],
+            "requirements": {"mathematics": 3, "physics": 3, "chemistry": 3},
         },
         "coal_mine": {
             "name": "Coal Mine",
@@ -498,10 +456,7 @@ const_config = {
             # day by one mine]
             "description": "The O&M costs of the coal mine are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Coal_mining",
-            "requirements": [
-                ["mineral_extraction", 1, False],
-                ["warehouse", 1, False],
-            ],
+            "requirements": {"mineral_extraction": 1, "warehouse": 1},
         },
         "gas_drilling_site": {
             "name": "Gas Drilling Site",
@@ -517,10 +472,7 @@ const_config = {
             "base_extraction_rate_per_day": 0.015,
             "description": "The O&M costs of the coal mine are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Natural_gas",
-            "requirements": [
-                ["mineral_extraction", 2, False],
-                ["warehouse", 1, False],
-            ],
+            "requirements": {"mineral_extraction": 2, "warehouse": 1},
         },
         "uranium_mine": {
             "name": "Uranium Mine",
@@ -536,10 +488,7 @@ const_config = {
             "base_extraction_rate_per_day": 0.001_8,
             "description": "The O&M costs of the coal mine are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Uranium_mining",
-            "requirements": [
-                ["mineral_extraction", 5, False],
-                ["warehouse", 3, False],
-            ],
+            "requirements": {"mineral_extraction": 5, "warehouse": 3},
         },
         "mathematics": {
             "name": "Mathematics",
@@ -552,7 +501,7 @@ const_config = {
             "description": "Mathematics is a prerequisite for many other technologies.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173657&",  # cspell:disable-line
-            "requirements": [["laboratory", 1, False]],
+            "requirements": {"laboratory": 1},
         },
         "mechanical_engineering": {
             "name": "Mechanical Engineering",
@@ -574,10 +523,7 @@ const_config = {
             "description": "Mechanical Engineering is the branch of engineering for machines and mechanical systems.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172711&",  # cspell:disable-line
-            "requirements": [
-                ["laboratory", 1, False],
-                ["mathematics", 1, False],
-            ],
+            "requirements": {"laboratory": 1, "mathematics": 1},
         },
         "thermodynamics": {
             "name": "Thermodynamics",
@@ -599,10 +545,7 @@ const_config = {
             "description": "Thermodynamics is the study of heat and energy transfer in systems.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173159&",  # cspell:disable-line
-            "requirements": [
-                ["laboratory", 1, False],
-                ["mathematics", 1, False],
-            ],
+            "requirements": {"laboratory": 1, "mathematics": 1},
         },
         "physics": {
             "name": "Physics",
@@ -623,11 +566,7 @@ const_config = {
             "description": "Physics is the study of matter, energy, and the fundamental forces of nature.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2024S&ansicht=ALLE&lerneinheitId=177068&",  # cspell:disable-line
-            "requirements": [
-                ["laboratory", 1, False],
-                ["mathematics", 1, False],
-                ["chemistry", -2, False],
-            ],
+            "requirements": {"laboratory": 1, "mathematics": 1, "chemistry": -2},
         },
         "building_technology": {
             "name": "Building Technology",
@@ -641,10 +580,7 @@ const_config = {
             "description": "Building Technology enables more efficient construction of facilities.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172899&",  # cspell:disable-line
-            "requirements": [
-                ["laboratory", 1, False],
-                ["transport_technology", -2, False],
-            ],
+            "requirements": {"laboratory": 1, "transport_technology": -2},
         },
         "mineral_extraction": {
             "name": "Mineral Extraction",
@@ -665,10 +601,7 @@ const_config = {
             "description": "Mineral Extraction improves the efficiency of the extraction of natural resources.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173723&",  # cspell:disable-line
-            "requirements": [
-                ["laboratory", 1, False],
-                ["mathematics", 1, False],
-            ],
+            "requirements": {"laboratory": 1, "mathematics": 1},
         },
         "transport_technology": {
             "name": "Transport Technology",
@@ -683,10 +616,7 @@ const_config = {
             "description": "Transport Technology enables more efficient shipping of natural resources.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172788&",  # cspell:disable-line
-            "requirements": [
-                ["laboratory", 2, False],
-                ["mechanical_engineering", 1, False],
-            ],
+            "requirements": {"laboratory": 2, "mechanical_engineering": 1},
         },
         "materials": {
             "name": "Materials",
@@ -707,10 +637,7 @@ const_config = {
             "description": "Materials sciences are essential for the development of new improved materials.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2024S&ansicht=ALLE&lerneinheitId=178386&",  # cspell:disable-line
-            "requirements": [
-                ["laboratory", 2, False],
-                ["chemistry", 0, False],
-            ],
+            "requirements": {"laboratory": 2, "chemistry": 0},
         },
         "civil_engineering": {
             "name": "Civil Engineering",
@@ -731,11 +658,7 @@ const_config = {
             "description": "Civil Engineering is the branch of engineering for large infrastructure projects.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173564&",  # cspell:disable-line
-            "requirements": [
-                ["laboratory", 3, False],
-                ["mathematics", 2, False],
-                ["building_technology", 2, False],
-            ],
+            "requirements": {"laboratory": 3, "mathematics": 2, "building_technology": 2},
         },
         "aerodynamics": {
             "name": "Aerodynamics",
@@ -754,10 +677,7 @@ const_config = {
             "description": "Aerodynamics is the study of the motion of air and other gases.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172719&",  # cspell:disable-line
-            "requirements": [
-                ["laboratory", 3, False],
-                ["physics", 3, False],
-            ],
+            "requirements": {"laboratory": 3, "physics": 3},
         },
         "chemistry": {
             "name": "Chemistry",
@@ -776,10 +696,7 @@ const_config = {
             "description": "Nuclear Engineering is the branch of engineering for nuclear power plants.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=174071&",  # cspell:disable-line
-            "requirements": [
-                ["laboratory", 3, False],
-                ["physics", -1, False],
-            ],
+            "requirements": {"laboratory": 3, "physics": -1},
         },
         "nuclear_engineering": {
             "name": "Nuclear Engineering",
@@ -797,11 +714,7 @@ const_config = {
             "description": "",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172874&",  # cspell:disable-line
-            "requirements": [
-                ["laboratory", 4, False],
-                ["physics", 3, False],
-                ["mechanical_engineering", 3, False],
-            ],
+            "requirements": {"laboratory": 4, "physics": 3, "mechanical_engineering": 3},
         },
     },
     "warehouse_capacities": {
@@ -1005,6 +918,7 @@ class Config(object):
 
     def update_config_for_user(self, player_id):
         """This function updates the config values according to the players technology level"""
+        # TODO: deprecate this method eventually
         self.for_player[player_id] = {
             "industry": {},
             "carbon_capture": {},
