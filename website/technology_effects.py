@@ -6,6 +6,7 @@ levels of the player.
 import math
 from typing import Dict, List
 
+import numpy as np
 from flask import current_app
 
 from website.config.assets import (
@@ -84,6 +85,11 @@ def multiplier_1(player: Player, facility) -> float:
         return power_production_multiplier(player, facility)
 
 
+def special_multiplier(pf: float, lvl: int) -> float:
+    """This is a special function to try to reduce the exponential growth of the power production"""
+    return (0.5 + 0.5 * pf) ** lvl + np.log(pf / (0.5 + 0.5 * pf)) * lvl
+
+
 def power_production_multiplier(player: Player, facility: str) -> float:
     """
     Returns by how much the `facility`'s `base_power_generation` should be multiplied, according to the `player`'s
@@ -93,19 +99,19 @@ def power_production_multiplier(player: Player, facility: str) -> float:
     mlt = 1
     # Mechanical engineering
     if facility in const_config["mechanical_engineering"]["affected_facilities"]:
-        mlt *= const_config["mechanical_engineering"]["prod_factor"] ** player.mechanical_engineering
+        mlt *= special_multiplier(const_config["mechanical_engineering"]["prod_factor"], player.mechanical_engineering)
     # Physics
     if facility in const_config["physics"]["affected_facilities"]:
-        mlt *= const_config["physics"]["prod_factor"] ** player.physics
+        mlt *= special_multiplier(const_config["physics"]["prod_factor"], player.physics)
     # Civil engineering
     if facility in const_config["civil_engineering"]["affected_facilities"]:
-        mlt *= const_config["civil_engineering"]["prod_factor"] ** player.civil_engineering
+        mlt *= special_multiplier(const_config["civil_engineering"]["prod_factor"], player.civil_engineering)
     # Aerodynamics
     if facility in const_config["aerodynamics"]["affected_facilities"]:
-        mlt *= const_config["aerodynamics"]["prod_factor"] ** player.aerodynamics
+        mlt *= special_multiplier(const_config["aerodynamics"]["prod_factor"], player.aerodynamics)
     # Nuclear engineering
     if facility in const_config["nuclear_engineering"]["affected_facilities"]:
-        mlt *= const_config["nuclear_engineering"]["prod_factor"] ** player.nuclear_engineering
+        mlt *= special_multiplier(const_config["nuclear_engineering"]["prod_factor"], player.nuclear_engineering)
     return mlt
 
 
@@ -146,7 +152,7 @@ def capacity_multiplier(player: Player, facility) -> float:
     mlt = 1
     # Civil engineering
     if facility in ["small_pumped_hydro", "large_pumped_hydro"]:
-        mlt *= const_config["civil_engineering"]["capacity_factor"] ** player.civil_engineering
+        mlt *= special_multiplier(const_config["civil_engineering"]["capacity_factor"], player.civil_engineering)
     return mlt
 
 
