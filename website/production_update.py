@@ -93,7 +93,7 @@ def update_electricity(engine):
 def set_facilities_usage(engine, new_values, player):
     """Set the usage of the facilities to the database"""
     for facility in engine.controllable_facilities:
-        if facility in new_values["generation"]:
+        if engine.data["player_capacities"][player.id].contains(facility):
             ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
                 {
                     ActiveFacility.usage: new_values["generation"][facility]
@@ -102,7 +102,7 @@ def set_facilities_usage(engine, new_values, player):
                 synchronize_session=False,
             )
     for facility in engine.storage_facilities:
-        if facility in new_values["storage"]:
+        if engine.data["player_capacities"][player.id].contains(facility):
             ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
                 {
                     ActiveFacility.usage: new_values["storage"][facility]
@@ -111,7 +111,7 @@ def set_facilities_usage(engine, new_values, player):
                 synchronize_session=False,
             )
     for facility in engine.extraction_facilities:
-        if facility in new_values["demand"]:
+        if engine.data["player_capacities"][player.id].contains(facility):
             ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
                 {
                     ActiveFacility.usage: new_values["demand"][facility]
