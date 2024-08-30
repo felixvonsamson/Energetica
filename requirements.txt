@@ -13,3 +13,4 @@ pywebpush
 Werkzeug>=3.0.3
 sqlalchemy>=2.0.0
 noise
+pvlib
