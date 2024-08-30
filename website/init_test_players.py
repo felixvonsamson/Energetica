@@ -220,10 +220,9 @@ def climate_events_scenario(engine):
 
             add_asset(player, "industry", 18)
             add_asset(player, "laboratory", 5)
-            add_asset(player, "mineral_extraction", 5)
             add_asset(player, "chemistry", 2)
-            add_asset(player, "coal_mine", 10)
-            add_asset(player, "coal_burner", 25)
             add_asset(player, "warehouse", 10)
-            add_asset(player, "carbon_capture", 7)
+            add_asset(player, "carbon_capture", 5)
+            add_asset(player, "CSP_solar", 10)
+            add_asset(player, "offshore_wind_turbine", 3)
     db.session.commit()

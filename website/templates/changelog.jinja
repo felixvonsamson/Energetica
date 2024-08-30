@@ -379,12 +379,12 @@
 </div>
 
 <div class="margin-large medium">
-    <div class="padding-small">------</div>
+    <div class="padding-small">1 Sep. 2024</div>
     <div class="padding-large bone">
         <b>beta 0.10</b>
         <ul>
             <li class="li_padding">
-                <b>In-game Time</b>: One in-game day is not equal to one real day anymore. The in-game time now runs 8 times faster than real time. Additonally, one in-game year is now 72 days long, so one in-game month has 6 days. All times in the game will now be displayed as in-game times and in some cases the equivalent real time might be indicated in parenthesis. For more information, see the <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">wiki</a>.
+                <b>In-game Time</b>: One in-game day is not equal to one real day anymore. The in-game time now runs 8 times faster than real time. Additonally, one in-game year is now 72 days long, so one in-game month has 6 days. All times in the game will now be displayed as in-game times and in some cases the equivalent real time might be indicated in parenthesis. For more information, see the <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">wiki</a>.
             </li>
             <li class="li_padding">
                 <b>Climate Change</b>: 
@@ -396,6 +396,8 @@
                     <li>Read the <a href="{{ url_for('wiki.render_template_wiki', template_name='climate_effects') }}">Climate Change</a> section in the wiki for more information.</li>
                 </ul>
             </li>
+            <li class="li_padding">
+                <b>New Weather Simulation</b>: Because of the faster in-game time, it is not possible to use real live weather data anymore. The weather is now simulated and is also location dependent. This means that the wind speed and solar iradiance will be different on different tiles but also for different facilities inside a tile. Each solar and wind facility will generate a different amount of power depending on the weather conditions on its location. A visualisation of the weather on the map is planned for the future.
             <li class="li_padding">
                 <b>General Chat</b>: A general chat has been added to the game where all players are added automatically.
             </li>

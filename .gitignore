@@ -1,6 +1,3 @@
 instance/*
 __pycache__
 .DS_Store
-vapid_private_key.txt
-vapid_public_key.txt
-flask_secret_key.txt

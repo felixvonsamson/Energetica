@@ -94,7 +94,7 @@
     The probability of the occurence of a heatwave is affected by both the global temperature anomaly (the bigger the 
     deviation the higher the risk) and the server's current GAT (the higher the temperature the higher the risk). The 
     following table shows the expected occurence of heatwaves per 
-    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     Reference GAT and the temperature anomaly.
   </p>
 
@@ -236,15 +236,21 @@
 
   <p>
     When a heatwave occurs, the tile it will affect (with it's neigbours) is chosen randomly following a normal 
-    distribution around the equator. This means that the risk is higher in tiles near the equator and almost zero in 
-    tiles near the poles. The following figure shows the probability distribution overlayed on the map.
+    distribution around the equator. This means that the risk is higher in southern tiles and almost zero in northern
+    tiles. The following figure shows the probability distribution overlayed on the map. 
   </p>
 
   <div class="graph-container">
-    <img src="{{ url_for('static', filename='images/wiki/heatwave_probability_distribution.jpg') }}"
-         alt="Probability distribution of heatwaves"
-         class="small">
+    <img src="{{ url_for('static', filename='images/wiki/heatwave_probability_distribution.png') }}"
+         alt="Probability distribution of heatwaves">
   </div>
+
+  <p>
+    Note that the risks on the edges on the map are lower. 
+    This is due to these tiles having less neigbours and therefore reducing the risk of 
+    being affected by a nearby heatwave. Considering that the map is an island, we can also explain the lower risks 
+    on the edges by the fact that the ocean has a moderating effect on the temperature.
+  </p>
 
   <h3 id="coldwave">Coldwave</h3>
 
@@ -277,7 +283,7 @@
     The probability of the occurence of a coldwave is affected by both the global temperature anomaly (the bigger the 
     deviation the higher the risk) and the servers current GAT (the lower the temperature the higher the risk). The 
     following table shows the expected occurence of coldwaves per 
-    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     Reference GAT and the temperature anomaly.
   </p>
 
@@ -419,14 +425,14 @@
 
   <p>
     When a coldwave occurs, the tile it will affect (with it's neigbours) is chosen randomly following a normal 
-    distribution around the poles. This means that the risk is higher in tiles near the poles and almost zero in 
-    tiles near the equator. The following figure shows the probability distribution overlayed on the map.
+    distribution around the north pole. This means that the risk is higher in northern tiles and almost zero in southern
+    tiles. Again the border tiles have lower risks due to therir lower neighbor count. The following figure shows the 
+    probability distribution overlayed on the map.
   </p>
 
   <div class="graph-container">
-    <img src="{{ url_for('static', filename='images/wiki/coldwave_probability_distribution.jpg') }}"
-         alt="Probability distribution of coldwaves"
-         class="small">
+    <img src="{{ url_for('static', filename='images/wiki/coldwave_probability_distribution.png') }}"
+         alt="Probability distribution of coldwaves">
   </div>
 
   <h3 id="wildfire">Wildfire</h3>
@@ -472,7 +478,7 @@
   <p>
     The probability of the occurence of a wildfire is affected by the servers current GAT, the higher the temperature 
     the higher the risk. The following table shows the expected occurence of wildfires per 
-    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     Reference GAT and the temperature anomaly.
   </p>
 
@@ -594,14 +600,14 @@
 
   <p>
     When a wildfire occurs, the tile it will affect (with it's neigbours) is chosen randomly following a normal 
-    distribution around the equator. This means that the risk is higher in tiles near the equator and lower in
-    tiles near the poles. The following figure shows the probability distribution overlayed on the map.
+    distribution around the 30° latitude line. This means that the risk is higher in tiles in the south but in the far 
+    south we consider less vegetation and terefore less wilfire risks. Again the border tiles have lower risks due to 
+    therir lower neighbor count. The following figure shows the probability distribution overlayed on the map.
   </p>
 
   <div class="graph-container">
-    <img src="{{ url_for('static', filename='images/wiki/wildfire_probability_distribution.jpg') }}"
-         alt="Probability distribution of wildfires"
-         class="small">
+    <img src="{{ url_for('static', filename='images/wiki/wildfire_probability_distribution.png') }}"
+         alt="Probability distribution of wildfires">
   </div>
 
   <h3 id="flood">Flood</h3>
@@ -648,7 +654,7 @@
   <p>
     The probability of the occurence of a flood is affected by the servers current temperature anomaly, the higher the
     deviation the higher the risk. The following graph shows the expected occurence of floods per 
-    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     temperature anomaly.
   </p>
 
@@ -701,7 +707,7 @@
   <p>
     The probability of the occurence of a huricane is affected by the servers current temperature anomaly, the higher the
     deviation the higher the risk. The following graph shows the expected occurence of huricanes per 
-    <a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game day</a> depending on the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     temperature anomaly.
   </p>
 

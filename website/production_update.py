@@ -11,6 +11,7 @@ from . import db
 from .config.assets import wind_power_curve
 from .database.player import Network, Player
 from .database.player_assets import ActiveFacility, OngoingConstruction, Shipment
+from .utils.misc import calculate_river_discharge, calculate_solar_irradiance, calculate_wind_speed
 
 resource_to_extraction = {
     "coal": "coal_mine",
@@ -77,6 +78,7 @@ def update_electricity(engine):
         if player.network is None:
             calculate_demand(engine, new_values[player.id], player)
             calculate_generation_without_market(engine, new_values, player)
+        set_facilities_usage(engine, new_values[player.id], player)
         calculate_net_import(new_values[player.id])
         update_storage_lvls(engine, new_values[player.id], player)
         resources_and_pollution(engine, new_values[player.id], player)
@@ -86,6 +88,37 @@ def update_electricity(engine):
         update_player_progress_values(engine, player, new_values)
         # send new data to clients
         player.send_new_data(new_values[player.id])
+
+
+def set_facilities_usage(engine, new_values, player):
+    """Set the usage of the facilities to the database"""
+    for facility in engine.controllable_facilities:
+        if facility in new_values["generation"]:
+            ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
+                {
+                    ActiveFacility.usage: new_values["generation"][facility]
+                    / engine.data["player_capacities"][player.id][facility]["power"]
+                },
+                synchronize_session=False,
+            )
+    for facility in engine.storage_facilities:
+        if facility in new_values["storage"]:
+            ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
+                {
+                    ActiveFacility.usage: new_values["storage"][facility]
+                    / engine.data["player_capacities"][player.id][facility]["capacity"]
+                },
+                synchronize_session=False,
+            )
+    for facility in engine.extraction_facilities:
+        if facility in new_values["demand"]:
+            ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
+                {
+                    ActiveFacility.usage: new_values["demand"][facility]
+                    / engine.data["player_capacities"][player.id][facility]["power_use"]
+                },
+                synchronize_session=False,
+            )
 
 
 def update_player_progress_values(engine, player, new_values):
@@ -249,7 +282,6 @@ def storage_demand(engine, player, demand):
                 facility,
                 engine.data["current_data"][player.id],
                 resource_reservations=None,
-                storage=True,
                 filling=True,
             )
 
@@ -336,7 +368,6 @@ def calculate_generation_without_market(engine, new_values, player):
                 facility,
                 engine.data["current_data"][player.id],
                 resource_reservations,
-                storage=facility in engine.storage_facilities,
             )
             price = getattr(player, "price_" + facility)
             capacity = max_prod - generation[facility]
@@ -389,7 +420,6 @@ def calculate_generation_with_market(engine, new_values, market, player):
                     facility,
                     engine.data["current_data"][player.id],
                     resource_reservations,
-                    storage=facility in engine.storage_facilities,
                 )
                 price = getattr(player, "price_" + facility)
                 capacity = max_prod - generation[facility]
@@ -554,46 +584,77 @@ def market_optimum(offers_og, demands_og):
 
 def renewables_generation(engine, player, player_cap, generation):
     """Generation of non controllable facilities is calculated from weather data"""
-    # WIND (wind generation is more complex and deserves its own function)
-    wind_generation(engine, player, player_cap, generation)
+    in_game_seconds_passed = (engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick
+    # WIND
+    wind_generation(engine, player, player_cap, generation, in_game_seconds_passed)
     # SOLAR
-    power_factor = (
-        engine.data["weather"]["irradiance"] / 875 * player.tile.solar
-    )  # 875 W/m2 is the maximum irradiation in Zürich
-    for facility in ["CSP_solar", "PV_solar"]:
-        if player_cap[facility] is not None:
-            generation[facility] = power_factor * player_cap[facility]["power"]
+    solar_generation(engine, player, player_cap, generation, in_game_seconds_passed)
     # HYDRO
-    power_factor = engine.data["weather"]["river_discharge"]
+    power_factor = calculate_river_discharge(in_game_seconds_passed) / 150
     for facility in ["watermill", "small_water_dam", "large_water_dam"]:
         if player_cap[facility] is not None:
             generation[facility] = power_factor * player_cap[facility]["power"]
+        ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
+            {ActiveFacility.usage: power_factor}, synchronize_session=False
+        )
 
 
-def wind_generation(engine, player, player_cap, generation):
-    """Each wind facility has its own wind speed multiplier and therefore generates a different amount of power"""
+def solar_generation(engine, player, player_cap, generation, in_game_seconds_passed):
+    """
+    Each instance of facility generates a different amount of power depending on the position of the facility.
+    The clear sky index is calculated using a 3D perlin noise that moves over time, simulating the movement of clouds.
+    The csi is then multiplied by the clear sky value from pvlib to get the actual irradiance at the location.
+    The effective power of the solar facility is then calculated as irradiance / 1000 * max_power.
+    """
+    for facility_type in ["CSP_solar", "PV_solar"]:
+        if player_cap[facility_type] is not None:
+            solar_facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(
+                player_id=player.id, facility=facility_type
+            ).all()
+            for facility in solar_facilities:
+                irradiance = calculate_solar_irradiance(
+                    facility.pos_x, facility.pos_y, in_game_seconds_passed, engine.data["random_seed"]
+                )
+                max_power = (
+                    engine.const_config["assets"][facility_type]["base_power_generation"] * facility.multiplier_1
+                )
+                facility.usage = irradiance / 1000
+                generation[facility_type] += facility.usage * max_power
+
+
+def wind_generation(engine, player, player_cap, generation, in_game_seconds_passed):
+    """
+    Each instance of facility generates a different amount of power depending on the position of the facility.
+    The wind speed is calculated using a 3D perlin noise with a superposition of specific frequencies.
+    Two sinusoidal functions are multiplied to the wind speed to simulate the day-night cycle and the seasonal cycle.
+    A multiplier is applied to the wind speed depending on the 'performance' of the facility linked to its position.
+    The characteristic power curve of wind facilities is interpolated to get the power generated by the facility.
+    """
+
+    def interpolate_wind(wind_speed):
+        """Interpolates the wind power curve to get the exact power generated by a wind facility"""
+        if wind_speed > 80:
+            return 0
+        i = math.floor(wind_speed)
+        f = wind_speed - i
+        pc = wind_power_curve
+        return pc[i] + (pc[(i + 1) % 80] - pc[i]) * f
+
     for facility_type in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
         if player_cap[facility_type] is not None:
             wind_facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(
                 player_id=player.id, facility=facility_type
             ).all()
             for facility in wind_facilities:
-                wind_speed_factor = facility.multiplier_2
+                wind_speed = calculate_wind_speed(
+                    facility.pos_x, facility.pos_y, in_game_seconds_passed, engine.data["random_seed"]
+                )
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"] * facility.multiplier_1
                 )
-                generation[facility_type] += interpolate_wind(engine, wind_speed_factor) * max_power
-
-
-def interpolate_wind(engine, wind_speed_factor):
-    """Interpolates the wind power curve to get the exact power generated by a wind facility"""
-    if engine.data["weather"]["windspeed"] > 100:
-        return 0
-    windspeed = engine.data["weather"]["windspeed"] * wind_speed_factor
-    i = math.floor(windspeed)
-    f = windspeed - i
-    pc = wind_power_curve
-    return pc[i] + (pc[(i + 1) % 100] - pc[i]) * f
+                # multiplier_2 is the wind speed factor linked to the position of the facility:
+                facility.usage = interpolate_wind(wind_speed * facility.multiplier_2)
+                generation[facility_type] += facility.usage * max_power
 
 
 def calculate_prod(
@@ -604,7 +665,6 @@ def calculate_prod(
     facility,
     past_values,
     resource_reservations,
-    storage=False,
     filling=False,
 ):
     """
@@ -683,7 +743,6 @@ def minimal_generation(engine, player, player_cap, generation, resource_reservat
                 facility,
                 engine.data["current_data"][player.id],
                 resource_reservations,
-                storage=facility in engine.storage_facilities,
             )
 
 

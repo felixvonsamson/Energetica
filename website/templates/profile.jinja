@@ -1,6 +1,6 @@
 {% extends "base.jinja" %}
 {% block title %}
-  Home
+  Profile
 {% endblock title %}
 {% block content %}
 
@@ -230,6 +230,5 @@
   <br>
 {% endblock content %}
 {% block additionnal_script %}
-  <script>const current_wind_speed = {{ engine.data["weather"]["windspeed"] }}</script>
   <script src="{{ url_for('static', filename='profile.js') }}"></script>
 {% endblock additionnal_script %}

@@ -211,6 +211,12 @@ def get_chart_data():
     )
 
 
+@http.route("/get_current_weather", methods=["GET"])
+def get_current_weather():
+    """gets the current weather data (date, irradiance, wind speed, river discharge)"""
+    return jsonify(website.utils.misc.package_weather_data(g.engine, current_user))
+
+
 @http.route("/get_network_capacities", methods=["GET"])
 def get_network_capacities():
     """gets the network capacities for the current player"""

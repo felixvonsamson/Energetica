@@ -2,7 +2,11 @@
 
 import math
 import random
+from datetime import datetime, timedelta
 
+import numpy as np
+import pandas as pd
+from pvlib.location import Location
 from scipy.stats import norm
 
 # Parameters
@@ -18,7 +22,7 @@ class Tile:
         coords = id_to_coordinates(tile_id)
         self.q = coords[0]
         self.r = coords[1]
-        self.solar = 0.8 * math.exp(-((self.r * 3) ** 2) / mapsize) + 0.2
+        self.solar = 0
         self.wind = 0
         self.hydro = 0
         self.coal = 0
@@ -57,22 +61,31 @@ class Tile:
         """Returns the distance between the tile and another tile."""
         return math.sqrt(2 * (self.q - tile.q) ** 2 + (self.r - tile.r) ** 2 + (self.q - tile.q) * (self.r - tile.r))
 
-    def latitude_probability(self, std_dev, poles=False):
-        """Returns the probability of a climate event happening in the tile based on its latitude."""
+    def sigmoid_probability(self, inverted=False):
+        """
+        This function is used for heat and cold waves and returns the probability of occurrence based on the latitude.
+        """
+
+        def cdf(x):
+            return (3 * np.log(math.exp(x / 3) + math.exp(-1 / 3)) + 0.88) / 11.44
+
         lower_bound = -0.5
         upper_bound = 0.5
-        latitude = self.r
-        if poles:
-            if self.r > 0:
-                latitude = size_param + 0.5 - self.r
-            else:
-                latitude = size_param - 0.5 + self.r
-        if latitude == size_param:
-            upper_bound = 100_000
-        elif latitude == -size_param:
-            lower_bound = -100_000
-        cdf_lower = norm.cdf(latitude + lower_bound, loc=0, scale=std_dev)
-        cdf_upper = norm.cdf(latitude + upper_bound, loc=0, scale=std_dev)
+        cdf_lower = cdf(-self.r + lower_bound if inverted else self.r + lower_bound)
+        cdf_upper = cdf(-self.r + upper_bound if inverted else self.r + upper_bound)
+        n_latitudes = 2 * size_param + 1 - abs(self.r)
+        return (cdf_upper - cdf_lower) / n_latitudes
+
+    def normal_probability(self):
+        """Returns the probability of occurrence of wildfires based on the latitude."""
+
+        def cdf(x):
+            return (1 / (1 + np.exp(-(x - 2.5) / 3.5)) - 0.02) / 0.88
+
+        lower_bound = -0.5
+        upper_bound = 0.5
+        cdf_lower = cdf(self.r + lower_bound)
+        cdf_upper = cdf(self.r + upper_bound)
         n_latitudes = 2 * size_param + 1 - abs(self.r)
         return (cdf_upper - cdf_lower) / n_latitudes
 
@@ -140,6 +153,37 @@ def save_as_csv(map, m):
     print(f"Map {m} saved.")
 
 
+def calculate_solar_potentials():
+    """Calculates the solar potentials for each latitude with pvlib."""
+    start_date = datetime(2023, 1, 1)
+    time_steps = []
+    for d in range(72):
+        day_of_year = d * 365 // 72
+        for t in range(216):
+            time_of_day = 4 * 3600 + t * 3600 * 18 // 216
+            time_steps.append(start_date + timedelta(days=day_of_year, seconds=time_of_day))
+    time_steps = pd.DatetimeIndex(time_steps)
+
+    potentials = {}
+    max_potential = 0
+    for r in range(-10, 11):
+        latitude = (r - 10) * 85 / 21
+        loc = Location(latitude, 0)
+        clear_sky = loc.get_clearsky(time_steps)["ghi"]
+        potentials[r] = clear_sky.mean()
+        if potentials[r] > max_potential:
+            max_potential = potentials[r]
+    for pot in potentials:
+        potentials[pot] = potentials[pot] / max_potential
+    return potentials
+
+
+def generate_solar(map, potentials):
+    """Generates solar resources on the map based on the pvlib clear sky model and depending on the latitude."""
+    for tile in map:
+        tile.solar = potentials[tile.r]
+
+
 def generate_hydro(map):
     """Generates rivers from the border to the center of the map."""
 
@@ -170,7 +214,6 @@ def generate_hydro(map):
         sources = [source_tile]
         hydro_value = 1
         while sources:
-            # print(len(sources))
             start_tile = sources.pop(0)
             start_tile.hydro = hydro_value
             hydro_value -= 0.01
@@ -201,26 +244,26 @@ def calculate_risk(map):
     )
     heatwave_cost = 0.3 * 3  # industry cost fraction times the duration in days
     for tile in map:
-        tile_probability = tile.latitude_probability(3)
+        tile_probability = tile.sigmoid_probability()
         tile.risk += tile_probability * heatwave_event_probability * heatwave_cost
         for neighbor in tile.get_neighbors():
-            tile.risk += neighbor.latitude_probability(3) * heatwave_event_probability * heatwave_cost
+            tile.risk += neighbor.sigmoid_probability() * heatwave_event_probability * heatwave_cost
 
     coldwave_event_probability = 1.016
     coldwave_cost = 0.3 * 3
     for tile in map:
-        tile_probability = tile.latitude_probability(4, poles=True)
+        tile_probability = tile.sigmoid_probability(inverted=True)
         tile.risk += tile_probability * coldwave_event_probability * coldwave_cost
         for neighbor in tile.get_neighbors():
-            tile.risk += neighbor.latitude_probability(4, poles=True) * coldwave_event_probability * coldwave_cost
+            tile.risk += neighbor.sigmoid_probability(inverted=True) * coldwave_event_probability * coldwave_cost
 
     wildfire_event_probability = 1.13
     wildfire_cost = 0.6 * 2
     for tile in map:
-        tile_probability = tile.latitude_probability(4.5)
+        tile_probability = tile.normal_probability()
         tile.risk += tile_probability * wildfire_event_probability * wildfire_cost
         for neighbor in tile.get_neighbors():
-            tile.risk += neighbor.latitude_probability(4.5) * wildfire_event_probability * wildfire_cost
+            tile.risk += neighbor.normal_probability() * wildfire_event_probability * wildfire_cost
 
     flood_event_probability = 0.8
     flood_cost = 0.5 * 6
@@ -312,22 +355,27 @@ def generate_gas(map):
     gas_count = 0
     while gas_count < 0.3 * mapsize:
         random_tile = random.choice(map)
-        while random_tile.score > 0.1:
+        vein = []
+        trials = 0
+        while (random_tile.score > 0.15 or count_gas_neighbors(random_tile) > 0) and trials < 25:
+            random_tile = random.choice(map)
+            trials += 1
+        while random_tile.score > 0.2 or count_gas_neighbors(random_tile) > 2:
             random_tile = random.choice(map)
 
         vein = [random_tile]
-        gas_value = 1.02
+        gas_value = 1
         while vein:
             tile = vein.pop(0)
             tile.gas = min(1, gas_value)
             gas_count += 1
             gas_value += 0.2 * (random.random() - 0.8)
-            if gas_value <= 0:
+            if gas_value <= 0.2:
                 break
             for neighbor in tile.get_neighbors():
                 if (
                     count_gas_neighbors(neighbor) <= 2
-                    and neighbor.score < 0.15
+                    and neighbor.score < 0.25
                     and neighbor.gas == 0
                     and neighbor not in vein
                 ):
@@ -398,10 +446,12 @@ def generate_background_resources(map):
             tile.score += tile.uranium
 
 
+solar_potentials = calculate_solar_potentials()
 for m in range(10):
     map = []
     for i in range(mapsize):
         map.append(Tile(i))
+    generate_solar(map, solar_potentials)
     generate_hydro(map)
     calculate_risk(map)
     generate_coal(map)

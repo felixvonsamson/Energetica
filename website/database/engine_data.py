@@ -1,17 +1,13 @@
 """This file contains the classes for `CapacityData`, `CircularBufferPlayer`,
-`CircularBufferNetwork`, `WeatherData`, and `EmissionData`"""
+`CircularBufferNetwork`, and `EmissionData`"""
 
-import json
 import math
 from collections import defaultdict, deque
 from typing import List
 
 import noise
-import numpy as np
-import requests
 from flask import current_app
 
-from website.config.assets import river_discharge_seasonal
 from website.database.player_assets import ActiveFacility
 
 
@@ -148,12 +144,9 @@ class CircularBufferPlayer:
                 "dumping": deque([0.0] * 360, maxlen=360),
                 "climate_events": deque([0.0] * 360, maxlen=360),
             },
-            "op_costs": {
-                "steam_engine": deque([0.0] * 360, maxlen=360),  # + other facilities
-            },
+            "op_costs": {},  # + all facilities
             "generation": {
-                "steam_engine": deque([0.0] * 360, maxlen=360),
-                "imports": deque([0.0] * 360, maxlen=360),  # + other power and storage facilities
+                "imports": deque([0.0] * 360, maxlen=360),  # + power and storage facilities
             },
             "demand": {
                 "industry": deque([0.0] * 360, maxlen=360),
@@ -166,8 +159,7 @@ class CircularBufferPlayer:
             "storage": {},  # + storage facilities
             "resources": {},  # + all resources when warehouse is built
             "emissions": {
-                "steam_engine": deque([0.0] * 360, maxlen=360),
-                "construction": deque([0.0] * 360, maxlen=360),  # + other controllable facilities
+                "construction": deque([0.0] * 360, maxlen=360),  # + controllable facilities
             },
         }
 
@@ -273,98 +265,6 @@ class CircularBufferNetwork:
             for group, buffer in value.items():
                 result[category][group] = list(buffer)[-t:]
         return result
-
-
-class WeatherData:
-    """Class that stores the weather data"""
-
-    def __init__(self):
-        self._data = {
-            "windspeed": deque([0.0] * 600, maxlen=600),
-            "irradiance": deque([0.0] * 600, maxlen=600),
-            "river_discharge": deque([0.0] * 600, maxlen=600),
-        }
-
-    def update_weather(self, engine):
-        """
-        This function updates the windspeed and irradiation data every 10
-        minutes using the MétéoSuisse api and calculates the river discharge for
-        the next 10 min
-        """
-        urls = {
-            "windspeed": (
-                (
-                    "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-"  # cspell:disable-line
-                    "windgeschwindigkeit-kmh-10min/ch.meteoschweiz.messwerte-"  # cspell:disable-line
-                    "windgeschwindigkeit-kmh-10min_en.json"  # cspell:disable-line
-                ),
-                107,
-            ),
-            "irradiance": (
-                (
-                    "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-"  # cspell:disable-line
-                    "globalstrahlung-10min/ch.meteoschweiz.messwerte-"  # cspell:disable-line
-                    "globalstrahlung-10min_en.json"  # cspell:disable-line
-                ),
-                65,
-            ),
-        }
-
-        def log_error(e, weather):
-            engine.log("An error occurred:" + str(e))
-            self._data[weather].extend([self._data[weather][-1]] * round(600 / engine.clock_time))
-
-        for weather, url_and_offset in urls.items():
-            try:
-                url = url_and_offset[0]
-                offset = url_and_offset[1]
-                # TODO: add timeout argument for get requests.
-                # This should probably depend on the game clock.
-                response = requests.get(url)
-                if response.status_code == 200:
-                    datapoint = json.loads(response.content)["features"][offset]["properties"]["value"]
-                    if weather == "windspeed":
-                        datapoint *= 1.3  # increasing wind speed because windspeed in Zurich is lower than elsewhere
-                    if datapoint > 2000:
-                        datapoint = self._data[weather][-1]
-                    interpolation = np.linspace(
-                        self._data[weather][-1],
-                        datapoint,
-                        round(600 / engine.clock_time) + 1,
-                    )
-                    self._data[weather].extend(interpolation[1:])
-                else:
-                    log_error(response.status_code, weather)
-            except Exception as e:
-                log_error(e, weather)
-
-        month = math.floor((engine.data["total_t"] % 25920) / 2160)
-        # One year in game is 25920 ticks
-        f = (engine.data["total_t"] % 25920) / 2160 - month
-
-        d = river_discharge_seasonal
-        power_factor = d[month] + (d[(month + 1) % 12] - d[month]) * f
-        interpolation = np.linspace(
-            self._data["river_discharge"][-1],
-            power_factor,
-            round(600 / engine.clock_time) + 1,
-        )
-        self._data["river_discharge"].extend(interpolation[1:])
-
-    def __getitem__(self, weather):
-        engine = current_app.config["engine"]
-        total_t = engine.data["total_t"]
-        i = total_t % round(600 / engine.clock_time) - round(600 / engine.clock_time)
-        return self._data[weather][i]
-
-    def package(self, total_t):
-        """Returns the weather data for the current tick"""
-        return {
-            "month_number": ((total_t % 25920) // 2160),
-            "irradiance": self["irradiance"],
-            "wind_speed": self["windspeed"],
-            "river_discharge": self["river_discharge"],
-        }
 
 
 class EmissionData:

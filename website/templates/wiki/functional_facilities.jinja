@@ -34,7 +34,7 @@
     <i class="fa fa-angle-double-right padding"></i>\( D = D_{base} \times dv(t) \times sv(t) \)<br>
     with \(D_{base}\) the base demand as indicated on the page <a href="{{ url_for('views.functional_facilities') }}">Functional
     facilities</a>, \(dv()\) the daily variations shown in the following graph, \(sv()\) the seasonal variations shown
-    in the following graph and \(t\) the in-game date and time (<a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">
+    in the following graph and \(t\) the in-game date and time (<a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">
     1 in-game year = {{(engine.clock_time / engine.in_game_seconds_per_tick * 72) | round() | int }} real-time days</a>).
   </li></ul>
   <div class="graph-container">

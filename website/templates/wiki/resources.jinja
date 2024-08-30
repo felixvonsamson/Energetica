@@ -43,7 +43,7 @@
       \(t_{ship}\) : shipment duration in hours
     </li><li>
       \(t_{base}\) : base value of shipment duration : {{ (80 / 15) | round(1) }} h/tile 
-      (<a href="{{ url_for('wiki.render_template_wiki', template_name='game_time') }}">in-game time</a>) or 
+      (<a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game time</a>) or 
       {{ (80 * engine.clock_time / 60) | int }} min/tile (real-time)
     </li><li>
       \(dist\) : distance between buyer and seller in tiles

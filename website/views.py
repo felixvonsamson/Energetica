@@ -206,7 +206,7 @@ def emissions():
 def render_template_wiki(template_name):
     valid_templates = [
         "introduction",
-        "game_time",
+        "time_and_weather",
         "map",
         "power_facilities",
         "storage_facilities",

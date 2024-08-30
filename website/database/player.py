@@ -571,6 +571,7 @@ class Player(db.Model, UserMixin):
                         "multiplier_1",
                         "multiplier_2",
                         "multiplier_3",
+                        "usage",
                     ]
                 }
                 for facility in sub_facilities

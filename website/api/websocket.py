@@ -15,7 +15,7 @@ from website.game_engine import GameEngine
 from website.technology_effects import package_constructions_page_data
 from website.utils.assets import decrease_project_priority, pause_project, start_project
 from website.utils.chat import add_message, create_chat, create_group_chat, hide_chat_disclaimer
-from website.utils.misc import confirm_location
+from website.utils.misc import confirm_location, package_weather_data
 from website.utils.network import create_network, join_network, leave_network
 
 websocket_blueprint = Blueprint("rest_api", __name__)
@@ -65,7 +65,7 @@ def add_sock_handlers(sock, engine):
         # ws.send(rest_get_scoreboard())
         ws.send(rest_get_constructions(player))
         ws.send(rest_get_construction_queue(player))
-        ws.send(rest_get_weather(engine))
+        ws.send(rest_get_weather(engine, player))
         ws.send(rest_get_achievements(player))
         if player.tile is not None:
             rest_init_ws_post_location(player, ws)
@@ -322,11 +322,11 @@ def rest_get_scoreboard():
     return json.dumps(response)
 
 
-def rest_get_weather(engine):
+def rest_get_weather(engine, player):
     """Gets the weather and returns it as a JSON string"""
     response = {
         "type": "getWeather",
-        "data": engine.data["weather"].package(engine.data["total_t"]),
+        "data": package_weather_data(engine, player),
     }
     return json.dumps(response)
 
@@ -536,10 +536,12 @@ def rest_notify_construction_queue(engine, player):
     rest_notify_player(engine, player, rest_get_construction_queue(player))
 
 
+# TODO: The rest_get_weather() is now dependent on the player !
 def rest_notify_weather(engine):
     """Notify to all ws sessions the new weather data"""
-    message = rest_get_weather(engine)
-    rest_notify_all_players(engine, message)
+    #     message = rest_get_weather(engine)
+    #     rest_notify_all_players(engine, message)
+    pass
 
 
 def rest_notify_achievements(engine, player: Player):
