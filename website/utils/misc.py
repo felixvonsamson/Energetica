@@ -224,8 +224,8 @@ def confirm_location(engine, player, location):
     )
     steam_engine: ActiveFacility = ActiveFacility(
         facility="steam_engine",
-        pos_x=player.tile.q + 0.5 * player.tile.r,
-        pos_y=player.tile.r,
+        pos_x=location.q + 0.5 * location.r,
+        pos_y=location.r,
         end_of_life=eol,
         player_id=player.id,
         price_multiplier=1.0,
@@ -237,11 +237,11 @@ def confirm_location(engine, player, location):
     general_chat = Chat.query.get(1)
     player.chats.append(general_chat)
     db.session.commit()
+    add_player_to_data(engine, player)
+    init_table(player.id)
     engine.data["current_data"][player.id].new_subcategory("op_costs", "steam_engine")
     engine.data["current_data"][player.id].new_subcategory("generation", "steam_engine")
     engine.data["current_data"][player.id].new_subcategory("emissions", "steam_engine")
-    add_player_to_data(engine, player)
-    init_table(player.id)
     websocket.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
     return {"response": "success"}
