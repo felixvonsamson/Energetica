@@ -313,7 +313,7 @@ def calculate_solar_irradiance(x, y, total_seconds, random_seed):
     )
     csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
     loc = Location((y - 10) * 85 / 21, 0)
-    clear_sky = loc.get_clearsky(weather_datetime)["ghi"][0]
+    clear_sky = loc.get_clearsky(weather_datetime)["ghi"][weather_datetime[0]]
     return min(1000, csi * clear_sky)
 
 
