@@ -399,25 +399,25 @@ def facility_requirements(player: Player, facility: str):
     """Returns the list of requirements (name, level, and boolean for met) for the specified facility"""
     # TODO: update docstring, met is no longer a boolean, and is called status
     const_config = current_app.config["engine"].const_config["assets"]
-    requirements = const_config[facility]["requirements"].copy()
+    requirements = const_config[facility]["requirements"]
     engine: GameEngine = current_app.config["engine"]
     level_offset = 0
     if facility in engine.functional_facilities or facility in engine.technologies:
         level_offset = next_level(player, facility) - 1
     return [
         {
-            "name": requirement[0],
-            "display_name": const_config[requirement[0]]["name"],
-            "level": requirement[1] + level_offset,
+            "name": technology,
+            "display_name": const_config[technology]["name"],
+            "level": level + level_offset,
             "status": (
                 "satisfied"
-                if getattr(player, requirement[0]) >= requirement[1] + level_offset
+                if getattr(player, technology) >= level + level_offset
                 else "queued"
-                if next_level(player, requirement[0]) - 1 >= requirement[1] + level_offset
+                if next_level(player, technology) - 1 >= level + level_offset
                 else "unsatisfied"
             ),
         }
-        for requirement in requirements
+        for technology, level in requirements.items()
     ]
 
 
@@ -487,7 +487,10 @@ def get_current_technology_values(player: Player):
         }
         # remove fulfilled requirements
         dict[facility]["locked"] = False
-        dict[facility]["requirements"] = engine.const_config["assets"][facility]["requirements"].copy()
+        dict[facility]["requirements"] = [
+            [technology, level, False]
+            for technology, level in engine.const_config["assets"][facility]["requirements"].items()
+        ]
         for req in dict[facility]["requirements"]:
             if req[1] + getattr(player, facility) < 1:
                 dict[facility]["requirements"].remove(req)
@@ -503,7 +506,10 @@ def get_current_technology_values(player: Player):
     ):
         # remove fulfilled requirements
         dict[facility]["locked"] = False
-        dict[facility]["requirements"] = engine.const_config["assets"][facility]["requirements"].copy()
+        dict[facility]["requirements"] = [
+            [technology, level, False]
+            for technology, level in engine.const_config["assets"][facility]["requirements"].items()
+        ]
         for req in dict[facility]["requirements"]:
             req[2] = getattr(player, req[0]) >= req[1]
             if not req[2]:
