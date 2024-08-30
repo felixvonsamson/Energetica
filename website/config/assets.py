@@ -411,14 +411,14 @@ const_config = {
             "type": "Functional facility",
             "base_price": 2_400,
             "base_construction_time": timedelta(hours=1, minutes=40).total_seconds(),
-            "base_construction_energy": 40_000,
+            "base_construction_energy": 200_000,
             "base_construction_pollution": 4_000,
             "base_power_consumption": 200_000,  # [W]
             "base_income_per_day": 8_000,  # [¤/in-game day]
             "universal_income_per_day": 4_400,  # [¤/in-game day]
-            "price_multiplier": 1.32,
+            "price_multiplier": 1.4,
             "power_factor": 1.4,
-            "income_factor": 1.35,
+            "income_factor": 1.33,
             "description": "The industry generates revenue from energy. The Power consumption of the Industry varies "
             "daily and seasonally. (<a href='/wiki/functional_facilities#The_Industry'>See wiki</a>)",
             "wikipedia_link": "",
