@@ -39,7 +39,7 @@ from .database.player import Player
 
 def get_or_create_flask_secret_key() -> str:
     """SECRET_KEY for Flask. Loads it from disk if it exists, creates one and stores it otherwise"""
-    filepath = "flask_secret_key.txt"
+    filepath = "instance/flask_secret_key.txt"
     if os.path.exists(filepath):
         with open(filepath, "r", encoding="utf-8") as f:
             return f.read().strip()
@@ -53,10 +53,10 @@ def get_or_create_flask_secret_key() -> str:
 def get_or_create_vapid_keys() -> type[str, str]:
     """
     Public private key pair for vapid push notifications. Loads these from disk if they exists, creates a new pair and
-    stores it otherwise
+    stores if otherwise
     """
-    public_key_filepath = "vapid_public_key.txt"
-    private_key_filepath = "vapid_private_key.txt"
+    public_key_filepath = "instance/vapid_public_key.txt"
+    private_key_filepath = "instance/vapid_private_key.txt"
     if os.path.exists(public_key_filepath) and os.path.exists(private_key_filepath):
         with open(public_key_filepath, "r", encoding="utf-8") as f:
             public_key = f.read().strip()
@@ -90,6 +90,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
 
     # creates the app :
     app = Flask(__name__)
+    Path("instance").mkdir(exist_ok=True)
     app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     (app.config["VAPID_PUBLIC_KEY"], app.config["VAPID_PRIVATE_KEY"]) = get_or_create_vapid_keys()
