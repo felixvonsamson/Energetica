@@ -357,7 +357,9 @@ def start_project(engine: GameEngine, player: Player, facility, family, force=Fa
     player_cap = engine.data["player_capacities"][player.id]
 
     if (
-        technology_effects.requirements_status(facility, technology_effects.facility_requirements(player, facility))
+        technology_effects.requirements_status(
+            player, facility, technology_effects.facility_requirements(player, facility)
+        )
         == "unsatisfied"
     ):
         return {"response": "locked"}

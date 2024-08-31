@@ -424,15 +424,21 @@ def facility_requirements(player: Player, facility: str):
     ]
 
 
-def requirements_status(asset, requirements) -> str:
+def requirements_status(player, asset, requirements) -> str:
     """
     Returns either "satisfied", "queued", or "unsatisfied".
     For facilities, returns "satisfied" if all requirements are "satisfied", otherwise returns "unsatisfied"
     For technologies, returns "satisfied" if all requirements are "satisfied", otherwise if all requirements are either
     "satisfied" or "queued", returns "queued", otherwise returns "unsatisfied".
     """
-    const_config = current_app.config["engine"].const_config["assets"]
+    engine: GameEngine = current_app.config["engine"]
+    const_config = engine.const_config["assets"]
     if all(requirement["status"] == "satisfied" for requirement in requirements):
+        if (
+            asset in engine.technologies
+            and OngoingConstruction.query.filter_by(name=asset, player_id=player.id).count() > 0
+        ):
+            return "queued"
         return "satisfied"
     if const_config[asset]["type"] == "Technology" and all(
         requirement["status"] != "unsatisfied" for requirement in requirements
@@ -444,7 +450,7 @@ def requirements_status(asset, requirements) -> str:
 def facility_requirements_and_requirements_status(player: Player, facility):
     """Returns a dictionary with both requirements and facility status"""
     requirements = facility_requirements(player, facility)
-    return {"requirements": requirements, "requirements_status": requirements_status(facility, requirements)}
+    return {"requirements": requirements, "requirements_status": requirements_status(player, facility, requirements)}
 
 
 def power_facility_resource_consumption(player: Player, power_facility):
