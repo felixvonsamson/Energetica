@@ -172,6 +172,10 @@ function pause_construction(construction_id) {
         else if (response == "parallelization not allowed") {
           addError("Consecutive upgrades of the same asset cannot be paralelized.");
         }
+        else if (response == "hasUnfinishedPrerequisites") {
+          addError("This construction cannot be started now as it has unfinished prerequisites.");
+          // console.log(raw_data["prerequisites"])
+        }
       });
     })
     .catch((error) => {

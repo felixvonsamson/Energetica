@@ -491,6 +491,7 @@ def cancel_project(player: Player, construction_id: int, force=False):
                             and candidate_dependent_level + offset - 1 >= construction_level
                         ):
                             is_dependent = True
+                            break
                     if is_dependent:
                         result.append([const_config[candidate_dependent.name]["name"], candidate_dependent_level])
             return result
@@ -594,12 +595,14 @@ def decrease_project_priority(player, construction_id, pausing=False):
     }
 
 
-def pause_project(player, construction_id):
+def pause_project(player: Player, construction_id: int):
     """this function is executed when a player pauses or unpauses an ongoing construction"""
-    engine = current_app.config["engine"]
+    engine: GameEngine = current_app.config["engine"]
+    const_config = engine.const_config["assets"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
 
     if construction.suspension_time is None:
+        # project is currently not pause, and should be paused
         while construction.suspension_time is None:
             response = decrease_project_priority(player, construction_id, pausing=True)
             if response["response"] == "paused":
@@ -611,6 +614,7 @@ def pause_project(player, construction_id):
             if last_project == int(construction_id):
                 construction.suspension_time = engine.data["total_t"]
     else:
+        # project is currently pause, and should be unpaused
         if construction.family in ["Functional facilities", "Technologies"]:
             first_lvl: OngoingConstruction = (
                 OngoingConstruction.query.filter_by(name=construction.name, player_id=player.id)
@@ -624,6 +628,41 @@ def pause_project(player, construction_id):
             else:
                 construction = first_lvl
         if construction.family == "Technologies":
+            # Check that this construction does not depend on any ongoing constructions
+            prerequisites = []
+            research_priorities = player.read_list("research_priorities")
+            construction_index = research_priorities.index(construction_id)
+            # Count all currently ongoing constructions of the same type to determine what exact level this one is
+            construction_level = getattr(player, construction.name) + 1
+            for other_research_id in research_priorities[:construction_index]:
+                if OngoingConstruction.query.get(other_research_id).name == construction.name:
+                    construction_level += 1
+            num_ongoing_researches_of = {}
+            # Iterate through all constructions that are higher up in the priority list
+            for candidate_prerequisite_id in research_priorities[:construction_index]:
+                candidate_prerequisite: OngoingConstruction = OngoingConstruction.query.get(candidate_prerequisite_id)
+                num_ongoing_researches_of[candidate_prerequisite.name] = (
+                    num_ongoing_researches_of.get(candidate_prerequisite.name, 0) + 1
+                )
+                candidate_prerequisite_level = getattr(
+                    player, candidate_prerequisite.name
+                ) + num_ongoing_researches_of.get(candidate_prerequisite.name, 0)
+                is_prerequisite = False
+                for requirement, offset in const_config[construction.name]["requirements"].items():
+                    if candidate_prerequisite.name == construction.name or (
+                        # `candidate_prerequisite` has this `construction` as a requirement
+                        candidate_prerequisite.name == requirement
+                        # `candidate_prerequisite`'s required `construction` level is greater or equal to
+                        and construction_level + offset - 1 >= candidate_prerequisite_level
+                    ):
+                        is_prerequisite = True
+                        break
+                if is_prerequisite:
+                    prerequisites.append(
+                        [const_config[candidate_prerequisite.name]["name"], candidate_prerequisite_level]
+                    )
+            if prerequisites:
+                return {"response": "hasUnfinishedPrerequisites", "prerequisites": prerequisites}
             player.project_max_priority("research_priorities", int(construction_id))
             if player.available_lab_workers() == 0:
                 research_priorities = player.read_list("research_priorities")
