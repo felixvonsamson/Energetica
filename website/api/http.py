@@ -384,7 +384,7 @@ def request_start_project():
 def request_cancel_project():
     """This function is executed when a player cancels an ongoing construction or upgrade."""
     request_data = request.get_json()
-    construction_id = request_data["id"]
+    construction_id = int(request_data["id"])
     force = request_data["force"]
     response = website.utils.assets.cancel_project(player=current_user, construction_id=construction_id, force=force)
     return jsonify(response)

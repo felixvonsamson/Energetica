@@ -141,6 +141,9 @@ function cancel_construction(construction_id, force = false) {
             JSON.stringify(raw_data["constructions"])
           );
           refresh_progressBar();
+        } else if (response == "hasDependents") {
+          let dependents = raw_data["dependents"]
+          has_dependents_cancel_construction(construction_id, dependents)
         } else if (response == "areYouSure") {
           refund = raw_data["refund"];
           are_you_sure_cancel_construction(construction_id, refund);

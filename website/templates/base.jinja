@@ -94,6 +94,17 @@
 </div>
 
 
+<div id="has_dependents_popup" class="popup bone flex-col medium hidden">
+  <div class="margin padding flex-col">
+    <span id="has_dependents_text">You cannot cancel this construction since the following other constructions depend on it:</span>
+    <span id="has_dependents_content"></span>
+    <div class="flex-row flex-space-around" style="width:100%">
+      <button id="no_cancel" onclick="hide_has_dependents();" class="button padding medium txt-red" style="margin-top:16px"><b>Dismiss</b></button>
+    </div>
+  </div>
+</div>
+
+
 <div id="are_you_sure_popup" class="popup bone flex-col medium hidden">
   <div class="margin padding flex-col">
     <span id="are_you_sure_content">Are you sure you want to delete this notification?</span>

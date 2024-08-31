@@ -15,10 +15,10 @@ from website.utils.network import reorder_facility_priorities
 
 def add_asset(player_id, construction_id):
     """
-    This function is executed when a construction or research project has finished. The effects indlude:
+    This function is executed when a construction or research project has finished. The effects include:
     * For facilities which create demands, e.g. carbon capture, adds demands to the demand priorities
     * For technologies and functional facilities, checks for achievements
-    * Removes from the relevant contruction / research list and priority list
+    * Removes from the relevant construction / research list and priority list
     """
     engine = current_app.config["engine"]
     player: Player = Player.query.get(player_id)
@@ -428,19 +428,74 @@ def start_project(engine, player, facility, family, force=False):
     }
 
 
-def cancel_project(player, construction_id, force=False):
-    """this function is executed when a player cancels an ongoing construction"""
+def cancel_project(player: Player, construction_id: int, force=False):
+    """This function is executed when a player cancels an ongoing construction"""
     engine = current_app.config["engine"]
+    const_config = engine.const_config["assets"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
 
-    priority_list_name = "construction_priorities"
     if construction.family == "Technologies":
         priority_list_name = "research_priorities"
+    else:
+        priority_list_name = "construction_priorities"
 
     if construction.suspension_time is None:
         time_fraction = (engine.data["total_t"] - construction.start_time) / (construction.duration)
     else:
         time_fraction = (construction.suspension_time - construction.start_time) / (construction.duration)
+
+    def get_dependents():
+        # Returns a list of OngoingConstructions which depend on this construction
+        if construction.family == "Technologies":
+            result = []
+            priority_list = player.read_list(priority_list_name)
+            construction_index = priority_list.index(construction_id)
+            num_ongoing_researches_of = {}
+            for candidate_dependent_index, candidate_dependent_id in enumerate(priority_list):
+                candidate_dependent: OngoingConstruction = OngoingConstruction.query.get(candidate_dependent_id)
+                num_ongoing_researches_of[candidate_dependent.name] = (
+                    num_ongoing_researches_of.get(candidate_dependent.name, 0) + 1
+                )
+                if candidate_dependent_index == construction_index:
+                    construction_level = getattr(player, construction.name) + num_ongoing_researches_of.get(
+                        construction.name, 0
+                    )
+                if candidate_dependent_index > construction_index:
+                    candidate_dependent_level = getattr(
+                        player, candidate_dependent.name
+                    ) + num_ongoing_researches_of.get(candidate_dependent.name, 0)
+                    is_dependent = False
+                    for requirement, offset in const_config[candidate_dependent.name]:
+                        if (
+                            # `candidate_dependent` has this `construction` as a requirement
+                            requirement == construction.name
+                            # `candidate_dependent`'s required `construction` level is greater or equal to
+                            and candidate_dependent_level + offset - 1 > construction_level
+                        ):
+                            is_dependent = True
+                    if is_dependent:
+                        result.append([const_config[candidate_dependent.name]["name"], candidate_dependent_level])
+            return result
+        elif construction.family == "Functional facilities":
+            result = []
+            priority_list = player.read_list(priority_list_name)
+            construction_index = priority_list.index(construction_id)
+            candidate_dependent_level = getattr(player, construction.name)
+            for candidate_dependent_index, candidate_dependent_id in enumerate(priority_list):
+                candidate_dependent: OngoingConstruction = OngoingConstruction.query.get(candidate_dependent_id)
+                if candidate_dependent.name == construction.name:
+                    candidate_dependent_level += 1
+                if candidate_dependent_index > construction_index:
+                    result.append([const_config[candidate_dependent.name]["name"], candidate_dependent_level])
+            return result
+        else:
+            return []
+
+    dependents = get_dependents()
+    print("dependents:")
+    print(dependents)
+    if dependents:
+        return {"response": "hasDependents", "dependents": dependents}
 
     if not force:
         return {

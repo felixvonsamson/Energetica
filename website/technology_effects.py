@@ -285,8 +285,8 @@ def next_available_location(player: Player, facility) -> int:
 
 def construction_price(player: Player, facility: str):
     """
-    Returns the (real) cost of the construciton of `factility` for `player`; be it power, storage, extraction,
-    functional facility, or technolgy; for functional facilities and technologies: be it for the immediate next level
+    Returns the (real) cost of the construction of `facility` for `player`; be it power, storage, extraction,
+    functional facility, or technology; for functional facilities and technologies: be it for the immediate next level
     when no other levels are queued, or or a level far in advance when many levels are already in progress and queued
     """
     engine: GameEngine = current_app.config["engine"]
@@ -396,7 +396,7 @@ def wind_speed_function(count, potential):
 
 
 def facility_requirements(player: Player, facility: str):
-    """Returns the list of requirements (name, level, and boolean for met) for the specified facility"""
+    """Returns the list of requirements (name, level, and satisfaction status) for the specified facility"""
     # TODO: update docstring, met is no longer a boolean, and is called status
     const_config = current_app.config["engine"].const_config["assets"]
     requirements = const_config[facility]["requirements"]
@@ -406,33 +406,38 @@ def facility_requirements(player: Player, facility: str):
         level_offset = next_level(player, facility) - 1
     return [
         {
-            "name": technology,
-            "display_name": const_config[technology]["name"],
+            "name": requirement,
+            "display_name": const_config[requirement]["name"],
             "level": level + level_offset,
             "status": (
                 "satisfied"
-                if getattr(player, technology) >= level + level_offset
+                if getattr(player, requirement) >= level + level_offset
                 else "queued"
-                if next_level(player, technology) - 1 >= level + level_offset
+                if next_level(player, requirement) - 1 >= level + level_offset and facility in engine.technologies
                 else "unsatisfied"
             ),
         }
-        for technology, level in requirements.items()
+        for requirement, level in requirements.items()
     ]
 
 
-def requirements_met(requirements):
+def requirements_met(asset, requirements) -> bool:
     """
-    Returns False (meaning locked) if any requirements is "unsatisfied"
-    Returns True (not locked) if all requirements are either "satisfied" or "queued"
+    Returns True if the facility is unlocked.
+    For facilities, all requirements must be "satisfied".
+    For technologies, all requirements must be either "satisfied" or "queued".
     """
-    return all(requirement["status"] != "unsatisfied" for requirement in requirements)
+    const_config = current_app.config["engine"].const_config["assets"]
+    if const_config[asset]["type"] == "Technology":  # Technologies
+        return all(requirement["status"] != "unsatisfied" for requirement in requirements)
+    else:  # Facilities
+        return all(requirement["status"] == "satisfied" for requirement in requirements)
 
 
 def facility_requirements_and_locked(player: Player, facility):
     """Returns a dictionary with both requirements and locked status"""
     requirements = facility_requirements(player, facility)
-    locked = not requirements_met(requirements)
+    locked = not requirements_met(facility, requirements)
     return {"requirements": requirements, "locked": locked}
 
 
@@ -530,7 +535,7 @@ def _package_facility_base(player: Player, facility):
         "price": construction_price(player, facility),
         "construction_power": construction_power(player, facility),
         "construction_time": construction_time(player, facility),
-        "locked": not requirements_met(facility_requirements(player, facility)),
+        "locked": not requirements_met(facility, facility_requirements(player, facility)),
         "requirements": facility_requirements(player, facility),
     }
 
@@ -660,7 +665,9 @@ def package_extraction_facilities(player: Player):
 
 def player_can_launch_project(player: Player, facility):
     """Returns true if facility is not hidden and if requirements are met"""
-    return not facility_is_hidden(player, facility) and requirements_met(facility_requirements(player, facility))
+    return not facility_is_hidden(player, facility) and requirements_met(
+        facility, facility_requirements(player, facility)
+    )
 
 
 def facility_is_hidden(player: Player, facility):
@@ -815,6 +822,8 @@ def package_constructions_page_data(player: Player):
 
 def package_available_technologies(player: Player):
     """Gets all data relevant for the frontend for technologies"""
+    # TODO: Check all invoked functions and rename facility to asset if needed
+    # Because these methods are common to both facilities and technologies, hence should use the name "asset"
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     engine: GameEngine = current_app.config["engine"]
