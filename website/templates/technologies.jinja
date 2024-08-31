@@ -77,6 +77,7 @@
                 {{ technology_data.description }}
                 <br class="smartphone_hide">
                 {% if technology_data.affected_facilities | length > 0 %}
+                  {# this looks like it needs some rework#}
                   {% if not (technology_data.locked and technology in
                     ["materials", "mechanical_engineering", "thermodynamics", "physics"]) %}
                     <br>
@@ -124,7 +125,7 @@
         {# Construction information for big screen #}
         <div id="constructionContent" class="hidden">
           <div class="flex-col construction_button_container hidden">
-            {% if technology_data.locked %}
+            {% if technology_data.requirements_status == "unsatisfied" %}
               <b class="padding medium margin txt_center white txt-red"
                  onclick="start_construction('{{ technology }}', 'Technologies');">
                 Locked
@@ -132,7 +133,11 @@
             {% else %}
               <b class="padding medium button margin txt_center white"
                  onclick="start_construction('{{ technology }}', 'Technologies');">
-                Start research
+                {% if technology_data.requirements_status == "satisfied" %}
+                  Start research
+                {% else %}
+                  Queue research
+                {% endif %}    
               </b>
             {% endif %}
           </div>
@@ -162,7 +167,7 @@
         {# Construction information for smartphone #}
         <div id="constructionContent_smartphone" class="hidden margin">
           <div class="flex-col">
-            {% if technology_data.locked %}
+            {% if technology_data.requirements_status == "unsatisfied" %}
               <b class="padding medium margin txt_center white txt-red"
                  onclick="event.stopPropagation(); start_construction('{{ technology }}', 'Technologies');">
                 Locked
@@ -170,7 +175,11 @@
             {% else %}
               <b class="padding medium button margin txt_center white"
                  onclick="event.stopPropagation(); start_construction('{{ technology }}', 'Technologies');">
-                Start research
+                {% if technology_data.requirements_status == "satisfied" %}
+                  Start research
+                {% else %}
+                  Queue research
+                {% endif %}    
               </b>
             {% endif %}
           </div>

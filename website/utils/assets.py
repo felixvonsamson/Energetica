@@ -356,7 +356,10 @@ def start_project(engine: GameEngine, player: Player, facility, family, force=Fa
     """this function is executed when a player clicks on 'start construction'"""
     player_cap = engine.data["player_capacities"][player.id]
 
-    if not technology_effects.player_can_launch_project(player, facility):
+    if (
+        technology_effects.requirements_status(facility, technology_effects.facility_requirements(player, facility))
+        == "unsatisfied"
+    ):
         return {"response": "locked"}
 
     real_price = technology_effects.construction_price(player, facility)
@@ -420,10 +423,10 @@ def start_project(engine: GameEngine, player: Player, facility, family, force=Fa
         # Add this project to the priority list, before all paused projects, but after all existing ongoing projects
         priority_list = player.read_list(priority_list_name)
         insertion_index = 0
-        for index, id in enumerate(priority_list):
-            possibly_unpaused: OngoingConstruction = OngoingConstruction.query.get(id)
-            if possibly_unpaused.suspension_time is None:  # not paused
-                insertion_index = index + 1
+        for possibly_unpaused_project_index, possibly_unpaused_project_id in enumerate(priority_list):
+            possibly_unpaused_project: OngoingConstruction = OngoingConstruction.query.get(possibly_unpaused_project_id)
+            if possibly_unpaused_project.suspension_time is None:  # not paused
+                insertion_index = possibly_unpaused_project_index + 1
             else:  # paused
                 break
         priority_list.insert(insertion_index, new_construction.id)

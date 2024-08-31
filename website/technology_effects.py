@@ -424,24 +424,27 @@ def facility_requirements(player: Player, facility: str):
     ]
 
 
-def requirements_met(asset, requirements) -> bool:
+def requirements_status(asset, requirements) -> str:
     """
-    Returns True if the facility is unlocked.
-    For facilities, all requirements must be "satisfied".
-    For technologies, all requirements must be either "satisfied" or "queued".
+    Returns either "satisfied", "queued", or "unsatisfied".
+    For facilities, returns "satisfied" if all requirements are "satisfied", otherwise returns "unsatisfied"
+    For technologies, returns "satisfied" if all requirements are "satisfied", otherwise if all requirements are either
+    "satisfied" or "queued", returns "queued", otherwise returns "unsatisfied".
     """
     const_config = current_app.config["engine"].const_config["assets"]
-    if const_config[asset]["type"] == "Technology":  # Technologies
-        return all(requirement["status"] != "unsatisfied" for requirement in requirements)
-    else:  # Facilities
-        return all(requirement["status"] == "satisfied" for requirement in requirements)
+    if all(requirement["status"] == "satisfied" for requirement in requirements):
+        return "satisfied"
+    if const_config[asset]["type"] == "Technology" and all(
+        requirement["status"] != "unsatisfied" for requirement in requirements
+    ):
+        return "queued"
+    return "unsatisfied"
 
 
-def facility_requirements_and_locked(player: Player, facility):
-    """Returns a dictionary with both requirements and locked status"""
+def facility_requirements_and_requirements_status(player: Player, facility):
+    """Returns a dictionary with both requirements and facility status"""
     requirements = facility_requirements(player, facility)
-    locked = not requirements_met(facility, requirements)
-    return {"requirements": requirements, "locked": locked}
+    return {"requirements": requirements, "requirements_status": requirements_status(facility, requirements)}
 
 
 def power_facility_resource_consumption(player: Player, power_facility):
@@ -526,21 +529,19 @@ def get_current_technology_values(player: Player):
     return dict
 
 
-def _package_facility_base(player: Player, facility):
-    """Gets data shared between power, storage, extraction, and functional facilities"""
+def _package_asset_base(player: Player, asset: str):
+    """Gets data shared between power, storage, extraction, functional facilities, and technologies"""
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
-        "name": facility,
-        "display_name": const_config_assets[facility]["name"],
-        "description": const_config_assets[facility]["description"],
-        "wikipedia_link": const_config_assets[facility]["wikipedia_link"],
-        "price": construction_price(player, facility),
-        "construction_power": construction_power(player, facility),
-        "construction_time": construction_time(player, facility),
-        "locked": not requirements_met(facility, facility_requirements(player, facility)),
-        "requirements": facility_requirements(player, facility),
-    }
+        "name": asset,
+        "display_name": const_config_assets[asset]["name"],
+        "description": const_config_assets[asset]["description"],
+        "wikipedia_link": const_config_assets[asset]["wikipedia_link"],
+        "price": construction_price(player, asset),
+        "construction_power": construction_power(player, asset),
+        "construction_time": construction_time(player, asset),
+    } | facility_requirements_and_requirements_status(player, asset)
 
 
 def _package_power_generating_facility_base(player: Player, facility):
@@ -587,7 +588,7 @@ def package_power_facilities(player: Player):
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return [
-        _package_facility_base(player, power_facility)
+        _package_asset_base(player, power_facility)
         | _package_power_generating_facility_base(player, power_facility)
         | _package_power_storage_extraction_facility_base(player, power_facility)
         | {
@@ -610,7 +611,7 @@ def package_storage_facilities(player: Player):
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return [
-        _package_facility_base(player, storage_facility)
+        _package_asset_base(player, storage_facility)
         | _package_power_generating_facility_base(player, storage_facility)
         | _package_power_storage_extraction_facility_base(player, storage_facility)
         | {
@@ -646,7 +647,7 @@ def package_extraction_facilities(player: Player):
             raise ValueError(f"unknown resource {resource}")
 
     return [
-        _package_facility_base(player, extraction_facility)
+        _package_asset_base(player, extraction_facility)
         | _package_power_storage_extraction_facility_base(player, extraction_facility)
         | {
             "power_consumption": const_config_assets[extraction_facility]["base_power_consumption"]
@@ -664,13 +665,6 @@ def package_extraction_facilities(player: Player):
         }
         for extraction_facility in engine.extraction_facilities
     ]
-
-
-def player_can_launch_project(player: Player, facility):
-    """Returns true if facility is not hidden and if requirements are met"""
-    return not facility_is_hidden(player, facility) and requirements_met(
-        facility, facility_requirements(player, facility)
-    )
 
 
 def facility_is_hidden(player: Player, facility):
@@ -798,7 +792,7 @@ def package_functional_facilities(player: Player):
         },
     }
     result = [
-        _package_facility_base(player, functional_facility)
+        _package_asset_base(player, functional_facility)
         | {
             "construction_pollution": const_config_assets[functional_facility]["base_construction_pollution"]
             * const_config_assets[functional_facility]["price_multiplier"] ** getattr(player, functional_facility),
@@ -832,7 +826,7 @@ def package_available_technologies(player: Player):
     engine: GameEngine = current_app.config["engine"]
     levels: Dict[str, int] = {technology: next_level(player, technology) for technology in engine.technologies}
     return {
-        technology: _package_facility_base(player, technology)
+        technology: _package_asset_base(player, technology)
         | {
             "level": levels[technology],
             "affected_facilities": [

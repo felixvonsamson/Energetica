@@ -56,7 +56,7 @@
               {# Description #}
               <div class="infotext">{{ facility_data.description }}</div>
               {# Requirements #}
-              {% if facility_data.locked %}
+              {% if facility_data.requirements_status != "satisfied" %}
                 <div class="infobox requirements" id="requirements">
                   <div>
                     <strong>Unlock with :</strong>
@@ -82,7 +82,7 @@
         {# Construction information for big screen #}
         <div id="constructionContent" class="hidden">
           <div class="flex-col construction_button_container hidden">
-            {% if facility_data.locked %}
+            {% if facility_data.requirements_status == "unsatisfied" %}
               <b class="padding medium margin txt_center white txt-red"
                  onclick="start_construction('{{ facility }}', 'Storage facilities');">
                 Locked
@@ -120,7 +120,7 @@
         {# Construction information for smartphone #}
         <div id="constructionContent_smartphone" class="hidden margin">
           <div class="flex-col">
-            {% if facility_data.locked %}
+            {% if facility_data.requirements_status == "unsatisfied" %}
               <b class="padding medium margin txt_center white txt-red"
                  onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Storage facilities');">
                 Locked
