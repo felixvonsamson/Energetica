@@ -372,7 +372,7 @@ def request_start_project():
     response = website.utils.assets.start_project(
         engine=g.engine,
         player=current_user,
-        facility=facility,
+        asset=facility,
         family=family,
         force=force,
     )

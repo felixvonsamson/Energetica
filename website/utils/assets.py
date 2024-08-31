@@ -352,24 +352,22 @@ def package_projects_data(player):
     return {0: projects, 1: construction_priorities, 2: research_priorities}
 
 
-def start_project(engine: GameEngine, player: Player, facility, family, force=False):
+def start_project(engine: GameEngine, player: Player, asset, family, force=False):
     """this function is executed when a player clicks on 'start construction'"""
     player_cap = engine.data["player_capacities"][player.id]
 
     if (
-        technology_effects.requirements_status(
-            player, facility, technology_effects.facility_requirements(player, facility)
-        )
+        technology_effects.requirements_status(player, asset, technology_effects.asset_requirements(player, asset))
         == "unsatisfied"
     ):
         return {"response": "locked"}
 
-    real_price = technology_effects.construction_price(player, facility)
-    duration = technology_effects.construction_time(player, facility)
+    real_price = technology_effects.construction_price(player, asset)
+    duration = technology_effects.construction_time(player, asset)
 
     if player.money < real_price:
         return {"response": "notEnoughMoneyError"}
-    construction_power = technology_effects.construction_power(player, facility)
+    construction_power = technology_effects.construction_power(player, asset)
     if not force and "Unlock Network" not in player.achievements:
         capacity = 0
         for gen in engine.power_facilities:
@@ -394,7 +392,7 @@ def start_project(engine: GameEngine, player: Player, facility, family, force=Fa
             return False  # No available workers
         if (
             family in ["Functional facilities", "Technologies"]
-            and OngoingConstruction.query.filter_by(name=facility, player_id=player.id).count() > 0
+            and OngoingConstruction.query.filter_by(name=asset, player_id=player.id).count() > 0
         ):
             return False  # Another level is already ongoing
         return True
@@ -406,17 +404,17 @@ def start_project(engine: GameEngine, player: Player, facility, family, force=Fa
 
     player.money -= real_price
     new_construction: OngoingConstruction = OngoingConstruction(
-        name=facility,
+        name=asset,
         family=family,
         start_time=engine.data["total_t"],
         duration=duration,
         suspension_time=suspension_time,
         construction_power=construction_power,
-        construction_pollution=technology_effects.construction_pollution_per_tick(player, facility),
-        price_multiplier=technology_effects.price_multiplier(player, facility),
-        multiplier_1=technology_effects.multiplier_1(player, facility),
-        multiplier_2=technology_effects.multiplier_2(player, facility),
-        multiplier_3=technology_effects.multiplier_3(player, facility),
+        construction_pollution=technology_effects.construction_pollution_per_tick(player, asset),
+        price_multiplier=technology_effects.price_multiplier(player, asset),
+        multiplier_1=technology_effects.multiplier_1(player, asset),
+        multiplier_2=technology_effects.multiplier_2(player, asset),
+        multiplier_3=technology_effects.multiplier_3(player, asset),
         player_id=player.id,
     )
     db.session.add(new_construction)
@@ -436,7 +434,7 @@ def start_project(engine: GameEngine, player: Player, facility, family, force=Fa
     else:
         player.add_to_list(priority_list_name, new_construction.id)
 
-    engine.log(f"{player.username} started the construction {facility}")
+    engine.log(f"{player.username} started the construction {asset}")
     websocket.rest_notify_constructions(engine, player)
     db.session.commit()
     return {
@@ -509,8 +507,6 @@ def cancel_project(player: Player, construction_id: int, force=False):
         return []
 
     dependents = get_dependents()
-    print("dependents:")
-    print(dependents)
     if dependents:
         return {"response": "hasDependents", "dependents": dependents}
 
