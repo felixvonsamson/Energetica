@@ -452,7 +452,7 @@ const_config = {
             "base_power_consumption": 3_000_000,  # [W]
             "base_pollution": 0.065,  # [kg CO2/kg extracted]
             "lifespan": timedelta(days=161).total_seconds(),  # [in-game seconds]
-            "base_extraction_rate_per_day": 0.001_8,  # [fraction of total stock that can be extracted every in-game
+            "base_extraction_rate_per_day": 0.001,  # [fraction of total stock that can be extracted every in-game
             # day by one mine]
             "description": "The O&M costs of the coal mine are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Coal_mining",
@@ -469,7 +469,7 @@ const_config = {
             "base_power_consumption": 5_100_000,
             "base_pollution": 0.523,
             "lifespan": timedelta(days=70).total_seconds(),
-            "base_extraction_rate_per_day": 0.015,
+            "base_extraction_rate_per_day": 0.002,
             "description": "The O&M costs of the coal mine are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Natural_gas",
             "requirements": {"mineral_extraction": 2, "warehouse": 1},
@@ -485,7 +485,7 @@ const_config = {
             "base_power_consumption": 18_000_000,
             "base_pollution": 86,
             "lifespan": timedelta(days=126).total_seconds(),
-            "base_extraction_rate_per_day": 0.001_8,
+            "base_extraction_rate_per_day": 0.000_05,
             "description": "The O&M costs of the coal mine are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Uranium_mining",
             "requirements": {"mineral_extraction": 5, "warehouse": 3},
@@ -718,9 +718,9 @@ const_config = {
         },
     },
     "warehouse_capacities": {
-        "coal": 3_000_000 / 1.5,  # [kg]
-        "gas": 1_000_000 / 1.5,
-        "uranium": 5_000 / 1.5,
+        "coal": 500_000 / 1.5,  # [kg]
+        "gas": 300_000 / 1.5,
+        "uranium": 1_000 / 1.5,
     },
     "transport": {
         "time_per_tile": timedelta(hours=5, minutes=20).total_seconds(),  # [in-game seconds/distance unit]
