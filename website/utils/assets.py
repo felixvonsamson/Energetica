@@ -10,6 +10,7 @@ from website import db, game_engine, technology_effects
 from website.api import websocket
 from website.database.player import Player
 from website.database.player_assets import ActiveFacility, OngoingConstruction
+from website.game_engine import GameEngine
 from website.utils.network import reorder_facility_priorities
 
 
@@ -351,7 +352,7 @@ def package_projects_data(player):
     return {0: projects, 1: construction_priorities, 2: research_priorities}
 
 
-def start_project(engine, player, facility, family, force=False):
+def start_project(engine: GameEngine, player: Player, facility, family, force=False):
     """this function is executed when a player clicks on 'start construction'"""
     player_cap = engine.data["player_capacities"][player.id]
 
@@ -415,9 +416,21 @@ def start_project(engine, player, facility, family, force=False):
     )
     db.session.add(new_construction)
     db.session.commit()
-    player.add_to_list(priority_list_name, new_construction.id)
     if suspension_time is None:
-        player.project_max_priority(priority_list_name, new_construction.id)
+        # Add this project to the priority list, before all paused projects, but after all existing ongoing projects
+        priority_list = player.read_list(priority_list_name)
+        insertion_index = 0
+        for index, id in enumerate(priority_list):
+            possibly_unpaused: OngoingConstruction = OngoingConstruction.query.get(id)
+            if possibly_unpaused.suspension_time == None:  # not paused
+                insertion_index = index + 1
+            else:  # paused
+                break
+        priority_list.insert(insertion_index, new_construction.id)
+        player.write_list(priority_list_name, priority_list)
+    else:
+        player.add_to_list(priority_list_name, new_construction.id)
+
     engine.log(f"{player.username} started the construction {facility}")
     websocket.rest_notify_constructions(engine, player)
     db.session.commit()
@@ -466,9 +479,6 @@ def cancel_project(player: Player, construction_id: int, force=False):
                     ) + num_ongoing_researches_of.get(candidate_dependent.name, 0)
                     is_dependent = False
                     for requirement, offset in const_config[candidate_dependent.name]["requirements"].items():
-                        print(
-                            f"technology {candidate_dependent.name} level {candidate_dependent_level} has requirement {requirement} level {candidate_dependent_level + offset - 1}"
-                        )
                         if candidate_dependent.name == construction.name or (
                             # `candidate_dependent` has this `construction` as a requirement
                             requirement == construction.name
@@ -491,8 +501,7 @@ def cancel_project(player: Player, construction_id: int, force=False):
                 if candidate_dependent_index > construction_index:
                     result.append([const_config[candidate_dependent.name]["name"], candidate_dependent_level])
             return result
-        else:
-            return []
+        return []
 
     dependents = get_dependents()
     print("dependents:")
