@@ -356,10 +356,10 @@ def start_project(engine: GameEngine, player: Player, asset, family, force=False
     """this function is executed when a player clicks on 'start construction'"""
     player_cap = engine.data["player_capacities"][player.id]
 
-    if (
-        technology_effects.requirements_status(player, asset, technology_effects.asset_requirements(player, asset))
-        == "unsatisfied"
-    ):
+    asset_requirement_status = technology_effects.requirements_status(
+        player, asset, technology_effects.asset_requirements(player, asset)
+    )
+    if asset_requirement_status == "unsatisfied":
         return {"response": "locked"}
 
     real_price = technology_effects.construction_price(player, asset)
@@ -386,6 +386,8 @@ def start_project(engine: GameEngine, player: Player, asset, family, force=False
         priority_list_name = "construction_priorities"
 
     def can_start_immediately():
+        if asset_requirement_status == "queued":
+            return False
         if family == "Technologies" and player.available_lab_workers() == 0:
             return False  # No available workers
         if family != "Technologies" and player.available_construction_workers() == 0:
