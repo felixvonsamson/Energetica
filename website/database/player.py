@@ -158,7 +158,7 @@ class Player(db.Model, UserMixin):
         return self.lab_workers - occupied_workers
 
     def read_list(self, attr):
-        """Helper method thar returns a list of any player list that is stored as a string"""
+        """Helper method that returns a list of any player list that is stored as a string"""
         if getattr(self, attr) == "":
             return []
         priority_list = getattr(self, attr).split(",")
@@ -166,6 +166,10 @@ class Player(db.Model, UserMixin):
             return list(map(int, priority_list))
         else:
             return priority_list
+
+    def write_list(self, attr, list):
+        """Helper method that writes a list of any player list that is stored as a string"""
+        setattr(self, attr, ",".join(map(str, list)))
 
     def add_to_list(self, attr, value):
         """Helper method that adds an element to a list stored as a string"""
@@ -493,8 +497,6 @@ class Player(db.Model, UserMixin):
     @staticmethod
     def package_all():
         """Gets the package data for all players"""
-        from typing import List
-
         players: List[Player] = Player.query.all()
         return {player.id: player.package() for player in players}
 

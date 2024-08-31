@@ -422,7 +422,7 @@ def start_project(engine: GameEngine, player: Player, facility, family, force=Fa
         insertion_index = 0
         for index, id in enumerate(priority_list):
             possibly_unpaused: OngoingConstruction = OngoingConstruction.query.get(id)
-            if possibly_unpaused.suspension_time == None:  # not paused
+            if possibly_unpaused.suspension_time is None:  # not paused
                 insertion_index = index + 1
             else:  # paused
                 break
