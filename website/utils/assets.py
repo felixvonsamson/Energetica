@@ -465,18 +465,21 @@ def cancel_project(player: Player, construction_id: int, force=False):
                         player, candidate_dependent.name
                     ) + num_ongoing_researches_of.get(candidate_dependent.name, 0)
                     is_dependent = False
-                    for requirement, offset in const_config[candidate_dependent.name]:
-                        if (
+                    for requirement, offset in const_config[candidate_dependent.name]["requirements"].items():
+                        print(
+                            f"technology {candidate_dependent.name} level {candidate_dependent_level} has requirement {requirement} level {candidate_dependent_level + offset - 1}"
+                        )
+                        if candidate_dependent.name == construction.name or (
                             # `candidate_dependent` has this `construction` as a requirement
                             requirement == construction.name
                             # `candidate_dependent`'s required `construction` level is greater or equal to
-                            and candidate_dependent_level + offset - 1 > construction_level
+                            and candidate_dependent_level + offset - 1 >= construction_level
                         ):
                             is_dependent = True
                     if is_dependent:
                         result.append([const_config[candidate_dependent.name]["name"], candidate_dependent_level])
             return result
-        elif construction.family == "Functional facilities":
+        if construction.family == "Functional facilities":
             result = []
             priority_list = player.read_list(priority_list_name)
             construction_index = priority_list.index(construction_id)
