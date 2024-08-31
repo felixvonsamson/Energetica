@@ -91,18 +91,26 @@
         <a href="/production_overview/electricity">
             <h2 class="txt_center">Power Production</h2>
         </a>
+        {% if "First Storage Facility" in user.achievements %}
         <a href="/production_overview/storage">
             <h2 class="txt_center">Stored Energy</h2>
         </a>
+        {% endif %}
+        {% if "Discover the Greenhouse Effect" in user.achievements %}
         <a href="/production_overview/emissions">
             <h2 class="txt_center">Emissions</h2>
         </a>
+        {% endif %}
+        {% if user.network != None  %}
         <a href="/network">
             <h2 class="txt_center">Market Prices</h2>
         </a>
+        {% endif %}
+        {% if "Unlock Natural Resources" in user.achievements %}
         <a href="/resource_market">
             <h2 class="txt_center">Resource Market</h2>
         </a>
+        {% endif %}
         <a href="/scoreboard">
             <h2 class="txt_center">Ranking</h2>
         </a>
