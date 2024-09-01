@@ -141,6 +141,9 @@ function cancel_construction(construction_id, force = false) {
             JSON.stringify(raw_data["constructions"])
           );
           refresh_progressBar();
+        } else if (response == "hasDependents") {
+          let dependents = raw_data["dependents"]
+          has_dependents_cancel_construction(construction_id, dependents)
         } else if (response == "areYouSure") {
           refund = raw_data["refund"];
           are_you_sure_cancel_construction(construction_id, refund);
@@ -168,6 +171,10 @@ function pause_construction(construction_id) {
         }
         else if (response == "parallelization not allowed") {
           addError("Consecutive upgrades of the same asset cannot be paralelized.");
+        }
+        else if (response == "hasUnfinishedPrerequisites") {
+          addError("This construction cannot be started now as it has unfinished prerequisites.");
+          // console.log(raw_data["prerequisites"])
         }
       });
     })
@@ -210,6 +217,11 @@ function decrease_project_priority(construction_id) {
             JSON.stringify(raw_data["constructions"])
           );
           refresh_progressBar();
+        } else if (response == "parallelization not allowed") {
+          addError("Consecutive upgrades of the same asset cannot be paralelized.");
+        }
+        else if (response == "requirementsPreventReorder") {
+          addError("The order of these two constructions cannot be swapped as one depends on the other.");
         }
       });
     })
