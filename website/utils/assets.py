@@ -541,7 +541,10 @@ def cancel_project(player: Player, construction_id: int, force=False):
 
 
 def decrease_project_priority(player, construction_id, pausing=False):
-    """this function is executed when a player changes the order of ongoing constructions"""
+    """
+    This function is executed when a player changes the order of ongoing constructions.
+    This function is also called from within the `pause_project` function, in which case `pausing=True`
+    """
     engine = current_app.config["engine"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
 
@@ -550,12 +553,15 @@ def decrease_project_priority(player, construction_id, pausing=False):
     else:
         attr = "construction_priorities"
 
-    id_list = player.read_list(attr)
-    index = id_list.index(construction_id)
-    if index >= 0 and index < len(id_list) - 1:
-        construction_1: OngoingConstruction = OngoingConstruction.query.get(id_list[index])
-        construction_2: OngoingConstruction = OngoingConstruction.query.get(id_list[index + 1])
+    priority_list = player.read_list(attr)
+    index = priority_list.index(construction_id)
+    if index >= 0 and index < len(priority_list) - 1:
+        construction_1: OngoingConstruction = OngoingConstruction.query.get(priority_list[index])
+        construction_2: OngoingConstruction = OngoingConstruction.query.get(priority_list[index + 1])
+        if construction_1.name == construction_2.name:
+            return {"response": "requirementsPreventReorder"}
         if construction_1.suspension_time is None and construction_2.suspension_time is not None:
+            # construction_1 is not paused, but construction_2 is
             construction_1.suspension_time = engine.data["total_t"]
             if pausing:
                 return {"response": "paused"}
@@ -569,23 +575,24 @@ def decrease_project_priority(player, construction_id, pausing=False):
                     .first()
                 )
                 if first_lvl.suspension_time is None:
+                    print("parallelization error")
                     return {
                         "response": "parallelization not allowed",
                     }
                 else:
-                    index_first_lvl = id_list.index(first_lvl.id)
-                    id_list[index + 1], id_list[index_first_lvl] = (
-                        id_list[index_first_lvl],
-                        id_list[index + 1],
+                    index_first_lvl = priority_list.index(first_lvl.id)
+                    priority_list[index + 1], priority_list[index_first_lvl] = (
+                        priority_list[index_first_lvl],
+                        priority_list[index + 1],
                     )
                     construction_2 = first_lvl
             construction_2.start_time += engine.data["total_t"] - construction_2.suspension_time
             construction_2.suspension_time = None
-        id_list[index + 1], id_list[index] = (
-            id_list[index],
-            id_list[index + 1],
+        priority_list[index + 1], priority_list[index] = (
+            priority_list[index],
+            priority_list[index + 1],
         )
-        setattr(player, attr, ",".join(map(str, id_list)))
+        setattr(player, attr, ",".join(map(str, priority_list)))
         db.session.commit()
         websocket.rest_notify_constructions(engine, player)
 

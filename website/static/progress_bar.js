@@ -217,6 +217,11 @@ function decrease_project_priority(construction_id) {
             JSON.stringify(raw_data["constructions"])
           );
           refresh_progressBar();
+        } else if (response == "parallelization not allowed") {
+          addError("Consecutive upgrades of the same asset cannot be paralelized.");
+        }
+        else if (response == "requirementsPreventReorder") {
+          addError("The order of these two constructions cannot be swapped as one depends on the other.");
         }
       });
     })
