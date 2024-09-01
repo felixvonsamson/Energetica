@@ -16,11 +16,19 @@
            class="cross pine margin-small"
            style="width:39px">×</div>
     </div>
-    <div class="txt_center margin medium">
-      <p>On this page you will find all the facilities that can extract natural resources from the ground.</p>
+    <div class="margin medium">
+      <p>On this page you will find all the facilities that can extract natural resources from the ground and their respective information.</p>
       <p>
-        For more information about Extraction facilities, refer to the <a href="{{ url_for('wiki.render_template_wiki', template_name='extraction_facilities') }}">Extraction
-        facilities section in the wiki</a>.
+        When clicking on a specific tile, it will extend the tile and show you more information about the facility aswell 
+        as a button to start the construction of the facility.
+      </p>
+      <p>
+        Some facilities might be locked and require certain technologies to be unlocked. To research technologies, you 
+        need a laboratory.
+      </p>
+      <p>
+        For more information about Extraction facilities, refer to <a href="{{ url_for('wiki.render_template_wiki', template_name='extraction_facilities') }}">
+        this section in the wiki</a>.
       </p>
     </div>
   </div>

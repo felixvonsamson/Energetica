@@ -18,28 +18,44 @@
                  class="cross pine margin-small"
                  style="width:39px">×</div>
         </div>
-        <div class="txt_center margin medium">
+        <div class="margin medium">
             {% if user.network == None %}
                 <p>
-                    Here you can join or create a network. You will also find tables where you can set the prices for the demand
-                    and the power and storage facilities. These prices will define the priority lists of facilities for the power
-                    generation logic.
+                    Here you can join or create a network to trade electricity with other players. If you do, you will 
+                    see the network's information adn activities here.
+                </p>
+                <p>
+                    Since you are currently not in a netwok you will find a interactive list of facilities on this page 
+                    where you can set the priority of your facilities. This will determine the order in which your facilities 
+                    will be used to satisfy your demand. For more information about the priority list refer to 
+                    <a href="{{ url_for('wiki.render_template_wiki', template_name='power_management') }}">this section of the wiki</a>.
+                </p>
+                <p>
+                    Refer to <a href="{{ url_for('wiki.render_template_wiki', template_name='network') }}">Network</a> in 
+                    the wiki for more information about networs.
                 </p>
             {% else %}
                 <p>
-                    On this page you will find informations about your network and tables where you can set the prices for the
-                    demand and the power and storage facilities.
+                    On this page you will find all the information about your networks activity.
                 </p>
                 <p>
-                    The top graph shows the market price and quantity over time and the lower graph shows the current market
-                    state with the colored rectangles being the supply and the red saircase curve being the demand. You can
-                    click on past timepoints in the top plot to show the market state at this time.
+                    At the top of the page you can choose between 3 views with different levels of detail. In each of 
+                    the views you will find different graphs and tables showing you information about network capacities,
+                    imports and exports, market prices and quantities and offers and demands of the market. Hover over the 
+                    different graphs to get more information about the data. You can also adjust the time scale of the graphs 
+                    with the resolution buttons aswell as switch between differnt views with the toggles below the graphs.
+                    Let me know if you need more documentation about the network graphs.
+                </p>
+                <p>
+                    At the bottom of the page you can adjust the selling prices for your different production 
+                    capacities, the buying prices for different demand types and the selling and buying prices for different 
+                    storage facilities. You can also leave the network here.
+                </p>
+                <p>
+                    Refer to <a href="{{ url_for('wiki.render_template_wiki', template_name='network') }}">Network</a> in 
+                    the wiki for more information about networs mechanics.
                 </p>
             {% endif %}
-            <p>
-                For more detailed information about the Network and the prices refer to the <a href="{{ url_for('wiki.render_template_wiki', template_name='network') }}">Network
-                section in the wiki</a>.
-            </p>
         </div>
     </div>
     {% if user.network == None %}

@@ -16,11 +16,18 @@
            class="cross pine margin-small"
            style="width:39px">×</div>
     </div>
-    <div class="txt_center margin medium">
-      <p>On this page you will find all the facilities that generate electricity.</p>
+    <div class="margin medium">
+      <p>On this page you will find all the facilities that generate electricity and their respective information.</p>
       <p>
-        For more information about how power facilities generate electricity, refer to the
-        <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities') }}">Power facilities section in the wiki</a>.
+        When clicking on a specific tile, it will extend the tile and show you more information about the facility aswell 
+        as a button to start the construction of the facility.
+      </p>
+      <p>
+        Some facilities might be locked and require certain technologies to be unlocked. To research technologies, you 
+        need a laboratory.
+      </p>
+        For more information about power facilites, refer to
+        <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities') }}">this section in the wiki</a>.
       </p>
     </div>
   </div>
