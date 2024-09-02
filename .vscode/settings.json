@@ -10,7 +10,7 @@
     "[jinja-html]": {
         "editor.wordWrapColumn": 120,
         "editor.defaultFormatter": "monosans.djlint",
-        "editor.rulers": [ 80, 120 ],
+        "editor.rulers": [ 120 ],
         "editor.formatOnSave": false,
         "djlint.enableLinting": true,
         // "djlint.profile": "jinja"
