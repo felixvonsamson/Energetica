@@ -32,7 +32,7 @@ class OngoingConstruction(db.Model):
 
     def prerequisites(self, recompute=False) -> List[int]:
         """Returns a list of the id's of ongoing constructions that this constructions depends on"""
-        if not self._prerequisites or recompute:
+        if self._prerequisites is None or recompute:
             self._compute_prerequisites_and_level()
         return self._prerequisites
 
@@ -41,7 +41,7 @@ class OngoingConstruction(db.Model):
         In the case of functional facilities and technologies, returns the level of this construction.
         Otherwise, returns 0.
         """
-        if not self._level:
+        if self._level is None:
             self._compute_prerequisites_and_level()
         return self._level
 
