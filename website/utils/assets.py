@@ -462,54 +462,13 @@ def cancel_project(player: Player, construction_id: int, force=False):
     else:
         time_fraction = (construction.suspension_time - construction.start_time) / (construction.duration)
 
-    def get_dependents():
-        # Returns a list of OngoingConstructions which depend on this construction
-        if construction.family == "Technologies":
-            result = []
-            priority_list = player.read_list(priority_list_name)
-            construction_index = priority_list.index(construction_id)
-            num_ongoing_researches_of = {}
-            for candidate_dependent_index, candidate_dependent_id in enumerate(priority_list):
-                candidate_dependent: OngoingConstruction = OngoingConstruction.query.get(candidate_dependent_id)
-                num_ongoing_researches_of[candidate_dependent.name] = (
-                    num_ongoing_researches_of.get(candidate_dependent.name, 0) + 1
-                )
-                if candidate_dependent_index == construction_index:
-                    construction_level = getattr(player, construction.name) + num_ongoing_researches_of.get(
-                        construction.name, 0
-                    )
-                if candidate_dependent_index > construction_index:
-                    candidate_dependent_level = getattr(
-                        player, candidate_dependent.name
-                    ) + num_ongoing_researches_of.get(candidate_dependent.name, 0)
-                    is_dependent = False
-                    for requirement, offset in const_config[candidate_dependent.name]["requirements"].items():
-                        if candidate_dependent.name == construction.name or (
-                            # `candidate_dependent` has this `construction` as a requirement
-                            requirement == construction.name
-                            # `candidate_dependent`'s required `construction` level is greater or equal to
-                            and candidate_dependent_level + offset - 1 >= construction_level
-                        ):
-                            is_dependent = True
-                            break
-                    if is_dependent:
-                        result.append([const_config[candidate_dependent.name]["name"], candidate_dependent_level])
-            return result
-        if construction.family == "Functional facilities":
-            result = []
-            priority_list = player.read_list(priority_list_name)
-            construction_index = priority_list.index(construction_id)
-            candidate_dependent_level = getattr(player, construction.name)
-            for candidate_dependent_index, candidate_dependent_id in enumerate(priority_list):
-                candidate_dependent: OngoingConstruction = OngoingConstruction.query.get(candidate_dependent_id)
-                if candidate_dependent.name == construction.name:
-                    candidate_dependent_level += 1
-                if candidate_dependent_index > construction_index:
-                    result.append([const_config[candidate_dependent.name]["name"], candidate_dependent_level])
-            return result
-        return []
-
-    dependents = get_dependents()
+    dependents = []
+    priority_list = player.read_list(priority_list_name)
+    construction_priority_index = priority_list.index(construction_id)
+    for candidate_dependent_id in priority_list[construction_priority_index + 1 :]:
+        candidate_dependent: OngoingConstruction = OngoingConstruction.query.get(candidate_dependent_id)
+        if construction_id in candidate_dependent.prerequisites():
+            dependents.append([candidate_dependent.name, candidate_dependent.level()])
     if dependents:
         return {"response": "hasDependents", "dependents": dependents}
 
@@ -558,36 +517,41 @@ def decrease_project_priority(player, construction_id, pausing=False):
     if index >= 0 and index < len(priority_list) - 1:
         construction_1: OngoingConstruction = OngoingConstruction.query.get(priority_list[index])
         construction_2: OngoingConstruction = OngoingConstruction.query.get(priority_list[index + 1])
-        if construction_1.name == construction_2.name:
+        if construction_1.id in construction_2.prerequisites():
             return {"response": "requirementsPreventReorder"}
+
         if construction_1.suspension_time is None and construction_2.suspension_time is not None:
             # construction_1 is not paused, but construction_2 is
-            construction_1.suspension_time = engine.data["total_t"]
-            if pausing:
-                return {"response": "paused"}
-            if construction_2.family in [
-                "Functional facilities",
-                "Technologies",
-            ]:
-                first_lvl: OngoingConstruction = (
-                    OngoingConstruction.query.filter_by(name=construction_2.name, player_id=player.id)
-                    .order_by(OngoingConstruction.duration)
-                    .first()
-                )
-                if first_lvl.suspension_time is None:
-                    print("parallelization error")
-                    return {
-                        "response": "parallelization not allowed",
-                    }
-                else:
-                    index_first_lvl = priority_list.index(first_lvl.id)
-                    priority_list[index + 1], priority_list[index_first_lvl] = (
-                        priority_list[index_first_lvl],
-                        priority_list[index + 1],
-                    )
-                    construction_2 = first_lvl
-            construction_2.start_time += engine.data["total_t"] - construction_2.suspension_time
-            construction_2.suspension_time = None
+            response = pause_project(player, construction_1.id)
+            if response["response"] == "success":
+                return pause_project(player, construction_2.id)
+            else:
+                return response
+            # construction_1.suspension_time = engine.data["total_t"]
+            # if pausing:
+            #     return {"response": "paused"}
+            # if construction_2.family in [
+            #     "Functional facilities",
+            #     "Technologies",
+            # ]:
+            #     first_lvl: OngoingConstruction = (
+            #         OngoingConstruction.query.filter_by(name=construction_2.name, player_id=player.id)
+            #         .order_by(OngoingConstruction.duration)
+            #         .first()
+            #     )
+            #     if first_lvl.suspension_time is None:
+            #         return {
+            #             "response": "parallelization not allowed",
+            #         }
+            #     else:
+            #         index_first_lvl = priority_list.index(first_lvl.id)
+            #         priority_list[index + 1], priority_list[index_first_lvl] = (
+            #             priority_list[index_first_lvl],
+            #             priority_list[index + 1],
+            #         )
+            #         construction_2 = first_lvl
+            # construction_2.start_time += engine.data["total_t"] - construction_2.suspension_time
+            # construction_2.suspension_time = None
         priority_list[index + 1], priority_list[index] = (
             priority_list[index],
             priority_list[index + 1],
@@ -608,85 +572,60 @@ def pause_project(player: Player, construction_id: int):
     const_config = engine.const_config["assets"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
 
+    if construction.family == "Technologies":
+        priority_list_name = "research_priorities"
+    else:
+        priority_list_name = "construction_priorities"
+
     if construction.suspension_time is None:
         # project is currently not pause, and should be paused
         while construction.suspension_time is None:
-            response = decrease_project_priority(player, construction_id, pausing=True)
-            if response["response"] == "paused":
-                break
-            if construction.family == "Technologies":
-                last_project = response["constructions"][2][-1]
+            construction.suspension_time = engine.data["total_t"]
+            priority_list: List[int] = player.read_list(priority_list_name)
+            priority_list.remove(construction_id)
+            insertion_index = None
+            for new_index, other_construction_id in enumerate(priority_list):
+                other_construction: OngoingConstruction = OngoingConstruction.query.get(other_construction_id)
+                if other_construction.suspension_time is not None:
+                    insertion_index = new_index
+                    break
+            if insertion_index is not None:
+                priority_list.insert(insertion_index, construction_id)
             else:
-                last_project = response["constructions"][1][-1]
-            if last_project == int(construction_id):
-                construction.suspension_time = engine.data["total_t"]
+                priority_list.append(construction_id)
+            player.write_list(priority_list_name, priority_list)
     else:
         # project is currently pause, and should be unpaused
-        if construction.family in ["Functional facilities", "Technologies"]:
-            first_lvl: OngoingConstruction = (
-                OngoingConstruction.query.filter_by(name=construction.name, player_id=player.id)
-                .order_by(OngoingConstruction.duration)
-                .first()
-            )
-            if first_lvl.suspension_time is None:
-                return {
-                    "response": "parallelization not allowed",
-                }
-            else:
-                construction = first_lvl
+        if construction.prerequisites(recompute=True):
+            return {"response": "hasUnfinishedPrerequisites"}
+
         if construction.family == "Technologies":
-            # Check that this construction does not depend on any ongoing constructions
-            prerequisites = []
-            research_priorities = player.read_list("research_priorities")
-            construction_index = research_priorities.index(construction_id)
-            # Count all currently ongoing constructions of the same type to determine what exact level this one is
-            construction_level = getattr(player, construction.name) + 1
-            for other_research_id in research_priorities[:construction_index]:
-                if OngoingConstruction.query.get(other_research_id).name == construction.name:
-                    construction_level += 1
-            num_ongoing_researches_of = {}
-            # Iterate through all constructions that are higher up in the priority list
-            for candidate_prerequisite_id in research_priorities[:construction_index]:
-                candidate_prerequisite: OngoingConstruction = OngoingConstruction.query.get(candidate_prerequisite_id)
-                num_ongoing_researches_of[candidate_prerequisite.name] = (
-                    num_ongoing_researches_of.get(candidate_prerequisite.name, 0) + 1
-                )
-                candidate_prerequisite_level = getattr(
-                    player, candidate_prerequisite.name
-                ) + num_ongoing_researches_of.get(candidate_prerequisite.name, 0)
-                is_prerequisite = False
-                for requirement, offset in const_config[construction.name]["requirements"].items():
-                    if candidate_prerequisite.name == construction.name or (
-                        # `candidate_prerequisite` has this `construction` as a requirement
-                        candidate_prerequisite.name == requirement
-                        # `candidate_prerequisite`'s required `construction` level is greater or equal to
-                        and construction_level + offset - 1 >= candidate_prerequisite_level
-                    ):
-                        is_prerequisite = True
-                        break
-                if is_prerequisite:
-                    prerequisites.append(
-                        [const_config[candidate_prerequisite.name]["name"], candidate_prerequisite_level]
-                    )
-            if prerequisites:
-                return {"response": "hasUnfinishedPrerequisites", "prerequisites": prerequisites}
-            player.project_max_priority("research_priorities", int(construction_id))
-            if player.available_lab_workers() == 0:
-                research_priorities = player.read_list("research_priorities")
-                project_to_pause: OngoingConstruction = OngoingConstruction.query.get(
-                    research_priorities[player.lab_workers]
-                )
-                project_to_pause.suspension_time = engine.data["total_t"]
+            available_workers = player.available_lab_workers()
         else:
-            player.project_max_priority("construction_priorities", int(construction_id))
-            if player.available_construction_workers() == 0:
-                construction_priorities = player.read_list("construction_priorities")
-                project_to_pause: OngoingConstruction = OngoingConstruction.query.get(
-                    construction_priorities[player.construction_workers]
-                )
-                project_to_pause.suspension_time = engine.data["total_t"]
+            available_workers = player.available_construction_workers()
+        if available_workers == 0:
+            return {"response": "noAvailableWorkers"}
+
+        # Unpause the construction
         construction.start_time += engine.data["total_t"] - construction.suspension_time
         construction.suspension_time = None
+
+        # Reorder the priority list
+        priority_list: List[int] = player.read_list(priority_list_name)
+        priority_list.remove(construction_id)
+        insertion_index = None
+        for new_index, other_construction_id in enumerate(priority_list):
+            other_construction: OngoingConstruction = OngoingConstruction.query.get(other_construction_id)
+            if other_construction.suspension_time is not None:
+                insertion_index = new_index
+                break
+        if insertion_index is not None:
+            priority_list.insert(insertion_index, construction_id)
+        else:
+            priority_list.append(construction_id)
+        # priority_list.insert(0, construction_id)
+        player.write_list(priority_list_name, priority_list)
+
     db.session.commit()
     websocket.rest_notify_constructions(engine, player)
     return {

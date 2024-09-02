@@ -1,5 +1,7 @@
 """Here are defined the classes for the items stored in the database"""
 
+from typing import List
+
 from website import db
 
 
@@ -24,6 +26,84 @@ class OngoingConstruction(db.Model):
     multiplier_3 = db.Column(db.Float, default=1)
     # can access player directly with .player
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
+
+    _prerequisites = None
+    _level = None
+
+    def prerequisites(self, recompute=False) -> List[int]:
+        """Returns a list of the id's of ongoing constructions that this constructions depends on"""
+        if not self._prerequisites or recompute:
+            self._compute_prerequisites_and_level()
+        return self._prerequisites
+
+    def level(self) -> int:
+        """
+        In the case of functional facilities and technologies, returns the level of this construction.
+        Otherwise, returns 0.
+        """
+        if not self._level:
+            self._compute_prerequisites_and_level()
+        return self._level
+
+    def reset_prerequisites(self):
+        """Resets the prerequisites, so that it is recomputed next time prerequisites are accessed"""
+        self._prerequisites = None
+
+    def _compute_prerequisites_and_level(self):
+        from website.database.player import Player
+
+        player: Player = Player.query.get(self.player_id)
+        self._prerequisites = []
+        if self.family == "Functional facilities":
+            # For functional facilities, the only prerequisites are ongoing constructions of the same type
+            priority_list = player.read_list("construction_priorities")
+            this_priority_index = priority_list.index(self.id)
+            # Go through all ongoing constructions that are higher up in the priority order
+            self._level = getattr(player, self.name) + 1
+            for candidate_prerequisite_id in priority_list[:this_priority_index]:
+                # Add them as a prerequisite, if they are of the same type
+                candidate_prerequisite = OngoingConstruction.query.get(candidate_prerequisite_id)
+                if candidate_prerequisite.name == self.name:
+                    self._prerequisites.append(candidate_prerequisite_id)
+                    self._level += 1
+            return
+        if self.family == "Technologies":
+            # For technologies, const config needs to be checked
+            from flask import current_app
+
+            from website.game_engine import GameEngine
+
+            engine: GameEngine = current_app.config["engine"]
+            const_config = engine.const_config["assets"]
+            requirements = const_config[self.name]["requirements"]
+            priority_list = player.read_list("research_priorities")
+            this_priority_index: int = priority_list.index(self.id)
+            # Compute this constructions level by looking at constructions higher up in the priority list with same name
+            self._level = getattr(player, self.name) + 1
+            for other_construction_id in priority_list[:this_priority_index]:
+                other_construction: OngoingConstruction = OngoingConstruction.query.get(other_construction_id)
+                if other_construction.name == self.name:
+                    self._level += 1
+            num_ongoing_researches_of = {}
+            for candidate_prerequisite_id in priority_list[:this_priority_index]:
+                candidate_prerequisite: OngoingConstruction = OngoingConstruction.query.get(candidate_prerequisite_id)
+                if candidate_prerequisite.name == self.name:
+                    self._prerequisites.append(candidate_prerequisite_id)
+                    continue
+                if candidate_prerequisite.name in requirements:
+                    num_ongoing_researches_of[candidate_prerequisite.name] = (
+                        num_ongoing_researches_of.get(candidate_prerequisite.name, 0) + 1
+                    )
+                    # Add them as a prerequisite, if they are, according to const_config
+                    offset: int = requirements[candidate_prerequisite.name]
+                    candidate_prerequisite_level: int = (
+                        getattr(player, candidate_prerequisite.name)
+                        + num_ongoing_researches_of[candidate_prerequisite.name]
+                    )
+                    if self._level + offset - 1 >= candidate_prerequisite_level:
+                        self._prerequisites.append(candidate_prerequisite_id)
+            return
+        self._level = 0
 
 
 class ActiveFacility(db.Model):
