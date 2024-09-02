@@ -559,6 +559,9 @@ def market_optimum(offers_og, demands_og):
     price_d = demands.loc[0, "price"]
     price_o = offers.loc[0, "price"]
 
+    if price_o > price_d:
+        return price_d, 0
+
     offers["index_offer"] = range(len(offers))
     offers["price"] = offers["price"].shift(-1)
     offers.loc[len(offers) - 1, "price"] = np.inf
@@ -574,8 +577,6 @@ def market_optimum(offers_og, demands_og):
         else:
             price_o = row.price
         if price_d < price_o:
-            if row.Index == 0:
-                return price_d, 0
             price = price_d
             if np.isnan(row.index_offer):
                 price = price_o
