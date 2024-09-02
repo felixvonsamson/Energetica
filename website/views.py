@@ -42,23 +42,23 @@ def check_user():
         elif page == "resource_market.jinja":
             on_sale = ResourceOnSale.query.all()
             return render_template(page, engine=g.engine, user=current_user, on_sale=on_sale, data=g.data)
-        elif page == "facilities/power_facilities.jinja":
+        elif page == "assets/power_facilities.jinja":
             # TODO: rename constructions to power_facilities
             constructions = package_power_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
-        elif page == "facilities/storage_facilities.jinja":
+        elif page == "assets/storage_facilities.jinja":
             # TODO: rename constructions to storage_facilities
             constructions = package_storage_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
-        elif page == "facilities/extraction_facilities.jinja":
+        elif page == "assets/extraction_facilities.jinja":
             # TODO: rename constructions to extraction_facilities
             constructions = package_extraction_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
-        elif page == "facilities/functional_facilities.jinja":
+        elif page == "assets/functional_facilities.jinja":
             # TODO: rename constructions to functional_facilities
             constructions = package_functional_facilities(current_user)
             return render_template(page, engine=g.engine, user=current_user, constructions=constructions)
-        elif page == "technologies.jinja":
+        elif page == "assets/technologies.jinja":
             available_technologies = package_available_technologies(current_user)
             # TODO: remove `data` from the next line
             return render_template(
@@ -132,31 +132,31 @@ def network():
 
 @views.route("/power_facilities")
 def power_facilities():
-    return g.render_template_ctx("facilities/power_facilities.jinja")
+    return g.render_template_ctx("assets/power_facilities.jinja")
 
 
 @views.route("/storage_facilities")
 def storage_facilities():
-    return g.render_template_ctx("facilities/storage_facilities.jinja")
+    return g.render_template_ctx("assets/storage_facilities.jinja")
 
 
 @views.route("/technology")
 def technology():
     if "Unlock Technologies" not in current_user.achievements:
         return redirect("/home", code=302)
-    return g.render_template_ctx("technologies.jinja")
+    return g.render_template_ctx("assets/technologies.jinja")
 
 
 @views.route("/functional_facilities")
 def functional_facilities():
-    return g.render_template_ctx("facilities/functional_facilities.jinja")
+    return g.render_template_ctx("assets/functional_facilities.jinja")
 
 
 @views.route("/extraction_facilities")
 def extraction_facilities():
     if "Unlock Natural Resources" not in current_user.achievements:
         return redirect("/home", code=302)
-    return g.render_template_ctx("facilities/extraction_facilities.jinja")
+    return g.render_template_ctx("assets/extraction_facilities.jinja")
 
 
 @views.route("/resource_market")
