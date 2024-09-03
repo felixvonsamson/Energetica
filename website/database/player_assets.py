@@ -27,7 +27,9 @@ class OngoingConstruction(db.Model):
     # can access player directly with .player
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
+    # A list of OngoingConstruction id's
     _prerequisites = None
+    # The level for this construction if it is a technology or a functional facility, otherwise -1 as special value
     _level = None
 
     def prerequisites(self, recompute=False) -> List[int]:
@@ -103,7 +105,7 @@ class OngoingConstruction(db.Model):
                     if self._level + offset - 1 >= candidate_prerequisite_level:
                         self._prerequisites.append(candidate_prerequisite_id)
             return
-        self._level = 0
+        self._level = -1
 
 
 class ActiveFacility(db.Model):
