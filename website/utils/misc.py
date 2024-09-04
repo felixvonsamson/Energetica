@@ -224,8 +224,8 @@ def confirm_location(engine, player, location):
     )
     steam_engine: ActiveFacility = ActiveFacility(
         facility="steam_engine",
-        pos_x=player.tile.q + 0.5 * player.tile.r,
-        pos_y=player.tile.r,
+        pos_x=location.q + 0.5 * location.r,
+        pos_y=location.r,
         end_of_life=eol,
         player_id=player.id,
         price_multiplier=1.0,
@@ -237,11 +237,11 @@ def confirm_location(engine, player, location):
     general_chat = Chat.query.get(1)
     player.chats.append(general_chat)
     db.session.commit()
+    add_player_to_data(engine, player)
+    init_table(player.id)
     engine.data["current_data"][player.id].new_subcategory("op_costs", "steam_engine")
     engine.data["current_data"][player.id].new_subcategory("generation", "steam_engine")
     engine.data["current_data"][player.id].new_subcategory("emissions", "steam_engine")
-    add_player_to_data(engine, player)
-    init_table(player.id)
     websocket.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
     return {"response": "success"}
@@ -313,7 +313,7 @@ def calculate_solar_irradiance(x, y, total_seconds, random_seed):
     )
     csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
     loc = Location((y - 10) * 85 / 21, 0)
-    clear_sky = loc.get_clearsky(weather_datetime)["ghi"][0]
+    clear_sky = loc.get_clearsky(weather_datetime)["ghi"][weather_datetime[0]]
     return min(1000, csi * clear_sky)
 
 
@@ -336,7 +336,7 @@ def calculate_wind_speed(x, y, total_seconds, random_seed):
         wind_speed_noise
         * (1 + 0.4 * math.sin(t / 60 / 24 / 72 * math.pi * 2 + 0.5 * math.pi))
         * (1 + 0.1 * math.sin(t / 60 / 24 * math.pi * 2 + 0.4 * math.pi))
-        * 75
+        * 85
     )
     return wind_speed
 

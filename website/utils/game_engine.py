@@ -66,8 +66,7 @@ def check_events_completion(engine):
         OngoingConstruction.start_time + OngoingConstruction.duration <= engine.data["total_t"],
     ).all()
     for fc in finished_constructions:
-        assets.add_asset(fc.player_id, fc.id)
-        db.session.delete(fc)
+        assets.finish_construction(fc)
 
     # check if shipment arrived
     arrived_shipments = Shipment.query.filter(
@@ -98,7 +97,8 @@ def check_climate_events(engine):
     """function that checks if a climate event happens on this tick"""
 
     def inv_cdf_sigmoid(p, inverse=False):
-        latitude = 3 * np.log(math.exp(11.44 * p - 0.88) / 3 - math.exp(-1 / 3))
+        latitude = 3 * np.log(math.exp((11.44 * p - 0.88) / 3) - math.exp(-1 / 3))
+        latitude = max(-10.5, min(10.5, latitude))
         return round(-latitude) if inverse else round(latitude)
 
     def inv_cdf_normal(p):
@@ -129,7 +129,8 @@ def check_climate_events(engine):
         )
     if random.random() < heatwave_probability:
         # the tile for the heatwave is chosen based on a sigmoid distribution around the equator
-        random_latitude = inv_cdf_sigmoid(random.random())
+        random_latitude = round(inv_cdf_sigmoid(random.random()))
+        print(random_latitude)
         latitude_tiles = Hex.query.filter(Hex.r == random_latitude).all()
         tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()

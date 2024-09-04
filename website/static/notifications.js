@@ -23,6 +23,23 @@ function read_notifications(){
   });
 }
 
+function hide_has_dependents(){
+  document.getElementById('has_dependents_popup').classList.add('hidden');
+}
+
+function has_dependents_cancel_construction(construction_id, dependents){
+  document.getElementById('has_dependents_popup').classList.remove('hidden');
+  newInnerHTML = `<table>`;
+  console.log(dependents)
+  for (let dependent of dependents) {
+    console.log(dependent)
+    newInnerHTML += `<tr><td>` + dependent[0] + `</td>`;
+    newInnerHTML += `<td>level ` + dependent[1] + `</td></tr>`;
+  }
+  newInnerHTML += `</table>`;
+  document.getElementById('has_dependents_content').innerHTML = newInnerHTML;
+}
+
 function hide_are_you_sure(){
   document.getElementById('are_you_sure_popup').classList.add('hidden');
 }

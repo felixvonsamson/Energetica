@@ -206,23 +206,26 @@ def create_network(engine, name, members):
 
 def climate_events_scenario(engine):
     """This scenario fills the map with players that use coal to see climate change events."""
-    for i in range(1, 2):
+    for i in range(1, 3):
         print("creating player", i)
         player = create_player(engine, f"user{i}", "password")
         if player:
             Hex.query.filter_by(id=i).first().player_id = player.id
 
-            player.money = 1_000_000_000_000
-            player.coal = 100_000_000
-            player.gas = 30_000_000
-            player.uranium = 4_500
+            player.money = 1_000_000_000
+            player.coal = 300_000
+            player.gas = 100_000
+            player.uranium = 500
             player.rest_of_priorities = ""
 
-            add_asset(player, "industry", 18)
-            add_asset(player, "laboratory", 5)
-            add_asset(player, "chemistry", 2)
-            add_asset(player, "warehouse", 10)
-            add_asset(player, "carbon_capture", 5)
-            add_asset(player, "CSP_solar", 10)
-            add_asset(player, "offshore_wind_turbine", 3)
+            add_asset(player, "industry", 10)
+            add_asset(player, "laboratory", 3)
+            add_asset(player, "mineral_extraction", 1)
+            add_asset(player, "warehouse", 1)
+            add_asset(player, "coal_mine", 1)
+            add_asset(player, "mathematics", 1)
+            add_asset(player, "mechanical_engineering", 1)
+            add_asset(player, "coal_burner", 1)
+            add_asset(player, "small_pumped_hydro", 1)
+            add_asset(player, "chemistry", 1)
     db.session.commit()

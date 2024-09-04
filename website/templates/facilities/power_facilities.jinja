@@ -16,11 +16,18 @@
            class="cross pine margin-small"
            style="width:39px">×</div>
     </div>
-    <div class="txt_center margin medium">
-      <p>On this page you will find all the facilities that generate electricity.</p>
+    <div class="margin medium">
+      <p>On this page you will find all the facilities that generate electricity and their respective information.</p>
       <p>
-        For more information about how power facilities generate electricity, refer to the
-        <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities') }}">Power facilities section in the wiki</a>.
+        When clicking on a specific tile, it will extend the tile and show you more information about the facility aswell 
+        as a button to start the construction of the facility.
+      </p>
+      <p>
+        Some facilities might be locked and require certain technologies to be unlocked. To research technologies, you 
+        need a laboratory.
+      </p>
+        For more information about power facilites, refer to
+        <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities') }}">this section in the wiki</a>.
       </p>
     </div>
   </div>
@@ -56,8 +63,9 @@
             <div class="infobox">
               {# Description & indicators #}
               <div class="infotext">
-                {{ facility_data.description }}
-                <br class="smartphone_hide">
+                <div id="facility_description" class="constrain_description_txt">
+                  {{ facility_data.description }}
+                </div>
                 {# Wind Indicator #}
                 {% if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"] %}
                   <br>
@@ -93,7 +101,7 @@
                 {% endfor %}
               </div>
               {# Requirements #}
-              {% if facility_data.locked %}
+              {% if facility_data.requirements_status != "satisfied" %}
                 <div class="infobox requirements" id="requirements">
                   <div>
                     <strong>Unlock with :</strong>
@@ -105,11 +113,9 @@
                         {% else %}
                           {% set tech_name = requirement.display_name %}
                         {% endif %}
-                        {% if requirement.fulfilled %}
-                          <li class="padding-small req_fulfilled">- {{ tech_name }} lvl {{ requirement.level }}</li>
-                        {% else %}
-                          <li class="padding-small requirement">- {{ tech_name }} lvl {{ requirement.level }}</li>
-                        {% endif %}
+                        <li class="padding-small requirement-{{ requirement.status }}">
+                        - {{ tech_name }} lvl {{ requirement.level }}
+                        </li>
                       {% endfor %}
                     </ul>
                   </div>
@@ -121,7 +127,7 @@
         {# Construction information for big screen #}
         <div id="constructionContent" class="hidden">
           <div class="flex-col construction_button_container hidden">
-            {% if facility_data.locked %}
+            {% if facility_data.requirements_status == "unsatisfied" %}
               <b class="padding medium margin txt_center white txt-red"
                  onclick="start_construction('{{ facility }}', 'Power facilities');">
                 Locked
@@ -159,7 +165,7 @@
         {# Construction information for smartphone #}
         <div id="constructionContent_smartphone" class="hidden margin">
           <div class="flex-col">
-            {% if facility_data.locked %}
+            {% if facility_data.requirements_status == "unsatisfied" %}
               <b class="padding medium margin txt_center white txt-red"
                  onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
                 Locked
@@ -222,6 +228,15 @@
                 <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ facility_data.operating_costs }}) + "/h";</script>
               </td>
             </tr>
+            {# Capacity factor #}
+            {% if facility_data.capacity_factor %}
+              <tr>
+                <td>Capacity factor</td>
+                <td class="txt_center">
+                  <strong>{{ facility_data.capacity_factor }}</strong>
+                </td>
+              </tr>
+            {% endif %}
             {# Resource Consumption #}
             {% for resource, amount in facility_data.consumed_resources.items() %}
               {% if resource in ["coal", "gas", "uranium"] %}

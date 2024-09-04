@@ -64,7 +64,7 @@ function load_constructions() {
 }
 
 function retrieve_constructions() {
-    console.log("Feching construction data from the server")
+    console.log("Fetching construction data from the server")
     return fetch("/api/get_constructions")
         .then((response) => response.json())
         .then((raw_data) => {

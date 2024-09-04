@@ -16,11 +16,19 @@
            class="cross pine margin-small"
            style="width:39px">×</div>
     </div>
-    <div class="txt_center margin medium">
-      <p>On this page you will find all the facilities that can extract natural resources from the ground.</p>
+    <div class="margin medium">
+      <p>On this page you will find all the facilities that can extract natural resources from the ground and their respective information.</p>
       <p>
-        For more information about Extraction facilities, refer to the <a href="{{ url_for('wiki.render_template_wiki', template_name='extraction_facilities') }}">Extraction
-        facilities section in the wiki</a>.
+        When clicking on a specific tile, it will extend the tile and show you more information about the facility aswell 
+        as a button to start the construction of the facility.
+      </p>
+      <p>
+        Some facilities might be locked and require certain technologies to be unlocked. To research technologies, you 
+        need a laboratory.
+      </p>
+      <p>
+        For more information about Extraction facilities, refer to <a href="{{ url_for('wiki.render_template_wiki', template_name='extraction_facilities') }}">
+        this section in the wiki</a>.
       </p>
     </div>
   </div>
@@ -66,18 +74,21 @@
                 </em>
               </div>
               {# Requirements #}
-              {% if facility_data.locked %}
+              {% if facility_data.requirements_status != "satisfied" %}
                 <div class="infobox requirements" id="requirements">
                   <div>
                     <strong>Unlock with :</strong>
                     <br>
                     <ul class="navbar-nav">
                       {% for requirement in facility_data["requirements"] %}
-                        {% if requirement.fulfilled %}
-                          <li class="padding-small req_fulfilled">- {{ requirement.display_name }} lvl {{ requirement.level }}</li>
+                        {% if requirement.name == "mechanical_engineering" %}
+                          {% set tech_name = "Mech. engineering" %}
                         {% else %}
-                          <li class="padding-small requirement">- {{ requirement.display_name }} lvl {{ requirement.level }}</li>
+                          {% set tech_name = requirement.display_name %}
                         {% endif %}
+                        <li class="padding-small requirement-{{ requirement.status }}">
+                        - {{ tech_name }} lvl {{ requirement.level }}
+                        </li>
                       {% endfor %}
                     </ul>
                   </div>
@@ -89,7 +100,7 @@
         {# Construction information for big screen #}
         <div id="constructionContent" class="hidden">
           <div class="flex-col construction_button_container hidden">
-            {% if facility_data.locked %}
+            {% if facility_data.requirements_status == "unsatisfied" %}
               <b class="padding medium margin txt_center white txt-red"
                  onclick="start_construction('{{ facility }}', 'Extraction facilities');">
                 Locked
@@ -127,7 +138,7 @@
         {# Construction information for smartphone #}
         <div id="constructionContent_smartphone" class="hidden margin">
           <div class="flex-col">
-            {% if facility_data.locked %}
+            {% if facility_data.requirements_status == "unsatisfied" %}
               <b class="padding medium margin txt_center white txt-red"
                  onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Extraction facilities');">
                 Locked

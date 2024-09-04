@@ -18,16 +18,21 @@
            class="cross pine margin-small"
            style="width:39px">×</div>
     </div>
-    <div class="txt_center margin medium">
+    <div class="margin medium">
       <p>
-        When you have build a
-        <a href="{{ url_for('views.functional_facilities', _anchor='Laboratory') }}">laboratory</a>
-        , you will be able to research technologies here. Each technology has a unique effect on a given set of
-        facilities.
+        Here you can find all the technologies that can be researched thanks to the laboratory and their specific information. 
       </p>
       <p>
-        For more information about Technologies, refer to the
-        <a href="{{ url_for('wiki.render_template_wiki', template_name='technologies') }}">Technology section in the
+        Each technology has a unique effect on a given set of facilities. 
+        When clicking on a specific tile, it will extend the tile and show you more information about the technology aswell 
+        as a button to start the research.
+      </p>
+      <p>
+        Technologies usually require specific levels of other technologies or laboratory to be researched.
+      </p>
+      <p>
+        For more information about Technologies, refer to 
+        <a href="{{ url_for('wiki.render_template_wiki', template_name='technologies') }}">this section in the
           wiki
         </a>.
       </p>
@@ -77,6 +82,7 @@
                 {{ technology_data.description }}
                 <br class="smartphone_hide">
                 {% if technology_data.affected_facilities | length > 0 %}
+                  {# this looks like it needs some rework#}
                   {% if not (technology_data.locked and technology in
                     ["materials", "mechanical_engineering", "thermodynamics", "physics"]) %}
                     <br>
@@ -98,27 +104,21 @@
                 {% endif %}
               </div>
               {# Requirements #}
-              {% if technology_data["locked"] %}
-                <div id="requirements" class="infobox requirements">
+              {% if true %}
+                <div class="infobox requirements" id="requirements">
                   <div>
                     <strong>Unlock with :</strong>
                     <br>
                     <ul class="navbar-nav">
-                      {% for req in facility_values[facility]["requirements"] %}
-                        {% if req[0] == "mechanical_engineering" %}
+                      {% for requirement in technology_data.requirements %}
+                        {% if requirement.name == "mechanical_engineering" %}
                           {% set tech_name = "Mech. engineering" %}
                         {% else %}
-                          {% set tech_name = engine.const_config["assets"][req[0]]["name"] %}
+                          {% set tech_name = requirement.display_name %}
                         {% endif %}
-                        {% if req[2] %}
-                          <li class="padding-small req_fulfilled">
-                            - {{ tech_name }} lvl {{ req[1] + user[facility] }}
-                          </li>
-                        {% else %}
-                          <li class="padding-small requirement">
-                            - {{ tech_name }} lvl {{ req[1] + user[facility] }}
-                          </li>
-                        {% endif %}
+                        <li class="padding-small requirement-{{ requirement.status }}">
+                        - {{ tech_name }} lvl {{ requirement.level }}
+                        </li>
                       {% endfor %}
                     </ul>
                   </div>
@@ -130,7 +130,7 @@
         {# Construction information for big screen #}
         <div id="constructionContent" class="hidden">
           <div class="flex-col construction_button_container hidden">
-            {% if technology_data.locked %}
+            {% if technology_data.requirements_status == "unsatisfied" %}
               <b class="padding medium margin txt_center white txt-red"
                  onclick="start_construction('{{ technology }}', 'Technologies');">
                 Locked
@@ -138,7 +138,11 @@
             {% else %}
               <b class="padding medium button margin txt_center white"
                  onclick="start_construction('{{ technology }}', 'Technologies');">
-                Start research
+                {% if technology_data.requirements_status == "satisfied" %}
+                  Start research
+                {% else %}
+                  Queue research
+                {% endif %}    
               </b>
             {% endif %}
           </div>
@@ -168,7 +172,7 @@
         {# Construction information for smartphone #}
         <div id="constructionContent_smartphone" class="hidden margin">
           <div class="flex-col">
-            {% if technology_data.locked %}
+            {% if technology_data.requirements_status == "unsatisfied" %}
               <b class="padding medium margin txt_center white txt-red"
                  onclick="event.stopPropagation(); start_construction('{{ technology }}', 'Technologies');">
                 Locked
@@ -176,7 +180,11 @@
             {% else %}
               <b class="padding medium button margin txt_center white"
                  onclick="event.stopPropagation(); start_construction('{{ technology }}', 'Technologies');">
-                Start research
+                {% if technology_data.requirements_status == "satisfied" %}
+                  Start research
+                {% else %}
+                  Queue research
+                {% endif %}    
               </b>
             {% endif %}
           </div>

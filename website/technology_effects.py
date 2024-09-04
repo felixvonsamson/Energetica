@@ -6,6 +6,7 @@ levels of the player.
 import math
 from typing import Dict, List
 
+import numpy as np
 from flask import current_app
 
 from website.config.assets import (
@@ -34,45 +35,52 @@ from .database.player_assets import ActiveFacility, OngoingConstruction
 # }
 
 
-def price_multiplier(player: Player, facility) -> float:
+def special_multiplier(pf: float, lvl: int) -> float:
+    """This is a special function to try to reduce the exponential growth of the power production"""
+    return (0.5 + 0.5 * pf) ** lvl + np.log(pf / (0.5 + 0.5 * pf)) * lvl
+
+
+def price_multiplier(player: Player, asset: str) -> float:
     """Function that returns the price multiplier according to the technology level of the player."""
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Mechanical engineering
-    if facility in const_config["mechanical_engineering"]["affected_facilities"]:
-        mlt *= const_config["mechanical_engineering"]["price_factor"] ** player.mechanical_engineering
+    if asset in const_config["mechanical_engineering"]["affected_facilities"]:
+        mlt *= special_multiplier(const_config["mechanical_engineering"]["price_factor"], player.mechanical_engineering)
     # Physics
-    if facility in const_config["physics"]["affected_facilities"]:
-        mlt *= const_config["physics"]["price_factor"] ** player.physics
+    if asset in const_config["physics"]["affected_facilities"]:
+        mlt *= special_multiplier(const_config["physics"]["price_factor"], player.physics)
     # Mineral extraction
-    if facility in const_config["mineral_extraction"]["affected_facilities"]:
-        mlt *= const_config["mineral_extraction"]["price_factor"] ** player.mineral_extraction
+    if asset in const_config["mineral_extraction"]["affected_facilities"]:
+        # TODO: the price multiplier here should probably be calculated differently. See extraction_rate_multiplier
+        mlt *= special_multiplier(const_config["mineral_extraction"]["price_factor"], player.mineral_extraction)
     # Materials
-    if facility in const_config["materials"]["affected_facilities"]:
+    if asset in const_config["materials"]["affected_facilities"]:
         mlt *= const_config["materials"]["price_factor"] ** player.materials
     # Civil engineering
-    if facility in const_config["civil_engineering"]["affected_facilities"]:
-        mlt *= const_config["civil_engineering"]["price_factor"] ** player.civil_engineering
+    if asset in const_config["civil_engineering"]["affected_facilities"]:
+        mlt *= special_multiplier(const_config["civil_engineering"]["price_factor"], player.civil_engineering)
     # Aerodynamics
-    if facility in const_config["aerodynamics"]["affected_facilities"]:
-        mlt *= const_config["aerodynamics"]["price_factor"] ** player.aerodynamics
+    if asset in const_config["aerodynamics"]["affected_facilities"]:
+        mlt *= special_multiplier(const_config["aerodynamics"]["price_factor"], player.aerodynamics)
     # Chemistry
-    if facility in const_config["chemistry"]["affected_facilities"]:
+    if asset in const_config["chemistry"]["affected_facilities"]:
         mlt *= const_config["chemistry"]["price_factor"] ** player.chemistry
     # Nuclear engineering
-    if facility in const_config["nuclear_engineering"]["affected_facilities"]:
-        mlt *= const_config["nuclear_engineering"]["price_factor"] ** player.nuclear_engineering
+    if asset in const_config["nuclear_engineering"]["affected_facilities"]:
+        mlt *= special_multiplier(const_config["nuclear_engineering"]["price_factor"], player.nuclear_engineering)
     # level based facilities and technologies
     engine: GameEngine = current_app.config["engine"]
-    if facility in engine.functional_facilities + engine.technologies:
-        mlt *= const_config[facility]["price_multiplier"] ** getattr(player, facility)
-    # knowledge spilling for technologies
-    if facility in engine.technologies:
-        mlt *= 0.92 ** engine.data["technology_lvls"][facility][getattr(player, facility)]
+    if asset in engine.functional_facilities + engine.technologies:
+        asset_next_level = next_level(player, asset)
+        mlt *= const_config[asset]["price_multiplier"] ** (asset_next_level - 1)
+        # knowledge spilling for technologies
+        if asset in engine.technologies and len(engine.data["technology_lvls"][asset]) > asset_next_level - 1:
+            mlt *= 0.92 ** engine.data["technology_lvls"][asset][asset_next_level - 1]
     return mlt
 
 
-def multiplier_1(player: Player, facility) -> float:
+def multiplier_1(player: Player, facility: str) -> float:
     """
     Returns the first multiplier according to the technology level of the player. This multiplier can be either the
     `power_production_multiplier` or the `power_consumption_multiplier`.
@@ -93,19 +101,19 @@ def power_production_multiplier(player: Player, facility: str) -> float:
     mlt = 1
     # Mechanical engineering
     if facility in const_config["mechanical_engineering"]["affected_facilities"]:
-        mlt *= const_config["mechanical_engineering"]["prod_factor"] ** player.mechanical_engineering
+        mlt *= special_multiplier(const_config["mechanical_engineering"]["prod_factor"], player.mechanical_engineering)
     # Physics
     if facility in const_config["physics"]["affected_facilities"]:
-        mlt *= const_config["physics"]["prod_factor"] ** player.physics
+        mlt *= special_multiplier(const_config["physics"]["prod_factor"], player.physics)
     # Civil engineering
     if facility in const_config["civil_engineering"]["affected_facilities"]:
-        mlt *= const_config["civil_engineering"]["prod_factor"] ** player.civil_engineering
+        mlt *= special_multiplier(const_config["civil_engineering"]["prod_factor"], player.civil_engineering)
     # Aerodynamics
     if facility in const_config["aerodynamics"]["affected_facilities"]:
-        mlt *= const_config["aerodynamics"]["prod_factor"] ** player.aerodynamics
+        mlt *= special_multiplier(const_config["aerodynamics"]["prod_factor"], player.aerodynamics)
     # Nuclear engineering
     if facility in const_config["nuclear_engineering"]["affected_facilities"]:
-        mlt *= const_config["nuclear_engineering"]["prod_factor"] ** player.nuclear_engineering
+        mlt *= special_multiplier(const_config["nuclear_engineering"]["prod_factor"], player.nuclear_engineering)
     return mlt
 
 
@@ -122,7 +130,7 @@ def power_consumption_multiplier(player: Player, facility: str) -> float:
     return mlt
 
 
-def multiplier_2(player: Player, facility) -> float:
+def multiplier_2(player: Player, facility: str) -> float:
     """
     Returns the second multiplier according to the technology level of the player. This multiplier can be either the
     `extraction_rate_multiplier`, the `hydro_price_multiplier`, the `wind_speed_multiplier` or the `capacity_multiplier`
@@ -137,7 +145,7 @@ def multiplier_2(player: Player, facility) -> float:
     return capacity_multiplier(player, facility)
 
 
-def capacity_multiplier(player: Player, facility) -> float:
+def capacity_multiplier(player: Player, facility: str) -> float:
     """
     For storage facilities, returns by how much the `facility`'s `base_storage_capacity` should be multiplied, according
     to the `player`'s currently researched technologies
@@ -146,7 +154,7 @@ def capacity_multiplier(player: Player, facility) -> float:
     mlt = 1
     # Civil engineering
     if facility in ["small_pumped_hydro", "large_pumped_hydro"]:
-        mlt *= const_config["civil_engineering"]["capacity_factor"] ** player.civil_engineering
+        mlt *= special_multiplier(const_config["civil_engineering"]["capacity_factor"], player.civil_engineering)
     return mlt
 
 
@@ -161,10 +169,10 @@ def extraction_rate_multiplier(player: Player, level: int = None) -> float:
     return 1 + const_config["mineral_extraction"]["extract_factor"] * level
 
 
-def hydro_price_multiplier(player: Player, facility) -> float:
+def hydro_price_multiplier(player: Player, facility: str) -> float:
     """
     For hydro power facilities, returns by how much the `facility`'s `base_price` should be multiplied, according to the
-    `player`'s currently researched technologies
+    `player`'s currently researched technologies. Otherwise, returns 1.
     """
     mlt = 1
     # calculating the hydro price multiplier linked to the number of hydro facilities
@@ -173,10 +181,10 @@ def hydro_price_multiplier(player: Player, facility) -> float:
     return mlt
 
 
-def wind_speed_multiplier(player: Player, facility) -> float:
+def wind_speed_multiplier(player: Player, facility: str) -> float:
     """
-    For wind power facilities, returns by how much the `facility`'s `base_power_generation` should be multiplied,
-    according to the `player`'s currently researched technologies
+    For wind power facilities, returns by how much the wind at the `facility`'s location should be multiplied,
+    according to the `player`'s current amount of wind facilities and wind potential.
     """
     mlt = 1
     # calculating the wind speed multiplier linked to the number of wind turbines
@@ -185,7 +193,7 @@ def wind_speed_multiplier(player: Player, facility) -> float:
     return mlt
 
 
-def multiplier_3(player: Player, facility) -> float:
+def multiplier_3(player: Player, facility: str) -> float:
     """
     Returns the third multiplier according to the technology level of the player. This multiplier can be either the
     `efficiency_multiplier`, the `extraction_emissions_multiplier`, or the `next_available_location`
@@ -266,7 +274,7 @@ def extraction_emissions_multiplier(player: Player, facility) -> float:
     return mlt
 
 
-def next_available_location(player: Player, facility) -> int:
+def next_available_location(player: Player, facility: str) -> int:
     """Finds the next available location for a hydro and wind facilities"""
     active_facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(
         facility=facility, player_id=player.id
@@ -283,6 +291,21 @@ def next_available_location(player: Player, facility) -> int:
     return i
 
 
+def construction_price(player: Player, facility: str):
+    """
+    Returns the (real) cost of the construction of `facility` for `player`; be it power, storage, extraction,
+    functional facility, or technology; for functional facilities and technologies: be it for the immediate next level
+    when no other levels are queued, or or a level far in advance when many levels are already in progress and queued
+    """
+    engine: GameEngine = current_app.config["engine"]
+    const_config_assets = engine.const_config["assets"]
+    return (
+        const_config_assets[facility]["base_price"]
+        * price_multiplier(player, facility)
+        * hydro_price_multiplier(player, facility)
+    )
+
+
 def construction_time(player: Player, facility):
     """Function that returns the construction time in ticks according to the technology level of the player."""
     engine: GameEngine = current_app.config["engine"]
@@ -291,11 +314,13 @@ def construction_time(player: Player, facility):
     duration = const_config[facility]["base_construction_time"] / engine.in_game_seconds_per_tick
     # construction time increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
-        duration *= const_config[facility]["price_multiplier"] ** (0.6 * getattr(player, facility))
-    # knowledge spillover and laboratory time reduction
-    if facility in engine.technologies:
-        duration *= 0.92 ** engine.data["technology_lvls"][facility][getattr(player, facility)]
-        duration *= const_config["laboratory"]["time_factor"] ** player.laboratory
+        level_with_constructions = OngoingConstruction.query.filter_by(name=facility, player_id=player.id).count()
+        duration *= const_config[facility]["price_multiplier"] ** (0.6 * level_with_constructions)
+        # knowledge spillover and laboratory time reduction
+        if facility in engine.technologies:
+            if len(engine.data["technology_lvls"][facility]) > level_with_constructions:
+                duration *= 0.92 ** engine.data["technology_lvls"][facility][level_with_constructions]
+            duration *= const_config["laboratory"]["time_factor"] ** player.laboratory
     # building technology time reduction
     if (
         facility
@@ -349,14 +374,15 @@ def construction_power(player: Player, facility):
     )
     # construction power increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
-        power *= const_config[facility]["price_multiplier"] ** (1.2 * getattr(player, facility))
-    # knowledge spillover
-    if facility in engine.technologies:
-        power *= 0.92 ** engine.data["technology_lvls"][facility][getattr(player, facility)]
+        facility_next_level = next_level(player, facility)
+        power *= const_config[facility]["price_multiplier"] ** (1.2 * (facility_next_level - 1))
+        # knowledge spillover
+        if facility in engine.technologies and len(engine.data["technology_lvls"][facility]) > facility_next_level - 1:
+            power *= 0.92 ** engine.data["technology_lvls"][facility][facility_next_level - 1]
     return power
 
 
-def construction_pollution_per_tick(player: Player, facility):
+def construction_pollution_per_tick(player: Player, facility: str):
     """Function that returns the construction pollution per tick according to the technology level of the player."""
     engine: GameEngine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
@@ -376,34 +402,61 @@ def hydro_price_function(count, potential):
 
 def wind_speed_function(count, potential):
     """wind speed multiplier, for the `count`th wind facility of a particular type, given the wind potential"""
-    return 1 / (math.log(math.e + (count * (1 / (9 * potential + 1))) ** 2))
+    return 1.3 / (math.log(math.e + (count * (1 / (9 * potential + 1))) ** 2))
 
 
-def facility_requirements(player: Player, facility):
-    """Returns the list of requirements (name, level, and boolean for met) for the specified facility"""
+def asset_requirements(player: Player, asset: str) -> List[Dict[str, str | int]]:
+    """Returns the list of requirements (name, level, and satisfaction status) for the specified asset"""
     const_config = current_app.config["engine"].const_config["assets"]
-    requirements = const_config[facility]["requirements"].copy()
+    requirements = const_config[asset]["requirements"]
+    engine: GameEngine = current_app.config["engine"]
+    level_offset = 0
+    if asset in engine.functional_facilities or asset in engine.technologies:
+        level_offset = next_level(player, asset) - 1
     return [
         {
-            "name": requirement[0],
-            "display_name": const_config[requirement[0]]["name"],
-            "level": requirement[1],
-            "fulfilled": getattr(player, requirement[0]) >= requirement[1],
+            "name": requirement,
+            "display_name": const_config[requirement]["name"],
+            "level": level + level_offset,
+            "status": (
+                "satisfied"
+                if getattr(player, requirement) >= level + level_offset
+                else "queued"
+                if next_level(player, requirement) - 1 >= level + level_offset and asset in engine.technologies
+                else "unsatisfied"
+            ),
         }
-        for requirement in requirements
+        for requirement, level in requirements.items()
     ]
 
 
-def requirements_met(requirements):
-    """Returns True (meaning locked) if any requirements are not met, otherwise False (not locked)"""
-    return any(requirement["fulfilled"] is False for requirement in requirements)
+def requirements_status(player, asset, requirements) -> str:
+    """
+    Returns either "satisfied", "queued", or "unsatisfied".
+    For facilities, returns "satisfied" if all requirements are "satisfied", otherwise returns "unsatisfied"
+    For technologies, returns "satisfied" if all requirements are "satisfied", otherwise if all requirements are either
+    "satisfied" or "queued", returns "queued", otherwise returns "unsatisfied".
+    """
+    engine: GameEngine = current_app.config["engine"]
+    const_config = engine.const_config["assets"]
+    if all(requirement["status"] == "satisfied" for requirement in requirements):
+        if (
+            asset in engine.technologies
+            and OngoingConstruction.query.filter_by(name=asset, player_id=player.id).count() > 0
+        ):
+            return "queued"
+        return "satisfied"
+    if const_config[asset]["type"] == "Technology" and all(
+        requirement["status"] != "unsatisfied" for requirement in requirements
+    ):
+        return "queued"
+    return "unsatisfied"
 
 
-def facility_requirements_and_locked(player: Player, facility):
-    """Returns a dictionary with both requirements and locked status"""
-    requirements = facility_requirements(player, facility)
-    locked = requirements_met(requirements)
-    return {"requirements": requirements, "locked": locked}
+def asset_requirements_and_requirements_status(player: Player, asset):
+    """Returns a dictionary with the list of requirements and the requirements_status"""
+    requirements = asset_requirements(player, asset)
+    return {"requirements": requirements, "requirements_status": requirements_status(player, asset, requirements)}
 
 
 def power_facility_resource_consumption(player: Player, power_facility):
@@ -457,7 +510,10 @@ def get_current_technology_values(player: Player):
         }
         # remove fulfilled requirements
         dict[facility]["locked"] = False
-        dict[facility]["requirements"] = engine.const_config["assets"][facility]["requirements"].copy()
+        dict[facility]["requirements"] = [
+            [technology, level, False]
+            for technology, level in engine.const_config["assets"][facility]["requirements"].items()
+        ]
         for req in dict[facility]["requirements"]:
             if req[1] + getattr(player, facility) < 1:
                 dict[facility]["requirements"].remove(req)
@@ -473,7 +529,10 @@ def get_current_technology_values(player: Player):
     ):
         # remove fulfilled requirements
         dict[facility]["locked"] = False
-        dict[facility]["requirements"] = engine.const_config["assets"][facility]["requirements"].copy()
+        dict[facility]["requirements"] = [
+            [technology, level, False]
+            for technology, level in engine.const_config["assets"][facility]["requirements"].items()
+        ]
         for req in dict[facility]["requirements"]:
             req[2] = getattr(player, req[0]) >= req[1]
             if not req[2]:
@@ -482,27 +541,19 @@ def get_current_technology_values(player: Player):
     return dict
 
 
-def _package_facility_base(player: Player, facility):
-    """Gets data shared between power, storage, extraction, and functional facilities"""
+def _package_asset_base(player: Player, asset: str):
+    """Gets data shared between power, storage, extraction, functional facilities, and technologies"""
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
-        "name": facility,
-        "display_name": const_config_assets[facility]["name"],
-        "description": const_config_assets[facility]["description"],
-        "wikipedia_link": const_config_assets[facility]["wikipedia_link"],
-        "price": const_config_assets[facility]["base_price"]
-        * price_multiplier(player, facility)
-        * (
-            hydro_price_multiplier(player, facility)
-            if facility in ["watermill", "small_water_dam", "large_water_dam"]
-            else 1.0
-        ),
-        "construction_power": construction_power(player, facility),
-        "construction_time": construction_time(player, facility),
-        "locked": requirements_met(facility_requirements(player, facility)),
-        "requirements": facility_requirements(player, facility),
-    }
+        "name": asset,
+        "display_name": const_config_assets[asset]["name"],
+        "description": const_config_assets[asset]["description"],
+        "wikipedia_link": const_config_assets[asset]["wikipedia_link"],
+        "price": construction_price(player, asset),
+        "construction_power": construction_power(player, asset),
+        "construction_time": construction_time(player, asset),
+    } | asset_requirements_and_requirements_status(player, asset)
 
 
 def _package_power_generating_facility_base(player: Player, facility):
@@ -521,7 +572,38 @@ def _package_power_generating_facility_base(player: Player, facility):
         * 60
         if const_config_assets[facility]["ramping_time"] != 0
         else None,
-    }
+    } | _capacity_factors(player, facility)
+
+
+def _capacity_factors(player: Player, facility: str):
+    """
+    Gets the capacity factors for renewable power facilities
+    !!! The capacity factor function is an approximation of the empirical data and has to be updated whenever a change
+    in the wind simulation is made. !!!
+    """
+    if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
+
+        def capacity_factor_wind(wind_speed):
+            """Fit of empirical data for wind speeds"""
+            return 0.5280542813 - 0.5374832237 * np.exp(-2.226120465 * wind_speed**2.38728403)
+
+        return {
+            "capacity_factor": f"{100 * capacity_factor_wind(wind_speed_multiplier(player, facility)):.0f}%",
+        }
+    if facility in ["watermill", "small_water_dam", "large_water_dam"]:
+        return {
+            "capacity_factor": "55%",
+        }
+    if facility in ["PV_solar", "CSP_solar"]:
+
+        def capacity_factor_solar(latitude):
+            """Fit of empirical data for solar irradiations"""
+            return 0.1788792882 / ((1 + np.exp(1.136558093 - 0.4216299482 * latitude)) ** (1 / 5.918314566))
+
+        return {
+            "capacity_factor": f"{100 * capacity_factor_solar(player.tile.r):.0f}%",
+        }
+    return {}
 
 
 def _package_power_storage_extraction_facility_base(player: Player, facility):
@@ -549,7 +631,7 @@ def package_power_facilities(player: Player):
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return [
-        _package_facility_base(player, power_facility)
+        _package_asset_base(player, power_facility)
         | _package_power_generating_facility_base(player, power_facility)
         | _package_power_storage_extraction_facility_base(player, power_facility)
         | {
@@ -572,7 +654,7 @@ def package_storage_facilities(player: Player):
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return [
-        _package_facility_base(player, storage_facility)
+        _package_asset_base(player, storage_facility)
         | _package_power_generating_facility_base(player, storage_facility)
         | _package_power_storage_extraction_facility_base(player, storage_facility)
         | {
@@ -608,7 +690,7 @@ def package_extraction_facilities(player: Player):
             raise ValueError(f"unknown resource {resource}")
 
     return [
-        _package_facility_base(player, extraction_facility)
+        _package_asset_base(player, extraction_facility)
         | _package_power_storage_extraction_facility_base(player, extraction_facility)
         | {
             "power_consumption": const_config_assets[extraction_facility]["base_power_consumption"]
@@ -626,11 +708,6 @@ def package_extraction_facilities(player: Player):
         }
         for extraction_facility in engine.extraction_facilities
     ]
-
-
-def player_can_launch_project(player: Player, facility):
-    """Returns true if facility is not hidden and if requirements are met"""
-    return not facility_is_hidden(player, facility) and requirements_met(facility_requirements(player, facility))
 
 
 def facility_is_hidden(player: Player, facility):
@@ -758,7 +835,7 @@ def package_functional_facilities(player: Player):
         },
     }
     result = [
-        _package_facility_base(player, functional_facility)
+        _package_asset_base(player, functional_facility)
         | {
             "construction_pollution": const_config_assets[functional_facility]["base_construction_pollution"]
             * const_config_assets[functional_facility]["price_multiplier"] ** getattr(player, functional_facility),
@@ -774,17 +851,6 @@ def package_constructions_page_data(player: Player):
     Gets cost, emissions, max power, etc data for constructions.
     Takes into account base config prices and multipliers for the specified player.
     Returns a dictionary with the relevant data for constructions.
-    Example:
-        {
-            'power_facilities': {
-                'steam_engine': {
-                    'price': 123.4
-                    ...
-                }
-                ...
-            }
-        }
-    ```
     """
     return {
         "power_facilities": package_power_facilities(player),
@@ -795,26 +861,15 @@ def package_constructions_page_data(player: Player):
 
 
 def package_available_technologies(player: Player):
+    """Gets all data relevant for the frontend for technologies"""
+    # TODO: Check all invoked functions and rename facility to asset if needed
+    # Because these methods are common to both facilities and technologies, hence should use the name "asset"
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
-    # TODO: This `technologies` list should be stored somewhere else, e.g. in config
-    technologies: List[str] = [
-        "mathematics",
-        "mechanical_engineering",
-        "thermodynamics",
-        "physics",
-        "building_technology",
-        "mineral_extraction",
-        "transport_technology",
-        "materials",
-        "civil_engineering",
-        "aerodynamics",
-        "chemistry",
-        "nuclear_engineering",
-    ]
-    levels: Dict[str, int] = {technology: next_level(player, technology) for technology in technologies}
+    engine: GameEngine = current_app.config["engine"]
+    levels: Dict[str, int] = {technology: next_level(player, technology) for technology in engine.technologies}
     return {
-        technology: _package_facility_base(player, technology)
+        technology: _package_asset_base(player, technology)
         | {
             "level": levels[technology],
             "affected_facilities": [
@@ -962,5 +1017,5 @@ def package_available_technologies(player: Player):
             else {}
         )
         # price_reduction_bonus
-        for technology in technologies
+        for technology in engine.technologies
     }

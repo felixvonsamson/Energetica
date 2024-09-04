@@ -10,17 +10,22 @@
     </div>
     <div id="info_popup" class="popup hidden green">
         <div class="flex-row margin-small align-items-center">
-            <div class="large txt_center flex-grow-1">Help : Overview</div>
+            <div class="large txt_center flex-grow-1">Help : Generation Overview</div>
             <div onclick="document.getElementById('info_popup').classList.add('hidden');"
                  class="cross pine margin-small"
                  style="width:39px">×</div>
         </div>
-        <div class="txt_center margin medium">
-            <p>These graphs show your power generation and consumption.</p>
+        <div class="margin medium">
+            <p>This graphs shows your power generation and consumption.</p>
             <p>
                 You can hover on the various elements of the graph to display more informations. You can also adjust the time
-                scale of the graph with the buttons at the bottom.
+                scale of the graph with the buttons at the bottom aswell as switching from generation to consumption view or absolute to percentage view.
             </p>
+            <p>
+                The table below shows the power generated or consumed of each facility type integrated over the period selected in the graph.
+                You can also choose to display only certain facilities in the graph by clicking on the toggle in the last column.
+            </p>
+            <p>For more information about the power generation of facilities, please refer to <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities', _anchor='Power_Generation_of_Renewable_Facilities') }}">this section of the wiki</a>.
         </div>
     </div>
 
