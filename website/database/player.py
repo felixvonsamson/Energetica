@@ -532,6 +532,7 @@ class Player(db.Model, UserMixin):
                 ]
             }
             | {"display_name": current_app.config["engine"].const_config["assets"][construction.name]["name"]}
+            | ({"level": construction.level()} if construction.level() >= 0 else {})
             for construction in self.under_construction
         }
 

@@ -66,8 +66,7 @@ def check_events_completion(engine):
         OngoingConstruction.start_time + OngoingConstruction.duration <= engine.data["total_t"],
     ).all()
     for fc in finished_constructions:
-        assets.add_asset(fc.player_id, fc.id)
-        db.session.delete(fc)
+        assets.finish_construction(fc)
 
     # check if shipment arrived
     arrived_shipments = Shipment.query.filter(
