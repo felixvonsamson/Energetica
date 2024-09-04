@@ -93,7 +93,7 @@ def update_electricity(engine):
 def set_facilities_usage(engine, new_values, player):
     """Set the usage of the facilities to the database"""
     for facility in engine.controllable_facilities:
-        if facility in new_values["generation"]:
+        if engine.data["player_capacities"][player.id].contains(facility):
             ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
                 {
                     ActiveFacility.usage: new_values["generation"][facility]
@@ -102,7 +102,7 @@ def set_facilities_usage(engine, new_values, player):
                 synchronize_session=False,
             )
     for facility in engine.storage_facilities:
-        if facility in new_values["storage"]:
+        if engine.data["player_capacities"][player.id].contains(facility):
             ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
                 {
                     ActiveFacility.usage: new_values["storage"][facility]
@@ -111,7 +111,7 @@ def set_facilities_usage(engine, new_values, player):
                 synchronize_session=False,
             )
     for facility in engine.extraction_facilities:
-        if facility in new_values["demand"]:
+        if engine.data["player_capacities"][player.id].contains(facility):
             ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
                 {
                     ActiveFacility.usage: new_values["demand"][facility]
@@ -559,6 +559,9 @@ def market_optimum(offers_og, demands_og):
     price_d = demands.loc[0, "price"]
     price_o = offers.loc[0, "price"]
 
+    if price_o > price_d:
+        return price_d, 0
+
     offers["index_offer"] = range(len(offers))
     offers["price"] = offers["price"].shift(-1)
     offers.loc[len(offers) - 1, "price"] = np.inf
@@ -574,8 +577,6 @@ def market_optimum(offers_og, demands_og):
         else:
             price_o = row.price
         if price_d < price_o:
-            if row.Index == 0:
-                return price_d, 0
             price = price_d
             if np.isnan(row.index_offer):
                 price = price_o

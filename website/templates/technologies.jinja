@@ -18,16 +18,21 @@
            class="cross pine margin-small"
            style="width:39px">×</div>
     </div>
-    <div class="txt_center margin medium">
+    <div class="margin medium">
       <p>
-        When you have build a
-        <a href="{{ url_for('views.functional_facilities', _anchor='Laboratory') }}">laboratory</a>
-        , you will be able to research technologies here. Each technology has a unique effect on a given set of
-        facilities.
+        Here you can find all the technologies that can be researched thanks to the laboratory and their specific information. 
       </p>
       <p>
-        For more information about Technologies, refer to the
-        <a href="{{ url_for('wiki.render_template_wiki', template_name='technologies') }}">Technology section in the
+        Each technology has a unique effect on a given set of facilities. 
+        When clicking on a specific tile, it will extend the tile and show you more information about the technology aswell 
+        as a button to start the research.
+      </p>
+      <p>
+        Technologies usually require specific levels of other technologies or laboratory to be researched.
+      </p>
+      <p>
+        For more information about Technologies, refer to 
+        <a href="{{ url_for('wiki.render_template_wiki', template_name='technologies') }}">this section in the
           wiki
         </a>.
       </p>

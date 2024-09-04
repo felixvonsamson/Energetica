@@ -131,6 +131,10 @@ class CapacityData:
         """Returns the capacity data"""
         return self._data
 
+    def contains(self, facility):
+        """Returns whether the facility is in the capacity data"""
+        return facility in self._data
+
 
 class CircularBufferPlayer:
     """Class that stores the active data of a player (last 360 ticks of the graph data)"""

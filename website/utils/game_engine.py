@@ -97,7 +97,8 @@ def check_climate_events(engine):
     """function that checks if a climate event happens on this tick"""
 
     def inv_cdf_sigmoid(p, inverse=False):
-        latitude = 3 * np.log(math.exp(11.44 * p - 0.88) / 3 - math.exp(-1 / 3))
+        latitude = 3 * np.log(math.exp((11.44 * p - 0.88) / 3) - math.exp(-1 / 3))
+        latitude = max(-10.5, min(10.5, latitude))
         return round(-latitude) if inverse else round(latitude)
 
     def inv_cdf_normal(p):
@@ -129,6 +130,7 @@ def check_climate_events(engine):
     if random.random() < heatwave_probability:
         # the tile for the heatwave is chosen based on a sigmoid distribution around the equator
         random_latitude = round(inv_cdf_sigmoid(random.random()))
+        print(random_latitude)
         latitude_tiles = Hex.query.filter(Hex.r == random_latitude).all()
         tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
