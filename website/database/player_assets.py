@@ -51,6 +51,21 @@ class OngoingConstruction(db.Model):
         """Resets the prerequisites, so that it is recomputed next time prerequisites are accessed"""
         self._prerequisites = None
 
+    def is_paused(self) -> bool:
+        """Returns True if this construction is paused"""
+        return self.suspension_time is not None
+
+    def resume(self):
+        """Make this facility go from paused to unpaused"""
+        assert self.is_paused()
+        from flask import current_app
+
+        from website.game_engine import GameEngine
+
+        engine: GameEngine = current_app.config["engine"]
+        self.start_time += engine.data["total_t"] - self.suspension_time
+        self.suspension_time = None
+
     def _compute_prerequisites_and_level(self):
         from website.database.player import Player
 

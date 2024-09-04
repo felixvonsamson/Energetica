@@ -14,16 +14,15 @@ from website.game_engine import GameEngine
 from website.utils.network import reorder_facility_priorities
 
 
-def add_asset(player_id, construction_id):
+def finish_construction(construction: OngoingConstruction):
     """
     This function is executed when a construction or research project has finished. The effects include:
     * For facilities which create demands, e.g. carbon capture, adds demands to the demand priorities
     * For technologies and functional facilities, checks for achievements
     * Removes from the relevant construction / research list and priority list
     """
-    engine = current_app.config["engine"]
-    player: Player = Player.query.get(player_id)
-    construction: OngoingConstruction = OngoingConstruction.query.get(construction_id)
+    engine: GameEngine = current_app.config["engine"]
+    player: Player = Player.query.get(construction.player_id)
 
     if construction.family in ["Technologies", "Functional facilities"]:
         if getattr(player, construction.name) == 0:
@@ -80,73 +79,15 @@ def add_asset(player_id, construction_id):
 
     player.check_construction_achievements(construction.name)
 
-    priority_list_name = "construction_priorities"
-    project_index = (
-        OngoingConstruction.query.filter(
-            OngoingConstruction.family != "Technologies",
-            OngoingConstruction.player_id == player.id,
-            OngoingConstruction.suspension_time.is_(None),
-        ).count()
-        - 1
-    )
     if construction.family == "Technologies":
         priority_list_name = "research_priorities"
-        project_index = (
-            OngoingConstruction.query.filter(
-                OngoingConstruction.family == "Technologies",
-                OngoingConstruction.player_id == player.id,
-                OngoingConstruction.suspension_time.is_(None),
-            ).count()
-            - 1
-        )
-    player.remove_from_list(priority_list_name, construction_id)
-    project_priorities = player.read_list(priority_list_name)
-    for priority_index, project_id in enumerate(project_priorities):
-        next_construction: OngoingConstruction = OngoingConstruction.query.get(project_id)
-        if next_construction.suspension_time is None:
-            continue
-        if next_construction.family in [
-            "Functional facilities",
-            "Technologies",
-        ]:
-            first_lvl: OngoingConstruction = (
-                OngoingConstruction.query.filter_by(name=next_construction.name, player_id=player.id)
-                .order_by(OngoingConstruction.duration)
-                .first()
-            )
-            if first_lvl.suspension_time is None:
-                if first_lvl.start_time + first_lvl.duration >= engine.data["total_t"]:
-                    continue
-                else:
-                    second_lvl: OngoingConstruction = (
-                        OngoingConstruction.query.filter_by(name=next_construction.name, player_id=player.id)
-                        .order_by(OngoingConstruction.duration)
-                        .offset(1)
-                        .first()
-                    )
-                    if second_lvl is None:
-                        continue
-                    else:
-                        first_lvl = second_lvl
-            else:
-                first_lvl.start_time += engine.data["total_t"] - first_lvl.suspension_time
-                first_lvl.suspension_time = None
-                index_first_lvl = project_priorities.index(first_lvl.id)
-                (
-                    project_priorities[index_first_lvl],
-                    project_priorities[project_index],
-                ) = (
-                    project_priorities[project_index],
-                    project_priorities[index_first_lvl],
-                )
-                break
-        next_construction.start_time += engine.data["total_t"] - next_construction.suspension_time
-        next_construction.suspension_time = None
-        project_priorities[priority_index], project_priorities[project_index] = (
-            project_priorities[project_index],
-            project_priorities[priority_index],
-        )
-        break
+    else:
+        priority_list_name = "construction_priorities"
+    player.remove_from_list(priority_list_name, construction.id)
+    family = construction.family
+    db.session.delete(construction)
+
+    deploy_available_workers(player, family)
 
     construction_name = engine.const_config["assets"][construction.name]["name"]
     if construction.family == "Technologies":
@@ -186,6 +127,45 @@ def add_asset(player_id, construction_id):
         engine.data["player_capacities"][player.id].update(player, construction.name)
     engine.config.update_config_for_user(player.id)
     player.emit("retrieve_player_data")
+
+
+def deploy_available_workers(player: Player, family: str):
+    """Ensures all free workers for `family` are in use, if possible"""
+    if family == "Technologies":
+        priority_list_name = "research_priorities"
+
+        def available_workers() -> int:
+            return player.available_lab_workers()
+    else:
+        priority_list_name = "construction_priorities"
+
+        def available_workers() -> int:
+            return player.available_construction_workers()
+
+    if available_workers() <= 0:
+        return
+    priority_list = player.read_list(priority_list_name)
+
+    for priority_index, construction_id in enumerate(priority_list):
+        construction: OngoingConstruction = OngoingConstruction.query.get(construction_id)
+        if not construction.is_paused():
+            continue
+        if construction.prerequisites(recompute=True):
+            continue
+        construction.resume()
+        insertion_index = None
+        for insertion_index_candidate, possibly_paused_construction_id in enumerate(priority_list[:priority_index]):
+            possibly_paused_construction: OngoingConstruction = OngoingConstruction.query.get(
+                possibly_paused_construction_id
+            )
+            if possibly_paused_construction.is_paused():
+                insertion_index = insertion_index_candidate
+                break
+        if insertion_index is not None:
+            priority_list.remove(construction_id)
+            priority_list.insert(insertion_index, construction_id)
+        if available_workers() <= 0:
+            return
 
 
 # Utilities relating to managing facilities and assets
