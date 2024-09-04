@@ -1526,6 +1526,14 @@ input:checked+.slider:before {
     width: 196px;
 }
 
+.constrain_description_txt{
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3; /* Number of lines to show */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 #constructionContent {
     width: 100%;
     display: flex;

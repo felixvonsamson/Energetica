@@ -122,6 +122,12 @@
     1 in-game year = {{(engine.clock_time / engine.in_game_seconds_per_tick * 72) | round() | int }} real-time days</a>) 
     and \(P_{max,n}\) is the max power generation of the facility instance n.
   </li></ul>
+  <p>
+    Note that the building and operational costs of hydro facilities increase with each new instance, reflecting the 
+    difficulty of constructing in increasingly hard-to-access locations. See 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='map', _anchor='hydro_potential') }}">
+    Hydro Potential</a> for more information.
+  </p>
 
   <h2 id="Power_Generation_of_Controllable_Plants">Power Generation of Controllable Facilities</h2>
   <p>

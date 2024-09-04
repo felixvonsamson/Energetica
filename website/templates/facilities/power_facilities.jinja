@@ -63,8 +63,9 @@
             <div class="infobox">
               {# Description & indicators #}
               <div class="infotext">
-                {{ facility_data.description }}
-                <br class="smartphone_hide">
+                <span{% if facility_data.requirements_status != "satisfied" %} class="constrain_description_txt"{% endif %}>
+                  {{ facility_data.description }}
+                </span>
                 {# Wind Indicator #}
                 {% if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"] %}
                   <br>
