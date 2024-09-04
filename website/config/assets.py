@@ -125,7 +125,7 @@ const_config = {
             "name": "Onshore Wind Turbine",
             "type": "Renewable",
             "base_price": 270_000,
-            "base_power_generation": 1_100_000,
+            "base_power_generation": 11_000_000,
             "base_construction_time": timedelta(days=3, hours=18).total_seconds(),
             "construction_power_factor": 1.3,
             "base_construction_pollution": 420_000,
