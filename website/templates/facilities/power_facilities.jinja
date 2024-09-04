@@ -228,6 +228,15 @@
                 <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ facility_data.operating_costs }}) + "/h";</script>
               </td>
             </tr>
+            {# Capacity factor #}
+            {% if facility_data.capacity_factor %}
+              <tr>
+                <td>Capacity factor</td>
+                <td class="txt_center">
+                  <strong>{{ facility_data.capacity_factor }}</strong>
+                </td>
+              </tr>
+            {% endif %}
             {# Resource Consumption #}
             {% for resource, amount in facility_data.consumed_resources.items() %}
               {% if resource in ["coal", "gas", "uranium"] %}

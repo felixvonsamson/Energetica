@@ -182,8 +182,8 @@ def hydro_price_multiplier(player: Player, facility: str) -> float:
 
 def wind_speed_multiplier(player: Player, facility: str) -> float:
     """
-    For wind power facilities, returns by how much the `facility`'s `base_power_generation` should be multiplied,
-    according to the `player`'s currently researched technologies
+    For wind power facilities, returns by how much the wind at the `facility`'s location should be multiplied,
+    according to the `player`'s current amount of wind facilities and wind potential.
     """
     mlt = 1
     # calculating the wind speed multiplier linked to the number of wind turbines
@@ -401,7 +401,7 @@ def hydro_price_function(count, potential):
 
 def wind_speed_function(count, potential):
     """wind speed multiplier, for the `count`th wind facility of a particular type, given the wind potential"""
-    return 1 / (math.log(math.e + (count * (1 / (9 * potential + 1))) ** 2))
+    return 1.3 / (math.log(math.e + (count * (1 / (9 * potential + 1))) ** 2))
 
 
 def asset_requirements(player: Player, asset: str) -> List[Dict[str, str | int]]:
@@ -571,7 +571,38 @@ def _package_power_generating_facility_base(player: Player, facility):
         * 60
         if const_config_assets[facility]["ramping_time"] != 0
         else None,
-    }
+    } | _capacity_factors(player, facility)
+
+
+def _capacity_factors(player: Player, facility: str):
+    """
+    Gets the capacity factors for renewable power facilities
+    !!! The capacity factor function is an approximation of the empirical data and has to be updated whenever a change
+    in the wind simulation is made. !!!
+    """
+    if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
+
+        def capacity_factor_wind(wind_speed):
+            """Fit of empirical data for wind speeds"""
+            return 0.5280542813 - 0.5374832237 * np.exp(-2.226120465 * wind_speed**2.38728403)
+
+        return {
+            "capacity_factor": f"{100 * capacity_factor_wind(wind_speed_multiplier(player, facility)):.0f}%",
+        }
+    if facility in ["watermill", "small_water_dam", "large_water_dam"]:
+        return {
+            "capacity_factor": "55%",
+        }
+    if facility in ["PV_solar", "CSP_solar"]:
+
+        def capacity_factor_solar(latitude):
+            """Fit of empirical data for solar irradiations"""
+            return 0.1788792882 / ((1 + np.exp(1.136558093 - 0.4216299482 * latitude)) ** (1 / 5.918314566))
+
+        return {
+            "capacity_factor": f"{100 * capacity_factor_solar(player.tile.r):.0f}%",
+        }
+    return {}
 
 
 def _package_power_storage_extraction_facility_base(player: Player, facility):
