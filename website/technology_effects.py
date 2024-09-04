@@ -35,34 +35,40 @@ from .database.player_assets import ActiveFacility, OngoingConstruction
 # }
 
 
+def special_multiplier(pf: float, lvl: int) -> float:
+    """This is a special function to try to reduce the exponential growth of the power production"""
+    return (0.5 + 0.5 * pf) ** lvl + np.log(pf / (0.5 + 0.5 * pf)) * lvl
+
+
 def price_multiplier(player: Player, asset: str) -> float:
     """Function that returns the price multiplier according to the technology level of the player."""
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Mechanical engineering
     if asset in const_config["mechanical_engineering"]["affected_facilities"]:
-        mlt *= const_config["mechanical_engineering"]["price_factor"] ** player.mechanical_engineering
+        mlt *= special_multiplier(const_config["mechanical_engineering"]["price_factor"], player.mechanical_engineering)
     # Physics
     if asset in const_config["physics"]["affected_facilities"]:
-        mlt *= const_config["physics"]["price_factor"] ** player.physics
+        mlt *= special_multiplier(const_config["physics"]["price_factor"], player.physics)
     # Mineral extraction
     if asset in const_config["mineral_extraction"]["affected_facilities"]:
-        mlt *= const_config["mineral_extraction"]["price_factor"] ** player.mineral_extraction
+        # TODO: the price multiplier here should probably be calculated differently. See extraction_rate_multiplier
+        mlt *= special_multiplier(const_config["mineral_extraction"]["price_factor"], player.mineral_extraction)
     # Materials
     if asset in const_config["materials"]["affected_facilities"]:
         mlt *= const_config["materials"]["price_factor"] ** player.materials
     # Civil engineering
     if asset in const_config["civil_engineering"]["affected_facilities"]:
-        mlt *= const_config["civil_engineering"]["price_factor"] ** player.civil_engineering
+        mlt *= special_multiplier(const_config["civil_engineering"]["price_factor"], player.civil_engineering)
     # Aerodynamics
     if asset in const_config["aerodynamics"]["affected_facilities"]:
-        mlt *= const_config["aerodynamics"]["price_factor"] ** player.aerodynamics
+        mlt *= special_multiplier(const_config["aerodynamics"]["price_factor"], player.aerodynamics)
     # Chemistry
     if asset in const_config["chemistry"]["affected_facilities"]:
         mlt *= const_config["chemistry"]["price_factor"] ** player.chemistry
     # Nuclear engineering
     if asset in const_config["nuclear_engineering"]["affected_facilities"]:
-        mlt *= const_config["nuclear_engineering"]["price_factor"] ** player.nuclear_engineering
+        mlt *= special_multiplier(const_config["nuclear_engineering"]["price_factor"], player.nuclear_engineering)
     # level based facilities and technologies
     engine: GameEngine = current_app.config["engine"]
     if asset in engine.functional_facilities + engine.technologies:
@@ -84,11 +90,6 @@ def multiplier_1(player: Player, facility: str) -> float:
         return power_consumption_multiplier(player, facility)
     else:
         return power_production_multiplier(player, facility)
-
-
-def special_multiplier(pf: float, lvl: int) -> float:
-    """This is a special function to try to reduce the exponential growth of the power production"""
-    return (0.5 + 0.5 * pf) ** lvl + np.log(pf / (0.5 + 0.5 * pf)) * lvl
 
 
 def power_production_multiplier(player: Player, facility: str) -> float:
