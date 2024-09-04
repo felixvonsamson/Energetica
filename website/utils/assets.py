@@ -101,51 +101,52 @@ def add_asset(player_id, construction_id):
         )
     player.remove_from_list(priority_list_name, construction_id)
     project_priorities = player.read_list(priority_list_name)
-    for priority_index, project_id in enumerate(project_priorities[:]):
+    for priority_index, project_id in enumerate(project_priorities):
         next_construction: OngoingConstruction = OngoingConstruction.query.get(project_id)
-        if next_construction.suspension_time is not None:
-            if next_construction.family in [
-                "Functional facilities",
-                "Technologies",
-            ]:
-                first_lvl: OngoingConstruction = (
-                    OngoingConstruction.query.filter_by(name=next_construction.name, player_id=player.id)
-                    .order_by(OngoingConstruction.duration)
-                    .first()
-                )
-                if first_lvl.suspension_time is None:
-                    if first_lvl.start_time + first_lvl.duration >= engine.data["total_t"]:
+        if next_construction.suspension_time is None:
+            continue
+        if next_construction.family in [
+            "Functional facilities",
+            "Technologies",
+        ]:
+            first_lvl: OngoingConstruction = (
+                OngoingConstruction.query.filter_by(name=next_construction.name, player_id=player.id)
+                .order_by(OngoingConstruction.duration)
+                .first()
+            )
+            if first_lvl.suspension_time is None:
+                if first_lvl.start_time + first_lvl.duration >= engine.data["total_t"]:
+                    continue
+                else:
+                    second_lvl: OngoingConstruction = (
+                        OngoingConstruction.query.filter_by(name=next_construction.name, player_id=player.id)
+                        .order_by(OngoingConstruction.duration)
+                        .offset(1)
+                        .first()
+                    )
+                    if second_lvl is None:
                         continue
                     else:
-                        second_lvl: OngoingConstruction = (
-                            OngoingConstruction.query.filter_by(name=next_construction.name, player_id=player.id)
-                            .order_by(OngoingConstruction.duration)
-                            .offset(1)
-                            .first()
-                        )
-                        if second_lvl is None:
-                            continue
-                        else:
-                            first_lvl = second_lvl
-                else:
-                    first_lvl.start_time += engine.data["total_t"] - first_lvl.suspension_time
-                    first_lvl.suspension_time = None
-                    index_first_lvl = project_priorities.index(first_lvl.id)
-                    (
-                        project_priorities[index_first_lvl],
-                        project_priorities[project_index],
-                    ) = (
-                        project_priorities[project_index],
-                        project_priorities[index_first_lvl],
-                    )
-                    break
-            next_construction.start_time += engine.data["total_t"] - next_construction.suspension_time
-            next_construction.suspension_time = None
-            project_priorities[priority_index], project_priorities[project_index] = (
-                project_priorities[project_index],
-                project_priorities[priority_index],
-            )
-            break
+                        first_lvl = second_lvl
+            else:
+                first_lvl.start_time += engine.data["total_t"] - first_lvl.suspension_time
+                first_lvl.suspension_time = None
+                index_first_lvl = project_priorities.index(first_lvl.id)
+                (
+                    project_priorities[index_first_lvl],
+                    project_priorities[project_index],
+                ) = (
+                    project_priorities[project_index],
+                    project_priorities[index_first_lvl],
+                )
+                break
+        next_construction.start_time += engine.data["total_t"] - next_construction.suspension_time
+        next_construction.suspension_time = None
+        project_priorities[priority_index], project_priorities[project_index] = (
+            project_priorities[project_index],
+            project_priorities[priority_index],
+        )
+        break
 
     construction_name = engine.const_config["assets"][construction.name]["name"]
     if construction.family == "Technologies":
@@ -569,7 +570,6 @@ def decrease_project_priority(player, construction_id, pausing=False):
 def pause_project(player: Player, construction_id: int):
     """this function is executed when a player pauses or unpauses an ongoing construction"""
     engine: GameEngine = current_app.config["engine"]
-    const_config = engine.const_config["assets"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
 
     if construction.family == "Technologies":
