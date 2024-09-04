@@ -14,7 +14,9 @@ function show_construction(name) {
         additionalContent_smartphone.classList.remove("hidden");
         additionalContent_smartphone.classList.add("shown");
 
-        facility_description.classList.remove("constrain_description_txt");
+        if (facility_description !== null) {
+            facility_description.classList.remove("constrain_description_txt");
+        }
 
         if (infotable.classList.contains("minimizable")) {
             infotable.classList.remove("minimized");
@@ -30,7 +32,9 @@ function show_construction(name) {
         additionalContent_smartphone.classList.remove("shown");
         additionalContent_smartphone.classList.add("hidden");
 
-        facility_description.classList.add("constrain_description_txt");
+        if (facility_description !== null) {
+            facility_description.classList.add("constrain_description_txt");
+        }
 
         if (infotable.classList.contains("minimizable")) {
             infotable.classList.remove("maximized");
