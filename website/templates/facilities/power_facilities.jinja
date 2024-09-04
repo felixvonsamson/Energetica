@@ -63,9 +63,9 @@
             <div class="infobox">
               {# Description & indicators #}
               <div class="infotext">
-                <span{% if facility_data.requirements_status != "satisfied" %} class="constrain_description_txt"{% endif %}>
+                <div id="facility_description" class="constrain_description_txt">
                   {{ facility_data.description }}
-                </span>
+                </div>
                 {# Wind Indicator #}
                 {% if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"] %}
                   <br>
