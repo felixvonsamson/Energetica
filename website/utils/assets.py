@@ -258,7 +258,7 @@ def remove_asset(player_id, facility, decommissioning=True):
     # The cost of decommissioning is 20% of the building cost.
     cost = 0.2 * engine.const_config["assets"][facility.facility]["base_price"] * facility.price_multiplier
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
-        cost *= facility.capacity_multiplier
+        cost *= facility.multiplier_2
     player.money -= cost
     facility_name = engine.const_config["assets"][facility.facility]["name"]
     if decommissioning:
@@ -287,7 +287,7 @@ def facility_destroyed(player, facility, event_name):
     base_price = current_app.config["engine"].const_config["assets"][facility.facility]["base_price"]
     cost = 0.1 * base_price * facility.price_multiplier
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
-        cost *= facility.capacity_multiplier
+        cost *= facility.multiplier_2
     response = remove_asset(player.id, facility, decommissioning=False)
     player.notify(
         "Destruction",
