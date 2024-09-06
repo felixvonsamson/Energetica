@@ -16,6 +16,7 @@ achievements = {
         "message": "You have passed the milestone of <span></span><script>document.currentScript.previousElementSibling"
         ".innerHTML = format_power({value});</script> of power consumption. You consume as much electricity as "
         "{comparison}. (+{reward} XP)",
+        "requirements": [],
     },
     "energy_storage": {
         "name": "Energy Storage",
@@ -25,6 +26,7 @@ achievements = {
         "rewards": [5, 10, 20],
         "message": "You have stored <span></span><script>document.currentScript.previousElementSibling.innerHTML = "
         "format_energy({value});</script> of energy, enough to power {comparison}. (+{reward} XP)",
+        "requirements": ["First Storage Facility"],
     },
     "mineral_extraction": {
         "name": "Mineral Extraction",
@@ -33,6 +35,7 @@ achievements = {
         "rewards": [5, 10, 15],
         "message": "You have extracted <span></span><script>document.currentScript.previousElementSibling.innerHTML = "
         "format_mass({value});</script> of resources. (+{reward} XP)",
+        "requirements": ["Unlock Natural Resources", "Unlock Technologies"],
     },
     "network_import": {
         "name": "Network Import",
@@ -41,6 +44,7 @@ achievements = {
         "rewards": [5, 10, 15],
         "message": "You have imported more than <span></span><script>document.currentScript.previousElementSibling"
         ".innerHTML = format_energy({value});</script> on the market. (+{reward} XP)",
+        "requirements": ["Unlock Network"],
     },
     "network_export": {
         "name": "Network Export",
@@ -49,6 +53,7 @@ achievements = {
         "rewards": [5, 10, 15],
         "message": "You have exported more than <span></span><script>document.currentScript.previousElementSibling"
         ".innerHTML = format_energy({value});</script> on the market. (+{reward} XP)",
+        "requirements": ["Unlock Network"],
     },
     "technology": {
         "name": "Technology",
@@ -56,6 +61,7 @@ achievements = {
         "milestones": [10, 25, 50, 100],
         "rewards": [5, 10, 15, 20],
         "message": "You have researched a total of {value} levels technologies. (+{reward} XP)",
+        "requirements": ["Unlock Technologies"],
     },
     "trading": {
         "name": "Resource Trading",
@@ -64,6 +70,7 @@ achievements = {
         "rewards": [5, 10, 15],
         "message": "You have traded more than <span></span><script>document.currentScript.previousElementSibling"
         ".innerHTML = format_mass({value});</script> of resources. (+{reward} XP)",
+        "requirements": ["Unlock Natural Resources"],
     },
     "network": {
         "name": "Unlock Network",
@@ -72,6 +79,7 @@ achievements = {
         "rewards": [1],
         "message": "You generation capacities are now big enough to join a network and trade electricity. "
         "See <b>Community</b> > <b><a href='/network'>Network</a></b>. (+{reward} XP)",
+        "requirements": [],
     },
     "laboratory": {
         "name": "Unlock Technologies",
@@ -79,6 +87,7 @@ achievements = {
         "reward": 1,
         "message": "You have built a laboratory, you can now research <a href='/technology'>technologies</a> "
         "to unlock new facilities or improve existing ones. (+{reward} XP)",
+        "requirements": [],
     },
     "warehouse": {
         "name": "Unlock Natural Resources",
@@ -87,6 +96,7 @@ achievements = {
         "message": "You have built a warehouse to store natural resources, you can now buy resources on the "
         "<a href='/resource_market'>resource market</a> or extract them yourself by building "
         "<a href='/extraction_facilities'>extraction facilities</a>. (+{reward} XP)",
+        "requirements": [],
     },
     "GHG_effect": {
         "name": "Discover the Greenhouse Effect",
@@ -96,6 +106,7 @@ achievements = {
         "is caused by human activities and increases the risk of extreme weather events. You can now monitor "
         "your CO<sub>2</sub> emissions and the climate anomalies in the <a href='/production_overview/emissions'>"
         "emissions overview</a>. (+{reward} XP)",
+        "requirements": ["Unlock Technologies"],
     },
     "storage_facilities": {
         "name": "First Storage Facility",
@@ -110,5 +121,6 @@ achievements = {
         "reward": 1,
         "message": "You have built your first storage facility, you can monitor the stored energy in the "
         "<a href='/production_overview/storage'>energy storage overview</a>. (+{reward} XP)",
+        "requirements": [],
     },
 }
