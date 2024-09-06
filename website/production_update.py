@@ -493,22 +493,7 @@ def market_logic(engine, new_values, market):
     market["capacities"] = offers
     market["demands"] = demands
 
-    if len(offers) == 0:
-        total_market_capacity = 0
-        max_supply_price = 0
-    else:
-        total_market_capacity = offers["cumul_capacities"].iloc[-1]
-        max_supply_price = offers["price"].iloc[-1]
-    demand_price = demands.loc[demands["cumul_capacities"] >= total_market_capacity, "price"]
-    if len(demand_price) == 0:
-        demand_price = 0
-    else:
-        demand_price = demand_price.iloc[0]
-    if demand_price > max_supply_price:
-        market_quantity = total_market_capacity
-        market_price = demand_price if demand_price != np.inf else max_supply_price
-    else:
-        market_price, market_quantity = market_optimum(offers, demands)
+    market_price, market_quantity = market_optimum(offers, demands)
     # sell all capacities under market price
     for row in offers.itertuples(index=False):
         if row.cumul_capacities > market_quantity:
