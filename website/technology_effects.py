@@ -427,6 +427,7 @@ def asset_requirements(player: Player, asset: str) -> List[Dict[str, str | int]]
             ),
         }
         for requirement, level in requirements.items()
+        if level + level_offset > 0
     ]
 
 
