@@ -1,4 +1,4 @@
-let player_levels, player_config
+let player_levels, player_config;
 
 retrieve_ud();
 
@@ -25,7 +25,7 @@ function change_info(constructions) {
     }
     load_const_config().then((const_config) => {
         for (const name in lvls_in_progress) {
-            console.log(const_config.assets[name]["name"])
+            console.log(const_config.assets[name]["name"]);
             let tile = document.getElementById(const_config.assets[name]["name"]);
 
             let lvl = tile.querySelector("#lvl");

@@ -21,8 +21,8 @@ function general_format(value, units, threshold = 10_000) {
         value /= 1_000;
         unit_index += 1;
     }
-    formatted_value = `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]}`
-    return formatted_value
+    formatted_value = `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]}`;
+    return formatted_value;
 }
 
 function general_upgrade_format(value1, value2, units) {
@@ -197,7 +197,7 @@ function update_resolution_button_text(in_game_seconds_per_tick) {
         1200: ["20h", "5 days", "30 days", "2 years", "14 years", "89 years"],
         1800: ["30h", "7 days", "45 days", "3 years", "22 years", "135 years"],
         3600: ["60h", "15 days", "1 year", "7 years", "45 years", "270 years"],
-    }
+    };
     for (let i = 0; i < 6; i++) {
         let res_button = document.getElementById(`res_button_${i}`);
         res_button.innerHTML = resolution_categories[in_game_seconds_per_tick][i];

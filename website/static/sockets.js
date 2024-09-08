@@ -145,7 +145,7 @@ function reduce_resolution(value, array, total_t) {
     array[0].shift();
     array[0].push(value);
     for (r = 1; r < 5; r++) {
-        factor = Math.pow(6, r)
+        factor = Math.pow(6, r);
         let mod = total_t % factor;
         if (mod != 0) {
             if (r == 4) {

@@ -65,7 +65,10 @@ options:
 
 ## Source Code Formatting and Linting
 
+<!-- TODO: restructure the below information to be more readable -->
+
 Use [Ruff](https://github.com/astral-sh/ruff), [Pylint](https://marketplace.visualstudio.com/items?itemName=ms-python.pylint) and [isort](https://marketplace.visualstudio.com/items?itemName=ms-python.isort) for Python.
+Use vscode's built in formatter for Javascript.
 Use [djLint](https://github.com/djlint/djLint) for Jinja.
 Use [Better Jinja](https://marketplace.visualstudio.com/items?itemName=samuelcolvin.jinjahtml) for code highlighting in vscode.
 Both specified through `pyproject.toml`.
