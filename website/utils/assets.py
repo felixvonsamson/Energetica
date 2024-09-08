@@ -255,11 +255,23 @@ def remove_asset(player_id, facility, decommissioning=True):
         return {"response": "notRemovable"}
     player = Player.query.get(player_id)
     db.session.delete(facility)
+    db.session.flush()
     # The cost of decommissioning is 20% of the building cost.
     cost = 0.2 * engine.const_config["assets"][facility.facility]["base_price"] * facility.price_multiplier
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
         cost *= facility.multiplier_2
     player.money -= cost
+    if ActiveFacility.query.filter_by(facility=facility.facility, player_id=player.id).count() == 0:
+        # remove facility from facility priorities if it was the last one
+        if facility.facility in engine.extraction_facilities + engine.storage_facilities:
+            player.remove_from_list("demand_priorities", facility.facility)
+            reorder_facility_priorities(engine, player)
+        if facility.facility in engine.renewables:
+            player.remove_from_list("self_consumption_priority", facility.facility)
+            reorder_facility_priorities(engine, player)
+        if facility.facility in engine.storage_facilities + engine.controllable_facilities:
+            player.remove_from_list("rest_of_priorities", facility.facility)
+            reorder_facility_priorities(engine, player)
     facility_name = engine.const_config["assets"][facility.facility]["name"]
     if decommissioning:
         player.notify(
