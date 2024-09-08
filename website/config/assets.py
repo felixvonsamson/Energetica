@@ -404,7 +404,7 @@ const_config = {
             "type": "Functional facility",
             "base_price": 25_000,
             "base_construction_time": timedelta(days=1, hours=1).total_seconds(),
-            "base_construction_energy": 100_000,
+            "base_construction_energy": 500_000,
             "base_construction_pollution": 25_000,
             "price_multiplier": 1.5,
             "capacity_factor": 1.5,
