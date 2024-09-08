@@ -61,10 +61,16 @@ def state_update(engine, app):
 def check_events_completion(engine):
     """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
     # check if constructions finished
-    finished_constructions: List[OngoingConstruction] = OngoingConstruction.query.filter(
-        OngoingConstruction.suspension_time.is_(None),
-        OngoingConstruction.start_time + OngoingConstruction.duration <= engine.data["total_t"],
-    ).all()
+    finished_constructions: List[OngoingConstruction] = (
+        OngoingConstruction.query.filter(
+            OngoingConstruction.suspension_time.is_(None),
+            OngoingConstruction.start_time + OngoingConstruction.duration <= engine.data["total_t"],
+        ).all()
+        + OngoingConstruction.query.filter(
+            OngoingConstruction.suspension_time.isnot(None),
+            OngoingConstruction.start_time + OngoingConstruction.duration <= OngoingConstruction.suspension_time,
+        ).all()
+    )
     for fc in finished_constructions:
         assets.finish_construction(fc)
 

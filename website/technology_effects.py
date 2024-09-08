@@ -375,7 +375,7 @@ def construction_power(player: Player, facility):
     # construction power increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
         facility_next_level = next_level(player, facility)
-        power *= const_config[facility]["price_multiplier"] ** (1.2 * (facility_next_level - 1))
+        power *= const_config[facility]["price_multiplier"] ** (facility_next_level - 1)
         # knowledge spillover
         if facility in engine.technologies and len(engine.data["technology_lvls"][facility]) > facility_next_level - 1:
             power *= 0.92 ** engine.data["technology_lvls"][facility][facility_next_level - 1]
@@ -427,6 +427,7 @@ def asset_requirements(player: Player, asset: str) -> List[Dict[str, str | int]]
             ),
         }
         for requirement, level in requirements.items()
+        if level + level_offset > 0
     ]
 
 

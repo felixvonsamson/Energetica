@@ -9,7 +9,6 @@ const formatting_mapping = {
 }
 
 
-
 function refresh_achievements() {
   fetch('/api/get_upcoming_achievements')
     .then((response) => response.json())
