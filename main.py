@@ -36,6 +36,16 @@ parser.add_argument(
     type=int,
     default=42,
     help="Set the random seed",
+    choices=range(0, 65536),
+    metavar="{0..65535}")
+)
+parser.add_argument(
+    "--port",
+    type=int
+    default=5001,
+    help="Port on witch the server should run",
+    choices=range(0, 65536),
+    metavar="{0..65535}")
 )
 
 args = parser.parse_args()
