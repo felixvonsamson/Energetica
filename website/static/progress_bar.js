@@ -42,13 +42,13 @@ asset_names = {
   "aerodynamics": "Aerodynamics",
   "chemistry": "Chemistry",
   "nuclear_engineering": "Nuclear Engineering",
-}
+};
 
 resource_names = {
   "coal": "Coal",
   "gas": "Gas",
   "uranium": "Uranium",
-}
+};
 
 function format_ticks(ticks) {
   totalSeconds = ticks * in_game_seconds_per_tick;
@@ -142,8 +142,8 @@ function cancel_construction(construction_id, force = false) {
           );
           refresh_progressBar();
         } else if (response == "hasDependents") {
-          let dependents = raw_data["dependents"]
-          has_dependents_cancel_construction(construction_id, dependents)
+          let dependents = raw_data["dependents"];
+          has_dependents_cancel_construction(construction_id, dependents);
         } else if (response == "areYouSure") {
           refund = raw_data["refund"];
           are_you_sure_cancel_construction(construction_id, refund);
@@ -377,7 +377,7 @@ function display_progressBars(construction_data, shipment_data) {
           shipment = shipment_data[id];
           uc.innerHTML += html_for_shipmentBar(id, shipment);
         }
-        return
+        return;
       }
       if (construction_data != null) {
         uc.innerHTML = "";

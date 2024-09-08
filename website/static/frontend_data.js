@@ -64,7 +64,7 @@ function load_constructions() {
 }
 
 function retrieve_constructions() {
-    console.log("Fetching construction data from the server")
+    console.log("Fetching construction data from the server");
     return fetch("/api/get_constructions")
         .then((response) => response.json())
         .then((raw_data) => {
@@ -88,7 +88,7 @@ function load_shipments() {
 }
 
 function retrieve_shipments() {
-    console.log("Fetching shipments data from the server")
+    console.log("Fetching shipments data from the server");
     return fetch("/api/get_shipments")
         .then((response) => response.json())
         .then((raw_data) => {
@@ -117,7 +117,7 @@ function load_chart_data(return_data = "data") {
 }
 
 function retrieve_chart_data(return_data = "data") {
-    console.log("Fetching chart data from the server")
+    console.log("Fetching chart data from the server");
     return fetch("/api/get_chart_data")
         .then((response) => response.json())
         .then((raw_data) => {
@@ -142,7 +142,7 @@ function load_players() {
             return Promise.resolve(JSON.parse(players));
         }
     }
-    return retrieve_players()
+    return retrieve_players();
 }
 
 function retrieve_players() {
@@ -168,7 +168,7 @@ function load_player_data() {
 }
 
 function retrieve_player_data() {
-    console.log("Fetching player data from the server")
+    console.log("Fetching player data from the server");
     return fetch("/api/get_player_data")
         .then((response) => response.json())
         .then((raw_data) => {
@@ -233,8 +233,8 @@ function show_unread_badges() {
         if (unread_chat_count > 0) {
             let community_nav = document.getElementById("community");
             let messages_nav = document.getElementById("messages");
-            community_nav.innerHTML += `<span id="unread_badge_community" class="unread_badge messages padding-small pine">${unread_chat_count}</span>`
-            messages_nav.innerHTML += `<span id="unread_badge_messages" class="unread_badge messages padding-small pine">${unread_chat_count}</span>`
+            community_nav.innerHTML += `<span id="unread_badge_community" class="unread_badge messages padding-small pine">${unread_chat_count}</span>`;
+            messages_nav.innerHTML += `<span id="unread_badge_messages" class="unread_badge messages padding-small pine">${unread_chat_count}</span>`;
         } else {
             document.querySelectorAll("#unread_badge_community").forEach(function (badge) {
                 badge.parentNode.removeChild(badge);
