@@ -295,7 +295,7 @@ def calculate_solar_irradiance(x, y, total_seconds, random_seed):
         return 1 / (1 + np.exp(-(x - threshold) * 10 / smoothness))
 
     # Calculate the real day and time in a year for a given tick
-    start_date = datetime(2023, 1, 1)
+    start_date = datetime(2023, 7, 1)  # 6 months offset because i'm using the southern hemisphere
     day_of_year = int((total_seconds / 3600 / 24 / 72) % 1 * 365)
     time_of_day = total_seconds % (3600 * 24)
     weather_datetime = pd.DatetimeIndex([start_date + timedelta(days=day_of_year, seconds=time_of_day)])
