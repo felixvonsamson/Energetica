@@ -416,7 +416,7 @@ const_config = {
             "name": "Industry",
             "type": "Functional facility",
             "base_price": 2_400,
-            "base_construction_time": timedelta(hours=1, minutes=40).total_seconds(),
+            "base_construction_time": timedelta(hours=4).total_seconds(),
             "base_construction_energy": 200_000,
             "base_construction_pollution": 4_000,
             "base_power_consumption": 200_000,  # [W]
