@@ -7,7 +7,7 @@ const storageCharging = [
     "buy_hydrogen_storage",
     "buy_lithium_ion_batteries",
     "buy_solid_state_batteries",
-]
+];
 
 let renewables;
 
@@ -15,7 +15,7 @@ const initSortableList = (e) => {
     e.preventDefault();
     const draggingItem = document.querySelector(".dragging");
     if (!draggingItem.draggable) {
-        return
+        return;
     }
     const sortableListRect = sortableList.getBoundingClientRect();
     let offsetY = e.clientY - sortableListRect.top;
@@ -65,7 +65,7 @@ const initSortableList = (e) => {
             }
         }
     });
-}
+};
 
 function send_new_list() {
     new_priority = [];
@@ -95,7 +95,7 @@ if (sortableList) {
                 <span>${name}</span>
                 </div>
                 <i id="priority_list_icon" class="fa fa-lock priority_list_icon"></i>
-            </li>`
+            </li>`;
                 }
                 for (facility of raw_data[1]) {
                     let name;
@@ -123,14 +123,14 @@ if (sortableList) {
                         <span>${name}</span>
                         </div>
                         <i id="priority_list_icon" class="fa fa-sort priority_list_icon"></i>
-                        </li>`
+                        </li>`;
                     } else {
                         sortableList.innerHTML += `<li class="item medium draggable cons" draggable="true" id="${facility}">
                         <i id="priority_list_icon" class="fa fa-sort priority_list_icon"></i>
                         <div class="details padding">
                         <span>${name}</span>
                         </div>
-                        </li>`
+                        </li>`;
                     }
                 }
                 const items = sortableList.querySelectorAll(".item");

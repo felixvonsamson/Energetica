@@ -1,6 +1,11 @@
 /* 
 This code contains the main functions that communicate with the server (client side)
 */
+
+/**
+ * @type {typeof import('./frontend_data.js').load_chats}
+ */
+
 socket.on("infoMessage", addToast);
 
 socket.on("errorMessage", addError);
@@ -166,21 +171,23 @@ function reduce_resolution(value, array, total_t) {
 socket.on("new_notification", function (notification) {
     let notification_list = document.getElementById("notification_list-small");
     if (notification_list != null) {
-        notification_list.innerHTML += `<div id="notification_${notification["id"]}" class="notification padding-small margin-small">
-        <b>${notification["title"]}</b><br>
-        ${notification["content"]}
-      </div>`;
+        notification_list.innerHTML +=
+            `<div id="notification_${notification["id"]}" class="notification padding-small margin-small">
+            <b>${notification["title"]}</b><br>
+            ${notification["content"]}
+            </div>`;
         scroll_down_small_notification_list();
     }
     notification_list = document.getElementById("notification_list");
     if (notification_list != null) {
-        notification_list.innerHTML += `<div id="notification_${notification["id"]}" class="notification padding medium margin-large">
-        <div class="small notification_time">${formatDateTime(notification["time"])}</div>
-         <div class="flex-row align-items-center notification_head">
-           <b>${notification["title"]}<i class="fa fa-circle small padding"></i></b>
-           <span onclick="delete_notification(this, ${notification["id"]});" class="cross">×</span></div>
-           ${notification["content"]}
-       </div>`;
+        notification_list.innerHTML +=
+            `<div id="notification_${notification["id"]}" class="notification padding medium margin-large">
+            <div class="small notification_time">${formatDateTime(notification["time"])}</div>
+            <div class="flex-row align-items-center notification_head">
+            <b>${notification["title"]}<i class="fa fa-circle small padding"></i></b>
+            <span onclick="delete_notification(this, ${notification["id"]});" class="cross">×</span></div>
+            ${notification["content"]}
+            </div>`;
     }
     let notification_button = document.getElementById("notification_button");
     if (notification_button != null) {

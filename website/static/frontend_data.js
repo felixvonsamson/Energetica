@@ -1,5 +1,5 @@
 /* 
-This code contains the functions to acess frontend data and retrieve it if it is not avalable. 
+This code contains the functions to access frontend data and retrieve it if it is not available. 
 */
 
 if (window.location.pathname != "/login" && window.location.pathname != "/sign-up" && document.title != "Location choice") {
