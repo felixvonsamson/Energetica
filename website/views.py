@@ -43,22 +43,24 @@ def check_user():
             on_sale = ResourceOnSale.query.all()
             return render_template(page, engine=g.engine, user=current_user, on_sale=on_sale, data=g.data)
         elif page == "assets/power_facilities.jinja":
-            power_facilities = package_power_facilities(current_user)
-            return render_template(page, engine=g.engine, user=current_user, constructions=power_facilities)
-        elif page == "assets/storage_facilities.jinja":
-            storage_facilities = package_storage_facilities(current_user)
-            return render_template(page, engine=g.engine, user=current_user, constructions=storage_facilities)
-        elif page == "assets/extraction_facilities.jinja":
-            extraction_facilities = package_extraction_facilities(current_user)
-            return render_template(page, engine=g.engine, user=current_user, constructions=extraction_facilities)
-        elif page == "assets/functional_facilities.jinja":
-            functional_facilities = package_functional_facilities(current_user)
-            return render_template(page, engine=g.engine, user=current_user, constructions=functional_facilities)
-        elif page == "assets/technologies.jinja":
-            available_technologies = package_available_technologies(current_user)
-            # TODO: remove `data` from the next line
             return render_template(
-                page, engine=g.engine, user=current_user, data=g.data, available_technologies=available_technologies
+                page, engine=g.engine, user=current_user, constructions=package_power_facilities(current_user)
+            )
+        elif page == "assets/storage_facilities.jinja":
+            return render_template(
+                page, engine=g.engine, user=current_user, constructions=package_storage_facilities(current_user)
+            )
+        elif page == "assets/extraction_facilities.jinja":
+            return render_template(
+                page, engine=g.engine, user=current_user, constructions=package_extraction_facilities(current_user)
+            )
+        elif page == "assets/functional_facilities.jinja":
+            return render_template(
+                page, engine=g.engine, user=current_user, constructions=package_functional_facilities(current_user)
+            )
+        elif page == "assets/technologies.jinja":
+            return render_template(
+                page, engine=g.engine, user=current_user, assets_data=package_available_technologies(current_user)
             )
         else:
             return render_template(page, engine=g.engine, user=current_user, data=g.data)
