@@ -3,7 +3,7 @@ let order_by = {
     "power_facilities_table": ["installed_cap", true],
     "storage_facilities_table": ["installed_cap", true],
     "extraction_facilities_table": ["extraction_rate", true],
-}
+};
 
 let multiplier_table = {
     "price_multiplier": "price_multiplier",
@@ -15,7 +15,7 @@ let multiplier_table = {
     "wind_speed_multiplier": "multiplier_2",
     "efficiency_multiplier": "multiplier_3",
     "extraction_emissions_multiplier": "multiplier_3",
-}
+};
 
 if (window.location.href.includes("player_id")) {
     let profile_headder = document.getElementById("profile_headder");
@@ -37,7 +37,7 @@ function upgradable(facility, current_multipliers) {
 
 function upgrade_cost(facility, current_multipliers, config) {
     if (upgradable(facility, current_multipliers)) {
-        const price_diff = current_multipliers.price_multiplier - facility.price_multiplier
+        const price_diff = current_multipliers.price_multiplier - facility.price_multiplier;
         if (price_diff > 0) {
             if (["watermill", "small_water_dam", "large_water_dam"].includes(facility.facility)) {
                 return price_diff * config.base_price * facility[multiplier_table.hydro_price_multiplier];
@@ -62,7 +62,7 @@ async function get_active_facilities(reorder = false) {
             "power_facilities": {},
             "storage_facilities": {},
             "extraction_facilities": {},
-        }
+        };
         let last_value = JSON.parse(sessionStorage.getItem("last_value"));
         for (const [id, facility] of Object.entries(raw_data.power_facilities)) {
             let config = const_config.assets[facility.facility];
@@ -99,12 +99,12 @@ async function get_active_facilities(reorder = false) {
             "coal_mine": "coal",
             "gas_drilling_site": "gas",
             "uranium_mine": "uranium",
-        }
+        };
         let cumul_demand = {
             "coal_mine": 0,
             "gas_drilling_site": 0,
             "uranium_mine": 0,
-        }
+        };
         for (const [id, facility] of Object.entries(raw_data.extraction_facilities)) {
             let config = const_config.assets[facility.facility];
             cumul_demand[facility.facility] += config.base_power_consumption * facility.multiplier_1;

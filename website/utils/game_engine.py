@@ -61,13 +61,18 @@ def state_update(engine, app):
 def check_events_completion(engine):
     """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
     # check if constructions finished
-    finished_constructions: List[OngoingConstruction] = OngoingConstruction.query.filter(
-        OngoingConstruction.suspension_time.is_(None),
-        OngoingConstruction.start_time + OngoingConstruction.duration <= engine.data["total_t"],
-    ).all()
+    finished_constructions: List[OngoingConstruction] = (
+        OngoingConstruction.query.filter(
+            OngoingConstruction.suspension_time.is_(None),
+            OngoingConstruction.start_time + OngoingConstruction.duration <= engine.data["total_t"],
+        ).all()
+        + OngoingConstruction.query.filter(
+            OngoingConstruction.suspension_time.isnot(None),
+            OngoingConstruction.start_time + OngoingConstruction.duration <= OngoingConstruction.suspension_time,
+        ).all()
+    )
     for fc in finished_constructions:
-        assets.add_asset(fc.player_id, fc.id)
-        db.session.delete(fc)
+        assets.finish_construction(fc)
 
     # check if shipment arrived
     arrived_shipments = Shipment.query.filter(
@@ -98,7 +103,8 @@ def check_climate_events(engine):
     """function that checks if a climate event happens on this tick"""
 
     def inv_cdf_sigmoid(p, inverse=False):
-        latitude = 3 * np.log(math.exp(11.44 * p - 0.88) / 3 - math.exp(-1 / 3))
+        latitude = 3 * np.log(math.exp((11.44 * p - 0.88) / 3) - math.exp(-1 / 3))
+        latitude = max(-10.5, min(10.5, latitude))
         return round(-latitude) if inverse else round(latitude)
 
     def inv_cdf_normal(p):

@@ -27,12 +27,14 @@ class OngoingConstruction(db.Model):
     # can access player directly with .player
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
+    # A list of OngoingConstruction id's
     _prerequisites = None
+    # The level for this construction if it is a technology or a functional facility, otherwise -1 as special value
     _level = None
 
     def prerequisites(self, recompute=False) -> List[int]:
         """Returns a list of the id's of ongoing constructions that this constructions depends on"""
-        if not self._prerequisites or recompute:
+        if self._prerequisites is None or recompute:
             self._compute_prerequisites_and_level()
         return self._prerequisites
 
@@ -41,13 +43,28 @@ class OngoingConstruction(db.Model):
         In the case of functional facilities and technologies, returns the level of this construction.
         Otherwise, returns 0.
         """
-        if not self._level:
+        if self._level is None:
             self._compute_prerequisites_and_level()
         return self._level
 
     def reset_prerequisites(self):
         """Resets the prerequisites, so that it is recomputed next time prerequisites are accessed"""
         self._prerequisites = None
+
+    def is_paused(self) -> bool:
+        """Returns True if this construction is paused"""
+        return self.suspension_time is not None
+
+    def resume(self):
+        """Make this facility go from paused to unpaused"""
+        assert self.is_paused()
+        from flask import current_app
+
+        from website.game_engine import GameEngine
+
+        engine: GameEngine = current_app.config["engine"]
+        self.start_time += engine.data["total_t"] - self.suspension_time
+        self.suspension_time = None
 
     def _compute_prerequisites_and_level(self):
         from website.database.player import Player
@@ -103,7 +120,7 @@ class OngoingConstruction(db.Model):
                     if self._level + offset - 1 >= candidate_prerequisite_level:
                         self._prerequisites.append(candidate_prerequisite_id)
             return
-        self._level = 0
+        self._level = -1
 
 
 class ActiveFacility(db.Model):

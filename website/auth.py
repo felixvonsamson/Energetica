@@ -1,15 +1,6 @@
 """This file contains the functions for authentication and sign-up of users."""
 
-from flask import (
-    Blueprint,
-    current_app,
-    flash,
-    g,
-    redirect,
-    render_template,
-    request,
-    url_for,
-)
+from flask import Blueprint, current_app, flash, g, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -47,8 +38,8 @@ def login():
         else:
             flash(
                 "Username does not exist.<br><b>All accounts created before "
-                "the 13.06.2024 have been<br>deleted due to a server reset for "
-                "the 0.9 update.<br>If your account has been deleted, please "
+                "the 01.09.2024 have been<br>deleted due to a server reset for "
+                "the 0.10 update.<br>If your account has been deleted, please "
                 "create a new one.</b>",
                 category="error",
             )

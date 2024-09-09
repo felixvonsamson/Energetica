@@ -6,6 +6,7 @@ levels of the player.
 import math
 from typing import Dict, List
 
+import numpy as np
 from flask import current_app
 
 from website.config.assets import (
@@ -34,34 +35,40 @@ from .database.player_assets import ActiveFacility, OngoingConstruction
 # }
 
 
+def special_multiplier(pf: float, lvl: int) -> float:
+    """This is a special function to try to reduce the exponential growth of the power production"""
+    return (0.5 + 0.5 * pf) ** lvl + np.log(pf / (0.5 + 0.5 * pf)) * lvl
+
+
 def price_multiplier(player: Player, asset: str) -> float:
     """Function that returns the price multiplier according to the technology level of the player."""
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # Mechanical engineering
     if asset in const_config["mechanical_engineering"]["affected_facilities"]:
-        mlt *= const_config["mechanical_engineering"]["price_factor"] ** player.mechanical_engineering
+        mlt *= special_multiplier(const_config["mechanical_engineering"]["price_factor"], player.mechanical_engineering)
     # Physics
     if asset in const_config["physics"]["affected_facilities"]:
-        mlt *= const_config["physics"]["price_factor"] ** player.physics
+        mlt *= special_multiplier(const_config["physics"]["price_factor"], player.physics)
     # Mineral extraction
     if asset in const_config["mineral_extraction"]["affected_facilities"]:
-        mlt *= const_config["mineral_extraction"]["price_factor"] ** player.mineral_extraction
+        # TODO: the price multiplier here should probably be calculated differently. See extraction_rate_multiplier
+        mlt *= special_multiplier(const_config["mineral_extraction"]["price_factor"], player.mineral_extraction)
     # Materials
     if asset in const_config["materials"]["affected_facilities"]:
         mlt *= const_config["materials"]["price_factor"] ** player.materials
     # Civil engineering
     if asset in const_config["civil_engineering"]["affected_facilities"]:
-        mlt *= const_config["civil_engineering"]["price_factor"] ** player.civil_engineering
+        mlt *= special_multiplier(const_config["civil_engineering"]["price_factor"], player.civil_engineering)
     # Aerodynamics
     if asset in const_config["aerodynamics"]["affected_facilities"]:
-        mlt *= const_config["aerodynamics"]["price_factor"] ** player.aerodynamics
+        mlt *= special_multiplier(const_config["aerodynamics"]["price_factor"], player.aerodynamics)
     # Chemistry
     if asset in const_config["chemistry"]["affected_facilities"]:
         mlt *= const_config["chemistry"]["price_factor"] ** player.chemistry
     # Nuclear engineering
     if asset in const_config["nuclear_engineering"]["affected_facilities"]:
-        mlt *= const_config["nuclear_engineering"]["price_factor"] ** player.nuclear_engineering
+        mlt *= special_multiplier(const_config["nuclear_engineering"]["price_factor"], player.nuclear_engineering)
     # level based facilities and technologies
     engine: GameEngine = current_app.config["engine"]
     if asset in engine.functional_facilities + engine.technologies:
@@ -94,19 +101,19 @@ def power_production_multiplier(player: Player, facility: str) -> float:
     mlt = 1
     # Mechanical engineering
     if facility in const_config["mechanical_engineering"]["affected_facilities"]:
-        mlt *= const_config["mechanical_engineering"]["prod_factor"] ** player.mechanical_engineering
+        mlt *= special_multiplier(const_config["mechanical_engineering"]["prod_factor"], player.mechanical_engineering)
     # Physics
     if facility in const_config["physics"]["affected_facilities"]:
-        mlt *= const_config["physics"]["prod_factor"] ** player.physics
+        mlt *= special_multiplier(const_config["physics"]["prod_factor"], player.physics)
     # Civil engineering
     if facility in const_config["civil_engineering"]["affected_facilities"]:
-        mlt *= const_config["civil_engineering"]["prod_factor"] ** player.civil_engineering
+        mlt *= special_multiplier(const_config["civil_engineering"]["prod_factor"], player.civil_engineering)
     # Aerodynamics
     if facility in const_config["aerodynamics"]["affected_facilities"]:
-        mlt *= const_config["aerodynamics"]["prod_factor"] ** player.aerodynamics
+        mlt *= special_multiplier(const_config["aerodynamics"]["prod_factor"], player.aerodynamics)
     # Nuclear engineering
     if facility in const_config["nuclear_engineering"]["affected_facilities"]:
-        mlt *= const_config["nuclear_engineering"]["prod_factor"] ** player.nuclear_engineering
+        mlt *= special_multiplier(const_config["nuclear_engineering"]["prod_factor"], player.nuclear_engineering)
     return mlt
 
 
@@ -147,7 +154,7 @@ def capacity_multiplier(player: Player, facility: str) -> float:
     mlt = 1
     # Civil engineering
     if facility in ["small_pumped_hydro", "large_pumped_hydro"]:
-        mlt *= const_config["civil_engineering"]["capacity_factor"] ** player.civil_engineering
+        mlt *= special_multiplier(const_config["civil_engineering"]["capacity_factor"], player.civil_engineering)
     return mlt
 
 
@@ -176,8 +183,8 @@ def hydro_price_multiplier(player: Player, facility: str) -> float:
 
 def wind_speed_multiplier(player: Player, facility: str) -> float:
     """
-    For wind power facilities, returns by how much the `facility`'s `base_power_generation` should be multiplied,
-    according to the `player`'s currently researched technologies
+    For wind power facilities, returns by how much the wind at the `facility`'s location should be multiplied,
+    according to the `player`'s current amount of wind facilities and wind potential.
     """
     mlt = 1
     # calculating the wind speed multiplier linked to the number of wind turbines
@@ -368,7 +375,7 @@ def construction_power(player: Player, facility):
     # construction power increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
         facility_next_level = next_level(player, facility)
-        power *= const_config[facility]["price_multiplier"] ** (1.2 * (facility_next_level - 1))
+        power *= const_config[facility]["price_multiplier"] ** (facility_next_level - 1)
         # knowledge spillover
         if facility in engine.technologies and len(engine.data["technology_lvls"][facility]) > facility_next_level - 1:
             power *= 0.92 ** engine.data["technology_lvls"][facility][facility_next_level - 1]
@@ -395,7 +402,7 @@ def hydro_price_function(count, potential):
 
 def wind_speed_function(count, potential):
     """wind speed multiplier, for the `count`th wind facility of a particular type, given the wind potential"""
-    return 1 / (math.log(math.e + (count * (1 / (9 * potential + 1))) ** 2))
+    return 1.3 / (math.log(math.e + (count * (1 / (9 * potential + 1))) ** 2))
 
 
 def asset_requirements(player: Player, asset: str) -> List[Dict[str, str | int]]:
@@ -420,6 +427,7 @@ def asset_requirements(player: Player, asset: str) -> List[Dict[str, str | int]]
             ),
         }
         for requirement, level in requirements.items()
+        if level + level_offset > 0
     ]
 
 
@@ -565,7 +573,38 @@ def _package_power_generating_facility_base(player: Player, facility):
         * 60
         if const_config_assets[facility]["ramping_time"] != 0
         else None,
-    }
+    } | _capacity_factors(player, facility)
+
+
+def _capacity_factors(player: Player, facility: str):
+    """
+    Gets the capacity factors for renewable power facilities
+    !!! The capacity factor function is an approximation of the empirical data and has to be updated whenever a change
+    in the wind simulation is made. !!!
+    """
+    if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
+
+        def capacity_factor_wind(wind_speed):
+            """Fit of empirical data for wind speeds"""
+            return 0.5280542813 - 0.5374832237 * np.exp(-2.226120465 * wind_speed**2.38728403)
+
+        return {
+            "capacity_factor": f"{100 * capacity_factor_wind(wind_speed_multiplier(player, facility)):.0f}%",
+        }
+    if facility in ["watermill", "small_water_dam", "large_water_dam"]:
+        return {
+            "capacity_factor": "55%",
+        }
+    if facility in ["PV_solar", "CSP_solar"]:
+
+        def capacity_factor_solar(latitude):
+            """Fit of empirical data for solar irradiations"""
+            return 0.1788792882 / ((1 + np.exp(1.136558093 - 0.4216299482 * latitude)) ** (1 / 5.918314566))
+
+        return {
+            "capacity_factor": f"{100 * capacity_factor_solar(player.tile.r):.0f}%",
+        }
+    return {}
 
 
 def _package_power_storage_extraction_facility_base(player: Player, facility):

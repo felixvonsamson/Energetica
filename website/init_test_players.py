@@ -212,17 +212,15 @@ def climate_events_scenario(engine):
         if player:
             Hex.query.filter_by(id=i).first().player_id = player.id
 
-            player.money = 1_000_000_000_000
-            player.coal = 100_000_000
-            player.gas = 30_000_000
-            player.uranium = 4_500
+            player.money = 1_000_000_000
+            player.coal = 300_000
+            player.gas = 100_000
+            player.uranium = 500
             player.rest_of_priorities = ""
 
-            add_asset(player, "industry", 18)
-            add_asset(player, "laboratory", 5)
-            add_asset(player, "chemistry", 2)
-            add_asset(player, "warehouse", 10)
-            add_asset(player, "carbon_capture", 5)
-            add_asset(player, "CSP_solar", 10)
-            add_asset(player, "offshore_wind_turbine", 3)
+            add_asset(player, "industry", 10)
+            add_asset(player, "warehouse", 1)
+            add_asset(player, "small_water_dam", 2)
+            add_asset(player, "onshore_wind_turbine", 1)
+            add_asset(player, "chemistry", 1)
     db.session.commit()

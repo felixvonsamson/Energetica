@@ -8,8 +8,8 @@ climate_events = {
         "base_probability": 0.2,  # [probability per in-game day]
         "description": "A flood has occurred and destroyed some parts of the infrastructure. The recovery from this "
         "event will take {duration} days and cost {cost}.",
-        "cost_fraction": 0.5,  # fraction of the player's industry revenue that he has to pay
-        "duration": timedelta(days=6).total_seconds(),  # [in-game seconds]
+        "cost_fraction": 0.25,  # fraction of the player's industry revenue that he has to pay
+        "duration": timedelta(days=8).total_seconds(),  # [in-game seconds]
         "affected_tiles": 1,
         "destruction_chance": {  # chance of destruction for each facility type
             "watermill": 0.6,
@@ -31,8 +31,8 @@ climate_events = {
         "base_probability": 0.35,
         "description": "A heat wave has occurred and is impacting the population. The recovery from this event will "
         "take {duration} days and cost {cost}.",
-        "cost_fraction": 0.3,
-        "duration": timedelta(days=3).total_seconds(),
+        "cost_fraction": 0.15,
+        "duration": timedelta(days=4).total_seconds(),
         "affected_tiles": 2,  # (a radius of 2 so 7 tiles)
         "destruction_chance": {
             "lithium_ion_batteries": 0.05,
@@ -45,8 +45,8 @@ climate_events = {
         "base_probability": 0.35,
         "description": "A cold wave has occurred and is impacting the population. The recovery from this event will "
         "take {duration} days and cost {cost}.",
-        "cost_fraction": 0.3,
-        "duration": timedelta(days=3).total_seconds(),
+        "cost_fraction": 0.15,
+        "duration": timedelta(days=4).total_seconds(),
         "affected_tiles": 2,  # (a radius of 2 so 7 tiles)
         "destruction_chance": {},
         "industry_destruction_chance": 0,
@@ -56,8 +56,8 @@ climate_events = {
         "base_probability": 0.05,
         "description": "A hurricane has occurred and destroyed some parts of the infrastructure. The recovery from "
         "this event will take {duration} days and cost {cost}.",
-        "cost_fraction": 0.8,
-        "duration": timedelta(days=7).total_seconds(),
+        "cost_fraction": 0.4,
+        "duration": timedelta(days=9).total_seconds(),
         "affected_tiles": 3,  # (a radius of 3 so 19 tiles)
         "destruction_chance": {
             "windmill": 0.5,
@@ -73,8 +73,8 @@ climate_events = {
         "base_probability": 0.25,
         "description": "A wildfire has occurred and destroyed some parts of the infrastructure. The recovery from this "
         "event will take {duration} days and cost {cost}.",
-        "cost_fraction": 0.6,
-        "duration": timedelta(days=2).total_seconds(),
+        "cost_fraction": 0.3,
+        "duration": timedelta(days=3).total_seconds(),
         "affected_tiles": 2,  # (a radius of 2 so 7 tiles)
         "destruction_chance": {
             "windmill": 0.1,

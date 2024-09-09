@@ -2,10 +2,10 @@ const weather_conditions = document.getElementById('current_weather_conditions')
 update_weather_conditions();
 
 function update_weather_conditions() {
-  fetch("/api/get_current_weather")
-    .then((response) => response.json())
-    .then((weather_data) => {
-      weather_conditions.innerHTML = `
+    fetch("/api/get_current_weather")
+        .then((response) => response.json())
+        .then((weather_data) => {
+            weather_conditions.innerHTML = `
         <div class="flex-col flex-grow-1 padding weather_info_container">
             <div>Month: <b>${weather_data.month}</b></div>
             <div class="year-background margin-small">
@@ -31,8 +31,8 @@ function update_weather_conditions() {
                 <div class="weather_level water" style="width: calc(${weather_data.river_discharge / 150} * 100%);"></div>
             </div>
         </div>`;
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-    });
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
 }

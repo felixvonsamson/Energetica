@@ -453,6 +453,9 @@ class Player(db.Model, UserMixin):
         """Packages the progress information for the upcoming achievements"""
         upcoming_achievements = {}
         for achievement, achievement_data in achievements.items():
+            requirements_met = all(requirement in self.achievements for requirement in achievement_data["requirements"])
+            if not requirements_met:
+                continue
             if achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
                 if achievement_data["name"] not in self.achievements:
                     upcoming_achievements[achievement] = {
@@ -532,6 +535,7 @@ class Player(db.Model, UserMixin):
                 ]
             }
             | {"display_name": current_app.config["engine"].const_config["assets"][construction.name]["name"]}
+            | ({"level": construction.level()} if construction.level() >= 0 else {})
             for construction in self.under_construction
         }
 

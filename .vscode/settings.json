@@ -8,7 +8,6 @@
     "editor.rulers": [ 80 ],
     // Jinja
     "[jinja-html]": {
-        "editor.wordWrapColumn": 120,
         "editor.defaultFormatter": "monosans.djlint",
         "editor.rulers": [ 120 ],
         "editor.formatOnSave": false,
@@ -19,7 +18,10 @@
     "djlint.maxLineLength": 80,
     "djlint.maxAttributeLength": 80,
     // Javascfript
+    "javascript.format.enable": true,
+    "javascript.format.semicolons": "insert",
     "[javascript]": {
+        "editor.defaultFormatter": null,
         "editor.wordWrapColumn": 120,
         "editor.rulers": [ 120 ]
     },
