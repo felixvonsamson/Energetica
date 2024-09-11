@@ -131,7 +131,7 @@ function format_duration(ticks) {
     const real_minutes = ticks * clock_time / 60;
     const in_game_time = format_minutes(in_game_minutes);
     const real_time = format_minutes(real_minutes);
-    return `${in_game_time} &ensp; <span class="transparency_txt dark">(${real_time})</span`;
+    return `${in_game_time} &ensp; <span class="transparency_txt dark">(${real_time})</span>`;
 }
 
 function format_days(ticks) {
