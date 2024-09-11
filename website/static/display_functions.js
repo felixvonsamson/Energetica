@@ -142,7 +142,7 @@ function calculate_delivery(delta_q, delta_r, trasport_speed) {
     const dist = Math.sqrt(
         2 * (Math.pow(delta_q, 2) + Math.pow(delta_r, 2) + delta_q * delta_r)
     );
-    return format_duration(dist * trasport_speed);
+    return format_duration(dist * trasport_speed / in_game_seconds_per_tick);
 }
 
 function formatDateTime(dateTimeString) {
