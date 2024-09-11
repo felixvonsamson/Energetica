@@ -221,14 +221,14 @@ function import_overview_sketch(s) {
         s.graphics.translate(0.5 * margin, 0.5 * s.graph_h - 0.2 * margin);
         s.graphics.textSize(20);
         if (exports >= 0) {
-            s.graphics.fill(0, 139, 0);
-            s.graphics.text(format_power(abs(exports)), 0.5 * s.graph_h, -0.6 * margin - 5);
-            s.graphics.fill(cols_and_names.exports[0]);
-            s.graphics.triangle(s.graph_h + 0.5 * arrow_w, 0, s.graph_h - 0.5 * arrow_w, arrow_w, s.graph_h - 0.5 * arrow_w, -arrow_w);
-        } else {
             s.graphics.fill(139, 0, 0);
             s.graphics.text(format_power(abs(exports)), 0.5 * s.graph_h, -0.6 * margin - 5);
-            s.graphics.fill(cols_and_names.imports[0]);
+            s.graphics.fill(255, 89, 94);
+            s.graphics.triangle(s.graph_h + 0.5 * arrow_w, 0, s.graph_h - 0.5 * arrow_w, arrow_w, s.graph_h - 0.5 * arrow_w, -arrow_w);
+        } else {
+            s.graphics.fill(0, 139, 0);
+            s.graphics.text(format_power(abs(exports)), 0.5 * s.graph_h, -0.6 * margin - 5);
+            s.graphics.fill(138, 201, 38);
             s.graphics.triangle(-0.5 * arrow_w, 0, 0.5 * arrow_w, arrow_w, 0.5 * arrow_w, -arrow_w);
         }
         s.graphics.rect(0, -0.5 * arrow_w, s.graph_h, arrow_w);
@@ -242,7 +242,7 @@ function import_overview_sketch(s) {
             s.graphics.text(format_money(abs(revenues), ""), 0.5 * s.graph_h, 0.6 * margin - 5);
             s.graphics.image(coin, 0.5 * s.graph_h + 5, 0.6 * margin - 9, 18, 18);
             s.graphics.text("/h", 0.5 * s.graph_h + 43, 0.6 * margin - 5);
-            s.graphics.fill(cols_and_names.exports[0]);
+            s.graphics.fill(138, 201, 38);
             s.graphics.triangle(-0.5 * arrow_w, 0, 0.5 * arrow_w, arrow_w, 0.5 * arrow_w, -arrow_w);
         } else {
             s.graphics.fill(139, 0, 0);
@@ -250,7 +250,7 @@ function import_overview_sketch(s) {
             s.graphics.text(format_money(abs(revenues), ""), 0.5 * s.graph_h, 0.6 * margin - 5);
             s.graphics.image(coin, 0.5 * s.graph_h + 5, 0.6 * margin - 9, 18, 18);
             s.graphics.text("/h", 0.5 * s.graph_h + 43, 0.6 * margin - 5);
-            s.graphics.fill(cols_and_names.imports[0]);
+            s.graphics.fill(255, 89, 94);
             s.graphics.triangle(s.graph_h + 0.5 * arrow_w, 0, s.graph_h - 0.5 * arrow_w, arrow_w, s.graph_h - 0.5 * arrow_w, -arrow_w);
         }
         s.graphics.rect(0, -0.5 * arrow_w, s.graph_h, arrow_w);
