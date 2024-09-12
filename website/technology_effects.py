@@ -422,7 +422,9 @@ def asset_requirements(player: Player, asset: str) -> List[Dict[str, str | int]]
                 "satisfied"
                 if getattr(player, requirement) >= level + level_offset
                 else "queued"
-                if next_level(player, requirement) - 1 >= level + level_offset and asset in engine.technologies
+                if next_level(player, requirement) - 1 >= level + level_offset
+                and const_config[asset]["type"] == "Technology"
+                and const_config[requirement]["type"] == "Technology"
                 else "unsatisfied"
             ),
         }
