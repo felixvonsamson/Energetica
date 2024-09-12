@@ -133,7 +133,7 @@ def store_import(player, resource, quantity):
             resource,
             getattr(player.tile, resource) + getattr(player, resource) + quantity - max_cap,
         )
-        sale.player.notify(
+        player.notify(
             "Shipments",
             f"A shipment of {format_mass(quantity)} {resource} arrived, but "
             "only {format_mass(max_cap - getattr(player, resource))} could be "
@@ -147,7 +147,7 @@ def store_import(player, resource, quantity):
         )
     else:
         setattr(player, resource, getattr(player, resource) + quantity)
-        sale.player.notify(
+        player.notify(
             "Shipments",
             f"A shipment of {format_mass(quantity)} {resource} arrived.",
         )

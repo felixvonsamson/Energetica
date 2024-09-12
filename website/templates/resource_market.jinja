@@ -101,7 +101,7 @@
                     <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ sale.price * 1000 }});</script>
                     /t</span>
                 <span>
-                    shipment :
+                    shipment time: <br>
                     <span></span>
                     <script>document.currentScript.previousElementSibling.innerHTML = calculate_delivery({{ user.tile.q - sale.player.tile.q }}, {{ user.tile.r - sale.player.tile.r }}, {{ engine.const_config.transport.time_per_tile * engine.const_config.assets.transport_technology["time_factor"] ** user.transport_technology }});</script>
                 </span>
@@ -109,11 +109,9 @@
             <form method="post"
                   autocomplete="off"
                   id="buyForm_{{ sale.id }}"
-                  class="additionalContent hidden-info medium flex-col">
-                Seller : {{ sale.player.username }}
-                <br>
-                <br>
-                <label for="buying_quantity_{{ sale.id }}" class="small">Purchased quantity (in tons)</label>
+                  class="additionalContent hidden-info medium flex-col small-margin-top">
+                Seller: {{ sale.player.username }}<br>
+                <label for="buying_quantity_{{ sale.id }}" class="small small-margin-top">Purchased quantity (in tons)</label>
                 <input type="number"
                        class="create_chat_input medium txt_center"
                        style="width:164px"
@@ -128,7 +126,7 @@
                        oninput="updateToPay({{ sale.id }}, {{ sale.price }});"
                        required />
                 <span id="to_pay_{{ sale.id }}"></span>
-                <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ sale.quantity * sale.price }});</script>
+                <script>document.currentScript.previousElementSibling.innerHTML = '(total: ' + format_money({{ sale.quantity * sale.price }}) + ')';</script>
                 <button type="submit"
                         onclick="stopPropagation(event);"
                         class="margin medium white padding button"

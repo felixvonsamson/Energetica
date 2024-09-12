@@ -25,9 +25,9 @@ function updateToPay(saleId, basePrice) {
             totalPrice % 1 === 0
                 ? totalPrice.toFixed(0)
                 : totalPrice.toFixed(2);
-        toPaySpan.innerHTML = `( ${format_money(parseFloat(totalPrice))} )`;
+        toPaySpan.innerHTML = `(total: ${format_money(parseFloat(totalPrice))})`;
     } else {
-        toPaySpan.innerHTML = format_money(0);
+        toPaySpan.innerHTML = `(total: ${format_money(parseFloat(0))})`;
     }
 }
 
