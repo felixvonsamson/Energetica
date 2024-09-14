@@ -251,9 +251,9 @@
                     <strong>
                       {% if resource == "uranium" %}
                         {% if facility == "nuclear_reactor" %}
-                          {{ amount|int }} g/MWh
+                          {{ (1000 * amount)|int }} g/MWh
                         {% else %}
-                          {{ amount|round(2) }} g/MWh
+                          {{ (1000 * amount)|round(2) }} g/MWh
                         {% endif %}
                       {% else %}
                         <span></span>
