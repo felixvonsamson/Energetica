@@ -55,6 +55,49 @@ let res_to_factor = {
 let cols_and_names = {};
 let random_colors = [];
 
+const keys_generation = {
+    "watermill": true,
+    "small_water_dam": true,
+    "large_water_dam": true,
+    "nuclear_reactor": true,
+    "nuclear_reactor_gen4": true,
+    "steam_engine": true,
+    "coal_burner": true,
+    "gas_burner": true,
+    "combined_cycle": true,
+    "windmill": true,
+    "onshore_wind_turbine": true,
+    "offshore_wind_turbine": true,
+    "CSP_solar": true,
+    "PV_solar": true,
+    "small_pumped_hydro": true,
+    "large_pumped_hydro": true,
+    "lithium_ion_batteries": true,
+    "solid_state_batteries": true,
+    "molten_salt": true,
+    "hydrogen_storage": true,
+    "imports": true,
+};
+
+const keys_demand = {
+    "coal_mine": true,
+    "gas_drilling_site": true,
+    "uranium_mine": true,
+    "industry": true,
+    "research": true,
+    "construction": true,
+    "transport": true,
+    "carbon_capture": true,
+    "small_pumped_hydro": true,
+    "large_pumped_hydro": true,
+    "lithium_ion_batteries": true,
+    "solid_state_batteries": true,
+    "molten_salt": true,
+    "hydrogen_storage": true,
+    "exports": true,
+    "dumping": true,
+};
+
 function preload() {
     font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
     balooBold = loadFont("static/fonts/Baloo2-SemiBold.ttf");
@@ -1448,6 +1491,18 @@ function fetch_temporal_network_data() {
                     }
                 });
             });
+            const keys_map = {
+                generation: keys_generation,
+                consumption: keys_demand
+            };
+            for (let key in keys_map) {
+                temporal_data[key] = Object.keys(temporal_data[key])
+                    .sort((a, b) => Object.keys(keys_map[key]).indexOf(a) - Object.keys(keys_map[key]).indexOf(b))
+                    .reduce((acc, curr) => {
+                        acc[curr] = temporal_data[key][curr];
+                        return acc;
+                    }, {});
+            }
             temporal_graph_p5.render_graph();
         })
             .catch((error) => {
