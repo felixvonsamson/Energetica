@@ -331,7 +331,7 @@ def construction_time(player: Player, facility):
         + engine.functional_facilities
     ):
         duration *= const_config["building_technology"]["time_factor"] ** player.building_technology
-    return math.ceil(duration)
+    return duration
 
 
 def construction_power(player: Player, facility):

@@ -143,9 +143,9 @@ def add_asset(player, asset, n):
         new_construction: OngoingConstruction = OngoingConstruction(
             name=asset,
             family=asset_to_family[asset],
-            start_time=0,
+            _end_tick_or_ticks_passed=0,
             duration=1,
-            suspension_time=None,
+            status=2,
             construction_power=0,
             construction_pollution=technology_effects.construction_pollution_per_tick(player, asset),
             price_multiplier=technology_effects.price_multiplier(player, asset),

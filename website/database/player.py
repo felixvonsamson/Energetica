@@ -137,12 +137,19 @@ class Player(db.Model, UserMixin):
         self.graph_view = view
         db.session.commit()
 
+    def available_workers(self, project_type):
+        """Returns the number of available workers depending on the project type"""
+        if project_type == "Technologies":
+            return self.available_lab_workers()
+        else:
+            return self.available_construction_workers()
+
     def available_construction_workers(self):
         """Returns the number of available construction workers"""
         occupied_workers = (
             OngoingConstruction.query.filter(OngoingConstruction.player_id == self.id)
             .filter(OngoingConstruction.family != "Technologies")
-            .filter(OngoingConstruction.suspension_time.is_(None))
+            .filter(OngoingConstruction.status == 2)
             .count()
         )
         return self.construction_workers - occupied_workers
@@ -152,7 +159,7 @@ class Player(db.Model, UserMixin):
         occupied_workers = (
             OngoingConstruction.query.filter(OngoingConstruction.player_id == self.id)
             .filter(OngoingConstruction.family == "Technologies")
-            .filter(OngoingConstruction.suspension_time.is_(None))
+            .filter(OngoingConstruction.status == 2)
             .count()
         )
         return self.lab_workers - occupied_workers
@@ -529,9 +536,9 @@ class Player(db.Model, UserMixin):
                     "id",
                     "name",
                     "family",
-                    "start_time",
+                    "_end_tick_or_ticks_passed",
                     "duration",
-                    "suspension_time",
+                    "status",
                 ]
             }
             | {"display_name": current_app.config["engine"].const_config["assets"][construction.name]["name"]}
@@ -548,9 +555,9 @@ class Player(db.Model, UserMixin):
                     "id",
                     "resource",
                     "quantity",
-                    "departure_time",
+                    "arrival_tick",
                     "duration",
-                    "suspension_time",
+                    "pause_tick",
                 ]
             }
             for shipment in self.shipments

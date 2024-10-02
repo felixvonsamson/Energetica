@@ -203,8 +203,8 @@ socket.on("new_notification", function (notification) {
 
 socket.on("pause_construction", function (info) {
     load_constructions().then((construction_list) => {
-        construction_list[0][info.construction_id].suspension_time =
-            info.suspension_time;
+        construction_list[0][info.construction_id].pause_tick =
+            info.pause_tick;
         sessionStorage.setItem(
             "constructions",
             JSON.stringify(construction_list)
@@ -215,8 +215,8 @@ socket.on("pause_construction", function (info) {
 
 socket.on("pause_shipment", function (info) {
     load_shipments().then((shipment_list) => {
-        shipment_list[info.shipment_id].suspension_time =
-            info.suspension_time;
+        shipment_list[info.shipment_id].pause_tick =
+            info.pause_tick;
         sessionStorage.setItem("shipments", JSON.stringify(shipment_list));
         display_progressBars(null, shipment_list);
     });
