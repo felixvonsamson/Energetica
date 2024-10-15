@@ -1,17 +1,15 @@
 import requests
 from flask import current_app
 
-# TODO: set port dynamically
 
-
-def create_user(id):
+def create_user(id, port):
     session = requests.Session()
     data = {"username": f"user{id}", "password1": "password", "password2": "password"}
-    session.post("http://localhost:5001/sign-up", data=data)
+    session.post(f"http://localhost:{port}/sign-up", data=data)
     return session
 
 
-def simulate(app, actions):
+def simulate(app, port, actions):
     import website.production_update as production_update
     from website import db
     from website.database.map import Hex
@@ -34,8 +32,8 @@ def simulate(app, actions):
             else:
                 player_id = action["player_id"]
                 if action["endpoint"] == "/api/choose_location" and player_id not in user_sessions:
-                    user_sessions[player_id] = create_user(player_id)
+                    user_sessions[player_id] = create_user(player_id, port)
                 else:
                     user_sessions[player_id].post(
-                        f"http://localhost:5001{action['endpoint']}", json=action["request_content"]
+                        f"http://localhost:{port}{action['endpoint']}", json=action["request_content"]
                     )

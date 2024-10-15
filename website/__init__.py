@@ -264,6 +264,7 @@ def create_app(
                 func=simulate,
                 args=(
                     app,
+                    kwargs["port"],
                     actions,
                 ),
                 id="simulate",
