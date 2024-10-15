@@ -33,7 +33,6 @@ def simulate(app, port, actions):
                 player_id = action["player_id"]
                 if action["endpoint"] == "/api/choose_location" and player_id not in user_sessions:
                     user_sessions[player_id] = create_user(player_id, port)
-                else:
-                    user_sessions[player_id].post(
-                        f"http://localhost:{port}{action['endpoint']}", json=action["request_content"]
-                    )
+                user_sessions[player_id].post(
+                    f"http://localhost:{port}{action['endpoint']}", json=action["request_content"]
+                )
