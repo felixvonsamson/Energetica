@@ -1,9 +1,5 @@
 """This code is run once at the start of the game"""
 
-import eventlet
-
-eventlet.monkey_patch(thread=True, time=True)
-
 # pylint: disable=wrong-import-order,wrong-import-position
 # ruff: noqa: E402
 
