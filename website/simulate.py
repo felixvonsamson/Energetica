@@ -16,6 +16,10 @@ def simulate(app, port, actions):
     from website.utils.game_engine import check_events_completion, climate_event_impact
 
     with app.app_context():
+        while True:
+            try: requests.get(f"http://localhost:{port}")
+            except: continue
+            break
         user_sessions = {}
         engine = current_app.config["engine"]
         for action in actions:
@@ -34,5 +38,5 @@ def simulate(app, port, actions):
                 if action["endpoint"] == "/api/choose_location" and player_id not in user_sessions:
                     user_sessions[player_id] = create_user(player_id, port)
                 user_sessions[player_id].post(
-                    f"http://localhost:{port}{action['endpoint']}", json=action["request_content"]
+                    f"http://localhost:{port}{action['endpoint']}", data=action["request_content"]
                 )
