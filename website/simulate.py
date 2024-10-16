@@ -21,6 +21,9 @@ def simulate(app, port, actions):
             except: continue
             break
         user_sessions = {}
+        max_player = max(action["player_id"] for action in actions if "player_id" in action)
+        for player_id in range(1, max_player + 1):
+            user_sessions[player_id] = create_user(player_id, port)
         engine = current_app.config["engine"]
         for action in actions:
             print(action)
@@ -37,6 +40,6 @@ def simulate(app, port, actions):
                 player_id = action["player_id"]
                 if action["endpoint"] == "/api/choose_location" and player_id not in user_sessions:
                     user_sessions[player_id] = create_user(player_id, port)
-                user_sessions[player_id].post(
-                    f"http://localhost:{port}{action['endpoint']}", data=action["request_content"]
-                )
+                print(user_sessions[player_id].post(
+                    f"http://localhost:{port}{action['endpoint']}", json=action["request_content"]
+                ).text)
