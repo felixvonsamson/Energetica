@@ -512,7 +512,11 @@ def join_network():
     request_data = request.get_json()
     network_name = request_data["choose_network"]
     network = Network.query.filter_by(name=network_name).first()
-    website.utils.network.join_network(g.engine, current_user, network)
+    response = website.utils.network.join_network(g.engine, current_user, network)
+    if type(response) == tuple:
+        response, _ = response
+    if response.json["response"] != "success":
+        return response
     flash(f"You joined the network {network_name}", category="message")
     g.engine.log(f"{current_user.username} joined the network {current_user.network.name}")
     return redirect("/network", code=303)
