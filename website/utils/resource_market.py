@@ -7,7 +7,7 @@ from flask import current_app, flash
 
 from website import db
 from website.database.player_assets import ResourceOnSale, Shipment
-from website.utils.formatting import format_mass
+from website.utils.formatting import display_money, format_mass
 from website.utils.misc import flash_error
 
 
@@ -32,7 +32,7 @@ def put_resource_on_market(player, resource, quantity, price):
         db.session.commit()
         flash(
             f"You put {quantity/1000}t of {resource} on sale for "
-            "{price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
+            f"{price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
             category="message",
         )
 
@@ -99,12 +99,12 @@ def buy_resource_from_market(player, quantity, sale_id):
         sale.player.notify(
             "Resource transaction",
             f"{player.username} bought {format_mass(quantity)} of "
-            "{sale.resource} for a total cost of {display_money(total_price)}.",
+            f"{sale.resource} for a total cost of {display_money(total_price)}.",
         )
         engine.log(
             f"{player.username} bought {format_mass(quantity)} of "
-            "{sale.resource} from {sale.player.username} for a total cost of "
-            "{display_money(total_price)}."
+            f"{sale.resource} from {sale.player.username} for a total cost of "
+            f"{display_money(total_price)}."
         )
         if sale.quantity == 0:
             # Player is purchasing all available quantity
@@ -133,21 +133,21 @@ def store_import(player, resource, quantity):
             resource,
             getattr(player.tile, resource) + getattr(player, resource) + quantity - max_cap,
         )
-        sale.player.notify(
+        player.notify(
             "Shipments",
             f"A shipment of {format_mass(quantity)} {resource} arrived, but "
-            "only {format_mass(max_cap - getattr(player, resource))} could be "
+            f"only {format_mass(max_cap - getattr(player, resource))} could be "
             "stored in your warehouse.",
         )
         engine.log(
             f"{player.username} received a shipment of {format_mass(quantity)} "
-            "{resource}, but could only store "
-            "{format_mass(max_cap - getattr(player, resource))} "
+            f"{resource}, but could only store "
+            f"{format_mass(max_cap - getattr(player, resource))} "
             "in their warehouse."
         )
     else:
         setattr(player, resource, getattr(player, resource) + quantity)
-        sale.player.notify(
+        player.notify(
             "Shipments",
             f"A shipment of {format_mass(quantity)} {resource} arrived.",
         )

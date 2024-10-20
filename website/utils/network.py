@@ -19,6 +19,7 @@ def join_network(engine, player, network):
         return {"response": "playerAlreadyInNetwork"}
     player.network = network
     db.session.commit()
+    engine.data["network_capacities"][network.id].update_network(network)
     engine.log(f"{player.username} joined the network {network.name}")
     websocket.rest_notify_network_change(engine)
     return {"response": "success"}

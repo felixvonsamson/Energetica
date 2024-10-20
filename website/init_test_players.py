@@ -206,7 +206,8 @@ def create_network(engine, name, members):
 
 def climate_events_scenario(engine):
     """This scenario fills the map with players that use coal to see climate change events."""
-    for i in range(1, 2):
+    players = []
+    for i in range(1, 5):
         print("creating player", i)
         player = create_player(engine, f"user{i}", "password")
         if player:
@@ -218,9 +219,31 @@ def climate_events_scenario(engine):
             player.uranium = 500
             player.rest_of_priorities = ""
 
-            add_asset(player, "industry", 10)
+            add_asset(player, "industry", 18)
             add_asset(player, "warehouse", 1)
             add_asset(player, "small_water_dam", 2)
-            add_asset(player, "onshore_wind_turbine", 1)
-            add_asset(player, "chemistry", 1)
+            add_asset(player, "onshore_wind_turbine", 3)
+            add_asset(player, "laboratory", 5)
+            add_asset(player, "mathematics", 1)
+            add_asset(player, "mineral_extraction", 5)
+            add_asset(player, "building_technology", 1)
+            add_asset(player, "civil_engineering", 1)
+            add_asset(player, "coal_mine", 3)
+            add_asset(player, "coal_burner", 3)
+            add_asset(player, "small_pumped_hydro", 1)
+            add_asset(player, "hydrogen_storage", 1)
+            add_asset(player, "offshore_wind_turbine", 1)
+            add_asset(player, "nuclear_reactor_gen4", 1)
+            add_asset(player, "combined_cycle", 1)
+            add_asset(player, "gas_burner", 1)
+            add_asset(player, "steam_engine", 1)
+            add_asset(player, "chemistry", 2)
+            add_asset(player, "carbon_capture", 4)
+            add_asset(player, "mechanical_engineering", 3)
+            add_asset(player, "physics", 2)
+            add_asset(player, "thermodynamics", 2)
+            add_asset(player, "nuclear_engineering", 3)
+            add_asset(player, "aerodynamics", 5)
+        players.append(player)
+    create_network(engine, "net", players)
     db.session.commit()

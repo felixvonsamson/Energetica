@@ -26,7 +26,7 @@ let network_capacities;
 let descending = {
     "offers_table": false,
     "bids_table": true,
-}
+};
 let offer_col = "price_col"; // current sorting column for offers
 let bid_col = "price_col"; // current sorting column for bids
 
@@ -54,6 +54,49 @@ let res_to_factor = {
 
 let cols_and_names = {};
 let random_colors = [];
+
+const keys_generation = {
+    "watermill": true,
+    "small_water_dam": true,
+    "large_water_dam": true,
+    "nuclear_reactor": true,
+    "nuclear_reactor_gen4": true,
+    "steam_engine": true,
+    "coal_burner": true,
+    "gas_burner": true,
+    "combined_cycle": true,
+    "windmill": true,
+    "onshore_wind_turbine": true,
+    "offshore_wind_turbine": true,
+    "CSP_solar": true,
+    "PV_solar": true,
+    "small_pumped_hydro": true,
+    "large_pumped_hydro": true,
+    "lithium_ion_batteries": true,
+    "solid_state_batteries": true,
+    "molten_salt": true,
+    "hydrogen_storage": true,
+    "imports": true,
+};
+
+const keys_demand = {
+    "coal_mine": true,
+    "gas_drilling_site": true,
+    "uranium_mine": true,
+    "industry": true,
+    "research": true,
+    "construction": true,
+    "transport": true,
+    "carbon_capture": true,
+    "small_pumped_hydro": true,
+    "large_pumped_hydro": true,
+    "lithium_ion_batteries": true,
+    "solid_state_batteries": true,
+    "molten_salt": true,
+    "hydrogen_storage": true,
+    "exports": true,
+    "dumping": true,
+};
 
 function preload() {
     font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
@@ -126,7 +169,7 @@ function setup() {
     }
     margin = min(70, canvas_width / 10);
 
-    import_overview_p5 = new p5(import_overview_sketch, "import_overview")
+    import_overview_p5 = new p5(import_overview_sketch, "import_overview");
 
     temporal_imports_p5 = new p5(temporal_imports_sketch, "temporal_imports");
 
@@ -136,7 +179,7 @@ function setup() {
 
     market_chart_p5 = new p5(market_chart_sketch, "market_chart");
 
-    change_page_view(server_saved_view)
+    change_page_view(server_saved_view);
 }
 
 function change_page_view(view) {
@@ -202,13 +245,13 @@ function import_overview_sketch(s) {
         s.graphics = s.createGraphics(s.width, s.height);
         s.graphics.textAlign(CENTER, CENTER);
         s.graphics.textFont(font);
-    }
+    };
 
     s.draw = function () {
         if (s.graphics_ready) {
             s.image(s.graphics, 0, 0);
         }
-    }
+    };
 
     s.render_graph = function () {
         s.graph_h = s.height - margin;
@@ -221,14 +264,14 @@ function import_overview_sketch(s) {
         s.graphics.translate(0.5 * margin, 0.5 * s.graph_h - 0.2 * margin);
         s.graphics.textSize(20);
         if (exports >= 0) {
-            s.graphics.fill(0, 139, 0);
-            s.graphics.text(format_power(abs(exports)), 0.5 * s.graph_h, -0.6 * margin - 5);
-            s.graphics.fill(cols_and_names.exports[0]);
-            s.graphics.triangle(s.graph_h + 0.5 * arrow_w, 0, s.graph_h - 0.5 * arrow_w, arrow_w, s.graph_h - 0.5 * arrow_w, -arrow_w);
-        } else {
             s.graphics.fill(139, 0, 0);
             s.graphics.text(format_power(abs(exports)), 0.5 * s.graph_h, -0.6 * margin - 5);
-            s.graphics.fill(cols_and_names.imports[0]);
+            s.graphics.fill(255, 89, 94);
+            s.graphics.triangle(s.graph_h + 0.5 * arrow_w, 0, s.graph_h - 0.5 * arrow_w, arrow_w, s.graph_h - 0.5 * arrow_w, -arrow_w);
+        } else {
+            s.graphics.fill(0, 139, 0);
+            s.graphics.text(format_power(abs(exports)), 0.5 * s.graph_h, -0.6 * margin - 5);
+            s.graphics.fill(138, 201, 38);
             s.graphics.triangle(-0.5 * arrow_w, 0, 0.5 * arrow_w, arrow_w, 0.5 * arrow_w, -arrow_w);
         }
         s.graphics.rect(0, -0.5 * arrow_w, s.graph_h, arrow_w);
@@ -242,7 +285,7 @@ function import_overview_sketch(s) {
             s.graphics.text(format_money(abs(revenues), ""), 0.5 * s.graph_h, 0.6 * margin - 5);
             s.graphics.image(coin, 0.5 * s.graph_h + 5, 0.6 * margin - 9, 18, 18);
             s.graphics.text("/h", 0.5 * s.graph_h + 43, 0.6 * margin - 5);
-            s.graphics.fill(cols_and_names.exports[0]);
+            s.graphics.fill(138, 201, 38);
             s.graphics.triangle(-0.5 * arrow_w, 0, 0.5 * arrow_w, arrow_w, 0.5 * arrow_w, -arrow_w);
         } else {
             s.graphics.fill(139, 0, 0);
@@ -250,14 +293,14 @@ function import_overview_sketch(s) {
             s.graphics.text(format_money(abs(revenues), ""), 0.5 * s.graph_h, 0.6 * margin - 5);
             s.graphics.image(coin, 0.5 * s.graph_h + 5, 0.6 * margin - 9, 18, 18);
             s.graphics.text("/h", 0.5 * s.graph_h + 43, 0.6 * margin - 5);
-            s.graphics.fill(cols_and_names.imports[0]);
+            s.graphics.fill(255, 89, 94);
             s.graphics.triangle(s.graph_h + 0.5 * arrow_w, 0, s.graph_h - 0.5 * arrow_w, arrow_w, s.graph_h - 0.5 * arrow_w, -arrow_w);
         }
         s.graphics.rect(0, -0.5 * arrow_w, s.graph_h, arrow_w);
         s.graphics.pop();
         s.graphics_ready = true;
         s.redraw();
-    }
+    };
 }
 
 function temporal_imports_sketch(s) {
@@ -271,7 +314,7 @@ function temporal_imports_sketch(s) {
         s.graphics = s.createGraphics(s.width, s.height);
         s.graphics.textAlign(CENTER, CENTER);
         s.graphics.textFont(font);
-    }
+    };
 
     s.draw = function () {
         if (s.graphics_ready) {
@@ -281,7 +324,7 @@ function temporal_imports_sketch(s) {
                 s.stroke(255);
                 s.strokeWeight(2);
                 let X = min(s.graph_w, max(0, s.mouseX - margin));
-                t_view = floor(map(X, 0, s.graph_w, 0, data_len - 1));
+                t_view = min(data_len - 1, floor(map(X, 0, s.graph_w, 0, data_len)));
                 s.translate(margin + X, s.graph_h + 0.4 * margin);
                 s.line(0, 0, 0, -s.graph_h);
                 s.noStroke();
@@ -348,7 +391,7 @@ function temporal_imports_sketch(s) {
                 s.pop();
             }
         }
-    }
+    };
 
     s.mouseMoved = function () {
         if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0 && s.mouseY < s.height) {
@@ -360,11 +403,11 @@ function temporal_imports_sketch(s) {
                 s.redraw();
             }
         }
-    }
+    };
 
     s.mouseDragged = function () {
         s.mouseMoved();
-    }
+    };
 
     s.render_graph = function () {
         s.graph_h = s.height - margin;
@@ -395,7 +438,7 @@ function temporal_imports_sketch(s) {
         s.graphics.translate(margin, 0.4 * margin + s.graph_h);
         s.graphics.noStroke();
 
-        revenue_curve = [...revenue_flux[res]]
+        revenue_curve = [...revenue_flux[res]];
         if (s.smoothed == "smoothed") {
             let window_size = 5;
             // Generate Normalized Gaussian kernel
@@ -404,7 +447,7 @@ function temporal_imports_sketch(s) {
                 gaussian_kernel.push(Math.exp(-(i ** 2) / 10));
             }
 
-            revenue_curve = []
+            revenue_curve = [];
             for (let t = 0; t < data_len; t++) {
                 let start = max(0, t - window_size);
                 let end = min(data_len - 1, t + window_size);
@@ -435,12 +478,17 @@ function temporal_imports_sketch(s) {
         s.graphics.push();
         s.graphics.strokeWeight(3);
         s.graphics.stroke(cols_and_names.revenues[0]);
+        let h = map(revenue_curve[0], s.lower_bounds.revenues, s.upper_bounds.revenues, 0, s.graph_h);
+        s.graphics.line(0, -h, 0.5 * s.graph_w / data_len, -h);
+        s.graphics.translate(0.5 * s.graph_w / data_len, 0);
         for (let t = 1; t < data_len; t++) {
             let h1 = map(revenue_curve[t - 1], s.lower_bounds.revenues, s.upper_bounds.revenues, 0, s.graph_h);
             let h2 = map(revenue_curve[t], s.lower_bounds.revenues, s.upper_bounds.revenues, 0, s.graph_h);
             s.graphics.line(0, -h1, s.graph_w / data_len, -h2);
-            s.graphics.translate(s.graph_w / (data_len - 1), 0);
+            s.graphics.translate(s.graph_w / data_len, 0);
         }
+        h = map(revenue_curve[data_len - 1], s.lower_bounds.revenues, s.upper_bounds.revenues, 0, s.graph_h);
+        s.graphics.line(0, -h, 0.5 * s.graph_w / data_len, -h);
         s.graphics.pop();
 
         s.graphics.stroke(0);
@@ -463,7 +511,7 @@ function temporal_imports_sketch(s) {
         s.graphics.pop();
 
         s.graphics.push();
-        let y_ticks = y_units_bounded(s.graph_h, s.lower_bounds.revenues, s.upper_bounds.revenues)
+        let y_ticks = y_units_bounded(s.graph_h, s.lower_bounds.revenues, s.upper_bounds.revenues);
         s.graphics.fill(cols_and_names.revenues[0]);
         s.graphics.textAlign(RIGHT, CENTER);
         for (let i in y_ticks) {
@@ -476,7 +524,7 @@ function temporal_imports_sketch(s) {
         s.graphics.pop();
 
         s.graphics.push();
-        y_ticks = y_units_bounded(s.graph_h, s.lower_bounds.energy, s.upper_bounds.energy)
+        y_ticks = y_units_bounded(s.graph_h, s.lower_bounds.energy, s.upper_bounds.energy);
         s.graphics.fill(0);
         for (let i in y_ticks) {
             s.graphics.stroke(0, 0, 0, 30);
@@ -492,7 +540,7 @@ function temporal_imports_sketch(s) {
 
         s.graphics_ready = true;
         s.redraw();
-    }
+    };
 }
 
 function change_smoothed(smoothed_mode) {
@@ -526,7 +574,7 @@ function network_capacities_sketch(s) {
                 Nuclear: ["nuclear_reactor", "nuclear_reactor_gen4"],
                 Storages: ["small_pumped_hydro", "large_pumped_hydro", "lithium_ion_batteries", "solid_state_batteries", "molten_salt", "hydrogen_storage"],
             }
-        }
+        };
         s.createCanvas(min(canvas_width, 1200), 0.3 * canvas_width);
         s.noLoop();
         s.textFont(font);
@@ -534,7 +582,7 @@ function network_capacities_sketch(s) {
         s.graphics = s.createGraphics(s.width, s.height);
         s.graphics.textAlign(CENTER, CENTER);
         s.graphics.textFont(font);
-    }
+    };
 
     s.draw = function () {
         if (s.graphics_ready) {
@@ -626,7 +674,7 @@ function network_capacities_sketch(s) {
             s.text(format_power(power_cumsum, 50000), 188, 5);
             s.pop();
         }
-    }
+    };
 
     s.mouseMoved = function () {
         if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0 && s.mouseY < s.height) {
@@ -638,11 +686,11 @@ function network_capacities_sketch(s) {
                 s.redraw();
             }
         }
-    }
+    };
 
     s.mouseDragged = function () {
         s.mouseMoved();
-    }
+    };
 
     s.render_graph = function () {
         s.spacing = min(margin, s.width / 20);
@@ -723,7 +771,7 @@ function network_capacities_sketch(s) {
             s.graphics.textSize(min(20, s.width / 40));
             s.graphics.text(category, 0.5 * s.bar_w, 0.25 * margin);
         }
-    }
+    };
 }
 
 function temporal_graph_sketch(s) {
@@ -741,7 +789,7 @@ function temporal_graph_sketch(s) {
         s.graphics = s.createGraphics(s.width, s.height);
         s.graphics.textAlign(CENTER, CENTER);
         s.graphics.textFont(font);
-    }
+    };
 
     s.draw = function () {
         if (s.graphics_ready) {
@@ -751,7 +799,7 @@ function temporal_graph_sketch(s) {
                 s.stroke(255);
                 s.strokeWeight(2);
                 let X = min(s.graph_w, max(0, s.mouseX - margin));
-                t_view = floor(map(X, 0, s.graph_w, 0, data_len - 1));
+                t_view = min(data_len - 1, floor(map(X, 0, s.graph_w, 0, data_len)));
                 s.translate(margin + X, s.graph_h + 0.4 * margin);
                 s.line(0, 0, 0, -s.graph_h);
                 s.noStroke();
@@ -862,7 +910,7 @@ function temporal_graph_sketch(s) {
                 s.pop();
             }
         }
-    }
+    };
 
     s.mouseMoved = function () {
         if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0 && s.mouseY < s.height) {
@@ -874,11 +922,11 @@ function temporal_graph_sketch(s) {
                 s.redraw();
             }
         }
-    }
+    };
 
     s.mouseDragged = function () {
         s.mouseMoved();
-    }
+    };
 
     s.mousePressed = function () {
         if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0.4 * margin && s.mouseY < s.height - 0.6 * margin) {
@@ -888,7 +936,7 @@ function temporal_graph_sketch(s) {
                 fetch_market_data();
             }
         }
-    }
+    };
 
 
     s.render_graph = function () {
@@ -956,7 +1004,7 @@ function temporal_graph_sketch(s) {
                     gaussian_kernel.push(Math.exp(-(i ** 2) / 10));
                 }
 
-                price_curve = []
+                price_curve = [];
                 for (let t = 0; t < data_len; t++) {
                     let start = max(0, t - window_size);
                     let end = min(data_len - 1, t + window_size);
@@ -973,12 +1021,17 @@ function temporal_graph_sketch(s) {
             s.graphics.translate(0, -s.graph_h * (1 - s.frac));
             s.graphics.strokeWeight(3);
             s.graphics.stroke(cols_and_names["price"][0]);
+            let h = (price_curve[0] / s.upper_bounds["price"]) * s.graph_h * s.frac;
+            s.graphics.line(0, -h, 0.5 * s.graph_w / data_len, -h);
+            s.graphics.translate(0.5 * s.graph_w / data_len, 0);
             for (let t = 1; t < data_len; t++) {
                 let h1 = (price_curve[t - 1] / s.upper_bounds["price"]) * s.graph_h * s.frac;
                 let h2 = (price_curve[t] / s.upper_bounds["price"]) * s.graph_h * s.frac;
                 s.graphics.line(0, -h1, s.graph_w / data_len, -h2);
-                s.graphics.translate(s.graph_w / (data_len - 1), 0);
+                s.graphics.translate(s.graph_w / data_len, 0);
             }
+            h = (price_curve[data_len - 1] / s.upper_bounds["price"]) * s.graph_h * s.frac;
+            s.graphics.line(0, -h, 0.5 * s.graph_w / data_len, -h);
             s.graphics.pop();
         }
 
@@ -1046,7 +1099,7 @@ function temporal_graph_sketch(s) {
 
         s.graphics_ready = true;
         s.redraw();
-    }
+    };
 }
 
 function change_res(i) {
@@ -1058,19 +1111,19 @@ function change_res(i) {
 }
 
 function change_categorization(categorization) {
-    show_selected_button("categorization_button_", categorization)
+    show_selected_button("categorization_button_", categorization);
     temporal_graph_p5.categorization = categorization;
     temporal_graph_p5.render_graph();
 }
 
 function change_export_import(view) {
-    show_selected_button("export_import_button_", view)
+    show_selected_button("export_import_button_", view);
     temporal_graph_p5.view = view;
     temporal_graph_p5.render_graph();
 }
 
 function change_percent(percent) {
-    show_selected_button("percent_button_", percent)
+    show_selected_button("percent_button_", percent);
     temporal_graph_p5.percent = percent;
     temporal_graph_p5.render_graph();
 }
@@ -1088,7 +1141,7 @@ function market_chart_sketch(s) {
         s.graphics = s.createGraphics(s.width, s.height);
         s.graphics.textAlign(CENTER, CENTER);
         s.graphics.textFont(font);
-    }
+    };
 
     s.draw = function () {
         if (s.graphics_ready) {
@@ -1130,7 +1183,7 @@ function market_chart_sketch(s) {
                                 }
                                 s.translate(tx, ty);
 
-                                display_capacity_information(s, "Supply", supply, i)
+                                display_capacity_information(s, "Supply", supply, i);
                                 break;
                             }
                         }
@@ -1153,7 +1206,7 @@ function market_chart_sketch(s) {
                                 }
                                 s.translate(tx, ty);
 
-                                display_capacity_information(s, "Demand", demand, i)
+                                display_capacity_information(s, "Demand", demand, i);
                                 break;
                             }
                         }
@@ -1185,7 +1238,7 @@ function market_chart_sketch(s) {
                                 }
                                 s.translate(tx, ty);
 
-                                display_capacity_information(s, "Supply", supply, i)
+                                display_capacity_information(s, "Supply", supply, i);
                                 break;
                             }
                         }
@@ -1209,7 +1262,7 @@ function market_chart_sketch(s) {
                                 }
                                 s.translate(tx, ty);
 
-                                display_capacity_information(s, "Demand", demand, i)
+                                display_capacity_information(s, "Demand", demand, i);
                                 break;
                             }
                         }
@@ -1300,7 +1353,7 @@ function market_chart_sketch(s) {
                 s.text(j, 90, 4);
             }
         }
-    }
+    };
 
     s.mouseMoved = function () {
         if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0 && s.mouseY < s.height) {
@@ -1312,11 +1365,11 @@ function market_chart_sketch(s) {
                 s.redraw();
             }
         }
-    }
+    };
 
     s.mouseDragged = function () {
         s.mouseMoved();
-    }
+    };
 
     s.render_graph = function () {
         s.graph_h = s.height - margin;
@@ -1373,23 +1426,23 @@ function market_chart_sketch(s) {
 
         s.graphics_ready = true;
         s.redraw();
-    }
+    };
 }
 
 function change_market_view(view_market) {
-    show_selected_button("market_view_button_", view_market)
+    show_selected_button("market_view_button_", view_market);
     market_chart_p5.view = view_market;
     market_chart_p5.render_graph();
 }
 
 function change_market_mode(market_mode) {
-    show_selected_button("market_mode_button_", market_mode)
+    show_selected_button("market_mode_button_", market_mode);
     market_chart_p5.market_mode = market_mode;
     market_chart_p5.render_graph();
 }
 
 function change_categorization_market(categorization) {
-    show_selected_button("categorization_market_button_", categorization)
+    show_selected_button("categorization_market_button_", categorization);
     market_chart_p5.categorization = categorization;
     market_chart_p5.render_graph();
 }
@@ -1438,6 +1491,18 @@ function fetch_temporal_network_data() {
                     }
                 });
             });
+            const keys_map = {
+                generation: keys_generation,
+                consumption: keys_demand
+            };
+            for (let key in keys_map) {
+                temporal_data[key] = Object.keys(temporal_data[key])
+                    .sort((a, b) => Object.keys(keys_map[key]).indexOf(a) - Object.keys(keys_map[key]).indexOf(b))
+                    .reduce((acc, curr) => {
+                        acc[curr] = temporal_data[key][curr];
+                        return acc;
+                    }, {});
+            }
             temporal_graph_p5.render_graph();
         })
             .catch((error) => {
@@ -1489,7 +1554,7 @@ function sortTable(table_name, columnName, reorder = true) {
     }
 
     let data = transform_data(demand);
-    let last_col = "Satisfied"
+    let last_col = "Satisfied";
     if (table_name == "offers_table") {
         data = transform_data(supply);
         last_col = "Sold";
@@ -1513,7 +1578,7 @@ function sortTable(table_name, columnName, reorder = true) {
         "Yes": "green",
         "Partially": "orange",
         "No": "red"
-    }
+    };
 
     // Rebuild the HTML table
     let html = `<tr>
@@ -1547,7 +1612,7 @@ function sortTable(table_name, columnName, reorder = true) {
                 "price_col": data.price[i],
                 "quantity_col": data.capacity[i],
                 "sold_col": is_sold(data, i)
-            })
+            });
         }
         return transformed_data;
 

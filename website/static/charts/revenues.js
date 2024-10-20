@@ -57,7 +57,7 @@ function graph_sketch(s) {
                 s.stroke(255);
                 s.strokeWeight(2);
                 let X = min(s.graph_w, max(0, s.mouseX - margin));
-                t_view = floor(map(X, 0, s.graph_w, 0, data_len - 1));
+                t_view = floor(map(X, 0, s.graph_w, 0, data_len));
                 t_view = min(359, t_view + s.t0);
                 s.translate(margin + X, s.graph_h * s.frac + 0.2 * margin);
                 s.line(0, s.graph_h * (1 - s.frac), 0, -s.graph_h * s.frac);

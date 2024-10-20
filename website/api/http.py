@@ -486,9 +486,10 @@ def request_change_facility_priority():
 @log_action
 def put_resource_on_sale():
     """Parse the HTTP form for selling resources"""
-    resource = request.form.get("resource")
-    quantity = float(request.form.get("quantity")) * 1000
-    price = float(request.form.get("price")) / 1000
+    request_data = request.get_json()
+    resource = request_data["resource"]
+    quantity = float(request_data["quantity"]) * 1000
+    price = float(request_data["price"]) / 1000
     website.utils.resource_market.put_resource_on_market(current_user, resource, quantity, price)
     return redirect("/resource_market", code=303)
 
@@ -508,7 +509,8 @@ def buy_resource():
 @log_action
 def join_network():
     """player is trying to join a network"""
-    network_name = request.form.get("choose_network")
+    request_data = request.get_json()
+    network_name = request_data["choose_network"]
     network = Network.query.filter_by(name=network_name).first()
     website.utils.network.join_network(g.engine, current_user, network)
     flash(f"You joined the network {network_name}", category="message")
@@ -520,7 +522,8 @@ def join_network():
 @log_action
 def create_network():
     """This endpoint is used when a player creates a network"""
-    network_name = request.form.get("network_name")
+    request_data = request.get_json()
+    network_name = request_data["network_name"]
     response = website.utils.network.create_network(g.engine, current_user, network_name)
     if response["response"] == "nameLengthInvalid":
         flash("Network name must be between 3 and 40 characters", category="error")
