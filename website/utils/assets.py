@@ -4,7 +4,7 @@ import math
 import random
 from typing import List
 
-from flask import current_app
+from flask import current_app, jsonify
 
 from website import db, game_engine, technology_effects
 from website.api import websocket
@@ -218,25 +218,28 @@ def upgrade_facility(player, facility_id):
         db.session.commit()
 
     facility: ActiveFacility = ActiveFacility.query.get(facility_id)
+    if facility is None:
+        return jsonify({"response": "facilityNotFound"}), 404
     if facility.facility in engine.technologies + engine.functional_facilities:
-        return {"response": "notUpgradable"}, 403
+        return jsonify({"response": "notUpgradable"}), 403
 
     const_config = engine.const_config["assets"][facility.facility]
 
-    if is_upgradable(facility):
-        price_diff = technology_effects.price_multiplier(player, facility.facility) - facility.price_multiplier
-        if price_diff > 0:
-            upgrade_cost = const_config["base_price"] * price_diff
-        else:
-            upgrade_cost = 0.05 * const_config["base_price"]
-        if player.money < upgrade_cost:
-            return {"response": "notEnoughMoney"}
-        player.money -= upgrade_cost
-        apply_upgrade(facility)
-        engine.data["player_capacities"][player.id].update(player, facility.facility)
-        return {"response": "success", "money": player.money}
+    if not is_upgradable(facility):
+        return jsonify({"response": "notUpgradable"}), 403
+    
+    price_diff = technology_effects.price_multiplier(player, facility.facility) - facility.price_multiplier
+    if price_diff > 0:
+        upgrade_cost = const_config["base_price"] * price_diff
     else:
-        return {"response": "notUpgradable"}, 403
+        upgrade_cost = 0.05 * const_config["base_price"]
+    if player.money < upgrade_cost:
+        return jsonify({"response": "notEnoughMoney"}), 403
+    player.money -= upgrade_cost
+    apply_upgrade(facility)
+    engine.data["player_capacities"][player.id].update(player, facility.facility)
+    return jsonify({"response": "success", "money": player.money})
+        
 
 
 def upgrade_all_of_type(player, facility_id):
@@ -245,7 +248,8 @@ def upgrade_all_of_type(player, facility_id):
     facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
         upgrade_facility(player, facility.id)
-    return {"response": "success", "money": player.money}
+    # TODO: success can be returned while some facility didn't have enough money
+    return jsonify({"response": "success", "money": player.money})
 
 
 def remove_asset(player_id, facility, decommissioning=True):
@@ -319,10 +323,10 @@ def dismantle_facility(player, facility_id):
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
         cost *= facility.multiplier_2
     if player.money < cost:
-        return {"response": "notEnoughMoney"}, 403
+        return jsonify({"response": "notEnoughMoney"}), 403
     response = remove_asset(player.id, facility, decommissioning=False)
     current_app.config["engine"].log(f"{player.username} dismantled the facility {response['facility_name']}.")
-    return response
+    return jsonify(response)
 
 
 def dismantle_all_of_type(player, facility_id):
@@ -331,7 +335,8 @@ def dismantle_all_of_type(player, facility_id):
     facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
         dismantle_facility(player, facility.id)
-    return {"response": "success", "money": player.money}
+    # TODO: response can be success while some facilities were not dismantled (i.e. not enough money)
+    return jsonify({"response": "success", "money": player.money})
 
 
 def package_projects_data(player):
@@ -354,13 +359,13 @@ def start_project(engine: GameEngine, player: Player, asset, family, force=False
         player, asset, technology_effects.asset_requirements(player, asset)
     )
     if asset_requirement_status == "unsatisfied":
-        return {"response": "locked"}, 403
+        return jsonify({"response": "locked"}), 403
 
     real_price = technology_effects.construction_price(player, asset)
     duration = technology_effects.construction_time(player, asset)
 
     if player.money < real_price:
-        return {"response": "notEnoughMoneyError"}, 403
+        return jsonify({"response": "notEnoughMoneyError"}), 403
     construction_power = technology_effects.construction_power(player, asset)
     if not force and "Unlock Network" not in player.achievements:
         capacity = 0
@@ -368,11 +373,11 @@ def start_project(engine: GameEngine, player: Player, asset, family, force=False
             if player_cap[gen] is not None:
                 capacity += player_cap[gen]["power"]
         if construction_power > capacity:
-            return {
+            return jsonify({
                 "response": "areYouSure",
                 "capacity": capacity,
                 "construction_power": construction_power,
-            }, 300
+            }), 300
 
     if family == "Technologies":
         priority_list_name = "research_priorities"
@@ -433,11 +438,11 @@ def start_project(engine: GameEngine, player: Player, asset, family, force=False
     engine.log(f"{player.username} started the construction {asset}")
     websocket.rest_notify_constructions(engine, player)
     db.session.commit()
-    return {
+    return jsonify({
         "response": "success",
         "money": player.money,
         "constructions": package_projects_data(player),
-    }
+    })
 
 
 def cancel_project(player: Player, construction_id: int, force=False):
@@ -464,13 +469,13 @@ def cancel_project(player: Player, construction_id: int, force=False):
         if construction_id in candidate_dependent.prerequisites():
             dependents.append([candidate_dependent.name, candidate_dependent.level()])
     if dependents:
-        return {"response": "hasDependents", "dependents": dependents}, 403
+        return jsonify({"response": "hasDependents", "dependents": dependents}), 403
 
     if not force:
-        return {
+        return jsonify({
             "response": "areYouSure",
             "refund": f"{round(80 * (1 - time_fraction))}%",
-        }, 300
+        }), 300
 
     refund = (
         0.8
@@ -486,12 +491,11 @@ def cancel_project(player: Player, construction_id: int, force=False):
     engine.log(f"{player.username} cancelled the construction {construction.name}")
     db.session.commit()
     websocket.rest_notify_constructions(engine, player)
-    return {
+    return jsonify({
         "response": "success",
         "money": player.money,
         "constructions": package_projects_data(player),
-    }
-
+    })
 
 def decrease_project_priority(player, construction_id, pausing=False):
     """
@@ -501,6 +505,9 @@ def decrease_project_priority(player, construction_id, pausing=False):
     engine = current_app.config["engine"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
 
+    if construction is None:
+        return jsonify({"response": "constructionNotFound"}), 404
+
     if construction.family == "Technologies":
         attr = "research_priorities"
     else:
@@ -508,21 +515,19 @@ def decrease_project_priority(player, construction_id, pausing=False):
 
     priority_list = player.read_list(attr)
     index = priority_list.index(construction_id)
-    if index >= 0 and index < len(priority_list) - 1:
+    if 0 <= index < len(priority_list) - 1:
         construction_1: OngoingConstruction = OngoingConstruction.query.get(priority_list[index])
         construction_2: OngoingConstruction = OngoingConstruction.query.get(priority_list[index + 1])
-        if construction_1 is None or construction_2 is None:
-            return {"response": "constructionNotFound"}, 404
-        if construction_1.id in construction_2.prerequisites():
-            return {"response": "requirementsPreventReorder"}, 403
 
         if construction_1.suspension_time is None and construction_2.suspension_time is not None:
             # construction_1 is not paused, but construction_2 is
             response = pause_project(player, construction_1.id)
-            if response["response"] == "success":
+            if type(response) == tuple:
+                response, status_code = response
+            if response.json["response"] == "success":
                 return pause_project(player, construction_2.id)
             else:
-                return response, 403
+                return response, status_code
             # construction_1.suspension_time = engine.data["total_t"]
             # if pausing:
             #     return {"response": "paused"}
@@ -556,10 +561,10 @@ def decrease_project_priority(player, construction_id, pausing=False):
         db.session.commit()
         websocket.rest_notify_constructions(engine, player)
 
-    return {
+    return jsonify({
         "response": "success",
         "constructions": package_projects_data(player),
-    }
+    })
 
 
 def pause_project(player: Player, construction_id: int):
@@ -592,14 +597,14 @@ def pause_project(player: Player, construction_id: int):
     else:
         # project is currently pause, and should be unpaused
         if construction.prerequisites(recompute=True):
-            return {"response": "hasUnfinishedPrerequisites"}, 403
+            return jsonify({"response": "hasUnfinishedPrerequisites"}), 403
 
         if construction.family == "Technologies":
             available_workers = player.available_lab_workers()
         else:
             available_workers = player.available_construction_workers()
         if available_workers == 0:
-            return {"response": "noAvailableWorkers"}, 403
+            return jsonify({"response": "noAvailableWorkers"}), 403
 
         # Unpause the construction
         construction.start_time += engine.data["total_t"] - construction.suspension_time
@@ -623,7 +628,7 @@ def pause_project(player: Player, construction_id: int):
 
     db.session.commit()
     websocket.rest_notify_constructions(engine, player)
-    return {
+    return jsonify({
         "response": "success",
         "constructions": package_projects_data(player),
-    }
+    })

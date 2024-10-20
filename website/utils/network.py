@@ -3,6 +3,7 @@
 import pickle
 import shutil
 from pathlib import Path
+from flask import jsonify
 
 import website.api.websocket as websocket
 import website.game_engine as game_engine
@@ -46,11 +47,11 @@ def create_network(engine, player, name):
     namely it must not be too long, nor too short, and must not already be in
     use."""
     if "Unlock Network" not in player.achievements:
-        return {"response": "networkNotUnlocked"}, 403
+        return jsonify({"response": "networkNotUnlocked"}), 403
     if len(name) < 3 or len(name) > 40:
-        return {"response": "nameLengthInvalid"}, 400
+        return jsonify({"response": "nameLengthInvalid"}), 400
     if Network.query.filter_by(name=name).first() is not None:
-        return {"response": "nameAlreadyUsed"}, 400
+        return jsonify({"response": "nameAlreadyUsed"}), 400
     new_network = Network(name=name, members=[player])
     db.session.add(new_network)
     db.session.commit()
@@ -112,12 +113,12 @@ def set_network_prices(engine, player, updated_prices):
 
     for key, updated_price in updated_prices.items():
         if updated_price <= -5:
-            return {"response": "priceTooLow"}, 405
+            return jsonify({"response": "priceTooLow"}), 405
         setattr(player, key, updated_price)
 
     engine.log(f"{player.username} updated their prices")
     reorder_facility_priorities(engine, player)
-    return {"response": "success"}
+    return jsonify({"response": "success"})
 
 
 def change_facility_priority(engine, player, priority):

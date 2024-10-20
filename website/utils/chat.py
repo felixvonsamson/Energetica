@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from flask import current_app
+from flask import current_app, jsonify
 
 from website import db
 from website.api import websocket
@@ -36,11 +36,11 @@ def create_chat(player, buddy_id):
     """creates a chat with 2 players"""
     buddy = Player.query.get(buddy_id)
     if buddy is None:
-        return {"response": "buddyIDDoesNotExist"}
+        return jsonify({"response": "buddyIDDoesNotExist"}), 403
     if buddy.id == player.id:
-        return {"response": "cannotChatWithYourself"}
+        return jsonify({"response": "cannotChatWithYourself"}), 403
     if check_existing_chats([player, buddy]):
-        return {"response": "chatAlreadyExist"}
+        return jsonify({"response": "chatAlreadyExist"}), 403
     new_chat = Chat(
         name=None,
         participants=[player, buddy],
@@ -50,7 +50,7 @@ def create_chat(player, buddy_id):
     engine: GameEngine = current_app.config["engine"]
     engine.log(f"{player.username} created a chat with {buddy.username}")
     websocket.notify_new_chat(new_chat)
-    return {"response": "success"}
+    return jsonify({"response": "success"})
 
 
 def create_group_chat(player, chat_name, participant_ids):
@@ -71,16 +71,16 @@ def create_group_chat(player, chat_name, participant_ids):
        participants
     """
     if len(chat_name) == 0 or len(chat_name) > 25:
-        return {"response": "wrongTitleLength"}
+        return jsonify({"response": "wrongTitleLength"}), 403
     participants = [player]
     for participant_id in participant_ids:
         participant = Player.query.get(participant_id)
         if participant is not None:
             participants.append(participant)
     if len(participants) < 3:
-        return {"response": "groupTooSmall"}
+        return jsonify({"response": "groupTooSmall"}), 403
     if check_existing_chats(participants):
-        return {"response": "chatAlreadyExist"}
+        return jsonify({"response": "chatAlreadyExist"}), 403
     new_chat = Chat(
         name=chat_name,
         participants=participants,
@@ -90,18 +90,18 @@ def create_group_chat(player, chat_name, participant_ids):
     engine: GameEngine = current_app.config["engine"]
     engine.log(f"{player.username} created a group chat called {chat_name} with {participants}")
     websocket.notify_new_chat(new_chat)
-    return {"response": "success"}
+    return jsonify({"response": "success"})
 
 
 def add_message(player, message_text, chat_id):
     """This function is called when a player sends a message in a chat. It returns either success or an error."""
     engine: GameEngine = current_app.config["engine"]
     if not chat_id:
-        return {"response": "noChatID"}
+        return jsonify({"response": "noChatID"}), 403
     if len(message_text) == 0:
-        return {"response": "noMessage"}
+        return jsonify({"response": "noMessage"}), 403
     if len(message_text) > 500:
-        return {"response": "messageTooLong", "message": message_text}
+        return jsonify({"response": "messageTooLong", "message": message_text}), 403
     chat = Chat.query.filter_by(id=chat_id).first()
     new_message = Message(
         text=message_text,
@@ -118,4 +118,4 @@ def add_message(player, message_text, chat_id):
         db.session.add(player_read_message)
     db.session.commit()
     display_new_message(engine, new_message, chat)
-    return {"response": "success"}
+    return jsonify({"response": "success"})

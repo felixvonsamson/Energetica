@@ -3,7 +3,7 @@
 import math
 from datetime import datetime
 
-from flask import current_app, flash
+from flask import current_app, flash, jsonify
 
 from website import db
 from website.database.player_assets import ResourceOnSale, Shipment
@@ -41,8 +41,12 @@ def buy_resource_from_market(player, quantity, sale_id):
     """Buy an offer from the resource market"""
     engine = current_app.config["engine"]
     sale = ResourceOnSale.query.filter_by(id=sale_id).first()
+    
+    if sale is None:
+        return jsonify({"response": "saleNotFound"}), 404
+    
     if quantity is None or quantity <= 0 or quantity > sale.quantity:
-        return {"response": "invalidQuantity"}
+        return jsonify({"response": "invalidQuantity"}), 403
     total_price = sale.price * quantity
     if player == sale.player:
         # Player is buying their own resource
@@ -55,14 +59,14 @@ def buy_resource_from_market(player, quantity, sale_id):
             getattr(player, sale.resource + "_on_sale") - quantity,
         )
         db.session.commit()
-        return {
+        return jsonify({
             "response": "removedFromMarket",
             "quantity": quantity,
             "available_quantity": sale.quantity,
             "resource": sale.resource,
-        }
+        })
     if total_price > player.money:
-        return {"response": "notEnoughMoney"}
+        return jsonify({"response": "notEnoughMoney"}), 403
     else:
         # Player buys form another player
         sale.quantity -= quantity
@@ -110,7 +114,7 @@ def buy_resource_from_market(player, quantity, sale_id):
             # Player is purchasing all available quantity
             ResourceOnSale.query.filter_by(id=sale_id).delete()
         db.session.commit()
-        return {
+        return jsonify({
             "response": "success",
             "resource": sale.resource,
             "total_price": total_price,
@@ -118,7 +122,7 @@ def buy_resource_from_market(player, quantity, sale_id):
             "seller": sale.player.username,
             "available_quantity": sale.quantity,
             "shipments": player.package_shipments(),
-        }
+        })
 
 
 def store_import(player, resource, quantity):
@@ -159,13 +163,16 @@ def pause_shipment(player, shipment_id):
     engine = current_app.config["engine"]
     shipment = Shipment.query.get(int(shipment_id))
 
+    if shipment is None:
+        return jsonify({"response": "shipmentNotFound"}), 404
+
     if shipment.suspension_time is None:
         shipment.suspension_time = engine.data["total_t"]
     else:
         shipment.departure_time += engine.data["total_t"] - shipment.suspension_time
         shipment.suspension_time = None
     db.session.commit()
-    return {
+    return jsonify({
         "response": "success",
         "shipments": player.package_shipments(),
-    }
+    })

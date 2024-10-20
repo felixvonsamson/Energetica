@@ -134,7 +134,7 @@ def get_chat_messages():
 def get_chat_list():
     """gets the list of chats for the current player"""
     response = current_user.package_chat_list()
-    return jsonify(response)
+    return response
 
 
 @http.route("/get_resource_data", methods=["GET"])
@@ -337,7 +337,7 @@ def submit_quiz_answer():
     request_data = request.get_json()
     answer = request_data["answer"]
     response = website.utils.misc.submit_quiz_answer(g.engine, current_user, answer)
-    return jsonify(response)
+    return response
 
 
 @http.route("/get_active_facilities", methods=["GET"])
@@ -354,7 +354,7 @@ def choose_location():
     selected_id = request_data["selected_id"]
     location = Hex.query.get(selected_id + 1)
     confirm_location_response = misc.confirm_location(engine=g.engine, player=current_user, location=location)
-    return jsonify(confirm_location_response)
+    return confirm_location_response
 
 
 @http.route("/request_start_project", methods=["POST"])
@@ -376,7 +376,7 @@ def request_start_project():
         family=family,
         force=force,
     )
-    return jsonify(response)
+    return response
 
 
 @http.route("/request_cancel_project", methods=["POST"])
@@ -387,7 +387,7 @@ def request_cancel_project():
     construction_id = int(request_data["id"])
     force = request_data["force"]
     response = website.utils.assets.cancel_project(player=current_user, construction_id=construction_id, force=force)
-    return jsonify(response)
+    return response
 
 
 @http.route("/request_pause_project", methods=["POST"])
@@ -397,7 +397,7 @@ def request_pause_project():
     request_data = request.get_json()
     construction_id = request_data["id"]
     response = website.utils.assets.pause_project(player=current_user, construction_id=construction_id)
-    return jsonify(response)
+    return response
 
 
 @http.route("/request_pause_shipment", methods=["POST"])
@@ -407,7 +407,7 @@ def request_pause_shipment():
     request_data = request.get_json()
     shipment_id = request_data["id"]
     response = website.utils.resource_market.pause_shipment(player=current_user, shipment_id=shipment_id)
-    return jsonify(response)
+    return response
 
 
 @http.route("/request_decrease_project_priority", methods=["POST"])
@@ -417,7 +417,7 @@ def request_decrease_project_priority():
     request_data = request.get_json()
     construction_id = request_data["id"]
     response = website.utils.assets.decrease_project_priority(player=current_user, construction_id=construction_id)
-    return jsonify(response)
+    return response
 
 
 @http.route("/request_upgrade_facility", methods=["POST"])
@@ -427,7 +427,7 @@ def request_upgrade_facility():
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     response = website.utils.assets.upgrade_facility(player=current_user, facility_id=facility_id)
-    return jsonify(response)
+    return response
 
 
 @http.route("/request_upgrade_all_of_type", methods=["POST"])
@@ -437,7 +437,7 @@ def request_upgrade_all_of_type():
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     response = website.utils.assets.upgrade_all_of_type(player=current_user, facility_id=facility_id)
-    return jsonify(response)
+    return response
 
 
 @http.route("/request_dismantle_facility", methods=["POST"])
@@ -447,7 +447,7 @@ def request_dismantle_facility():
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     response = website.utils.assets.dismantle_facility(player=current_user, facility_id=facility_id)
-    return jsonify(response)
+    return response
 
 
 @http.route("/request_dismantle_all_of_type", methods=["POST"])
@@ -457,7 +457,7 @@ def request_dismantle_all_of_type():
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     response = website.utils.assets.dismantle_all_of_type(player=current_user, facility_id=facility_id)
-    return jsonify(response)
+    return response
 
 
 @http.route("/change_network_prices", methods=["POST"])
@@ -469,7 +469,7 @@ def change_network_prices():
     response = website.utils.network.set_network_prices(
         engine=g.engine, player=current_user, updated_prices=updated_prices
     )
-    return jsonify(response)
+    return response
 
 
 @http.route("/request_change_facility_priority", methods=["POST"])
@@ -479,7 +479,7 @@ def request_change_facility_priority():
     request_data = request.get_json()
     priority = request_data["priority"]
     response = website.utils.network.change_facility_priority(engine=g.engine, player=current_user, priority=priority)
-    return jsonify(response)
+    return response
 
 
 @http.route("/put_resource_on_sale", methods=["POST"])
@@ -502,7 +502,7 @@ def buy_resource():
     sale_id = int(request_data["id"])
     quantity = float(request_data["quantity"]) * 1000
     response = website.utils.resource_market.buy_resource_from_market(current_user, quantity, sale_id)
-    return jsonify(response)
+    return response
 
 
 @http.route("join_network", methods=["POST"])
@@ -525,10 +525,12 @@ def create_network():
     request_data = request.get_json()
     network_name = request_data["network_name"]
     response = website.utils.network.create_network(g.engine, current_user, network_name)
-    if response["response"] == "nameLengthInvalid":
+    if type(response) == tuple:
+        response, _ = response
+    if response.json["response"] == "nameLengthInvalid":
         flash("Network name must be between 3 and 40 characters", category="error")
         return redirect("/network", code=303)
-    if response["response"] == "nameAlreadyUsed":
+    if response.json["response"] == "nameAlreadyUsed":
         flash("A network with this name already exists", category="error")
         return redirect("/network", code=303)
     flash(f"You created the network {network_name}", category="message")
@@ -559,7 +561,7 @@ def create_chat():
     request_data = request.get_json()
     buddy_id = request_data["buddy_id"]
     response = website.utils.chat.create_chat(current_user, buddy_id)
-    return jsonify(response)
+    return response
 
 
 @http.route("create_group_chat", methods=["POST"])
@@ -569,7 +571,7 @@ def create_group_chat():
     chat_title = request_data["chat_title"]
     group_members = request_data["group_members"]
     response = website.utils.chat.create_group_chat(current_user, chat_title, group_members)
-    return jsonify(response)
+    return response
 
 
 @http.route("new_message", methods=["POST"])
