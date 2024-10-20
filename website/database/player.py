@@ -167,9 +167,9 @@ class Player(db.Model, UserMixin):
         else:
             return priority_list
 
-    def write_list(self, attr, list):
+    def write_list(self, attr, list_data):
         """Helper method that writes a list of any player list that is stored as a string"""
-        setattr(self, attr, ",".join(map(str, list)))
+        setattr(self, attr, ",".join(map(str, list_data)))
 
     def add_to_list(self, attr, value):
         """Helper method that adds an element to a list stored as a string"""
