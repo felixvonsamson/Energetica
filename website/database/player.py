@@ -5,7 +5,7 @@ from datetime import datetime
 from itertools import chain
 from typing import List
 
-from flask import current_app
+from flask import current_app, jsonify
 from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
@@ -265,11 +265,11 @@ class Player(db.Model, UserMixin):
             }
             for chat in self.chats
         }
-        return {
+        return jsonify({
             "response": "success",
             "chat_list": chat_dict,
             "last_opened_chat": self.last_opened_chat,
-        }
+        })
 
     def package_chats(self):
         """This method packages chats for the iOS frontend"""

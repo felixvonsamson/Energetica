@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
-from flask import flash
+from flask import flash, jsonify
 from noise import pnoise3
 from pvlib.location import Location
 from scipy.stats import norm
@@ -213,10 +213,10 @@ def confirm_location(engine, player, location):
     """
     if location.player_id is not None:
         # Location already taken
-        return {"response": "locationOccupied", "by": location.player_id}
+        return jsonify({"response": "locationOccupied", "by": location.player_id}), 403
     if player.tile is not None:
         # Player has already chosen a location and cannot chose again
-        return {"response": "choiceUnmodifiable"}
+        return jsonify({"response": "choiceUnmodifiable"}), 403
     # Checks have succeeded, proceed
     location.player_id = player.id
     eol = engine.data["total_t"] + math.ceil(
@@ -244,7 +244,7 @@ def confirm_location(engine, player, location):
     engine.data["current_data"][player.id].new_subcategory("emissions", "steam_engine")
     websocket.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
-    return {"response": "success"}
+    return jsonify({"response": "success"})
 
 
 # Quiz
@@ -257,15 +257,15 @@ def submit_quiz_answer(engine, player, answer):
     """
     quiz_data = engine.data["daily_question"]
     if player.id in quiz_data["player_answers"]:
-        return {"response": "quizAlreadyAnswered"}
+        return jsonify({"response": "quizAlreadyAnswered"}), 403
     quiz_data["player_answers"][player.id] = answer
     if answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":
         player.xp += 1
         db.session.commit()
         engine.log(f"{player.username} answered the quiz correctly")
-        return {"response": "correct", "question_data": get_quiz_question(engine, player)}
+        return jsonify({"response": "correct", "question_data": get_quiz_question(engine, player)})
     engine.log(f"{player.username} answered the quiz incorrectly")
-    return {"response": "incorrect", "question_data": get_quiz_question(engine, player)}
+    return jsonify({"response": "incorrect", "question_data": get_quiz_question(engine, player)})
 
 
 def get_quiz_question(engine, player):

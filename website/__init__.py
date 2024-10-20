@@ -18,6 +18,9 @@ import socket
 from datetime import datetime
 from pathlib import Path
 
+from gevent import monkey
+monkey.patch_all(thread=True, time=True)
+
 from ecdsa import NIST256p, SigningKey
 from flask import Flask, jsonify, request, send_file
 from flask_apscheduler import APScheduler
