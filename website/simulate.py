@@ -40,6 +40,13 @@ def simulate(app, port, actions):
                 player_id = action["player_id"]
                 if action["endpoint"] == "/api/choose_location" and player_id not in user_sessions:
                     user_sessions[player_id] = create_user(player_id, port)
-                print(user_sessions[player_id].post(
+                response = user_sessions[player_id].post(
                     f"http://localhost:{port}{action['endpoint']}", json=action["request_content"]
-                ).text)
+                )
+                if response.status_code != 200:
+                    print(f"Status code: {response.status_code}")
+                    if response.status_code // 100 == 4:
+                        print("\033[33m" + response.text + "\033[0m")
+                    elif response.status_code // 100 == 5:
+                        print("\033[31m" + "Server error, look at the stack above.\033[0m")
+
