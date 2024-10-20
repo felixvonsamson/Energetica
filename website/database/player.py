@@ -132,6 +132,13 @@ class Player(db.Model, UserMixin):
     active_facilities = db.relationship("ActiveFacility", backref="player", lazy="dynamic")
     climate_events = db.relationship("ClimateEventRecovery", backref="player")
 
+    _buffered_data_for_power_facilities_page = None
+    _buffered_data_for_storage_facilities_page = None
+    _buffered_data_for_extraction_facilities_page = None
+    _buffered_data_for_functional_facilities_page = None
+    _buffered_data_for_technologies_page = None
+    _buffered_data_for_resource_market_page = None
+
     def change_graph_view(self, view):
         """Helper method to set the network graph view of the player (basic/normal/expert)"""
         self.graph_view = view
@@ -589,6 +596,18 @@ class Player(db.Model, UserMixin):
             "storage_facilities": get_facility_data(engine.storage_facilities),
             "extraction_facilities": get_facility_data(engine.extraction_facilities),
         }
+
+    def invalidate_recompute_and_dispatch_data_for_pages(
+        self,
+        power_facilities=False,
+        storage_facilities=False,
+        extraction_facilities=False,
+        functional_facilities=False,
+        technologies=False,
+        resource_market=False,
+    ):
+        """Signal to all instances of clients for this player that there is possibly new data for the specified page"""
+        pass
 
 
 class Network(db.Model):

@@ -128,6 +128,12 @@ def finish_construction(construction: OngoingConstruction):
     engine.config.update_config_for_user(player.id)
     player.emit("retrieve_player_data")
 
+    if family == "Functional facilities":
+        player.invalidate_recompute_and_dispatch_data_for_pages(functional_facilities=True, technologies=True)
+    if family == "Technologies":
+        for player in Player.query.all():
+            player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
+
 
 def deploy_available_workers(player: Player, family: str):
     """Ensures all free workers for `family` are in use, if possible"""
@@ -346,8 +352,9 @@ def package_projects_data(player):
     return {0: projects, 1: construction_priorities, 2: research_priorities}
 
 
-def start_project(engine: GameEngine, player: Player, asset, family, force=False):
+def start_project(engine: GameEngine, player: Player, asset: str, family: str, force=False):
     """this function is executed when a player clicks on 'start construction'"""
+    # TODO: rename this function to something like 'queue_project'
     player_cap = engine.data["player_capacities"][player.id]
 
     asset_requirement_status = technology_effects.requirements_status(
@@ -433,11 +440,31 @@ def start_project(engine: GameEngine, player: Player, asset, family, force=False
     engine.log(f"{player.username} started the construction {asset}")
     websocket.rest_notify_constructions(engine, player)
     db.session.commit()
+
+    invalidate_data_on_project_update(player, asset, family)
+
     return {
         "response": "success",
         "money": player.money,
         "constructions": package_projects_data(player),
     }
+
+
+def invalidate_data_on_project_update(player: Player, asset: str, family: str):
+    """Check for data page invalidation when project has been queued or cancelled"""
+    if family == "Power facilities" and asset in [
+        "watermill",
+        "small_water_dam",
+        "large_water_dam",
+        "windmill",
+        "onshore_wind_turbine",
+        "offshore_wind_turbine",
+    ]:
+        player.invalidate_recompute_and_dispatch_data_for_pages(power_facilities=True)
+    if family == "Functional facilities":
+        player.invalidate_recompute_and_dispatch_data_for_pages(functional_facilities=True)
+    if family == "Technologies":
+        player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
 
 
 def cancel_project(player: Player, construction_id: int, force=False):
@@ -486,6 +513,9 @@ def cancel_project(player: Player, construction_id: int, force=False):
     engine.log(f"{player.username} cancelled the construction {construction.name}")
     db.session.commit()
     websocket.rest_notify_constructions(engine, player)
+
+    invalidate_data_on_project_update(player, construction.name, construction.family)
+
     return {
         "response": "success",
         "money": player.money,
