@@ -15,17 +15,17 @@ from website.database.player import Network, Player
 def join_network(engine, player, network):
     """shared API method to join a network."""
     if "Unlock Network" not in player.achievements:
-        return {"response": "networkNotUnlocked"}, 403
+        return jsonify({"response": "networkNotUnlocked"}), 403
     if network is None:
-        return {"response": "noSuchNetwork"}, 404
+        return jsonify({"response": "noSuchNetwork"}), 404
     if player.network is not None:
-        return {"response": "playerAlreadyInNetwork"}, 409
+        return jsonify({"response": "playerAlreadyInNetwork"}), 409
     player.network = network
     db.session.commit()
     engine.data["network_capacities"][network.id].update_network(network)
     engine.log(f"{player.username} joined the network {network.name}")
     websocket.rest_notify_network_change(engine)
-    return {"response": "success"}
+    return jsonify({"response": "success"})
 
 
 def data_init_network():
