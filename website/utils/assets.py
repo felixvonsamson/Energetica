@@ -219,7 +219,7 @@ def upgrade_facility(player, facility_id):
 
     facility: ActiveFacility = ActiveFacility.query.get(facility_id)
     if facility.facility in engine.technologies + engine.functional_facilities:
-        return {"response": "notUpgradable"}
+        return {"response": "notUpgradable"}, 403
 
     const_config = engine.const_config["assets"][facility.facility]
 
@@ -236,7 +236,7 @@ def upgrade_facility(player, facility_id):
         engine.data["player_capacities"][player.id].update(player, facility.facility)
         return {"response": "success", "money": player.money}
     else:
-        return {"response": "notUpgradable"}
+        return {"response": "notUpgradable"}, 403
 
 
 def upgrade_all_of_type(player, facility_id):
@@ -252,7 +252,7 @@ def remove_asset(player_id, facility, decommissioning=True):
     """this function is executed when a facility is decommissioned."""
     engine = current_app.config["engine"]
     if facility.facility in engine.technologies + engine.functional_facilities:
-        return {"response": "notRemovable"}
+        return {"response": "notRemovable"}, 403
     player = Player.query.get(player_id)
     db.session.delete(facility)
     db.session.flush()
@@ -319,7 +319,7 @@ def dismantle_facility(player, facility_id):
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
         cost *= facility.multiplier_2
     if player.money < cost:
-        return {"response": "notEnoughMoney"}
+        return {"response": "notEnoughMoney"}, 403
     response = remove_asset(player.id, facility, decommissioning=False)
     current_app.config["engine"].log(f"{player.username} dismantled the facility {response['facility_name']}.")
     return response
@@ -354,13 +354,13 @@ def start_project(engine: GameEngine, player: Player, asset, family, force=False
         player, asset, technology_effects.asset_requirements(player, asset)
     )
     if asset_requirement_status == "unsatisfied":
-        return {"response": "locked"}
+        return {"response": "locked"}, 403
 
     real_price = technology_effects.construction_price(player, asset)
     duration = technology_effects.construction_time(player, asset)
 
     if player.money < real_price:
-        return {"response": "notEnoughMoneyError"}
+        return {"response": "notEnoughMoneyError"}, 403
     construction_power = technology_effects.construction_power(player, asset)
     if not force and "Unlock Network" not in player.achievements:
         capacity = 0
@@ -372,7 +372,7 @@ def start_project(engine: GameEngine, player: Player, asset, family, force=False
                 "response": "areYouSure",
                 "capacity": capacity,
                 "construction_power": construction_power,
-            }
+            }, 300
 
     if family == "Technologies":
         priority_list_name = "research_priorities"
@@ -458,13 +458,13 @@ def cancel_project(player: Player, construction_id: int, force=False):
         if construction_id in candidate_dependent.prerequisites():
             dependents.append([candidate_dependent.name, candidate_dependent.level()])
     if dependents:
-        return {"response": "hasDependents", "dependents": dependents}
+        return {"response": "hasDependents", "dependents": dependents}, 403
 
     if not force:
         return {
             "response": "areYouSure",
             "refund": f"{round(80 * (1 - construction.progress()))}%",
-        }
+        }, 300
 
     refund = (
         0.8
@@ -505,8 +505,10 @@ def decrease_project_priority(player, construction_id):
     if index >= 0 and index < len(priority_list) - 1:
         construction_1: OngoingConstruction = OngoingConstruction.query.get(priority_list[index])
         construction_2: OngoingConstruction = OngoingConstruction.query.get(priority_list[index + 1])
+        if construction_1 is None or construction_2 is None:
+            return {"response": "constructionNotFound"}, 404
         if construction_1.id in construction_2.prerequisites():
-            return {"response": "requirementsPreventReorder"}
+            return {"response": "requirementsPreventReorder"}, 403
 
         if construction_1.is_ongoing() and not construction_2.is_ongoing():
             # construction_1 is not paused, but construction_2 is
@@ -514,7 +516,7 @@ def decrease_project_priority(player, construction_id):
             if response["response"] == "success":
                 return pause_project(player, construction_2.id)
             else:
-                return response
+                return response, 403
         priority_list[index + 1], priority_list[index] = (
             priority_list[index],
             priority_list[index + 1],

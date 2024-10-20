@@ -6,7 +6,8 @@ flask-login
 flask-apscheduler
 flask-httpauth
 ecdsa
-eventlet
+gevent
+gevent-websocket
 requests
 pandas
 pywebpush

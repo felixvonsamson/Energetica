@@ -1,9 +1,5 @@
 """This code is run once at the start of the game"""
 
-import eventlet
-
-eventlet.monkey_patch(thread=True, time=True)
-
 # pylint: disable=wrong-import-order,wrong-import-position
 # ruff: noqa: E402
 
@@ -11,6 +7,7 @@ import atexit
 import base64
 import cProfile
 import csv
+import json
 import os
 import pickle
 import platform
@@ -18,6 +15,7 @@ import pstats
 import secrets
 import shutil
 import socket
+from datetime import datetime
 from pathlib import Path
 
 from ecdsa import NIST256p, SigningKey
@@ -29,6 +27,8 @@ from flask_sock import Sock
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash
+
+from website.simulate import simulate
 
 db = SQLAlchemy()
 
@@ -81,7 +81,9 @@ def get_or_create_vapid_keys() -> type[str, str]:
         return public_key, private_key
 
 
-def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_instance, random_seed):
+def create_app(
+    clock_time, in_game_seconds_per_tick, run_init_test_players, rm_instance, random_seed, simulate_file, **kwargs
+):
     """This function sets up the app and the game engine"""
     # gets lock to avoid multiple instances
     if platform.system() == "Linux":
@@ -94,7 +96,7 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     (app.config["VAPID_PUBLIC_KEY"], app.config["VAPID_PRIVATE_KEY"]) = get_or_create_vapid_keys()
-    app.config["VAPID_CLAIMS"] = {"sub": "mailto:felixvonsamson@gmail.com"}
+    app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
     db.init_app(app)
 
     # creates the engine (and loading the save if it exists)
@@ -231,9 +233,8 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
     @engine.auth.verify_password
     def verify_password(username, password):
         player = Player.query.filter_by(username=username).first()
-        if player:
-            if check_password_hash(player.pwhash, password):
-                return player
+        if player and check_password_hash(player.pwhash, password):
+            return player
 
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
@@ -243,14 +244,30 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
         scheduler = APScheduler()
         scheduler.init_app(app)
 
-        scheduler.add_job(
-            func=state_update,
-            args=(engine, app),
-            id="state_update",
-            trigger="cron",
-            second=f"*/{clock_time}" if clock_time != 60 else "0",
-            misfire_grace_time=10,
-        )
+        if not simulate_file:
+            scheduler.add_job(
+                func=state_update,
+                args=(engine, app),
+                id="state_update",
+                trigger="cron",
+                second=f"*/{clock_time}" if clock_time != 60 else "0",
+                misfire_grace_time=10,
+            )
+        else:
+            with open(simulate_file.name, "r", encoding="utf-8") as file:
+                actions = json.loads("[" + ", ".join(file.read().split("\n")[:-1]) + "]")
+            scheduler.add_job(
+                func=simulate,
+                args=(
+                    app,
+                    kwargs["port"],
+                    actions,
+                ),
+                id="simulate",
+                trigger="date",
+                run_date=datetime.now(),
+            )
+
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
 
@@ -261,11 +278,4 @@ def create_app(clock_time, in_game_seconds_per_tick, run_init_test_players, rm_i
                 from .init_test_players import init_test_players
 
                 init_test_players(engine)
-
-                # # Profiling
-                # profiler = cProfile.Profile()
-                # profiler.runctx("state_update(engine, app)", globals(), locals())
-                # profiler.dump_stats("restats")
-                # p = pstats.Stats("restats")
-                # p.sort_stats("cumulative").print_stats(20)
     return socketio, sock, app
