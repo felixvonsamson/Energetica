@@ -244,6 +244,9 @@ def upgrade_facility(player, facility_id):
 
 def upgrade_all_of_type(player, facility_id):
     """this function is executed when a player upgrades all facilities of a certain type"""
+    facility = ActiveFacility.query.get(facility_id)
+    if facility is None:
+        return jsonify({"response": "facilityNotFound"}), 404
     facility_name = ActiveFacility.query.get(facility_id).facility
     facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
