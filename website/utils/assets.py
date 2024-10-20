@@ -511,6 +511,8 @@ def decrease_project_priority(player, construction_id, pausing=False):
     if index >= 0 and index < len(priority_list) - 1:
         construction_1: OngoingConstruction = OngoingConstruction.query.get(priority_list[index])
         construction_2: OngoingConstruction = OngoingConstruction.query.get(priority_list[index + 1])
+        if construction_1 is None or construction_2 is None:
+            return {"response": "constructionNotFound"}, 404
         if construction_1.id in construction_2.prerequisites():
             return {"response": "requirementsPreventReorder"}, 403
 

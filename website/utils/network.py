@@ -13,10 +13,12 @@ from website.database.player import Network, Player
 
 def join_network(engine, player, network):
     """shared API method to join a network."""
+    if "Unlock Network" not in player.achievements:
+        return {"response": "networkNotUnlocked"}, 403
     if network is None:
-        return {"response": "noSuchNetwork"}
+        return {"response": "noSuchNetwork"}, 404
     if player.network is not None:
-        return {"response": "playerAlreadyInNetwork"}
+        return {"response": "playerAlreadyInNetwork"}, 409
     player.network = network
     db.session.commit()
     engine.data["network_capacities"][network.id].update_network(network)
@@ -43,10 +45,12 @@ def create_network(engine, player, name):
     """shared API method to create a network. Network name must pass validation,
     namely it must not be too long, nor too short, and must not already be in
     use."""
+    if "Unlock Network" not in player.achievements:
+        return {"response": "networkNotUnlocked"}, 403
     if len(name) < 3 or len(name) > 40:
-        return {"response": "nameLengthInvalid"}
+        return {"response": "nameLengthInvalid"}, 400
     if Network.query.filter_by(name=name).first() is not None:
-        return {"response": "nameAlreadyUsed"}
+        return {"response": "nameAlreadyUsed"}, 400
     new_network = Network(name=name, members=[player])
     db.session.add(new_network)
     db.session.commit()
@@ -68,7 +72,7 @@ def leave_network(engine, player):
     """Shared API method for a player to leave a network. Always succeeds."""
     network = player.network
     if network is None:
-        return {"response": "playerNotInNetwork"}
+        return {"response": "playerNotInNetwork"}, 409
     player.network_id = None
     remaining_members_count = Player.query.filter_by(network_id=network.id).count()
     # delete network if it is empty
@@ -108,7 +112,7 @@ def set_network_prices(engine, player, updated_prices):
 
     for key, updated_price in updated_prices.items():
         if updated_price <= -5:
-            return {"response": "priceTooLow"}
+            return {"response": "priceTooLow"}, 405
         setattr(player, key, updated_price)
 
     engine.log(f"{player.username} updated their prices")
