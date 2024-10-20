@@ -243,16 +243,15 @@ load_constructions().then((constructions) => {
       const current_time = (now - server_start) / clock_time;
       let new_width;
       let time_remaining;
-      if (construction.suspension_time) {
+      if (construction.pause_tick) {
         new_width =
-          ((construction.suspension_time -
-            construction.start_time) /
+          (1 + (construction.pause_tick -
+            construction.end_tick) /
             construction.duration) *
           100;
         time_remaining =
-          construction.duration +
-          construction.start_time -
-          construction.suspension_time;
+          construction.end_tick -
+          construction.pause_tick;
       } else {
         new_width =
           ((current_time - construction.start_time) /
@@ -285,16 +284,16 @@ load_constructions().then((constructions) => {
       const current_time = (now - server_start) / clock_time;
       let new_width;
       let time_remaining;
-      if (shipment["suspension_time"]) {
+      if (shipment["pause_tick"]) {
         new_width =
-          ((shipment["suspension_time"] -
+          ((shipment["pause_tick"] -
             shipment["departure_time"]) /
             shipment["duration"]) *
           100;
         time_remaining =
           shipment["duration"] +
           shipment["departure_time"] -
-          shipment["suspension_time"];
+          shipment["pause_tick"];
       } else {
         new_width =
           ((current_time - shipment["departure_time"]) /
@@ -400,7 +399,7 @@ function display_progressBars(construction_data, shipment_data) {
 
 function html_for_progressBar(c_id, index, project_priority, construction) {
   let playPauseLogo = "fa-pause";
-  if (construction["suspension_time"]) {
+  if (construction["pause_tick"]) {
     playPauseLogo = "fa-play";
   }
   return `
@@ -430,7 +429,7 @@ function html_for_progressBar(c_id, index, project_priority, construction) {
 
 function html_for_shipmentBar(id, shipment) {
   let playPauseLogo = "fa-pause";
-  if (shipment["suspension_time"]) {
+  if (shipment["pause_tick"]) {
     playPauseLogo = "fa-play";
   }
   return `<div class="progressbar-container">

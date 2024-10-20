@@ -12,10 +12,12 @@ class OngoingConstruction(db.Model):
     name = db.Column(db.String(50))
     family = db.Column(db.String(50))
     # to assign the thing to the correct page
-    start_time = db.Column(db.Integer)  # in game ticks
-    duration = db.Column(db.Integer)  # in game ticks
+    _end_tick_or_ticks_passed = db.Column(
+        db.Float
+    )  # in game ticks when the construction will be finished or ticks passed if it is paused
+    duration = db.Column(db.Float)  # in game ticks
     # time at witch the construction has been paused if it has else None
-    suspension_time = db.Column(db.Integer)
+    status = db.Column(db.Integer)  # 0 for paused, 1 for waiting, 2 for ongoing
     # Power consumed and emissions produced by the construction
     construction_power = db.Column(db.Float)
     construction_pollution = db.Column(db.Float)
@@ -31,6 +33,18 @@ class OngoingConstruction(db.Model):
     _prerequisites = None
     # The level for this construction if it is a technology or a functional facility, otherwise -1 as special value
     _level = None
+
+    def progress(self) -> float:
+        """Returns the progress of the construction, as a float between 0 and 1"""
+        from flask import current_app
+
+        from website.game_engine import GameEngine
+
+        engine: GameEngine = current_app.config["engine"]
+        if self.status == 2:
+            return (self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]) / self.duration
+        else:
+            return self._end_tick_or_ticks_passed / self.duration
 
     def prerequisites(self, recompute=False) -> List[int]:
         """Returns a list of the id's of ongoing constructions that this constructions depends on"""
@@ -51,20 +65,57 @@ class OngoingConstruction(db.Model):
         """Resets the prerequisites, so that it is recomputed next time prerequisites are accessed"""
         self._prerequisites = None
 
-    def is_paused(self) -> bool:
-        """Returns True if this construction is paused"""
-        return self.suspension_time is not None
+    def was_paused_by_player(self) -> bool:
+        """Returns True if this construction is paused by the player"""
+        return self.status == 0
 
-    def resume(self):
-        """Make this facility go from paused to unpaused"""
-        assert self.is_paused()
+    def is_ongoing(self) -> bool:
+        """Returns True if this construction is not paused and has no requirements"""
+        return self.status == 2
+
+    def pause(self):
+        """Make this facility go from waiting or ongoing to paused"""
+        assert not self.was_paused_by_player()
         from flask import current_app
 
         from website.game_engine import GameEngine
 
         engine: GameEngine = current_app.config["engine"]
-        self.start_time += engine.data["total_t"] - self.suspension_time
-        self.suspension_time = None
+        if self.is_ongoing():
+            self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
+        self.status = 0
+
+    def unpause(self):
+        """Make this facility go from paused to either waiting or ongoing"""
+        assert self.was_paused_by_player()
+        from flask import current_app
+
+        from website.database.player import Player
+        from website.game_engine import GameEngine
+
+        engine: GameEngine = current_app.config["engine"]
+        player: Player = Player.query.get(self.player_id)
+        if self._prerequisites or player.available_workers(self.family) < 1:
+            self.status = 1
+        else:
+            self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
+            self.status = 2
+
+    def delay_by(self, ticks: int):
+        """Delays the construction by the given number of ticks"""
+        assert self.is_ongoing()
+        self._end_tick_or_ticks_passed += ticks
+
+    # def has_finished(self) -> bool:
+    #     """Returns True if the construction has finished"""
+    #     from flask import current_app
+
+    #     from website.game_engine import GameEngine
+
+    #     if self.status == 2:
+    #         engine: GameEngine = current_app.config["engine"]
+    #         return self._end_tick_or_ticks_passed <= engine.data["total_t"]
+    #     return False
 
     def _compute_prerequisites_and_level(self):
         from website.database.player import Player
@@ -148,11 +199,19 @@ class Shipment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     resource = db.Column(db.String(10))
-    quantity = db.Column(db.Float)
-    departure_time = db.Column(db.Integer)
-    duration = db.Column(db.Integer)
-    suspension_time = db.Column(db.Integer, default=None)  # time at witch the shipment has been paused if it has
+    quantity = db.Column(db.Float)  # in kg
+    arrival_tick = db.Column(db.Float)  # in game ticks when the shipment will arrive
+    duration = db.Column(db.Float)  # in game ticks
+    pause_tick = db.Column(db.Integer, default=None)  # time at witch the shipment has been paused if it has
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player
+
+    def delay_by(self, ticks: int):
+        """Delays the shipment by the given number of ticks"""
+        self.arrival_tick += ticks
+
+    def is_ongoing(self) -> bool:
+        """Returns True if this shipment is not paused"""
+        return self.pause_tick is None
 
 
 class ResourceOnSale(db.Model):
@@ -171,7 +230,7 @@ class ClimateEventRecovery(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     event = db.Column(db.String(20))
-    start_time = db.Column(db.Integer)
-    duration = db.Column(db.Integer)
+    end_tick = db.Column(db.Float)
+    duration = db.Column(db.Float)
     recovery_cost = db.Column(db.Float)
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player
