@@ -66,7 +66,7 @@ def create_network(engine, player, name):
         pickle.dump(past_data, file)
     engine.log(f"{player.username} created the network {name}")
     websocket.rest_notify_network_change(engine)
-    return {"response": "success"}
+    return jsonify({"response": "success"})
 
 
 def leave_network(engine, player):

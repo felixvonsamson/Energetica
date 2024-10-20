@@ -450,7 +450,10 @@ def cancel_project(player: Player, construction_id: int, force=False):
     engine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
-
+    
+    if construction is None:
+        return jsonify({"response": "constructionNotFound"}), 404
+    
     if construction.family == "Technologies":
         priority_list_name = "research_priorities"
     else:
@@ -571,7 +574,10 @@ def pause_project(player: Player, construction_id: int):
     """this function is executed when a player pauses or unpauses an ongoing construction"""
     engine: GameEngine = current_app.config["engine"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
-
+    
+    if construction is None:
+        return jsonify({"response": "constructionNotFound"}), 404
+    
     if construction.family == "Technologies":
         priority_list_name = "research_priorities"
     else:
