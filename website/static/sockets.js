@@ -264,3 +264,16 @@ socket.on("display_new_message", function (message) {
 socket.on("refresh", function () {
     window.location = window.location;
 });
+
+socket.on("update_page_data", function (pages_data) {
+    let path = document.baseURI.split('/').pop();
+    // console.log(pages_data);
+    if (path == "power_facilities" && "power_facilities" in pages_data) {
+        let power_facilities_data = pages_data.power_facilities;
+        // console.log(power_facilities_data);
+        for (let power_facility_data of power_facilities_data) {
+            let facility_div = document.getElementById(power_facility_data.name);
+            // console.log(facility_div);
+        }
+    }
+});
