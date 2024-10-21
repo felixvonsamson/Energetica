@@ -244,7 +244,7 @@ def upgrade_facility(player, facility_id):
 def upgrade_all_of_type(player, facility_id):
     """this function is executed when a player upgrades all facilities of a certain type"""
     facility = ActiveFacility.query.get(facility_id)
-    if facility is None:
+    if facility is None or facility.player_id != player.id:
         return jsonify({"response": "facilityNotFound"}), 404
     facility_name = ActiveFacility.query.get(facility_id).facility
     facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
@@ -320,6 +320,8 @@ def facility_destroyed(player, facility, event_name):
 def dismantle_facility(player, facility_id):
     """this function is executed when a player dismantles a facility"""
     facility: ActiveFacility = ActiveFacility.query.get(facility_id)
+    if facility is None or facility.player_id != player.id:
+        return jsonify({"response": "facilityNotFound"}), 404
     base_price = current_app.config["engine"].const_config["assets"][facility.facility]["base_price"]
     cost = 0.2 * base_price * facility.price_multiplier
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
