@@ -319,4 +319,16 @@ socket.on("update_page_data", function (pages_data) {
             div.querySelector("#efficiency").innerHTML = data.efficiency + "%";
         }
     }
+    if (path == "extraction_facilities" && "extraction_facilities" in pages_data) {
+        let extraction_facilities_data = pages_data.extraction_facilities;
+        for (let data of extraction_facilities_data) {
+            let div = document.getElementById(data.name);
+            update_base_data(data, div);
+            update_polluting_projects(data, div);
+            update_buildings_data(data, div);
+            div.querySelector("#power_consumption").innerHTML = format_power(data.power_consumption);
+            div.querySelector("#pollution").innerHTML = format_mass(data.pollution) + "/t";
+            // TODO: resource_production
+        }
+    }
 });

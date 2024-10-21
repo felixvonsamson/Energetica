@@ -56,7 +56,7 @@
                 <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
               </a>
               {# Construction Cost #}
-              <span class="money_font"></span>
+              <span id="price" class="money_font"></span>
               <script>document.currentScript.previousElementSibling.innerHTML = format_money_long({{ facility_data.price }});</script>
             </div>
             <div class="infobox">
@@ -114,19 +114,19 @@
           <div class="construction_info">
             <span class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <strong></strong>
+              <strong id="construction_time"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_duration({{ facility_data.construction_time }});</script>
               <span class="popup_info small">Duration in-game (real)</span>
             </span>
             <span class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <strong></strong>
+              <strong id="construction_power"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.construction_power }});</script>
               <span class="popup_info small">Power consumption</span>
             </span>
             <span class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <strong></strong>
+              <strong id="construction_pollution"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO<sub>2</sub>";</script>
               <span class="popup_info small">CO<sub>2</sub> emissions</span>
             </span>
@@ -164,7 +164,7 @@
             </span>
             <span class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <strong></strong>
+              <strong id="construction_pollution"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO<sub>2</sub>";</script>
               <span class="popup_info small">CO<sub>2</sub> emissions</span>
             </span>
@@ -177,7 +177,7 @@
             <tr>
               <td>Power consumption</td>
               <td class="txt_center">
-                <strong></strong>
+                <strong id="power_consumption"></strong>
                 <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.power_consumption }});</script>
               </td>
             </tr>
@@ -193,7 +193,7 @@
             <tr>
               <td>Operation cost</td>
               <td class="txt_center">
-                <strong></strong>
+                <strong id="operating_costs"></strong>
                 <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ facility_data.operating_costs }}) + "/h";</script>
               </td>
             </tr>
@@ -201,7 +201,7 @@
             <tr>
               <td>CO<sub>2</sub> emissions</td>
               <td class="txt_center">
-                <strong></strong>
+                <strong id="pollution"></strong>
                 <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.pollution }}) + "/t";</script>
               </td>
             </tr>
@@ -209,7 +209,7 @@
             <tr>
               <td>Lifespan</td>
               <td class="txt_center">
-                <strong></strong>
+                <strong id="lifespan"></strong>
                 <script>document.currentScript.previousElementSibling.innerHTML = format_days({{ facility_data.lifespan }}) + " days";</script>
               </td>
             </tr>
