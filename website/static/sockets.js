@@ -267,13 +267,43 @@ socket.on("refresh", function () {
 
 socket.on("update_page_data", function (pages_data) {
     let path = document.baseURI.split('/').pop();
-    // console.log(pages_data);
+    function update_base_data(data, div) {
+        // This data needs updating for all facilities and all technologies
+        div.querySelector("#price").innerHTML = format_money_long(data.price);
+        div.querySelector("#construction_power").innerHTML = format_power(data.construction_power);
+        div.querySelector("#construction_time").innerHTML = format_duration(data.construction_time);
+        // TODO: requirements
+        // TODO: requirements_status
+    }
+    function update_polluting_projects(data, div) {
+        // This data is shared for all facilities, so only technologies are absent
+        div.querySelector("#construction_pollution").innerHTML =
+            format_mass(data.construction_pollution) + " CO<sub>2</sub>";
+    }
+    function update_buildings_data(data, div) {
+        // This data is shared among all facilities, except functional facilities
+        div.querySelector("#operating_costs").innerHTML = format_money(data.operating_costs) + "/h";
+        div.querySelector("#lifespan").innerHTML = format_days(data.lifespan) + " days";
+    }
+    function update_power_generating_facilities_data(data, div) {
+        // This data is shared only with power and storage facilities
+        div.querySelector("#power_generation").innerHTML = format_power(data.power_generation);
+        if (data.ramping_speed != null) {
+            div.querySelector("#ramping_time").innerHTML = format_power(data.ramping_speed) + "/min";
+        }
+    }
     if (path == "power_facilities" && "power_facilities" in pages_data) {
         let power_facilities_data = pages_data.power_facilities;
-        // console.log(power_facilities_data);
         for (let power_facility_data of power_facilities_data) {
-            let facility_div = document.getElementById(power_facility_data.name);
-            // console.log(facility_div);
+            let div = document.getElementById(power_facility_data.name);
+            update_base_data(power_facility_data, div);
+            update_polluting_projects(power_facility_data, div);
+            update_buildings_data(power_facility_data, div);
+            update_power_generating_facilities_data(power_facility_data, div);
+            if ("pollution" in power_facility_data) {
+                div.querySelector("#pollution").innerHTML = format_mass(power_facility_data.pollution) + "/MWh";
+            }
+            // TODO: consumed_resources
         }
     }
 });
