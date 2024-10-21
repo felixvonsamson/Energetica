@@ -291,7 +291,7 @@ def next_available_location(player: Player, facility: str) -> int:
     return i
 
 
-def construction_price(player: Player, facility: str):
+def construction_price(player: Player, facility: str) -> float:
     """
     Returns the (real) cost of the construction of `facility` for `player`; be it power, storage, extraction,
     functional facility, or technology; for functional facilities and technologies: be it for the immediate next level
@@ -306,7 +306,7 @@ def construction_price(player: Player, facility: str):
     )
 
 
-def construction_time(player: Player, facility):
+def construction_time(player: Player, facility) -> float:
     """Function that returns the construction time in ticks according to the technology level of the player."""
     engine: GameEngine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
@@ -334,7 +334,7 @@ def construction_time(player: Player, facility):
     return math.ceil(duration)
 
 
-def construction_power(player: Player, facility):
+def construction_power(player: Player, facility) -> float:
     """Function that returns the construction power in W according to the technology level of the player."""
     engine: GameEngine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
@@ -382,7 +382,7 @@ def construction_power(player: Player, facility):
     return power
 
 
-def construction_pollution_per_tick(player: Player, facility: str):
+def construction_pollution_per_tick(player: Player, facility: str) -> float:
     """Function that returns the construction pollution per tick according to the technology level of the player."""
     engine: GameEngine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
@@ -395,12 +395,12 @@ def construction_pollution_per_tick(player: Player, facility: str):
     return pollution
 
 
-def hydro_price_function(count, potential):
+def hydro_price_function(count, potential) -> float:
     """price multiplier coefficient, for the `count`th hydro facility of a particular type, given the hydro potential"""
     return 0.6 + (math.e ** (0.6 * (count + 1 - 3 * potential) / (0.3 + potential)))
 
 
-def wind_speed_function(count, potential):
+def wind_speed_function(count, potential) -> float:
     """wind speed multiplier, for the `count`th wind facility of a particular type, given the wind potential"""
     return 1.3 / (math.log(math.e + (count * (1 / (9 * potential + 1))) ** 2))
 
@@ -456,13 +456,13 @@ def requirements_status(player, asset, requirements) -> str:
     return "unsatisfied"
 
 
-def asset_requirements_and_requirements_status(player: Player, asset):
+def asset_requirements_and_requirements_status(player: Player, asset) -> str:
     """Returns a dictionary with the list of requirements and the requirements_status"""
     requirements = asset_requirements(player, asset)
     return {"requirements": requirements, "requirements_status": requirements_status(player, asset, requirements)}
 
 
-def power_facility_resource_consumption(player: Player, power_facility):
+def power_facility_resource_consumption(player: Player, power_facility) -> float:
     """Returns a dictionary of the resources consumed by the power_facility for this player"""
     # TODO: perhaps rejig how this information is packaged.
     # Namely, switch from a dictionary with the system resource name as a key and a float for the amount as a value
