@@ -53,16 +53,23 @@ if __name__ == "__main__":
         metavar="FILE",
     )
     parser.add_argument(
-        "--profiling",
+        "--simulate_profiling",
         type=bool,
         default=False,
         help="If game is simulated, allows to run code profiling.",
     )
     parser.add_argument(
-        "--simulate_log_every_k_ticks",
+        "--simulate_checkpoint_every_k_ticks",
         type=int,
         default=10000,
         help="If game is simulated, save the engine for every tick that is a multiple of the given int.",
+    )
+    parser.add_argument(
+        "--simulate_checkpoint_ticks",
+        nargs="+",
+        type=int,
+        default=[],
+        help="If game is simulated, save the engine for every given tick.",
     )
     parser.add_argument(
         "--simulate_till",

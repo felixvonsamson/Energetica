@@ -24,7 +24,7 @@ def verify(engine):
     assert True
 
 
-def simulate(app, port, create_users, actions, log_every_k_ticks=10000, simulate_till=None):
+def simulate(app, port, create_users, actions, log_every_k_ticks=10000, checkpoint_ticks=[]):
     import website.production_update as production_update
     from website import db
     from website.database.map import Hex
@@ -50,13 +50,14 @@ def simulate(app, port, create_users, actions, log_every_k_ticks=10000, simulate
 
         for action in actions:
             print(action)
+            verify(engine)
             if action["endpoint"] == "update_electricity":
                 engine.data["total_t"] += 1
                 engine.log(f"t = {engine.data['total_t']}")
                 production_update.update_electricity(engine=engine)
                 check_events_completion(engine)
                 db.session.commit()
-                if action["total_t"] % log_every_k_ticks == 0:
+                if action["total_t"] % log_every_k_ticks == 0 or action["total_t"] in checkpoint_ticks:
                     with open("instance/engine_data.pck", "wb") as file:
                         pickle.dump(engine.data, file)
                     with tarfile.open(f"checkpoints/checkpoint_{action["total_t"]}.tar.gz", "w:gz") as tar:

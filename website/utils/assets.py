@@ -519,7 +519,7 @@ def decrease_project_priority(player, construction_id, pausing=False):
     engine = current_app.config["engine"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
 
-    if construction is None:
+    if construction is None or construction.player_id != player.id:
         return jsonify({"response": "constructionNotFound"}), 404
 
     if construction.family == "Technologies":
@@ -588,7 +588,7 @@ def pause_project(player: Player, construction_id: int):
     engine: GameEngine = current_app.config["engine"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
 
-    if construction is None:
+    if construction is None or construction.player_id != player.id:
         return jsonify({"response": "constructionNotFound"}), 404
 
     if construction.family == "Technologies":

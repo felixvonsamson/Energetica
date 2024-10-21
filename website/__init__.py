@@ -94,8 +94,9 @@ def create_app(
     rm_instance,
     random_seed,
     simulate_file,
-    simulate_log_every_k_ticks=10000,
-    simulate_till=None,
+    simulate_checkpoint_every_k_ticks,
+    simulate_checkpoint_ticks,
+    simulate_till,
     **kwargs,
 ):
     """This function sets up the app and the game engine"""
@@ -305,8 +306,8 @@ def create_app(
                     kwargs["port"],
                     loaded_tick is None,
                     actions[start_action_id : last_action_id + 1],
-                    simulate_log_every_k_ticks,
-                    simulate_till,
+                    simulate_checkpoint_every_k_ticks,
+                    simulate_checkpoint_ticks,
                 ),
                 id="simulate",
                 trigger="date",
