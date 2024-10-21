@@ -269,6 +269,7 @@ socket.on("update_page_data", function (pages_data) {
     let path = document.baseURI.split('/').pop();
     function update_base_data(data, div) {
         // This data needs updating for all facilities and all technologies
+        // TODO: update this logic / make sure this logic also works with mobile devices
         div.querySelector("#price").innerHTML = format_money_long(data.price);
         div.querySelector("#construction_power").innerHTML = format_power(data.construction_power);
         div.querySelector("#construction_time").innerHTML = format_duration(data.construction_time);
@@ -289,21 +290,33 @@ socket.on("update_page_data", function (pages_data) {
         // This data is shared only with power and storage facilities
         div.querySelector("#power_generation").innerHTML = format_power(data.power_generation);
         if (data.ramping_speed != null) {
-            div.querySelector("#ramping_time").innerHTML = format_power(data.ramping_speed) + "/min";
+            div.querySelector("#ramping_speed").innerHTML = format_power(data.ramping_speed) + "/min";
         }
     }
     if (path == "power_facilities" && "power_facilities" in pages_data) {
         let power_facilities_data = pages_data.power_facilities;
-        for (let power_facility_data of power_facilities_data) {
-            let div = document.getElementById(power_facility_data.name);
-            update_base_data(power_facility_data, div);
-            update_polluting_projects(power_facility_data, div);
-            update_buildings_data(power_facility_data, div);
-            update_power_generating_facilities_data(power_facility_data, div);
-            if ("pollution" in power_facility_data) {
-                div.querySelector("#pollution").innerHTML = format_mass(power_facility_data.pollution) + "/MWh";
+        for (let data of power_facilities_data) {
+            let div = document.getElementById(data.name);
+            update_base_data(data, div);
+            update_polluting_projects(data, div);
+            update_buildings_data(data, div);
+            update_power_generating_facilities_data(data, div);
+            if ("pollution" in data) {
+                div.querySelector("#pollution").innerHTML = format_mass(data.pollution) + "/MWh";
             }
             // TODO: consumed_resources
+        }
+    }
+    if (path == "storage_facilities" && "storage_facilities" in pages_data) {
+        let storage_facilities_data = pages_data.storage_facilities;
+        for (let data of storage_facilities_data) {
+            let div = document.getElementById(data.name);
+            update_base_data(data, div);
+            update_polluting_projects(data, div);
+            update_buildings_data(data, div);
+            update_power_generating_facilities_data(data, div);
+            div.querySelector("#storage_capacity").innerHTML = format_energy(data.storage_capacity);
+            div.querySelector("#efficiency").innerHTML = data.efficiency + "%";
         }
     }
 });

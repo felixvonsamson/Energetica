@@ -30,7 +30,7 @@ def update_electricity(engine):
     """Update the electricity generation and storage status for all players"""
     # calculate new co2 and temperature values
     engine.data["current_climate_data"].init_new_value()
-    players = Player.query.all()
+    players: List[Player] = Player.query.all()
     networks = Network.query.all()
 
     new_values = {}
