@@ -7,6 +7,7 @@ import atexit
 import base64
 import cProfile
 import csv
+import glob
 import json
 import os
 import pickle
@@ -19,6 +20,7 @@ from datetime import datetime
 from pathlib import Path
 
 from gevent import monkey
+
 monkey.patch_all(thread=True, time=True)
 
 from ecdsa import NIST256p, SigningKey
@@ -53,7 +55,7 @@ def get_or_create_flask_secret_key() -> str:
         return secret_key
 
 
-def get_or_create_vapid_keys() -> type[str, str]:
+def get_or_create_vapid_keys() -> tuple[str, str]:
     """
     Public private key pair for vapid push notifications. Loads these from disk if they exists, creates a new pair and
     stores if otherwise
@@ -85,7 +87,15 @@ def get_or_create_vapid_keys() -> type[str, str]:
 
 
 def create_app(
-    clock_time, in_game_seconds_per_tick, run_init_test_players, rm_instance, random_seed, simulate_file, **kwargs
+    clock_time,
+    in_game_seconds_per_tick,
+    run_init_test_players,
+    rm_instance,
+    random_seed,
+    simulate_file,
+    simulate_log_every_k_ticks=10000,
+    simulate_till=None,
+    **kwargs,
 ):
     """This function sets up the app and the game engine"""
     # gets lock to avoid multiple instances
@@ -120,10 +130,25 @@ def create_app(
             )
             pickle.dump(climate_data, file)
 
-    if os.path.isfile("instance/engine_data.pck"):
-        with open("instance/engine_data.pck", "rb") as file:
-            engine.data = pickle.load(file)
-            engine.log("Loaded engine data from disk.")
+    if not simulate_file:
+        if os.path.isfile("instance/engine_data.pck"):
+            with open("instance/engine_data.pck", "rb") as file:
+                engine.data = pickle.load(file)
+                engine.log("Loaded engine data from disk.")
+    else:
+        Path("checkpoints").mkdir(exist_ok=True)
+        saves = {
+            int(save.split("engine_data_")[1].rstrip(".pck")): save
+            for save in glob.glob("checkpoints/engine_data_*.pck")
+        }
+        save_ids = [save_id for save_id in saves.keys() if simulate_till is None or save_id <= simulate_till]
+        loaded_tick = None
+        if save_ids:
+            loaded_tick = max(save_ids)
+            with open(f"checkpoints/engine_data_{loaded_tick}.pck", "rb") as file:
+                engine.data = pickle.load(file)
+                engine.log(f"Loaded file checkpoints/engine_data_{loaded_tick}.pck into engine.")
+
     app.config["engine"] = engine
 
     # initialize socketio :
@@ -259,12 +284,21 @@ def create_app(
         else:
             with open(simulate_file.name, "r", encoding="utf-8") as file:
                 actions = json.loads("[" + ", ".join(file.read().split("\n")[:-1]) + "]")
+            action_id_by_tick = {
+                action["total_t"]: action_id
+                for action_id, action in enumerate(actions)
+                if action["endpoint"] == "update_electricity"
+            }
+            start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 0
+            last_action_id = action_id_by_tick[simulate_till] if loaded_tick else len(actions) - 1
             scheduler.add_job(
                 func=simulate,
                 args=(
                     app,
                     kwargs["port"],
-                    actions,
+                    actions[start_action_id : last_action_id + 1],
+                    simulate_log_every_k_ticks,
+                    simulate_till,
                 ),
                 id="simulate",
                 trigger="date",

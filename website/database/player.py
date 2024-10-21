@@ -258,11 +258,13 @@ class Player(db.Model, UserMixin):
             }
             for chat in self.chats
         }
-        return jsonify({
-            "response": "success",
-            "chat_list": chat_dict,
-            "last_opened_chat": self.last_opened_chat,
-        })
+        return jsonify(
+            {
+                "response": "success",
+                "chat_list": chat_dict,
+                "last_opened_chat": self.last_opened_chat,
+            }
+        )
 
     def package_chats(self):
         """This method packages chats for the iOS frontend"""
@@ -506,7 +508,7 @@ class Player(db.Model, UserMixin):
     @staticmethod
     def package_scoreboard():
         """Gets the scoreboard data for settled players"""
-        players = Player.query.filter(Player.tile != None)
+        players = Player.query.filter(Player.tile is not None)
         return {
             player.id: {
                 "username": player.username,

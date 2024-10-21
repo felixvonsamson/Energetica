@@ -513,7 +513,7 @@ def join_network():
     network_name = request_data["choose_network"]
     network = Network.query.filter_by(name=network_name).first()
     response = website.utils.network.join_network(g.engine, current_user, network)
-    if type(response) == tuple:
+    if type(response) is tuple:
         response, _ = response
     if response.json["response"] != "success":
         return response
@@ -529,7 +529,7 @@ def create_network():
     request_data = request.get_json()
     network_name = request_data["network_name"]
     response = website.utils.network.create_network(g.engine, current_user, network_name)
-    if type(response) == tuple:
+    if type(response) is tuple:
         response, _ = response
     if response.json["response"] == "nameLengthInvalid":
         flash("Network name must be between 3 and 40 characters", category="error")
@@ -547,7 +547,8 @@ def leave_network():
     """this endpoint is called when a player leaves their network"""
     network = current_user.network
     full_response = website.utils.network.leave_network(g.engine, current_user)
-    if type(full_response) == tuple: response, status_code = full_response
+    if type(full_response) is tuple:
+        response, status_code = full_response
     if response.json["response"] == "success":
         flash(f"You left network {network.name}", category="message")
         return redirect("/network", code=303)
