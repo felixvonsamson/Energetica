@@ -12,7 +12,7 @@ def create_user(id, port):
     return session
 
 
-def simulate(app, port, actions, log_every_k_ticks=10000, simulate_till=None):
+def simulate(app, port, create_users, actions, log_every_k_ticks=10000, simulate_till=None):
     import website.production_update as production_update
     from website import db
     from website.database.map import Hex
@@ -27,9 +27,10 @@ def simulate(app, port, actions, log_every_k_ticks=10000, simulate_till=None):
                 continue
             break
         user_sessions = {}
-        max_player = max((action["player_id"] for action in actions if "player_id" in action), default=0)
-        for player_id in range(1, max_player + 1):
-            user_sessions[player_id] = create_user(player_id, port)
+        if create_users:
+            max_player = max((action["player_id"] for action in actions if "player_id" in action), default=0)
+            for player_id in range(1, max_player + 1):
+                user_sessions[player_id] = create_user(player_id, port)
         engine = current_app.config["engine"]
 
         for action in actions:

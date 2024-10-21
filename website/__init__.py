@@ -296,6 +296,7 @@ def create_app(
                 args=(
                     app,
                     kwargs["port"],
+                    loaded_tick is None,
                     actions[start_action_id : last_action_id + 1],
                     simulate_log_every_k_ticks,
                     simulate_till,
