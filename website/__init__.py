@@ -290,7 +290,7 @@ def create_app(
                 if action["endpoint"] == "update_electricity"
             }
             start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 0
-            last_action_id = action_id_by_tick[simulate_till] if loaded_tick else len(actions) - 1
+            last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
             scheduler.add_job(
                 func=simulate,
                 args=(
