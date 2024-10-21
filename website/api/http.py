@@ -546,10 +546,13 @@ def create_network():
 def leave_network():
     """this endpoint is called when a player leaves their network"""
     network = current_user.network
-    response = website.utils.network.leave_network(g.engine, current_user)
-    if response["response"] == "success":
+    full_response = website.utils.network.leave_network(g.engine, current_user)
+    if type(full_response) == tuple: response, status_code = full_response
+    if response.json["response"] == "success":
         flash(f"You left network {network.name}", category="message")
-    return redirect("/network", code=303)
+        return redirect("/network", code=303)
+    else:
+        return full_response
 
 
 @http.route("hide_chat_disclaimer", methods=["GET"])

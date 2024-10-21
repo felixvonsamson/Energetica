@@ -73,7 +73,7 @@ def leave_network(engine, player):
     """Shared API method for a player to leave a network. Always succeeds."""
     network = player.network
     if network is None:
-        return {"response": "playerNotInNetwork"}, 409
+        return jsonify({"response": "playerNotInNetwork"}), 409
     player.network_id = None
     remaining_members_count = Player.query.filter_by(network_id=network.id).count()
     # delete network if it is empty
@@ -84,7 +84,7 @@ def leave_network(engine, player):
     db.session.commit()
     engine.log(f"{player.username} left the network {network.name}")
     websocket.rest_notify_network_change(engine)
-    return {"response": "success"}
+    return jsonify({"response": "success"})
 
 
 def reorder_facility_priorities(engine: game_engine.GameEngine, player: Player):
