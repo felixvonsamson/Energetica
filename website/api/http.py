@@ -7,7 +7,7 @@ from functools import wraps
 from pathlib import Path
 
 import numpy as np
-from flask import Blueprint, current_app, flash, g, jsonify, redirect, request
+from flask import Blueprint, Response, current_app, flash, g, jsonify, redirect, request
 from flask_login import current_user, login_required
 
 import website.utils.assets
@@ -29,18 +29,25 @@ def log_action(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
+        response = func(*args, **kwargs)
+        response, status_code = response if isinstance(response, tuple) else response, 200
         log_entry = {
             "timestamp": datetime.now().isoformat(),
             "player_id": current_user.id,
             "endpoint": request.path,
             "method": request.method,
+            "request_content": request.get_json()
+            if request.content_type == "application/json"
+            else request.form.to_dict(),
+            "response": {
+                "status_code": status_code,
+                "response_content": response.json
+                if isinstance(response, Response) and response.content_type == "application/json"
+                else response.text,
+            },
         }
-        if request.content_type == "application/json":
-            log_entry["request_content"] = request.get_json()
-        else:
-            log_entry["request_content"] = request.form.to_dict()
         g.engine.action_logger.info(json.dumps(log_entry))
-        return func(*args, **kwargs)
+        return response
 
     return wrapper
 
@@ -513,7 +520,7 @@ def join_network():
     network_name = request_data["choose_network"]
     network = Network.query.filter_by(name=network_name).first()
     response = website.utils.network.join_network(g.engine, current_user, network)
-    if type(response) is tuple:
+    if isinstance(response, tuple):
         response, _ = response
     if response.json["response"] != "success":
         return response
@@ -529,7 +536,7 @@ def create_network():
     request_data = request.get_json()
     network_name = request_data["network_name"]
     response = website.utils.network.create_network(g.engine, current_user, network_name)
-    if type(response) is tuple:
+    if isinstance(response, tuple):
         response, _ = response
     if response.json["response"] == "nameLengthInvalid":
         flash("Network name must be between 3 and 40 characters", category="error")

@@ -538,7 +538,7 @@ def decrease_project_priority(player, construction_id, pausing=False):
         if construction_1.suspension_time is None and construction_2.suspension_time is not None:
             # construction_1 is not paused, but construction_2 is
             response = pause_project(player, construction_1.id)
-            if type(response) is tuple:
+            if isinstance(response, tuple):
                 response, status_code = response
             if response.json["response"] == "success":
                 return pause_project(player, construction_2.id)
