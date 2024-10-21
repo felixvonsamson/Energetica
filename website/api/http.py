@@ -547,8 +547,7 @@ def leave_network():
     """this endpoint is called when a player leaves their network"""
     network = current_user.network
     full_response = website.utils.network.leave_network(g.engine, current_user)
-    if type(full_response) is tuple:
-        response, status_code = full_response
+    response = full_response[0] if type(full_response) is tuple else full_response
     if response.json["response"] == "success":
         flash(f"You left network {network.name}", category="message")
         return redirect("/network", code=303)

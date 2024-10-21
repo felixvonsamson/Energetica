@@ -16,6 +16,7 @@ import pstats
 import secrets
 import shutil
 import socket
+import tarfile
 from datetime import datetime
 from pathlib import Path
 
@@ -24,7 +25,7 @@ from gevent import monkey
 monkey.patch_all(thread=True, time=True)
 
 from ecdsa import NIST256p, SigningKey
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, redirect, request, send_file, url_for
 from flask_apscheduler import APScheduler
 from flask_httpauth import HTTPBasicAuth
 from flask_login import LoginManager, current_user
@@ -119,6 +120,22 @@ def create_app(
         engine.log("removing instance")
         shutil.rmtree("instance")
 
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true" and simulate_file:
+        Path("checkpoints").mkdir(exist_ok=True)
+        checkpoints = {
+            int(save.split("checkpoint_")[1].rstrip(".tar.gz")): save
+            for save in glob.glob("checkpoints/checkpoint_*.tar.gz")
+        }
+        checkpoints_ids = [
+            save_id for save_id in checkpoints.keys() if simulate_till is None or save_id <= simulate_till
+        ]
+        loaded_tick = None
+        if checkpoints_ids:
+            loaded_tick = max(checkpoints_ids)
+            with tarfile.open(f"checkpoints/checkpoint_{loaded_tick}.tar.gz") as file:
+                file.extractall("./")
+            engine.log(f"Loaded instance from checkpoints/checkpoint_{loaded_tick}.tar.gz.")
+
     from .utils.game_engine import data_init_climate
 
     Path("instance/player_data").mkdir(parents=True, exist_ok=True)
@@ -130,24 +147,10 @@ def create_app(
             )
             pickle.dump(climate_data, file)
 
-    if not simulate_file:
-        if os.path.isfile("instance/engine_data.pck"):
-            with open("instance/engine_data.pck", "rb") as file:
-                engine.data = pickle.load(file)
-                engine.log("Loaded engine data from disk.")
-    else:
-        Path("checkpoints").mkdir(exist_ok=True)
-        saves = {
-            int(save.split("engine_data_")[1].rstrip(".pck")): save
-            for save in glob.glob("checkpoints/engine_data_*.pck")
-        }
-        save_ids = [save_id for save_id in saves.keys() if simulate_till is None or save_id <= simulate_till]
-        loaded_tick = None
-        if save_ids:
-            loaded_tick = max(save_ids)
-            with open(f"checkpoints/engine_data_{loaded_tick}.pck", "rb") as file:
-                engine.data = pickle.load(file)
-                engine.log(f"Loaded file checkpoints/engine_data_{loaded_tick}.pck into engine.")
+    if os.path.isfile("instance/engine_data.pck"):
+        with open("instance/engine_data.pck", "rb") as file:
+            engine.data = pickle.load(file)
+            engine.log("Loaded engine data from disk.")
 
     app.config["engine"] = engine
 
@@ -249,6 +252,10 @@ def create_app(
     login_manager = LoginManager()
     login_manager.login_view = "auth.login"
     login_manager.init_app(app)
+
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        return redirect(url_for("auth.login")), 401
 
     @login_manager.user_loader
     def load_user(id):

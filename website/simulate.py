@@ -1,4 +1,5 @@
 import pickle
+import tarfile
 from time import sleep
 
 import requests
@@ -10,6 +11,17 @@ def create_user(id, port):
     data = {"username": f"user{id}", "password1": "password", "password2": "password"}
     session.post(f"http://localhost:{port}/sign-up", data=data)
     return session
+
+
+def login_user(id, port):
+    session = requests.Session()
+    data = {"username": f"user{id}", "password": "password"}
+    session.post(f"http://localhost:{port}/login", data=data)
+    return session
+
+
+def verify(engine):
+    assert True
 
 
 def simulate(app, port, create_users, actions, log_every_k_ticks=10000, simulate_till=None):
@@ -31,6 +43,9 @@ def simulate(app, port, create_users, actions, log_every_k_ticks=10000, simulate
             max_player = max((action["player_id"] for action in actions if "player_id" in action), default=0)
             for player_id in range(1, max_player + 1):
                 user_sessions[player_id] = create_user(player_id, port)
+        else:
+            for player_id in range(1, 19 + 1):
+                user_sessions[player_id] = login_user(player_id, port)
         engine = current_app.config["engine"]
 
         for action in actions:
@@ -42,12 +57,10 @@ def simulate(app, port, create_users, actions, log_every_k_ticks=10000, simulate
                 check_events_completion(engine)
                 db.session.commit()
                 if action["total_t"] % log_every_k_ticks == 0:
-                    with open(f"checkpoints/engine_data_{action["total_t"]}.pck", "wb") as file:
+                    with open("instance/engine_data.pck", "wb") as file:
                         pickle.dump(engine.data, file)
-                if simulate_till and action["total_t"] == simulate_till:
-                    with open(f"checkpoints/engine_data_{action["total_t"]}.pck", "wb") as file:
-                        pickle.dump(engine.data, file)
-                    break
+                    with tarfile.open(f"checkpoints/checkpoint_{action["total_t"]}.tar.gz", "w:gz") as tar:
+                        tar.add("instance/")
             elif action["endpoint"] == "climate_event_impact":
                 tile = Hex.query.get(action["tile_id"])
                 climate_event_impact(engine, tile, action["event"])
@@ -64,3 +77,7 @@ def simulate(app, port, create_users, actions, log_every_k_ticks=10000, simulate
                         print("\033[33m" + response.text + "\033[0m")
                     elif response.status_code // 100 == 5:
                         print("\033[31m" + "Server error, look at the stack above.\033[0m")
+            try:
+                verify(engine)
+            except AssertionError:
+                print(print("\033[31m" + "Assertion error.\033[0m"))
