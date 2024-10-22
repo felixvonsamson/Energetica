@@ -38,7 +38,7 @@ def state_update(engine, app):
                 engine.new_daily_question()
             log_entry = {
                 "timestamp": datetime.now().isoformat(),
-                "endpoint": "update_electricity",
+                "action_type": "tick",
                 "total_t": engine.data["total_t"],
             }
             engine.action_logger.info(json.dumps(log_entry))
@@ -197,7 +197,7 @@ def climate_event_impact(engine, tile, event):
         json.dumps(
             {
                 "timestamp": datetime.now().isoformat(),
-                "endpoint": "climate_event_impact",
+                "action_type": "climate_event_impact",
                 "tile_id": tile.id,
                 "event": event,
             }

@@ -114,12 +114,13 @@ def create_app(
     app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
     db.init_app(app)
 
+    if rm_instance:
+        print("Removing instance")
+        shutil.rmtree("instance")
+        Path("instance").mkdir(exist_ok=True)
+
     # creates the engine (and loading the save if it exists)
     engine = website.game_engine.GameEngine(clock_time, in_game_seconds_per_tick, random_seed)
-
-    if rm_instance:
-        engine.log("removing instance")
-        shutil.rmtree("instance")
 
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true" and simulate_file:
         Path("checkpoints").mkdir(exist_ok=True)
@@ -291,11 +292,11 @@ def create_app(
             )
         else:
             with open(simulate_file.name, "r", encoding="utf-8") as file:
-                actions = json.loads("[" + ", ".join(file.read().split("\n")[:-1]) + "]")
+                actions = [json.loads(line) for line in file]
             action_id_by_tick = {
                 action["total_t"]: action_id
                 for action_id, action in enumerate(actions)
-                if action["endpoint"] == "update_electricity"
+                if action["action_type"] == "tick"
             }
             start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 0
             last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
@@ -304,7 +305,6 @@ def create_app(
                 args=(
                     app,
                     kwargs["port"],
-                    loaded_tick is None,
                     actions[start_action_id : last_action_id + 1],
                     simulate_checkpoint_every_k_ticks,
                     simulate_checkpoint_ticks,

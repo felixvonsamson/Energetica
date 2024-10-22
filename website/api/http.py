@@ -30,23 +30,28 @@ def log_action(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         response = func(*args, **kwargs)
-        response, status_code = response if isinstance(response, tuple) else response, 200
-        log_entry = {
-            "timestamp": datetime.now().isoformat(),
-            "player_id": current_user.id,
-            "endpoint": request.path,
-            "method": request.method,
-            "request_content": request.get_json()
-            if request.content_type == "application/json"
-            else request.form.to_dict(),
-            "response": {
-                "status_code": status_code,
-                "response_content": response.json
-                if isinstance(response, Response) and response.content_type == "application/json"
-                else response.text,
-            },
-        }
-        g.engine.action_logger.info(json.dumps(log_entry))
+        response, status_code = response if isinstance(response, tuple) else (response, 200)
+        if request.method == "POST":
+            log_entry = {
+                "timestamp": datetime.now().isoformat(),
+                "action_type": "request",
+                "player_id": current_user.id,
+                "request": {
+                    "endpoint": request.path,
+                    "content_type": request.content_type,
+                    "content": request.get_json()
+                    if request.content_type == "application/json"
+                    else request.form.to_dict(),
+                },
+                "response": {
+                    "status_code": status_code,
+                    "content_type": response.content_type if isinstance(response, Response) else str(type(response)),
+                    "content": (response.json if response.content_type == "application/json" else response.text)
+                    if isinstance(response, Response)
+                    else response,
+                },
+            }
+            g.engine.action_logger.info(json.dumps(log_entry))
         return response
 
     return wrapper
