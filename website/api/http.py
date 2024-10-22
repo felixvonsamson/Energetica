@@ -39,14 +39,12 @@ def log_action(func):
                 "request": {
                     "endpoint": request.path,
                     "content_type": request.content_type,
-                    "content": request.get_json()
-                    if request.content_type == "application/json"
-                    else request.form.to_dict(),
+                    "content": request.get_json() if request.is_json else request.form.to_dict(),
                 },
                 "response": {
                     "status_code": status_code,
                     "content_type": response.content_type if isinstance(response, Response) else str(type(response)),
-                    "content": (response.json if response.content_type == "application/json" else response.text)
+                    "content": (response.json if response.is_json else response.data.decode("utf-8"))
                     if isinstance(response, Response)
                     else response,
                 },
