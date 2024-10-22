@@ -63,12 +63,14 @@
               {# Description #}
               <div class="infotext">{{ facility_data.description }}</div>
               {# Requirements #}
-              {% if facility_data.requirements_status != "satisfied" %}
-                <div class="infobox requirements" id="requirements">
+              <div class="infobox requirements"
+                   {% if facility_data.requirements_status == "satisfied" %}style="display:none"{% endif %}" 
+                   id="requirements">
+                {% if facility_data.requirements_status != "satisfied" %}
                   <div>
                     <strong>Unlock with :</strong>
                     <br>
-                    <ul class="navbar-nav">
+                    <ul id="requirements_list" class="navbar-nav">
                       {% for requirement in facility_data["requirements"] %}
                         {% if requirement.name == "mechanical_engineering" %}
                           {% set tech_name = "Mech. engineering" %}
@@ -81,8 +83,8 @@
                       {% endfor %}
                     </ul>
                   </div>
-                </div>
-              {% endif %}
+                {% endif %}
+              </div>
             </div>
           </div>
         </div>

@@ -273,8 +273,18 @@ socket.on("update_page_data", function (pages_data) {
         div.querySelector("#price").innerHTML = format_money_long(data.price);
         div.querySelector("#construction_power").innerHTML = format_power(data.construction_power);
         div.querySelector("#construction_time").innerHTML = format_duration(data.construction_time);
-        // TODO: requirements
-        // TODO: requirements_status
+        div.querySelector("#requirements").style.cssText =
+            data.requirements_status == "satisfied" ? "display:none" : "";
+        if (data.requirements_status != "satisfied") {
+            function requirement_to_list_item(req) {
+                tech_name = req.name == "mechanical_engineering" ? "Mech. engineering" : req.display_name;
+                return `<li class=\"padding-small requirement-${req.status}\">
+                        - ${tech_name} lvl ${req.level}
+                        </li>`;
+            }
+            div.querySelector("#requirements_list").innerHTML =
+                data.requirements.map(requirement_to_list_item).join('');
+        }
     }
     function update_polluting_projects(data, div) {
         // This data is shared for all facilities, so only technologies are absent
