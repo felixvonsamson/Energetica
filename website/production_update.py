@@ -88,6 +88,9 @@ def update_electricity(engine):
         update_player_progress_values(engine, player, new_values)
         # send new data to clients
         player.send_new_data(new_values[player.id])
+        player.invalidate_recompute_and_dispatch_data_for_pages(
+            power_facilities=True, storage_facilities=True, extraction_facilities=True, functional_facilities=True
+        )
 
 
 def set_facilities_usage(engine, new_values, player):
