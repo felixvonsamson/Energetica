@@ -60,7 +60,10 @@ def check_user():
             )
         elif page == "assets/technologies.jinja":
             return render_template(
-                page, engine=g.engine, user=current_user, assets_data=package_available_technologies(current_user)
+                page,
+                engine=g.engine,
+                user=current_user,
+                available_technologies=package_available_technologies(current_user),
             )
         else:
             return render_template(page, engine=g.engine, user=current_user, data=g.data)
