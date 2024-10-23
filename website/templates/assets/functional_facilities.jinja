@@ -28,9 +28,9 @@
   <div id="under_construction">{# Facilites under construction will show here #}</div>
   {% for facility_data in constructions %}
     {% set facility = facility_data.name %}
-    <div id="{{ facility_data.display_name }}"
+    <div id="{{ facility_data.name }}"
          class="bone margin facility small"
-         onclick="show_construction('{{ facility_data.display_name }}');">
+         onclick="show_construction('{{ facility_data.name }}');">
       <div class="flex-col flex-grow-1">
         <div style="width:100%" class="flex-row">
           <img class="img"
@@ -45,7 +45,7 @@
               &ensp; lvl.&thinsp;<em id="lvl" class="large">{{ facility_data.level }}</em>
               &emsp;&ensp;
               {# Construction Cost #}
-              <span class="money_font"></span>
+              <span id="price" class="money_font"></span>
               <script>document.currentScript.previousElementSibling.innerHTML = format_money_long({{ facility_data.price }});</script>
             </div>
             <div class="infobox">
@@ -63,12 +63,14 @@
                 {% endif %}
               </div>
               {# Requirements #}
-              {% if facility_data.requirements_status != "satisfied" %}
-                <div class="infobox requirements" id="requirements">
+              <div class="infobox requirements"
+                   {% if facility_data.requirements_status == "satisfied" %}style="display:none"{% endif %}" 
+                   id="requirements">
+                {% if facility_data.requirements_status != "satisfied" %}
                   <div>
                     <strong>Unlock with :</strong>
                     <br>
-                    <ul class="navbar-nav">
+                    <ul id="requirements_list" class="navbar-nav">
                       {% for requirement in facility_data["requirements"] %}
                         {% if requirement.name == "mechanical_engineering" %}
                           {% set tech_name = "Mech. engineering" %}
@@ -81,8 +83,8 @@
                       {% endfor %}
                     </ul>
                   </div>
-                </div>
-              {% endif %}
+                {% endif %}
+              </div>
             </div>
           </div>
         </div>
@@ -104,19 +106,19 @@
           <div class="construction_info">
             <span class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <strong></strong>
+              <strong id="construction_time"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_duration({{ facility_data.construction_time }});</script>
               <span class="popup_info small">Duration in-game (real)</span>
             </span>
             <span class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <strong></strong>
+              <strong id="construction_power"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.construction_power }});</script>
               <span class="popup_info small">Power consumption</span>
             </span>
             <span class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <strong></strong>
+              <strong id="construction_pollution"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO<sub>2</sub>";</script>
               <span class="popup_info small">CO<sub>2</sub> emissions</span>
             </span>
@@ -172,29 +174,32 @@
             {% if "average_consumption" in facility_data %}
               <tr>
                 <td>Average consumption</td>
-                <td class="txt_center"></td>
+                <td id="average_consumption" class="txt_center"></td>
                 <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_power({{ facility_data.average_consumption.current }}, {{ facility_data.average_consumption.upgraded }});</script>
               </tr>
             {% endif %}
             {% if "revenue_generation" in facility_data %}
               <tr>
                 <td>Revenue generation</td>
-                <td class="txt_center"></td>
+                <td id="revenue_generation" class="txt_center"></td>
                 <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_money({{ facility_data.revenue_generation.current }}, {{ facility_data.revenue_generation.upgraded }});</script>
               </tr>
             {% endif %}
             {% if "research_speed_bonus" in facility_data %}
               <tr>
                 <td>Research speed</td>
-                <td class="txt_center">+{{ facility_data.research_speed_bonus | int }}%</td>
+                <td id="research_speed_bonus" class="txt_center">+{{ facility_data.research_speed_bonus | int }}%</td>
               </tr>
             {% endif %}
-            {% if "lab_workers" in facility_data and facility_data.lab_workers is not none %}
-              <tr>
+            {% if "lab_workers" in facility_data %}
+              <tr id="lab_workers_tr"
+                  {% if facility_data.lab_workers is none %}style="display:none"{% endif %}>
                 <td>Lab workers</td>
-                <td class="txt_center">
-                  {{ facility_data.lab_workers.current }} ->
-                  {{ facility_data.lab_workers.upgraded }}
+                <td id="lab_workers" class="txt_center">
+                  {% if facility_data.lab_workers is not none %}
+                    {{ facility_data.lab_workers.current }} ->
+                    {{ facility_data.lab_workers.upgraded }}
+                  {% endif %}
                 </td>
               </tr>
             {% endif %}
@@ -202,24 +207,24 @@
               {% set warehouse_capacities = facility_data.warehouse_capacities %}
               <tr>
                 <td>Coal capacity</td>
-                <td class="txt_center"></td>
+                <td id="coal" class="txt_center"></td>
                 <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.coal.current}}, {{warehouse_capacities.coal.upgraded}});</script>
               </tr>
               <tr>
                 <td>Gas capacity</td>
-                <td class="txt_center"></td>
+                <td id="gas" class="txt_center"></td>
                 <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.gas.current}}, {{warehouse_capacities.gas.upgraded}});</script>
               </tr>
               <tr>
                 <td>Uranium cap.</td>
-                <td class="txt_center"></td>
+                <td id="uranium" class="txt_center"></td>
                 <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.uranium.current}}, {{warehouse_capacities.uranium.upgraded}});</script>
               </tr>
             {% endif %}
             {% if "power_consumption" in facility_data.keys() %}
               <tr>
                 <td>Power consumption</td>
-                <td class="txt_center"></td>
+                <td id="power_consumption" class="txt_center"></td>
                 <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_power({{ facility_data.power_consumption.current}}, {{ facility_data.power_consumption.upgraded }});</script>
               </tr>
             {% endif %}

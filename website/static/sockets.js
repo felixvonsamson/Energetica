@@ -277,9 +277,9 @@ socket.on("update_page_data", function (pages_data) {
             data.requirements_status == "satisfied" ? "display:none" : "";
         if (data.requirements_status != "satisfied") {
             function requirement_to_list_item(req) {
-                tech_name = req.name == "mechanical_engineering" ? "Mech. engineering" : req.display_name;
+                let req_display_name = req.name == "mechanical_engineering" ? "Mech. engineering" : req.display_name;
                 return `<li class=\"padding-small requirement-${req.status}\">
-                        - ${tech_name} lvl ${req.level}
+                        - ${req_display_name} lvl ${req.level}
                         </li>`;
             }
             div.querySelector("#requirements_list").innerHTML =
@@ -339,6 +339,57 @@ socket.on("update_page_data", function (pages_data) {
             div.querySelector("#power_consumption").innerHTML = format_power(data.power_consumption);
             div.querySelector("#pollution").innerHTML = format_mass(data.pollution) + "/t";
             // TODO: resource_production
+        }
+    }
+    if (path == "functional_facilities" && "functional_facilities" in pages_data) {
+        let functional_facilities_data = pages_data.functional_facilities;
+        for (let data of functional_facilities_data) {
+            let div = document.getElementById(data.name);
+            update_base_data(data, div);
+            update_polluting_projects(data, div);
+            if ("average_consumption" in data) {
+                div.querySelector("#average_consumption").innerHTML = format_upgrade_power(
+                    data.average_consumption.current,
+                    data.average_consumption.upgraded
+                );
+            }
+            if ("revenue_generation" in data) {
+                div.querySelector("#revenue_generation").innerHTML = format_upgrade_money(
+                    data.revenue_generation.current,
+                    data.revenue_generation.upgraded
+                );
+            }
+            if ("research_speed_bonus" in data) {
+                div.querySelector("#research_speed_bonus").innerHTML =
+                    "+" + Math.round(data.research_speed_bonus) + "%";
+            }
+            if ("lab_workers" in data) {
+                div.querySelector("#lab_workers_tr").style = data.lab_workers == null ? "display:none" : "";
+                if (data.lab_workers != null) {
+                    div.querySelector("#lab_workers").innerHTML =
+                        data.lab_workers.current + " -> " + data.lab_workers.upgraded;
+                }
+            }
+            if ("warehouse_capacities" in data) {
+                for (const resource of ["coal", "gas", "uranium"]) {
+                    div.querySelector("#" + resource).innerHTML = format_upgrade_mass(
+                        data.warehouse_capacities[resource].current,
+                        data.warehouse_capacities[resource].upgraded
+                    );
+                }
+            }
+            if ("power_consumption" in data) {
+                div.querySelector("#power_consumption").innerHTML =
+                    format_upgrade_power(data.power_consumption.current, data.power_consumption.upgraded);
+            }
+            if ("co2_absorption" in data) {
+                div.querySelector("#co2_absorption").innerHTML =
+                    format_upgrade_mass_rate(data.co2_absorption.current, data.co2_absorption.upgraded);
+            }
+            // TODO: See how what follows for levels should be reused for technologies
+            // TODO: verify that lvlup_display is not overwriting or contradicting what is going on here
+            div.querySelector("#lvl").innerHTML = data.level;
+            div.querySelector("#upgrade").innerHTML = "lvl " + (data.level - 1) + " -> lvl " + data.level;
         }
     }
 });
