@@ -71,6 +71,7 @@ socket.on("new_values", function (changes) {
         money.innerHTML = format_money_long(changes["money"]);
     }
     let total_t = changes["total_t"];
+    // TODO: comment out this following log
     console.log("received new values : " + total_t);
     let last_value = JSON.parse(sessionStorage.getItem("last_value"));
     if (!last_value || total_t == 1) {
@@ -314,7 +315,22 @@ socket.on("update_page_data", function (pages_data) {
             if ("pollution" in data) {
                 div.querySelector("#pollution").innerHTML = format_mass(data.pollution) + "/MWh";
             }
-            // TODO: consumed_resources
+            for (let resource in data.consumed_resources) {
+                var newInnerHTML = "";
+                if (resource == "coal" || resource == "gas") {
+                    newInnerHTML = format_mass(data.consumed_resources[resource]) + "/MWh";
+                } else if (resource == "uranium") {
+                    if (data.name == "nuclear_reactor") {
+                        newInnerHTML = Math.round(1000 * data.consumed_resources[resource]) + " g/MWh";
+                    } else {
+                        newInnerHTML = Math.round(100000 * data.consumed_resources[resource]) / 100 + " g/MWh";
+                    }
+                } else {
+                    // This case treats irradiance, wind, ... no html to update
+                    continue;
+                }
+                div.querySelector("#" + resource + "_consumption").innerHTML = newInnerHTML;
+            }
         }
     }
     if (path == "storage_facilities" && "storage_facilities" in pages_data) {

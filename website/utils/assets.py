@@ -21,6 +21,7 @@ def finish_construction(construction: OngoingConstruction):
     * For technologies and functional facilities, checks for achievements
     * Removes from the relevant construction / research list and priority list
     """
+    # TODO: rename this method to `finish_project`
     engine: GameEngine = current_app.config["engine"]
     player: Player = Player.query.get(construction.player_id)
 

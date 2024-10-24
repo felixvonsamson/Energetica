@@ -249,18 +249,18 @@
                     <td>{{ resource[0]|upper|upper + resource[1:] }} consumption</td>
                   {% endif %}
                   <td class="txt_center">
-                    <strong>
+                    <strong id="{{resource}}_consumption">
                       {% if resource == "uranium" %}
                         {% if facility == "nuclear_reactor" %}
                           {{ (1000 * amount)|int }} g/MWh
                         {% else %}
                           {{ (1000 * amount)|round(2) }} g/MWh
                         {% endif %}
-                      {% else %}
-                        <span></span>
-                        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ amount }}) + "/MWh";</script>
                       {% endif %}
                     </strong>
+                    {% if resource != "uranium" %}
+                      <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ amount }}) + "/MWh";</script>
+                    {% endif %}
                   </td>
                 </tr>
               {% endif %}
