@@ -354,7 +354,8 @@ socket.on("update_page_data", function (pages_data) {
             update_buildings_data(data, div);
             div.querySelector("#power_consumption").innerHTML = format_power(data.power_consumption);
             div.querySelector("#pollution").innerHTML = format_mass(data.pollution) + "/t";
-            // TODO: resource_production
+            div.querySelector("#" + data.resource_production.name + "_production").innerHTML =
+                format_mass(data.resource_production.rate) + "/h";
         }
     }
     if (path == "functional_facilities" && "functional_facilities" in pages_data) {
