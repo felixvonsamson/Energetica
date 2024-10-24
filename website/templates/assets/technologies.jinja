@@ -40,16 +40,13 @@
   <div id="under_construction">
     {# Technologies currently researched will show here #}
   </div>
-  {% for facility in ["mathematics", "mechanical_engineering", "thermodynamics", "physics", "building_technology",
-    "mineral_extraction", "transport_technology", "materials", "civil_engineering", "aerodynamics", "chemistry",
-    "nuclear_engineering"] %}
-    {% set technology_data = available_technologies[facility] %}
-    {% set technology = facility %}
+  {% for technology_data in available_technologies %}
+    {% set technology = technology_data.name %}
     {# TODO: remove the above for loop and replace this line #}
     {% set const_data = engine.const_config["assets"][facility] %}
-    <div id="{{ technology_data.display_name }}"
+    <div id="{{ technology_data.name }}"
          class="bone margin facility small"
-         onclick="show_construction('{{ technology_data.display_name }}');">
+         onclick="show_construction('{{ technology_data.name }}');">
       <div class="flex-col flex-grow-1">
         <div style="width:100%" class="flex-row">
           <img class="img"
@@ -103,13 +100,15 @@
                 {% endif %}
               </div>
               {# Requirements #}
-              {% if true %}
-                <div class="infobox requirements" id="requirements">
+              <div class="infobox requirements"
+                   {% if technology_data.requirements_status == "satisfied" %}style="display:none"{% endif %}" 
+                   id="requirements">
+                {% if technology_data.requirements_status != "satisfied" %}
                   <div>
                     <strong>Unlock with :</strong>
                     <br>
-                    <ul class="navbar-nav">
-                      {% for requirement in technology_data.requirements %}
+                    <ul id="requirements_list" class="navbar-nav">
+                      {% for requirement in technology_data["requirements"] %}
                         {% if requirement.name == "mechanical_engineering" %}
                           {% set tech_name = "Mech. engineering" %}
                         {% else %}
@@ -121,8 +120,8 @@
                       {% endfor %}
                     </ul>
                   </div>
-                </div>
-              {% endif %}
+                {% endif %}
+              </div>
             </div>
           </div>
         </div>
@@ -148,7 +147,7 @@
           <div class="construction_info">
             <span class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <strong></strong>
+              <strong id="construction_time"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_duration(
                 {{ technology_data.construction_time }}
                 );
@@ -157,7 +156,7 @@
             </span>
             <span class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <strong></strong>
+              <strong id="construction_power"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_power(
                 {{ technology_data.construction_power }}
                 );
@@ -223,7 +222,7 @@
                 {% if data_key in technology_data %}
                   <tr>
                     <td>{{ label }}</td>
-                    <td class="txt_center{% if hover_info %} hover_info{% endif %}">
+                    <td id="{{data_key}}" class="txt_center{% if hover_info %} hover_info{% endif %}">
                       {% if round_value %}
                         {{ sign }}{{ technology_data[data_key] | round(precision) }}{{ suffix }}
                       {% else %}
@@ -236,23 +235,20 @@
                   </tr>
                 {% endif %}
               {% endmacro %}
-              {% macro render_change_row(label, current_key, upgraded_key) %}
-                {% if current_key in technology_data and upgraded_key in technology_data %}
-                  <tr>
-                    <td>{{ label }}</td>
-                    <td class="txt_center">
-                      {{ technology_data[current_key] }} -> {{ technology_data[upgraded_key] }}
-                    </td>
-                  </tr>
-                {% endif %}
-              {% endmacro %}
               {{ render_effect_row('Power generation', 'power_generation_bonus') }}
               {{ render_effect_row('Extraction speed', 'extraction_speed_bonus') }}
               {{ render_effect_row("Fuel use", "fuel_use_reduction_bonus", sign="-", precision=1) }}
               {{ render_effect_row("CO<sub>2</sub> emissions", "co2_emissions_reduction_bonus", sign="-", precision=1) }}
               {{ render_effect_row("Effic. molten salt", "molten_salt_efficiency_bonus", suffix="pp", precision=1, hover_info="percentage point") }}
               {{ render_effect_row("Construction time", "construction_time_reduction_bonus", sign="-") }}
-              {{ render_change_row('Constrtruct. workers', 'construction_workers.current', 'construction_workers.upgraded') }}
+              {% if "construction_workers" in technology_data %}
+                <tr id="construction_workers_tr" {% if technology_data.construction_workers is none %}style="display:none"{% endif %}>
+                  <td>Constrtruct. workers</td>
+                  <td id="construction_workers" class="txt_center">
+                    {{ technology_data.construction_workers.current }} -> {{ technology_data.construction_workers.upgraded }}
+                  </td>
+                </tr>
+              {% endif %}
               {{ render_effect_row("Shipment time", "shipment_time_reduction_bonus", sign="-") }}
               {{ render_effect_row("Power consumption", "power_consumption_reduction_bonus", sign="+") }}
               {{ render_effect_row("Power consumption", "power_consumption_penalty", sign="+") }}

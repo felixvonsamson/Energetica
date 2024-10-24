@@ -90,7 +90,11 @@ def update_electricity(engine):
         player.send_new_data(new_values[player.id])
         # TODO: remove the following line once testing is done
         player.invalidate_recompute_and_dispatch_data_for_pages(
-            power_facilities=True, storage_facilities=True, extraction_facilities=True, functional_facilities=True
+            power_facilities=True,
+            storage_facilities=True,
+            extraction_facilities=True,
+            functional_facilities=True,
+            technologies=True,
         )
 
 

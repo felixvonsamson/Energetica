@@ -871,8 +871,8 @@ def package_available_technologies(player: Player):
     const_config_assets = engine.const_config["assets"]
     engine: GameEngine = current_app.config["engine"]
     levels: Dict[str, int] = {technology: next_level(player, technology) for technology in engine.technologies}
-    return {
-        technology: _package_asset_base(player, technology)
+    return [
+        _package_asset_base(player, technology)
         | {
             "level": levels[technology],
             "affected_facilities": [
@@ -1021,4 +1021,4 @@ def package_available_technologies(player: Player):
         )
         # price_reduction_bonus
         for technology in engine.technologies
-    }
+    ]

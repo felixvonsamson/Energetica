@@ -304,6 +304,14 @@ socket.on("update_page_data", function (pages_data) {
             div.querySelector("#ramping_speed").innerHTML = format_power(data.ramping_speed) + "/min";
         }
     }
+    function update_level_data(data, div) {
+        // Shared among functional facilities and technologies
+        // TODO: verify that lvlup_display is not overwriting or contradicting what is going on here
+        div.querySelector("#lvl").innerHTML = data.level;
+        if (data.name != "mathematics") {
+            div.querySelector("#upgrade").innerHTML = "lvl " + (data.level - 1) + " -> lvl " + data.level;
+        }
+    }
     if (path == "power_facilities" && "power_facilities" in pages_data) {
         let power_facilities_data = pages_data.power_facilities;
         for (let data of power_facilities_data) {
@@ -403,10 +411,58 @@ socket.on("update_page_data", function (pages_data) {
                 div.querySelector("#co2_absorption").innerHTML =
                     format_upgrade_mass_rate(data.co2_absorption.current, data.co2_absorption.upgraded);
             }
-            // TODO: See how what follows for levels should be reused for technologies
-            // TODO: verify that lvlup_display is not overwriting or contradicting what is going on here
-            div.querySelector("#lvl").innerHTML = data.level;
-            div.querySelector("#upgrade").innerHTML = "lvl " + (data.level - 1) + " -> lvl " + data.level;
+            update_level_data(data, div);
+        }
+    }
+    if (path == "technology" && "technologies" in pages_data) {
+        let technologies = pages_data.technologies;
+        for (let data of technologies) {
+            let div = document.getElementById(data.name);
+            update_base_data(data, div);
+            update_level_data(data, div);
+            function effect_helper(key, sign = "+", precision = 0, suffix = "%", round_value = true, hover_info = null) {
+                if (data[key] == null) {
+                    return;
+                }
+                var value = sign;
+                if (round_value) {
+                    value += Math.round(data[key] * Math.pow(10, precision)) / Math.pow(10, precision);
+                } else {
+                    value += data[key];
+                }
+                value += suffix;
+                if (hover_info != null) {
+                    value += `<span class="popup_info small">${hover_info}</span>`;
+                }
+                div.querySelector("#" + key).innerHTML = value;
+            }
+            effect_helper('power_generation_bonus');
+            effect_helper("extraction_speed_bonus");
+            effect_helper("fuel_use_reduction_bonus", sign = "-", precision = 1);
+            effect_helper("co2_emissions_reduction_bonus", sign = "-", precision = 1);
+            effect_helper("molten_salt_efficiency_bonus", sign = "+", precision = 1, suffix = "pp", round_value = true, hover_info = "percentage point");
+            effect_helper("construction_time_reduction_bonus", sign = "-");
+            effect_helper("shipment_time_reduction_bonus", sign = "-");
+            effect_helper("power_consumption_reduction_bonus", sign = "+");
+            effect_helper("power_consumption_penalty", sign = "+");
+            effect_helper("co2_emissions_penalty", sign = "+");
+            effect_helper("storage_capacity_bonus");
+            effect_helper("hydrogen_efficiency_bonus", sign = "+", precision = 2, suffix = "pp", round_value = true, hover_info = "percentage point");
+            effect_helper("lithium_ion_efficiency_bonus", sign = "+", precision = 2, suffix = "pp", round_value = true, hover_info = "percentage point");
+            effect_helper("solid_state_efficiency_bonus", sign = "+", precision = 2, suffix = "pp", round_value = true, hover_info = "percentage point");
+            effect_helper("price_penalty", sign = "+");
+            effect_helper("price_reduction_bonus", sign = "");
+            effect_helper("construction_power_reduction_bonus", sign = "-");
+
+            if (data.hasOwnProperty("construction_workers")) {
+                console.log(data.name);
+                div.querySelector("#construction_workers_tr").style =
+                    data.construction_workers == null ? "display:none" : "";
+                if (data.construction_workers != null) {
+                    div.querySelector("#construction_workers").innerHTML =
+                        data.construction_workers.current + " -> " + data.construction_workers.upgraded;
+                }
+            }
         }
     }
 });
