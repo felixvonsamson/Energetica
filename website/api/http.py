@@ -10,6 +10,7 @@ import numpy as np
 from flask import Blueprint, Response, current_app, flash, g, jsonify, redirect, request
 from flask_login import current_user, login_required
 
+# from gevent import getcurrent
 import website.utils.assets
 import website.utils.chat
 import website.utils.misc
@@ -29,7 +30,9 @@ def log_action(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
+        # print(f"Greenlet ID: {id(getcurrent())}")
         response = func(*args, **kwargs)
+        # print("Done")
         response, status_code = response if isinstance(response, tuple) else (response, 200)
         if request.method == "POST":
             log_entry = {

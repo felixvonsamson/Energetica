@@ -44,31 +44,19 @@ def price_multiplier(player: Player, asset: str) -> float:
     """Function that returns the price multiplier according to the technology level of the player."""
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
-    # Mechanical engineering
-    if asset in const_config["mechanical_engineering"]["affected_facilities"]:
-        mlt *= special_multiplier(const_config["mechanical_engineering"]["price_factor"], player.mechanical_engineering)
-    # Physics
-    if asset in const_config["physics"]["affected_facilities"]:
-        mlt *= special_multiplier(const_config["physics"]["price_factor"], player.physics)
-    # Mineral extraction
-    if asset in const_config["mineral_extraction"]["affected_facilities"]:
-        # TODO: the price multiplier here should probably be calculated differently. See extraction_rate_multiplier
-        mlt *= special_multiplier(const_config["mineral_extraction"]["price_factor"], player.mineral_extraction)
-    # Materials
-    if asset in const_config["materials"]["affected_facilities"]:
-        mlt *= const_config["materials"]["price_factor"] ** player.materials
-    # Civil engineering
-    if asset in const_config["civil_engineering"]["affected_facilities"]:
-        mlt *= special_multiplier(const_config["civil_engineering"]["price_factor"], player.civil_engineering)
-    # Aerodynamics
-    if asset in const_config["aerodynamics"]["affected_facilities"]:
-        mlt *= special_multiplier(const_config["aerodynamics"]["price_factor"], player.aerodynamics)
-    # Chemistry
-    if asset in const_config["chemistry"]["affected_facilities"]:
-        mlt *= const_config["chemistry"]["price_factor"] ** player.chemistry
-    # Nuclear engineering
-    if asset in const_config["nuclear_engineering"]["affected_facilities"]:
-        mlt *= special_multiplier(const_config["nuclear_engineering"]["price_factor"], player.nuclear_engineering)
+    # TODO: the price multiplier for mineral extraction should probably be calculated differently. See extraction_rate_multiplier
+    for research in [
+        "mechanical_engineering",
+        "physics",
+        "mineral_extraction",
+        "materials",
+        "civil_engineering",
+        "aerodynamics",
+        "chemistry",
+        "nuclear_engineering",
+    ]:
+        if asset in const_config[research]["affected_facilities"]:
+            mlt *= special_multiplier(const_config[research]["price_factor"], getattr(player, research))
     # level based facilities and technologies
     engine: GameEngine = current_app.config["engine"]
     if asset in engine.functional_facilities + engine.technologies:

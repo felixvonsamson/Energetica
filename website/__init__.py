@@ -5,14 +5,12 @@
 
 import atexit
 import base64
-import cProfile
 import csv
 import glob
 import json
 import os
 import pickle
 import platform
-import pstats
 import secrets
 import shutil
 import socket
@@ -20,6 +18,7 @@ import tarfile
 from datetime import datetime
 from pathlib import Path
 
+# import cProfile
 from gevent import monkey
 
 monkey.patch_all(thread=True, time=True)
@@ -27,12 +26,10 @@ monkey.patch_all(thread=True, time=True)
 from ecdsa import NIST256p, SigningKey
 from flask import Flask, jsonify, redirect, request, send_file, url_for
 from flask_apscheduler import APScheduler
-from flask_httpauth import HTTPBasicAuth
 from flask_login import LoginManager, current_user
 from flask_sock import Sock
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import check_password_hash
 
 from website.simulate import simulate
 
@@ -263,15 +260,6 @@ def create_app(
     def load_user(id):
         player = Player.query.get(int(id))
         return player
-
-    # initialize HTTP basic auth
-    engine.auth = HTTPBasicAuth()
-
-    @engine.auth.verify_password
-    def verify_password(username, password):
-        player = Player.query.filter_by(username=username).first()
-        if player and check_password_hash(player.pwhash, password):
-            return player
 
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
