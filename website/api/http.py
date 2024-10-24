@@ -25,15 +25,22 @@ from website.utils import misc
 http = Blueprint("http", __name__)
 
 
+class GameException(Exception):
+    pass
+
+
 def log_action(func):
     """This decorator logs all endpoint actions of the players"""
 
     @wraps(func)
     def wrapper(*args, **kwargs):
         # print(f"Greenlet ID: {id(getcurrent())}")
-        response = func(*args, **kwargs)
+        try:
+            response = func(*args, **kwargs)
+            response, status_code = response if isinstance(response, tuple) else (response, 200)
+        except GameException as exp:
+            response, status_code = jsonify({"response": str(exp)}), 403
         # print("Done")
-        response, status_code = response if isinstance(response, tuple) else (response, 200)
         if request.method == "POST":
             log_entry = {
                 "timestamp": datetime.now().isoformat(),
@@ -53,7 +60,7 @@ def log_action(func):
                 },
             }
             g.engine.action_logger.info(json.dumps(log_entry))
-        return response
+        return response, status_code
 
     return wrapper
 
