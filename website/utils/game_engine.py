@@ -4,6 +4,7 @@ import json
 import math
 import pickle
 import random
+import tarfile
 import time
 from datetime import datetime
 from typing import List
@@ -47,10 +48,12 @@ def state_update(engine, app):
             check_climate_events(engine)
             db.session.commit()
 
-    # save engine every minute in case of server crash
+    # save instance every minute in case of server crash
     if engine.data["total_t"] % (60 / engine.clock_time) == 0:
         with open("instance/engine_data.pck", "wb") as file:
             pickle.dump(engine.data, file)
+        with tarfile.open(f"checkpoints/checkpoint_{engine.data["total_t"]}.tar.gz", "w:gz") as tar:
+            tar.add("instance/")
     with app.app_context():
         # TODO: perhaps only run the below code conditionally on there being active ws connections
         websocket.rest_notify_scoreboard(engine)
