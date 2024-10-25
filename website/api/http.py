@@ -34,13 +34,13 @@ def log_action(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # print(f"Greenlet ID: {id(getcurrent())}")
+        # print(f"Greenlet ID {id(getcurrent())}: start")
         try:
             response = func(*args, **kwargs)
             response, status_code = response if isinstance(response, tuple) else (response, 200)
         except GameException as exp:
             response, status_code = jsonify({"response": str(exp)}), 403
-        # print("Done")
+        # print(f"Greenlet ID {id(getcurrent())}: done")
         if request.method == "POST":
             log_entry = {
                 "timestamp": datetime.now().isoformat(),

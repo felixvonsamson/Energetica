@@ -104,6 +104,7 @@ def create_app(
 
     # creates the app :
     app = Flask(__name__)
+    Path("checkpoints").mkdir(exist_ok=True)
     Path("instance").mkdir(exist_ok=True)
     app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
@@ -120,7 +121,6 @@ def create_app(
     engine = website.game_engine.GameEngine(clock_time, in_game_seconds_per_tick, random_seed)
 
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true" and simulate_file:
-        Path("checkpoints").mkdir(exist_ok=True)
         checkpoints = {
             int(save.split("checkpoint_")[1].rstrip(".tar.gz")): save
             for save in glob.glob("checkpoints/checkpoint_*.tar.gz")
