@@ -53,7 +53,7 @@ def simulate(app, port, actions, log_every_k_ticks=10000, checkpoint_ticks=[]):
                 if action["total_t"] % log_every_k_ticks == 0 or action["total_t"] in checkpoint_ticks:
                     with open("instance/engine_data.pck", "wb") as file:
                         pickle.dump(engine.data, file)
-                    with tarfile.open(f"checkpoints/checkpoint_{action["total_t"]}.tar.gz", "w:gz") as tar:
+                    with tarfile.open(f"checkpoints/checkpoint_{action['total_t']}.tar.gz", "w:gz") as tar:
                         tar.add("instance/")
             elif action["action_type"] == "climate_event_impact":
                 tile = Hex.query.get(action["tile_id"])
@@ -65,7 +65,7 @@ def simulate(app, port, actions, log_every_k_ticks=10000, checkpoint_ticks=[]):
                 player_id = action["player_id"]
                 if player_id not in user_sessions:
                     user_sessions[player_id] = login_user(player_id, port)
-                url = f"http://localhost:{port}{action["request"]['endpoint']}"
+                url = f"http://localhost:{port}{action['request']['endpoint']}"
                 content_type = "json" if action["request"]["content_type"] == "application/json" else "data"
                 response = user_sessions[player_id].post(url, **{content_type: action["request"]["content"]})
                 if response.status_code != 200:
