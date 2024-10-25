@@ -103,7 +103,6 @@
               <div class="infobox requirements"
                    {% if technology_data.requirements_status == "satisfied" %}style="display:none"{% endif %}" 
                    id="requirements">
-                {% if technology_data.requirements_status != "satisfied" %}
                   <div>
                     <strong>Unlock with :</strong>
                     <br>
@@ -120,7 +119,6 @@
                       {% endfor %}
                     </ul>
                   </div>
-                {% endif %}
               </div>
             </div>
           </div>
