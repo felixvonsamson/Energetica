@@ -266,7 +266,7 @@ socket.on("refresh", function () {
 
 socket.on("update_page_data", function (pages_data) {
     let path = document.baseURI.split('/').pop();
-    function update_base_data(data, div) {
+    function update_base_data(data, div, on_technologies_page) {
         // This data needs updating for all facilities and all technologies
         div.querySelector("#price").innerHTML = format_money_long(data.price);
         div.querySelectorAll(".construction_power").forEach(el => {
@@ -286,6 +286,29 @@ socket.on("update_page_data", function (pages_data) {
             }
             div.querySelector("#requirements_list").innerHTML =
                 data.requirements.map(requirement_to_list_item).join('');
+        }
+        construction_button = div.querySelector("#construction_button");
+        construction_button_mobile = div.querySelector("#construction_button_mobile");
+        if (data.requirements_status == "unsatisfied") {
+            construction_button.class = "padding medium margin txt_center white txt-red";
+            construction_button_mobile.class = "padding medium margin txt_center white txt-red";
+            construction_button.innerHTML = "Locked";
+            construction_button_mobile.innerHTML = "Locked";
+        } else {
+            construction_button.class = "padding medium button margin txt_center white";
+            construction_button_mobile.class = "padding medium button margin txt_center white";
+            if (!on_technologies_page) {
+                construction_button.innerHTML = "Start construction";
+                construction_button_mobile.innerHTML = "Start construction";
+            } else {
+                if (data.requirements_status == "satisfied") {
+                    construction_button.innerHTML = "Start research";
+                    construction_button_mobile.innerHTML = "Start research";
+                } else {
+                    construction_button.innerHTML = "Queue research";
+                    construction_button_mobile.innerHTML = "Queue research";
+                }
+            }
         }
     }
     function update_polluting_projects(data, div) {
@@ -318,7 +341,7 @@ socket.on("update_page_data", function (pages_data) {
         let power_facilities_data = pages_data.power_facilities;
         for (let data of power_facilities_data) {
             let div = document.getElementById(data.name);
-            update_base_data(data, div);
+            update_base_data(data, div, on_technologies_page = false);
             update_polluting_projects(data, div);
             update_buildings_data(data, div);
             update_power_generating_facilities_data(data, div);
@@ -347,7 +370,7 @@ socket.on("update_page_data", function (pages_data) {
         let storage_facilities_data = pages_data.storage_facilities;
         for (let data of storage_facilities_data) {
             let div = document.getElementById(data.name);
-            update_base_data(data, div);
+            update_base_data(data, div, on_technologies_page = false);
             update_polluting_projects(data, div);
             update_buildings_data(data, div);
             update_power_generating_facilities_data(data, div);
@@ -359,7 +382,7 @@ socket.on("update_page_data", function (pages_data) {
         let extraction_facilities_data = pages_data.extraction_facilities;
         for (let data of extraction_facilities_data) {
             let div = document.getElementById(data.name);
-            update_base_data(data, div);
+            update_base_data(data, div, on_technologies_page = false);
             update_polluting_projects(data, div);
             update_buildings_data(data, div);
             div.querySelector("#power_consumption").innerHTML = format_power(data.power_consumption);
@@ -372,7 +395,7 @@ socket.on("update_page_data", function (pages_data) {
         let functional_facilities_data = pages_data.functional_facilities;
         for (let data of functional_facilities_data) {
             let div = document.getElementById(data.name);
-            update_base_data(data, div);
+            update_base_data(data, div, on_technologies_page = false);
             update_polluting_projects(data, div);
             if ("average_consumption" in data) {
                 div.querySelector("#average_consumption").innerHTML = format_upgrade_power(
@@ -420,7 +443,7 @@ socket.on("update_page_data", function (pages_data) {
         let technologies = pages_data.technologies;
         for (let data of technologies) {
             let div = document.getElementById(data.name);
-            update_base_data(data, div);
+            update_base_data(data, div, on_technologies_page = true);
             update_level_data(data, div);
             function effect_helper(key, sign = "+", precision = 0, suffix = "%", round_value = true, hover_info = null) {
                 if (data[key] == null) {
