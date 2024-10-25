@@ -270,10 +270,13 @@ socket.on("update_page_data", function (pages_data) {
     let path = document.baseURI.split('/').pop();
     function update_base_data(data, div) {
         // This data needs updating for all facilities and all technologies
-        // TODO: update this logic / make sure this logic also works with mobile devices
         div.querySelector("#price").innerHTML = format_money_long(data.price);
-        div.querySelector("#construction_power").innerHTML = format_power(data.construction_power);
-        div.querySelector("#construction_time").innerHTML = format_duration(data.construction_time);
+        div.querySelectorAll(".construction_power").forEach(el => {
+            el.innerHTML = format_power(data.construction_power);
+        });
+        div.querySelectorAll(".construction_time").forEach(el => {
+            el.innerHTML = format_duration(data.construction_time);
+        });
         div.querySelector("#requirements").style.cssText =
             data.requirements_status == "satisfied" ? "display:none" : "";
         if (data.requirements_status != "satisfied") {
@@ -289,8 +292,9 @@ socket.on("update_page_data", function (pages_data) {
     }
     function update_polluting_projects(data, div) {
         // This data is shared for all facilities, so only technologies are absent
-        div.querySelector("#construction_pollution").innerHTML =
-            format_mass(data.construction_pollution) + " CO<sub>2</sub>";
+        div.querySelectorAll(".construction_pollution").forEach(el => {
+            el.innerHTML = format_mass(data.construction_pollution) + " CO<sub>2</sub>";
+        });
     }
     function update_buildings_data(data, div) {
         // This data is shared among all facilities, except functional facilities

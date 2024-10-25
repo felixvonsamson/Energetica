@@ -147,7 +147,7 @@
           <div class="construction_info">
             <span class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <strong id="construction_time"></strong>
+              <strong class="construction_time"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_duration(
                 {{ technology_data.construction_time }}
                 );
@@ -156,7 +156,7 @@
             </span>
             <span class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <strong id="construction_power"></strong>
+              <strong class="construction_power"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_power(
                 {{ technology_data.construction_power }}
                 );
@@ -190,7 +190,7 @@
             <span class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
               <strong></strong>
-              <script>document.currentScript.previousElementSibling.innerHTML = format_duration(
+              <script class="construction_time">document.currentScript.previousElementSibling.innerHTML = format_duration(
                 {{ technology_data.construction_time }}
                 );
               </script>
@@ -198,7 +198,7 @@
             </span>
             <span class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <strong></strong>
+              <strong class="construction_power"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_power(
                 {{ technology_data.construction_power }}
                 );

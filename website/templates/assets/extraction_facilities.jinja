@@ -116,19 +116,19 @@
           <div class="construction_info">
             <span class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <strong id="construction_time"></strong>
+              <strong class="construction_time"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_duration({{ facility_data.construction_time }});</script>
               <span class="popup_info small">Duration in-game (real)</span>
             </span>
             <span class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <strong id="construction_power"></strong>
+              <strong class="construction_power"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.construction_power }});</script>
               <span class="popup_info small">Power consumption</span>
             </span>
             <span class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <strong id="construction_pollution"></strong>
+              <strong class="construction_pollution"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO<sub>2</sub>";</script>
               <span class="popup_info small">CO<sub>2</sub> emissions</span>
             </span>
@@ -154,19 +154,19 @@
           <div class="construction_info">
             <span class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <strong></strong>
+              <strong class="construction_time"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_duration({{ facility_data.construction_time }});</script>
               <span class="popup_info small">Duration in-game (real)</span>
             </span>
             <span class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <strong></strong>
+              <strong class="construction_power"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.construction_power }});</script>
               <span class="popup_info small">Power consumption</span>
             </span>
             <span class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <strong id="construction_pollution"></strong>
+              <strong class="construction_pollution"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO<sub>2</sub>";</script>
               <span class="popup_info small">CO<sub>2</sub> emissions</span>
             </span>
