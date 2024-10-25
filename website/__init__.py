@@ -5,31 +5,31 @@
 
 import atexit
 import base64
-import cProfile
 import csv
+import glob
 import json
 import os
 import pickle
 import platform
-import pstats
 import secrets
 import shutil
 import socket
+import tarfile
 from datetime import datetime
 from pathlib import Path
 
+# import cProfile
 from gevent import monkey
+
 monkey.patch_all(thread=True, time=True)
 
 from ecdsa import NIST256p, SigningKey
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, redirect, request, send_file, url_for
 from flask_apscheduler import APScheduler
-from flask_httpauth import HTTPBasicAuth
 from flask_login import LoginManager, current_user
 from flask_sock import Sock
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import check_password_hash
 
 from website.simulate import simulate
 
@@ -53,7 +53,7 @@ def get_or_create_flask_secret_key() -> str:
         return secret_key
 
 
-def get_or_create_vapid_keys() -> type[str, str]:
+def get_or_create_vapid_keys() -> tuple[str, str]:
     """
     Public private key pair for vapid push notifications. Loads these from disk if they exists, creates a new pair and
     stores if otherwise
@@ -85,7 +85,16 @@ def get_or_create_vapid_keys() -> type[str, str]:
 
 
 def create_app(
-    clock_time, in_game_seconds_per_tick, run_init_test_players, rm_instance, random_seed, simulate_file, **kwargs
+    clock_time,
+    in_game_seconds_per_tick,
+    run_init_test_players,
+    rm_instance,
+    random_seed,
+    simulate_file,
+    simulate_checkpoint_every_k_ticks,
+    simulate_checkpoint_ticks,
+    simulate_till,
+    **kwargs,
 ):
     """This function sets up the app and the game engine"""
     # gets lock to avoid multiple instances
@@ -95,6 +104,7 @@ def create_app(
 
     # creates the app :
     app = Flask(__name__)
+    Path("checkpoints").mkdir(exist_ok=True)
     Path("instance").mkdir(exist_ok=True)
     app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
@@ -102,12 +112,28 @@ def create_app(
     app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
     db.init_app(app)
 
+    if rm_instance:
+        print("Removing instance")
+        shutil.rmtree("instance")
+        Path("instance").mkdir(exist_ok=True)
+
     # creates the engine (and loading the save if it exists)
     engine = website.game_engine.GameEngine(clock_time, in_game_seconds_per_tick, random_seed)
 
-    if rm_instance:
-        engine.log("removing instance")
-        shutil.rmtree("instance")
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true" and simulate_file:
+        checkpoints = {
+            int(save.split("checkpoint_")[1].rstrip(".tar.gz")): save
+            for save in glob.glob("checkpoints/checkpoint_*.tar.gz")
+        }
+        checkpoints_ids = [
+            save_id for save_id in checkpoints.keys() if simulate_till is None or save_id <= simulate_till
+        ]
+        loaded_tick = None
+        if checkpoints_ids:
+            loaded_tick = max(checkpoints_ids)
+            with tarfile.open(f"checkpoints/checkpoint_{loaded_tick}.tar.gz") as file:
+                file.extractall("./")
+            engine.log(f"Loaded instance from checkpoints/checkpoint_{loaded_tick}.tar.gz.")
 
     from .utils.game_engine import data_init_climate
 
@@ -124,6 +150,7 @@ def create_app(
         with open("instance/engine_data.pck", "rb") as file:
             engine.data = pickle.load(file)
             engine.log("Loaded engine data from disk.")
+
     app.config["engine"] = engine
 
     # initialize socketio :
@@ -225,19 +252,14 @@ def create_app(
     login_manager.login_view = "auth.login"
     login_manager.init_app(app)
 
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        return redirect(url_for("auth.login")), 401
+
     @login_manager.user_loader
     def load_user(id):
         player = Player.query.get(int(id))
         return player
-
-    # initialize HTTP basic auth
-    engine.auth = HTTPBasicAuth()
-
-    @engine.auth.verify_password
-    def verify_password(username, password):
-        player = Player.query.filter_by(username=username).first()
-        if player and check_password_hash(player.pwhash, password):
-            return player
 
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
@@ -258,13 +280,22 @@ def create_app(
             )
         else:
             with open(simulate_file.name, "r", encoding="utf-8") as file:
-                actions = json.loads("[" + ", ".join(file.read().split("\n")[:-1]) + "]")
+                actions = [json.loads(line) for line in file]
+            action_id_by_tick = {
+                action["total_t"]: action_id
+                for action_id, action in enumerate(actions)
+                if action["action_type"] == "tick"
+            }
+            start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 0
+            last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
             scheduler.add_job(
                 func=simulate,
                 args=(
                     app,
                     kwargs["port"],
-                    actions,
+                    actions[start_action_id : last_action_id + 1],
+                    simulate_checkpoint_every_k_ticks,
+                    simulate_checkpoint_ticks,
                 ),
                 id="simulate",
                 trigger="date",

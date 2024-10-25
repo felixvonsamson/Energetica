@@ -185,27 +185,22 @@ def upgrade_facility(player, facility_id):
     def is_upgradable(facility: ActiveFacility):
         """Returns true if any of the attributes of the built facility are outdated compared to current tech levels"""
         if facility.facility in engine.extraction_facilities:
-            if facility.price_multiplier < technology_effects.price_multiplier(player, facility.facility):
-                return True
-            if facility.multiplier_1 < technology_effects.multiplier_1(player, facility.facility):
-                return True
-            if facility.multiplier_2 < technology_effects.multiplier_2(player, facility.facility):
-                return True
-            if facility.multiplier_3 < technology_effects.multiplier_3(player, facility.facility):
-                return True
+            return (
+                facility.price_multiplier < technology_effects.price_multiplier(player, facility.facility)
+                or facility.multiplier_1 < technology_effects.multiplier_1(player, facility.facility)
+                or facility.multiplier_2 < technology_effects.multiplier_2(player, facility.facility)
+                or facility.multiplier_3 < technology_effects.multiplier_3(player, facility.facility)
+            )
         else:  # power & storage facilities
-            if facility.price_multiplier < technology_effects.price_multiplier(player, facility.facility):
-                return True
-            if facility.facility in engine.power_facilities + engine.storage_facilities:
-                if facility.multiplier_1 < technology_effects.multiplier_1(player, facility.facility):
-                    return True
-            if facility.facility in engine.storage_facilities:
-                if facility.multiplier_2 < technology_effects.multiplier_2(player, facility.facility):
-                    return True
-            if facility.facility in engine.controllable_facilities + engine.storage_facilities:
-                if facility.multiplier_3 < technology_effects.multiplier_3(player, facility.facility):
-                    return True
-        return False
+            return (
+                facility.price_multiplier < technology_effects.price_multiplier(player, facility.facility)
+                or facility.facility in engine.power_facilities + engine.storage_facilities
+                and facility.multiplier_1 < technology_effects.multiplier_1(player, facility.facility)
+                or facility.facility in engine.storage_facilities
+                and facility.multiplier_2 < technology_effects.multiplier_2(player, facility.facility)
+                or facility.facility in engine.controllable_facilities + engine.storage_facilities
+                and facility.multiplier_3 < technology_effects.multiplier_3(player, facility.facility)
+            )
 
     def apply_upgrade(facility: ActiveFacility):
         """Updates the built facilities attributes to match current tech levels"""
@@ -251,7 +246,7 @@ def upgrade_facility(player, facility_id):
 def upgrade_all_of_type(player, facility_id):
     """this function is executed when a player upgrades all facilities of a certain type"""
     facility = ActiveFacility.query.get(facility_id)
-    if facility is None:
+    if facility is None or facility.player_id != player.id:
         return jsonify({"response": "facilityNotFound"}), 404
     facility_name = ActiveFacility.query.get(facility_id).facility
     facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
@@ -265,7 +260,7 @@ def remove_asset(player_id, facility, decommissioning=True):
     """this function is executed when a facility is decommissioned."""
     engine = current_app.config["engine"]
     if facility.facility in engine.technologies + engine.functional_facilities:
-        return {"response": "notRemovable"}, 403
+        return jsonify({"response": "notRemovable"}), 403
     player = Player.query.get(player_id)
     db.session.delete(facility)
     db.session.flush()
@@ -300,11 +295,13 @@ def remove_asset(player_id, facility, decommissioning=True):
     engine.data["player_capacities"][player.id].update(player, facility.facility)
     engine.config.update_config_for_user(player.id)
     db.session.commit()
-    return {
-        "response": "success",
-        "facility_name": facility_name,
-        "money": player.money,
-    }
+    return jsonify(
+        {
+            "response": "success",
+            "facility_name": facility_name,
+            "money": player.money,
+        }
+    )
 
 
 def facility_destroyed(player, facility, event_name):
@@ -314,6 +311,11 @@ def facility_destroyed(player, facility, event_name):
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
         cost *= facility.multiplier_2
     response = remove_asset(player.id, facility, decommissioning=False)
+    if isinstance(response, tuple):
+        response, _ = response
+    if response.json["response"] != "success":
+        # TODO
+        return
     player.notify(
         "Destruction",
         (
@@ -321,12 +323,14 @@ def facility_destroyed(player, facility, event_name):
             f"{round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>."
         ),
     )
-    current_app.config["engine"].log(f"{player.username} : {response['facility_name']} destroyed by {event_name}.")
+    current_app.config["engine"].log(f"{player.username} : {response.json['facility_name']} destroyed by {event_name}.")
 
 
 def dismantle_facility(player, facility_id):
     """this function is executed when a player dismantles a facility"""
     facility: ActiveFacility = ActiveFacility.query.get(facility_id)
+    if facility is None or facility.player_id != player.id:
+        return jsonify({"response": "facilityNotFound"}), 404
     base_price = current_app.config["engine"].const_config["assets"][facility.facility]["base_price"]
     cost = 0.2 * base_price * facility.price_multiplier
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
@@ -334,7 +338,11 @@ def dismantle_facility(player, facility_id):
     if player.money < cost:
         return jsonify({"response": "notEnoughMoney"}), 403
     response = remove_asset(player.id, facility, decommissioning=False)
-    current_app.config["engine"].log(f"{player.username} dismantled the facility {response['facility_name']}.")
+    if isinstance(response, tuple):
+        response, _ = response
+    if response.json["response"] != "success":
+        return response
+    current_app.config["engine"].log(f"{player.username} dismantled the facility {response.json['facility_name']}.")
     return jsonify(response)
 
 
@@ -482,7 +490,6 @@ def invalidate_data_on_project_update(player: Player, asset: str, family: str):
 def cancel_project(player: Player, construction_id: int, force=False):
     """This function is executed when a player cancels an ongoing construction"""
     engine = current_app.config["engine"]
-    const_config = engine.const_config["assets"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
 
     if construction is None:
@@ -550,7 +557,7 @@ def decrease_project_priority(player, construction_id, pausing=False):
     engine = current_app.config["engine"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
 
-    if construction is None:
+    if construction is None or construction.player_id != player.id:
         return jsonify({"response": "constructionNotFound"}), 404
 
     if construction.family == "Technologies":
@@ -567,7 +574,7 @@ def decrease_project_priority(player, construction_id, pausing=False):
         if construction_1.suspension_time is None and construction_2.suspension_time is not None:
             # construction_1 is not paused, but construction_2 is
             response = pause_project(player, construction_1.id)
-            if type(response) == tuple:
+            if isinstance(response, tuple):
                 response, status_code = response
             if response.json["response"] == "success":
                 return pause_project(player, construction_2.id)
@@ -619,7 +626,7 @@ def pause_project(player: Player, construction_id: int):
     engine: GameEngine = current_app.config["engine"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
 
-    if construction is None:
+    if construction is None or construction.player_id != player.id:
         return jsonify({"response": "constructionNotFound"}), 404
 
     if construction.family == "Technologies":

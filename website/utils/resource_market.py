@@ -41,10 +41,10 @@ def buy_resource_from_market(player, quantity, sale_id):
     """Buy an offer from the resource market"""
     engine = current_app.config["engine"]
     sale = ResourceOnSale.query.filter_by(id=sale_id).first()
-    
+
     if sale is None:
         return jsonify({"response": "saleNotFound"}), 404
-    
+
     if quantity is None or quantity <= 0 or quantity > sale.quantity:
         return jsonify({"response": "invalidQuantity"}), 403
     total_price = sale.price * quantity
@@ -59,12 +59,14 @@ def buy_resource_from_market(player, quantity, sale_id):
             getattr(player, sale.resource + "_on_sale") - quantity,
         )
         db.session.commit()
-        return jsonify({
-            "response": "removedFromMarket",
-            "quantity": quantity,
-            "available_quantity": sale.quantity,
-            "resource": sale.resource,
-        })
+        return jsonify(
+            {
+                "response": "removedFromMarket",
+                "quantity": quantity,
+                "available_quantity": sale.quantity,
+                "resource": sale.resource,
+            }
+        )
     if total_price > player.money:
         return jsonify({"response": "notEnoughMoney"}), 403
     else:
@@ -114,15 +116,17 @@ def buy_resource_from_market(player, quantity, sale_id):
             # Player is purchasing all available quantity
             ResourceOnSale.query.filter_by(id=sale_id).delete()
         db.session.commit()
-        return jsonify({
-            "response": "success",
-            "resource": sale.resource,
-            "total_price": total_price,
-            "quantity": quantity,
-            "seller": sale.player.username,
-            "available_quantity": sale.quantity,
-            "shipments": player.package_shipments(),
-        })
+        return jsonify(
+            {
+                "response": "success",
+                "resource": sale.resource,
+                "total_price": total_price,
+                "quantity": quantity,
+                "seller": sale.player.username,
+                "available_quantity": sale.quantity,
+                "shipments": player.package_shipments(),
+            }
+        )
 
 
 def store_import(player, resource, quantity):
@@ -172,7 +176,9 @@ def pause_shipment(player, shipment_id):
         shipment.departure_time += engine.data["total_t"] - shipment.suspension_time
         shipment.suspension_time = None
     db.session.commit()
-    return jsonify({
-        "response": "success",
-        "shipments": player.package_shipments(),
-    })
+    return jsonify(
+        {
+            "response": "success",
+            "shipments": player.package_shipments(),
+        }
+    )

@@ -4,6 +4,7 @@ import json
 import math
 import pickle
 import random
+import tarfile
 import time
 from datetime import datetime
 from typing import List
@@ -38,7 +39,7 @@ def state_update(engine, app):
                 engine.new_daily_question()
             log_entry = {
                 "timestamp": datetime.now().isoformat(),
-                "endpoint": "update_electricity",
+                "action_type": "tick",
                 "total_t": engine.data["total_t"],
             }
             engine.action_logger.info(json.dumps(log_entry))
@@ -47,10 +48,12 @@ def state_update(engine, app):
             check_climate_events(engine)
             db.session.commit()
 
-    # save engine every minute in case of server crash
+    # save instance every minute in case of server crash
     if engine.data["total_t"] % (60 / engine.clock_time) == 0:
         with open("instance/engine_data.pck", "wb") as file:
             pickle.dump(engine.data, file)
+        with tarfile.open(f"checkpoints/checkpoint_{engine.data["total_t"]}.tar.gz", "w:gz") as tar:
+            tar.add("instance/")
     with app.app_context():
         # TODO: perhaps only run the below code conditionally on there being active ws connections
         websocket.rest_notify_scoreboard(engine)
@@ -197,7 +200,7 @@ def climate_event_impact(engine, tile, event):
         json.dumps(
             {
                 "timestamp": datetime.now().isoformat(),
-                "endpoint": "climate_event_impact",
+                "action_type": "climate_event_impact",
                 "tile_id": tile.id,
                 "event": event,
             }

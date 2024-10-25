@@ -15,17 +15,17 @@ from website.database.player import Network, Player
 def join_network(engine, player, network):
     """shared API method to join a network."""
     if "Unlock Network" not in player.achievements:
-        return {"response": "networkNotUnlocked"}, 403
+        return jsonify({"response": "networkNotUnlocked"}), 403
     if network is None:
-        return {"response": "noSuchNetwork"}, 404
+        return jsonify({"response": "noSuchNetwork"}), 404
     if player.network is not None:
-        return {"response": "playerAlreadyInNetwork"}, 409
+        return jsonify({"response": "playerAlreadyInNetwork"}), 409
     player.network = network
     db.session.commit()
     engine.data["network_capacities"][network.id].update_network(network)
     engine.log(f"{player.username} joined the network {network.name}")
     websocket.rest_notify_network_change(engine)
-    return {"response": "success"}
+    return jsonify({"response": "success"})
 
 
 def data_init_network():
@@ -73,7 +73,7 @@ def leave_network(engine, player):
     """Shared API method for a player to leave a network. Always succeeds."""
     network = player.network
     if network is None:
-        return {"response": "playerNotInNetwork"}, 409
+        return jsonify({"response": "playerNotInNetwork"}), 409
     player.network_id = None
     remaining_members_count = Player.query.filter_by(network_id=network.id).count()
     # delete network if it is empty
@@ -84,7 +84,7 @@ def leave_network(engine, player):
     db.session.commit()
     engine.log(f"{player.username} left the network {network.name}")
     websocket.rest_notify_network_change(engine)
-    return {"response": "success"}
+    return jsonify({"response": "success"})
 
 
 def reorder_facility_priorities(engine: game_engine.GameEngine, player: Player):

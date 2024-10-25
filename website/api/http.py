@@ -7,9 +7,10 @@ from functools import wraps
 from pathlib import Path
 
 import numpy as np
-from flask import Blueprint, current_app, flash, g, jsonify, redirect, request
+from flask import Blueprint, Response, current_app, flash, g, jsonify, redirect, request
 from flask_login import current_user, login_required
 
+# from gevent import getcurrent
 import website.utils.assets
 import website.utils.chat
 import website.utils.misc
@@ -24,23 +25,42 @@ from website.utils import misc
 http = Blueprint("http", __name__)
 
 
+class GameException(Exception):
+    pass
+
+
 def log_action(func):
     """This decorator logs all endpoint actions of the players"""
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        log_entry = {
-            "timestamp": datetime.now().isoformat(),
-            "player_id": current_user.id,
-            "endpoint": request.path,
-            "method": request.method,
-        }
-        if request.content_type == "application/json":
-            log_entry["request_content"] = request.get_json()
-        else:
-            log_entry["request_content"] = request.form.to_dict()
-        g.engine.action_logger.info(json.dumps(log_entry))
-        return func(*args, **kwargs)
+        # print(f"Greenlet ID {id(getcurrent())}: start")
+        try:
+            response = func(*args, **kwargs)
+            response, status_code = response if isinstance(response, tuple) else (response, 200)
+        except GameException as exp:
+            response, status_code = jsonify({"response": str(exp)}), 403
+        # print(f"Greenlet ID {id(getcurrent())}: done")
+        if request.method == "POST":
+            log_entry = {
+                "timestamp": datetime.now().isoformat(),
+                "action_type": "request",
+                "player_id": current_user.id,
+                "request": {
+                    "endpoint": request.path,
+                    "content_type": request.content_type,
+                    "content": request.get_json() if request.is_json else request.form.to_dict(),
+                },
+                "response": {
+                    "status_code": status_code,
+                    "content_type": response.content_type if isinstance(response, Response) else str(type(response)),
+                    "content": (response.json if response.is_json else response.data.decode("utf-8"))
+                    if isinstance(response, Response)
+                    else response,
+                },
+            }
+            g.engine.action_logger.info(json.dumps(log_entry))
+        return response, status_code
 
     return wrapper
 
@@ -513,7 +533,7 @@ def join_network():
     network_name = request_data["choose_network"]
     network = Network.query.filter_by(name=network_name).first()
     response = website.utils.network.join_network(g.engine, current_user, network)
-    if type(response) == tuple:
+    if isinstance(response, tuple):
         response, _ = response
     if response.json["response"] != "success":
         return response
@@ -529,7 +549,7 @@ def create_network():
     request_data = request.get_json()
     network_name = request_data["network_name"]
     response = website.utils.network.create_network(g.engine, current_user, network_name)
-    if type(response) == tuple:
+    if isinstance(response, tuple):
         response, _ = response
     if response.json["response"] == "nameLengthInvalid":
         flash("Network name must be between 3 and 40 characters", category="error")
@@ -546,10 +566,13 @@ def create_network():
 def leave_network():
     """this endpoint is called when a player leaves their network"""
     network = current_user.network
-    response = website.utils.network.leave_network(g.engine, current_user)
-    if response["response"] == "success":
+    full_response = website.utils.network.leave_network(g.engine, current_user)
+    response = full_response[0] if type(full_response) is tuple else full_response
+    if response.json["response"] == "success":
         flash(f"You left network {network.name}", category="message")
-    return redirect("/network", code=303)
+        return redirect("/network", code=303)
+    else:
+        return full_response
 
 
 @http.route("hide_chat_disclaimer", methods=["GET"])

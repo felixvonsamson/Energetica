@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3 -u
 
 """This code launches the game"""
 
@@ -53,19 +53,46 @@ if __name__ == "__main__":
         metavar="FILE",
     )
     parser.add_argument(
-        "--profiling",
+        "--simulate_profiling",
         type=bool,
         default=False,
         help="If game is simulated, allows to run code profiling.",
     )
+    parser.add_argument(
+        "--simulate_checkpoint_every_k_ticks",
+        type=int,
+        default=10000,
+        help="If game is simulated, save the engine for every tick that is a multiple of the given int.",
+    )
+    parser.add_argument(
+        "--simulate_checkpoint_ticks",
+        nargs="+",
+        type=int,
+        default=[],
+        help="If game is simulated, save the engine for every given tick.",
+    )
+    parser.add_argument(
+        "--simulate_till",
+        type=int,
+        default=None,
+        help="If game is simulated, and if a value is given, only simulates till the given tick, and saves the engine",
+    )
+    parser.add_argument(
+        "--force_yes",
+        action="store_true",
+        help="If yes, the app proceeds with the high-risk action without requesting approval.",
+    )
 
     args = parser.parse_args()
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true" and args.simulate_file:
-        warnings.warn("The instance folder will be deleted. Do you want to continue? (yes/no)")
-        response = input().strip().lower()
-        if response != "yes":
-            print("Operation aborted by the user.")
-            exit(0)
+        warnings.warn("The instance folder will be deleted.")
+        if not args.force_yes:
+            print("Do you want to continue? (yes/no): ", end="")
+            response = input().strip().lower()
+            response = "yes"
+            if response != "yes":
+                print("Operation aborted by the user.")
+                exit(0)
         args.rm_instance = True
     socketio, _, app = create_app(**vars(args))
     socketio.run(app, debug=True, log_output=False, host="0.0.0.0", port=args.port)
