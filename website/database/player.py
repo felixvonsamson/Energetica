@@ -641,7 +641,6 @@ class Player(db.Model, UserMixin):
                 pages_data |= {"technologies": self.get_packaged_data_for_technologies_page()}
             # if resource_market:
             #     pages_data |= {"power_facilities": self.get_packaged_data_for_power_facilities_page()}
-            print("sending an emit")
             self.emit("update_page_data", pages_data)
             # TODO: update clients over websocket
 

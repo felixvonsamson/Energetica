@@ -71,8 +71,6 @@ socket.on("new_values", function (changes) {
         money.innerHTML = format_money_long(changes["money"]);
     }
     let total_t = changes["total_t"];
-    // TODO: comment out this following log
-    console.log("received new values : " + total_t);
     let last_value = JSON.parse(sessionStorage.getItem("last_value"));
     if (!last_value || total_t == 1) {
         retrieve_all();
