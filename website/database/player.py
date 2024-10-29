@@ -613,7 +613,6 @@ class Player(db.Model, UserMixin):
         This function will invalidate the data for all corresponding arguments that are set to True.
         """
         if power_facilities:
-            print("invalidating power facilities")
             self._buffered_data_for_power_facilities_page = None
         if storage_facilities:
             self._buffered_data_for_storage_facilities_page = None
