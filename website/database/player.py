@@ -175,11 +175,11 @@ class Player(db.Model, UserMixin):
             return priority_list
 
     def write_list(self, attr, list_data):
-        """Helper method that writes a list of any player list that is stored as a string"""
+        """Helper method that transforms a list into a sting in order to store it in the player database"""
         setattr(self, attr, ",".join(map(str, list_data)))
 
     def add_to_list(self, attr, value):
-        """Helper method that adds an element to a list stored as a string"""
+        """Helper method that adds an element to a list stored as a string in the player database"""
         if getattr(self, attr) == "":
             setattr(self, attr, str(value))
         else:
@@ -192,18 +192,10 @@ class Player(db.Model, UserMixin):
             rest_notify_achievements(engine, self)
 
     def remove_from_list(self, attr, value):
-        """Helper method that removes an element from a list stored as a string"""
+        """Helper method that removes an element from a list stored as a string in the player database"""
         id_list = getattr(self, attr).split(",")
         id_list.remove(str(value))
         setattr(self, attr, ",".join(id_list))
-
-    def project_max_priority(self, attr, project_id):
-        """the project with the corresponding id will be moved to the top of the priority list"""
-        self.remove_from_list(attr, project_id)
-        if getattr(self, attr) == "":
-            setattr(self, attr, str(project_id))
-        else:
-            setattr(self, attr, f"{project_id}," + getattr(self, attr))
 
     def package_chat_messages(self, chat_id):
         """This method packages the last 20 messages of a chat"""
