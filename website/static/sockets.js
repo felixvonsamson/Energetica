@@ -4,6 +4,7 @@ This code contains the main functions that communicate with the server (client s
 
 /**
  * @type {typeof import('./frontend_data.js').load_chats}
+ * @type {typeof import('./display_functions.js')}
  */
 
 socket.on("infoMessage", addToast);
@@ -264,8 +265,23 @@ socket.on("refresh", function () {
     window.location = window.location;
 });
 
+/** 
+ * This function parses data sent from the server relating to various pages (power, storage, extraction, and functional
+ * facilities, technologies) and updates the HTML accordingly.
+ */
 socket.on("update_page_data", function (pages_data) {
+    // The `path` variable is used to determine what page is currently open. Possible values are:
+    // "power_facilities", "storage_facilities", "extraction_facilities", "functional_facilities" and "technology"
     let path = document.baseURI.split('/').pop();
+
+    /**
+     * Updates the construction information and the requirements of a particular facility's / technology's corresponding
+     * div element
+     * 
+     * @param {Object} data The new data for this facility / technology
+     * @param {HTMLElement} div The HTML element corresponding to the this facility / technology
+     * @param {boolean} on_technologies_page Should be true for technologies and false for all others
+     */
     function update_base_data(data, div, on_technologies_page) {
         // This data needs updating for all facilities and all technologies
         div.querySelector("#price").innerHTML = format_money_long(data.price);
@@ -311,17 +327,41 @@ socket.on("update_page_data", function (pages_data) {
             }
         }
     }
+
+    /**
+     * Updates the construction pollution of a particular facility's div element
+     * 
+     * @param {Object} data The new data for this facility
+     * @param {number} data.construction_pollution The cost in CO2 emissions for constructing this facility, in kg
+     * @param {HTMLElement} div The HTML element corresponding to the this facility
+     */
     function update_polluting_projects(data, div) {
         // This data is shared for all facilities, so only technologies are absent
         div.querySelectorAll(".construction_pollution").forEach(el => {
             el.innerHTML = format_mass(data.construction_pollution) + " CO<sub>2</sub>";
         });
     }
+    /**
+     * Updates the operating cost and lifespan of a particular facility's div element
+     * 
+     * @param {Object} data The new data for this facility
+     * @param {number} data.operating_costs The operating costs for this facility, in units per hour
+     * @param {number} data.lifespan The lifespan for this facility, in days
+     * @param {HTMLElement} div The HTML element corresponding to the this facility
+     */
     function update_buildings_data(data, div) {
-        // This data is shared among all facilities, except functional facilities
+        // This data is shared for all power, storage, and extraction facilities
         div.querySelector("#operating_costs").innerHTML = format_money(data.operating_costs) + "/h";
         div.querySelector("#lifespan").innerHTML = format_days(data.lifespan) + " days";
     }
+    /**
+     * Updates the power generation and ramping speed of a particular facility's div element
+     * 
+     * @param {Object} data The new data for this facility
+     * @param {number} data.power_generation The maximum power output for this facility, in units per watts
+     * @param {number} data.ramping_speed The ramping speed for this facility, in watts per minute
+     * @param {HTMLElement} div The HTML element corresponding to the this facility
+     */
     function update_power_generating_facilities_data(data, div) {
         // This data is shared only with power and storage facilities
         div.querySelector("#power_generation").innerHTML = format_power(data.power_generation);
@@ -329,15 +369,23 @@ socket.on("update_page_data", function (pages_data) {
             div.querySelector("#ramping_speed").innerHTML = format_power(data.ramping_speed) + "/min";
         }
     }
+    /**
+     * Updates the level of a particular facility's div element
+     * 
+     * @param {Object} data The new data for this facility
+     * @param {string} data.name The name of this facility
+     * @param {number} data.level The level for this facility
+     * @param {HTMLElement} div The HTML element corresponding to the this facility
+     */
     function update_level_data(data, div) {
         // Shared among functional facilities and technologies
-        // TODO: verify that lvlup_display is not overwriting or contradicting what is going on here
         div.querySelector("#lvl").innerHTML = data.level;
         if (data.name != "mathematics") {
             div.querySelector("#upgrade").innerHTML = "lvl " + (data.level - 1) + " -> lvl " + data.level;
         }
     }
     if (path == "power_facilities" && "power_facilities" in pages_data) {
+        // The page for power facilities is currently open, and new relevant data was sent by the server
         let power_facilities_data = pages_data.power_facilities;
         for (let data of power_facilities_data) {
             let div = document.getElementById(data.name);
@@ -367,6 +415,7 @@ socket.on("update_page_data", function (pages_data) {
         }
     }
     if (path == "storage_facilities" && "storage_facilities" in pages_data) {
+        // The page for storage facilities is currently open, and new relevant data was sent by the server
         let storage_facilities_data = pages_data.storage_facilities;
         for (let data of storage_facilities_data) {
             let div = document.getElementById(data.name);
@@ -379,6 +428,7 @@ socket.on("update_page_data", function (pages_data) {
         }
     }
     if (path == "extraction_facilities" && "extraction_facilities" in pages_data) {
+        // The page for extraction facilities is currently open, and new relevant data was sent by the server
         let extraction_facilities_data = pages_data.extraction_facilities;
         for (let data of extraction_facilities_data) {
             let div = document.getElementById(data.name);
@@ -392,6 +442,7 @@ socket.on("update_page_data", function (pages_data) {
         }
     }
     if (path == "functional_facilities" && "functional_facilities" in pages_data) {
+        // The page for functional facilities is currently open, and new relevant data was sent by the server
         let functional_facilities_data = pages_data.functional_facilities;
         for (let data of functional_facilities_data) {
             let div = document.getElementById(data.name);
@@ -440,11 +491,24 @@ socket.on("update_page_data", function (pages_data) {
         }
     }
     if (path == "technology" && "technologies" in pages_data) {
+        // The page for technologies is currently open, and new relevant data was sent by the server
         let technologies = pages_data.technologies;
         for (let data of technologies) {
             let div = document.getElementById(data.name);
             update_base_data(data, div, on_technologies_page = true);
             update_level_data(data, div);
+            /**
+             * Modifies the corresponding technology's effect table for a particular entry determined by `key`
+             * 
+             * @param {string} key the name of the key in the data object to update, also the ID of the HTML element to 
+             * update
+             * @param {string} [sign="+"] The sign to use, prepended to the data
+             * @param {number} [precision=0] if rounding is enabled, the number of significant digits to show
+             * @param {string} [suffix="%"] Appended at the end fo the data
+             * @param {boolean} [round_value=true] Enables rounding
+             * @param {string} [hover_info=null] Text to show on hoover, if applicable
+             * @returns 
+             */
             function effect_helper(key, sign = "+", precision = 0, suffix = "%", round_value = true, hover_info = null) {
                 if (data[key] == null) {
                     return;
