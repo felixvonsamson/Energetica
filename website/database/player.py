@@ -132,6 +132,13 @@ class Player(db.Model, UserMixin):
     active_facilities = db.relationship("ActiveFacility", backref="player", lazy="dynamic")
     climate_events = db.relationship("ClimateEventRecovery", backref="player")
 
+    _buffered_data_for_power_facilities_page = None
+    _buffered_data_for_storage_facilities_page = None
+    _buffered_data_for_extraction_facilities_page = None
+    _buffered_data_for_functional_facilities_page = None
+    _buffered_data_for_technologies_page = None
+    _buffered_data_for_resource_market_page = None
+
     def change_graph_view(self, view):
         """Helper method to set the network graph view of the player (basic/normal/expert)"""
         self.graph_view = view
@@ -167,9 +174,9 @@ class Player(db.Model, UserMixin):
         else:
             return priority_list
 
-    def write_list(self, attr, list):
+    def write_list(self, attr, list_data):
         """Helper method that transforms a list into a sting in order to store it in the player database"""
-        setattr(self, attr, ",".join(map(str, list)))
+        setattr(self, attr, ",".join(map(str, list_data)))
 
     def add_to_list(self, attr, value):
         """Helper method that adds an element to a list stored as a string in the player database"""
@@ -583,6 +590,90 @@ class Player(db.Model, UserMixin):
             "storage_facilities": get_facility_data(engine.storage_facilities),
             "extraction_facilities": get_facility_data(engine.extraction_facilities),
         }
+
+    def invalidate_recompute_and_dispatch_data_for_pages(
+        self,
+        power_facilities=False,
+        storage_facilities=False,
+        extraction_facilities=False,
+        functional_facilities=False,
+        technologies=False,
+        resource_market=False,
+    ):
+        """
+        Signal to all instances of clients for this player that there is possibly new data for the specified page.
+        This function will invalidate the data for all corresponding arguments that are set to True.
+        """
+        if power_facilities:
+            self._buffered_data_for_power_facilities_page = None
+        if storage_facilities:
+            self._buffered_data_for_storage_facilities_page = None
+        if extraction_facilities:
+            self._buffered_data_for_extraction_facilities_page = None
+        if functional_facilities:
+            self._buffered_data_for_functional_facilities_page = None
+        if technologies:
+            self._buffered_data_for_technologies_page = None
+        if resource_market:
+            self._buffered_data_for_resource_market_page = None
+        engine = current_app.config["engine"]
+        if engine.clients[self.id]:
+            # or engine.websocket_dict[self.id]:
+            pages_data = {}
+            if power_facilities:
+                pages_data |= {"power_facilities": self.get_packaged_data_for_power_facilities_page()}
+            if storage_facilities:
+                pages_data |= {"storage_facilities": self.get_packaged_data_for_storage_facilities_page()}
+            if extraction_facilities:
+                pages_data |= {"extraction_facilities": self.get_packaged_data_for_extraction_facilities_page()}
+            if functional_facilities:
+                pages_data |= {"functional_facilities": self.get_packaged_data_for_functional_facilities_page()}
+            if technologies:
+                pages_data |= {"technologies": self.get_packaged_data_for_technologies_page()}
+            # if resource_market:
+            #     pages_data |= {"power_facilities": self.get_packaged_data_for_power_facilities_page()}
+            self.emit("update_page_data", pages_data)
+            # TODO: update clients over websocket
+
+    def get_packaged_data_for_power_facilities_page(self):
+        """Get buffered data or recompute"""
+        from website import technology_effects
+
+        if self._buffered_data_for_power_facilities_page is None:
+            self._buffered_data_for_power_facilities_page = technology_effects.package_power_facilities(self)
+        return self._buffered_data_for_power_facilities_page
+
+    def get_packaged_data_for_storage_facilities_page(self):
+        """Get buffered data or recompute"""
+        from website import technology_effects
+
+        if self._buffered_data_for_storage_facilities_page is None:
+            self._buffered_data_for_storage_facilities_page = technology_effects.package_storage_facilities(self)
+        return self._buffered_data_for_storage_facilities_page
+
+    def get_packaged_data_for_extraction_facilities_page(self):
+        """Get buffered data or recompute"""
+        from website import technology_effects
+
+        if self._buffered_data_for_extraction_facilities_page is None:
+            self._buffered_data_for_extraction_facilities_page = technology_effects.package_extraction_facilities(self)
+        return self._buffered_data_for_extraction_facilities_page
+
+    def get_packaged_data_for_functional_facilities_page(self):
+        """Get buffered data or recompute"""
+        from website import technology_effects
+
+        if self._buffered_data_for_functional_facilities_page is None:
+            self._buffered_data_for_functional_facilities_page = technology_effects.package_functional_facilities(self)
+        return self._buffered_data_for_functional_facilities_page
+
+    def get_packaged_data_for_technologies_page(self):
+        """Get buffered data or recompute"""
+        from website import technology_effects
+
+        if self._buffered_data_for_technologies_page is None:
+            self._buffered_data_for_technologies_page = technology_effects.package_available_technologies(self)
+        return self._buffered_data_for_technologies_page
 
 
 class Network(db.Model):

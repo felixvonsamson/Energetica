@@ -52,7 +52,7 @@ def state_update(engine, app):
     if engine.data["total_t"] % (60 / engine.clock_time) == 0:
         with open("instance/engine_data.pck", "wb") as file:
             pickle.dump(engine.data, file)
-        with tarfile.open(f"checkpoints/checkpoint_{engine.data["total_t"]}.tar.gz", "w:gz") as tar:
+        with tarfile.open(f"checkpoints/checkpoint_{engine.data['total_t']}.tar.gz", "w:gz") as tar:
             tar.add("instance/")
     with app.app_context():
         # TODO: perhaps only run the below code conditionally on there being active ws connections

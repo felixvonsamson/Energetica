@@ -2,8 +2,7 @@
 {% block title %}
   Power facilities
 {% endblock title %}
-{% block content
-  %}
+{% block content %}
   <div class="flex-row huge title">
     Power facilities
     <div class="pine info_icon_container"
@@ -57,7 +56,7 @@
                 <i class="fa fa-wikipedia-w" aria-hidden="true"></i>
               </a>
               {# Construction Cost #}
-              <span class="money_font"></span>
+              <span id="price" class="money_font"></span>
               <script>document.currentScript.previousElementSibling.innerHTML = format_money_long({{ facility_data.price }});</script>
             </div>
             <div class="infobox">
@@ -101,12 +100,14 @@
                 {% endfor %}
               </div>
               {# Requirements #}
-              {% if facility_data.requirements_status != "satisfied" %}
-                <div class="infobox requirements" id="requirements">
+              <div class="infobox requirements"
+                   {% if facility_data.requirements_status == "satisfied" %}style="display:none"{% endif %}" 
+                   id="requirements">
+                {% if facility_data.requirements_status != "satisfied" %}
                   <div>
                     <strong>Unlock with :</strong>
                     <br>
-                    <ul class="navbar-nav">
+                    <ul id="requirements_list" class="navbar-nav">
                       {% for requirement in facility_data["requirements"] %}
                         {% if requirement.name == "mechanical_engineering" %}
                           {% set tech_name = "Mech. engineering" %}
@@ -119,8 +120,8 @@
                       {% endfor %}
                     </ul>
                   </div>
-                </div>
-              {% endif %}
+                {% endif %}
+              </div>
             </div>
           </div>
         </div>
@@ -128,12 +129,12 @@
         <div id="constructionContent" class="hidden">
           <div class="flex-col construction_button_container hidden">
             {% if facility_data.requirements_status == "unsatisfied" %}
-              <b class="padding medium margin txt_center white txt-red"
+              <b id="construction_button" class="padding medium margin txt_center white txt-red"
                  onclick="start_construction('{{ facility }}', 'Power facilities');">
                 Locked
               </b>
             {% else %}
-              <b class="padding medium button margin txt_center white"
+              <b id="construction_button" class="padding medium button margin txt_center white"
                  onclick="start_construction('{{ facility }}', 'Power facilities');">
                 Start construction
               </b>
@@ -142,19 +143,19 @@
           <div class="construction_info">
             <span class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <strong></strong>
+              <strong class="construction_time"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_duration({{ facility_data.construction_time }});</script>
               <span class="popup_info small">Duration in-game (real)</span>
             </span>
             <span class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <strong></strong>
+              <strong class="construction_power"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.construction_power }});</script>
               <span class="popup_info small">Power consumption</span>
             </span>
             <span class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <strong></strong>
+              <strong class="construction_pollution"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO<sub>2</sub>";</script>
               <span class="popup_info small">CO<sub>2</sub> emissions</span>
             </span>
@@ -166,12 +167,12 @@
         <div id="constructionContent_smartphone" class="hidden margin">
           <div class="flex-col">
             {% if facility_data.requirements_status == "unsatisfied" %}
-              <b class="padding medium margin txt_center white txt-red"
+              <b id="construction_button_mobile" class="padding medium margin txt_center white txt-red"
                  onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
                 Locked
               </b>
             {% else %}
-              <b class="padding medium button margin txt_center white"
+              <b id="construction_button_mobile" class="padding medium button margin txt_center white"
                  onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
                 Start construction
               </b>
@@ -180,19 +181,19 @@
           <div class="construction_info">
             <span class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <strong></strong>
+              <strong class="construction_time"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_duration({{ facility_data.construction_time }});</script>
               <span class="popup_info small">Duration in-game (real)</span>
             </span>
             <span class="hover_info">
               <i class="fa fa-bolt"></i>&ensp;
-              <strong></strong>
+              <strong class="construction_power"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.construction_power }});</script>
               <span class="popup_info small">Power consumption</span>
             </span>
             <span class="hover_info">
               <i class="fa fa-cloud"></i>&ensp;
-              <strong></strong>
+              <strong class="construction_pollution"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO<sub>2</sub>";</script>
               <span class="popup_info small">CO<sub>2</sub> emissions</span>
             </span>
@@ -206,7 +207,7 @@
             <tr>
               <td>Max generation</td>
               <td class="txt_center">
-                <strong></strong>
+                <strong id="power_generation"></strong>
                 <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.power_generation }});</script>
               </td>
             </tr>
@@ -215,7 +216,7 @@
               <tr>
                 <td>Ramping speed</td>
                 <td class="txt_center">
-                  <strong></strong>
+                  <strong id="ramping_speed"></strong>
                   <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.ramping_speed }}) + "/min";</script>
                 </td>
               </tr>
@@ -224,7 +225,7 @@
             <tr>
               <td>Operation cost</td>
               <td class="txt_center">
-                <strong></strong>
+                <strong id="operating_costs"></strong>
                 <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ facility_data.operating_costs }}) + "/h";</script>
               </td>
             </tr>
@@ -248,18 +249,18 @@
                     <td>{{ resource[0]|upper|upper + resource[1:] }} consumption</td>
                   {% endif %}
                   <td class="txt_center">
-                    <strong>
+                    <strong id="{{resource}}_consumption">
                       {% if resource == "uranium" %}
                         {% if facility == "nuclear_reactor" %}
                           {{ (1000 * amount)|int }} g/MWh
                         {% else %}
                           {{ (1000 * amount)|round(2) }} g/MWh
                         {% endif %}
-                      {% else %}
-                        <span></span>
-                        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ amount }}) + "/MWh";</script>
                       {% endif %}
                     </strong>
+                    {% if resource != "uranium" %}
+                      <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ amount }}) + "/MWh";</script>
+                    {% endif %}
                   </td>
                 </tr>
               {% endif %}
@@ -269,7 +270,7 @@
               <tr>
                 <td>CO<sub>2</sub> emissions</td>
                 <td class="txt_center">
-                  <strong></strong>
+                  <strong id="pollution"></strong>
                   <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.pollution }}) + "/MWh";</script>
                 </td>
               </tr>
@@ -278,7 +279,7 @@
             <tr>
               <td>Lifespan</td>
               <td class="txt_center">
-                <strong></strong>
+                <strong id="lifespan"></strong>
                 <script>document.currentScript.previousElementSibling.innerHTML = format_days({{ facility_data.lifespan }}) + " days";</script>
               </td>
             </tr>
