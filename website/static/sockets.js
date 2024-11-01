@@ -306,13 +306,13 @@ socket.on("update_page_data", function (pages_data) {
         construction_button = div.querySelector("#construction_button");
         construction_button_mobile = div.querySelector("#construction_button_mobile");
         if (data.requirements_status == "unsatisfied") {
-            construction_button.class = "padding medium margin txt_center white txt-red";
-            construction_button_mobile.class = "padding medium margin txt_center white txt-red";
+            construction_button.className = "padding medium margin txt_center white txt-red";
+            construction_button_mobile.className = "padding medium margin txt_center white txt-red";
             construction_button.innerHTML = "Locked";
             construction_button_mobile.innerHTML = "Locked";
         } else {
-            construction_button.class = "padding medium button margin txt_center white";
-            construction_button_mobile.class = "padding medium button margin txt_center white";
+            construction_button.className = "padding medium button margin txt_center white";
+            construction_button_mobile.className = "padding medium button margin txt_center white";
             if (!on_technologies_page) {
                 construction_button.innerHTML = "Start construction";
                 construction_button_mobile.innerHTML = "Start construction";
