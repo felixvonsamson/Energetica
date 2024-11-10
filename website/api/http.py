@@ -10,7 +10,6 @@ import numpy as np
 from flask import Blueprint, Response, current_app, flash, g, jsonify, redirect, request
 from flask_login import current_user, login_required
 
-# from gevent import getcurrent
 import website.utils.assets
 import website.utils.chat
 import website.utils.misc
@@ -18,15 +17,18 @@ import website.utils.network
 import website.utils.resource_market
 from website.config.assets import wind_power_curve
 from website.database.map import Hex
+from website.database.messages import Chat
 from website.database.player import Network, Player
+
+# from gevent import getcurrent
+from website.database.player_assets import ActiveFacility, OngoingConstruction, ResourceOnSale, Shipment
+from website.game_engine import Confirm, GameException
 from website.technology_effects import get_current_technology_values
 from website.utils import misc
+from website.utils.assets import package_projects_data
+from website.utils.misc import flash_error
 
 http = Blueprint("http", __name__)
-
-
-class GameException(Exception):
-    pass
 
 
 def log_action(func):
@@ -38,8 +40,8 @@ def log_action(func):
         try:
             response = func(*args, **kwargs)
             response, status_code = response if isinstance(response, tuple) else (response, 200)
-        except GameException as exp:
-            response, status_code = jsonify({"response": str(exp)}), 403
+        except GameException as excp:
+            response, status_code = jsonify({"response": excp.exception_type, **excp.kwargs}), 403
         # print(f"Greenlet ID {id(getcurrent())}: done")
         if request.method == "POST":
             log_entry = {
@@ -154,7 +156,7 @@ def get_chat_messages():
 def get_chat_list():
     """gets the list of chats for the current player"""
     response = current_user.package_chat_list()
-    return response
+    return jsonify({"response": "success"} + response)
 
 
 @http.route("/get_resource_data", methods=["GET"])
@@ -356,8 +358,13 @@ def submit_quiz_answer():
     """Submits the daily quiz answer from a player"""
     request_data = request.get_json()
     answer = request_data["answer"]
-    response = website.utils.misc.submit_quiz_answer(g.engine, current_user, answer)
-    return response
+    answer_correct = website.utils.misc.submit_quiz_answer(g.engine, current_user, answer)
+    return jsonify(
+        {
+            "response": "correct" if answer_correct else "incorrect",
+            "question_data": get_quiz_question(g.engine, current_user),
+        }
+    )
 
 
 @http.route("/get_active_facilities", methods=["GET"])
@@ -372,31 +379,47 @@ def choose_location():
     """this function is executed when a player choses a location"""
     request_data = request.get_json()
     selected_id = request_data["selected_id"]
+    if selected_id < 0 or selected_id >= Hex.query.count():
+        return jsonify({"resonse": "TileNotExist"})  # TODO
     location = Hex.query.get(selected_id + 1)
-    confirm_location_response = misc.confirm_location(engine=g.engine, player=current_user, location=location)
-    return confirm_location_response
+    misc.confirm_location(engine=g.engine, player=current_user, location=location)
+    return jsonify({"response": "success"})
 
 
-@http.route("/request_start_project", methods=["POST"])
+@http.route("/request_queue_project", methods=["POST"])
 @log_action
-def request_start_project():
+def request_queue_project():
     """
     this function is executed when a player does any of the following:
-    * initiates the construction or upgrades a building or facility
+    * initiates the construction or upgrades a building or an asset
     * starts a technology research
     """
     request_data = request.get_json()
-    facility = request_data["facility"]
-    family = request_data["family"]
+    asset = request_data["facility"]
     force = request_data["force"]
-    response = website.utils.assets.start_project(
-        engine=g.engine,
-        player=current_user,
-        asset=facility,
-        family=family,
-        force=force,
+    try:
+        website.utils.assets.queue_project(
+            engine=g.engine,
+            player=current_user,
+            asset=asset,
+            force=force,
+        )
+    except Confirm as confirm:
+        return jsonify(
+            {
+                "response": "areYouSure",
+                "capacity": confirm.capacity,
+                "construction_power": confirm.construction_power,
+            }
+        ), 300
+
+    return jsonify(
+        {
+            "response": "success",
+            "money": current_user.money,
+            "constructions": package_projects_data(current_user),
+        }
     )
-    return response
 
 
 @http.route("/request_cancel_project", methods=["POST"])
@@ -405,19 +428,44 @@ def request_cancel_project():
     """This function is executed when a player cancels an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = int(request_data["id"])
+    construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
+    if construction is None or construction.player_id != current_user.id:
+        return jsonify({"response": "ConstructionNotFound"}), 404
     force = request_data["force"]
-    response = website.utils.assets.cancel_project(player=current_user, construction_id=construction_id, force=force)
-    return response
+    try:
+        website.utils.assets.cancel_project(player=current_user, construction=construction, force=force)
+    except Confirm as confirm:
+        return jsonify(
+            {
+                "response": "areYouSure",
+                "refund": confirm.refund,
+            }
+        ), 300
+    return jsonify(
+        {
+            "response": "success",
+            "money": current_user.money,
+            "constructions": package_projects_data(current_user),
+        }
+    )
 
 
-@http.route("/request_pause_project", methods=["POST"])
+@http.route("/request_toggle_pause_project", methods=["POST"])
 @log_action
 def request_pause_project():
     """This function is executed when a player pauses or unpauses an ongoing construction or upgrade."""
     request_data = request.get_json()
-    construction_id = request_data["id"]
-    response = website.utils.assets.pause_project(player=current_user, construction_id=construction_id)
-    return response
+    construction_id = int(request_data["id"])
+    construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
+    if construction is None or construction.player_id != current_user.id:
+        return jsonify({"response": "constructionNotFound"}), 404
+    website.utils.assets.toggle_pause_project(player=current_user, construction_id=construction_id)
+    return jsonify(
+        {
+            "response": "success",
+            "constructions": package_projects_data(current_user),
+        }
+    )
 
 
 @http.route("/request_pause_shipment", methods=["POST"])
@@ -426,8 +474,16 @@ def request_pause_shipment():
     """This function is executed when a player pauses or unpauses an ongoing construction or upgrade."""
     request_data = request.get_json()
     shipment_id = request_data["id"]
-    response = website.utils.resource_market.pause_shipment(player=current_user, shipment_id=shipment_id)
-    return response
+    shipment: Shipment = Shipment.query.get(int(shipment_id))
+    if shipment is None or shipment.player_id != current_user.id:
+        return jsonify({"response": "ShipmentNotFound"}), 404
+    website.utils.resource_market.pause_shipment(shipment=shipment)
+    return jsonify(
+        {
+            "response": "success",
+            "shipments": current_user.package_shipments(),
+        }
+    )
 
 
 @http.route("/request_decrease_project_priority", methods=["POST"])
@@ -436,8 +492,16 @@ def request_decrease_project_priority():
     """This function is executed when a player changes the order of ongoing constructions or upgrades."""
     request_data = request.get_json()
     construction_id = request_data["id"]
-    response = website.utils.assets.decrease_project_priority(player=current_user, construction_id=construction_id)
-    return response
+    construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
+    if construction is None or construction.player_id != current_user.id:
+        return jsonify({"response": "ConstructionNotFound"}), 404
+    website.utils.assets.decrease_project_priority(player=current_user, construction_id=construction_id)
+    return jsonify(
+        {
+            "response": "success",
+            "constructions": package_projects_data(current_user),
+        }
+    )
 
 
 @http.route("/request_upgrade_facility", methods=["POST"])
@@ -446,8 +510,11 @@ def request_upgrade_facility():
     """This function is executed when a player wants to upgrades a facility"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    response = website.utils.assets.upgrade_facility(player=current_user, facility_id=facility_id)
-    return response
+    facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
+    if facility is None or facility.player_id != current_user.id:
+        return jsonify({"response": "constructionNotFound"}), 404
+    website.utils.assets.upgrade_facility(player=current_user, facility=facility)
+    return jsonify({"response": "success", "money": current_user.money})
 
 
 @http.route("/request_upgrade_all_of_type", methods=["POST"])
@@ -456,8 +523,11 @@ def request_upgrade_all_of_type():
     """This function is executed when a player wants to upgrades all facilities of a certain type"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    response = website.utils.assets.upgrade_all_of_type(player=current_user, facility_id=facility_id)
-    return response
+    facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
+    if facility is None or facility.player_id != current_user.id:
+        return jsonify({"response": "constructionNotFound"}), 404
+    website.utils.assets.upgrade_all_of_type(player=current_user, facility_name=facility.facility)
+    return jsonify({"response": "success", "money": current_user.money})
 
 
 @http.route("/request_dismantle_facility", methods=["POST"])
@@ -466,7 +536,10 @@ def request_dismantle_facility():
     """This function is executed when a player wants to dismantle a facility"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    response = website.utils.assets.dismantle_facility(player=current_user, facility_id=facility_id)
+    facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
+    if facility is None or facility.player_id != current_user.id:
+        return jsonify({"response": "constructionNotFound"}), 404
+    response = website.utils.assets.dismantle_facility(player=current_user, facility=facility)
     return response
 
 
@@ -476,30 +549,35 @@ def request_dismantle_all_of_type():
     """This function is executed when a player wants to dismantle all facilities of a certain type"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    response = website.utils.assets.dismantle_all_of_type(player=current_user, facility_id=facility_id)
-    return response
+    facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
+    if facility is None or facility.player_id != current_user.id:
+        return jsonify({"response": "constructionNotFound"}), 404
+    website.utils.assets.dismantle_all_of_type(player=current_user, facility_name=facility.facility)
+    return jsonify({"response": "success", "money": current_user.money})
 
 
 @http.route("/change_network_prices", methods=["POST"])
 @log_action
 def change_network_prices():
     """this function is executed when a player changes the prices for anything on the network"""
+    if not current_user.is_in_network:
+        return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
     updated_prices = request_data["prices"]
-    response = website.utils.network.set_network_prices(
-        engine=g.engine, player=current_user, updated_prices=updated_prices
-    )
-    return response
+    website.utils.network.set_network_prices(engine=g.engine, player=current_user, updated_prices=updated_prices)
+    return jsonify({"response": "success"})
 
 
 @http.route("/request_change_facility_priority", methods=["POST"])
 @log_action
 def request_change_facility_priority():
     """this function is executed when a player changes the generation priority"""
+    if "Unlock Network" not in current_user.achievements:
+        return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
     priority = request_data["priority"]
-    response = website.utils.network.change_facility_priority(engine=g.engine, player=current_user, priority=priority)
-    return response
+    website.utils.network.change_facility_priority(engine=g.engine, player=current_user, priority=priority)
+    return jsonify({"response": "success"})
 
 
 @http.route("/put_resource_on_sale", methods=["POST"])
@@ -510,7 +588,16 @@ def put_resource_on_sale():
     resource = request_data["resource"]
     quantity = float(request_data["quantity"]) * 1000
     price = float(request_data["price"]) / 1000
-    website.utils.resource_market.put_resource_on_market(current_user, resource, quantity, price)
+    try:
+        website.utils.resource_market.put_resource_on_market(current_user, resource, quantity, price)
+    except GameException as excp:
+        assert excp.exception_type == "notEnoughResource"
+        flash_error(f"You have not enough {resource} available")
+    flash(
+        f"You put {quantity/1000}t of {resource} on sale for "
+        f"{price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
+        category="message",
+    )
     return redirect("/resource_market", code=303)
 
 
@@ -521,8 +608,31 @@ def buy_resource():
     request_data = request.get_json()
     sale_id = int(request_data["id"])
     quantity = float(request_data["quantity"]) * 1000
-    response = website.utils.resource_market.buy_resource_from_market(current_user, quantity, sale_id)
-    return response
+    sale = ResourceOnSale.query.get(int(sale_id))
+    if sale is None:
+        return jsonify({"response": "saleNotFound"}), 404
+    website.utils.resource_market.buy_resource_from_market(current_user, quantity, sale)
+    if current_user == sale.player:
+        return jsonify(
+            {
+                "response": "removedFromMarket",
+                "quantity": quantity,
+                "available_quantity": sale.quantity,
+                "resource": sale.resource,
+            }
+        )
+    else:
+        return jsonify(
+            {
+                "response": "success",
+                "resource": sale.resource,
+                "total_price": sale.price * quantity,
+                "quantity": quantity,
+                "seller": sale.player.username,
+                "available_quantity": sale.quantity,
+                "shipments": current_user.package_shipments(),
+            }
+        )
 
 
 @http.route("join_network", methods=["POST"])
@@ -532,11 +642,7 @@ def join_network():
     request_data = request.get_json()
     network_name = request_data["choose_network"]
     network = Network.query.filter_by(name=network_name).first()
-    response = website.utils.network.join_network(g.engine, current_user, network)
-    if isinstance(response, tuple):
-        response, _ = response
-    if response.json["response"] != "success":
-        return response
+    website.utils.network.join_network(g.engine, current_user, network)
     flash(f"You joined the network {network_name}", category="message")
     g.engine.log(f"{current_user.username} joined the network {current_user.network.name}")
     return redirect("/network", code=303)
@@ -548,16 +654,8 @@ def create_network():
     """This endpoint is used when a player creates a network"""
     request_data = request.get_json()
     network_name = request_data["network_name"]
-    response = website.utils.network.create_network(g.engine, current_user, network_name)
-    if isinstance(response, tuple):
-        response, _ = response
-    if response.json["response"] == "nameLengthInvalid":
-        flash("Network name must be between 3 and 40 characters", category="error")
-        return redirect("/network", code=303)
-    if response.json["response"] == "nameAlreadyUsed":
-        flash("A network with this name already exists", category="error")
-        return redirect("/network", code=303)
-    flash(f"You created the network {network_name}", category="message")
+    website.utils.network.create_network(g.engine, current_user, network_name)
+    # TODO: flash(f"You created the network {network_name}", category="message")
     return redirect("/network", code=303)
 
 
@@ -566,13 +664,10 @@ def create_network():
 def leave_network():
     """this endpoint is called when a player leaves their network"""
     network = current_user.network
-    full_response = website.utils.network.leave_network(g.engine, current_user)
-    response = full_response[0] if type(full_response) is tuple else full_response
-    if response.json["response"] == "success":
-        flash(f"You left network {network.name}", category="message")
-        return redirect("/network", code=303)
-    else:
-        return full_response
+    if network is None:
+        return jsonify({"response": "notInNetwork"}), 404
+    website.utils.network.leave_network(g.engine, current_user)
+    return redirect("/network", code=303)
 
 
 @http.route("hide_chat_disclaimer", methods=["GET"])
@@ -587,8 +682,9 @@ def create_chat():
     """this endpoint is called when a player creates a chat with one other player"""
     request_data = request.get_json()
     buddy_id = request_data["buddy_id"]
-    response = website.utils.chat.create_chat(current_user, buddy_id)
-    return response
+    buddy = Player.query.get(buddy_id)
+    website.utils.chat.create_chat(current_user, buddy)
+    return jsonify({"response": "success"})
 
 
 @http.route("create_group_chat", methods=["POST"])
@@ -596,9 +692,9 @@ def create_group_chat():
     """this endpoint is called when a player creates a group chat"""
     request_data = request.get_json()
     chat_title = request_data["chat_title"]
-    group_members = request_data["group_members"]
-    response = website.utils.chat.create_group_chat(current_user, chat_title, group_members)
-    return response
+    group_members = [current_user] + list(map(Player.query.get, request_data["group_members"]))
+    website.utils.chat.create_group_chat(current_user, chat_title, group_members)
+    return jsonify({"response": "success"})
 
 
 @http.route("new_message", methods=["POST"])
@@ -606,9 +702,12 @@ def new_message():
     """this endpoint is called when a player writes a new message"""
     request_data = request.get_json()
     message = request_data["new_message"]
-    chat_id = request_data["chat_id"]
-    response = website.utils.chat.add_message(current_user, message, chat_id)
-    return response
+    chat_id = int(request_data["chat_id"])
+    chat = Chat.query.get(chat_id)
+    if chat_id is None:
+        return jsonify({"response": "NoChatID"}), 403
+    website.utils.chat.add_message(current_user, message, chat)
+    return jsonify({"response": "success"})
 
 
 @http.route("change_graph_view", methods=["POST"])

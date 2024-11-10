@@ -85,7 +85,7 @@ function format_seconds(totalSeconds, show_seconds = true) {
 
 // information sent to the server when a new facility is created
 function start_construction(facility, family, force = false) {
-  send_form("/api/request_start_project", {
+  send_form("/api/request_queue_project", {
     facility: facility,
     family: family,
     force: force,
@@ -107,7 +107,7 @@ function start_construction(facility, family, force = false) {
           capacity = raw_data["capacity"];
           construction_power = raw_data["construction_power"];
           are_you_sure_start_construction(facility, family, capacity, construction_power);
-        } else if (response == "notEnoughMoneyError") {
+        } else if (response == "notEnoughMoney") {
           addError("Not enough money");
         } else if (response == "locked") {
           if (family == "Technologies") {
@@ -141,7 +141,7 @@ function cancel_construction(construction_id, force = false) {
             JSON.stringify(raw_data["constructions"])
           );
           refresh_progressBar();
-        } else if (response == "hasDependents") {
+        } else if (response == "HasDependents") {
           let dependents = raw_data["dependents"];
           has_dependents_cancel_construction(construction_id, dependents);
         } else if (response == "areYouSure") {
@@ -156,7 +156,7 @@ function cancel_construction(construction_id, force = false) {
 }
 
 function pause_construction(construction_id) {
-  send_form("/api/request_pause_project", {
+  send_form("/api/request_toggle_pause_project", {
     id: construction_id,
   })
     .then((response) => {

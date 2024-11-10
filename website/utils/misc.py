@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
-from flask import flash, jsonify
+from flask import flash
 from noise import pnoise3
 from pvlib.location import Location
 from scipy.stats import norm
@@ -17,9 +17,11 @@ import website.api.websocket as websocket
 from website import db
 from website.config.assets import river_discharge_seasonal
 from website.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData
+from website.database.map import Hex
 from website.database.messages import Chat, Notification
 from website.database.player import Network, Player
 from website.database.player_assets import ActiveFacility
+from website.game_engine import GameEngine, GameException
 
 # Helper functions and data initialization utilities
 
@@ -204,7 +206,7 @@ def display_new_message(engine, message, chat):
 # Map
 
 
-def confirm_location(engine, player, location):
+def confirm_location(engine: GameEngine, player: Player, location: Hex):
     """
     This function is called when a player choses a location. It returns
     either success or an explanatory error message in the form of a dictionary.
@@ -213,10 +215,11 @@ def confirm_location(engine, player, location):
     """
     if location.player_id is not None:
         # Location already taken
-        return jsonify({"response": "locationOccupied", "by": location.player_id}), 403
+        raise GameException("locationOccupied", by=location.player_id)
     if player.tile is not None:
         # Player has already chosen a location and cannot chose again
-        return jsonify({"response": "choiceUnmodifiable"}), 403
+        raise GameException("choiceUnmodifiable")
+
     # Checks have succeeded, proceed
     location.player_id = player.id
     eol = engine.data["total_t"] + math.ceil(
@@ -244,28 +247,28 @@ def confirm_location(engine, player, location):
     engine.data["current_data"][player.id].new_subcategory("emissions", "steam_engine")
     websocket.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
-    return jsonify({"response": "success"})
 
 
 # Quiz
 
 
-def submit_quiz_answer(engine, player, answer):
+def submit_quiz_answer(engine: GameEngine, player: Player, answer: str):
     """
     This function is called when a player submits an answer to a quiz question.
-    It returns the new data for the quiz question in the form of a dictionary.
+    It returns True if the answer was correct, False otherwise.
     """
     quiz_data = engine.data["daily_question"]
     if player.id in quiz_data["player_answers"]:
-        return jsonify({"response": "quizAlreadyAnswered"}), 403
+        raise GameException("quizAlreadyAnswered")
     quiz_data["player_answers"][player.id] = answer
     if answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":
         player.xp += 1
         db.session.commit()
         engine.log(f"{player.username} answered the quiz correctly")
-        return jsonify({"response": "correct", "question_data": get_quiz_question(engine, player)})
-    engine.log(f"{player.username} answered the quiz incorrectly")
-    return jsonify({"response": "incorrect", "question_data": get_quiz_question(engine, player)})
+        return True
+    else:
+        engine.log(f"{player.username} answered the quiz incorrectly")
+        return False
 
 
 def get_quiz_question(engine, player):

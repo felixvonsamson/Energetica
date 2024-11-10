@@ -92,7 +92,8 @@ def check_events_completion(engine):
         ActiveFacility.end_of_life <= engine.data["total_t"]
     ).all()
     for facility in eolt_facilities:
-        remove_asset(facility.player_id, facility)
+        player = Player.query.get(facility.player_id)
+        remove_asset(player, facility)
 
     # check end of climate events
     finished_climate_events: List[ClimateEventRecovery] = ClimateEventRecovery.query.filter(

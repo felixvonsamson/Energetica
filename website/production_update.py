@@ -332,7 +332,7 @@ def calculate_generation_without_market(engine, new_values, player):
     # generation of non controllable facilities is calculated from weather data
     renewables_generation(engine, player, player_cap, generation)
     minimal_generation(engine, player, player_cap, generation, resource_reservations)
-    facilities = engine.storage_facilities + engine.power_facilities
+    facilities = engine.storage_facilities | engine.power_facilities
     # Obligatory generation is put on the internal market at a price of -5
     for facility in facilities:
         if player_cap[facility] is not None:
@@ -358,7 +358,7 @@ def calculate_generation_without_market(engine, new_values, player):
 
     resource_reservations = reset_resource_reservations()
     # offer additional capacities of facilities on the internal market
-    for facility in engine.storage_facilities + engine.controllable_facilities:
+    for facility in engine.storage_facilities | engine.controllable_facilities:
         if player_cap[facility] is not None:
             max_prod = calculate_prod(
                 engine,
@@ -719,7 +719,7 @@ def calculate_prod(
 
 def minimal_generation(engine, player, player_cap, generation, resource_reservations):
     """Calculate the minimal generation of controllable facilities"""
-    for facility in engine.controllable_facilities + engine.storage_facilities:
+    for facility in engine.controllable_facilities | engine.storage_facilities:
         if player_cap[facility] is not None:
             generation[facility] = calculate_prod(
                 engine,
@@ -836,12 +836,12 @@ def resources_and_pollution(engine, new_values, player):
     construction_emissions(engine, new_values, player)
 
     # O&M costs
-    for facility in engine.power_facilities + engine.storage_facilities + engine.extraction_facilities:
+    for facility in engine.power_facilities | engine.storage_facilities | engine.extraction_facilities:
         if player_cap[facility] is not None:
             # the proportion of fixed cost is 100% for renewable and storage facilities,
             # 50% for nuclear reactors and 20% for the rest
             operational_cost = player_cap[facility]["O&M_cost"]
-            if facility in engine.controllable_facilities + engine.extraction_facilities:
+            if facility in engine.controllable_facilities | engine.extraction_facilities:
                 fc = 0.2
                 if facility in ["nuclear_reactor", "nuclear_reactor_gen4"]:
                     fc = 0.5

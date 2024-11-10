@@ -74,6 +74,7 @@ def simulate(app, port, actions, log_every_k_ticks=10000, checkpoint_ticks=[]):
                         print("\033[33m" + response.text + "\033[0m")
                     elif response.status_code // 100 == 5:
                         print("\033[31m" + "Server error, look at the stack above.\033[0m")
+                        break
             try:
                 verify(engine)
             except AssertionError:

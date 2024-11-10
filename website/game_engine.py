@@ -29,7 +29,7 @@ class GameEngine(object):
         self.init_loggers()
         self.log("engine created")
 
-        self.power_facilities = [
+        self.power_facilities = {
             "steam_engine",
             "windmill",
             "watermill",
@@ -44,34 +44,34 @@ class GameEngine(object):
             "PV_solar",
             "offshore_wind_turbine",
             "nuclear_reactor_gen4",
-        ]
+        }
 
-        self.extraction_facilities = [
+        self.extraction_facilities = {
             "coal_mine",
             "gas_drilling_site",
             "uranium_mine",
-        ]
+        }
 
-        self.extractable_resources = ["coal", "gas", "uranium"]
-        self.storage_facilities = [
+        self.extractable_resources = {"coal", "gas", "uranium"}
+        self.storage_facilities = {
             "small_pumped_hydro",
             "molten_salt",
             "large_pumped_hydro",
             "hydrogen_storage",
             "lithium_ion_batteries",
             "solid_state_batteries",
-        ]
+        }
 
-        self.controllable_facilities = [
+        self.controllable_facilities = {
             "steam_engine",
             "nuclear_reactor",
             "nuclear_reactor_gen4",
             "combined_cycle",
             "gas_burner",
             "coal_burner",
-        ]
+        }
 
-        self.renewables = [
+        self.renewables = {
             "small_water_dam",
             "large_water_dam",
             "watermill",
@@ -80,16 +80,16 @@ class GameEngine(object):
             "windmill",
             "CSP_solar",
             "PV_solar",
-        ]
+        }
 
-        self.functional_facilities = [
+        self.functional_facilities = {
             "industry",
             "laboratory",
             "warehouse",
             "carbon_capture",
-        ]
+        }
 
-        self.technologies = [
+        self.technologies = {
             "mathematics",
             "mechanical_engineering",
             "thermodynamics",
@@ -102,7 +102,33 @@ class GameEngine(object):
             "aerodynamics",
             "chemistry",
             "nuclear_engineering",
-        ]
+        }
+
+        self.facility_types = (
+            self.power_facilities | self.extraction_facilities | self.storage_facilities | self.functional_facilities
+        )
+        self.all_asset_types = self.facility_types | self.technologies
+
+        self.price_keys = (
+            self.controllable_facilities
+            | self.storage_facilities
+            | {
+                "buy_small_pumped_hydro",
+                "buy_molten_salt",
+                "buy_large_pumped_hydro",
+                "buy_hydrogen_storage",
+                "buy_lithium_ion_batteries",
+                "buy_solid_state_batteries",
+                "buy_industry",
+                "buy_construction",
+                "buy_research",
+                "buy_transport",
+                "buy_coal_mine",
+                "buy_gas_drilling_site",
+                "buy_uranium_mine",
+                "buy_carbon_capture",
+            }
+        )
 
         self.data = {}
         self.data["random_seed"] = random_seed
@@ -197,3 +223,16 @@ class GameEngine(object):
             self.data["daily_question"] = csv_reader[question_id]
             self.data["daily_question"]["id"] = question_id
             self.data["daily_question"]["player_answers"] = {}
+
+
+class GameException(Exception):
+    def __init__(self, exception_type, **kwargs):
+        self.exception_type = exception_type
+        self.kwargs = kwargs
+        Exception.__init__(self, exception_type)
+
+
+class Confirm(Exception):
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+        Exception.__init__(self, "Please confirm this action.")
