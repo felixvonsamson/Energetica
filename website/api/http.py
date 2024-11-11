@@ -459,7 +459,7 @@ def request_pause_project():
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
     if construction is None or construction.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
-    website.utils.assets.toggle_pause_project(player=current_user, construction_id=construction_id)
+    website.utils.assets.toggle_pause_project(player=current_user, construction=construction)
     return jsonify(
         {
             "response": "success",
@@ -495,7 +495,7 @@ def request_decrease_project_priority():
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
     if construction is None or construction.player_id != current_user.id:
         return jsonify({"response": "ConstructionNotFound"}), 404
-    website.utils.assets.decrease_project_priority(player=current_user, construction_id=construction_id)
+    website.utils.assets.decrease_project_priority(player=current_user, construction=construction)
     return jsonify(
         {
             "response": "success",

@@ -108,7 +108,17 @@ class GameEngine(object):
             self.power_facilities | self.extraction_facilities | self.storage_facilities | self.functional_facilities
         )
         self.all_asset_types = self.facility_types | self.technologies
-
+        self.asset_family_by_type = {
+            asset_type: asset_family
+            for asset_family in [
+                "power_facilities",
+                "extraction_facilities",
+                "storage_facilities",
+                "functional_facilities",
+                "technologies",
+            ]
+            for asset_type in getattr(self, asset_family)
+        }
         self.price_keys = (
             self.controllable_facilities
             | self.storage_facilities

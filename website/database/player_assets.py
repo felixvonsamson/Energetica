@@ -10,6 +10,7 @@ class OngoingConstruction(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
+    family = db.Column(db.String(50))
     # to assign the thing to the correct page
     start_time = db.Column(db.Integer)  # in game ticks
     duration = db.Column(db.Integer)  # in game ticks

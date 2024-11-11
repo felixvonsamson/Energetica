@@ -59,7 +59,7 @@ def price_multiplier(player: Player, asset: str) -> float:
             mlt *= special_multiplier(const_config[research]["price_factor"], getattr(player, research))
     # level based facilities and technologies
     engine: GameEngine = current_app.config["engine"]
-    if asset in engine.functional_facilities + engine.technologies:
+    if asset in engine.functional_facilities | engine.technologies:
         asset_next_level = next_level(player, asset)
         mlt *= const_config[asset]["price_multiplier"] ** (asset_next_level - 1)
         # knowledge spilling for technologies
@@ -301,7 +301,7 @@ def construction_time(player: Player, facility) -> float:
     # transforming in game seconds in ticks
     duration = const_config[facility]["base_construction_time"] / engine.in_game_seconds_per_tick
     # construction time increases with higher levels
-    if facility in engine.functional_facilities + engine.technologies:
+    if facility in engine.functional_facilities | engine.technologies:
         level_with_constructions = OngoingConstruction.query.filter_by(name=facility, player_id=player.id).count()
         duration *= const_config[facility]["price_multiplier"] ** (0.6 * level_with_constructions)
         # knowledge spillover and laboratory time reduction
@@ -313,10 +313,10 @@ def construction_time(player: Player, facility) -> float:
     if (
         facility
         in engine.storage_facilities
-        + engine.controllable_facilities
-        + engine.renewables
-        + engine.extraction_facilities
-        + engine.functional_facilities
+        | engine.controllable_facilities
+        | engine.renewables
+        | engine.extraction_facilities
+        | engine.functional_facilities
     ):
         duration *= const_config["building_technology"]["time_factor"] ** player.building_technology
     return math.ceil(duration)
@@ -361,7 +361,7 @@ def construction_power(player: Player, facility) -> float:
         * 3600
     )
     # construction power increases with higher levels
-    if facility in engine.functional_facilities + engine.technologies:
+    if facility in engine.functional_facilities | engine.technologies:
         facility_next_level = next_level(player, facility)
         power *= const_config[facility]["price_multiplier"] ** (facility_next_level - 1)
         # knowledge spillover

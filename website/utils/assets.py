@@ -57,24 +57,24 @@ def finish_construction(construction: OngoingConstruction):
     elif ActiveFacility.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
         # initialize array for facility if it is the first one built
         current_data = engine.data["current_data"][player.id]
-        if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
+        if construction.name in engine.storage_facilities | engine.power_facilities | engine.extraction_facilities:
             current_data.new_subcategory("op_costs", construction.name)
-        if construction.name in engine.storage_facilities + engine.power_facilities:
+        if construction.name in engine.storage_facilities | engine.power_facilities:
             current_data.new_subcategory("generation", construction.name)
-        if construction.name in engine.storage_facilities + engine.extraction_facilities:
+        if construction.name in engine.storage_facilities | engine.extraction_facilities:
             current_data.new_subcategory("demand", construction.name)
         if construction.name in engine.storage_facilities:
             current_data.new_subcategory("storage", construction.name)
-        if construction.name in engine.controllable_facilities + engine.extraction_facilities:
+        if construction.name in engine.controllable_facilities | engine.extraction_facilities:
             current_data.new_subcategory("emissions", construction.name)
             engine.data["player_cumul_emissions"][player.id].new_category(construction.name)
-        if construction.name in engine.extraction_facilities + engine.storage_facilities:
+        if construction.name in engine.extraction_facilities | engine.storage_facilities:
             player.add_to_list("demand_priorities", construction.name)
             reorder_facility_priorities(engine, player)
         if construction.name in engine.renewables:
             player.add_to_list("self_consumption_priority", construction.name)
             reorder_facility_priorities(engine, player)
-        if construction.name in engine.storage_facilities + engine.controllable_facilities:
+        if construction.name in engine.storage_facilities | engine.controllable_facilities:
             player.add_to_list("rest_of_priorities", construction.name)
             reorder_facility_priorities(engine, player)
 
@@ -221,7 +221,7 @@ def upgrade_facility(player, facility):
                 facility.multiplier_3 = technology_effects.multiplier_3(player, facility.facility)
         db.session.commit()
 
-    if facility.facility in engine.technologies + engine.functional_facilities or not is_upgradable(facility):
+    if facility.facility in (engine.technologies | engine.functional_facilities) or not is_upgradable(facility):
         raise GameException("notUpgradable")
 
     const_config = engine.const_config["assets"][facility.facility]
@@ -372,7 +372,7 @@ def queue_project(engine: GameEngine, player: Player, asset: str, force=False):
         if asset not in engine.technologies and player.available_construction_workers() == 0:
             return False  # No available workers
         if (
-            asset in engine.technologies + engine.functional_facilities
+            asset in engine.technologies | engine.functional_facilities
             and OngoingConstruction.query.filter_by(name=asset, player_id=player.id).count() > 0
         ):
             return False  # Another level is already ongoing
@@ -383,6 +383,7 @@ def queue_project(engine: GameEngine, player: Player, asset: str, force=False):
     player.money -= real_price
     new_construction: OngoingConstruction = OngoingConstruction(
         name=asset,
+        family=engine.asset_family_by_type[asset],
         start_time=engine.data["total_t"],
         duration=duration,
         suspension_time=suspension_time,

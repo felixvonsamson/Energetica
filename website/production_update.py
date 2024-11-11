@@ -874,7 +874,7 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
         demand["industry"] = satisfaction
         return
     demand[demand_type] = satisfaction
-    if demand_type in engine.extraction_facilities + engine.storage_facilities + ["carbon_capture"]:
+    if demand_type in engine.extraction_facilities | engine.storage_facilities | {"carbon_capture"}:
         return
     if satisfaction > (1 + 0.0008 * engine.in_game_seconds_per_tick) * past_data.get_last_data("demand", demand_type):
         return
