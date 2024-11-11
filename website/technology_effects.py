@@ -471,9 +471,9 @@ def get_current_technology_values(player: Player):
     dict = {}
     for facility in (
         engine.power_facilities
-        + engine.storage_facilities
-        + engine.extraction_facilities
-        + engine.functional_facilities
+        | engine.storage_facilities
+        | engine.extraction_facilities
+        | engine.functional_facilities
     ):
         dict[facility] = {
             "price_multiplier": price_multiplier(player, facility),
@@ -481,9 +481,9 @@ def get_current_technology_values(player: Player):
             "construction_power": construction_power(player, facility),
             "construction_pollution": construction_pollution_per_tick(player, facility),
         }
-    for facility in engine.power_facilities + engine.storage_facilities:
+    for facility in engine.power_facilities | engine.storage_facilities:
         dict[facility]["power_multiplier"] = power_production_multiplier(player, facility)
-    for facility in engine.controllable_facilities + engine.storage_facilities:
+    for facility in engine.controllable_facilities | engine.storage_facilities:
         dict[facility]["efficiency_multiplier"] = efficiency_multiplier(player, facility)
     for facility in ["watermill", "small_water_dam", "large_water_dam"]:
         dict[facility]["special_price_multiplier"] = hydro_price_multiplier(player, facility)
@@ -514,9 +514,9 @@ def get_current_technology_values(player: Player):
                 dict[facility]["locked"] = True
     for facility in (
         engine.power_facilities
-        + engine.storage_facilities
-        + engine.functional_facilities
-        + engine.extraction_facilities
+        | engine.storage_facilities
+        | engine.functional_facilities
+        | engine.extraction_facilities
     ):
         # remove fulfilled requirements
         dict[facility]["locked"] = False

@@ -502,8 +502,8 @@ def decrease_project_priority(player, construction):
         if construction_1.suspension_time is None and construction_2.suspension_time is not None:
             # construction_1 is not paused, but construction_2 is
             # TODO: groossssse merrrde
-            toggle_pause_project(player, construction_1.id)
-            toggle_pause_project(player, construction_2.id)
+            toggle_pause_project(player, construction_1)
+            toggle_pause_project(player, construction_2)
         setattr(player, attr, ",".join(map(str, priority_list)))
         db.session.commit()
         websocket.rest_notify_constructions(engine, player)
