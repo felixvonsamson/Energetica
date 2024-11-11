@@ -385,7 +385,7 @@ def calculate_generation_with_market(engine, new_values, market, player):
 
     renewables_generation(engine, player, player_cap, generation)
     minimal_generation(engine, player, player_cap, generation, resource_reservations)
-    facilities = engine.storage_facilities + engine.power_facilities
+    facilities = engine.storage_facilities | engine.power_facilities
     for facility in facilities:
         if player_cap[facility] is not None:
             market = offer(market, player.id, generation[facility], -5, facility)

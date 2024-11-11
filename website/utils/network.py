@@ -104,11 +104,11 @@ def reorder_facility_priorities(engine: GameEngine, player: Player):
     db.session.commit()
 
 
-def set_network_prices(engine, player, updated_prices):
+def set_network_prices(engine: GameEngine, player, updated_prices):
     """Updates network prices for that player"""
 
     for key, updated_price in updated_prices.items():
-        if key not in engine.price_keys or not isinstance(updated_price, float):
+        if key not in engine.price_keys or not isinstance(updated_price, (int, float)):
             raise GameException("malformedRequest")
         if updated_price <= -5:
             raise GameException("priceTooLow")

@@ -563,7 +563,7 @@ def change_network_prices():
     if not current_user.is_in_network:
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
-    updated_prices = request_data["prices"]
+    updated_prices = {k.lstrip("price_"): v for k, v in request_data["prices"].items()}
     website.utils.network.set_network_prices(engine=g.engine, player=current_user, updated_prices=updated_prices)
     return jsonify({"response": "success"})
 

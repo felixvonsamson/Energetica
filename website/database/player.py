@@ -141,7 +141,7 @@ class Player(db.Model, UserMixin):
 
     @property
     def is_in_network(self):
-        return self.network_id is None
+        return self.network_id is not None
 
     def change_graph_view(self, view):
         """Helper method to set the network graph view of the player (basic/normal/expert)"""

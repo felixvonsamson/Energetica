@@ -196,11 +196,11 @@ def upgrade_facility(player, facility):
         else:  # power & storage facilities
             return (
                 facility.price_multiplier < technology_effects.price_multiplier(player, facility.facility)
-                or facility.facility in engine.power_facilities + engine.storage_facilities
+                or facility.facility in engine.power_facilities | engine.storage_facilities
                 and facility.multiplier_1 < technology_effects.multiplier_1(player, facility.facility)
                 or facility.facility in engine.storage_facilities
                 and facility.multiplier_2 < technology_effects.multiplier_2(player, facility.facility)
-                or facility.facility in engine.controllable_facilities + engine.storage_facilities
+                or facility.facility in engine.controllable_facilities | engine.storage_facilities
                 and facility.multiplier_3 < technology_effects.multiplier_3(player, facility.facility)
             )
 
@@ -221,7 +221,8 @@ def upgrade_facility(player, facility):
                 facility.multiplier_3 = technology_effects.multiplier_3(player, facility.facility)
         db.session.commit()
 
-    if facility.facility in (engine.technologies | engine.functional_facilities) or not is_upgradable(facility):
+    print(is_upgradable(facility))
+    if facility.facility in engine.technologies | engine.functional_facilities or not is_upgradable(facility):
         raise GameException("notUpgradable")
 
     const_config = engine.const_config["assets"][facility.facility]
