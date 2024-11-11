@@ -111,13 +111,13 @@ class GameEngine(object):
         self.asset_family_by_type = {
             asset_type: asset_family
             for asset_family in [
-                "power_facilities",
-                "extraction_facilities",
-                "storage_facilities",
-                "functional_facilities",
-                "technologies",
+                "Power facilities",
+                "Extraction facilities",
+                "Storage facilities",
+                "Functional facilities",
+                "Technologies",
             ]
-            for asset_type in getattr(self, asset_family)
+            for asset_type in getattr(self, asset_family.lower().replace(" ", "_"))
         }
         self.price_keys = (
             self.controllable_facilities
