@@ -1,6 +1,7 @@
 """Here is the logic for the engine of the game"""
 
 import csv
+import json
 import logging
 import math
 import pickle
@@ -15,7 +16,119 @@ from .database.engine_data import EmissionData
 class GameEngine(object):
     """This class is the engine of the game. It contains all the data and methods to run the game."""
 
-    def __init__(self, clock_time, in_game_seconds_per_tick, random_seed):
+    power_facilities = {
+        "steam_engine",
+        "windmill",
+        "watermill",
+        "coal_burner",
+        "gas_burner",
+        "small_water_dam",
+        "onshore_wind_turbine",
+        "combined_cycle",
+        "nuclear_reactor",
+        "large_water_dam",
+        "CSP_solar",
+        "PV_solar",
+        "offshore_wind_turbine",
+        "nuclear_reactor_gen4",
+    }
+
+    extraction_facilities = {
+        "coal_mine",
+        "gas_drilling_site",
+        "uranium_mine",
+    }
+
+    extractable_resources = {"coal", "gas", "uranium"}
+
+    storage_facilities = {
+        "small_pumped_hydro",
+        "molten_salt",
+        "large_pumped_hydro",
+        "hydrogen_storage",
+        "lithium_ion_batteries",
+        "solid_state_batteries",
+    }
+
+    controllable_facilities = {
+        "steam_engine",
+        "nuclear_reactor",
+        "nuclear_reactor_gen4",
+        "combined_cycle",
+        "gas_burner",
+        "coal_burner",
+    }
+
+    renewables = [
+        "small_water_dam",
+        "large_water_dam",
+        "watermill",
+        "onshore_wind_turbine",
+        "offshore_wind_turbine",
+        "windmill",
+        "CSP_solar",
+        "PV_solar",
+    ]
+
+    functional_facilities = {
+        "industry",
+        "laboratory",
+        "warehouse",
+        "carbon_capture",
+    }
+
+    technologies = {
+        "mathematics",
+        "mechanical_engineering",
+        "thermodynamics",
+        "physics",
+        "building_technology",
+        "mineral_extraction",
+        "transport_technology",
+        "materials",
+        "civil_engineering",
+        "aerodynamics",
+        "chemistry",
+        "nuclear_engineering",
+    }
+
+    facility_types = power_facilities | extraction_facilities | storage_facilities | functional_facilities
+
+    all_asset_types = facility_types | technologies
+
+    asset_family_by_type = {
+        asset_type: asset_family
+        for asset_family in [
+            "Power facilities",
+            "Extraction facilities",
+            "Storage facilities",
+            "Functional facilities",
+            "Technologies",
+        ]
+        for asset_type in vars()[asset_family.lower().replace(" ", "_")]
+    }
+    price_keys = (
+        controllable_facilities
+        | storage_facilities
+        | {
+            "buy_small_pumped_hydro",
+            "buy_molten_salt",
+            "buy_large_pumped_hydro",
+            "buy_hydrogen_storage",
+            "buy_lithium_ion_batteries",
+            "buy_solid_state_batteries",
+            "buy_industry",
+            "buy_construction",
+            "buy_research",
+            "buy_transport",
+            "buy_coal_mine",
+            "buy_gas_drilling_site",
+            "buy_uranium_mine",
+            "buy_carbon_capture",
+        }
+    )
+
+    def __init__(self, clock_time, in_game_seconds_per_tick, random_seed, start_date=None):
         self.clock_time = clock_time
         self.in_game_seconds_per_tick = in_game_seconds_per_tick
         self.config = config
@@ -29,121 +142,19 @@ class GameEngine(object):
         self.init_loggers()
         self.log("engine created")
 
-        self.power_facilities = {
-            "steam_engine",
-            "windmill",
-            "watermill",
-            "coal_burner",
-            "gas_burner",
-            "small_water_dam",
-            "onshore_wind_turbine",
-            "combined_cycle",
-            "nuclear_reactor",
-            "large_water_dam",
-            "CSP_solar",
-            "PV_solar",
-            "offshore_wind_turbine",
-            "nuclear_reactor_gen4",
-        }
-
-        self.extraction_facilities = {
-            "coal_mine",
-            "gas_drilling_site",
-            "uranium_mine",
-        }
-
-        self.extractable_resources = {"coal", "gas", "uranium"}
-        self.storage_facilities = {
-            "small_pumped_hydro",
-            "molten_salt",
-            "large_pumped_hydro",
-            "hydrogen_storage",
-            "lithium_ion_batteries",
-            "solid_state_batteries",
-        }
-
-        self.controllable_facilities = {
-            "steam_engine",
-            "nuclear_reactor",
-            "nuclear_reactor_gen4",
-            "combined_cycle",
-            "gas_burner",
-            "coal_burner",
-        }
-
-        self.renewables = [
-            "small_water_dam",
-            "large_water_dam",
-            "watermill",
-            "onshore_wind_turbine",
-            "offshore_wind_turbine",
-            "windmill",
-            "CSP_solar",
-            "PV_solar",
-        ]
-
-        self.functional_facilities = {
-            "industry",
-            "laboratory",
-            "warehouse",
-            "carbon_capture",
-        }
-
-        self.technologies = {
-            "mathematics",
-            "mechanical_engineering",
-            "thermodynamics",
-            "physics",
-            "building_technology",
-            "mineral_extraction",
-            "transport_technology",
-            "materials",
-            "civil_engineering",
-            "aerodynamics",
-            "chemistry",
-            "nuclear_engineering",
-        }
-
-        self.facility_types = (
-            self.power_facilities | self.extraction_facilities | self.storage_facilities | self.functional_facilities
-        )
-        self.all_asset_types = self.facility_types | self.technologies
-        self.asset_family_by_type = {
-            asset_type: asset_family
-            for asset_family in [
-                "Power facilities",
-                "Extraction facilities",
-                "Storage facilities",
-                "Functional facilities",
-                "Technologies",
-            ]
-            for asset_type in getattr(self, asset_family.lower().replace(" ", "_"))
-        }
-        self.price_keys = (
-            self.controllable_facilities
-            | self.storage_facilities
-            | {
-                "buy_small_pumped_hydro",
-                "buy_molten_salt",
-                "buy_large_pumped_hydro",
-                "buy_hydrogen_storage",
-                "buy_lithium_ion_batteries",
-                "buy_solid_state_batteries",
-                "buy_industry",
-                "buy_construction",
-                "buy_research",
-                "buy_transport",
-                "buy_coal_mine",
-                "buy_gas_drilling_site",
-                "buy_uranium_mine",
-                "buy_carbon_capture",
-            }
-        )
-
         self.data = {}
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
-        self.data["start_date"] = datetime.now()  # 0 point of server time
+        self.data["start_date"] = start_date or datetime.now()  # 0 point of server time
+        self.action_logger.info(
+            json.dumps(
+                {
+                    "action_type": "init_engine",
+                    "random_seed": self.data["random_seed"],
+                    "start_date": self.data["start_date"].isoformat(),
+                }
+            )
+        )
         last_midnight = self.data["start_date"].replace(hour=0, minute=0, second=0, microsecond=0)
         # time shift in ticks. Defines the number of ticks between the first simulated tick and the beginning of in-game year 0.
         self.data["delta_t"] = round((self.data["start_date"] - last_midnight).total_seconds() // self.clock_time)

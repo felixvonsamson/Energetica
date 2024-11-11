@@ -117,10 +117,14 @@ def create_app(
         shutil.rmtree("instance")
         Path("instance").mkdir(exist_ok=True)
 
-    # creates the engine (and loading the save if it exists)
-    engine = website.game_engine.GameEngine(clock_time, in_game_seconds_per_tick, random_seed)
-
+    start_date = None
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true" and simulate_file:
+        with open(simulate_file.name, "r", encoding="utf-8") as file:
+            actions = [json.loads(line) for line in file]
+        assert actions[0]["action_type"] == "init_engine"
+        random_seed = actions[0]["random_seed"]
+        start_date = datetime.fromisoformat(actions[0]["start_date"])
+
         checkpoints = {
             int(save.split("checkpoint_")[1].rstrip(".tar.gz")): save
             for save in glob.glob("checkpoints/checkpoint_*.tar.gz")
@@ -133,7 +137,15 @@ def create_app(
             loaded_tick = max(checkpoints_ids)
             with tarfile.open(f"checkpoints/checkpoint_{loaded_tick}.tar.gz") as file:
                 file.extractall("./")
-            engine.log(f"Loaded instance from checkpoints/checkpoint_{loaded_tick}.tar.gz.")
+            print(f"Loaded instance from checkpoints/checkpoint_{loaded_tick}.tar.gz.")
+        action_id_by_tick = {
+            action["total_t"]: action_id for action_id, action in enumerate(actions) if action["action_type"] == "tick"
+        }
+        start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 1
+        last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
+
+    # creates the engine (and loading the save if it exists)
+    engine = website.game_engine.GameEngine(clock_time, in_game_seconds_per_tick, random_seed, start_date)
 
     from .utils.game_engine import data_init_climate
 
@@ -279,15 +291,6 @@ def create_app(
                 misfire_grace_time=10,
             )
         else:
-            with open(simulate_file.name, "r", encoding="utf-8") as file:
-                actions = [json.loads(line) for line in file]
-            action_id_by_tick = {
-                action["total_t"]: action_id
-                for action_id, action in enumerate(actions)
-                if action["action_type"] == "tick"
-            }
-            start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 0
-            last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
             scheduler.add_job(
                 func=simulate,
                 args=(
