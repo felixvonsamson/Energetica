@@ -535,6 +535,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction):
             else:
                 priority_list.append(construction.id)
             player.write_list(priority_list_name, priority_list)
+        engine.log(f"{player.username} paused the construction {construction.id} {construction.name}")
     else:
         # project is currently pause, and should be unpaused
         if construction.prerequisites(recompute=True):
@@ -567,6 +568,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction):
         else:
             priority_list.append(construction.id)
         player.write_list(priority_list_name, priority_list)
+        engine.log(f"{player.username} unpaused the construction {construction.id} {construction.name}")
 
     db.session.commit()
     websocket.rest_notify_constructions(engine, player)
