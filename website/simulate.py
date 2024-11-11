@@ -72,8 +72,14 @@ def simulate(app, port, actions, log_every_k_ticks=10000, checkpoint_ticks=[]):
                     print(f"Status code: {response.status_code}")
                     if response.status_code // 100 == 4:
                         print("\033[33m" + response.text + "\033[0m")
+                        if response.json()["response"] != action["response"]["content"]["response"]:
+                            print(
+                                f"""\033[31mResponse {response.json()["response"]} does not match expected response """
+                                f"""{action["response"]["content"]["response"]}.\033[0m"""
+                            )
+                            break
                     elif response.status_code // 100 == 5:
-                        print("\033[31m" + "Server error, look at the stack above.\033[0m")
+                        print("\033[31mServer error, look at the stack above.\033[0m")
                         break
             try:
                 verify(engine)
