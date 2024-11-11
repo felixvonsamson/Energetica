@@ -5,7 +5,7 @@ from datetime import datetime
 from itertools import chain
 from typing import List
 
-from flask import current_app, jsonify
+from flask import current_app
 from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
@@ -139,6 +139,10 @@ class Player(db.Model, UserMixin):
     _buffered_data_for_technologies_page = None
     _buffered_data_for_resource_market_page = None
 
+    @property
+    def is_in_network(self):
+        return self.network_id is not None
+
     def change_graph_view(self, view):
         """Helper method to set the network graph view of the player (basic/normal/expert)"""
         self.graph_view = view
@@ -257,13 +261,10 @@ class Player(db.Model, UserMixin):
             }
             for chat in self.chats
         }
-        return jsonify(
-            {
-                "response": "success",
-                "chat_list": chat_dict,
-                "last_opened_chat": self.last_opened_chat,
-            }
-        )
+        return {
+            "chat_list": chat_dict,
+            "last_opened_chat": self.last_opened_chat,
+        }
 
     def package_chats(self):
         """This method packages chats for the iOS frontend"""

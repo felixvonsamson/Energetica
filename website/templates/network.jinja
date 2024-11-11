@@ -19,7 +19,7 @@
                  style="width:39px">×</div>
         </div>
         <div class="margin medium">
-            {% if user.network == None %}
+            {% if user.network is None %}
                 <p>
                     Here you can join or create a network to trade electricity with other players. If you do, you will 
                     see the network's information adn activities here.
@@ -58,7 +58,7 @@
             {% endif %}
         </div>
     </div>
-    {% if user.network == None %}
+    {% if user.network is None %}
         <div class="flex-col medium" style="justify-content:center;">
             <div class="txt_center padding">
             <b>You are currently not connected to a network.</b>

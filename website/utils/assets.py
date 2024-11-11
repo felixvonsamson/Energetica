@@ -4,13 +4,13 @@ import math
 import random
 from typing import List
 
-from flask import current_app, jsonify
+from flask import current_app
 
 from website import db, game_engine, technology_effects
 from website.api import websocket
 from website.database.player import Player
 from website.database.player_assets import ActiveFacility, OngoingConstruction
-from website.game_engine import GameEngine
+from website.game_engine import Confirm, GameEngine, GameException
 from website.utils.network import reorder_facility_priorities
 
 
@@ -57,24 +57,24 @@ def finish_construction(construction: OngoingConstruction):
     elif ActiveFacility.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
         # initialize array for facility if it is the first one built
         current_data = engine.data["current_data"][player.id]
-        if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
+        if construction.name in engine.storage_facilities | engine.power_facilities | engine.extraction_facilities:
             current_data.new_subcategory("op_costs", construction.name)
-        if construction.name in engine.storage_facilities + engine.power_facilities:
+        if construction.name in engine.storage_facilities | engine.power_facilities:
             current_data.new_subcategory("generation", construction.name)
-        if construction.name in engine.storage_facilities + engine.extraction_facilities:
+        if construction.name in engine.storage_facilities | engine.extraction_facilities:
             current_data.new_subcategory("demand", construction.name)
         if construction.name in engine.storage_facilities:
             current_data.new_subcategory("storage", construction.name)
-        if construction.name in engine.controllable_facilities + engine.extraction_facilities:
+        if construction.name in engine.controllable_facilities | engine.extraction_facilities:
             current_data.new_subcategory("emissions", construction.name)
             engine.data["player_cumul_emissions"][player.id].new_category(construction.name)
-        if construction.name in engine.extraction_facilities + engine.storage_facilities:
+        if construction.name in engine.extraction_facilities | engine.storage_facilities:
             player.add_to_list("demand_priorities", construction.name)
             reorder_facility_priorities(engine, player)
         if construction.name in engine.renewables:
             player.add_to_list("self_consumption_priority", construction.name)
             reorder_facility_priorities(engine, player)
-        if construction.name in engine.storage_facilities + engine.controllable_facilities:
+        if construction.name in engine.storage_facilities | engine.controllable_facilities:
             player.add_to_list("rest_of_priorities", construction.name)
             reorder_facility_priorities(engine, player)
 
@@ -178,9 +178,11 @@ def deploy_available_workers(player: Player, family: str):
 # Utilities relating to managing facilities and assets
 
 
-def upgrade_facility(player, facility_id):
+def upgrade_facility(player, facility):
     """this function is executed when a player upgrades a facility"""
     engine: game_engine.GameEngine = current_app.config["engine"]
+    if facility is None or facility.player_id != player.id:
+        raise GameException("constructionNotFound")
 
     def is_upgradable(facility: ActiveFacility):
         """Returns true if any of the attributes of the built facility are outdated compared to current tech levels"""
@@ -194,11 +196,11 @@ def upgrade_facility(player, facility_id):
         else:  # power & storage facilities
             return (
                 facility.price_multiplier < technology_effects.price_multiplier(player, facility.facility)
-                or facility.facility in engine.power_facilities + engine.storage_facilities
+                or facility.facility in engine.power_facilities | engine.storage_facilities
                 and facility.multiplier_1 < technology_effects.multiplier_1(player, facility.facility)
                 or facility.facility in engine.storage_facilities
                 and facility.multiplier_2 < technology_effects.multiplier_2(player, facility.facility)
-                or facility.facility in engine.controllable_facilities + engine.storage_facilities
+                or facility.facility in engine.controllable_facilities | engine.storage_facilities
                 and facility.multiplier_3 < technology_effects.multiplier_3(player, facility.facility)
             )
 
@@ -219,49 +221,37 @@ def upgrade_facility(player, facility_id):
                 facility.multiplier_3 = technology_effects.multiplier_3(player, facility.facility)
         db.session.commit()
 
-    facility: ActiveFacility = ActiveFacility.query.get(facility_id)
-    if facility is None:
-        return jsonify({"response": "facilityNotFound"}), 404
-    if facility.facility in engine.technologies + engine.functional_facilities:
-        return jsonify({"response": "notUpgradable"}), 403
+    print(is_upgradable(facility))
+    if facility.facility in engine.technologies | engine.functional_facilities or not is_upgradable(facility):
+        raise GameException("notUpgradable")
 
     const_config = engine.const_config["assets"][facility.facility]
-
-    if not is_upgradable(facility):
-        return jsonify({"response": "notUpgradable"}), 403
-
     price_diff = technology_effects.price_multiplier(player, facility.facility) - facility.price_multiplier
     if price_diff > 0:
         upgrade_cost = const_config["base_price"] * price_diff
     else:
         upgrade_cost = 0.05 * const_config["base_price"]
     if player.money < upgrade_cost:
-        return jsonify({"response": "notEnoughMoney"}), 403
+        raise GameException("notEnoughMoney")
     player.money -= upgrade_cost
     apply_upgrade(facility)
     engine.data["player_capacities"][player.id].update(player, facility.facility)
-    return jsonify({"response": "success", "money": player.money})
 
 
-def upgrade_all_of_type(player, facility_id):
+def upgrade_all_of_type(player, facility_name):
     """this function is executed when a player upgrades all facilities of a certain type"""
-    facility = ActiveFacility.query.get(facility_id)
-    if facility is None or facility.player_id != player.id:
-        return jsonify({"response": "facilityNotFound"}), 404
-    facility_name = ActiveFacility.query.get(facility_id).facility
     facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
-        upgrade_facility(player, facility.id)
-    # TODO: success can be returned while some facility didn't have enough money
-    return jsonify({"response": "success", "money": player.money})
+        upgrade_facility(player, facility)
 
 
-def remove_asset(player_id, facility, decommissioning=True):
+def remove_asset(player, facility, decommissioning=True):
     """this function is executed when a facility is decommissioned."""
     engine = current_app.config["engine"]
+    if facility is None or facility.player_id != player.id:
+        raise GameException("constructionNotFound")
     if facility.facility in engine.technologies + engine.functional_facilities:
-        return jsonify({"response": "notRemovable"}), 403
-    player = Player.query.get(player_id)
+        raise GameEngine("notRemovable")
     db.session.delete(facility)
     db.session.flush()
     # The cost of decommissioning is 20% of the building cost.
@@ -295,13 +285,6 @@ def remove_asset(player_id, facility, decommissioning=True):
     engine.data["player_capacities"][player.id].update(player, facility.facility)
     engine.config.update_config_for_user(player.id)
     db.session.commit()
-    return jsonify(
-        {
-            "response": "success",
-            "facility_name": facility_name,
-            "money": player.money,
-        }
-    )
 
 
 def facility_destroyed(player, facility, event_name):
@@ -310,50 +293,36 @@ def facility_destroyed(player, facility, event_name):
     cost = 0.1 * base_price * facility.price_multiplier
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
         cost *= facility.multiplier_2
-    response = remove_asset(player.id, facility, decommissioning=False)
-    if isinstance(response, tuple):
-        response, _ = response
-    if response.json["response"] != "success":
-        # TODO
-        return
+    remove_asset(player, facility, decommissioning=False)
     player.notify(
         "Destruction",
         (
-            f"The facility {response['facility_name']} was destroyed by the {event_name}. The cost of the cleanup was "
+            f"The facility {facility.facility} was destroyed by the {event_name}. The cost of the cleanup was "
             f"{round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>."
         ),
     )
-    current_app.config["engine"].log(f"{player.username} : {response.json['facility_name']} destroyed by {event_name}.")
+    current_app.config["engine"].log(f"{player.username} : {facility.facility} destroyed by {event_name}.")
 
 
-def dismantle_facility(player, facility_id):
+def dismantle_facility(player, facility):
     """this function is executed when a player dismantles a facility"""
-    facility: ActiveFacility = ActiveFacility.query.get(facility_id)
     if facility is None or facility.player_id != player.id:
-        return jsonify({"response": "facilityNotFound"}), 404
+        raise GameException("facilityNotFound")
     base_price = current_app.config["engine"].const_config["assets"][facility.facility]["base_price"]
     cost = 0.2 * base_price * facility.price_multiplier
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
         cost *= facility.multiplier_2
     if player.money < cost:
-        return jsonify({"response": "notEnoughMoney"}), 403
-    response = remove_asset(player.id, facility, decommissioning=False)
-    if isinstance(response, tuple):
-        response, _ = response
-    if response.json["response"] != "success":
-        return response
-    current_app.config["engine"].log(f"{player.username} dismantled the facility {response.json['facility_name']}.")
-    return jsonify(response)
+        return GameException("notEnoughMoney")
+    remove_asset(player, facility, decommissioning=False)
+    current_app.config["engine"].log(f"{player.username} dismantled the facility {facility.facility}.")
 
 
-def dismantle_all_of_type(player, facility_id):
+def dismantle_all_of_type(player, facility_name):
     """this function is executed when a player dismantles all facilities of a certain type"""
-    facility_name = ActiveFacility.query.get(facility_id).facility
     facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
         dismantle_facility(player, facility.id)
-    # TODO: response can be success while some facilities were not dismantled (i.e. not enough money)
-    return jsonify({"response": "success", "money": player.money})
 
 
 def package_projects_data(player):
@@ -368,65 +337,54 @@ def package_projects_data(player):
     return {0: projects, 1: construction_priorities, 2: research_priorities}
 
 
-def start_project(engine: GameEngine, player: Player, asset: str, family: str, force=False):
+def queue_project(engine: GameEngine, player: Player, asset: str, force=False):
     """this function is executed when a player clicks on 'start construction'"""
-    # TODO: rename this function to something like 'queue_project'
     player_cap = engine.data["player_capacities"][player.id]
+
+    if asset not in engine.all_asset_types:
+        raise GameException("malformedRequest")
 
     asset_requirement_status = technology_effects.requirements_status(
         player, asset, technology_effects.asset_requirements(player, asset)
     )
     if asset_requirement_status == "unsatisfied":
-        return jsonify({"response": "locked"}), 403
+        raise GameException("locked")
 
     real_price = technology_effects.construction_price(player, asset)
     duration = technology_effects.construction_time(player, asset)
 
     if player.money < real_price:
-        return jsonify({"response": "notEnoughMoneyError"}), 403
+        raise GameException("notEnoughMoney")
+
     construction_power = technology_effects.construction_power(player, asset)
-    if not force and "Unlock Network" not in player.achievements:
+    if not force and not player.is_in_network:
         capacity = 0
         for gen in engine.power_facilities:
             if player_cap[gen] is not None:
                 capacity += player_cap[gen]["power"]
         if construction_power > capacity:
-            return jsonify(
-                {
-                    "response": "areYouSure",
-                    "capacity": capacity,
-                    "construction_power": construction_power,
-                }
-            ), 300
-
-    if family == "Technologies":
-        priority_list_name = "research_priorities"
-    else:
-        priority_list_name = "construction_priorities"
+            raise Confirm(capacity=capacity, construction_power=construction_power)
 
     def can_start_immediately():
         if asset_requirement_status == "queued":
             return False
-        if family == "Technologies" and player.available_lab_workers() == 0:
+        if asset in engine.technologies and player.available_lab_workers() == 0:
             return False  # No available workers
-        if family != "Technologies" and player.available_construction_workers() == 0:
+        if asset not in engine.technologies and player.available_construction_workers() == 0:
             return False  # No available workers
         if (
-            family in ["Functional facilities", "Technologies"]
+            asset in engine.technologies | engine.functional_facilities
             and OngoingConstruction.query.filter_by(name=asset, player_id=player.id).count() > 0
         ):
             return False  # Another level is already ongoing
         return True
 
-    if can_start_immediately():
-        suspension_time = None
-    else:
-        suspension_time = engine.data["total_t"]
+    suspension_time = None if can_start_immediately() else engine.data["total_t"]
 
     player.money -= real_price
     new_construction: OngoingConstruction = OngoingConstruction(
         name=asset,
-        family=family,
+        family=engine.asset_family_by_type[asset],
         start_time=engine.data["total_t"],
         duration=duration,
         suspension_time=suspension_time,
@@ -440,6 +398,8 @@ def start_project(engine: GameEngine, player: Player, asset: str, family: str, f
     )
     db.session.add(new_construction)
     db.session.commit()
+
+    priority_list_name = "research_priorities" if asset in engine.technologies else "construction_priorities"
     if suspension_time is None:
         # Add this project to the priority list, before all paused projects, but after all existing ongoing projects
         priority_list = player.read_list(priority_list_name)
@@ -459,46 +419,34 @@ def start_project(engine: GameEngine, player: Player, asset: str, family: str, f
     websocket.rest_notify_constructions(engine, player)
     db.session.commit()
 
-    invalidate_data_on_project_update(player, asset, family)
-
-    return jsonify(
-        {
-            "response": "success",
-            "money": player.money,
-            "constructions": package_projects_data(player),
-        }
-    )
+    invalidate_data_on_project_update(engine, player, asset)
 
 
-def invalidate_data_on_project_update(player: Player, asset: str, family: str):
+def invalidate_data_on_project_update(engine: GameEngine, player: Player, asset_type: str):
     """Check for data page invalidation when project has been queued or cancelled"""
-    if family == "Power facilities" and asset in [
+    if asset_type in {
         "watermill",
         "small_water_dam",
         "large_water_dam",
         "windmill",
         "onshore_wind_turbine",
         "offshore_wind_turbine",
-    ]:
+    }:
         player.invalidate_recompute_and_dispatch_data_for_pages(power_facilities=True)
-    if family == "Functional facilities":
+    elif asset_type in engine.functional_facilities:
         player.invalidate_recompute_and_dispatch_data_for_pages(functional_facilities=True)
-    if family == "Technologies":
+    elif asset_type in engine.technologies:
         player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
 
 
-def cancel_project(player: Player, construction_id: int, force=False):
+def cancel_project(player: Player, construction: OngoingConstruction, force=False):
     """This function is executed when a player cancels an ongoing construction"""
-    engine = current_app.config["engine"]
-    construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
-
-    if construction is None:
-        return jsonify({"response": "constructionNotFound"}), 404
-
-    if construction.family == "Technologies":
-        priority_list_name = "research_priorities"
-    else:
-        priority_list_name = "construction_priorities"
+    engine: GameEngine = current_app.config["engine"]
+    if construction is None or construction.player_id != player.id:
+        raise GameException("constructionNotFound")
+    priority_list_name = (
+        "research_priorities" if construction.name in engine.technologies else "construction_priorities"
+    )
 
     if construction.suspension_time is None:
         time_fraction = (engine.data["total_t"] - construction.start_time) / (construction.duration)
@@ -507,21 +455,16 @@ def cancel_project(player: Player, construction_id: int, force=False):
 
     dependents = []
     priority_list = player.read_list(priority_list_name)
-    construction_priority_index = priority_list.index(construction_id)
+    construction_priority_index = priority_list.index(construction.id)
     for candidate_dependent_id in priority_list[construction_priority_index + 1 :]:
         candidate_dependent: OngoingConstruction = OngoingConstruction.query.get(candidate_dependent_id)
-        if construction_id in candidate_dependent.prerequisites():
+        if construction.id in candidate_dependent.prerequisites():
             dependents.append([candidate_dependent.name, candidate_dependent.level()])
     if dependents:
-        return jsonify({"response": "hasDependents", "dependents": dependents}), 403
+        raise GameException("hasDependents", dependents=dependents)
 
     if not force:
-        return jsonify(
-            {
-                "response": "areYouSure",
-                "refund": f"{round(80 * (1 - time_fraction))}%",
-            }
-        ), 300
+        raise Confirm(refund=f"{round(80 * (1 - time_fraction))}%")
 
     refund = (
         0.8
@@ -532,114 +475,56 @@ def cancel_project(player: Player, construction_id: int, force=False):
     if construction.name in ["small_water_dam", "large_water_dam", "watermill"]:
         refund *= construction.multiplier_2
     player.money += refund
-    player.remove_from_list(priority_list_name, construction_id)
+    player.remove_from_list(priority_list_name, construction.id)
     db.session.delete(construction)
     engine.log(f"{player.username} cancelled the construction {construction.name}")
     db.session.commit()
     websocket.rest_notify_constructions(engine, player)
 
-    invalidate_data_on_project_update(player, construction.name, construction.family)
-
-    return jsonify(
-        {
-            "response": "success",
-            "money": player.money,
-            "constructions": package_projects_data(player),
-        }
-    )
+    invalidate_data_on_project_update(engine, player, construction.name)
 
 
-def decrease_project_priority(player, construction_id, pausing=False):
+def decrease_project_priority(player, construction):
     """
     This function is executed when a player changes the order of ongoing constructions.
-    This function is also called from within the `pause_project` function, in which case `pausing=True`
+    This function is also called from within the `toggle_pause_project` function, in which case `pausing=True`
     """
     engine = current_app.config["engine"]
-    construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
-
     if construction is None or construction.player_id != player.id:
-        return jsonify({"response": "constructionNotFound"}), 404
-
-    if construction.family == "Technologies":
-        attr = "research_priorities"
-    else:
-        attr = "construction_priorities"
+        raise GameException("constructionNotFound")
+    attr = "research_priorities" if construction.name in engine.technologies else "construction_priorities"
 
     priority_list = player.read_list(attr)
-    index = priority_list.index(construction_id)
+    index = priority_list.index(construction.id)
     if 0 <= index < len(priority_list) - 1:
-        construction_1: OngoingConstruction = OngoingConstruction.query.get(priority_list[index])
+        construction_1: OngoingConstruction = construction
         construction_2: OngoingConstruction = OngoingConstruction.query.get(priority_list[index + 1])
 
         if construction_1.suspension_time is None and construction_2.suspension_time is not None:
             # construction_1 is not paused, but construction_2 is
-            response = pause_project(player, construction_1.id)
-            if isinstance(response, tuple):
-                response, status_code = response
-            if response.json["response"] == "success":
-                return pause_project(player, construction_2.id)
-            else:
-                return response, status_code
-            # construction_1.suspension_time = engine.data["total_t"]
-            # if pausing:
-            #     return {"response": "paused"}
-            # if construction_2.family in [
-            #     "Functional facilities",
-            #     "Technologies",
-            # ]:
-            #     first_lvl: OngoingConstruction = (
-            #         OngoingConstruction.query.filter_by(name=construction_2.name, player_id=player.id)
-            #         .order_by(OngoingConstruction.duration)
-            #         .first()
-            #     )
-            #     if first_lvl.suspension_time is None:
-            #         return {
-            #             "response": "parallelization not allowed",
-            #         }
-            #     else:
-            #         index_first_lvl = priority_list.index(first_lvl.id)
-            #         priority_list[index + 1], priority_list[index_first_lvl] = (
-            #             priority_list[index_first_lvl],
-            #             priority_list[index + 1],
-            #         )
-            #         construction_2 = first_lvl
-            # construction_2.start_time += engine.data["total_t"] - construction_2.suspension_time
-            # construction_2.suspension_time = None
-        priority_list[index + 1], priority_list[index] = (
-            priority_list[index],
-            priority_list[index + 1],
-        )
+            # TODO: groossssse merrrde
+            toggle_pause_project(player, construction_1)
+            toggle_pause_project(player, construction_2)
         setattr(player, attr, ",".join(map(str, priority_list)))
         db.session.commit()
         websocket.rest_notify_constructions(engine, player)
 
-    return jsonify(
-        {
-            "response": "success",
-            "constructions": package_projects_data(player),
-        }
-    )
 
-
-def pause_project(player: Player, construction_id: int):
+def toggle_pause_project(player: Player, construction: OngoingConstruction):
     """this function is executed when a player pauses or unpauses an ongoing construction"""
     engine: GameEngine = current_app.config["engine"]
-    construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
-
     if construction is None or construction.player_id != player.id:
-        return jsonify({"response": "constructionNotFound"}), 404
-
-    if construction.family == "Technologies":
-        priority_list_name = "research_priorities"
-    else:
-        priority_list_name = "construction_priorities"
+        raise GameException("constructionNotFound")
+    priority_list_name = (
+        "research_priorities" if construction.name in engine.technologies else "construction_priorities"
+    )
 
     if construction.suspension_time is None:
         # project is currently not pause, and should be paused
         while construction.suspension_time is None:
             construction.suspension_time = engine.data["total_t"]
             priority_list: List[int] = player.read_list(priority_list_name)
-            priority_list.remove(construction_id)
+            priority_list.remove(construction.id)
             insertion_index = None
             for new_index, other_construction_id in enumerate(priority_list):
                 other_construction: OngoingConstruction = OngoingConstruction.query.get(other_construction_id)
@@ -647,21 +532,24 @@ def pause_project(player: Player, construction_id: int):
                     insertion_index = new_index
                     break
             if insertion_index is not None:
-                priority_list.insert(insertion_index, construction_id)
+                priority_list.insert(insertion_index, construction.id)
             else:
-                priority_list.append(construction_id)
+                priority_list.append(construction.id)
             player.write_list(priority_list_name, priority_list)
+        engine.log(f"{player.username} paused the construction {construction.id} {construction.name}")
     else:
         # project is currently pause, and should be unpaused
         if construction.prerequisites(recompute=True):
-            return jsonify({"response": "hasUnfinishedPrerequisites"}), 403
+            raise GameException("hasUnfinishedPrerequisites")
 
-        if construction.family == "Technologies":
-            available_workers = player.available_lab_workers()
-        else:
-            available_workers = player.available_construction_workers()
+        available_workers = (
+            player.available_lab_workers()
+            if construction.family == "Technologies"
+            else player.available_construction_workers()
+        )
+
         if available_workers == 0:
-            return jsonify({"response": "noAvailableWorkers"}), 403
+            raise GameException("noAvailableWorkers")
 
         # Unpause the construction
         construction.start_time += engine.data["total_t"] - construction.suspension_time
@@ -669,7 +557,7 @@ def pause_project(player: Player, construction_id: int):
 
         # Reorder the priority list
         priority_list: List[int] = player.read_list(priority_list_name)
-        priority_list.remove(construction_id)
+        priority_list.remove(construction.id)
         insertion_index = None
         for new_index, other_construction_id in enumerate(priority_list):
             other_construction: OngoingConstruction = OngoingConstruction.query.get(other_construction_id)
@@ -677,17 +565,11 @@ def pause_project(player: Player, construction_id: int):
                 insertion_index = new_index
                 break
         if insertion_index is not None:
-            priority_list.insert(insertion_index, construction_id)
+            priority_list.insert(insertion_index, construction.id)
         else:
-            priority_list.append(construction_id)
-        # priority_list.insert(0, construction_id)
+            priority_list.append(construction.id)
         player.write_list(priority_list_name, priority_list)
+        engine.log(f"{player.username} unpaused the construction {construction.id} {construction.name}")
 
     db.session.commit()
     websocket.rest_notify_constructions(engine, player)
-    return jsonify(
-        {
-            "response": "success",
-            "constructions": package_projects_data(player),
-        }
-    )

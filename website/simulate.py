@@ -68,12 +68,28 @@ def simulate(app, port, actions, log_every_k_ticks=10000, checkpoint_ticks=[]):
                 url = f"http://localhost:{port}{action['request']['endpoint']}"
                 content_type = "json" if action["request"]["content_type"] == "application/json" else "data"
                 response = user_sessions[player_id].post(url, **{content_type: action["request"]["content"]})
+                if (
+                    response.headers["Content-Type"] == "application/json"
+                    and response.json()["response"] != action["response"]["content"]["response"]
+                ):
+                    print(
+                        f"""\033[31mResponse {response.json()["response"]} does not match expected response """
+                        f"""{action["response"]["content"]["response"]}.\033[0m"""
+                    )
+                    break
+                if response.status_code != action["response"]["status_code"]:
+                    print(
+                        f"""\033[31mStatus code {response.status_code} does not match expected status code """
+                        f"""{action["response"]["status_code"]}.\033[0m"""
+                    )
+                    break
                 if response.status_code != 200:
                     print(f"Status code: {response.status_code}")
                     if response.status_code // 100 == 4:
                         print("\033[33m" + response.text + "\033[0m")
                     elif response.status_code // 100 == 5:
-                        print("\033[31m" + "Server error, look at the stack above.\033[0m")
+                        print("\033[31mServer error, look at the stack above.\033[0m")
+                        break
             try:
                 verify(engine)
             except AssertionError:

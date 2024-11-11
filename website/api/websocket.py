@@ -13,7 +13,7 @@ from website.database.messages import Chat, Message
 from website.database.player import Network, Player
 from website.game_engine import GameEngine
 from website.technology_effects import package_constructions_page_data
-from website.utils.assets import decrease_project_priority, pause_project, start_project
+from website.utils.assets import decrease_project_priority, queue_project, toggle_pause_project
 from website.utils.chat import add_message, create_chat, create_group_chat, hide_chat_disclaimer
 from website.utils.misc import confirm_location, package_weather_data
 from website.utils.network import create_network, join_network, leave_network
@@ -379,7 +379,7 @@ def rest_parse_request(engine, player: Player, ws, uuid, data):
         case "createNetwork":
             rest_parse_request_create_network(engine, ws, uuid, body)
         case "startProject":
-            rest_parse_request_start_project(engine, ws, uuid, body)
+            rest_parse_request_queue_project(engine, ws, uuid, body)
         case "pauseUnpauseProject":
             rest_parse_request_pause_unpause_project(ws, uuid, body)
         case "decreaseProjectPriority":
@@ -436,12 +436,12 @@ def rest_parse_request_create_network(engine, ws, uuid, data):
     ws.send(message)
 
 
-def rest_parse_request_start_project(engine, ws, uuid, data):
+def rest_parse_request_queue_project(engine, ws, uuid, data):
     """Interpret message sent from a client when they start a project"""
     facility = data["facility"]
     family = data["family"]
     print(f"rest_parse_request_startProject got: family = {family}, facility = {facility}")
-    response = start_project(engine, g.player, facility, family)
+    response = queue_project(engine, g.player, facility, family)
     message = rest_request_response(uuid, "startProject", response)
     ws.send(message)
 
@@ -450,7 +450,7 @@ def rest_parse_request_pause_unpause_project(ws, uuid, data):
     """Interpret message sent from a client when they pause or unpause a
     project"""
     construction_id = data
-    response = pause_project(g.player, construction_id)
+    response = toggle_pause_project(g.player, construction_id)
     message = rest_request_response(uuid, "pauseUnpauseProject", response)
     ws.send(message)
 

@@ -3,73 +3,55 @@
 import math
 from datetime import datetime
 
-from flask import current_app, flash, jsonify
+from flask import current_app
 
 from website import db
 from website.database.player_assets import ResourceOnSale, Shipment
+from website.game_engine import GameException
 from website.utils.formatting import display_money, format_mass
-from website.utils.misc import flash_error
 
 
 def put_resource_on_market(player, resource, quantity, price):
     """Put an offer on the resource market"""
     if getattr(player, resource) - getattr(player, resource + "_on_sale") < quantity:
-        flash_error(f"You have not enough {resource} available")
-    else:
-        setattr(
-            player,
-            resource + "_on_sale",
-            getattr(player, resource + "_on_sale") + quantity,
-        )
-        new_sale = ResourceOnSale(
-            resource=resource,
-            quantity=quantity,
-            price=price,
-            creation_date=datetime.now(),
-            player=player,
-        )
-        db.session.add(new_sale)
-        db.session.commit()
-        flash(
-            f"You put {quantity/1000}t of {resource} on sale for "
-            f"{price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
-            category="message",
-        )
+        raise GameException("notEnoughResource")
+    setattr(
+        player,
+        resource + "_on_sale",
+        getattr(player, resource + "_on_sale") + quantity,
+    )
+    new_sale = ResourceOnSale(
+        resource=resource,
+        quantity=quantity,
+        price=price,
+        creation_date=datetime.now(),
+        player=player,
+    )
+    db.session.add(new_sale)
+    db.session.commit()
 
 
-def buy_resource_from_market(player, quantity, sale_id):
+def buy_resource_from_market(player, quantity, sale):
     """Buy an offer from the resource market"""
     engine = current_app.config["engine"]
-    sale = ResourceOnSale.query.filter_by(id=sale_id).first()
-
-    if sale is None:
-        return jsonify({"response": "saleNotFound"}), 404
 
     if quantity is None or quantity <= 0 or quantity > sale.quantity:
-        return jsonify({"response": "invalidQuantity"}), 403
+        raise GameException("invalidQuantity")
     total_price = sale.price * quantity
     if player == sale.player:
         # Player is buying their own resource
         sale.quantity -= quantity
         if sale.quantity == 0:
-            ResourceOnSale.query.filter_by(id=sale_id).delete()
+            sale.delete()
         setattr(
             player,
             sale.resource + "_on_sale",
             getattr(player, sale.resource + "_on_sale") - quantity,
         )
         db.session.commit()
-        return jsonify(
-            {
-                "response": "removedFromMarket",
-                "quantity": quantity,
-                "available_quantity": sale.quantity,
-                "resource": sale.resource,
-            }
-        )
-    if total_price > player.money:
-        return jsonify({"response": "notEnoughMoney"}), 403
     else:
+        if total_price > player.money:
+            raise GameException("notEnoughMoney")
         # Player buys form another player
         sale.quantity -= quantity
         player.money -= total_price
@@ -114,19 +96,8 @@ def buy_resource_from_market(player, quantity, sale_id):
         )
         if sale.quantity == 0:
             # Player is purchasing all available quantity
-            ResourceOnSale.query.filter_by(id=sale_id).delete()
+            sale.delete()
         db.session.commit()
-        return jsonify(
-            {
-                "response": "success",
-                "resource": sale.resource,
-                "total_price": total_price,
-                "quantity": quantity,
-                "seller": sale.player.username,
-                "available_quantity": sale.quantity,
-                "shipments": player.package_shipments(),
-            }
-        )
 
 
 def store_import(player, resource, quantity):
@@ -162,23 +133,14 @@ def store_import(player, resource, quantity):
         engine.log(f"{player.username} received a shipment of {format_mass(quantity)} {resource}.")
 
 
-def pause_shipment(player, shipment_id):
+def pause_shipment(shipment: Shipment):
     """this function is executed when a player pauses or unpauses an ongoing shipment"""
     engine = current_app.config["engine"]
-    shipment = Shipment.query.get(int(shipment_id))
-
-    if shipment is None:
-        return jsonify({"response": "shipmentNotFound"}), 404
-
+    if shipment.player_id != shipment.id:
+        raise GameException("shipmentNotFound")
     if shipment.suspension_time is None:
         shipment.suspension_time = engine.data["total_t"]
     else:
         shipment.departure_time += engine.data["total_t"] - shipment.suspension_time
         shipment.suspension_time = None
     db.session.commit()
-    return jsonify(
-        {
-            "response": "success",
-            "shipments": player.package_shipments(),
-        }
-    )
