@@ -314,7 +314,7 @@ def construction_time(player: Player, facility) -> float:
         facility
         in engine.storage_facilities
         | engine.controllable_facilities
-        | engine.renewables
+        | set(engine.renewables)
         | engine.extraction_facilities
         | engine.functional_facilities
     ):

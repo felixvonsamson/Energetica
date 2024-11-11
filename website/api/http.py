@@ -430,7 +430,7 @@ def request_cancel_project():
     construction_id = int(request_data["id"])
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
     if construction is None or construction.player_id != current_user.id:
-        return jsonify({"response": "ConstructionNotFound"}), 404
+        return jsonify({"response": "constructionNotFound"}), 404
     force = request_data["force"]
     try:
         website.utils.assets.cancel_project(player=current_user, construction=construction, force=force)
@@ -494,7 +494,7 @@ def request_decrease_project_priority():
     construction_id = request_data["id"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
     if construction is None or construction.player_id != current_user.id:
-        return jsonify({"response": "ConstructionNotFound"}), 404
+        return jsonify({"response": "constructionNotFound"}), 404
     website.utils.assets.decrease_project_priority(player=current_user, construction=construction)
     return jsonify(
         {

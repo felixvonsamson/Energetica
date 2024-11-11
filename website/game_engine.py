@@ -71,7 +71,7 @@ class GameEngine(object):
             "coal_burner",
         }
 
-        self.renewables = {
+        self.renewables = [
             "small_water_dam",
             "large_water_dam",
             "watermill",
@@ -80,7 +80,7 @@ class GameEngine(object):
             "windmill",
             "CSP_solar",
             "PV_solar",
-        }
+        ]
 
         self.functional_facilities = {
             "industry",
