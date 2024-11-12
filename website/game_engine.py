@@ -18,7 +18,7 @@ from .database.engine_data import EmissionData
 class GameEngine(object):
     """This class is the engine of the game. It contains all the data and methods to run the game."""
 
-    power_facilities = {
+    power_facilities = [
         "steam_engine",
         "windmill",
         "watermill",
@@ -33,33 +33,33 @@ class GameEngine(object):
         "PV_solar",
         "offshore_wind_turbine",
         "nuclear_reactor_gen4",
-    }
+    ]
 
-    extraction_facilities = {
+    extraction_facilities = [
         "coal_mine",
         "gas_drilling_site",
         "uranium_mine",
-    }
+    ]
 
-    extractable_resources = {"coal", "gas", "uranium"}
+    extractable_resources = ["coal", "gas", "uranium"]
 
-    storage_facilities = {
+    storage_facilities = [
         "small_pumped_hydro",
         "molten_salt",
         "large_pumped_hydro",
         "hydrogen_storage",
         "lithium_ion_batteries",
         "solid_state_batteries",
-    }
+    ]
 
-    controllable_facilities = {
+    controllable_facilities = [
         "steam_engine",
         "nuclear_reactor",
         "nuclear_reactor_gen4",
         "combined_cycle",
         "gas_burner",
         "coal_burner",
-    }
+    ]
 
     renewables = [
         "small_water_dam",
@@ -72,14 +72,14 @@ class GameEngine(object):
         "PV_solar",
     ]
 
-    functional_facilities = {
+    functional_facilities = [
         "industry",
         "laboratory",
         "warehouse",
         "carbon_capture",
-    }
+    ]
 
-    technologies = {
+    technologies = [
         "mathematics",
         "mechanical_engineering",
         "thermodynamics",
@@ -92,13 +92,13 @@ class GameEngine(object):
         "aerodynamics",
         "chemistry",
         "nuclear_engineering",
-    }
+    ]
 
-    facility_types = power_facilities | extraction_facilities | storage_facilities | functional_facilities
+    facility_types = power_facilities + extraction_facilities + storage_facilities + functional_facilities
 
-    all_asset_types = facility_types | technologies
+    all_asset_types = facility_types + technologies
 
-    asset_family_by_type = {
+    asset_family_by_name = {
         asset_type: asset_family
         for asset_family in [
             "Power facilities",
@@ -109,9 +109,10 @@ class GameEngine(object):
         ]
         for asset_type in vars()[asset_family.lower().replace(" ", "_")]
     }
+
     price_keys = (
-        controllable_facilities
-        | storage_facilities
+        set(controllable_facilities)
+        | set(storage_facilities)
         | {
             "buy_small_pumped_hydro",
             "buy_molten_salt",
