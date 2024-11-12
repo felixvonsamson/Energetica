@@ -14,14 +14,13 @@ from website.game_engine import Confirm, GameEngine, GameException
 from website.utils.network import reorder_facility_priorities
 
 
-def finish_construction(construction: OngoingConstruction):
+def finish_project(construction: OngoingConstruction):
     """
     This function is executed when a construction or research project has finished. The effects include:
     * For facilities which create demands, e.g. carbon capture, adds demands to the demand priorities
     * For technologies and functional facilities, checks for achievements
     * Removes from the relevant construction / research list and priority list
     """
-    # TODO: rename this method to `finish_project`
     engine: GameEngine = current_app.config["engine"]
     player: Player = Player.query.get(construction.player_id)
 
@@ -221,7 +220,6 @@ def upgrade_facility(player, facility):
                 facility.multiplier_3 = technology_effects.multiplier_3(player, facility.facility)
         db.session.commit()
 
-    print(is_upgradable(facility))
     if facility.facility in engine.technologies | engine.functional_facilities or not is_upgradable(facility):
         raise GameException("notUpgradable")
 
@@ -242,7 +240,10 @@ def upgrade_all_of_type(player, facility_name):
     """this function is executed when a player upgrades all facilities of a certain type"""
     facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
-        upgrade_facility(player, facility)
+        try:
+            upgrade_facility(player, facility)
+        except GameException:
+            pass
 
 
 def remove_asset(player, facility, decommissioning=True):
@@ -322,7 +323,10 @@ def dismantle_all_of_type(player, facility_name):
     """this function is executed when a player dismantles all facilities of a certain type"""
     facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
-        dismantle_facility(player, facility)
+        try:
+            dismantle_facility(player, facility)
+        except GameException:
+            pass
 
 
 def package_projects_data(player):
@@ -502,9 +506,9 @@ def decrease_project_priority(player, construction):
 
         if construction_1.suspension_time is None and construction_2.suspension_time is not None:
             # construction_1 is not paused, but construction_2 is
-            # TODO: groossssse merrrde
             toggle_pause_project(player, construction_1)
             toggle_pause_project(player, construction_2)
+            priority_list[index + 1], priority_list[index] = priority_list[index], priority_list[index + 1]
         setattr(player, attr, ",".join(map(str, priority_list)))
         db.session.commit()
         websocket.rest_notify_constructions(engine, player)

@@ -158,7 +158,7 @@ def get_chat_messages():
 def get_chat_list():
     """gets the list of chats for the current player"""
     response = current_user.package_chat_list()
-    return jsonify({"response": "success"} + response)
+    return jsonify({"response": "success"} | response)
 
 
 @http.route("/get_resource_data", methods=["GET"])

@@ -80,7 +80,7 @@ def check_events_completion(engine):
         ).all()
     )
     for fc in finished_constructions:
-        assets.finish_construction(fc)
+        assets.finish_project(fc)
 
     # check if shipment arrived
     arrived_shipments = Shipment.query.filter(
