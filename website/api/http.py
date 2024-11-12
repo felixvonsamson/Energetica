@@ -10,6 +10,7 @@ import numpy as np
 from flask import Blueprint, Response, current_app, flash, g, jsonify, redirect, request
 from flask_login import current_user, login_required
 
+# from gevent import getcurrent
 import website.utils.assets
 import website.utils.chat
 import website.utils.misc
@@ -19,8 +20,6 @@ from website.config.assets import wind_power_curve
 from website.database.map import Hex
 from website.database.messages import Chat
 from website.database.player import Network, Player
-
-# from gevent import getcurrent
 from website.database.player_assets import ActiveFacility, OngoingConstruction, ResourceOnSale, Shipment
 from website.game_engine import Confirm, GameException
 from website.technology_effects import get_current_technology_values
@@ -39,14 +38,14 @@ def log_action(func):
         if request.method != "POST":
             return func(*args, **kwargs)
 
-        # print(f"Greenlet ID {id(getcurrent())}: start")
         try:
             with g.engine.lock:
+                # print(f"Greenlet ID {id(getcurrent())}: start")
                 response = func(*args, **kwargs)
+                # print(f"Greenlet ID {id(getcurrent())}: done")
             response, status_code = response if isinstance(response, tuple) else (response, 200)
         except GameException as excp:
             response, status_code = jsonify({"response": excp.exception_type, **excp.kwargs}), 403
-        # print(f"Greenlet ID {id(getcurrent())}: done")
         log_entry = {
             "timestamp": datetime.now().isoformat(),
             "action_type": "request",
