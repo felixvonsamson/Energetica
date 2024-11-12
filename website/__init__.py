@@ -136,9 +136,8 @@ def create_app(
         loaded_tick = None
         if checkpoints_ids:
             loaded_tick = max(checkpoints_ids)
-            with tarfile.open(f"checkpoints/checkpoint_{loaded_tick}.tar.gz") as file:
-                file.extractall("./")
-            print(f"Loaded instance from checkpoints/checkpoint_{loaded_tick}.tar.gz.")
+            print(f"Using checkpoints/checkpoint_{loaded_tick}.tar.gz as last checkpoint.")
+            shutil.copyfile(f"checkpoints/checkpoint_{loaded_tick}.tar.gz", "checkpoints/last_checkpoint.tar.gz")
         action_id_by_tick = {
             action["total_t"]: action_id for action_id, action in enumerate(actions) if action["action_type"] == "tick"
         }
@@ -158,11 +157,14 @@ def create_app(
                 in_game_seconds_per_tick, engine.data["random_seed"], engine.data["delta_t"]
             )
             pickle.dump(climate_data, file)
-
+    if os.path.isfile("checkpoints/last_checkpoint.tar.gz"):
+        with tarfile.open("checkpoints/last_checkpoint.tar.gz") as file:
+            file.extractall("./")
+        engine.log("Loaded last checkpoint from disk.")
     if os.path.isfile("instance/engine_data.pck"):
         with open("instance/engine_data.pck", "rb") as file:
             engine.data = pickle.load(file)
-            engine.log("Loaded engine data from disk.")
+        engine.log("Loaded engine data from disk.")
 
     app.config["engine"] = engine
 
