@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 from pvlib.location import Location
-from scipy.stats import norm
 
 # Parameters
 size_param = 10

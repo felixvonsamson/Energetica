@@ -589,7 +589,7 @@ def solar_generation(engine, player, player_cap, generation, in_game_seconds_pas
     """
     Each instance of facility generates a different amount of power depending on the position of the facility.
     The clear sky index is calculated using a 3D perlin noise that moves over time, simulating the movement of clouds.
-    The csi is then multiplied by the clear sky value from pvlib to get the actual irradiance at the location.
+    The csi is then multiplied by the clear sky value to get the actual irradiance at the location.
     The effective power of the solar facility is then calculated as irradiance / 1000 * max_power.
     """
     for facility_type in ["CSP_solar", "PV_solar"]:

@@ -7,10 +7,8 @@ import threading
 from datetime import datetime, timedelta
 
 import numpy as np
-import pandas as pd
 from flask import flash
 from noise import pnoise3
-from pvlib.location import Location
 from scipy.stats import norm
 
 import website.api.websocket as websocket
@@ -22,6 +20,7 @@ from website.database.messages import Chat, Notification
 from website.database.player import Network, Player
 from website.database.player_assets import ActiveFacility
 from website.game_engine import GameEngine, GameException
+from website.utils.astro import DrHI
 
 # Helper functions and data initialization utilities
 
@@ -289,7 +288,7 @@ def get_quiz_question(engine, player):
 def calculate_solar_irradiance(x, y, total_seconds, random_seed):
     """
     The clear sky index is derived from a 3d perlin noise function that moves in time to simulate the cloud cover.
-    The clear sky index is then multiplied by the clear sky irradiance from pvlib to get the solar irradiance.
+    The clear sky index is then multiplied by the clear sky irradiance to get the solar irradiance.
     The irradiance is capped at 1000 W/m^2.
     """
 
@@ -301,7 +300,7 @@ def calculate_solar_irradiance(x, y, total_seconds, random_seed):
     start_date = datetime(2023, 7, 1)  # 6 months offset because i'm using the southern hemisphere
     day_of_year = int((total_seconds / 3600 / 24 / 72) % 1 * 365)
     time_of_day = total_seconds % (3600 * 24)
-    weather_datetime = pd.DatetimeIndex([start_date + timedelta(days=day_of_year, seconds=time_of_day)])
+    weather_datetime = start_date + timedelta(days=day_of_year, seconds=time_of_day)
 
     x_noise = x + total_seconds / 2400
     y_noise = y + total_seconds / 4000
@@ -315,8 +314,7 @@ def calculate_solar_irradiance(x, y, total_seconds, random_seed):
         cloud_cover_noise, threshold=0.5 * regional_noise, smoothness=max(0.3, 1 - regional_noise)
     )
     csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
-    loc = Location((y - 10) * 85 / 21, 0)
-    clear_sky = loc.get_clearsky(weather_datetime)["ghi"][weather_datetime[0]]
+    clear_sky = DrHI(weather_datetime.timestamp(), (y - 10) * 85 / 21, 0)
     return min(1000, csi * clear_sky)
 
 
