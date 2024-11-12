@@ -633,7 +633,7 @@ def package_power_facilities(player: Player):
                 "pollution": const_config_assets[power_facility]["base_pollution"]
                 / efficiency_multiplier(player, power_facility)
             }
-            if power_facility in engine.controllable_facilities + engine.storage_facilities
+            if power_facility in engine.controllable_facilities | engine.storage_facilities
             else {}
         )
         for power_facility in engine.power_facilities

@@ -213,11 +213,11 @@ def upgrade_facility(player, facility):
             facility.multiplier_3 = technology_effects.multiplier_3(player, facility.facility)
         else:
             facility.price_multiplier = technology_effects.price_multiplier(player, facility.facility)
-            if facility.facility in engine.power_facilities + engine.storage_facilities:
+            if facility.facility in engine.power_facilities | engine.storage_facilities:
                 facility.multiplier_1 = technology_effects.multiplier_1(player, facility.facility)
             if facility.facility in engine.storage_facilities:
                 facility.multiplier_2 = technology_effects.multiplier_2(player, facility.facility)
-            if facility.facility in engine.controllable_facilities + engine.storage_facilities:
+            if facility.facility in engine.controllable_facilities | engine.storage_facilities:
                 facility.multiplier_3 = technology_effects.multiplier_3(player, facility.facility)
         db.session.commit()
 
@@ -250,7 +250,7 @@ def remove_asset(player, facility, decommissioning=True):
     engine = current_app.config["engine"]
     if facility is None or facility.player_id != player.id:
         raise GameException("constructionNotFound")
-    if facility.facility in engine.technologies + engine.functional_facilities:
+    if facility.facility in engine.technologies | engine.functional_facilities:
         raise GameEngine("notRemovable")
     db.session.delete(facility)
     db.session.flush()
@@ -261,13 +261,13 @@ def remove_asset(player, facility, decommissioning=True):
     player.money -= cost
     if ActiveFacility.query.filter_by(facility=facility.facility, player_id=player.id).count() == 0:
         # remove facility from facility priorities if it was the last one
-        if facility.facility in engine.extraction_facilities + engine.storage_facilities:
+        if facility.facility in engine.extraction_facilities | engine.storage_facilities:
             player.remove_from_list("demand_priorities", facility.facility)
             reorder_facility_priorities(engine, player)
         if facility.facility in engine.renewables:
             player.remove_from_list("self_consumption_priority", facility.facility)
             reorder_facility_priorities(engine, player)
-        if facility.facility in engine.storage_facilities + engine.controllable_facilities:
+        if facility.facility in engine.storage_facilities | engine.controllable_facilities:
             player.remove_from_list("rest_of_priorities", facility.facility)
             reorder_facility_priorities(engine, player)
     facility_name = engine.const_config["assets"][facility.facility]["name"]
@@ -322,7 +322,7 @@ def dismantle_all_of_type(player, facility_name):
     """this function is executed when a player dismantles all facilities of a certain type"""
     facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
-        dismantle_facility(player, facility.id)
+        dismantle_facility(player, facility)
 
 
 def package_projects_data(player):

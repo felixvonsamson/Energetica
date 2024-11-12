@@ -539,8 +539,14 @@ def request_dismantle_facility():
     facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
     if facility is None or facility.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
-    response = website.utils.assets.dismantle_facility(player=current_user, facility=facility)
-    return response
+    website.utils.assets.dismantle_facility(player=current_user, facility=facility)
+    return jsonify(
+        {
+            "response": "success",
+            "facility_name": facility.facility,
+            "money": current_user.money,
+        }
+    )
 
 
 @http.route("/request_dismantle_all_of_type", methods=["POST"])
