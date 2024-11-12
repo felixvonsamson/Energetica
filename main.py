@@ -54,8 +54,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--simulate_profiling",
-        type=bool,
-        default=False,
+        action="store_true",
         help="If game is simulated, allows to run code profiling.",
     )
     parser.add_argument(

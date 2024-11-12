@@ -94,6 +94,7 @@ def create_app(
     simulate_checkpoint_every_k_ticks,
     simulate_checkpoint_ticks,
     simulate_till,
+    simulate_profiling,
     **kwargs,
 ):
     """This function sets up the app and the game engine"""
@@ -300,6 +301,7 @@ def create_app(
                     simulate_checkpoint_every_k_ticks,
                     simulate_checkpoint_ticks,
                 ),
+                kwargs={"profiling": simulate_profiling},
                 id="simulate",
                 trigger="date",
                 run_date=datetime.now(),

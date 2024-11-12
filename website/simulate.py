@@ -1,4 +1,6 @@
+import cProfile
 import pickle
+import pstats
 import tarfile
 from time import sleep
 
@@ -24,7 +26,17 @@ def verify(engine):
     assert True
 
 
-def simulate(app, port, actions, log_every_k_ticks=10000, checkpoint_ticks=[]):
+def simulate(*simulate_args, profiling=False, **simulate_kwargs):
+    if not profiling:
+        _simulate(*simulate_args, **simulate_kwargs)
+    else:
+        with cProfile.Profile() as profile:
+            _simulate(*simulate_args, **simulate_kwargs)
+            stats = pstats.Stats(profile)
+            stats.sort_stats(pstats.SortKey.CUMULATIVE).print_stats(30)
+
+
+def _simulate(app, port, actions, log_every_k_ticks=10000, checkpoint_ticks=[]):
     import website.production_update as production_update
     from website import db
     from website.database.map import Hex
