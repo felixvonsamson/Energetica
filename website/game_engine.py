@@ -153,6 +153,8 @@ class GameEngine(object):
         self.action_logger.info(
             json.dumps(
                 {
+                    "clock_time": self.clock_time,
+                    "in_game_seconds_per_tick": self.in_game_seconds_per_tick,
                     "action_type": "init_engine",
                     "random_seed": self.data["random_seed"],
                     "start_date": self.data["start_date"].isoformat(),
