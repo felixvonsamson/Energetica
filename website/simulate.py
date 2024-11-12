@@ -33,7 +33,7 @@ def simulate(*simulate_args, profiling=False, **simulate_kwargs):
         with cProfile.Profile() as profile:
             _simulate(*simulate_args, **simulate_kwargs)
             stats = pstats.Stats(profile)
-            stats.sort_stats(pstats.SortKey.CUMULATIVE).print_stats(30)
+        stats.sort_stats(pstats.SortKey.CUMULATIVE).print_stats(30)
 
 
 def _simulate(app, port, actions, log_every_k_ticks=10000, checkpoint_ticks=[]):

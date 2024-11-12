@@ -8,6 +8,8 @@ import pickle
 from collections import defaultdict
 from datetime import datetime
 
+from gevent.lock import RLock
+
 from .config.assets import config, const_config
 from .database.engine_data import EmissionData
 
@@ -142,6 +144,7 @@ class GameEngine(object):
         self.init_loggers()
         self.log("engine created")
 
+        self.lock = RLock()
         self.data = {}
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start

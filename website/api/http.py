@@ -36,32 +36,35 @@ def log_action(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
+        if request.method != "POST":
+            return func(*args, **kwargs)
+
         # print(f"Greenlet ID {id(getcurrent())}: start")
         try:
-            response = func(*args, **kwargs)
+            with g.engine.lock:
+                response = func(*args, **kwargs)
             response, status_code = response if isinstance(response, tuple) else (response, 200)
         except GameException as excp:
             response, status_code = jsonify({"response": excp.exception_type, **excp.kwargs}), 403
         # print(f"Greenlet ID {id(getcurrent())}: done")
-        if request.method == "POST":
-            log_entry = {
-                "timestamp": datetime.now().isoformat(),
-                "action_type": "request",
-                "player_id": current_user.id,
-                "request": {
-                    "endpoint": request.path,
-                    "content_type": request.content_type,
-                    "content": request.get_json() if request.is_json else request.form.to_dict(),
-                },
-                "response": {
-                    "status_code": status_code,
-                    "content_type": response.content_type if isinstance(response, Response) else str(type(response)),
-                    "content": (response.json if response.is_json else response.data.decode("utf-8"))
-                    if isinstance(response, Response)
-                    else response,
-                },
-            }
-            g.engine.action_logger.info(json.dumps(log_entry))
+        log_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "action_type": "request",
+            "player_id": current_user.id,
+            "request": {
+                "endpoint": request.path,
+                "content_type": request.content_type,
+                "content": request.get_json() if request.is_json else request.form.to_dict(),
+            },
+            "response": {
+                "status_code": status_code,
+                "content_type": response.content_type if isinstance(response, Response) else str(type(response)),
+                "content": (response.json if response.is_json else response.data.decode("utf-8"))
+                if isinstance(response, Response)
+                else response,
+            },
+        }
+        g.engine.action_logger.info(json.dumps(log_entry))
         return response, status_code
 
     return wrapper

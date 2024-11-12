@@ -27,7 +27,13 @@ from website.utils.resource_market import store_import
 
 
 def state_update(engine, app):
+    with engine.lock:
+        _state_update(engine, app)
+
+
+def _state_update(engine, app):
     """This function is called every tick to update the state of the game"""
+    # acquire lock
     total_t = (time.time() - engine.data["start_date"]) / engine.clock_time
     with app.app_context():
         while engine.data["total_t"] < total_t - 1:
