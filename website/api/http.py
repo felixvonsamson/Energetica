@@ -601,11 +601,12 @@ def put_resource_on_sale():
     except GameException as excp:
         assert excp.exception_type == "notEnoughResource"
         flash_error(f"You have not enough {resource} available")
-    flash(
-        f"You put {quantity/1000}t of {resource} on sale for "
-        f"{price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
-        category="message",
-    )
+    else:
+        flash(
+            f"You put {quantity/1000}t of {resource} on sale for "
+            f"{price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
+            category="message",
+        )
     return redirect("/resource_market", code=303)
 
 
@@ -662,8 +663,17 @@ def create_network():
     """This endpoint is used when a player creates a network"""
     request_data = request.get_json()
     network_name = request_data["network_name"]
-    website.utils.network.create_network(g.engine, current_user, network_name)
-    # TODO: flash(f"You created the network {network_name}", category="message")
+    try:
+        website.utils.network.create_network(g.engine, current_user, network_name)
+    except GameException as excp:
+        match excp.exception_type:
+            case "nameLengthInvalid":
+                flash("Network name must be between 3 and 40 characters", category="error")
+            case "nameAlreadyUsed":
+                flash("A network with this name already exists", category="error")
+            case _:
+                raise
+    flash(f"You created the network {network_name}", category="message")
     return redirect("/network", code=303)
 
 
@@ -675,6 +685,7 @@ def leave_network():
     if network is None:
         return jsonify({"response": "notInNetwork"}), 404
     website.utils.network.leave_network(g.engine, current_user)
+    flash(f"You left network {network.name}", category="message")
     return redirect("/network", code=303)
 
 
