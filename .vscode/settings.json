@@ -43,6 +43,7 @@
     // cSpell
     "cSpell.words": [
         "apscheduler",
+        "arccos",
         "backref",
         "Baloo",
         "Banqiao",
@@ -63,6 +64,7 @@
         "ensp",
         "eventlet",
         "Fukushima",
+        "gevent",
         "httpauth",
         "Hydrostrg",
         "iloc",
@@ -71,6 +73,8 @@
         "isort",
         "itertuples",
         "jsonify",
+        "lacunarity",
+        "linalg",
         "lvls",
         "mapsize",
         "Météo",
@@ -93,6 +97,7 @@
         "Unsubscription",
         "Uran",
         "uselist",
+        "vectorize",
         "webcredentials",
         "webpush",
         "werkzeug",

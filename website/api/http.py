@@ -382,7 +382,7 @@ def choose_location():
     request_data = request.get_json()
     selected_id = request_data["selected_id"]
     if selected_id < 0 or selected_id >= Hex.query.count():
-        return jsonify({"resonse": "TileNotExist"})  # TODO
+        return jsonify({"response": "TileNotExist"})  # TODO
     location = Hex.query.get(selected_id + 1)
     misc.confirm_location(engine=g.engine, player=current_user, location=location)
     return jsonify({"response": "success"})
