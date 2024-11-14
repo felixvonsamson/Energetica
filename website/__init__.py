@@ -267,10 +267,6 @@ def create_app(
     login_manager.login_view = "auth.login"
     login_manager.init_app(app)
 
-    @login_manager.unauthorized_handler
-    def unauthorized():
-        return redirect(url_for("auth.login")), 401
-
     @login_manager.user_loader
     def load_user(id):
         player = Player.query.get(int(id))

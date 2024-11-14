@@ -43,7 +43,7 @@ def log_action(func):
                 # print(f"Greenlet ID {id(getcurrent())}: start")
                 response = func(*args, **kwargs)
                 # print(f"Greenlet ID {id(getcurrent())}: done")
-            response, status_code = response if isinstance(response, tuple) else (response, 200)
+            response, status_code = response if isinstance(response, tuple) else (response, response.status_code)
         except GameException as excp:
             response, status_code = jsonify({"response": excp.exception_type, **excp.kwargs}), 403
         log_entry = {
@@ -94,7 +94,7 @@ def request_delete_notification():
     return jsonify({"response": "success"})
 
 
-@http.route("/request_marked_as_read", methods=["GET"])
+@http.route("/request_marked_as_read", methods=["POST"])
 def request_marked_as_read():
     """Endpoint for marking all notification as read"""
     current_user.notifications_read()
@@ -592,7 +592,7 @@ def request_change_facility_priority():
 @log_action
 def put_resource_on_sale():
     """Parse the HTTP form for selling resources"""
-    request_data = request.get_json()
+    request_data = request.form
     resource = request_data["resource"]
     quantity = float(request_data["quantity"]) * 1000
     price = float(request_data["price"]) / 1000
@@ -648,7 +648,7 @@ def buy_resource():
 @log_action
 def join_network():
     """player is trying to join a network"""
-    request_data = request.get_json()
+    request_data = request.form
     network_name = request_data["choose_network"]
     network = Network.query.filter_by(name=network_name).first()
     website.utils.network.join_network(g.engine, current_user, network)
@@ -661,7 +661,7 @@ def join_network():
 @log_action
 def create_network():
     """This endpoint is used when a player creates a network"""
-    request_data = request.get_json()
+    request_data = request.form
     network_name = request_data["network_name"]
     try:
         website.utils.network.create_network(g.engine, current_user, network_name)
