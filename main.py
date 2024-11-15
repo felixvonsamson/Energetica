@@ -53,9 +53,14 @@ if __name__ == "__main__":
         metavar="FILE",
     )
     parser.add_argument(
-        "--simulate_profiling",
+        "--simulate_stop_on_mismatch",
         action="store_true",
-        help="If game is simulated, allows to run code profiling.",
+        help="If game is simulated, stops the simulation if the request response does not match the expected response.",
+    )
+    parser.add_argument(
+        "--simulate_stop_on_server_error",
+        action="store_true",
+        help="If game is simulated, stops the simulation if the server returns an error.",
     )
     parser.add_argument(
         "--simulate_checkpoint_every_k_ticks",
@@ -75,6 +80,11 @@ if __name__ == "__main__":
         type=int,
         default=None,
         help="If game is simulated, and if a value is given, only simulates till the given tick, and saves the engine",
+    )
+    parser.add_argument(
+        "--simulate_profiling",
+        action="store_true",
+        help="If game is simulated, allows to run code profiling.",
     )
     parser.add_argument(
         "--force_yes",
