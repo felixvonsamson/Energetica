@@ -52,10 +52,15 @@ def _simulate(
     from website.utils.game_engine import check_events_completion, climate_event_impact
 
     with app.app_context():
+        trials = 0
         while True:
             try:
                 requests.get(f"http://localhost:{port}")
             except requests.exceptions.ConnectionError:
+                trials += 1
+                if trials == 10:
+                    print("Server is not running.")
+                    exit(1)
                 sleep(1)
                 continue
             break
