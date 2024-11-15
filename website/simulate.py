@@ -42,6 +42,7 @@ def _simulate(
     actions,
     stop_on_mismatch,
     stop_on_server_error,
+    stop_on_assertion_error,
     checkpoint_every_k_ticks=10000,
     checkpoint_ticks=[],
 ):
@@ -119,3 +120,5 @@ def _simulate(
                 verify(engine)
             except AssertionError:
                 print(print("\033[31m" + "Assertion error.\033[0m"))
+                if stop_on_assertion_error:
+                    break
