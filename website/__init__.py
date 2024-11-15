@@ -24,7 +24,7 @@ from gevent import monkey
 monkey.patch_all(thread=True, time=True)
 
 from ecdsa import NIST256p, SigningKey
-from flask import Flask, jsonify, redirect, request, send_file, url_for
+from flask import Flask, jsonify, request, send_file
 from flask_apscheduler import APScheduler
 from flask_login import LoginManager, current_user
 from flask_sock import Sock
