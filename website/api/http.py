@@ -45,6 +45,7 @@ def log_action(func):
                 # print(f"Greenlet ID {id(getcurrent())}: done")
             response, status_code = response if isinstance(response, tuple) else (response, response.status_code)
         except GameException as excp:
+            # TODO g.engine.db.rollback()
             response, status_code = jsonify({"response": excp.exception_type, **excp.kwargs}), 403
         log_entry = {
             "timestamp": datetime.now().isoformat(),
@@ -203,7 +204,7 @@ def get_chart_data():
     if current_user.tile is None:
         return "", 404
     total_t = g.engine.data["total_t"]
-    current_data = g.engine.data["current_data"][current_user.id].get_data(t=total_t % 216 + 1)
+    current_data = current_user.current_data.get_data(t=total_t % 216 + 1)
     filename = f"instance/player_data/player_{current_user.id}.pck"
     with open(filename, "rb") as file:
         data = pickle.load(file)
@@ -222,15 +223,13 @@ def get_chart_data():
         climate_data = pickle.load(file)
     concat_slices(climate_data, current_climate_data)
 
-    cumulative_emissions = g.engine.data["player_cumul_emissions"][current_user.id].get_all()
-
     return jsonify(
         {
             "total_t": total_t,
             "data": data,
             "network_data": network_data,
             "climate_data": climate_data,
-            "cumulative_emissions": cumulative_emissions,
+            "cumulative_emissions": current_user.cumul_emissions.get_all(),
         }
     )
 
@@ -275,7 +274,7 @@ def get_player_data():
         return "", 404
     levels = current_user.get_lvls()
     config = g.engine.config[current_user.id]
-    capacities = g.engine.data["player_capacities"][current_user.id].get_all()
+    capacities = current_user.capacities.get_all()
     return jsonify(
         {
             "levels": levels,

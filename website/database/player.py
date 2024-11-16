@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime
+from functools import partial
 from itertools import chain
 from typing import List
 
@@ -12,9 +13,11 @@ from pywebpush import WebPushException, webpush
 from website import db
 from website.config.achievements import achievements
 from website.database.messages import Chat, Message, Notification, player_chats
+from website.database.mixed_database import mixed_db
 from website.database.player_assets import ActiveFacility, OngoingConstruction
 
 
+@partial(mixed_db, fields={"current_data", "capacities", "cumul_emissions"})
 class Player(db.Model, UserMixin):
     """Class that stores the users"""
 
@@ -327,7 +330,7 @@ class Player(db.Model, UserMixin):
                 "total_t": engine.data["total_t"],
                 "chart_values": new_values,
                 "climate_values": engine.data["current_climate_data"].get_last_data(),
-                "cumulative_emissions": engine.data["player_cumul_emissions"][self.id].get_all(),
+                "cumulative_emissions": self.cumul_emissions.get_all(),
                 "money": self.money,
             },
         )
@@ -374,7 +377,7 @@ class Player(db.Model, UserMixin):
 
     def calculate_net_emissions(self):
         """Calculates the net emissions of the player"""
-        cumulative_emissions = current_app.config["engine"].data["player_cumul_emissions"][self.id].get_all()
+        cumulative_emissions = self.cumul_emissions.get_all()
         net_emissions = 0
         for value in cumulative_emissions.values():
             net_emissions += value

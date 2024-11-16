@@ -146,7 +146,7 @@ class GameEngine(object):
         self.log("engine created")
 
         self.lock = RLock()
-        self.data = {}
+        self.data = defaultdict(lambda: defaultdict(dict))
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
         self.data["start_date"] = start_date or datetime.now()  # 0 point of server time
@@ -168,10 +168,7 @@ class GameEngine(object):
         self.data["start_date"] = math.floor(self.data["start_date"].timestamp() / clock_time) * clock_time
 
         # All data for the current day will be stored here :
-        self.data["player_capacities"] = {}
-        self.data["player_cumul_emissions"] = {}
         self.data["network_capacities"] = {}
-        self.data["current_data"] = {}
         self.data["network_data"] = {}
         self.data["current_climate_data"] = EmissionData(
             self.data["delta_t"], in_game_seconds_per_tick, self.data["random_seed"]

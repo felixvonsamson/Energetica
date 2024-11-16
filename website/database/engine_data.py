@@ -97,10 +97,9 @@ class CapacityData:
 
     def update_network(self, network):
         """This function updates the capacity data of the network"""
-        engine = current_app.config["engine"]
         self._data = {}
         for player in network.members:
-            player_capacities = engine.data["player_capacities"][player.id].get_all()
+            player_capacities = player.capacities.get_all()
             for facility in player_capacities:
                 if "power" in player_capacities[facility]:
                     if facility not in self._data:
@@ -173,7 +172,7 @@ class CircularBufferPlayer:
             for subcategory, value in subcategories.items():
                 self._data[category][subcategory].append(value)
 
-    def new_subcategory(self, category, subcategory):
+    def add_subcategory(self, category, subcategory):
         """Adds a new subcategory to the data"""
         if subcategory not in self._data[category]:
             self._data[category][subcategory] = deque([0.0] * 360, maxlen=360)
@@ -221,7 +220,7 @@ class CumulativeEmissionsData:
         """Adds a value to the data"""
         self._data[facility] += value
 
-    def new_category(self, facility):
+    def add_category(self, facility):
         """Adds a new category to the data"""
         if facility not in self._data:
             self._data[facility] = 0.0

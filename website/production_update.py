@@ -37,7 +37,7 @@ def update_electricity(engine):
     for player in players:
         if player.tile is None:
             continue
-        new_values[player.id] = engine.data["current_data"][player.id].init_new_data()
+        new_values[player.id] = player.current_data.init_new_data()
 
     for network in networks:
         market = init_market()
@@ -82,7 +82,7 @@ def update_electricity(engine):
         calculate_net_import(new_values[player.id])
         update_storage_lvls(engine, new_values[player.id], player)
         resources_and_pollution(engine, new_values[player.id], player)
-        engine.data["current_data"][player.id].append_value(new_values[player.id])
+        player.current_data.append_value(new_values[player.id])
         # add industry revenues to player money
         player.money += new_values[player.id]["revenues"]["industry"]
         update_player_progress_values(engine, player, new_values)
@@ -93,30 +93,21 @@ def update_electricity(engine):
 def set_facilities_usage(engine, new_values, player):
     """Set the usage of the facilities to the database"""
     for facility in engine.controllable_facilities:
-        if engine.data["player_capacities"][player.id].contains(facility):
+        if player.capacities.contains(facility):
             ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
-                {
-                    ActiveFacility.usage: new_values["generation"][facility]
-                    / engine.data["player_capacities"][player.id][facility]["power"]
-                },
+                {ActiveFacility.usage: new_values["generation"][facility] / player.capacities[facility]["power"]},
                 synchronize_session=False,
             )
     for facility in engine.storage_facilities:
-        if engine.data["player_capacities"][player.id].contains(facility):
+        if player.capacities.contains(facility):
             ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
-                {
-                    ActiveFacility.usage: new_values["storage"][facility]
-                    / engine.data["player_capacities"][player.id][facility]["capacity"]
-                },
+                {ActiveFacility.usage: new_values["storage"][facility] / player.capacities[facility]["capacity"]},
                 synchronize_session=False,
             )
     for facility in engine.extraction_facilities:
-        if engine.data["player_capacities"][player.id].contains(facility):
+        if player.capacities.contains(facility):
             ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
-                {
-                    ActiveFacility.usage: new_values["demand"][facility]
-                    / engine.data["player_capacities"][player.id][facility]["power_use"]
-                },
+                {ActiveFacility.usage: new_values["demand"][facility] / player.capacities[facility]["power_use"]},
                 synchronize_session=False,
             )
 
@@ -159,23 +150,22 @@ def init_market():
 
 def update_storage_lvls(engine, new_values, player):
     """Update storage levels according to the use of storage facilities"""
-    player_cap = engine.data["player_capacities"][player.id]
     generation = new_values["generation"]
     demand = new_values["demand"]
     storage = new_values["storage"]
     for facility in engine.storage_facilities:
-        if player_cap[facility] is not None:
+        if player.capacities[facility] is not None:
             # the energy is converted from Wt to Wh
             storage[facility] = (
                 storage[facility]
                 - generation[facility]
                 / 3600
                 * engine.in_game_seconds_per_tick
-                / (player_cap[facility]["efficiency"] ** 0.5)
+                / (player.capacities[facility]["efficiency"] ** 0.5)
                 + demand[facility]
                 / 3600
                 * engine.in_game_seconds_per_tick
-                * (player_cap[facility]["efficiency"] ** 0.5)
+                * (player.capacities[facility]["efficiency"] ** 0.5)
             )
 
 
@@ -196,21 +186,21 @@ def calculate_net_import(new_values):
         new_values["revenues"]["imports"] = min(0.0, exp_rev + imp_rev)
 
 
-def extraction_facility_demand(engine, new_values, player, player_cap, demand):
+def extraction_facility_demand(engine, new_values, player, demand):
     """Calculate power consumption of extraction facilities"""
     player_resources = new_values["resources"]
     warehouse_caps = engine.config[player.id]["warehouse_capacities"]
     for resource, facility in resource_to_extraction.items():
-        if player_cap[facility] is not None:
+        if player.capacities[facility] is not None:
             max_warehouse = warehouse_caps[resource] - player_resources[resource]
             max_prod = (
-                player_cap[facility]["extraction_rate_per_day"]
+                player.capacities[facility]["extraction_rate_per_day"]
                 * getattr(player.tile, resource)
                 * engine.in_game_seconds_per_tick
                 / 86400  # 86400 seconds in a day
             )
             power_factor = min(1.0, max_warehouse / max(1.0, max_prod))
-            demand[facility] = player_cap[facility]["power_use"] * power_factor
+            demand[facility] = player.capacities[facility]["power_use"] * power_factor
 
 
 def industry_demand_and_revenues(engine, player, demand, revenues):
@@ -271,16 +261,13 @@ def shipment_demand(engine, player, demand):
 
 def storage_demand(engine, player, demand):
     """calculate the maximal demand of storage plants"""
-    player_cap = engine.data["player_capacities"][player.id]
     for facility in engine.storage_facilities:
-        if player_cap[facility] is not None:
+        if player.capacities[facility] is not None:
             demand[facility] = calculate_prod(
                 engine,
                 "max",
                 player,
-                player_cap,
                 facility,
-                engine.data["current_data"][player.id],
                 resource_reservations=None,
                 filling=True,
             )
@@ -295,11 +282,10 @@ def climate_event_recovery_cost(player, revenues):
 def calculate_demand(engine, new_values, player):
     """Calculates the electricity demand of one player"""
 
-    player_cap = engine.data["player_capacities"][player.id]
     demand = new_values["demand"]
     revenues = new_values["revenues"]
 
-    extraction_facility_demand(engine, new_values, player, player_cap, demand)
+    extraction_facility_demand(engine, new_values, player, demand)
     industry_demand_and_revenues(engine, player, demand, revenues)
     construction_demand(player, demand)
     shipment_demand(engine, player, demand)
@@ -324,18 +310,17 @@ def reset_resource_reservations():
 def calculate_generation_without_market(engine, new_values, player):
     """Calculate the generation of a player that is not part of a network"""
     internal_market = init_market()
-    player_cap = engine.data["player_capacities"][player.id]
     generation = new_values[player.id]["generation"]
     demand = new_values[player.id]["demand"]
     resource_reservations = reset_resource_reservations()
 
     # generation of non controllable facilities is calculated from weather data
-    renewables_generation(engine, player, player_cap, generation)
-    minimal_generation(engine, player, player_cap, generation, resource_reservations)
+    renewables_generation(engine, player, generation)
+    minimal_generation(engine, player, generation, resource_reservations)
     facilities = engine.storage_facilities + engine.power_facilities
     # Obligatory generation is put on the internal market at a price of -5
     for facility in facilities:
-        if player_cap[facility] is not None:
+        if player.capacities[facility] is not None:
             internal_market = offer(
                 internal_market,
                 player.id,
@@ -359,14 +344,12 @@ def calculate_generation_without_market(engine, new_values, player):
     resource_reservations = reset_resource_reservations()
     # offer additional capacities of facilities on the internal market
     for facility in engine.storage_facilities + engine.controllable_facilities:
-        if player_cap[facility] is not None:
+        if player.capacities[facility] is not None:
             max_prod = calculate_prod(
                 engine,
                 "max",
                 player,
-                player_cap,
                 facility,
-                engine.data["current_data"][player.id],
                 resource_reservations,
             )
             price = getattr(player, "price_" + facility)
@@ -378,16 +361,15 @@ def calculate_generation_without_market(engine, new_values, player):
 
 def calculate_generation_with_market(engine, new_values, market, player):
     """Calculate the generation of a player that is part of a network (before market logic)"""
-    player_cap = engine.data["player_capacities"][player.id]
     generation = new_values[player.id]["generation"]
     demand = new_values[player.id]["demand"]
     resource_reservations = reset_resource_reservations()
 
-    renewables_generation(engine, player, player_cap, generation)
-    minimal_generation(engine, player, player_cap, generation, resource_reservations)
+    renewables_generation(engine, player, generation)
+    minimal_generation(engine, player, generation, resource_reservations)
     facilities = engine.storage_facilities + engine.power_facilities
     for facility in facilities:
-        if player_cap[facility] is not None:
+        if player.capacities[facility] is not None:
             market = offer(market, player.id, generation[facility], -5, facility)
 
     # bid demand on the market at the set prices
@@ -405,20 +387,18 @@ def calculate_generation_with_market(engine, new_values, market, player):
             price = getattr(player, "price_buy_" + demand_type)
             market = bid(market, player.id, bid_q, price, demand_type)
         else:
-            reduce_demand(engine, new_values, engine.data["current_data"][player.id], demand_type, player.id, 0.0)
+            reduce_demand(engine, new_values, player.current_data, demand_type, player.id, 0.0)
 
     resource_reservations = reset_resource_reservations()
     # Sell capacities of remaining facilities on the market
     for facility in player.read_list("rest_of_priorities") + player.read_list("self_consumption_priority"):
         if engine.const_config["assets"][facility]["ramping_time"] != 0:
-            if player_cap[facility] is not None:
+            if player.capacities[facility] is not None:
                 max_prod = calculate_prod(
                     engine,
                     "max",
                     player,
-                    player_cap,
                     facility,
-                    engine.data["current_data"][player.id],
                     resource_reservations,
                 )
                 price = getattr(player, "price_" + facility)
@@ -522,7 +502,6 @@ def market_logic(engine, new_values, market):
             reduce_demand(
                 engine,
                 new_values,
-                engine.data["current_data"][row.player_id],
                 row.facility,
                 row.player_id,
                 max(0.0, bought_cap),
@@ -568,24 +547,24 @@ def market_optimum(offers_og, demands_og):
             return price, row.cumul_capacities
 
 
-def renewables_generation(engine, player, player_cap, generation):
+def renewables_generation(engine, player, generation):
     """Generation of non controllable facilities is calculated from weather data"""
     in_game_seconds_passed = (engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick
     # WIND
-    wind_generation(engine, player, player_cap, generation, in_game_seconds_passed)
+    wind_generation(engine, player, generation, in_game_seconds_passed)
     # SOLAR
-    solar_generation(engine, player, player_cap, generation, in_game_seconds_passed)
+    solar_generation(engine, player, generation, in_game_seconds_passed)
     # HYDRO
     power_factor = calculate_river_discharge(in_game_seconds_passed) / 150
     for facility in ["watermill", "small_water_dam", "large_water_dam"]:
-        if player_cap[facility] is not None:
-            generation[facility] = power_factor * player_cap[facility]["power"]
+        if player.capacities[facility] is not None:
+            generation[facility] = power_factor * player.capacities[facility]["power"]
         ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
             {ActiveFacility.usage: power_factor}, synchronize_session=False
         )
 
 
-def solar_generation(engine, player, player_cap, generation, in_game_seconds_passed):
+def solar_generation(engine, player, generation, in_game_seconds_passed):
     """
     Each instance of facility generates a different amount of power depending on the position of the facility.
     The clear sky index is calculated using a 3D perlin noise that moves over time, simulating the movement of clouds.
@@ -593,7 +572,7 @@ def solar_generation(engine, player, player_cap, generation, in_game_seconds_pas
     The effective power of the solar facility is then calculated as irradiance / 1000 * max_power.
     """
     for facility_type in ["CSP_solar", "PV_solar"]:
-        if player_cap[facility_type] is not None:
+        if player.capacities[facility_type] is not None:
             solar_facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(
                 player_id=player.id, facility=facility_type
             ).all()
@@ -608,7 +587,7 @@ def solar_generation(engine, player, player_cap, generation, in_game_seconds_pas
                 generation[facility_type] += facility.usage * max_power
 
 
-def wind_generation(engine, player, player_cap, generation, in_game_seconds_passed):
+def wind_generation(engine, player, generation, in_game_seconds_passed):
     """
     Each instance of facility generates a different amount of power depending on the position of the facility.
     The wind speed is calculated using a 3D perlin noise with a superposition of specific frequencies.
@@ -627,7 +606,7 @@ def wind_generation(engine, player, player_cap, generation, in_game_seconds_pass
         return pc[i] + (pc[(i + 1) % 90] - pc[i]) * f
 
     for facility_type in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
-        if player_cap[facility_type] is not None:
+        if player.capacities[facility_type] is not None:
             wind_facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(
                 player_id=player.id, facility=facility_type
             ).all()
@@ -647,9 +626,7 @@ def calculate_prod(
     engine,
     minmax,
     player,
-    player_cap,
     facility,
-    past_values,
     resource_reservations,
     filling=False,
 ):
@@ -663,71 +640,69 @@ def calculate_prod(
 
     def reserve_resources(power):
         """Reserve resources for the production of power so that they are not used somewhere else"""
-        if "fuel_use" in player_cap[facility]:
-            for resource, amount in player_cap[facility]["fuel_use"].items():
-                resource_reservations[resource] += amount * power / player_cap[facility]["power"]
+        if "fuel_use" in player.capacities[facility]:
+            for resource, amount in player.capacities[facility]["fuel_use"].items():
+                resource_reservations[resource] += amount * power / player.capacities[facility]["power"]
 
     max_resources = np.inf
     ramping_speed = (
-        player_cap[facility]["power"]
+        player.capacities[facility]["power"]
         / engine.const_config["assets"][facility]["ramping_time"]
         * engine.in_game_seconds_per_tick
     )
-    if "fuel_use" in player_cap[facility]:
-        for resource, amount in player_cap[facility]["fuel_use"].items():
+    if "fuel_use" in player.capacities[facility]:
+        for resource, amount in player.capacities[facility]["fuel_use"].items():
             available_resource = (
                 getattr(player, resource) - getattr(player, resource + "_on_sale") - resource_reservations[resource]
             )
-            p_max_resources = available_resource / amount * player_cap[facility]["power"]
+            p_max_resources = available_resource / amount * player.capacities[facility]["power"]
             max_resources = min(p_max_resources, max_resources)
     else:
         if filling:
             energy_capacity = (
                 max(
                     0.0,
-                    player_cap[facility]["capacity"] - past_values.get_last_data("storage", facility),
+                    player.capacities[facility]["capacity"] - player.current_data.get_last_data("storage", facility),
                 )
                 * 3600
                 / engine.in_game_seconds_per_tick
-                * (player_cap[facility]["efficiency"] ** 0.5)
+                * (player.capacities[facility]["efficiency"] ** 0.5)
             )  # max remaining storage space
         else:
             energy_capacity = max(
                 0.0,
-                past_values.get_last_data("storage", facility)
+                player.current_data.get_last_data("storage", facility)
                 * 3600
                 / engine.in_game_seconds_per_tick
-                * (player_cap[facility]["efficiency"] ** 0.5),
+                * (player.capacities[facility]["efficiency"] ** 0.5),
             )  # max available storage content
         max_resources = max(
             0.0, min(energy_capacity, (2 * energy_capacity * ramping_speed) ** 0.5 - 0.5 * ramping_speed)
         )  # ramping down
     if minmax == "max":
         if filling:
-            max_ramping = past_values.get_last_data("demand", facility) + ramping_speed
+            max_ramping = player.current_data.get_last_data("demand", facility) + ramping_speed
         else:
-            max_ramping = past_values.get_last_data("generation", facility) + ramping_speed
-        max_generation = min(max_resources, max_ramping, player_cap[facility]["power"])
+            max_ramping = player.current_data.get_last_data("generation", facility) + ramping_speed
+        max_generation = min(max_resources, max_ramping, player.capacities[facility]["power"])
         reserve_resources(max_generation)
         return max_generation
     else:
-        min_ramping = past_values.get_last_data("generation", facility) - ramping_speed
-        min_generation = max(0.0, min(max_resources, min_ramping, player_cap[facility]["power"]))
+        min_ramping = player.current_data.get_last_data("generation", facility) - ramping_speed
+        min_generation = max(0.0, min(max_resources, min_ramping, player.capacities[facility]["power"]))
         reserve_resources(min_generation)
         return min_generation
 
 
-def minimal_generation(engine, player, player_cap, generation, resource_reservations):
+def minimal_generation(engine, player, generation, resource_reservations):
     """Calculate the minimal generation of controllable facilities"""
     for facility in engine.controllable_facilities + engine.storage_facilities:
-        if player_cap[facility] is not None:
+        if player.capacities[facility] is not None:
             generation[facility] = calculate_prod(
                 engine,
                 "min",
                 player,
-                player_cap,
                 facility,
-                engine.data["current_data"][player.id],
                 resource_reservations,
             )
 
@@ -764,15 +739,14 @@ def bid(market, player_id, demand, price, facility):
 
 def resources_and_pollution(engine, new_values, player):
     """Calculate resource use and production, O&M costs and emissions"""
-    player_cap = engine.data["player_capacities"][player.id]
     generation = new_values["generation"]
     op_costs = new_values["op_costs"]
     demand = new_values["demand"]
     # Calculate resource consumption and pollution of generation facilities
     for facility in engine.controllable_facilities:
-        if player_cap[facility] is not None:
-            for resource, amount in player_cap[facility]["fuel_use"].items():
-                quantity = amount * generation[facility] / player_cap[facility]["power"]
+        if player.capacities[facility] is not None:
+            for resource, amount in player.capacities[facility]["fuel_use"].items():
+                quantity = amount * generation[facility] / player.capacities[facility]["power"]
                 setattr(player, resource, getattr(player, resource) - quantity)
             facility_emissions = (
                 engine.const_config["assets"][facility]["base_pollution"]
@@ -786,12 +760,12 @@ def resources_and_pollution(engine, new_values, player):
     if player.warehouse > 0:
         for extraction_facility in engine.extraction_facilities:
             resource = extraction_to_resource[extraction_facility]
-            if player_cap[extraction_facility] is not None:
-                max_demand = player_cap[extraction_facility]["power_use"]
+            if player.capacities[extraction_facility] is not None:
+                max_demand = player.capacities[extraction_facility]["power_use"]
                 production_factor = demand[extraction_facility] / max_demand
                 extracted_quantity = (
                     production_factor
-                    * player_cap[extraction_facility]["extraction_rate_per_day"]
+                    * player.capacities[extraction_facility]["extraction_rate_per_day"]
                     * getattr(player.tile, resource)
                     * engine.in_game_seconds_per_tick
                     / 86400  # 86400 seconds in a day
@@ -808,7 +782,7 @@ def resources_and_pollution(engine, new_values, player):
                 )
                 player.extracted_resources += extracted_quantity
                 db.session.commit()
-                emissions = extracted_quantity * player_cap[extraction_facility]["pollution"]
+                emissions = extracted_quantity * player.capacities[extraction_facility]["pollution"]
                 add_emissions(
                     engine,
                     new_values,
@@ -837,18 +811,18 @@ def resources_and_pollution(engine, new_values, player):
 
     # O&M costs
     for facility in engine.power_facilities + engine.storage_facilities + engine.extraction_facilities:
-        if player_cap[facility] is not None:
+        if player.capacities[facility] is not None:
             # the proportion of fixed cost is 100% for renewable and storage facilities,
             # 50% for nuclear reactors and 20% for the rest
-            operational_cost = player_cap[facility]["O&M_cost"]
+            operational_cost = player.capacities[facility]["O&M_cost"]
             if facility in engine.controllable_facilities + engine.extraction_facilities:
                 fc = 0.2
                 if facility in ["nuclear_reactor", "nuclear_reactor_gen4"]:
                     fc = 0.5
                 if facility in engine.extraction_facilities:
-                    capacity = demand[facility] / player_cap[facility]["power_use"]
+                    capacity = demand[facility] / player.capacities[facility]["power_use"]
                 else:
-                    capacity = generation[facility] / player_cap[facility]["power"]
+                    capacity = generation[facility] / player.capacities[facility]["power"]
                 operational_cost = operational_cost * (fc + (1 - fc) * capacity)
             player.money -= operational_cost
             op_costs[facility] -= operational_cost
@@ -864,7 +838,7 @@ def construction_emissions(engine, new_values, player):
     add_emissions(engine, new_values, player, "construction", emissions_construction)
 
 
-def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfaction):
+def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
     """Measures taken to reduce demand"""
     player = Player.query.get(player_id)
     demand = new_values[player.id]["demand"]
@@ -876,7 +850,9 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
     demand[demand_type] = satisfaction
     if demand_type in engine.extraction_facilities + engine.storage_facilities + ["carbon_capture"]:
         return
-    if satisfaction > (1 + 0.0008 * engine.in_game_seconds_per_tick) * past_data.get_last_data("demand", demand_type):
+    if satisfaction > (1 + 0.0008 * engine.in_game_seconds_per_tick) * player.current_data.get_last_data(
+        "demand", demand_type
+    ):
         return
     if demand_type == "construction":
         construction_priorities = player.read_list("construction_priorities")
@@ -957,5 +933,5 @@ def reduce_demand(engine, new_values, past_data, demand_type, player_id, satisfa
 def add_emissions(engine, new_values, player, facility, amount):
     """Helper function to add emissions to the data"""
     new_values["emissions"][facility] += amount
-    engine.data["player_cumul_emissions"][player.id].add(facility, amount)
+    player.cumul_emissions.add(facility, amount)
     engine.data["current_climate_data"].add("CO2", amount)

@@ -26,16 +26,15 @@ def finish_project(construction: OngoingConstruction):
 
     if construction.family in ["Technologies", "Functional facilities"]:
         if getattr(player, construction.name) == 0:
-            current_data = engine.data["current_data"][player.id]
             if construction.name == "carbon_capture":
-                current_data.new_subcategory("demand", construction.name)
-                current_data.new_subcategory("emissions", construction.name)
-                engine.data["player_cumul_emissions"][player.id].new_category(construction.name)
+                player.current_data.add_subcategory("demand", construction.name)
+                player.current_data.add_subcategory("emissions", construction.name)
+                player.cumul_emissions.add_category(construction.name)
                 player.add_to_list("demand_priorities", construction.name)
                 reorder_facility_priorities(engine, player)
             if construction.name == "warehouse":
                 for resource in ["coal", "gas", "uranium"]:
-                    current_data.new_subcategory("resources", resource)
+                    player.current_data.add_subcategory("resources", resource)
             if construction.name == "laboratory":
                 player.add_to_list("demand_priorities", "research")
                 reorder_facility_priorities(engine, player)
@@ -55,18 +54,17 @@ def finish_project(construction: OngoingConstruction):
 
     elif ActiveFacility.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
         # initialize array for facility if it is the first one built
-        current_data = engine.data["current_data"][player.id]
         if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
-            current_data.new_subcategory("op_costs", construction.name)
+            player.current_data.add_subcategory("op_costs", construction.name)
         if construction.name in engine.storage_facilities + engine.power_facilities:
-            current_data.new_subcategory("generation", construction.name)
+            player.current_data.add_subcategory("generation", construction.name)
         if construction.name in engine.storage_facilities + engine.extraction_facilities:
-            current_data.new_subcategory("demand", construction.name)
+            player.current_data.add_subcategory("demand", construction.name)
         if construction.name in engine.storage_facilities:
-            current_data.new_subcategory("storage", construction.name)
+            player.current_data.add_subcategory("storage", construction.name)
         if construction.name in engine.controllable_facilities + engine.extraction_facilities:
-            current_data.new_subcategory("emissions", construction.name)
-            engine.data["player_cumul_emissions"][player.id].new_category(construction.name)
+            player.current_data.add_subcategory("emissions", construction.name)
+            player.cumul_emissions.add_category(construction.name)
         if construction.name in engine.extraction_facilities + engine.storage_facilities:
             player.add_to_list("demand_priorities", construction.name)
             reorder_facility_priorities(engine, player)
@@ -122,9 +120,9 @@ def finish_project(construction: OngoingConstruction):
         )
         db.session.add(new_facility)
     if construction.family == "Technologies":
-        engine.data["player_capacities"][player.id].update(player, None)
+        player.capacities.update(player, None)
     else:
-        engine.data["player_capacities"][player.id].update(player, construction.name)
+        player.capacities.update(player, construction.name)
     engine.config.update_config_for_user(player.id)
     player.emit("retrieve_player_data")
 
@@ -233,7 +231,7 @@ def upgrade_facility(player, facility):
         raise GameException("notEnoughMoney")
     player.money -= upgrade_cost
     apply_upgrade(facility)
-    engine.data["player_capacities"][player.id].update(player, facility.facility)
+    player.capacities.update(player, facility.facility)
 
 
 def upgrade_all_of_type(player, facility_name):
@@ -283,7 +281,7 @@ def remove_asset(player, facility, decommissioning=True):
         )
         engine.log(f"The facility {facility_name} from {player.username} has been decommissioned.")
     db.session.flush()
-    engine.data["player_capacities"][player.id].update(player, facility.facility)
+    player.capacities.update(player, facility.facility)
     engine.config.update_config_for_user(player.id)
     db.session.commit()
 
@@ -343,7 +341,6 @@ def package_projects_data(player):
 
 def queue_project(engine: GameEngine, player: Player, asset: str, force=False):
     """this function is executed when a player clicks on 'start construction'"""
-    player_cap = engine.data["player_capacities"][player.id]
 
     if asset not in engine.all_asset_types:
         raise GameException("malformedRequest")
@@ -364,8 +361,8 @@ def queue_project(engine: GameEngine, player: Player, asset: str, force=False):
     if not force and not player.is_in_network:
         capacity = 0
         for gen in engine.power_facilities:
-            if player_cap[gen] is not None:
-                capacity += player_cap[gen]["power"]
+            if player.capacities[gen] is not None:
+                capacity += player.capacities[gen]["power"]
         if construction_power > capacity:
             raise Confirm(capacity=capacity, construction_power=construction_power)
 

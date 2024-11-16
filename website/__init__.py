@@ -112,7 +112,7 @@ def create_app(
     Path("instance").mkdir(exist_ok=True)
     app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
-    (app.config["VAPID_PUBLIC_KEY"], app.config["VAPID_PRIVATE_KEY"]) = get_or_create_vapid_keys()
+    app.config["VAPID_PUBLIC_KEY"], app.config["VAPID_PRIVATE_KEY"] = get_or_create_vapid_keys()
     app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
     db.init_app(app)
 

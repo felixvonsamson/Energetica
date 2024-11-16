@@ -75,12 +75,12 @@ def init_table(user_id):
         pickle.dump(past_data, file)
 
 
-def add_player_to_data(engine, user):
+def add_player_to_data(user):
     """Helper function to add a new player to the engine data"""
-    engine.data["current_data"][user.id] = CircularBufferPlayer()
-    engine.data["player_capacities"][user.id] = CapacityData()
-    engine.data["player_cumul_emissions"][user.id] = CumulativeEmissionsData()
-    engine.data["player_capacities"][user.id].update(user, None)
+    user.current_data = CircularBufferPlayer()
+    user.capacities = CapacityData()
+    user.cumul_emissions = CumulativeEmissionsData()
+    user.capacities.update(user, None)
 
 
 def save_past_data_threaded(app, engine):
@@ -113,7 +113,7 @@ def save_past_data_threaded(app, engine):
                     "rb",
                 ) as file:
                     past_data = pickle.load(file)
-                new_data = engine.data["current_data"][player.id].get_data()
+                new_data = player.current_data.get_data()
                 for category in new_data:
                     for element in new_data[category]:
                         new_el_data = new_data[category][element]
@@ -239,11 +239,11 @@ def confirm_location(engine: GameEngine, player: Player, location: Hex):
     general_chat = Chat.query.get(1)
     player.chats.append(general_chat)
     db.session.commit()
-    add_player_to_data(engine, player)
+    add_player_to_data(player)
     init_table(player.id)
-    engine.data["current_data"][player.id].new_subcategory("op_costs", "steam_engine")
-    engine.data["current_data"][player.id].new_subcategory("generation", "steam_engine")
-    engine.data["current_data"][player.id].new_subcategory("emissions", "steam_engine")
+    player.current_data.add_subcategory("op_costs", "steam_engine")
+    player.current_data.add_subcategory("generation", "steam_engine")
+    player.current_data.add_subcategory("emissions", "steam_engine")
     websocket.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
 
