@@ -2,11 +2,23 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "run server",
+			"type": "shell",
+			"command": "python main.py",
+			"presentation": {
+				"clear": true
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
 			"label": "pytest",
 			"type": "shell",
 			"command": "pytest",
 			"presentation": {
-				"clear": true // <-- this line
+				"clear": true
 			},
 			"group": {
 				"kind": "test",
