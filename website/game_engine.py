@@ -163,7 +163,8 @@ class GameEngine(object):
             )
         )
         last_midnight = self.data["start_date"].replace(hour=0, minute=0, second=0, microsecond=0)
-        # time shift in ticks. Defines the number of ticks between the first simulated tick and the beginning of in-game year 0.
+        # time shift in ticks. Defines the number of ticks between
+        # the first simulated tick and the beginning of in-game year 0.
         self.data["delta_t"] = round((self.data["start_date"] - last_midnight).total_seconds() // self.clock_time)
         # transform start_date to a seconds timestamp corresponding to the time of the first tick
         self.data["start_date"] = math.floor(self.data["start_date"].timestamp() / clock_time) * clock_time
@@ -217,11 +218,12 @@ class GameEngine(object):
         f_handler.setLevel(logging.INFO)
         self.action_logger.addHandler(f_handler)
 
-    # logs a message with the current time in the terminal
     def log(self, message):
+        """Logs a message with the current time in the terminal"""
         self.console_logger.info(message)
 
     def warn(self, message):
+        """Logs a warning message in the terminal"""
         self.console_logger.warning(message)
 
     def package_global_data(self):
@@ -246,6 +248,7 @@ class GameEngine(object):
 
 
 class GameException(Exception):
+    """This class is the exception class for the game engine"""
     def __init__(self, exception_type, **kwargs):
         self.exception_type = exception_type
         self.kwargs = kwargs
@@ -253,6 +256,7 @@ class GameException(Exception):
 
 
 class Confirm(Exception):
+    """This class is used to ask the player to confirm an action"""
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
         Exception.__init__(self, "Please confirm this action.")
