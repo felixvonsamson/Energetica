@@ -1,23 +1,27 @@
+""" This module contains functions for simulating user actions on the server. """
+
 import cProfile
 import pickle
 import pstats
 import tarfile
 from time import sleep
+from typing import List
 
 import requests
 from flask import current_app
 
 
-def create_user(id, port):
+def create_user(user_id, port):
+    """ Create a user with the given user_id. """
     session = requests.Session()
-    data = {"username": f"user{id}", "password1": "password", "password2": "password"}
+    data = {"username": f"user{user_id}", "password1": "password", "password2": "password"}
     session.post(f"http://localhost:{port}/sign-up", data=data)
     return session
 
 
-def login_user(id, port):
+def login_user(user_id, port):
     session = requests.Session()
-    data = {"username": f"user{id}", "password": "password"}
+    data = {"username": f"user{user_id}", "password": "password"}
     session.post(f"http://localhost:{port}/login", data=data)
     return session
 
@@ -44,7 +48,7 @@ def _simulate(
     stop_on_server_error,
     stop_on_assertion_error,
     checkpoint_every_k_ticks=10000,
-    checkpoint_ticks=[],
+    checkpoint_ticks: List[int]=None,
 ):
     import website.production_update as production_update
     from website import db
@@ -55,7 +59,7 @@ def _simulate(
         trials = 0
         while True:
             try:
-                requests.get(f"http://localhost:{port}")
+                requests.get(f"http://localhost:{port}", timeout=1)
             except requests.exceptions.ConnectionError:
                 trials += 1
                 if trials == 10:
