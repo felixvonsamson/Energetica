@@ -1,4 +1,4 @@
-"""In this file, the main routes of the website are managed"""
+"""This module is responsible for serving the Jinja templates to the user."""
 
 from functools import partial
 
