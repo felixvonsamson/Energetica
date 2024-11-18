@@ -109,6 +109,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     socketio, _, app = create_app(**vars(args))
-    socketio.run(
-        app, debug=True, log_output=False, host="0.0.0.0", port=args.port, keyfile=args.keyfile, certfile=args.certfile
-    )
+    ssl_args = {"keyfile": args.keyfile, "certfile": args.certfile} if args.keyfile and args.certfile else {}
+    socketio.run(app, debug=True, log_output=False, host="0.0.0.0", port=args.port, **ssl_args)
