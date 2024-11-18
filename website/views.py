@@ -29,12 +29,14 @@ changelog = Blueprint("changelog", __name__, static_folder="static")
 @login_required
 def set_ctx():
     """This function is called before every request"""
-    g.engine = current_app.config["engine"]
     if current_user.tile is None:
         return redirect("/location_choice", code=302)
 
     render_template_ctx = partial(
-        render_template, engine=g.engine, user=current_user, data=get_current_technology_values(current_user)
+        render_template,
+        engine=current_app.config["engine"],
+        user=current_user,
+        data=get_current_technology_values(current_user),
     )
     g.render_template_ctx = render_template_ctx
 
@@ -43,15 +45,14 @@ def set_ctx():
 @changelog.before_request
 def set_ctx_no_login():
     """This function is called before every request"""
-    g.engine = current_app.config["engine"]
-    g.data = None
-    if current_user.is_authenticated and current_user.tile is not None:
-        g.data = get_current_technology_values(current_user)
+    user, data = (
+        (current_user, get_current_technology_values(current_user))
+        if current_user.is_authenticated and current_user.tile is not None
+        else (None, None)
+    )
 
     def render_template_ctx(page):
-        if g.data is not None:
-            return render_template(page, engine=g.engine, user=current_user, data=g.data)
-        return render_template(page, engine=g.engine, user=None)
+        render_template(page, engine=current_app.config["engine"], user=user, data=data)
 
     g.render_template_ctx = render_template_ctx
 
