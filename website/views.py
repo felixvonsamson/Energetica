@@ -1,5 +1,7 @@
 """In this file, the main routes of the website are managed"""
 
+from functools import partial
+
 from flask import Blueprint, current_app, g, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
@@ -22,12 +24,6 @@ wiki = Blueprint("wiki", __name__, static_folder="static")
 changelog = Blueprint("changelog", __name__, static_folder="static")
 
 
-@location_choice_views.before_request
-@login_required
-def location_choice_set_ctx():
-    g.engine = current_app.config["engine"]
-
-
 @views.before_request
 @overviews.before_request
 @login_required
@@ -37,11 +33,9 @@ def set_ctx():
     if current_user.tile is None:
         return redirect("/location_choice", code=302)
 
-    def render_template_ctx(page):
-        return render_template(
-            page, engine=g.engine, user=current_user, data=get_current_technology_values(current_user)
-        )
-
+    render_template_ctx = partial(
+        render_template, engine=g.engine, user=current_user, data=get_current_technology_values(current_user)
+    )
     g.render_template_ctx = render_template_ctx
 
 
@@ -63,10 +57,11 @@ def set_ctx_no_login():
 
 
 @location_choice_views.route("/location_choice", methods=["GET"])
+@login_required
 def location_choice():
     if current_user.tile is not None:
         return redirect(url_for("views.home"))
-    return render_template("location_choice.jinja", engine=g.engine)
+    return render_template("location_choice.jinja", engine=current_app.config["engine"])
 
 
 @views.route("/")
