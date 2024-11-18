@@ -234,7 +234,7 @@ class GameEngine(object):
 
     def new_daily_question(self, init=False):
         """Loads a new daily question from the csv file."""
-        with open("website/static/data/daily_quiz_questions.csv", "r") as file:
+        with open("website/static/data/daily_quiz_questions.csv", "r", encoding='utf-8') as file:
             csv_reader = list(csv.DictReader(file))
             if init:
                 question_id = 0
