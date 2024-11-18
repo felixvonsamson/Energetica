@@ -189,8 +189,9 @@ def create_app(
     from .api.http import http
     from .api.websocket import websocket_blueprint
     from .auth import auth
-    from .views import changelog, overviews, views, wiki
+    from .views import changelog, location_choice_views, overviews, views, wiki
 
+    app.register_blueprint(location_choice_views, url_prefix="/")
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")
     app.register_blueprint(wiki, url_prefix="/wiki")
