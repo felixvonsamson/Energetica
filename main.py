@@ -1,12 +1,10 @@
 #!/usr/bin/env python3 -u
 
+import argparse
+
 """This code launches the game"""
 
 if __name__ == "__main__":
-    import argparse
-    import os
-    import warnings
-
     from website import create_app
 
     parser = argparse.ArgumentParser()
@@ -96,17 +94,21 @@ if __name__ == "__main__":
         action="store_true",
         help="If yes, the app proceeds with the high-risk action without requesting approval.",
     )
+    parser.add_argument(
+        "--keyfile",
+        type=str,
+        default=None,
+        help="Path to the SSL key file",
+    )
+    parser.add_argument(
+        "--certfile",
+        type=str,
+        default=None,
+        help="Path to the SSL certificate file",
+    )
 
     args = parser.parse_args()
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true" and args.simulate_file:
-        warnings.warn("The instance folder will be deleted.")
-        if not args.force_yes:
-            print("Do you want to continue? (yes/no): ", end="")
-            response = input().strip().lower()
-            response = "yes"
-            if response != "yes":
-                print("Operation aborted by the user.")
-                exit(0)
-        args.rm_instance = True
     socketio, _, app = create_app(**vars(args))
-    socketio.run(app, debug=True, log_output=False, host="0.0.0.0", port=args.port)
+    socketio.run(
+        app, debug=True, log_output=False, host="0.0.0.0", port=args.port, keyfile=args.keyfile, certfile=args.certfile
+    )

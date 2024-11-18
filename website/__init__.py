@@ -15,6 +15,7 @@ import secrets
 import shutil
 import socket
 import tarfile
+import warnings
 from datetime import datetime
 from pathlib import Path
 
@@ -98,6 +99,7 @@ def create_app(
     simulate_checkpoint_ticks,
     simulate_till,
     simulate_profiling,
+    force_yes,
     **kwargs,
 ):
     """This function sets up the app and the game engine"""
@@ -105,6 +107,18 @@ def create_app(
     if platform.system() == "Linux":
         lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         lock.bind("\0energetica")
+
+    # Delete instance folder
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true" and (rm_instance or simulate_file):
+        warnings.warn("The instance folder will be deleted.")
+        if not rm_instance and not force_yes:
+            print("Do you want to continue? (yes/no): ", end="")
+            response = input().strip().lower()
+            if response != "yes":
+                print("Operation aborted by the user.")
+                exit(0)
+        shutil.rmtree("instance")
+        print("instance folder deleted.")
 
     # creates the app :
     app = Flask(__name__)
@@ -115,11 +129,6 @@ def create_app(
     app.config["VAPID_PUBLIC_KEY"], app.config["VAPID_PRIVATE_KEY"] = get_or_create_vapid_keys()
     app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
     db.init_app(app)
-
-    if rm_instance:
-        print("Removing instance")
-        shutil.rmtree("instance")
-        Path("instance").mkdir(exist_ok=True)
 
     start_date = None
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true" and simulate_file:
