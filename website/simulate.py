@@ -69,7 +69,6 @@ def _simulate(
 
         for action in actions:
             print(action)
-            verify(engine)
             if action["action_type"] == "tick":
                 engine.data["total_t"] += 1
                 engine.log(f"t = {engine.data['total_t']}")
