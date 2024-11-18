@@ -217,11 +217,6 @@ class GameEngine(object):
         f_handler.setLevel(logging.INFO)
         self.action_logger.addHandler(f_handler)
 
-    def refresh(self):
-        """Sends a refresh signal to all clients"""
-        # TODO: Do we need this method?
-        self.socketio.emit("refresh")
-
     # logs a message with the current time in the terminal
     def log(self, message):
         self.console_logger.info(message)
