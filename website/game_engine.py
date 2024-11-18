@@ -7,6 +7,7 @@ import math
 import pickle
 from collections import defaultdict
 from datetime import datetime
+from functools import partial
 
 from gevent.lock import RLock
 
@@ -146,7 +147,7 @@ class GameEngine(object):
         self.log("engine created")
 
         self.lock = RLock()
-        self.data = defaultdict(lambda: defaultdict(dict))
+        self.data = defaultdict(partial(defaultdict, dict))
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
         self.data["start_date"] = start_date or datetime.now()  # 0 point of server time
