@@ -51,9 +51,7 @@ def set_ctx_no_login():
         else (None, None)
     )
 
-    def render_template_ctx(page):
-        render_template(page, engine=current_app.config["engine"], user=user, data=data)
-
+    render_template_ctx = partial(render_template, engine=current_app.config["engine"], user=user, data=data)
     g.render_template_ctx = render_template_ctx
 
 
