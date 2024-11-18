@@ -1,4 +1,4 @@
-""" This module contains functions for simulating user actions on the server. """
+"""This module contains functions for simulating user actions on the server."""
 
 import cProfile
 import pickle
@@ -12,7 +12,7 @@ from flask import current_app
 
 
 def create_user(user_id, port):
-    """ Create a user with the given user_id. """
+    """Create a user with the given user_id."""
     session = requests.Session()
     data = {"username": f"user{user_id}", "password1": "password", "password2": "password"}
     session.post(f"http://localhost:{port}/sign-up", data=data)
@@ -20,6 +20,7 @@ def create_user(user_id, port):
 
 
 def login_user(user_id, port):
+    """Login a user with the given user_id."""
     session = requests.Session()
     data = {"username": f"user{user_id}", "password": "password"}
     session.post(f"http://localhost:{port}/login", data=data)
