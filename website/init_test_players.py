@@ -133,8 +133,24 @@ def init_test_players(engine):
         create_network("net", players)
         db.session.commit()
 
-    climate_events_scenario(engine)
-    # player = create_player("user", "password")
+    # climate_events_scenario(engine)
+
+    player1 = create_player("user1", "password")
+    Hex.query.filter_by(id=player1.id).first().player_id = player1.id
+    print(player1)
+    player1.achievements = "Unlock Network"
+
+    player2 = create_player("user2", "password")
+    Hex.query.filter_by(id=player2.id).first().player_id = player2.id
+    player2.achievements = "Unlock Network"
+
+    player3 = create_player("user3", "password")
+    Hex.query.filter_by(id=player3.id).first().player_id = player3.id
+    player3.achievements = "Unlock Network"
+    
+    create_network("net1", [player2])
+    create_network("net2", [player3])
+
     # if player:
     #     Hex.query.filter_by(id=35).first().player_id = player.id
 

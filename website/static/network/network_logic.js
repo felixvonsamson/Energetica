@@ -1,10 +1,10 @@
-let sortedNetworks;
+let networks;
 
 fetch("/api/get_networks") // retrieves list of all networks using api.py
     .then((response) => response.json())
     .then((data) => {
-        sortedNetworks = data.sort();
-        if (sortedNetworks.length == 0) {
+        networks = data;
+        if (networks.length == 0) {
             var warning = document.getElementById("warning");
             warning.innerHTML =
                 '<div class="medium toast error txt_center margin" \
@@ -14,10 +14,10 @@ fetch("/api/get_networks") // retrieves list of all networks using api.py
             joinNetworkForm.style.display = "none";
         }
         var selectElement = document.getElementById("choose_network");
-        for (network of sortedNetworks) {
+        for (const [network_id, network_name] of Object.entries(networks)) {
             var option = document.createElement("option");
-            option.value = network;
-            option.text = network;
+            option.value = network_id;
+            option.text = network_name;
             selectElement.appendChild(option);
         }
     })
@@ -31,7 +31,7 @@ let invitations = [];
 
 
 load_players().then((players_) => {
-    const player_id = sessionStorage.getItem("player_id")
+    const player_id = sessionStorage.getItem("player_id");
     const usernames = Object.entries(players_)
         .filter(([id, user]) => id != player_id)
         .map(([id, user]) => user.username);
@@ -40,7 +40,7 @@ load_players().then((players_) => {
 
 let input = document.getElementById("invite_player");
 
-if(input){
+if (input) {
     input.addEventListener("keyup", (e) => {
         //Initially remove all elements (so if user erases a letter or adds new letter then clean previous outputs)
         removeElements();
