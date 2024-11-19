@@ -9,7 +9,6 @@ from .database.messages import Chat
 from .database.player import Player
 from .database.player_assets import ResourceOnSale
 from .technology_effects import (
-    get_current_technology_values,
     package_available_technologies,
     package_extraction_facilities,
     package_functional_facilities,
@@ -36,7 +35,6 @@ def set_ctx():
         render_template,
         engine=current_app.config["engine"],
         user=current_user,
-        data=get_current_technology_values(current_user),
     )
     g.render_template_ctx = render_template_ctx
 
@@ -46,9 +44,9 @@ def set_ctx():
 def set_ctx_no_login():
     """This function is called before every request"""
     user, data = (
-        (current_user, get_current_technology_values(current_user))
+        current_user
         if current_user.is_authenticated and current_user.tile is not None
-        else (None, None)
+        else None
     )
 
     render_template_ctx = partial(render_template, engine=current_app.config["engine"], user=user, data=data)

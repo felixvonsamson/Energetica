@@ -77,6 +77,7 @@ async function get_active_facilities(reorder = false) {
                 "used_capacity": facility.usage,
                 "op_cost": tot_cost * config["O&M_factor_per_day"] / 24,
                 "remaining_lifespan": facility.end_of_life - last_value["total_t"],
+                // The following lines should be removed / reworked as it relies on get_current_technology_values
                 "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
                 "dismantle": tot_cost * 0.2,
             };
@@ -91,6 +92,7 @@ async function get_active_facilities(reorder = false) {
                 "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor_per_day"] / 24,
                 "efficiency": config.base_efficiency * facility[multiplier_table.efficiency_multiplier],
                 "remaining_lifespan": facility.end_of_life - last_value["total_t"],
+                // The following lines should be removed / reworked as it relies on get_current_technology_values
                 "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
                 "dismantle": config.base_price * facility.price_multiplier * 0.2,
             };
@@ -119,6 +121,7 @@ async function get_active_facilities(reorder = false) {
                 "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor_per_day"] / 24,
                 "energy_use": config.base_power_consumption * facility.multiplier_1,
                 "remaining_lifespan": facility.end_of_life - last_value["total_t"],
+                // The following lines should be removed / reworked as it relies on get_current_technology_values
                 "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
                 "dismantle": config.base_price * facility.price_multiplier * 0.2,
             };
