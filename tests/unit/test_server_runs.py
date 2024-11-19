@@ -23,6 +23,3 @@ def test_server_runs():
             break
     os.kill(process.pid, signal.SIGTERM)
     process.wait()
-
-
-test_server_runs()

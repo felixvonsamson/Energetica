@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 
 import argparse
+import os
 
 """This code launches the game"""
 
