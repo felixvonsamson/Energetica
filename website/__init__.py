@@ -15,7 +15,6 @@ import secrets
 import shutil
 import socket
 import tarfile
-import warnings
 from datetime import datetime
 from pathlib import Path
 
@@ -99,7 +98,6 @@ def create_app(
     simulate_checkpoint_ticks,
     simulate_till,
     simulate_profiling,
-    force_yes,
     **kwargs,
 ):
     """This function sets up the app and the game engine"""
@@ -108,15 +106,17 @@ def create_app(
         lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         lock.bind("\0energetica")
 
+    # Delete last checkpoint
+    if rm_instance:
+        if not simulate_file:
+            if os.path.exists("checkpoints/last_checkpoint.tar.gz"):
+                os.remove("checkpoints/last_checkpoint.tar.gz")
+                print("checkpoints/last_checkpoint.tar.gz deleted.")
+        else:
+            print("--rm_instance ignored.")
+
     # Delete instance folder
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true" and (rm_instance or simulate_file):
-        warnings.warn("The instance folder will be deleted.")
-        if not rm_instance and not force_yes:
-            print("Do you want to continue? (yes/no): ", end="")
-            response = input().strip().lower()
-            if response != "yes":
-                print("Operation aborted by the user.")
-                exit(0)
+    if os.path.exists("instance"):
         shutil.rmtree("instance")
         print("instance folder deleted.")
 
@@ -132,7 +132,8 @@ def create_app(
 
     start_date = None
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true" and simulate_file:
-        with open(simulate_file.name, "r", encoding="utf-8") as file:
+        Path("checkpoints/simulation").mkdir(exist_ok=True)
+        with simulate_file as file:
             actions = [json.loads(line) for line in file]
         assert actions[0]["action_type"] == "init_engine"
         random_seed = actions[0]["random_seed"]
@@ -140,7 +141,7 @@ def create_app(
 
         checkpoints = {
             int(save.split("checkpoint_")[1].rstrip(".tar.gz")): save
-            for save in glob.glob("checkpoints/checkpoint_*.tar.gz")
+            for save in glob.glob("checkpoints/simulation/checkpoint_*.tar.gz")
         }
         checkpoints_ids = [
             save_id for save_id in checkpoints.keys() if simulate_till is None or save_id <= simulate_till
@@ -148,8 +149,6 @@ def create_app(
         loaded_tick = None
         if checkpoints_ids:
             loaded_tick = max(checkpoints_ids)
-            print(f"Using checkpoints/checkpoint_{loaded_tick}.tar.gz as last checkpoint.")
-            shutil.copyfile(f"checkpoints/checkpoint_{loaded_tick}.tar.gz", "checkpoints/last_checkpoint.tar.gz")
         action_id_by_tick = {
             action["total_t"]: action_id for action_id, action in enumerate(actions) if action["action_type"] == "tick"
         }
@@ -169,14 +168,23 @@ def create_app(
                 in_game_seconds_per_tick, engine.data["random_seed"], engine.data["delta_t"]
             )
             pickle.dump(climate_data, file)
-    if os.path.isfile("checkpoints/last_checkpoint.tar.gz"):
-        with tarfile.open("checkpoints/last_checkpoint.tar.gz") as file:
-            file.extractall("./")
-        engine.log("Loaded last checkpoint from disk.")
-    if os.path.isfile("instance/engine_data.pck"):
-        with open("instance/engine_data.pck", "rb") as file:
-            engine.data = pickle.load(file)
-        engine.log("Loaded engine data from disk.")
+
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        if not simulate_file:
+            if os.path.isfile("checkpoints/last_checkpoint.tar.gz"):
+                with tarfile.open("checkpoints/last_checkpoint.tar.gz") as file:
+                    file.extractall("./")
+                engine.log("Loaded last checkpoint from disk.")
+        else:
+            if loaded_tick:
+                with tarfile.open("checkpoints/simulation/checkpoint_{loaded_tick}.tar.gz") as file:
+                    file.extractall("./")
+                engine.log(f"Loaded checkpoints/simulation/checkpoint_{loaded_tick}.tar.gz from disk.")
+
+        if os.path.isfile("instance/engine_data.pck"):
+            with open("instance/engine_data.pck", "rb") as file:
+                engine.data = pickle.load(file)
+            engine.log("Loaded engine data from disk.")
 
     app.config["engine"] = engine
 

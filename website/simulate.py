@@ -49,7 +49,7 @@ def _simulate(
     stop_on_server_error,
     stop_on_assertion_error,
     checkpoint_every_k_ticks=10000,
-    checkpoint_ticks: List[int]=None,
+    checkpoint_ticks: List[int] = None,
 ):
     import website.production_update as production_update
     from website import db
@@ -83,7 +83,7 @@ def _simulate(
                 if action["total_t"] % checkpoint_every_k_ticks == 0 or action["total_t"] in checkpoint_ticks:
                     with open("instance/engine_data.pck", "wb") as file:
                         pickle.dump(engine.data, file)
-                    with tarfile.open(f"checkpoints/checkpoint_{action['total_t']}.tar.gz", "w:gz") as tar:
+                    with tarfile.open(f"checkpoints/simulation/checkpoint_{action['total_t']}.tar.gz", "w:gz") as tar:
                         tar.add("instance/")
             elif action["action_type"] == "climate_event_impact":
                 tile = Hex.query.get(action["tile_id"])

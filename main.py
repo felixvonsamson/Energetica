@@ -1,7 +1,6 @@
 #!/usr/bin/env python3 -u
 
 import argparse
-import os
 
 """This code launches the game"""
 
@@ -89,11 +88,6 @@ if __name__ == "__main__":
         "--simulate_profiling",
         action="store_true",
         help="If game is simulated, allows to run code profiling.",
-    )
-    parser.add_argument(
-        "--force_yes",
-        action="store_true",
-        help="If yes, the app proceeds with the high-risk action without requesting approval.",
     )
     parser.add_argument(
         "--keyfile",
