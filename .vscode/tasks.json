@@ -15,9 +15,8 @@
 		},
 		{
 			"label": "run with init_test_players",
-			"dependsOn": "remove instance",
 			"type": "shell",
-			"command": "python main.py --run_init_test_players",
+			"command": "python main.py --rm_instance --run_init_test_players",
 			"presentation": {
 				"clear": true
 			},
