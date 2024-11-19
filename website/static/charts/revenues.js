@@ -382,21 +382,23 @@ function sortTable(columnName, reorder = true) {
     });
 
     // Rebuild the HTML table
-    let html = `<tr>
-        <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-        <th class="usage_col hover_info" onclick="sortTable('usage_col')">Revenues<span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span></th>
-        <th class="selected_col">Displayed</th>
-    </tr>`;
+    // remove all tr table row elements of the table
+    while (table.rows.length > 1) {
+        table.deleteRow(1);
+    }
+    // Reset the table headers
+    table.querySelector(".facility_col").innerHTML = "Facility";
+    table.querySelector(".usage_col").innerHTML =
+        `Revenues<span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span>`;
+    // Add the sorted data to the table
     for (const [id, facility] of sortedData) {
-        html += `<tr>
+        table.insertRow().innerHTML = `<tr>
             <td>${facility.facility_col}</td>
             <td>${format_money(facility.usage_col)}</td>
             <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}')" ${keys_revenues[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
             </tr>`;
     }
-    table.innerHTML = html;
-
-    // Update the sorting indicator
+    // Add the sorting indicator to the sorted column's header
     column = table.querySelector(`.${columnName}`);
     column.innerHTML += triangle;
 
@@ -478,12 +480,12 @@ function show_all_revenues() {
 
 function set_global_button_role_to_hide() {
     const button = document.getElementById("show_hide_button");
-    button.innerText = "Hide all revenues";
+    button.firstChild.innerText = "Hide all";
     button.onclick = hide_all_revenues;
 }
 
 function set_global_button_role_to_show() {
     const button = document.getElementById("show_hide_button");
-    button.innerText = "Show all revenues";
+    button.firstChild.innerText = "Show all";
     button.onclick = show_all_revenues;
 }
