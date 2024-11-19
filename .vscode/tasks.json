@@ -24,6 +24,18 @@
 				"kind": "test",
 				"isDefault": true
 			}
+		},
+		{
+			"label": "remove instance",
+			"type": "shell",
+			"command": "rm -rf instance/",
+			"presentation": {
+				"reveal": "always"
+			},
+			"group": {
+				"kind": "none"
+			},
+			"problemMatcher": [ ]
 		}
 	]
 }
