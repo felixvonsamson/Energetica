@@ -142,9 +142,8 @@ def get_map():
 @http.route("/get_networks", methods=["GET"])
 def get_networks():
     """gets all the network names and returns it as a list"""
-    network_list = Network.query.with_entities(Network.name).all()
-    network_list = [name[0] for name in network_list]
-    return jsonify(network_list)
+    network_list = Network.query.with_entities(Network.id, Network.name).all()
+    return jsonify(dict(network_list))
 
 
 @http.route("/get_chat_messages", methods=["GET"])
@@ -648,10 +647,10 @@ def buy_resource():
 def join_network():
     """player is trying to join a network"""
     request_data = request.form
-    network_name = request_data["choose_network"]
-    network = Network.query.filter_by(name=network_name).first()
+    network_id = int(request_data["choose_network"])
+    network: Network = Network.query.get(network_id)
     website.utils.network.join_network(g.engine, current_user, network)
-    flash(f"You joined the network {network_name}", category="message")
+    flash(f"You joined the network {network.name}", category="message")
     g.engine.log(f"{current_user.username} joined the network {current_user.network.name}")
     return redirect("/network", code=303)
 
