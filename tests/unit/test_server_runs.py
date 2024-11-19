@@ -12,7 +12,7 @@ def test_server_runs():
     trials = 0
     while True:
         try:
-            response = requests.get("http://localhost:5011/wiki/introduction")
+            response = requests.get("http://localhost:5011/wiki/introduction", timeout=1)
         except requests.exceptions.ConnectionError:
             trials += 1
             if trials == 10:
