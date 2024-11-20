@@ -509,6 +509,21 @@ function toggle_consumption_displayed(name) {
 
 function set_generation_displayed(name, state) {
     keys_generation[name] = state;
+    if (!state) {
+        set_generating_facilities_button_role_to_show();
+    } else {
+        // if all generating facilities are displayed, change the button role to hide
+        let all_displayed = true;
+        for (const key in data.generation) {
+            if (keys_generation[key] === false) {
+                all_displayed = false;
+                break;
+            }
+        }
+        if (all_displayed) {
+            set_generating_facilities_button_role_to_hide();
+        }
+    }
     graph_p5.render_graph(regen_table = false);
     setTimeout(() => {
         sortGeneratingFacilitiesTable(sort_by, false);
@@ -517,6 +532,21 @@ function set_generation_displayed(name, state) {
 
 function set_consumption_displayed(name, state) {
     keys_demand[name] = state;
+    if (!state) {
+        set_consumption_button_role_to_show();
+    } else {
+        // if all consuming facilities are displayed, change the button role to hide
+        let all_displayed = true;
+        for (const key in data.demand) {
+            if (keys_demand[key] === false) {
+                all_displayed = false;
+                break;
+            }
+        }
+        if (all_displayed) {
+            set_consumption_button_role_to_hide();
+        }
+    }
     graph_p5.render_graph(regen_table = false);
     setTimeout(() => {
         sortConsumingFacilitiesTable(sort_by, false);
@@ -539,4 +569,73 @@ function change_view(view) {
     show_selected_button("view_button_", view);
     graph_p5.view = view;
     graph_p5.render_graph(regen_table = false);
+}
+
+function set_all_table_toggles(table, state) {
+    const rows = table.getElementsByTagName("tr");
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const checkbox = row.getElementsByTagName("input")[0];
+        checkbox.checked = state;
+    }
+}
+
+function hide_all_generating_facilities() {
+    set_all_table_toggles(document.getElementById("generating_facilities_table"), false);
+    for (const key in keys_generation) {
+        keys_generation[key] = false;
+    }
+    graph_p5.render_graph(regen_table = false);
+    set_generating_facilities_button_role_to_show();
+}
+
+function show_all_generating_facilities() {
+    set_all_table_toggles(document.getElementById("generating_facilities_table"), true);
+    for (const key in keys_generation) {
+        keys_generation[key] = true;
+    }
+    graph_p5.render_graph(regen_table = false);
+    set_generating_facilities_button_role_to_hide();
+}
+
+function hide_all_consuming_facilities() {
+    set_all_table_toggles(document.getElementById("consuming_facilities_table"), false);
+    for (const key in keys_demand) {
+        keys_demand[key] = false;
+    }
+    graph_p5.render_graph(regen_table = false);
+    set_consumption_button_role_to_show();
+}
+
+function show_all_consuming_facilities() {
+    set_all_table_toggles(document.getElementById("consuming_facilities_table"), true);
+    for (const key in keys_demand) {
+        keys_demand[key] = true;
+    }
+    graph_p5.render_graph(regen_table = false);
+    set_consumption_button_role_to_hide();
+}
+
+function set_generating_facilities_button_role_to_hide() {
+    const button = document.getElementById("show_hide_generating_facilities_button");
+    button.firstChild.innerText = "Hide all";
+    button.onclick = hide_all_generating_facilities;
+}
+
+function set_generating_facilities_button_role_to_show() {
+    const button = document.getElementById("show_hide_generating_facilities_button");
+    button.firstChild.innerText = "Show all";
+    button.onclick = show_all_generating_facilities;
+}
+
+function set_consumption_button_role_to_hide() {
+    const button = document.getElementById("show_hide_consuming_facilities_button");
+    button.firstChild.innerText = "Hide all";
+    button.onclick = hide_all_consuming_facilities;
+}
+
+function set_consumption_button_role_to_show() {
+    const button = document.getElementById("show_hide_consuming_facilities_button");
+    button.firstChild.innerText = "Show all";
+    button.onclick = show_all_consuming_facilities;
 }

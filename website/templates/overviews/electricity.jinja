@@ -63,9 +63,9 @@
                     <th class="capacity_col" onclick="sortGeneratingFacilitiesTable('capacity_col')">Installed Cap.</th>
                     <th class="used_cap_col" onclick="sortGeneratingFacilitiesTable('used_cap_col')">Used Capacity</th>
                     <th class="selected_col">
-                        <button id="show_hide_generating_button"
+                        <button id="show_hide_generating_facilities_button"
                                 class="graph_button small"
-                                onClick="console.log('todo')"><b>Hide all</b></button>
+                                onClick="hide_all_generating_facilities()"><b>Hide all</b></button>
                     </th>
                 </tr>
             </table>
@@ -77,9 +77,9 @@
                         <span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span>
                     </th>
                     <th class="selected_col">
-                        <button id="show_hide_consuming_button"
+                        <button id="show_hide_consuming_facilities_button"
                                 class="graph_button small"
-                                onClick="console.log('todo')"><b>Hide all</b></button>
+                                onClick="hide_all_consuming_facilities()"><b>Hide all</b></button>
                     </th>
                 </tr>
             </table>

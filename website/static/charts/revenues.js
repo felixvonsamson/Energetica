@@ -443,7 +443,7 @@ function set_displayed(name, state) {
     } else {
         // if all revenues are displayed, change the button role to hide
         let all_displayed = true;
-        for (const key in keys_revenues) {
+        for (const key in data.revenues) {
             if (!keys_revenues[key]) {
                 all_displayed = false;
                 break;
@@ -460,7 +460,6 @@ function set_displayed(name, state) {
 }
 
 function hide_all_revenues() {
-    console.log("Hiding all revenues");
     const table = document.getElementById("facilities_list");
     const rows = table.getElementsByTagName("tr");
     for (let i = 1; i < rows.length; i++) {
@@ -476,7 +475,6 @@ function hide_all_revenues() {
 }
 
 function show_all_revenues() {
-    console.log("Showing all revenues");
     const table = document.getElementById("facilities_list");
     const rows = table.getElementsByTagName("tr");
     for (let i = 1; i < rows.length; i++) {
