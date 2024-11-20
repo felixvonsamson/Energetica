@@ -395,7 +395,8 @@ function sortTable(columnName, reorder = true) {
         table.insertRow().innerHTML = `<tr>
             <td>${facility.facility_col}</td>
             <td>${format_money(facility.usage_col)}</td>
-            <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}')" ${keys_revenues[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
+            <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}')" 
+                ${keys_revenues[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
             </tr>`;
     }
     // Add the sorting indicator to the sorted column's header
@@ -454,9 +455,7 @@ function set_displayed(name, state) {
         }
     }
     graph_p5.render_graph(regen_table = false);
-    setTimeout(() => {
-        sortTable(sort_by, false);
-    }, 500);
+    sortTable(sort_by, false);
 }
 
 function hide_all_revenues() {
