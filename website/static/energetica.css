@@ -1,6 +1,7 @@
 /* CSS document for the project "Energetica" by Felix von Samson */
 
 /* TODO: class selector names should use kebab case */
+/* TODO: rename and fix "Jauge" typo */
 
 html {
     -ms-text-size-adjust: 100%;
@@ -1210,6 +1211,7 @@ input:checked+.slider:before {
     display: flex;
     justify-content: space-around;
     position: relative;
+    overflow: hidden;
 }
 
 .table_legend_left {
@@ -1223,6 +1225,10 @@ input:checked+.slider:before {
     border-collapse: collapse;
     border-spacing: 0;
     display: table
+}
+
+.table.hidden {
+    display: none;
 }
 
 .table.tan_green {
@@ -1530,10 +1536,11 @@ input:checked+.slider:before {
     width: 196px;
 }
 
-.constrain_description_txt{
+.constrain_description_txt {
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3; /* Number of lines to show */
+    -webkit-line-clamp: 3;
+    /* Number of lines to show */
     overflow: hidden;
     text-overflow: ellipsis;
 }
