@@ -438,7 +438,20 @@ function toggle_displayed(name) {
 function set_displayed(name, state) {
     keys_revenues[name] = state;
     if (!state) {
+        // since one revenue is hidden, change the button role to show
         set_global_button_role_to_show();
+    } else {
+        // if all revenues are displayed, change the button role to hide
+        let all_displayed = true;
+        for (const key in keys_revenues) {
+            if (!keys_revenues[key]) {
+                all_displayed = false;
+                break;
+            }
+        }
+        if (all_displayed) {
+            set_global_button_role_to_hide();
+        }
     }
     graph_p5.render_graph(regen_table = false);
     setTimeout(() => {
