@@ -11,7 +11,7 @@ socket.on("infoMessage", addToast);
 
 socket.on("errorMessage", addError);
 
-function send_form(endpoint, body) {
+function send_json(endpoint, body) {
     return fetch(endpoint, {
         method: "POST",
         headers: {

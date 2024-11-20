@@ -46,7 +46,7 @@ fetch('/api/get_quiz_question')
   });
 
 function answer_quiz(answer) {
-  send_form("/api/submit_quiz_answer", { answer: answer })
+  send_json("/api/submit_quiz_answer", { answer: answer })
     .then((response) => {
       response.json().then((response_data) => {
         if (response_data.response == "correct") {

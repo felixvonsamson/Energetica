@@ -183,7 +183,7 @@ function setup() {
 }
 
 function change_page_view(view) {
-    send_form("/api/change_graph_view", {
+    send_json("/api/change_graph_view", {
         view: view,
     }).catch((error) => {
         console.error(`caught error ${error}`);

@@ -74,7 +74,7 @@ function send_new_list() {
             new_priority.push(item.id);
         }
     });
-    send_form("/api/request_change_facility_priority", {
+    send_json("/api/request_change_facility_priority", {
         priority: new_priority,
     }).catch((error) => {
         console.error(`caught error ${error}`);
@@ -185,7 +185,7 @@ function change_prices() {
         }
         prices[input.id] = float(input.value);
     });
-    send_form("/api/change_network_prices", {
+    send_json("/api/change_network_prices", {
         prices: prices,
     })
         .then((response) => {
