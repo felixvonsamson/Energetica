@@ -210,9 +210,9 @@ function build_power_facilities_table(sortedData) {
             <td>${facility.name}</td>
             <td>${format_power(facility.installed_cap)}</td>
             <td>
-                <div class="capacityJauge-background">
-                    <div class="capacityJauge color_${facility.facility}" style="--width:${facility.used_capacity}"></div>
-                    <div class="capacityJauge-txt">${Math.round(facility.used_capacity * 100)}%</div>
+                <div class="capacityGauge-background">
+                    <div class="capacityGauge color_${facility.facility}" style="--width:${facility.used_capacity}"></div>
+                    <div class="capacityGauge-txt">${Math.round(facility.used_capacity * 100)}%</div>
                 </div>
             </td>
             <td>${format_money(facility.op_cost)}/h</td>
@@ -254,9 +254,9 @@ function build_storage_facilities_table(sortedData) {
             <td>${facility.name}</td>
             <td>${format_energy(facility.installed_cap)}</td>
             <td>
-                <div class="capacityJauge-background">
-                    <div class="capacityJauge color_${facility.facility}" style="--width:${facility.used_capacity}"></div>
-                    <div class="capacityJauge-txt">${Math.round(facility.used_capacity * 100)}%</div>
+                <div class="capacityGauge-background">
+                    <div class="capacityGauge color_${facility.facility}" style="--width:${facility.used_capacity}"></div>
+                    <div class="capacityGauge-txt">${Math.round(facility.used_capacity * 100)}%</div>
                 </div>
             </td>
             <td>${format_money(facility.op_cost)}/h</td>
@@ -299,9 +299,9 @@ function build_extraction_facilities_table(sortedData) {
             <td>${facility.name}</td>
             <td>${format_mass_rate(facility.extraction_rate)}</td>
             <td>
-                <div class="capacityJauge-background">
-                    <div class="capacityJauge color_${facility.facility}" style="--width:${facility.used_capacity}"></div>
-                    <div class="capacityJauge-txt">${Math.round(facility.used_capacity * 100)}%</div>
+                <div class="capacityGauge-background">
+                    <div class="capacityGauge color_${facility.facility}" style="--width:${facility.used_capacity}"></div>
+                    <div class="capacityGauge-txt">${Math.round(facility.used_capacity * 100)}%</div>
                 </div>
             </td>
             <td>${format_money(facility.op_cost)}/h</td>

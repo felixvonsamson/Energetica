@@ -475,10 +475,10 @@ function sortTable(table, column_name, table_content, reorder = true) {
                     <td>
                         ${facility.used_cap_col === null
                     ? '-'
-                    : `<div class="capacityJauge-background">
-                                    <div class="capacityJauge color_${facility.name}" 
+                    : `<div class="capacityGauge-background">
+                                    <div class="capacityGauge color_${facility.name}" 
                                          style="--width:${facility.used_cap_col}"></div>
-                                    <div class="capacityJauge-txt">${Math.round(facility.used_cap_col * 100)}%</div>
+                                    <div class="capacityGauge-txt">${Math.round(facility.used_cap_col * 100)}%</div>
                                 </div>`
                 }
                     </td>

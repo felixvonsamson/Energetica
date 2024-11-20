@@ -369,9 +369,9 @@ function sortTable(columnName, reorder = true) {
             <td>${format_energy(facility.cumul_discharging_col)}</td>
             <td>${format_energy(facility.capacity_col)}</td>
             <td>
-                <div class="capacityJauge-background hover_info">
-                    <div class="capacityJauge color_${facility.name}" style="--width:${facility.used_cap_col}"></div>
-                    <div class="capacityJauge-txt">${Math.round(facility.used_cap_col * 100)}%</div>
+                <div class="capacityGauge-background hover_info">
+                    <div class="capacityGauge color_${facility.name}" style="--width:${facility.used_cap_col}"></div>
+                    <div class="capacityGauge-txt">${Math.round(facility.used_cap_col * 100)}%</div>
                 </div>
             </td>
             <td><label class="switch"><input type="checkbox" 

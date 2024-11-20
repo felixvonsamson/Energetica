@@ -1,7 +1,7 @@
 /* CSS document for the project "Energetica" by Felix von Samson */
 
 /* TODO: class selector names should use kebab case */
-/* TODO: rename and fix "Jauge" typo */
+/* TODO: rename and fix "Gauge" typo */
 
 html {
     -ms-text-size-adjust: 100%;
@@ -792,14 +792,14 @@ input:checked+.slider:before {
     align-items: center;
 }
 
-.resourceJauge-background {
+.resourceGauge-background {
     width: 85%;
     background-color: #e5d9b6;
     height: 1.3em;
     margin: 0.5em 0;
 }
 
-.resourceJauge {
+.resourceGauge {
     display: flex;
     height: 100%;
     width: calc(var(--width, 0) * 100%);
@@ -871,7 +871,7 @@ input:checked+.slider:before {
         align-items: center;
     }
 
-    .resourceJauge-background {
+    .resourceGauge-background {
         width: 30%;
         background-color: #e5d9b6;
         height: 1.3em;
@@ -1760,20 +1760,20 @@ input:checked+.slider:before {
     background-color: #0c10f2;
 }
 
-.capacityJauge-background {
+.capacityGauge-background {
     width: 150px;
     background-color: #ffffff99;
     height: 1.3em;
 }
 
-.capacityJauge {
+.capacityGauge {
     display: flex;
     height: 100%;
     width: calc(var(--width, 0) * 100%);
     max-width: 100%;
 }
 
-.capacityJauge-txt {
+.capacityGauge-txt {
     width: 100%;
     position: relative;
     transform: translate(0, -100%);
