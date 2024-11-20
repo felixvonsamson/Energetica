@@ -139,6 +139,14 @@ def init_test_players(engine):
     Hex.query.filter_by(id=player1.id).first().player_id = player1.id
     print(player1)
     player1.achievements = "Unlock Network"
+    add_asset(player1, "steam_engine", 2)
+    add_asset(player1, "small_water_dam", 1)
+    add_asset(player1, "onshore_wind_turbine", 1)
+    add_asset(player1, "industry", 5)
+    add_asset(player1, "small_pumped_hydro", 1)
+    # add_asset(player1, "coal_mine", 1)
+    add_asset(player1, "chemistry", 1)
+    add_asset(player1, "warehouse", 1)
 
     player2 = create_player("user2", "password")
     Hex.query.filter_by(id=player2.id).first().player_id = player2.id
