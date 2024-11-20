@@ -680,6 +680,7 @@ class Player(db.Model, UserMixin):
         return self._buffered_data_for_technologies_page
 
 
+@partial(mixed_db, fields={"current_data", "capacities"})
 class Network(db.Model):
     """class that stores the networks of players"""
 

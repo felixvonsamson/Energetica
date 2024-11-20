@@ -146,7 +146,7 @@ def save_past_data_threaded(app, engine):
                 ) as file:
                     past_data = pickle.load(file)
 
-                new_data = engine.data["network_data"][network.id].get_data()
+                new_data = network.current_data.get_data()
                 for category in new_data:
                     for group, buffer in new_data[category].items():
                         if group not in past_data[category]:

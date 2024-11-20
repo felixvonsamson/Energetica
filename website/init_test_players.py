@@ -78,9 +78,9 @@ def init_test_players(engine):
             db.session.add(new_network)
             db.session.commit()
             Path(f"instance/network_data/{new_network.id}/charts").mkdir(parents=True, exist_ok=True)
-            engine.data["network_data"][new_network.id] = CircularBufferNetwork()
-            engine.data["network_capacities"][new_network.id] = CapacityData()
-            engine.data["network_capacities"][new_network.id].update_network(new_network)
+            new_network.current_data = CircularBufferNetwork()
+            new_network.capacities = CapacityData()
+            new_network.capacities.update_network(new_network)
             past_data = data_init_network()
             Path(f"instance/network_data/{new_network.id}").mkdir(parents=True, exist_ok=True)
             with open(
@@ -147,7 +147,7 @@ def init_test_players(engine):
     player3 = create_player("user3", "password")
     Hex.query.filter_by(id=player3.id).first().player_id = player3.id
     player3.achievements = "Unlock Network"
-    
+
     create_network("net1", [player2])
     create_network("net2", [player3])
 

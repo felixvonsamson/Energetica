@@ -21,7 +21,7 @@ def join_network(engine, player, network):
         raise GameException("playerAlreadyInNetwork")
     player.network = network
     db.session.commit()
-    engine.data["network_capacities"][network.id].update_network(network)
+    network.capacities.update_network(network)
     engine.log(f"{player.username} joined the network {network.name}")
     websocket.rest_notify_network_change(engine)
 
@@ -55,9 +55,9 @@ def create_network(engine, player, name):
     db.session.commit()
     network_path = f"instance/network_data/{new_network.id}"
     Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
-    engine.data["network_data"][new_network.id] = CircularBufferNetwork()
-    engine.data["network_capacities"][new_network.id] = CapacityData()
-    engine.data["network_capacities"][new_network.id].update_network(new_network)
+    new_network.current_data = CircularBufferNetwork()
+    new_network.capacities = CapacityData()
+    new_network.capacities.update_network(new_network)
     past_data = data_init_network()
     Path(f"{network_path}").mkdir(parents=True, exist_ok=True)
     with open(f"{network_path}/time_series.pck", "wb") as file:

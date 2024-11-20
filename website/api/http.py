@@ -211,11 +211,10 @@ def get_chart_data():
 
     network_data = None
     if current_user.network is not None:
-        current_network_data = g.engine.data["network_data"][current_user.network.id].get_data(t=total_t % 216 + 1)
         filename = f"instance/network_data/{current_user.network.id}/time_series.pck"
         with open(filename, "rb") as file:
             network_data = pickle.load(file)
-        concat_slices(network_data, current_network_data)
+        concat_slices(network_data, current_user.network.current_data.get_data(t=total_t % 216 + 1))
 
     current_climate_data = g.engine.data["current_climate_data"].get_data(t=total_t % 216 + 1)
     with open("instance/server_data/climate_data.pck", "rb") as file:
@@ -244,8 +243,7 @@ def get_network_capacities():
     """gets the network capacities for the current player"""
     if current_user.network is None:
         return "", 404
-    network_capacities = g.engine.data["network_capacities"][current_user.network.id].get_all()
-    return jsonify(network_capacities)
+    return jsonify(current_user.network.capacities.get_all())
 
 
 @http.route("/get_market_data", methods=["GET"])
