@@ -27,7 +27,7 @@ function CO2_graph(s) {
         s.graphics = s.createGraphics(s.width, s.height);
         s.graphics.textAlign(CENTER, CENTER);
         s.graphics.textFont(font);
-    }
+    };
 
     s.draw = function () {
         if (s.graphics_ready) {
@@ -126,7 +126,7 @@ function CO2_graph(s) {
                 s.pop();
             }
         }
-    }
+    };
 
     s.mouseMoved = function () {
         if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0 && s.mouseY < s.height) {
@@ -138,11 +138,11 @@ function CO2_graph(s) {
                 s.redraw();
             }
         }
-    }
+    };
 
     s.mouseDragged = function () {
         s.mouseMoved();
-    }
+    };
 
     s.render_graph = function () {
         s.graph_h = s.height - margin;
@@ -243,24 +243,24 @@ function CO2_graph(s) {
             s.graphics_ready = true;
             s.redraw();
         });
-    }
+    };
 }
 
 
 function change_concentration(concentration) {
-    let ppm_legend = document.getElementById("ppm_legend")
+    let ppm_legend = document.getElementById("ppm_legend");
     if (concentration == "concentration") {
         ppm_legend.style.display = "";
     } else {
         ppm_legend.style.display = "none";
     }
-    show_selected_button("concentration_button_", concentration)
+    show_selected_button("concentration_button_", concentration);
     CO2_graph_p5.concentration = concentration;
     CO2_graph_p5.render_graph();
 }
 
 function change_relative_co2(relative) {
-    show_selected_button("relative_co2_button_", relative)
+    show_selected_button("relative_co2_button_", relative);
     CO2_graph_p5.relative = relative;
     CO2_graph_p5.render_graph();
 }
@@ -276,7 +276,7 @@ function climate_graph(s) {
         s.graphics = s.createGraphics(s.width, s.height);
         s.graphics.textAlign(CENTER, CENTER);
         s.graphics.textFont(font);
-    }
+    };
 
     s.draw = function () {
         if (s.graphics_ready) {
@@ -356,7 +356,7 @@ function climate_graph(s) {
                 s.pop();
             }
         }
-    }
+    };
 
     s.mouseMoved = function () {
         if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0 && s.mouseY < s.height) {
@@ -368,11 +368,11 @@ function climate_graph(s) {
                 s.redraw();
             }
         }
-    }
+    };
 
     s.mouseDragged = function () {
         s.mouseMoved();
-    }
+    };
 
     s.render_graph = function () {
         s.graph_h = s.height - margin;
@@ -464,11 +464,11 @@ function climate_graph(s) {
             s.graphics_ready = true;
             s.redraw();
         });
-    }
+    };
 }
 
 function change_relative(relative) {
-    show_selected_button("relative_button_", relative)
+    show_selected_button("relative_button_", relative);
     climate_graph_p5.relative = relative;
     climate_graph_p5.render_graph();
 }
@@ -487,7 +487,7 @@ function graph_sketch(s) {
         s.graphics = s.createGraphics(s.width, s.height);
         s.graphics.textAlign(CENTER, CENTER);
         s.graphics.textFont(font);
-    }
+    };
 
     s.draw = function () {
         if (s.graphics_ready) {
@@ -568,7 +568,7 @@ function graph_sketch(s) {
                 let cumsum = 0;
                 for (const group of Object.keys(keys_emissions).reverse()) {
                     if (group in s.graph_data) {
-                        let value = s.graph_data[group][t_view]
+                        let value = s.graph_data[group][t_view];
                         if (s.cumulative == "rates") {
                             value *= 3600 / in_game_seconds_per_tick;
                         }
@@ -606,7 +606,7 @@ function graph_sketch(s) {
                 s.pop();
             }
         }
-    }
+    };
 
     s.mouseMoved = function () {
         if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0 && s.mouseY < s.height) {
@@ -618,11 +618,11 @@ function graph_sketch(s) {
                 s.redraw();
             }
         }
-    }
+    };
 
     s.mouseDragged = function () {
         s.mouseMoved();
-    }
+    };
 
     s.render_graph = function (regen_table = true) {
         CO2_graph_p5.render_graph();
@@ -778,14 +778,14 @@ function graph_sketch(s) {
             s.graphics_ready = true;
             s.redraw();
             if (regen_table) {
-                sortTable(sort_by, reorder = false)
+                sortTable(sort_by, reorder = false);
             }
         });
-    }
+    };
 }
 
 function change_cumulative(cumulative) {
-    show_selected_button("cumulative_button_", cumulative)
+    show_selected_button("cumulative_button_", cumulative);
     graph_p5.cumulative = cumulative;
     graph_p5.render_graph();
 }
@@ -844,7 +844,7 @@ function sortTable(columnName, reorder = true) {
                 name: key,
                 facility_col: cols_and_names[key][1],
                 usage_col: integrate(data.emissions[key][res_id].slice(graph_p5.t0), res_to_factor[res]),
-            })
+            });
         }
         return transformed_data;
     }
@@ -862,7 +862,5 @@ function sortTable(columnName, reorder = true) {
 function toggle_displayed(name, state) {
     keys_emissions[name] = state;
     graph_p5.render_graph(regen_table = false);
-    setTimeout(() => {
-        sortTable(sort_by, false);
-    }, 500);
+    sortTable(sort_by, false);
 }
