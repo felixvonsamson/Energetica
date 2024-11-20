@@ -43,13 +43,13 @@ def set_ctx():
 @changelog.before_request
 def set_ctx_no_login():
     """This function is called before every request"""
-    user, data = (
+    user = (
         current_user
         if current_user.is_authenticated and current_user.tile is not None
         else None
     )
 
-    render_template_ctx = partial(render_template, engine=current_app.config["engine"], user=user, data=data)
+    render_template_ctx = partial(render_template, engine=current_app.config["engine"], user=user)
     g.render_template_ctx = render_template_ctx
 
 
@@ -140,7 +140,7 @@ def resource_market():
     if "Unlock Natural Resources" not in current_user.achievements:
         return redirect("/home", code=302)
     on_sale = ResourceOnSale.query.all()
-    return g.render_template_ctx("resource_market.jinja", on_sale=on_sale, data=g.data)
+    return g.render_template_ctx("resource_market.jinja", on_sale=on_sale)
 
 
 @views.route("/scoreboard")

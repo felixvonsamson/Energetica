@@ -85,7 +85,7 @@ function format_seconds(totalSeconds, show_seconds = true) {
 
 // information sent to the server when a new facility is created
 function start_construction(facility, family, force = false) {
-  send_form("/api/request_queue_project", {
+  send_json("/api/request_queue_project", {
     facility: facility,
     family: family,
     force: force,
@@ -124,7 +124,7 @@ function start_construction(facility, family, force = false) {
 }
 
 function cancel_construction(construction_id, force = false) {
-  send_form("/api/request_cancel_project", {
+  send_json("/api/request_cancel_project", {
     id: construction_id,
     force: force,
   })
@@ -156,7 +156,7 @@ function cancel_construction(construction_id, force = false) {
 }
 
 function pause_construction(construction_id) {
-  send_form("/api/request_toggle_pause_project", {
+  send_json("/api/request_toggle_pause_project", {
     id: construction_id,
   })
     .then((response) => {
@@ -184,7 +184,7 @@ function pause_construction(construction_id) {
 }
 
 function pause_shipment(shipment_id) {
-  send_form("/api/request_pause_shipment", {
+  send_json("/api/request_pause_shipment", {
     id: shipment_id,
   })
     .then((response) => {
@@ -205,7 +205,7 @@ function pause_shipment(shipment_id) {
 }
 
 function decrease_project_priority(construction_id) {
-  send_form("/api/request_decrease_project_priority", {
+  send_json("/api/request_decrease_project_priority", {
     id: construction_id,
   })
     .then((response) => {

@@ -561,7 +561,7 @@ function mousePressed_monitor() {
     ) {
         if (validate.is_clicked()) {
             if (selected_id != null) {
-                send_form("/api/choose_location", { selected_id: selected_id })
+                send_json("/api/choose_location", { selected_id: selected_id })
                     .then((response) => {
                         response.json().then((raw_data) => {
                             if (raw_data["response"] == "locationOccupied") {
@@ -630,7 +630,7 @@ function mousePressed_smartphone() {
     ) {
         if (validate.is_clicked()) {
             if (selected_id != null) {
-                send_form("/api/choose_location", { selected_id: selected_id })
+                send_json("/api/choose_location", { selected_id: selected_id })
                     .then((response) => {
                         response.json().then((raw_data) => {
                             if (raw_data["response"] == "locationOccupied") {

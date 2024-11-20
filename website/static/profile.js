@@ -347,7 +347,7 @@ function are_you_sure_upgrade_all_of_type(facility_id, facility_name) {
 }
 
 function upgrade(id) {
-    send_form("/api/request_upgrade_facility", {
+    send_json("/api/request_upgrade_facility", {
         facility_id: id,
     }).then((response) => {
         response.json().then((raw_data) => {
@@ -370,7 +370,7 @@ function upgrade(id) {
 }
 
 function upgrade_all_of_type(facility_id) {
-    send_form("/api/request_upgrade_all_of_type", {
+    send_json("/api/request_upgrade_all_of_type", {
         facility_id: facility_id,
     }).then((response) => {
         response.json().then((raw_data) => {
@@ -393,7 +393,7 @@ function upgrade_all_of_type(facility_id) {
 }
 
 function dismantle(id) {
-    send_form("/api/request_dismantle_facility", {
+    send_json("/api/request_dismantle_facility", {
         facility_id: id,
     }).then((response) => {
         response.json().then((raw_data) => {
@@ -416,7 +416,7 @@ function dismantle(id) {
 }
 
 function dismantle_all_of_type(facility_id) {
-    send_form("/api/request_dismantle_all_of_type", {
+    send_json("/api/request_dismantle_all_of_type", {
         facility_id: facility_id,
     }).then((response) => {
         response.json().then((raw_data) => {

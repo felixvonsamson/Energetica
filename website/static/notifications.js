@@ -1,7 +1,7 @@
 function delete_notification(element, notification_id) {
   element.parentElement.parentElement.style.display = 'none';
   document.getElementById("notification_" + notification_id).style.display = 'none';
-  send_form("/api/request_delete_notification", {
+  send_json("/api/request_delete_notification", {
     id: notification_id,
   })
     .catch((error) => {
@@ -17,7 +17,7 @@ function read_notifications() {
   }
   document.getElementById('notification_popup').classList.add('hidden');
   document.getElementById('web_push_notification_switch').classList.add('hidden');
-  fetch("/api/request_marked_as_read")
+  fetch("/api/request_marked_as_read", { method: "POST" })
     .catch((error) => {
       console.error(`caught error ${error}`);
     });
