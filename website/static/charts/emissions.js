@@ -819,19 +819,24 @@ function sortTable(columnName, reorder = true) {
     });
 
     // Rebuild the HTML table
-    let html = `<tr>
-        <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-        <th class="usage_col hover_info" onclick="sortTable('usage_col')">CO2 Emissions<span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span></th>
-        <th class="selected_col">Displayed</th>
-    </tr>`;
-    for (const [id, facility] of sortedData) {
-        html += `<tr>
-            <td>${facility.facility_col}</td>
-            <td>${format_mass(facility.usage_col)}</td>
-            <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}', ${!keys_emissions[facility.name]})" ${keys_emissions[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
-            </tr>`;
+    // remove all tr table row elements of the table
+    while (table.rows.length > 1) {
+        table.deleteRow(1);
     }
-    table.innerHTML = html;
+    // Reset the table headers
+    table.querySelector(".facility_col").innerHTML = "Facility";
+    table.querySelector(".usage_col").innerHTML = `CO2 Emissions
+        <span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span></th>`;
+
+    // Add the sorted data to the table
+    for (const [id, facility] of sortedData) {
+        let row = table.insertRow().innerHTML = `<td>${facility.facility_col}</td>
+            <td>${format_mass(facility.usage_col)}</td>
+            <td><label class="switch"><input type="checkbox" 
+                onclick="toggle_displayed('${facility.name}')" 
+                ${keys_emissions[facility.name] ? 'checked' : ''}><span class="slider round"></span></label>
+            </td>`;
+    }
 
     // Update the sorting indicator
     column = table.querySelector(`.${columnName}`);
@@ -859,8 +864,70 @@ function sortTable(columnName, reorder = true) {
     }
 }
 
-function toggle_displayed(name, state) {
+function toggle_displayed(name) {
+    set_displayed(name, !keys_emissions[name]);
+}
+
+function set_displayed(name, state) {
     keys_emissions[name] = state;
+    if (!state) {
+        set_global_button_role_to_show();
+    } else {
+        let all_checked = true;
+        for (const key in data.emissions) {
+            if (!keys_emissions[key]) {
+                all_checked = false;
+                break;
+            }
+        }
+        if (all_checked) {
+            set_global_button_role_to_hide();
+        }
+    }
     graph_p5.render_graph(regen_table = false);
     sortTable(sort_by, false);
+}
+
+function hide_all() {
+    const table = document.getElementById("facilities_list");
+    const rows = table.getElementsByTagName("tr");
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const checkbox = row.getElementsByTagName("input")[0];
+        checkbox.checked = false;
+    }
+    for (const key in keys_emissions) {
+        keys_emissions[key] = false;
+    }
+    graph_p5.render_graph(regen_table = false);
+    sortTable(sort_by, false);
+    set_global_button_role_to_show();
+}
+
+function show_all() {
+    const table = document.getElementById("facilities_list");
+    const rows = table.getElementsByTagName("tr");
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const checkbox = row.getElementsByTagName("input")[0];
+        checkbox.checked = true;
+    }
+    for (const key in keys_emissions) {
+        keys_emissions[key] = true;
+    }
+    graph_p5.render_graph(regen_table = false);
+    sortTable(sort_by, false);
+    set_global_button_role_to_hide();
+}
+
+function set_global_button_role_to_hide() {
+    const button = document.getElementById("show_hide_button");
+    button.firstChild.innerHTML = "Hide all";
+    button.onclick = hide_all;
+}
+
+function set_global_button_role_to_show() {
+    const button = document.getElementById("show_hide_button");
+    button.firstChild.innerHTML = "Show all";
+    button.onclick = show_all;
 }
