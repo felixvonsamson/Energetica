@@ -375,7 +375,7 @@ function sortTable(columnName, reorder = true) {
                 </div>
             </td>
             <td><label class="switch"><input type="checkbox" 
-                onclick="toggle_displayed('${facility.name}', ${!keys_storage[facility.name]})" 
+                onclick="toggle_displayed('${facility.name}')" 
                 ${keys_storage[facility.name] ? 'checked' : ''}><span class="slider round"></span></label>
             </td>`;
     }
