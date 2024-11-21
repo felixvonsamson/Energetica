@@ -439,9 +439,8 @@ def rest_parse_request_create_network(engine, ws, uuid, data):
 def rest_parse_request_queue_project(engine, ws, uuid, data):
     """Interpret message sent from a client when they start a project"""
     facility = data["facility"]
-    family = data["family"]
-    print(f"rest_parse_request_startProject got: family = {family}, facility = {facility}")
-    response = queue_project(engine, g.player, facility, family)
+    print(f"rest_parse_request_startProject got: facility = {facility}")
+    response = queue_project(engine, g.player, facility)
     message = rest_request_response(uuid, "startProject", response)
     ws.send(message)
 
