@@ -56,7 +56,7 @@ def update_electricity(engine):
             "generation": market["generation"],
             "consumption": market["consumption"],
         }
-        engine.data["network_data"][network.id].append_value(new_network_values)
+        network.current_data.append_value(new_network_values)
         for player in network.members:
             player.emit(
                 "new_network_values",

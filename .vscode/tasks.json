@@ -18,7 +18,8 @@
 			"type": "shell",
 			"command": "python main.py --rm_instance --run_init_test_players",
 			"presentation": {
-				"clear": true
+				"clear": true,
+				"focus": true
 			},
 			"group": {
 				"kind": "build"
@@ -39,9 +40,9 @@
 		{
 			"label": "remove instance",
 			"type": "shell",
-			"command": "rm -rf instance/",
+			"command": "rm -rf instance/ checkpoints/",
 			"presentation": {
-				"reveal": "always"
+				"reveal": "never"
 			},
 			"group": {
 				"kind": "none"

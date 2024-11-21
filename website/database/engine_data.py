@@ -93,7 +93,7 @@ class CapacityData:
                 effective_values["pollution"] += base_data["base_pollution"] * facility.multiplier_3
 
         if player.network is not None:
-            engine.data["network_capacities"][player.network.id].update_network(player.network)
+            player.network.capacities.update_network(player.network)
 
     def update_network(self, network):
         """This function updates the capacity data of the network"""

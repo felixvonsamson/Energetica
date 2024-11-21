@@ -170,8 +170,6 @@ class GameEngine(object):
         self.data["start_date"] = math.floor(self.data["start_date"].timestamp() / clock_time) * clock_time
 
         # All data for the current day will be stored here :
-        self.data["network_capacities"] = {}
-        self.data["network_data"] = {}
         self.data["current_climate_data"] = EmissionData(
             self.data["delta_t"], in_game_seconds_per_tick, self.data["random_seed"]
         )
@@ -236,7 +234,7 @@ class GameEngine(object):
 
     def new_daily_question(self, init=False):
         """Loads a new daily question from the csv file."""
-        with open("website/static/data/daily_quiz_questions.csv", "r", encoding='utf-8') as file:
+        with open("website/static/data/daily_quiz_questions.csv", "r", encoding="utf-8") as file:
             csv_reader = list(csv.DictReader(file))
             if init:
                 question_id = 0
@@ -249,6 +247,7 @@ class GameEngine(object):
 
 class GameException(Exception):
     """This class is the exception class for the game engine"""
+
     def __init__(self, exception_type, **kwargs):
         self.exception_type = exception_type
         self.kwargs = kwargs
@@ -257,6 +256,7 @@ class GameException(Exception):
 
 class Confirm(Exception):
     """This class is used to ask the player to confirm an action"""
+
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
         Exception.__init__(self, "Please confirm this action.")
