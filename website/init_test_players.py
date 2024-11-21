@@ -13,7 +13,7 @@ from .database.map import Hex
 from .database.messages import Chat
 from .database.player import Network, Player
 from .database.player_assets import OngoingConstruction
-from .utils.misc import add_player_to_data, init_table
+from .utils.misc import add_player_to_data, confirm_location, init_table
 from .utils.network import data_init_network
 
 
@@ -48,27 +48,20 @@ def init_test_players(engine):
         for new_construction in new_constructions:
             player.add_to_list(priority_list_name, new_construction.id)
 
-    def create_player(username, password):
+    def create_player(username, password, tile_id=None) -> Player:
         """This function creates and initializes a player."""
-        p = Player.query.filter_by(username=username).first()
-        if p is None:
-            new_player = Player(
-                username=username,
-                pwhash=generate_password_hash(password, method="scrypt"),
-            )
-            db.session.add(new_player)
-            general_chat = Chat.query.get(1)
-            new_player.chats.append(general_chat)
-            db.session.commit()
-            new_player.current_data = CircularBufferPlayer()
-            new_player.capacities = CapacityData()
-            new_player.cumul_emissions = CumulativeEmissionsData()
-            add_player_to_data(new_player)
-            init_table(new_player.id)
-            db.session.commit()
-            return new_player
-        engine.log(f"create_player: player {username} already exists")
-        return None
+        player = Player.query.filter_by(username=username).first()
+        if player:
+            engine.log(f"create_player: player {username} already exists")
+            return player
+        player = Player(username=username, pwhash=generate_password_hash(password))
+        db.session.add(player)
+        db.session.commit()
+        # If tile_id is None, find any tile that isn't assigned to a player
+        hex_tile = Hex.get(tile_id) if tile_id else Hex.query.filter_by(player_id=None).first()
+        confirm_location(engine, player, hex_tile)
+        engine.log(f"create_player: player {username} created")
+        return player
 
     def create_network(name, members):
         """This function creates and initializes a network."""
