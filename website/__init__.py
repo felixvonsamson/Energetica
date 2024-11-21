@@ -339,4 +339,12 @@ def create_app(
                 from .init_test_players import init_test_players
 
                 init_test_players(engine)
+                # Manually trigger the scheduler to run the state_update function as soon as possible
+                scheduler.add_job(
+                    func=state_update,
+                    args=(engine, app),
+                    id="state_update_immediate",
+                    trigger="date",
+                )
+
     return socketio, sock, app

@@ -14,7 +14,7 @@ from website.game_engine import Confirm, GameEngine, GameException
 from website.utils.network import reorder_facility_priorities
 
 
-def finish_project(construction: OngoingConstruction):
+def finish_project(construction: OngoingConstruction, skip_notifications=False):
     """
     This function is executed when a construction or research project has finished. The effects include:
     * For facilities which create demands, e.g. carbon capture, adds demands to the demand priorities
@@ -89,13 +89,16 @@ def finish_project(construction: OngoingConstruction):
 
     construction_name = engine.const_config["assets"][construction.name]["name"]
     if construction.family == "Technologies":
-        player.notify("Technologies", f"+ 1 lvl <b>{construction_name}</b>.")
+        if not skip_notifications:
+            player.notify("Technologies", f"+ 1 lvl <b>{construction_name}</b>.")
         engine.log(f"{player.username} : + 1 lvl {construction_name}")
     elif construction.family == "Functional facilities":
-        player.notify("Constructions", f"+ 1 lvl <b>{construction_name}</b>")
+        if not skip_notifications:
+            player.notify("Constructions", f"+ 1 lvl <b>{construction_name}</b>")
         engine.log(f"{player.username} : + 1 lvl {construction_name}")
     else:
-        player.notify("Constructions", f"+ 1 <b>{construction_name}</b>")
+        if not skip_notifications:
+            player.notify("Constructions", f"+ 1 <b>{construction_name}</b>")
         engine.log(f"{player.username} : + 1 {construction_name}")
     if construction.family in [
         "Extraction facilities",
@@ -140,6 +143,7 @@ def deploy_available_workers(player: Player, family: str):
 
         def available_workers() -> int:
             return player.available_lab_workers()
+
     else:
         priority_list_name = "construction_priorities"
 
@@ -339,7 +343,13 @@ def package_projects_data(player):
     return {0: projects, 1: construction_priorities, 2: research_priorities}
 
 
-def queue_project(engine: GameEngine, player: Player, asset: str, force=False):
+def queue_project(
+    engine: GameEngine,
+    player: Player,
+    asset: str,
+    force=False,
+    ignore_requirements_and_money=False,
+) -> OngoingConstruction:
     """this function is executed when a player clicks on 'start construction'"""
 
     if asset not in engine.all_asset_types:
@@ -348,13 +358,13 @@ def queue_project(engine: GameEngine, player: Player, asset: str, force=False):
     asset_requirement_status = technology_effects.requirements_status(
         player, asset, technology_effects.asset_requirements(player, asset)
     )
-    if asset_requirement_status == "unsatisfied":
+    if asset_requirement_status == "unsatisfied" and not ignore_requirements_and_money:
         raise GameException("locked")
 
     real_price = technology_effects.construction_price(player, asset)
     duration = technology_effects.construction_time(player, asset)
 
-    if player.money < real_price:
+    if player.money < real_price and not ignore_requirements_and_money:
         raise GameException("notEnoughMoney")
 
     construction_power = technology_effects.construction_power(player, asset)
@@ -382,7 +392,8 @@ def queue_project(engine: GameEngine, player: Player, asset: str, force=False):
 
     suspension_time = None if can_start_immediately() else engine.data["total_t"]
 
-    player.money -= real_price
+    if not ignore_requirements_and_money:
+        player.money -= real_price
     new_construction: OngoingConstruction = OngoingConstruction(
         name=asset,
         family=engine.asset_family_by_name[asset],
@@ -421,6 +432,7 @@ def queue_project(engine: GameEngine, player: Player, asset: str, force=False):
     db.session.commit()
 
     invalidate_data_on_project_update(engine, player, asset)
+    return new_construction
 
 
 def invalidate_data_on_project_update(engine: GameEngine, player: Player, asset_type: str):
@@ -505,7 +517,10 @@ def decrease_project_priority(player, construction):
             # construction_1 is not paused, but construction_2 is
             toggle_pause_project(player, construction_1)
             toggle_pause_project(player, construction_2)
-            priority_list[index + 1], priority_list[index] = priority_list[index], priority_list[index + 1]
+            priority_list[index + 1], priority_list[index] = (
+                priority_list[index],
+                priority_list[index + 1],
+            )
         setattr(player, attr, ",".join(map(str, priority_list)))
         db.session.commit()
         websocket.rest_notify_constructions(engine, player)

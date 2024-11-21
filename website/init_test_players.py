@@ -1,93 +1,63 @@
 """This module is used to initialize the database with test players and networks."""
 
-import pickle
-from pathlib import Path
-
 from werkzeug.security import generate_password_hash
 
-from website import technology_effects
-
-from . import db
-from .database.engine_data import CapacityData, CircularBufferNetwork, CircularBufferPlayer, CumulativeEmissionsData
-from .database.map import Hex
-from .database.messages import Chat
-from .database.player import Network, Player
-from .database.player_assets import OngoingConstruction
-from .utils.misc import add_player_to_data, init_table
-from .utils.network import data_init_network
+from website import db
+from website.database.map import Hex
+from website.database.player import Network, Player
+from website.utils.assets import finish_project, queue_project
+from website.utils.misc import confirm_location
+from website.utils.network import create_network, join_network
 
 
 def init_test_players(engine):
     """This function initializes the database with test players and networks."""
 
-    def add_asset(player, asset, n):
+    def add_asset(player: Player, asset: str, n):
         """This function adds an asset as an instant construction."""
         priority_list_name = "construction_priorities"
         if engine.asset_family_by_name[asset] == "Technologies":
             priority_list_name = "research_priorities"
 
-        new_constructions = []
         for i in range(n):
-            new_construction: OngoingConstruction = OngoingConstruction(
-                name=asset,
-                family=engine.asset_family_by_name[asset],
-                start_time=0,
-                duration=1,
-                suspension_time=None,
-                construction_power=0,
-                construction_pollution=technology_effects.construction_pollution_per_tick(player, asset),
-                price_multiplier=technology_effects.price_multiplier(player, asset),
-                multiplier_1=technology_effects.multiplier_1(player, asset),
-                multiplier_2=technology_effects.multiplier_2(player, asset),
-                multiplier_3=technology_effects.multiplier_3(player, asset),
-                player_id=player.id,
-            )
-            new_constructions.append(new_construction)
-        db.session.add_all(new_constructions)
-        db.session.flush()
-        for new_construction in new_constructions:
-            player.add_to_list(priority_list_name, new_construction.id)
+            ongoing_construction = queue_project(engine, player, asset, force=True, ignore_requirements_and_money=True)
+            finish_project(ongoing_construction, skip_notifications=True)
+            print(f"Added {asset} to {player.username}'s {priority_list_name}")
 
-    def create_player(username, password):
+    def create_player(username, password, tile_id=None) -> Player:
         """This function creates and initializes a player."""
-        p = Player.query.filter_by(username=username).first()
-        if p is None:
-            new_player = Player(
-                username=username,
-                pwhash=generate_password_hash(password, method="scrypt"),
-            )
-            db.session.add(new_player)
-            general_chat = Chat.query.get(1)
-            new_player.chats.append(general_chat)
-            db.session.commit()
-            new_player.current_data = CircularBufferPlayer()
-            new_player.capacities = CapacityData()
-            new_player.cumul_emissions = CumulativeEmissionsData()
-            add_player_to_data(new_player)
-            init_table(new_player.id)
-            db.session.commit()
-            return new_player
-        engine.log(f"create_player: player {username} already exists")
-        return None
+        player = Player.query.filter_by(username=username).first()
+        if player:
+            engine.log(f"create_player: player {username} already exists")
+            return player
+        player = Player(username=username, pwhash=generate_password_hash(password))
+        db.session.add(player)
+        db.session.commit()
+        # If tile_id is None, find any tile that isn't assigned to a player
+        hex_tile = Hex.get(tile_id) if tile_id else Hex.query.filter_by(player_id=None).first()
+        confirm_location(engine, player, hex_tile)
+        engine.log(f"create_player: player {username} created")
+        return player
 
-    def create_network(name, members):
+    def setup_network(name, members: list[Player]) -> Network:
         """This function creates and initializes a network."""
-        n = Network.query.filter_by(name=name).first()
-        if n is None:
-            new_network = Network(name=name, members=members)
-            db.session.add(new_network)
-            db.session.commit()
-            Path(f"instance/network_data/{new_network.id}/charts").mkdir(parents=True, exist_ok=True)
-            new_network.current_data = CircularBufferNetwork()
-            new_network.capacities = CapacityData()
-            new_network.capacities.update_network(new_network)
-            past_data = data_init_network()
-            Path(f"instance/network_data/{new_network.id}").mkdir(parents=True, exist_ok=True)
-            with open(
-                f"instance/network_data/{new_network.id}/time_series.pck",
-                "wb",
-            ) as file:
-                pickle.dump(past_data, file)
+        # Unlock the network achievement for all members
+        for player in members:
+            if "Unlock Network" not in player.achievements:
+                player.add_to_list("achievements", "Unlock Network")
+
+        network = Network.query.filter_by(name=name).first()
+        if network:
+            engine.log(f"create_network: network {name} already exists")
+        else:
+            if members == []:
+                engine.log(f"create_network: network {name} has no members")
+                # raise an exception
+                raise ValueError("create_network: network has no members")
+            network = create_network(engine, members[0], name)
+            for player in members[1:]:
+                join_network(engine, player, network)
+        return network
 
     def climate_events_scenario(engine):
         """This scenario fills the map with players that use coal to see climate change events."""
@@ -130,26 +100,23 @@ def init_test_players(engine):
                 add_asset(player, "nuclear_engineering", 3)
                 add_asset(player, "aerodynamics", 5)
             players.append(player)
-        create_network("net", players)
+        setup_network("net", players)
         db.session.commit()
 
     # climate_events_scenario(engine)
 
     player1 = create_player("user1", "password")
-    Hex.query.filter_by(id=player1.id).first().player_id = player1.id
-    print(player1)
-    player1.achievements = "Unlock Network"
-
     player2 = create_player("user2", "password")
-    Hex.query.filter_by(id=player2.id).first().player_id = player2.id
-    player2.achievements = "Unlock Network"
-
     player3 = create_player("user3", "password")
-    Hex.query.filter_by(id=player3.id).first().player_id = player3.id
-    player3.achievements = "Unlock Network"
 
-    create_network("net1", [player2])
-    create_network("net2", [player3])
+    setup_network("net1", [player1, player2])
+    setup_network("net2", [player3])
+
+    add_asset(player1, "chemistry", 3)
+    add_asset(player1, "coal_mine", 3)
+    add_asset(player1, "warehouse", 1)
+    add_asset(player1, "coal_burner", 3)
+    add_asset(player1, "industry", 18)
 
     # if player:
     #     Hex.query.filter_by(id=35).first().player_id = player.id
