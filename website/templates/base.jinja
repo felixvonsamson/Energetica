@@ -356,7 +356,7 @@
   <script>
     const navigationEntry = performance.getEntriesByType("navigation")[0];
     if (navigationEntry && navigationEntry.type === "reload")
-      console.log("Session storage cleared");
+      sessionStorage.clear();
   </script>
   <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}"></script>
   <script src="{{ url_for('static', filename='notifications.js') }}"></script>
