@@ -39,9 +39,9 @@
 		{
 			"label": "remove instance",
 			"type": "shell",
-			"command": "rm -rf instance/",
+			"command": "rm -rf instance/ checkpoints/",
 			"presentation": {
-				"reveal": "always"
+				"reveal": "never"
 			},
 			"group": {
 				"kind": "none"
