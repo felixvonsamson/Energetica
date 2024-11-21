@@ -14,8 +14,7 @@ from .database.messages import Chat
 from .database.player import Network, Player
 from .database.player_assets import OngoingConstruction
 from .utils.misc import add_player_to_data, confirm_location, init_table
-from .utils.network import data_init_network
-
+from website import utils
 
 def init_test_players(engine):
     """This function initializes the database with test players and networks."""
@@ -63,24 +62,25 @@ def init_test_players(engine):
         engine.log(f"create_player: player {username} created")
         return player
 
-    def create_network(name, members):
+    def create_network(name, members: list[Player]) -> Network:
         """This function creates and initializes a network."""
-        n = Network.query.filter_by(name=name).first()
-        if n is None:
-            new_network = Network(name=name, members=members)
-            db.session.add(new_network)
-            db.session.commit()
-            Path(f"instance/network_data/{new_network.id}/charts").mkdir(parents=True, exist_ok=True)
-            new_network.current_data = CircularBufferNetwork()
-            new_network.capacities = CapacityData()
-            new_network.capacities.update_network(new_network)
-            past_data = data_init_network()
-            Path(f"instance/network_data/{new_network.id}").mkdir(parents=True, exist_ok=True)
-            with open(
-                f"instance/network_data/{new_network.id}/time_series.pck",
-                "wb",
-            ) as file:
-                pickle.dump(past_data, file)
+        # Unlock the network achievement for all members
+        for player in members:
+            if "Unlock Network" not in player.achievements:
+                player.add_to_list("achievements", "Unlock Network")
+
+        network = Network.query.filter_by(name=name).first()
+        if network:
+            engine.log(f"create_network: network {name} already exists")
+        else:
+            if members == []:
+                engine.log(f"create_network: network {name} has no members")
+                # raise an exception
+                raise ValueError("create_network: network has no members")
+            network = utils.network.create_network(engine, members[0], name)
+            for player in members[1:]:
+                utils.network.join_network(engine, player, network)
+        
 
     def climate_events_scenario(engine):
         """This scenario fills the map with players that use coal to see climate change events."""
@@ -129,19 +129,10 @@ def init_test_players(engine):
     # climate_events_scenario(engine)
 
     player1 = create_player("user1", "password")
-    Hex.query.filter_by(id=player1.id).first().player_id = player1.id
-    print(player1)
-    player1.achievements = "Unlock Network"
-
     player2 = create_player("user2", "password")
-    Hex.query.filter_by(id=player2.id).first().player_id = player2.id
-    player2.achievements = "Unlock Network"
-
     player3 = create_player("user3", "password")
-    Hex.query.filter_by(id=player3.id).first().player_id = player3.id
-    player3.achievements = "Unlock Network"
 
-    create_network("net1", [player2])
+    create_network("net1", [player1, player2])
     create_network("net2", [player3])
 
     # if player:
