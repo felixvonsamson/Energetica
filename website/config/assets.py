@@ -918,7 +918,7 @@ def warehouse_capacity_for_level(warehouse_level, resource):
     """Returns how much capacity in kg a player with a warehouse with
     `warehouse_level` has for the specified `resource`"""
     if warehouse_level == 0:
-        return 0
+        return None
     else:
         return (
             const_config["warehouse_capacities"][resource]
@@ -968,7 +968,7 @@ class Config(object):
 
         # calculating the maximum storage capacity from the warehouse level
         for resource in const_config["warehouse_capacities"]:
-            assets["warehouse_capacities"][resource] = warehouse_capacity_for_level(player.warehouse, resource)
+            assets["warehouse_capacities"][resource] = warehouse_capacity_for_level(player.warehouse, resource) or 0.0
 
         # calculating the transport speed and energy consumption from the level of transport technology
         assets["transport"]["time_per_tile"] = (

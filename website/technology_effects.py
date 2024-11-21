@@ -754,7 +754,7 @@ def package_functional_facilities(player: Player):
 
     def carbon_capture_power_consumption_for_level(level):
         if level == 0:
-            return 0
+            return None
         else:
             return (
                 const_config_assets["carbon_capture"]["base_power_consumption"]
@@ -763,7 +763,7 @@ def package_functional_facilities(player: Player):
 
     def carbon_capture_absorption(level):
         if level == 0:
-            return 0
+            return None
         else:
             return (
                 const_config_assets["carbon_capture"]["base_absorption_per_day"]

@@ -208,31 +208,31 @@
               <tr>
                 <td>Coal capacity</td>
                 <td id="coal" class="txt_center"></td>
-                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.coal.current}}, {{warehouse_capacities.coal.upgraded}});</script>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.coal.current | default('null', true)}}, {{warehouse_capacities.coal.upgraded}});</script>
               </tr>
               <tr>
                 <td>Gas capacity</td>
                 <td id="gas" class="txt_center"></td>
-                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.gas.current}}, {{warehouse_capacities.gas.upgraded}});</script>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.gas.current | default('null', true)}}, {{warehouse_capacities.gas.upgraded}});</script>
               </tr>
               <tr>
                 <td>Uranium cap.</td>
                 <td id="uranium" class="txt_center"></td>
-                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.uranium.current}}, {{warehouse_capacities.uranium.upgraded}});</script>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass({{warehouse_capacities.uranium.current | default('null', true)}}, {{warehouse_capacities.uranium.upgraded}});</script>
               </tr>
             {% endif %}
             {% if "power_consumption" in facility_data.keys() %}
               <tr>
                 <td>Power consumption</td>
                 <td id="power_consumption" class="txt_center"></td>
-                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_power({{ facility_data.power_consumption.current}}, {{ facility_data.power_consumption.upgraded }});</script>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_power({{ facility_data.power_consumption.current | default('null', true)}}, {{ facility_data.power_consumption.upgraded }});</script>
               </tr>
             {% endif %}
             {% if "co2_absorption" in facility_data.keys() %}
               <tr>
                 <td>CO<sub>2</sub> absorbed</td>
                 <td class="txt_center"></td>
-                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass_rate({{ facility_data.co2_absorption.current }}, {{ facility_data.co2_absorption.upgraded }});</script>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_upgrade_mass_rate({{ facility_data.co2_absorption.current | default('null', true) }}, {{ facility_data.co2_absorption.upgraded }});</script>
               </tr>
             {% endif %}
           </table>
