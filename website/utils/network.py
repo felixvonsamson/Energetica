@@ -40,7 +40,7 @@ def data_init_network():
     }
 
 
-def create_network(engine, player, name):
+def create_network(engine, player, name) -> Network:
     """shared API method to create a network. Network name must pass validation,
     namely it must not be too long, nor too short, and must not already be in
     use."""
@@ -64,6 +64,7 @@ def create_network(engine, player, name):
         pickle.dump(past_data, file)
     engine.log(f"{player.username} created the network {name}")
     websocket.rest_notify_network_change(engine)
+    return new_network
 
 
 def leave_network(engine, player):
