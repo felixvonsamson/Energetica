@@ -10,6 +10,7 @@ const keys_storage = {
 
 function graph_sketch(s) {
     s.setup = function () {
+        sort_by = "cumul_charging_col";
         s.percent = "normal";
         s.is_inside = false;
         s.createCanvas(min(canvas_width, 1200), 0.55 * canvas_width);
@@ -19,7 +20,7 @@ function graph_sketch(s) {
         s.graphics = s.createGraphics(s.width, s.height);
         s.graphics.textAlign(CENTER, CENTER);
         s.graphics.textFont(font);
-    }
+    };
 
     s.draw = function () {
         if (s.graphics_ready) {
@@ -46,7 +47,7 @@ function graph_sketch(s) {
                             if (keys_storage[group] === false) {
                                 return acc;
                             }
-                            return acc + data.storage[group][res_id][t_view]
+                            return acc + data.storage[group][res_id][t_view];
                         }, 0);
                     }
                     for (const group in keys_storage) {
@@ -155,7 +156,7 @@ function graph_sketch(s) {
                 }
             }
         }
-    }
+    };
 
     s.mouseMoved = function () {
         if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0 && s.mouseY < s.height) {
@@ -167,11 +168,11 @@ function graph_sketch(s) {
                 s.redraw();
             }
         }
-    }
+    };
 
     s.mouseDragged = function () {
         s.mouseMoved();
-    }
+    };
 
     s.render_graph = function (regen_table = true) {
         s.graph_h = s.height - margin;
@@ -216,7 +217,7 @@ function graph_sketch(s) {
                     if (keys_storage[group] === false) {
                         return acc;
                     }
-                    return acc + data.storage[group][res_id][t]
+                    return acc + data.storage[group][res_id][t];
                 }, 0);
             }
             for (const group in keys_storage) {
@@ -282,18 +283,18 @@ function graph_sketch(s) {
             s.graphics.push();
             s.graphics.translate(s.width - 1.1 * margin, 0.2 * margin);
             s.graphics.noStroke();
-            capacities = {}
+            capacities = {};
             for (const key of Object.keys(keys_storage).reverse()) {
                 if (key in player_data.capacities) {
-                    capacities[key] = player_data.capacities[key].capacity
+                    capacities[key] = player_data.capacities[key].capacity;
                 }
             }
             const sum = Object.entries(capacities).reduce(
                 (acc, [key, currentValue]) => {
                     if (keys_storage[key] === false) {
-                        return acc
+                        return acc;
                     }
-                    return acc + currentValue
+                    return acc + currentValue;
                 }, 0);
             for (const key in capacities) {
                 if (capacities[key] > 0 && keys_storage[key]) {
@@ -313,10 +314,10 @@ function graph_sketch(s) {
             s.graphics_ready = true;
             s.redraw();
             if (regen_table) {
-                sortTable(sort_by, reorder = false)
+                sortTable(sort_by, reorder = false);
             }
         });
-    }
+    };
 }
 
 function sortTable(columnName, reorder = true) {
@@ -348,30 +349,36 @@ function sortTable(columnName, reorder = true) {
     });
 
     // Rebuild the HTML table
-    let html = `<tr>
-        <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-        <th class="cumul_charging_col hover_info" onclick="sortTable('cumul_charging_col')">Cumul Charging<span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span></th>
-        <th class="cumul_discharging_col hover_info" onclick="sortTable('cumul_discharging_col')">Cumul Discharging<span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span></th>
-        <th class="capacity_col" onclick="sortTable('capacity_col')">Max Storage</th>
-        <th class="used_cap_col" onclick="sortTable('used_cap_col')">State of Charge</th>
-        <th class="selected_col">Displayed</th>
-    </tr>`;
+    // remove all tr table row elements of the table
+    while (table.rows.length > 1) {
+        table.deleteRow(1);
+    }
+    // Reset the table headers
+    table.querySelector(".facility_col").innerHTML = "Facility";
+    table.querySelector(".cumul_charging_col").innerHTML = `Cumul Charging
+        <span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span>`;
+    table.querySelector(".cumul_discharging_col").innerHTML = `Cumul Discharging
+        <span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span>`;
+    table.querySelector(".capacity_col").innerHTML = "Max Storage";
+    table.querySelector(".used_cap_col").innerHTML = "State of Charge";
+
+    // Add the sorted data to the table
     for (const [id, facility] of sortedData) {
-        html += `<tr>
-            <td>${facility.facility_col}</td>
+        table.insertRow().innerHTML = `<td>${facility.facility_col}</td>
             <td>${format_energy(facility.cumul_charging_col)}</td>
             <td>${format_energy(facility.cumul_discharging_col)}</td>
             <td>${format_energy(facility.capacity_col)}</td>
             <td>
-                <div class="capacityJauge-background hover_info">
-                    <div class="capacityJauge color_${facility.name}" style="--width:${facility.used_cap_col}"></div>
-                    <div class="capacityJauge-txt">${Math.round(facility.used_cap_col * 100)}%</div>
+                <div class="capacityGauge-background hover_info">
+                    <div class="capacityGauge color_${facility.name}" style="--width:${facility.used_cap_col}"></div>
+                    <div class="capacityGauge-txt">${Math.round(facility.used_cap_col * 100)}%</div>
                 </div>
             </td>
-            <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}', ${!keys_storage[facility.name]})" ${keys_storage[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
-            </tr>`;
+            <td><label class="switch"><input type="checkbox" 
+                onclick="toggle_displayed('${facility.name}')" 
+                ${keys_storage[facility.name] ? 'checked' : ''}><span class="slider round"></span></label>
+            </td>`;
     }
-    table.innerHTML = html;
 
     // Update the sorting indicator
     column = table.querySelector(`.${columnName}`);
@@ -387,7 +394,7 @@ function sortTable(columnName, reorder = true) {
                 cumul_discharging_col: integrate(data.generation[key][res_id].slice(graph_p5.t0), res_to_factor[res] * in_game_seconds_per_tick / 3600),
                 capacity_col: capacities[key],
                 used_cap_col: data.storage[key][0][359] / capacities[key],
-            })
+            });
         }
         return transformed_data;
     }
@@ -401,10 +408,70 @@ function sortTable(columnName, reorder = true) {
     }
 }
 
-function toggle_displayed(name, state) {
+function toggle_displayed(name) {
+    set_displayed(name, !keys_storage[name]);
+}
+
+function set_displayed(name, state) {
     keys_storage[name] = state;
+    if (!state) {
+        set_global_button_role_to_show();
+    } else {
+        let all_checked = true;
+        for (const key in data.storage) {
+            if (!keys_storage[key]) {
+                all_checked = false;
+                break;
+            }
+        }
+        if (all_checked) {
+            set_global_button_role_to_hide();
+        }
+    }
     graph_p5.render_graph(regen_table = false);
-    setTimeout(() => {
-        sortTable(sort_by, false);
-    }, 500);
+    sortTable(sort_by, false);
+}
+
+function hide_all() {
+    const table = document.getElementById("facilities_list");
+    const rows = table.getElementsByTagName("tr");
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const checkbox = row.getElementsByTagName("input")[0];
+        checkbox.checked = false;
+    }
+    for (const key in keys_storage) {
+        keys_storage[key] = false;
+    }
+    graph_p5.render_graph(regen_table = false);
+    sortTable(sort_by, false);
+    set_global_button_role_to_show();
+}
+
+function show_all() {
+    const table = document.getElementById("facilities_list");
+    const rows = table.getElementsByTagName("tr");
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const checkbox = row.getElementsByTagName("input")[0];
+        checkbox.checked = true;
+    }
+    for (const key in keys_storage) {
+        keys_storage[key] = true;
+    }
+    graph_p5.render_graph(regen_table = false);
+    sortTable(sort_by, false);
+    set_global_button_role_to_hide();
+}
+
+function set_global_button_role_to_hide() {
+    const button = document.getElementById("show_hide_button");
+    button.firstChild.innerHTML = "Hide all";
+    button.onclick = hide_all;
+}
+
+function set_global_button_role_to_show() {
+    const button = document.getElementById("show_hide_button");
+    button.firstChild.innerHTML = "Show all";
+    button.onclick = show_all;
 }

@@ -86,8 +86,12 @@
             <table id="facilities_list" class="table bone margin txt_center">
                 <tr>
                     <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-                    <th class="usage_col hover_info" onclick="sortTable('usage_col')">CO<sub>2</sub> Emissions<span class="popup_info small">over the last 4h</span></th>
-                    <th class="selected_col">Displayed</th>
+                    <th class="usage_col hover_info" onclick="sortTable('usage_col')">CO<sub>2</sub> Emissions<span class="popup_info bottom small">over the last 4h</span></th>
+                    <th class="selected_col">
+                        <button id="show_hide_button"
+                                class="graph_button small"
+                                onClick="hide_all()"><b>Hide all</b></button>
+                    </th>
                 </tr>
             </table>
         </div>
