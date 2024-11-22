@@ -1,10 +1,10 @@
 from flask import current_app
 
 
-def mixed_db(cls, fields={}):
+def mixed_db(cls, disk_field={}):
     def __getattr__(self, name):
         engine = current_app.config["engine"]
-        if name in fields:
+        if name in disk_field:
             return engine.data[cls.__name__][self.id][name]
         elif name in self.__dict__:
             return self.__dict__[name]
@@ -15,7 +15,7 @@ def mixed_db(cls, fields={}):
 
     def __setattr__(self, name, value):
         engine = current_app.config["engine"]
-        if name in fields and self.id:
+        if name in disk_field and self.id:
             engine.data[cls.__name__][self.id][name] = value
         else:
             original_setattr(self, name, value)
