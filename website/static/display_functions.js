@@ -28,12 +28,20 @@ function general_format(value, units, threshold = 10_000) {
 function general_upgrade_format(value1, value2, units) {
     // formats two values with the right unit for upgrade display
     let unit_index = 0;
-    while (value1 >= 10_000 && unit_index < units.length - 1) {
-        value1 /= 1_000;
-        value2 /= 1_000;
-        unit_index += 1;
+    if (value1 == null) {
+        while (value2 >= 10_000 && unit_index < units.length - 1) {
+            value2 /= 1_000;
+            unit_index += 1;
+        }
+        return `0${units[unit_index][0]} -> ${value2.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]}`;
+    } else {
+        while (value1 >= 10_000 && unit_index < units.length - 1) {
+            value1 /= 1_000;
+            value2 /= 1_000;
+            unit_index += 1;
+        }
+        return `${value1.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index][0]} -> ${value2.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]}`;
     }
-    return `${value1.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index][0]} -> ${value2.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]}`;
 }
 
 function format_upgrade_power(value1, value2) {
@@ -49,7 +57,9 @@ function format_upgrade_mass(value1, value2) {
 }
 
 function format_upgrade_mass_rate(value1, value2) {
-    return general_upgrade_format(value1 * 1000, value2 * 1000, _mass_rate_units);
+    const scaledValue1 = value1 != null ? value1 * 1_000 : null;
+    const scaledValue2 = value2 != null ? value2 * 1_000 : null; // Handle potential null for value2, shouldn't happen
+    return general_upgrade_format(scaledValue1, scaledValue2, _mass_rate_units);
 }
 
 // Price :
