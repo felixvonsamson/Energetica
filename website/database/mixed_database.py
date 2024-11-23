@@ -1,11 +1,13 @@
-from typing import Any, Callable
+from typing import Any, Callable, Type, TypeVar
 
 from flask import current_app
 
 from website.game_engine import GameEngine
 
+Cls = TypeVar("Cls")  # Generic type variable for the class
 
-def mixed_db(cls: object, data_fields: set[str], buffered_field: dict[str, Callable[[], Any]]):
+
+def mixed_db(cls: Type[Cls], data_fields: set[str], buffered_field: dict[str, Callable[[Cls], Any]]):
     """
     This decorator, when applied to a class which inherits from an SQLAlchemy model, will allow the class to store
     certain fields on disk, rather than in the database. These are specified by the `disk_field` parameter. The data is
