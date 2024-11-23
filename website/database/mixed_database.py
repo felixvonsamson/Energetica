@@ -2,8 +2,6 @@ from typing import Any, Callable, Type, TypeVar
 
 from flask import current_app
 
-from website.game_engine import GameEngine
-
 Cls = TypeVar("Cls")  # Generic type variable for the class
 
 
@@ -20,7 +18,7 @@ def mixed_db(cls: Type[Cls], data_fields: set[str], buffered_field: dict[str, Ca
     """
 
     def __getattr__(self, name):
-        engine: GameEngine = current_app.config["engine"]
+        engine = current_app.config["engine"]
         if name in data_fields:
             return engine.data[cls.__name__][self.id][name]
         elif name in buffered_field:
@@ -37,7 +35,7 @@ def mixed_db(cls: Type[Cls], data_fields: set[str], buffered_field: dict[str, Ca
     original_setattr = cls.__setattr__
 
     def __setattr__(self, name, value):
-        engine: GameEngine = current_app.config["engine"]
+        engine = current_app.config["engine"]
         if name in data_fields and self.id:
             engine.data[cls.__name__][self.id][name] = value
         elif name in buffered_field:
