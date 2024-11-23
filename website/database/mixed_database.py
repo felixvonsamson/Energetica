@@ -26,7 +26,7 @@ def mixed_db(cls: Type[Cls], data_fields: set[str], buffered_field: dict[str, Ca
         elif name in buffered_field:
             buffered_value = engine.buffered[cls.__name__][self.id][name]
             if buffered_value is None:
-                buffered_value = buffered_field[name]()
+                buffered_value = buffered_field[name](self)
                 engine.buffered[cls.__name__][self.id][name] = buffered_value
             return buffered_value
         elif name in self.__dict__:
