@@ -17,7 +17,7 @@ from website.database.mixed_database import mixed_db
 from website.database.player_assets import ActiveFacility, OngoingConstruction
 
 
-@partial(mixed_db, disk_field={"current_data", "capacities", "cumul_emissions"})
+@partial(mixed_db, data_fields={"current_data", "capacities", "cumul_emissions"}, buffered_field={})
 class Player(db.Model, UserMixin):
     """Class that stores the users"""
 
@@ -680,7 +680,7 @@ class Player(db.Model, UserMixin):
         return self._buffered_data_for_technologies_page
 
 
-@partial(mixed_db, disk_field={"current_data", "capacities"})
+@partial(mixed_db, data_fields={"current_data", "capacities"}, buffered_field={})
 class Network(db.Model):
     """class that stores the networks of players"""
 

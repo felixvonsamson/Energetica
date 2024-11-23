@@ -148,6 +148,7 @@ class GameEngine(object):
 
         self.lock = RLock()
         self.data = defaultdict(partial(defaultdict, dict))
+        self.buffered = defaultdict(partial(defaultdict, dict))
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
         self.data["start_date"] = start_date or datetime.now()  # 0 point of server time
