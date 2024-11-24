@@ -91,15 +91,15 @@ def finish_project(construction: OngoingConstruction, skip_notifications=False):
     if construction.family == "Technologies":
         if not skip_notifications:
             player.notify("Technologies", f"+ 1 lvl <b>{construction_name}</b>.")
-        engine.log(f"{player.username} : + 1 lvl {construction_name}")
+            engine.log(f"{player.username} : + 1 lvl {construction_name}")
     elif construction.family == "Functional facilities":
         if not skip_notifications:
             player.notify("Constructions", f"+ 1 lvl <b>{construction_name}</b>")
-        engine.log(f"{player.username} : + 1 lvl {construction_name}")
+            engine.log(f"{player.username} : + 1 lvl {construction_name}")
     else:
         if not skip_notifications:
             player.notify("Constructions", f"+ 1 <b>{construction_name}</b>")
-        engine.log(f"{player.username} : + 1 {construction_name}")
+            engine.log(f"{player.username} : + 1 {construction_name}")
     if construction.family in [
         "Extraction facilities",
         "Power facilities",
@@ -261,7 +261,7 @@ def remove_asset(player, facility, decommissioning=True):
     if facility is None or facility.player_id != player.id:
         raise GameException("constructionNotFound")
     if facility.facility in engine.technologies + engine.functional_facilities:
-        raise GameEngine("notRemovable")
+        raise GameException("notRemovable")
     db.session.delete(facility)
     db.session.flush()
     # The cost of decommissioning is 20% of the building cost.
@@ -356,6 +356,7 @@ def queue_project(
     asset: str,
     force=False,
     ignore_requirements_and_money=False,
+    skip_notifications=False,
 ) -> OngoingConstruction:
     """this function is executed when a player clicks on 'start construction'"""
 
@@ -434,7 +435,8 @@ def queue_project(
     else:
         player.add_to_list(priority_list_name, new_construction.id)
 
-    engine.log(f"{player.username} started the construction {asset}")
+    if not skip_notifications:
+        engine.log(f"{player.username} started the construction {asset}")
     websocket.rest_notify_constructions(engine, player)
     db.session.commit()
 

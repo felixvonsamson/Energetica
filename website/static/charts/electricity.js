@@ -56,7 +56,7 @@ function graph_sketch(s) {
         s.graphics = s.createGraphics(s.width, s.height);
         s.graphics.textAlign(CENTER, CENTER);
         s.graphics.textFont(font);
-    }
+    };
 
     s.draw = function () {
         if (s.graphics_ready) {
@@ -83,7 +83,7 @@ function graph_sketch(s) {
                             if (s.keys[group] === false) {
                                 return acc;
                             }
-                            return acc + s.current_data[group][res_id][t_view]
+                            return acc + s.current_data[group][res_id][t_view];
                         }, 0);
                     }
                     for (const group in s.keys) {
@@ -192,7 +192,7 @@ function graph_sketch(s) {
                 }
             }
         }
-    }
+    };
 
     s.mouseMoved = function () {
         if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0 && s.mouseY < s.height) {
@@ -204,11 +204,11 @@ function graph_sketch(s) {
                 s.redraw();
             }
         }
-    }
+    };
 
     s.mouseDragged = function () {
         s.mouseMoved();
-    }
+    };
 
     s.render_graph = function (regen_table = true) {
         s.current_data = data.generation;
@@ -259,7 +259,7 @@ function graph_sketch(s) {
                     if (s.keys[group] === false) {
                         return acc;
                     }
-                    return acc + s.current_data[group][res_id][t]
+                    return acc + s.current_data[group][res_id][t];
                 }, 0);
             }
             for (const group in s.keys) {
@@ -326,19 +326,19 @@ function graph_sketch(s) {
                 s.graphics.push();
                 s.graphics.translate(s.width - 1.1 * margin, 0.2 * margin);
                 s.graphics.noStroke();
-                capacities = {}
+                capacities = {};
                 const keys = Object.keys(keys_generation).reverse();
                 for (const key of keys) {
                     if (key in player_data.capacities) {
-                        capacities[key] = player_data.capacities[key].power
+                        capacities[key] = player_data.capacities[key].power;
                     }
                 }
                 const sum = Object.entries(capacities).reduce(
                     (acc, [key, currentValue]) => {
                         if (s.keys[key] === false || storage_keys.includes(key)) {
-                            return acc
+                            return acc;
                         }
-                        return acc + currentValue
+                        return acc + currentValue;
                     }, 0);
                 for (const key in capacities) {
                     if (capacities[key] > 1 && s.keys[key] && !(storage_keys.includes(key))) {
@@ -359,16 +359,67 @@ function graph_sketch(s) {
             s.graphics_ready = true;
             s.redraw();
             if (regen_table) {
-                sortTable(sort_by, reorder = false)
+                sortGeneratingFacilitiesTable(sort_by, reorder = false);
+                sortConsumingFacilitiesTable(sort_by, reorder = false);
             }
         });
-    }
+    };
 }
 
-function sortTable(columnName, reorder = true) {
-    const table = document.getElementById("facilities_list");
-    let column = table.querySelector(`.${columnName}`);
-    sort_by = columnName;
+function integrate(array, delta) {
+    // integrated the energy over the array. delta is the time step in hours
+    let sum = 0;
+    for (let i = 0; i < array.length; i++) {
+        sum += array[i] * delta;
+    }
+    return sum;
+}
+
+function sortGeneratingFacilitiesTable(columnName, reorder = true) {
+    const table = document.getElementById("generating_facilities_table");
+    table_content = [];
+    for (const [key, generation_data] of Object.entries(data.generation)) {
+        let cap = 0;
+        if (key in capacities) {
+            cap = capacities[key];
+        }
+        table_content.push({
+            name: key,
+            facility_col: cols_and_names[key][1],
+            usage_col: integrate(generation_data[res_id].slice(graph_p5.t0), res_to_factor[res] * in_game_seconds_per_tick / 3600),
+            capacity_col: cap === 0 ? null : cap,
+            used_cap_col: cap === 0 ? null : generation_data[0][359] / cap,
+        });
+    }
+    // Reset the table headers
+    table.querySelector(".facility_col").innerHTML = "Facility";
+    table.querySelector(".usage_col").innerHTML = `Generated
+        <span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span>`;
+    table.querySelector(".capacity_col").innerHTML = "Installed Cap.";
+    table.querySelector(".used_cap_col").innerHTML = "Used Capacity";
+    sortTable(table, columnName, table_content, reorder);
+}
+
+function sortConsumingFacilitiesTable(columnName, reorder = true) {
+    const table = document.getElementById("consuming_facilities_table");
+    table_content = [];
+    for (const [key, consumption_data] of Object.entries(data.demand)) {
+        table_content.push({
+            name: key,
+            facility_col: cols_and_names[key][1],
+            usage_col: integrate(consumption_data[res_id].slice(graph_p5.t0), res_to_factor[res] * in_game_seconds_per_tick / 3600),
+        });
+    }
+    // Reset the table headers
+    table.querySelector(".facility_col").innerHTML = "Facility";
+    table.querySelector(".usage_col").innerHTML = `Generated
+        <span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span>`;
+    sortTable(table, columnName, table_content, reorder);
+}
+
+function sortTable(table, column_name, table_content, reorder = true) {
+    let column = table.querySelector(`.${column_name}`);
+    sort_by = column_name;
 
     if (reorder) {
         // Check if the column is already sorted, toggle sorting order accordingly
@@ -380,11 +431,10 @@ function sortTable(columnName, reorder = true) {
         triangle = ' <i class="fa fa-caret-down"></i>';
     }
 
-    table_content = transform_data();
     // Sort the data based on the selected column
     const sortedData = Object.entries(table_content).sort((a, b) => {
-        const aValue = a[1][columnName];
-        const bValue = b[1][columnName];
+        const aValue = a[1][column_name];
+        const bValue = b[1][column_name];
 
         if (typeof aValue === "string" && typeof bValue === "string") {
             return descending ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
@@ -394,101 +444,198 @@ function sortTable(columnName, reorder = true) {
     });
 
     // Rebuild the HTML table
+    // remove all tr table row elements of the table
+    while (table.rows.length > 1) {
+        table.deleteRow(1);
+    }
     let html;
-    if (graph_p5.view == "consumption") {
-        html = `<tr>
-            <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-            <th class="usage_col hover_info" onclick="sortTable('usage_col')">Consumed<span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span></th>
-            <th class="selected_col">Displayed</th>
-        </tr>`;
+
+    // Add the sorted data to the table
+    if (table.id == "consuming_facilities_table") {
         for (const [id, facility] of sortedData) {
-            html += `<tr>
-                <td>${facility.facility_col}</td>
-                <td>${format_power(facility.usage_col)}</td>
-                <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}', ${!graph_p5.keys[facility.name]})" ${graph_p5.keys[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
+            table.insertRow().innerHTML = `<tr>
+                    <td>${facility.facility_col}</td>
+                    <td>${format_power(facility.usage_col)}</td>
+                    <td>
+                        <label class="switch">
+                            <input type="checkbox" 
+                                onclick="toggle_consumption_displayed('${facility.name}')" 
+                                ${keys_demand[facility.name] ? 'checked' : ''}>
+                            <span class="slider round"></span>
+                        </label>
+                    </td>
                 </tr>`;
         }
     } else {
-        html = `<tr>
-            <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-            <th class="usage_col hover_info" onclick="sortTable('usage_col')">Generated<span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span></th>
-            <th class="capacity_col" onclick="sortTable('capacity_col')">Installed Cap.</th>
-            <th class="used_cap_col" onclick="sortTable('used_cap_col')">Used Capacity</th>
-            <th class="selected_col">Displayed</th>
-        </tr>`;
         for (const [id, facility] of sortedData) {
-            html += `<tr>
-                <td>${facility.facility_col}</td>
-                <td>${format_energy(facility.usage_col)}</td>
-                <td>${facility.capacity_col === null ? '-' : format_power(facility.capacity_col)}</td>
-                <td>
-                    ${facility.used_cap_col === null
+            table.insertRow().innerHTML = `<tr>
+                    <td>${facility.facility_col}</td>
+                    <td>${format_energy(facility.usage_col)}</td>
+                    <td>${facility.capacity_col === null ? '-' : format_power(facility.capacity_col)}</td>
+                    <td>
+                        ${facility.used_cap_col === null
                     ? '-'
-                    : `<div class="capacityJauge-background">
-                                <div class="capacityJauge color_${facility.name}" style="--width:${facility.used_cap_col}"></div>
-                                <div class="capacityJauge-txt">${Math.round(facility.used_cap_col * 100)}%</div>
-                            </div>`
+                    : `<div class="capacityGauge-background">
+                                    <div class="capacityGauge color_${facility.name}" 
+                                         style="--width:${facility.used_cap_col}"></div>
+                                    <div class="capacityGauge-txt">${Math.round(facility.used_cap_col * 100)}%</div>
+                                </div>`
                 }
-                </td>
-                <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}', ${!graph_p5.keys[facility.name]})" ${graph_p5.keys[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
+                    </td>
+                    <td>
+                        <label class="switch">
+                            <input type="checkbox" 
+                                   onclick="toggle_generation_displayed('${facility.name}')" 
+                                   ${keys_generation[facility.name] ? 'checked' : ''}>
+                            <span class="slider round"></span>
+                        </label>
+                    </td>
                 </tr>`;
         }
     }
-    table.innerHTML = html;
 
     // Update the sorting indicator
-    column = table.querySelector(`.${columnName}`);
+    column = table.querySelector(`.${column_name}`);
     column.innerHTML += triangle;
-
-    function transform_data() {
-        let transformed_data = [];
-        if (graph_p5.view == "consumption") {
-            for (const key in graph_p5.current_data) {
-                transformed_data.push({
-                    name: key,
-                    facility_col: cols_and_names[key][1],
-                    usage_col: integrate(graph_p5.current_data[key][res_id].slice(graph_p5.t0), res_to_factor[res] * in_game_seconds_per_tick / 3600),
-                })
-            }
-        } else {
-            for (const key in graph_p5.current_data) {
-                let cap = 0;
-                if (key in capacities) {
-                    cap = capacities[key];
-                }
-                transformed_data.push({
-                    name: key,
-                    facility_col: cols_and_names[key][1],
-                    usage_col: integrate(graph_p5.current_data[key][res_id].slice(graph_p5.t0), res_to_factor[res] * in_game_seconds_per_tick / 3600),
-                    capacity_col: cap === 0 ? null : cap,
-                    used_cap_col: cap === 0 ? null : graph_p5.current_data[key][0][359] / cap,
-                })
-            }
-        }
-        return transformed_data;
-    }
-
-    function integrate(array, delta) {
-        // integrated the energy over the array. delta is the time step in hours
-        let sum = 0;
-        for (let i = 0; i < array.length; i++) {
-            sum += array[i] * delta;
-        }
-        return sum;
-    }
 }
 
-function toggle_displayed(name, state) {
-    graph_p5.keys[name] = state;
+function toggle_generation_displayed(name) {
+    set_generation_displayed(name, !keys_generation[name]);
+}
+
+function toggle_consumption_displayed(name) {
+    set_consumption_displayed(name, !keys_demand[name]);
+}
+
+function set_generation_displayed(name, state) {
+    keys_generation[name] = state;
+    if (!state) {
+        set_generating_facilities_button_role_to_show();
+    } else {
+        // if all generating facilities are displayed, change the button role to hide
+        let all_displayed = true;
+        for (const key in data.generation) {
+            if (keys_generation[key] === false) {
+                all_displayed = false;
+                break;
+            }
+        }
+        if (all_displayed) {
+            set_generating_facilities_button_role_to_hide();
+        }
+    }
     graph_p5.render_graph(regen_table = false);
     setTimeout(() => {
-        sortTable(sort_by, false);
+        sortGeneratingFacilitiesTable(sort_by, false);
+    }, 500);
+}
+
+function set_consumption_displayed(name, state) {
+    keys_demand[name] = state;
+    if (!state) {
+        set_consumption_button_role_to_show();
+    } else {
+        // if all consuming facilities are displayed, change the button role to hide
+        let all_displayed = true;
+        for (const key in data.demand) {
+            if (keys_demand[key] === false) {
+                all_displayed = false;
+                break;
+            }
+        }
+        if (all_displayed) {
+            set_consumption_button_role_to_hide();
+        }
+    }
+    graph_p5.render_graph(regen_table = false);
+    setTimeout(() => {
+        sortConsumingFacilitiesTable(sort_by, false);
     }, 500);
 }
 
 function change_view(view) {
-    document.getElementById("graph_headder").innerHTML = view == "generation" ? "Power Generation" : "Power Consumption";
-    show_selected_button("view_button_", view)
+    header = document.getElementById("graph_header");
+    consuming_facilities_table = document.getElementById("consuming_facilities_table");
+    generating_facilities_table = document.getElementById("generating_facilities_table");
+    if (view == "generation") {
+        header.innerHTML = "Power Generation";
+        generating_facilities_table.classList.remove("hidden");
+        consuming_facilities_table.classList.add("hidden");
+    } else {
+        header.innerHTML = "Power Consumption";
+        consuming_facilities_table.classList.remove("hidden");
+        generating_facilities_table.classList.add("hidden");
+    }
+    show_selected_button("view_button_", view);
     graph_p5.view = view;
-    graph_p5.render_graph();
+    graph_p5.render_graph(regen_table = false);
+}
+
+function set_all_table_toggles(table, state) {
+    const rows = table.getElementsByTagName("tr");
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const checkbox = row.getElementsByTagName("input")[0];
+        checkbox.checked = state;
+    }
+}
+
+function hide_all_generating_facilities() {
+    set_all_table_toggles(document.getElementById("generating_facilities_table"), false);
+    for (const key in keys_generation) {
+        keys_generation[key] = false;
+    }
+    graph_p5.render_graph(regen_table = false);
+    set_generating_facilities_button_role_to_show();
+}
+
+function show_all_generating_facilities() {
+    set_all_table_toggles(document.getElementById("generating_facilities_table"), true);
+    for (const key in keys_generation) {
+        keys_generation[key] = true;
+    }
+    graph_p5.render_graph(regen_table = false);
+    set_generating_facilities_button_role_to_hide();
+}
+
+function hide_all_consuming_facilities() {
+    set_all_table_toggles(document.getElementById("consuming_facilities_table"), false);
+    for (const key in keys_demand) {
+        keys_demand[key] = false;
+    }
+    graph_p5.render_graph(regen_table = false);
+    set_consumption_button_role_to_show();
+}
+
+function show_all_consuming_facilities() {
+    set_all_table_toggles(document.getElementById("consuming_facilities_table"), true);
+    for (const key in keys_demand) {
+        keys_demand[key] = true;
+    }
+    graph_p5.render_graph(regen_table = false);
+    set_consumption_button_role_to_hide();
+}
+
+function set_generating_facilities_button_role_to_hide() {
+    const button = document.getElementById("show_hide_generating_facilities_button");
+    button.firstChild.innerText = "Hide all";
+    button.onclick = hide_all_generating_facilities;
+}
+
+function set_generating_facilities_button_role_to_show() {
+    const button = document.getElementById("show_hide_generating_facilities_button");
+    button.firstChild.innerText = "Show all";
+    button.onclick = show_all_generating_facilities;
+}
+
+function set_consumption_button_role_to_hide() {
+    const button = document.getElementById("show_hide_consuming_facilities_button");
+    button.firstChild.innerText = "Hide all";
+    button.onclick = hide_all_consuming_facilities;
+}
+
+function set_consumption_button_role_to_show() {
+    const button = document.getElementById("show_hide_consuming_facilities_button");
+    button.firstChild.innerText = "Show all";
+    button.onclick = show_all_consuming_facilities;
 }

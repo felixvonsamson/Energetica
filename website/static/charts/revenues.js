@@ -47,7 +47,7 @@ function graph_sketch(s) {
         s.graphics = s.createGraphics(s.width, s.height);
         s.graphics.textAlign(CENTER, CENTER);
         s.graphics.textFont(font);
-    }
+    };
 
     s.draw = function () {
         if (s.graphics_ready) {
@@ -170,7 +170,7 @@ function graph_sketch(s) {
                 s.pop();
             }
         }
-    }
+    };
 
     s.mouseMoved = function () {
         if (s.mouseX > 0 && s.mouseX < s.width && s.mouseY > 0 && s.mouseY < s.height) {
@@ -182,11 +182,11 @@ function graph_sketch(s) {
                 s.redraw();
             }
         }
-    }
+    };
 
     s.mouseDragged = function () {
         s.mouseMoved();
-    }
+    };
 
     s.render_graph = function (regen_table = true) {
         s.graph_h = s.height - margin;
@@ -339,9 +339,9 @@ function graph_sketch(s) {
         s.graphics_ready = true;
         s.redraw();
         if (regen_table) {
-            sortTable(sort_by, reorder = false)
+            sortTable(sort_by, reorder = false);
         }
-    }
+    };
 }
 
 function display_coin(s, money, x, y) {
@@ -382,21 +382,24 @@ function sortTable(columnName, reorder = true) {
     });
 
     // Rebuild the HTML table
-    let html = `<tr>
-        <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-        <th class="usage_col hover_info" onclick="sortTable('usage_col')">Revenues<span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span></th>
-        <th class="selected_col">Displayed</th>
-    </tr>`;
+    // remove all tr table row elements of the table
+    while (table.rows.length > 1) {
+        table.deleteRow(1);
+    }
+    // Reset the table headers
+    table.querySelector(".facility_col").innerHTML = "Facility";
+    table.querySelector(".usage_col").innerHTML =
+        `Revenues<span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span>`;
+    // Add the sorted data to the table
     for (const [id, facility] of sortedData) {
-        html += `<tr>
+        table.insertRow().innerHTML = `<tr>
             <td>${facility.facility_col}</td>
             <td>${format_money(facility.usage_col)}</td>
-            <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}', ${!keys_revenues[facility.name]})" ${keys_revenues[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
+            <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}')" 
+                ${keys_revenues[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
             </tr>`;
     }
-    table.innerHTML = html;
-
-    // Update the sorting indicator
+    // Add the sorting indicator to the sorted column's header
     column = table.querySelector(`.${columnName}`);
     column.innerHTML += triangle;
 
@@ -407,14 +410,14 @@ function sortTable(columnName, reorder = true) {
                 name: key,
                 facility_col: cols_and_names[key][1],
                 usage_col: integrate(data.revenues[key][res_id].slice(graph_p5.t0), res_to_factor[res]),
-            })
+            });
         }
         for (const key in data.op_costs) {
             transformed_data.push({
                 name: key,
                 facility_col: cols_and_names[key][1],
                 usage_col: integrate(data.op_costs[key][res_id].slice(graph_p5.t0), res_to_factor[res]),
-            })
+            });
         }
         return transformed_data;
     }
@@ -429,10 +432,70 @@ function sortTable(columnName, reorder = true) {
     }
 }
 
-function toggle_displayed(name, state) {
+function toggle_displayed(name) {
+    set_displayed(name, !keys_revenues[name]);
+}
+
+function set_displayed(name, state) {
     keys_revenues[name] = state;
+    if (!state) {
+        // since one revenue is hidden, change the button role to show
+        set_global_button_role_to_show();
+    } else {
+        // if all revenues are displayed, change the button role to hide
+        let all_displayed = true;
+        for (const key in data.revenues) {
+            if (!keys_revenues[key]) {
+                all_displayed = false;
+                break;
+            }
+        }
+        if (all_displayed) {
+            set_global_button_role_to_hide();
+        }
+    }
     graph_p5.render_graph(regen_table = false);
-    setTimeout(() => {
-        sortTable(sort_by, false);
-    }, 500);
+    sortTable(sort_by, false);
+}
+
+function hide_all_revenues() {
+    const table = document.getElementById("facilities_list");
+    const rows = table.getElementsByTagName("tr");
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const checkbox = row.getElementsByTagName("input")[0];
+        checkbox.checked = false;
+    }
+    for (const key in keys_revenues) {
+        keys_revenues[key] = false;
+    }
+    graph_p5.render_graph(regen_table = false);
+    set_global_button_role_to_show();
+}
+
+function show_all_revenues() {
+    const table = document.getElementById("facilities_list");
+    const rows = table.getElementsByTagName("tr");
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const checkbox = row.getElementsByTagName("input")[0];
+        checkbox.checked = true;
+    }
+    for (const key in keys_revenues) {
+        keys_revenues[key] = true;
+    }
+    graph_p5.render_graph(regen_table = false);
+    set_global_button_role_to_hide();
+}
+
+function set_global_button_role_to_hide() {
+    const button = document.getElementById("show_hide_button");
+    button.firstChild.innerText = "Hide all";
+    button.onclick = hide_all_revenues;
+}
+
+function set_global_button_role_to_show() {
+    const button = document.getElementById("show_hide_button");
+    button.firstChild.innerText = "Show all";
+    button.onclick = show_all_revenues;
 }

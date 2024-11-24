@@ -446,6 +446,13 @@ socket.on("update_page_data", function (pages_data) {
         let functional_facilities_data = pages_data.functional_facilities;
         for (let data of functional_facilities_data) {
             let div = document.getElementById(data.name);
+            if (div == null) {
+                // This is the edge case where a functional facility is unlocked after the player has already opened the
+                // page. This can happen with the "carbon_capture" facility, for example. In this case, the page is 
+                // reloaded, and the Jinja template will render the new facility.
+                location.reload();
+                return;
+            }
             update_base_data(data, div, on_technologies_page = false);
             update_polluting_projects(data, div);
             if ("average_consumption" in data) {

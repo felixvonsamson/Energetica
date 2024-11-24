@@ -51,11 +51,15 @@
             <table id="facilities_list" class="table bone margin txt_center">
                 <tr>
                     <th class="facility_col" onclick="sortTable('facility_col')">Facility</th>
-                    <th class="cumul_charging_col hover_info" onclick="sortTable('cumul_charging_col')">Cumul Charging<span class="popup_info small">over the last 4h</span></th>
-                    <th class="cumul_discharging_col hover_info" onclick="sortTable('cumul_discharging_col')">Cumul Discharging<span class="popup_info small">over the last 4h</span></th>
+                    <th class="cumul_charging_col hover_info" onclick="sortTable('cumul_charging_col')">Cumul Charging<span class="popup_info bottom small">over the last 4h</span></th>
+                    <th class="cumul_discharging_col hover_info" onclick="sortTable('cumul_discharging_col')">Cumul Discharging<span class="popup_info bottom small">over the last 4h</span></th>
                     <th class="capacity_col" onclick="sortTable('capacity_col')">Max Storage</th>
                     <th class="used_cap_col" onclick="sortTable('used_cap_col')">State of Charge</th>
-                    <th class="selected_col">Displayed</th>
+                    <th class="selected_col">
+                        <button id="show_hide_button"
+                                class="graph_button small"
+                                onClick="hide_all()"><b>Hide all</b></button>
+                    </th>
                 </tr>
             </table>
         </div>
