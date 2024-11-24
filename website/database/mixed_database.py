@@ -1,3 +1,4 @@
+from functools import partial
 from typing import TYPE_CHECKING, Any, Callable, Type, TypeVar
 
 from flask import current_app
@@ -8,17 +9,27 @@ if TYPE_CHECKING:
 Cls = TypeVar("Cls")  # Generic type variable for the class
 
 
-def mixed_db(cls: Type[Cls], data_fields: set[str], buffered_field: dict[str, Callable[[Cls], Any]]):
+def mixed_db(
+    data_fields: set[str] = None, buffered_field: dict[str, Callable[[Cls], Any]] = None, cls: Type[Cls] = None
+):
     """
     This decorator, when applied to a class which inherits from an SQLAlchemy model, will allow the class to store
     certain fields on disk, rather than in the database. These are specified by the `disk_field` parameter. The data is
     stored in the `engine.data` dictionary, which is periodically saved to disk as a pck file.
-    :param cls: class to mix
     :param data_field: list of fields to store in disk
     :param buffered_field: dictionary of fields to store in memory. keys are field names, values are functions which
     return or recalculate the value of the field
     :return: mixed class
+    :param cls: class to mix
     """
+
+    if cls is None:
+        return partial(mixed_db, data_fields, buffered_field)
+
+    if data_fields is None:
+        data_fields = {}
+    if buffered_field is None:
+        buffered_field = {}
 
     def __getattr__(self, name):
         engine: GameEngine = current_app.config["engine"]

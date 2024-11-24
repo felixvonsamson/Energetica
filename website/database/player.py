@@ -24,8 +24,7 @@ from website.technology_effects import (
 )
 
 
-@partial(
-    mixed_db,
+@mixed_db(
     data_fields={"current_data", "capacities", "cumul_emissions"},
     buffered_field={
         "cached_power_facilities_data": package_power_facilities,
@@ -651,7 +650,7 @@ class Player(db.Model, UserMixin):
             # TODO: update clients over websocket
 
 
-@partial(mixed_db, data_fields={"current_data", "capacities"}, buffered_field={})
+@mixed_db(data_fields={"current_data", "capacities"})
 class Network(db.Model):
     """class that stores the networks of players"""
 
