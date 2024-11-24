@@ -620,15 +620,15 @@ class Player(db.Model, UserMixin):
         This function will invalidate the data for all corresponding arguments that are set to True.
         """
         if power_facilities:
-            self.cached_power_facilities_data = None  # pylint: disable=attribute-defined-outside-init
+            del self.cached_power_facilities_data
         if storage_facilities:
-            self.cached_storage_facilities_data = None  # pylint: disable=attribute-defined-outside-init
+            del self.cached_storage_facilities_data
         if extraction_facilities:
-            self.cached_extraction_facility_data = None  # pylint: disable=attribute-defined-outside-init
+            del self.cached_extraction_facility_data
         if functional_facilities:
-            self.cached_functional_facilities_data = None  # pylint: disable=attribute-defined-outside-init
+            del self.cached_functional_facilities_data
         if technologies:
-            self.cached_technologies_data = None  # pylint: disable=attribute-defined-outside-init
+            del self.cached_technologies_data
         # if resource_market:
         #     self._buffered_data_for_resource_market_page = None
         engine = current_app.config["engine"]

@@ -35,16 +35,13 @@ def mixed_db(
         engine: GameEngine = current_app.config["engine"]
         if name in data_fields:
             return engine.data[cls.__name__][self.id][name]
-        elif name in buffered_field:
-            buffered_value = engine.buffered[cls.__name__][self.id][name]
-            if buffered_value is None:
-                buffered_value = buffered_field[name](self)
-                engine.buffered[cls.__name__][self.id][name] = buffered_value
-            return buffered_value
-        elif name in self.__dict__:
+        if name in buffered_field:
+            if name not in engine.buffered[cls.__name__][self.id]:
+                engine.buffered[cls.__name__][self.id][name] = buffered_field[name](self)
+            return engine.buffered[cls.__name__][self.id][name]
+        if name in self.__dict__:
             return self.__dict__[name]
-        else:
-            raise AttributeError(f"'{cls.__name__}' object has no attribute '{name}'")
+        raise AttributeError(f"'{cls.__name__}' object has no attribute '{name}'")
 
     original_setattr = cls.__setattr__
 
