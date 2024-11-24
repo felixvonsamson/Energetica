@@ -521,7 +521,7 @@ class Player(db.Model, UserMixin):
     @staticmethod
     def package_scoreboard():
         """Gets the scoreboard data for settled players"""
-        players = Player.query.filter(Player.tile.is_(None))
+        players = Player.query.filter(Player.tile != None)
         return {
             player.id: {
                 "username": player.username,
