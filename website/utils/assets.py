@@ -133,8 +133,13 @@ def finish_project(construction: OngoingConstruction, skip_notifications=False):
         player.invalidate_recompute_and_dispatch_data_for_pages(functional_facilities=True, technologies=True)
     if family == "Technologies":
         for player in Player.query.all():
-            # TODO: what about power facilities, storage facilities, and extraction facilities?
-            player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
+            player.invalidate_recompute_and_dispatch_data_for_pages(
+                power_facilities=True,
+                storage_facilities=True,
+                extraction_facilities=True,
+                functional_facilities=True,
+                technologies=True,
+            )
 
 
 def deploy_available_workers(player: Player, family: str):

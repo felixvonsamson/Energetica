@@ -607,6 +607,7 @@ class Player(db.Model, UserMixin):
 
     def invalidate_recompute_and_dispatch_data_for_pages(
         self,
+        *,
         power_facilities=False,
         storage_facilities=False,
         extraction_facilities=False,
