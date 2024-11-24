@@ -254,7 +254,7 @@ def remove_asset(player, facility, decommissioning=True):
     if facility is None or facility.player_id != player.id:
         raise GameException("constructionNotFound")
     if facility.facility in engine.technologies + engine.functional_facilities:
-        raise GameEngine("notRemovable")
+        raise GameException("notRemovable")
     db.session.delete(facility)
     db.session.flush()
     # The cost of decommissioning is 20% of the building cost.
