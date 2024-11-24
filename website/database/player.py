@@ -625,21 +625,21 @@ class Player(db.Model, UserMixin):
             # or engine.websocket_dict[self.id]:
             pages_data = {}
             if power_facilities:
-                pages_data |= {"power_facilities": self.get_packaged_data_for_power_facilities_page()}
+                pages_data |= {"power_facilities": self.get_cached_power_facilities_data()}
             if storage_facilities:
-                pages_data |= {"storage_facilities": self.get_packaged_data_for_storage_facilities_page()}
+                pages_data |= {"storage_facilities": self.get_cached_storage_facilities_data()}
             if extraction_facilities:
-                pages_data |= {"extraction_facilities": self.get_packaged_data_for_extraction_facilities_page()}
+                pages_data |= {"extraction_facilities": self.get_cached_extraction_facility_data()}
             if functional_facilities:
-                pages_data |= {"functional_facilities": self.get_packaged_data_for_functional_facilities_page()}
+                pages_data |= {"functional_facilities": self.get_cached_functional_facilities_data()}
             if technologies:
-                pages_data |= {"technologies": self.get_packaged_data_for_technologies_page()}
+                pages_data |= {"technologies": self.get_cached_technologies_data()}
             # if resource_market:
             #     pages_data |= {"power_facilities": self.get_packaged_data_for_power_facilities_page()}
             self.emit("update_page_data", pages_data)
             # TODO: update clients over websocket
 
-    def get_packaged_data_for_power_facilities_page(self):
+    def get_cached_power_facilities_data(self):
         """Get buffered data or recompute"""
         from website import technology_effects
 
@@ -647,7 +647,7 @@ class Player(db.Model, UserMixin):
             self._buffered_data_for_power_facilities_page = technology_effects.package_power_facilities(self)
         return self._buffered_data_for_power_facilities_page
 
-    def get_packaged_data_for_storage_facilities_page(self):
+    def get_cached_storage_facilities_data(self):
         """Get buffered data or recompute"""
         from website import technology_effects
 
@@ -655,7 +655,7 @@ class Player(db.Model, UserMixin):
             self._buffered_data_for_storage_facilities_page = technology_effects.package_storage_facilities(self)
         return self._buffered_data_for_storage_facilities_page
 
-    def get_packaged_data_for_extraction_facilities_page(self):
+    def get_cached_extraction_facility_data(self):
         """Get buffered data or recompute"""
         from website import technology_effects
 
@@ -663,7 +663,7 @@ class Player(db.Model, UserMixin):
             self._buffered_data_for_extraction_facilities_page = technology_effects.package_extraction_facilities(self)
         return self._buffered_data_for_extraction_facilities_page
 
-    def get_packaged_data_for_functional_facilities_page(self):
+    def get_cached_functional_facilities_data(self):
         """Get buffered data or recompute"""
         from website import technology_effects
 
@@ -671,7 +671,7 @@ class Player(db.Model, UserMixin):
             self._buffered_data_for_functional_facilities_page = technology_effects.package_functional_facilities(self)
         return self._buffered_data_for_functional_facilities_page
 
-    def get_packaged_data_for_technologies_page(self):
+    def get_cached_technologies_data(self):
         """Get buffered data or recompute"""
         from website import technology_effects
 
