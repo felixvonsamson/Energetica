@@ -73,7 +73,7 @@ def buy_resource_from_market(player, quantity, sale):
         dr = player.tile.r - sale.player.tile.r
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
         shipment_duration = (
-            distance * engine.config[player.id]["transport"]["time_per_tile"] / engine.in_game_seconds_per_tick
+            distance * engine.config[player]["transport"]["time_per_tile"] / engine.in_game_seconds_per_tick
         )
         shipment_duration = math.ceil(shipment_duration)
         new_shipment = Shipment(
@@ -103,7 +103,7 @@ def buy_resource_from_market(player, quantity, sale):
 def store_import(player, resource, quantity):
     """This function is executed when a resource shipment arrives"""
     engine = current_app.config["engine"]
-    max_cap = engine.config[player.id]["warehouse_capacities"][resource]
+    max_cap = engine.config[player]["warehouse_capacities"][resource]
     if getattr(player, resource) + quantity > max_cap:
         setattr(player, resource, max_cap)
         # excess resources are stored in the ground

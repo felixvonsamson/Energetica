@@ -270,7 +270,7 @@ def get_player_data():
     if current_user.tile is None:
         return "", 404
     levels = current_user.get_lvls()
-    config = g.engine.config[current_user.id]
+    config = g.engine.config[current_user]
     capacities = current_user.capacities.get_all()
     return jsonify(
         {

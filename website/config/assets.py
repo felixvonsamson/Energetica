@@ -2,9 +2,13 @@
 
 # TODO: it would be better to store the relevant data in a non-code file. Maybe a JSON
 
-from datetime import timedelta
+from __future__ import annotations
 
-from website.database.player import Player
+from datetime import timedelta
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from website.database.player import Player
 
 const_config = {
     "assets": {
@@ -932,17 +936,16 @@ class Config(object):
     def __init__(self):
         self.for_player = {}
 
-    def update_config_for_user(self, player_id):
+    def update_config_for_user(self, player: Player):
         """This function updates the config values according to the players technology level"""
         # TODO: deprecate this method eventually
-        self.for_player[player_id] = {
+        self.for_player[player.id] = {
             "industry": {},
             "carbon_capture": {},
             "warehouse_capacities": {},
             "transport": {},
         }
-        assets = self.for_player[player_id]
-        player: Player = Player.query.get(player_id)
+        assets = self.for_player[player.id]
 
         # calculating industry energy consumption and income
         assets["industry"]["power_consumption"] = (
@@ -986,10 +989,10 @@ class Config(object):
         player.construction_workers = player_construction_workers_for_level(player.building_technology)
         player.lab_workers = player_lab_workers_for_level(player.laboratory)
 
-    def __getitem__(self, player_id):
-        if player_id not in self.for_player:
-            self.update_config_for_user(player_id)
-        return self.for_player[player_id]
+    def __getitem__(self, player: Player):
+        if player.id not in self.for_player:
+            self.update_config_for_user(player)
+        return self.for_player[player.id]
 
 
 config = Config()
