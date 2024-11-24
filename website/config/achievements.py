@@ -77,7 +77,7 @@ achievements = {
         "metric": "max_power_consumption",
         "milestones": [3_000_000],
         "rewards": [1],
-        "message": "You generation capacities are now big enough to join a network and trade electricity. "
+        "message": "Your generation capacities are now big enough to join a network and trade electricity. "
         "See <b>Community</b> > <b><a href='/network'>Network</a></b>. (+{reward} XP)",
         "requirements": [],
     },
