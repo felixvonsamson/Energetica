@@ -8,13 +8,6 @@ from flask_login import current_user, login_required
 from .database.messages import Chat
 from .database.player import Player
 from .database.player_assets import ResourceOnSale
-from .technology_effects import (
-    package_available_technologies,
-    package_extraction_facilities,
-    package_functional_facilities,
-    package_power_facilities,
-    package_storage_facilities,
-)
 
 location_choice_views = Blueprint("location_choice_views", __name__)
 views = Blueprint("views", __name__)
@@ -43,11 +36,7 @@ def set_ctx():
 @changelog.before_request
 def set_ctx_no_login():
     """This function is called before every request"""
-    user = (
-        current_user
-        if current_user.is_authenticated and current_user.tile is not None
-        else None
-    )
+    user = current_user if current_user.is_authenticated and current_user.tile is not None else None
 
     render_template_ctx = partial(render_template, engine=current_app.config["engine"], user=user)
     g.render_template_ctx = render_template_ctx
@@ -100,13 +89,15 @@ def network():
 
 @views.route("/power_facilities")
 def power_facilities():
-    return g.render_template_ctx("assets/power_facilities.jinja", constructions=package_power_facilities(current_user))
+    return g.render_template_ctx(
+        "assets/power_facilities.jinja", constructions=current_user.cached_power_facilities_data
+    )
 
 
 @views.route("/storage_facilities")
 def storage_facilities():
     return g.render_template_ctx(
-        "assets/storage_facilities.jinja", constructions=package_storage_facilities(current_user)
+        "assets/storage_facilities.jinja", constructions=current_user.cached_storage_facilities_data
     )
 
 
@@ -115,14 +106,14 @@ def technology():
     if "Unlock Technologies" not in current_user.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx(
-        "assets/technologies.jinja", available_technologies=package_available_technologies(current_user)
+        "assets/technologies.jinja", available_technologies=current_user.cached_available_technologies_data
     )
 
 
 @views.route("/functional_facilities")
 def functional_facilities():
     return g.render_template_ctx(
-        "assets/functional_facilities.jinja", constructions=package_functional_facilities(current_user)
+        "assets/functional_facilities.jinja", constructions=current_user.cached_functional_facilities_data
     )
 
 
@@ -131,7 +122,7 @@ def extraction_facilities():
     if "Unlock Natural Resources" not in current_user.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx(
-        "assets/extraction_facilities.jinja", constructions=package_extraction_facilities(current_user)
+        "assets/extraction_facilities.jinja", constructions=current_user.cached_extraction_facilities_data
     )
 
 
