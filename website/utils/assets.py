@@ -481,7 +481,7 @@ def cancel_project(player: Player, construction: OngoingConstruction, force=Fals
     for candidate_dependent_id in priority_list[construction_priority_index + 1 :]:
         candidate_dependent: OngoingConstruction = OngoingConstruction.query.get(candidate_dependent_id)
         if construction.id in candidate_dependent.prerequisites():
-            dependents.append([candidate_dependent.name, candidate_dependent.level()])
+            dependents.append([candidate_dependent.name, candidate_dependent.level])
     if dependents:
         raise GameException("hasDependents", dependents=dependents)
 

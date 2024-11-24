@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from flask import current_app
 
 if TYPE_CHECKING:
-    from website.database.player import Player
     from website.database.player_assets import OngoingConstruction
     from website.game_engine import GameEngine
 else:
@@ -14,9 +13,10 @@ else:
 
 def compute_prerequisites_and_level(ongoing_construction: OngoingConstruction) -> tuple[list[int], int]:
     """Compute the prerequisites and level of an ongoing construction."""
+    from website.database.player import Player
     from website.database.player_assets import OngoingConstruction
 
-    player: Player = ongoing_construction.player
+    player: Player = Player.query.get(ongoing_construction.player_id)
     prerequisites = []
     level = -1
     if ongoing_construction.family == "Functional facilities":
