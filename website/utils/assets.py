@@ -159,7 +159,8 @@ def deploy_available_workers(player: Player, family: str):
         construction: OngoingConstruction = OngoingConstruction.query.get(construction_id)
         if not construction.is_paused():
             continue
-        if construction.prerequisites(recompute=True):
+        construction.prerequisites = None  # force recompute
+        if construction.prerequisites():
             continue
         construction.resume()
         insertion_index = None
@@ -556,7 +557,8 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction):
         engine.log(f"{player.username} paused the construction {construction.id} {construction.name}")
     else:
         # project is currently pause, and should be unpaused
-        if construction.prerequisites(recompute=True):
+        construction.prerequisites = None  # force recompute
+        if construction.prerequisites():
             raise GameException("hasUnfinishedPrerequisites")
 
         available_workers = (
