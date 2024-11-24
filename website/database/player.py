@@ -15,9 +15,26 @@ from website.config.achievements import achievements
 from website.database.messages import Chat, Message, Notification, player_chats
 from website.database.mixed_database import mixed_db
 from website.database.player_assets import ActiveFacility, OngoingConstruction
+from website.technology_effects import (
+    package_available_technologies,
+    package_extraction_facilities,
+    package_functional_facilities,
+    package_power_facilities,
+    package_storage_facilities,
+)
 
 
-@partial(mixed_db, data_fields={"current_data", "capacities", "cumul_emissions"}, buffered_field={})
+@partial(
+    mixed_db,
+    data_fields={"current_data", "capacities", "cumul_emissions"},
+    buffered_field={
+        "cached_power_facilities_data": package_power_facilities,
+        "cached_storage_facilities_data": package_storage_facilities,
+        "cached_extraction_facility_data": package_extraction_facilities,
+        "cached_functional_facilities_data": package_functional_facilities,
+        "cached_technologies_data": package_available_technologies,
+    },
+)
 class Player(db.Model, UserMixin):
     """Class that stores the users"""
 
@@ -135,15 +152,9 @@ class Player(db.Model, UserMixin):
     active_facilities = db.relationship("ActiveFacility", backref="player", lazy="dynamic")
     climate_events = db.relationship("ClimateEventRecovery", backref="player")
 
-    _buffered_data_for_power_facilities_page = None
-    _buffered_data_for_storage_facilities_page = None
-    _buffered_data_for_extraction_facilities_page = None
-    _buffered_data_for_functional_facilities_page = None
-    _buffered_data_for_technologies_page = None
-    _buffered_data_for_resource_market_page = None
-
     @property
     def is_in_network(self):
+        """Returns True if the player is in a network"""
         return self.network_id is not None
 
     def change_graph_view(self, view):
@@ -511,7 +522,7 @@ class Player(db.Model, UserMixin):
     @staticmethod
     def package_scoreboard():
         """Gets the scoreboard data for settled players"""
-        players = Player.query.filter(Player.tile != None)
+        players = Player.query.filter(Player.tile.is_(None))
         return {
             player.id: {
                 "username": player.username,
@@ -602,82 +613,42 @@ class Player(db.Model, UserMixin):
         extraction_facilities=False,
         functional_facilities=False,
         technologies=False,
-        resource_market=False,
+        # resource_market=False,
     ):
         """
         Signal to all instances of clients for this player that there is possibly new data for the specified page.
         This function will invalidate the data for all corresponding arguments that are set to True.
         """
         if power_facilities:
-            self._buffered_data_for_power_facilities_page = None
+            self.cached_power_facilities_data = None  # pylint: disable=attribute-defined-outside-init
         if storage_facilities:
-            self._buffered_data_for_storage_facilities_page = None
+            self.cached_storage_facilities_data = None  # pylint: disable=attribute-defined-outside-init
         if extraction_facilities:
-            self._buffered_data_for_extraction_facilities_page = None
+            self.cached_extraction_facility_data = None  # pylint: disable=attribute-defined-outside-init
         if functional_facilities:
-            self._buffered_data_for_functional_facilities_page = None
+            self.cached_functional_facilities_data = None  # pylint: disable=attribute-defined-outside-init
         if technologies:
-            self._buffered_data_for_technologies_page = None
-        if resource_market:
-            self._buffered_data_for_resource_market_page = None
+            self.cached_technologies_data = None  # pylint: disable=attribute-defined-outside-init
+        # if resource_market:
+        #     self._buffered_data_for_resource_market_page = None
         engine = current_app.config["engine"]
         if engine.clients[self.id]:
             # or engine.websocket_dict[self.id]:
             pages_data = {}
             if power_facilities:
-                pages_data |= {"power_facilities": self.get_cached_power_facilities_data()}
+                pages_data |= {"power_facilities": self.cached_power_facilities_data}
             if storage_facilities:
-                pages_data |= {"storage_facilities": self.get_cached_storage_facilities_data()}
+                pages_data |= {"storage_facilities": self.cached_storage_facilities_data}
             if extraction_facilities:
-                pages_data |= {"extraction_facilities": self.get_cached_extraction_facility_data()}
+                pages_data |= {"extraction_facilities": self.cached_extraction_facility_data}
             if functional_facilities:
-                pages_data |= {"functional_facilities": self.get_cached_functional_facilities_data()}
+                pages_data |= {"functional_facilities": self.cached_functional_facilities_data}
             if technologies:
-                pages_data |= {"technologies": self.get_cached_technologies_data()}
+                pages_data |= {"technologies": self.cached_technologies_data}
             # if resource_market:
             #     pages_data |= {"power_facilities": self.get_packaged_data_for_power_facilities_page()}
             self.emit("update_page_data", pages_data)
             # TODO: update clients over websocket
-
-    def get_cached_power_facilities_data(self):
-        """Get buffered data or recompute"""
-        from website import technology_effects
-
-        if self._buffered_data_for_power_facilities_page is None:
-            self._buffered_data_for_power_facilities_page = technology_effects.package_power_facilities(self)
-        return self._buffered_data_for_power_facilities_page
-
-    def get_cached_storage_facilities_data(self):
-        """Get buffered data or recompute"""
-        from website import technology_effects
-
-        if self._buffered_data_for_storage_facilities_page is None:
-            self._buffered_data_for_storage_facilities_page = technology_effects.package_storage_facilities(self)
-        return self._buffered_data_for_storage_facilities_page
-
-    def get_cached_extraction_facility_data(self):
-        """Get buffered data or recompute"""
-        from website import technology_effects
-
-        if self._buffered_data_for_extraction_facilities_page is None:
-            self._buffered_data_for_extraction_facilities_page = technology_effects.package_extraction_facilities(self)
-        return self._buffered_data_for_extraction_facilities_page
-
-    def get_cached_functional_facilities_data(self):
-        """Get buffered data or recompute"""
-        from website import technology_effects
-
-        if self._buffered_data_for_functional_facilities_page is None:
-            self._buffered_data_for_functional_facilities_page = technology_effects.package_functional_facilities(self)
-        return self._buffered_data_for_functional_facilities_page
-
-    def get_cached_technologies_data(self):
-        """Get buffered data or recompute"""
-        from website import technology_effects
-
-        if self._buffered_data_for_technologies_page is None:
-            self._buffered_data_for_technologies_page = technology_effects.package_available_technologies(self)
-        return self._buffered_data_for_technologies_page
 
 
 @partial(mixed_db, data_fields={"current_data", "capacities"}, buffered_field={})
