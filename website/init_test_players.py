@@ -15,14 +15,12 @@ def init_test_players(engine):
 
     def add_asset(player: Player, asset: str, n):
         """This function adds an asset as an instant construction."""
-        priority_list_name = "construction_priorities"
-        if engine.asset_family_by_name[asset] == "Technologies":
-            priority_list_name = "research_priorities"
-
-        for i in range(n):
-            ongoing_construction = queue_project(engine, player, asset, force=True, ignore_requirements_and_money=True)
+        for _ in range(n):
+            ongoing_construction = queue_project(
+                engine, player, asset, force=True, ignore_requirements_and_money=True, skip_notifications=True
+            )
             finish_project(ongoing_construction, skip_notifications=True)
-            print(f"Added {asset} to {player.username}'s {priority_list_name}")
+        engine.log(f"Added {n} {asset} for {player.username}")
 
     def create_player(username, password, tile_id=None) -> Player:
         """This function creates and initializes a player."""
@@ -34,7 +32,7 @@ def init_test_players(engine):
         db.session.add(player)
         db.session.commit()
         # If tile_id is None, find any tile that isn't assigned to a player
-        hex_tile = Hex.get(tile_id) if tile_id else Hex.query.filter_by(player_id=None).first()
+        hex_tile = Hex.query.get(tile_id) if tile_id else Hex.query.filter_by(player_id=None).first()
         confirm_location(engine, player, hex_tile)
         engine.log(f"create_player: player {username} created")
         return player
@@ -185,4 +183,4 @@ def init_test_players(engine):
     #     db.session.commit()
 
     # create_network("net", [player, player2, player3])
-    # db.session.commit()
+    db.session.commit()
