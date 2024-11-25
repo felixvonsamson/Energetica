@@ -637,6 +637,11 @@ class Player(db.Model, UserMixin):
             self.cached_power_facilities_data = package_power_facilities(self)
         return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_power_facilities_data"]
 
+    @cached_power_facilities_data.setter
+    def cached_power_facilities_data(self, value):
+        """Sets the cached data for the power facilities page"""
+        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_power_facilities_data"] = value
+
     @property
     def cached_storage_facilities_data(self):
         """Cached data for the storage facilities page"""
@@ -644,12 +649,22 @@ class Player(db.Model, UserMixin):
             self.cached_storage_facilities_data = package_storage_facilities(self)
         return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_storage_facilities_data"]
 
+    @cached_storage_facilities_data.setter
+    def cached_storage_facilities_data(self, value):
+        """Sets the cached data for the storage facilities page"""
+        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_storage_facilities_data"] = value
+
     @property
     def cached_extraction_facility_data(self):
         """Cached data for the extraction facilities page"""
         if "cached_extraction_facility_data" not in current_app.config["engine"].buffered[type(self).__name__][self.id]:
             self.cached_extraction_facility_data = package_extraction_facilities(self)
         return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_extraction_facility_data"]
+
+    @cached_extraction_facility_data.setter
+    def cached_extraction_facility_data(self, value):
+        """Sets the cached data for the extraction facilities page"""
+        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_extraction_facility_data"] = value
 
     @property
     def cached_functional_facilities_data(self):
@@ -661,12 +676,22 @@ class Player(db.Model, UserMixin):
             self.cached_functional_facilities_data = package_functional_facilities(self)
         return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_functional_facilities_data"]
 
+    @cached_functional_facilities_data.setter
+    def cached_functional_facilities_data(self, value):
+        """Sets the cached data for the functional facilities page"""
+        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_functional_facilities_data"] = value
+
     @property
     def cached_technologies_data(self):
         """Cached data for the technologies page"""
         if "cached_technologies_data" not in current_app.config["engine"].buffered[type(self).__name__][self.id]:
             self.cached_technologies_data = package_available_technologies(self)
         return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_technologies_data"]
+
+    @cached_technologies_data.setter
+    def cached_technologies_data(self, value):
+        """Sets the cached data for the technologies page"""
+        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_technologies_data"] = value
 
     def invalidate_recompute_and_dispatch_data_for_pages(
         self,
