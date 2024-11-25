@@ -157,6 +157,10 @@ class Player(db.Model, UserMixin):
         return current_app.config["engine"].config[self]
 
     @property
+    def socketio_clients(self) -> List[int]:
+        return current_app.config["engine"].clients[self.id]
+
+    @property
     def current_data(self) -> CircularBufferPlayer:
         return current_app.config["engine"].data[type(self).__name__][self.id]["current_data"]
 
@@ -748,8 +752,7 @@ class Player(db.Model, UserMixin):
             del self.cached_technologies_data
         # if resource_market:
         #     self._buffered_data_for_resource_market_page = None
-        engine = current_app.config["engine"]
-        if engine.clients[self.id]:
+        if self.socketio_clients:
             # or engine.websocket_dict[self.id]:
             pages_data = {}
             if power_facilities:
