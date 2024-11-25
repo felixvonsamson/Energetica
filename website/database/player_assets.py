@@ -14,8 +14,20 @@ if TYPE_CHECKING:
 
 @dataclass
 class OngoingConstructionCache(object):
-    level: int = None
-    prerequisites: list[int] = None
+    construction_id: int
+
+    @cached_property
+    def _prerequisites_and_level(self) -> tuple[list[int], int]:
+        construction = OngoingConstruction.query.get(self.construction_id)
+        return construction._compute_prerequisites_and_level()
+
+    @property
+    def prequisites(self) -> list[int]:
+        return self._prerequisites_and_level[0]
+
+    @property
+    def level(self) -> int:
+        return self._prerequisites_and_level[1]
 
 
 class OngoingConstruction(db.Model):
@@ -61,7 +73,8 @@ class OngoingConstruction(db.Model):
 
     def recompute_prerequisites_and_level(self) -> None:
         """Recompute the prerequisites and level of an ongoing construction."""
-        self.cache.prerequisites, self.cache.level = self._compute_prerequisites_and_level()
+        if "_prerequisites_and_level" in self.cache.__dict__:
+            del self.cache.__dict__["_prerequisites_and_level"]
 
     def _compute_prerequisites_and_level(self) -> tuple[list[int], int]:
         """Compute the prerequisites and level of an ongoing construction."""
