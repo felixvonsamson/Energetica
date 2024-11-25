@@ -125,7 +125,7 @@ def finish_project(construction: OngoingConstruction, skip_notifications=False):
         player.capacities.update(player, None)
     else:
         player.capacities.update(player, construction.name)
-    engine.config.update_config_for_user(player.id)
+    engine.config.update_config_for_user(player)
     player.emit("retrieve_player_data")
 
     if family == "Functional facilities":
