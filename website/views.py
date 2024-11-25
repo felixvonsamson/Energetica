@@ -106,7 +106,7 @@ def technology():
     if "Unlock Technologies" not in current_user.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx(
-        "assets/technologies.jinja", available_technologies=current_user.cached_available_technologies_data
+        "assets/technologies.jinja", available_technologies=current_user.cached_technologies_data
     )
 
 
