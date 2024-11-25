@@ -19,6 +19,13 @@ from website.database.engine_data import (
 )
 from website.database.messages import Chat, Message, Notification, player_chats
 from website.database.player_assets import ActiveFacility, OngoingConstruction
+from website.technology_effects import (
+    package_available_technologies,
+    package_extraction_facilities,
+    package_functional_facilities,
+    package_power_facilities,
+    package_storage_facilities,
+)
 
 if TYPE_CHECKING:
     from website.game_engine import GameEngine
@@ -147,27 +154,27 @@ class Player(db.Model, UserMixin):
 
     @property
     def current_data(self) -> CircularBufferPlayer:
-        return current_app.config["engine"].data["players"][self.id]["current_data"]
+        return current_app.config["engine"].data[type(self).__name__][self.id]["current_data"]
 
     @current_data.setter
     def current_data(self, value):
-        current_app.config["engine"].data["players"][self.id]["current_data"] = value
+        current_app.config["engine"].data[type(self).__name__][self.id]["current_data"] = value
 
     @property
     def capacities(self) -> CapacityData:
-        return current_app.config["engine"].data["players"][self.id]["capacities"]
+        return current_app.config["engine"].data[type(self).__name__][self.id]["capacities"]
 
     @capacities.setter
     def capacities(self, value):
-        current_app.config["engine"].data["players"][self.id]["capacities"] = value
+        current_app.config["engine"].data[type(self).__name__][self.id]["capacities"] = value
 
     @property
     def cumul_emissions(self) -> CumulativeEmissionsData:
-        return current_app.config["engine"].data["players"][self.id]["cumul_emissions"]
+        return current_app.config["engine"].data[type(self).__name__][self.id]["cumul_emissions"]
 
     @cumul_emissions.setter
     def cumul_emissions(self, value):
-        current_app.config["engine"].data["players"][self.id]["cumul_emissions"] = value
+        current_app.config["engine"].data[type(self).__name__][self.id]["cumul_emissions"] = value
 
     @property
     def is_in_network(self):
@@ -713,19 +720,19 @@ class Network(db.Model):
 
     @property
     def current_data(self) -> CircularBufferNetwork:
-        return current_app.config["engine"].data["networks"][self.id]["current_data"]
+        return current_app.config["engine"].data[type(self).__name__][self.id]["current_data"]
 
     @current_data.setter
     def current_data(self, value):
-        current_app.config["engine"].data["networks"][self.id]["current_data"] = value
+        current_app.config["engine"].data[type(self).__name__][self.id]["current_data"] = value
 
     @property
     def capacities(self) -> CapacityData:
-        return current_app.config["engine"].data["networks"][self.id]["capacities"]
+        return current_app.config["engine"].data[type(self).__name__][self.id]["capacities"]
 
     @capacities.setter
     def capacities(self, value):
-        current_app.config["engine"].data["networks"][self.id]["capacities"] = value
+        current_app.config["engine"].data[type(self).__name__][self.id]["capacities"] = value
 
 
 class PlayerUnreadMessages(db.Model):
