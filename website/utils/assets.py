@@ -7,7 +7,6 @@ from typing import List
 from flask import current_app
 
 from website import db, game_engine, technology_effects
-from website.api import websocket
 from website.database.player import Player
 from website.database.player_assets import ActiveFacility, OngoingConstruction
 from website.game_engine import Confirm, GameEngine, GameException
@@ -439,6 +438,8 @@ def queue_project(
 
     if not skip_notifications:
         engine.log(f"{player.username} started the construction {asset}")
+    from website.api import websocket
+
     websocket.rest_notify_constructions(engine, player)
     db.session.commit()
 
@@ -503,6 +504,8 @@ def cancel_project(player: Player, construction: OngoingConstruction, force=Fals
     db.session.delete(construction)
     engine.log(f"{player.username} cancelled the construction {construction.name}")
     db.session.commit()
+    from website.api import websocket
+
     websocket.rest_notify_constructions(engine, player)
 
     invalidate_data_on_project_update(engine, player, construction.name)
@@ -534,6 +537,8 @@ def decrease_project_priority(player, construction):
             )
         setattr(player, attr, ",".join(map(str, priority_list)))
         db.session.commit()
+        from website.api import websocket
+
         websocket.rest_notify_constructions(engine, player)
 
 
@@ -600,4 +605,6 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction):
         engine.log(f"{player.username} unpaused the construction {construction.id} {construction.name}")
 
     db.session.commit()
+    from website.api import websocket
+
     websocket.rest_notify_constructions(engine, player)

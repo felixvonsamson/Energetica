@@ -4,7 +4,6 @@ import pickle
 import shutil
 from pathlib import Path
 
-import website.api.websocket as websocket
 from website import db
 from website.database.engine_data import CapacityData, CircularBufferNetwork
 from website.database.player import Network, Player
@@ -23,6 +22,8 @@ def join_network(engine, player, network):
     db.session.commit()
     network.capacities.update_network(network)
     engine.log(f"{player.username} joined the network {network.name}")
+    import website.api.websocket as websocket
+
     websocket.rest_notify_network_change(engine)
 
 
@@ -63,6 +64,8 @@ def create_network(engine, player, name) -> Network:
     with open(f"{network_path}/time_series.pck", "wb") as file:
         pickle.dump(past_data, file)
     engine.log(f"{player.username} created the network {name}")
+    import website.api.websocket as websocket
+
     websocket.rest_notify_network_change(engine)
     return new_network
 
@@ -81,6 +84,8 @@ def leave_network(engine, player):
         shutil.rmtree(f"instance/network_data/{network.id}")
         db.session.delete(network)
     db.session.commit()
+    import website.api.websocket as websocket
+
     websocket.rest_notify_network_change(engine)
 
 
