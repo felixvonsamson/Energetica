@@ -26,14 +26,14 @@ def finish_project(construction: OngoingConstruction, skip_notifications=False):
     if construction.family in ["Technologies", "Functional facilities"]:
         if getattr(player, construction.name) == 0:
             if construction.name == "carbon_capture":
-                player.current_data.add_subcategory("demand", construction.name)
-                player.current_data.add_subcategory("emissions", construction.name)
-                player.cumul_emissions.add_category(construction.name)
+                player.data.history.add_subcategory("demand", construction.name)
+                player.data.history.add_subcategory("emissions", construction.name)
+                player.data.cumul_emissions.add_category(construction.name)
                 player.add_to_list("demand_priorities", construction.name)
                 reorder_facility_priorities(engine, player)
             if construction.name == "warehouse":
                 for resource in ["coal", "gas", "uranium"]:
-                    player.current_data.add_subcategory("resources", resource)
+                    player.data.history.add_subcategory("resources", resource)
             if construction.name == "laboratory":
                 player.add_to_list("demand_priorities", "research")
                 reorder_facility_priorities(engine, player)
@@ -54,16 +54,16 @@ def finish_project(construction: OngoingConstruction, skip_notifications=False):
     elif ActiveFacility.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
         # initialize array for facility if it is the first one built
         if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
-            player.current_data.add_subcategory("op_costs", construction.name)
+            player.data.history.add_subcategory("op_costs", construction.name)
         if construction.name in engine.storage_facilities + engine.power_facilities:
-            player.current_data.add_subcategory("generation", construction.name)
+            player.data.history.add_subcategory("generation", construction.name)
         if construction.name in engine.storage_facilities + engine.extraction_facilities:
-            player.current_data.add_subcategory("demand", construction.name)
+            player.data.history.add_subcategory("demand", construction.name)
         if construction.name in engine.storage_facilities:
-            player.current_data.add_subcategory("storage", construction.name)
+            player.data.history.add_subcategory("storage", construction.name)
         if construction.name in engine.controllable_facilities + engine.extraction_facilities:
-            player.current_data.add_subcategory("emissions", construction.name)
-            player.cumul_emissions.add_category(construction.name)
+            player.data.history.add_subcategory("emissions", construction.name)
+            player.data.cumul_emissions.add_category(construction.name)
         if construction.name in engine.extraction_facilities + engine.storage_facilities:
             player.add_to_list("demand_priorities", construction.name)
             reorder_facility_priorities(engine, player)
@@ -122,9 +122,9 @@ def finish_project(construction: OngoingConstruction, skip_notifications=False):
         )
         db.session.add(new_facility)
     if construction.family == "Technologies":
-        player.capacities.update(player, None)
+        player.data.capacities.update(player, None)
     else:
-        player.capacities.update(player, construction.name)
+        player.data.capacities.update(player, construction.name)
     engine.config.update_config_for_user(player)
     player.emit("retrieve_player_data")
 
@@ -166,7 +166,7 @@ def deploy_available_workers(player: Player, family: str):
         if not construction.is_paused():
             continue
         construction.recompute_prerequisites_and_level()  # force recompute
-        if construction.prerequisites():
+        if construction.cache.prerequisites:
             continue
         construction.resume()
         insertion_index = None
@@ -243,7 +243,7 @@ def upgrade_facility(player, facility):
         raise GameException("notEnoughMoney")
     player.money -= upgrade_cost
     apply_upgrade(facility)
-    player.capacities.update(player, facility.facility)
+    player.data.capacities.update(player, facility.facility)
 
 
 def upgrade_all_of_type(player, facility_name):
@@ -293,7 +293,7 @@ def remove_asset(player, facility, decommissioning=True):
         )
         engine.log(f"The facility {facility_name} from {player.username} has been decommissioned.")
     db.session.flush()
-    player.capacities.update(player, facility.facility)
+    player.data.capacities.update(player, facility.facility)
     engine.config.update_config_for_user(player.id)
     db.session.commit()
 
@@ -380,8 +380,8 @@ def queue_project(
     if not force and not player.is_in_network:
         capacity = 0
         for gen in engine.power_facilities:
-            if player.capacities[gen] is not None:
-                capacity += player.capacities[gen]["power"]
+            if player.data.capacities[gen] is not None:
+                capacity += player.data.capacities[gen]["power"]
         if construction_power > capacity:
             raise Confirm(capacity=capacity, construction_power=construction_power)
 
@@ -483,8 +483,8 @@ def cancel_project(player: Player, construction: OngoingConstruction, force=Fals
     construction_priority_index = priority_list.index(construction.id)
     for candidate_dependent_id in priority_list[construction_priority_index + 1 :]:
         candidate_dependent: OngoingConstruction = OngoingConstruction.query.get(candidate_dependent_id)
-        if construction.id in candidate_dependent.prerequisites():
-            dependents.append([candidate_dependent.name, candidate_dependent.level])
+        if construction.id in candidate_dependent.cache.prerequisites:
+            dependents.append([candidate_dependent.name, candidate_dependent.cache.level])
     if dependents:
         raise GameException("hasDependents", dependents=dependents)
 
@@ -572,7 +572,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction):
     else:
         # project is currently pause, and should be unpaused
         construction.recompute_prerequisites_and_level()  # force recompute
-        if construction.prerequisites():
+        if construction.cache.prerequisites:
             raise GameException("hasUnfinishedPrerequisites")
 
         available_workers = (

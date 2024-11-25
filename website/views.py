@@ -90,14 +90,14 @@ def network():
 @views.route("/power_facilities")
 def power_facilities():
     return g.render_template_ctx(
-        "assets/power_facilities.jinja", constructions=current_user.cached_power_facilities_data
+        "assets/power_facilities.jinja", constructions=current_user.cache.power_facilities_data
     )
 
 
 @views.route("/storage_facilities")
 def storage_facilities():
     return g.render_template_ctx(
-        "assets/storage_facilities.jinja", constructions=current_user.cached_storage_facilities_data
+        "assets/storage_facilities.jinja", constructions=current_user.cache.storage_facilities_data
     )
 
 
@@ -113,7 +113,7 @@ def technology():
 @views.route("/functional_facilities")
 def functional_facilities():
     return g.render_template_ctx(
-        "assets/functional_facilities.jinja", constructions=current_user.cached_functional_facilities_data
+        "assets/functional_facilities.jinja", constructions=current_user.cache.functional_facilities_data
     )
 
 

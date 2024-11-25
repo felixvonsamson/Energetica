@@ -7,12 +7,14 @@ import math
 import pickle
 from collections import defaultdict
 from datetime import datetime
-from functools import partial
 
 from gevent.lock import RLock
 
+from website.database.player import PlayerCache, PlayerData
+from website.database.player_assets import OngoingConstructionCache
+
 from .config.assets import config, const_config
-from .database.engine_data import EmissionData
+from .database.engine_data import CircularBufferNetwork, EmissionData
 
 
 # This is the engine object
@@ -148,8 +150,12 @@ class GameEngine(object):
         self.log("engine created")
 
         self.lock = RLock()
-        self.data = defaultdict(partial(defaultdict, dict))
-        self.buffered = defaultdict(partial(defaultdict, dict))  # stores buffered values for mixed_database
+        self.data = {}
+        self.data["by_player"] = defaultdict(PlayerData)
+        self.data["by_network"] = defaultdict(CircularBufferNetwork)
+        self.buffered = {}  # stores buffered values for mixed_database
+        self.buffered["by_player"] = defaultdict(PlayerCache)
+        self.buffered["by_ongoing_construction"] = defaultdict(OngoingConstructionCache)
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
         self.data["start_date"] = start_date or datetime.now()  # 0 point of server time

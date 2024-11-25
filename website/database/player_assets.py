@@ -1,5 +1,7 @@
 """Here are defined the classes for the items stored in the database"""
 
+from dataclasses import dataclass
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 from flask import current_app
@@ -8,6 +10,12 @@ from website import db
 
 if TYPE_CHECKING:
     from website.game_engine import GameEngine
+
+
+@dataclass
+class OngoingConstructionCache(object):
+    level: int
+    prerequisites: list[int]
 
 
 class OngoingConstruction(db.Model):
@@ -47,37 +55,13 @@ class OngoingConstruction(db.Model):
         self.start_time += engine.data["total_t"] - self.suspension_time
         self.suspension_time = None
 
-    @property
-    def level(self) -> int:
-        """Return the level of the ongoing construction when applicable.
-
-        For functional facilities and technologies, returns the level of this construction.
-        For other types of constructions, returns None.
-        """
-        if "level" not in current_app.config["engine"].data[type(self).__name__][self.id]:
-            self.recompute_prerequisites_and_level()
-        return current_app.config["engine"].data[type(self).__name__][self.id]["level"]
-
-    @level.setter
-    def level(self, value: int):
-        """Set the level of the ongoing construction."""
-        current_app.config["engine"].data[type(self).__name__][self.id]["level"] = value
-
-    @property
-    def prerequisites(self) -> list[int]:
-        """Return a list of the id's of ongoing constructions that this constructions depends on."""
-        if "prerequisites" not in current_app.config["engine"].data[type(self).__name__][self.id]:
-            self.recompute_prerequisites_and_level()
-        return current_app.config["engine"].data[type(self).__name__][self.id]["prerequisites"]
-
-    @prerequisites.setter
-    def prerequisites(self, value: list[int]):
-        """Set the prerequisites of the ongoing construction."""
-        current_app.config["engine"].data[type(self).__name__][self.id]["prerequisites"] = value
+    @cached_property
+    def cache(self) -> OngoingConstructionCache:
+        return current_app.config["engine"].buffered["by_ongoing_construction"][self.id]
 
     def recompute_prerequisites_and_level(self) -> None:
         """Recompute the prerequisites and level of an ongoing construction."""
-        self.prerequisites, self.level = self._compute_prerequisites_and_level()
+        self.cache.prerequisites, self.cache.level = self._compute_prerequisites_and_level()
 
     def _compute_prerequisites_and_level(self) -> tuple[list[int], int]:
         """Compute the prerequisites and level of an ongoing construction."""

@@ -99,7 +99,7 @@ class CapacityData:
         """This function updates the capacity data of the network"""
         self._data = {}
         for player in network.members:
-            player_capacities = player.capacities.get_all()
+            player_capacities = player.data.capacities.get_all()
             for facility in player_capacities:
                 if "power" in player_capacities[facility]:
                     if facility not in self._data:

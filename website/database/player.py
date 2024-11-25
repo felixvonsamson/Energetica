@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from datetime import datetime
+from functools import cached_property
 from itertools import chain
 from typing import TYPE_CHECKING, List
 
@@ -31,6 +33,43 @@ from website.technology_effects import (
 
 if TYPE_CHECKING:
     from website.game_engine import GameEngine
+
+
+@dataclass
+class PlayerData(object):
+    history: CircularBufferPlayer
+    capacities: CapacityData
+    cumul_emissions: CumulativeEmissionsData
+
+
+@dataclass
+class PlayerCache(object):
+    player_id: int
+
+    @cached_property
+    def power_facilities_data(self):
+        player = Player.query.get(self.player_id)
+        return package_power_facilities(player)
+
+    @cached_property
+    def storage_facilities_data(self):
+        player = Player.query.get(self.player_id)
+        return package_storage_facilities(player)
+
+    @cached_property
+    def extraction_facility_data(self):
+        player = Player.query.get(self.player_id)
+        return package_extraction_facilities(player)
+
+    @cached_property
+    def functional_facilities_data(self):
+        player = Player.query.get(self.player_id)
+        return package_functional_facilities(player)
+
+    @cached_property
+    def technologies_data(self):
+        player = Player.query.get(self.player_id)
+        return package_available_technologies(player)
 
 
 class Player(db.Model, UserMixin):
@@ -162,29 +201,13 @@ class Player(db.Model, UserMixin):
     def socketio_clients(self) -> List[int]:
         return current_app.config["engine"].clients[self.id]
 
-    @property
-    def current_data(self) -> CircularBufferPlayer:
-        return current_app.config["engine"].data[type(self).__name__][self.id]["current_data"]
+    @cached_property
+    def data(self) -> PlayerData:
+        return current_app.config["engine"].data["by_player"][self.id]
 
-    @current_data.setter
-    def current_data(self, value):
-        current_app.config["engine"].data[type(self).__name__][self.id]["current_data"] = value
-
-    @property
-    def capacities(self) -> CapacityData:
-        return current_app.config["engine"].data[type(self).__name__][self.id]["capacities"]
-
-    @capacities.setter
-    def capacities(self, value):
-        current_app.config["engine"].data[type(self).__name__][self.id]["capacities"] = value
-
-    @property
-    def cumul_emissions(self) -> CumulativeEmissionsData:
-        return current_app.config["engine"].data[type(self).__name__][self.id]["cumul_emissions"]
-
-    @cumul_emissions.setter
-    def cumul_emissions(self, value):
-        current_app.config["engine"].data[type(self).__name__][self.id]["cumul_emissions"] = value
+    @cached_property
+    def cache(self) -> PlayerCache:
+        return current_app.config["engine"].buffered["by_player"][self.id]
 
     @property
     def is_in_network(self):
@@ -363,7 +386,7 @@ class Player(db.Model, UserMixin):
     def emit(self, event, *args):
         """This method emits a socketio event to the player's clients"""
         engine = current_app.config["engine"]
-        for sid in engine.clients[self.id]:
+        for sid in self.socketio_clients:
             engine.socketio.emit(event, *args, room=sid)
 
     def send_new_data(self, new_values):
@@ -585,7 +608,7 @@ class Player(db.Model, UserMixin):
                 ]
             }
             | {"display_name": current_app.config["engine"].const_config["assets"][construction.name]["name"]}
-            | ({"level": construction.level} if construction.level >= 0 else {})
+            | ({"level": construction.cache.level} if construction.cache.level >= 0 else {})
             for construction in self.under_construction
         }
 
@@ -640,99 +663,6 @@ class Player(db.Model, UserMixin):
             "extraction_facilities": get_facility_data(engine.extraction_facilities),
         }
 
-    @property
-    def cached_power_facilities_data(self):
-        """Cached data for the power facilities page"""
-        if "cached_power_facilities_data" not in current_app.config["engine"].buffered[type(self).__name__][self.id]:
-            self.cached_power_facilities_data = package_power_facilities(self)
-        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_power_facilities_data"]
-
-    @cached_power_facilities_data.setter
-    def cached_power_facilities_data(self, value):
-        """Sets the cached data for the power facilities page"""
-        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_power_facilities_data"] = value
-
-    @cached_power_facilities_data.deleter
-    def cached_power_facilities_data(self):
-        """Deletes the cached data for the power facilities page"""
-        if "cached_power_facilities_data" in current_app.config["engine"].buffered[type(self).__name__][self.id]:
-            del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_power_facilities_data"]
-
-    @property
-    def cached_storage_facilities_data(self):
-        """Cached data for the storage facilities page"""
-        if "cached_storage_facilities_data" not in current_app.config["engine"].buffered[type(self).__name__][self.id]:
-            self.cached_storage_facilities_data = package_storage_facilities(self)
-        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_storage_facilities_data"]
-
-    @cached_storage_facilities_data.setter
-    def cached_storage_facilities_data(self, value):
-        """Sets the cached data for the storage facilities page"""
-        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_storage_facilities_data"] = value
-
-    @cached_storage_facilities_data.deleter
-    def cached_storage_facilities_data(self):
-        """Deletes the cached data for the storage facilities page"""
-        if "cached_storage_facilities_data" in current_app.config["engine"].buffered[type(self).__name__][self.id]:
-            del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_storage_facilities_data"]
-
-    @property
-    def cached_extraction_facility_data(self):
-        """Cached data for the extraction facilities page"""
-        if "cached_extraction_facility_data" not in current_app.config["engine"].buffered[type(self).__name__][self.id]:
-            self.cached_extraction_facility_data = package_extraction_facilities(self)
-        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_extraction_facility_data"]
-
-    @cached_extraction_facility_data.setter
-    def cached_extraction_facility_data(self, value):
-        """Sets the cached data for the extraction facilities page"""
-        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_extraction_facility_data"] = value
-
-    @cached_extraction_facility_data.deleter
-    def cached_extraction_facility_data(self):
-        """Deletes the cached data for the extraction facilities page"""
-        if "cached_extraction_facility_data" in current_app.config["engine"].buffered[type(self).__name__][self.id]:
-            del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_extraction_facility_data"]
-
-    @property
-    def cached_functional_facilities_data(self):
-        """Cached data for the functional facilities page"""
-        if (
-            "cached_functional_facilities_data"
-            not in current_app.config["engine"].buffered[type(self).__name__][self.id]
-        ):
-            self.cached_functional_facilities_data = package_functional_facilities(self)
-        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_functional_facilities_data"]
-
-    @cached_functional_facilities_data.setter
-    def cached_functional_facilities_data(self, value):
-        """Sets the cached data for the functional facilities page"""
-        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_functional_facilities_data"] = value
-
-    @cached_functional_facilities_data.deleter
-    def cached_functional_facilities_data(self):
-        """Deletes the cached data for the functional facilities page"""
-        if "cached_functional_facilities_data" in current_app.config["engine"].buffered[type(self).__name__][self.id]:
-            del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_functional_facilities_data"]
-
-    @property
-    def cached_technologies_data(self):
-        """Cached data for the technologies page"""
-        if "cached_technologies_data" not in current_app.config["engine"].buffered[type(self).__name__][self.id]:
-            self.cached_technologies_data = package_available_technologies(self)
-        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_technologies_data"]
-
-    @cached_technologies_data.setter
-    def cached_technologies_data(self, value):
-        """Sets the cached data for the technologies page"""
-        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_technologies_data"] = value
-
-    @cached_technologies_data.deleter
-    def cached_technologies_data(self):
-        """Deletes the cached data for the technologies page"""
-        if "cached_technologies_data" in current_app.config["engine"].buffered[type(self).__name__][self.id]:
-            del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_technologies_data"]
-
     def invalidate_recompute_and_dispatch_data_for_pages(
         self,
         *,
@@ -748,30 +678,30 @@ class Player(db.Model, UserMixin):
         This function will invalidate the data for all corresponding arguments that are set to True.
         """
         if power_facilities:
-            del self.cached_power_facilities_data
+            del self.cache.power_facilities_data
         if storage_facilities:
-            del self.cached_storage_facilities_data
+            del self.cache.storage_facilities_data
         if extraction_facilities:
-            del self.cached_extraction_facility_data
+            del self.cache.extraction_facility_data
         if functional_facilities:
-            del self.cached_functional_facilities_data
+            del self.cache.functional_facilities_data
         if technologies:
-            del self.cached_technologies_data
+            del self.cache.technologies_data
         # if resource_market:
         #     self._buffered_data_for_resource_market_page = None
         if self.socketio_clients:
             # or engine.websocket_dict[self.id]:
             pages_data = {}
             if power_facilities:
-                pages_data |= {"power_facilities": self.cached_power_facilities_data}
+                pages_data |= {"power_facilities": self.cache.power_facilities_data}
             if storage_facilities:
-                pages_data |= {"storage_facilities": self.cached_storage_facilities_data}
+                pages_data |= {"storage_facilities": self.cache.storage_facilities_data}
             if extraction_facilities:
-                pages_data |= {"extraction_facilities": self.cached_extraction_facility_data}
+                pages_data |= {"extraction_facilities": self.cache.extraction_facility_data}
             if functional_facilities:
-                pages_data |= {"functional_facilities": self.cached_functional_facilities_data}
+                pages_data |= {"functional_facilities": self.cache.functional_facilities_data}
             if technologies:
-                pages_data |= {"technologies": self.cached_technologies_data}
+                pages_data |= {"technologies": self.cache.technologies_data}
             # if resource_market:
             #     pages_data |= {"power_facilities": self.get_packaged_data_for_power_facilities_page()}
             self.emit("update_page_data", pages_data)
@@ -786,12 +716,12 @@ class Network(db.Model):
     members = db.relationship("Player", backref="network")
 
     @property
-    def current_data(self) -> CircularBufferNetwork:
-        return current_app.config["engine"].data[type(self).__name__][self.id]["current_data"]
+    def history(self) -> CircularBufferNetwork:
+        return current_app.config["engine"].data["by_network"][self.id]["history"]
 
-    @current_data.setter
-    def current_data(self, value):
-        current_app.config["engine"].data[type(self).__name__][self.id]["current_data"] = value
+    @history.setter
+    def history(self, value):
+        current_app.config["engine"].data["by_network"][self.id]["history"] = value
 
     @property
     def capacities(self) -> CapacityData:

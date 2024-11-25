@@ -203,18 +203,18 @@ def get_chart_data():
     if current_user.tile is None:
         return "", 404
     total_t = g.engine.data["total_t"]
-    current_data = current_user.current_data.get_data(t=total_t % 216 + 1)
+    history = current_user.history.get_data(t=total_t % 216 + 1)
     filename = f"instance/player_data/player_{current_user.id}.pck"
     with open(filename, "rb") as file:
         data = pickle.load(file)
-    concat_slices(data, current_data)
+    concat_slices(data, history)
 
     network_data = None
     if current_user.network is not None:
         filename = f"instance/network_data/{current_user.network.id}/time_series.pck"
         with open(filename, "rb") as file:
             network_data = pickle.load(file)
-        concat_slices(network_data, current_user.network.current_data.get_data(t=total_t % 216 + 1))
+        concat_slices(network_data, current_user.network.history.get_data(t=total_t % 216 + 1))
 
     current_climate_data = g.engine.data["current_climate_data"].get_data(t=total_t % 216 + 1)
     with open("instance/server_data/climate_data.pck", "rb") as file:

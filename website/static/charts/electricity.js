@@ -78,18 +78,18 @@ function graph_sketch(s) {
                     s.push();
                     let sum = s.upper_bound;
                     if (s.percent == "percent") {
-                        const groups = Object.keys(s.current_data);
+                        const groups = Object.keys(s.history);
                         sum = groups.reduce((acc, group) => {
                             if (s.keys[group] === false) {
                                 return acc;
                             }
-                            return acc + s.current_data[group][res_id][t_view];
+                            return acc + s.history[group][res_id][t_view];
                         }, 0);
                     }
                     for (const group in s.keys) {
-                        if (group in s.current_data) {
-                            if (s.current_data[group][res_id][t_view] > 1 && s.keys[group]) {
-                                let h = -s.current_data[group][res_id][t_view] * s.graph_h / sum;
+                        if (group in s.history) {
+                            if (s.history[group][res_id][t_view] > 1 && s.keys[group]) {
+                                let h = -s.history[group][res_id][t_view] * s.graph_h / sum;
                                 s.ellipse(0, h, 8, 8);
                                 s.translate(0, h);
                             }
@@ -97,8 +97,8 @@ function graph_sketch(s) {
                     }
                     s.pop();
 
-                    for (const group in s.current_data) {
-                        if (s.current_data[group][res_id][t_view] > 1 && s.keys[group]) {
+                    for (const group in s.history) {
+                        if (s.history[group][res_id][t_view] > 1 && s.keys[group]) {
                             count += 1;
                         }
                     }
@@ -123,9 +123,9 @@ function graph_sketch(s) {
 
                     let cumsum = 0;
                     for (const group of Object.keys(s.keys).reverse()) {
-                        if (group in s.current_data) {
-                            if (s.current_data[group][res_id][t_view] > 1 && s.keys[group]) {
-                                cumsum += s.current_data[group][res_id][t_view];
+                        if (group in s.history) {
+                            if (s.history[group][res_id][t_view] > 1 && s.keys[group]) {
+                                cumsum += s.history[group][res_id][t_view];
                                 alternate_fill(s);
                                 s.rect(0, 0, 160, 17);
                                 s.push();
@@ -136,7 +136,7 @@ function graph_sketch(s) {
                                 s.textAlign(LEFT, CENTER);
                                 s.text(cols_and_names[group][1], 20, 5);
                                 s.textAlign(CENTER, CENTER);
-                                s.text(format_power(s.current_data[group][res_id][t_view]), 132, 5);
+                                s.text(format_power(s.history[group][res_id][t_view]), 132, 5);
                                 s.translate(0, 16);
                             }
                         }
@@ -211,10 +211,10 @@ function graph_sketch(s) {
     };
 
     s.render_graph = function (regen_table = true) {
-        s.current_data = data.generation;
+        s.history = data.generation;
         s.keys = keys_generation;
         if (s.view == "consumption") {
-            s.current_data = data.demand;
+            s.history = data.demand;
             s.keys = keys_demand;
         }
         s.graph_h = s.height - margin;
@@ -228,7 +228,7 @@ function graph_sketch(s) {
             s.t0 = 300;
         }
 
-        const sumArray = Object.entries(s.current_data).reduce((acc, [key, arr]) => {
+        const sumArray = Object.entries(s.history).reduce((acc, [key, arr]) => {
             // Skip summing if not displayed
             if (s.keys[key] === false) {
                 return acc;
@@ -254,19 +254,19 @@ function graph_sketch(s) {
             s.graphics.push();
             let sum = s.upper_bound;
             if (s.percent == "percent") {
-                const goups = Object.keys(s.current_data);
+                const goups = Object.keys(s.history);
                 sum = goups.reduce((acc, group) => {
                     if (s.keys[group] === false) {
                         return acc;
                     }
-                    return acc + s.current_data[group][res_id][t];
+                    return acc + s.history[group][res_id][t];
                 }, 0);
             }
             for (const group in s.keys) {
-                if (group in s.current_data) {
-                    if (s.current_data[group][res_id][t] > 1 && s.keys[group]) {
+                if (group in s.history) {
+                    if (s.history[group][res_id][t] > 1 && s.keys[group]) {
                         s.graphics.fill(cols_and_names[group][0]);
-                        let h = s.current_data[group][res_id][t] * s.graph_h / sum;
+                        let h = s.history[group][res_id][t] * s.graph_h / sum;
                         s.graphics.rect(0, 0, s.graph_w / data_len + 1, -h - 1);
                         s.graphics.translate(0, -h);
                     }

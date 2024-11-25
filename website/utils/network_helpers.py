@@ -56,7 +56,7 @@ def create_network(engine, player, name) -> Network:
     db.session.commit()
     network_path = f"instance/network_data/{new_network.id}"
     Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
-    new_network.current_data = CircularBufferNetwork()
+    new_network.history = CircularBufferNetwork()
     new_network.capacities = CapacityData()
     new_network.capacities.update_network(new_network)
     past_data = data_init_network()
