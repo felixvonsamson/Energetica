@@ -551,19 +551,25 @@ def _package_power_generating_facility_base(player: Player, facility):
     """Gets all data shared by power and storage facilities"""
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
-    return {
-        "power_generation": const_config_assets[facility]["base_power_generation"]
-        * power_production_multiplier(player, facility),
-        "ramping_time": const_config_assets[facility]["ramping_time"]
-        if const_config_assets[facility]["ramping_time"] != 0
-        else None,
-        "ramping_speed": const_config_assets[facility]["base_power_generation"]
-        * power_production_multiplier(player, facility)
-        / const_config_assets[facility]["ramping_time"]
-        * 60
-        if const_config_assets[facility]["ramping_time"] != 0
-        else None,
-    } | _capacity_factors(player, facility)
+    return (
+        {
+            "power_generation": const_config_assets[facility]["base_power_generation"]
+            * power_production_multiplier(player, facility)
+        }
+        | (
+            {
+                "ramping_time": const_config_assets[facility]["ramping_time"],
+                "ramping_speed": const_config_assets[facility]["base_power_generation"]
+                * power_production_multiplier(player, facility)
+                / const_config_assets[facility]["ramping_time"]
+                * 60,
+            }
+            if const_config_assets[facility]["ramping_time"] != 0
+            and const_config_assets[facility]["ramping_time"] > engine.in_game_seconds_per_tick
+            else {}
+        )
+        | _capacity_factors(player, facility)
+    )
 
 
 def _capacity_factors(player: Player, facility: str):

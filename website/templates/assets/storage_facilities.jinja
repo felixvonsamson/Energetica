@@ -182,13 +182,15 @@
               </td>
             </tr>
             {# Ramping Speed #}
-            <tr>
-              <td>Ramping speed</td>
-              <td class="txt_center">
-                <strong id="ramping_speed"></strong>
-                <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.ramping_speed }}) + "/min";</script>
-              </td>
-            </tr>
+            {% if "ramping_speed" in facility_data %}
+              <tr>
+                <td>Ramping speed</td>
+                <td class="txt_center">
+                  <strong id="ramping_speed"></strong>
+                  <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.ramping_speed }}) + "/min";</script>
+                </td>
+              </tr>
+            {% endif %}
             {# Efficiency #}
             <tr>
               <td>Efficiency</td>
