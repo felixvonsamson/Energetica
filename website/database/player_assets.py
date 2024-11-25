@@ -55,7 +55,7 @@ class OngoingConstruction(db.Model):
         For other types of constructions, returns None.
         """
         if "level" not in current_app.config["engine"].data[type(self).__name__][self.id]:
-            self.compute_prerequisites_and_level()
+            self.recompute_prerequisites_and_level()
         return current_app.config["engine"].data[type(self).__name__][self.id]["level"]
 
     @level.setter
@@ -67,7 +67,7 @@ class OngoingConstruction(db.Model):
     def prerequisites(self) -> list[int]:
         """Return a list of the id's of ongoing constructions that this constructions depends on."""
         if "prerequisites" not in current_app.config["engine"].data[type(self).__name__][self.id]:
-            self.compute_prerequisites_and_level()
+            self.recompute_prerequisites_and_level()
         return current_app.config["engine"].data[type(self).__name__][self.id]["prerequisites"]
 
     @prerequisites.setter
@@ -75,11 +75,11 @@ class OngoingConstruction(db.Model):
         """Set the prerequisites of the ongoing construction."""
         current_app.config["engine"].data[type(self).__name__][self.id]["prerequisites"] = value
 
-    def recompute_prerequisites_and_level(self):
+    def recompute_prerequisites_and_level(self) -> None:
         """Recompute the prerequisites and level of an ongoing construction."""
-        self.compute_prerequisites_and_level()
+        self.prerequisites, self.level = self._compute_prerequisites_and_level
 
-    def compute_prerequisites_and_level(self):
+    def _compute_prerequisites_and_level(self) -> tuple[list[int], int]:
         """Compute the prerequisites and level of an ongoing construction."""
         from website.database.player import Player
 
@@ -132,8 +132,7 @@ class OngoingConstruction(db.Model):
                     )
                     if level + offset - 1 >= candidate_prerequisite_level:
                         prerequisites.append(candidate_prerequisite_id)
-        self.prerequisites = prerequisites
-        self.level = level
+        return prerequisites, level
 
 
 class ActiveFacility(db.Model):
