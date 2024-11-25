@@ -101,6 +101,7 @@ class GameEngine(object):
 
     asset_family_by_name = {
         asset_type: asset_family
+        for dict in [vars()]
         for asset_family in [
             "Power facilities",
             "Extraction facilities",
@@ -108,7 +109,7 @@ class GameEngine(object):
             "Functional facilities",
             "Technologies",
         ]
-        for asset_type in vars()[asset_family.lower().replace(" ", "_")]
+        for asset_type in dict[asset_family.lower().replace(" ", "_")]
     }
 
     price_keys = (
