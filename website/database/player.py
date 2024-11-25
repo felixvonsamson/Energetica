@@ -57,7 +57,7 @@ class PlayerCache(object):
         return package_storage_facilities(player)
 
     @cached_property
-    def extraction_facility_data(self):
+    def extraction_facilities_data(self):
         player = Player.query.get(self.player_id)
         return package_extraction_facilities(player)
 
@@ -685,7 +685,7 @@ class Player(db.Model, UserMixin):
         if storage_facilities and "storage_facilities_data" in self.cache.__dict__:
             del self.cache.storage_facilities_data
         if extraction_facilities and "extraction_facility_data" in self.cache.__dict__:
-            del self.cache.extraction_facility_data
+            del self.cache.extraction_facilities_data
         if functional_facilities and "functional_facilities_data" in self.cache.__dict__:
             del self.cache.functional_facilities_data
         if technologies and "technologies_data" in self.cache.__dict__:
@@ -700,7 +700,7 @@ class Player(db.Model, UserMixin):
             if storage_facilities:
                 pages_data |= {"storage_facilities": self.cache.storage_facilities_data}
             if extraction_facilities:
-                pages_data |= {"extraction_facilities": self.cache.extraction_facility_data}
+                pages_data |= {"extraction_facilities": self.cache.extraction_facilities_data}
             if functional_facilities:
                 pages_data |= {"functional_facilities": self.cache.functional_facilities_data}
             if technologies:
