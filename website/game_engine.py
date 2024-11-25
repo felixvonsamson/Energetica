@@ -11,7 +11,6 @@ from datetime import datetime
 from gevent.lock import RLock
 
 from website.database.player import NetworkData, PlayerData
-from website.database.player_assets import OngoingConstructionCache
 
 from .config.assets import config, const_config
 from .database.engine_data import EmissionData
@@ -155,7 +154,7 @@ class GameEngine(object):
         self.data["by_network"] = defaultdict(NetworkData)
         self.buffered = {}  # stores buffered values for mixed_database
         self.buffered["by_player"] = {}
-        self.buffered["by_ongoing_construction"] = defaultdict(OngoingConstructionCache)
+        self.buffered["by_ongoing_construction"] = {}
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
         self.data["start_date"] = start_date or datetime.now()  # 0 point of server time

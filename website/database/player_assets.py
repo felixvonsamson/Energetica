@@ -69,6 +69,10 @@ class OngoingConstruction(db.Model):
 
     @cached_property
     def cache(self) -> OngoingConstructionCache:
+        if self.id not in current_app.config["engine"].buffered["by_ongoing_construction"]:
+            current_app.config["engine"].buffered["by_ongoing_construction"][self.id] = OngoingConstructionCache(
+                self.id
+            )
         return current_app.config["engine"].buffered["by_ongoing_construction"][self.id]
 
     def recompute_prerequisites_and_level(self) -> None:
