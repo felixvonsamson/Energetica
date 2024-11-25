@@ -206,7 +206,6 @@ def extraction_facility_demand(engine, new_values, player, demand):
 def industry_demand_and_revenues(engine, player, demand, revenues):
     """calculate power consumption and revenues from industry"""
     # interpolating seasonal factor on the day
-    assets = player.config
     ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
     real_t = engine.data["total_t"] + engine.data["delta_t"]  # this ensures that the year starts at real time midnight
     day = round(real_t // ticks_per_day)
@@ -215,9 +214,9 @@ def industry_demand_and_revenues(engine, player, demand, revenues):
     seasonal_factor = (sf1 * (ticks_per_day - real_t % ticks_per_day) + sf2 * (real_t % ticks_per_day)) / ticks_per_day
     intra_day_t = real_t % ticks_per_day
     intra_day_factor = engine.industry_demand[round(intra_day_t * 1440 / ticks_per_day)]
-    demand["industry"] = intra_day_factor * seasonal_factor * assets["industry"]["power_consumption"]
+    demand["industry"] = intra_day_factor * seasonal_factor * player.config["industry"]["power_consumption"]
     # calculate income of industry per tick
-    revenues["industry"] = assets["industry"]["income_per_day"] / ticks_per_day
+    revenues["industry"] = player.config["industry"]["income_per_day"] / ticks_per_day
     for ud in player.under_construction:
         # industry demand ramps up during construction
         if ud.name == "industry":
@@ -794,10 +793,9 @@ def resources_and_pollution(engine, new_values, player):
 
     # Carbon capture CO2 absorption
     if player.carbon_capture > 0:
-        assets = player.config
-        satisfaction = demand["carbon_capture"] / assets["carbon_capture"]["power_consumption"]
+        satisfaction = demand["carbon_capture"] / player.config["carbon_capture"]["power_consumption"]
         captured_co2 = (
-            assets["carbon_capture"]["absorption"]
+            player.config["carbon_capture"]["absorption"]
             * engine.data["current_climate_data"].get_co2()
             * engine.in_game_seconds_per_tick
             / 86400
