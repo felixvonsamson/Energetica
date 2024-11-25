@@ -16,7 +16,7 @@ from website.technology_effects import package_constructions_page_data
 from website.utils.assets import decrease_project_priority, queue_project, toggle_pause_project
 from website.utils.chat import add_message, create_chat, create_group_chat, hide_chat_disclaimer
 from website.utils.misc import confirm_location, package_weather_data
-from website.utils.network import create_network, join_network, leave_network
+from website.utils.network_helpers import create_network, join_network, leave_network
 
 websocket_blueprint = Blueprint("rest_api", __name__)
 

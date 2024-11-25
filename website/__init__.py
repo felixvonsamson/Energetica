@@ -158,7 +158,7 @@ def create_app(
     # creates the engine (and loading the save if it exists)
     engine = website.game_engine.GameEngine(clock_time, in_game_seconds_per_tick, random_seed, start_date)
 
-    from .utils.game_engine import data_init_climate
+    from .utils.climate_helpers import data_init_climate
 
     Path("instance/player_data").mkdir(parents=True, exist_ok=True)
     if not os.path.isfile("instance/server_data/climate_data.pck"):
@@ -296,7 +296,7 @@ def create_app(
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        from .utils.game_engine import state_update
+        from .utils.tick_execution import state_update
 
         scheduler = APScheduler()
         scheduler.init_app(app)

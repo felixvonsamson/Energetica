@@ -7,7 +7,7 @@ from website.database.map import Hex
 from website.database.player import Network, Player
 from website.utils.assets import finish_project, queue_project
 from website.utils.misc import confirm_location
-from website.utils.network import create_network, join_network
+from website.utils.network_helpers import create_network, join_network
 
 
 def init_test_players(engine):

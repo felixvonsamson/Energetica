@@ -14,7 +14,7 @@ from flask_login import current_user, login_required
 import website.utils.assets
 import website.utils.chat
 import website.utils.misc
-import website.utils.network
+import website.utils.network_helpers
 import website.utils.resource_market
 from website.config.assets import wind_power_curve
 from website.database.map import Hex
@@ -567,7 +567,9 @@ def change_network_prices():
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
     updated_prices = {k.lstrip("price_"): v for k, v in request_data["prices"].items()}
-    website.utils.network.set_network_prices(engine=g.engine, player=current_user, updated_prices=updated_prices)
+    website.utils.network_helpers.set_network_prices(
+        engine=g.engine, player=current_user, updated_prices=updated_prices
+    )
     return jsonify({"response": "success"})
 
 
@@ -579,7 +581,7 @@ def request_change_facility_priority():
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
     priority = request_data["priority"]
-    website.utils.network.change_facility_priority(engine=g.engine, player=current_user, priority=priority)
+    website.utils.network_helpers.change_facility_priority(engine=g.engine, player=current_user, priority=priority)
     return jsonify({"response": "success"})
 
 
@@ -646,7 +648,7 @@ def join_network():
     request_data = request.form
     network_id = int(request_data["choose_network"])
     network: Network = Network.query.get(network_id)
-    website.utils.network.join_network(g.engine, current_user, network)
+    website.utils.network_helpers.join_network(g.engine, current_user, network)
     flash(f"You joined the network {network.name}", category="message")
     g.engine.log(f"{current_user.username} joined the network {current_user.network.name}")
     return redirect("/network", code=303)
@@ -659,7 +661,7 @@ def create_network():
     request_data = request.form
     network_name = request_data["network_name"]
     try:
-        website.utils.network.create_network(g.engine, current_user, network_name)
+        website.utils.network_helpers.create_network(g.engine, current_user, network_name)
     except GameException as excp:
         match excp.exception_type:
             case "nameLengthInvalid":
@@ -679,7 +681,7 @@ def leave_network():
     network = current_user.network
     if network is None:
         return jsonify({"response": "notInNetwork"}), 404
-    website.utils.network.leave_network(g.engine, current_user)
+    website.utils.network_helpers.leave_network(g.engine, current_user)
     flash(f"You left network {network.name}", category="message")
     return redirect("/network", code=303)
 

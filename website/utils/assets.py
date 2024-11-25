@@ -11,7 +11,7 @@ from website.api import websocket
 from website.database.player import Player
 from website.database.player_assets import ActiveFacility, OngoingConstruction
 from website.game_engine import Confirm, GameEngine, GameException
-from website.utils.network import reorder_facility_priorities
+from website.utils.network_helpers import reorder_facility_priorities
 
 
 def finish_project(construction: OngoingConstruction, skip_notifications=False):

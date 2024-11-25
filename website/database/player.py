@@ -1,5 +1,7 @@
 """This module contains the classes that define the players and networks"""
 
+from __future__ import annotations
+
 import json
 from datetime import datetime
 from itertools import chain
@@ -149,7 +151,7 @@ class Player(db.Model, UserMixin):
     climate_events = db.relationship("ClimateEventRecovery", backref="player")
 
     @property
-    def engine(self) -> "GameEngine":
+    def engine(self) -> GameEngine:
         return current_app.config["engine"]
 
     @property

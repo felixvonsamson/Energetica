@@ -54,7 +54,8 @@ def _simulate(
     import website.production_update as production_update
     from website import db
     from website.database.map import Hex
-    from website.utils.game_engine import check_events_completion, climate_event_impact
+    from website.utils.climate_helpers import climate_event_impact
+    from website.utils.tick_execution import check_events_completion
 
     with app.app_context():
         trials = 0
