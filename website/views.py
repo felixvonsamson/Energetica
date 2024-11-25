@@ -20,8 +20,8 @@ changelog = Blueprint("changelog", __name__, static_folder="static")
 @overviews.before_request
 @login_required
 def set_ctx():
-    player: Player = current_user
     """This function is called before every request"""
+    player: Player = current_user
     if player.tile is None:
         return redirect("/location_choice", code=302)
 
