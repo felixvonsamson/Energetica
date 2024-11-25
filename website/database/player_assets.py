@@ -1,12 +1,17 @@
 """Here are defined the classes for the items stored in the database"""
 
-from typing import List
+from typing import TYPE_CHECKING
+
+from flask import current_app
 
 from website import db
 
+if TYPE_CHECKING:
+    from website.game_engine import GameEngine
+
 
 class OngoingConstruction(db.Model):
-    """class that stores the things currently under construction"""
+    """class that stores the things currently under construction."""
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
@@ -27,30 +32,6 @@ class OngoingConstruction(db.Model):
     # can access player directly with .player
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
-    # A list of OngoingConstruction id's
-    _prerequisites = None
-    # The level for this construction if it is a technology or a functional facility, otherwise -1 as special value
-    _level = None
-
-    def prerequisites(self, recompute=False) -> List[int]:
-        """Returns a list of the id's of ongoing constructions that this constructions depends on"""
-        if self._prerequisites is None or recompute:
-            self._compute_prerequisites_and_level()
-        return self._prerequisites
-
-    def level(self) -> int:
-        """
-        In the case of functional facilities and technologies, returns the level of this construction.
-        Otherwise, returns 0.
-        """
-        if self._level is None:
-            self._compute_prerequisites_and_level()
-        return self._level
-
-    def reset_prerequisites(self):
-        """Resets the prerequisites, so that it is recomputed next time prerequisites are accessed"""
-        self._prerequisites = None
-
     def is_paused(self) -> bool:
         """Returns True if this construction is paused"""
         return self.suspension_time is not None
@@ -66,46 +47,78 @@ class OngoingConstruction(db.Model):
         self.start_time += engine.data["total_t"] - self.suspension_time
         self.suspension_time = None
 
-    def _compute_prerequisites_and_level(self):
+    @property
+    def level(self) -> int:
+        """Return the level of the ongoing construction when applicable.
+
+        For functional facilities and technologies, returns the level of this construction.
+        For other types of constructions, returns None.
+        """
+        if "level" not in current_app.config["engine"].data[type(self).__name__][self.id]:
+            self.recompute_prerequisites_and_level()
+        return current_app.config["engine"].data[type(self).__name__][self.id]["level"]
+
+    @level.setter
+    def level(self, value: int):
+        """Set the level of the ongoing construction."""
+        current_app.config["engine"].data[type(self).__name__][self.id]["level"] = value
+
+    @property
+    def prerequisites(self) -> list[int]:
+        """Return a list of the id's of ongoing constructions that this constructions depends on."""
+        if "prerequisites" not in current_app.config["engine"].data[type(self).__name__][self.id]:
+            self.recompute_prerequisites_and_level()
+        return current_app.config["engine"].data[type(self).__name__][self.id]["prerequisites"]
+
+    @prerequisites.setter
+    def prerequisites(self, value: list[int]):
+        """Set the prerequisites of the ongoing construction."""
+        current_app.config["engine"].data[type(self).__name__][self.id]["prerequisites"] = value
+
+    def recompute_prerequisites_and_level(self) -> None:
+        """Recompute the prerequisites and level of an ongoing construction."""
+        self.prerequisites, self.level = self._compute_prerequisites_and_level
+
+    def _compute_prerequisites_and_level(self) -> tuple[list[int], int]:
+        """Compute the prerequisites and level of an ongoing construction."""
         from website.database.player import Player
 
+        if not TYPE_CHECKING:
+            from website.database.player_assets import OngoingConstruction
+
         player: Player = Player.query.get(self.player_id)
-        self._prerequisites = []
+        prerequisites = []
+        level = None
         if self.family == "Functional facilities":
             # For functional facilities, the only prerequisites are ongoing constructions of the same type
             priority_list = player.read_list("construction_priorities")
             this_priority_index = priority_list.index(self.id)
             # Go through all ongoing constructions that are higher up in the priority order
-            self._level = getattr(player, self.name) + 1
+            level = getattr(player, self.name) + 1
             for candidate_prerequisite_id in priority_list[:this_priority_index]:
                 # Add them as a prerequisite, if they are of the same type
                 candidate_prerequisite = OngoingConstruction.query.get(candidate_prerequisite_id)
                 if candidate_prerequisite.name == self.name:
-                    self._prerequisites.append(candidate_prerequisite_id)
-                    self._level += 1
-            return
-        if self.family == "Technologies":
+                    prerequisites.append(candidate_prerequisite_id)
+                    level += 1
+        elif self.family == "Technologies":
             # For technologies, const config needs to be checked
-            from flask import current_app
-
-            from website.game_engine import GameEngine
-
             engine: GameEngine = current_app.config["engine"]
             const_config = engine.const_config["assets"]
             requirements = const_config[self.name]["requirements"]
             priority_list = player.read_list("research_priorities")
             this_priority_index: int = priority_list.index(self.id)
             # Compute this constructions level by looking at constructions higher up in the priority list with same name
-            self._level = getattr(player, self.name) + 1
+            level = getattr(player, self.name) + 1
             for other_construction_id in priority_list[:this_priority_index]:
                 other_construction: OngoingConstruction = OngoingConstruction.query.get(other_construction_id)
                 if other_construction.name == self.name:
-                    self._level += 1
+                    level += 1
             num_ongoing_researches_of = {}
             for candidate_prerequisite_id in priority_list[:this_priority_index]:
                 candidate_prerequisite: OngoingConstruction = OngoingConstruction.query.get(candidate_prerequisite_id)
                 if candidate_prerequisite.name == self.name:
-                    self._prerequisites.append(candidate_prerequisite_id)
+                    prerequisites.append(candidate_prerequisite_id)
                     continue
                 if candidate_prerequisite.name in requirements:
                     num_ongoing_researches_of[candidate_prerequisite.name] = (
@@ -117,10 +130,9 @@ class OngoingConstruction(db.Model):
                         getattr(player, candidate_prerequisite.name)
                         + num_ongoing_researches_of[candidate_prerequisite.name]
                     )
-                    if self._level + offset - 1 >= candidate_prerequisite_level:
-                        self._prerequisites.append(candidate_prerequisite_id)
-            return
-        self._level = -1
+                    if level + offset - 1 >= candidate_prerequisite_level:
+                        prerequisites.append(candidate_prerequisite_id)
+        return prerequisites, level
 
 
 class ActiveFacility(db.Model):

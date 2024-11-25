@@ -19,6 +19,13 @@ from website.database.engine_data import (
 )
 from website.database.messages import Chat, Message, Notification, player_chats
 from website.database.player_assets import ActiveFacility, OngoingConstruction
+from website.technology_effects import (
+    package_available_technologies,
+    package_extraction_facilities,
+    package_functional_facilities,
+    package_power_facilities,
+    package_storage_facilities,
+)
 
 if TYPE_CHECKING:
     from website.game_engine import GameEngine
@@ -141,43 +148,45 @@ class Player(db.Model, UserMixin):
     active_facilities = db.relationship("ActiveFacility", backref="player", lazy="dynamic")
     climate_events = db.relationship("ClimateEventRecovery", backref="player")
 
-    _buffered_data_for_power_facilities_page = None
-    _buffered_data_for_storage_facilities_page = None
-    _buffered_data_for_extraction_facilities_page = None
-    _buffered_data_for_functional_facilities_page = None
-    _buffered_data_for_technologies_page = None
-    _buffered_data_for_resource_market_page = None
-
     @property
     def engine(self) -> "GameEngine":
         return current_app.config["engine"]
 
     @property
+    def config(self):
+        return current_app.config["engine"].config[self]
+
+    @property
+    def socketio_clients(self) -> List[int]:
+        return current_app.config["engine"].clients[self.id]
+
+    @property
     def current_data(self) -> CircularBufferPlayer:
-        return current_app.config["engine"].data["players"][self.id]["current_data"]
+        return current_app.config["engine"].data[type(self).__name__][self.id]["current_data"]
 
     @current_data.setter
     def current_data(self, value):
-        current_app.config["engine"].data["players"][self.id]["current_data"] = value
+        current_app.config["engine"].data[type(self).__name__][self.id]["current_data"] = value
 
     @property
     def capacities(self) -> CapacityData:
-        return current_app.config["engine"].data["players"][self.id]["capacities"]
+        return current_app.config["engine"].data[type(self).__name__][self.id]["capacities"]
 
     @capacities.setter
     def capacities(self, value):
-        current_app.config["engine"].data["players"][self.id]["capacities"] = value
+        current_app.config["engine"].data[type(self).__name__][self.id]["capacities"] = value
 
     @property
     def cumul_emissions(self) -> CumulativeEmissionsData:
-        return current_app.config["engine"].data["players"][self.id]["cumul_emissions"]
+        return current_app.config["engine"].data[type(self).__name__][self.id]["cumul_emissions"]
 
     @cumul_emissions.setter
     def cumul_emissions(self, value):
-        current_app.config["engine"].data["players"][self.id]["cumul_emissions"] = value
+        current_app.config["engine"].data[type(self).__name__][self.id]["cumul_emissions"] = value
 
     @property
     def is_in_network(self):
+        """Returns True if the player is in a network"""
         return self.network_id is not None
 
     def change_graph_view(self, view):
@@ -574,7 +583,7 @@ class Player(db.Model, UserMixin):
                 ]
             }
             | {"display_name": current_app.config["engine"].const_config["assets"][construction.name]["name"]}
-            | ({"level": construction.level()} if construction.level() >= 0 else {})
+            | ({"level": construction.level} if construction.level >= 0 else {})
             for construction in self.under_construction
         }
 
@@ -629,89 +638,137 @@ class Player(db.Model, UserMixin):
             "extraction_facilities": get_facility_data(engine.extraction_facilities),
         }
 
+    @property
+    def cached_power_facilities_data(self):
+        """Cached data for the power facilities page"""
+        if "cached_power_facilities_data" not in current_app.config["engine"].buffered[type(self).__name__][self.id]:
+            self.cached_power_facilities_data = package_power_facilities(self)
+        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_power_facilities_data"]
+
+    @cached_power_facilities_data.setter
+    def cached_power_facilities_data(self, value):
+        """Sets the cached data for the power facilities page"""
+        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_power_facilities_data"] = value
+
+    @cached_power_facilities_data.deleter
+    def cached_power_facilities_data(self):
+        """Deletes the cached data for the power facilities page"""
+        del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_power_facilities_data"]
+
+    @property
+    def cached_storage_facilities_data(self):
+        """Cached data for the storage facilities page"""
+        if "cached_storage_facilities_data" not in current_app.config["engine"].buffered[type(self).__name__][self.id]:
+            self.cached_storage_facilities_data = package_storage_facilities(self)
+        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_storage_facilities_data"]
+
+    @cached_storage_facilities_data.setter
+    def cached_storage_facilities_data(self, value):
+        """Sets the cached data for the storage facilities page"""
+        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_storage_facilities_data"] = value
+
+    @cached_storage_facilities_data.deleter
+    def cached_storage_facilities_data(self):
+        """Deletes the cached data for the storage facilities page"""
+        del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_storage_facilities_data"]
+
+    @property
+    def cached_extraction_facility_data(self):
+        """Cached data for the extraction facilities page"""
+        if "cached_extraction_facility_data" not in current_app.config["engine"].buffered[type(self).__name__][self.id]:
+            self.cached_extraction_facility_data = package_extraction_facilities(self)
+        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_extraction_facility_data"]
+
+    @cached_extraction_facility_data.deleter
+    def cached_extraction_facility_data(self):
+        """Deletes the cached data for the extraction facilities page"""
+        del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_extraction_facility_data"]
+
+    @cached_extraction_facility_data.setter
+    def cached_extraction_facility_data(self, value):
+        """Sets the cached data for the extraction facilities page"""
+        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_extraction_facility_data"] = value
+
+    @property
+    def cached_functional_facilities_data(self):
+        """Cached data for the functional facilities page"""
+        if (
+            "cached_functional_facilities_data"
+            not in current_app.config["engine"].buffered[type(self).__name__][self.id]
+        ):
+            self.cached_functional_facilities_data = package_functional_facilities(self)
+        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_functional_facilities_data"]
+
+    @cached_functional_facilities_data.deleter
+    def cached_functional_facilities_data(self):
+        """Deletes the cached data for the functional facilities page"""
+        del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_functional_facilities_data"]
+
+    @cached_functional_facilities_data.setter
+    def cached_functional_facilities_data(self, value):
+        """Sets the cached data for the functional facilities page"""
+        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_functional_facilities_data"] = value
+
+    @property
+    def cached_technologies_data(self):
+        """Cached data for the technologies page"""
+        if "cached_technologies_data" not in current_app.config["engine"].buffered[type(self).__name__][self.id]:
+            self.cached_technologies_data = package_available_technologies(self)
+        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_technologies_data"]
+
+    @cached_technologies_data.setter
+    def cached_technologies_data(self, value):
+        """Sets the cached data for the technologies page"""
+        current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_technologies_data"] = value
+
+    @cached_technologies_data.deleter
+    def cached_technologies_data(self):
+        """Deletes the cached data for the technologies page"""
+        del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_technologies_data"]
+
     def invalidate_recompute_and_dispatch_data_for_pages(
         self,
+        *,
         power_facilities=False,
         storage_facilities=False,
         extraction_facilities=False,
         functional_facilities=False,
         technologies=False,
-        resource_market=False,
+        # resource_market=False,
     ):
         """
         Signal to all instances of clients for this player that there is possibly new data for the specified page.
         This function will invalidate the data for all corresponding arguments that are set to True.
         """
         if power_facilities:
-            self._buffered_data_for_power_facilities_page = None
+            del self.cached_power_facilities_data
         if storage_facilities:
-            self._buffered_data_for_storage_facilities_page = None
+            del self.cached_storage_facilities_data
         if extraction_facilities:
-            self._buffered_data_for_extraction_facilities_page = None
+            del self.cached_extraction_facility_data
         if functional_facilities:
-            self._buffered_data_for_functional_facilities_page = None
+            del self.cached_functional_facilities_data
         if technologies:
-            self._buffered_data_for_technologies_page = None
-        if resource_market:
-            self._buffered_data_for_resource_market_page = None
-        engine = current_app.config["engine"]
-        if engine.clients[self.id]:
+            del self.cached_technologies_data
+        # if resource_market:
+        #     self._buffered_data_for_resource_market_page = None
+        if self.socketio_clients:
             # or engine.websocket_dict[self.id]:
             pages_data = {}
             if power_facilities:
-                pages_data |= {"power_facilities": self.get_packaged_data_for_power_facilities_page()}
+                pages_data |= {"power_facilities": self.cached_power_facilities_data}
             if storage_facilities:
-                pages_data |= {"storage_facilities": self.get_packaged_data_for_storage_facilities_page()}
+                pages_data |= {"storage_facilities": self.cached_storage_facilities_data}
             if extraction_facilities:
-                pages_data |= {"extraction_facilities": self.get_packaged_data_for_extraction_facilities_page()}
+                pages_data |= {"extraction_facilities": self.cached_extraction_facility_data}
             if functional_facilities:
-                pages_data |= {"functional_facilities": self.get_packaged_data_for_functional_facilities_page()}
+                pages_data |= {"functional_facilities": self.cached_functional_facilities_data}
             if technologies:
-                pages_data |= {"technologies": self.get_packaged_data_for_technologies_page()}
+                pages_data |= {"technologies": self.cached_technologies_data}
             # if resource_market:
             #     pages_data |= {"power_facilities": self.get_packaged_data_for_power_facilities_page()}
             self.emit("update_page_data", pages_data)
             # TODO: update clients over websocket
-
-    def get_packaged_data_for_power_facilities_page(self):
-        """Get buffered data or recompute"""
-        from website import technology_effects
-
-        if self._buffered_data_for_power_facilities_page is None:
-            self._buffered_data_for_power_facilities_page = technology_effects.package_power_facilities(self)
-        return self._buffered_data_for_power_facilities_page
-
-    def get_packaged_data_for_storage_facilities_page(self):
-        """Get buffered data or recompute"""
-        from website import technology_effects
-
-        if self._buffered_data_for_storage_facilities_page is None:
-            self._buffered_data_for_storage_facilities_page = technology_effects.package_storage_facilities(self)
-        return self._buffered_data_for_storage_facilities_page
-
-    def get_packaged_data_for_extraction_facilities_page(self):
-        """Get buffered data or recompute"""
-        from website import technology_effects
-
-        if self._buffered_data_for_extraction_facilities_page is None:
-            self._buffered_data_for_extraction_facilities_page = technology_effects.package_extraction_facilities(self)
-        return self._buffered_data_for_extraction_facilities_page
-
-    def get_packaged_data_for_functional_facilities_page(self):
-        """Get buffered data or recompute"""
-        from website import technology_effects
-
-        if self._buffered_data_for_functional_facilities_page is None:
-            self._buffered_data_for_functional_facilities_page = technology_effects.package_functional_facilities(self)
-        return self._buffered_data_for_functional_facilities_page
-
-    def get_packaged_data_for_technologies_page(self):
-        """Get buffered data or recompute"""
-        from website import technology_effects
-
-        if self._buffered_data_for_technologies_page is None:
-            self._buffered_data_for_technologies_page = technology_effects.package_available_technologies(self)
-        return self._buffered_data_for_technologies_page
 
 
 class Network(db.Model):
@@ -723,19 +780,19 @@ class Network(db.Model):
 
     @property
     def current_data(self) -> CircularBufferNetwork:
-        return current_app.config["engine"].data["networks"][self.id]["current_data"]
+        return current_app.config["engine"].data[type(self).__name__][self.id]["current_data"]
 
     @current_data.setter
     def current_data(self, value):
-        current_app.config["engine"].data["networks"][self.id]["current_data"] = value
+        current_app.config["engine"].data[type(self).__name__][self.id]["current_data"] = value
 
     @property
     def capacities(self) -> CapacityData:
-        return current_app.config["engine"].data["networks"][self.id]["capacities"]
+        return current_app.config["engine"].data[type(self).__name__][self.id]["capacities"]
 
     @capacities.setter
     def capacities(self, value):
-        current_app.config["engine"].data["networks"][self.id]["capacities"] = value
+        current_app.config["engine"].data[type(self).__name__][self.id]["capacities"] = value
 
 
 class PlayerUnreadMessages(db.Model):

@@ -3,8 +3,10 @@ This files contains all the functions to calculate the different parameters of f
 levels of the player.
 """
 
+from __future__ import annotations
+
 import math
-from typing import Dict, List
+from typing import TYPE_CHECKING, Dict, List
 
 import numpy as np
 from flask import current_app
@@ -14,11 +16,12 @@ from website.config.assets import (
     player_lab_workers_for_level,
     warehouse_capacity_for_level,
 )
-from website.database.map import Hex
-from website.database.player import Player
-from website.game_engine import GameEngine
+from website.database.player_assets import ActiveFacility, OngoingConstruction
 
-from .database.player_assets import ActiveFacility, OngoingConstruction
+if TYPE_CHECKING:
+    from website.database.map import Hex
+    from website.database.player import Player
+    from website.game_engine import GameEngine
 
 # This dictionary describes what multipliers are stored where.
 # See also the docstring for the individual multiplier functions.
@@ -761,22 +764,20 @@ def package_functional_facilities(player: Player):
     def carbon_capture_power_consumption_for_level(level):
         if level == 0:
             return None
-        else:
-            return (
-                const_config_assets["carbon_capture"]["base_power_consumption"]
-                * const_config_assets["carbon_capture"]["power_factor"] ** level
-            )
+        return (
+            const_config_assets["carbon_capture"]["base_power_consumption"]
+            * const_config_assets["carbon_capture"]["power_factor"] ** level
+        )
 
     def carbon_capture_absorption(level):
         if level == 0:
             return None
-        else:
-            return (
-                const_config_assets["carbon_capture"]["base_absorption_per_day"]
-                * const_config_assets["carbon_capture"]["absorption_factor"] ** level
-                * engine.data["current_climate_data"].get_co2()  # TODO: make this part be a client side computation
-                / 24
-            )
+        return (
+            const_config_assets["carbon_capture"]["base_absorption_per_day"]
+            * const_config_assets["carbon_capture"]["absorption_factor"] ** level
+            * engine.data["current_climate_data"].get_co2()  # TODO: make this part be a client side computation
+            / 24
+        )
 
     next_industry_level = next_level(player, "industry")
     next_laboratory_level = next_level(player, "laboratory")
