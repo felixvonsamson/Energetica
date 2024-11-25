@@ -75,12 +75,12 @@ def init_table(user_id):
         pickle.dump(past_data, file)
 
 
-def add_player_to_data(user):
+def add_player_to_data(player):
     """Helper function to add a new player to the engine data"""
-    user.current_data = CircularBufferPlayer()
-    user.capacities = CapacityData()
-    user.cumul_emissions = CumulativeEmissionsData()
-    user.capacities.update(user, None)
+    player.current_data = CircularBufferPlayer()
+    player.capacities = CapacityData()
+    player.cumul_emissions = CumulativeEmissionsData()
+    player.capacities.update(player, None)
 
 
 def save_past_data_threaded(app, engine):

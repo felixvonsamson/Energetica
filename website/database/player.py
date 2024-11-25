@@ -3,7 +3,7 @@
 import json
 from datetime import datetime
 from itertools import chain
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from flask import current_app
 from flask_login import UserMixin
@@ -11,19 +11,19 @@ from pywebpush import WebPushException, webpush
 
 from website import db
 from website.config.achievements import achievements
-from website.database.messages import Chat, Message, Notification, player_chats
-from website.database.mixed_database import mixed_db
-from website.database.player_assets import ActiveFacility, OngoingConstruction
-from website.technology_effects import (
-    package_available_technologies,
-    package_extraction_facilities,
-    package_functional_facilities,
-    package_power_facilities,
-    package_storage_facilities,
+from website.database.engine_data import (
+    CapacityData,
+    CircularBufferNetwork,
+    CircularBufferPlayer,
+    CumulativeEmissionsData,
 )
+from website.database.messages import Chat, Message, Notification, player_chats
+from website.database.player_assets import ActiveFacility, OngoingConstruction
+
+if TYPE_CHECKING:
+    from website.game_engine import GameEngine
 
 
-@mixed_db(data_fields={"current_data", "capacities", "cumul_emissions"})
 class Player(db.Model, UserMixin):
     """Class that stores the users"""
 
@@ -140,6 +140,34 @@ class Player(db.Model, UserMixin):
     shipments = db.relationship("Shipment", backref="player")
     active_facilities = db.relationship("ActiveFacility", backref="player", lazy="dynamic")
     climate_events = db.relationship("ClimateEventRecovery", backref="player")
+
+    @property
+    def engine(self) -> "GameEngine":
+        return current_app.config["engine"]
+
+    @property
+    def current_data(self) -> CircularBufferPlayer:
+        return current_app.config["engine"].data["players"][self.id]["current_data"]
+
+    @current_data.setter
+    def current_data(self, value):
+        current_app.config["engine"].data["players"][self.id]["current_data"] = value
+
+    @property
+    def capacities(self) -> CapacityData:
+        return current_app.config["engine"].data["players"][self.id]["capacities"]
+
+    @capacities.setter
+    def capacities(self, value):
+        current_app.config["engine"].data["players"][self.id]["capacities"] = value
+
+    @property
+    def cumul_emissions(self) -> CumulativeEmissionsData:
+        return current_app.config["engine"].data["players"][self.id]["cumul_emissions"]
+
+    @cumul_emissions.setter
+    def cumul_emissions(self, value):
+        current_app.config["engine"].data["players"][self.id]["cumul_emissions"] = value
 
     @property
     def is_in_network(self):
@@ -676,13 +704,28 @@ class Player(db.Model, UserMixin):
             # TODO: update clients over websocket
 
 
-@mixed_db(data_fields={"current_data", "capacities"})
 class Network(db.Model):
     """class that stores the networks of players"""
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True)
     members = db.relationship("Player", backref="network")
+
+    @property
+    def current_data(self) -> CircularBufferNetwork:
+        return current_app.config["engine"].data["networks"][self.id]["current_data"]
+
+    @current_data.setter
+    def current_data(self, value):
+        current_app.config["engine"].data["networks"][self.id]["current_data"] = value
+
+    @property
+    def capacities(self) -> CapacityData:
+        return current_app.config["engine"].data["networks"][self.id]["capacities"]
+
+    @capacities.setter
+    def capacities(self, value):
+        current_app.config["engine"].data["networks"][self.id]["capacities"] = value
 
 
 class PlayerUnreadMessages(db.Model):
