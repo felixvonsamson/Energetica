@@ -189,7 +189,7 @@ def calculate_net_import(new_values):
 def extraction_facility_demand(engine, new_values, player, demand):
     """Calculate power consumption of extraction facilities"""
     player_resources = new_values["resources"]
-    warehouse_caps = engine.config[player]["warehouse_capacities"]
+    warehouse_caps = player.config["warehouse_capacities"]
     for resource, facility in resource_to_extraction.items():
         if player.capacities[facility] is not None:
             max_warehouse = warehouse_caps[resource] - player_resources[resource]
@@ -206,7 +206,7 @@ def extraction_facility_demand(engine, new_values, player, demand):
 def industry_demand_and_revenues(engine, player, demand, revenues):
     """calculate power consumption and revenues from industry"""
     # interpolating seasonal factor on the day
-    assets = engine.config[player]
+    assets = player.config
     ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
     real_t = engine.data["total_t"] + engine.data["delta_t"]  # this ensures that the year starts at real time midnight
     day = round(real_t // ticks_per_day)
@@ -253,7 +253,7 @@ def construction_demand(player, demand):
 
 def shipment_demand(engine, player, demand):
     """calculate the power consumption for shipments"""
-    transport = engine.config[player]["transport"]
+    transport = player.config["transport"]
     for shipment in player.shipments:
         if shipment.suspension_time is None:
             demand["transport"] += transport["power_per_kg"] * shipment.quantity
@@ -295,7 +295,7 @@ def calculate_demand(engine, new_values, player):
     climate_event_recovery_cost(player, revenues)
 
     if player.carbon_capture > 0:
-        demand["carbon_capture"] = engine.config[player]["carbon_capture"]["power_consumption"]
+        demand["carbon_capture"] = player.config["carbon_capture"]["power_consumption"]
 
 
 def reset_resource_reservations():
@@ -376,7 +376,7 @@ def calculate_generation_with_market(engine, new_values, market, player):
     demand_priorities = player.demand_priorities.split(",")
 
     # allow a maximum overdraft of the equivalent of the daily income of the industry
-    max_overdraft = -engine.config[player]["industry"]["income_per_day"]
+    max_overdraft = -player.config["industry"]["income_per_day"]
     if player.money < max_overdraft:
         player.notify(
             "Not Enough Money", "You exceeded your credit limit, you can't buy electricity on the market anymore."
@@ -794,7 +794,7 @@ def resources_and_pollution(engine, new_values, player):
 
     # Carbon capture CO2 absorption
     if player.carbon_capture > 0:
-        assets = engine.config[player]
+        assets = player.config
         satisfaction = demand["carbon_capture"] / assets["carbon_capture"]["power_consumption"]
         captured_co2 = (
             assets["carbon_capture"]["absorption"]

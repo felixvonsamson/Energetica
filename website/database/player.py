@@ -153,6 +153,10 @@ class Player(db.Model, UserMixin):
         return current_app.config["engine"]
 
     @property
+    def config(self):
+        return current_app.config["engine"].config[self]
+
+    @property
     def current_data(self) -> CircularBufferPlayer:
         return current_app.config["engine"].data[type(self).__name__][self.id]["current_data"]
 
