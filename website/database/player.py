@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class PlayerData(object):
-    history: CircularBufferPlayer
+    rolling_history: CircularBufferPlayer
     capacities: CapacityData
     cumul_emissions: CumulativeEmissionsData
 
@@ -207,6 +207,8 @@ class Player(db.Model, UserMixin):
 
     @cached_property
     def cache(self) -> PlayerCache:
+        if self.id not in current_app.config["engine"].buffered["by_player"]:
+            current_app.config["engine"].buffered["by_player"][self.id] = PlayerCache(self.id)
         return current_app.config["engine"].buffered["by_player"][self.id]
 
     @property
@@ -398,7 +400,7 @@ class Player(db.Model, UserMixin):
                 "total_t": engine.data["total_t"],
                 "chart_values": new_values,
                 "climate_values": engine.data["current_climate_data"].get_last_data(),
-                "cumulative_emissions": self.cumul_emissions.get_all(),
+                "cumulative_emissions": self.data.cumul_emissions.get_all(),
                 "money": self.money,
             },
         )
@@ -445,7 +447,7 @@ class Player(db.Model, UserMixin):
 
     def calculate_net_emissions(self):
         """Calculates the net emissions of the player"""
-        cumulative_emissions = self.cumul_emissions.get_all()
+        cumulative_emissions = self.data.cumul_emissions.get_all()
         net_emissions = 0
         for value in cumulative_emissions.values():
             net_emissions += value
@@ -677,15 +679,15 @@ class Player(db.Model, UserMixin):
         Signal to all instances of clients for this player that there is possibly new data for the specified page.
         This function will invalidate the data for all corresponding arguments that are set to True.
         """
-        if power_facilities:
+        if power_facilities and "power_facilities_data" in self.cache.__dict__:
             del self.cache.power_facilities_data
-        if storage_facilities:
+        if storage_facilities and "storage_facilities_data" in self.cache.__dict__:
             del self.cache.storage_facilities_data
-        if extraction_facilities:
+        if extraction_facilities and "extraction_facility_data" in self.cache.__dict__:
             del self.cache.extraction_facility_data
-        if functional_facilities:
+        if functional_facilities and "functional_facilities_data" in self.cache.__dict__:
             del self.cache.functional_facilities_data
-        if technologies:
+        if technologies and "technologies_data" in self.cache.__dict__:
             del self.cache.technologies_data
         # if resource_market:
         #     self._buffered_data_for_resource_market_page = None
@@ -708,6 +710,12 @@ class Player(db.Model, UserMixin):
             # TODO: update clients over websocket
 
 
+@dataclass
+class NetworkData(object):
+    rolling_history: CircularBufferNetwork
+    capacities: CapacityData
+
+
 class Network(db.Model):
     """class that stores the networks of players"""
 
@@ -715,21 +723,9 @@ class Network(db.Model):
     name = db.Column(db.String(50), unique=True)
     members = db.relationship("Player", backref="network")
 
-    @property
-    def history(self) -> CircularBufferNetwork:
-        return current_app.config["engine"].data["by_network"][self.id]["history"]
-
-    @history.setter
-    def history(self, value):
-        current_app.config["engine"].data["by_network"][self.id]["history"] = value
-
-    @property
-    def capacities(self) -> CapacityData:
-        return current_app.config["engine"].data[type(self).__name__][self.id]["capacities"]
-
-    @capacities.setter
-    def capacities(self, value):
-        current_app.config["engine"].data[type(self).__name__][self.id]["capacities"] = value
+    @cached_property
+    def data(self) -> NetworkData:
+        return current_app.config["engine"].data["by_network"][self.id]
 
 
 class PlayerUnreadMessages(db.Model):

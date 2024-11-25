@@ -109,7 +109,7 @@ def save_past_data_threaded(app, engine):
                     "rb",
                 ) as file:
                     past_data = pickle.load(file)
-                new_data = player.data.history.get_data()
+                new_data = player.data.rolling_history.get_data()
                 for category in new_data:
                     for element in new_data[category]:
                         new_el_data = new_data[category][element]
@@ -142,7 +142,7 @@ def save_past_data_threaded(app, engine):
                 ) as file:
                     past_data = pickle.load(file)
 
-                new_data = network.history.get_data()
+                new_data = network.data.rolling_history.get_data()
                 for category in new_data:
                     for group, buffer in new_data[category].items():
                         if group not in past_data[category]:
@@ -237,9 +237,9 @@ def confirm_location(engine: GameEngine, player: Player, location: Hex):
     db.session.commit()
     add_player_to_data(player)
     init_table(player.id)
-    player.data.history.add_subcategory("op_costs", "steam_engine")
-    player.data.history.add_subcategory("generation", "steam_engine")
-    player.data.history.add_subcategory("emissions", "steam_engine")
+    player.data.rolling_history.add_subcategory("op_costs", "steam_engine")
+    player.data.rolling_history.add_subcategory("generation", "steam_engine")
+    player.data.rolling_history.add_subcategory("emissions", "steam_engine")
     websocket.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
 

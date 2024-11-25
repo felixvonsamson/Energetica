@@ -111,7 +111,6 @@ def _simulate(
                     if stop_on_mismatch:
                         break
                 if response.status_code != action["response"]["status_code"]:
-                    print(response.history)
                     print(
                         f"""\033[31mStatus code {response.status_code} does not match expected status code """
                         f"""{action["response"]["status_code"]}.\033[0m"""

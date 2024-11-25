@@ -37,7 +37,7 @@ def update_electricity(engine):
     for player in players:
         if player.tile is None:
             continue
-        new_values[player.id] = player.data.history.init_new_data()
+        new_values[player.id] = player.data.rolling_history.init_new_data()
 
     for network in networks:
         market = init_market()
@@ -56,7 +56,7 @@ def update_electricity(engine):
             "generation": market["generation"],
             "consumption": market["consumption"],
         }
-        network.history.append_value(new_network_values)
+        network.data.rolling_history.append_value(new_network_values)
         for player in network.members:
             player.emit(
                 "new_network_values",
@@ -82,7 +82,7 @@ def update_electricity(engine):
         calculate_net_import(new_values[player.id])
         update_storage_lvls(engine, new_values[player.id], player)
         resources_and_pollution(engine, new_values[player.id], player)
-        player.data.history.append_value(new_values[player.id])
+        player.data.rolling_history.append_value(new_values[player.id])
         # add industry revenues to player money
         player.money += new_values[player.id]["revenues"]["industry"]
         update_player_progress_values(engine, player, new_values)
@@ -386,7 +386,7 @@ def calculate_generation_with_market(engine, new_values, market, player):
             price = getattr(player, "price_buy_" + demand_type)
             market = bid(market, player.id, bid_q, price, demand_type)
         else:
-            reduce_demand(engine, new_values, player.data.history, demand_type, player.id, 0.0)
+            reduce_demand(engine, new_values, player.data.rolling_history, demand_type, player.id, 0.0)
 
     resource_reservations = reset_resource_reservations()
     # Sell capacities of remaining facilities on the market
@@ -662,7 +662,7 @@ def calculate_prod(
                 max(
                     0.0,
                     player.data.capacities[facility]["capacity"]
-                    - player.data.history.get_last_data("storage", facility),
+                    - player.data.rolling_history.get_last_data("storage", facility),
                 )
                 * 3600
                 / engine.in_game_seconds_per_tick
@@ -671,7 +671,7 @@ def calculate_prod(
         else:
             energy_capacity = max(
                 0.0,
-                player.data.history.get_last_data("storage", facility)
+                player.data.rolling_history.get_last_data("storage", facility)
                 * 3600
                 / engine.in_game_seconds_per_tick
                 * (player.data.capacities[facility]["efficiency"] ** 0.5),
@@ -681,14 +681,14 @@ def calculate_prod(
         )  # ramping down
     if minmax == "max":
         if filling:
-            max_ramping = player.data.history.get_last_data("demand", facility) + ramping_speed
+            max_ramping = player.data.rolling_history.get_last_data("demand", facility) + ramping_speed
         else:
-            max_ramping = player.data.history.get_last_data("generation", facility) + ramping_speed
+            max_ramping = player.data.rolling_history.get_last_data("generation", facility) + ramping_speed
         max_generation = min(max_resources, max_ramping, player.data.capacities[facility]["power"])
         reserve_resources(max_generation)
         return max_generation
     else:
-        min_ramping = player.data.history.get_last_data("generation", facility) - ramping_speed
+        min_ramping = player.data.rolling_history.get_last_data("generation", facility) - ramping_speed
         min_generation = max(0.0, min(max_resources, min_ramping, player.data.capacities[facility]["power"]))
         reserve_resources(min_generation)
         return min_generation
@@ -849,7 +849,7 @@ def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
     demand[demand_type] = satisfaction
     if demand_type in engine.extraction_facilities + engine.storage_facilities + ["carbon_capture"]:
         return
-    if satisfaction > (1 + 0.0008 * engine.in_game_seconds_per_tick) * player.data.history.get_last_data(
+    if satisfaction > (1 + 0.0008 * engine.in_game_seconds_per_tick) * player.data.rolling_history.get_last_data(
         "demand", demand_type
     ):
         return

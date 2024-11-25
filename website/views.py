@@ -38,7 +38,6 @@ def set_ctx():
 def set_ctx_no_login():
     """This function is called before every request"""
     user = current_user if current_user.is_authenticated and current_user.tile is not None else None
-
     render_template_ctx = partial(render_template, engine=current_app.config["engine"], user=user)
     g.render_template_ctx = render_template_ctx
 
@@ -109,7 +108,7 @@ def technology():
     player: Player = current_user
     if "Unlock Technologies" not in player.achievements:
         return redirect("/home", code=302)
-    return g.render_template_ctx("assets/technologies.jinja", player=player.cached_technologies_data)
+    return g.render_template_ctx("assets/technologies.jinja", player=player.cache.technologies_data)
 
 
 @views.route("/functional_facilities")
@@ -126,7 +125,7 @@ def extraction_facilities():
     if "Unlock Natural Resources" not in player.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx(
-        "assets/extraction_facilities.jinja", constructions=player.cached_extraction_facilities_data
+        "assets/extraction_facilities.jinja", constructions=player.cache.extraction_facilities_data
     )
 
 

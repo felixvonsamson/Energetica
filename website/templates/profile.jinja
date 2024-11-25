@@ -33,7 +33,7 @@
   </div>
 
   <div id="facilities_list" class="flex-col medium margin">
-    {% set caps = user.capacities %}
+    {% set caps = user.data.capacities %}
     {% if caps["steam_engine"] or caps["windmill"] or caps["watermill"] or caps["coal_burner"] or caps["gas_burner"] or caps["small_water_dam"] or caps["onshore_wind_turbine"] or caps["combined_cycle"] or caps["nuclear_reactor"] or caps["large_water_dam"] or caps["CSP_solar"] or caps["PV_solar"] or caps["offshore_wind_turbine"] or caps["nuclear_reactor_gen4"] %}
       <b class="large">Power facilities</b>
       <div class="table_container">

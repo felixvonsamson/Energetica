@@ -26,14 +26,14 @@ def finish_project(construction: OngoingConstruction, skip_notifications=False):
     if construction.family in ["Technologies", "Functional facilities"]:
         if getattr(player, construction.name) == 0:
             if construction.name == "carbon_capture":
-                player.data.history.add_subcategory("demand", construction.name)
-                player.data.history.add_subcategory("emissions", construction.name)
+                player.data.rolling_history.add_subcategory("demand", construction.name)
+                player.data.rolling_history.add_subcategory("emissions", construction.name)
                 player.data.cumul_emissions.add_category(construction.name)
                 player.add_to_list("demand_priorities", construction.name)
                 reorder_facility_priorities(engine, player)
             if construction.name == "warehouse":
                 for resource in ["coal", "gas", "uranium"]:
-                    player.data.history.add_subcategory("resources", resource)
+                    player.data.rolling_history.add_subcategory("resources", resource)
             if construction.name == "laboratory":
                 player.add_to_list("demand_priorities", "research")
                 reorder_facility_priorities(engine, player)
@@ -54,15 +54,15 @@ def finish_project(construction: OngoingConstruction, skip_notifications=False):
     elif ActiveFacility.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
         # initialize array for facility if it is the first one built
         if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
-            player.data.history.add_subcategory("op_costs", construction.name)
+            player.data.rolling_history.add_subcategory("op_costs", construction.name)
         if construction.name in engine.storage_facilities + engine.power_facilities:
-            player.data.history.add_subcategory("generation", construction.name)
+            player.data.rolling_history.add_subcategory("generation", construction.name)
         if construction.name in engine.storage_facilities + engine.extraction_facilities:
-            player.data.history.add_subcategory("demand", construction.name)
+            player.data.rolling_history.add_subcategory("demand", construction.name)
         if construction.name in engine.storage_facilities:
-            player.data.history.add_subcategory("storage", construction.name)
+            player.data.rolling_history.add_subcategory("storage", construction.name)
         if construction.name in engine.controllable_facilities + engine.extraction_facilities:
-            player.data.history.add_subcategory("emissions", construction.name)
+            player.data.rolling_history.add_subcategory("emissions", construction.name)
             player.data.cumul_emissions.add_category(construction.name)
         if construction.name in engine.extraction_facilities + engine.storage_facilities:
             player.add_to_list("demand_priorities", construction.name)

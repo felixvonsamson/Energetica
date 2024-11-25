@@ -203,18 +203,18 @@ def get_chart_data():
     if current_user.tile is None:
         return "", 404
     total_t = g.engine.data["total_t"]
-    history = current_user.history.get_data(t=total_t % 216 + 1)
+    rolling_history = current_user.data.rolling_history.get_data(t=total_t % 216 + 1)
     filename = f"instance/player_data/player_{current_user.id}.pck"
     with open(filename, "rb") as file:
         data = pickle.load(file)
-    concat_slices(data, history)
+    concat_slices(data, rolling_history)
 
     network_data = None
     if current_user.network is not None:
         filename = f"instance/network_data/{current_user.network.id}/time_series.pck"
         with open(filename, "rb") as file:
             network_data = pickle.load(file)
-        concat_slices(network_data, current_user.network.history.get_data(t=total_t % 216 + 1))
+        concat_slices(network_data, current_user.network.data.rolling_history.get_data(t=total_t % 216 + 1))
 
     current_climate_data = g.engine.data["current_climate_data"].get_data(t=total_t % 216 + 1)
     with open("instance/server_data/climate_data.pck", "rb") as file:
@@ -227,7 +227,7 @@ def get_chart_data():
             "data": data,
             "network_data": network_data,
             "climate_data": climate_data,
-            "cumulative_emissions": current_user.cumul_emissions.get_all(),
+            "cumulative_emissions": current_user.data.cumul_emissions.get_all(),
         }
     )
 
@@ -243,7 +243,7 @@ def get_network_capacities():
     """gets the network capacities for the current player"""
     if current_user.network is None:
         return "", 404
-    return jsonify(current_user.network.capacities.get_all())
+    return jsonify(current_user.network.data.capacities.get_all())
 
 
 @http.route("/get_market_data", methods=["GET"])
@@ -270,7 +270,7 @@ def get_player_data():
     if current_user.tile is None:
         return "", 404
     levels = current_user.get_lvls()
-    capacities = current_user.capacities.get_all()
+    capacities = current_user.data.capacities.get_all()
     return jsonify(
         {
             "levels": levels,

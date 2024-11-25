@@ -246,7 +246,7 @@ def rest_get_charts():
     def industry_data_for(category, subcategory):
         return combine_file_data_and_engine_data(
             file_data[category][subcategory],
-            g.player.data.history[category][subcategory],
+            g.player.data.rolling_history[category][subcategory],
         )
 
     subcategories = {

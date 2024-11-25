@@ -89,7 +89,7 @@
         <p class="txt_center medium">To have a better understanding how this priority list works, please refer to the <a href="{{ url_for('wiki.render_template_wiki', template_name='power_management') }}">Power Management</a> section of the wiki.</p>
         <br><br><br><br>
     {% else %}
-        {% set caps = user.capacities %}
+        {% set caps = user.data.capacities %}
 
         <div class="flex-center margin">
             <button id="page_view_button_basic" class="graph_button graph_button_views left {% if user.graph_view == 'basic'%}selected{% endif %}" onclick="change_page_view('basic')">Basic view</button>
