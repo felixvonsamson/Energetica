@@ -132,14 +132,16 @@ def finish_project(construction: OngoingConstruction, skip_notifications=False):
     if family == "Functional facilities":
         player.invalidate_recompute_and_dispatch_data_for_pages(functional_facilities=True, technologies=True)
     if family == "Technologies":
-        for player in Player.query.all():
-            player.invalidate_recompute_and_dispatch_data_for_pages(
-                power_facilities=True,
-                storage_facilities=True,
-                extraction_facilities=True,
-                functional_facilities=True,
-                technologies=True,
-            )
+        player.invalidate_recompute_and_dispatch_data_for_pages(
+            power_facilities=True,
+            storage_facilities=True,
+            extraction_facilities=True,
+            functional_facilities=True,
+            technologies=True,
+        )
+        other_players: List[Player] = Player.query.filter(Player.id != player.id).all()
+        for other_player in other_players:
+            other_player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
 
 
 def deploy_available_workers(player: Player, family: str):
