@@ -77,7 +77,7 @@ class OngoingConstruction(db.Model):
 
     def recompute_prerequisites_and_level(self) -> None:
         """Recompute the prerequisites and level of an ongoing construction."""
-        self.prerequisites, self.level = self._compute_prerequisites_and_level
+        self.prerequisites, self.level = self._compute_prerequisites_and_level()
 
     def _compute_prerequisites_and_level(self) -> tuple[list[int], int]:
         """Compute the prerequisites and level of an ongoing construction."""
