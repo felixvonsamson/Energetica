@@ -54,16 +54,16 @@ class OngoingConstruction(db.Model):
         For functional facilities and technologies, returns the level of this construction.
         For other types of constructions, returns None.
         """
-        if "level" not in current_app.config["engine"].data[self.__name__][self.id]:
+        if "level" not in current_app.config["engine"].data[type(self).__name__][self.id]:
             self.compute_prerequisites_and_level()
-        return current_app.config["engine"].data[self.__name__][self.id]["level"]
+        return current_app.config["engine"].data[type(self).__name__][self.id]["level"]
 
     @property
     def prerequisites(self) -> list[int]:
         """Return a list of the id's of ongoing constructions that this constructions depends on."""
-        if "prerequisites" not in current_app.config["engine"].data[self.__name__][self.id]:
+        if "prerequisites" not in current_app.config["engine"].data[type(self).__name__][self.id]:
             self.compute_prerequisites_and_level()
-        return current_app.config["engine"].data[self.__name__][self.id]["prerequisites"]
+        return current_app.config["engine"].data[type(self).__name__][self.id]["prerequisites"]
 
     def recompute_prerequisites_and_level(self):
         """Recompute the prerequisites and level of an ongoing construction."""
