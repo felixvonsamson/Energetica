@@ -1,4 +1,4 @@
-"""Miscellaneous util functions"""
+"""Miscellaneous util functions."""
 
 import math
 import os
@@ -11,11 +11,11 @@ from flask import flash
 from noise import pnoise3
 from scipy.stats import norm
 
-import website.api.websocket as websocket
 from website import db
+from website.api import websocket
 from website.config.assets import river_discharge_seasonal
 from website.database.map import Hex
-from website.database.messages import Chat, Notification
+from website.database.messages import Chat, Message, Notification
 from website.database.player import Network, Player
 from website.database.player_assets import ActiveFacility
 from website.game_engine import GameEngine, GameException
@@ -24,15 +24,15 @@ from website.utils.astro import DrHI
 # Helper functions and data initialization utilities
 
 
-def flash_error(msg):
-    """Helper function to flash an error message"""
+def flash_error(msg: str) -> None:
+    """Flash an error message."""
     return flash(msg, category="error")
 
 
-def data_init():
-    """Initializes the data structure for a new player"""
+def data_init() -> dict:
+    """Initialize the data structure for a new player."""
 
-    def init_array():
+    def init_array() -> list[list[float]]:
         return [[0.0] * 360] * 5
 
     return {
@@ -67,22 +67,20 @@ def data_init():
     }
 
 
-def init_table(user_id):
-    """initialize data table for new user and stores it as a .pck in the 'player_data' repo"""
+def init_table(user_id: int) -> None:
+    """Initialize data table for new user and stores it as a .pck in the 'player_data' repo."""
     past_data = data_init()
     with open(f"instance/player_data/player_{user_id}.pck", "wb") as file:
         pickle.dump(past_data, file)
 
 
-def add_player_to_data(player):
-    """Helper function to add a new player to the engine data"""
+def add_player_to_data(player: Player) -> None:
+    """Add a new player to the engine data."""
     player.data.capacities.update(player, None)
 
 
-def save_past_data_threaded(app, engine):
-    """Saves the past production data to files every 216 ticks AND remove network
-    data older than 24h
-    """
+def save_past_data_threaded(app, engine: GameEngine):
+    """Save the past production data to files every 216 ticks AND remove network data older than 24h."""
 
     def save_data():
         with app.app_context():
@@ -165,8 +163,8 @@ def save_past_data_threaded(app, engine):
 
             engine.log("last 216 data points have been saved to files")
 
-    def reduce_resolution(array, new_values):
-        """reduces resolution of current array x6, x36, x216 and x1296"""
+    def reduce_resolution(array, new_values) -> None:
+        """Reduce resolution of current array x6, x36, x216 and x1296."""
         array[0] = array[0][len(new_values) :]
         array[0].extend(new_values)
         new_values_reduced = new_values
@@ -182,8 +180,8 @@ def save_past_data_threaded(app, engine):
     thread.start()
 
 
-def display_new_message(engine, message, chat):
-    """Sends chat message to all relevant sources through socketio and websocket"""
+def display_new_message(engine: GameEngine, message: Message, chat: Chat) -> None:
+    """Send a chat message to all relevant sources through socketio and websocket."""
     websocket_message = websocket.rest_new_chat_message(chat.id, message)
     for player in chat.participants:
         player.emit(
@@ -201,12 +199,11 @@ def display_new_message(engine, message, chat):
 # Map
 
 
-def confirm_location(engine: GameEngine, player: Player, location: Hex):
-    """
-    This function is called when a player choses a location. It returns
-    either success or an explanatory error message in the form of a dictionary.
-    It is called when a web client uses the choose_location socket.io endpoint,
-    or the REST websocket API.
+def confirm_location(engine: GameEngine, player: Player, location: Hex) -> None:
+    """Confirm a location choice.
+
+    Return either success or an explanatory error message in the form of a dictionary.
+    Called when a web client uses the choose_location socket.io endpoint, or the REST websocket API.
     """
     if location.player_id is not None:
         # Location already taken
@@ -247,11 +244,8 @@ def confirm_location(engine: GameEngine, player: Player, location: Hex):
 # Quiz
 
 
-def submit_quiz_answer(engine: GameEngine, player: Player, answer: str):
-    """
-    This function is called when a player submits an answer to a quiz question.
-    It returns True if the answer was correct, False otherwise.
-    """
+def submit_quiz_answer(engine: GameEngine, player: Player, answer: str) -> bool:
+    """Return True if the answer was correct, False otherwise."""
     quiz_data = engine.data["daily_question"]
     if player.id in quiz_data["player_answers"]:
         raise GameException("quizAlreadyAnswered")
@@ -261,16 +255,12 @@ def submit_quiz_answer(engine: GameEngine, player: Player, answer: str):
         db.session.commit()
         engine.log(f"{player.username} answered the quiz correctly")
         return True
-    else:
-        engine.log(f"{player.username} answered the quiz incorrectly")
-        return False
+    engine.log(f"{player.username} answered the quiz incorrectly")
+    return False
 
 
-def get_quiz_question(engine, player):
-    """
-    This function returns the data for the quiz question in the form of a dictionary with only the answer of the
-    current player.
-    """
+def get_quiz_question(engine: GameEngine, player: Player) -> dict:
+    """Return the data for the quiz question in the form of a dictionary with only the answer of the current player."""
     question_data = engine.data["daily_question"].copy()
     if player.id in question_data["player_answers"]:
         question_data["player_answer"] = question_data["player_answers"][player.id]
@@ -281,15 +271,16 @@ def get_quiz_question(engine, player):
 # Weather
 
 
-def calculate_solar_irradiance(x, y, total_seconds, random_seed):
-    """
+def calculate_solar_irradiance(x: float, y: float, total_seconds: float, random_seed: int) -> float:
+    """Calculate the solar irradiance for a given location and time.
+
     The clear sky index is derived from a 3d perlin noise function that moves in time to simulate the cloud cover.
     The clear sky index is then multiplied by the clear sky irradiance to get the solar irradiance.
     The irradiance is capped at 1000 W/m^2.
     """
 
-    def transformation(x, threshold=0, smoothness=2):
-        """Sigmoid transformation"""
+    def transformation(x: float, threshold: float = 0, smoothness: float = 2) -> float:
+        """Sigmoid transformation."""
         return 1 / (1 + np.exp(-(x - threshold) * 10 / smoothness))
 
     # Calculate the real day and time in a year for a given tick
@@ -302,20 +293,29 @@ def calculate_solar_irradiance(x, y, total_seconds, random_seed):
     y_noise = y + total_seconds / 4000
     t = total_seconds / 3600 / 24
     regional_noise = pnoise3(
-        x_noise / 50, y_noise / 50, t, octaves=2, persistence=0.5, lacunarity=2.0, base=random_seed
+        x_noise / 50,
+        y_noise / 50,
+        t,
+        octaves=2,
+        persistence=0.5,
+        lacunarity=2.0,
+        base=random_seed,
     )
     regional_noise = transformation(regional_noise, smoothness=1) * 2 - 1
     cloud_cover_noise = pnoise3(x_noise, y_noise, t, octaves=6, persistence=0.5, lacunarity=2.0, base=random_seed)
     cloud_cover_noise = transformation(
-        cloud_cover_noise, threshold=0.5 * regional_noise, smoothness=max(0.3, 1 - regional_noise)
+        cloud_cover_noise,
+        threshold=0.5 * regional_noise,
+        smoothness=max(0.3, 1 - regional_noise),
     )
     csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
     clear_sky = DrHI(weather_datetime.timestamp(), (y - 10) * 85 / 21, 0)
     return min(1000, csi * clear_sky)
 
 
-def calculate_wind_speed(x, y, total_seconds, random_seed):
-    """
+def calculate_wind_speed(x: float, y: float, total_seconds: float, random_seed: int) -> float:
+    """Calculate the wind speed for a given location and time.
+
     The wind speed is derived from a 3d perlin noise function with a superposition of specific frequencies.
     Two sinusoidal functions are multiplied to the noise to simulate the diurnal and seasonal wind patterns.
     """
@@ -329,17 +329,16 @@ def calculate_wind_speed(x, y, total_seconds, random_seed):
     )
     wind_speed_noise = norm.cdf(wind_speed_noise, loc=0, scale=0.15)
     wind_speed_noise = (1 - (1 - wind_speed_noise) ** 0.1282) ** 0.4673
-    wind_speed = (
+    return (
         wind_speed_noise
         * (1 + 0.4 * math.sin(t / 60 / 24 / 72 * math.pi * 2 + 0.5 * math.pi))
         * (1 + 0.1 * math.sin(t / 60 / 24 * math.pi * 2 + 0.4 * math.pi))
         * 85
     )
-    return wind_speed
 
 
-def calculate_river_discharge(total_seconds):
-    """Calculate the river discharge by interpolating the values from the seasonal variation"""
+def calculate_river_discharge(total_seconds: float) -> float:
+    """Calculate the river discharge by interpolating the values from the seasonal variation."""
     days_since_start = math.floor(total_seconds / 3600 / 24)
     current_day_fraction = (total_seconds % (3600 * 24)) / (3600 * 24)
     discharge_factor = river_discharge_seasonal[days_since_start % 72] + current_day_fraction * (
@@ -348,8 +347,8 @@ def calculate_river_discharge(total_seconds):
     return discharge_factor * 150  # in m^3/s
 
 
-def package_weather_data(engine, player):
-    """Package date and weather data for a player"""
+def package_weather_data(engine: GameEngine, player: Player) -> dict:
+    """Package date and weather data for a player."""
     x = player.tile.q + 0.5 * player.tile.r
     y = player.tile.r * 0.5 * 3**0.5
     total_seconds = (engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick
