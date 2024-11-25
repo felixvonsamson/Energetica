@@ -58,12 +58,22 @@ class OngoingConstruction(db.Model):
             self.compute_prerequisites_and_level()
         return current_app.config["engine"].data[type(self).__name__][self.id]["level"]
 
+    @level.setter
+    def level(self, value: int):
+        """Set the level of the ongoing construction."""
+        current_app.config["engine"].data[type(self).__name__][self.id]["level"] = value
+
     @property
     def prerequisites(self) -> list[int]:
         """Return a list of the id's of ongoing constructions that this constructions depends on."""
         if "prerequisites" not in current_app.config["engine"].data[type(self).__name__][self.id]:
             self.compute_prerequisites_and_level()
         return current_app.config["engine"].data[type(self).__name__][self.id]["prerequisites"]
+
+    @prerequisites.setter
+    def prerequisites(self, value: list[int]):
+        """Set the prerequisites of the ongoing construction."""
+        current_app.config["engine"].data[type(self).__name__][self.id]["prerequisites"] = value
 
     def recompute_prerequisites_and_level(self):
         """Recompute the prerequisites and level of an ongoing construction."""
