@@ -633,37 +633,40 @@ class Player(db.Model, UserMixin):
     @property
     def cached_power_facilities_data(self):
         """Cached data for the power facilities page"""
-        if "cached_power_facilities_data" not in current_app.engine.buffered[type(self).__name__][self.id]:
+        if "cached_power_facilities_data" not in current_app.config["engine"].buffered[type(self).__name__][self.id]:
             self.cached_power_facilities_data = package_power_facilities(self)
-        return current_app.engine.buffered[type(self).__name__][self.id]["cached_power_facilities_data"]
+        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_power_facilities_data"]
 
     @property
     def cached_storage_facilities_data(self):
         """Cached data for the storage facilities page"""
-        if "cached_storage_facilities_data" not in current_app.engine.buffered[type(self).__name__][self.id]:
+        if "cached_storage_facilities_data" not in current_app.config["engine"].buffered[type(self).__name__][self.id]:
             self.cached_storage_facilities_data = package_storage_facilities(self)
-        return current_app.engine.buffered[type(self).__name__][self.id]["cached_storage_facilities_data"]
+        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_storage_facilities_data"]
 
     @property
     def cached_extraction_facility_data(self):
         """Cached data for the extraction facilities page"""
-        if "cached_extraction_facility_data" not in current_app.engine.buffered[type(self).__name__][self.id]:
+        if "cached_extraction_facility_data" not in current_app.config["engine"].buffered[type(self).__name__][self.id]:
             self.cached_extraction_facility_data = package_extraction_facilities(self)
-        return current_app.engine.buffered[type(self).__name__][self.id]["cached_extraction_facility_data"]
+        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_extraction_facility_data"]
 
     @property
     def cached_functional_facilities_data(self):
         """Cached data for the functional facilities page"""
-        if "cached_functional_facilities_data" not in current_app.engine.buffered[type(self).__name__][self.id]:
+        if (
+            "cached_functional_facilities_data"
+            not in current_app.config["engine"].buffered[type(self).__name__][self.id]
+        ):
             self.cached_functional_facilities_data = package_functional_facilities(self)
-        return current_app.engine.buffered[type(self).__name__][self.id]["cached_functional_facilities_data"]
+        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_functional_facilities_data"]
 
     @property
     def cached_technologies_data(self):
         """Cached data for the technologies page"""
-        if "cached_technologies_data" not in current_app.engine.buffered[type(self).__name__][self.id]:
+        if "cached_technologies_data" not in current_app.config["engine"].buffered[type(self).__name__][self.id]:
             self.cached_technologies_data = package_available_technologies(self)
-        return current_app.engine.buffered[type(self).__name__][self.id]["cached_technologies_data"]
+        return current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_technologies_data"]
 
     def invalidate_recompute_and_dispatch_data_for_pages(
         self,
@@ -680,15 +683,15 @@ class Player(db.Model, UserMixin):
         This function will invalidate the data for all corresponding arguments that are set to True.
         """
         if power_facilities:
-            del current_app.engine.buffered[type(self).__name__][self.id]["cached_power_facilities_data"]
+            del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_power_facilities_data"]
         if storage_facilities:
-            del current_app.engine.buffered[type(self).__name__][self.id]["cached_storage_facilities_data"]
+            del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_storage_facilities_data"]
         if extraction_facilities:
-            del current_app.engine.buffered[type(self).__name__][self.id]["cached_extraction_facility_data"]
+            del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_extraction_facility_data"]
         if functional_facilities:
-            del current_app.engine.buffered[type(self).__name__][self.id]["cached_functional_facilities_data"]
+            del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_functional_facilities_data"]
         if technologies:
-            del current_app.engine.buffered[type(self).__name__][self.id]["cached_technologies_data"]
+            del current_app.config["engine"].buffered[type(self).__name__][self.id]["cached_technologies_data"]
         # if resource_market:
         #     self._buffered_data_for_resource_market_page = None
         engine = current_app.config["engine"]
