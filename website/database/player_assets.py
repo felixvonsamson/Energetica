@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 
 @dataclass
 class OngoingConstructionCache(object):
-    level: int
-    prerequisites: list[int]
+    level: int = None
+    prerequisites: list[int] = None
 
 
 class OngoingConstruction(db.Model):

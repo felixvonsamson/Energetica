@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from functools import cached_property
 from itertools import chain
@@ -37,9 +37,9 @@ if TYPE_CHECKING:
 
 @dataclass
 class PlayerData(object):
-    rolling_history: CircularBufferPlayer
-    capacities: CapacityData
-    cumul_emissions: CumulativeEmissionsData
+    rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
+    capacities: CapacityData = field(default_factory=CapacityData)
+    cumul_emissions: CumulativeEmissionsData = field(default_factory=CumulativeEmissionsData)
 
 
 @dataclass
@@ -712,8 +712,8 @@ class Player(db.Model, UserMixin):
 
 @dataclass
 class NetworkData(object):
-    rolling_history: CircularBufferNetwork
-    capacities: CapacityData
+    rolling_history: CircularBufferNetwork = field(default_factory=CircularBufferNetwork)
+    capacities: CapacityData = field(default_factory=CapacityData)
 
 
 class Network(db.Model):
