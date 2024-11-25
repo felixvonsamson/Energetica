@@ -1,11 +1,15 @@
 """Here are defined the classes for the items stored in the database"""
 
+from typing import TYPE_CHECKING
+
+from flask import current_app
+
 from website import db
-from website.database.mixed_database import mixed_db
-from website.utils.constructions import compute_level, compute_prerequisites
+
+if TYPE_CHECKING:
+    from website.game_engine import GameEngine
 
 
-@mixed_db(buffered_field={"prerequisites": compute_prerequisites, "level": compute_level})
 class OngoingConstruction(db.Model):
     """class that stores the things currently under construction."""
 
@@ -42,6 +46,84 @@ class OngoingConstruction(db.Model):
         engine: GameEngine = current_app.config["engine"]
         self.start_time += engine.data["total_t"] - self.suspension_time
         self.suspension_time = None
+
+    @property
+    def level(self) -> int:
+        """Return the level of the ongoing construction when applicable.
+
+        For functional facilities and technologies, returns the level of this construction.
+        For other types of constructions, returns None.
+        """
+        if "level" not in current_app.config["engine"].data[self.__name__][self.id]:
+            self.compute_prerequisites_and_level()
+        return current_app.config["engine"].data[self.__name__][self.id]["level"]
+
+    @property
+    def prerequisites(self) -> list[int]:
+        """Return a list of the id's of ongoing constructions that this constructions depends on."""
+        if "prerequisites" not in current_app.config["engine"].data[self.__name__][self.id]:
+            self.compute_prerequisites_and_level()
+        return current_app.config["engine"].data[self.__name__][self.id]["prerequisites"]
+
+    def recompute_prerequisites_and_level(self):
+        """Recompute the prerequisites and level of an ongoing construction."""
+        self.compute_prerequisites_and_level()
+
+    def compute_prerequisites_and_level(self):
+        """Compute the prerequisites and level of an ongoing construction."""
+        from website.database.player import Player
+
+        if not TYPE_CHECKING:
+            from website.database.player_assets import OngoingConstruction
+
+        player: Player = Player.query.get(self.player_id)
+        prerequisites = []
+        level = None
+        if self.family == "Functional facilities":
+            # For functional facilities, the only prerequisites are ongoing constructions of the same type
+            priority_list = player.read_list("construction_priorities")
+            this_priority_index = priority_list.index(self.id)
+            # Go through all ongoing constructions that are higher up in the priority order
+            level = getattr(player, self.name) + 1
+            for candidate_prerequisite_id in priority_list[:this_priority_index]:
+                # Add them as a prerequisite, if they are of the same type
+                candidate_prerequisite = OngoingConstruction.query.get(candidate_prerequisite_id)
+                if candidate_prerequisite.name == self.name:
+                    prerequisites.append(candidate_prerequisite_id)
+                    level += 1
+        elif self.family == "Technologies":
+            # For technologies, const config needs to be checked
+            engine: GameEngine = current_app.config["engine"]
+            const_config = engine.const_config["assets"]
+            requirements = const_config[self.name]["requirements"]
+            priority_list = player.read_list("research_priorities")
+            this_priority_index: int = priority_list.index(self.id)
+            # Compute this constructions level by looking at constructions higher up in the priority list with same name
+            level = getattr(player, self.name) + 1
+            for other_construction_id in priority_list[:this_priority_index]:
+                other_construction: OngoingConstruction = OngoingConstruction.query.get(other_construction_id)
+                if other_construction.name == self.name:
+                    level += 1
+            num_ongoing_researches_of = {}
+            for candidate_prerequisite_id in priority_list[:this_priority_index]:
+                candidate_prerequisite: OngoingConstruction = OngoingConstruction.query.get(candidate_prerequisite_id)
+                if candidate_prerequisite.name == self.name:
+                    prerequisites.append(candidate_prerequisite_id)
+                    continue
+                if candidate_prerequisite.name in requirements:
+                    num_ongoing_researches_of[candidate_prerequisite.name] = (
+                        num_ongoing_researches_of.get(candidate_prerequisite.name, 0) + 1
+                    )
+                    # Add them as a prerequisite, if they are, according to const_config
+                    offset: int = requirements[candidate_prerequisite.name]
+                    candidate_prerequisite_level: int = (
+                        getattr(player, candidate_prerequisite.name)
+                        + num_ongoing_researches_of[candidate_prerequisite.name]
+                    )
+                    if level + offset - 1 >= candidate_prerequisite_level:
+                        prerequisites.append(candidate_prerequisite_id)
+        self.prerequisites = prerequisites
+        self.level = level
 
 
 class ActiveFacility(db.Model):
