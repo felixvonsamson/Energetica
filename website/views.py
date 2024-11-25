@@ -20,14 +20,15 @@ changelog = Blueprint("changelog", __name__, static_folder="static")
 @overviews.before_request
 @login_required
 def set_ctx():
+    player: Player = current_user
     """This function is called before every request"""
-    if current_user.tile is None:
+    if player.tile is None:
         return redirect("/location_choice", code=302)
 
     render_template_ctx = partial(
         render_template,
         engine=current_app.config["engine"],
-        user=current_user,
+        user=player,
     )
     g.render_template_ctx = render_template_ctx
 
@@ -45,7 +46,8 @@ def set_ctx_no_login():
 @location_choice_views.route("/location_choice", methods=["GET"])
 @login_required
 def location_choice():
-    if current_user.tile is not None:
+    player: Player = current_user
+    if player.tile is not None:
         return redirect(url_for("views.home"))
     return render_template("location_choice.jinja", engine=current_app.config["engine"])
 
@@ -69,66 +71,69 @@ def profile():
     """
     player_id = request.args.get("player_id")
     if player_id is None:
-        player_id = current_user.id
+        player: Player = current_user
+        player_id = player.id
     player = Player.query.get(player_id)
     return g.render_template_ctx("profile.jinja", profile=player)
 
 
 @views.route("/messages", methods=["GET", "POST"])
 def messages():
-    chats = Chat.query.filter(Chat.participants.any(id=current_user.id)).all()
+    player: Player = current_user
+    chats = Chat.query.filter(Chat.participants.any(id=player.id)).all()
     return g.render_template_ctx("messages.jinja", chats=chats)
 
 
 @views.route("/network")
 def network():
-    if "Unlock Network" not in current_user.achievements:
+    player: Player = current_user
+    if "Unlock Network" not in player.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx("network.jinja")
 
 
 @views.route("/power_facilities")
 def power_facilities():
-    return g.render_template_ctx(
-        "assets/power_facilities.jinja", constructions=current_user.cache.power_facilities_data
-    )
+    player: Player = current_user
+    return g.render_template_ctx("assets/power_facilities.jinja", constructions=player.cache.power_facilities_data)
 
 
 @views.route("/storage_facilities")
 def storage_facilities():
-    return g.render_template_ctx(
-        "assets/storage_facilities.jinja", constructions=current_user.cache.storage_facilities_data
-    )
+    player: Player = current_user
+    return g.render_template_ctx("assets/storage_facilities.jinja", constructions=player.cache.storage_facilities_data)
 
 
 @views.route("/technology")
 def technology():
-    if "Unlock Technologies" not in current_user.achievements:
+    player: Player = current_user
+    if "Unlock Technologies" not in player.achievements:
         return redirect("/home", code=302)
-    return g.render_template_ctx(
-        "assets/technologies.jinja", available_technologies=current_user.cached_technologies_data
-    )
+    return g.render_template_ctx("assets/technologies.jinja", player=player.cached_technologies_data)
 
 
 @views.route("/functional_facilities")
 def functional_facilities():
+    player: Player = current_user
     return g.render_template_ctx(
-        "assets/functional_facilities.jinja", constructions=current_user.cache.functional_facilities_data
+        "assets/functional_facilities.jinja", constructions=player.cache.functional_facilities_data
     )
 
 
 @views.route("/extraction_facilities")
 def extraction_facilities():
-    if "Unlock Natural Resources" not in current_user.achievements:
+    player: Player = current_user
+    if "Unlock Natural Resources" not in player.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx(
-        "assets/extraction_facilities.jinja", constructions=current_user.cached_extraction_facilities_data
+        "assets/extraction_facilities.jinja", constructions=player.cached_extraction_facilities_data
     )
 
 
 @views.route("/resource_market")
 def resource_market():
-    if "Unlock Natural Resources" not in current_user.achievements:
+    player: Player = current_user
+    if "Unlock Natural Resources" not in player.achievements:
         return redirect("/home", code=302)
     on_sale = ResourceOnSale.query.all()
     return g.render_template_ctx("resource_market.jinja", on_sale=on_sale)
@@ -151,21 +156,24 @@ def electricity():
 
 @overviews.route("/storage")
 def storage():
-    if "First Storage Facility" not in current_user.achievements:
+    player: Player = current_user
+    if "First Storage Facility" not in player.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/storage.jinja")
 
 
 @overviews.route("/resources")
 def resources():
-    if "Unlock Natural Resources" not in current_user.achievements:
+    player: Player = current_user
+    if "Unlock Natural Resources" not in player.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/resources.jinja")
 
 
 @overviews.route("/emissions")
 def emissions():
-    if "Discover the Greenhouse Effect" not in current_user.achievements:
+    player: Player = current_user
+    if "Discover the Greenhouse Effect" not in player.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/emissions.jinja")
 
