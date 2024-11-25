@@ -595,8 +595,9 @@ class Player(db.Model, UserMixin):
             for player in players
         }
 
-    def package_constructions(self):
-        """Packages the player's ongoing constructions"""
+    def package_constructions(self) -> dict[int, dict]:
+        """Package the player's ongoing constructions."""
+        constructions: list[OngoingConstruction] = self.under_construction
         return {
             construction.id: {
                 k: getattr(construction, k)
@@ -610,8 +611,8 @@ class Player(db.Model, UserMixin):
                 ]
             }
             | {"display_name": current_app.config["engine"].const_config["assets"][construction.name]["name"]}
-            | ({"level": construction.cache.level} if construction.cache.level >= 0 else {})
-            for construction in self.under_construction
+            | ({"level": construction.cache.level} if construction.cache.level is not None else {})
+            for construction in constructions
         }
 
     def package_shipments(self):
