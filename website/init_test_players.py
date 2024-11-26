@@ -115,6 +115,22 @@ def init_test_players(engine):
     add_asset(player1, "warehouse", 1)
     add_asset(player1, "coal_burner", 3)
     add_asset(player1, "industry", 18)
+    add_asset(player1, "laboratory", 4)
+
+    add_asset(player2, "chemistry", 5)
+
+    add_asset(player3, "mathematics", 1)
+    add_asset(player3, "mechanical_engineering", 1)
+    add_asset(player3, "thermodynamics", 1)
+    add_asset(player3, "physics", 1)
+    add_asset(player3, "building_technology", 1)
+    add_asset(player3, "mineral_extraction", 1)
+    add_asset(player3, "transport_technology", 1)
+    add_asset(player3, "materials", 1)
+    add_asset(player3, "civil_engineering", 1)
+    add_asset(player3, "aerodynamics", 1)
+    add_asset(player3, "chemistry", 5)
+    add_asset(player3, "nuclear_engineering", 1)
 
     # if player:
     #     Hex.query.filter_by(id=35).first().player_id = player.id

@@ -71,11 +71,32 @@
                 {{ technology_data.price }}
                 );
               </script>
+              {# Discount #}
+              {% if "discount" in technology_data %}
+                &ensp;
+                <span id="discount" class="hover_info">
+                  <em class="txt-green">(-{{ (100 - 100 * technology_data.discount) | round | int}}%)</em>
+                  {% if "prevalence" in technology_data %}
+                  <span class="popup_info small" style="width: 240px">
+                    <p>
+                      <a href="{{ url_for('wiki.render_template_wiki', 
+                                  template_name='technologies', 
+                                  _anchor='knowledge_spillover') }}">
+                        Knowledge spillover discount
+                      </a>:<br>
+                      Researched by {{ technology_data.prevalence }} other player{% if technology_data.prevalence > 1 %}s{% endif %}.
+                    </p>
+                  </span>
+                  {% endif %}
+                </span>
+              {% endif %}
             </div>
             <div class="infobox">
               {# Description & affected facilities #}
               <div class="infotext">
+                {# Description #}
                 {{ technology_data.description }}
+                {# Affected facilities #}
                 <br class="smartphone_hide">
                 {% if technology_data.affected_facilities | length > 0 %}
                   {# this looks like it needs some rework#}
