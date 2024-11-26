@@ -43,8 +43,29 @@ def special_multiplier(pf: float, lvl: int) -> float:
     return (0.5 + 0.5 * pf) ** lvl + np.log(pf / (0.5 + 0.5 * pf)) * lvl
 
 
+def research_prevalence(technology: str, level: int) -> int:
+    """Return the number of players that have researched the technology at the given level.
+
+    :param technology: the technology to check
+    :param level: the level of the technology to check
+    """
+    engine: GameEngine = current_app.config["engine"]
+    if len(engine.data["technology_lvls"][technology]) > level - 1:
+        return engine.data["technology_lvls"][technology][level - 1]
+    return 0
+
+
+def knowledge_spillover_discount(times_researched: int) -> float:
+    """Return how a technology should be discounted given the number of players that have researched it.
+
+    :param times_researched: the number of players that have researched the technology
+    :return: the discount factor. 1.0 means no discount, 0.8 means a 20% discount
+    """
+    return 0.92**times_researched
+
+
 def price_multiplier(player: Player, asset: str) -> float:
-    """Function that returns the price multiplier according to the technology level of the player."""
+    """Return the price multiplier according to the technology level of the player."""
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
     # TODO: the price multiplier for mineral extraction should probably be calculated differently. See extraction_rate_multiplier
@@ -66,8 +87,8 @@ def price_multiplier(player: Player, asset: str) -> float:
         asset_next_level = next_level(player, asset)
         mlt *= const_config[asset]["price_multiplier"] ** (asset_next_level - 1)
         # knowledge spilling for technologies
-        if asset in engine.technologies and len(engine.data["technology_lvls"][asset]) > asset_next_level - 1:
-            mlt *= 0.92 ** engine.data["technology_lvls"][asset][asset_next_level - 1]
+        if asset in engine.technologies:
+            mlt *= knowledge_spillover_discount(research_prevalence(asset, asset_next_level))
     return mlt
 
 
@@ -875,6 +896,14 @@ def package_available_technologies(player: Player):
                 for facility in const_config_assets[technology]["affected_facilities"]
             ],
         }
+        | (
+            {
+                "discount": knowledge_spillover_discount(research_prevalence(technology, levels[technology])),
+                "prevalence": research_prevalence(technology, levels[technology]),
+            }
+            if research_prevalence(technology, levels[technology]) > 0
+            else {}
+        )
         | (
             {
                 "power_generation_bonus": const_config_assets[technology]["prod_factor"] * 100 - 100,
