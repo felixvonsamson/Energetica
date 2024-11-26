@@ -14,10 +14,10 @@ from scipy.stats import norm
 from website import db
 from website.api import websocket
 from website.config.assets import river_discharge_seasonal
+from website.database.active_facility import ActiveFacility
 from website.database.map import Hex
 from website.database.messages import Chat, Message, Notification
 from website.database.player import Network, Player
-from website.database.player_assets import ActiveFacility
 from website.game_engine import GameEngine, GameException
 from website.utils.astro import DrHI
 

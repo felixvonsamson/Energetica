@@ -16,7 +16,8 @@ from website.config.assets import (
     player_lab_workers_for_level,
     warehouse_capacity_for_level,
 )
-from website.database.player_assets import ActiveFacility, OngoingConstruction
+from website.database.active_facility import ActiveFacility
+from website.database.ongoing_construction import OngoingConstruction
 
 if TYPE_CHECKING:
     from website.database.map import Hex

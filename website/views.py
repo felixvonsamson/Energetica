@@ -7,7 +7,7 @@ from flask_login import current_user, login_required
 
 from .database.messages import Chat
 from .database.player import Player
-from .database.player_assets import ResourceOnSale
+from .database.resource_on_sale import ResourceOnSale
 
 location_choice_views = Blueprint("location_choice_views", __name__)
 views = Blueprint("views", __name__)

@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from functools import cached_property
 from itertools import chain
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from flask import current_app
 from flask_login import UserMixin
@@ -15,6 +15,7 @@ from pywebpush import WebPushException, webpush
 
 from website import db
 from website.config.achievements import achievements
+from website.database.active_facility import ActiveFacility
 from website.database.engine_data import (
     CapacityData,
     CircularBufferNetwork,
@@ -22,7 +23,7 @@ from website.database.engine_data import (
     CumulativeEmissionsData,
 )
 from website.database.messages import Chat, Message, Notification, player_chats
-from website.database.player_assets import ActiveFacility, OngoingConstruction
+from website.database.ongoing_construction import OngoingConstruction
 from website.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -198,7 +199,7 @@ class Player(db.Model, UserMixin):
         return current_app.config["engine"].config[self]
 
     @property
-    def socketio_clients(self) -> List[int]:
+    def socketio_clients(self) -> list[int]:
         return current_app.config["engine"].clients[self.id]
 
     @cached_property
@@ -575,7 +576,7 @@ class Player(db.Model, UserMixin):
     @staticmethod
     def package_all():
         """Gets the package data for all players"""
-        players: List[Player] = Player.query.all()
+        players: list[Player] = Player.query.all()
         return {player.id: player.package() for player in players}
 
     @staticmethod
@@ -640,7 +641,7 @@ class Player(db.Model, UserMixin):
         """Packages the player's active facilities"""
 
         def get_facility_data(facilities):
-            sub_facilities: List[ActiveFacility] = self.active_facilities.filter(
+            sub_facilities: list[ActiveFacility] = self.active_facilities.filter(
                 ActiveFacility.facility.in_(facilities)
             ).all()
             return {

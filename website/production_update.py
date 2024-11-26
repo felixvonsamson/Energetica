@@ -9,8 +9,10 @@ import pandas as pd
 
 from . import db
 from .config.assets import wind_power_curve
+from .database.active_facility import ActiveFacility
+from .database.ongoing_construction import OngoingConstruction
 from .database.player import Network, Player
-from .database.player_assets import ActiveFacility, OngoingConstruction, Shipment
+from .database.shipment import Shipment
 from .utils.misc import calculate_river_discharge, calculate_solar_irradiance, calculate_wind_speed
 
 resource_to_extraction = {

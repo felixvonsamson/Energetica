@@ -1,5 +1,3 @@
-"""Here are defined the classes for the items stored in the database"""
-
 from dataclasses import dataclass
 from functools import cached_property
 from typing import TYPE_CHECKING
@@ -61,8 +59,6 @@ class OngoingConstruction(db.Model):
         assert self.is_paused()
         from flask import current_app
 
-        from website.game_engine import GameEngine
-
         engine: GameEngine = current_app.config["engine"]
         self.start_time += engine.data["total_t"] - self.suspension_time
         self.suspension_time = None
@@ -85,7 +81,7 @@ class OngoingConstruction(db.Model):
         from website.database.player import Player
 
         if not TYPE_CHECKING:
-            from website.database.player_assets import OngoingConstruction
+            from website.database.ongoing_construction import OngoingConstruction
 
         player: Player = Player.query.get(self.player_id)
         prerequisites = []
@@ -134,57 +130,3 @@ class OngoingConstruction(db.Model):
                     if level + offset - 1 >= candidate_prerequisite_level:
                         prerequisites.append(candidate_prerequisite_id)
         return prerequisites, level
-
-
-class ActiveFacility(db.Model):
-    """Class that stores the facilities on the server and their end of life time."""
-
-    id = db.Column(db.Integer, primary_key=True)
-    facility = db.Column(db.String(50))
-    pos_x = db.Column(db.Float)
-    pos_y = db.Column(db.Float)
-    # time at witch the facility will be decommissioned
-    end_of_life = db.Column(db.Integer)
-    # multiply the base values by the following values
-    price_multiplier = db.Column(db.Float)
-    multiplier_1 = db.Column(db.Float)
-    multiplier_2 = db.Column(db.Float)
-    multiplier_3 = db.Column(db.Float)
-    # percentage of the facility that is currently used
-    usage = db.Column(db.Float, default=0)
-
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
-
-
-class Shipment(db.Model):
-    """Class that stores the resources shipment on their way"""
-
-    id = db.Column(db.Integer, primary_key=True)
-    resource = db.Column(db.String(10))
-    quantity = db.Column(db.Float)
-    departure_time = db.Column(db.Integer)
-    duration = db.Column(db.Integer)
-    suspension_time = db.Column(db.Integer, default=None)  # time at witch the shipment has been paused if it has
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player
-
-
-class ResourceOnSale(db.Model):
-    """Class that stores resources currently on sale"""
-
-    id = db.Column(db.Integer, primary_key=True)
-    resource = db.Column(db.String(10))
-    quantity = db.Column(db.Float)
-    price = db.Column(db.Float)
-    creation_date = db.Column(db.DateTime)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player
-
-
-class ClimateEventRecovery(db.Model):
-    """Class that stores the climate events players are recovering from"""
-
-    id = db.Column(db.Integer, primary_key=True)
-    event = db.Column(db.String(20))
-    start_time = db.Column(db.Integer)
-    duration = db.Column(db.Integer)
-    recovery_cost = db.Column(db.Float)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player

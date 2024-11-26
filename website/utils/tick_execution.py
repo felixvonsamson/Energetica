@@ -5,14 +5,15 @@ import pickle
 import tarfile
 import time
 from datetime import datetime
-from typing import List
 
-import website.api.websocket as websocket
-import website.production_update as production_update
-import website.utils.assets as assets
-from website import db
+from website import db, production_update
+from website.api import websocket
+from website.database.active_facility import ActiveFacility
+from website.database.climate_event_recovery import ClimateEventRecovery
+from website.database.ongoing_construction import OngoingConstruction
 from website.database.player import Player
-from website.database.player_assets import ActiveFacility, ClimateEventRecovery, OngoingConstruction, Shipment
+from website.database.shipment import Shipment
+from website.utils import assets
 from website.utils.assets import remove_asset
 from website.utils.climate_helpers import check_climate_events
 from website.utils.misc import save_past_data_threaded
@@ -62,7 +63,7 @@ def _state_update(engine, app):
 def check_events_completion(engine):
     """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
     # check if constructions finished
-    finished_constructions: List[OngoingConstruction] = (
+    finished_constructions: list[OngoingConstruction] = (
         OngoingConstruction.query.filter(
             OngoingConstruction.suspension_time.is_(None),
             OngoingConstruction.start_time + OngoingConstruction.duration <= engine.data["total_t"],
@@ -86,7 +87,7 @@ def check_events_completion(engine):
         db.session.delete(a_s)
 
     # check end of lifespan of facilities
-    eolt_facilities: List[ActiveFacility] = ActiveFacility.query.filter(
+    eolt_facilities: list[ActiveFacility] = ActiveFacility.query.filter(
         ActiveFacility.end_of_life <= engine.data["total_t"]
     ).all()
     for facility in eolt_facilities:
@@ -94,7 +95,7 @@ def check_events_completion(engine):
         remove_asset(player, facility)
 
     # check end of climate events
-    finished_climate_events: List[ClimateEventRecovery] = ClimateEventRecovery.query.filter(
+    finished_climate_events: list[ClimateEventRecovery] = ClimateEventRecovery.query.filter(
         ClimateEventRecovery.start_time + ClimateEventRecovery.duration <= engine.data["total_t"]
     ).all()
     for fce in finished_climate_events:

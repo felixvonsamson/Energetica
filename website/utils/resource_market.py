@@ -6,7 +6,8 @@ from datetime import datetime
 from flask import current_app
 
 from website import db
-from website.database.player_assets import ResourceOnSale, Shipment
+from website.database.resource_on_sale import ResourceOnSale
+from website.database.shipment import Shipment
 from website.game_engine import GameException
 from website.utils.formatting import display_money, format_mass
 

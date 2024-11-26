@@ -8,9 +8,10 @@ import numpy as np
 
 from website import db
 from website.config.climate_events import climate_events
+from website.database.active_facility import ActiveFacility
+from website.database.climate_event_recovery import ClimateEventRecovery
 from website.database.engine_data import calculate_reference_gta, calculate_temperature_deviation
 from website.database.map import Hex
-from website.database.player_assets import ActiveFacility, ClimateEventRecovery
 from website.utils.assets import facility_destroyed
 from website.utils.formatting import display_money
 

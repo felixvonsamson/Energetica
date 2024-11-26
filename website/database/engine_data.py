@@ -8,7 +8,7 @@ from typing import List
 import noise
 from flask import current_app
 
-from website.database.player_assets import ActiveFacility
+from website.database.active_facility import ActiveFacility
 
 
 class CapacityData:
