@@ -330,8 +330,7 @@ def construction_time(player: Player, facility) -> float:
         duration *= const_config[facility]["price_multiplier"] ** (0.6 * level_with_constructions)
         # knowledge spillover and laboratory time reduction
         if facility in engine.technologies:
-            if len(engine.data["technology_lvls"][facility]) > level_with_constructions:
-                duration *= 0.92 ** engine.data["technology_lvls"][facility][level_with_constructions]
+            duration *= 0.92 ** research_prevalence(facility, next_level(player, facility))
             duration *= const_config["laboratory"]["time_factor"] ** player.laboratory
     # building technology time reduction
     if (
