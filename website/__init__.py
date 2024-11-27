@@ -85,19 +85,19 @@ def get_or_create_vapid_keys() -> tuple[str, str]:
 
 
 def create_app(
-    clock_time,
-    in_game_seconds_per_tick,
-    run_init_test_players,
-    rm_instance,
-    random_seed,
-    simulate_file,
-    simulate_stop_on_mismatch,
-    simulate_stop_on_server_error,
-    simulate_stop_on_assertion_error,
-    simulate_checkpoint_every_k_ticks,
-    simulate_checkpoint_ticks,
-    simulate_till,
-    simulate_profiling,
+    clock_time=30,
+    in_game_seconds_per_tick=240,
+    run_init_test_players=False,
+    rm_instance=False,
+    random_seed=42,
+    simulate_file=None,
+    simulate_stop_on_mismatch=False,
+    simulate_stop_on_server_error=False,
+    simulate_stop_on_assertion_error=False,
+    simulate_checkpoint_every_k_ticks=10000,
+    simulate_checkpoint_ticks=[],
+    simulate_till=None,
+    simulate_profiling=False,
     **kwargs,
 ):
     """This function sets up the app and the game engine"""
@@ -347,4 +347,4 @@ def create_app(
                     trigger="date",
                 )
 
-    return socketio, sock, app
+    return socketio, app
