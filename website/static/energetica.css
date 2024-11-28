@@ -1235,6 +1235,7 @@ input:checked+.slider:before {
     width: 265px;
 }
 
+/* TODO: swap even and odd, now that header rows are in thead */
 .table tbody tr:nth-child(even) {
     background-color: #d6c79a
 }
@@ -1248,9 +1249,29 @@ input:checked+.slider:before {
     white-space: nowrap;
 }
 
+.table thead button,
 .table tbody th {
     padding: 6px 12px;
     white-space: nowrap;
+}
+
+.table thead th {
+    padding: 0px;
+}
+
+/* Table sorting */
+.sort-button {
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    /* padding: 0; */
+    cursor: pointer;
+}
+
+.sort-button:hover {
+    text-decoration: underline;
+    /* Add hover styling for clarity */
 }
 
 #scoreboard td {
