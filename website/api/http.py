@@ -5,6 +5,7 @@ import pickle
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 from flask import Blueprint, Response, current_app, flash, g, jsonify, redirect, request
@@ -27,6 +28,9 @@ from website.game_engine import Confirm, GameException
 from website.technology_effects import get_current_technology_values
 from website.utils.assets import package_projects_data
 from website.utils.misc import flash_error
+
+if TYPE_CHECKING:
+    current_user: Player
 
 http = Blueprint("http", __name__)
 
