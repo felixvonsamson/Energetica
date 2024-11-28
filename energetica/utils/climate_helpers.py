@@ -60,7 +60,7 @@ def climate_event_impact(engine, tile, event):
     if random.random() < climate_events[event]["industry_destruction_chance"]:
         player.industry -= 1
         db.session.commit()
-        engine.config.update_config_for_user(player.id)
+        engine.config.update_config_for_user(player)
         player.notify(
             "Destruction",
             f"Your industry hs been levelled down by 1 due to the {climate_events[event]['name']} event.",
