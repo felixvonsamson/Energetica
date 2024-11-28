@@ -41,9 +41,7 @@ def log_action(func: callable) -> callable:
 
         try:
             with g.engine.lock:
-                # print(f"Greenlet ID {id(getcurrent())}: start")
                 response = func(*args, **kwargs)
-                # print(f"Greenlet ID {id(getcurrent())}: done")
             response, status_code = response if isinstance(response, tuple) else (response, response.status_code)
         except GameException as excp:
             # TODO g.engine.db.rollback()
@@ -98,27 +96,27 @@ def request_delete_notification() -> Response:
 
 @http.route("/request_marked_as_read", methods=["POST"])
 def request_marked_as_read() -> Response:
-    """Endpoint for marking all notification as read"""
+    """Mark all notification as read."""
     current_user.notifications_read()
     return jsonify({"response": "success"})
 
 
 @http.route("/get_const_config", methods=["GET"])
 def get_const_config() -> Response:
-    """Gets constant config data"""
+    """Get constant config data."""
     return jsonify(g.engine.const_config)
 
 
 @http.route("/get_wind_power_curve", methods=["GET"])
 def get_wind_power_curve() -> Response:
-    """Gets the wind power curve"""
+    """Get the wind power curve."""
     return jsonify(wind_power_curve)
 
 
 # gets the map data from the database and returns it as a array of dictionaries :
 @http.route("/get_map", methods=["GET"])
 def get_map() -> Response:
-    """gets the map data from the database and returns it as a array of dictionaries"""
+    """Get the map data from the database and returns it as a array of dictionaries."""
     hex_map = Hex.query.all()
     hex_list = [
         {
@@ -142,14 +140,14 @@ def get_map() -> Response:
 # gets all the network names and returns it as a list :
 @http.route("/get_networks", methods=["GET"])
 def get_networks() -> Response:
-    """gets all the network names and returns it as a list"""
+    """Get all the network names and returns it as a list."""
     network_list = Network.query.with_entities(Network.id, Network.name).all()
     return jsonify(dict(network_list))
 
 
 @http.route("/get_chat_messages", methods=["GET"])
 def get_chat_messages() -> Response:
-    """gets the last 20 messages from a chat and returns it as a list"""
+    """Get the last 20 messages from a chat and returns it as a list."""
     chat_id = request.args.get("chatID")
     packaged_messages = current_user.package_chat_messages(chat_id)
     return jsonify({"response": "success", "messages": packaged_messages})
@@ -157,14 +155,14 @@ def get_chat_messages() -> Response:
 
 @http.route("/get_chat_list", methods=["GET"])
 def get_chat_list() -> Response:
-    """gets the list of chats for the current player"""
+    """Get the list of chats for the current player."""
     response = current_user.package_chat_list()
     return jsonify({"response": "success"} | response)
 
 
 @http.route("/get_resource_data", methods=["GET"])
 def get_resource_data() -> Response:
-    """gets production rates and quantity on sale for every resource"""
+    """Get production rates and quantity on sale for every resource."""
     on_sale = {}
     for resource in ["coal", "gas", "uranium"]:
         on_sale[resource] = getattr(current_user, resource + "_on_sale")
@@ -173,7 +171,7 @@ def get_resource_data() -> Response:
 
 @http.route("/get_chart_data", methods=["GET"])
 def get_chart_data() -> Response:
-    """gets the data for the overview charts"""
+    """Get the data for the overview charts."""
 
     def calculate_mean_subarrays(array, x):
         return [np.mean(array[i : i + x]) for i in range(0, len(array), x)]
@@ -235,13 +233,13 @@ def get_chart_data() -> Response:
 
 @http.route("/get_current_weather", methods=["GET"])
 def get_current_weather() -> Response:
-    """gets the current weather data (date, irradiance, wind speed, river discharge)"""
+    """Get the current weather data including date, irradiance, wind speed, and river discharge."""
     return jsonify(website.utils.misc.package_weather_data(g.engine, current_user))
 
 
 @http.route("/get_network_capacities", methods=["GET"])
 def get_network_capacities() -> Response:
-    """gets the network capacities for the current player"""
+    """Get the network capacities for the current player."""
     if current_user.network is None:
         return "", 404
     return jsonify(current_user.network.data.capacities.get_all())
@@ -249,7 +247,7 @@ def get_network_capacities() -> Response:
 
 @http.route("/get_market_data", methods=["GET"])
 def get_market_data() -> Response:
-    """gets the data for the market graph at a specific tick"""
+    """Get the data for the market graph at a specific tick."""
     market_data = {}
     if current_user.network is None:
         return "", 404
@@ -267,7 +265,7 @@ def get_market_data() -> Response:
 
 @http.route("/get_player_data", methods=["GET"])
 def get_player_data() -> Response:
-    """Gets count of assets and config for this player"""
+    """Get count of assets and config for this player."""
     if current_user.tile is None:
         return "", 404
     levels = current_user.get_lvls()
@@ -284,26 +282,26 @@ def get_player_data() -> Response:
 
 @http.route("/get_resource_reserves", methods=["GET"])
 def get_resource_reserves() -> Response:
-    """Gets the natural resources reserves for this player"""
+    """Get the natural resources reserves for this player."""
     reserves = current_user.get_reserves()
     return jsonify(reserves)
 
 
 @http.route("/get_player_id", methods=["GET"])
 def get_player_id() -> Response:
-    """Gets the id for this player"""
+    """Get the id for this player."""
     return jsonify(current_user.id)
 
 
 @http.route("/get_players", methods=["GET"])
 def get_players() -> Response:
-    """Gets all the players information"""
+    """Get information for all players."""
     return jsonify(Player.package_all())
 
 
 @http.route("/get_generation_priority", methods=["GET"])
 def get_generation_priority() -> Response:
-    """Gets generation and demand priority for this player"""
+    """Get generation and demand priority for this player."""
     renewable_priorities = current_user.read_list("self_consumption_priority")
     rest_of_priorities = current_user.read_list("rest_of_priorities")
     demand_priorities = current_user.read_list("demand_priorities")
@@ -320,7 +318,7 @@ def get_generation_priority() -> Response:
 
 @http.route("/get_constructions", methods=["GET"])
 def get_constructions() -> Response:
-    """Gets list of facilities under construction for this player"""
+    """Get list of facilities under construction for this player."""
     projects = current_user.package_constructions()
     construction_priorities = current_user.read_list("construction_priorities")
     research_priorities = current_user.read_list("research_priorities")
@@ -329,31 +327,31 @@ def get_constructions() -> Response:
 
 @http.route("/get_shipments", methods=["GET"])
 def get_shipments() -> Response:
-    """Gets list of shipments under way for this player"""
+    """Get list of shipments under way for this player."""
     return jsonify(current_user.package_shipments())
 
 
 @http.route("/get_upcoming_achievements", methods=["GET"])
 def get_upcoming_achievements() -> Response:
-    """Gets the upcoming achievements for this player"""
+    """Get the upcoming achievements for this player."""
     return jsonify(current_user.package_upcoming_achievements())
 
 
 @http.route("/get_scoreboard", methods=["GET"])
 def get_scoreboard() -> Response:
-    """Gets the scoreboard data"""
+    """Get the scoreboard data."""
     return jsonify(Player.package_scoreboard())
 
 
 @http.route("/get_quiz_question", methods=["GET"])
 def get_quiz_question() -> Response:
-    """Gets the daily quiz question"""
+    """Get the daily quiz question."""
     return jsonify(website.utils.misc.get_quiz_question(g.engine, current_user))
 
 
 @http.route("/submit_quiz_answer", methods=["POST"])
 def submit_quiz_answer() -> Response:
-    """Submits the daily quiz answer from a player"""
+    """Submit the daily quiz answer from a player."""
     request_data = request.get_json()
     answer = request_data["answer"]
     answer_correct = website.utils.misc.submit_quiz_answer(g.engine, current_user, answer)
@@ -367,14 +365,14 @@ def submit_quiz_answer() -> Response:
 
 @http.route("/get_active_facilities", methods=["GET"])
 def get_active_facilities() -> Response:
-    """Gets list of active facilities for this player"""
+    """Get list of active facilities for this player."""
     return jsonify(current_user.package_active_facilities())
 
 
 @http.route("choose_location", methods=["POST"])
 @log_action
 def choose_location() -> Response:
-    """this function is executed when a player choses a location"""
+    """Set the location for the player."""
     request_data = request.get_json()
     selected_id = request_data["selected_id"]
     if selected_id < 0 or selected_id >= Hex.query.count():
@@ -387,11 +385,7 @@ def choose_location() -> Response:
 @http.route("/request_queue_project", methods=["POST"])
 @log_action
 def request_queue_project() -> Response:
-    """
-    this function is executed when a player does any of the following:
-    * initiates the construction or upgrades a building or an asset
-    * starts a technology research
-    """
+    """Start a construction or research project for the player."""
     request_data = request.get_json()
     asset = request_data["facility"]
     force = request_data["force"]
@@ -423,7 +417,7 @@ def request_queue_project() -> Response:
 @http.route("/request_cancel_project", methods=["POST"])
 @log_action
 def request_cancel_project() -> Response:
-    """This function is executed when a player cancels an ongoing construction or upgrade."""
+    """Cancel an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = int(request_data["id"])
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
@@ -451,7 +445,7 @@ def request_cancel_project() -> Response:
 @http.route("/request_toggle_pause_project", methods=["POST"])
 @log_action
 def request_pause_project() -> Response:
-    """This function is executed when a player pauses or unpauses an ongoing construction or upgrade."""
+    """Pause or unpause an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = int(request_data["id"])
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
@@ -469,7 +463,7 @@ def request_pause_project() -> Response:
 @http.route("/request_pause_shipment", methods=["POST"])
 @log_action
 def request_pause_shipment() -> Response:
-    """This function is executed when a player pauses or unpauses an ongoing construction or upgrade."""
+    """Pause or unpause a shipment."""
     request_data = request.get_json()
     shipment_id = request_data["id"]
     shipment: Shipment = Shipment.query.get(int(shipment_id))
@@ -487,7 +481,7 @@ def request_pause_shipment() -> Response:
 @http.route("/request_decrease_project_priority", methods=["POST"])
 @log_action
 def request_decrease_project_priority() -> Response:
-    """This function is executed when a player changes the order of ongoing constructions or upgrades."""
+    """Change the order of ongoing constructions or upgrades."""
     request_data = request.get_json()
     construction_id = request_data["id"]
     construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
@@ -505,7 +499,7 @@ def request_decrease_project_priority() -> Response:
 @http.route("/request_upgrade_facility", methods=["POST"])
 @log_action
 def request_upgrade_facility() -> Response:
-    """This function is executed when a player wants to upgrades a facility"""
+    """Upgrade a facility."""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
@@ -518,7 +512,7 @@ def request_upgrade_facility() -> Response:
 @http.route("/request_upgrade_all_of_type", methods=["POST"])
 @log_action
 def request_upgrade_all_of_type() -> Response:
-    """This function is executed when a player wants to upgrades all facilities of a certain type"""
+    """Upgrade all facilities of a certain type."""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
@@ -531,7 +525,7 @@ def request_upgrade_all_of_type() -> Response:
 @http.route("/request_dismantle_facility", methods=["POST"])
 @log_action
 def request_dismantle_facility() -> Response:
-    """This function is executed when a player wants to dismantle a facility"""
+    """Dismantle a facility."""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
@@ -550,7 +544,7 @@ def request_dismantle_facility() -> Response:
 @http.route("/request_dismantle_all_of_type", methods=["POST"])
 @log_action
 def request_dismantle_all_of_type() -> Response:
-    """This function is executed when a player wants to dismantle all facilities of a certain type"""
+    """Dismantle all facilities of a certain type."""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
@@ -563,7 +557,7 @@ def request_dismantle_all_of_type() -> Response:
 @http.route("/change_network_prices", methods=["POST"])
 @log_action
 def change_network_prices() -> Response:
-    """this function is executed when a player changes the prices for anything on the network"""
+    """Change the prices for anything on the network."""
     if not current_user.is_in_network:
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
@@ -577,7 +571,7 @@ def change_network_prices() -> Response:
 @http.route("/request_change_facility_priority", methods=["POST"])
 @log_action
 def request_change_facility_priority() -> Response:
-    """this function is executed when a player changes the generation priority"""
+    """Change the generation priority."""
     if "Unlock Network" not in current_user.achievements:
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
@@ -589,7 +583,7 @@ def request_change_facility_priority() -> Response:
 @http.route("/put_resource_on_sale", methods=["POST"])
 @log_action
 def put_resource_on_sale() -> Response:
-    """Parse the HTTP form for selling resources"""
+    """Put a resource on sale."""
     request_data = request.form
     resource = request_data["resource"]
     quantity = float(request_data["quantity"]) * 1000
@@ -611,7 +605,7 @@ def put_resource_on_sale() -> Response:
 @http.route("/buy_resource", methods=["POST"])
 @log_action
 def buy_resource() -> Response:
-    """Parse the HTTP form for buying resources"""
+    """Buy a resource from the market."""
     request_data = request.get_json()
     sale_id = int(request_data["id"])
     quantity = float(request_data["quantity"]) * 1000
@@ -645,7 +639,7 @@ def buy_resource() -> Response:
 @http.route("join_network", methods=["POST"])
 @log_action
 def join_network() -> Response:
-    """player is trying to join a network"""
+    """Join a network."""
     request_data = request.form
     network_id = int(request_data["choose_network"])
     network: Network = Network.query.get(network_id)
@@ -658,7 +652,7 @@ def join_network() -> Response:
 @http.route("create_network", methods=["POST"])
 @log_action
 def create_network() -> Response:
-    """This endpoint is used when a player creates a network"""
+    """Create a network."""
     request_data = request.form
     network_name = request_data["network_name"]
     try:
@@ -678,7 +672,7 @@ def create_network() -> Response:
 @http.route("leave_network", methods=["POST"])
 @log_action
 def leave_network() -> Response:
-    """this endpoint is called when a player leaves their network"""
+    """Leave the current network."""
     network = current_user.network
     if network is None:
         return jsonify({"response": "notInNetwork"}), 404
@@ -689,14 +683,14 @@ def leave_network() -> Response:
 
 @http.route("hide_chat_disclaimer", methods=["GET"])
 def hide_chat_disclaimer() -> Response:
-    """this endpoint is called when a player selects 'don't show again' on the chat disclaimer"""
+    """Permanently hide the chat disclaimer."""
     website.utils.chat.hide_chat_disclaimer(current_user)
     return jsonify({"response": "success"})
 
 
 @http.route("create_chat", methods=["POST"])
 def create_chat() -> Response:
-    """this endpoint is called when a player creates a chat with one other player"""
+    """Create a chat with one other player."""
     request_data = request.get_json()
     buddy_id = request_data["buddy_id"]
     buddy = Player.query.get(buddy_id)
@@ -706,7 +700,7 @@ def create_chat() -> Response:
 
 @http.route("create_group_chat", methods=["POST"])
 def create_group_chat() -> Response:
-    """this endpoint is called when a player creates a group chat"""
+    """Create a group chat."""
     request_data = request.get_json()
     chat_title = request_data["chat_title"]
     group_members = [current_user] + list(map(Player.query.get, request_data["group_members"]))
@@ -716,7 +710,7 @@ def create_group_chat() -> Response:
 
 @http.route("new_message", methods=["POST"])
 def new_message() -> Response:
-    """this endpoint is called when a player writes a new message"""
+    """Send a message."""
     request_data = request.get_json()
     message = request_data["new_message"]
     chat_id = int(request_data["chat_id"])
@@ -729,7 +723,7 @@ def new_message() -> Response:
 
 @http.route("change_graph_view", methods=["POST"])
 def change_graph_view() -> Response:
-    """this endpoint is called when a player changes the view mode for the graphs (basic, normal, expert)"""
+    """Change the view mode for the graphs (basic, normal, expert)."""
     request_data = request.get_json()
     view = request_data["view"]
     current_user.change_graph_view(view)
@@ -738,7 +732,7 @@ def change_graph_view() -> Response:
 
 @http.route("test_notification", methods=["GET"])
 def test_notification() -> Response:
-    """this endpoint is used to send a dummy notification to the player"""
+    """Send a dummy notification to the player."""
     notification_data = {
         "title": "Test notification",
         "body": f"{g.engine.data['total_t']} ({datetime.now()})",
