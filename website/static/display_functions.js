@@ -21,8 +21,7 @@ function general_format(value, units, threshold = 10_000) {
         value /= 1_000;
         unit_index += 1;
     }
-    formatted_value = `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]}`;
-    return formatted_value;
+    return `${value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unit_index]}`;
 }
 
 function general_upgrade_format(value1, value2, units) {
@@ -70,7 +69,7 @@ function format_money(price, coin = "<img src='/static/images/icons/coin.svg' cl
 
 // Prices for balance display :
 function format_money_long(price) {
-    formatted_value = price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'") + "<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>";
+    const formatted_value = price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'") + "<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>";
     return formatted_value;
 }
 
@@ -148,11 +147,11 @@ function format_days(ticks) {
     return Math.round(ticks * in_game_seconds_per_tick / 86_400);
 }
 
-function calculate_delivery(delta_q, delta_r, trasport_speed) {
+function calculate_delivery(delta_q, delta_r, transport_speed) {
     const dist = Math.sqrt(
         2 * (Math.pow(delta_q, 2) + Math.pow(delta_r, 2) + delta_q * delta_r)
     );
-    return format_duration(dist * trasport_speed / in_game_seconds_per_tick);
+    return format_duration(dist * transport_speed / in_game_seconds_per_tick);
 }
 
 function formatDateTime(dateTimeString) {
@@ -192,7 +191,7 @@ function formatDateString(dateString) {
 }
 
 function update_resolution_button_text(in_game_seconds_per_tick) {
-    resolution_categories = {
+    const resolution_categories = {
         30: ["30min", "3h", "18h", "4 days", "27 days", "2 years"],
         60: ["1h", "6h", "36h", "9 days", "9 months", "4 years"],
         120: ["2h", "12h", "3 days", "18 days", "16 months", "9 years"],
