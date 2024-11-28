@@ -16,6 +16,7 @@ import website.utils.misc
 import website.utils.network_helpers
 import website.utils.resource_market
 from website.config.assets import wind_power_curve
+from website.database import db
 from website.database.active_facility import ActiveFacility
 from website.database.map import Hex
 from website.database.messages import Chat
@@ -379,7 +380,7 @@ def choose_location() -> Response:
     selected_id = request_data["selected_id"]
     if selected_id < 0 or selected_id >= Hex.query.count():
         return jsonify({"response": "TileNotExist"})  # TODO
-    location = Hex.query.get(selected_id + 1)
+    location = db.session.get(Hex, selected_id + 1)
     website.utils.misc.confirm_location(engine=g.engine, player=current_user, location=location)
     return jsonify({"response": "success"})
 
@@ -426,7 +427,7 @@ def request_cancel_project() -> Response:
     """This function is executed when a player cancels an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = int(request_data["id"])
-    construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
+    construction: OngoingConstruction = db.session.get(OngoingConstruction, int(construction_id))
     if construction is None or construction.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     force = request_data["force"]
@@ -454,7 +455,7 @@ def request_pause_project() -> Response:
     """This function is executed when a player pauses or unpauses an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = int(request_data["id"])
-    construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
+    construction: OngoingConstruction = db.session.get(OngoingConstruction, int(construction_id))
     if construction is None or construction.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     website.utils.assets.toggle_pause_project(player=current_user, construction=construction)
@@ -472,7 +473,7 @@ def request_pause_shipment() -> Response:
     """This function is executed when a player pauses or unpauses an ongoing construction or upgrade."""
     request_data = request.get_json()
     shipment_id = request_data["id"]
-    shipment: Shipment = Shipment.query.get(int(shipment_id))
+    shipment: Shipment = db.session.get(Shipment, int(shipment_id))
     if shipment is None or shipment.player_id != current_user.id:
         return jsonify({"response": "ShipmentNotFound"}), 404
     website.utils.resource_market.pause_shipment(shipment=shipment)
@@ -490,7 +491,7 @@ def request_decrease_project_priority() -> Response:
     """This function is executed when a player changes the order of ongoing constructions or upgrades."""
     request_data = request.get_json()
     construction_id = request_data["id"]
-    construction: OngoingConstruction = OngoingConstruction.query.get(int(construction_id))
+    construction: OngoingConstruction = db.session.get(OngoingConstruction, int(construction_id))
     if construction is None or construction.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     website.utils.assets.decrease_project_priority(player=current_user, construction=construction)
@@ -508,7 +509,7 @@ def request_upgrade_facility() -> Response:
     """This function is executed when a player wants to upgrades a facility"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
+    facility: ActiveFacility = db.session.get(ActiveFacility, int(facility_id))
     if facility is None or facility.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     website.utils.assets.upgrade_facility(player=current_user, facility=facility)
@@ -521,7 +522,7 @@ def request_upgrade_all_of_type() -> Response:
     """This function is executed when a player wants to upgrades all facilities of a certain type"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
+    facility: ActiveFacility = db.session.get(ActiveFacility, int(facility_id))
     if facility is None or facility.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     website.utils.assets.upgrade_all_of_type(player=current_user, facility_name=facility.facility)
@@ -534,7 +535,7 @@ def request_dismantle_facility() -> Response:
     """This function is executed when a player wants to dismantle a facility"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
+    facility: ActiveFacility = db.session.get(ActiveFacility, int(facility_id))
     if facility is None or facility.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     website.utils.assets.dismantle_facility(player=current_user, facility=facility)
@@ -553,7 +554,7 @@ def request_dismantle_all_of_type() -> Response:
     """This function is executed when a player wants to dismantle all facilities of a certain type"""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
+    facility: ActiveFacility = db.session.get(ActiveFacility, int(facility_id))
     if facility is None or facility.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     website.utils.assets.dismantle_all_of_type(player=current_user, facility_name=facility.facility)
@@ -615,7 +616,7 @@ def buy_resource() -> Response:
     request_data = request.get_json()
     sale_id = int(request_data["id"])
     quantity = float(request_data["quantity"]) * 1000
-    sale = ResourceOnSale.query.get(int(sale_id))
+    sale = db.session.get(ResourceOnSale, int(sale_id))
     if sale is None:
         return jsonify({"response": "saleNotFound"}), 404
     website.utils.resource_market.buy_resource_from_market(current_user, quantity, sale)
@@ -648,7 +649,7 @@ def join_network() -> Response:
     """player is trying to join a network"""
     request_data = request.form
     network_id = int(request_data["choose_network"])
-    network: Network = Network.query.get(network_id)
+    network: Network = db.session.get(Network, network_id)
     website.utils.network_helpers.join_network(g.engine, current_user, network)
     flash(f"You joined the network {network.name}", category="message")
     g.engine.log(f"{current_user.username} joined the network {current_user.network.name}")
@@ -699,7 +700,7 @@ def create_chat() -> Response:
     """this endpoint is called when a player creates a chat with one other player"""
     request_data = request.get_json()
     buddy_id = request_data["buddy_id"]
-    buddy = Player.query.get(buddy_id)
+    buddy = db.session.get(Player, buddy_id)
     website.utils.chat.create_chat(current_user, buddy)
     return jsonify({"response": "success"})
 
@@ -720,7 +721,7 @@ def new_message() -> Response:
     request_data = request.get_json()
     message = request_data["new_message"]
     chat_id = int(request_data["chat_id"])
-    chat = Chat.query.get(chat_id)
+    chat = db.session.get(Chat, chat_id)
     if chat_id is None:
         return jsonify({"response": "NoChatID"}), 403
     website.utils.chat.add_message(current_user, message, chat)

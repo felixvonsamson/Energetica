@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from flask import current_app
 
-from website import db
+from website.database import db
 
 if TYPE_CHECKING:
     from website.game_engine import GameEngine
@@ -16,7 +16,7 @@ class OngoingConstructionCache(object):
 
     @cached_property
     def _prerequisites_and_level(self) -> tuple[list[int], int]:
-        construction = OngoingConstruction.query.get(self.construction_id)
+        construction = db.session.get(OngoingConstruction, self.construction_id)
         return construction._compute_prerequisites_and_level()
 
     @property
@@ -80,10 +80,7 @@ class OngoingConstruction(db.Model):
         """Compute the prerequisites and level of an ongoing construction."""
         from website.database.player import Player
 
-        if not TYPE_CHECKING:
-            from website.database.ongoing_construction import OngoingConstruction
-
-        player: Player = Player.query.get(self.player_id)
+        player: Player = db.session.get(Player, self.player_id)
         prerequisites = []
         level = None
         if self.family == "Functional facilities":
@@ -94,7 +91,7 @@ class OngoingConstruction(db.Model):
             level = getattr(player, self.name) + 1
             for candidate_prerequisite_id in priority_list[:this_priority_index]:
                 # Add them as a prerequisite, if they are of the same type
-                candidate_prerequisite = OngoingConstruction.query.get(candidate_prerequisite_id)
+                candidate_prerequisite = db.session.get(OngoingConstruction, candidate_prerequisite_id)
                 if candidate_prerequisite.name == self.name:
                     prerequisites.append(candidate_prerequisite_id)
                     level += 1
@@ -108,12 +105,14 @@ class OngoingConstruction(db.Model):
             # Compute this constructions level by looking at constructions higher up in the priority list with same name
             level = getattr(player, self.name) + 1
             for other_construction_id in priority_list[:this_priority_index]:
-                other_construction: OngoingConstruction = OngoingConstruction.query.get(other_construction_id)
+                other_construction: OngoingConstruction = db.session.get(OngoingConstruction, other_construction_id)
                 if other_construction.name == self.name:
                     level += 1
             num_ongoing_researches_of = {}
             for candidate_prerequisite_id in priority_list[:this_priority_index]:
-                candidate_prerequisite: OngoingConstruction = OngoingConstruction.query.get(candidate_prerequisite_id)
+                candidate_prerequisite: OngoingConstruction = db.session.get(
+                    OngoingConstruction, candidate_prerequisite_id
+                )
                 if candidate_prerequisite.name == self.name:
                     prerequisites.append(candidate_prerequisite_id)
                     continue

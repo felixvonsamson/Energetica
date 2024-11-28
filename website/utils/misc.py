@@ -11,9 +11,8 @@ from flask import flash
 from noise import pnoise3
 from scipy.stats import norm
 
-from website import db
-from website.api import websocket
 from website.config.assets import river_discharge_seasonal
+from website.database import db
 from website.database.active_facility import ActiveFacility
 from website.database.map import Hex
 from website.database.messages import Chat, Message, Notification
@@ -182,7 +181,7 @@ def save_past_data_threaded(app, engine: GameEngine):
 
 def display_new_message(engine: GameEngine, message: Message, chat: Chat) -> None:
     """Send a chat message to all relevant sources through socketio and websocket."""
-    websocket_message = websocket.rest_new_chat_message(chat.id, message)
+    # websocket_message = websocket.rest_new_chat_message(chat.id, message)
     for player in chat.participants:
         player.emit(
             "display_new_message",
@@ -193,7 +192,7 @@ def display_new_message(engine: GameEngine, message: Message, chat: Chat) -> Non
                 "chat_id": message.chat_id,
             },
         )
-        websocket.rest_notify_player(engine, player, websocket_message)
+        # websocket.rest_notify_player(engine, player, websocket_message)
 
 
 # Map
@@ -229,7 +228,7 @@ def confirm_location(engine: GameEngine, player: Player, location: Hex) -> None:
         multiplier_3=1.0,
     )
     db.session.add(steam_engine)
-    general_chat = Chat.query.get(1)
+    general_chat = db.session.get(Chat, 1)
     player.chats.append(general_chat)
     db.session.commit()
     add_player_to_data(player)
@@ -237,7 +236,7 @@ def confirm_location(engine: GameEngine, player: Player, location: Hex) -> None:
     player.data.rolling_history.add_subcategory("op_costs", "steam_engine")
     player.data.rolling_history.add_subcategory("generation", "steam_engine")
     player.data.rolling_history.add_subcategory("emissions", "steam_engine")
-    websocket.rest_notify_player_location(engine, player)
+    # websocket.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
 
 

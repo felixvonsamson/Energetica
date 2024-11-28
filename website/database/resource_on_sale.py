@@ -1,4 +1,4 @@
-from website import db
+from website.database import db
 
 
 class ResourceOnSale(db.Model):

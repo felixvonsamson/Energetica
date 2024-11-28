@@ -2,11 +2,11 @@
 
 import argparse
 
+from website import create_app
+
 """This code launches the game"""
 
 if __name__ == "__main__":
-    from website import create_app
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--clock_time",

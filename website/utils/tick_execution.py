@@ -6,8 +6,9 @@ import tarfile
 import time
 from datetime import datetime
 
-from website import db, production_update
+from website import production_update
 from website.api import websocket
+from website.database import db
 from website.database.active_facility import ActiveFacility
 from website.database.climate_event_recovery import ClimateEventRecovery
 from website.database.ongoing_construction import OngoingConstruction
@@ -91,7 +92,7 @@ def check_events_completion(engine):
         ActiveFacility.end_of_life <= engine.data["total_t"]
     ).all()
     for facility in eolt_facilities:
-        player = Player.query.get(facility.player_id)
+        player = db.session.get(Player, facility.player_id)
         remove_asset(player, facility)
 
     # check end of climate events

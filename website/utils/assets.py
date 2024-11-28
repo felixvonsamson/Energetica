@@ -6,7 +6,8 @@ from typing import List
 
 from flask import current_app
 
-from website import db, game_engine, technology_effects
+from website import game_engine, technology_effects
+from website.database import db
 from website.database.active_facility import ActiveFacility
 from website.database.ongoing_construction import OngoingConstruction
 from website.database.player import Player
@@ -22,7 +23,7 @@ def finish_project(construction: OngoingConstruction, skip_notifications=False):
     * Removes from the relevant construction / research list and priority list
     """
     engine: GameEngine = current_app.config["engine"]
-    player: Player = Player.query.get(construction.player_id)
+    player: Player = db.session.get(Player, construction.player_id)
 
     if construction.family in ["Technologies", "Functional facilities"]:
         if getattr(player, construction.name) == 0:
@@ -163,7 +164,7 @@ def deploy_available_workers(player: Player, family: str):
     priority_list = player.read_list(priority_list_name)
 
     for priority_index, construction_id in enumerate(priority_list):
-        construction: OngoingConstruction = OngoingConstruction.query.get(construction_id)
+        construction: OngoingConstruction = db.session.get(OngoingConstruction, construction_id)
         if not construction.is_paused():
             continue
         construction.recompute_prerequisites_and_level()  # force recompute
@@ -172,8 +173,8 @@ def deploy_available_workers(player: Player, family: str):
         construction.resume()
         insertion_index = None
         for insertion_index_candidate, possibly_paused_construction_id in enumerate(priority_list[:priority_index]):
-            possibly_paused_construction: OngoingConstruction = OngoingConstruction.query.get(
-                possibly_paused_construction_id
+            possibly_paused_construction: OngoingConstruction = db.session.get(
+                OngoingConstruction, possibly_paused_construction_id
             )
             if possibly_paused_construction.is_paused():
                 insertion_index = insertion_index_candidate
@@ -427,7 +428,9 @@ def queue_project(
         priority_list = player.read_list(priority_list_name)
         insertion_index = 0
         for possibly_unpaused_project_index, possibly_unpaused_project_id in enumerate(priority_list):
-            possibly_unpaused_project: OngoingConstruction = OngoingConstruction.query.get(possibly_unpaused_project_id)
+            possibly_unpaused_project: OngoingConstruction = db.session.get(
+                OngoingConstruction, possibly_unpaused_project_id
+            )
             if possibly_unpaused_project.suspension_time is None:  # not paused
                 insertion_index = possibly_unpaused_project_index + 1
             else:  # paused
@@ -439,9 +442,8 @@ def queue_project(
 
     if not skip_notifications:
         engine.log(f"{player.username} started the construction {asset}")
-    from website.api import websocket
-
-    websocket.rest_notify_constructions(engine, player)
+    # from website.api import websocket
+    # websocket.rest_notify_constructions(engine, player)
     db.session.commit()
 
     invalidate_data_on_project_update(engine, player, asset)
@@ -483,7 +485,7 @@ def cancel_project(player: Player, construction: OngoingConstruction, force=Fals
     priority_list = player.read_list(priority_list_name)
     construction_priority_index = priority_list.index(construction.id)
     for candidate_dependent_id in priority_list[construction_priority_index + 1 :]:
-        candidate_dependent: OngoingConstruction = OngoingConstruction.query.get(candidate_dependent_id)
+        candidate_dependent: OngoingConstruction = db.session.get(OngoingConstruction, candidate_dependent_id)
         if construction.id in candidate_dependent.cache.prerequisites:
             dependents.append([candidate_dependent.name, candidate_dependent.cache.level])
     if dependents:
@@ -505,9 +507,8 @@ def cancel_project(player: Player, construction: OngoingConstruction, force=Fals
     db.session.delete(construction)
     engine.log(f"{player.username} cancelled the construction {construction.name}")
     db.session.commit()
-    from website.api import websocket
-
-    websocket.rest_notify_constructions(engine, player)
+    # from website.api import websocket
+    # websocket.rest_notify_constructions(engine, player)
 
     invalidate_data_on_project_update(engine, player, construction.name)
 
@@ -526,7 +527,7 @@ def decrease_project_priority(player, construction):
     index = priority_list.index(construction.id)
     if 0 <= index < len(priority_list) - 1:
         construction_1: OngoingConstruction = construction
-        construction_2: OngoingConstruction = OngoingConstruction.query.get(priority_list[index + 1])
+        construction_2: OngoingConstruction = db.session.get(OngoingConstruction, priority_list[index + 1])
 
         if construction_1.suspension_time is None and construction_2.suspension_time is not None:
             # construction_1 is not paused, but construction_2 is
@@ -538,9 +539,8 @@ def decrease_project_priority(player, construction):
             )
         setattr(player, attr, ",".join(map(str, priority_list)))
         db.session.commit()
-        from website.api import websocket
-
-        websocket.rest_notify_constructions(engine, player)
+        # from website.api import websocket
+        # websocket.rest_notify_constructions(engine, player)
 
 
 def toggle_pause_project(player: Player, construction: OngoingConstruction):
@@ -560,7 +560,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction):
             priority_list.remove(construction.id)
             insertion_index = None
             for new_index, other_construction_id in enumerate(priority_list):
-                other_construction: OngoingConstruction = OngoingConstruction.query.get(other_construction_id)
+                other_construction: OngoingConstruction = db.session.get(OngoingConstruction, other_construction_id)
                 if other_construction.suspension_time is not None:
                     insertion_index = new_index
                     break
@@ -594,7 +594,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction):
         priority_list.remove(construction.id)
         insertion_index = None
         for new_index, other_construction_id in enumerate(priority_list):
-            other_construction: OngoingConstruction = OngoingConstruction.query.get(other_construction_id)
+            other_construction: OngoingConstruction = db.session.get(OngoingConstruction, other_construction_id)
             if other_construction.suspension_time is not None:
                 insertion_index = new_index
                 break
@@ -606,6 +606,5 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction):
         engine.log(f"{player.username} unpaused the construction {construction.id} {construction.name}")
 
     db.session.commit()
-    from website.api import websocket
-
-    websocket.rest_notify_constructions(engine, player)
+    # from website.api import websocket
+    # websocket.rest_notify_constructions(engine, player)

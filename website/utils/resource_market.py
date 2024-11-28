@@ -5,7 +5,7 @@ from datetime import datetime
 
 from flask import current_app
 
-from website import db
+from website.database import db
 from website.database.resource_on_sale import ResourceOnSale
 from website.database.shipment import Shipment
 from website.game_engine import GameException

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import List
 
-from website import db
+from website.database import db
 
 
 class Hex(db.Model):

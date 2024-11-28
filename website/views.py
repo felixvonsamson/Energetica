@@ -5,9 +5,10 @@ from functools import partial
 from flask import Blueprint, current_app, g, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
-from .database.messages import Chat
-from .database.player import Player
-from .database.resource_on_sale import ResourceOnSale
+from website.database import db
+from website.database.messages import Chat
+from website.database.player import Player
+from website.database.resource_on_sale import ResourceOnSale
 
 location_choice_views = Blueprint("location_choice_views", __name__)
 views = Blueprint("views", __name__)
@@ -72,7 +73,7 @@ def profile():
     if player_id is None:
         player: Player = current_user
         player_id = player.id
-    player = Player.query.get(player_id)
+    player = db.session.get(Player, player_id)
     return g.render_template_ctx("profile.jinja", profile=player)
 
 

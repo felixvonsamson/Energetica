@@ -10,10 +10,9 @@ from datetime import datetime
 
 from gevent.lock import RLock
 
+from website.config.assets import config, const_config
+from website.database.engine_data import EmissionData
 from website.database.player import NetworkData, PlayerData
-
-from .config.assets import config, const_config
-from .database.engine_data import EmissionData
 
 
 # This is the engine object

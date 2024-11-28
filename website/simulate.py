@@ -10,6 +10,12 @@ from typing import List
 import requests
 from flask import current_app
 
+import website.production_update as production_update
+from website.database import db
+from website.database.map import Hex
+from website.utils.climate_helpers import climate_event_impact
+from website.utils.tick_execution import check_events_completion
+
 
 def create_user(user_id, port):
     """Create a user with the given user_id."""
@@ -51,12 +57,6 @@ def _simulate(
     checkpoint_every_k_ticks=10000,
     checkpoint_ticks: List[int] = None,
 ):
-    import website.production_update as production_update
-    from website import db
-    from website.database.map import Hex
-    from website.utils.climate_helpers import climate_event_impact
-    from website.utils.tick_execution import check_events_completion
-
     with app.app_context():
         trials = 0
         while True:
@@ -87,7 +87,7 @@ def _simulate(
                     with tarfile.open(f"checkpoints/simulation/checkpoint_{action['total_t']}.tar.gz", "w:gz") as tar:
                         tar.add("instance/")
             elif action["action_type"] == "climate_event_impact":
-                tile = Hex.query.get(action["tile_id"])
+                tile = db.session.get(Hex, action["tile_id"])
                 climate_event_impact(engine, tile, action["event"])
             elif action["action_type"] == "create_user":
                 player_id = action["player_id"]

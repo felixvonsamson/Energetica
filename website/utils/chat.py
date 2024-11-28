@@ -4,8 +4,7 @@ from datetime import datetime
 
 from flask import current_app
 
-from website import db
-from website.api import websocket
+from website.database import db
 from website.database.messages import Chat, Message
 from website.database.player import PlayerUnreadMessages
 from website.game_engine import GameEngine, GameException
@@ -16,9 +15,9 @@ def hide_chat_disclaimer(player):
     """Stores the player's choice to not show the chat disclaimer anymore"""
     player.show_disclaimer = False
     db.session.commit()
-    engine: GameEngine = current_app.config["engine"]
-    message = websocket.rest_get_show_chat_disclaimer(player)
-    websocket.rest_notify_player(engine, player, message)
+    # engine: GameEngine = current_app.config["engine"]
+    # message = websocket.rest_get_show_chat_disclaimer(player)
+    # websocket.rest_notify_player(engine, player, message)
 
 
 def check_existing_chats(participants):
@@ -48,7 +47,7 @@ def create_chat(player, buddy):
     db.session.commit()
     engine: GameEngine = current_app.config["engine"]
     engine.log(f"{player.username} created a chat with {buddy.username}")
-    websocket.notify_new_chat(new_chat)
+    # websocket.notify_new_chat(new_chat)
 
 
 def create_group_chat(player, chat_name, participants):
@@ -76,7 +75,7 @@ def create_group_chat(player, chat_name, participants):
     db.session.commit()
     engine: GameEngine = current_app.config["engine"]
     engine.log(f"{player.username} created a group chat called {chat_name} with {participants}")
-    websocket.notify_new_chat(new_chat)
+    # websocket.notify_new_chat(new_chat)
 
 
 def add_message(player, message_text, chat):

@@ -8,6 +8,7 @@ from flask_httpauth import HTTPBasicAuth
 from simple_websocket import ConnectionClosed
 from werkzeug.security import check_password_hash
 
+from website.database import db
 from website.database.map import Hex
 from website.database.messages import Chat, Message
 from website.database.player import Network, Player
@@ -94,7 +95,7 @@ def add_sock_handlers(sock, engine):
 
 def unregister_websocket_connection(player_id, ws):
     """Removes the ws object from the player's registered ws connections"""
-    player = Player.query.get(player_id)
+    player = db.session.get(Player, player_id)
     g.engine.log(f"Websocket connection closed for player {player}")
     g.engine.websocket_dict[player_id].remove(ws)
 
@@ -404,7 +405,7 @@ def rest_parse_request(engine, player: Player, ws, uuid, data):
 def rest_parse_request_confirm_location(ws, uuid, data):
     """Interpret message sent from a client when they chose a location."""
     cell_id = data
-    response = confirm_location(engine=g.engine, player=g.player, location=Hex.query.get(cell_id))
+    response = confirm_location(engine=g.engine, player=g.player, location=db.session.get(Hex, cell_id))
     print(f"ws is {ws} and we're sending rest_respond_confirmLocation")
     message = rest_request_response(uuid, "confirmLocation", response)
     ws.send(message)
@@ -415,7 +416,7 @@ def rest_parse_request_confirm_location(ws, uuid, data):
 def rest_parse_request_join_network(engine, ws, uuid, data):
     """Interpret message sent from a client when they join a network."""
     network_id = data
-    network = Network.query.get(network_id)
+    network = db.session.get(Network, network_id)
     response = join_network(engine, g.player, network)
     message = rest_request_response(uuid, "joinNetwork", response)
     ws.send(message)

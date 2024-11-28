@@ -29,15 +29,21 @@ from flask_apscheduler import APScheduler
 from flask_login import LoginManager, current_user
 from flask_sock import Sock
 from flask_socketio import SocketIO
-from flask_sqlalchemy import SQLAlchemy
 
+from website.api.http import http
+from website.api.socketio_handlers import add_handlers
+from website.api.websocket import add_sock_handlers, websocket_blueprint
+from website.auth import auth
+from website.database import db
+from website.database.map import Hex
+from website.database.messages import Chat
+from website.database.player import Player
+from website.game_engine import GameEngine
+from website.init_test_players import init_test_players
 from website.simulate import simulate
-
-db = SQLAlchemy()
-
-import website.game_engine
-
-from .database.player import Player
+from website.utils.climate_helpers import data_init_climate
+from website.utils.tick_execution import state_update
+from website.views import changelog, location_choice_views, overviews, views, wiki
 
 
 def get_or_create_flask_secret_key() -> str:
@@ -156,9 +162,7 @@ def create_app(
         last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
 
     # creates the engine (and loading the save if it exists)
-    engine = website.game_engine.GameEngine(clock_time, in_game_seconds_per_tick, random_seed, start_date)
-
-    from .utils.climate_helpers import data_init_climate
+    engine = GameEngine(clock_time, in_game_seconds_per_tick, random_seed, start_date)
 
     Path("instance/player_data").mkdir(parents=True, exist_ok=True)
     if not os.path.isfile("instance/server_data/climate_data.pck"):
@@ -191,23 +195,16 @@ def create_app(
     # initialize socketio :
     socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
     engine.socketio = socketio
-    from .api.socketio_handlers import add_handlers
 
     add_handlers(socketio=socketio, engine=engine)
 
     # initialize sock for WebSockets:
     sock = Sock(app)
     engine.sock = sock
-    from .api.websocket import add_sock_handlers
 
     add_sock_handlers(sock=sock, engine=engine)
 
     # add blueprints (website repositories) :
-    from .api.http import http
-    from .api.websocket import websocket_blueprint
-    from .auth import auth
-    from .views import changelog, location_choice_views, overviews, views, wiki
-
     app.register_blueprint(location_choice_views, url_prefix="/")
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")
@@ -249,9 +246,6 @@ def create_app(
         """
         return send_file("static/apple-app-site-association", as_attachment=True)
 
-    from .database.map import Hex
-    from .database.messages import Chat
-
     # initialize database :
     with app.app_context():
         db.create_all()
@@ -290,14 +284,12 @@ def create_app(
 
     @login_manager.user_loader
     def load_user(id):
-        player = Player.query.get(int(id))
+        player = db.session.get(Player, int(id))
         return player
 
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        from .utils.tick_execution import state_update
-
         scheduler = APScheduler()
         scheduler.init_app(app)
 
@@ -336,8 +328,6 @@ def create_app(
             engine.log("running init_test_players")
             with app.app_context():
                 # Temporary automated player creation for testing
-                from .init_test_players import init_test_players
-
                 init_test_players(engine)
                 # Manually trigger the scheduler to run the state_update function as soon as possible
                 scheduler.add_job(

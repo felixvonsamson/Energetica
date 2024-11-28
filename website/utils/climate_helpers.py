@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from website import db
 from website.config.climate_events import climate_events
+from website.database import db
 from website.database.active_facility import ActiveFacility
 from website.database.climate_event_recovery import ClimateEventRecovery
 from website.database.engine_data import calculate_reference_gta, calculate_temperature_deviation
@@ -155,7 +155,7 @@ def check_climate_events(engine):
     hurricane_probability = climate_events["hurricane"]["base_probability"] / ticks_per_day * climate_change**2
     if random.random() < hurricane_probability:
         random_tile_id = random.randint(1, Hex.query.count() + 1)
-        tile = Hex.query.get(random_tile_id)
+        tile = db.session.get(Hex, random_tile_id)
         affected_tiles = tile.get_neighbors(n=2)
         for affected_tile in affected_tiles:
             climate_event_impact(engine, affected_tile, "hurricane")

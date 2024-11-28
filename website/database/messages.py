@@ -2,7 +2,7 @@
 `Notification` are stored in the database
 """
 
-from website import db
+from website.database import db
 
 
 class Chat(db.Model):
