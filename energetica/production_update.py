@@ -387,7 +387,7 @@ def calculate_generation_with_market(engine, new_values, market, player):
             price = getattr(player, "price_buy_" + demand_type)
             market = bid(market, player.id, bid_q, price, demand_type)
         else:
-            reduce_demand(engine, new_values, player.data.rolling_history, demand_type, player.id, 0.0)
+            reduce_demand(engine, new_values, demand_type, player.id, 0.0)
 
     resource_reservations = reset_resource_reservations()
     # Sell capacities of remaining facilities on the market

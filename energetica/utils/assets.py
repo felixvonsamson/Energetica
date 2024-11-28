@@ -295,7 +295,7 @@ def remove_asset(player, facility, decommissioning=True):
         engine.log(f"The facility {facility_name} from {player.username} has been decommissioned.")
     db.session.flush()
     player.data.capacities.update(player, facility.facility)
-    engine.config.update_config_for_user(player.id)
+    engine.config.update_config_for_user(player)
     db.session.commit()
 
 
