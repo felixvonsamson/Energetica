@@ -2,7 +2,7 @@
 
 import argparse
 
-from website import create_app
+from energetica import create_app
 
 """This code launches the game"""
 

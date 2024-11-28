@@ -3,13 +3,12 @@ import sys
 
 sys.path.append(os.getcwd())
 
+from energetica import create_app
+from energetica.database import db
+from energetica.database.map import Hex
+from energetica.database.player import Player
+from energetica.utils.misc import confirm_location
 from werkzeug.security import generate_password_hash
-
-from website import create_app
-from website.database import db
-from website.database.map import Hex
-from website.database.player import Player
-from website.utils.misc import confirm_location
 
 
 def test():
