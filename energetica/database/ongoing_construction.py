@@ -2,8 +2,9 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import TYPE_CHECKING
 
-from energetica.database import db
 from flask import current_app
+
+from energetica.database import db
 
 if TYPE_CHECKING:
     from energetica.game_engine import GameEngine
@@ -19,7 +20,7 @@ class OngoingConstructionCache(object):
         return construction._compute_prerequisites_and_level()
 
     @property
-    def prequisites(self) -> list[int]:
+    def prerequisites(self) -> list[int]:
         return self._prerequisites_and_level[0]
 
     @property
