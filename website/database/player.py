@@ -637,7 +637,29 @@ class Player(db.Model, UserMixin):
         """Packages the player's construction queue (list of construction_ids)"""
         return self.read_list("construction_priorities")
 
-    def package_active_facilities(self):
+    def package_active_facilities(self) -> dict[str, dict[int, dict[str, any]]]:
+        """Package the player's active facilities."""
+        engine: GameEngine = current_app.config["engine"]
+        power_facilities: list[ActiveFacility] = self.active_facilities.filter(
+            ActiveFacility.facility.in_(engine.power_facilities)
+        ).all()
+        return {
+            "power_facilities": {
+                power_facility.id: {
+                    "facility": power_facility.facility,
+                    "name": power_facility.display_name,
+                    "installed_cap": power_facility.installed_cap,
+                    "used_capacity": power_facility.usage,
+                    "op_cost": power_facility.op_cost,
+                    "remaining_lifespan": power_facility.remaining_lifespan,
+                    "upgrade_cost": power_facility.upgrade_cost,
+                    "dismantle_cost": power_facility.dismantle_cost,
+                }
+                for power_facility in power_facilities
+            }
+        }
+
+    def package_active_facilities_OLD(self):
         """Packages the player's active facilities"""
 
         def get_facility_data(facilities):

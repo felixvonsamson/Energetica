@@ -96,7 +96,6 @@ class Table {
      * @returns {void}
      * */
     update_table_body(table_data) {
-        console.log("Updating table body");
         // Clear the table body
         this.table_body.replaceChildren();
         // TODO: remove this; it's a workaround for the alternating row colors
@@ -149,6 +148,9 @@ class Table {
 
     /** @returns {void} */
     sort_table_body() {
+        if (this.table_data === undefined) {
+            return;
+        }
         if (this.sort_state === null) {
             throw new Error("Cannot sort table body, no ordering specified: sort state is null");
         }

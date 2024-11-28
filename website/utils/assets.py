@@ -194,56 +194,15 @@ def upgrade_facility(player, facility):
     if facility is None or facility.player_id != player.id:
         raise GameException("constructionNotFound")
 
-    def is_upgradable(facility: ActiveFacility):
-        """Returns true if any of the attributes of the built facility are outdated compared to current tech levels"""
-        if facility.facility in engine.extraction_facilities:
-            return (
-                facility.price_multiplier < technology_effects.price_multiplier(player, facility.facility)
-                or facility.multiplier_1 < technology_effects.multiplier_1(player, facility.facility)
-                or facility.multiplier_2 < technology_effects.multiplier_2(player, facility.facility)
-                or facility.multiplier_3 < technology_effects.multiplier_3(player, facility.facility)
-            )
-        else:  # power & storage facilities
-            return (
-                facility.price_multiplier < technology_effects.price_multiplier(player, facility.facility)
-                or facility.facility in engine.power_facilities + engine.storage_facilities
-                and facility.multiplier_1 < technology_effects.multiplier_1(player, facility.facility)
-                or facility.facility in engine.storage_facilities
-                and facility.multiplier_2 < technology_effects.multiplier_2(player, facility.facility)
-                or facility.facility in engine.controllable_facilities + engine.storage_facilities
-                and facility.multiplier_3 < technology_effects.multiplier_3(player, facility.facility)
-            )
-
-    def apply_upgrade(facility: ActiveFacility):
-        """Updates the built facilities attributes to match current tech levels"""
-        if facility.facility in engine.extraction_facilities:
-            facility.price_multiplier = technology_effects.price_multiplier(player, facility.facility)
-            facility.multiplier_1 = technology_effects.multiplier_1(player, facility.facility)
-            facility.multiplier_2 = technology_effects.multiplier_2(player, facility.facility)
-            facility.multiplier_3 = technology_effects.multiplier_3(player, facility.facility)
-        else:
-            facility.price_multiplier = technology_effects.price_multiplier(player, facility.facility)
-            if facility.facility in engine.power_facilities + engine.storage_facilities:
-                facility.multiplier_1 = technology_effects.multiplier_1(player, facility.facility)
-            if facility.facility in engine.storage_facilities:
-                facility.multiplier_2 = technology_effects.multiplier_2(player, facility.facility)
-            if facility.facility in engine.controllable_facilities + engine.storage_facilities:
-                facility.multiplier_3 = technology_effects.multiplier_3(player, facility.facility)
-        db.session.commit()
-
-    if facility.facility in engine.technologies + engine.functional_facilities or not is_upgradable(facility):
+    if facility.facility in engine.technologies + engine.functional_facilities or not facility.is_upgradable:
         raise GameException("notUpgradable")
 
     const_config = engine.const_config["assets"][facility.facility]
-    price_diff = technology_effects.price_multiplier(player, facility.facility) - facility.price_multiplier
-    if price_diff > 0:
-        upgrade_cost = const_config["base_price"] * price_diff
-    else:
-        upgrade_cost = 0.05 * const_config["base_price"]
+    upgrade_cost = facility.upgrade_cost
     if player.money < upgrade_cost:
         raise GameException("notEnoughMoney")
     player.money -= upgrade_cost
-    apply_upgrade(facility)
+    facility.upgrade()
     player.data.capacities.update(player, facility.facility)
 
 
@@ -320,8 +279,7 @@ def dismantle_facility(player, facility):
     """this function is executed when a player dismantles a facility"""
     if facility is None or facility.player_id != player.id:
         raise GameException("facilityNotFound")
-    base_price = current_app.config["engine"].const_config["assets"][facility.facility]["base_price"]
-    cost = 0.2 * base_price * facility.price_multiplier
+    cost = facility.dismantle_cost
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
         cost *= facility.multiplier_2
     if player.money < cost:

@@ -16,7 +16,6 @@ from website.config.assets import (
     player_lab_workers_for_level,
     warehouse_capacity_for_level,
 )
-from website.database.active_facility import ActiveFacility
 from website.database.ongoing_construction import OngoingConstruction
 
 if TYPE_CHECKING:
@@ -289,6 +288,8 @@ def extraction_emissions_multiplier(player: Player, facility) -> float:
 
 def next_available_location(player: Player, facility: str) -> int:
     """Finds the next available location for a hydro and wind facilities"""
+    from website.database.active_facility import ActiveFacility
+
     active_facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(
         facility=facility, player_id=player.id
     ).all()

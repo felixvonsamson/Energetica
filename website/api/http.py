@@ -367,9 +367,15 @@ def submit_quiz_answer() -> Response:
     )
 
 
+@http.route("/get_active_facilities_OLD", methods=["GET"])
+def get_active_facilities_OLD() -> Response:
+    """Get the active facilities for this player."""
+    return jsonify(current_user.package_active_facilities_OLD())
+
+
 @http.route("/get_active_facilities", methods=["GET"])
 def get_active_facilities() -> Response:
-    """Get list of active facilities for this player."""
+    """Get the active facilities for this player."""
     return jsonify(current_user.package_active_facilities())
 
 
