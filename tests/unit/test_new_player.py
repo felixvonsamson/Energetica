@@ -14,7 +14,6 @@ from energetica.utils.misc import confirm_location
 
 def test():
     _, app = create_app(rm_instance=True)
-    app.app_context().push()
     engine = app.config["engine"]
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
