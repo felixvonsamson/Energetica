@@ -181,7 +181,7 @@ def create_app(
                 engine.log("Loaded last checkpoint from disk.")
         else:
             if loaded_tick:
-                with tarfile.open("checkpoints/simulation/checkpoint_{loaded_tick}.tar.gz") as file:
+                with tarfile.open(f"checkpoints/simulation/checkpoint_{loaded_tick}.tar.gz") as file:
                     file.extractall("./")
                 engine.log(f"Loaded checkpoints/simulation/checkpoint_{loaded_tick}.tar.gz from disk.")
 
