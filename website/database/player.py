@@ -693,36 +693,6 @@ class Player(db.Model, UserMixin):
             },
         }
 
-    def package_active_facilities_OLD(self):
-        """Packages the player's active facilities"""
-
-        def get_facility_data(facilities):
-            sub_facilities: list[ActiveFacility] = self.active_facilities.filter(
-                ActiveFacility.facility.in_(facilities)
-            ).all()
-            return {
-                facility.id: {
-                    k: getattr(facility, k)
-                    for k in [
-                        "facility",
-                        "end_of_life",
-                        "price_multiplier",
-                        "multiplier_1",
-                        "multiplier_2",
-                        "multiplier_3",
-                        "usage",
-                    ]
-                }
-                for facility in sub_facilities
-            }
-
-        engine = current_app.config["engine"]
-        return {
-            "power_facilities": get_facility_data(engine.power_facilities),
-            "storage_facilities": get_facility_data(engine.storage_facilities),
-            "extraction_facilities": get_facility_data(engine.extraction_facilities),
-        }
-
     def invalidate_recompute_and_dispatch_data_for_pages(
         self,
         *,

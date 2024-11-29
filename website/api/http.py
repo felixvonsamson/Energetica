@@ -367,12 +367,6 @@ def submit_quiz_answer() -> Response:
     )
 
 
-@http.route("/get_active_facilities_OLD", methods=["GET"])
-def get_active_facilities_OLD() -> Response:
-    """Get the active facilities for this player."""
-    return jsonify(current_user.package_active_facilities_OLD())
-
-
 @http.route("/get_active_facilities", methods=["GET"])
 def get_active_facilities() -> Response:
     """Get the active facilities for this player."""
@@ -524,11 +518,8 @@ def request_upgrade_facility() -> Response:
 def request_upgrade_all_of_type() -> Response:
     """Upgrade all facilities of a certain type."""
     request_data = request.get_json()
-    facility_id = request_data["facility_id"]
-    facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
-    if facility is None or facility.player_id != current_user.id:
-        return jsonify({"response": "constructionNotFound"}), 404
-    website.utils.assets.upgrade_all_of_type(player=current_user, facility_name=facility.facility)
+    facility = request_data["facility"]
+    website.utils.assets.upgrade_all_of_type(player=current_user, facility_name=facility)
     return jsonify({"response": "success", "money": current_user.money})
 
 
@@ -556,11 +547,8 @@ def request_dismantle_facility() -> Response:
 def request_dismantle_all_of_type() -> Response:
     """Dismantle all facilities of a certain type."""
     request_data = request.get_json()
-    facility_id = request_data["facility_id"]
-    facility: ActiveFacility = ActiveFacility.query.get(int(facility_id))
-    if facility is None or facility.player_id != current_user.id:
-        return jsonify({"response": "constructionNotFound"}), 404
-    website.utils.assets.dismantle_all_of_type(player=current_user, facility_name=facility.facility)
+    facility = request_data["facility"]
+    website.utils.assets.dismantle_all_of_type(player=current_user, facility_name=facility)
     return jsonify({"response": "success", "money": current_user.money})
 
 

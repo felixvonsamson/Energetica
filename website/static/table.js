@@ -19,7 +19,7 @@
  * default.
  * @property {(data: Object, row_key: number | string, value: any) => string} [render_cell] - A function to generate the 
  * cell's inner HTML.
- * @property {(cell_element: HTMLTableCellElement, data: Object, row_key: number | string, value: any) => void} [populate_cell_content]
+ * @property {(cell_element: HTMLTableCellElement, table_data: Object.<string|number, Object>, data: Object, row_key: number | string, value: any) => void} [populate_cell_content]
  *  - A function to populate the cell with custom content.
  */
 
@@ -136,7 +136,7 @@ class Table {
                                 cell_element.innerHTML = render_cell(row_data, row_key, cell_data);
                             }
                         } else {
-                            column.populate_cell_content(cell_element, row_data, row_key, cell_data);
+                            column.populate_cell_content(cell_element, table_data, row_data, row_key, cell_data);
                         }
                     }
                 }
