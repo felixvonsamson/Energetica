@@ -643,11 +643,14 @@ class Player(db.Model, UserMixin):
         power_facilities: list[ActiveFacility] = self.active_facilities.filter(
             ActiveFacility.facility.in_(engine.power_facilities)
         ).all()
+        storage_facilities: list[ActiveFacility] = self.active_facilities.filter(
+            ActiveFacility.facility.in_(engine.storage_facilities)
+        ).all()
         return {
             "power_facilities": {
                 power_facility.id: {
                     "facility": power_facility.facility,
-                    "name": power_facility.display_name,
+                    "display_name": power_facility.display_name,
                     "installed_cap": power_facility.installed_cap,
                     "used_capacity": power_facility.usage,
                     "op_cost": power_facility.op_cost,
@@ -656,7 +659,21 @@ class Player(db.Model, UserMixin):
                     "dismantle_cost": power_facility.dismantle_cost,
                 }
                 for power_facility in power_facilities
-            }
+            },
+            "storage_facilities": {
+                storage_facility.id: {
+                    "facility": storage_facility.facility,
+                    "display_name": storage_facility.display_name,
+                    "storage_capacity": storage_facility.storage_capacity,
+                    "state_of_charge": storage_facility.state_of_charge,
+                    "op_cost": storage_facility.op_cost,
+                    "efficiency": storage_facility.efficiency,
+                    "remaining_lifespan": storage_facility.remaining_lifespan,
+                    "upgrade_cost": storage_facility.upgrade_cost,
+                    "dismantle_cost": storage_facility.dismantle_cost,
+                }
+                for storage_facility in storage_facilities
+            },
         }
 
     def package_active_facilities_OLD(self):

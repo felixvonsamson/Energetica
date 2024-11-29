@@ -61,6 +61,21 @@ class ActiveFacility(db.Model):
         return self.const_config["base_power_generation"] * self.multiplier_1
 
     @property
+    def storage_capacity(self) -> float:
+        """Storage capacity of the facility in Wh."""
+        return self.const_config["base_storage_capacity"] * self.multiplier_2
+
+    @property
+    def state_of_charge(self) -> float:
+        """Current charge of the facility as a percentage of maximum."""
+        return self.usage
+
+    @property
+    def efficiency(self) -> float:
+        """Efficiency of the facility as a number from 0 to 1."""
+        return self.const_config["base_efficiency"] * self.multiplier_3
+
+    @property
     def op_cost(self) -> float:
         """Cost to operate the facility per in-game hour."""
         return self.total_cost * self.const_config["O&M_factor_per_day"] / 24

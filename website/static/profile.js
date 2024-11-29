@@ -2,9 +2,9 @@
 /** @type {typeof import('./display_functions.js')} */
 
 /** @type {DataColumnConfig[]} */
-const columns_config = [
+const power_facilities_columns_config = [
     {
-        key: "name",
+        key: "display_name",
         display_name: "Name",
         data_type: 'string',
         default_sort_order: "ascending",
@@ -72,18 +72,102 @@ const columns_config = [
     },
 ];
 
-const power_facilities_table = document.getElementById("test_table");
+/** @type {DataColumnConfig[]} */
+const storage_facilities_columns_config = [
+    {
+        key: "display_name",
+        display_name: "Name",
+        data_type: 'string',
+        default_sort_order: "ascending",
+    },
+    {
+        key: "storage_capacity",
+        display_name: "Max storage",
+        data_type: "number",
+        render_cell: (_, __, value) => format_energy(value),
+    },
+    {
+        key: "state_of_charge",
+        display_name: "State of Charge",
+        data_type: "number",
+        special_render: "gauge",
+        gauge_class: (data, _, __) => `color_${data.facility}`,
+    },
+    {
+        key: "op_cost",
+        display_name: "O&M cost",
+        data_type: "number",
+        render_cell: (_, __, value) => format_money(value) + "/h",
+    },
+    {
+        key: "efficiency",
+        display_name: "Efficiency",
+        data_type: "number",
+        render_cell: (_, __, value) => Math.round(value * 100) + "%",
+    },
+    {
+        key: "remaining_lifespan",
+        display_name: "Lifespan left",
+        data_type: "number",
+        default_sort_order: "ascending", // Players might want to see the facilities with the least lifespan left first.
+        render_cell: (_, __, value) => format_days(value) + " d",
+    },
+    {
+        key: "upgrade_cost",
+        display_name: "Upgrade",
+        data_type: "number",
+        default_sort_order: "ascending",
+        populate_cell_content: (cell_element, id, _, value) => {
+            if (value == null) {
+                return "-";
+            }
+            const container = document.createElement("div");
+            container.classList.add("upgrade_container");
+            const button = document.createElement("button");
+            button.classList.add("upgrade_button");
+            button.innerHTML = format_money(value);
+            button.onclick = () => console.log("Upgrade", id);
+            container.appendChild(button);
+            cell_element.appendChild(container);
+        }
+    },
+    {
+        key: "dismantle_cost",
+        display_name: "Dismantle",
+        data_type: "number",
+        default_sort_order: "ascending",
+        populate_cell_content: (cell_element, id, _, value) => {
+            const container = document.createElement("div");
+            container.classList.add("upgrade_container");
+            const button = document.createElement("button");
+            button.classList.add("dismantle_button");
+            button.innerHTML = format_money(value);
+            button.onclick = () => are_you_sure_dismantle_facility(id, value);
+            container.appendChild(button);
+            cell_element.appendChild(container);
+        },
+    }
+];
+
+const power_facilities_table = document.getElementById("power_facilities_table");
+const storage_facilities_table = document.getElementById("storage_facilities_table");
 if (!(power_facilities_table instanceof HTMLTableElement)) {
     throw new Error("Element 'power_facilities_table' is not a table");
 }
+if (!(storage_facilities_table instanceof HTMLTableElement)) {
+    throw new Error("Element 'storage_facilities_table' is not a table");
+}
 const power_facilities_table_manager = new Table(
-    power_facilities_table, columns_config,
+    power_facilities_table, power_facilities_columns_config,
     { key: "installed_cap", order: "descending" }
+);
+const storage_facilities_table_manager = new Table(
+    storage_facilities_table, storage_facilities_columns_config,
+    { key: "storage_capacity", order: "descending" }
 );
 
 let active_facilities;
 let order_by = {
-    "storage_facilities_table": ["installed_cap", true],
     "extraction_facilities_table": ["extraction_rate", true],
 };
 
@@ -141,25 +225,9 @@ async function get_active_facilities(reorder = false) {
         const reserves = await fetch("/api/get_resource_reserves").then((response) => response.json());
 
         active_facilities = {
-            "storage_facilities": {},
             "extraction_facilities": {},
         };
         let last_value = JSON.parse(sessionStorage.getItem("last_value"));
-        for (const [id, facility] of Object.entries(raw_data.storage_facilities)) {
-            let config = const_config.assets[facility.facility];
-            active_facilities.storage_facilities[id] = {
-                "facility": facility.facility,
-                "name": config.name,
-                "installed_cap": config.base_storage_capacity * facility[multiplier_table.capacity_multiplier],
-                "used_capacity": facility.usage,
-                "op_cost": config.base_price * facility.price_multiplier * config["O&M_factor_per_day"] / 24,
-                "efficiency": config.base_efficiency * facility[multiplier_table.efficiency_multiplier],
-                "remaining_lifespan": facility.end_of_life - last_value["total_t"],
-                // The following lines should be removed / reworked as it relies on get_current_technology_values
-                "upgrade": upgrade_cost(facility, player_data.multipliers[facility.facility], config),
-                "dismantle": config.base_price * facility.price_multiplier * 0.2,
-            };
-        }
         let facility_to_resource = {
             "coal_mine": "coal",
             "gas_drilling_site": "gas",
@@ -189,7 +257,6 @@ async function get_active_facilities(reorder = false) {
                 "dismantle": config.base_price * facility.price_multiplier * 0.2,
             };
         }
-        sortTable('storage_facilities_table', order_by.storage_facilities_table[0], reorder = reorder);
         sortTable('extraction_facilities_table', order_by.extraction_facilities_table[0], reorder = reorder);
     } catch (error) {
         console.error("Error:", error);
@@ -197,6 +264,7 @@ async function get_active_facilities(reorder = false) {
     try {
         const active_facilities_data = await fetch("/api/get_active_facilities").then((response) => response.json());
         power_facilities_table_manager.update_table_body(active_facilities_data.power_facilities);
+        storage_facilities_table_manager.update_table_body(active_facilities_data.storage_facilities);
     } catch (error) {
         console.error("Error:", error);
     }
@@ -241,61 +309,12 @@ function sortTable(table_name, columnName, reorder = true) {
 
     // Rebuild the HTML table
     let html;
-    if (table_name == "storage_facilities_table") {
-        html = build_storage_facilities_table(sortedData);
-    } else {
-        html = build_extraction_facilities_table(sortedData);
-    }
+    html = build_extraction_facilities_table(sortedData);
     table.innerHTML = html;
 
     // Update the sorting indicator
     column = table.querySelector(`.${columnName}`);
     column.innerHTML += triangle;
-}
-
-function build_storage_facilities_table(sortedData) {
-    let html = `<tr>
-        <th class="name" onclick="sortTable('storage_facilities_table', 'name')">Name</th>
-        <th class="installed_cap" onclick="sortTable('storage_facilities_table', 'installed_cap')">Max storage</th>
-        <th class="used_capacity" onclick="sortTable('storage_facilities_table', 'used_capacity')">State of Charge</th>
-        <th class="op_cost" onclick="sortTable('storage_facilities_table', 'op_cost')">O&M costs</th>
-        <th class="efficiency" onclick="sortTable('storage_facilities_table', 'efficiency')">Efficiency</th>
-        <th class="remaining_lifespan" onclick="sortTable('storage_facilities_table', 'remaining_lifespan')">Lifespan left</th>
-        <th class="upgrade" onclick="sortTable('storage_facilities_table', 'upgrade')">Upgrade</th>
-        <th class="dismantle" onclick="sortTable('storage_facilities_table', 'dismantle')">Dismantle</th>
-        </tr>`;
-    for (const [id, facility] of sortedData) {
-        let upgrade = "-";
-        if (facility.upgrade != null) {
-            upgrade = `<div class="upgrade_container">
-                    <button class="upgrade_button" onclick="upgrade(${id})">${format_money(facility.upgrade)}</button>
-                    <button class="or_all_button">- or -</button>
-                    <button class="upgrade_all_button" onclick="are_you_sure_upgrade_all_of_type(${id}, '${facility.name}')">Upgrade all ${facility.name}</button>
-                </div>`;
-        }
-        html += `<tr>
-            <td>${facility.name}</td>
-            <td>${format_energy(facility.installed_cap)}</td>
-            <td>
-                <div class="capacityGauge-background">
-                    <div class="capacityGauge color_${facility.facility}" style="--width:${facility.used_capacity}"></div>
-                    <div class="capacityGauge-txt">${Math.round(facility.used_capacity * 100)}%</div>
-                </div>
-            </td>
-            <td>${format_money(facility.op_cost)}/h</td>
-            <td>${Math.round(facility.efficiency * 100)}%</td>
-            <td>${format_days(facility.remaining_lifespan)} d</td>
-            <td>${upgrade}</td>
-            <td>
-                <div class="upgrade_container">
-                    <button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${format_money(facility.dismantle)}</button>
-                    <button class="or_all_button">- or -</button>
-                    <button class="dismantle_all_button" onclick="are_you_sure_dismantle_all_of_type(${id}, '${facility.name}')">Dismantle all ${facility.name}</button>
-                </div>
-            </td>
-            </tr>`;
-    }
-    return html;
 }
 
 function build_extraction_facilities_table(sortedData) {
