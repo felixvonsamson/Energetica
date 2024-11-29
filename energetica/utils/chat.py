@@ -2,12 +2,13 @@
 
 from datetime import datetime
 
+from flask import current_app
+
 from energetica.database import db
 from energetica.database.messages import Chat, Message
 from energetica.database.player import PlayerUnreadMessages
 from energetica.game_engine import GameEngine, GameException
 from energetica.utils.misc import display_new_message
-from flask import current_app
 
 
 def hide_chat_disclaimer(player):

@@ -2,12 +2,13 @@
 
 from functools import partial
 
+from flask import Blueprint, current_app, g, redirect, render_template, request, url_for
+from flask_login import current_user, login_required
+
 from energetica.database import db
 from energetica.database.messages import Chat
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from flask import Blueprint, current_app, g, redirect, render_template, request, url_for
-from flask_login import current_user, login_required
 
 location_choice_views = Blueprint("location_choice_views", __name__)
 views = Blueprint("views", __name__)

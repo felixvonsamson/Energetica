@@ -7,6 +7,10 @@ import threading
 from datetime import datetime, timedelta
 
 import numpy as np
+from flask import flash
+from noise import pnoise3
+from scipy.stats import norm
+
 from energetica.config.assets import river_discharge_seasonal
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
@@ -15,9 +19,6 @@ from energetica.database.messages import Chat, Message, Notification
 from energetica.database.player import Network, Player
 from energetica.game_engine import GameEngine, GameException
 from energetica.utils.astro import DrHI
-from flask import flash
-from noise import pnoise3
-from scipy.stats import norm
 
 # Helper functions and data initialization utilities
 

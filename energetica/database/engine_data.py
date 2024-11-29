@@ -6,8 +6,9 @@ from collections import defaultdict, deque
 from typing import List
 
 import noise
-from energetica.database.active_facility import ActiveFacility
 from flask import current_app
+
+from energetica.database.active_facility import ActiveFacility
 
 
 class CapacityData:

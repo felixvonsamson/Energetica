@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 import numpy as np
+
 from energetica.config.climate_events import climate_events
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility

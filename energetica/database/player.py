@@ -9,6 +9,10 @@ from functools import cached_property
 from itertools import chain
 from typing import TYPE_CHECKING
 
+from flask import current_app
+from flask_login import UserMixin
+from pywebpush import WebPushException, webpush
+
 from energetica.config.achievements import achievements
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
@@ -27,9 +31,6 @@ from energetica.technology_effects import (
     package_power_facilities,
     package_storage_facilities,
 )
-from flask import current_app
-from flask_login import UserMixin
-from pywebpush import WebPushException, webpush
 
 if TYPE_CHECKING:
     from energetica.game_engine import GameEngine

@@ -6,6 +6,7 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+
 from energetica.config.assets import wind_power_curve
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility

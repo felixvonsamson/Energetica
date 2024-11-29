@@ -7,13 +7,14 @@ import tarfile
 from time import sleep
 from typing import List
 
-import energetica.production_update as production_update
 import requests
+from flask import current_app
+
+import energetica.production_update as production_update
 from energetica.database import db
 from energetica.database.map import Hex
 from energetica.utils.climate_helpers import climate_event_impact
 from energetica.utils.tick_execution import check_events_completion
-from flask import current_app
 
 
 def create_user(user_id, port):

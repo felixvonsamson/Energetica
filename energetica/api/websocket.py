@@ -3,6 +3,11 @@
 import json
 import pickle
 
+from flask import Blueprint, current_app, g
+from flask_httpauth import HTTPBasicAuth
+from simple_websocket import ConnectionClosed
+from werkzeug.security import check_password_hash
+
 from energetica.database import db
 from energetica.database.map import Hex
 from energetica.database.messages import Chat, Message
@@ -13,10 +18,6 @@ from energetica.utils.assets import decrease_project_priority, queue_project, to
 from energetica.utils.chat import add_message, create_chat, create_group_chat, hide_chat_disclaimer
 from energetica.utils.misc import confirm_location, package_weather_data
 from energetica.utils.network_helpers import create_network, join_network, leave_network
-from flask import Blueprint, current_app, g
-from flask_httpauth import HTTPBasicAuth
-from simple_websocket import ConnectionClosed
-from werkzeug.security import check_password_hash
 
 websocket_blueprint = Blueprint("rest_api", __name__)
 

@@ -9,6 +9,8 @@ import math
 from typing import TYPE_CHECKING, Dict, List
 
 import numpy as np
+from flask import current_app
+
 from energetica.config.assets import (
     player_construction_workers_for_level,
     player_lab_workers_for_level,
@@ -16,7 +18,6 @@ from energetica.config.assets import (
 )
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_construction import OngoingConstruction
-from flask import current_app
 
 if TYPE_CHECKING:
     from energetica.database.map import Hex

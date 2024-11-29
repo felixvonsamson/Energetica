@@ -4,6 +4,8 @@ import math
 import random
 from typing import List
 
+from flask import current_app
+
 from energetica import game_engine, technology_effects
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
@@ -11,7 +13,6 @@ from energetica.database.ongoing_construction import OngoingConstruction
 from energetica.database.player import Player
 from energetica.game_engine import Confirm, GameEngine, GameException
 from energetica.utils.network_helpers import reorder_facility_priorities
-from flask import current_app
 
 
 def finish_project(construction: OngoingConstruction, skip_notifications=False):
