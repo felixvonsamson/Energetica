@@ -1,6 +1,64 @@
 /** @type {typeof import('./table.js')} */
 /** @type {typeof import('./display_functions.js')} */
 
+/**
+ * 
+ * @param {HTMLTableCellElement} cell_element 
+ * @param {Object} facility 
+ * @param {number | string} id 
+ * @param {number} upgrade_cost 
+ * @returns 
+ */
+function add_upgrade_button(cell_element, facility, id, upgrade_cost) {
+    if (upgrade_cost == null) {
+        cell_element.innerHTML = "-";
+        return;
+    }
+    const container = document.createElement("div");
+    container.classList.add("upgrade_container");
+    const button_single = document.createElement("button");
+    button_single.classList.add("upgrade_button");
+    button_single.innerHTML = format_money(upgrade_cost);
+    button_single.onclick = () => upgrade(id);
+    const button_or = document.createElement("button");
+    button_or.classList.add("or_all_button");
+    button_or.innerHTML = "- or -";
+    const button_all = document.createElement("button");
+    button_all.classList.add("upgrade_all_button");
+    button_all.innerHTML = `Upgrade all ${facility.display_name}`;
+    button_all.onclick = () => are_you_sure_upgrade_all_of_type(id, facility.display_name);
+    container.appendChild(button_single);
+    container.appendChild(button_or);
+    container.appendChild(button_all);
+    cell_element.appendChild(container);
+}
+
+/**
+ * @param {HTMLTableCellElement} cell_element
+ * @param {Object} facility
+ * @param {number | string} id
+ * @param {number} dismantle_cost
+ */
+function add_dismantle_button(cell_element, facility, id, dismantle_cost) {
+    const container = document.createElement("div");
+    container.classList.add("upgrade_container");
+    const button_single = document.createElement("button");
+    button_single.classList.add("dismantle_button");
+    button_single.innerHTML = format_money(dismantle_cost);
+    button_single.onclick = () => are_you_sure_dismantle_facility(id, dismantle_cost);
+    const button_or = document.createElement("button");
+    button_or.classList.add("or_all_button");
+    button_or.innerHTML = "- or -";
+    const button_all = document.createElement("button");
+    button_all.classList.add("dismantle_all_button");
+    button_all.innerHTML = `Dismantle all ${facility.display_name}`;
+    button_all.onclick = () => are_you_sure_dismantle_all_of_type(id, facility.display_name);
+    container.appendChild(button_single);
+    container.appendChild(button_or);
+    container.appendChild(button_all);
+    cell_element.appendChild(container);
+}
+
 /** @type {DataColumnConfig[]} */
 const power_facilities_columns_config = [
     {
@@ -16,8 +74,8 @@ const power_facilities_columns_config = [
         render_cell: (_, __, value) => format_power(value),
     },
     {
-        key: "used_capacity",
-        display_name: "Used Capacity",
+        key: "usage",
+        display_name: "Power output",
         data_type: "number",
         special_render: "gauge",
         gauge_class: (data, _, __) => `color_${data.facility}`,
@@ -40,35 +98,14 @@ const power_facilities_columns_config = [
         display_name: "Upgrade",
         data_type: "number",
         default_sort_order: "ascending",
-        populate_cell_content: (cell_element, id, _, value) => {
-            if (value == null) {
-                return "-";
-            }
-            const container = document.createElement("div");
-            container.classList.add("upgrade_container");
-            const button = document.createElement("button");
-            button.classList.add("upgrade_button");
-            button.innerHTML = format_money(value);
-            button.onclick = () => console.log("Upgrade", id);
-            container.appendChild(button);
-            cell_element.appendChild(container);
-        }
+        populate_cell_content: add_upgrade_button
     },
     {
         key: "dismantle_cost",
         display_name: "Dismantle",
         data_type: "number",
         default_sort_order: "ascending",
-        populate_cell_content: (cell_element, id, _, value) => {
-            const container = document.createElement("div");
-            container.classList.add("upgrade_container");
-            const button = document.createElement("button");
-            button.classList.add("dismantle_button");
-            button.innerHTML = format_money(value);
-            button.onclick = () => are_you_sure_dismantle_facility(id, value);
-            container.appendChild(button);
-            cell_element.appendChild(container);
-        },
+        populate_cell_content: add_dismantle_button,
     },
 ];
 
@@ -117,45 +154,84 @@ const storage_facilities_columns_config = [
         display_name: "Upgrade",
         data_type: "number",
         default_sort_order: "ascending",
-        populate_cell_content: (cell_element, id, _, value) => {
-            if (value == null) {
-                return "-";
-            }
-            const container = document.createElement("div");
-            container.classList.add("upgrade_container");
-            const button = document.createElement("button");
-            button.classList.add("upgrade_button");
-            button.innerHTML = format_money(value);
-            button.onclick = () => console.log("Upgrade", id);
-            container.appendChild(button);
-            cell_element.appendChild(container);
-        }
+        populate_cell_content: add_upgrade_button
     },
     {
         key: "dismantle_cost",
         display_name: "Dismantle",
         data_type: "number",
         default_sort_order: "ascending",
-        populate_cell_content: (cell_element, id, _, value) => {
-            const container = document.createElement("div");
-            container.classList.add("upgrade_container");
-            const button = document.createElement("button");
-            button.classList.add("dismantle_button");
-            button.innerHTML = format_money(value);
-            button.onclick = () => are_you_sure_dismantle_facility(id, value);
-            container.appendChild(button);
-            cell_element.appendChild(container);
-        },
+        populate_cell_content: add_dismantle_button,
+    }
+];
+
+/** @type {DataColumnConfig[]} */
+const extraction_facilities_columns_config = [
+    {
+        key: "display_name",
+        display_name: "Name",
+        data_type: 'string',
+        default_sort_order: "ascending",
+    },
+    {
+        key: "extraction_rate",
+        display_name: "Extraction rate",
+        data_type: "number",
+        render_cell: (_, __, value) => format_mass_rate(value),
+    },
+    {
+        key: "usage",
+        display_name: "Usage",
+        data_type: "number",
+        special_render: "gauge",
+        gauge_class: (data, _, __) => `color_${data.facility}`,
+    },
+    {
+        key: "op_cost",
+        display_name: "O&M cost",
+        data_type: "number",
+        render_cell: (_, __, value) => format_money(value) + "/h",
+    },
+    {
+        key: "max_power_use",
+        display_name: "Power use",
+        data_type: "number",
+        render_cell: (_, __, value) => format_power(value),
+    },
+    {
+        key: "remaining_lifespan",
+        display_name: "Lifespan left",
+        data_type: "number",
+        default_sort_order: "ascending", // Players might want to see the facilities with the least lifespan left first.
+        render_cell: (_, __, value) => format_days(value) + " d",
+    },
+    {
+        key: "upgrade_cost",
+        display_name: "Upgrade",
+        data_type: "number",
+        default_sort_order: "ascending",
+        populate_cell_content: add_upgrade_button,
+    },
+    {
+        key: "dismantle_cost",
+        display_name: "Dismantle",
+        data_type: "number",
+        default_sort_order: "ascending",
+        populate_cell_content: add_dismantle_button,
     }
 ];
 
 const power_facilities_table = document.getElementById("power_facilities_table");
 const storage_facilities_table = document.getElementById("storage_facilities_table");
+const extraction_facilities_table = document.getElementById("extraction_facilities_table");
 if (!(power_facilities_table instanceof HTMLTableElement)) {
     throw new Error("Element 'power_facilities_table' is not a table");
 }
 if (!(storage_facilities_table instanceof HTMLTableElement)) {
     throw new Error("Element 'storage_facilities_table' is not a table");
+}
+if (!(extraction_facilities_table instanceof HTMLTableElement)) {
+    throw new Error("Element 'extraction_facilities_table' is not a table");
 }
 const power_facilities_table_manager = new Table(
     power_facilities_table, power_facilities_columns_config,
@@ -164,6 +240,10 @@ const power_facilities_table_manager = new Table(
 const storage_facilities_table_manager = new Table(
     storage_facilities_table, storage_facilities_columns_config,
     { key: "storage_capacity", order: "descending" }
+);
+const extraction_facilities_table_manager = new Table(
+    extraction_facilities_table, extraction_facilities_columns_config,
+    { key: "extraction_rate", order: "descending" }
 );
 
 let active_facilities;
@@ -257,7 +337,6 @@ async function get_active_facilities(reorder = false) {
                 "dismantle": config.base_price * facility.price_multiplier * 0.2,
             };
         }
-        sortTable('extraction_facilities_table', order_by.extraction_facilities_table[0], reorder = reorder);
     } catch (error) {
         console.error("Error:", error);
     }
@@ -265,6 +344,7 @@ async function get_active_facilities(reorder = false) {
         const active_facilities_data = await fetch("/api/get_active_facilities").then((response) => response.json());
         power_facilities_table_manager.update_table_body(active_facilities_data.power_facilities);
         storage_facilities_table_manager.update_table_body(active_facilities_data.storage_facilities);
+        extraction_facilities_table_manager.update_table_body(active_facilities_data.extraction_facilities);
     } catch (error) {
         console.error("Error:", error);
     }
@@ -275,91 +355,6 @@ async function get_active_facilities(reorder = false) {
         let power = wind_power_curve[curve_index] * (1 - curve_fraction) + wind_power_curve[curve_index + 1] * curve_fraction;
         return power;
     }
-}
-
-function sortTable(table_name, columnName, reorder = true) {
-    const table = document.getElementById(table_name);
-    if (table == null) {
-        return;
-    }
-    let column = table.querySelector(`.${columnName}`);
-    let triangle = ' <i class="fa fa-caret-down"></i>';
-
-    if (reorder) {
-        // Check if the column is already sorted, toggle sorting order accordingly
-        if (column.innerHTML.includes(triangle)) {
-            order_by[table_name] = [columnName, !order_by[table_name][1]];
-            triangle = ' <i class="fa fa-caret-up"></i>';
-        } else {
-            order_by[table_name] = [columnName, true];
-        }
-    }
-
-    // Sort the data based on the selected column
-    const sortedData = Object.entries(active_facilities[table_name.slice(0, -6)]).sort((a, b) => {
-        const aValue = a[1][columnName];
-        const bValue = b[1][columnName];
-
-        if (typeof aValue === "string" && typeof bValue === "string") {
-            return order_by[table_name][1] ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
-        } else {
-            return order_by[table_name][1] ? bValue - aValue : aValue - bValue;
-        }
-    });
-
-    // Rebuild the HTML table
-    let html;
-    html = build_extraction_facilities_table(sortedData);
-    table.innerHTML = html;
-
-    // Update the sorting indicator
-    column = table.querySelector(`.${columnName}`);
-    column.innerHTML += triangle;
-}
-
-function build_extraction_facilities_table(sortedData) {
-    let html = `<tr>
-        <th class="name" onclick="sortTable('extraction_facilities_table', 'name')">Name</th>
-        <th class="extraction_rate" onclick="sortTable('extraction_facilities_table', 'extraction_rate')">Extraction rate</th>
-        <th class="used_capacity" onclick="sortTable('extraction_facilities_table', 'used_capacity')">Used Capacity</th>
-        <th class="op_cost" onclick="sortTable('extraction_facilities_table', 'op_cost')">O&M costs</th>
-        <th class="energy_use" onclick="sortTable('extraction_facilities_table', 'energy_use')">Energy use</th>
-        <th class="remaining_lifespan" onclick="sortTable('extraction_facilities_table', 'remaining_lifespan')">Lifespan left</th>
-        <th class="upgrade" onclick="sortTable('extraction_facilities_table', 'upgrade')">Upgrade</th>
-        <th class="dismantle" onclick="sortTable('extraction_facilities_table', 'dismantle')">Dismantle</th>
-        </tr>`;
-    for (const [id, facility] of sortedData) {
-        let upgrade = "-";
-        if (facility.upgrade != null) {
-            upgrade = `<div class="upgrade_container">
-                    <button class="upgrade_button" onclick="upgrade(${id})">${format_money(facility.upgrade)}</button>
-                    <button class="or_all_button">- or -</button>
-                    <button class="upgrade_all_button" onclick="are_you_sure_upgrade_all_of_type(${id}, '${facility.name}')">Upgrade all ${facility.name}</button>
-                </div>`;
-        }
-        html += `<tr>
-            <td>${facility.name}</td>
-            <td>${format_mass_rate(facility.extraction_rate)}</td>
-            <td>
-                <div class="capacityGauge-background">
-                    <div class="capacityGauge color_${facility.facility}" style="--width:${facility.used_capacity}"></div>
-                    <div class="capacityGauge-txt">${Math.round(facility.used_capacity * 100)}%</div>
-                </div>
-            </td>
-            <td>${format_money(facility.op_cost)}/h</td>
-            <td>${format_power(facility.energy_use)}</td>
-            <td>${format_days(facility.remaining_lifespan)} d</td>
-            <td>${upgrade}</td>
-            <td>
-                <div class="upgrade_container">
-                    <button class="dismantle_button" onclick="are_you_sure_dismantle_facility(${id}, ${facility.dismantle})">${format_money(facility.dismantle)}</button>
-                    <button class="or_all_button">- or -</button>
-                    <button class="dismantle_all_button" onclick="are_you_sure_dismantle_all_of_type(${id}, '${facility.name}')">Dismantle all ${facility.name}</button>
-                </div>
-            </td>
-            </tr>`;
-    }
-    return html;
 }
 
 function are_you_sure_dismantle_facility(facility_id, cost) {

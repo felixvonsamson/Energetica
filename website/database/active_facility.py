@@ -8,6 +8,7 @@ from website import db, technology_effects
 from website.config.assets import const_config
 
 if TYPE_CHECKING:
+    from website.database.player import Player
     from website.game_engine import GameEngine
 
 
@@ -66,6 +67,22 @@ class ActiveFacility(db.Model):
         return self.const_config["base_storage_capacity"] * self.multiplier_2
 
     @property
+    def extraction_rate(self) -> float:
+        """Rate at which the facility extracts resources from the ground. Defined only for extraction facilities."""
+        player: Player = self.player
+        extraction_to_resource = {
+            "coal_mine": "coal",
+            "gas_drilling_site": "gas",
+            "uranium_mine": "uranium",
+        }
+        return (
+            self.const_config["base_extraction_rate_per_day"]
+            * self.multiplier_2
+            * player.get_reserves()[extraction_to_resource[self.facility]]
+            / 24
+        )
+
+    @property
     def state_of_charge(self) -> float:
         """Current charge of the facility as a percentage of maximum."""
         return self.usage
@@ -79,6 +96,11 @@ class ActiveFacility(db.Model):
     def op_cost(self) -> float:
         """Cost to operate the facility per in-game hour."""
         return self.total_cost * self.const_config["O&M_factor_per_day"] / 24
+
+    @property
+    def max_power_use(self) -> float:
+        """Maximum power consumption of the facility in W. Defined only for extraction facilities."""
+        return self.const_config["base_power_consumption"] * self.multiplier_1
 
     @property
     def remaining_lifespan(self) -> int:

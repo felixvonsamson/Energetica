@@ -646,13 +646,16 @@ class Player(db.Model, UserMixin):
         storage_facilities: list[ActiveFacility] = self.active_facilities.filter(
             ActiveFacility.facility.in_(engine.storage_facilities)
         ).all()
+        extraction_facilities: list[ActiveFacility] = self.active_facilities.filter(
+            ActiveFacility.facility.in_(engine.extraction_facilities)
+        ).all()
         return {
             "power_facilities": {
                 power_facility.id: {
                     "facility": power_facility.facility,
                     "display_name": power_facility.display_name,
                     "installed_cap": power_facility.installed_cap,
-                    "used_capacity": power_facility.usage,
+                    "usage": power_facility.usage,
                     "op_cost": power_facility.op_cost,
                     "remaining_lifespan": power_facility.remaining_lifespan,
                     "upgrade_cost": power_facility.upgrade_cost,
@@ -673,6 +676,20 @@ class Player(db.Model, UserMixin):
                     "dismantle_cost": storage_facility.dismantle_cost,
                 }
                 for storage_facility in storage_facilities
+            },
+            "extraction_facilities": {
+                extraction_facility.id: {
+                    "facility": extraction_facility.facility,
+                    "display_name": extraction_facility.display_name,
+                    "extraction_rate": extraction_facility.extraction_rate,
+                    "usage": extraction_facility.usage,
+                    "op_cost": extraction_facility.op_cost,
+                    "max_power_use": extraction_facility.max_power_use,
+                    "remaining_lifespan": extraction_facility.remaining_lifespan,
+                    "upgrade_cost": extraction_facility.upgrade_cost,
+                    "dismantle_cost": extraction_facility.dismantle_cost,
+                }
+                for extraction_facility in extraction_facilities
             },
         }
 
