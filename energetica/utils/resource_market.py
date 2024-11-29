@@ -5,7 +5,7 @@ from datetime import datetime
 
 from flask import current_app
 
-from energetica import db
+from energetica.database import db
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.database.shipment import Shipment
 from energetica.game_engine import GameException
@@ -135,8 +135,6 @@ def store_import(player, resource, quantity):
 def pause_shipment(shipment: Shipment):
     """this function is executed when a player pauses or unpauses an ongoing shipment"""
     engine = current_app.config["engine"]
-    if shipment.player_id != shipment.id:
-        raise GameException("shipmentNotFound")
     if shipment.suspension_time is None:
         shipment.suspension_time = engine.data["total_t"]
     else:

@@ -1,4 +1,4 @@
-from energetica import db
+from energetica.database import db
 
 
 class ResourceOnSale(db.Model):

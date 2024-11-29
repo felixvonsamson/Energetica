@@ -2,7 +2,7 @@
 `Notification` are stored in the database
 """
 
-from energetica import db
+from energetica.database import db
 
 
 class Chat(db.Model):

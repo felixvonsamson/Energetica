@@ -6,8 +6,9 @@ import tarfile
 import time
 from datetime import datetime
 
-from energetica import db, production_update
+from energetica import production_update
 from energetica.api import websocket
+from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.ongoing_construction import OngoingConstruction
@@ -91,7 +92,7 @@ def check_events_completion(engine):
         ActiveFacility.end_of_life <= engine.data["total_t"]
     ).all()
     for facility in eolt_facilities:
-        player = Player.query.get(facility.player_id)
+        player = db.session.get(Player, facility.player_id)
         remove_asset(player, facility)
 
     # check end of climate events

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import List
 
-from energetica import db
+from energetica.database import db
 
 
 class Hex(db.Model):

@@ -4,8 +4,9 @@ from typing import TYPE_CHECKING
 
 from flask import current_app
 
-from energetica import db, technology_effects
+from energetica import technology_effects
 from energetica.config.assets import const_config
+from energetica.database import db
 
 if TYPE_CHECKING:
     from energetica.database.player import Player

@@ -2,7 +2,7 @@
 
 from werkzeug.security import generate_password_hash
 
-from energetica import db
+from energetica.database import db
 from energetica.database.map import Hex
 from energetica.database.player import Network, Player
 from energetica.utils.assets import finish_project, queue_project
@@ -32,7 +32,7 @@ def init_test_players(engine):
         db.session.add(player)
         db.session.commit()
         # If tile_id is None, find any tile that isn't assigned to a player
-        hex_tile = Hex.query.get(tile_id) if tile_id else Hex.query.filter_by(player_id=None).first()
+        hex_tile = db.session.get(Hex, tile_id) if tile_id else Hex.query.filter_by(player_id=None).first()
         confirm_location(engine, player, hex_tile)
         engine.log(f"create_player: player {username} created")
         return player

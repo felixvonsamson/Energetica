@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from energetica import db
 from energetica.config.climate_events import climate_events
+from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.engine_data import calculate_reference_gta, calculate_temperature_deviation
@@ -61,7 +61,7 @@ def climate_event_impact(engine, tile, event):
     if random.random() < climate_events[event]["industry_destruction_chance"]:
         player.industry -= 1
         db.session.commit()
-        engine.config.update_config_for_user(player.id)
+        engine.config.update_config_for_user(player)
         player.notify(
             "Destruction",
             f"Your industry hs been levelled down by 1 due to the {climate_events[event]['name']} event.",
@@ -155,7 +155,7 @@ def check_climate_events(engine):
     hurricane_probability = climate_events["hurricane"]["base_probability"] / ticks_per_day * climate_change**2
     if random.random() < hurricane_probability:
         random_tile_id = random.randint(1, Hex.query.count() + 1)
-        tile = Hex.query.get(random_tile_id)
+        tile = db.session.get(Hex, random_tile_id)
         affected_tiles = tile.get_neighbors(n=2)
         for affected_tile in affected_tiles:
             climate_event_impact(engine, affected_tile, "hurricane")

@@ -13,8 +13,8 @@ from flask import current_app
 from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
-from energetica import db
 from energetica.config.achievements import achievements
+from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.engine_data import (
     CapacityData,
@@ -49,27 +49,27 @@ class PlayerCache(object):
 
     @cached_property
     def power_facilities_data(self):
-        player = Player.query.get(self.player_id)
+        player = db.session.get(Player, self.player_id)
         return package_power_facilities(player)
 
     @cached_property
     def storage_facilities_data(self):
-        player = Player.query.get(self.player_id)
+        player = db.session.get(Player, self.player_id)
         return package_storage_facilities(player)
 
     @cached_property
     def extraction_facilities_data(self):
-        player = Player.query.get(self.player_id)
+        player = db.session.get(Player, self.player_id)
         return package_extraction_facilities(player)
 
     @cached_property
     def functional_facilities_data(self):
-        player = Player.query.get(self.player_id)
+        player = db.session.get(Player, self.player_id)
         return package_functional_facilities(player)
 
     @cached_property
     def technologies_data(self):
-        player = Player.query.get(self.player_id)
+        player = db.session.get(Player, self.player_id)
         return package_available_technologies(player)
 
 
@@ -262,12 +262,11 @@ class Player(db.Model, UserMixin):
             setattr(self, attr, str(value))
         else:
             setattr(self, attr, getattr(self, attr) + f",{value}")
-        if attr == "achievements":
-            # TODO: I don't like how this is done. -Max
-            from energetica.api.websocket import rest_notify_achievements
-
-            engine = current_app.config["engine"]
-            rest_notify_achievements(engine, self)
+        # if attr == "achievements":
+        #     TODO: I don't like how this is done. -Max
+        #     from energetica.api.websocket import rest_notify_achievements
+        #     engine = current_app.config["engine"]
+        #     rest_notify_achievements(engine, self)
 
     def remove_from_list(self, attr, value):
         """Helper method that removes an element from a list stored as a string in the player database"""
@@ -358,7 +357,7 @@ class Player(db.Model, UserMixin):
 
     def delete_notification(self, notification_id):
         """This method deletes a notification"""
-        notification = Notification.query.get(notification_id)
+        notification = db.session.get(Notification, notification_id)
         if notification in self.notifications.all():
             db.session.delete(notification)
             db.session.commit()

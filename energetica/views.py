@@ -5,6 +5,7 @@ from functools import partial
 from flask import Blueprint, current_app, g, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
+from energetica.database import db
 from energetica.database.messages import Chat
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
@@ -72,7 +73,7 @@ def profile():
     if player_id is None:
         player: Player = current_user
         player_id = player.id
-    player = Player.query.get(player_id)
+    player = db.session.get(Player, player_id)
     return g.render_template_ctx("profile.jinja", profile=player)
 
 

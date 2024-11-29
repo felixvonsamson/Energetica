@@ -7,8 +7,8 @@ from flask import Blueprint, current_app, flash, g, redirect, render_template, r
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from energetica import db
-from energetica.api import websocket
+# from energetica.api import websocket
+from energetica.database import db
 from energetica.database.player import Player
 
 auth = Blueprint("auth", __name__)
@@ -94,8 +94,8 @@ def sign_up():
             }
             g.engine.action_logger.info(json.dumps(log_entry))
             g.engine.log(f"{username} created an account")
-            websocket.rest_notify_scoreboard(g.engine)
-            websocket.rest_notify_new_player(g.engine)
+            # websocket.rest_notify_scoreboard(g.engine)
+            # websocket.rest_notify_new_player(g.engine)
             return redirect(url_for("views.home"))
 
     return render_template("sign_up.jinja", engine=g.engine, user=current_user)

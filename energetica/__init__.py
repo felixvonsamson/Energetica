@@ -29,14 +29,21 @@ from flask_apscheduler import APScheduler
 from flask_login import LoginManager, current_user
 from flask_sock import Sock
 from flask_socketio import SocketIO
-from flask_sqlalchemy import SQLAlchemy
 
-from energetica.simulate import simulate
-
-db = SQLAlchemy()
-
-import energetica.game_engine
+from energetica.api.http import http
+from energetica.api.socketio_handlers import add_handlers
+from energetica.api.websocket import add_sock_handlers, websocket_blueprint
+from energetica.auth import auth
+from energetica.database import db
+from energetica.database.map import Hex
+from energetica.database.messages import Chat
 from energetica.database.player import Player
+from energetica.game_engine import GameEngine
+from energetica.init_test_players import init_test_players
+from energetica.simulate import simulate
+from energetica.utils.climate_helpers import data_init_climate
+from energetica.utils.tick_execution import state_update
+from energetica.views import changelog, location_choice_views, overviews, views, wiki
 
 
 def get_or_create_flask_secret_key() -> str:
@@ -84,19 +91,19 @@ def get_or_create_vapid_keys() -> tuple[str, str]:
 
 
 def create_app(
-    clock_time,
-    in_game_seconds_per_tick,
-    run_init_test_players,
-    rm_instance,
-    random_seed,
-    simulate_file,
-    simulate_stop_on_mismatch,
-    simulate_stop_on_server_error,
-    simulate_stop_on_assertion_error,
-    simulate_checkpoint_every_k_ticks,
-    simulate_checkpoint_ticks,
-    simulate_till,
-    simulate_profiling,
+    clock_time=30,
+    in_game_seconds_per_tick=240,
+    run_init_test_players=False,
+    rm_instance=False,
+    random_seed=42,
+    simulate_file=None,
+    simulate_stop_on_mismatch=False,
+    simulate_stop_on_server_error=False,
+    simulate_stop_on_assertion_error=False,
+    simulate_checkpoint_every_k_ticks=10000,
+    simulate_checkpoint_ticks=[],
+    simulate_till=None,
+    simulate_profiling=False,
     **kwargs,
 ):
     """This function sets up the app and the game engine"""
@@ -155,9 +162,7 @@ def create_app(
         last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
 
     # creates the engine (and loading the save if it exists)
-    engine = energetica.game_engine.GameEngine(clock_time, in_game_seconds_per_tick, random_seed, start_date)
-
-    from energetica.utils.climate_helpers import data_init_climate
+    engine = GameEngine(clock_time, in_game_seconds_per_tick, random_seed, start_date)
 
     Path("instance/player_data").mkdir(parents=True, exist_ok=True)
     if not os.path.isfile("instance/server_data/climate_data.pck"):
@@ -176,7 +181,7 @@ def create_app(
                 engine.log("Loaded last checkpoint from disk.")
         else:
             if loaded_tick:
-                with tarfile.open("checkpoints/simulation/checkpoint_{loaded_tick}.tar.gz") as file:
+                with tarfile.open(f"checkpoints/simulation/checkpoint_{loaded_tick}.tar.gz") as file:
                     file.extractall("./")
                 engine.log(f"Loaded checkpoints/simulation/checkpoint_{loaded_tick}.tar.gz from disk.")
 
@@ -190,23 +195,16 @@ def create_app(
     # initialize socketio :
     socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
     engine.socketio = socketio
-    from energetica.api.socketio_handlers import add_handlers
 
     add_handlers(socketio=socketio, engine=engine)
 
     # initialize sock for WebSockets:
     sock = Sock(app)
     engine.sock = sock
-    from energetica.api.websocket import add_sock_handlers
 
     add_sock_handlers(sock=sock, engine=engine)
 
     # add blueprints (website repositories) :
-    from energetica.api.http import http
-    from energetica.api.websocket import websocket_blueprint
-    from energetica.auth import auth
-    from energetica.views import changelog, location_choice_views, overviews, views, wiki
-
     app.register_blueprint(location_choice_views, url_prefix="/")
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")
@@ -248,9 +246,6 @@ def create_app(
         """
         return send_file("static/apple-app-site-association", as_attachment=True)
 
-    from energetica.database.map import Hex
-    from energetica.database.messages import Chat
-
     # initialize database :
     with app.app_context():
         db.create_all()
@@ -289,14 +284,12 @@ def create_app(
 
     @login_manager.user_loader
     def load_user(id):
-        player = Player.query.get(int(id))
+        player = db.session.get(Player, int(id))
         return player
 
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        from energetica.utils.tick_execution import state_update
-
         scheduler = APScheduler()
         scheduler.init_app(app)
 
@@ -335,8 +328,6 @@ def create_app(
             engine.log("running init_test_players")
             with app.app_context():
                 # Temporary automated player creation for testing
-                from energetica.init_test_players import init_test_players
-
                 init_test_players(engine)
                 # Manually trigger the scheduler to run the state_update function as soon as possible
                 scheduler.add_job(
@@ -346,4 +337,4 @@ def create_app(
                     trigger="date",
                 )
 
-    return socketio, sock, app
+    return socketio, app

@@ -7,8 +7,8 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from energetica import db
 from energetica.config.assets import wind_power_curve
+from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_construction import OngoingConstruction
 from energetica.database.player import Network, Player
@@ -388,7 +388,7 @@ def calculate_generation_with_market(engine, new_values, market, player):
             price = getattr(player, "price_buy_" + demand_type)
             market = bid(market, player.id, bid_q, price, demand_type)
         else:
-            reduce_demand(engine, new_values, player.data.rolling_history, demand_type, player.id, 0.0)
+            reduce_demand(engine, new_values, demand_type, player.id, 0.0)
 
     resource_reservations = reset_resource_reservations()
     # Sell capacities of remaining facilities on the market
@@ -417,7 +417,7 @@ def market_logic(engine, new_values, market):
 
     def sell(row, market_price, quantity=None):
         """Sell and produce offered power capacity"""
-        player = Player.query.get(row.player_id)
+        player = db.session.get(Player, row.player_id)
         generation = new_values[player.id]["generation"]
         demand = new_values[player.id]["demand"]
         revenue = new_values[player.id]["revenues"]
@@ -440,7 +440,7 @@ def market_logic(engine, new_values, market):
 
     def buy(row, market_price, quantity=None):
         """Buy demanded power capacity"""
-        player = Player.query.get(row.player_id)
+        player = db.session.get(Player, row.player_id)
         generation = new_values[player.id]["generation"]
         revenue = new_values[player.id]["revenues"]
         if quantity is None:
@@ -484,7 +484,7 @@ def market_logic(engine, new_values, market):
             # dumping electricity that is offered for negative price and not sold
             if row.price < 0:
                 dump_cap = max(0.0, min(row.capacity, row.capacity - sold_cap))
-                player = Player.query.get(row.player_id)
+                player = db.session.get(Player, row.player_id)
                 demand = new_values[row.player_id]["demand"]
                 demand["dumping"] += dump_cap
                 player.money -= dump_cap * 5 / 3600 * engine.in_game_seconds_per_tick / 1_000_000
@@ -841,7 +841,7 @@ def construction_emissions(engine, new_values, player):
 
 def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
     """Measures taken to reduce demand"""
-    player = Player.query.get(player_id)
+    player = db.session.get(Player, player_id)
     demand = new_values[player.id]["demand"]
     if demand_type == "industry":
         # revenues of industry are reduced
@@ -860,7 +860,7 @@ def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
         cumul_demand = 0.0
         for i in range(min(len(construction_priorities), player.construction_workers)):
             construction_id = construction_priorities[i]
-            construction: OngoingConstruction = OngoingConstruction.query.get(construction_id)
+            construction: OngoingConstruction = db.session.get(OngoingConstruction, construction_id)
             if construction.suspension_time is not None:
                 continue
             cumul_demand += construction.construction_power
@@ -885,7 +885,7 @@ def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
         cumul_demand = 0.0
         for i in range(min(len(research_priorities), player.lab_workers)):
             construction_id = research_priorities[i]
-            construction: OngoingConstruction = OngoingConstruction.query.get(construction_id)
+            construction: OngoingConstruction = db.session.get(OngoingConstruction, construction_id)
             if construction.suspension_time is not None:
                 continue
             cumul_demand += construction.construction_power

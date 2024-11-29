@@ -2,11 +2,11 @@
 
 import argparse
 
+from energetica import create_app
+
 """This code launches the game"""
 
 if __name__ == "__main__":
-    from energetica import create_app
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--clock_time",
@@ -103,6 +103,6 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    socketio, _, app = create_app(**vars(args))
+    socketio, app = create_app(**vars(args))
     ssl_args = {"keyfile": args.keyfile, "certfile": args.certfile} if args.keyfile and args.certfile else {}
     socketio.run(app, debug=True, log_output=False, host="0.0.0.0", port=args.port, **ssl_args)
