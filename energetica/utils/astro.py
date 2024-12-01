@@ -4,7 +4,6 @@ from numpy.linalg import norm
 
 # Constants
 TROPICAL_YEAR = 365.24219 * 24 * 3600  # seconds in a tropical year
-ticks_per_day = 3600 * 24
 EARTH_TILT_ANGLE = 23.5 / 180 * pi  # Earth tilt angle in radians
 SIDEREAL_DAY = 86164.098903691  # seconds in a sidereal day
 ABSORPTION_FACTOR = 0.28352711107  # Atmospheric absorption factor
@@ -14,22 +13,26 @@ T1 = 33400  # Earth's spin initial phase
 
 
 def DrHI(unix_time, latitude, longitude):
-    """
-    Calculate Direct Horizontal Irradiance (DrHI) at a given time and location.
+    """Calculate Direct Horizontal Irradiance (DrHI) at a given time and location.
 
-    Parameters:
+    Parameters
+    ----------
     - unix_time: Time in UNIX timestamp (seconds since 1970-01-01)
     - latitude: Latitude in degrees (must be between -90 (excluded) and 90)
     - longitude: Longitude in degrees (can be between -180 (excluded) and 180)
 
-    Returns:
+    Returns
+    -------
     - DrHI: Direct horizontal irradiance in W/m^2
+
     """
     # Validate inputs
-    if not (-90 < latitude <= 90).all():
-        raise ValueError("Latitude must be between -90 (excluded) and 90 degrees.")
-    if not (-180 < longitude <= 180).all():
-        raise ValueError("Longitude must be between -180 (excluded) and 180 degrees.")
+    if not (latitude > -90 and latitude <= 90):
+        msg = "Latitude must be between -90 (excluded) and 90 degrees."
+        raise ValueError(msg)
+    if not (longitude > -180 and longitude <= 180):
+        msg = "Longitude must be between -180 (excluded) and 180 degrees."
+        raise ValueError(msg)
 
     # Convert to radians
     latitude = latitude / 180 * pi
