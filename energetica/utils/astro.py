@@ -1,5 +1,5 @@
 import numpy as np
-from numpy import arccos, cos, dot, exp, pi, sin
+from numpy import arccos, cos, exp, pi, sin
 from numpy.linalg import norm
 
 # Constants
