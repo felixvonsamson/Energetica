@@ -13,7 +13,6 @@ T0 = 15011250  # Earth's orbit initial phase
 T1 = 33400  # Earth's spin initial phase
 
 
-@np.vectorize
 def DrHI(unix_time, latitude, longitude):
     """
     Calculate Direct Horizontal Irradiance (DrHI) at a given time and location.
@@ -26,11 +25,10 @@ def DrHI(unix_time, latitude, longitude):
     Returns:
     - DrHI: Direct horizontal irradiance in W/m^2
     """
-
     # Validate inputs
-    if not (-90 < latitude <= 90):
+    if not (-90 < latitude <= 90).all():
         raise ValueError("Latitude must be between -90 (excluded) and 90 degrees.")
-    if not (-180 < longitude <= 180):
+    if not (-180 < longitude <= 180).all():
         raise ValueError("Longitude must be between -180 (excluded) and 180 degrees.")
 
     # Convert to radians
@@ -39,16 +37,17 @@ def DrHI(unix_time, latitude, longitude):
 
     # Calculate Earth’s position in its orbit around the Sun (v1)
     orbital_phase = 2 * pi * (unix_time - T0) / TROPICAL_YEAR
-    v1 = np.array([cos(orbital_phase), sin(orbital_phase), 0])
+    v1 = np.stack([cos(orbital_phase), sin(orbital_phase), np.zeros_like(orbital_phase)], axis=-1)
 
     # Calculate the observer's position on the Earth (v2)
     sidereal_phase = 2 * pi * (unix_time - T1) / SIDEREAL_DAY
-    v2 = np.array(
+    v2 = np.stack(
         [
             cos(latitude) * cos(longitude + sidereal_phase),
             cos(latitude) * sin(longitude + sidereal_phase),
-            sin(latitude),
-        ]
+            sin(latitude) * np.ones_like(sidereal_phase),
+        ],
+        axis=-1,
     )
 
     # Rotation matrix for Earth's axial tilt
@@ -61,14 +60,16 @@ def DrHI(unix_time, latitude, longitude):
     )
 
     # Calculate the zenith angle (angle between the Sun's rays and the observer)
-    zenith_angle = arccos(dot(-v1, rot_matrix @ v2) / (norm(v1) * norm(v2)))
+    zenith_angle = arccos(
+        (-v1[..., None, :] @ (rot_matrix @ v2[..., None]))[..., 0, 0] / (norm(v1, axis=-1) * norm(v2, axis=-1))
+    )
 
     # Calculate solar elevation angle
-    elevation = max(0, pi / 2 - zenith_angle)
+    elevation = np.maximum(0, pi / 2 - zenith_angle)
 
     # Calculate Direct Normal Irradiance (DrNI)
     sin_elevation = sin(elevation)
-    DrNI = exp(-ABSORPTION_FACTOR / sin_elevation) * TSI if sin_elevation > 0 else 0
+    DrNI = exp(-ABSORPTION_FACTOR / np.maximum(sin_elevation, 1e-8)) * TSI
 
     # Calculate Direct Horizontal Irradiance (DrHI)
     DrHI = DrNI * sin_elevation

@@ -2,11 +2,11 @@
 
 import math
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import numpy as np
-import pandas as pd
-from pvlib.location import Location
+
+from energetica.utils.astro import DrHI
 
 # Parameters
 size_param = 10
@@ -153,32 +153,19 @@ def save_as_csv(map, m):
 
 
 def calculate_solar_potentials():
-    """Calculates the solar potentials for each latitude with pvlib."""
-    start_date = datetime(2023, 1, 1)
-    time_steps = []
-    for d in range(72):
-        day_of_year = d * 365 // 72
-        for t in range(216):
-            time_of_day = 4 * 3600 + t * 3600 * 18 // 216
-            time_steps.append(start_date + timedelta(days=day_of_year, seconds=time_of_day))
-    time_steps = pd.DatetimeIndex(time_steps)
-
-    potentials = {}
-    max_potential = 0
-    for r in range(-10, 11):
-        latitude = (r - 10) * 85 / 21
-        loc = Location(latitude, 0)
-        clear_sky = loc.get_clearsky(time_steps)["ghi"]
-        potentials[r] = clear_sky.mean()
-        if potentials[r] > max_potential:
-            max_potential = potentials[r]
-    for pot in potentials:
-        potentials[pot] = potentials[pot] / max_potential
-    return potentials
+    """Calculates the solar potentials for each latitude."""
+    start_date = datetime(2023, 1, 1).timestamp()
+    end_date = datetime(2024, 1, 1).timestamp()
+    timesteps = np.linspace(start_date, end_date, 365 * 24)
+    Rs = range(-10, 11)
+    latitudes = np.array([(r - 10) * 85 / 21 for r in Rs])
+    potentials = DrHI(timesteps[None, :], latitudes[:, None], 0).mean(axis=1)
+    potentials /= potentials.max()
+    return dict(zip(Rs, potentials))
 
 
 def generate_solar(map, potentials):
-    """Generates solar resources on the map based on the pvlib clear sky model and depending on the latitude."""
+    """Generates solar resources on the map based on the internal clear sky model and depending on the latitude."""
     for tile in map:
         tile.solar = potentials[tile.r]
 
