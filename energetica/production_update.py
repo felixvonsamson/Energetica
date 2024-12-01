@@ -10,8 +10,9 @@ import pandas as pd
 from energetica.config.assets import wind_power_curve
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
+from energetica.database.network import Network
 from energetica.database.ongoing_construction import OngoingConstruction
-from energetica.database.player import Network, Player
+from energetica.database.player import Player
 from energetica.database.shipment import Shipment
 from energetica.utils.misc import calculate_river_discharge, calculate_solar_irradiance, calculate_wind_speed
 

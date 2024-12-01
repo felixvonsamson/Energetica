@@ -13,7 +13,8 @@ from gevent.lock import RLock
 
 from energetica.config.assets import config, const_config
 from energetica.database.engine_data import EmissionData
-from energetica.database.player import NetworkData, PlayerData
+from energetica.database.network import NetworkData
+from energetica.database.player import PlayerData
 
 
 # This is the engine object

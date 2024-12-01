@@ -11,7 +11,8 @@ from werkzeug.security import check_password_hash
 from energetica.database import db
 from energetica.database.map import Hex
 from energetica.database.messages import Chat, Message
-from energetica.database.player import Network, Player
+from energetica.database.network import Network
+from energetica.database.player import Player
 from energetica.game_engine import GameEngine
 from energetica.technology_effects import package_constructions_page_data
 from energetica.utils.assets import decrease_project_priority, queue_project, toggle_pause_project

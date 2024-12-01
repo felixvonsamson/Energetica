@@ -4,7 +4,8 @@ from werkzeug.security import generate_password_hash
 
 from energetica.database import db
 from energetica.database.map import Hex
-from energetica.database.player import Network, Player
+from energetica.database.network import Network
+from energetica.database.player import Player
 from energetica.utils.assets import finish_project, queue_project
 from energetica.utils.misc import confirm_location
 from energetica.utils.network_helpers import create_network, join_network

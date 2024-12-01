@@ -16,7 +16,8 @@ from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import Hex
 from energetica.database.messages import Chat, Message, Notification
-from energetica.database.player import Network, Player
+from energetica.database.network import Network
+from energetica.database.player import Player
 from energetica.game_engine import GameEngine, GameException
 from energetica.utils.astro import DrHI
 

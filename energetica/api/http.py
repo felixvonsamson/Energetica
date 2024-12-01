@@ -21,8 +21,9 @@ from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import Hex
 from energetica.database.messages import Chat
+from energetica.database.network import Network
 from energetica.database.ongoing_construction import OngoingConstruction
-from energetica.database.player import Network, Player
+from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.database.shipment import Shipment
 from energetica.game_engine import Confirm, GameException

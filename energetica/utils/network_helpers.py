@@ -6,7 +6,8 @@ from pathlib import Path
 
 from energetica.database import db
 from energetica.database.engine_data import CapacityData, CircularBufferNetwork
-from energetica.database.player import Network, Player
+from energetica.database.network import Network
+from energetica.database.player import Player
 from energetica.game_engine import GameEngine, GameException
 
 
