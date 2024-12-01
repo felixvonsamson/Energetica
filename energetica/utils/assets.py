@@ -203,7 +203,21 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
         msg = "Not enough money"
         raise GameException(msg)
     player.money -= upgrade_cost
-    facility.upgrade()
+    engine: GameEngine = current_app.config["engine"]
+    if facility.facility in engine.extraction_facilities:
+        facility.price_multiplier = technology_effects.price_multiplier(facility.player, facility.facility)
+        facility.multiplier_1 = technology_effects.multiplier_1(facility.player, facility.facility)
+        facility.multiplier_2 = technology_effects.multiplier_2(facility.player, facility.facility)
+        facility.multiplier_3 = technology_effects.multiplier_3(facility.player, facility.facility)
+    else:
+        facility.price_multiplier = technology_effects.price_multiplier(facility.player, facility.facility)
+        if facility.facility in engine.power_facilities + engine.storage_facilities:
+            facility.multiplier_1 = technology_effects.multiplier_1(facility.player, facility.facility)
+        if facility.facility in engine.storage_facilities:
+            facility.multiplier_2 = technology_effects.multiplier_2(facility.player, facility.facility)
+        if facility.facility in engine.controllable_facilities + engine.storage_facilities:
+            facility.multiplier_3 = technology_effects.multiplier_3(facility.player, facility.facility)
+    db.session.commit()
     player.data.capacities.update(player, facility.facility)
 
 
