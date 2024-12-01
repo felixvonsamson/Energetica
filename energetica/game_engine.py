@@ -8,6 +8,7 @@ import pickle
 from collections import defaultdict
 from datetime import datetime
 
+from flask_socketio import SocketIO
 from gevent.lock import RLock
 
 from energetica.config.assets import config, const_config
@@ -138,7 +139,7 @@ class GameEngine(object):
         self.in_game_seconds_per_tick = in_game_seconds_per_tick
         self.config = config
         self.const_config = const_config
-        self.socketio = None
+        self.socketio: SocketIO = None
         self.notification_subscriptions = defaultdict(list)
         self.clients = defaultdict(list)
         self.websocket_dict = {}

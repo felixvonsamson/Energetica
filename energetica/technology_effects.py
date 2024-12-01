@@ -644,7 +644,7 @@ def _package_power_storage_extraction_facility_base(player: Player, facility):
     }
 
 
-def package_power_facilities(player: Player):
+def package_power_facilities(player: Player) -> list:
     """Gets all data relevant for the power_facilities frontend"""
     # TODO: add wind and hydro potential
     engine: GameEngine = current_app.config["engine"]
@@ -668,7 +668,7 @@ def package_power_facilities(player: Player):
     ]
 
 
-def package_storage_facilities(player: Player):
+def package_storage_facilities(player: Player) -> list:
     """Gets all data relevant for the storage_facilities frontend"""
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
@@ -687,7 +687,7 @@ def package_storage_facilities(player: Player):
     ]
 
 
-def package_extraction_facilities(player: Player):
+def package_extraction_facilities(player: Player) -> list:
     """Gets all data relevant for the extraction_facilities frontend"""
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]

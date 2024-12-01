@@ -16,6 +16,7 @@ Energetica uses Flask and Python for its backend, SQL for its database, and Jinj
 
 ## Running a Local Instance
 
+<!-- Using StrEnum requires >=3.11 -->
 Make sure you have Python version 3.11 or 3.12 installed.
 
 Clone the repository:

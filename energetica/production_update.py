@@ -804,7 +804,7 @@ def resources_and_pollution(engine, new_values, player):
             / 86400
             * satisfaction
         )
-        player.captured_CO2 += captured_co2
+        player.captured_co2 += captured_co2
         db.session.commit()
         add_emissions(engine, new_values, player, "carbon_capture", -captured_co2)
 

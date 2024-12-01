@@ -1,10 +1,11 @@
-"""This module contains the classes that define the players and networks"""
+"""Contains the classes that define the players and networks."""
 
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import StrEnum
 from functools import cached_property
 from itertools import chain
 from typing import TYPE_CHECKING
@@ -37,44 +38,53 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class PlayerData(object):
+class PlayerData:
+    """Dataclass that stores the player data."""
+
     rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
     capacities: CapacityData = field(default_factory=CapacityData)
     cumul_emissions: CumulativeEmissionsData = field(default_factory=CumulativeEmissionsData)
 
 
 @dataclass
-class PlayerCache(object):
+class PlayerCache:
+    """Dataclass that stores cached player data."""
+
     player_id: int
 
     @cached_property
-    def power_facilities_data(self):
+    def power_facilities_data(self) -> list:
+        """Cached property that stores the power facilities data of a player."""
         player = db.session.get(Player, self.player_id)
         return package_power_facilities(player)
 
     @cached_property
-    def storage_facilities_data(self):
+    def storage_facilities_data(self) -> list:
+        """Cached property that stores the storage facilities data of a player."""
         player = db.session.get(Player, self.player_id)
         return package_storage_facilities(player)
 
     @cached_property
-    def extraction_facilities_data(self):
+    def extraction_facilities_data(self) -> list:
+        """Cached property that stores the extraction facilities data of a player."""
         player = db.session.get(Player, self.player_id)
         return package_extraction_facilities(player)
 
     @cached_property
-    def functional_facilities_data(self):
+    def functional_facilities_data(self) -> list:
+        """Cached property that stores the functional facilities data of a player."""
         player = db.session.get(Player, self.player_id)
         return package_functional_facilities(player)
 
     @cached_property
-    def technologies_data(self):
+    def technologies_data(self) -> list:
+        """Cached property that stores the technologies data of a player."""
         player = db.session.get(Player, self.player_id)
         return package_available_technologies(player)
 
 
 class Player(db.Model, UserMixin):
-    """Class that stores the users"""
+    """Class that stores the users."""
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -96,6 +106,13 @@ class Player(db.Model, UserMixin):
     # misc :
     graph_view = db.Column(db.String(10), default="basic")
     network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
+
+    class NetworkGraphView(StrEnum):
+        """Enum for the network graph view of the player."""
+
+        BASIC = "basic"
+        NORMAL = "normal"
+        EXPERT = "expert"
 
     # resources :
     money = db.Column(db.Float, default=25000)  # default is 25000
@@ -180,7 +197,7 @@ class Player(db.Model, UserMixin):
     total_technologies = db.Column(db.Integer, default=0)
     imported_energy = db.Column(db.Float, default=0)
     exported_energy = db.Column(db.Float, default=0)
-    captured_CO2 = db.Column(db.Float, default=0)
+    captured_co2 = db.Column(db.Float, default=0)
 
     achievements = db.Column(db.Text, default="")
 
@@ -192,38 +209,43 @@ class Player(db.Model, UserMixin):
 
     @property
     def engine(self) -> GameEngine:
+        """Return the game engine."""
         return current_app.config["engine"]
 
     @property
-    def config(self):
+    def config(self) -> dict:
+        """Return the player's configuration."""
         return current_app.config["engine"].config[self]
 
     @property
     def socketio_clients(self) -> list[int]:
+        """Return the player's socketio clients."""
         return current_app.config["engine"].clients[self.id]
 
     @cached_property
     def data(self) -> PlayerData:
+        """Cached property that stores the player data."""
         return current_app.config["engine"].data["by_player"][self.id]
 
     @cached_property
     def cache(self) -> PlayerCache:
+        """Cached property that stores the player cache."""
         if self.id not in current_app.config["engine"].buffered["by_player"]:
             current_app.config["engine"].buffered["by_player"][self.id] = PlayerCache(self.id)
         return current_app.config["engine"].buffered["by_player"][self.id]
 
     @property
-    def is_in_network(self):
-        """Returns True if the player is in a network"""
+    def is_in_network(self) -> bool:
+        """Return True if the player is in a network."""
         return self.network_id is not None
 
-    def change_graph_view(self, view):
-        """Helper method to set the network graph view of the player (basic/normal/expert)"""
+    def change_graph_view(self, view: NetworkGraphView) -> None:
+        """Set the network graph view of the player (basic/normal/expert)."""
         self.graph_view = view
         db.session.commit()
 
-    def available_construction_workers(self):
-        """Returns the number of available construction workers"""
+    def available_construction_workers(self) -> int:
+        """Return the number of available construction workers."""
         occupied_workers = (
             OngoingConstruction.query.filter(OngoingConstruction.player_id == self.id)
             .filter(OngoingConstruction.family != "Technologies")
@@ -232,8 +254,8 @@ class Player(db.Model, UserMixin):
         )
         return self.construction_workers - occupied_workers
 
-    def available_lab_workers(self):
-        """Returns the number of available lab workers"""
+    def available_lab_workers(self) -> int:
+        """Return the number of available lab workers."""
         occupied_workers = (
             OngoingConstruction.query.filter(OngoingConstruction.player_id == self.id)
             .filter(OngoingConstruction.family == "Technologies")
@@ -242,40 +264,36 @@ class Player(db.Model, UserMixin):
         )
         return self.lab_workers - occupied_workers
 
-    def read_list(self, attr):
-        """Helper method that returns a list of any player list that is stored as a string"""
+    def read_list(self, attr: str) -> list:
+        """Return a list of any player list that is stored as a string."""
         if getattr(self, attr) == "":
             return []
         priority_list = getattr(self, attr).split(",")
         if attr in ["construction_priorities", "research_priorities"]:
             return list(map(int, priority_list))
-        else:
-            return priority_list
+        return priority_list
 
-    def write_list(self, attr, list_data):
-        """Helper method that transforms a list into a sting in order to store it in the player database"""
+    def write_list(self, attr: str, list_data: list) -> None:
+        """Transform a list into a sting and store it in the player database."""
         setattr(self, attr, ",".join(map(str, list_data)))
 
-    def add_to_list(self, attr, value):
-        """Helper method that adds an element to a list stored as a string in the player database"""
+    def add_to_list(self, attr: str, value) -> None:
+        """Add an element to a list stored as a string in the player database."""
+        # TODO(mglst): assign the correct type to value, probably str
         if getattr(self, attr) == "":
             setattr(self, attr, str(value))
         else:
             setattr(self, attr, getattr(self, attr) + f",{value}")
-        # if attr == "achievements":
-        #     TODO: I don't like how this is done. -Max
-        #     from energetica.api.websocket import rest_notify_achievements
-        #     engine = current_app.config["engine"]
-        #     rest_notify_achievements(engine, self)
 
-    def remove_from_list(self, attr, value):
-        """Helper method that removes an element from a list stored as a string in the player database"""
+    def remove_from_list(self, attr: str, value) -> None:
+        """Remove an element from a list stored as a string in the player database."""
+        # TODO(mglst): assign the correct type to value, probably str
         id_list = getattr(self, attr).split(",")
         id_list.remove(str(value))
         setattr(self, attr, ",".join(id_list))
 
-    def package_chat_messages(self, chat_id):
-        """This method packages the last 20 messages of a chat"""
+    def package_chat_messages(self, chat_id: int) -> None:
+        """Package the last 20 messages of a chat."""
         chat = Chat.query.filter_by(id=chat_id).first()
         messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
         messages_list = [
@@ -293,37 +311,38 @@ class Player(db.Model, UserMixin):
         db.session.commit()
         return messages_list
 
-    def package_chat_list(self):
-        """This method packages the chats of a player"""
+    def package_chat_list(self) -> dict:
+        """Package the chats of a player."""
 
-        def chat_name(chat):
+        def chat_name(chat: Chat) -> str:
             if chat.name is not None:
                 return chat.name
             for participant in chat.participants:
                 if participant != self:
                     return participant.username
-            return None
+            msg = "Chat has no name and no other participant"
+            raise ValueError(msg)
 
-        def find_initials(chat):
+        def find_initials(chat: Chat) -> str:
             if chat.name is None:
                 for participant in chat.participants:
                     if participant != self:
                         return participant.username[0]
+            max_initials_size = 4
             initials = []
             for participant in chat.participants:
                 initials.append(participant.username[0])
-                if len(initials) == 4:
+                if len(initials) == max_initials_size:
                     break
             return initials
 
-        def unread_message_count(chat):
-            unread_messages_count = (
+        def unread_message_count(chat: Chat) -> int:
+            return (
                 PlayerUnreadMessages.query.join(Message, PlayerUnreadMessages.message_id == Message.id)
                 .filter(PlayerUnreadMessages.player_id == self.id)
                 .filter(Message.chat_id == chat.id)
                 .count()
             )
-            return unread_messages_count
 
         chat_dict = {
             chat.id: {
@@ -339,8 +358,9 @@ class Player(db.Model, UserMixin):
             "last_opened_chat": self.last_opened_chat,
         }
 
-    def package_chats(self):
-        """This method packages chats for the iOS frontend"""
+    def package_chats(self) -> dict:
+        """Package chats for the iOS frontend."""
+        # TODO: unify the two package_chat methods
         return {
             chat.id: {
                 "id": chat.id,
@@ -355,44 +375,44 @@ class Player(db.Model, UserMixin):
             for chat in self.chats
         }
 
-    def delete_notification(self, notification_id):
-        """This method deletes a notification"""
+    def delete_notification(self, notification_id: int) -> None:
+        """Delete a notification."""
         notification = db.session.get(Notification, notification_id)
         if notification in self.notifications.all():
             db.session.delete(notification)
             db.session.commit()
 
-    def notifications_read(self):
-        """This method marks all notifications as read"""
+    def notifications_read(self) -> None:
+        """Mark all notifications as read."""
         for notification in self.unread_notifications():
             notification.read = True
         db.session.commit()
 
-    def unread_notifications(self):
-        """This method returns all unread notifications"""
+    def unread_notifications(self) -> list[Notification]:
+        """Return all unread notifications."""
         return self.notifications.filter_by(read=False).all()
 
-    def get_lvls(self):
-        """This method returns the levels of functional facilities and technologies of a player"""
+    def get_lvls(self) -> dict:
+        """Return the levels of functional facilities and technologies of a player."""
         engine = current_app.config["engine"]
         attributes = chain(engine.functional_facilities, engine.technologies)
         return {attr: getattr(self, attr) for attr in attributes}
 
-    def get_reserves(self):
-        """This method returns the natural resources reserves of a player"""
+    def get_reserves(self) -> dict:
+        """Return natural resources reserves of a player."""
         reserves = {}
         for resource in ["coal", "gas", "uranium"]:
             reserves[resource] = getattr(self.tile, resource)
         return reserves
 
-    def emit(self, event, *args):
-        """This method emits a socketio event to the player's clients"""
-        engine = current_app.config["engine"]
+    def emit(self, event: str, *args) -> None:
+        """Emit a socketio event to the player's clients."""
+        engine: GameEngine = current_app.config["engine"]
         for sid in self.socketio_clients:
             engine.socketio.emit(event, *args, room=sid)
 
-    def send_new_data(self, new_values):
-        """This method sends the new data to the player's clients"""
+    def send_new_data(self, new_values) -> None:
+        """Send the new data to the player's clients."""
         engine = current_app.config["engine"]
         self.emit(
             "new_values",
@@ -405,8 +425,8 @@ class Player(db.Model, UserMixin):
             },
         )
 
-    def notify(self, title, message):
-        """Creates a new notification and sends it to the player's subscribed browsers"""
+    def notify(self, title: str, message: str) -> None:
+        """Create a new notification and sends it to the player's subscribed browsers."""
         new_notification = Notification(title=title, content=message, time=datetime.now(), player_id=self.id)
         db.session.add(new_notification)
         self.notifications.append(new_notification)
@@ -419,17 +439,17 @@ class Player(db.Model, UserMixin):
                 "content": new_notification.content,
             },
         )
-        if self.notifications.count() > 1:
-            if (
-                new_notification.content == self.notifications[self.notifications.count() - 2].content
-                and new_notification.time == self.notifications[self.notifications.count() - 2].time
-            ):
-                return
+        if (
+            self.notifications.count() > 1
+            and new_notification.content == self.notifications[self.notifications.count() - 2].content
+            and new_notification.time == self.notifications[self.notifications.count() - 2].time
+        ):
+            return
         notification_data = {
             "title": new_notification.title,
             "body": new_notification.content,
         }
-        engine = current_app.config["engine"]
+        engine: GameEngine = current_app.config["engine"]
         for subscription in engine.notification_subscriptions[self.id]:
             audience = "https://fcm.googleapis.com"
             if "https://updates.push.services.mozilla.com" in subscription["endpoint"]:
@@ -443,18 +463,18 @@ class Player(db.Model, UserMixin):
                     vapid_claims=current_app.config["VAPID_CLAIMS"],
                 )
             except WebPushException as ex:
-                print(f"Failed to send notification: {repr(ex)}")
+                engine.warn(f"Failed to send notification: {repr(ex)}")
 
-    def calculate_net_emissions(self):
-        """Calculates the net emissions of the player"""
+    def calculate_net_emissions(self) -> float:
+        """Calculate the net emissions of the player."""
         cumulative_emissions = self.data.cumul_emissions.get_all()
         net_emissions = 0
         for value in cumulative_emissions.values():
             net_emissions += value
         return net_emissions
 
-    def check_continuous_achievements(self):
-        """Check for player achievements that are linked to values that are updated every tick"""
+    def check_continuous_achievements(self) -> None:
+        """Check for player achievements that are linked to values that are updated every tick."""
         for achievement in [
             "power_consumption",
             "energy_storage",
@@ -483,49 +503,54 @@ class Player(db.Model, UserMixin):
                         self.notify("Achievement", message)
                     break
 
-    def check_construction_achievements(self, construction_name):
-        """Check for player achievements that may be unlocked by a construction"""
+    def check_construction_achievements(self, construction_name: str) -> None:
+        """Check for player achievements that may be unlocked by a construction."""
         for achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
             achievement_name = achievements[achievement]["name"]
-            if achievement_name not in self.achievements:
-                if construction_name in achievements[achievement]["unlocked_with"]:
-                    self.add_to_list("achievements", achievement_name)
-                    self.xp += achievements[achievement]["reward"]
-                    message = achievements[achievement]["message"].format(reward=achievements[achievement]["reward"])
-                    self.notify("Achievement", message)
+            if (
+                achievement_name not in self.achievements
+                and construction_name in achievements[achievement]["unlocked_with"]
+            ):
+                self.add_to_list("achievements", achievement_name)
+                self.xp += achievements[achievement]["reward"]
+                message = achievements[achievement]["message"].format(reward=achievements[achievement]["reward"])
+                self.notify("Achievement", message)
 
-    def check_technology_achievement(self):
-        """Check for technology achievement"""
+    def check_technology_achievement(self) -> None:
+        """Check for technology achievement."""
         achievement_name = achievements["technology"]["name"]
         for i, value in enumerate(achievements["technology"]["milestones"]):
-            if f"{achievement_name} {i+1}" not in self.achievements:
-                if getattr(self, achievements["technology"]["metric"]) >= value:
-                    self.add_to_list("achievements", f"{achievement_name} {i+1}")
-                    self.xp += achievements["technology"]["rewards"][i]
-                    message = achievements["technology"]["message"].format(
-                        value=value, reward=achievements["technology"]["rewards"][i]
-                    )
-                    self.notify("Achievement", message)
+            if (
+                f"{achievement_name} {i+1}" not in self.achievements
+                and getattr(self, achievements["technology"]["metric"]) >= value
+            ):
+                self.add_to_list("achievements", f"{achievement_name} {i+1}")
+                self.xp += achievements["technology"]["rewards"][i]
+                message = achievements["technology"]["message"].format(
+                    value=value,
+                    reward=achievements["technology"]["rewards"][i],
+                )
+                self.notify("Achievement", message)
 
-    def check_trading_achievement(self):
-        """Check for trading achievement"""
+    def check_trading_achievement(self) -> None:
+        """Check for trading achievement."""
         achievement_name = achievements["trading"]["name"]
         for i, value in enumerate(achievements["trading"]["milestones"]):
-            if f"{achievement_name} {i+1}" not in self.achievements:
-                if (
-                    getattr(self, achievements["trading"]["metric"][0])
-                    + getattr(self, achievements["trading"]["metric"][1])
-                    >= value
-                ):
-                    self.add_to_list("achievements", f"{achievement_name} {i+1}")
-                    self.xp += achievements["trading"]["rewards"][i]
-                    message = achievements["trading"]["message"].format(
-                        value=value, reward=achievements["trading"]["rewards"][i]
-                    )
-                    self.notify("Achievement", message)
+            if f"{achievement_name} {i+1}" not in self.achievements and (
+                getattr(self, achievements["trading"]["metric"][0])
+                + getattr(self, achievements["trading"]["metric"][1])
+                >= value
+            ):
+                self.add_to_list("achievements", f"{achievement_name} {i+1}")
+                self.xp += achievements["trading"]["rewards"][i]
+                message = achievements["trading"]["message"].format(
+                    value=value,
+                    reward=achievements["trading"]["rewards"][i],
+                )
+                self.notify("Achievement", message)
 
-    def package_upcoming_achievements(self):
-        """Packages the progress information for the upcoming achievements"""
+    def package_upcoming_achievements(self) -> dict:
+        """Package the progress information for the upcoming achievements."""
         upcoming_achievements = {}
         for achievement, achievement_data in achievements.items():
             requirements_met = all(requirement in self.achievements for requirement in achievement_data["requirements"])
@@ -544,7 +569,8 @@ class Player(db.Model, UserMixin):
                     if f"{achievement_data['name']} {i+1}" not in self.achievements:
                         if achievement == "trading":
                             status = getattr(self, achievement_data["metric"][0]) + getattr(
-                                self, achievement_data["metric"][1]
+                                self,
+                                achievement_data["metric"][1],
                             )
                         else:
                             status = getattr(self, achievement_data["metric"])
@@ -557,12 +583,12 @@ class Player(db.Model, UserMixin):
                         break
         return upcoming_achievements
 
-    # prints out the object as a sting with the players username for debugging
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Return the player's username as a string for debugging."""
         return f"<Player {self.id} '{self.username}'>"
 
-    def package(self):
-        """Serialize select attributes of self to a dictionary"""
+    def package(self) -> dict:
+        """Package select attributes of self to a dictionary."""
         return (
             {
                 "id": self.id,
@@ -573,14 +599,14 @@ class Player(db.Model, UserMixin):
         )
 
     @staticmethod
-    def package_all():
-        """Gets the package data for all players"""
+    def package_all() -> dict[int, dict]:
+        """Package data for all players."""
         players: list[Player] = Player.query.all()
         return {player.id: player.package() for player in players}
 
     @staticmethod
-    def package_scoreboard():
-        """Gets the scoreboard data for settled players"""
+    def package_scoreboard() -> dict[int, dict]:
+        """Package the scoreboard data for players with a tile."""
         players = Player.query.filter(Player.tile != None)
         return {
             player.id: {
@@ -615,8 +641,8 @@ class Player(db.Model, UserMixin):
             for construction in constructions
         }
 
-    def package_shipments(self):
-        """Packages the player's ongoing shipments"""
+    def package_shipments(self) -> dict[int, dict]:
+        """Package the player's ongoing shipments."""
         return {
             shipment.id: {
                 k: getattr(shipment, k)
@@ -632,21 +658,21 @@ class Player(db.Model, UserMixin):
             for shipment in self.shipments
         }
 
-    def package_construction_queue(self):
-        """Packages the player's construction queue (list of construction_ids)"""
+    def package_construction_queue(self) -> list:
+        """Package the player's construction queue (list of construction_ids)."""
         return self.read_list("construction_priorities")
 
     def package_active_facilities(self) -> dict[str, dict[int, dict[str, any]]]:
         """Package the player's active facilities."""
         engine: GameEngine = current_app.config["engine"]
         power_facilities: list[ActiveFacility] = self.active_facilities.filter(
-            ActiveFacility.facility.in_(engine.power_facilities)
+            ActiveFacility.facility.in_(engine.power_facilities),
         ).all()
         storage_facilities: list[ActiveFacility] = self.active_facilities.filter(
-            ActiveFacility.facility.in_(engine.storage_facilities)
+            ActiveFacility.facility.in_(engine.storage_facilities),
         ).all()
         extraction_facilities: list[ActiveFacility] = self.active_facilities.filter(
-            ActiveFacility.facility.in_(engine.extraction_facilities)
+            ActiveFacility.facility.in_(engine.extraction_facilities),
         ).all()
         return {
             "power_facilities": {
@@ -695,17 +721,13 @@ class Player(db.Model, UserMixin):
     def invalidate_recompute_and_dispatch_data_for_pages(
         self,
         *,
-        power_facilities=False,
-        storage_facilities=False,
-        extraction_facilities=False,
-        functional_facilities=False,
-        technologies=False,
-        # resource_market=False,
-    ):
-        """
-        Signal to all instances of clients for this player that there is possibly new data for the specified page.
-        This function will invalidate the data for all corresponding arguments that are set to True.
-        """
+        power_facilities: bool = False,
+        storage_facilities: bool = False,
+        extraction_facilities: bool = False,
+        functional_facilities: bool = False,
+        technologies: bool = False,
+    ) -> None:
+        """Invalidate the facility data for the specified pages and dispatch the new data to the clients."""
         if power_facilities and "power_facilities_data" in self.cache.__dict__:
             del self.cache.power_facilities_data
         if storage_facilities and "storage_facilities_data" in self.cache.__dict__:
@@ -716,10 +738,8 @@ class Player(db.Model, UserMixin):
             del self.cache.functional_facilities_data
         if technologies and "technologies_data" in self.cache.__dict__:
             del self.cache.technologies_data
-        # if resource_market:
-        #     self._buffered_data_for_resource_market_page = None
         if self.socketio_clients:
-            # or engine.websocket_dict[self.id]:
+            # TODO(mglst): update clients over websocket
             pages_data = {}
             if power_facilities:
                 pages_data |= {"power_facilities": self.cache.power_facilities_data}
@@ -731,20 +751,19 @@ class Player(db.Model, UserMixin):
                 pages_data |= {"functional_facilities": self.cache.functional_facilities_data}
             if technologies:
                 pages_data |= {"technologies": self.cache.technologies_data}
-            # if resource_market:
-            #     pages_data |= {"power_facilities": self.get_packaged_data_for_power_facilities_page()}
             self.emit("update_page_data", pages_data)
-            # TODO: update clients over websocket
 
 
 @dataclass
-class NetworkData(object):
+class NetworkData:
+    """Dataclass that stores the network data."""
+
     rolling_history: CircularBufferNetwork = field(default_factory=CircularBufferNetwork)
     capacities: CapacityData = field(default_factory=CapacityData)
 
 
 class Network(db.Model):
-    """class that stores the networks of players"""
+    """Class that stores the networks of players."""
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True)
@@ -752,11 +771,12 @@ class Network(db.Model):
 
     @cached_property
     def data(self) -> NetworkData:
+        """Cached property that stores the network data."""
         return current_app.config["engine"].data["by_network"][self.id]
 
 
 class PlayerUnreadMessages(db.Model):
-    """Association table to store player's last activity in each chat"""
+    """Association table to store player's last activity in each chat."""
 
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"), primary_key=True)
     message_id = db.Column(db.Integer, db.ForeignKey("message.id"), primary_key=True)
