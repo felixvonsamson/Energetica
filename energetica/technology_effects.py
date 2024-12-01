@@ -289,6 +289,7 @@ def extraction_emissions_multiplier(player: Player, facility) -> float:
 
 def next_available_location(player: Player, facility: str) -> int:
     """Finds the next available location for a hydro and wind facilities"""
+
     active_facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(
         facility=facility, player_id=player.id
     ).all()

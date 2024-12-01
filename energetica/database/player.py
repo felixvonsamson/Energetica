@@ -636,34 +636,60 @@ class Player(db.Model, UserMixin):
         """Packages the player's construction queue (list of construction_ids)"""
         return self.read_list("construction_priorities")
 
-    def package_active_facilities(self):
-        """Packages the player's active facilities"""
-
-        def get_facility_data(facilities):
-            sub_facilities: list[ActiveFacility] = self.active_facilities.filter(
-                ActiveFacility.facility.in_(facilities)
-            ).all()
-            return {
-                facility.id: {
-                    k: getattr(facility, k)
-                    for k in [
-                        "facility",
-                        "end_of_life",
-                        "price_multiplier",
-                        "multiplier_1",
-                        "multiplier_2",
-                        "multiplier_3",
-                        "usage",
-                    ]
-                }
-                for facility in sub_facilities
-            }
-
-        engine = current_app.config["engine"]
+    def package_active_facilities(self) -> dict[str, dict[int, dict[str, any]]]:
+        """Package the player's active facilities."""
+        engine: GameEngine = current_app.config["engine"]
+        power_facilities: list[ActiveFacility] = self.active_facilities.filter(
+            ActiveFacility.facility.in_(engine.power_facilities)
+        ).all()
+        storage_facilities: list[ActiveFacility] = self.active_facilities.filter(
+            ActiveFacility.facility.in_(engine.storage_facilities)
+        ).all()
+        extraction_facilities: list[ActiveFacility] = self.active_facilities.filter(
+            ActiveFacility.facility.in_(engine.extraction_facilities)
+        ).all()
         return {
-            "power_facilities": get_facility_data(engine.power_facilities),
-            "storage_facilities": get_facility_data(engine.storage_facilities),
-            "extraction_facilities": get_facility_data(engine.extraction_facilities),
+            "power_facilities": {
+                power_facility.id: {
+                    "facility": power_facility.facility,
+                    "display_name": power_facility.display_name,
+                    "installed_cap": power_facility.installed_cap,
+                    "usage": power_facility.usage,
+                    "op_cost": power_facility.op_cost,
+                    "remaining_lifespan": power_facility.remaining_lifespan,
+                    "upgrade_cost": power_facility.upgrade_cost,
+                    "dismantle_cost": power_facility.dismantle_cost,
+                }
+                for power_facility in power_facilities
+            },
+            "storage_facilities": {
+                storage_facility.id: {
+                    "facility": storage_facility.facility,
+                    "display_name": storage_facility.display_name,
+                    "storage_capacity": storage_facility.storage_capacity,
+                    "state_of_charge": storage_facility.state_of_charge,
+                    "op_cost": storage_facility.op_cost,
+                    "efficiency": storage_facility.efficiency,
+                    "remaining_lifespan": storage_facility.remaining_lifespan,
+                    "upgrade_cost": storage_facility.upgrade_cost,
+                    "dismantle_cost": storage_facility.dismantle_cost,
+                }
+                for storage_facility in storage_facilities
+            },
+            "extraction_facilities": {
+                extraction_facility.id: {
+                    "facility": extraction_facility.facility,
+                    "display_name": extraction_facility.display_name,
+                    "extraction_rate": extraction_facility.extraction_rate,
+                    "usage": extraction_facility.usage,
+                    "op_cost": extraction_facility.op_cost,
+                    "max_power_use": extraction_facility.max_power_use,
+                    "remaining_lifespan": extraction_facility.remaining_lifespan,
+                    "upgrade_cost": extraction_facility.upgrade_cost,
+                    "dismantle_cost": extraction_facility.dismantle_cost,
+                }
+                for extraction_facility in extraction_facilities
+            },
         }
 
     def invalidate_recompute_and_dispatch_data_for_pages(

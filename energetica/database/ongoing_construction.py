@@ -80,6 +80,9 @@ class OngoingConstruction(db.Model):
         """Compute the prerequisites and level of an ongoing construction."""
         from energetica.database.player import Player
 
+        if not TYPE_CHECKING:
+            from energetica.database.ongoing_construction import OngoingConstruction
+
         player: Player = db.session.get(Player, self.player_id)
         prerequisites = []
         level = None

@@ -141,10 +141,10 @@
     <br>
 
 {% endblock content %}
-{% block additionnal_script %}
+{% block additional_script %}
     <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
     <script src="{{ url_for('static', filename='achievement_progress.js') }}"></script>
     <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
     <script>refresh_progressBar();</script>
     <script>refresh_achievements();</script>
-{% endblock additionnal_script %}
+{% endblock additional_script %}
