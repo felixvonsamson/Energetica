@@ -27,10 +27,10 @@ def DrHI(unix_time, latitude, longitude):
 
     """
     # Validate inputs
-    if not (latitude > -90 and latitude <= 90):
+    if not np.all(latitude > -90 and latitude <= 90):
         msg = "Latitude must be between -90 (excluded) and 90 degrees."
         raise ValueError(msg)
-    if not (longitude > -180 and longitude <= 180):
+    if not np.all(longitude > -180 and longitude <= 180):
         msg = "Longitude must be between -180 (excluded) and 180 degrees."
         raise ValueError(msg)
 
