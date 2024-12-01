@@ -3,7 +3,7 @@ from numpy import arccos, cos, exp, pi, sin
 from numpy.linalg import norm
 
 # Constants
-TROPICAL_YEAR = 365.24219 * 24 * 3600  # ticks in a tropical year
+TROPICAL_YEAR = 365.24219 * 24 * 3600  # seconds in a tropical year
 ticks_per_day = 3600 * 24
 EARTH_TILT_ANGLE = 23.5 / 180 * pi  # Earth tilt angle in radians
 SIDEREAL_DAY = 86164.098903691  # seconds in a sidereal day
