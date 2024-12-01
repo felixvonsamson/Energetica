@@ -1,12 +1,10 @@
-"""This files defines the classes for the built-in chat. `Chat`, `Message`, and
-`Notification` are stored in the database
-"""
+"""Module that contains the classes for the built-in chat."""
 
 from energetica.database import db
 
 
 class Chat(db.Model):
-    """Stores chats with 2 or more players"""
+    """Class for chats with 2 or more players."""
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
@@ -14,7 +12,7 @@ class Chat(db.Model):
 
 
 class Message(db.Model):
-    """A class for storing data about messages for the in-game messaging system"""
+    """Class for storing data about messages for the in-game messaging system."""
 
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text)
@@ -22,8 +20,8 @@ class Message(db.Model):
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
     chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"))
 
-    def package(self):
-        """Serializes this message's data into a dictionary"""
+    def package(self) -> dict:
+        """Package this message's data into a dictionary."""
         return {
             "id": self.id,
             "text": self.text,
@@ -33,7 +31,7 @@ class Message(db.Model):
 
 
 class Notification(db.Model):
-    """A class for storing data about in-game notifications"""
+    """Class for storing data about in-game notifications."""
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(50))

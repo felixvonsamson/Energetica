@@ -1,8 +1,10 @@
+"""Module that contains the ResourceOnSale class."""
+
 from energetica.database import db
 
 
 class ResourceOnSale(db.Model):
-    """Class that stores resources currently on sale"""
+    """Class that stores resources currently on sale."""
 
     id = db.Column(db.Integer, primary_key=True)
     resource = db.Column(db.String(10))

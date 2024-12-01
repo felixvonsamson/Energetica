@@ -1,15 +1,12 @@
-"""This file contains the `Hex` class, which contains resource information, and
-which makes up the map"""
+"""Module for the `Hex` class, which contains resource information, and which makes up the map."""
 
 from __future__ import annotations
-
-from typing import List
 
 from energetica.database import db
 
 
 class Hex(db.Model):
-    """class for the tiles that compose the map"""
+    """Class for the tiles that compose the map."""
 
     id = db.Column(db.Integer, primary_key=True)
     q = db.Column(db.Integer)
@@ -21,22 +18,24 @@ class Hex(db.Model):
     gas = db.Column(db.Float)
     uranium = db.Column(db.Float)
     climate_risk = db.Column(db.Integer)
-    player_id = db.Column(
-        db.Integer, db.ForeignKey("player.id"), unique=True, nullable=True
-    )  # ID of the owner of the tile
+    # ID of the owner of the tile
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), unique=True, nullable=True)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Return a string representation of the tile."""
         return f"<Tile {self.id} wind {self.wind}>"
 
-    def get_neighbors(self, n=1) -> List[Hex]:
-        """returns the neighbors of the tile plus the tile itself"""
+    def get_neighbors(self, n: int = 1) -> list[Hex]:
+        """Return the neighbors of the tile plus the tile itself."""
 
-        def get_hex_at_distance(q, r, distance):
-            """Generate all hex coordinates within a given distance"""
+        def get_hex_at_distance(q: int, r: int, distance: int) -> list[tuple[int, int]]:
+            """Generate all hex coordinates within a given distance."""
             results = []
-            for dq in range(-distance, distance + 1):
-                for dr in range(max(-distance, -dq - distance), min(distance, -dq + distance) + 1):
-                    results.append((q + dq, r + dr))
+            results.extend(
+                (q + dq, r + dr)
+                for dq in range(-distance, distance + 1)
+                for dr in range(max(-distance, -dq - distance), min(distance, -dq + distance) + 1)
+            )
             return results
 
         neighbors = []
@@ -47,11 +46,11 @@ class Hex(db.Model):
                 neighbors.append(neighbor)
         return neighbors
 
-    def get_downstream_tiles(self, n) -> List[Hex]:
-        """returns up to `n` many tiles that are downstream (related to hydro) from the current tile"""
+    def get_downstream_tiles(self, n: int) -> list[Hex]:
+        """Return up to `n` many tiles that are downstream (related to hydro) from the current tile."""
         downstream_tiles = []
 
-        def find_downstream(tile, n):
+        def find_downstream(tile: Hex, n: int) -> None:
             if n == 0:
                 return
             for neighbor in tile.get_neighbors():

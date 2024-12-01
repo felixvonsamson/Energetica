@@ -1,14 +1,21 @@
 """This file contains the classes for `CapacityData`, `CircularBufferPlayer`,
 `CircularBufferNetwork`, and `EmissionData`"""
 
+from __future__ import annotations
+
 import math
 from collections import defaultdict, deque
-from typing import List
+from typing import TYPE_CHECKING
 
 import noise
 from flask import current_app
 
 from energetica.database.active_facility import ActiveFacility
+
+if TYPE_CHECKING:
+    from energetica.database.network import Network
+    from energetica.database.player import Player
+    from energetica.game_engine import GameEngine
 
 
 class CapacityData:
@@ -32,24 +39,24 @@ class CapacityData:
     """
 
     def __init__(self):
-        self._data = {}
+        self._data: dict[str, dict] = {}
 
-    def update(self, player, facility):
-        """This function updates the capacity data of the player"""
+    def update(self, player: Player, facility_name: str) -> None:
+        """Update the capacity data of the player."""
         engine = current_app.config["engine"]
-        if facility is None:
-            active_facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id).all()
+        if facility_name is None:
+            active_facilities: list[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id).all()
             unique_facilities = {af.facility for af in active_facilities}
             for uf in unique_facilities:
                 self.init_facility(engine, uf)
         else:
-            active_facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(
-                player_id=player.id, facility=facility
+            active_facilities: list[ActiveFacility] = ActiveFacility.query.filter_by(
+                player_id=player.id, facility=facility_name
             ).all()
-            if len(active_facilities) == 0 and facility in self._data:
-                del self._data[facility]
+            if len(active_facilities) == 0 and facility_name in self._data:
+                del self._data[facility_name]
                 return
-            self.init_facility(engine, facility)
+            self.init_facility(engine, facility_name)
 
         for facility in active_facilities:
             base_data = engine.const_config["assets"][facility.facility]
@@ -95,8 +102,8 @@ class CapacityData:
         if player.network is not None:
             player.network.data.capacities.update_network(player.network)
 
-    def update_network(self, network):
-        """This function updates the capacity data of the network"""
+    def update_network(self, network: Network) -> None:
+        """Update the capacity data of the network."""
         self._data = {}
         for player in network.members:
             player_capacities = player.data.capacities.get_all()
@@ -106,8 +113,8 @@ class CapacityData:
                         self._data[facility] = {"power": 0.0}
                     self._data[facility]["power"] += player_capacities[facility]["power"]
 
-    def init_facility(self, engine, facility):
-        """This function initializes the capacity data of a facility"""
+    def init_facility(self, engine: GameEngine, facility: str) -> None:
+        """Initialize the capacity data of a facility."""
         const_config = engine.const_config["assets"]
         if facility in engine.power_facilities:
             self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "fuel_use": {}}
@@ -121,22 +128,23 @@ class CapacityData:
         if facility in engine.extraction_facilities:
             self._data[facility] = {"O&M_cost": 0.0, "extraction_rate_per_day": 0.0, "power_use": 0.0, "pollution": 0.0}
 
-    def __getitem__(self, facility):
+    def __getitem__(self, facility: str) -> dict:
+        """Return the capacity data of a facility."""
         if facility not in self._data:
             return None
         return self._data[facility]
 
-    def get_all(self):
-        """Returns the capacity data"""
+    def get_all(self) -> dict[str, dict]:
+        """Return the capacity data."""
         return self._data
 
-    def contains(self, facility):
-        """Returns whether the facility is in the capacity data"""
+    def contains(self, facility: str) -> bool:
+        """Return true if the facility is in the capacity data."""
         return facility in self._data
 
 
 class CircularBufferPlayer:
-    """Class that stores the active data of a player (last 360 ticks of the graph data)"""
+    """Class that stores the active data of a player (last 360 ticks of the graph data)."""
 
     def __init__(self):
         self._data = {
@@ -166,19 +174,19 @@ class CircularBufferPlayer:
             },
         }
 
-    def append_value(self, new_value):
-        """Adds one new tick of data to the buffer"""
+    def append_value(self, new_value) -> None:
+        """Add one new tick of data to the buffer."""
         for category, subcategories in new_value.items():
             for subcategory, value in subcategories.items():
                 self._data[category][subcategory].append(value)
 
-    def add_subcategory(self, category, subcategory):
-        """Adds a new subcategory to the data"""
+    def add_subcategory(self, category: str, subcategory: str) -> None:
+        """Add a new subcategory to the data."""
         if subcategory not in self._data[category]:
             self._data[category][subcategory] = deque([0.0] * 360, maxlen=360)
 
-    def get_data(self, t=216):
-        """Returns the last t ticks of the data"""
+    def get_data(self, t: int = 216):
+        """Return the last t ticks of the data."""
         result = defaultdict(lambda: defaultdict(dict))
         for category, subcategories in self._data.items():
             for subcategory, buffer in subcategories.items():
@@ -186,14 +194,16 @@ class CircularBufferPlayer:
         return result
 
     def get_last_data(self, category, subcategory):
-        """Returns the last value of a subcategory"""
+        """Return the last value of a subcategory."""
         if category in self._data and subcategory in self._data[category]:
             return self._data[category][subcategory][-1]
         return 0
 
-    def init_new_data(self):
-        """Returns a dict with the same structure as the data with 0 and with
-        the last value for the storage and resources"""
+    def init_new_data(self) -> dict:
+        """Generate the new values for the data.
+
+        Return a dict with the same structure as the data with 0 and with the last value for the storage and resources.
+        """
         result = {}
         for category, subcategories in self._data.items():
             result[category] = {}
@@ -206,32 +216,31 @@ class CircularBufferPlayer:
 
 
 class CumulativeEmissionsData:
-    """
-    This class stores the cumulative emissions of all facilities of a player
-    """
+    """Class storing the cumulative emissions of all facilities of a player."""
 
     def __init__(self):
-        self._data = {
+        self._data: dict[str, float] = {
             "steam_engine": 0.0,
             "construction": 0.0,
         }
 
-    def add(self, facility, value):
-        """Adds a value to the data"""
+    def add(self, facility: str, value: float) -> None:
+        """Add a value to the data."""
         self._data[facility] += value
 
-    def add_category(self, facility):
-        """Adds a new category to the data"""
+    def add_category(self, facility: str) -> None:
+        """Add a new category to the data."""
         if facility not in self._data:
             self._data[facility] = 0.0
 
-    def __getitem__(self, facility):
+    def __getitem__(self, facility: str) -> float:
+        """Return the data of a facility."""
         if facility not in self._data:
             return None
         return self._data[facility]
 
-    def get_all(self):
-        """Returns the data"""
+    def get_all(self) -> dict[str, float]:
+        """Return the data."""
         return self._data
 
 

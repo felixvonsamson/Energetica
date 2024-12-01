@@ -1,3 +1,5 @@
+"""Module for the OngoingConstruction class."""
+
 from dataclasses import dataclass
 from functools import cached_property
 from typing import TYPE_CHECKING
@@ -11,25 +13,30 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class OngoingConstructionCache(object):
+class OngoingConstructionCache:
+    """Cache for the OngoingConstruction class."""
+
     construction_id: int
 
     @cached_property
     def _prerequisites_and_level(self) -> tuple[list[int], int]:
+        """Compute the prerequisites and level of an ongoing construction."""
         construction = db.session.get(OngoingConstruction, self.construction_id)
         return construction._compute_prerequisites_and_level()
 
     @property
     def prerequisites(self) -> list[int]:
+        """Return the prerequisites of the ongoing construction."""
         return self._prerequisites_and_level[0]
 
     @property
     def level(self) -> int:
+        """Return the level of the ongoing construction."""
         return self._prerequisites_and_level[1]
 
 
 class OngoingConstruction(db.Model):
-    """class that stores the things currently under construction."""
+    """Class that stores projects currently under construction."""
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
@@ -51,20 +58,21 @@ class OngoingConstruction(db.Model):
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
     def is_paused(self) -> bool:
-        """Returns True if this construction is paused"""
+        """Return True if this construction is paused."""
         return self.suspension_time is not None
 
-    def resume(self):
-        """Make this facility go from paused to unpaused"""
-        assert self.is_paused()
-        from flask import current_app
-
+    def resume(self) -> None:
+        """Make this facility go from paused to unpaused."""
+        if not self.is_paused():
+            msg = f"Cannot resume construction {self.id} because it is not paused."
+            raise ValueError(msg)
         engine: GameEngine = current_app.config["engine"]
         self.start_time += engine.data["total_t"] - self.suspension_time
         self.suspension_time = None
 
     @cached_property
     def cache(self) -> OngoingConstructionCache:
+        """Return the cache for this ongoing construction."""
         if self.id not in current_app.config["engine"].buffered["by_ongoing_construction"]:
             current_app.config["engine"].buffered["by_ongoing_construction"][self.id] = OngoingConstructionCache(
                 self.id

@@ -1,8 +1,10 @@
+"""Contains the class that stores the resources shipment on their way."""
+
 from energetica.database import db
 
 
 class Shipment(db.Model):
-    """Class that stores the resources shipment on their way"""
+    """Class that stores the resources shipment on their way."""
 
     id = db.Column(db.Integer, primary_key=True)
     resource = db.Column(db.String(10))
