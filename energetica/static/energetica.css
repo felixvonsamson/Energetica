@@ -1235,11 +1235,8 @@ input:checked+.slider:before {
     width: 265px;
 }
 
-table tbody tr[summary-row] {
+table tbody tr[summary-row] td:first-child {
     cursor: pointer;
-    margin-bottom: 10px;
-    border-bottom: 10px;
-    padding-bottom: 10px;
 }
 
 table tbody tr.hidden[detail-row] {

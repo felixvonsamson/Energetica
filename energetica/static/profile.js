@@ -8,30 +8,27 @@
  * @param {Object} facility 
  * @param {number | string} id 
  * @param {number} upgrade_cost 
+ * @param {boolean} is_summary_row
  * @returns 
  */
-function add_upgrade_button(cell_element, table_data, facility, id, upgrade_cost) {
+function add_upgrade_button(cell_element, table_data, facility, id, upgrade_cost, is_summary_row) {
     if (upgrade_cost == null) {
         cell_element.innerHTML = "-";
         return;
     }
-    const container = document.createElement("div");
-    container.classList.add("upgrade_container");
-    const button_single = document.createElement("button");
-    button_single.classList.add("upgrade_button");
-    button_single.innerHTML = format_money(upgrade_cost);
-    button_single.onclick = () => upgrade(id);
-    const button_or = document.createElement("button");
-    button_or.classList.add("or_all_button");
-    button_or.innerHTML = "- or -";
-    const button_all = document.createElement("button");
-    button_all.classList.add("upgrade_all_button");
-    button_all.innerHTML = `Upgrade all ${facility.display_name}`;
-    button_all.onclick = () => are_you_sure_upgrade_all_of_type(table_data, facility.facility, facility.display_name);
-    container.appendChild(button_single);
-    container.appendChild(button_or);
-    container.appendChild(button_all);
-    cell_element.appendChild(container);
+    if (is_summary_row) {
+        const button_all = document.createElement("button");
+        button_all.classList.add("upgrade_button");
+        button_all.innerHTML = format_money(upgrade_cost);
+        button_all.onclick = () => are_you_sure_upgrade_all_of_type(id, facility.display_name, upgrade_cost);
+        cell_element.appendChild(button_all);
+    } else {
+        const button_single = document.createElement("button");
+        button_single.classList.add("upgrade_button");
+        button_single.innerHTML = format_money(upgrade_cost);
+        button_single.onclick = () => upgrade(id);
+        cell_element.appendChild(button_single);
+    }
 }
 
 /**
@@ -40,25 +37,22 @@ function add_upgrade_button(cell_element, table_data, facility, id, upgrade_cost
  * @param {Object} facility
  * @param {number | string} id
  * @param {number} dismantle_cost
+ * @param {boolean} is_summary_row
  */
-function add_dismantle_button(cell_element, table_data, facility, id, dismantle_cost) {
-    const container = document.createElement("div");
-    container.classList.add("upgrade_container");
-    const button_single = document.createElement("button");
-    button_single.classList.add("dismantle_button");
-    button_single.innerHTML = format_money(dismantle_cost);
-    button_single.onclick = () => are_you_sure_dismantle_facility(id, dismantle_cost);
-    const button_or = document.createElement("button");
-    button_or.classList.add("or_all_button");
-    button_or.innerHTML = "- or -";
-    const button_all = document.createElement("button");
-    button_all.classList.add("dismantle_all_button");
-    button_all.innerHTML = `Dismantle all ${facility.display_name}`;
-    button_all.onclick = () => are_you_sure_dismantle_all_of_type(table_data, facility.facility, facility.display_name);
-    container.appendChild(button_single);
-    container.appendChild(button_or);
-    container.appendChild(button_all);
-    cell_element.appendChild(container);
+function add_dismantle_button(cell_element, table_data, facility, id, dismantle_cost, is_summary_row) {
+    if (is_summary_row) {
+        const button_all = document.createElement("button");
+        button_all.classList.add("dismantle_button");
+        button_all.innerHTML = format_money(dismantle_cost);
+        button_all.onclick = () => are_you_sure_dismantle_all_of_type(id, facility.display_name, dismantle_cost);
+        cell_element.appendChild(button_all);
+    } else {
+        const button_single = document.createElement("button");
+        button_single.classList.add("dismantle_button");
+        button_single.innerHTML = format_money(dismantle_cost);
+        button_single.onclick = () => are_you_sure_dismantle_facility(id, dismantle_cost);
+        cell_element.appendChild(button_single);
+    }
 }
 
 /** @type {DataColumnConfig[]} */
@@ -289,8 +283,7 @@ function are_you_sure_dismantle_facility(facility_id, cost) {
     document.getElementById('no_cancel').innerHTML = '<b>Cancel</b>';
 }
 
-function are_you_sure_dismantle_all_of_type(table_data, facility_name, facility_display_name) {
-    let cost = cost_of_action_all_of_type(table_data, facility_name, "dismantle_cost");
+function are_you_sure_dismantle_all_of_type(facility_name, facility_display_name, cost) {
     document.getElementById('are_you_sure_popup').classList.remove('hidden');
     document.getElementById('are_you_sure_content').innerHTML = `Are you sure you want to dismantle all ${facility_display_name}?<br>
     This will cost you ${format_money(cost)}.`;
@@ -298,8 +291,7 @@ function are_you_sure_dismantle_all_of_type(table_data, facility_name, facility_
     document.getElementById('no_cancel').innerHTML = '<b>Cancel</b>';
 }
 
-function are_you_sure_upgrade_all_of_type(table_data, facility_name, facility_display_name) {
-    let cost = cost_of_action_all_of_type(table_data, facility_name, "upgrade_cost");
+function are_you_sure_upgrade_all_of_type(facility_name, facility_display_name, cost) {
     document.getElementById('are_you_sure_popup').classList.remove('hidden');
     document.getElementById('are_you_sure_content').innerHTML = `Are you sure you want to upgrade all ${facility_display_name}?<br>
     This will cost you ${format_money(cost)}.`;
@@ -330,9 +322,9 @@ function upgrade(id) {
         });
 }
 
-function upgrade_all_of_type(facility_id) {
+function upgrade_all_of_type(facility) {
     send_json("/api/request_upgrade_all_of_type", {
-        facility_id: facility_id,
+        facility: facility,
     }).then((response) => {
         response.json().then((raw_data) => {
             let response = raw_data["response"];
@@ -376,9 +368,9 @@ function dismantle(id) {
         });
 }
 
-function dismantle_all_of_type(facility_id) {
+function dismantle_all_of_type(facility) {
     send_json("/api/request_dismantle_all_of_type", {
-        facility_id: facility_id,
+        facility: facility,
     }).then((response) => {
         response.json().then((raw_data) => {
             let response = raw_data["response"];
@@ -397,6 +389,7 @@ function dismantle_all_of_type(facility_id) {
         });
 }
 
+// TODO: remove this function
 function cost_of_action_all_of_type(table_data, facility_name, key) {
     let cost = 0;
     for (const [id, facility] of Object.entries(table_data)) {

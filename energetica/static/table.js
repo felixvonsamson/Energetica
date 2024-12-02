@@ -18,7 +18,7 @@
  * default.
  * @property {(data: Object, row_key: number | string, value: any) => string} [render_cell] - A function to generate the 
  * cell's inner HTML.
- * @property {(cell_element: HTMLTableCellElement, table_data: Object.<string|number, Object>, data: Object, row_key: number | string, value: any) => void} [populate_cell_content]
+ * @property {(cell_element: HTMLTableCellElement, table_data: Object.<string|number, Object>, data: Object, row_key: number | string, value: any, is_summary: boolean) => void} [populate_cell_content]
  *  - A function to populate the cell with custom content.
  * @property {boolean} [hide_detail] - If true, detail rows will not show this field.
  */
@@ -143,8 +143,6 @@ class Table {
                 this.summary_row_visibility[row_key] = false;
             }
         }
-        console.log(summary_data);
-        console.log(this.summary_row_visibility);
         // Clear the table body
         this.table_body.replaceChildren();
         // TODO: remove this; it's a workaround for the alternating row colors
@@ -165,16 +163,14 @@ class Table {
                 this.update_cell_element(column, table_data, cell_element, cell_data, row_data, row_key, cell_data, false);
             }
             row_element.setAttribute("expanded", this.summary_row_visibility[row_key]);
-            row_element.onclick = () => {
+            row_element.firstChild.onclick = () => {
                 if (this.summary_row_visibility[row_key]) {
                     for (let detail_row of this.table_body.querySelectorAll(`[summary_key="${row_key}"]`)) {
                         detail_row.classList.add("hidden");
-                        console.log(detail_row);
                     }
                 } else {
                     for (let detail_row of this.table_body.querySelectorAll(`[summary_key="${row_key}"]`)) {
                         detail_row.classList.remove("hidden");
-                        console.log(detail_row);
                     }
                 }
                 this.summary_row_visibility[row_key] = !this.summary_row_visibility[row_key];
@@ -264,7 +260,7 @@ class Table {
                     }
                 } else {
                     // Call the custom populate_cell_content function specified in the column config
-                    column.populate_cell_content(cell_element, table_data, row_data, row_key, cell_data);
+                    column.populate_cell_content(cell_element, table_data, row_data, row_key, cell_data, !is_detail_row);
                 }
             }
         }
