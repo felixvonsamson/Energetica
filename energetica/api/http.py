@@ -27,7 +27,6 @@ from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.database.shipment import Shipment
 from energetica.game_engine import Confirm, GameException
-from energetica.technology_effects import get_current_technology_values
 from energetica.utils.assets import package_projects_data
 from energetica.utils.misc import flash_error
 
@@ -281,7 +280,6 @@ def get_player_data() -> Response:
             "levels": levels,
             "config": current_user.config,
             "capacities": capacities,
-            "multipliers": get_current_technology_values(current_user),
         }
     )
 
