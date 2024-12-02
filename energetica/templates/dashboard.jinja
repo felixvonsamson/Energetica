@@ -103,7 +103,7 @@
             <h2 class="txt_center">Stored Energy</h2>
         </a>
         {% endif %}
-        {% if "Discover the Greenhouse Effect" in user.achievements %}
+        {% if user.discovered_greenhouse_gas_effect() %}
         <a href="/production_overview/emissions">
             <h2 class="txt_center">Emissions</h2>
         </a>

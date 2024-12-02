@@ -472,6 +472,10 @@ class Player(db.Model, UserMixin):
             net_emissions += value
         return net_emissions
 
+    def discovered_greenhouse_gas_effect(self) -> bool:
+        """Return True if the player has discovered the greenhouse gas effect."""
+        return "Discover the Greenhouse Effect" in self.achievements
+
     def check_continuous_achievements(self) -> None:
         """Check for player achievements that are linked to values that are updated every tick."""
         for achievement in [

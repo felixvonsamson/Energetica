@@ -173,7 +173,7 @@ def resources():
 @overviews.route("/emissions")
 def emissions():
     player: Player = current_user
-    if "Discover the Greenhouse Effect" not in player.achievements:
+    if not player.discovered_greenhouse_gas_effect():
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/emissions.jinja")
 

@@ -198,7 +198,7 @@
           </a>
           {% endif %}
 
-          {% if "Discover the Greenhouse Effect" in user.achievements %}
+          {% if user.discovered_greenhouse_gas_effect() %}
           <a class="navbar_item bone flex-row"
               id="production_overview"
               href="{{ url_for('overviews.emissions') }}">

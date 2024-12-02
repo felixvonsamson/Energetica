@@ -666,7 +666,7 @@ def facility_is_hidden(player: Player, facility):
     Returns true if the facility is hidden to the player due to lack of achievements.
     Such facilities should not be shown on the frontend.
     """
-    if "Discover the Greenhouse Effect" not in player.achievements and facility == "carbon_capture":
+    if facility == "carbon_capture" and not player.discovered_greenhouse_gas_effect():
         return True
     return False
 
