@@ -562,7 +562,6 @@ def _package_power_storage_extraction_facility_base(player: Player, facility):
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return {
-        "construction_pollution": const_config_assets[facility]["base_construction_pollution"],
         "operating_costs": const_config_assets[facility]["base_price"]
         * price_multiplier(player, facility)
         * (
@@ -573,7 +572,11 @@ def _package_power_storage_extraction_facility_base(player: Player, facility):
         * const_config_assets[facility]["O&M_factor_per_day"]
         / 24,
         "lifespan": const_config_assets[facility]["lifespan"] / engine.in_game_seconds_per_tick,
-    }
+    } | (
+        {"construction_pollution": const_config_assets[facility]["base_construction_pollution"]}
+        if player.discovered_greenhouse_gas_effect()
+        else {}
+    )
 
 
 def package_power_facilities(player: Player) -> list:
@@ -785,10 +788,14 @@ def package_functional_facilities(player: Player):
     }
     result = [
         _package_asset_base(player, functional_facility)
-        | {
-            "construction_pollution": const_config_assets[functional_facility]["base_construction_pollution"]
-            * const_config_assets[functional_facility]["price_multiplier"] ** getattr(player, functional_facility),
-        }
+        | (
+            {
+                "construction_pollution": const_config_assets[functional_facility]["base_construction_pollution"]
+                * const_config_assets[functional_facility]["price_multiplier"] ** getattr(player, functional_facility),
+            }
+            if player.discovered_greenhouse_gas_effect()
+            else {}
+        )
         | special_keys[functional_facility]
         for functional_facility in engine.functional_facilities
     ]

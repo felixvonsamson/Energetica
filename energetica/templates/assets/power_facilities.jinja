@@ -153,12 +153,14 @@
               <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.construction_power }});</script>
               <span class="popup_info small">Power consumption</span>
             </span>
-            <span class="hover_info">
-              <i class="fa fa-cloud"></i>&ensp;
-              <strong class="construction_pollution"></strong>
-              <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO<sub>2</sub>";</script>
-              <span class="popup_info small">CO<sub>2</sub> emissions</span>
-            </span>
+            {% if "construction_pollution" in facility_data %}
+              <span class="hover_info">
+                <i class="fa fa-cloud"></i>&ensp;
+                <strong class="construction_pollution"></strong>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO<sub>2</sub>";</script>
+                <span class="popup_info small">CO<sub>2</sub> emissions</span>
+              </span>
+            {% endif %}
           </div>
         </div>
       </div>
@@ -191,12 +193,14 @@
               <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ facility_data.construction_power }});</script>
               <span class="popup_info small">Power consumption</span>
             </span>
-            <span class="hover_info">
-              <i class="fa fa-cloud"></i>&ensp;
-              <strong class="construction_pollution"></strong>
-              <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO<sub>2</sub>";</script>
-              <span class="popup_info small">CO<sub>2</sub> emissions</span>
-            </span>
+            {% if "construction_pollution" in facility_data %}
+              <span class="hover_info">
+                <i class="fa fa-cloud"></i>&ensp;
+                <strong class="construction_pollution"></strong>
+                <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ facility_data.construction_pollution }}) + " CO<sub>2</sub>";</script>
+                <span class="popup_info small">CO<sub>2</sub> emissions</span>
+              </span>
+            {% endif %}
           </div>
         </div>
         {# Power Facility Data #}
