@@ -182,16 +182,18 @@
           <td>XP</td>
           <td class="txt_center">{{ profile.xp }}</td>
         </tr>
-        <tr>
-          <td>Emissions</td>
-          <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.calculate_net_emissions() }});</script>
-        </tr>
-        <tr>
-          <td>Captured CO<sub>2</sub></td>
-          <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.captured_co2 }});</script>
-        </tr>
+        {% if "construction_pollution" in facility_data %}
+          <tr>
+            <td>Emissions</td>
+            <td class="txt_center"></td>
+            <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.calculate_net_emissions() }});</script>
+          </tr>
+          <tr>
+            <td>Captured CO<sub>2</sub></td>
+            <td class="txt_center"></td>
+            <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.captured_co2 }});</script>
+          </tr>
+        {% endif %}
       </table>
     </div>
   </div>
