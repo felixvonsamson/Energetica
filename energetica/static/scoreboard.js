@@ -40,15 +40,21 @@ function sortTable(columnName) {
     });
 
     // Rebuild the HTML table
+    console.log(sortedData);
+    console.log(Object.values(sortedData)[0]);
+    console.log(Object.values(sortedData)[0][1]);
+    let include_co2_emissions = 'co2_emissions' in Object.values(sortedData)[0][1];
     let html = `<tr>
         <th id="username" onclick="sortTable('username')">Username</th>
         <th id="network_name" onclick="sortTable('network_name')">Network</th>
         <th id="average_hourly_revenues" onclick="sortTable('average_hourly_revenues')">Revenues</th>
         <th id="max_power_consumption" onclick="sortTable('max_power_consumption')">Max power</th>
         <th id="total_technology_levels" onclick="sortTable('total_technology_levels')">Technology</th>
-        <th id="xp" onclick="sortTable('xp')">xp</th>
-        <th id="co2_emissions" onclick="sortTable('co2_emissions')">Emissions</th>
-        </tr>`;
+        <th id="xp" onclick="sortTable('xp')">xp</th>`;
+    if (include_co2_emissions) {
+        html += `<th id="co2_emissions" onclick="sortTable('co2_emissions')">Emissions</th>`;
+    }
+    html += `</tr>`;
     let current_player_id = sessionStorage.getItem("player_id");
     for (const [id, player] of sortedData) {
         if (id == current_player_id) {
@@ -62,13 +68,15 @@ function sortTable(columnName) {
             <td>${format_money(player['average_hourly_revenues'])}/h</td>
             <td>${format_power(player['max_power_consumption'])}</td>
             <td>${player['total_technology_levels']}</td>
-            <td>${player['xp']}</td>
-            <td>${format_mass(player['co2_emissions'])}</td>
-            </tr>`;
+            <td>${player['xp']}</td>`;
+        if (include_co2_emissions) {
+            html += `<td>${format_mass(player['co2_emissions'])}</td>`;
+        }
+        html += `</tr > `;
     }
     table.innerHTML = html;
 
     // Update the sorting indicator
     column = document.getElementById(columnName);
     column.innerHTML += triangle;
-}
+};

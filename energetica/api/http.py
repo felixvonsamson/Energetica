@@ -344,7 +344,8 @@ def get_upcoming_achievements() -> Response:
 @http.route("/get_scoreboard", methods=["GET"])
 def get_scoreboard() -> Response:
     """Get the scoreboard data."""
-    return jsonify(Player.package_scoreboard())
+    player: Player = current_user
+    return jsonify(player.package_scoreboard())
 
 
 @http.route("/get_quiz_question", methods=["GET"])

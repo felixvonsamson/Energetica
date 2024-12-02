@@ -320,8 +320,8 @@ def rest_get_facilities_data(player: Player):
 
 def rest_get_scoreboard():
     """Gets the scoreboard and returns it as a JSON string"""
-    response = {"type": "getScoreboard", "data": Player.package_scoreboard()}
-    return json.dumps(response)
+    # response = {"type": "getScoreboard", "data": Player.package_scoreboard()}
+    return json.dumps({})
 
 
 def rest_get_weather(engine, player):

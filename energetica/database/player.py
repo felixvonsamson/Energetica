@@ -607,20 +607,22 @@ class Player(db.Model, UserMixin):
         players: list[Player] = Player.query.all()
         return {player.id: player.package() for player in players}
 
-    @staticmethod
-    def package_scoreboard() -> dict[int, dict]:
+    def package_scoreboard(self) -> dict[int, dict]:
         """Package the scoreboard data for players with a tile."""
         players = Player.query.filter(Player.tile != None)
+        include_co2_emissions = self.discovered_greenhouse_gas_effect()
         return {
-            player.id: {
-                "username": player.username,
-                "network_name": player.network.name if player.network else "-",
-                "average_hourly_revenues": player.average_revenues,
-                "max_power_consumption": player.max_power_consumption,
-                "total_technology_levels": player.total_technologies,
-                "xp": player.xp,
-                "co2_emissions": player.calculate_net_emissions(),
-            }
+            player.id: (
+                {
+                    "username": player.username,
+                    "network_name": player.network.name if player.network else "-",
+                    "average_hourly_revenues": player.average_revenues,
+                    "max_power_consumption": player.max_power_consumption,
+                    "total_technology_levels": player.total_technologies,
+                    "xp": player.xp,
+                }
+                | ({"co2_emissions": player.calculate_net_emissions()} if include_co2_emissions else {})
+            )
             for player in players
         }
 
