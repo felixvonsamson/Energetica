@@ -6,7 +6,7 @@ class ClimateEventRecovery(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     event = db.Column(db.String(20))
-    start_time = db.Column(db.Integer)
-    duration = db.Column(db.Integer)
+    end_tick = db.Column(db.Float)
+    duration = db.Column(db.Float)
     recovery_cost = db.Column(db.Float)
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player

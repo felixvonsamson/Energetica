@@ -174,7 +174,6 @@ function pause_construction(construction_id) {
         }
         else if (response == "hasUnfinishedPrerequisites") {
           addError("This construction cannot be started now as it has unfinished prerequisites.");
-          // console.log(raw_data["prerequisites"])
         }
       });
     })
@@ -243,27 +242,25 @@ load_constructions().then((constructions) => {
       const current_time = (now - server_start) / clock_time;
       let new_width;
       let time_remaining;
-      if (construction.suspension_time) {
-        new_width =
-          ((construction.suspension_time -
-            construction.start_time) /
-            construction.duration) *
-          100;
-        time_remaining =
-          construction.duration +
-          construction.start_time -
-          construction.suspension_time;
-      } else {
-        new_width =
-          ((current_time - construction.start_time) /
-            construction.duration) *
-          100;
-        time_remaining =
-          construction.duration + construction.start_time - current_time;
+      if (construction.status == 2) {
+        new_width = (1 - (construction._end_tick_or_ticks_passed - current_time) / construction.duration) * 100;
+        time_remaining = construction._end_tick_or_ticks_passed - current_time;
+      }
+      else {
+        new_width = (construction._end_tick_or_ticks_passed / construction.duration) * 100;
+        time_remaining = construction.duration - construction._end_tick_or_ticks_passed;
       }
       progressBar.style.setProperty("--width", new_width);
       if (new_width > 0.01) {
-        progressBar.classList.add("pine");
+        if (construction.speed < 0.01) {
+          progressBar.classList.add("red");
+        }
+        else if (construction.speed < 0.99) {
+          progressBar.classList.add("orange");
+        }
+        else {
+          progressBar.classList.add("pine");
+        }
       }
       if (time_remaining < 0) {
         progressBar.parentElement.parentElement.remove();
@@ -285,16 +282,16 @@ load_constructions().then((constructions) => {
       const current_time = (now - server_start) / clock_time;
       let new_width;
       let time_remaining;
-      if (shipment["suspension_time"]) {
+      if (shipment["pause_tick"]) {
         new_width =
-          ((shipment["suspension_time"] -
+          ((shipment["pause_tick"] -
             shipment["departure_time"]) /
             shipment["duration"]) *
           100;
         time_remaining =
           shipment["duration"] +
           shipment["departure_time"] -
-          shipment["suspension_time"];
+          shipment["pause_tick"];
       } else {
         new_width =
           ((current_time - shipment["departure_time"]) /
@@ -400,8 +397,18 @@ function display_progressBars(construction_data, shipment_data) {
 
 function html_for_progressBar(c_id, index, project_priority, construction) {
   let playPauseLogo = "fa-pause";
-  if (construction["suspension_time"]) {
+  if (construction["pause_tick"]) {
     playPauseLogo = "fa-play";
+  }
+  let snail = "";
+  if (construction["speed"] < 0.01) {
+    snail = `<span class="progressbar-name medium">
+            <span class="hover_info"><img src="/static/images/icons/snail_house.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
+        </span>`;
+  } else if (construction["speed"] < 0.99) {
+    snail = `<div class="progressbar-name medium">
+            <span class="hover_info"><img src="/static/images/icons/snail.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
+        </div>`;
   }
   return `
     <div class="progressbar-container">
@@ -416,6 +423,7 @@ function html_for_progressBar(c_id, index, project_priority, construction) {
                 </button>` : ''}
         </div>
         <div class="progressbar-name medium margin-small">${asset_names[construction["name"]]}${"level" in construction ? " " + construction["level"] : ""}</div>
+        ${snail}
         <div class="progressbar-background">
             <div id="${c_id}" class="progressbar-bar"></div>
         </div>
@@ -430,7 +438,7 @@ function html_for_progressBar(c_id, index, project_priority, construction) {
 
 function html_for_shipmentBar(id, shipment) {
   let playPauseLogo = "fa-pause";
-  if (shipment["suspension_time"]) {
+  if (shipment["pause_tick"]) {
     playPauseLogo = "fa-play";
   }
   return `<div class="progressbar-container">

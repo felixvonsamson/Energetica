@@ -48,6 +48,16 @@ canvas {
     background-color: #285430
 }
 
+.red {
+    color: #fff;
+    background-color: #f44336
+}
+
+.orange {
+    color: #fff;
+    background-color: #f59f00
+}
+
 .txt_pine {
     color: #285430;
 }
