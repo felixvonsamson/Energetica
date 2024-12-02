@@ -141,7 +141,6 @@ class GameEngine(object):
         self.config = config
         self.const_config = const_config
         self.socketio: SocketIO = None
-        self.data["notification_subscriptions"] = defaultdict(list)
         self.clients = defaultdict(list)
         self.websocket_dict = {}
         self.console_logger = logging.getLogger("console")  # logs events in the terminal
@@ -151,6 +150,7 @@ class GameEngine(object):
 
         self.lock = RLock()
         self.data = {}
+        self.data["notification_subscriptions"] = defaultdict(list)
         self.data["by_player"] = defaultdict(PlayerData)
         self.data["by_network"] = defaultdict(NetworkData)
         self.buffered = {}  # stores buffered values for mixed_database
