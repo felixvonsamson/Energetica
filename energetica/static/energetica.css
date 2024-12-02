@@ -1236,20 +1236,39 @@ input:checked+.slider:before {
 }
 
 table tbody tr[summary-row] {
-    background-color: #e2bca6;
     cursor: pointer;
+    margin-bottom: 10px;
+    border-bottom: 10px;
+    padding-bottom: 10px;
 }
 
 table tbody tr.hidden[detail-row] {
     display: none;
 }
 
+table tbody td.transparent {
+    /* opacity: 0; */
+    background-color: #a4be7b
+}
+
+tr[expanded=true] i.fa-caret-right {
+    display: none;
+}
+
+tr[expanded=false] i.fa-caret-down {
+    display: none;
+}
+
 /* TODO: swap even and odd, now that header rows are in thead */
-table tbody tr[detail-row]:nth-child(even) {
+table tbody tr[summary-row]:nth-child(even of tr[summary-row]) {
     background-color: #d6c79a
 }
 
-table.tan_green tbody tr[detail-row]:nth-child(even) {
+table tbody tr:not([summary-row]):nth-child(even of tr:not([summary-row])) {
+    background-color: #d6c79a
+}
+
+table.tan_green tbody tr:nth-child(even) {
     background-color: #c1cf8b
 }
 
@@ -1476,7 +1495,7 @@ table.tan_green tbody tr[detail-row]:nth-child(even) {
     width: 250px
 }
 
-#profile_headder.hidden {
+#profile_header.hidden {
     display: none;
 }
 

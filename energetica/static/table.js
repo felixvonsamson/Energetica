@@ -13,7 +13,6 @@
  * @property {"string"|"number"|"gauge"} data_type - The type of the data (string, number, or gauge).
  * @property {boolean} [sortable=false] - Whether the column supports sorting.
  * @property {"gauge"} [special_render] - Special mode for the column.
- * @property {(data: Object, row_key: number | string, value: any) => string} [gauge_class] - A function to generate the
  * class for the gauge.
  * @property {"ascending"|"descending"} [default_sort_order="descending"] - Whether the column is sorted ascending by 
  * default.
@@ -21,6 +20,7 @@
  * cell's inner HTML.
  * @property {(cell_element: HTMLTableCellElement, table_data: Object.<string|number, Object>, data: Object, row_key: number | string, value: any) => void} [populate_cell_content]
  *  - A function to populate the cell with custom content.
+ * @property {boolean} [hide_detail] - If true, detail rows will not show this field.
  */
 
 class Table {
@@ -125,29 +125,31 @@ class Table {
             for (let column of Object.values(this.columns)) {
                 const cell_element = row_element.insertCell();
                 const cell_data = row_data[column.key];
-                this.update_cell_element(column, table_data, cell_element, cell_data, row_data, row_key, cell_data);
+                this.update_cell_element(column, table_data, cell_element, cell_data, row_data, row_key, cell_data, true);
             }
         }
         this.table_data = table_data;
         this.sort_table_body();
     }
 
-    update_table_body_with_summary_rows(table_data, summary_rows) {
+    update_table_body_with_summary_rows(table_data) {
         if (!this.uses_summary_rows) {
             throw new Error("Cannot update table body with summary rows: table does not use summary rows. Use \
                 update_table_body instead.");
         }
-        for (let row_key in summary_rows) {
+        const summary_data = table_data.summary;
+        for (let row_key in summary_data) {
             if (!(row_key in this.summary_row_visibility)) {
-                this.summary_row_visibility[row_key] = true;
+                this.summary_row_visibility[row_key] = false;
             }
         }
+        console.log(summary_data);
+        console.log(this.summary_row_visibility);
         // Clear the table body
         this.table_body.replaceChildren();
         // TODO: remove this; it's a workaround for the alternating row colors
         this.table_body.insertRow();
         // Populate the table body with the new data
-        const summary_data = table_data.summary;
         const detail_data = table_data.detail;
         for (let row_key in summary_data) {
             const row_element = this.table_body.insertRow();
@@ -155,27 +157,28 @@ class Table {
             row_element.setAttribute("data-row-key", row_key);
             row_element.setAttribute("summary-row", "");
             row_element.setAttribute("summary_key", row_key);
+            // row_element.style.setProperty("position", "relative");
             const row_data = summary_data[row_key];
             for (let column of Object.values(this.columns)) {
                 const cell_element = row_element.insertCell();
                 const cell_data = row_data[column.key];
-                this.update_cell_element(column, table_data, cell_element, cell_data, row_data, row_key, cell_data);
+                this.update_cell_element(column, table_data, cell_element, cell_data, row_data, row_key, cell_data, false);
             }
+            row_element.setAttribute("expanded", this.summary_row_visibility[row_key]);
             row_element.onclick = () => {
                 if (this.summary_row_visibility[row_key]) {
                     for (let detail_row of this.table_body.querySelectorAll(`[summary_key="${row_key}"]`)) {
                         detail_row.classList.add("hidden");
-                        detail_row.style.maxHeight = 0;
                         console.log(detail_row);
                     }
                 } else {
                     for (let detail_row of this.table_body.querySelectorAll(`[summary_key="${row_key}"]`)) {
                         detail_row.classList.remove("hidden");
-                        detail_row.style.maxHeight = "100px";
                         console.log(detail_row);
                     }
                 }
                 this.summary_row_visibility[row_key] = !this.summary_row_visibility[row_key];
+                row_element.setAttribute("expanded", this.summary_row_visibility[row_key]);
             };
         }
         for (let row_key in detail_data) {
@@ -191,7 +194,7 @@ class Table {
             for (let column of Object.values(this.columns)) {
                 const cell_element = row_element.insertCell();
                 const cell_data = row_data[column.key];
-                this.update_cell_element(column, table_data, cell_element, cell_data, row_data, row_key, cell_data);
+                this.update_cell_element(column, table_data, cell_element, cell_data, row_data, row_key, cell_data, true);
             }
         }
         this.table_data = table_data;
@@ -207,9 +210,14 @@ class Table {
      * @param {Object} row_data - The data for the row
      * @param {string|number} row_key - The key for the row
      * @param {any} value - The value for the cell
+     * @param {boolean} is_detail_row - Whether the row is a detail row
      */
-    update_cell_element(column, table_data, cell_element, cell_data, row_data, row_key, value) {
+    update_cell_element(column, table_data, cell_element, cell_data, row_data, row_key, value, is_detail_row) {
         // TODO: remove table_data from the arguments, it's need for the upgrade and dismantle all buttons
+        if (column.hide_detail && is_detail_row) {
+            cell_element.classList.add("transparent");
+            return;
+        }
         if (cell_data === undefined || cell_data === null) {
             cell_element.innerText = '-';
         } else {
@@ -218,8 +226,10 @@ class Table {
                 gauge.classList.add("capacityGauge-background");
                 const gauge_fill = document.createElement("div");
                 gauge_fill.classList.add("capacityGauge");
-                if (column.gauge_class !== undefined) {
-                    gauge_fill.classList.add(column.gauge_class(row_data, row_key, cell_data));
+                if (is_detail_row) {
+                    gauge_fill.classList.add(`color_${row_data.facility}`);
+                } else {
+                    gauge_fill.classList.add(`color_${row_key}`);
                 }
                 gauge_fill.style.setProperty("--width", cell_data);
                 const gauge_text = document.createElement("div");
@@ -232,7 +242,23 @@ class Table {
                 if (column.populate_cell_content === undefined) {
                     const render_cell = column.render_cell;
                     if (render_cell === undefined) {
-                        cell_element.innerText = cell_data;
+                        if (column.hide_detail && !is_detail_row) {
+                            const contracted_indicator = document.createElement("i");
+                            contracted_indicator.classList.add("fa");
+                            contracted_indicator.classList.add("fa-caret-right");
+                            contracted_indicator.style.setProperty("float", "left");
+                            contracted_indicator.style.setProperty("margin-right", "5px");
+                            const expanded_indicator = document.createElement("i");
+                            expanded_indicator.classList.add("fa");
+                            expanded_indicator.classList.add("fa-caret-down");
+                            expanded_indicator.style.setProperty("float", "left");
+                            expanded_indicator.style.setProperty("margin-right", "5px");
+                            cell_element.appendChild(contracted_indicator);
+                            cell_element.appendChild(expanded_indicator);
+                            cell_element.appendChild(document.createTextNode(cell_data));
+                        } else {
+                            cell_element.innerText = cell_data;
+                        }
                     } else {
                         cell_element.innerHTML = render_cell(row_data, row_key, cell_data);
                     }

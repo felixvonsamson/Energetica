@@ -68,6 +68,7 @@ const power_facilities_columns_config = [
         display_name: "Name",
         data_type: 'string',
         default_sort_order: "ascending",
+        hide_detail: true, // Hide the name for detail rows.
     },
     {
         key: "installed_cap",
@@ -80,7 +81,6 @@ const power_facilities_columns_config = [
         display_name: "Power output",
         data_type: "number",
         special_render: "gauge",
-        gauge_class: (data, _, __) => `color_${data.facility}`,
     },
     {
         key: "hourly_op_cost",
@@ -130,7 +130,6 @@ const storage_facilities_columns_config = [
         display_name: "State of Charge",
         data_type: "number",
         special_render: "gauge",
-        gauge_class: (data, _, __) => `color_${data.facility}`,
     },
     {
         key: "hourly_op_cost",
@@ -186,7 +185,6 @@ const extraction_facilities_columns_config = [
         display_name: "Usage",
         data_type: "number",
         special_render: "gauge",
-        gauge_class: (data, _, __) => `color_${data.facility}`,
     },
     {
         key: "hourly_op_cost",
@@ -262,9 +260,9 @@ let multiplier_table = {
 };
 
 if (window.location.href.includes("player_id")) {
-    let profile_headder = document.getElementById("profile_headder");
+    let profile_header = document.getElementById("profile_header");
     let facilities_list = document.getElementById("facilities_list");
-    profile_headder.classList.add("hidden");
+    profile_header.classList.add("hidden");
     facilities_list.style.display = "none";
 } else {
     get_active_facilities();
