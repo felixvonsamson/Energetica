@@ -48,9 +48,9 @@ def log_action(func: callable) -> callable:
             with g.engine.lock:
                 response = func(*args, **kwargs)
             response, status_code = response if isinstance(response, tuple) else (response, response.status_code)
-        except GameException as excp:
+        except GameException as game_exception:
             # TODO g.engine.db.rollback()
-            response, status_code = jsonify({"response": excp.exception_type, **excp.kwargs}), 403
+            response, status_code = jsonify({"response": game_exception.exception_type, **game_exception.kwargs}), 403
         log_entry = {
             "timestamp": datetime.now().isoformat(),
             "action_type": "request",
@@ -280,7 +280,7 @@ def get_player_data() -> Response:
             "levels": levels,
             "config": current_user.config,
             "capacities": capacities,
-        }
+        },
     )
 
 
@@ -350,7 +350,7 @@ def get_scoreboard() -> Response:
 
 @http.route("/get_quiz_question", methods=["GET"])
 def get_quiz_question() -> Response:
-    """Gets the daily quiz question"""
+    """Get the daily quiz question."""
     return jsonify(energetica.utils.misc.get_quiz_question(g.engine, current_user))
 
 
@@ -364,7 +364,7 @@ def submit_quiz_answer() -> Response:
         {
             "response": "correct" if answer_correct else "incorrect",
             "question_data": energetica.utils.misc.get_quiz_question(g.engine, current_user),
-        }
+        },
     )
 
 
@@ -407,7 +407,7 @@ def request_queue_project() -> Response:
                 "response": "areYouSure",
                 "capacity": confirm.capacity,
                 "construction_power": confirm.construction_power,
-            }
+            },
         ), 300
 
     return jsonify(
@@ -415,7 +415,7 @@ def request_queue_project() -> Response:
             "response": "success",
             "money": current_user.money,
             "constructions": package_projects_data(current_user),
-        }
+        },
     )
 
 
@@ -436,14 +436,14 @@ def request_cancel_project() -> Response:
             {
                 "response": "areYouSure",
                 "refund": confirm.refund,
-            }
+            },
         ), 300
     return jsonify(
         {
             "response": "success",
             "money": current_user.money,
             "constructions": package_projects_data(current_user),
-        }
+        },
     )
 
 
@@ -461,7 +461,7 @@ def request_pause_project() -> Response:
         {
             "response": "success",
             "constructions": package_projects_data(current_user),
-        }
+        },
     )
 
 
@@ -479,7 +479,7 @@ def request_pause_shipment() -> Response:
         {
             "response": "success",
             "shipments": current_user.package_shipments(),
-        }
+        },
     )
 
 
@@ -497,7 +497,7 @@ def request_decrease_project_priority() -> Response:
         {
             "response": "success",
             "constructions": package_projects_data(current_user),
-        }
+        },
     )
 
 
@@ -539,7 +539,7 @@ def request_dismantle_facility() -> Response:
             "response": "success",
             "facility_name": facility.facility,
             "money": current_user.money,
-        }
+        },
     )
 
 
@@ -562,7 +562,9 @@ def change_network_prices() -> Response:
     request_data = request.get_json()
     updated_prices = {k.lstrip("price_"): v for k, v in request_data["prices"].items()}
     energetica.utils.network_helpers.set_network_prices(
-        engine=g.engine, player=current_user, updated_prices=updated_prices
+        engine=g.engine,
+        player=current_user,
+        updated_prices=updated_prices,
     )
     return jsonify({"response": "success"})
 
@@ -589,8 +591,9 @@ def put_resource_on_sale() -> Response:
     price = float(request_data["price"]) / 1000
     try:
         energetica.utils.resource_market.put_resource_on_market(current_user, resource, quantity, price)
-    except GameException as excp:
-        assert excp.exception_type == "notEnoughResource"
+    except GameException as game_exception:
+        if game_exception.exception_type != "notEnoughResource":
+            raise
         flash_error(f"You have not enough {resource} available")
     else:
         flash(
@@ -619,20 +622,19 @@ def buy_resource() -> Response:
                 "quantity": quantity,
                 "available_quantity": sale.quantity,
                 "resource": sale.resource,
-            }
+            },
         )
-    else:
-        return jsonify(
-            {
-                "response": "success",
-                "resource": sale.resource,
-                "total_price": sale.price * quantity,
-                "quantity": quantity,
-                "seller": sale.player.username,
-                "available_quantity": sale.quantity,
-                "shipments": current_user.package_shipments(),
-            }
-        )
+    return jsonify(
+        {
+            "response": "success",
+            "resource": sale.resource,
+            "total_price": sale.price * quantity,
+            "quantity": quantity,
+            "seller": sale.player.username,
+            "available_quantity": sale.quantity,
+            "shipments": current_user.package_shipments(),
+        },
+    )
 
 
 @http.route("join_network", methods=["POST"])
@@ -656,8 +658,8 @@ def create_network() -> Response:
     network_name = request_data["network_name"]
     try:
         energetica.utils.network_helpers.create_network(g.engine, current_user, network_name)
-    except GameException as excp:
-        match excp.exception_type:
+    except GameException as game_exception:
+        match game_exception.exception_type:
             case "nameLengthInvalid":
                 flash("Network name must be between 3 and 40 characters", category="error")
             case "nameAlreadyUsed":
@@ -702,7 +704,7 @@ def create_group_chat() -> Response:
     """Create a group chat."""
     request_data = request.get_json()
     chat_title = request_data["chat_title"]
-    group_members = [current_user] + list(map(Player.query.get, request_data["group_members"]))
+    group_members = [current_user, *list(map(Player.query.get, request_data["group_members"]))]
     energetica.utils.chat.create_group_chat(current_user, chat_title, group_members)
     return jsonify({"response": "success"})
 
