@@ -1214,6 +1214,14 @@ input:checked+.slider:before {
     overflow: hidden;
 }
 
+.table_container.hidden {
+    display: none;
+}
+
+.large.hidden {
+    display: none;
+}
+
 .table_legend_left {
     width: 40px;
     transform: rotate(-90deg);
@@ -1235,12 +1243,37 @@ input:checked+.slider:before {
     width: 265px;
 }
 
+table tbody tr[summary-row] td:first-child {
+    cursor: pointer;
+}
+
+table tbody tr.hidden[detail-row] {
+    display: none;
+}
+
+table tbody td.transparent {
+    /* opacity: 0; */
+    background-color: #a4be7b
+}
+
+tr[expanded=true] i.fa-caret-right {
+    display: none;
+}
+
+tr[expanded=false] i.fa-caret-down {
+    display: none;
+}
+
 /* TODO: swap even and odd, now that header rows are in thead */
-.table tbody tr:nth-child(even) {
+table tbody tr[summary-row]:nth-child(even of tr[summary-row]) {
     background-color: #d6c79a
 }
 
-.table.tan_green tbody tr:nth-child(even) {
+table tbody tr:not([summary-row]):nth-child(even of tr:not([summary-row])) {
+    background-color: #d6c79a
+}
+
+table.tan_green tbody tr:nth-child(even) {
     background-color: #c1cf8b
 }
 
@@ -1467,7 +1500,7 @@ input:checked+.slider:before {
     width: 250px
 }
 
-#profile_headder.hidden {
+#profile_header.hidden {
     display: none;
 }
 

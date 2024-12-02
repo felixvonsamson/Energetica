@@ -4,7 +4,7 @@
 {% endblock title %}
 {% block content %}
 
-  <div id="profile_headder" class="flex-row huge title">
+  <div id="profile_header" class="flex-row huge title">
       Profile
       <div class="pine info_icon_container"
             onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
@@ -21,9 +21,9 @@
               This is your profile page with an overview of all your assets.
           </p><p>
               You will find 3 tables with all the instances of power, storage and extraction facilities you own with their respective information.
-              You also have the possibily to upgrade (after you researched a technology that affects this facility) or dismantle each instance.
+              You also have the possibly to upgrade (after you researched a technology that affects this facility) or dismantle each instance.
           </p><p>
-              At the bottom of the page you will find 3 other tables with your levels of functional facilities, technologies and other informations.
+              At the bottom of the page you will find 3 other tables with your levels of functional facilities, technologies and other information.
           </p>
       </div>
   </div>
@@ -33,23 +33,18 @@
   </div>
 
   <div id="facilities_list" class="flex-col medium margin">
-    {% set caps = user.data.capacities %}
     <b class="large">Power facilities</b>
     <div class="table_container">
       <table id="power_facilities_table" class="table bone txt_center margin-small"></table>
     </div>
-    {% if caps["small_pumped_hydro"] or caps["molten_salt"] or caps["large_pumped_hydro"] or caps["hydrogen_storage"] or caps["lithium_ion_batteries"] or caps["solid_state_batteries"] %}
-      <b class="large margin-top">Storage facilities</b>
-      <div class="table_container">
-        <table id="storage_facilities_table" class="table bone txt_center margin-small"></table>
-      </div>
-    {% endif %}
-    {% if caps["coal_mine"] or caps["gas_drilling_site"] or caps["uranium_mine"] %}
-      <b class="large margin-top">Extraction facilities</b>
-      <div class="table_container">
-        <table id="extraction_facilities_table" class="table bone txt_center margin-small"></table>
-      </div>
-    {% endif %}
+    <b class="large margin-top">Storage facilities</b>
+    <div class="table_container">
+      <table id="storage_facilities_table" class="table bone txt_center margin-small"></table>
+    </div>
+    <b class="large margin-top">Extraction facilities</b>
+    <div class="table_container">
+      <table id="extraction_facilities_table" class="table bone txt_center margin-small"></table>
+    </div>
   </div>
 
   <div class="medium flex-space-evenly" style="overflow-x: auto;">
@@ -128,7 +123,7 @@
       </table>
     </div>
     <div class="flex-col medium">
-      <b>Other informations</b>
+      <b>Other information</b>
       <table class="table bone margin-small">
         <tr>
           <td>Network</td>

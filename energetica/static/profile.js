@@ -8,30 +8,27 @@
  * @param {Object} facility 
  * @param {number | string} id 
  * @param {number} upgrade_cost 
+ * @param {boolean} is_summary_row
  * @returns 
  */
-function add_upgrade_button(cell_element, table_data, facility, id, upgrade_cost) {
+function add_upgrade_button(cell_element, table_data, facility, id, upgrade_cost, is_summary_row) {
     if (upgrade_cost == null) {
         cell_element.innerHTML = "-";
         return;
     }
-    const container = document.createElement("div");
-    container.classList.add("upgrade_container");
-    const button_single = document.createElement("button");
-    button_single.classList.add("upgrade_button");
-    button_single.innerHTML = format_money(upgrade_cost);
-    button_single.onclick = () => upgrade(id);
-    const button_or = document.createElement("button");
-    button_or.classList.add("or_all_button");
-    button_or.innerHTML = "- or -";
-    const button_all = document.createElement("button");
-    button_all.classList.add("upgrade_all_button");
-    button_all.innerHTML = `Upgrade all ${facility.display_name}`;
-    button_all.onclick = () => are_you_sure_upgrade_all_of_type(table_data, facility.facility, facility.display_name);
-    container.appendChild(button_single);
-    container.appendChild(button_or);
-    container.appendChild(button_all);
-    cell_element.appendChild(container);
+    if (is_summary_row) {
+        const button_all = document.createElement("button");
+        button_all.classList.add("upgrade_button");
+        button_all.innerHTML = format_money(upgrade_cost);
+        button_all.onclick = () => are_you_sure_upgrade_all_of_type(id, facility.display_name, upgrade_cost);
+        cell_element.appendChild(button_all);
+    } else {
+        const button_single = document.createElement("button");
+        button_single.classList.add("upgrade_button");
+        button_single.innerHTML = format_money(upgrade_cost);
+        button_single.onclick = () => upgrade(id);
+        cell_element.appendChild(button_single);
+    }
 }
 
 /**
@@ -40,25 +37,22 @@ function add_upgrade_button(cell_element, table_data, facility, id, upgrade_cost
  * @param {Object} facility
  * @param {number | string} id
  * @param {number} dismantle_cost
+ * @param {boolean} is_summary_row
  */
-function add_dismantle_button(cell_element, table_data, facility, id, dismantle_cost) {
-    const container = document.createElement("div");
-    container.classList.add("upgrade_container");
-    const button_single = document.createElement("button");
-    button_single.classList.add("dismantle_button");
-    button_single.innerHTML = format_money(dismantle_cost);
-    button_single.onclick = () => are_you_sure_dismantle_facility(id, dismantle_cost);
-    const button_or = document.createElement("button");
-    button_or.classList.add("or_all_button");
-    button_or.innerHTML = "- or -";
-    const button_all = document.createElement("button");
-    button_all.classList.add("dismantle_all_button");
-    button_all.innerHTML = `Dismantle all ${facility.display_name}`;
-    button_all.onclick = () => are_you_sure_dismantle_all_of_type(table_data, facility.facility, facility.display_name);
-    container.appendChild(button_single);
-    container.appendChild(button_or);
-    container.appendChild(button_all);
-    cell_element.appendChild(container);
+function add_dismantle_button(cell_element, table_data, facility, id, dismantle_cost, is_summary_row) {
+    if (is_summary_row) {
+        const button_all = document.createElement("button");
+        button_all.classList.add("dismantle_button");
+        button_all.innerHTML = format_money(dismantle_cost);
+        button_all.onclick = () => are_you_sure_dismantle_all_of_type(id, facility.display_name, dismantle_cost);
+        cell_element.appendChild(button_all);
+    } else {
+        const button_single = document.createElement("button");
+        button_single.classList.add("dismantle_button");
+        button_single.innerHTML = format_money(dismantle_cost);
+        button_single.onclick = () => are_you_sure_dismantle_facility(id, dismantle_cost);
+        cell_element.appendChild(button_single);
+    }
 }
 
 /** @type {DataColumnConfig[]} */
@@ -68,6 +62,7 @@ const power_facilities_columns_config = [
         display_name: "Name",
         data_type: 'string',
         default_sort_order: "ascending",
+        hide_detail: true, // Hide the name for detail rows.
     },
     {
         key: "installed_cap",
@@ -80,10 +75,9 @@ const power_facilities_columns_config = [
         display_name: "Power output",
         data_type: "number",
         special_render: "gauge",
-        gauge_class: (data, _, __) => `color_${data.facility}`,
     },
     {
-        key: "op_cost",
+        key: "hourly_op_cost",
         display_name: "O&M cost",
         data_type: "number",
         render_cell: (_, __, value) => format_money(value) + "/h",
@@ -118,6 +112,7 @@ const storage_facilities_columns_config = [
         display_name: "Name",
         data_type: 'string',
         default_sort_order: "ascending",
+        hide_detail: true, // Hide the name for detail rows.
     },
     {
         key: "storage_capacity",
@@ -130,10 +125,9 @@ const storage_facilities_columns_config = [
         display_name: "State of Charge",
         data_type: "number",
         special_render: "gauge",
-        gauge_class: (data, _, __) => `color_${data.facility}`,
     },
     {
-        key: "op_cost",
+        key: "hourly_op_cost",
         display_name: "O&M cost",
         data_type: "number",
         render_cell: (_, __, value) => format_money(value) + "/h",
@@ -174,6 +168,7 @@ const extraction_facilities_columns_config = [
         display_name: "Name",
         data_type: 'string',
         default_sort_order: "ascending",
+        hide_detail: true, // Hide the name for detail rows.
     },
     {
         key: "extraction_rate",
@@ -186,10 +181,9 @@ const extraction_facilities_columns_config = [
         display_name: "Usage",
         data_type: "number",
         special_render: "gauge",
-        gauge_class: (data, _, __) => `color_${data.facility}`,
     },
     {
-        key: "op_cost",
+        key: "hourly_op_cost",
         display_name: "O&M cost",
         data_type: "number",
         render_cell: (_, __, value) => format_money(value) + "/h",
@@ -237,15 +231,18 @@ if (!(extraction_facilities_table instanceof HTMLTableElement)) {
 }
 const power_facilities_table_manager = new Table(
     power_facilities_table, power_facilities_columns_config,
-    { key: "installed_cap", order: "descending" }
+    { key: "installed_cap", order: "descending" },
+    true,
 );
 const storage_facilities_table_manager = new Table(
     storage_facilities_table, storage_facilities_columns_config,
-    { key: "storage_capacity", order: "descending" }
+    { key: "storage_capacity", order: "descending" },
+    true,
 );
 const extraction_facilities_table_manager = new Table(
     extraction_facilities_table, extraction_facilities_columns_config,
-    { key: "extraction_rate", order: "descending" }
+    { key: "extraction_rate", order: "descending" },
+    true,
 );
 
 let multiplier_table = {
@@ -261,9 +258,9 @@ let multiplier_table = {
 };
 
 if (window.location.href.includes("player_id")) {
-    let profile_headder = document.getElementById("profile_headder");
+    let profile_header = document.getElementById("profile_header");
     let facilities_list = document.getElementById("facilities_list");
-    profile_headder.classList.add("hidden");
+    profile_header.classList.add("hidden");
     facilities_list.style.display = "none";
 } else {
     get_active_facilities();
@@ -277,9 +274,9 @@ async function get_active_facilities() {
         console.error("Error:", error);
         throw new Error("Error fetching active facilities data");
     }
-    power_facilities_table_manager.update_table_body(active_facilities_data.power_facilities);
-    storage_facilities_table_manager.update_table_body(active_facilities_data.storage_facilities);
-    extraction_facilities_table_manager.update_table_body(active_facilities_data.extraction_facilities);
+    power_facilities_table_manager.update_table_body_with_summary_rows(active_facilities_data.power_facilities);
+    storage_facilities_table_manager.update_table_body_with_summary_rows(active_facilities_data.storage_facilities);
+    extraction_facilities_table_manager.update_table_body_with_summary_rows(active_facilities_data.extraction_facilities);
 }
 
 function are_you_sure_dismantle_facility(facility_id, cost) {
@@ -290,8 +287,7 @@ function are_you_sure_dismantle_facility(facility_id, cost) {
     document.getElementById('no_cancel').innerHTML = '<b>Cancel</b>';
 }
 
-function are_you_sure_dismantle_all_of_type(table_data, facility_name, facility_display_name) {
-    let cost = cost_of_action_all_of_type(table_data, facility_name, "dismantle_cost");
+function are_you_sure_dismantle_all_of_type(facility_name, facility_display_name, cost) {
     document.getElementById('are_you_sure_popup').classList.remove('hidden');
     document.getElementById('are_you_sure_content').innerHTML = `Are you sure you want to dismantle all ${facility_display_name}?<br>
     This will cost you ${format_money(cost)}.`;
@@ -299,8 +295,7 @@ function are_you_sure_dismantle_all_of_type(table_data, facility_name, facility_
     document.getElementById('no_cancel').innerHTML = '<b>Cancel</b>';
 }
 
-function are_you_sure_upgrade_all_of_type(table_data, facility_name, facility_display_name) {
-    let cost = cost_of_action_all_of_type(table_data, facility_name, "upgrade_cost");
+function are_you_sure_upgrade_all_of_type(facility_name, facility_display_name, cost) {
     document.getElementById('are_you_sure_popup').classList.remove('hidden');
     document.getElementById('are_you_sure_content').innerHTML = `Are you sure you want to upgrade all ${facility_display_name}?<br>
     This will cost you ${format_money(cost)}.`;
@@ -331,9 +326,9 @@ function upgrade(id) {
         });
 }
 
-function upgrade_all_of_type(facility_id) {
+function upgrade_all_of_type(facility) {
     send_json("/api/request_upgrade_all_of_type", {
-        facility_id: facility_id,
+        facility: facility,
     }).then((response) => {
         response.json().then((raw_data) => {
             let response = raw_data["response"];
@@ -377,9 +372,9 @@ function dismantle(id) {
         });
 }
 
-function dismantle_all_of_type(facility_id) {
+function dismantle_all_of_type(facility) {
     send_json("/api/request_dismantle_all_of_type", {
-        facility_id: facility_id,
+        facility: facility,
     }).then((response) => {
         response.json().then((raw_data) => {
             let response = raw_data["response"];
@@ -398,6 +393,7 @@ function dismantle_all_of_type(facility_id) {
         });
 }
 
+// TODO: remove this function
 function cost_of_action_all_of_type(table_data, facility_name, key) {
     let cost = 0;
     for (const [id, facility] of Object.entries(table_data)) {

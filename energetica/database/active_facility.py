@@ -94,7 +94,7 @@ class ActiveFacility(db.Model):
         return self.const_config["base_efficiency"] * self.multiplier_3
 
     @property
-    def op_cost(self) -> float:
+    def hourly_op_cost(self) -> float:
         """Cost to operate the facility per in-game hour."""
         return self.total_cost * self.const_config["O&M_factor_per_day"] / 24
 
@@ -156,21 +156,3 @@ class ActiveFacility(db.Model):
     def dismantle_cost(self) -> float:
         """Cost to dismantle the facility."""
         return self.total_cost * 0.2
-
-    def upgrade(self) -> None:
-        """Update all multipliers to match current tech levels."""
-        engine: GameEngine = current_app.config["engine"]
-        if self.facility in engine.extraction_facilities:
-            self.price_multiplier = technology_effects.price_multiplier(self.player, self.facility)
-            self.multiplier_1 = technology_effects.multiplier_1(self.player, self.facility)
-            self.multiplier_2 = technology_effects.multiplier_2(self.player, self.facility)
-            self.multiplier_3 = technology_effects.multiplier_3(self.player, self.facility)
-        else:
-            self.price_multiplier = technology_effects.price_multiplier(self.player, self.facility)
-            if self.facility in engine.power_facilities + engine.storage_facilities:
-                self.multiplier_1 = technology_effects.multiplier_1(self.player, self.facility)
-            if self.facility in engine.storage_facilities:
-                self.multiplier_2 = technology_effects.multiplier_2(self.player, self.facility)
-            if self.facility in engine.controllable_facilities + engine.storage_facilities:
-                self.multiplier_3 = technology_effects.multiplier_3(self.player, self.facility)
-        db.session.commit()

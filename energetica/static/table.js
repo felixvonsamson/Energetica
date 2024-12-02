@@ -13,14 +13,14 @@
  * @property {"string"|"number"|"gauge"} data_type - The type of the data (string, number, or gauge).
  * @property {boolean} [sortable=false] - Whether the column supports sorting.
  * @property {"gauge"} [special_render] - Special mode for the column.
- * @property {(data: Object, row_key: number | string, value: any) => string} [gauge_class] - A function to generate the
  * class for the gauge.
  * @property {"ascending"|"descending"} [default_sort_order="descending"] - Whether the column is sorted ascending by 
  * default.
  * @property {(data: Object, row_key: number | string, value: any) => string} [render_cell] - A function to generate the 
  * cell's inner HTML.
- * @property {(cell_element: HTMLTableCellElement, table_data: Object.<string|number, Object>, data: Object, row_key: number | string, value: any) => void} [populate_cell_content]
+ * @property {(cell_element: HTMLTableCellElement, table_data: Object.<string|number, Object>, data: Object, row_key: number | string, value: any, is_summary: boolean) => void} [populate_cell_content]
  *  - A function to populate the cell with custom content.
+ * @property {boolean} [hide_detail] - If true, detail rows will not show this field.
  */
 
 class Table {
@@ -31,14 +31,21 @@ class Table {
     /** @type {null | { key: string, order: "ascending"|"descending" }} */ sort_state = null;
     /** @type {Object.<string, HTMLTableCellElement>} */ table_header_cells = {};
     /** @type {Object.<string|number, Object>} */ table_data;
+    /** @type {boolean} */ uses_summary_rows = false;
+    /** @type {Object.<string|number, boolean>} */ summary_row_visibility;
 
     /**
      * @param {HTMLTableElement} table - The table element as an HTMLTableElement
      * @param {Array<DataColumnConfig>} columns_config - The configuration for the columns
      * @param {null | { key: string, order: "ascending"|"descending" }} default_sort_state - The default sort state
+     * @param {boolean} [uses_summary_rows] - Whether the table uses summary rows
      */
-    constructor(table, columns_config, default_sort_state = null) {
+    constructor(table, columns_config, default_sort_state = null, uses_summary_rows = false) {
         this.table = table;
+        this.uses_summary_rows = uses_summary_rows;
+        if (this.uses_summary_rows) {
+            this.summary_row_visibility = {};
+        }
         // Create the table header
         this.create_table_header(columns_config);
         // Create the table body
@@ -46,6 +53,8 @@ class Table {
         if (default_sort_state !== null) {
             this.set_sort_state(default_sort_state);
         }
+        this.table.parentElement?.classList.add("hidden");
+        this.table.parentElement?.previousElementSibling?.classList.add("hidden");
     }
 
     /** 
@@ -96,6 +105,22 @@ class Table {
      * @returns {void}
      * */
     update_table_body(table_data) {
+        if (this.uses_summary_rows) {
+            throw new Error("Cannot update table body: table uses summary rows. Use \
+                update_table_body_with_summary_rows instead.");
+        }
+        if ("detail" in table_data && "summary" in table_data) {
+            throw new Error("Cannot update table body: table data contains both detail and summary rows. Most likely \
+                the data has detail and summary rows - call the Table construction with uses_summary_rows=true, and \
+                use update_table_body_with_summary_rows instead.");
+        }
+        if (Object.keys(table_data).length === 0) {
+            this.table.parentElement?.classList.add("hidden");
+            this.table.parentElement?.previousElementSibling?.classList.add("hidden");
+        } else {
+            this.table.parentElement?.classList.remove("hidden");
+            this.table.parentElement?.previousElementSibling?.classList.remove("hidden");
+        }
         // Clear the table body
         this.table_body.replaceChildren();
         // TODO: remove this; it's a workaround for the alternating row colors
@@ -107,43 +132,154 @@ class Table {
             row_element.setAttribute("data-row-key", row_key);
             const row_data = table_data[row_key];
             for (let column of Object.values(this.columns)) {
-                const cell_data = row_data[column.key];
                 const cell_element = row_element.insertCell();
-                if (cell_data === undefined || cell_data === null) {
-                    cell_element.innerText = '-';
-                } else {
-                    if (column.special_render === "gauge") {
-                        const gauge = document.createElement("div");
-                        gauge.classList.add("capacityGauge-background");
-                        const gauge_fill = document.createElement("div");
-                        gauge_fill.classList.add("capacityGauge");
-                        if (column.gauge_class !== undefined) {
-                            gauge_fill.classList.add(column.gauge_class(row_data, row_key, cell_data));
-                        }
-                        gauge_fill.style.setProperty("--width", cell_data);
-                        const gauge_text = document.createElement("div");
-                        gauge_text.classList.add("capacityGauge-txt");
-                        gauge_text.innerText = `${Math.round(cell_data * 100)}%`;
-                        gauge.appendChild(gauge_fill);
-                        gauge.appendChild(gauge_text);
-                        cell_element.appendChild(gauge);
-                    } else {
-                        if (column.populate_cell_content === undefined) {
-                            const render_cell = column.render_cell;
-                            if (render_cell === undefined) {
-                                cell_element.innerText = cell_data;
-                            } else {
-                                cell_element.innerHTML = render_cell(row_data, row_key, cell_data);
-                            }
-                        } else {
-                            column.populate_cell_content(cell_element, table_data, row_data, row_key, cell_data);
-                        }
-                    }
-                }
+                const cell_data = row_data[column.key];
+                this.update_cell_element(column, table_data, cell_element, cell_data, row_data, row_key, cell_data, true);
             }
         }
         this.table_data = table_data;
         this.sort_table_body();
+    }
+
+    update_table_body_with_summary_rows(table_data) {
+        if (!this.uses_summary_rows) {
+            throw new Error("Cannot update table body with summary rows: table does not use summary rows. Use \
+                update_table_body instead.");
+        }
+        const summary_data = table_data.summary;
+        for (let row_key in summary_data) {
+            if (!(row_key in this.summary_row_visibility)) {
+                this.summary_row_visibility[row_key] = false;
+            }
+        }
+        const detail_data = table_data.detail;
+        if (Object.keys(summary_data).length === 0 && Object.keys(detail_data).length === 0) {
+            this.table.parentElement?.classList.add("hidden");
+            this.table.parentElement?.previousElementSibling?.classList.add("hidden");
+        } else {
+            this.table.parentElement?.classList.remove("hidden");
+            this.table.parentElement?.previousElementSibling?.classList.remove("hidden");
+        }
+        // Clear the table body
+        this.table_body.replaceChildren();
+        // TODO: remove this; it's a workaround for the alternating row colors
+        this.table_body.insertRow();
+        // Populate the table body with the new data
+        for (let row_key in summary_data) {
+            const row_element = this.table_body.insertRow();
+            // Store the row key in the row element so it can be used for sorting
+            row_element.setAttribute("data-row-key", row_key);
+            row_element.setAttribute("summary-row", "");
+            row_element.setAttribute("summary_key", row_key);
+            // row_element.style.setProperty("position", "relative");
+            const row_data = summary_data[row_key];
+            for (let column of Object.values(this.columns)) {
+                const cell_element = row_element.insertCell();
+                const cell_data = row_data[column.key];
+                this.update_cell_element(column, table_data, cell_element, cell_data, row_data, row_key, cell_data, false);
+            }
+            row_element.setAttribute("expanded", this.summary_row_visibility[row_key]);
+            row_element.firstChild.onclick = () => {
+                if (this.summary_row_visibility[row_key]) {
+                    for (let detail_row of this.table_body.querySelectorAll(`[summary_key="${row_key}"]`)) {
+                        detail_row.classList.add("hidden");
+                    }
+                } else {
+                    for (let detail_row of this.table_body.querySelectorAll(`[summary_key="${row_key}"]`)) {
+                        detail_row.classList.remove("hidden");
+                    }
+                }
+                this.summary_row_visibility[row_key] = !this.summary_row_visibility[row_key];
+                row_element.setAttribute("expanded", this.summary_row_visibility[row_key]);
+            };
+        }
+        for (let row_key in detail_data) {
+            const row_element = this.table_body.insertRow();
+            // Store the row key in the row element so it can be used for sorting
+            row_element.setAttribute("data-row-key", row_key);
+            row_element.setAttribute("detail-row", "");
+            const row_data = detail_data[row_key];
+            row_element.setAttribute("summary_key", row_data.facility);
+            if (!this.summary_row_visibility[row_data.facility]) {
+                row_element.classList.add("hidden");
+            }
+            for (let column of Object.values(this.columns)) {
+                const cell_element = row_element.insertCell();
+                const cell_data = row_data[column.key];
+                this.update_cell_element(column, table_data, cell_element, cell_data, row_data, row_key, cell_data, true);
+            }
+        }
+        this.table_data = table_data;
+        this.sort_table_body();
+    }
+
+
+    /**
+     * @param {DataColumnConfig} column - The column configuration
+     * @param {Object.<string|number, Object>} table_data - The data to update the table with
+     * @param {HTMLTableCellElement} cell_element - The cell element to populate
+     * @param {any} cell_data - The data for the cell
+     * @param {Object} row_data - The data for the row
+     * @param {string|number} row_key - The key for the row
+     * @param {any} value - The value for the cell
+     * @param {boolean} is_detail_row - Whether the row is a detail row
+     */
+    update_cell_element(column, table_data, cell_element, cell_data, row_data, row_key, value, is_detail_row) {
+        // TODO: remove table_data from the arguments, it's need for the upgrade and dismantle all buttons
+        if (column.hide_detail && is_detail_row) {
+            cell_element.classList.add("transparent");
+            return;
+        }
+        if (cell_data === undefined || cell_data === null) {
+            cell_element.innerText = '-';
+        } else {
+            if (column.special_render === "gauge") {
+                const gauge = document.createElement("div");
+                gauge.classList.add("capacityGauge-background");
+                const gauge_fill = document.createElement("div");
+                gauge_fill.classList.add("capacityGauge");
+                if (is_detail_row) {
+                    gauge_fill.classList.add(`color_${row_data.facility}`);
+                } else {
+                    gauge_fill.classList.add(`color_${row_key}`);
+                }
+                gauge_fill.style.setProperty("--width", cell_data);
+                const gauge_text = document.createElement("div");
+                gauge_text.classList.add("capacityGauge-txt");
+                gauge_text.innerText = `${Math.round(cell_data * 100)}%`;
+                gauge.appendChild(gauge_fill);
+                gauge.appendChild(gauge_text);
+                cell_element.appendChild(gauge);
+            } else {
+                if (column.populate_cell_content === undefined) {
+                    const render_cell = column.render_cell;
+                    if (render_cell === undefined) {
+                        if (column.hide_detail && !is_detail_row) {
+                            const contracted_indicator = document.createElement("i");
+                            contracted_indicator.classList.add("fa");
+                            contracted_indicator.classList.add("fa-caret-right");
+                            contracted_indicator.style.setProperty("float", "left");
+                            contracted_indicator.style.setProperty("margin-right", "5px");
+                            const expanded_indicator = document.createElement("i");
+                            expanded_indicator.classList.add("fa");
+                            expanded_indicator.classList.add("fa-caret-down");
+                            expanded_indicator.style.setProperty("float", "left");
+                            expanded_indicator.style.setProperty("margin-right", "5px");
+                            cell_element.appendChild(contracted_indicator);
+                            cell_element.appendChild(expanded_indicator);
+                            cell_element.appendChild(document.createTextNode(cell_data));
+                        } else {
+                            cell_element.innerText = cell_data;
+                        }
+                    } else {
+                        cell_element.innerHTML = render_cell(row_data, row_key, cell_data);
+                    }
+                } else {
+                    // Call the custom populate_cell_content function specified in the column config
+                    column.populate_cell_content(cell_element, table_data, row_data, row_key, cell_data, !is_detail_row);
+                }
+            }
+        }
     }
 
     /** @returns {void} */
@@ -163,12 +299,41 @@ class Table {
         rows.sort((a, b) => {
             const a_key = a.getAttribute("data-row-key");
             const b_key = b.getAttribute("data-row-key");
-            // assert a and b keys are not null
-            if (a_key === null || b_key === null) {
-                throw new Error("Cannot sort table body, row key is null");
+            let a_data, b_data;
+            if (this.uses_summary_rows) {
+                const summary_key_a = a.getAttribute("summary_key");
+                const summary_key_b = b.getAttribute("summary_key");
+                const is_summary_row_a = a.hasAttribute("summary-row");
+                const is_summary_row_b = b.hasAttribute("summary-row");
+                if (summary_key_a === null || summary_key_b === null) {
+                    console.log("Summary key is null");
+                    throw new Error("Cannot sort table body, summary key is null");
+                }
+                if (!a.hasAttribute("summary-row") &&
+                    !b.hasAttribute("summary-row") &&
+                    summary_key_a === summary_key_b) {
+                    // Sort by Detail row
+                    // assert a and b keys are not null
+                    if (a_key === null || b_key === null) {
+                        console.log("Row key is null");
+                        throw new Error("Cannot sort table body, row key is null");
+                    }
+                    a_data = this.table_data.detail[a_key][sort_key];
+                    b_data = this.table_data.detail[b_key][sort_key];
+                } else {
+                    // Sort by Summary row
+                    a_data = this.table_data.summary[summary_key_a][sort_key];
+                    b_data = this.table_data.summary[summary_key_b][sort_key];
+
+                }
+            } else {
+                // assert a and b keys are not null
+                if (a_key === null || b_key === null) {
+                    throw new Error("Cannot sort table body, row key is null");
+                }
+                a_data = this.table_data[a_key][sort_key];
+                b_data = this.table_data[b_key][sort_key];
             }
-            const a_data = this.table_data[a_key][sort_key];
-            const b_data = this.table_data[b_key][sort_key];
             if (a_data === null) {
                 return 1;
             }

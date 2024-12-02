@@ -1,8 +1,8 @@
-"""Utils relating to player assets"""
+"""Utils relating to player assets."""
 
+import contextlib
 import math
 import random
-from typing import List
 
 from flask import current_app
 
@@ -15,8 +15,9 @@ from energetica.game_engine import Confirm, GameEngine, GameException
 from energetica.utils.network_helpers import reorder_facility_priorities
 
 
-def finish_project(construction: OngoingConstruction, skip_notifications=False):
-    """
+def finish_project(construction: OngoingConstruction, *, skip_notifications: bool = False):
+    """Finish a construction or research project.
+
     This function is executed when a construction or research project has finished. The effects include:
     * For facilities which create demands, e.g. carbon capture, adds demands to the demand priorities
     * For technologies and functional facilities, checks for achievements
@@ -78,10 +79,7 @@ def finish_project(construction: OngoingConstruction, skip_notifications=False):
 
     player.check_construction_achievements(construction.name)
 
-    if construction.family == "Technologies":
-        priority_list_name = "research_priorities"
-    else:
-        priority_list_name = "construction_priorities"
+    priority_list_name = "research_priorities" if construction.family == "Technologies" else "construction_priorities"
     player.remove_from_list(priority_list_name, construction.id)
     family = construction.family
     db.session.delete(construction)
@@ -89,16 +87,14 @@ def finish_project(construction: OngoingConstruction, skip_notifications=False):
     deploy_available_workers(player, family)
 
     construction_name = engine.const_config["assets"][construction.name]["name"]
-    if construction.family == "Technologies":
-        if not skip_notifications:
+    if not skip_notifications:
+        if construction.family == "Technologies":
             player.notify("Technologies", f"+ 1 lvl <b>{construction_name}</b>.")
             engine.log(f"{player.username} : + 1 lvl {construction_name}")
-    elif construction.family == "Functional facilities":
-        if not skip_notifications:
+        elif construction.family == "Functional facilities":
             player.notify("Constructions", f"+ 1 lvl <b>{construction_name}</b>")
             engine.log(f"{player.username} : + 1 lvl {construction_name}")
-    else:
-        if not skip_notifications:
+        else:
             player.notify("Constructions", f"+ 1 <b>{construction_name}</b>")
             engine.log(f"{player.username} : + 1 {construction_name}")
     if construction.family in [
@@ -109,6 +105,8 @@ def finish_project(construction: OngoingConstruction, skip_notifications=False):
         eol = engine.data["total_t"] + math.ceil(
             engine.const_config["assets"][construction.name]["lifespan"] / engine.in_game_seconds_per_tick
         )
+        # TODO(mglst): using random is incompatible with the deterministic nature of the game that the action logger
+        # relies on. This should be fixed. Either the position should be logged, or the random should be seeded.
         position_x = player.tile.q + 0.5 * player.tile.r + random.uniform(-0.5, 0.5)
         position_y = (player.tile.r + random.uniform(-0.5, 0.5)) * 0.5 * 3**0.5
         new_facility: ActiveFacility = ActiveFacility(
@@ -140,13 +138,13 @@ def finish_project(construction: OngoingConstruction, skip_notifications=False):
             functional_facilities=True,
             technologies=True,
         )
-        other_players: List[Player] = Player.query.filter(Player.id != player.id).all()
+        other_players: list[Player] = Player.query.filter(Player.id != player.id).all()
         for other_player in other_players:
             other_player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
 
 
-def deploy_available_workers(player: Player, family: str):
-    """Ensures all free workers for `family` are in use, if possible"""
+def deploy_available_workers(player: Player, family: str) -> None:
+    """Ensure all free workers for `family` are in use, if possible."""
     if family == "Technologies":
         priority_list_name = "research_priorities"
 
@@ -174,7 +172,8 @@ def deploy_available_workers(player: Player, family: str):
         insertion_index = None
         for insertion_index_candidate, possibly_paused_construction_id in enumerate(priority_list[:priority_index]):
             possibly_paused_construction: OngoingConstruction = db.session.get(
-                OngoingConstruction, possibly_paused_construction_id
+                OngoingConstruction,
+                possibly_paused_construction_id,
             )
             if possibly_paused_construction.is_paused():
                 insertion_index = insertion_index_candidate
@@ -189,41 +188,59 @@ def deploy_available_workers(player: Player, family: str):
 # Utilities relating to managing facilities and assets
 
 
-def upgrade_facility(player, facility):
-    """this function is executed when a player upgrades a facility"""
+def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
+    """Upgrade a facility."""
     engine: GameEngine = current_app.config["engine"]
     if facility is None or facility.player_id != player.id:
-        raise GameException("constructionNotFound")
+        msg = "Construction not found"
+        raise GameException(msg)
 
-    if facility.facility in engine.technologies + engine.functional_facilities or not facility.is_upgradable:
-        raise GameException("notUpgradable")
-
-    const_config = engine.const_config["assets"][facility.facility]
     upgrade_cost = facility.upgrade_cost
+    if upgrade_cost is None:
+        msg = "Facility not upgradable"
+        raise GameException(msg)
     if player.money < upgrade_cost:
-        raise GameException("notEnoughMoney")
+        msg = "Not enough money"
+        raise GameException(msg)
     player.money -= upgrade_cost
-    facility.upgrade()
+    engine: GameEngine = current_app.config["engine"]
+    if facility.facility in engine.extraction_facilities:
+        facility.price_multiplier = technology_effects.price_multiplier(facility.player, facility.facility)
+        facility.multiplier_1 = technology_effects.multiplier_1(facility.player, facility.facility)
+        facility.multiplier_2 = technology_effects.multiplier_2(facility.player, facility.facility)
+        facility.multiplier_3 = technology_effects.multiplier_3(facility.player, facility.facility)
+    else:
+        facility.price_multiplier = technology_effects.price_multiplier(facility.player, facility.facility)
+        if facility.facility in engine.power_facilities + engine.storage_facilities:
+            facility.multiplier_1 = technology_effects.multiplier_1(facility.player, facility.facility)
+        if facility.facility in engine.storage_facilities:
+            facility.multiplier_2 = technology_effects.multiplier_2(facility.player, facility.facility)
+        if facility.facility in engine.controllable_facilities + engine.storage_facilities:
+            facility.multiplier_3 = technology_effects.multiplier_3(facility.player, facility.facility)
+    db.session.commit()
     player.data.capacities.update(player, facility.facility)
 
 
-def upgrade_all_of_type(player, facility_name):
-    """this function is executed when a player upgrades all facilities of a certain type"""
-    facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
+def upgrade_all_of_type(player: Player, facility_name: str) -> None:
+    """Upgrade all facilities of a certain type."""
+    facilities: list[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
-        try:
+        with contextlib.suppress(GameException):
             upgrade_facility(player, facility)
-        except GameException:
-            pass
 
 
-def remove_asset(player, facility, decommissioning=True):
-    """this function is executed when a facility is decommissioned."""
+def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: bool = True) -> None:
+    """Remove a facility.
+
+    This function is executed when a facility is decommissioned.
+    """
     engine = current_app.config["engine"]
     if facility is None or facility.player_id != player.id:
-        raise GameException("constructionNotFound")
+        msg = "Facility not found"
+        raise GameException(msg)
     if facility.facility in engine.technologies + engine.functional_facilities:
-        raise GameException("notRemovable")
+        msg = "Cannot remove technologies or functional facilities"
+        raise GameException(msg)
     db.session.delete(facility)
     db.session.flush()
     # The cost of decommissioning is 20% of the building cost.
@@ -259,8 +276,8 @@ def remove_asset(player, facility, decommissioning=True):
     db.session.commit()
 
 
-def facility_destroyed(player, facility, event_name):
-    """this function is executed when a facility is destroyed by a climate event"""
+def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str) -> None:
+    """Destroyed a facility, by a climate event."""
     base_price = current_app.config["engine"].const_config["assets"][facility.facility]["base_price"]
     cost = 0.1 * base_price * facility.price_multiplier
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
@@ -276,35 +293,33 @@ def facility_destroyed(player, facility, event_name):
     current_app.config["engine"].log(f"{player.username} : {facility.facility} destroyed by {event_name}.")
 
 
-def dismantle_facility(player, facility):
-    """this function is executed when a player dismantles a facility"""
+def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
+    """Dismantle a facility."""
     if facility is None or facility.player_id != player.id:
-        raise GameException("facilityNotFound")
+        msg = "Facility not found"
+        raise GameException(msg)
     cost = facility.dismantle_cost
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
         cost *= facility.multiplier_2
     if player.money < cost:
-        return GameException("notEnoughMoney")
+        msg = "Not enough money"
+        raise GameException(msg)
     remove_asset(player, facility, decommissioning=False)
-    current_app.config["engine"].log(f"{player.username} dismantled the facility {facility.facility}.")
+    engine: GameEngine = current_app.config["engine"]
+    engine.log(f"{player.username} dismantled the facility {facility.facility}.")
 
 
-def dismantle_all_of_type(player, facility_name):
-    """this function is executed when a player dismantles all facilities of a certain type"""
-    facilities: List[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
+def dismantle_all_of_type(player: Player, facility_name: str) -> None:
+    """Dismantle all facilities of a certain type."""
+    facilities: list[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
-        try:
+        with contextlib.suppress(GameException):
             dismantle_facility(player, facility)
-        except GameException:
-            pass
 
 
-def package_projects_data(player):
-    """
-    Gets the data for the ongoing constructions for a particular player
-    TODO:
-    * Rework the return dict structure (involves back + front end)
-    """
+def package_projects_data(player: Player) -> dict:
+    """Package ongoing constructions for a particular player."""
+    # TODO(mglst): Rework the return dict structure (involves back + front end)
     projects = player.package_constructions()
     construction_priorities = player.read_list("construction_priorities")
     research_priorities = player.read_list("research_priorities")
@@ -315,26 +330,32 @@ def queue_project(
     engine: GameEngine,
     player: Player,
     asset: str,
-    force=False,
-    ignore_requirements_and_money=False,
-    skip_notifications=False,
+    *,
+    force: bool = False,
+    ignore_requirements_and_money: bool = False,
+    skip_notifications: bool = False,
 ) -> OngoingConstruction:
-    """this function is executed when a player clicks on 'start construction'"""
+    """Queue a construction or research project."""
 
     if asset not in engine.all_asset_types:
-        raise GameException("malformedRequest")
+        msg = f"Asset '{asset}' not found"
+        raise GameException(msg)
 
     asset_requirement_status = technology_effects.requirements_status(
-        player, asset, technology_effects.asset_requirements(player, asset)
+        player,
+        asset,
+        technology_effects.asset_requirements(player, asset),
     )
     if asset_requirement_status == "unsatisfied" and not ignore_requirements_and_money:
-        raise GameException("locked")
+        msg = "Requirements not satisfied"
+        raise GameException(msg)
 
     real_price = technology_effects.construction_price(player, asset)
     duration = technology_effects.construction_time(player, asset)
 
     if player.money < real_price and not ignore_requirements_and_money:
-        raise GameException("notEnoughMoney")
+        msg = "Not enough money"
+        raise GameException(msg)
 
     construction_power = technology_effects.construction_power(player, asset)
     if not force and not player.is_in_network:
@@ -345,7 +366,7 @@ def queue_project(
         if construction_power > capacity:
             raise Confirm(capacity=capacity, construction_power=construction_power)
 
-    def can_start_immediately():
+    def can_start_immediately() -> bool:
         if asset_requirement_status == "queued":
             return False
         if asset in engine.technologies and player.available_lab_workers() == 0:
@@ -400,6 +421,7 @@ def queue_project(
 
     if not skip_notifications:
         engine.log(f"{player.username} started the construction {asset}")
+    # TODO(mglst): This should be re-enabled when the websocket is re-enabled
     # from energetica.api import websocket
     # websocket.rest_notify_constructions(engine, player)
     db.session.commit()
@@ -408,8 +430,8 @@ def queue_project(
     return new_construction
 
 
-def invalidate_data_on_project_update(engine: GameEngine, player: Player, asset_type: str):
-    """Check for data page invalidation when project has been queued or cancelled"""
+def invalidate_data_on_project_update(engine: GameEngine, player: Player, asset_type: str) -> None:
+    """Check for data page invalidation when project has been queued or cancelled."""
     if asset_type in {
         "watermill",
         "small_water_dam",
@@ -425,11 +447,12 @@ def invalidate_data_on_project_update(engine: GameEngine, player: Player, asset_
         player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
 
 
-def cancel_project(player: Player, construction: OngoingConstruction, force=False):
-    """This function is executed when a player cancels an ongoing construction"""
+def cancel_project(player: Player, construction: OngoingConstruction, *, force: bool = False):
+    """Cancel an ongoing construction."""
     engine: GameEngine = current_app.config["engine"]
     if construction is None or construction.player_id != player.id:
-        raise GameException("constructionNotFound")
+        msg = "Construction not found"
+        raise GameException(msg)
     priority_list_name = (
         "research_priorities" if construction.name in engine.technologies else "construction_priorities"
     )
@@ -447,7 +470,8 @@ def cancel_project(player: Player, construction: OngoingConstruction, force=Fals
         if construction.id in candidate_dependent.cache.prerequisites:
             dependents.append([candidate_dependent.name, candidate_dependent.cache.level])
     if dependents:
-        raise GameException("hasDependents", dependents=dependents)
+        msg = f"Cannot cancel project, the following projects depend on it: {dependents}"
+        raise GameException(msg)
 
     if not force:
         raise Confirm(refund=f"{round(80 * (1 - time_fraction))}%")
@@ -465,6 +489,7 @@ def cancel_project(player: Player, construction: OngoingConstruction, force=Fals
     db.session.delete(construction)
     engine.log(f"{player.username} cancelled the construction {construction.name}")
     db.session.commit()
+    # TODO(mglst): This should be re-enabled when the websocket is re-enabled
     # from energetica.api import websocket
     # websocket.rest_notify_constructions(engine, player)
 
@@ -472,13 +497,15 @@ def cancel_project(player: Player, construction: OngoingConstruction, force=Fals
 
 
 def decrease_project_priority(player, construction):
-    """
+    """Decrease the priority of an ongoing construction.
+
     This function is executed when a player changes the order of ongoing constructions.
     This function is also called from within the `toggle_pause_project` function, in which case `pausing=True`
     """
     engine = current_app.config["engine"]
     if construction is None or construction.player_id != player.id:
-        raise GameException("constructionNotFound")
+        msg = "Construction not found"
+        raise GameException(msg)
     attr = "research_priorities" if construction.name in engine.technologies else "construction_priorities"
 
     priority_list = player.read_list(attr)
@@ -497,15 +524,17 @@ def decrease_project_priority(player, construction):
             )
         setattr(player, attr, ",".join(map(str, priority_list)))
         db.session.commit()
+        # TODO(mglst): This should be re-enabled when the websocket is re-enabled
         # from energetica.api import websocket
         # websocket.rest_notify_constructions(engine, player)
 
 
-def toggle_pause_project(player: Player, construction: OngoingConstruction):
-    """this function is executed when a player pauses or unpauses an ongoing construction"""
+def toggle_pause_project(player: Player, construction: OngoingConstruction) -> None:
+    """Pause or unpause an ongoing construction."""
     engine: GameEngine = current_app.config["engine"]
     if construction is None or construction.player_id != player.id:
-        raise GameException("constructionNotFound")
+        msg = "Construction not found"
+        raise GameException(msg)
     priority_list_name = (
         "research_priorities" if construction.name in engine.technologies else "construction_priorities"
     )
@@ -514,7 +543,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction):
         # project is currently not pause, and should be paused
         while construction.suspension_time is None:
             construction.suspension_time = engine.data["total_t"]
-            priority_list: List[int] = player.read_list(priority_list_name)
+            priority_list: list[int] = player.read_list(priority_list_name)
             priority_list.remove(construction.id)
             insertion_index = None
             for new_index, other_construction_id in enumerate(priority_list):
@@ -532,7 +561,8 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction):
         # project is currently pause, and should be unpaused
         construction.recompute_prerequisites_and_level()  # force recompute
         if construction.cache.prerequisites:
-            raise GameException("hasUnfinishedPrerequisites")
+            msg = "Cannot unpause/start project, it has unfinished prerequisites"
+            raise GameException(msg)
 
         available_workers = (
             player.available_lab_workers()
@@ -541,14 +571,15 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction):
         )
 
         if available_workers == 0:
-            raise GameException("noAvailableWorkers")
+            msg = "No available workers"
+            raise GameException(msg)
 
         # Unpause the construction
         construction.start_time += engine.data["total_t"] - construction.suspension_time
         construction.suspension_time = None
 
         # Reorder the priority list
-        priority_list: List[int] = player.read_list(priority_list_name)
+        priority_list: list[int] = player.read_list(priority_list_name)
         priority_list.remove(construction.id)
         insertion_index = None
         for new_index, other_construction_id in enumerate(priority_list):
@@ -564,5 +595,6 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction):
         engine.log(f"{player.username} unpaused the construction {construction.id} {construction.name}")
 
     db.session.commit()
+    # TODO(mglst): This should be re-enabled when the websocket is re-enabled
     # from energetica.api import websocket
     # websocket.rest_notify_constructions(engine, player)
