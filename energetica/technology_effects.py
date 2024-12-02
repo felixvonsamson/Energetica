@@ -21,19 +21,26 @@ if TYPE_CHECKING:
     from energetica.database.player import Player
     from energetica.game_engine import GameEngine
 
-# This dictionary describes what multipliers are stored where.
-# See also the docstring for the individual multiplier functions.
-# {
-#     "power_production_multiplier": "multiplier_1",
-#     "power_consumption_multiplier": "multiplier_1",
-#     "capacity_multiplier": "multiplier_2",
-#     "wind_speed_multiplier": "multiplier_2",
-#     "hydro_price_multiplier": "multiplier_2",
-#     "extraction_rate_multiplier": "multiplier_2",
-#     "efficiency_multiplier": "multiplier_3",
-#     "next_available_location": "multiplier_3",
-#     "extraction_emissions_multiplier": "multiplier_3",
-# }
+# This section describes the mapping of various multipliers to their corresponding categories.
+# Each multiplier is associated with a specific group of facilities, allowing easy identification
+# of where they are stored and how they are applied:
+#
+# - **multiplier_1**:
+#   - `power_production_multiplier` (used for all power and storage facilities)
+#   - `power_consumption_multiplier` (specific to extraction facilities)
+#
+# - **multiplier_2**:
+#   - `capacity_multiplier` (applicable to storage facilities)
+#   - `wind_speed_multiplier` (specific to wind power facilities)
+#   - `hydro_price_multiplier` (specific to hydro power facilities)
+#   - `extraction_rate_multiplier` (used in extraction facilities)
+#
+# - **multiplier_3**:
+#   - `efficiency_multiplier` (used in storage and other power facilities)
+#   - `next_available_location` (relevant for wind and hydro power facilities)
+#   - `extraction_emissions_multiplier` (specific to extraction facilities)
+#
+# For more detailed explanations, refer to the docstrings of individual multiplier functions.
 
 
 def special_multiplier(pf: float, lvl: int) -> float:
@@ -66,7 +73,6 @@ def price_multiplier(player: Player, asset: str) -> float:
     """Return the price multiplier according to the technology level of the player."""
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
-    # TODO: the price multiplier for mineral extraction should probably be calculated differently. See extraction_rate_multiplier
     for research in [
         "mechanical_engineering",
         "physics",
@@ -254,7 +260,7 @@ def efficiency_multiplier_thermodynamics(player: Player, facility: str, level: i
     return thermodynamic_factor
 
 
-def efficiency_multiplier_chemistry(player: Player, facility: str, level: int = None) -> float:
+def efficiency_multiplier_chemistry(player: Player, facility: str, level: int | None = None) -> float:
     """Return by how much the `base_efficiency` should be multiplied.
 
     For facilities in the `"affected_facilities"` list for `chemistry`.
@@ -341,7 +347,7 @@ def construction_time(player: Player, facility: str) -> float:
     return math.ceil(duration)
 
 
-def construction_power(player: Player, facility) -> float:
+def construction_power(player: Player, facility: str) -> float:
     """Return the construction power in W according to the technology level of the player."""
     engine: GameEngine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
@@ -404,7 +410,7 @@ def hydro_price_function(count: int, potential: float) -> float:
     return 0.6 + (math.e ** (0.6 * (count + 1 - 3 * potential) / (0.3 + potential)))
 
 
-def wind_speed_function(count, potential) -> float:
+def wind_speed_function(count: int, potential: float) -> float:
     """Return the wind speed multiplier, for the `count`th wind facility, given the wind potential."""
     return 1.3 / (math.log(math.e + (count * (1 / (9 * potential + 1))) ** 2))
 
@@ -437,8 +443,9 @@ def asset_requirements(player: Player, asset: str) -> list[dict[str, str | int]]
     ]
 
 
-def requirements_status(player, asset, requirements) -> str:
-    """
+def requirements_status(player: Player, project: str, requirements: list) -> str:
+    """Return the satisfaction status of the requirements for the specified asset.
+
     Returns either "satisfied", "queued", or "unsatisfied".
     For facilities, returns "satisfied" if all requirements are "satisfied", otherwise returns "unsatisfied"
     For technologies, returns "satisfied" if all requirements are "satisfied", otherwise if all requirements are either
@@ -448,25 +455,25 @@ def requirements_status(player, asset, requirements) -> str:
     const_config = engine.const_config["assets"]
     if all(requirement["status"] == "satisfied" for requirement in requirements):
         if (
-            asset in engine.technologies
-            and OngoingConstruction.query.filter_by(name=asset, player_id=player.id).count() > 0
+            project in engine.technologies
+            and OngoingConstruction.query.filter_by(name=project, player_id=player.id).count() > 0
         ):
             return "queued"
         return "satisfied"
-    if const_config[asset]["type"] == "Technology" and all(
+    if const_config[project]["type"] == "Technology" and all(
         requirement["status"] != "unsatisfied" for requirement in requirements
     ):
         return "queued"
     return "unsatisfied"
 
 
-def asset_requirements_and_requirements_status(player: Player, asset) -> str:
+def asset_requirements_and_requirements_status(player: Player, asset: str) -> str:
     """Return a dictionary with the list of requirements and the requirements_status."""
     requirements = asset_requirements(player, asset)
     return {"requirements": requirements, "requirements_status": requirements_status(player, asset, requirements)}
 
 
-def power_facility_resource_consumption(player: Player, power_facility) -> float:
+def power_facility_resource_consumption(player: Player, power_facility: str) -> float:
     """Return a dictionary of the resources consumed by the power_facility for this player."""
     # TODO: perhaps rejig how this information is packaged.
     # Namely, switch from a dictionary with the system resource name as a key and a float for the amount as a value
@@ -520,16 +527,16 @@ def _package_power_generating_facility_base(player: Player, facility: str) -> di
     )
 
 
-def _capacity_factors(player: Player, facility: str):
-    """
-    Gets the capacity factors for renewable power facilities
+def _capacity_factors(player: Player, facility: str) -> dict:
+    """Get the capacity factors for renewable power facilities.
+
     !!! The capacity factor function is an approximation of the empirical data and has to be updated whenever a change
     in the wind simulation is made. !!!
     """
     if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
 
-        def capacity_factor_wind(wind_speed):
-            """Fit of empirical data for wind speeds"""
+        def capacity_factor_wind(wind_speed: float) -> float:
+            """Fit of empirical data for wind speeds."""
             return 0.5280542813 - 0.5374832237 * np.exp(-2.226120465 * wind_speed**2.38728403)
 
         return {
@@ -541,8 +548,8 @@ def _capacity_factors(player: Player, facility: str):
         }
     if facility in ["PV_solar", "CSP_solar"]:
 
-        def capacity_factor_solar(latitude):
-            """Fit of empirical data for solar irradiations"""
+        def capacity_factor_solar(latitude: float) -> float:
+            """Fit of empirical data for solar irradiations."""
             return 0.1788792882 / ((1 + np.exp(1.136558093 - 0.4216299482 * latitude)) ** (1 / 5.918314566))
 
         return {
@@ -573,9 +580,10 @@ def _package_power_storage_extraction_facility_base(player: Player, facility: st
     )
 
 
-def package_power_facilities(player: Player) -> list:
+def package_power_facilities(player: Player) -> list[dict]:
     """Package data relevant for the power_facilities frontend."""
-    # TODO: add wind and hydro potential
+    # TODO(mglst): add wind and hydro potential
+    # https://github.com/users/felixvonsamson/projects/1/views/15?pane=issue&itemId=71832436
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
     return [
@@ -588,7 +596,7 @@ def package_power_facilities(player: Player) -> list:
         | (
             {
                 "pollution": const_config_assets[power_facility]["base_pollution"]
-                / efficiency_multiplier(player, power_facility)
+                / efficiency_multiplier(player, power_facility),
             }
             if power_facility in engine.controllable_facilities + engine.storage_facilities
             else {}
@@ -597,7 +605,7 @@ def package_power_facilities(player: Player) -> list:
     ]
 
 
-def package_storage_facilities(player: Player) -> list:
+def package_storage_facilities(player: Player) -> list[dict]:
     """Package data relevant for the storage_facilities frontend."""
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
@@ -616,7 +624,7 @@ def package_storage_facilities(player: Player) -> list:
     ]
 
 
-def package_extraction_facilities(player: Player) -> list:
+def package_extraction_facilities(player: Player) -> list[dict]:
     """Package data relevant for the extraction_facilities frontend."""
     engine: GameEngine = current_app.config["engine"]
     const_config_assets = engine.const_config["assets"]
@@ -626,16 +634,16 @@ def package_extraction_facilities(player: Player) -> list:
         "uranium_mine": "uranium",
     }
 
-    # TODO: remove this, let the frontend compute it (since tile resource can change often)
-    def tile_resource_amount(tile: Hex, resource: str):
+    # TODO(mglst): remove this, let the frontend compute it (since tile resource can change often)
+    def tile_resource_amount(tile: Hex, resource: str) -> float:
         if resource == "coal":
             return tile.coal
-        elif resource == "gas":
+        if resource == "gas":
             return tile.gas
-        elif resource == "uranium":
+        if resource == "uranium":
             return tile.uranium
-        else:
-            raise ValueError(f"unknown resource {resource}")
+        msg = f"unknown resource {resource}"
+        raise ValueError(msg)
 
     return [
         _package_asset_base(player, extraction_facility)
@@ -678,7 +686,7 @@ def next_level(player: Player, facility_or_technology: str) -> int:
     )
 
 
-def package_change(current, upgraded) -> dict | None:
+def package_change(current: float | None, upgraded: float) -> dict | None:
     """Package a change between two values.
 
     `current` can be `None` to represent a new ability rather than an upgrade.
@@ -794,7 +802,7 @@ def package_functional_facilities(player: Player) -> list[dict]:
     ]
 
 
-def package_constructions_page_data(player: Player):
+def package_constructions_page_data(player: Player) -> dict[list[dict]]:
     """Package data for all facilities.
 
     Gets cost, emissions, max power, etc data for constructions.
@@ -809,7 +817,7 @@ def package_constructions_page_data(player: Player):
     }
 
 
-def package_available_technologies(player: Player):
+def package_available_technologies(player: Player) -> list[dict]:
     """Package data relevant for the frontend for technologies."""
     # TODO(mglst): Check all invoked functions and rename facility to asset if needed
     # Because these methods are common to both facilities and technologies, hence should use the name "asset"
