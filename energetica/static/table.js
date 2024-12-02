@@ -53,6 +53,8 @@ class Table {
         if (default_sort_state !== null) {
             this.set_sort_state(default_sort_state);
         }
+        this.table.parentElement?.classList.add("hidden");
+        this.table.parentElement?.previousElementSibling?.classList.add("hidden");
     }
 
     /** 
@@ -112,6 +114,13 @@ class Table {
                 the data has detail and summary rows - call the Table construction with uses_summary_rows=true, and \
                 use update_table_body_with_summary_rows instead.");
         }
+        if (Object.keys(table_data).length === 0) {
+            this.table.parentElement?.classList.add("hidden");
+            this.table.parentElement?.previousElementSibling?.classList.add("hidden");
+        } else {
+            this.table.parentElement?.classList.remove("hidden");
+            this.table.parentElement?.previousElementSibling?.classList.remove("hidden");
+        }
         // Clear the table body
         this.table_body.replaceChildren();
         // TODO: remove this; it's a workaround for the alternating row colors
@@ -143,12 +152,19 @@ class Table {
                 this.summary_row_visibility[row_key] = false;
             }
         }
+        const detail_data = table_data.detail;
+        if (Object.keys(summary_data).length === 0 && Object.keys(detail_data).length === 0) {
+            this.table.parentElement?.classList.add("hidden");
+            this.table.parentElement?.previousElementSibling?.classList.add("hidden");
+        } else {
+            this.table.parentElement?.classList.remove("hidden");
+            this.table.parentElement?.previousElementSibling?.classList.remove("hidden");
+        }
         // Clear the table body
         this.table_body.replaceChildren();
         // TODO: remove this; it's a workaround for the alternating row colors
         this.table_body.insertRow();
         // Populate the table body with the new data
-        const detail_data = table_data.detail;
         for (let row_key in summary_data) {
             const row_element = this.table_body.insertRow();
             // Store the row key in the row element so it can be used for sorting

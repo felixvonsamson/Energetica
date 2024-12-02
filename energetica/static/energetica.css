@@ -1214,6 +1214,14 @@ input:checked+.slider:before {
     overflow: hidden;
 }
 
+.table_container.hidden {
+    display: none;
+}
+
+.large.hidden {
+    display: none;
+}
+
 .table_legend_left {
     width: 40px;
     transform: rotate(-90deg);

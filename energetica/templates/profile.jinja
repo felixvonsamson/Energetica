@@ -33,23 +33,18 @@
   </div>
 
   <div id="facilities_list" class="flex-col medium margin">
-    {% set caps = user.data.capacities %}
     <b class="large">Power facilities</b>
     <div class="table_container">
       <table id="power_facilities_table" class="table bone txt_center margin-small"></table>
     </div>
-    {% if caps["small_pumped_hydro"] or caps["molten_salt"] or caps["large_pumped_hydro"] or caps["hydrogen_storage"] or caps["lithium_ion_batteries"] or caps["solid_state_batteries"] %}
-      <b class="large margin-top">Storage facilities</b>
-      <div class="table_container">
-        <table id="storage_facilities_table" class="table bone txt_center margin-small"></table>
-      </div>
-    {% endif %}
-    {% if caps["coal_mine"] or caps["gas_drilling_site"] or caps["uranium_mine"] %}
-      <b class="large margin-top">Extraction facilities</b>
-      <div class="table_container">
-        <table id="extraction_facilities_table" class="table bone txt_center margin-small"></table>
-      </div>
-    {% endif %}
+    <b class="large margin-top">Storage facilities</b>
+    <div class="table_container">
+      <table id="storage_facilities_table" class="table bone txt_center margin-small"></table>
+    </div>
+    <b class="large margin-top">Extraction facilities</b>
+    <div class="table_container">
+      <table id="extraction_facilities_table" class="table bone txt_center margin-small"></table>
+    </div>
   </div>
 
   <div class="medium flex-space-evenly" style="overflow-x: auto;">
