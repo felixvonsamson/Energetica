@@ -664,91 +664,111 @@ class Player(db.Model, UserMixin):
 
     def package_active_facilities(self) -> dict[str, dict[int, dict[str, any]]]:
         """Package the player's active facilities."""
+        return {
+            "power_facilities": self.package_active_power_facilities(),
+            "storage_facilities": self.package_active_storage_facilities(),
+            "extraction_facilities": self.package_active_extraction_facilities(),
+        }
+
+    def package_active_power_facilities(self) -> dict:
+        """Package the player's active power facilities."""
         engine: GameEngine = current_app.config["engine"]
+        ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
+        capacities = self.data.capacities
         power_facilities: list[ActiveFacility] = self.active_facilities.filter(
             ActiveFacility.facility.in_(engine.power_facilities),
         ).all()
+        power_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
+        for power_facility in power_facilities:
+            power_facility_groups[power_facility.facility].append(power_facility)
+        return {
+            "summary": {
+                group_name: {
+                    "display_name": engine.const_config["assets"][group_name]["name"],
+                    "count": len(group),
+                    "installed_cap": capacities[group_name]["power"],
+                    "usage": sum(f.usage * f.installed_cap for f in group) / sum(f.installed_cap for f in group),
+                    "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
+                    "remaining_lifespan": min(f.remaining_lifespan for f in group),
+                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                    if any(f.is_upgradable for f in group)
+                    else None,
+                    "dismantle_cost": sum(f.dismantle_cost for f in group),
+                }
+                for group_name, group in power_facility_groups.items()
+            },
+            "detail": {
+                power_facility.id: {
+                    "facility": power_facility.facility,
+                    "display_name": power_facility.display_name,
+                    "installed_cap": power_facility.installed_cap,
+                    "usage": power_facility.usage,
+                    "hourly_op_cost": power_facility.hourly_op_cost,
+                    "remaining_lifespan": power_facility.remaining_lifespan,
+                    "upgrade_cost": power_facility.upgrade_cost,
+                    "dismantle_cost": power_facility.dismantle_cost,
+                }
+                for power_facility in power_facilities
+            },
+        }
+
+    def package_active_storage_facilities(self) -> dict:
+        """Package active storage facilities."""
+        engine: GameEngine = current_app.config["engine"]
+        ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         storage_facilities: list[ActiveFacility] = self.active_facilities.filter(
             ActiveFacility.facility.in_(engine.storage_facilities),
         ).all()
-        extraction_facilities: list[ActiveFacility] = self.active_facilities.filter(
-            ActiveFacility.facility.in_(engine.extraction_facilities),
-        ).all()
-        # group power facilities by facility name
-        power_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(lambda: [])
-        for power_facility in power_facilities:
-            power_facility_groups[power_facility.facility].append(power_facility)
-        capacities = self.data.capacities
-        ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
-        storage_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(lambda: [])
+        storage_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for storage_facility in storage_facilities:
             storage_facility_groups[storage_facility.facility].append(storage_facility)
         return {
-            "power_facilities": {
-                "summary": {
-                    group_name: {
-                        "display_name": engine.const_config["assets"][group_name]["name"],
-                        "count": len(group),
-                        "installed_cap": capacities[group_name]["power"],
-                        "usage": sum(f.usage * f.installed_cap for f in group) / sum(f.installed_cap for f in group),
-                        "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
-                        "remaining_lifespan": min(f.remaining_lifespan for f in group),
-                        "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
-                        if any(f.is_upgradable for f in group)
-                        else None,
-                        "dismantle_cost": sum(f.dismantle_cost for f in group),
-                    }
-                    for group_name, group in power_facility_groups.items()
-                },
-                "detail": {
-                    power_facility.id: {
-                        "facility": power_facility.facility,
-                        "display_name": power_facility.display_name,
-                        "installed_cap": power_facility.installed_cap,
-                        "usage": power_facility.usage,
-                        "hourly_op_cost": power_facility.hourly_op_cost,
-                        "remaining_lifespan": power_facility.remaining_lifespan,
-                        "upgrade_cost": power_facility.upgrade_cost,
-                        "dismantle_cost": power_facility.dismantle_cost,
-                    }
-                    for power_facility in power_facilities
-                },
+            "summary": {
+                group_name: {
+                    "display_name": engine.const_config["assets"][group_name]["name"],
+                    "count": len(group),
+                    "storage_capacity": sum(f.storage_capacity for f in group),
+                    "state_of_charge": sum(f.state_of_charge * f.storage_capacity for f in group)
+                    / sum(f.storage_capacity for f in group),
+                    "hourly_op_cost": sum(f.hourly_op_cost for f in group) * ticks_per_hour,
+                    "efficiency": sum(f.efficiency * f.storage_capacity for f in group)
+                    / sum(f.storage_capacity for f in group),
+                    "remaining_lifespan": min(f.remaining_lifespan for f in group),
+                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                    if any(f.is_upgradable for f in group)
+                    else None,
+                    "dismantle_cost": sum(f.dismantle_cost for f in group),
+                }
+                for group_name, group in storage_facility_groups.items()
             },
-            "storage_facilities": {
-                "summary": {
-                    group_name: {
-                        "display_name": engine.const_config["assets"][group_name]["name"],
-                        "count": len(group),
-                        "storage_capacity": sum(f.storage_capacity for f in group),
-                        "state_of_charge": sum(f.state_of_charge * f.storage_capacity for f in group)
-                        / sum(f.storage_capacity for f in group),
-                        "hourly_op_cost": sum(f.hourly_op_cost for f in group) * ticks_per_hour,
-                        "efficiency": sum(f.efficiency * f.storage_capacity for f in group)
-                        / sum(f.storage_capacity for f in group),
-                        "remaining_lifespan": min(f.remaining_lifespan for f in group),
-                        "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
-                        if any(f.is_upgradable for f in group)
-                        else None,
-                        "dismantle_cost": sum(f.dismantle_cost for f in group),
-                    }
-                    for group_name, group in storage_facility_groups.items()
-                },
-                "detail": {
-                    storage_facility.id: {
-                        "facility": storage_facility.facility,
-                        "display_name": storage_facility.display_name,
-                        "storage_capacity": storage_facility.storage_capacity,
-                        "state_of_charge": storage_facility.state_of_charge,
-                        "hourly_op_cost": storage_facility.hourly_op_cost,
-                        "efficiency": storage_facility.efficiency,
-                        "remaining_lifespan": storage_facility.remaining_lifespan,
-                        "upgrade_cost": storage_facility.upgrade_cost,
-                        "dismantle_cost": storage_facility.dismantle_cost,
-                    }
-                    for storage_facility in storage_facilities
-                },
+            "detail": {
+                storage_facility.id: {
+                    "facility": storage_facility.facility,
+                    "display_name": storage_facility.display_name,
+                    "storage_capacity": storage_facility.storage_capacity,
+                    "state_of_charge": storage_facility.state_of_charge,
+                    "hourly_op_cost": storage_facility.hourly_op_cost,
+                    "efficiency": storage_facility.efficiency,
+                    "remaining_lifespan": storage_facility.remaining_lifespan,
+                    "upgrade_cost": storage_facility.upgrade_cost,
+                    "dismantle_cost": storage_facility.dismantle_cost,
+                }
+                for storage_facility in storage_facilities
             },
-            "extraction_facilities": {
+        }
+
+    def package_active_extraction_facilities(self) -> dict:
+        """Package active extraction facilities."""
+        engine: GameEngine = current_app.config["engine"]
+        ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
+        extraction_facilities: list[ActiveFacility] = self.active_facilities.filter(
+            ActiveFacility.facility.in_(engine.extraction_facilities),
+        ).all()
+        extraction_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
+        for extraction_facility in extraction_facilities:
+            extraction_facility_groups[extraction_facility.facility].append(extraction_facility)
+        return {
+            "detail": {
                 extraction_facility.id: {
                     "facility": extraction_facility.facility,
                     "display_name": extraction_facility.display_name,
@@ -761,6 +781,22 @@ class Player(db.Model, UserMixin):
                     "dismantle_cost": extraction_facility.dismantle_cost,
                 }
                 for extraction_facility in extraction_facilities
+            },
+            "summary": {
+                group_name: {
+                    "display_name": engine.const_config["assets"][group_name]["name"],
+                    "count": len(group),
+                    "extraction_rate": sum(f.extraction_rate for f in group),
+                    "usage": sum(f.usage * f.extraction_rate for f in group) / sum(f.extraction_rate for f in group),
+                    "hourly_op_cost": sum(f.hourly_op_cost for f in group) * ticks_per_hour,
+                    "max_power_use": sum(f.max_power_use for f in group),
+                    "remaining_lifespan": min(f.remaining_lifespan for f in group),
+                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                    if any(f.is_upgradable for f in group)
+                    else None,
+                    "dismantle_cost": sum(f.dismantle_cost for f in group),
+                }
+                for group_name, group in extraction_facility_groups.items()
             },
         }
 

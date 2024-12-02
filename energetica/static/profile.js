@@ -168,6 +168,7 @@ const extraction_facilities_columns_config = [
         display_name: "Name",
         data_type: 'string',
         default_sort_order: "ascending",
+        hide_detail: true, // Hide the name for detail rows.
     },
     {
         key: "extraction_rate",
@@ -238,10 +239,11 @@ const storage_facilities_table_manager = new Table(
     { key: "storage_capacity", order: "descending" },
     true,
 );
-// const extraction_facilities_table_manager = new Table(
-//     extraction_facilities_table, extraction_facilities_columns_config,
-//     { key: "extraction_rate", order: "descending" }
-// );
+const extraction_facilities_table_manager = new Table(
+    extraction_facilities_table, extraction_facilities_columns_config,
+    { key: "extraction_rate", order: "descending" },
+    true,
+);
 
 let multiplier_table = {
     "price_multiplier": "price_multiplier",
@@ -274,7 +276,7 @@ async function get_active_facilities() {
     }
     power_facilities_table_manager.update_table_body_with_summary_rows(active_facilities_data.power_facilities);
     storage_facilities_table_manager.update_table_body_with_summary_rows(active_facilities_data.storage_facilities);
-    // extraction_facilities_table_manager.update_table_body(active_facilities_data.extraction_facilities);
+    extraction_facilities_table_manager.update_table_body_with_summary_rows(active_facilities_data.extraction_facilities);
 }
 
 function are_you_sure_dismantle_facility(facility_id, cost) {
