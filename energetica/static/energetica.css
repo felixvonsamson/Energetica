@@ -1275,15 +1275,15 @@ tr[expanded=false] i.fa-caret-down {
 }
 
 /* TODO: swap even and odd, now that header rows are in thead */
-table tbody tr[summary-row]:nth-child(even of tr[summary-row]) {
+table:not(.tan_green) tbody tr[summary-row]:nth-child(even of tr[summary-row]) {
     background-color: #d6c79a
 }
 
-table tbody tr:not([summary-row]):nth-child(even of tr:not([summary-row])) {
+table:not(.tan_green) tbody tr:not([summary-row]):nth-child(even of tr:not([summary-row])) {
     background-color: #d6c79a
 }
 
-table.tan_green tbody tr:nth-child(even) {
+table.tan_green tr:nth-child(even) {
     background-color: #c1cf8b
 }
 

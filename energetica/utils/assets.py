@@ -130,6 +130,9 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
 
     if family == "Functional facilities":
         player.invalidate_recompute_and_dispatch_data_for_pages(functional_facilities=True, technologies=True)
+        # Deploy any new workers from laboratory upgrades
+        if construction.name == "laboratory":
+            deploy_available_workers(player, "Technologies")
     if family == "Technologies":
         player.invalidate_recompute_and_dispatch_data_for_pages(
             power_facilities=True,
