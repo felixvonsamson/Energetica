@@ -450,7 +450,7 @@ class Player(db.Model, UserMixin):
             "body": new_notification.content,
         }
         engine: GameEngine = current_app.config["engine"]
-        for subscription in engine.notification_subscriptions[self.id]:
+        for subscription in engine.data["notification_subscriptions"][self.id]:
             audience = "https://fcm.googleapis.com"
             if "https://updates.push.services.mozilla.com" in subscription["endpoint"]:
                 audience = "https://updates.push.services.mozilla.com"
