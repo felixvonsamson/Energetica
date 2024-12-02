@@ -275,7 +275,7 @@ def efficiency_multiplier_chemistry(player: Player, facility: str, level: int | 
     return 1 / const_config[facility]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
 
 
-def extraction_emissions_multiplier(player: Player, facility) -> float:
+def extraction_emissions_multiplier(player: Player, facility: str) -> float:
     """Return by how much the `facility`'s `base_pollution` should be multiplied."""
     const_config = current_app.config["engine"].const_config["assets"]
     mlt = 1
@@ -509,7 +509,7 @@ def _package_power_generating_facility_base(player: Player, facility: str) -> di
     return (
         {
             "power_generation": const_config_assets[facility]["base_power_generation"]
-            * power_production_multiplier(player, facility)
+            * power_production_multiplier(player, facility),
         }
         | (
             {
