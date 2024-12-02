@@ -182,7 +182,7 @@
           <td>XP</td>
           <td class="txt_center">{{ profile.xp }}</td>
         </tr>
-        {% if "construction_pollution" in facility_data %}
+        {% if user.discovered_greenhouse_gas_effect() %}
           <tr>
             <td>Emissions</td>
             <td class="txt_center"></td>
