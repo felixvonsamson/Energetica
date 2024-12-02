@@ -1235,12 +1235,21 @@ input:checked+.slider:before {
     width: 265px;
 }
 
+table tbody tr[summary-row] {
+    background-color: #e2bca6;
+    cursor: pointer;
+}
+
+table tbody tr.hidden[detail-row] {
+    display: none;
+}
+
 /* TODO: swap even and odd, now that header rows are in thead */
-.table tbody tr:nth-child(even) {
+table tbody tr[detail-row]:nth-child(even) {
     background-color: #d6c79a
 }
 
-.table.tan_green tbody tr:nth-child(even) {
+table.tan_green tbody tr[detail-row]:nth-child(even) {
     background-color: #c1cf8b
 }
 

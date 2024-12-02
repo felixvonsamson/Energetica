@@ -94,7 +94,7 @@ class ActiveFacility(db.Model):
         return self.const_config["base_efficiency"] * self.multiplier_3
 
     @property
-    def op_cost(self) -> float:
+    def hourly_op_cost(self) -> float:
         """Cost to operate the facility per in-game hour."""
         return self.total_cost * self.const_config["O&M_factor_per_day"] / 24
 

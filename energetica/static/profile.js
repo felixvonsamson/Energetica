@@ -83,7 +83,7 @@ const power_facilities_columns_config = [
         gauge_class: (data, _, __) => `color_${data.facility}`,
     },
     {
-        key: "op_cost",
+        key: "hourly_op_cost",
         display_name: "O&M cost",
         data_type: "number",
         render_cell: (_, __, value) => format_money(value) + "/h",
@@ -133,7 +133,7 @@ const storage_facilities_columns_config = [
         gauge_class: (data, _, __) => `color_${data.facility}`,
     },
     {
-        key: "op_cost",
+        key: "hourly_op_cost",
         display_name: "O&M cost",
         data_type: "number",
         render_cell: (_, __, value) => format_money(value) + "/h",
@@ -189,7 +189,7 @@ const extraction_facilities_columns_config = [
         gauge_class: (data, _, __) => `color_${data.facility}`,
     },
     {
-        key: "op_cost",
+        key: "hourly_op_cost",
         display_name: "O&M cost",
         data_type: "number",
         render_cell: (_, __, value) => format_money(value) + "/h",
@@ -237,16 +237,17 @@ if (!(extraction_facilities_table instanceof HTMLTableElement)) {
 }
 const power_facilities_table_manager = new Table(
     power_facilities_table, power_facilities_columns_config,
-    { key: "installed_cap", order: "descending" }
+    { key: "installed_cap", order: "descending" },
+    true,
 );
-const storage_facilities_table_manager = new Table(
-    storage_facilities_table, storage_facilities_columns_config,
-    { key: "storage_capacity", order: "descending" }
-);
-const extraction_facilities_table_manager = new Table(
-    extraction_facilities_table, extraction_facilities_columns_config,
-    { key: "extraction_rate", order: "descending" }
-);
+// const storage_facilities_table_manager = new Table(
+//     storage_facilities_table, storage_facilities_columns_config,
+//     { key: "storage_capacity", order: "descending" }
+// );
+// const extraction_facilities_table_manager = new Table(
+//     extraction_facilities_table, extraction_facilities_columns_config,
+//     { key: "extraction_rate", order: "descending" }
+// );
 
 let multiplier_table = {
     "price_multiplier": "price_multiplier",
@@ -277,9 +278,9 @@ async function get_active_facilities() {
         console.error("Error:", error);
         throw new Error("Error fetching active facilities data");
     }
-    power_facilities_table_manager.update_table_body(active_facilities_data.power_facilities);
-    storage_facilities_table_manager.update_table_body(active_facilities_data.storage_facilities);
-    extraction_facilities_table_manager.update_table_body(active_facilities_data.extraction_facilities);
+    power_facilities_table_manager.update_table_body_with_summary_rows(active_facilities_data.power_facilities);
+    // storage_facilities_table_manager.update_table_body(active_facilities_data.storage_facilities);
+    // extraction_facilities_table_manager.update_table_body(active_facilities_data.extraction_facilities);
 }
 
 function are_you_sure_dismantle_facility(facility_id, cost) {

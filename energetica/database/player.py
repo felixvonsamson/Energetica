@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
@@ -673,19 +674,42 @@ class Player(db.Model, UserMixin):
         extraction_facilities: list[ActiveFacility] = self.active_facilities.filter(
             ActiveFacility.facility.in_(engine.extraction_facilities),
         ).all()
+        # group power facilities by facility name
+        power_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(lambda: [])
+        for power_facility in power_facilities:
+            power_facility_groups[power_facility.facility].append(power_facility)
+        capacities = self.data.capacities
+        ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         return {
             "power_facilities": {
-                power_facility.id: {
-                    "facility": power_facility.facility,
-                    "display_name": power_facility.display_name,
-                    "installed_cap": power_facility.installed_cap,
-                    "usage": power_facility.usage,
-                    "op_cost": power_facility.op_cost,
-                    "remaining_lifespan": power_facility.remaining_lifespan,
-                    "upgrade_cost": power_facility.upgrade_cost,
-                    "dismantle_cost": power_facility.dismantle_cost,
-                }
-                for power_facility in power_facilities
+                "summary": {
+                    group_name: {
+                        "display_name": engine.const_config["assets"][group_name]["name"],
+                        "count": len(group),
+                        "installed_cap": capacities[group_name]["power"],
+                        "usage": 0,
+                        "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
+                        "remaining_lifespan": min(f.remaining_lifespan for f in group),
+                        "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                        if any(f.is_upgradable for f in group)
+                        else None,
+                        "dismantle_cost": sum(f.dismantle_cost for f in group),
+                    }
+                    for group_name, group in power_facility_groups.items()
+                },
+                "detail": {
+                    power_facility.id: {
+                        "facility": power_facility.facility,
+                        "display_name": power_facility.display_name,
+                        "installed_cap": power_facility.installed_cap,
+                        "usage": power_facility.usage,
+                        "hourly_op_cost": power_facility.hourly_op_cost,
+                        "remaining_lifespan": power_facility.remaining_lifespan,
+                        "upgrade_cost": power_facility.upgrade_cost,
+                        "dismantle_cost": power_facility.dismantle_cost,
+                    }
+                    for power_facility in power_facilities
+                },
             },
             "storage_facilities": {
                 storage_facility.id: {
@@ -693,7 +717,7 @@ class Player(db.Model, UserMixin):
                     "display_name": storage_facility.display_name,
                     "storage_capacity": storage_facility.storage_capacity,
                     "state_of_charge": storage_facility.state_of_charge,
-                    "op_cost": storage_facility.op_cost,
+                    "hourly_op_cost": storage_facility.hourly_op_cost,
                     "efficiency": storage_facility.efficiency,
                     "remaining_lifespan": storage_facility.remaining_lifespan,
                     "upgrade_cost": storage_facility.upgrade_cost,
@@ -707,7 +731,7 @@ class Player(db.Model, UserMixin):
                     "display_name": extraction_facility.display_name,
                     "extraction_rate": extraction_facility.extraction_rate,
                     "usage": extraction_facility.usage,
-                    "op_cost": extraction_facility.op_cost,
+                    "hourly_op_cost": extraction_facility.hourly_op_cost,
                     "max_power_use": extraction_facility.max_power_use,
                     "remaining_lifespan": extraction_facility.remaining_lifespan,
                     "upgrade_cost": extraction_facility.upgrade_cost,
