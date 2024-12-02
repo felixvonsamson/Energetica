@@ -112,6 +112,7 @@ const storage_facilities_columns_config = [
         display_name: "Name",
         data_type: 'string',
         default_sort_order: "ascending",
+        hide_detail: true, // Hide the name for detail rows.
     },
     {
         key: "storage_capacity",
@@ -232,10 +233,11 @@ const power_facilities_table_manager = new Table(
     { key: "installed_cap", order: "descending" },
     true,
 );
-// const storage_facilities_table_manager = new Table(
-//     storage_facilities_table, storage_facilities_columns_config,
-//     { key: "storage_capacity", order: "descending" }
-// );
+const storage_facilities_table_manager = new Table(
+    storage_facilities_table, storage_facilities_columns_config,
+    { key: "storage_capacity", order: "descending" },
+    true,
+);
 // const extraction_facilities_table_manager = new Table(
 //     extraction_facilities_table, extraction_facilities_columns_config,
 //     { key: "extraction_rate", order: "descending" }
@@ -271,7 +273,7 @@ async function get_active_facilities() {
         throw new Error("Error fetching active facilities data");
     }
     power_facilities_table_manager.update_table_body_with_summary_rows(active_facilities_data.power_facilities);
-    // storage_facilities_table_manager.update_table_body(active_facilities_data.storage_facilities);
+    storage_facilities_table_manager.update_table_body_with_summary_rows(active_facilities_data.storage_facilities);
     // extraction_facilities_table_manager.update_table_body(active_facilities_data.extraction_facilities);
 }
 

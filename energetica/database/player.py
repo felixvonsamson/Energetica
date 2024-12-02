@@ -680,6 +680,9 @@ class Player(db.Model, UserMixin):
             power_facility_groups[power_facility.facility].append(power_facility)
         capacities = self.data.capacities
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
+        storage_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(lambda: [])
+        for storage_facility in storage_facilities:
+            storage_facility_groups[storage_facility.facility].append(storage_facility)
         return {
             "power_facilities": {
                 "summary": {
@@ -712,18 +715,38 @@ class Player(db.Model, UserMixin):
                 },
             },
             "storage_facilities": {
-                storage_facility.id: {
-                    "facility": storage_facility.facility,
-                    "display_name": storage_facility.display_name,
-                    "storage_capacity": storage_facility.storage_capacity,
-                    "state_of_charge": storage_facility.state_of_charge,
-                    "hourly_op_cost": storage_facility.hourly_op_cost,
-                    "efficiency": storage_facility.efficiency,
-                    "remaining_lifespan": storage_facility.remaining_lifespan,
-                    "upgrade_cost": storage_facility.upgrade_cost,
-                    "dismantle_cost": storage_facility.dismantle_cost,
-                }
-                for storage_facility in storage_facilities
+                "summary": {
+                    group_name: {
+                        "display_name": engine.const_config["assets"][group_name]["name"],
+                        "count": len(group),
+                        "storage_capacity": sum(f.storage_capacity for f in group),
+                        "state_of_charge": sum(f.state_of_charge * f.storage_capacity for f in group)
+                        / sum(f.storage_capacity for f in group),
+                        "hourly_op_cost": sum(f.hourly_op_cost for f in group) * ticks_per_hour,
+                        "efficiency": sum(f.efficiency * f.storage_capacity for f in group)
+                        / sum(f.storage_capacity for f in group),
+                        "remaining_lifespan": min(f.remaining_lifespan for f in group),
+                        "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                        if any(f.is_upgradable for f in group)
+                        else None,
+                        "dismantle_cost": sum(f.dismantle_cost for f in group),
+                    }
+                    for group_name, group in storage_facility_groups.items()
+                },
+                "detail": {
+                    storage_facility.id: {
+                        "facility": storage_facility.facility,
+                        "display_name": storage_facility.display_name,
+                        "storage_capacity": storage_facility.storage_capacity,
+                        "state_of_charge": storage_facility.state_of_charge,
+                        "hourly_op_cost": storage_facility.hourly_op_cost,
+                        "efficiency": storage_facility.efficiency,
+                        "remaining_lifespan": storage_facility.remaining_lifespan,
+                        "upgrade_cost": storage_facility.upgrade_cost,
+                        "dismantle_cost": storage_facility.dismantle_cost,
+                    }
+                    for storage_facility in storage_facilities
+                },
             },
             "extraction_facilities": {
                 extraction_facility.id: {
