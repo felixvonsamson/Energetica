@@ -693,7 +693,8 @@ class Player(db.Model, UserMixin):
                     "display_name": engine.const_config["assets"][group_name]["name"],
                     "count": len(group),
                     "installed_cap": capacities[group_name]["power"],
-                    "usage": sum(f.usage * f.installed_cap for f in group) / sum(f.installed_cap for f in group),
+                    "usage": sum(f.usage * f.max_power_generation for f in group)
+                    / sum(f.max_power_generation for f in group),
                     "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
                     "remaining_lifespan": min(f.remaining_lifespan for f in group),
                     "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
@@ -707,7 +708,7 @@ class Player(db.Model, UserMixin):
                 power_facility.id: {
                     "facility": power_facility.facility,
                     "display_name": power_facility.display_name,
-                    "installed_cap": power_facility.installed_cap,
+                    "installed_cap": power_facility.max_power_generation,
                     "usage": power_facility.usage,
                     "hourly_op_cost": power_facility.hourly_op_cost,
                     "remaining_lifespan": power_facility.remaining_lifespan,

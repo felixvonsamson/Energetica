@@ -247,9 +247,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     db.session.delete(facility)
     db.session.flush()
     # The cost of decommissioning is 20% of the building cost.
-    cost = 0.2 * engine.const_config["assets"][facility.facility]["base_price"] * facility.price_multiplier
-    if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
-        cost *= facility.multiplier_2
+    cost = facility.dismantle_cost
     player.money -= cost
     if ActiveFacility.query.filter_by(facility=facility.facility, player_id=player.id).count() == 0:
         # remove facility from facility priorities if it was the last one
@@ -281,10 +279,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
 
 def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str) -> None:
     """Destroyed a facility, by a climate event."""
-    base_price = current_app.config["engine"].const_config["assets"][facility.facility]["base_price"]
-    cost = 0.1 * base_price * facility.price_multiplier
-    if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
-        cost *= facility.multiplier_2
+    cost = 0.1 * facility.total_cost
     remove_asset(player, facility, decommissioning=False)
     player.notify(
         "Destruction",
