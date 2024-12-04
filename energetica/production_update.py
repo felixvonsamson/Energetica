@@ -639,7 +639,7 @@ def wind_generation(engine: GameEngine, player: Player, generation: dict, in_gam
                 # is 1 before the cut out taper.
                 max_speed_before_cut_out = 85
                 engine.buffered["cut_out_speed_exceeded"][facility.id] = bool(
-                    effective_wind_speed >= max_speed_before_cut_out
+                    effective_wind_speed >= max_speed_before_cut_out,
                 )
 
 
