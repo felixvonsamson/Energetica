@@ -661,6 +661,7 @@ def package_extraction_facilities(player: Player) -> list[dict]:
                 * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
                 / 24,
             },
+            "poor_resource_production": True,
         }
         for extraction_facility in engine.extraction_facilities
     ]
