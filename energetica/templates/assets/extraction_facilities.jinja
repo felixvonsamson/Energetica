@@ -31,7 +31,7 @@
       </p>
     </div>
   </div>
-  <div id="under_construction">{# Facilites under construction will show here #}</div>
+  <div id="under_construction">{# Facilities under construction will show here #}</div>
   {% for facility_data in constructions %}
     {% set facility = facility_data.name %}
     {% set resource = facility_data.resource_production.name %}
@@ -102,13 +102,12 @@
         <div id="constructionContent" class="hidden">
           <div class="flex-col construction_button_container hidden">
             {% if facility_data.requirements_status == "unsatisfied" %}
-              <b id="construction_button" class="padding medium margin txt_center white txt-red"
-                 onclick="start_construction('{{ facility }}', 'Extraction facilities');">
+              <b id="construction_button" class="padding medium margin txt_center white txt-red">
                 Locked
               </b>
             {% else %}
               <b id="construction_button" class="padding medium button margin txt_center white"
-                 onclick="start_construction('{{ facility }}', 'Extraction facilities');">
+                 onclick="launch_extraction_facility_project('{{ facility }}', {{ facility_data.poor_resource_production|int }});">
                 Start construction
               </b>
             {% endif %}
@@ -142,13 +141,12 @@
         <div id="constructionContent_smartphone" class="hidden margin">
           <div class="flex-col">
             {% if facility_data.requirements_status == "unsatisfied" %}
-              <b id="construction_button_mobile" class="padding medium margin txt_center white txt-red"
-                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Extraction facilities');">
+              <b id="construction_button_mobile" class="padding medium margin txt_center white txt-red">
                 Locked
               </b>
             {% else %}
               <b id="construction_button_mobile" class="padding medium button margin txt_center white"
-                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Extraction facilities');">
+                 onclick="event.stopPropagation(); launch_extraction_facility_project('{{ facility }}', {{ facility_data.poor_resource_production|int }});">
                 Start construction
               </b>
             {% endif %}
@@ -229,5 +227,6 @@
 {% block additional_script %}
   <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
   <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
+  <script src="{{ url_for('static', filename='extraction_facilities.js') }}"></script>
   <script>refresh_progressBar()</script>
 {% endblock additional_script %}
