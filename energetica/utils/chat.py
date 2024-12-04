@@ -62,11 +62,11 @@ def create_group_chat(player, chat_name, participants):
 
     """
     if len(chat_name) == 0 or len(chat_name) > 25:
-        raise GameEngine("wrongTitleLength")
+        raise GameException("wrongTitleLength")
     if len(participants) < 3:
-        raise GameEngine("groupTooSmall")
+        raise GameException("groupTooSmall")
     if check_existing_chats(participants):
-        raise GameEngine("chatAlreadyExist")
+        raise GameException("chatAlreadyExist")
     new_chat = Chat(
         name=chat_name,
         participants=participants,
@@ -86,7 +86,7 @@ def add_message(player, message_text, chat):
     if len(message_text) == 0:
         raise GameError("noMessage")
     if len(message_text) > 500:
-        raise GameEngine("messageTooLong", message=message_text)
+        raise GameError("messageTooLong", message=message_text)
     new_message = Message(
         text=message_text,
         time=datetime.now(),
