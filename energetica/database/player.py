@@ -702,6 +702,11 @@ class Player(db.Model, UserMixin):
                     else None,
                     "dismantle_cost": sum(f.dismantle_cost for f in group),
                 }
+                | (
+                    {"cut_out_speed_exceeded": any(f.cut_out_speed_exceeded for f in group)}
+                    if group_name in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
+                    else {}
+                )
                 for group_name, group in power_facility_groups.items()
             },
             "detail": {
@@ -715,6 +720,11 @@ class Player(db.Model, UserMixin):
                     "upgrade_cost": power_facility.upgrade_cost,
                     "dismantle_cost": power_facility.dismantle_cost,
                 }
+                | (
+                    {"cut_out_speed_exceeded": power_facility.cut_out_speed_exceeded}
+                    if power_facility.facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
+                    else {}
+                )
                 for power_facility in power_facilities
             },
         }
