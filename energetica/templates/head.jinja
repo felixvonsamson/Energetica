@@ -71,6 +71,7 @@
     <script>var socket = io();</script>
     <script src="{{ url_for('static', filename='toasts.js') }}"></script>
     <script src="{{ url_for('static', filename='sockets.js') }}"></script>
+    {# Maybe this script should not be loaded in head, but base. It seems to be causing js console issues #}
     <script src="{{ url_for('static', filename='frontend_data.js') }}"></script>
     {% block scripts %}
     {% endblock scripts %}

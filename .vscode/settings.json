@@ -64,6 +64,7 @@
         "ensp",
         "eventlet",
         "Fukushima",
+        "gameplay",
         "gevent",
         "httpauth",
         "Hydrostrg",
