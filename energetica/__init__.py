@@ -43,7 +43,7 @@ from energetica.init_test_players import init_test_players
 from energetica.simulate import simulate
 from energetica.utils.climate_helpers import data_init_climate
 from energetica.utils.tick_execution import state_update
-from energetica.views import changelog, location_choice_views, overviews, views, wiki
+from energetica.views import changelog, landing, location_choice_views, overviews, views, wiki
 
 
 def get_or_create_flask_secret_key() -> str:
@@ -206,6 +206,7 @@ def create_app(
 
     # add blueprints (website repositories) :
     app.register_blueprint(location_choice_views, url_prefix="/")
+    app.register_blueprint(landing, url_prefix="/")
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(overviews, url_prefix="/production_overview")
     app.register_blueprint(wiki, url_prefix="/wiki")
