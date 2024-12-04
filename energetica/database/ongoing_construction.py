@@ -14,6 +14,14 @@ if TYPE_CHECKING:
 
 
 @dataclass
+class OngoingConstructionData:
+    """Dataclass that stores the data of ongoing constructions."""
+
+    speed: float = None
+    previous_speed: float = None
+
+
+@dataclass
 class OngoingConstructionCache:
     """Cache for the OngoingConstruction class."""
 
@@ -60,10 +68,6 @@ class OngoingConstruction(db.Model):
     # can access player directly with .player
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
-    # TODO: move this to ram data :
-    speed = None
-    _previous_speed = None
-
     def was_paused_by_player(self) -> bool:
         """Returns True if this construction is paused by the player"""
         return self.status == 0
@@ -95,7 +99,13 @@ class OngoingConstruction(db.Model):
         """Delays the construction by the given number of ticks"""
         assert self.is_ongoing()
         self._end_tick_or_ticks_passed += ticks
-        self.speed = 1 - ticks
+        self.data.speed = 1 - ticks
+        print(f"New speed: {self.data.speed} for construction {self.name}")
+
+    @cached_property
+    def data(self) -> OngoingConstructionData:
+        """Return the data of the ongoing construction."""
+        return current_app.config["engine"].data["by_ongoing_construction"][self.id]
 
     @cached_property
     def cache(self) -> OngoingConstructionCache:
@@ -121,16 +131,14 @@ class OngoingConstruction(db.Model):
 
     def updated_speed(self) -> float:
         """Returns the speed of the construction, if it has changed since the last tick"""
-        if self.speed != self._previous_speed:
-            return self.speed
+        if self.data.speed != self.data.previous_speed:
+            return self.data.speed
         return None
 
     def reset_speed(self):
         """Resets the speed of the construction to 1 and stores the previous speed"""
-        print(f"old speed: {self._previous_speed}, new speed: {self.speed}")
-        self._previous_speed = self.speed
-        self.speed = 1
-        print(f"old speed: {self._previous_speed}, new speed: {self.speed}")
+        self.data.previous_speed = self.data.speed
+        self.data.speed = 1
 
     def _compute_prerequisites_and_level(self) -> tuple[list[int], int]:
         """Compute the prerequisites and level of an ongoing construction."""

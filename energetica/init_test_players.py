@@ -112,7 +112,8 @@ def init_test_players(engine):
     setup_network("net2", [player3])
 
     # Player 1
-    player1.money = 1_000_000_000_000
+    player1.money = 1_000_000_000
+    player1.coal = 300_000
 
     add_asset(player1, "molten_salt", 1)
     add_asset(player1, "hydrogen_storage", 1)
@@ -129,7 +130,7 @@ def init_test_players(engine):
     add_asset(player1, "coal_mine", 2)
     add_asset(player1, "uranium_mine", 1)
     add_asset(player1, "warehouse", 1)
-    add_asset(player1, "industry", 10)
+    add_asset(player1, "industry", 16)
     add_asset(player1, "laboratory", 4)
     add_asset(player1, "gas_burner", 1)
     add_asset(player1, "mechanical_engineering", 1)
@@ -143,8 +144,6 @@ def init_test_players(engine):
     add_asset(player1, "PV_solar", 2)
     add_asset(player1, "onshore_wind_turbine", 2)
     add_asset(player1, "CSP_solar", 1)
-    add_asset(player1, "watermill", 3)
-    add_asset(player1, "small_water_dam", 3)
 
     # One level of each technology
     add_asset(player1, "mathematics", 1)
@@ -164,8 +163,6 @@ def init_test_players(engine):
     add_asset(player1, "hydrogen_storage", 1)
     add_asset(player1, "solid_state_batteries", 1)
     add_asset(player1, "gas_drilling_site", 1)
-
-    add_asset(player1, "large_water_dam", 6)
 
     # Player 2
     add_asset(player2, "chemistry", 5)

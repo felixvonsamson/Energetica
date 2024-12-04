@@ -45,7 +45,6 @@ def update_electricity(engine):
     # reset progress speeds fot all ongoing constructions
     ongoing_constructions = OngoingConstruction.query.filter_by(status=2).all()
     for oc in ongoing_constructions:
-        print(oc.speed)
         oc.reset_speed()
 
     for network in networks:
@@ -869,12 +868,13 @@ def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
     ):
         return
     if demand_type == "construction":
+        print("Construction demand reduced")
         construction_priorities = player.read_list("construction_priorities")
         cumul_demand = 0.0
         for i in range(min(len(construction_priorities), player.construction_workers)):
             construction_id = construction_priorities[i]
             construction: OngoingConstruction = db.session.get(OngoingConstruction, construction_id)
-            if construction.is_ongoing():
+            if not construction.is_ongoing():
                 continue
             cumul_demand += construction.construction_power
             if cumul_demand > satisfaction:

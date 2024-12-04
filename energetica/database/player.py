@@ -220,7 +220,7 @@ class Player(db.Model, UserMixin):
 
     @cached_property
     def data(self) -> PlayerData:
-        """Cached property that stores the player data."""
+        """Returns the data for the player."""
         return current_app.config["engine"].data["by_player"][self.id]
 
     @cached_property
@@ -438,7 +438,6 @@ class Player(db.Model, UserMixin):
         player_constructions = OngoingConstruction.query.filter_by(player_id=self.id, status=2).all()
         construction_speeds = {}
         for construction in player_constructions:
-            print(f"old speed: {construction._previous_speed}, new speed: {construction.speed}")
             new_speed = construction.updated_speed()
             if new_speed is not None:
                 construction_speeds[construction.id] = new_speed
@@ -659,11 +658,11 @@ class Player(db.Model, UserMixin):
                     "_end_tick_or_ticks_passed",
                     "duration",
                     "status",
-                    "speed",
                 ]
             }
             | {"display_name": current_app.config["engine"].const_config["assets"][construction.name]["name"]}
             | ({"level": construction.cache.level} if construction.cache.level is not None else {})
+            | {"speed": construction.data.speed}
             for construction in constructions
         }
 

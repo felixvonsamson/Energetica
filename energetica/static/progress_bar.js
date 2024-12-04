@@ -402,9 +402,9 @@ function html_for_progressBar(c_id, index, project_priority, construction) {
   }
   let snail = "";
   if (construction["speed"] < 0.01) {
-    snail = `<span class="progressbar-name medium">
+    snail = `<div class="progressbar-name medium">
             <span class="hover_info"><img src="/static/images/icons/snail_house.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
-        </span>`;
+        </div>`;
   } else if (construction["speed"] < 0.99) {
     snail = `<div class="progressbar-name medium">
             <span class="hover_info"><img src="/static/images/icons/snail.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
