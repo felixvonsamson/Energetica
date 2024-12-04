@@ -135,9 +135,9 @@ class GameEngine(object):
         }
     )
 
-    def __init__(self, clock_time, in_game_seconds_per_tick, random_seed, start_date=None):
+    def __init__(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None):
         self.clock_time = clock_time
-        self.in_game_seconds_per_tick = in_game_seconds_per_tick
+        self.in_game_seconds_per_tick: int = in_game_seconds_per_tick
         self.config = config
         self.const_config = const_config
         self.socketio: SocketIO = None
@@ -156,6 +156,7 @@ class GameEngine(object):
         self.buffered = {}  # stores buffered values for mixed_database
         self.buffered["by_player"] = {}
         self.buffered["by_ongoing_construction"] = {}
+        self.buffered["cut_out_speed_exceeded"] = defaultdict(bool)
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
         self.data["start_date"] = start_date or datetime.now()  # 0 point of server time
