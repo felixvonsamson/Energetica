@@ -4,8 +4,14 @@
 {% endblock title %}
 {% block base %}
     <div id="main_container" class="main_container tan_green">
+
         <div class="flex-row huge title logo_txt" style="font-size: 100px">
             Energetica
+        </div>
+        {# Sign up and login buttons #}
+        <div class="flex-center margin">
+            <a href="{{ url_for('auth.sign_up') }}" class="white login-button padding medium txt_center" style="margin-right:16px;">Sign up</a>
+            <a href="{{ url_for('auth.login') }}" class="white login-button padding medium txt_center">Login</a>
         </div>
         <div class="huge title padding margin medium">
             What is Energetica?
