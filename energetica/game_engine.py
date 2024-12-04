@@ -253,7 +253,7 @@ class GameEngine(object):
             self.data["daily_question"]["player_answers"] = {}
 
 
-class GameException(Exception):
+class GameError(Exception):
     """Define the exception class for the game engine."""
 
     def __init__(self, exception_type, **kwargs):

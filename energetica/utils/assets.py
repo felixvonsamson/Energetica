@@ -11,7 +11,7 @@ from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_construction import OngoingConstruction
 from energetica.database.player import Player
-from energetica.game_engine import Confirm, GameEngine, GameException
+from energetica.game_engine import Confirm, GameEngine, GameError
 from energetica.utils.network_helpers import reorder_facility_priorities
 
 
@@ -196,15 +196,15 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
     engine: GameEngine = current_app.config["engine"]
     if facility is None or facility.player_id != player.id:
         msg = "Construction not found"
-        raise GameException(msg)
+        raise GameError(msg)
 
     upgrade_cost = facility.upgrade_cost
     if upgrade_cost is None:
         msg = "Facility not upgradable"
-        raise GameException(msg)
+        raise GameError(msg)
     if player.money < upgrade_cost:
         msg = "Not enough money"
-        raise GameException(msg)
+        raise GameError(msg)
     player.money -= upgrade_cost
     engine: GameEngine = current_app.config["engine"]
     if facility.facility in engine.extraction_facilities:
@@ -228,7 +228,7 @@ def upgrade_all_of_type(player: Player, facility_name: str) -> None:
     """Upgrade all facilities of a certain type."""
     facilities: list[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
-        with contextlib.suppress(GameException):
+        with contextlib.suppress(GameError):
             upgrade_facility(player, facility)
 
 
@@ -240,10 +240,10 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     engine = current_app.config["engine"]
     if facility is None or facility.player_id != player.id:
         msg = "Facility not found"
-        raise GameException(msg)
+        raise GameError(msg)
     if facility.facility in engine.technologies + engine.functional_facilities:
         msg = "Cannot remove technologies or functional facilities"
-        raise GameException(msg)
+        raise GameError(msg)
     db.session.delete(facility)
     db.session.flush()
     # The cost of decommissioning is 20% of the building cost.
@@ -295,13 +295,13 @@ def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
     """Dismantle a facility."""
     if facility is None or facility.player_id != player.id:
         msg = "Facility not found"
-        raise GameException(msg)
+        raise GameError(msg)
     cost = facility.dismantle_cost
     if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
         cost *= facility.multiplier_2
     if player.money < cost:
         msg = "Not enough money"
-        raise GameException(msg)
+        raise GameError(msg)
     remove_asset(player, facility, decommissioning=False)
     engine: GameEngine = current_app.config["engine"]
     engine.log(f"{player.username} dismantled the facility {facility.facility}.")
@@ -311,7 +311,7 @@ def dismantle_all_of_type(player: Player, facility_name: str) -> None:
     """Dismantle all facilities of a certain type."""
     facilities: list[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
     for facility in facilities:
-        with contextlib.suppress(GameException):
+        with contextlib.suppress(GameError):
             dismantle_facility(player, facility)
 
 
@@ -337,7 +337,7 @@ def queue_project(
 
     if asset not in engine.all_asset_types:
         msg = f"Asset '{asset}' not found"
-        raise GameException(msg)
+        raise GameError(msg)
 
     asset_requirement_status = technology_effects.requirements_status(
         player,
@@ -346,14 +346,14 @@ def queue_project(
     )
     if asset_requirement_status == "unsatisfied" and not ignore_requirements_and_money:
         msg = "Requirements not satisfied"
-        raise GameException(msg)
+        raise GameError(msg)
 
     real_price = technology_effects.construction_price(player, asset)
     duration = technology_effects.construction_time(player, asset)
 
     if player.money < real_price and not ignore_requirements_and_money:
         msg = "Not enough money"
-        raise GameException(msg)
+        raise GameError(msg)
 
     construction_power = technology_effects.construction_power(player, asset)
     if not force and not player.is_in_network:
@@ -450,7 +450,7 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
     engine: GameEngine = current_app.config["engine"]
     if construction is None or construction.player_id != player.id:
         msg = "Construction not found"
-        raise GameException(msg)
+        raise GameError(msg)
     priority_list_name = (
         "research_priorities" if construction.name in engine.technologies else "construction_priorities"
     )
@@ -469,7 +469,7 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
             dependents.append([candidate_dependent.name, candidate_dependent.cache.level])
     if dependents:
         msg = f"Cannot cancel project, the following projects depend on it: {dependents}"
-        raise GameException(msg)
+        raise GameError(msg)
 
     if not force:
         raise Confirm(refund=f"{round(80 * (1 - time_fraction))}%")
@@ -503,7 +503,7 @@ def decrease_project_priority(player, construction):
     engine = current_app.config["engine"]
     if construction is None or construction.player_id != player.id:
         msg = "Construction not found"
-        raise GameException(msg)
+        raise GameError(msg)
     attr = "research_priorities" if construction.name in engine.technologies else "construction_priorities"
 
     priority_list = player.read_list(attr)
@@ -532,7 +532,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
     engine: GameEngine = current_app.config["engine"]
     if construction is None or construction.player_id != player.id:
         msg = "Construction not found"
-        raise GameException(msg)
+        raise GameError(msg)
     priority_list_name = (
         "research_priorities" if construction.name in engine.technologies else "construction_priorities"
     )
@@ -560,7 +560,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
         construction.recompute_prerequisites_and_level()  # force recompute
         if construction.cache.prerequisites:
             msg = "Cannot unpause/start project, it has unfinished prerequisites"
-            raise GameException(msg)
+            raise GameError(msg)
 
         available_workers = (
             player.available_lab_workers()
@@ -570,7 +570,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
 
         if available_workers == 0:
             msg = "No available workers"
-            raise GameException(msg)
+            raise GameError(msg)
 
         # Unpause the construction
         construction.start_time += engine.data["total_t"] - construction.suspension_time

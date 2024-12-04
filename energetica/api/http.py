@@ -26,7 +26,7 @@ from energetica.database.ongoing_construction import OngoingConstruction
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.database.shipment import Shipment
-from energetica.game_engine import Confirm, GameException
+from energetica.game_engine import Confirm, GameError
 from energetica.utils.assets import package_projects_data
 from energetica.utils.misc import flash_error
 
@@ -48,7 +48,7 @@ def log_action(func: callable) -> callable:
             with g.engine.lock:
                 response = func(*args, **kwargs)
             response, status_code = response if isinstance(response, tuple) else (response, response.status_code)
-        except GameException as game_exception:
+        except GameError as game_exception:
             # TODO g.engine.db.rollback()
             response, status_code = jsonify({"response": game_exception.exception_type, **game_exception.kwargs}), 403
         log_entry = {
@@ -591,7 +591,7 @@ def put_resource_on_sale() -> Response:
     price = float(request_data["price"]) / 1000
     try:
         energetica.utils.resource_market.put_resource_on_market(current_user, resource, quantity, price)
-    except GameException as game_exception:
+    except GameError as game_exception:
         if game_exception.exception_type != "notEnoughResource":
             raise
         flash_error(f"You have not enough {resource} available")
@@ -658,7 +658,7 @@ def create_network() -> Response:
     network_name = request_data["network_name"]
     try:
         energetica.utils.network_helpers.create_network(g.engine, current_user, network_name)
-    except GameException as game_exception:
+    except GameError as game_exception:
         match game_exception.exception_type:
             case "nameLengthInvalid":
                 flash("Network name must be between 3 and 40 characters", category="error")
