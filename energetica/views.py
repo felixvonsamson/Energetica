@@ -54,7 +54,6 @@ def location_choice():
     return render_template("location_choice.jinja", engine=current_app.config["engine"])
 
 
-@views.route("/")
 @views.route("/home")
 def home():
     return g.render_template_ctx("dashboard.jinja")
@@ -180,6 +179,7 @@ def emissions():
     return g.render_template_ctx("overviews/emissions.jinja")
 
 
+@landing.route("/")
 @landing.route("/landing")
 def landing_page():
     return g.render_template_ctx("landing.jinja")
