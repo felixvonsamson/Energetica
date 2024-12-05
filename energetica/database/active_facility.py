@@ -89,6 +89,12 @@ class ActiveFacility(db.Model):
         return self.usage
 
     @property
+    def cut_out_speed_exceeded(self) -> bool:
+        """Whether the wind speed for this wind turbine exceeds the cut-out speed."""
+        engine: GameEngine = current_app.config["engine"]
+        return engine.buffered["cut_out_speed_exceeded"][self.id]
+
+    @property
     def efficiency(self) -> float:
         """Efficiency of the facility as a number from 0 to 1."""
         return self.const_config["base_efficiency"] * self.multiplier_3

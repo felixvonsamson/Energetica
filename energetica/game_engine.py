@@ -1,4 +1,4 @@
-"""Here is the logic for the engine of the game"""
+"""Logic for the engine of the game."""
 
 import csv
 import json
@@ -19,7 +19,7 @@ from energetica.database.player import PlayerData
 
 # This is the engine object
 class GameEngine(object):
-    """This class is the engine of the game. It contains all the data and methods to run the game."""
+    """Run the game engine. Contains all the data and methods to operate the game."""
 
     power_facilities = [
         "steam_engine",
@@ -135,9 +135,9 @@ class GameEngine(object):
         }
     )
 
-    def __init__(self, clock_time, in_game_seconds_per_tick, random_seed, start_date=None):
+    def __init__(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None):
         self.clock_time = clock_time
-        self.in_game_seconds_per_tick = in_game_seconds_per_tick
+        self.in_game_seconds_per_tick: int = in_game_seconds_per_tick
         self.config = config
         self.const_config = const_config
         self.socketio: SocketIO = None
@@ -156,6 +156,7 @@ class GameEngine(object):
         self.buffered = {}  # stores buffered values for mixed_database
         self.buffered["by_player"] = {}
         self.buffered["by_ongoing_construction"] = {}
+        self.buffered["cut_out_speed_exceeded"] = defaultdict(bool)
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
         self.data["start_date"] = start_date or datetime.now()  # 0 point of server time
@@ -211,7 +212,7 @@ class GameEngine(object):
             )  # array of length 51 of normalized yearly industry demand variations
 
     def init_loggers(self):
-        """Initializes the loggers for the engine"""
+        """Initialize the loggers for the engine."""
         self.console_logger.setLevel(logging.INFO)
         s_handler = logging.StreamHandler()
         s_handler.setLevel(logging.INFO)
@@ -225,15 +226,15 @@ class GameEngine(object):
         self.action_logger.addHandler(f_handler)
 
     def log(self, message):
-        """Logs a message with the current time in the terminal"""
+        """Log a message with the current time in the terminal."""
         self.console_logger.info(message)
 
     def warn(self, message):
-        """Logs a warning message in the terminal"""
+        """Log a warning message in the terminal."""
         self.console_logger.warning(message)
 
     def package_global_data(self):
-        """This method packages mutable global engine data as a dict to be sent and used on the frontend"""
+        """Package mutable global engine data as a dict to be sent and used on the frontend."""
         return {
             "first_tick_date": self.data["start_date"],
             "tick_length": self.clock_time,
@@ -241,7 +242,7 @@ class GameEngine(object):
         }
 
     def new_daily_question(self, init=False):
-        """Loads a new daily question from the csv file."""
+        """Load a new daily question from the csv file."""
         with open("energetica/static/data/daily_quiz_questions.csv", "r", encoding="utf-8") as file:
             csv_reader = list(csv.DictReader(file))
             if init:
@@ -253,8 +254,8 @@ class GameEngine(object):
             self.data["daily_question"]["player_answers"] = {}
 
 
-class GameException(Exception):
-    """This class is the exception class for the game engine"""
+class GameError(Exception):
+    """Define the exception class for the game engine."""
 
     def __init__(self, exception_type, **kwargs):
         self.exception_type = exception_type
@@ -263,7 +264,9 @@ class GameException(Exception):
 
 
 class Confirm(Exception):
-    """This class is used to ask the player to confirm an action"""
+    """Use this class to ask the player to confirm an action."""
+
+    # TODO(mglst): I think we should remove this class. Instead, we should handle the confirmation in the frontend.
 
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)

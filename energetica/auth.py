@@ -1,4 +1,4 @@
-"""This file contains the functions for authentication and sign-up of users."""
+"""Functions for authentication and sign-up of users."""
 
 import json
 from datetime import datetime
@@ -7,7 +7,6 @@ from flask import Blueprint, current_app, flash, g, redirect, render_template, r
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
-# from energetica.api import websocket
 from energetica.database import db
 from energetica.database.player import Player
 
@@ -15,15 +14,15 @@ auth = Blueprint("auth", __name__)
 
 
 @auth.before_request
-def check_user():
-    """This function is called before every request"""
+def check_user() -> None:
+    """Call this function before every request."""
     g.engine = current_app.config["engine"]
 
 
 # logic for the login :
 @auth.route("/login", methods=["GET", "POST"])
 def login():
-    """This is the endpoint for an attempt to log in"""
+    """Endpoint for attempting to log in."""
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
@@ -53,7 +52,7 @@ def login():
 @auth.route("/logout")
 @login_required
 def logout():
-    """This is the endpoint for logging out"""
+    """Log out the current user."""
     g.engine.log(f"{current_user.username} logged out")
     logout_user()
     return redirect(url_for("auth.login"))
@@ -62,7 +61,7 @@ def logout():
 # logic for the sign-up :
 @auth.route("/sign-up", methods=["GET", "POST"])
 def sign_up():
-    """This is the endpoint for creating a new account"""
+    """Create a new account."""
     if request.method == "POST":
         username = request.form.get("username")
         username = username.strip()

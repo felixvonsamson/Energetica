@@ -1,4 +1,4 @@
-"""This code is run once at the start of the game"""
+"""Initializes the app and the game engine."""
 
 # pylint: disable=wrong-import-order,wrong-import-position
 # ruff: noqa: E402
@@ -18,7 +18,6 @@ import tarfile
 from datetime import datetime
 from pathlib import Path
 
-# import cProfile
 from gevent import monkey
 
 monkey.patch_all(thread=True, time=True)
@@ -47,7 +46,7 @@ from energetica.views import changelog, landing, location_choice_views, overview
 
 
 def get_or_create_flask_secret_key() -> str:
-    """SECRET_KEY for Flask. Loads it from disk if it exists, creates one and stores it otherwise"""
+    """Load or create SECRET_KEY for Flask."""
     filepath = "instance/flask_secret_key.txt"
     if os.path.exists(filepath):
         with open(filepath, "r", encoding="utf-8") as f:
@@ -60,34 +59,26 @@ def get_or_create_flask_secret_key() -> str:
 
 
 def get_or_create_vapid_keys() -> tuple[str, str]:
-    """
-    Public private key pair for vapid push notifications. Loads these from disk if they exists, creates a new pair and
-    stores if otherwise
-    """
+    """Load or create VAPID key pair for push notifications."""
     public_key_filepath = "instance/vapid_public_key.txt"
     private_key_filepath = "instance/vapid_private_key.txt"
-    if os.path.exists(public_key_filepath) and os.path.exists(private_key_filepath):
-        with open(public_key_filepath, "r", encoding="utf-8") as f:
-            public_key = f.read().strip()
-        with open(private_key_filepath, "r", encoding="utf-8") as f:
-            private_key = f.read().strip()
+    if Path(public_key_filepath).exists() and Path(private_key_filepath).exists():
+        public_key = Path(public_key_filepath).read_text(encoding="utf-8").strip()
+        private_key = Path(private_key_filepath).read_text(encoding="utf-8").strip()
         return public_key, private_key
-    else:
-        # Generate a new ECDSA key pair
-        private_key_obj = SigningKey.generate(curve=NIST256p)
-        public_key_obj = private_key_obj.get_verifying_key()
+    # Generate a new ECDSA key pair
+    private_key_obj = SigningKey.generate(curve=NIST256p)
+    public_key_obj = private_key_obj.get_verifying_key()
 
-        # Encode the keys using URL- and filename-safe base64 without padding
-        private_key = base64.urlsafe_b64encode(private_key_obj.to_string()).rstrip(b"=").decode("utf-8")
-        public_key = base64.urlsafe_b64encode(b"\x04" + public_key_obj.to_string()).rstrip(b"=").decode("utf-8")
+    # Encode the keys using URL- and filename-safe base64 without padding
+    private_key = base64.urlsafe_b64encode(private_key_obj.to_string()).rstrip(b"=").decode("utf-8")
+    public_key = base64.urlsafe_b64encode(b"\x04" + public_key_obj.to_string()).rstrip(b"=").decode("utf-8")
 
-        # Write the keys to their respective files
-        with open(public_key_filepath, "w", encoding="utf-8") as f:
-            f.write(public_key)
-        with open(private_key_filepath, "w", encoding="utf-8") as f:
-            f.write(private_key)
+    # Write the keys to their respective files
+    Path(public_key_filepath).write_text(public_key, encoding="utf-8")
+    Path(private_key_filepath).write_text(private_key, encoding="utf-8")
 
-        return public_key, private_key
+    return public_key, private_key
 
 
 def create_app(
@@ -106,7 +97,7 @@ def create_app(
     simulate_profiling=False,
     **kwargs,
 ):
-    """This function sets up the app and the game engine"""
+    """Set up the app and the game engine."""
     # gets lock to avoid multiple instances
     if platform.system() == "Linux":
         lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -217,10 +208,7 @@ def create_app(
 
     @app.route("/subscribe", methods=["GET", "POST"])
     def subscribe():
-        """
-        POST creates a new subscription
-        GET returns vapid public key
-        """
+        """POST: Create a new subscription. GET: Return VAPID public key."""
         if request.method == "GET":
             return jsonify({"public_key": app.config["VAPID_PUBLIC_KEY"]})
         subscription = request.json
@@ -231,9 +219,7 @@ def create_app(
 
     @app.route("/unsubscribe", methods=["POST"])
     def unsubscribe():
-        """
-        POST removes a subscription
-        """
+        """POST: remove a subscription."""
         subscription = request.json
         if subscription in engine.data["notification_subscriptions"][current_user.id]:
             engine.data["notification_subscriptions"][current_user.id].remove(subscription)
@@ -241,9 +227,9 @@ def create_app(
 
     @app.route("/apple-app-site-association")
     def apple_app_site_association():
-        """
-        Returns the apple-app-site-association JSON data needed for supporting
-        associated domains needed for shared webcredentials
+        """Return the apple-app-site-association JSON data.
+
+        Needed for supporting associated domains needed for shared webcredentials
         """
         return send_file("static/apple-app-site-association", as_attachment=True)
 
@@ -284,9 +270,8 @@ def create_app(
     login_manager.init_app(app)
 
     @login_manager.user_loader
-    def load_user(id):
-        player = db.session.get(Player, int(id))
-        return player
+    def load_user(id) -> Player:
+        return db.session.get(Player, int(id))
 
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE

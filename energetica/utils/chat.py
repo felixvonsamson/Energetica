@@ -7,7 +7,7 @@ from flask import current_app
 from energetica.database import db
 from energetica.database.messages import Chat, Message
 from energetica.database.player import PlayerUnreadMessages
-from energetica.game_engine import GameEngine, GameException
+from energetica.game_engine import GameEngine, GameError
 from energetica.utils.misc import display_new_message
 
 
@@ -34,11 +34,11 @@ def check_existing_chats(participants):
 def create_chat(player, buddy):
     """creates a chat with 2 players"""
     if buddy is None:
-        raise GameException("buddyIDDoesNotExist")
+        raise GameError("buddyIDDoesNotExist")
     if buddy.id == player.id:
-        raise GameException("cannotChatWithYourself")
+        raise GameError("cannotChatWithYourself")
     if check_existing_chats([player, buddy]):
-        raise GameException("chatAlreadyExist")
+        raise GameError("chatAlreadyExist")
     new_chat = Chat(
         name=None,
         participants=[player, buddy],
@@ -62,11 +62,11 @@ def create_group_chat(player, chat_name, participants):
 
     """
     if len(chat_name) == 0 or len(chat_name) > 25:
-        raise GameEngine("wrongTitleLength")
+        raise GameException("wrongTitleLength")
     if len(participants) < 3:
-        raise GameEngine("groupTooSmall")
+        raise GameException("groupTooSmall")
     if check_existing_chats(participants):
-        raise GameEngine("chatAlreadyExist")
+        raise GameException("chatAlreadyExist")
     new_chat = Chat(
         name=chat_name,
         participants=participants,
@@ -82,11 +82,11 @@ def add_message(player, message_text, chat):
     """This function is called when a player sends a message in a chat. It returns either success or an error."""
     engine: GameEngine = current_app.config["engine"]
     if player not in chat.participants:
-        raise GameException("notInChat")
+        raise GameError("notInChat")
     if len(message_text) == 0:
-        raise GameException("noMessage")
+        raise GameError("noMessage")
     if len(message_text) > 500:
-        raise GameEngine("messageTooLong", message=message_text)
+        raise GameError("messageTooLong", message=message_text)
     new_message = Message(
         text=message_text,
         time=datetime.now(),

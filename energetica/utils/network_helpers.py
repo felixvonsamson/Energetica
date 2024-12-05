@@ -8,17 +8,17 @@ from energetica.database import db
 from energetica.database.engine_data import CapacityData, CircularBufferNetwork
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.game_engine import GameEngine, GameException
+from energetica.game_engine import GameEngine, GameError
 
 
 def join_network(engine, player, network):
     """shared API method to join a network."""
     if "Unlock Network" not in player.achievements:
-        raise GameException("networkNotUnlocked")
+        raise GameError("networkNotUnlocked")
     if network is None:
-        raise GameException("noSuchNetwork")
+        raise GameError("noSuchNetwork")
     if player.network is not None:
-        raise GameException("playerAlreadyInNetwork")
+        raise GameError("playerAlreadyInNetwork")
     player.network = network
     db.session.commit()
     network.data.capacities.update_network(network)
@@ -46,11 +46,11 @@ def create_network(engine, player, name) -> Network:
     namely it must not be too long, nor too short, and must not already be in
     use."""
     if "Unlock Network" not in player.achievements:
-        raise GameException("networkNotUnlocked")
+        raise GameError("networkNotUnlocked")
     if len(name) < 3 or len(name) > 40:
-        raise GameException("nameLengthInvalid")
+        raise GameError("nameLengthInvalid")
     if Network.query.filter_by(name=name).first() is not None:
-        raise GameException("nameAlreadyUsed")
+        raise GameError("nameAlreadyUsed")
     new_network = Network(name=name, members=[player])
     db.session.add(new_network)
     db.session.commit()
@@ -73,7 +73,7 @@ def leave_network(engine, player):
     """Shared API method for a player to leave a network. Always succeeds."""
     network = player.network
     if network is None:
-        raise GameException("notInNetwork")
+        raise GameError("notInNetwork")
     player.network_id = None
     engine.log(f"{player.username} left the network {network.name}")
     remaining_members_count = Player.query.filter_by(network_id=network.id).count()
@@ -113,9 +113,9 @@ def set_network_prices(engine: GameEngine, player, updated_prices):
 
     for key, updated_price in updated_prices.items():
         if key not in engine.price_keys or not isinstance(updated_price, (int, float)):
-            raise GameException("malformedRequest")
+            raise GameError("malformedRequest")
         if updated_price <= -5:
-            raise GameException("priceTooLow")
+            raise GameError("priceTooLow")
 
     for key, updated_price in updated_prices.items():
         setattr(player, "price_" + key, updated_price)
@@ -135,7 +135,7 @@ def change_facility_priority(engine, player, priority):
         + player.read_list("demand_priorities")
     )
     if old_set != set(priority):
-        raise GameException("malformedRequest")
+        raise GameError("malformedRequest")
     price_list = [getattr(player, "price_" + facility) for facility in priority]
     prices = dict(zip(priority, sorted(price_list)))
     set_network_prices(engine, player, prices)

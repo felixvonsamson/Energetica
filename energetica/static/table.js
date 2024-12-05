@@ -249,6 +249,23 @@ class Table {
                 gauge_text.innerText = `${Math.round(cell_data * 100)}%`;
                 gauge.appendChild(gauge_fill);
                 gauge.appendChild(gauge_text);
+                if ("cut_out_speed_exceeded" in row_data && row_data.cut_out_speed_exceeded) {
+                    gauge.classList.add("hover_info");
+                    const cut_out_speed_exceeded_popup = document.createElement("span");
+                    cut_out_speed_exceeded_popup.classList.add("popup_info");
+                    cut_out_speed_exceeded_popup.classList.add("small");
+                    cut_out_speed_exceeded_popup.innerText = "Cut-out speed exceeded";
+                    const warning_icon = document.createElement("i");
+                    warning_icon.classList.add("fa");
+                    warning_icon.classList.add("fa-exclamation-triangle");
+                    warning_icon.style.setProperty("color", "red");
+                    warning_icon.style.setProperty("z-index", "5");
+                    warning_icon.style.setProperty("position", "absolute");
+                    warning_icon.style.setProperty("top", "3px");
+                    warning_icon.style.setProperty("right", "8px");
+                    gauge.appendChild(warning_icon);
+                    gauge.appendChild(cut_out_speed_exceeded_popup);
+                }
                 cell_element.appendChild(gauge);
             } else {
                 if (column.populate_cell_content === undefined) {

@@ -18,7 +18,7 @@ from energetica.database.map import Hex
 from energetica.database.messages import Chat, Message, Notification
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.game_engine import GameEngine, GameException
+from energetica.game_engine import GameEngine, GameError
 from energetica.utils.astro import DrHI
 
 # Helper functions and data initialization utilities
@@ -207,10 +207,10 @@ def confirm_location(engine: GameEngine, player: Player, location: Hex) -> None:
     """
     if location.player_id is not None:
         # Location already taken
-        raise GameException("locationOccupied", by=location.player_id)
+        raise GameError("locationOccupied", by=location.player_id)
     if player.tile is not None:
         # Player has already chosen a location and cannot chose again
-        raise GameException("choiceUnmodifiable")
+        raise GameError("choiceUnmodifiable")
 
     # Checks have succeeded, proceed
     location.player_id = player.id
@@ -248,7 +248,7 @@ def submit_quiz_answer(engine: GameEngine, player: Player, answer: str) -> bool:
     """Return True if the answer was correct, False otherwise."""
     quiz_data = engine.data["daily_question"]
     if player.id in quiz_data["player_answers"]:
-        raise GameException("quizAlreadyAnswered")
+        raise GameError("quizAlreadyAnswered")
     quiz_data["player_answers"][player.id] = answer
     if answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":
         player.xp += 1
