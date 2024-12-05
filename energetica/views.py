@@ -10,6 +10,7 @@ from energetica.database.messages import Chat
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
 
+landing = Blueprint("landing", __name__, static_folder="static")
 location_choice_views = Blueprint("location_choice_views", __name__)
 views = Blueprint("views", __name__)
 overviews = Blueprint("overviews", __name__, static_folder="static")
@@ -34,6 +35,7 @@ def set_ctx():
     g.render_template_ctx = render_template_ctx
 
 
+@landing.before_request
 @wiki.before_request
 @changelog.before_request
 def set_ctx_no_login():
@@ -52,7 +54,6 @@ def location_choice():
     return render_template("location_choice.jinja", engine=current_app.config["engine"])
 
 
-@views.route("/")
 @views.route("/home")
 def home():
     return g.render_template_ctx("dashboard.jinja")
@@ -176,6 +177,12 @@ def emissions():
     if not player.discovered_greenhouse_gas_effect():
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/emissions.jinja")
+
+
+@landing.route("/")
+@landing.route("/landing")
+def landing_page():
+    return g.render_template_ctx("landing.jinja")
 
 
 @wiki.route("/<template_name>")
