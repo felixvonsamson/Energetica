@@ -633,6 +633,8 @@ def wind_generation(engine: GameEngine, player: Player, generation: dict, in_gam
                 )
                 # multiplier_2 is the wind speed factor linked to the position of the facility:
                 effective_wind_speed = wind_speed * facility.multiplier_2
+                if facility_type == "offshore_wind_turbine":
+                    effective_wind_speed *= 1.26
                 facility.usage = interpolate_wind(effective_wind_speed)
                 generation[facility_type] += facility.usage * max_power
                 # The following value is the index of the last value in the wind_power_curve list in config.assets that
