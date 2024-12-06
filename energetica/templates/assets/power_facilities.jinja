@@ -38,6 +38,11 @@
     {% else %}
       {% set high_hydro_cost = false | tojson %}
     {% endif %}
+    {% if "low_wind_speed" in facility_data and facility_data.low_wind_speed %}
+      {% set low_wind_speed = true | tojson %}
+    {% else %}
+      {% set low_wind_speed = false | tojson %}
+    {% endif %}
     <div id="{{ facility }}"
          class="bone margin facility small"
          onclick="show_construction('{{ facility }}');">
@@ -135,12 +140,12 @@
           <div class="flex-col construction_button_container hidden">
             {% if facility_data.requirements_status == "unsatisfied" %}
               <b id="construction_button" class="padding medium margin txt_center white txt-red"
-                 onclick="launch_power_facility_project('{{ facility }}', {{ high_hydro_cost }});">
+                 onclick="launch_power_facility_project('{{ facility }}', {{ high_hydro_cost }}, {{ low_wind_speed }});">
                 Locked
               </b>
             {% else %}
               <b id="construction_button" class="padding medium button margin txt_center white"
-                 onclick="launch_power_facility_project('{{ facility }}', {{ high_hydro_cost }});">
+                 onclick="launch_power_facility_project('{{ facility }}', {{ high_hydro_cost }}, {{ low_wind_speed }});">
                 Start construction
               </b>
             {% endif %}
@@ -175,12 +180,12 @@
           <div class="flex-col">
             {% if facility_data.requirements_status == "unsatisfied" %}
               <b id="construction_button_mobile" class="padding medium margin txt_center white txt-red"
-                 onclick="event.stopPropagation(); launch_power_facility_project('{{ facility }}', {{ high_hydro_cost }});">
+                 onclick="event.stopPropagation(); launch_power_facility_project('{{ facility }}', {{ high_hydro_cost }}, {{ low_wind_speed }});">
                 Locked
               </b>
             {% else %}
               <b id="construction_button_mobile" class="padding medium button margin txt_center white"
-                 onclick="event.stopPropagation(); launch_power_facility_project('{{ facility }}', {{ high_hydro_cost }});">
+                 onclick="event.stopPropagation(); launch_power_facility_project('{{ facility }}', {{ high_hydro_cost }}, {{ low_wind_speed }});">
                 Start construction
               </b>
             {% endif %}

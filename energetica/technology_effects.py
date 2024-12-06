@@ -602,8 +602,13 @@ def package_power_facilities(player: Player) -> list[dict]:
             else {}
         )
         | (
-            {"high_hydro_cost": True or hydro_price_multiplier(player, power_facility) >= 13.0}
+            {"high_hydro_cost": hydro_price_multiplier(player, power_facility) >= 13.0}
             if power_facility in ["watermill", "small_water_dam", "large_water_dam"]
+            else {}
+        )
+        | (
+            {"low_wind_speed": wind_speed_multiplier(player, power_facility) <= 1.5}
+            if power_facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
             else {}
         )
         for power_facility in engine.power_facilities
