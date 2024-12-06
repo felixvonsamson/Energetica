@@ -432,29 +432,30 @@ def generate_background_resources(map):
             tile.score += tile.uranium
 
 
-solar_potentials = calculate_solar_potentials()
-for m in range(10):
-    map = []
-    for i in range(mapsize):
-        map.append(Tile(i))
-    generate_solar(map, solar_potentials)
-    generate_hydro(map)
-    calculate_risk(map)
-    generate_coal(map)
-    generate_gas(map)
-    generate_uranium(map)
-    generate_wind(map)
-    generate_background_resources(map)
-    for tile in map:
-        tile.risk = round(tile.risk, 1)
-    max_score = 0
-    min_score = 0
-    for tile in map:
-        tile.score = tile.solar + tile.wind + tile.hydro + tile.coal + tile.gas + tile.uranium - tile.risk
-        if tile.score > max_score:
-            max_score = tile.score
-        if tile.score < min_score:
-            min_score = tile.score
-    for tile in map:
-        tile.score = (tile.score - min_score) / (max_score - min_score)
-    save_as_csv(map, m)
+if __name__ == "__main__":
+    solar_potentials = calculate_solar_potentials()
+    for m in range(10):
+        map = []
+        for i in range(mapsize):
+            map.append(Tile(i))
+        generate_solar(map, solar_potentials)
+        generate_hydro(map)
+        calculate_risk(map)
+        generate_coal(map)
+        generate_gas(map)
+        generate_uranium(map)
+        generate_wind(map)
+        generate_background_resources(map)
+        for tile in map:
+            tile.risk = round(tile.risk, 1)
+        max_score = 0
+        min_score = 0
+        for tile in map:
+            tile.score = tile.solar + tile.wind + tile.hydro + tile.coal + tile.gas + tile.uranium - tile.risk
+            if tile.score > max_score:
+                max_score = tile.score
+            if tile.score < min_score:
+                min_score = tile.score
+        for tile in map:
+            tile.score = (tile.score - min_score) / (max_score - min_score)
+        save_as_csv(map, m)
