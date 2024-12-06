@@ -63,15 +63,6 @@ if __name__ == "__main__":
             "CSP_solar",
             lambda irradiance: irradiance * CSP_BASE_POWER / 1000,
         ),
-        # Profile(
-        #     "PV_solar_exp_decay",
-        #     lambda irradiance: irradiance
-        #     / 1000
-        #     * 4
-        #     * min(0.25, math.exp(-3 * irradiance / 1000))
-        #     * PV_BASE_POWER
-        #     * 1.3,
-        # ),
         Profile(
             "PV_solar_linear_efficiency",
             lambda irradiance: 0.7 * irradiance * PV_BASE_POWER / 1000 * 20 / 3 * (0.3 - 0.15 * irradiance / 1000),
