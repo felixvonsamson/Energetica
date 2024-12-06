@@ -52,8 +52,6 @@ if __name__ == "__main__":
         / const_config["assets"]["CSP_solar"]["base_price"]
         / const_config["assets"]["CSP_solar"]["O&M_factor_per_day"]
     )
-    (u1, v1) = (0.2, 0.0)
-    (a1, b1, c1) = uv_to_abc(u1, v1)
     profiles = [
         Profile(
             "PV_solar",
