@@ -13,10 +13,8 @@ function launch_power_facility_project(facility, high_hydro_cost, low_wind_speed
         document.getElementById('are_you_sure_popup')?.classList.remove('hidden');
         // @ts-ignore
         const are_you_sure_content = document.getElementById('are_you_sure_content').innerHTML =
-            `Are you sure you want to proceed with building this hydro facility?<br>
-            The costs are high and it may not be cost-effective.<br>
-            Learn more about <a href="/wiki/map#hydro_potential">Hydro Potential</a> in the wiki.
-            `;
+            `Build this hydro facility? High costs may outweigh benefits. 
+            Learn more: <a href="/wiki/map#hydro_potential">Hydro Potential</a>.`;
         // @ts-ignore
         document.getElementById('yes_im_sure').onclick = () => {
             start_construction(facility, 'Power facilities');
@@ -29,9 +27,8 @@ function launch_power_facility_project(facility, high_hydro_cost, low_wind_speed
         document.getElementById('are_you_sure_popup')?.classList.remove('hidden');
         // @ts-ignore
         const are_you_sure_content = document.getElementById('are_you_sure_content').innerHTML =
-            `Are you sure you want to proceed with building this facility?
-            It will have poor yields because the wind speeds for this locations are low.<br>
-            Learn more about <a href="/wiki/map#wind_potential">Wind Potential</a> in the wiki.
+            `Build this wind facility? Low wind speeds will reduce yields. 
+            Learn more: <a href="/wiki/map#wind_potential">Wind Potential</a>.
             `;
         // @ts-ignore
         document.getElementById('yes_im_sure').onclick = () => {
