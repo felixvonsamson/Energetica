@@ -49,7 +49,7 @@ class Hex {
 let h, w;
 let size_param = 10; //indicates the size of the map
 let s = 280 / size_param; //displayed size of the hexagon tiles
-let mapsize = size_param * (size_param + 1) * 3 + 1; //lenght of the list that contains the hexagon tiles
+let mapsize = size_param * (size_param + 1) * 3 + 1; //length of the list that contains the hexagon tiles
 let map = [];
 let resources = ["Solar", "Wind", "Hydro", "Coal", "Gas", "Uranium", "Climate risk"];
 let validate;
@@ -103,7 +103,7 @@ function setup() {
         canvas_height = 0.86 * windowWidth;
     }
     let canvas = createCanvas(min(canvas_width, 1200), min(canvas_height, 950));
-    canvas.parent("map_visalisation");
+    canvas.parent("map_visualization");
     colorMode(HSB);
     textFont(font);
     textAlign(CENTER, CENTER);
@@ -182,7 +182,7 @@ function draw() {
     pop();
 }
 
-// This function makes the link between (q, r) coordonates and the tile id.
+// This function makes the link between (q, r) coordinates and the tile id.
 function mouse_to_id(mouseX, mouseY) {
     let r = floor((mouseY - height / 2 + 0.75 * s) / (0.75 * h));
     let q = floor((mouseX - width / 2 + 0.5 * w - 0.5 * w * r) / w);

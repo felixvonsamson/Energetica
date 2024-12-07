@@ -18,14 +18,14 @@
            style="width:39px">×</div>
     </div>
     <div class="margin medium">
-      <p>On this page you will find facilities with unique abilites and their specific information.</p>
+      <p>On this page you will find facilities with unique abilities and their specific information.</p>
       <p>
         For more information about Functional facilities, refer to 
         <a href="{{ url_for('wiki.render_template_wiki', template_name='functional_facilities') }}">this section in the wiki</a>.
       </p>
     </div>
   </div>
-  <div id="under_construction">{# Facilites under construction will show here #}</div>
+  <div id="under_construction">{# Facilities under construction will show here #}</div>
   {% for facility_data in constructions %}
     {% set facility = facility_data.name %}
     <div id="{{ facility_data.name }}"

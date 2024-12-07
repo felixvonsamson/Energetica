@@ -66,10 +66,10 @@
     <a href="/home">Dashboard</a>. For more information about the weather simulation, see 
     <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='solar_irradiance') }}">Solar Irradiance</a>.
   </p>
-  <p>The formula for total power generation of solar facilties:</p>
+  <p>The formula for total power generation of solar facilities:</p>
   <ul style="list-style: none;"><li>
     <i class="fa fa-angle-double-right padding"></i>\(P_s(t) = \sum_{n} \frac{ irr_{n}(t) }{1000W/m²} \times P_{max,n} \)<br>
-    where \(irr_{n}\) is the current irradiance at the loaction of facility \(n\) in W/m², 
+    where \(irr_{n}\) is the current irradiance at the location of facility \(n\) in W/m², 
     \(1000 W/m²\) is the maximal irradiance and \(P_{max,n}\) is the max power generation of the
     facility \(n\).
   </li></ul>
@@ -111,10 +111,10 @@
   </p>
   <div class="graph-container">
     <img src="{{ url_for('static', filename='images/wiki/seasonal_variation_rivers.jpg') }}"
-         alt="Seasonal variataions of river discharges"
+         alt="Seasonal variations of river discharges"
          id="seasonal_variation_rivers_graph">
   </div>
-  <p>Formula for total power generation of hydropower facilty type i:</p>
+  <p>Formula for total power generation of hydropower facility type i:</p>
   <ul style="list-style: none;"><li>
     <i class="fa fa-angle-double-right padding"></i>\(P_h(t) = \sum_{n} sv(t) \times P_{max,n} \)<br>
     where \(sv\) is the seasonal variation shown in the graph, \(t\) is the in-game date 
@@ -182,7 +182,7 @@
   <p>
     Construction projects are undertaken by construction workers. Each worker can focus on a single construction at a 
     time. Construction projects can be paused, cancelled, and reordered. If a construction is immediately cancelled, 80% 
-    of the facility's price will be refunded, with a proportionaly decreasing refund as construction progresses. Upon completing a 
+    of the facility's price will be refunded, with a proportionally decreasing refund as construction progresses. Upon completing a 
     construction, a worker will automatically move on to the next project in the list, if possible.
   </p>
   <p>If the energy demand for constructions isn't met, it is paused, except for the initial phase, during which a ramping up period is allowed. 
@@ -193,18 +193,18 @@
     increase the speed of construction projects.
   </p>
   <p>
-    When a facility is buit, a random location inside the player's tile is assigned to it. This is especially important 
+    When a facility is built, a random location inside the player's tile is assigned to it. This is especially important 
     for wind and solar facilities, as their output is influenced by the weather conditions at their location.
   </p>
 
   <h3>Lifespan of a Facility</h3>
   <p>
-    Each facility has an operational lifespan. At the end of its lifespan, a facility is automatically decommisionned 
+    Each facility has an operational lifespan. At the end of its lifespan, a facility is automatically decommissioned 
     at a cost equivalent to 20% of its original price.
   </p>
   <p>
     It is also possible to dismantle a facility before the end of its lifespan. This can be done in the 
-    <a href="/profile">Profile page</a> and happens instantly. The dismantling process has the same cost as decomissioning.
+    <a href="/profile">Profile page</a> and happens instantly. The dismantling process has the same cost as decommissioning.
   </p>
 
   <h3>Upgrades</h3>

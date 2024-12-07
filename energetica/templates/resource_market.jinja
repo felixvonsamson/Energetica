@@ -95,7 +95,7 @@
                 <img class="img"
                      src="{{ url_for('static', filename='images/resources/'+sale.resource+'_img.jpg') }}">
                 <div id="infos" class="flex-col medium">
-                    <span id="available_quantitiy_{{ sale.id }}" class="large"></span>
+                    <span id="available_quantity_{{ sale.id }}" class="large"></span>
                     <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ sale.quantity }}) + " {{ sale.resource }}";</script>
                     <span class="large"><b></b>
                     <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ sale.price * 1000 }});</script>

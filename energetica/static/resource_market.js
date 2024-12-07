@@ -46,7 +46,7 @@ function buy_resource(saleId) {
                     if (raw_data["available_quantity"] == 0) {
                         document.getElementById("tile_" + saleId).remove();
                     } else {
-                        available_quantity = document.getElementById("available_quantitiy_" + saleId);
+                        available_quantity = document.getElementById("available_quantity_" + saleId);
                         available_quantity.innerHTML = format_mass(raw_data["available_quantity"]) + raw_data["resource"];
                     }
                     sessionStorage.setItem(
@@ -57,12 +57,12 @@ function buy_resource(saleId) {
                 } else if (response == "notEnoughMoney") {
                     addError("Not enough money");
                 } else if (response == "invalidQuantity") {
-                    addError("The quantitiy needs to be grater than 0 and cannot exceed the available quantity");
+                    addError("The quantity needs to be grater than 0 and cannot exceed the available quantity");
                 } else if (response == "removedFromMarket") {
                     if (raw_data["available_quantity"] == 0) {
                         document.getElementById("tile_" + saleId).remove();
                     } else {
-                        available_quantity = document.getElementById("available_quantitiy_" + saleId);
+                        available_quantity = document.getElementById("available_quantity_" + saleId);
                         available_quantity.innerHTML = format_mass(raw_data["available_quantity"]) + raw_data["resource"];
                     }
                     addToast(`You removed ${format_mass(raw_data["quantity"])} of ${raw_data["resource"]} from the market`);

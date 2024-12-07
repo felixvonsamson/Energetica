@@ -31,7 +31,7 @@
       </p>
     </div>
   </div>
-  <div id="under_construction">{# Facilites under construction will show here #}</div>
+  <div id="under_construction">{# Facilities under construction will show here #}</div>
   {% for facility_data in constructions %}
     {% set facility = facility_data.name %}
     <div id="{{ facility }}"
@@ -146,7 +146,7 @@
           <div class="construction_info">
             <span class="hover_info">
               <i class="fa fa-clock-o"></i>&ensp;
-              <strong class="constructionn_time"></strong>
+              <strong class="construction_time"></strong>
               <script>document.currentScript.previousElementSibling.innerHTML = format_duration({{ facility_data.construction_time }});</script>
               <span class="popup_info small">Duration in-game (real)</span>
             </span>
