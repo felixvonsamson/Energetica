@@ -9,7 +9,6 @@ from flask import current_app
 from energetica.database import db
 
 if TYPE_CHECKING:
-    from energetica.database.player import Player
     from energetica.game_engine import GameEngine
 
 
@@ -91,7 +90,7 @@ class OngoingConstruction(db.Model):
 
         engine: GameEngine = current_app.config["engine"]
         player: Player = Player.query.get(self.player_id)
-        if self._prerequisites or player.available_workers(self.family) < 1:
+        if self.cache.prerequisites or player.available_workers(self.family) < 1:
             self.status = 1
         else:
             self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
@@ -102,7 +101,6 @@ class OngoingConstruction(db.Model):
         assert self.is_ongoing()
         self._end_tick_or_ticks_passed += ticks
         self.data.speed = 1 - ticks
-        print(f"New speed: {self.data.speed} for construction {self.name}")
 
     @cached_property
     def data(self) -> OngoingConstructionData:

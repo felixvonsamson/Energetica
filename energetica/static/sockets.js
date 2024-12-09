@@ -94,9 +94,8 @@ socket.on("new_values", function (changes) {
         sessionStorage.setItem("cumulative_emissions", JSON.stringify(changes.cumulative_emissions));
 
         construction_updates = changes.construction_updates;
-        if (construction_updates) {
+        if (Object.keys(construction_updates).length > 0) {
             constructions_data = JSON.parse(sessionStorage.getItem("constructions"));
-            console.log(construction_updates);
             for (var construction_id in construction_updates) {
                 let construction = constructions_data[0][construction_id];
                 construction.speed = construction_updates[construction_id].speed;

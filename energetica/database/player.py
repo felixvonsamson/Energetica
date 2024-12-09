@@ -436,7 +436,9 @@ class Player(db.Model, UserMixin):
         This method returns a dictionary of the constructions for which the progress speed has changed. For each of
         these constructions, the dictionary contains the new speed and the new end_tick.
         """
-        player_constructions = OngoingConstruction.query.filter_by(player_id=self.id, status=2).all()
+        player_constructions: list[OngoingConstruction] = OngoingConstruction.query.filter_by(
+            player_id=self.id, status=2
+        ).all()
         construction_speeds = {}
         for construction in player_constructions:
             new_speed = construction.updated_speed()

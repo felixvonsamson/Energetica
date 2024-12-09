@@ -399,8 +399,11 @@ function display_progressBars(construction_data, shipment_data) {
 
 function html_for_progressBar(c_id, index, project_priority, construction) {
   let playPauseLogo = "fa-pause";
-  if (construction["pause_tick"]) {
+  if (construction["status"] == 0) {
     playPauseLogo = "fa-play";
+  }
+  if (construction["status"] == 1) {
+    playPauseLogo = "fa-hourglass-half";
   }
   let snail = "";
   if (construction["speed"] < 0.01) {

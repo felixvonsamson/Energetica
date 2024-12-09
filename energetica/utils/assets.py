@@ -492,7 +492,7 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
     invalidate_data_on_project_update(engine, player, construction.name)
 
 
-def decrease_project_priority(player, construction, pausing=False):
+def decrease_project_priority(player, construction):
     """
     Decrease the priority of an ongoing construction.
     This function is executed when a player changes the order of ongoing constructions.
@@ -510,14 +510,14 @@ def decrease_project_priority(player, construction, pausing=False):
         construction_1: OngoingConstruction = construction
         construction_2: OngoingConstruction = db.session.get(OngoingConstruction, priority_list[index + 1])
 
-        if construction_1.is_ongoing() and construction_2.is_ongoing():
+        if construction_1.is_ongoing() and not construction_2.is_ongoing():
             # construction_1 is not paused, but construction_2 is
             toggle_pause_project(player, construction_1)
             toggle_pause_project(player, construction_2)
-            priority_list[index + 1], priority_list[index] = (
-                priority_list[index],
-                priority_list[index + 1],
-            )
+        priority_list[index + 1], priority_list[index] = (
+            priority_list[index],
+            priority_list[index + 1],
+        )
         setattr(player, attr, ",".join(map(str, priority_list)))
         db.session.commit()
         # TODO(mglst): This should be re-enabled when the websocket is re-enabled
@@ -561,8 +561,8 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
     else:
         # project is currently pause, and should be unpaused
         construction.unpause()
-
-        if not construction.prerequisites(recompute=True) and player.available_workers(construction.family) > 0:
+        del construction.cache._prerequisites_and_level
+        if not construction.cache.prerequisites and player.available_workers(construction.family) > 0:
             # The project can be started immediately
             # Reorder the priority list
             priority_list = player.read_list(priority_list_name)

@@ -888,7 +888,6 @@ def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
     ):
         return
     if demand_type == "construction":
-        print("Construction demand reduced")
         construction_priorities = player.read_list("construction_priorities")
         cumul_demand = 0.0
         for i in range(min(len(construction_priorities), player.construction_workers)):
