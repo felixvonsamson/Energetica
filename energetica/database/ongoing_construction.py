@@ -63,7 +63,7 @@ class OngoingConstruction(db.Model):
     )  # in game ticks when the construction will be finished or ticks passed if it is paused
     duration = db.Column(db.Float)  # in game ticks
     # time at witch the construction has been paused if it has else None
-    status = db.Column(db.Integer)  # 0 for paused, 1 for waiting, 2 for ongoing
+    status = db.Column(db.Integer)  # 0 for paused, 1 for waiting, 2 for ongoing. See ConstructionStatus
     # Power consumed and emissions produced by the construction
     construction_power = db.Column(db.Float)
     construction_pollution = db.Column(db.Float)

@@ -20,7 +20,7 @@ from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData
 from energetica.database.messages import Chat, Message, Notification, player_chats
-from energetica.database.ongoing_construction import OngoingConstruction
+from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -253,7 +253,7 @@ class Player(db.Model, UserMixin):
         occupied_workers = (
             OngoingConstruction.query.filter(OngoingConstruction.player_id == self.id)
             .filter(OngoingConstruction.family != "Technologies")
-            .filter(OngoingConstruction.status == 2)
+            .filter(OngoingConstruction.status == ConstructionStatus.ONGOING)
             .count()
         )
         return self.construction_workers - occupied_workers
@@ -263,7 +263,7 @@ class Player(db.Model, UserMixin):
         occupied_workers = (
             OngoingConstruction.query.filter(OngoingConstruction.player_id == self.id)
             .filter(OngoingConstruction.family == "Technologies")
-            .filter(OngoingConstruction.status == 2)
+            .filter(OngoingConstruction.status == ConstructionStatus.ONGOING)
             .count()
         )
         return self.lab_workers - occupied_workers
@@ -437,7 +437,7 @@ class Player(db.Model, UserMixin):
         these constructions, the dictionary contains the new speed and the new end_tick.
         """
         player_constructions: list[OngoingConstruction] = OngoingConstruction.query.filter_by(
-            player_id=self.id, status=2
+            player_id=self.id, status=ConstructionStatus.ONGOING
         ).all()
         construction_speeds = {}
         for construction in player_constructions:
