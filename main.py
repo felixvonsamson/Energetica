@@ -1,10 +1,9 @@
 #!/usr/bin/env -S python3 -u
+"""Launch the game."""
 
 import argparse
 
 from energetica import create_app
-
-"""This code launches the game"""
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -33,14 +32,19 @@ if __name__ == "__main__":
         action="store_true",
     )
     parser.add_argument(
-        "--random_seed", type=int, default=42, help="Set the random seed", choices=range(0, 65536), metavar="{0..65535}"
+        "--random_seed",
+        type=int,
+        default=42,
+        help="Set the random seed",
+        choices=range(65536),
+        metavar="{0..65535}",
     )
     parser.add_argument(
         "--port",
         type=int,
         default=5001,
         help="Port on witch the server should run",
-        choices=range(0, 65536),
+        choices=range(65536),
         metavar="{0..65535}",
     )
     parser.add_argument(

@@ -8,14 +8,14 @@ from flask import current_app
 from energetica.database import db
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.database.shipment import Shipment
-from energetica.game_engine import GameException
+from energetica.game_engine import GameError
 from energetica.utils.formatting import display_money, format_mass
 
 
 def put_resource_on_market(player, resource, quantity, price):
     """Put an offer on the resource market"""
     if getattr(player, resource) - getattr(player, resource + "_on_sale") < quantity:
-        raise GameException("notEnoughResource")
+        raise GameError("notEnoughResource")
     setattr(
         player,
         resource + "_on_sale",
@@ -37,7 +37,7 @@ def buy_resource_from_market(player, quantity, sale):
     engine = current_app.config["engine"]
 
     if quantity is None or quantity <= 0 or quantity > sale.quantity:
-        raise GameException("invalidQuantity")
+        raise GameError("invalidQuantity")
     total_price = sale.price * quantity
     if player == sale.player:
         # Player is buying their own resource
@@ -52,7 +52,7 @@ def buy_resource_from_market(player, quantity, sale):
         db.session.commit()
     else:
         if total_price > player.money:
-            raise GameException("notEnoughMoney")
+            raise GameError("notEnoughMoney")
         # Player buys form another player
         sale.quantity -= quantity
         player.money -= total_price

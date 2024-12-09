@@ -7,7 +7,7 @@
 <div class="medium margin-large">
 
   <p>
-    Once a player unlocks the climate change achievement (Research chemistry lvl 1), they will have acess to the page 
+    Once a player unlocks the climate change achievement (Research chemistry lvl 1), they will have access to the page 
     <a href="{{ url_for('overviews.emissions') }}">Emissions</a> in the production overviews. There they will see the 
     servers CO<sub>2</sub> concentration, the server's climate and their personal emissions.
   </p>
@@ -18,25 +18,25 @@
     <a href="#coldwave" class="nav-button">Coldwave</a>
     <a href="#wildfire" class="nav-button">Wildfire</a>
     <a href="#flood" class="nav-button">Flood</a>
-    <a href="#huricane" class="nav-button">Huricane</a>
+    <a href="#hurricane" class="nav-button">Hurricane</a>
   </div>
 
   <h2 id="co2_emissions">CO<sub>2</sub> Emissions</h2>
   <p>
     Sources of CO<sub>2</sub> emissions are constructions and all facilities that consume fuel plus the steam engine (controllable 
-    facilities). Aditionally, the functional facility <a href="{{ url_for('wiki.render_template_wiki', template_name='functional_facilities', _anchor='Carbon_Capture') }}">Carbon Capture</a>
+    facilities). Additionally, the functional facility <a href="{{ url_for('wiki.render_template_wiki', template_name='functional_facilities', _anchor='Carbon_Capture') }}">Carbon Capture</a>
     can absorb CO<sub>2</sub> from the atmosphere and store it. 
   </p>
   <p>
     The atmosphere is shared between all players and the CO<sub>2</sub> emitted by all players will increase the server's CO<sub>2</sub> concentration.
     The reference value for the server's "natural" CO<sub>2</sub> concentration is <span class="hover_info">300 ppm
-    <span class="popup_info small">parts per million</span></span> wich corresponds to a base value of 40 Mt of CO<sub>2</sub> in the atmosphere.
+    <span class="popup_info small">parts per million</span></span> which corresponds to a base value of 40 Mt of CO<sub>2</sub> in the atmosphere.
   </p>
 
   <h2 id="climate">Climate</h2>
   <p>
     The server's climate is represented by the global average temperature (GAT). The GAT has a natural seasonal variation 
-    due to the asymetric distribution of land and water on the planet. Due to the important role of CO<sub>2</sub> in the
+    due to the asymmetric distribution of land and water on the planet. Due to the important role of CO<sub>2</sub> in the
     greenhouse effect, the server's climate will be affected by the server's CO<sub>2</sub> concentration. 
   </p>
   <p>
@@ -50,18 +50,18 @@
 
   <h2 id="climate_events">Climate Events</h2>
   <p>
-    Climate events have a low chance of occuring naturally every game tick however, the probability of their occurence 
+    Climate events have a low chance of occurring naturally every game tick however, the probability of their occurrence 
     increases with climate change. Climate events are always negative and can have a wide range of consequences. 
   </p>
   <p>
     All tiles do not have the same risk of being affected by a climate event. A climate risk score is visible in the 
-    <a href="/map_view">Map</a> that indicates the probaility and the severity of the climate events in each tile.
+    <a href="/map_view">Map</a> that indicates the probability and the severity of the climate events in each tile.
   </p>
 
   <h3 id="heatwave">Heatwave</h3>
 
   <p>
-    Heatwaves have a higher chance of occuring with higher global temperatures. They have a big impact on the population, 
+    Heatwaves have a higher chance of occurring with higher global temperatures. They have a big impact on the population, 
     especially the elderly and the sick. Heatwaves can also have a negative impact on battery storage technologies and 
     can cause overheating and in some cases permanent damage.
   </p>
@@ -69,16 +69,16 @@
   <div class="flex-col">
     <table class="table bone">
       <tr>
-        <th>Rcovery time</th>
+        <th>Recovery time</th>
         <td>3 days</td>
       </tr>
       <tr>
-        <th>Rcovery cost</th>
+        <th>Recovery cost</th>
         <td>25% of current industry revenues</td>
       </tr>
       <tr>
         <th>Affected tiles</th>
-        <td>7 (1 and its 6 neigbours)</td>
+        <td>7 (1 and its 6 neighbors)</td>
       </tr>
       <tr>
         <th>Destruction<br>chances</th>
@@ -91,9 +91,9 @@
   </div>
 
   <p>
-    The probability of the occurence of a heatwave is affected by both the global temperature anomaly (the bigger the 
+    The probability of the occurrence of a heatwave is affected by both the global temperature anomaly (the bigger the 
     deviation the higher the risk) and the server's current GAT (the higher the temperature the higher the risk). The 
-    following table shows the expected occurence of heatwaves per 
+    following table shows the expected occurrence of heatwaves per 
     <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     Reference GAT and the temperature anomaly.
   </p>
@@ -235,9 +235,9 @@
   </div>
 
   <p>
-    When a heatwave occurs, the tile it will affect (with it's neigbours) is chosen randomly following a normal 
+    When a heatwave occurs, the tile it will affect (with it's neighbors) is chosen randomly following a normal 
     distribution around the equator. This means that the risk is higher in southern tiles and almost zero in northern
-    tiles. The following figure shows the probability distribution overlayed on the map. 
+    tiles. The following figure shows the probability distribution overlaid on the map. 
   </p>
 
   <div class="graph-container">
@@ -247,7 +247,7 @@
 
   <p>
     Note that the risks on the edges on the map are lower. 
-    This is due to these tiles having less neigbours and therefore reducing the risk of 
+    This is due to these tiles having less neighbors and therefore reducing the risk of 
     being affected by a nearby heatwave. Considering that the map is an island, we can also explain the lower risks 
     on the edges by the fact that the ocean has a moderating effect on the temperature.
   </p>
@@ -255,23 +255,23 @@
   <h3 id="coldwave">Coldwave</h3>
 
   <p>
-    Coldwaves have a higher chance of occuring with lower global temperatures. They have a big impact on the population, 
+    Coldwaves have a higher chance of occurring with lower global temperatures. They have a big impact on the population, 
     especially the elderly.
   </p>
 
   <div class="flex-col">
     <table class="table bone">
       <tr>
-        <th>Rcovery time</th>
+        <th>Recovery time</th>
         <td>3 days</td>
       </tr>
       <tr>
-        <th>Rcovery cost</th>
+        <th>Recovery cost</th>
         <td>25% of current industry revenues</td>
       </tr>
       <tr>
         <th>Affected tiles</th>
-        <td>7 (1 and its 6 neigbours)</td>
+        <td>7 (1 and its 6 neighbors)</td>
       </tr>
       <tr>
         <th>Destruction<br>chances</th>
@@ -280,9 +280,9 @@
   </div>he server's
 
   <p>
-    The probability of the occurence of a coldwave is affected by both the global temperature anomaly (the bigger the 
+    The probability of the occurrence of a coldwave is affected by both the global temperature anomaly (the bigger the 
     deviation the higher the risk) and the servers current GAT (the lower the temperature the higher the risk). The 
-    following table shows the expected occurence of coldwaves per 
+    following table shows the expected occurrence of coldwaves per 
     <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     Reference GAT and the temperature anomaly.
   </p>
@@ -424,10 +424,10 @@
   </div>
 
   <p>
-    When a coldwave occurs, the tile it will affect (with it's neigbours) is chosen randomly following a normal 
+    When a coldwave occurs, the tile it will affect (with it's neighbors) is chosen randomly following a normal 
     distribution around the north pole. This means that the risk is higher in northern tiles and almost zero in southern
-    tiles. Again the border tiles have lower risks due to therir lower neighbor count. The following figure shows the 
-    probability distribution overlayed on the map.
+    tiles. Again the border tiles have lower risks due to their lower neighbor count. The following figure shows the 
+    probability distribution overlaid on the map.
   </p>
 
   <div class="graph-container">
@@ -438,7 +438,7 @@
   <h3 id="wildfire">Wildfire</h3>
 
   <p>
-    Wildfires have a higher chance of occuring with higher global temperatures. They can damage facilities near forests 
+    Wildfires have a higher chance of occurring with higher global temperatures. They can damage facilities near forests 
     and have a chance of cause an important reduction of the industries productivity. In addition to that, wildfires 
     will release important amounts of CO<sub>2</sub> in the atmosphere (10 kt).
   </p>
@@ -446,16 +446,16 @@
   <div class="flex-col">
     <table class="table bone">
       <tr>
-        <th>Rcovery time</th>
+        <th>Recovery time</th>
         <td>2 days</td>
       </tr>
       <tr>
-        <th>Rcovery cost</th>
+        <th>Recovery cost</th>
         <td>60% of current industry revenues</td>
       </tr>
       <tr>
         <th>Affected tiles</th>
-        <td>7 (1 and its 6 neigbours)</td>
+        <td>7 (1 and its 6 neighbors)</td>
       </tr>
       <tr>
         <th>Destruction<br>chances</th>
@@ -476,8 +476,8 @@
   </div>
 
   <p>
-    The probability of the occurence of a wildfire is affected by the servers current GAT, the higher the temperature 
-    the higher the risk. The following table shows the expected occurence of wildfires per 
+    The probability of the occurrence of a wildfire is affected by the servers current GAT, the higher the temperature 
+    the higher the risk. The following table shows the expected occurrence of wildfires per 
     <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     Reference GAT and the temperature anomaly.
   </p>
@@ -599,10 +599,10 @@
   </div>
 
   <p>
-    When a wildfire occurs, the tile it will affect (with it's neigbours) is chosen randomly following a normal 
+    When a wildfire occurs, the tile it will affect (with it's neighbors) is chosen randomly following a normal 
     distribution around the 30° latitude line. This means that the risk is higher in tiles in the south but in the far 
-    south we consider less vegetation and terefore less wilfire risks. Again the border tiles have lower risks due to 
-    therir lower neighbor count. The following figure shows the probability distribution overlayed on the map.
+    south we consider less vegetation and therefore less wildfire risks. Again the border tiles have lower risks due to 
+    their lower neighbor count. The following figure shows the probability distribution overlaid on the map.
   </p>
 
   <div class="graph-container">
@@ -613,7 +613,7 @@
   <h3 id="flood">Flood</h3>
 
   <p>
-    Floods can only occur in tiles with a hydro potential higher than 20% and have a higher chance of occuring with 
+    Floods can only occur in tiles with a hydro potential higher than 20% and have a higher chance of occurring with 
     higher global temperatures anomaly. They can damage facilities near rivers and have a chance of cause an important 
     reduction of the industries productivity. Floods might destroy water dams and if this happens, the flood will be 
     propagated to the downstream tiles.
@@ -622,11 +622,11 @@
   <div class="flex-col">
     <table class="table bone">
       <tr>
-        <th>Rcovery time</th>
+        <th>Recovery time</th>
         <td>6 days</td>
       </tr>
       <tr>
-        <th>Rcovery cost</th>
+        <th>Recovery cost</th>
         <td>50% of current industry revenues</td>
       </tr>
       <tr>
@@ -652,15 +652,15 @@
   </div>
 
   <p>
-    The probability of the occurence of a flood is affected by the servers current temperature anomaly, the higher the
-    deviation the higher the risk. The following graph shows the expected occurence of floods per 
+    The probability of the occurrence of a flood is affected by the servers current temperature anomaly, the higher the
+    deviation the higher the risk. The following graph shows the expected occurrence of floods per 
     <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     temperature anomaly.
   </p>
 
   <div class="graph-container">
-    <img src="{{ url_for('static', filename='images/wiki/expected_occurence_flood.jpg') }}"
-         alt="Expected occurence graph for floods">
+    <img src="{{ url_for('static', filename='images/wiki/expected_occurrence_flood.jpg') }}"
+         alt="Expected occurrence graph for floods">
   </div>
 
   <p>
@@ -668,22 +668,22 @@
     20%.
   </p>
 
-  <h3 id="huricane">Huricane</h3>
+  <h3 id="hurricane">hurricane</h3>
 
   <p>
-    The huricane is the most destructive climate event. It can ocurr anywhere on the map and will affect a large area.
-    Huricanes can destroy facilities and have a high chance of cause an important reduction of the industries 
+    The hurricane is the most destructive climate event. It can occur anywhere on the map and will affect a large area.
+    hurricanes can destroy facilities and have a high chance of cause an important reduction of the industries 
     productivity.
   </p>
 
   <div class="flex-col">
     <table class="table bone">
       <tr>
-        <th>Rcovery time</th>
+        <th>Recovery time</th>
         <td>7 days</td>
       </tr>
       <tr>
-        <th>Rcovery cost</th>
+        <th>Recovery cost</th>
         <td>80% of current industry revenues</td>
       </tr>
       <tr>
@@ -705,19 +705,19 @@
   </div>
 
   <p>
-    The probability of the occurence of a huricane is affected by the servers current temperature anomaly, the higher the
-    deviation the higher the risk. The following graph shows the expected occurence of huricanes per 
+    The probability of the occurrence of a hurricane is affected by the servers current temperature anomaly, the higher the
+    deviation the higher the risk. The following graph shows the expected occurrence of hurricanes per 
     <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game day</a> depending on the 
     temperature anomaly.
   </p>
 
   <div class="graph-container">
-    <img src="{{ url_for('static', filename='images/wiki/expected_occurence_huricane.jpg') }}"
-         alt="Expected occurence graph for huricanes">
+    <img src="{{ url_for('static', filename='images/wiki/expected_occurrence_hurricane.jpg') }}"
+         alt="Expected occurrence graph for hurricanes">
   </div>
 
   <p>
-    When a huricane occurs, the tile it will affect is chosen randomly among all tiles.
+    When a hurricane occurs, the tile it will affect is chosen randomly among all tiles.
   </p>
 
 

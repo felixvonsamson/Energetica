@@ -18,21 +18,31 @@
     <div class="margin medium">
       <p>On this page you will find all the facilities that generate electricity and their respective information.</p>
       <p>
-        When clicking on a specific tile, it will extend the tile and show you more information about the facility aswell 
+        When clicking on a specific tile, it will extend the tile and show you more information about the facility as well 
         as a button to start the construction of the facility.
       </p>
       <p>
         Some facilities might be locked and require certain technologies to be unlocked. To research technologies, you 
         need a laboratory.
       </p>
-        For more information about power facilites, refer to
+        For more information about power facilities, refer to
         <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities') }}">this section in the wiki</a>.
       </p>
     </div>
   </div>
-  <div id="under_construction">{# Facilites under construction will show here #}</div>
+  <div id="under_construction">{# Facilities under construction will show here #}</div>
   {% for facility_data in constructions %}
     {% set facility = facility_data.name %}
+    {% if "high_hydro_cost" in facility_data and facility_data.high_hydro_cost %}
+      {% set high_hydro_cost = true | tojson %}
+    {% else %}
+      {% set high_hydro_cost = false | tojson %}
+    {% endif %}
+    {% if "low_wind_speed" in facility_data and facility_data.low_wind_speed %}
+      {% set low_wind_speed = true | tojson %}
+    {% else %}
+      {% set low_wind_speed = false | tojson %}
+    {% endif %}
     <div id="{{ facility }}"
          class="bone margin facility small"
          onclick="show_construction('{{ facility }}');">
@@ -130,12 +140,12 @@
           <div class="flex-col construction_button_container hidden">
             {% if facility_data.requirements_status == "unsatisfied" %}
               <b id="construction_button" class="padding medium margin txt_center white txt-red"
-                 onclick="start_construction('{{ facility }}', 'Power facilities');">
+                 onclick="launch_power_facility_project('{{ facility }}', {{ high_hydro_cost }}, {{ low_wind_speed }});">
                 Locked
               </b>
             {% else %}
               <b id="construction_button" class="padding medium button margin txt_center white"
-                 onclick="start_construction('{{ facility }}', 'Power facilities');">
+                 onclick="launch_power_facility_project('{{ facility }}', {{ high_hydro_cost }}, {{ low_wind_speed }});">
                 Start construction
               </b>
             {% endif %}
@@ -170,12 +180,12 @@
           <div class="flex-col">
             {% if facility_data.requirements_status == "unsatisfied" %}
               <b id="construction_button_mobile" class="padding medium margin txt_center white txt-red"
-                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
+                 onclick="event.stopPropagation(); launch_power_facility_project('{{ facility }}', {{ high_hydro_cost }}, {{ low_wind_speed }});">
                 Locked
               </b>
             {% else %}
               <b id="construction_button_mobile" class="padding medium button margin txt_center white"
-                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Power facilities');">
+                 onclick="event.stopPropagation(); launch_power_facility_project('{{ facility }}', {{ high_hydro_cost }}, {{ low_wind_speed }});">
                 Start construction
               </b>
             {% endif %}
@@ -269,7 +279,7 @@
                 </tr>
               {% endif %}
             {% endfor %}
-            {# CO2 Emssions #}
+            {# CO2 Emissions #}
             {% if facility_data.pollution is defined %}
               <tr>
                 <td>CO<sub>2</sub> emissions</td>
@@ -297,5 +307,6 @@
 {% block additional_script %}
   <script src="{{ url_for('static', filename='click_construction.js') }}"></script>
   <script src="{{ url_for('static', filename='progress_bar.js') }}"></script>
+  <script src="{{ url_for('static', filename='power_facilities.js') }}"></script>
   <script>refresh_progressBar()</script>
 {% endblock additional_script %}

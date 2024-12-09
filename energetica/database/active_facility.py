@@ -58,7 +58,7 @@ class ActiveFacility(db.Model):
         return self.real_base_cost * self.price_multiplier
 
     @property
-    def installed_cap(self) -> float:
+    def max_power_generation(self) -> float:
         """Max power output of the facility in W."""
         return self.const_config["base_power_generation"] * self.multiplier_1
 
@@ -89,14 +89,25 @@ class ActiveFacility(db.Model):
         return self.usage
 
     @property
+    def cut_out_speed_exceeded(self) -> bool:
+        """Whether the wind speed for this wind turbine exceeds the cut-out speed."""
+        engine: GameEngine = current_app.config["engine"]
+        return engine.buffered["cut_out_speed_exceeded"][self.id]
+
+    @property
     def efficiency(self) -> float:
         """Efficiency of the facility as a number from 0 to 1."""
         return self.const_config["base_efficiency"] * self.multiplier_3
 
     @property
+    def daily_op_cost(self) -> float:
+        """Cost to operate the facility per in-game day."""
+        return self.total_cost * self.const_config["O&M_factor_per_day"]
+
+    @property
     def hourly_op_cost(self) -> float:
         """Cost to operate the facility per in-game hour."""
-        return self.total_cost * self.const_config["O&M_factor_per_day"] / 24
+        return self.daily_op_cost / 24
 
     @property
     def max_power_use(self) -> float:

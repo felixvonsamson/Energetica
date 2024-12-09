@@ -601,6 +601,16 @@ def package_power_facilities(player: Player) -> list[dict]:
             if power_facility in engine.controllable_facilities + engine.storage_facilities
             else {}
         )
+        | (
+            {"high_hydro_cost": hydro_price_multiplier(player, power_facility) >= 13.0}
+            if power_facility in ["watermill", "small_water_dam", "large_water_dam"]
+            else {}
+        )
+        | (
+            {"low_wind_speed": wind_speed_multiplier(player, power_facility) <= 1.5}
+            if power_facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
+            else {}
+        )
         for power_facility in engine.power_facilities
     ]
 
@@ -645,6 +655,17 @@ def package_extraction_facilities(player: Player) -> list[dict]:
         msg = f"unknown resource {resource}"
         raise ValueError(msg)
 
+    def production_will_be_poor(tile: Hex, resource: str) -> bool:
+        """Return whether extracting the resource will be poor."""
+        if resource == "coal":
+            return tile.coal < 500_000_000
+        if resource == "gas":
+            return tile.gas < 180_000_000
+        if resource == "uranium":
+            return tile.uranium < 2_400_000
+        msg = f"unknown resource {resource}"
+        raise ValueError(msg)
+
     return [
         _package_asset_base(player, extraction_facility)
         | _package_power_storage_extraction_facility_base(player, extraction_facility)
@@ -661,6 +682,7 @@ def package_extraction_facilities(player: Player) -> list[dict]:
                 * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
                 / 24,
             },
+            "poor_resource_production": production_will_be_poor(player.tile, facility_to_resource[extraction_facility]),
         }
         for extraction_facility in engine.extraction_facilities
     ]

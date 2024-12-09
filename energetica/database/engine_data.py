@@ -61,18 +61,12 @@ class CapacityData:
         for facility in active_facilities:
             base_data = engine.const_config["assets"][facility.facility]
             effective_values = self._data[facility.facility]
-            op_costs = (
-                base_data["base_price"]
-                * facility.price_multiplier
-                * base_data["O&M_factor_per_day"]
-                * engine.in_game_seconds_per_tick
-                / (24 * 3600)
-            )
+            op_costs = facility.daily_op_cost * engine.in_game_seconds_per_tick / (24 * 3600)
             if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
                 op_costs *= facility.multiplier_2
             effective_values["O&M_cost"] += op_costs
             if facility.facility in engine.power_facilities:
-                power_gen = base_data["base_power_generation"] * facility.multiplier_1
+                power_gen = facility.max_power_generation
                 effective_values["power"] += power_gen
                 for fuel in effective_values["fuel_use"]:
                     effective_values["fuel_use"][fuel] += (
@@ -84,14 +78,14 @@ class CapacityData:
                         / 1_000_000
                     )
             elif facility.facility in engine.storage_facilities:
-                power_gen = base_data["base_power_generation"] * facility.multiplier_1
+                power_gen = facility.max_power_generation
                 # mean efficiency
                 effective_values["efficiency"] = (
                     (effective_values["efficiency"] * effective_values["power"])
                     + (base_data["base_efficiency"] * facility.multiplier_3 * power_gen)
                 ) / (effective_values["power"] + power_gen)
                 effective_values["power"] += power_gen
-                effective_values["capacity"] += base_data["base_storage_capacity"] * facility.multiplier_2
+                effective_values["capacity"] += facility.storage_capacity
             elif facility.facility in engine.extraction_facilities:
                 effective_values["extraction_rate_per_day"] += (
                     base_data["base_extraction_rate_per_day"] * facility.multiplier_2

@@ -738,7 +738,7 @@ const_config = {
     },
 }
 
-wind_power_curve = [
+wind_power_curve: list[float] = [
     0,
     0,
     0,
