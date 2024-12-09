@@ -14,7 +14,7 @@ class Shipment(db.Model):
     pause_tick = db.Column(db.Integer, default=None)  # time at witch the shipment has been paused if it has
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player
 
-    def delay_by(self, ticks: int):
+    def delay_by(self, ticks: float):
         """Delays the shipment by the given number of ticks"""
         self.arrival_tick += ticks
 

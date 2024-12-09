@@ -104,7 +104,7 @@ class OngoingConstruction(db.Model):
             self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
             self.status = ConstructionStatus.ONGOING
 
-    def delay_by(self, ticks: int):
+    def delay_by(self, ticks: float):
         """Delays the construction by the given number of ticks"""
         assert self.is_ongoing()
         self._end_tick_or_ticks_passed += ticks
