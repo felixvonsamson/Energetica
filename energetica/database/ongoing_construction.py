@@ -137,7 +137,7 @@ class OngoingConstruction(db.Model):
         else:
             return self._end_tick_or_ticks_passed / self.duration
 
-    def updated_speed(self) -> float:
+    def updated_speed(self) -> float | None:
         """Returns the speed of the construction except if it is 1 and unchanged since last tick"""
         if self.data.speed != self.data.previous_speed or self.data.speed != 1:
             return self.data.speed
