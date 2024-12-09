@@ -12,6 +12,14 @@ if TYPE_CHECKING:
     from energetica.game_engine import GameEngine
 
 
+class ConstructionStatus:
+    """Class that stores the status of ongoing constructions."""
+
+    PAUSED = 0
+    WAITING = 1
+    ONGOING = 2
+
+
 @dataclass
 class OngoingConstructionData:
     """Dataclass that stores the data of ongoing constructions."""
@@ -69,11 +77,11 @@ class OngoingConstruction(db.Model):
 
     def was_paused_by_player(self) -> bool:
         """Returns True if this construction is paused by the player"""
-        return self.status == 0
+        return self.status == ConstructionStatus.PAUSED
 
     def is_ongoing(self) -> bool:
         """Returns True if this construction is not paused and has no requirements"""
-        return self.status == 2
+        return self.status == ConstructionStatus.ONGOING
 
     def pause(self):
         """Make this facility go from waiting or ongoing to paused"""
@@ -81,7 +89,7 @@ class OngoingConstruction(db.Model):
         engine: GameEngine = current_app.config["engine"]
         if self.is_ongoing():
             self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
-        self.status = 0
+        self.status = ConstructionStatus.PAUSED
 
     def unpause(self):
         """Make this facility go from paused to either waiting or ongoing"""
@@ -91,10 +99,10 @@ class OngoingConstruction(db.Model):
         engine: GameEngine = current_app.config["engine"]
         player: Player = Player.query.get(self.player_id)
         if self.cache.prerequisites or player.available_workers(self.family) < 1:
-            self.status = 1
+            self.status = ConstructionStatus.WAITING
         else:
             self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
-            self.status = 2
+            self.status = ConstructionStatus.ONGOING
 
     def delay_by(self, ticks: int):
         """Delays the construction by the given number of ticks"""
@@ -124,7 +132,7 @@ class OngoingConstruction(db.Model):
     def progress(self) -> float:
         """Returns the progress of the construction, as a float between 0 and 1"""
         engine: GameEngine = current_app.config["engine"]
-        if self.status == 2:
+        if self.status == ConstructionStatus.ONGOING:
             return (self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]) / self.duration
         else:
             return self._end_tick_or_ticks_passed / self.duration
