@@ -504,26 +504,28 @@ def decrease_project_priority(player, construction):
         raise GameError(msg)
     attr = "research_priorities" if construction.name in engine.technologies else "construction_priorities"
 
-    priority_list = player.read_list(attr)
+    priority_list: list[int] = player.read_list(attr)
     index = priority_list.index(construction.id)
-    if 0 <= index < len(priority_list) - 1:
-        construction_1: OngoingConstruction = construction
-        construction_2: OngoingConstruction = db.session.get(OngoingConstruction, priority_list[index + 1])
+    if index == len(priority_list) - 1:
+        return
 
-        if construction_1.is_ongoing() and not construction_2.is_ongoing():
-            # construction_1 is not paused, but construction_2 is
-            # TODO(mglst): projects should only ever be paused when the player does so explicitly
-            toggle_pause_project(player, construction_1)
-            toggle_pause_project(player, construction_2)
-        priority_list[index + 1], priority_list[index] = (
-            priority_list[index],
-            priority_list[index + 1],
-        )
-        setattr(player, attr, ",".join(map(str, priority_list)))
-        db.session.commit()
-        # TODO(mglst): This should be re-enabled when the websocket is re-enabled
-        # from energetica.api import websocket
-        # websocket.rest_notify_constructions(engine, player)
+    construction_1: OngoingConstruction = construction
+    construction_2: OngoingConstruction = db.session.get(OngoingConstruction, priority_list[index + 1])
+
+    if construction_1.is_ongoing() and not construction_2.is_ongoing():
+        # construction_1 is not paused, but construction_2 is
+        # TODO(mglst): projects should only ever be paused when the player does so explicitly
+        toggle_pause_project(player, construction_1)
+        toggle_pause_project(player, construction_2)
+    priority_list[index + 1], priority_list[index] = (
+        priority_list[index],
+        priority_list[index + 1],
+    )
+    setattr(player, attr, ",".join(map(str, priority_list)))
+    db.session.commit()
+    # TODO(mglst): This should be re-enabled when the websocket is re-enabled
+    # from energetica.api import websocket
+    # websocket.rest_notify_constructions(engine, player)
 
 
 def toggle_pause_project(player: Player, construction: OngoingConstruction) -> None:
