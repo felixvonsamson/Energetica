@@ -9,7 +9,7 @@ from flask import current_app
 from energetica import technology_effects
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.ongoing_construction import OngoingConstruction
+from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
 from energetica.database.player import Player
 from energetica.game_engine import Confirm, GameEngine, GameError
 from energetica.utils.network_helpers import reorder_facility_priorities
@@ -403,7 +403,7 @@ def queue_project(
     db.session.commit()
 
     priority_list_name = "research_priorities" if asset in engine.technologies else "construction_priorities"
-    if status == 2:
+    if status == ConstructionStatus.ONGOING:
         # Add this project to the priority list, before all paused projects, but after all existing ongoing projects
         priority_list = player.read_list(priority_list_name)
         insertion_index = 0
@@ -512,6 +512,7 @@ def decrease_project_priority(player, construction):
 
         if construction_1.is_ongoing() and not construction_2.is_ongoing():
             # construction_1 is not paused, but construction_2 is
+            # TODO(mglst): projects should only ever be paused when the player does so explicitly
             toggle_pause_project(player, construction_1)
             toggle_pause_project(player, construction_2)
         priority_list[index + 1], priority_list[index] = (
@@ -540,44 +541,42 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
 
     if not construction.was_paused_by_player():
         # project is currently not paused by player, and should be paused
-        if not construction.is_ongoing():
-            construction.pause()
+        construction.pause()
+        # Reorder the priority list
+        priority_list: list[int] = player.read_list(priority_list_name)
+        priority_list.remove(construction.id)
+        insertion_index: int | None = None
+        for new_index, other_construction_id in enumerate(priority_list):
+            other_construction: OngoingConstruction = db.session.get(OngoingConstruction, other_construction_id)
+            if other_construction.was_paused_by_player():
+                insertion_index = new_index
+                break
+        if insertion_index is not None:
+            priority_list.insert(insertion_index, construction.id)
         else:
-            construction.pause()
-            priority_list: list[int] = player.read_list(priority_list_name)
-            priority_list.remove(construction.id)
-            insertion_index = None
-            for new_index, other_construction_id in enumerate(priority_list):
-                other_construction: OngoingConstruction = db.session.get(OngoingConstruction, other_construction_id)
-                if not other_construction.is_ongoing():
-                    insertion_index = new_index
-                    break
-            if insertion_index is not None:
-                priority_list.insert(insertion_index, construction.id)
-            else:
-                priority_list.append(construction.id)
-            player.write_list(priority_list_name, priority_list)
+            priority_list.append(construction.id)
+        player.write_list(priority_list_name, priority_list)
         engine.log(f"{player.username} paused the construction {construction.id} {construction.name}")
     else:
         # project is currently pause, and should be unpaused
+        del construction.cache._prerequisites_and_level  # Needed to force recompute, as prerequisites aren't
+        # automatically removed when they are finished
         construction.unpause()
-        del construction.cache._prerequisites_and_level
-        if not construction.cache.prerequisites and player.available_workers(construction.family) > 0:
-            # The project can be started immediately
-            # Reorder the priority list
-            priority_list = player.read_list(priority_list_name)
-            priority_list.remove(construction.id)
-            insertion_index = None
-            for new_index, other_construction_id in enumerate(priority_list):
-                other_construction: OngoingConstruction = OngoingConstruction.query.get(other_construction_id)
-                if not other_construction.is_ongoing():
-                    insertion_index = new_index
-                    break
-            if insertion_index is not None:
-                priority_list.insert(insertion_index, construction.id)
-            else:
-                priority_list.append(construction.id)
-            player.write_list(priority_list_name, priority_list)
+        # project status is now ONGOING or WAITING.
+        # Reorder the priority list
+        priority_list = player.read_list(priority_list_name)
+        priority_list.remove(construction.id)
+        insertion_index = None
+        for new_index, other_construction_id in enumerate(priority_list):
+            other_construction: OngoingConstruction = OngoingConstruction.query.get(other_construction_id)
+            if other_construction.status < construction.status:
+                insertion_index = new_index
+                break
+        if insertion_index is not None:
+            priority_list.insert(insertion_index, construction.id)
+        else:
+            priority_list.append(construction.id)
+        player.write_list(priority_list_name, priority_list)
         engine.log(f"{player.username} unpaused the construction {construction.id} {construction.name}")
 
     db.session.commit()
