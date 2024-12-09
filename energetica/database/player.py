@@ -418,7 +418,7 @@ class Player(db.Model, UserMixin):
     def send_new_data(self, new_values) -> None:
         """Send the new data to the player's clients."""
         engine = current_app.config["engine"]
-        construction_speeds = self.get_construction_speed_updates()
+        construction_updates = self.get_construction_updates()
         self.emit(
             "new_values",
             {
@@ -427,20 +427,24 @@ class Player(db.Model, UserMixin):
                 "climate_values": engine.data["current_climate_data"].get_last_data(),
                 "cumulative_emissions": self.data.cumul_emissions.get_all(),
                 "money": self.money,
-                "construction_speeds": construction_speeds,
+                "construction_updates": construction_updates,
             },
         )
 
-    def get_construction_speed_updates(self):
+    def get_construction_updates(self):
         """
-        This method returns a dictionary of the constructions for which the progress speed has changed and the new speed
+        This method returns a dictionary of the constructions for which the progress speed has changed. For each of
+        these constructions, the dictionary contains the new speed and the new end_tick.
         """
         player_constructions = OngoingConstruction.query.filter_by(player_id=self.id, status=2).all()
         construction_speeds = {}
         for construction in player_constructions:
             new_speed = construction.updated_speed()
             if new_speed is not None:
-                construction_speeds[construction.id] = new_speed
+                construction_speeds[construction.id] = {
+                    "speed": new_speed,
+                    "end_tick": construction._end_tick_or_ticks_passed,
+                }
         return construction_speeds
 
     def notify(self, title: str, message: str) -> None:

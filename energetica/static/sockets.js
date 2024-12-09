@@ -93,14 +93,20 @@ socket.on("new_values", function (changes) {
 
         sessionStorage.setItem("cumulative_emissions", JSON.stringify(changes.cumulative_emissions));
 
-        constructions_data = JSON.parse(sessionStorage.getItem("constructions"));
-        construction_speeds = changes.construction_speeds;
-        console.log(construction_speeds);
-        for (var construction_id in construction_speeds) {
-            let construction = constructions_data[0][construction_id];
-            construction.speed = construction_speeds[construction_id];
+        construction_updates = changes.construction_updates;
+        if (construction_updates) {
+            constructions_data = JSON.parse(sessionStorage.getItem("constructions"));
+            console.log(construction_updates);
+            for (var construction_id in construction_updates) {
+                let construction = constructions_data[0][construction_id];
+                construction.speed = construction_updates[construction_id].speed;
+                construction._end_tick_or_ticks_passed = construction_updates[construction_id].end_tick;
+            }
+            sessionStorage.setItem("constructions", JSON.stringify(constructions_data));
+            if (typeof display_progressBars === "function") {
+                display_progressBars(constructions_data, null);
+            }
         }
-        sessionStorage.setItem("constructions", JSON.stringify(constructions_data));
 
         if (typeof fetch_graph_data === "function") {
             fetch_graph_data();

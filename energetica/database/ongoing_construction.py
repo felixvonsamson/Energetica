@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 class OngoingConstructionData:
     """Dataclass that stores the data of ongoing constructions."""
 
-    speed: float = None
-    previous_speed: float = None
+    speed: float = 1
+    previous_speed: float = 1
 
 
 @dataclass
@@ -87,6 +87,8 @@ class OngoingConstruction(db.Model):
     def unpause(self):
         """Make this facility go from paused to either waiting or ongoing"""
         assert self.was_paused_by_player()
+        from energetica.database.player import Player
+
         engine: GameEngine = current_app.config["engine"]
         player: Player = Player.query.get(self.player_id)
         if self._prerequisites or player.available_workers(self.family) < 1:
@@ -130,8 +132,8 @@ class OngoingConstruction(db.Model):
             return self._end_tick_or_ticks_passed / self.duration
 
     def updated_speed(self) -> float:
-        """Returns the speed of the construction, if it has changed since the last tick"""
-        if self.data.speed != self.data.previous_speed:
+        """Returns the speed of the construction except if it is 1 and unchanged since last tick"""
+        if self.data.speed != self.data.previous_speed or self.data.speed != 1:
             return self.data.speed
         return None
 
