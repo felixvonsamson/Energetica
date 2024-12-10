@@ -7,6 +7,7 @@ CSP (Concentrated Solar Power) on the contrary have a drop off in performance wh
 import math
 import os
 import sys
+from datetime import datetime, timedelta
 
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
@@ -16,6 +17,7 @@ sys.path.append(os.getcwd())
 
 # from energetica.database.map import Hex
 from energetica.config.assets import const_config
+from energetica.utils.astro import DrHI
 from energetica.utils.misc import calculate_solar_irradiance
 from map_generation.map_generation import calculate_solar_potentials
 
@@ -55,15 +57,19 @@ if __name__ == "__main__":
     profiles = [
         Profile(
             "PV_solar",
-            lambda irradiance: irradiance * PV_BASE_POWER / 1000,
+            lambda irradiance: irradiance / 1000 * (PV_BASE_POWER / 0.7),  # This is how it was before
         ),
         Profile(
             "CSP_solar",
-            lambda irradiance: irradiance * CSP_BASE_POWER / 1000,
+            lambda irradiance: irradiance * (CSP_BASE_POWER / 2.0) / 1000,
         ),
         Profile(
             "PV_solar_linear_efficiency",
-            lambda irradiance: 0.7 * irradiance * PV_BASE_POWER / 1000 * 20 / 3 * (0.3 - 0.15 * irradiance / 1000),
+            lambda irradiance: irradiance / 1000 * (PV_BASE_POWER) * ((0.3 - 0.15 * irradiance / 1000) / 0.15),
+        ),
+        Profile(
+            "CSP_solar_modified",
+            lambda irradiance: irradiance * CSP_BASE_POWER / 1000 * irradiance / 1000,
         ),
     ]
 
@@ -76,6 +82,11 @@ if __name__ == "__main__":
         y = r * 0.5 * 3**0.5
         power = {profile.name: [] for profile in profiles}
         for t in time_of_day:
+            # total_seconds = t
+            # start_date = datetime(2023, 7, 1)  # 6 months offset because i'm using the southern hemisphere
+            # day_of_year = int((total_seconds / 3600 / 24 / 72) % 1 * 365)
+            # weather_datetime = start_date + timedelta(days=day_of_year, seconds=total_seconds % (3600 * 24))
+            # irradiance = DrHI(weather_datetime.timestamp(), (y - 10) * 70 / 21, 0)
             irradiance = calculate_solar_irradiance(x, y, t, SEED)
             irradiance_data[r].append(irradiance)
             for profile in profiles:
@@ -96,7 +107,7 @@ if __name__ == "__main__":
     plt.figure()
 
     profile_a = profiles[-1]
-    profile_b = profiles[1]
+    profile_b = profiles[-2]
     plt.plot(
         latitudes,
         [x / y for x, y in zip(data_for_profile[profile_a.name], data_for_profile[profile_b.name])],
@@ -112,7 +123,7 @@ if __name__ == "__main__":
     def irradiance_histograms():
         plt.figure("Irradiance histogram")
         for r in latitudes:
-            THRESHOLD = 20
+            THRESHOLD = -100
             irradiance_data[r] = [x for x in irradiance_data[r] if x > THRESHOLD]
             points_above_threshold = len(irradiance_data[r])
             density = stats.gaussian_kde(irradiance_data[r])
@@ -122,5 +133,7 @@ if __name__ == "__main__":
         plt.xlabel("Irradiance (W/m^2)")
         plt.ylabel("Frequency")
         plt.legend()
+        plt.title("Irradiance histogram")
 
+    # irradiance_histograms()
     plt.show()

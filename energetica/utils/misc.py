@@ -309,7 +309,7 @@ def calculate_solar_irradiance(x: float, y: float, total_seconds: float, random_
         smoothness=max(0.3, 1 - regional_noise),
     )
     csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
-    clear_sky = DrHI(weather_datetime.timestamp(), (y - 10) * 85 / 21, 0)
+    clear_sky = DrHI(weather_datetime.timestamp(), (y - 10) * 70 / 21, 0)
     return min(1000, csi * clear_sky)
 
 
