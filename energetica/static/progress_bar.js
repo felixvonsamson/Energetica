@@ -169,14 +169,9 @@ function pause_construction(construction_id) {
           );
           refresh_progressBar();
         }
-        else if (response == "parallelization not allowed") {
-          addError("Consecutive upgrades of the same asset cannot be paralelized.");
-        }
-        else if (response == "hasUnfinishedPrerequisites") {
-          addError("This construction cannot be started now as it has unfinished prerequisites.");
-          // console.log(raw_data["prerequisites"])
-        }
-      });
+        else if (response == "PausedPrerequisitePreventUnpause") {
+          addError("This construction cannot be unpaused as it has a paused prerequisite. Unpause these first.");
+        });
     })
     .catch((error) => {
       console.error(`caught error ${error}`);
@@ -217,11 +212,14 @@ function decrease_project_priority(construction_id) {
             JSON.stringify(raw_data["constructions"])
           );
           refresh_progressBar();
-        } else if (response == "parallelization not allowed") {
-          addError("Consecutive upgrades of the same asset cannot be paralelized.");
         }
         else if (response == "requirementsPreventReorder") {
           addError("The order of these two constructions cannot be swapped as one depends on the other.");
+        }
+        else if (response == "CannotSwapPausedProject") {
+          construction_1 = raw_data["construction_1"];
+          construction_2 = raw_data["construction_2"];
+          addError(`Cannot change order. Unpause ${construction_2} or pause ${construction_1} first.`);
         }
       });
     })
@@ -243,27 +241,27 @@ load_constructions().then((constructions) => {
       const current_time = (now - server_start) / clock_time;
       let new_width;
       let time_remaining;
-      if (construction.suspension_time) {
-        new_width =
-          ((construction.suspension_time -
-            construction.start_time) /
-            construction.duration) *
-          100;
-        time_remaining =
-          construction.duration +
-          construction.start_time -
-          construction.suspension_time;
-      } else {
-        new_width =
-          ((current_time - construction.start_time) /
-            construction.duration) *
-          100;
-        time_remaining =
-          construction.duration + construction.start_time - current_time;
+      const last_tick = JSON.parse(sessionStorage.getItem("last_value")).total_t;
+      let time_since_last_tick = current_time - last_tick;
+      if (construction.status == 2) {
+        time_remaining = construction._end_tick_or_ticks_passed - current_time + time_since_last_tick * (1 - construction.speed);
+        new_width = (1 - time_remaining / construction.duration) * 100;
+      }
+      else {
+        new_width = (construction._end_tick_or_ticks_passed / construction.duration) * 100;
+        time_remaining = construction.duration - construction._end_tick_or_ticks_passed;
       }
       progressBar.style.setProperty("--width", new_width);
       if (new_width > 0.01) {
-        progressBar.classList.add("pine");
+        if (construction.speed < 0.01) {
+          progressBar.classList.add("red");
+        }
+        else if (construction.speed < 0.99) {
+          progressBar.classList.add("orange");
+        }
+        else {
+          progressBar.classList.add("pine");
+        }
       }
       if (time_remaining < 0) {
         progressBar.parentElement.parentElement.remove();
@@ -285,16 +283,16 @@ load_constructions().then((constructions) => {
       const current_time = (now - server_start) / clock_time;
       let new_width;
       let time_remaining;
-      if (shipment["suspension_time"]) {
+      if (shipment["pause_tick"]) {
         new_width =
-          ((shipment["suspension_time"] -
+          ((shipment["pause_tick"] -
             shipment["departure_time"]) /
             shipment["duration"]) *
           100;
         time_remaining =
           shipment["duration"] +
           shipment["departure_time"] -
-          shipment["suspension_time"];
+          shipment["pause_tick"];
       } else {
         new_width =
           ((current_time - shipment["departure_time"]) /
@@ -400,8 +398,21 @@ function display_progressBars(construction_data, shipment_data) {
 
 function html_for_progressBar(c_id, index, project_priority, construction) {
   let playPauseLogo = "fa-pause";
-  if (construction["suspension_time"]) {
+  if (construction["status"] == 0) {
     playPauseLogo = "fa-play";
+  }
+  if (construction["status"] == 1) {
+    playPauseLogo = "fa-hourglass-half";
+  }
+  let snail = "";
+  if (construction["speed"] < 0.01) {
+    snail = `<div class="progressbar-name medium">
+            <span class="hover_info"><img src="/static/images/icons/snail_house.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
+        </div>`;
+  } else if (construction["speed"] < 0.99) {
+    snail = `<div class="progressbar-name medium">
+            <span class="hover_info"><img src="/static/images/icons/snail.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
+        </div>`;
   }
   return `
     <div class="progressbar-container">
@@ -416,6 +427,7 @@ function html_for_progressBar(c_id, index, project_priority, construction) {
                 </button>` : ''}
         </div>
         <div class="progressbar-name medium margin-small">${asset_names[construction["name"]]}${"level" in construction ? " " + construction["level"] : ""}</div>
+        ${snail}
         <div class="progressbar-background">
             <div id="${c_id}" class="progressbar-bar"></div>
         </div>
@@ -430,7 +442,7 @@ function html_for_progressBar(c_id, index, project_priority, construction) {
 
 function html_for_shipmentBar(id, shipment) {
   let playPauseLogo = "fa-pause";
-  if (shipment["suspension_time"]) {
+  if (shipment["pause_tick"]) {
     playPauseLogo = "fa-play";
   }
   return `<div class="progressbar-container">

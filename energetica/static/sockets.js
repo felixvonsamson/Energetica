@@ -93,6 +93,20 @@ socket.on("new_values", function (changes) {
 
         sessionStorage.setItem("cumulative_emissions", JSON.stringify(changes.cumulative_emissions));
 
+        construction_updates = changes.construction_updates;
+        if (Object.keys(construction_updates).length > 0) {
+            constructions_data = JSON.parse(sessionStorage.getItem("constructions"));
+            for (var construction_id in construction_updates) {
+                let construction = constructions_data[0][construction_id];
+                construction.speed = construction_updates[construction_id].speed;
+                construction._end_tick_or_ticks_passed = construction_updates[construction_id].end_tick;
+            }
+            sessionStorage.setItem("constructions", JSON.stringify(constructions_data));
+            if (typeof display_progressBars === "function") {
+                display_progressBars(constructions_data, null);
+            }
+        }
+
         if (typeof fetch_graph_data === "function") {
             fetch_graph_data();
         }
@@ -203,8 +217,8 @@ socket.on("new_notification", function (notification) {
 
 socket.on("pause_construction", function (info) {
     load_constructions().then((construction_list) => {
-        construction_list[0][info.construction_id].suspension_time =
-            info.suspension_time;
+        construction_list[0][info.construction_id].pause_tick =
+            info.pause_tick;
         sessionStorage.setItem(
             "constructions",
             JSON.stringify(construction_list)
@@ -215,8 +229,8 @@ socket.on("pause_construction", function (info) {
 
 socket.on("pause_shipment", function (info) {
     load_shipments().then((shipment_list) => {
-        shipment_list[info.shipment_id].suspension_time =
-            info.suspension_time;
+        shipment_list[info.shipment_id].pause_tick =
+            info.pause_tick;
         sessionStorage.setItem("shipments", JSON.stringify(shipment_list));
         display_progressBars(null, shipment_list);
     });

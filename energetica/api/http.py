@@ -51,6 +51,7 @@ def log_action(func: callable) -> callable:
         except GameError as game_exception:
             # TODO g.engine.db.rollback()
             response, status_code = jsonify({"response": game_exception.exception_type, **game_exception.kwargs}), 403
+
         log_entry = {
             "timestamp": datetime.now().isoformat(),
             "action_type": "request",

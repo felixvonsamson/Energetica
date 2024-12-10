@@ -18,13 +18,9 @@ from pywebpush import WebPushException, webpush
 from energetica.config.achievements import achievements
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.engine_data import (
-    CapacityData,
-    CircularBufferPlayer,
-    CumulativeEmissionsData,
-)
+from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData
 from energetica.database.messages import Chat, Message, Notification, player_chats
-from energetica.database.ongoing_construction import OngoingConstruction
+from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -224,7 +220,7 @@ class Player(db.Model, UserMixin):
 
     @cached_property
     def data(self) -> PlayerData:
-        """Cached property that stores the player data."""
+        """Returns the data for the player."""
         return current_app.config["engine"].data["by_player"][self.id]
 
     @cached_property
@@ -244,12 +240,20 @@ class Player(db.Model, UserMixin):
         self.graph_view = view
         db.session.commit()
 
+    def available_workers(self, project_name):
+        """Returns the number of available workers depending on the project type"""
+        engine = current_app.config["engine"]
+        if project_name in engine.technologies:
+            return self.available_lab_workers()
+        else:
+            return self.available_construction_workers()
+
     def available_construction_workers(self) -> int:
         """Return the number of available construction workers."""
         occupied_workers = (
             OngoingConstruction.query.filter(OngoingConstruction.player_id == self.id)
             .filter(OngoingConstruction.family != "Technologies")
-            .filter(OngoingConstruction.suspension_time.is_(None))
+            .filter(OngoingConstruction.status == ConstructionStatus.ONGOING)
             .count()
         )
         return self.construction_workers - occupied_workers
@@ -259,7 +263,7 @@ class Player(db.Model, UserMixin):
         occupied_workers = (
             OngoingConstruction.query.filter(OngoingConstruction.player_id == self.id)
             .filter(OngoingConstruction.family == "Technologies")
-            .filter(OngoingConstruction.suspension_time.is_(None))
+            .filter(OngoingConstruction.status == ConstructionStatus.ONGOING)
             .count()
         )
         return self.lab_workers - occupied_workers
@@ -414,6 +418,7 @@ class Player(db.Model, UserMixin):
     def send_new_data(self, new_values) -> None:
         """Send the new data to the player's clients."""
         engine = current_app.config["engine"]
+        construction_updates = self.get_construction_updates()
         self.emit(
             "new_values",
             {
@@ -422,8 +427,27 @@ class Player(db.Model, UserMixin):
                 "climate_values": engine.data["current_climate_data"].get_last_data(),
                 "cumulative_emissions": self.data.cumul_emissions.get_all(),
                 "money": self.money,
+                "construction_updates": construction_updates,
             },
         )
+
+    def get_construction_updates(self):
+        """
+        This method returns a dictionary of the constructions for which the progress speed has changed. For each of
+        these constructions, the dictionary contains the new speed and the new end_tick.
+        """
+        player_constructions: list[OngoingConstruction] = OngoingConstruction.query.filter_by(
+            player_id=self.id, status=ConstructionStatus.ONGOING
+        ).all()
+        construction_speeds = {}
+        for construction in player_constructions:
+            new_speed = construction.updated_speed()
+            if new_speed is not None:
+                construction_speeds[construction.id] = {
+                    "speed": new_speed,
+                    "end_tick": construction._end_tick_or_ticks_passed,
+                }
+        return construction_speeds
 
     def notify(self, title: str, message: str) -> None:
         """Create a new notification and sends it to the player's subscribed browsers."""
@@ -637,13 +661,14 @@ class Player(db.Model, UserMixin):
                     "id",
                     "name",
                     "family",
-                    "start_time",
+                    "_end_tick_or_ticks_passed",
                     "duration",
-                    "suspension_time",
+                    "status",
                 ]
             }
             | {"display_name": current_app.config["engine"].const_config["assets"][construction.name]["name"]}
             | ({"level": construction.cache.level} if construction.cache.level is not None else {})
+            | {"speed": construction.data.speed}
             for construction in constructions
         }
 
@@ -656,9 +681,9 @@ class Player(db.Model, UserMixin):
                     "id",
                     "resource",
                     "quantity",
-                    "departure_time",
+                    "arrival_tick",
                     "duration",
-                    "suspension_time",
+                    "pause_tick",
                 ]
             }
             for shipment in self.shipments

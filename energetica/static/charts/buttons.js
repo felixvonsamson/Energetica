@@ -245,7 +245,7 @@ function show_selected_button(button_id, id) {
 }
 
 function change_percent(percent) {
-    show_selected_button("percent_button_", percent)
+    show_selected_button("percent_button_", percent);
     graph_p5.percent = percent;
     graph_p5.render_graph();
 }

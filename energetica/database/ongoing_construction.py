@@ -12,6 +12,22 @@ if TYPE_CHECKING:
     from energetica.game_engine import GameEngine
 
 
+class ConstructionStatus:
+    """Class that stores the status of ongoing constructions."""
+
+    PAUSED = 0
+    WAITING = 1
+    ONGOING = 2
+
+
+@dataclass
+class OngoingConstructionData:
+    """Dataclass that stores the data of ongoing constructions."""
+
+    speed: float = 1
+    previous_speed: float = 1
+
+
 @dataclass
 class OngoingConstructionCache:
     """Cache for the OngoingConstruction class."""
@@ -42,10 +58,12 @@ class OngoingConstruction(db.Model):
     name = db.Column(db.String(50))
     family = db.Column(db.String(50))
     # to assign the thing to the correct page
-    start_time = db.Column(db.Integer)  # in game ticks
-    duration = db.Column(db.Integer)  # in game ticks
+    _end_tick_or_ticks_passed = db.Column(
+        db.Float
+    )  # in game ticks when the construction will be finished or ticks passed if it is paused
+    duration = db.Column(db.Float)  # in game ticks
     # time at witch the construction has been paused if it has else None
-    suspension_time = db.Column(db.Integer)
+    status = db.Column(db.Integer)  # 0 for paused, 1 for waiting, 2 for ongoing. See ConstructionStatus
     # Power consumed and emissions produced by the construction
     construction_power = db.Column(db.Float)
     construction_pollution = db.Column(db.Float)
@@ -57,18 +75,69 @@ class OngoingConstruction(db.Model):
     # can access player directly with .player
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
-    def is_paused(self) -> bool:
-        """Return True if this construction is paused."""
-        return self.suspension_time is not None
+    def was_paused_by_player(self) -> bool:
+        """Returns True if this construction is paused by the player"""
+        return self.status == ConstructionStatus.PAUSED
 
-    def resume(self) -> None:
-        """Make this facility go from paused to unpaused."""
-        if not self.is_paused():
-            msg = f"Cannot resume construction {self.id} because it is not paused."
-            raise ValueError(msg)
+    def is_ongoing(self) -> bool:
+        """Returns True if this construction is not paused and has no requirements"""
+        return self.status == ConstructionStatus.ONGOING
+
+    def pause(self):
+        """Make this facility go from waiting or ongoing to paused"""
+        assert not self.was_paused_by_player()
         engine: GameEngine = current_app.config["engine"]
-        self.start_time += engine.data["total_t"] - self.suspension_time
-        self.suspension_time = None
+        if self.is_ongoing():
+            self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
+        self.status = ConstructionStatus.PAUSED
+        db.session.flush()
+
+    def set_waiting(self):
+        """Make this facility go from ongoing to waiting."""
+        assert self.status == ConstructionStatus.ONGOING
+        engine: GameEngine = current_app.config["engine"]
+        self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
+        self.status = ConstructionStatus.WAITING
+        db.session.flush()
+
+    def set_ongoing(self):
+        """Make this facility go from waiting to ongoing."""
+        assert self.status == ConstructionStatus.WAITING
+        assert not self.cache.prerequisites
+        from energetica.database.player import Player
+
+        engine: GameEngine = current_app.config["engine"]
+        player: Player = Player.query.get(self.player_id)
+        assert player.available_workers(self.family) > 0
+        engine: GameEngine = current_app.config["engine"]
+        self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
+        self.status = ConstructionStatus.ONGOING
+        db.session.flush()
+
+    def unpause(self):
+        """Make this facility go from paused to either waiting or ongoing"""
+        assert self.was_paused_by_player()
+        from energetica.database.player import Player
+
+        engine: GameEngine = current_app.config["engine"]
+        player: Player = Player.query.get(self.player_id)
+        if self.cache.prerequisites or player.available_workers(self.family) < 1:
+            self.status = ConstructionStatus.WAITING
+        else:
+            self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
+            self.status = ConstructionStatus.ONGOING
+        db.session.flush()
+
+    def delay_by(self, ticks: float):
+        """Delays the construction by the given number of ticks"""
+        assert self.is_ongoing()
+        self._end_tick_or_ticks_passed += ticks
+        self.data.speed = 1 - ticks
+
+    @cached_property
+    def data(self) -> OngoingConstructionData:
+        """Return the data of the ongoing construction."""
+        return current_app.config["engine"].data["by_ongoing_construction"][self.id]
 
     @cached_property
     def cache(self) -> OngoingConstructionCache:
@@ -83,6 +152,25 @@ class OngoingConstruction(db.Model):
         """Recompute the prerequisites and level of an ongoing construction."""
         if "_prerequisites_and_level" in self.cache.__dict__:
             del self.cache.__dict__["_prerequisites_and_level"]
+
+    def progress(self) -> float:
+        """Returns the progress of the construction, as a float between 0 and 1"""
+        engine: GameEngine = current_app.config["engine"]
+        if self.status == ConstructionStatus.ONGOING:
+            return (self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]) / self.duration
+        else:
+            return self._end_tick_or_ticks_passed / self.duration
+
+    def updated_speed(self) -> float | None:
+        """Returns the speed of the construction except if it is 1 and unchanged since last tick"""
+        if self.data.speed != self.data.previous_speed or self.data.speed != 1:
+            return self.data.speed
+        return None
+
+    def reset_speed(self):
+        """Resets the speed of the construction to 1 and stores the previous speed"""
+        self.data.previous_speed = self.data.speed
+        self.data.speed = 1
 
     def _compute_prerequisites_and_level(self) -> tuple[list[int], int]:
         """Compute the prerequisites and level of an ongoing construction."""

@@ -47,6 +47,11 @@ def update_electricity(engine):
             continue
         new_values[player.id] = player.data.rolling_history.init_new_data()
 
+    # reset progress speeds fot all ongoing constructions
+    ongoing_constructions = OngoingConstruction.query.filter_by(status=2).all()
+    for oc in ongoing_constructions:
+        oc.reset_speed()
+
     for network in networks:
         market = init_market()
         for player in network.members:
@@ -228,48 +233,44 @@ def industry_demand_and_revenues(engine, player, demand, revenues):
     demand["industry"] = intra_day_factor * seasonal_factor * player.config["industry"]["power_consumption"]
     # calculate income of industry per tick
     revenues["industry"] = player.config["industry"]["income_per_day"] / ticks_per_day
-    for ud in player.under_construction:
-        # industry demand ramps up during construction
-        if ud.name == "industry":
-            if ud.suspension_time is None:
-                time_fraction = (engine.data["total_t"] - ud.start_time) / (ud.duration)
-            else:
-                time_fraction = (ud.suspension_time - ud.start_time) / (ud.duration)
-            additional_demand = (
-                time_fraction * demand["industry"] * (engine.const_config["assets"]["industry"]["power_factor"] - 1)
+    industry_upgrade = OngoingConstruction.query.filter_by(player_id=player.id, name="industry").first()
+    if industry_upgrade:
+        additional_demand = (
+            industry_upgrade.progress()
+            * demand["industry"]
+            * (engine.const_config["assets"]["industry"]["power_factor"] - 1)
+        )
+        additional_revenue = (
+            industry_upgrade.progress()
+            * (
+                revenues["industry"]
+                - engine.const_config["assets"]["industry"]["universal_income_per_day"] / ticks_per_day
             )
-            additional_revenue = (
-                time_fraction
-                * (
-                    revenues["industry"]
-                    - engine.const_config["assets"]["industry"]["universal_income_per_day"] / ticks_per_day
-                )
-                * (engine.const_config["assets"]["industry"]["income_factor"] - 1)
-            )
-            demand["industry"] += additional_demand
-            revenues["industry"] += additional_revenue
-            break
+            * (engine.const_config["assets"]["industry"]["income_factor"] - 1)
+        )
+        demand["industry"] += additional_demand
+        revenues["industry"] += additional_revenue
 
 
-def construction_demand(player, demand):
+def construction_demand(player: Player, demand):
     """Calculate power consumption for facilities under construction."""
     for ud in player.under_construction:
-        if ud.suspension_time is None:
+        if ud.is_ongoing():
             if ud.family == "Technologies":
                 demand["research"] += ud.construction_power
             else:
                 demand["construction"] += ud.construction_power
 
 
-def shipment_demand(engine, player, demand):
+def shipment_demand(engine, player: Player, demand):
     """Calculate the power consumption for shipments."""
     transport = player.config["transport"]
     for shipment in player.shipments:
-        if shipment.suspension_time is None:
+        if shipment.is_ongoing():
             demand["transport"] += transport["power_per_kg"] * shipment.quantity
 
 
-def storage_demand(engine, player, demand):
+def storage_demand(engine, player: Player, demand):
     """Calculate the maximal demand of storage plants."""
     for facility in engine.storage_facilities:
         if player.data.capacities[facility] is not None:
@@ -852,16 +853,26 @@ def resources_and_pollution(engine, new_values, player):
 
 def construction_emissions(engine, new_values, player):
     """Calculate emissions of facilities under construction."""
+    # TODO: Max suggestion : Change the satisfaction logic to redirect to 3 cases :
+    # 1. Total satisfaction
+    # 2. Partial satisfaction
+    # 3. No satisfaction
+    # Call construction_emissions respectively
+    # (for now this is wrong)
     emissions_construction = 0.0
     for ud in player.under_construction:
-        if ud.start_time is not None:
-            if ud.suspension_time is None and ud.family != "Technologies":
-                emissions_construction += ud.construction_pollution
+        if ud.is_ongoing() and ud.family != "Technologies":
+            emissions_construction += ud.construction_pollution
     add_emissions(engine, new_values, player, "construction", emissions_construction)
 
 
 def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
-    """Take measures to reduce demand."""
+    """
+    Measures taken to reduce power demand
+    Arguments:
+    @param demand_type: type of the power demand (eg. industry, construction, research, transport)
+    @param satisfaction: the amount of power that can be provided (in W)
+    """
     player = db.session.get(Player, player_id)
     demand = new_values[player.id]["demand"]
     if demand_type == "industry":
@@ -882,73 +893,43 @@ def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
         for i in range(min(len(construction_priorities), player.construction_workers)):
             construction_id = construction_priorities[i]
             construction: OngoingConstruction = db.session.get(OngoingConstruction, construction_id)
-            if construction.suspension_time is not None:
+            if not construction.is_ongoing():
                 continue
             cumul_demand += construction.construction_power
             if cumul_demand > satisfaction:
-                construction.suspension_time = engine.data["total_t"]
-                player.emit(
-                    "pause_construction",
-                    {
-                        "construction_id": construction_id,
-                        "suspension_time": engine.data["total_t"],
-                    },
-                )
-                player.notify(
-                    "Energy shortage",
-                    f"The construction of the facility {engine.const_config['assets'][construction.name]['name']} "
-                    "has been suspended because of a lack of electricity.",
-                )
-        db.session.commit()
+                progress_speed_factor = max(0, 1 + (satisfaction - cumul_demand) / construction.construction_power)
+                construction.delay_by(1 - progress_speed_factor)
+                db.session.flush()
         return
+
     if demand_type == "research":
         research_priorities = player.read_list("research_priorities")
         cumul_demand = 0.0
         for i in range(min(len(research_priorities), player.lab_workers)):
             construction_id = research_priorities[i]
             construction: OngoingConstruction = db.session.get(OngoingConstruction, construction_id)
-            if construction.suspension_time is not None:
+            if construction.is_ongoing():
                 continue
             cumul_demand += construction.construction_power
             if cumul_demand > satisfaction:
-                construction.suspension_time = engine.data["total_t"]
-                player.emit(
-                    "pause_construction",
-                    {
-                        "construction_id": construction_id,
-                        "suspension_time": engine.data["total_t"],
-                    },
-                )
-                player.notify(
-                    "Energy shortage",
-                    f"The research of the technology {engine.const_config['assets'][construction.name]['name']} "
-                    "has been suspended because of a lack of electricity.",
-                )
-        db.session.commit()
+                progress_speed_factor = max(0, 1 + (satisfaction - cumul_demand) / construction.construction_power)
+                construction.delay_by(1 - progress_speed_factor)
+                db.session.flush()
         return
+
     if demand_type == "transport":
+        # TODO: This should be updated and use a similar logic as above.
         last_shipment = (
             Shipment.query.filter(
-                Shipment.suspension_time.is_(None),
+                Shipment.pause_tick.is_(None),
                 Shipment.player_id == player.id,
             )
-            .order_by(Shipment.departure_time.desc())
+            .order_by(Shipment.arrival_tick.desc())
             .first()
         )
         if last_shipment:
-            last_shipment.suspension_time = engine.data["total_t"]
-            player.emit(
-                "pause_shipment",
-                {
-                    "shipment_id": last_shipment.id,
-                    "suspension_time": engine.data["total_t"],
-                },
-            )
-            player.notify(
-                "Energy shortage",
-                f"The shipment of {last_shipment.resource} has been suspended because of a lack of electricity.",
-                player,
-            )
+            last_shipment.delay_by(1 - satisfaction / last_shipment.power)
+            db.session.flush()
         return
 
 

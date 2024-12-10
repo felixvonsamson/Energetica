@@ -64,24 +64,17 @@ def _state_update(engine, app):
 def check_events_completion(engine):
     """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
     # check if constructions finished
-    finished_constructions: list[OngoingConstruction] = (
-        OngoingConstruction.query.filter(
-            OngoingConstruction.suspension_time.is_(None),
-            OngoingConstruction.start_time + OngoingConstruction.duration <= engine.data["total_t"],
-        ).all()
-        + OngoingConstruction.query.filter(
-            OngoingConstruction.suspension_time.isnot(None),
-            OngoingConstruction.start_time + OngoingConstruction.duration <= OngoingConstruction.suspension_time,
-        ).all()
-    )
+    finished_constructions = OngoingConstruction.query.filter(
+        OngoingConstruction._end_tick_or_ticks_passed <= engine.data["total_t"],
+        OngoingConstruction.status == 2,
+    ).all()
     for fc in finished_constructions:
         assets.finish_project(fc)
 
     # check if shipment arrived
     arrived_shipments = Shipment.query.filter(
-        Shipment.departure_time.isnot(None),
-        Shipment.suspension_time.is_(None),
-        Shipment.departure_time + Shipment.duration <= engine.data["total_t"],
+        Shipment.pause_tick.is_(None),
+        Shipment.arrival_tick <= engine.data["total_t"],
     ).all()
     for a_s in arrived_shipments:
         store_import(a_s.player, a_s.resource, a_s.quantity)
@@ -97,7 +90,7 @@ def check_events_completion(engine):
 
     # check end of climate events
     finished_climate_events: list[ClimateEventRecovery] = ClimateEventRecovery.query.filter(
-        ClimateEventRecovery.start_time + ClimateEventRecovery.duration <= engine.data["total_t"]
+        ClimateEventRecovery.end_tick <= engine.data["total_t"]
     ).all()
     for fce in finished_climate_events:
         db.session.delete(fce)
