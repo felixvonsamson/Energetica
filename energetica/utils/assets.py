@@ -370,33 +370,17 @@ def queue_project(
         if construction_power > capacity:
             raise Confirm(capacity=capacity, construction_power=construction_power)
 
-    def can_start_immediately() -> bool:
-        if asset_requirement_status == "queued":
-            return False
-        if player.available_workers(asset) == 0:
-            return False  # No available workers
-        if (
-            asset in engine.technologies + engine.functional_facilities
-            and OngoingConstruction.query.filter_by(name=asset, player_id=player.id).count() > 0
-        ):
-            return False  # Another level is already ongoing
-        return True
-
-    if can_start_immediately():
-        status = 2
-        end_tick_or_ticks_passed = engine.data["total_t"] + duration
-    else:
-        status = 1
-        end_tick_or_ticks_passed = 0
-
     if not ignore_requirements_and_money:
         player.money -= real_price
+
+    # The construction is added as paused and then imediately unpaused in order to place it in the right place in the
+    # priority list.
     new_construction: OngoingConstruction = OngoingConstruction(
         name=asset,
         family=engine.asset_family_by_name[asset],
-        _end_tick_or_ticks_passed=end_tick_or_ticks_passed,
+        _end_tick_or_ticks_passed=0,
         duration=duration,
-        status=status,
+        status=ConstructionStatus.PAUSED,
         construction_power=construction_power,
         construction_pollution=technology_effects.construction_pollution_per_tick(player, asset),
         price_multiplier=technology_effects.price_multiplier(player, asset),
@@ -407,27 +391,7 @@ def queue_project(
     )
     db.session.add(new_construction)
     db.session.commit()
-
-    priority_list_name = "research_priorities" if asset in engine.technologies else "construction_priorities"
-    if status == ConstructionStatus.ONGOING:
-        # Add this project to the priority list, before all paused projects, but after all existing ongoing projects
-        priority_list = player.read_list(priority_list_name)
-        insertion_index = 0
-        for possibly_unpaused_project_index, possibly_unpaused_project_id in enumerate(priority_list):
-            possibly_unpaused_project: OngoingConstruction = db.session.get(
-                OngoingConstruction, possibly_unpaused_project_id
-            )
-            if possibly_unpaused_project.is_ongoing():  # not paused
-                insertion_index = possibly_unpaused_project_index + 1
-            else:  # not ongoing
-                break
-        priority_list.insert(insertion_index, new_construction.id)
-        player.write_list(priority_list_name, priority_list)
-    else:
-        # TODO(mglst): The following line violates the priority list invariants.
-        # e.g. this project will start as 'waiting', but there may be paused projects at the end.
-        # In this case, the new project should be inserted before the first paused project.
-        player.add_to_list(priority_list_name, new_construction.id)
+    toggle_pause_project(player, new_construction)
 
     if not skip_notifications:
         engine.log(f"{player.username} started the construction {asset}")
