@@ -92,6 +92,14 @@ class OngoingConstruction(db.Model):
         self.status = ConstructionStatus.PAUSED
         db.session.flush()
 
+    def set_waiting(self):
+        """Make this facility go from ongoing to waiting."""
+        assert self.status == ConstructionStatus.ONGOING
+        engine: GameEngine = current_app.config["engine"]
+        self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
+        self.status = ConstructionStatus.WAITING
+        db.session.flush()
+
     def set_ongoing(self):
         """Make this facility go from waiting to ongoing."""
         assert self.status == ConstructionStatus.WAITING

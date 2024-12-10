@@ -358,7 +358,7 @@ def queue_project(
     duration = technology_effects.construction_time(player, asset)
 
     if player.money < real_price and not ignore_requirements_and_money:
-        msg = "Not enough money"
+        msg = "notEnoughMoney"
         raise GameError(msg)
 
     construction_power = technology_effects.construction_power(player, asset)
@@ -391,6 +391,11 @@ def queue_project(
     )
     db.session.add(new_construction)
     db.session.commit()
+    player.add_to_list(
+        "research_priorities" if asset in engine.technologies else "construction_priorities",
+        new_construction.id,
+    )
+    db.session.flush()
     toggle_pause_project(player, new_construction)
 
     if not skip_notifications:
@@ -439,8 +444,8 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
         if construction.id in candidate_dependent.cache.prerequisites:
             dependents.append([candidate_dependent.name, candidate_dependent.cache.level])
     if dependents:
-        msg = f"Cannot cancel project, the following projects depend on it: {dependents}"
-        raise GameError(msg)
+        msg = "HasDependents"
+        raise GameError(msg, dependents=dependents)
 
     if not force:
         raise Confirm(refund=f"{round(80 * (1 - construction.progress()))}%")
@@ -494,17 +499,17 @@ def decrease_project_priority(player, construction):
     # 6. paused , paused  (swap)
 
     if construction_1.id in construction_2.cache.prerequisites:
-        raise GameError("Cannot swap constructions, a prerequisite is not finished")
+        raise GameError("requirementsPreventReorder")
     if not construction_1.was_paused_by_player() and construction_2.was_paused_by_player():
-        msg = f"Cannot swap constructions. Unpause {construction_2.name} or pause {construction_1.name} first."
-        return GameError(msg)
+        msg = f"CannotSwapPausedProject"
+        raise GameError(msg, construction_1=construction_1.name, construction_2=construction_2.name)
 
     if construction_1.status == ConstructionStatus.ONGOING and construction_2.status == ConstructionStatus.WAITING:
         # Case 2
         # This case can only happen when construction 1 is using the last available worker. (Indeed, the other case is
         # when construction 1 is a prerequisite of construction 2, but in this case, the swap is not possible)
-        construction_1.status = ConstructionStatus.WAITING
-        construction_2.status = ConstructionStatus.ONGOING
+        construction_1.set_waiting()
+        construction_2.set_ongoing()
 
     priority_list[index + 1], priority_list[index] = (priority_list[index], priority_list[index + 1])
     setattr(player, attr, ",".join(map(str, priority_list)))
@@ -565,12 +570,12 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
         engine.log(f"{player.username} paused the construction {construction.id} {construction.name}")
     else:
         # project is currently pause, and should be unpaused
-        del construction.cache._prerequisites_and_level  # Needed to force recompute, as prerequisites aren't
-        for prerequisite_id in construction.prerequisites:
+        if "_prerequisites_and_level" in construction.cache.__dict__:
+            del construction.cache._prerequisites_and_level  # Needed to force recompute, as prerequisites aren't
+        for prerequisite_id in construction.cache.prerequisites:
             prerequisite = OngoingConstruction.query.get(prerequisite_id)
             if prerequisite.status == ConstructionStatus.PAUSED:
-                raise GameError("Cannot unpause construction, a prerequisite is paused")
-                # TODO(mglst): ensure http.py handles this error
+                raise GameError("PausedPrerequisitePreventUnpause")
 
         # automatically removed when they are finished
         construction.unpause()

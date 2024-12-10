@@ -169,13 +169,9 @@ function pause_construction(construction_id) {
           );
           refresh_progressBar();
         }
-        else if (response == "parallelization not allowed") {
-          addError("Consecutive upgrades of the same asset cannot be paralelized.");
-        }
-        else if (response == "hasUnfinishedPrerequisites") {
-          addError("This construction cannot be started now as it has unfinished prerequisites.");
-        }
-      });
+        else if (response == "PausedPrerequisitePreventUnpause") {
+          addError("This construction cannot be unpaused as it has a paused prerequisite. Unpause these first.");
+        });
     })
     .catch((error) => {
       console.error(`caught error ${error}`);
@@ -216,11 +212,14 @@ function decrease_project_priority(construction_id) {
             JSON.stringify(raw_data["constructions"])
           );
           refresh_progressBar();
-        } else if (response == "parallelization not allowed") {
-          addError("Consecutive upgrades of the same asset cannot be paralelized.");
         }
         else if (response == "requirementsPreventReorder") {
           addError("The order of these two constructions cannot be swapped as one depends on the other.");
+        }
+        else if (response == "CannotSwapPausedProject") {
+          construction_1 = raw_data["construction_1"];
+          construction_2 = raw_data["construction_2"];
+          addError(`Cannot change order. Unpause ${construction_2} or pause ${construction_1} first.`);
         }
       });
     })
