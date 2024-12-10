@@ -20,7 +20,7 @@ class ActiveFacility(db.Model):
     facility = db.Column(db.String(50))
     pos_x = db.Column(db.Float)
     pos_y = db.Column(db.Float)
-    # time at witch the facility will be decommissioned
+    # tick at witch the facility will be decommissioned
     end_of_life = db.Column(db.Integer)
     # multiply the base values by the following values
     price_multiplier = db.Column(db.Float)
@@ -31,6 +31,11 @@ class ActiveFacility(db.Model):
     usage = db.Column(db.Float, default=0)
 
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
+
+    @property
+    def decommissioning(self) -> bool:
+        """returns True if the facility is being decommissioned."""
+        return self.end_of_life <= current_app.config["engine"].data["total_t"]
 
     @property
     def const_config(self) -> dict:
@@ -115,10 +120,13 @@ class ActiveFacility(db.Model):
         return self.const_config["base_power_consumption"] * self.multiplier_1
 
     @property
-    def remaining_lifespan(self) -> int:
+    def remaining_lifespan(self) -> int | None:
         """Time left until the facility is decommissioned in ticks."""
         engine: GameEngine = current_app.config["engine"]
-        return self.end_of_life - engine.data["total_t"]
+        remaining_ticks = self.end_of_life - engine.data["total_t"]
+        if remaining_ticks < 0:
+            return None
+        return remaining_ticks
 
     @property
     def is_upgradable(self) -> bool:

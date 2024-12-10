@@ -47,6 +47,10 @@ function add_dismantle_button(cell_element, table_data, facility, id, dismantle_
         button_all.onclick = () => are_you_sure_dismantle_all_of_type(id, facility.display_name, dismantle_cost);
         cell_element.appendChild(button_all);
     } else {
+        if (dismantle_cost == null) {
+            cell_element.innerHTML = "Decommissioning...";
+            return;
+        }
         const button_single = document.createElement("button");
         button_single.classList.add("dismantle_button");
         button_single.innerHTML = format_money(dismantle_cost);
