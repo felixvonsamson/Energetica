@@ -90,6 +90,21 @@ class OngoingConstruction(db.Model):
         if self.is_ongoing():
             self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
         self.status = ConstructionStatus.PAUSED
+        db.session.flush()
+
+    def set_ongoing(self):
+        """Make this facility go from waiting to ongoing."""
+        assert self.status == ConstructionStatus.WAITING
+        assert not self.cache.prerequisites
+        from energetica.database.player import Player
+
+        engine: GameEngine = current_app.config["engine"]
+        player: Player = Player.query.get(self.player_id)
+        assert player.available_workers(self.family) > 0
+        engine: GameEngine = current_app.config["engine"]
+        self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
+        self.status = ConstructionStatus.ONGOING
+        db.session.flush()
 
     def unpause(self):
         """Make this facility go from paused to either waiting or ongoing"""
@@ -103,6 +118,7 @@ class OngoingConstruction(db.Model):
         else:
             self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
             self.status = ConstructionStatus.ONGOING
+        db.session.flush()
 
     def delay_by(self, ticks: float):
         """Delays the construction by the given number of ticks"""
