@@ -424,6 +424,9 @@ def queue_project(
         priority_list.insert(insertion_index, new_construction.id)
         player.write_list(priority_list_name, priority_list)
     else:
+        # TODO(mglst): The following line violates the priority list invariants.
+        # e.g. this project will start as 'waiting', but there may be paused projects at the end.
+        # In this case, the new project should be inserted before the first paused project.
         player.add_to_list(priority_list_name, new_construction.id)
 
     if not skip_notifications:
