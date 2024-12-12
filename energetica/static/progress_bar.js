@@ -171,7 +171,8 @@ function pause_construction(construction_id) {
         }
         else if (response == "PausedPrerequisitePreventUnpause") {
           addError("This construction cannot be unpaused as it has a paused prerequisite. Unpause these first.");
-        });
+        }
+      });
     })
     .catch((error) => {
       console.error(`caught error ${error}`);
