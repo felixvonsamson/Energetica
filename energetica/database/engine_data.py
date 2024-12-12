@@ -85,7 +85,8 @@ class CapacityData:
                     + (base_data["base_efficiency"] * facility.multiplier_3 * power_gen)
                 ) / (effective_values["power"] + power_gen)
                 effective_values["power"] += power_gen
-                effective_values["capacity"] += facility.storage_capacity
+                if facility.end_of_life > 0:
+                    effective_values["capacity"] += facility.storage_capacity
             elif facility.facility in engine.extraction_facilities:
                 effective_values["extraction_rate_per_day"] += (
                     base_data["base_extraction_rate_per_day"] * facility.multiplier_2
