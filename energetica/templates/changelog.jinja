@@ -7,7 +7,7 @@
     <div class="padding-small">
         🚧 This game is still under development! 🚧 Join the <a href="https://discord.gg/6xQsfqe2Nd">Energetica 
         Discord server</a> to stay updated with the latest news, report bugs, and engage with the community. 
-        You can also contact me directly if you have questions (vsfelix@ethz.ch)
+        You can also contact me directly if you have questions (felixvonsamson@gmail.com)
     </div>
 </div>
 
@@ -421,6 +421,36 @@
             </li>
             <li class="li_padding">
                 <b>Facility Description</b>: The description given for each facility should be more informative now.
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="margin-large medium">
+    <div class="padding-small">20 Dec. 2024</div>
+    <div class="padding-large bone">
+        <b>beta 0.11</b>
+        <ul>
+            <li class="li_padding">
+                <b>Landing Page</b>: When you connect to the games website, you will now be redirected to a landing page with some information about the game and buttons to login, sign-up or read the wiki or changelog.
+            </li>
+            <li class="li_padding">
+                <b>Continuous Construction Advancement</b>: Previously, constructions and research projects would be paused if not enough energy was available. Now, the game will automatically reduce the constructions or research projects' advancement speed to match the available energy. If there is no available energy, the advancement will be stalled but will continue as soon as energy is available again. Slow constructions or research projects are indicated by a snail icon and a orange (slow) or red (stalled) progress bar.
+            </li>
+            <li class="li_padding">
+                <b>Expandable Active Facility Table</b>: On the profile page, the active facility tables now group different instances of one facility type together. Clicking on one facility type will expand the table to show all instances of that facility type.
+            </li>
+            <li class="li_padding">
+                <b>More Pop-up Warnings</b>: Pop-up warnings have been added for when a player tries to build an extraction facility that would not be very efficient due to the low resource concentration on the tile or when a player tries to build a hydro, wind or solar facility that would not be very efficient due to the low potentials on the tile.
+            </li>
+            <li class="li_padding">
+                <b>Wind cut-off indicator</b>: A red exclamation mark will now appear next to wind turbines in the profile page tables if the wind speed is so high that the turbines are stopped.
+            </li>
+            <li class="li_padding">
+                <b>Technology spillover</b>: This existed in the game before but players can now see the discount on research prices they get from other players that already researched the technology. See the wiki for more information about <a href="{{ url_for('wiki.render_template_wiki', template_name='technologies', _anchor='knowledge_spillover') }}">Knowledge Spillover</a>.
+            </li>
+            <li class="li_padding">
+                <b>Christmas Theme</b>: The color theme of the game is temporally changed to Christmas colors until the 1st of January.
             </li>
         </ul>
     </div>

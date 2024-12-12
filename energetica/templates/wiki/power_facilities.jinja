@@ -185,8 +185,8 @@
     of the facility's price will be refunded, with a proportionally decreasing refund as construction progresses. Upon completing a 
     construction, a worker will automatically move on to the next project in the list, if possible.
   </p>
-  <p>If the energy demand for constructions isn't met, it is paused, except for the initial phase, during which a ramping up period is allowed. 
-  During this period, it's acceptable for the satisfaction level to be lower as long as the power consumption increases by at least 5% per minute.</p>
+  <p>If the energy demand for constructions isn't met, it is slowed down or stalled in case of no available energy. 
+  The slow or stalled construction and research projects are indicated with a snail icon and a orange or red progress bar.</p>
   <p>
     Researching {% if "Unlock Technologies" in user.achievements %}<a href="{{ url_for('views.technology', _anchor='Building Technology') }}">
     building technology</a>{% else %}building technology{% endif %} will unlock additional construction workers and 
