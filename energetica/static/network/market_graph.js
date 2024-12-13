@@ -1617,7 +1617,7 @@ function sortTable(table_name, columnName, reorder = true) {
         return transformed_data;
 
         function is_sold(data, i) {
-            if (data.cumul_capacities[i] < mq) {
+            if (data.cumul_capacities[i] < mq + 0.0001) {
                 return "Yes";
             }
             if (i == 0) {
