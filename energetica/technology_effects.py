@@ -607,7 +607,7 @@ def package_power_facilities(player: Player) -> list[dict]:
             else {}
         )
         | (
-            {"low_wind_speed": wind_speed_multiplier(player, power_facility) <= 1.5}
+            {"low_wind_speed": wind_speed_multiplier(player, power_facility) <= 0.65}
             if power_facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
             else {}
         )
