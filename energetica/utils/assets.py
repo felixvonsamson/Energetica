@@ -211,6 +211,9 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
     if player.money < upgrade_cost:
         msg = "Not enough money"
         raise GameError(msg)
+    if facility.decommissioning:
+        msg = "FacilityIsDecommissioning"
+        raise GameError(msg)
     player.money -= upgrade_cost
     engine: GameEngine = current_app.config["engine"]
     if facility.facility in engine.extraction_facilities:
@@ -250,6 +253,12 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     if facility.facility in engine.technologies + engine.functional_facilities:
         msg = "Cannot remove technologies or functional facilities"
         raise GameError(msg)
+    if facility.facility in engine.storage_facilities and not decommissioning:
+        facility.end_of_life = 0
+        db.session.flush()
+        player.data.capacities.update(player, facility.facility)
+        db.session.commit()
+        return
     db.session.delete(facility)
     db.session.flush()
     # The cost of decommissioning is 20% of the building cost.

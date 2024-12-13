@@ -37,8 +37,8 @@ def login():
         else:
             flash(
                 "Username does not exist.<br><b>All accounts created before "
-                "the 01.09.2024 have been<br>deleted due to a server reset for "
-                "the 0.10 update.<br>If your account has been deleted, please "
+                "the 20.12.2024 have been<br>deleted due to a server reset for "
+                "the 0.11 update.<br>If your account has been deleted, please "
                 "create a new one.</b>",
                 category="error",
             )

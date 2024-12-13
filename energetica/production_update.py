@@ -113,8 +113,12 @@ def set_facilities_usage(engine, new_values, player):
             )
     for facility in engine.storage_facilities:
         if player.data.capacities.contains(facility):
+            if player.data.capacities[facility]["capacity"] == 0:
+                usage = 1.0
+            else:
+                usage = new_values["storage"][facility] / player.data.capacities[facility]["capacity"]
             ActiveFacility.query.filter_by(player_id=player.id, facility=facility).update(
-                {ActiveFacility.usage: new_values["storage"][facility] / player.data.capacities[facility]["capacity"]},
+                {ActiveFacility.usage: usage},
                 synchronize_session=False,
             )
     for facility in engine.extraction_facilities:

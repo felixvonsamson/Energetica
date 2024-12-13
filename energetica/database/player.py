@@ -775,11 +775,15 @@ class Player(db.Model, UserMixin):
                     "hourly_op_cost": sum(f.hourly_op_cost for f in group) * ticks_per_hour,
                     "efficiency": sum(f.efficiency * f.storage_capacity for f in group)
                     / sum(f.storage_capacity for f in group),
-                    "remaining_lifespan": min(f.remaining_lifespan for f in group),
+                    "remaining_lifespan": None
+                    if all(f.decommissioning for f in group)
+                    else min(f.remaining_lifespan for f in group if not f.decommissioning),
                     "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
                     if any(f.is_upgradable for f in group)
                     else None,
-                    "dismantle_cost": sum(f.dismantle_cost for f in group),
+                    "dismantle_cost": None
+                    if all(f.decommissioning for f in group)
+                    else sum(f.dismantle_cost for f in group if not f.decommissioning),
                 }
                 for group_name, group in storage_facility_groups.items()
             },
@@ -792,8 +796,8 @@ class Player(db.Model, UserMixin):
                     "hourly_op_cost": storage_facility.hourly_op_cost,
                     "efficiency": storage_facility.efficiency,
                     "remaining_lifespan": storage_facility.remaining_lifespan,
-                    "upgrade_cost": storage_facility.upgrade_cost,
-                    "dismantle_cost": storage_facility.dismantle_cost,
+                    "upgrade_cost": None if storage_facility.decommissioning else storage_facility.upgrade_cost,
+                    "dismantle_cost": None if storage_facility.decommissioning else storage_facility.dismantle_cost,
                 }
                 for storage_facility in storage_facilities
             },
