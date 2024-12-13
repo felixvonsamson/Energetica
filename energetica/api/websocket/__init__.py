@@ -1,21 +1,23 @@
-"""Code providing API access using WebSockets and HTTP Basic Auth"""
+"""Code providing API access using WebSockets for iOS Swift Client."""
 
 import json
 import pickle
 
-from flask import Blueprint, current_app, g
-from flask_httpauth import HTTPBasicAuth
-from simple_websocket import ConnectionClosed
+from flask import Blueprint, g
+from flask_sock import Sock
+from simple_websocket import ConnectionClosed, Server
 from werkzeug.security import check_password_hash
 
+from energetica.api.websocket import endpoints
 from energetica.database import db
 from energetica.database.map import Hex
 from energetica.database.messages import Chat, Message
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.game_engine import GameEngine
+from energetica.game_engine import GameEngine, GameError
 from energetica.technology_effects import package_constructions_page_data
 from energetica.utils.assets import decrease_project_priority, queue_project, toggle_pause_project
+from energetica.utils.auth_logic import signup_player
 from energetica.utils.chat import add_message, create_chat, create_group_chat, hide_chat_disclaimer
 from energetica.utils.misc import confirm_location, package_weather_data
 from energetica.utils.network_helpers import create_network, join_network, leave_network
@@ -23,75 +25,177 @@ from energetica.utils.network_helpers import create_network, join_network, leave
 websocket_blueprint = Blueprint("rest_api", __name__)
 
 
-def add_sock_handlers(sock, engine):
-    """Adds flask-sock endpoints and other various setup methods. Called by
-    __init__.py."""
-    basic_auth = HTTPBasicAuth()
+# String constants for the different types of messages that can be sent over the WebSocket
+class ClientMessage:
+    """Enum of message types that can be sent from the client to the server."""
 
-    # Authentication through HTTP Basic
+    LOGIN = "login"
+    # REQUEST = "request"
+    # CONFIRM_LOCATION = "confirmLocation"
+    # JOIN_NETWORK = "joinNetwork"
+    # LEAVE_NETWORK = "leaveNetwork"
+    # CREATE_NETWORK = "createNetwork"
+    # START_PROJECT = "startProject"
+    # PAUSE_UNPAUSE_PROJECT = "pauseUnpauseProject"
+    # DECREASE_PROJECT_PRIORITY = "decreaseProjectPriority"
+    # DISMISS_CHAT_DISCLAIMER = "dismissChatDisclaimer"
+    # CREATE_CHAT = "createChat"
+    # CREATE_GROUP_CHAT = "createGroupChat"
+    # SEND_MESSAGE = "sendMessage"
 
-    @basic_auth.verify_password
-    def verify_password(username, password):
-        """Called by flask-HTTPAUth to verify credentials."""
+
+def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
+    """Add flask-sock endpoints and other various setup methods. Called by energetica/__init__.py."""
+
+    def verify_password(username: str, password: str) -> Player | None:
+        """Verify the given credentials. Return the corresponding player if it exists."""
         player = Player.query.filter_by(username=username).first()
         if player:
             if check_password_hash(player.pwhash, password):
                 engine.log(f"{username} logged in via WebSocket")
-                return username
-            else:
-                engine.log(f"{username} failed to log in via WebSocket")
+                return player
+            engine.log(f"{username} failed to log in via WebSocket")
+        return None
 
-    @websocket_blueprint.before_request
-    @basic_auth.login_required
-    def check_user():
-        """Sets up variables used by endpoints."""
-        g.engine = current_app.config["engine"]
-        g.player = Player.query.filter_by(username=basic_auth.current_user()).first()
-
-    # Main WebSocket endpoint for Swift client
     @sock.route("/rest_ws", bp=websocket_blueprint)
-    def rest_ws(ws):
-        """Main WebSocket endpoint for API."""
-        player = g.player
-        engine.log(f"Received WebSocket connection for player {player}")
-        ws.send(rest_setup_complete())
-        ws.send(rest_get_global_data(engine))
-        # TODO: Review what data is sent before a tile is selected
-        ws.send(rest_get_map())
-        ws.send(rest_get_players())
-        ws.send(rest_get_current_player(player))
-        ws.send(rest_get_chats(player))
-        ws.send(rest_get_last_opened_chat(player))
-        ws.send(rest_get_show_chat_disclaimer(player))
-        ws.send(rest_get_networks())
-        # ws.send(rest_get_scoreboard())
-        ws.send(rest_get_constructions(player))
-        ws.send(rest_get_construction_queue(player))
-        ws.send(rest_get_weather(engine, player))
-        ws.send(rest_get_achievements(player))
-        if player.tile is not None:
-            rest_init_ws_post_location(player, ws)
-        if player.id not in engine.websocket_dict:
-            engine.websocket_dict[player.id] = []
-        engine.websocket_dict[player.id].append(ws)
+    def rest_ws(ws: Server) -> None:
+        """Define the WebSocket endpoint for API used for the iOS client."""
+        player: Player | None = None
+        engine.log("Received WebSocket connection")
+
+        def send_message(message: dict) -> None:
+            ws.send(json.dumps(message))
+
+        def parse_request(uuid: str, request: dict) -> None:
+            nonlocal player
+
+            def send_response(response: dict) -> None:
+                message = {"response": {"uuid": uuid, "data": response}}
+                send_message(message)
+
+            def send_success() -> None:
+                send_response({"success": {}})
+
+            def send_error(error: GameError) -> None:
+                send_response({"error": {"type": str(error)}})
+
+            request_keys = list(request.keys())
+            if len(request_keys) != 1:
+                msg = f"Invalid request: {request}"
+                engine.log(msg)
+                raise ValueError(msg)
+
+            request_type = request_keys[0]
+            request_body = request[request_type]
+
+            if request_type == "login":
+                if player is not None:
+                    engine.log("Player already logged in")
+                    send_error(GameError("alreadyLoggedIn"))
+                    return
+                username = request_body["username"]
+                password = request_body["password"]
+                player = verify_password(username, password)
+                if player is None:
+                    send_error(GameError("invalidCredentials"))
+                    return
+                send_success()
+
+            if request_type == "signup":
+                if player is not None:
+                    engine.log("Player already logged in")
+                    send_error(GameError("alreadyLoggedIn"))
+                    return
+                username = request_body["username"]
+                password1 = request_body["password1"]
+                password2 = request_body["password2"]
+                try:
+                    player = signup_player(username, password1, password2)
+                except GameError as e:
+                    send_error(e)
+                    return
+                send_success()
+
+            if request_type == "signout":
+                if player is None:
+                    engine.log("Player not logged in")
+                    send_error(GameError("notLoggedIn"))
+                    return
+                player = None
+                send_success()
+            # if message_type in endpoints:
+            #     arguments = message["data"]
+            #     try:
+            #         response = endpoints[message["type"]](engine, player, ws, **arguments)
+            #         ws.send(json.dumps({"type": "response", "data": response}))
+            #     except GameError as e:
+            #         ws.send(json.dumps({"type": "error", "data": str(e)}))
+
+        def parse_message(message: dict) -> None:
+            message_keys = list(message.keys())
+            if len(message_keys) != 1:
+                msg = f"Invalid message: {message}"
+                engine.log(msg)
+                raise ValueError(msg)
+
+            message_type = message_keys[0]
+            if message_type == "request":
+                uuid: str = message[message_type]["uuid"]
+                request: dict = message[message_type]["data"]
+                parse_request(uuid, request)
+            else:
+                msg = f"Websocket connection from player {player} sent an unknown message of type {message['type']}"
+                engine.log(msg)
+
         while True:
             try:
-                data = ws.receive()
+                data: str = ws.receive()
+                print(f"Received data: {data}")
+                message = json.loads(data)
+                parse_message(message)
             except ConnectionClosed:
-                unregister_websocket_connection(player.id, ws)
+                engine.log("Websocket connection closed")
                 break
-            message = json.loads(data)
-            message_data = message["data"]
-            match message["type"]:
-                # case "confirmLocation":
-                #     rest_confirm_location(engine, ws, message_data)
-                case "request":
-                    uuid = message["uuid"]
-                    rest_parse_request(engine, player, ws, uuid, message_data)
-                case message_type:
-                    engine.log(
-                        f"Websocket connection from player {player} sent an unknown message of type {message_type}"
-                    )
+
+        # ws.send(rest_setup_complete())
+        # ws.send(rest_get_global_data(engine))
+        # # TODO: Review what data is sent before a tile is selected
+        # ws.send(rest_get_map())
+        # ws.send(rest_get_players())
+        # ws.send(rest_get_current_player(player))
+        # ws.send(rest_get_chats(player))
+        # ws.send(rest_get_last_opened_chat(player))
+        # ws.send(rest_get_show_chat_disclaimer(player))
+        # ws.send(rest_get_networks())
+        # # ws.send(rest_get_scoreboard())
+        # ws.send(rest_get_constructions(player))
+        # ws.send(rest_get_construction_queue(player))
+        # ws.send(rest_get_weather(engine, player))
+        # ws.send(rest_get_achievements(player))
+        # if player.tile is not None:
+        #     rest_init_ws_post_location(player, ws)
+        # if player.id not in engine.websocket_dict:
+        #     engine.websocket_dict[player.id] = []
+        # engine.websocket_dict[player.id].append(ws)
+        # while True:
+        #     try:
+        #         data = ws.receive()
+        #     except ConnectionClosed:
+        #         if player is not None:
+        #             unregister_websocket_connection(player.id, ws)
+        #         break
+        #     message = json.loads(data)
+        #     message_data = message["data"]
+        #     match message["type"]:
+        #         # case "confirmLocation":
+        #         #     rest_confirm_location(engine, ws, message_data)
+        #         case "request":
+        #             uuid = message["uuid"]
+        #             rest_parse_request(engine, player, ws, uuid, message_data)
+        #         case request_type:
+        #             engine.log(
+        #                 f"Websocket connection from player {player} sent an unknown message of type {request_type}"
+        #             )
 
 
 def unregister_websocket_connection(player_id, ws):
@@ -352,13 +456,12 @@ def rest_get_achievements(player: Player):
     return json.dumps(response)
 
 
-def rest_request_response(uuid, endpoint, data):
+def rest_request_response(uuid, response):
     """Package a request response in JSON"""
     response = {
         "type": "requestResponse",
         "uuid": uuid,
-        "request_response": endpoint,
-        "data": data,
+        "data": response,
     }
     return json.dumps(response)
 
@@ -366,10 +469,10 @@ def rest_request_response(uuid, endpoint, data):
 ## Client Messages
 
 
-def rest_parse_request(engine, player: Player, ws, uuid, data):
-    """Interpret a request sent from a REST client"""
+def rest_parse_request(engine: GameEngine, player: Player | None, ws: Server, uuid, data):
+    """Interpret a request sent from a REST client."""
     endpoint = data["endpoint"]
-    body = data["body"] if "body" in data else None
+    body = data.get("body", None)
     print(f"rest_parse_request({player.username}, {endpoint})")
     match endpoint:
         case "confirmLocation":

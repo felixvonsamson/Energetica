@@ -1,14 +1,12 @@
 """Functions for authentication and sign-up of users."""
 
-import json
-from datetime import datetime
-
 from flask import Blueprint, current_app, flash, g, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import check_password_hash
 
-from energetica.database import db
 from energetica.database.player import Player
+from energetica.game_engine import GameError
+from energetica.utils.auth_logic import signup_player
 
 auth = Blueprint("auth", __name__)
 
@@ -68,33 +66,23 @@ def sign_up():
         password1 = request.form.get("password1")
         password2 = request.form.get("password2")
 
-        player = Player.query.filter_by(username=username).first()
-        if player:
-            flash("Username already exist", category="error")
-        elif len(username) < 3 or len(username) > 18:
-            flash("Username must be between 3 and 18 characters.", category="error")
-        elif password1 != password2:
-            flash("Passwords don't match.", category="error")
-        elif len(password1) < 7:
-            flash("Password must be at least 7 characters.", category="error")
-        else:
-            new_player = Player(
-                username=username,
-                pwhash=generate_password_hash(password1, method="scrypt"),
-            )
-            db.session.add(new_player)
-            db.session.commit()
+        try:
+            new_player = signup_player(username, password1, password2)
             login_user(new_player, remember=True)
             flash("Account created!", category="message")
-            log_entry = {
-                "timestamp": datetime.now().isoformat(),
-                "action_type": "create_user",
-                "player_id": new_player.id,
-            }
-            g.engine.action_logger.info(json.dumps(log_entry))
-            g.engine.log(f"{username} created an account")
-            # websocket.rest_notify_scoreboard(g.engine)
-            # websocket.rest_notify_new_player(g.engine)
             return redirect(url_for("views.home"))
+        except GameError as e:
+            match e.exception_type:
+                case "usernameExists":
+                    flash("Username already exist", category="error")
+                case "usernameLength":
+                    flash("Username must be between 3 and 18 characters.", category="error")
+                case "passwordMismatch":
+                    flash("Passwords don't match.", category="error")
+                case "passwordLength":
+                    flash("Password must be at least 7 characters.", category="error")
+                case _:
+                    raise
+            return None
 
     return render_template("sign_up.jinja", engine=g.engine, user=current_user)
