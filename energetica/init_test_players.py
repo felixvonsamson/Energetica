@@ -165,7 +165,9 @@ def init_test_players(engine):
     add_asset(player1, "gas_drilling_site", 1)
 
     # Player 2
-    add_asset(player2, "chemistry", 5)
+    player2.money = 1_000_000_000
+    add_asset(player2, "steam_engine", 20)
+    add_asset(player2, "industry", 10)
     # Player 3
     # add_asset(player3, "mathematics", 1)
     # add_asset(player3, "mechanical_engineering", 1)
