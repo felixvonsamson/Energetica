@@ -719,6 +719,7 @@ input:checked+.slider:before {
 .logo {
     height: 350px;
     filter: invert(26%) sepia(28%) saturate(805%) hue-rotate(79deg) brightness(93%) contrast(91%);
+    transition: transform 0.05s linear;
 }
 
 .logo.small {
@@ -1015,6 +1016,20 @@ input:checked+.slider:before {
 
 .background {
     height: 100vh
+}
+
+.border_left {
+    width: 18%;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.border_right {
+    width: 18%;
+    position: fixed;
+    top: 0;
+    right: 0;
 }
 
 .input {

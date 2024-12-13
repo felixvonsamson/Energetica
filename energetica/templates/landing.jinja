@@ -3,112 +3,109 @@
   Login
 {% endblock title %}
 {% block base %}
+    <div class="logo_txt large">Energetica</div>
+    <div class="border_left flex-col">
+        <img src="{{ url_for('static', filename='images/icon.svg') }}"
+            class="logo" style="width:95%"/>
+    </div>
+    <div class="border_right flex-col">
+        <img src="{{ url_for('static', filename='images/icon.svg') }}"
+            class="logo" style="width:95%"/>
+    </div>
+    
+    <div class="flex-col" style="position:fixed; width:100%">
+        <div style="height:250px"></div>
+        <div class="bone padding txt_center" style="border-radius: 8px; max-width:960px; font-size: min(25px, 3.4vh)">
+            Shape your energy future! Manage electricity generation, balance resources, and combat emissions in <b>Energetica</b> - the multiplayer game where your decisions impact the world.
+        </div>
+        <div class="flex-center margin">
+            <a href="{{ url_for('auth.login') }}" class="white login-button padding large margin" style="text-decoration: none;">Login</a>
+            <a href="{{ url_for('auth.sign_up') }}" class="white login-button padding large margin" style="text-decoration: none;">Sign up</a>
+        </div>
+    </div>
+
+    <div class="main_container flex-col" style="min-height:480px; pointer-events: none;">
+    </div>
     <div id="main_container" class="main_container tan_green">
 
-        <div class="flex-row huge title logo_txt" style="font-size: 100px">
-            Energetica
-        </div>
-        <div class="margin">
-            <h2 class="txt_center" style="font-size: min(26px, 4vh);">
-                Shape your energy future! Manage electricity generation, balance resources, and combat emissions in <b>Energetica</b> - the multiplayer game where your decisions impact the world.
-            </h2>
-        </div>
-        {# Sign up and login buttons #}
-        <div class="flex-center margin">
-            <a href="{{ url_for('auth.sign_up') }}" class="white login-button padding medium txt_center" style="margin-right:16px;">Sign up</a>
-            <a href="{{ url_for('auth.login') }}" class="white login-button padding medium txt_center">Login</a>
-        </div>
-        <div class="huge title padding margin medium">
+        <div class="flex-row title logo_txt">
             What is Energetica?
         </div>
-        <div class="bone padding margin medium">
-            <p>
-                Energetica is a free, web-based multiplayer game that brings the complexities of energy systems to life. Players take on the role of energy managers, balancing electricity generation, resource extraction, and CO2 emissions while adapting to climate challenges. Through strategic decision-making and collaboration, Energetica offers a realistic yet engaging way to explore energy solutions and their trade- off s.
-            </p>
+        <div class="bone padding-large margin-large medium">
+            Energetica is a free, web-based multiplayer game that brings the complexities of energy systems to life. 
+            Players take on the role of energy managers, balancing electricity generation, resource extraction, and CO2 
+            emissions while adapting to climate challenges. Through strategic decision-making and collaboration, 
+            Energetica offers a realistic yet engaging way to explore energy solutions and their trade-offs.
         </div>
-        <div class="huge title padding margin medium">
+        <div class="flex-row title logo_txt">
             A World of Strategic Decisions
         </div>
-        <div class="bone padding margin medium">
-            <p>
-                Energetica places players in a dynamic simulation where they manage energy systems and navigate complex challenges. Players choose a location, build facilities like power plants and storage units, and trade resources in realistic markets shaped by supply and demand.
-            </p>
-            <p>
-                Every decision has trade-offs, influenced by factors like location, technology, and the actions of others. Rising CO2 levels and climate risks add shared challenges, pushing players to weigh cooperation against competition. With no single "best" strategy, success depends on adaptability and careful analysis. For a deeper dive, the Energetica wiki offers detailed insights into the game's mechanics and strategic possibilities.
-            </p>
+        <div class="bone padding-large margin-large medium">
+            Energetica places players in a dynamic simulation where they manage energy systems and navigate complex 
+            challenges. Players choose a location, build facilities like power plants and storage units, and trade 
+            resources in realistic markets shaped by supply and demand. <br>
+            Every decision has trade-offs, influenced by factors like location, technology, and the actions of others. 
+            Rising CO2 levels and climate risks add shared challenges, pushing players to weigh cooperation against 
+            competition. With no single "best" strategy, success depends on adaptability and careful analysis. For a 
+            deeper dive, the Energetica wiki offers detailed insights into the game's mechanics and strategic possibilities.
         </div>
-        <img src="{{ url_for('static', filename='images/landing/power_facilities_sample.png')}}" class="margin padding" style="width: 94%; left: 50%;">
-        <div class="flex-row margin padding">
-            {# TODO(mglst): This image goes wonky for mobile, the aspect ratio is wrong #}
-            <img src="{{ url_for('static', filename='images/landing/network_graph.png')}}" class="" style="width: 60%; left: 50%;">
-            <div class="medium margin padding">
-                <p>
-                    The graph on the left shows the energy generation of a network. The different colors represent the different generation technologies. We can clearly see the weather dependent generation of solar facilities in yellow. We also see the diurnal variation of power demand.
-                </p>
-            </div>
+        <div class="padding-large margin-large medium">
+            The following pictures are some screenshots from the game. In the first picture we can see a sample of the 
+            power facilities that a player can build. The second picture shows a graph of the energy generation of a 
+            network. The different colors represent the different generation technologies. The last picture shows the 
+            evolution of the global average temperature of a server over a long period. We can see a disruption 
+            caused by the players emissions. The rise in temperature increases risks for the occurrence of climate 
+            events that affect players negatively.
         </div>
-        <div class="huge title padding margin medium">
-            What We've Achieved
+        <div class="flex-col">
+            <img src="{{ url_for('static', filename='images/landing/power_facilities_sample.png')}}" style="width:95%;">
+            <img src="{{ url_for('static', filename='images/landing/network_graph.png')}}" class="margin" style="max-width:1000px; width:95%;">
+            <img src="{{ url_for('static', filename='images/landing/global_average_temperatures_graph.png')}}" class="margin" style="max-width:1000px; width:95%;">
         </div>
-        <div class="bone padding margin medium">
-            <p>
-                During a test run at ETH Zürich, Energetica received high praise for its educational value. Students reported greater engagement with energy concepts, collaborating to uncover strategies and actively learning about the trade-off s of different technologies.
-            </p>
-            <p>
-                The game's realism even revealed fascinating behaviors, like markets mirroring real-world dynamics, with electricity prices tied to coal availability or players forming specialized roles in uranium export or renewable storage.
-            </p>
-        </div>
-        <img src="{{ url_for('static', filename='images/landing/live_demo_photo.png')}}" class="margin padding" style="width: 94%; left: 50%;">
-        <div class="huge title padding margin medium">
+        <div class="flex-row title logo_txt">
             The Story Behind Energetica
         </div>
-        <div class="bone padding margin medium">
-            <p>
-                Launched in 2023, Energetica was born out of a desire to shift the energy conversation. Too often, public debate oversimplifies the challenges of the energy transition, offering "one-size-fi ts-all" solutions. Energetica challenges this narrative, highlighting the strengths and limitations of various technologies through interactive gameplay.
-            </p>
-            <p>
-                The project is rooted in the belief that there won't be a technological miracle to solve the climate crisis. Instead, we must foster public engagement and nuanced understanding of existing solutions. Energetica's open-source and free-to-play nature ensures accessibility to all who share this vision.
-            </p>
+        <div class="bone padding-large margin-large medium">
+            Launched in 2023, Energetica was born out of a desire to shift the energy conversation. Too often, public 
+            debate oversimplifies the challenges of the energy transition, offering "one-size-fits-all" solutions. 
+            Energetica challenges this narrative, highlighting the strengths and limitations of various technologies 
+            through interactive gameplay. <br>
+            The project is rooted in the belief that there won't be a technological miracle to solve the climate crisis. 
+            Instead, we must foster public engagement and nuanced understanding of existing solutions. Energetica's 
+            open-source and free-to-play nature ensures accessibility to all who share this vision.
         </div>
-        <div class="flex-row margin padding">
-            {# TODO(mglst): This image goes wonky for mobile, the aspect ratio is wrong #}
-            <img src="{{ url_for('static', filename='images/landing/global_average_temperatures_graph.png')}}" class="" style="width: 60%; left: 50%;">
-            <div class="medium margin padding">
-                <p>
-                    The image on left shows the evolution of a servers global average temperature over a long period. We can see a disruption when caused by the players emissions. The rise in temperature increases risks for the occurrence of climate events that affect players negatively.
-                </p>
-            </div>
-        </div>
-        <div class="huge title padding margin medium">
+        <div class="flex-row title logo_txt">
             Teaching Through Play
         </div>
-        <div class="bone padding margin medium">
-            <p>
-                Energetica embodies the principle that interactive play can make complex topics more accessible and engaging. By simulating real-world challenges, the game encourages active learning, helping players grasp abstract energy concepts in a hands-on way.
-            </p>
-            <p>
-                Whether for students, professionals, or energy enthusiasts, Energetica offers a platform to explore energy strategies, test ideas, and learn through experimentation.
-            </p>
+        <div class="bone padding-large margin-large medium">
+            Energetica embodies the principle that interactive play can make complex topics more accessible and engaging. 
+            By simulating real-world challenges, the game encourages active learning, helping players grasp abstract 
+            energy concepts in a hands-on way.<br>
+            Whether for students, professionals, or energy enthusiasts, Energetica offers a platform to explore energy 
+            strategies, test ideas, and learn through experimentation.
         </div>
-        <div class="flex-col margin padding">
-            <img src="{{ url_for('static', filename='images/landing/location_choice_page.png')}}" class="" style="width: 94%; left: 50%;">
-            <div class="medium margin padding">
-                <p>
-                    The first thing to do after creating an account, is to choose a location on the virtual map shown right. Each tile has a given amount of natural resources and a location dependent climate risk. This first decision is crucial for the strategy that a player decides to follow
-                </p>
-            </div>
+        <div class="flex-col">
+            <img src="{{ url_for('static', filename='images/landing/live_demo_photo.jpg')}}" class="margin" style="max-width:1000px; width:95%;">      
         </div>
-        <div class="huge title padding margin medium">
+        <div class="flex-row title logo_txt">
             Join the Community
         </div>
-        <div class="bone padding margin medium">
-            <p>
-                Energetica is in beta, and we’re looking for players and collaborators to test the game and provide feedback. Whether you’re an educator, researcher, or energy enthusiast, your input will help refine Energetica as an educational and strategic tool.
-            </p>
-            <p>
-                <a href="{{ url_for('auth.sign_up') }}">Sign up</a> to start playing, or join our community to discuss ideas and collaborate on development. Together, we can use games to inspire better understanding and meaningful action on energy and climate challenges.
-                {# TODO(mglst): add link for joining the community (presumably this is discord?) #}
-            </p>
+        <div class="bone padding-large margin-large medium">
+            Energetica is in beta, and we're looking for players and collaborators to test the game and provide 
+            feedback. Whether you're an educator, researcher, or energy enthusiast, your input will help refine 
+            Energetica as an educational and strategic tool. <br>
+            <a href="{{ url_for('auth.sign_up') }}">Sign up</a> to start playing, and/or join our 
+            <a href="https://discord.gg/6xQsfqe2Nd">Discord</a> server to 
+            discuss ideas and collaborate on development. Together, we can use games to inspire better 
+            understanding and meaningful action on energy and climate challenges.
+        </div>
+        <div class="flex-col">
+            <img src="{{ url_for('static', filename='images/icon.svg') }}"
+            class="logo" onclick="scrollToTop()" style="cursor:pointer">      
         </div>
     </div>
 {% endblock base %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='landing_page.js') }}"></script>
+{% endblock scripts %}
