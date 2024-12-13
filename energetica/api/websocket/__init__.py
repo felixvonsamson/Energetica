@@ -8,7 +8,7 @@ from flask_sock import Sock
 from simple_websocket import ConnectionClosed, Server
 from werkzeug.security import check_password_hash
 
-from energetica.api.websocket import endpoints
+from energetica.api.websocket import server_messages
 from energetica.database import db
 from energetica.database.map import Hex
 from energetica.database.messages import Chat, Message
@@ -66,6 +66,10 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
         def send_message(message: dict) -> None:
             ws.send(json.dumps(message))
 
+        def post_auth_setup() -> None:
+            send_message(server_messages.players())
+            send_message(server_messages.user_player_id(player))
+
         def parse_request(uuid: str, request: dict) -> None:
             nonlocal player
 
@@ -100,6 +104,7 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
                     send_error(GameError("invalidCredentials"))
                     return
                 send_success()
+                post_auth_setup()
 
             if request_type == "signup":
                 if player is not None:
@@ -115,6 +120,7 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
                     send_error(e)
                     return
                 send_success()
+                post_auth_setup()
 
             if request_type == "signout":
                 if player is None:
@@ -153,8 +159,11 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
                 print(f"Received data: {data}")
                 message = json.loads(data)
                 parse_message(message)
-            except ConnectionClosed:
+            except ConnectionClosed as e:
+                engine.log(e)
                 engine.log("Websocket connection closed")
+                engine.log(ws.close_reason)
+                engine.log(ws.close_message)
                 break
 
         # ws.send(rest_setup_complete())
@@ -223,37 +232,6 @@ def rest_setup_complete():
     """Tells the ws connection that authentication happened successfully"""
     # TODO: deprecate this. There should HTTP standard ways of dealing with this
     response = {"type": "setupComplete"}
-    return json.dumps(response)
-
-
-def rest_get_map():
-    """Gets the map data from the database and returns it as a JSON string as a
-    dictionary of arrays."""
-    hex_list = Hex.query.order_by(Hex.r, Hex.q).all()
-    response = {
-        "type": "getMap",
-        "data": {
-            "ids": [tile.id for tile in hex_list],
-            "solars": [tile.solar for tile in hex_list],
-            "winds": [tile.wind for tile in hex_list],
-            "hydros": [tile.hydro for tile in hex_list],
-            "coals": [tile.coal for tile in hex_list],
-            "gases": [tile.gas for tile in hex_list],
-            "uraniums": [tile.uranium for tile in hex_list],
-            "climate_risks": [tile.climate_risk for tile in hex_list],
-        },
-    }
-    return json.dumps(response)
-
-
-def rest_get_players():
-    """Gets all player data and returns it as a JSON string."""
-    return json.dumps({"type": "getPlayers", "data": Player.package_all()})
-
-
-def rest_get_current_player(current_player):
-    """Gets the current player's id and returns it as a JSON string."""
-    response = {"type": "getCurrentPlayer", "data": current_player.id}
     return json.dumps(response)
 
 
