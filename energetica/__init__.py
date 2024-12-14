@@ -95,6 +95,7 @@ def create_app(
     simulate_checkpoint_ticks=[],
     simulate_till=None,
     simulate_profiling=False,
+    skip_adding_handlers=False,
     **kwargs,
 ):
     """Set up the app and the game engine."""
@@ -187,13 +188,15 @@ def create_app(
     socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
     engine.socketio = socketio
 
-    add_handlers(socketio=socketio, engine=engine)
+    if not skip_adding_handlers:
+        add_handlers(socketio=socketio, engine=engine)
 
     # initialize sock for WebSockets:
     sock = Sock(app)
     engine.sock = sock
 
-    add_sock_handlers(sock=sock, engine=engine)
+    if not skip_adding_handlers:
+        add_sock_handlers(sock=sock, engine=engine)
 
     # add blueprints (website repositories) :
     app.register_blueprint(location_choice_views, url_prefix="/")

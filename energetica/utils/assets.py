@@ -383,7 +383,7 @@ def queue_project(
     if not ignore_requirements_and_money:
         player.money -= real_price
 
-    # The construction is added as paused and then imediately unpaused in order to place it in the right place in the
+    # The construction is added as paused and then immediately unpaused in order to place it in the right place in the
     # priority list.
     new_construction: OngoingConstruction = OngoingConstruction(
         name=asset,

@@ -9,7 +9,7 @@ from energetica.database import db
 from energetica.database.map import Hex
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
 from energetica.database.player import Player
-from energetica.utils.assets import cancel_project, decrease_project_priority, queue_project
+from energetica.utils.assets import cancel_project, decrease_project_priority, queue_project, toggle_pause_project
 from energetica.utils.misc import confirm_location
 
 # RULES FOR CONSTRUCTIONS:
@@ -154,7 +154,7 @@ def test_swap_paused_and_unpaused_constructions():
     After decreasing the priority of the construction A, construction B should be ongoing, and A waiting.
     """
 
-    _, app = create_app(rm_instance=True)
+    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
     engine = app.config["engine"]
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
@@ -180,7 +180,7 @@ def test_cancel_construction():
     """Setup:
     Player starts a construction and then cancels it. There should be no more constructions afterwards.
     """
-    _, app = create_app(rm_instance=True)
+    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
     engine = app.config["engine"]
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
@@ -196,3 +196,33 @@ def test_cancel_construction():
         cancel_project(player, construction, force=True)
         validate_rules(engine, player)
         assert len(player.read_list("construction_priorities")) == 0
+
+
+def test_pause_construction():
+    """Setup:
+    Player starts a construction and then pauses it. It should be paused.
+    Then player unpauses the construction. It should be ongoing.
+    """
+
+    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
+    engine = app.config["engine"]
+    with app.app_context():
+        player = Player(username="username", pwhash=generate_password_hash("password"))
+        db.session.add(player)
+        db.session.commit()
+        hex_tile = db.session.get(Hex, 1)
+        confirm_location(engine, player, hex_tile)
+        db.session.commit()
+        validate_rules(engine, player)
+        construction = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
+        validate_rules(engine, player)
+        assert construction.status == ConstructionStatus.ONGOING
+        toggle_pause_project(player, construction)
+        validate_rules(engine, player)
+        assert construction.status == ConstructionStatus.PAUSED
+        toggle_pause_project(player, construction)
+        validate_rules(engine, player)
+        assert construction.status == ConstructionStatus.ONGOING
+
+
+# /def test_misc
