@@ -475,6 +475,10 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
     player.money += refund
     player.remove_from_list(priority_list_name, construction.id)
     db.session.delete(construction)
+
+    db.session.flush()
+    deploy_available_workers(player, construction.family)
+
     engine.log(f"{player.username} cancelled the construction {construction.name}")
     db.session.commit()
     # TODO(mglst): This should be re-enabled when the websocket is re-enabled
@@ -581,6 +585,11 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
                 *priority_list[insertion_index:],
             ]
         player.write_list(priority_list_name, priority_list)
+
+        # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
+        db.session.flush()
+        deploy_available_workers(player, construction.family)
+
         engine.log(f"{player.username} paused the construction {construction.id} {construction.name}")
     else:
         # project is currently pause, and should be unpaused

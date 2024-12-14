@@ -1,7 +1,9 @@
 import os
+import random
 import sys
 
 sys.path.append(os.getcwd())
+import pytest
 from werkzeug.security import generate_password_hash
 
 from energetica import create_app
@@ -9,6 +11,7 @@ from energetica.database import db
 from energetica.database.map import Hex
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
 from energetica.database.player import Player
+from energetica.game_engine import GameError
 from energetica.utils.assets import cancel_project, decrease_project_priority, queue_project, toggle_pause_project
 from energetica.utils.misc import confirm_location
 
@@ -126,13 +129,25 @@ def validate_rules(engine, player):
         OngoingConstruction.family != "Technologies",
     ).all()
     if any(not project.cache.prerequisites for project in waiting_constructions):
-        assert (
+        if (
             player.construction_workers
-            == OngoingConstruction.query.filter(
+            != OngoingConstruction.query.filter(
                 OngoingConstruction.player_id == player.id,
                 OngoingConstruction.status == ConstructionStatus.ONGOING,
             ).count()
-        )
+        ):
+            status_to_str = {0: "PAUSED", 1: "WAITING", 2: "ONGOING"}
+            for c_id in construction_priorities:
+                c = OngoingConstruction.query.get(c_id)
+                print(f"construction.id: {c_id}, {c.name}, {status_to_str[c.status]}")
+            debug_str = "\n".join(
+                [
+                    f"construction.id: {c_id}, {OngoingConstruction.query.get(c_id).name}, {status_to_str[OngoingConstruction.query.get(c_id).status]}"
+                    for c_id in construction_priorities
+                ]
+            )
+            msg = f"Rule 7 failed for constructions.\n{debug_str}"
+            pytest.fail(msg)
     waiting_research: list[OngoingConstruction] = OngoingConstruction.query.filter(
         OngoingConstruction.player_id == player.id,
         OngoingConstruction.status == ConstructionStatus.WAITING,
@@ -225,4 +240,83 @@ def test_pause_construction():
         assert construction.status == ConstructionStatus.ONGOING
 
 
-# /def test_misc
+def test_queue_two_pause_one():
+    """Setup:
+    Player starts constructions A and B. Player then pauses A.
+    """
+
+    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
+    engine = app.config["engine"]
+    with app.app_context():
+        player = Player(username="username", pwhash=generate_password_hash("password"))
+        db.session.add(player)
+        db.session.commit()
+        hex_tile = db.session.get(Hex, 1)
+        confirm_location(engine, player, hex_tile)
+        db.session.commit()
+        validate_rules(engine, player)
+        construction_A = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
+        validate_rules(engine, player)
+        construction_B = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
+        validate_rules(engine, player)
+        toggle_pause_project(player, construction_A)
+        validate_rules(engine, player)
+        assert player.read_list("construction_priorities") == [construction_B.id, construction_A.id]
+
+
+def test_three_constructions_with_pause():
+    """Setup:
+    Player starts constructions A, B and C. Player then pauses C, then A.
+    """
+
+    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
+    engine = app.config["engine"]
+    with app.app_context():
+        player = Player(username="username", pwhash=generate_password_hash("password"))
+        player.money = 1_000_000_000
+        db.session.add(player)
+        db.session.commit()
+        hex_tile = db.session.get(Hex, 1)
+        confirm_location(engine, player, hex_tile)
+        db.session.commit()
+        validate_rules(engine, player)
+        construction_A = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
+        validate_rules(engine, player)
+        construction_B = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
+        validate_rules(engine, player)
+        construction_C = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
+        validate_rules(engine, player)
+        toggle_pause_project(player, construction_C)
+        validate_rules(engine, player)
+        toggle_pause_project(player, construction_A)
+        validate_rules(engine, player)
+        # assert player.read_list("construction_priorities") == [construction_B.id, construction_A.id, construction_C.id]
+
+
+def test_add_two_and_cancel_one():
+    """Setup:
+    queue(1)
+    queue(2)
+    cancel(1)
+    """
+
+    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
+    engine = app.config["engine"]
+    with app.app_context():
+        player = Player(username="username", pwhash=generate_password_hash("password"))
+        player.money = 1_000_000_000
+        db.session.add(player)
+        db.session.commit()
+        hex_tile = db.session.get(Hex, 1)
+        confirm_location(engine, player, hex_tile)
+        db.session.commit()
+        validate_rules(engine, player)
+        construction_1 = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
+        validate_rules(engine, player)
+        construction_2 = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
+        validate_rules(engine, player)
+        cancel_project(player, construction_1, force=True)
+        validate_rules(engine, player)
+        assert player.read_list("construction_priorities") == [construction_2.id]
+
+
