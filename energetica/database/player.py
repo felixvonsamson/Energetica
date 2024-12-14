@@ -242,7 +242,7 @@ class Player(db.Model, UserMixin):
 
     def available_workers(self, project_name):
         """Returns the number of available workers depending on the project type"""
-        engine = current_app.config["engine"]
+        engine: GameEngine = current_app.config["engine"]
         if project_name in engine.technologies:
             return self.available_lab_workers()
         else:

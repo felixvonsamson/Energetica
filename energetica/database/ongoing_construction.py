@@ -108,7 +108,7 @@ class OngoingConstruction(db.Model):
 
         engine: GameEngine = current_app.config["engine"]
         player: Player = Player.query.get(self.player_id)
-        assert player.available_workers(self.family) > 0
+        assert player.available_workers(self.name) > 0
         engine: GameEngine = current_app.config["engine"]
         self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
         self.status = ConstructionStatus.ONGOING
@@ -121,7 +121,7 @@ class OngoingConstruction(db.Model):
 
         engine: GameEngine = current_app.config["engine"]
         player: Player = Player.query.get(self.player_id)
-        if self.cache.prerequisites or player.available_workers(self.family) < 1:
+        if self.cache.prerequisites or player.available_workers(self.name) < 1:
             self.status = ConstructionStatus.WAITING
         else:
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]

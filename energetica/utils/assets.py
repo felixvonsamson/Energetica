@@ -191,6 +191,7 @@ def deploy_available_workers(player: Player, family: str) -> None:
         if insertion_index is not None:
             priority_list.remove(construction_id)
             priority_list.insert(insertion_index, construction_id)
+            player.write_list(priority_list_name, priority_list)
         if available_workers <= 0:
             return
 

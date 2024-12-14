@@ -354,9 +354,38 @@ def test_technologies_pausing_propagates_requirements():
         validate_rules(engine, player)
         technology_a = queue_project(engine=engine, player=player, asset="mathematics", force=True)
         validate_rules(engine, player)
+        assert technology_a.status == ConstructionStatus.ONGOING
         technology_b = queue_project(engine=engine, player=player, asset="mechanical_engineering", force=True)
         validate_rules(engine, player)
+        assert technology_b.status == ConstructionStatus.WAITING
         toggle_pause_project(player, technology_a)
         validate_rules(engine, player)
         assert technology_a.status == ConstructionStatus.PAUSED
         assert technology_b.status == ConstructionStatus.PAUSED
+
+
+def test_math_and_building_tech():
+    """Setup:
+    Player starts mathematics and building_technology in that order.
+    """
+
+    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
+    engine = app.config["engine"]
+    with app.app_context():
+        player = Player(username="username", pwhash=generate_password_hash("password"))
+        player.money = 1_000_000_000
+        db.session.add(player)
+        db.session.commit()
+        hex_tile = db.session.get(Hex, 1)
+        confirm_location(engine, player, hex_tile)
+        db.session.commit()
+        finish_project(queue_project(engine=engine, player=player, asset="laboratory", force=True))
+
+        validate_rules(engine, player)
+        technology_a = queue_project(engine=engine, player=player, asset="mathematics", force=True)
+        validate_rules(engine, player)
+        assert technology_a.status == ConstructionStatus.ONGOING
+        technology_c = queue_project(engine=engine, player=player, asset="building_technology", force=True)
+        validate_rules(engine, player)
+        assert technology_c.status == ConstructionStatus.WAITING
+
