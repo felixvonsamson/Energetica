@@ -1,3 +1,6 @@
 [tool.ruff]
 line-length = 120 # Let's keep this at 120 for now, there are some files that need it
 target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = [ "tests" ]
