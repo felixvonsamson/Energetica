@@ -12,7 +12,13 @@ from energetica.database.map import Hex
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
 from energetica.database.player import Player
 from energetica.game_engine import GameError
-from energetica.utils.assets import cancel_project, decrease_project_priority, queue_project, toggle_pause_project
+from energetica.utils.assets import (
+    cancel_project,
+    decrease_project_priority,
+    finish_project,
+    queue_project,
+    toggle_pause_project,
+)
 from energetica.utils.misc import confirm_location
 
 # RULES FOR CONSTRUCTIONS:
@@ -52,22 +58,29 @@ def validate_rules(engine, player):
     ).count() == len(research_priorities)
 
     # Rule 2
-    assert (
-        OngoingConstruction.query.filter(
-            OngoingConstruction.player_id == player.id,
-            OngoingConstruction.status == ConstructionStatus.ONGOING,
-            OngoingConstruction.family != "Technologies",
-        ).count()
-        <= player.construction_workers
+    ongoing_constructions = OngoingConstruction.query.filter(
+        OngoingConstruction.player_id == player.id,
+        OngoingConstruction.status == ConstructionStatus.ONGOING,
+        OngoingConstruction.family != "Technologies",
     )
-    assert (
-        OngoingConstruction.query.filter_by(
-            player_id=player.id,
-            status=ConstructionStatus.ONGOING,
-            family="Technologies",
-        ).count()
-        <= player.lab_workers
+    if ongoing_constructions.count() > player.construction_workers:
+        pytest.fail(
+            f"Rule 2 violation: there are {ongoing_constructions.count()} ongoing constructions "
+            f"({','.join(map(lambda c: c.name, ongoing_constructions))}), "
+            f"but only {player.construction_workers} construction workers."
+        )
+
+    ongoing_research = OngoingConstruction.query.filter_by(
+        player_id=player.id,
+        status=ConstructionStatus.ONGOING,
+        family="Technologies",
     )
+    if ongoing_research.count() > player.lab_workers:
+        pytest.fail(
+            f"Rule 2 violation: there are {ongoing_research.count()} ongoing research projects "
+            f"({','.join(map(lambda c: c.name, ongoing_research))}), "
+            f"but only {player.lab_workers} lab workers."
+        )
 
     # Rule 3
     status_list_constructions = list(map(lambda x: OngoingConstruction.query.get(x).status, construction_priorities))
@@ -320,3 +333,30 @@ def test_add_two_and_cancel_one():
         assert player.read_list("construction_priorities") == [construction_2.id]
 
 
+def test_technologies_pausing_propagates_requirements():
+    """Setup:
+    Player starts technology A, and then technology B, which has A as a prerequisite. Pausing A should pause B.
+    Here, A is mathematics, B is mechanical_engineering.
+    """
+
+    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
+    engine = app.config["engine"]
+    with app.app_context():
+        player = Player(username="username", pwhash=generate_password_hash("password"))
+        player.money = 1_000_000_000
+        db.session.add(player)
+        db.session.commit()
+        hex_tile = db.session.get(Hex, 1)
+        confirm_location(engine, player, hex_tile)
+        db.session.commit()
+        finish_project(queue_project(engine=engine, player=player, asset="laboratory", force=True))
+
+        validate_rules(engine, player)
+        technology_a = queue_project(engine=engine, player=player, asset="mathematics", force=True)
+        validate_rules(engine, player)
+        technology_b = queue_project(engine=engine, player=player, asset="mechanical_engineering", force=True)
+        validate_rules(engine, player)
+        toggle_pause_project(player, technology_a)
+        validate_rules(engine, player)
+        assert technology_a.status == ConstructionStatus.PAUSED
+        assert technology_b.status == ConstructionStatus.PAUSED
