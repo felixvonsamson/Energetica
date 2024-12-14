@@ -445,7 +445,7 @@ class Player(db.Model, UserMixin):
             if new_speed is not None:
                 construction_speeds[construction.id] = {
                     "speed": new_speed,
-                    "end_tick": construction._end_tick_or_ticks_passed,
+                    "end_tick": construction.end_tick_or_ticks_passed,
                 }
         return construction_speeds
 
@@ -661,7 +661,7 @@ class Player(db.Model, UserMixin):
                     "id",
                     "name",
                     "family",
-                    "_end_tick_or_ticks_passed",
+                    "end_tick_or_ticks_passed",
                     "duration",
                     "status",
                 ]

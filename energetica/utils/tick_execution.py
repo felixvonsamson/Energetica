@@ -65,7 +65,7 @@ def check_events_completion(engine):
     """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
     # check if constructions finished
     finished_constructions = OngoingConstruction.query.filter(
-        OngoingConstruction._end_tick_or_ticks_passed <= engine.data["total_t"],
+        OngoingConstruction.end_tick_or_ticks_passed <= engine.data["total_t"],
         OngoingConstruction.status == 2,
     ).all()
     for fc in finished_constructions:

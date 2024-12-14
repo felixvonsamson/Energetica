@@ -83,6 +83,7 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
     player.remove_from_list(priority_list_name, construction.id)
     family = construction.family
     db.session.delete(construction)
+    db.session.commit()
 
     deploy_available_workers(player, family)
 
@@ -387,7 +388,7 @@ def queue_project(
     new_construction: OngoingConstruction = OngoingConstruction(
         name=asset,
         family=engine.asset_family_by_name[asset],
-        _end_tick_or_ticks_passed=0,
+        end_tick_or_ticks_passed=0,
         duration=duration,
         status=ConstructionStatus.PAUSED,
         construction_power=construction_power,
@@ -404,8 +405,12 @@ def queue_project(
         "research_priorities" if asset in engine.technologies else "construction_priorities",
         new_construction.id,
     )
-    db.session.flush()
-    toggle_pause_project(player, new_construction)
+    db.session.commit()
+    try:
+        toggle_pause_project(player, new_construction)
+    except GameError:
+        # if the new construction depends on a construction that is paused.
+        pass
 
     if not skip_notifications:
         engine.log(f"{player.username} started the construction {asset}")
@@ -479,7 +484,7 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
     invalidate_data_on_project_update(engine, player, construction.name)
 
 
-def decrease_project_priority(player, construction):
+def decrease_project_priority(player: Player, construction: OngoingConstruction):
     """
     Decrease the priority of an ongoing construction.
     This function is executed when a player changes the order of ongoing constructions.
@@ -586,7 +591,6 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
             if prerequisite.status == ConstructionStatus.PAUSED:
                 raise GameError("PausedPrerequisitePreventUnpause")
 
-        # automatically removed when they are finished
         construction.unpause()
         # project status is now ONGOING or WAITING.
         # Reorder the priority list

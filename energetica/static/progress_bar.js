@@ -245,12 +245,12 @@ load_constructions().then((constructions) => {
       const last_tick = JSON.parse(sessionStorage.getItem("last_value")).total_t;
       let time_since_last_tick = current_time - last_tick;
       if (construction.status == 2) {
-        time_remaining = construction._end_tick_or_ticks_passed - current_time + time_since_last_tick * (1 - construction.speed);
+        time_remaining = construction.end_tick_or_ticks_passed - current_time + time_since_last_tick * (1 - construction.speed);
         new_width = (1 - time_remaining / construction.duration) * 100;
       }
       else {
-        new_width = (construction._end_tick_or_ticks_passed / construction.duration) * 100;
-        time_remaining = construction.duration - construction._end_tick_or_ticks_passed;
+        new_width = (construction.end_tick_or_ticks_passed / construction.duration) * 100;
+        time_remaining = construction.duration - construction.end_tick_or_ticks_passed;
       }
       progressBar.style.setProperty("--width", new_width);
       if (new_width > 0.01) {
