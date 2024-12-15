@@ -78,6 +78,7 @@ function send_new_list() {
         priority: new_priority,
     }).catch((error) => {
         console.error(`caught error ${error}`);
+        // TODO(mglst): error is possible if new data arrives before the old data is saved
     });
 }
 

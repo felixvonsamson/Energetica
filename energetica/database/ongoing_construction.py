@@ -42,7 +42,7 @@ class OngoingConstructionCache:
 
     @property
     def prerequisites(self) -> list[int]:
-        """Return the prerequisites of the ongoing construction."""
+        """Return the prerequisites of the ongoing construction in form of a list of construction ids."""
         return self._prerequisites_and_level[0]
 
     @property
@@ -58,7 +58,7 @@ class OngoingConstruction(db.Model):
     name = db.Column(db.String(50))
     family = db.Column(db.String(50))
     # to assign the thing to the correct page
-    _end_tick_or_ticks_passed = db.Column(
+    end_tick_or_ticks_passed = db.Column(
         db.Float
     )  # in game ticks when the construction will be finished or ticks passed if it is paused
     duration = db.Column(db.Float)  # in game ticks
@@ -88,7 +88,7 @@ class OngoingConstruction(db.Model):
         assert not self.was_paused_by_player()
         engine: GameEngine = current_app.config["engine"]
         if self.is_ongoing():
-            self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
+            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
         self.status = ConstructionStatus.PAUSED
         db.session.flush()
 
@@ -96,7 +96,7 @@ class OngoingConstruction(db.Model):
         """Make this facility go from ongoing to waiting."""
         assert self.status == ConstructionStatus.ONGOING
         engine: GameEngine = current_app.config["engine"]
-        self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
+        self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
         self.status = ConstructionStatus.WAITING
         db.session.flush()
 
@@ -108,9 +108,9 @@ class OngoingConstruction(db.Model):
 
         engine: GameEngine = current_app.config["engine"]
         player: Player = Player.query.get(self.player_id)
-        assert player.available_workers(self.family) > 0
+        assert player.available_workers(self.name) > 0
         engine: GameEngine = current_app.config["engine"]
-        self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
+        self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
         self.status = ConstructionStatus.ONGOING
         db.session.flush()
 
@@ -121,17 +121,17 @@ class OngoingConstruction(db.Model):
 
         engine: GameEngine = current_app.config["engine"]
         player: Player = Player.query.get(self.player_id)
-        if self.cache.prerequisites or player.available_workers(self.family) < 1:
+        if self.cache.prerequisites or player.available_workers(self.name) < 1:
             self.status = ConstructionStatus.WAITING
         else:
-            self._end_tick_or_ticks_passed = self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]
+            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
             self.status = ConstructionStatus.ONGOING
         db.session.flush()
 
     def delay_by(self, ticks: float):
         """Delays the construction by the given number of ticks"""
         assert self.is_ongoing()
-        self._end_tick_or_ticks_passed += ticks
+        self.end_tick_or_ticks_passed += ticks
         self.data.speed = 1 - ticks
 
     @cached_property
@@ -157,9 +157,9 @@ class OngoingConstruction(db.Model):
         """Returns the progress of the construction, as a float between 0 and 1"""
         engine: GameEngine = current_app.config["engine"]
         if self.status == ConstructionStatus.ONGOING:
-            return (self.duration - self._end_tick_or_ticks_passed + engine.data["total_t"]) / self.duration
+            return (self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]) / self.duration
         else:
-            return self._end_tick_or_ticks_passed / self.duration
+            return self.end_tick_or_ticks_passed / self.duration
 
     def updated_speed(self) -> float | None:
         """Returns the speed of the construction except if it is 1 and unchanged since last tick"""

@@ -83,6 +83,7 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
     player.remove_from_list(priority_list_name, construction.id)
     family = construction.family
     db.session.delete(construction)
+    db.session.commit()
 
     deploy_available_workers(player, family)
 
@@ -190,6 +191,7 @@ def deploy_available_workers(player: Player, family: str) -> None:
         if insertion_index is not None:
             priority_list.remove(construction_id)
             priority_list.insert(insertion_index, construction_id)
+            player.write_list(priority_list_name, priority_list)
         if available_workers <= 0:
             return
 
@@ -382,12 +384,12 @@ def queue_project(
     if not ignore_requirements_and_money:
         player.money -= real_price
 
-    # The construction is added as paused and then imediately unpaused in order to place it in the right place in the
+    # The construction is added as paused and then immediately unpaused in order to place it in the right place in the
     # priority list.
     new_construction: OngoingConstruction = OngoingConstruction(
         name=asset,
         family=engine.asset_family_by_name[asset],
-        _end_tick_or_ticks_passed=0,
+        end_tick_or_ticks_passed=0,
         duration=duration,
         status=ConstructionStatus.PAUSED,
         construction_power=construction_power,
@@ -404,8 +406,12 @@ def queue_project(
         "research_priorities" if asset in engine.technologies else "construction_priorities",
         new_construction.id,
     )
-    db.session.flush()
-    toggle_pause_project(player, new_construction)
+    db.session.commit()
+    try:
+        toggle_pause_project(player, new_construction)
+    except GameError:
+        # if the new construction depends on a construction that is paused.
+        pass
 
     if not skip_notifications:
         engine.log(f"{player.username} started the construction {asset}")
@@ -470,6 +476,10 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
     player.money += refund
     player.remove_from_list(priority_list_name, construction.id)
     db.session.delete(construction)
+
+    db.session.flush()
+    deploy_available_workers(player, construction.family)
+
     engine.log(f"{player.username} cancelled the construction {construction.name}")
     db.session.commit()
     # TODO(mglst): This should be re-enabled when the websocket is re-enabled
@@ -479,7 +489,7 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
     invalidate_data_on_project_update(engine, player, construction.name)
 
 
-def decrease_project_priority(player, construction):
+def decrease_project_priority(player: Player, construction: OngoingConstruction):
     """
     Decrease the priority of an ongoing construction.
     This function is executed when a player changes the order of ongoing constructions.
@@ -576,6 +586,11 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
                 *priority_list[insertion_index:],
             ]
         player.write_list(priority_list_name, priority_list)
+
+        # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
+        db.session.flush()
+        deploy_available_workers(player, construction.family)
+
         engine.log(f"{player.username} paused the construction {construction.id} {construction.name}")
     else:
         # project is currently pause, and should be unpaused
@@ -586,7 +601,6 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
             if prerequisite.status == ConstructionStatus.PAUSED:
                 raise GameError("PausedPrerequisitePreventUnpause")
 
-        # automatically removed when they are finished
         construction.unpause()
         # project status is now ONGOING or WAITING.
         # Reorder the priority list

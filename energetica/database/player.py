@@ -242,7 +242,7 @@ class Player(db.Model, UserMixin):
 
     def available_workers(self, project_name):
         """Returns the number of available workers depending on the project type"""
-        engine = current_app.config["engine"]
+        engine: GameEngine = current_app.config["engine"]
         if project_name in engine.technologies:
             return self.available_lab_workers()
         else:
@@ -296,7 +296,7 @@ class Player(db.Model, UserMixin):
         id_list.remove(str(value))
         setattr(self, attr, ",".join(id_list))
 
-    def package_chat_messages(self, chat_id: int) -> None:
+    def package_chat_messages(self, chat_id: int) -> list[dict]:
         """Package the last 20 messages of a chat."""
         chat = Chat.query.filter_by(id=chat_id).first()
         messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
@@ -445,7 +445,7 @@ class Player(db.Model, UserMixin):
             if new_speed is not None:
                 construction_speeds[construction.id] = {
                     "speed": new_speed,
-                    "end_tick": construction._end_tick_or_ticks_passed,
+                    "end_tick": construction.end_tick_or_ticks_passed,
                 }
         return construction_speeds
 
@@ -661,7 +661,7 @@ class Player(db.Model, UserMixin):
                     "id",
                     "name",
                     "family",
-                    "_end_tick_or_ticks_passed",
+                    "end_tick_or_ticks_passed",
                     "duration",
                     "status",
                 ]
@@ -758,6 +758,7 @@ class Player(db.Model, UserMixin):
         """Package active storage facilities."""
         engine: GameEngine = current_app.config["engine"]
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
+        capacities = self.data.capacities
         storage_facilities: list[ActiveFacility] = self.active_facilities.filter(
             ActiveFacility.facility.in_(engine.storage_facilities),
         ).all()
@@ -772,7 +773,7 @@ class Player(db.Model, UserMixin):
                     "storage_capacity": sum(f.storage_capacity for f in group),
                     "state_of_charge": sum(f.state_of_charge * f.storage_capacity for f in group)
                     / sum(f.storage_capacity for f in group),
-                    "hourly_op_cost": sum(f.hourly_op_cost for f in group) * ticks_per_hour,
+                    "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
                     "efficiency": sum(f.efficiency * f.storage_capacity for f in group)
                     / sum(f.storage_capacity for f in group),
                     "remaining_lifespan": None
@@ -807,6 +808,7 @@ class Player(db.Model, UserMixin):
         """Package active extraction facilities."""
         engine: GameEngine = current_app.config["engine"]
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
+        capacities = self.data.capacities
         extraction_facilities: list[ActiveFacility] = self.active_facilities.filter(
             ActiveFacility.facility.in_(engine.extraction_facilities),
         ).all()
@@ -814,6 +816,22 @@ class Player(db.Model, UserMixin):
         for extraction_facility in extraction_facilities:
             extraction_facility_groups[extraction_facility.facility].append(extraction_facility)
         return {
+            "summary": {
+                group_name: {
+                    "display_name": engine.const_config["assets"][group_name]["name"],
+                    "count": len(group),
+                    "extraction_rate": sum(f.extraction_rate for f in group),
+                    "usage": sum(f.usage * f.extraction_rate for f in group) / sum(f.extraction_rate for f in group),
+                    "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
+                    "max_power_use": sum(f.max_power_use for f in group),
+                    "remaining_lifespan": min(f.remaining_lifespan for f in group),
+                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                    if any(f.is_upgradable for f in group)
+                    else None,
+                    "dismantle_cost": sum(f.dismantle_cost for f in group),
+                }
+                for group_name, group in extraction_facility_groups.items()
+            },
             "detail": {
                 extraction_facility.id: {
                     "facility": extraction_facility.facility,
@@ -827,22 +845,6 @@ class Player(db.Model, UserMixin):
                     "dismantle_cost": extraction_facility.dismantle_cost,
                 }
                 for extraction_facility in extraction_facilities
-            },
-            "summary": {
-                group_name: {
-                    "display_name": engine.const_config["assets"][group_name]["name"],
-                    "count": len(group),
-                    "extraction_rate": sum(f.extraction_rate for f in group),
-                    "usage": sum(f.usage * f.extraction_rate for f in group) / sum(f.extraction_rate for f in group),
-                    "hourly_op_cost": sum(f.hourly_op_cost for f in group) * ticks_per_hour,
-                    "max_power_use": sum(f.max_power_use for f in group),
-                    "remaining_lifespan": min(f.remaining_lifespan for f in group),
-                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
-                    if any(f.is_upgradable for f in group)
-                    else None,
-                    "dismantle_cost": sum(f.dismantle_cost for f in group),
-                }
-                for group_name, group in extraction_facility_groups.items()
             },
         }
 

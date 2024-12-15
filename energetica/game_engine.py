@@ -5,6 +5,7 @@ import json
 import logging
 import math
 import pickle
+import random
 from collections import defaultdict
 from datetime import datetime
 
@@ -185,7 +186,7 @@ class GameEngine(object):
             self.data["delta_t"], in_game_seconds_per_tick, self.data["random_seed"]
         )
         self.data["daily_question"] = {}
-        self.new_daily_question(init=True)
+        self.new_daily_question()
 
         # stored the levels of technology of the server
         # for each tech an array stores [# players with lvl 1, # players with lvl 2, ...]
@@ -243,16 +244,18 @@ class GameEngine(object):
             "total_ticks": self.data["total_t"],
         }
 
-    def new_daily_question(self, init=False):
+    def new_daily_question(self):
         """Load a new daily question from the csv file."""
         with open("energetica/static/data/daily_quiz_questions.csv", "r", encoding="utf-8") as file:
             csv_reader = list(csv.DictReader(file))
-            if init:
-                question_id = 0
+            if "question_order" not in self.data:
+                self.data["question_order"] = list(range(len(csv_reader)))
+                random.shuffle(self.data["question_order"])
+                question_index = 0
             else:
-                question_id = (self.data["daily_question"]["id"] + 1) % len(csv_reader)
-            self.data["daily_question"] = csv_reader[question_id]
-            self.data["daily_question"]["id"] = question_id
+                question_index = (self.data["daily_question"]["index"] + 1) % len(csv_reader)
+            self.data["daily_question"] = csv_reader[self.data["question_order"][question_index]]
+            self.data["daily_question"]["index"] = question_index
             self.data["daily_question"]["player_answers"] = {}
 
 
