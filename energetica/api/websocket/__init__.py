@@ -1,5 +1,6 @@
 """Code providing API access using WebSockets for iOS Swift Client."""
 
+import inspect
 import json
 import pickle
 
@@ -8,7 +9,7 @@ from flask_sock import Sock
 from simple_websocket import ConnectionClosed, Server
 from werkzeug.security import check_password_hash
 
-from energetica.api.websocket import server_messages
+from energetica.api.websocket import ws_messages, ws_requests
 from energetica.database import db
 from energetica.database.map import Hex
 from energetica.database.messages import Chat, Message
@@ -43,14 +44,25 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
         """Define the WebSocket endpoint for API used for the iOS client."""
         player: Player | None = None
         engine.log("Received WebSocket connection")
+        requests = dict(inspect.getmembers(ws_requests, inspect.isfunction))
 
         def send_message(message: dict) -> None:
             ws.send(json.dumps(message))
 
+        def post_location_setup() -> None:
+            send_message(ws_messages.players())
+            # ws.send(rest_get_charts()) # TODO
+            # ws.send(rest_get_facilities_data(player))
+
         def post_auth_setup() -> None:
-            send_message(server_messages.players())
-            send_message(server_messages.user_player_id(player))
-            send_message(server_messages.get_map())
+            if player is None:
+                raise ValueError()
+            send_message(ws_messages.get_map())
+            if player.tile is not None:
+                post_location_setup()
+            else:
+                send_message(ws_messages.players())
+            send_message(ws_messages.user_player_id(player))
 
         def parse_request(uuid: str, request: dict) -> None:
             nonlocal player
@@ -87,6 +99,7 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
                     return
                 send_success()
                 post_auth_setup()
+                return
 
             if request_type == "signup":
                 if player is not None:
@@ -103,6 +116,7 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
                     return
                 send_success()
                 post_auth_setup()
+                return
 
             if request_type == "signout":
                 if player is None:
@@ -111,13 +125,24 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
                     return
                 player = None
                 send_success()
-            # if message_type in endpoints:
-            #     arguments = message["data"]
-            #     try:
-            #         response = endpoints[message["type"]](engine, player, ws, **arguments)
-            #         ws.send(json.dumps({"type": "response", "data": response}))
-            #     except GameError as e:
-            #         ws.send(json.dumps({"type": "error", "data": str(e)}))
+                return
+
+            if request_type in requests:
+                request_handler = requests[request_type]
+                arguments = request_body
+                try:
+                    print(arguments)
+                    response = request_handler(engine, player, **arguments)
+                    send_success()
+                    if request_type == "confirmLocation":
+                        post_location_setup(player, ws)
+                except GameError as e:
+                    send_error(e)
+                return
+
+            msg = f"Unknown request type: {request_type}"
+            engine.log(msg)
+            raise ValueError(msg)
 
         def parse_message(message: dict) -> None:
             message_keys = list(message.keys())
@@ -194,15 +219,6 @@ def unregister_websocket_connection(player_id, ws):
     player = db.session.get(Player, player_id)
     g.engine.log(f"Websocket connection closed for player {player}")
     g.engine.websocket_dict[player_id].remove(ws)
-
-
-def rest_init_ws_post_location(player, ws):
-    """
-    Called once the player has selected a location, or immediately after logging
-    in if location was already selected.
-    """
-    # ws.send(rest_get_charts()) # TODO
-    ws.send(rest_get_facilities_data(player))
 
 
 # The following methods generate messages to be sent over websocket connections.

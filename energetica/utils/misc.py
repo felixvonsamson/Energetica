@@ -199,12 +199,14 @@ def display_new_message(engine: GameEngine, message: Message, chat: Chat) -> Non
 # Map
 
 
-def confirm_location(engine: GameEngine, player: Player, location: Hex) -> None:
+def confirm_location(engine: GameEngine, player: Player, location: Hex | None) -> None:
     """Confirm a location choice.
 
     Return either success or an explanatory error message in the form of a dictionary.
     Called when a web client uses the choose_location socket.io endpoint, or the REST websocket API.
     """
+    if location is None:
+        raise GameError("locationNotFound")
     if location.player_id is not None:
         # Location already taken
         raise GameError("locationOccupied", by=location.player_id)
