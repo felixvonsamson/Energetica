@@ -136,44 +136,54 @@ def validate_rules(engine, player):
                 break
 
     # Rule 7
-    waiting_constructions: list[OngoingConstruction] = OngoingConstruction.query.filter(
-        OngoingConstruction.player_id == player.id,
-        OngoingConstruction.status == ConstructionStatus.WAITING,
-        OngoingConstruction.family != "Technologies",
-    ).all()
-    if any(not project.cache.prerequisites for project in waiting_constructions):
-        if (
-            player.construction_workers
-            != OngoingConstruction.query.filter(
+    waiting_constructions: list[OngoingConstruction] = list(
+        filter(
+            lambda construction: not construction.cache.prerequisites,
+            OngoingConstruction.query.filter(
                 OngoingConstruction.player_id == player.id,
-                OngoingConstruction.status == ConstructionStatus.ONGOING,
-            ).count()
-        ):
-            status_to_str = {0: "PAUSED", 1: "WAITING", 2: "ONGOING"}
-            for c_id in construction_priorities:
-                c = OngoingConstruction.query.get(c_id)
-                print(f"construction.id: {c_id}, {c.name}, {status_to_str[c.status]}")
-            debug_str = "\n".join(
-                [
-                    f"construction.id: {c_id}, {OngoingConstruction.query.get(c_id).name}, {status_to_str[OngoingConstruction.query.get(c_id).status]}"
-                    for c_id in construction_priorities
-                ]
-            )
-            msg = f"Rule 7 failed for constructions.\n{debug_str}"
-            pytest.fail(msg)
-    waiting_research: list[OngoingConstruction] = OngoingConstruction.query.filter(
-        OngoingConstruction.player_id == player.id,
-        OngoingConstruction.status == ConstructionStatus.WAITING,
-        OngoingConstruction.family == "Technologies",
-    ).all()
-    if any(not project.cache.prerequisites for project in waiting_research):
-        assert (
-            player.lab_workers
-            == OngoingConstruction.query.filter(
-                OngoingConstruction.player_id == player.id,
-                OngoingConstruction.status == ConstructionStatus.ONGOING,
-            ).count()
+                OngoingConstruction.status == ConstructionStatus.WAITING,
+                OngoingConstruction.family != "Technologies",
+            ).all(),
         )
+    )
+    if waiting_constructions:
+        count_on_going_constructions = OngoingConstruction.query.filter(
+            OngoingConstruction.player_id == player.id,
+            OngoingConstruction.status == ConstructionStatus.ONGOING,
+            OngoingConstruction.family != "Technologies",
+        ).count()
+        if player.construction_workers != count_on_going_constructions:
+            pytest.fail(
+                "Rule 7 failed for constructions. "
+                f"Player has {len(waiting_constructions)} waiting constructions "
+                f"({','.join(map(lambda c: c.name, waiting_constructions))}), "
+                f"but has {player.construction_workers} construction workers, "
+                f"and only {count_on_going_constructions} ongoing constructions."
+            )
+    waiting_research: list[OngoingConstruction] = list(
+        filter(
+            lambda research: not research.cache.prerequisites,
+            OngoingConstruction.query.filter(
+                OngoingConstruction.player_id == player.id,
+                OngoingConstruction.status == ConstructionStatus.WAITING,
+                OngoingConstruction.family == "Technologies",
+            ).all(),
+        )
+    )
+    if waiting_research:
+        count_on_going_research = OngoingConstruction.query.filter(
+            OngoingConstruction.player_id == player.id,
+            OngoingConstruction.status == ConstructionStatus.ONGOING,
+            OngoingConstruction.family == "Technologies",
+        ).count()
+        if player.lab_workers != count_on_going_research:
+            pytest.fail(
+                "Rule 7 failed for research. "
+                f"Player has {len(waiting_research)} waiting research projects "
+                f"({','.join(map(lambda c: c.name, waiting_research))}), "
+                f"but has {player.lab_workers} lab workers, "
+                f"and only {count_on_going_research} ongoing research projects."
+            )
 
 
 def test_swap_paused_and_unpaused_constructions():
