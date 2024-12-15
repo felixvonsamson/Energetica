@@ -2,11 +2,11 @@
 
 from typing import Callable
 
-# from energetica.database.map import Hex
+from energetica.database.map import Hex
 from energetica.database.player import Player
 
 
-def server_message(func) -> Callable[..., dict]:
+def server_message(func: Callable) -> Callable[..., dict]:
     """Decorate server messages by formatting the return value as a dictionary."""
 
     def wrapper(*args, **kwargs) -> dict:
@@ -38,20 +38,17 @@ def user_player_id(player: Player) -> int:
     return player.id
 
 
-# def map():
-#     """Package the map data from the database and returns it as a JSON string as a dictionary of arrays."""
-#     hex_list = Hex.query.order_by(Hex.r, Hex.q).all()
-#     response = {
-#         "type": "getMap",
-#         "data": {
-#             "ids": [tile.id for tile in hex_list],
-#             "solars": [tile.solar for tile in hex_list],
-#             "winds": [tile.wind for tile in hex_list],
-#             "hydros": [tile.hydro for tile in hex_list],
-#             "coals": [tile.coal for tile in hex_list],
-#             "gases": [tile.gas for tile in hex_list],
-#             "uraniums": [tile.uranium for tile in hex_list],
-#             "climate_risks": [tile.climate_risk for tile in hex_list],
-#         },
-#     }
-#     return json.dumps(response)
+@server_message
+def get_map() -> dict:
+    """Package the map data from the database and returns it as a JSON string as a dictionary of arrays."""
+    hex_list = Hex.query.order_by(Hex.r, Hex.q).all()
+    return {
+        "ids": [tile.id for tile in hex_list],
+        "solars": [tile.solar for tile in hex_list],
+        "winds": [tile.wind for tile in hex_list],
+        "hydros": [tile.hydro for tile in hex_list],
+        "coals": [tile.coal for tile in hex_list],
+        "gases": [tile.gas for tile in hex_list],
+        "uraniums": [tile.uranium for tile in hex_list],
+        "climate_risks": [tile.climate_risk for tile in hex_list],
+    }

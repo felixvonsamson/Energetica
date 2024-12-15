@@ -50,6 +50,7 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
         def post_auth_setup() -> None:
             send_message(server_messages.players())
             send_message(server_messages.user_player_id(player))
+            send_message(server_messages.get_map())
 
         def parse_request(uuid: str, request: dict) -> None:
             nonlocal player
