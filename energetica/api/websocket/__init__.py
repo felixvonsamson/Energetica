@@ -25,25 +25,6 @@ from energetica.utils.network_helpers import create_network, join_network, leave
 websocket_blueprint = Blueprint("rest_api", __name__)
 
 
-# String constants for the different types of messages that can be sent over the WebSocket
-class ClientMessage:
-    """Enum of message types that can be sent from the client to the server."""
-
-    LOGIN = "login"
-    # REQUEST = "request"
-    # CONFIRM_LOCATION = "confirmLocation"
-    # JOIN_NETWORK = "joinNetwork"
-    # LEAVE_NETWORK = "leaveNetwork"
-    # CREATE_NETWORK = "createNetwork"
-    # START_PROJECT = "startProject"
-    # PAUSE_UNPAUSE_PROJECT = "pauseUnpauseProject"
-    # DECREASE_PROJECT_PRIORITY = "decreaseProjectPriority"
-    # DISMISS_CHAT_DISCLAIMER = "dismissChatDisclaimer"
-    # CREATE_CHAT = "createChat"
-    # CREATE_GROUP_CHAT = "createGroupChat"
-    # SEND_MESSAGE = "sendMessage"
-
-
 def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
     """Add flask-sock endpoints and other various setup methods. Called by energetica/__init__.py."""
 
