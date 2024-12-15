@@ -1,15 +1,16 @@
 """Server messages for the websocket server."""
 
-import humps
+from typing import Callable
 
+# from energetica.database.map import Hex
 from energetica.database.player import Player
 
 
-def server_message(func):
-    """Decorator to add the server message type to the return value of the function."""
+def server_message(func) -> Callable[..., dict]:
+    """Decorate server messages by formatting the return value as a dictionary."""
 
-    def wrapper(*args, **kwargs):
-        key = humps.camelize(func.__name__)
+    def wrapper(*args, **kwargs) -> dict:
+        key = func.__name__
         function_return = func(*args, **kwargs)
         if function_return is dict:
             value = function_return
@@ -26,20 +27,19 @@ def server_message(func):
 
 
 @server_message
-def players():
-    """Message with the data for all players."""
+def players() -> dict[int, dict]:
+    """Package data for all players."""
     return Player.package_all()
 
 
 @server_message
-def user_player_id(player: Player):
-    """Message with the ID of the user's player."""
+def user_player_id(player: Player) -> int:
+    """Package the ID of the user's player."""
     return player.id
 
 
 # def map():
-#     """Gets the map data from the database and returns it as a JSON string as a
-#     dictionary of arrays."""
+#     """Package the map data from the database and returns it as a JSON string as a dictionary of arrays."""
 #     hex_list = Hex.query.order_by(Hex.r, Hex.q).all()
 #     response = {
 #         "type": "getMap",
