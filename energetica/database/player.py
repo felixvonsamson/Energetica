@@ -296,7 +296,7 @@ class Player(db.Model, UserMixin):
         id_list.remove(str(value))
         setattr(self, attr, ",".join(id_list))
 
-    def package_chat_messages(self, chat_id: int) -> None:
+    def package_chat_messages(self, chat_id: int) -> list[dict]:
         """Package the last 20 messages of a chat."""
         chat = Chat.query.filter_by(id=chat_id).first()
         messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
