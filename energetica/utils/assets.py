@@ -131,7 +131,11 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
     player.emit("finish_construction", package_projects_data(player))
 
     if family == "Functional facilities":
-        player.invalidate_recompute_and_dispatch_data_for_pages(functional_facilities=True, technologies=True)
+        player.invalidate_recompute_and_dispatch_data_for_pages(
+            functional_facilities=True,
+            technologies=construction.name == "laboratory",
+            extraction_facilities=construction.name == "warehouse",
+        )
         # Deploy any new workers from laboratory upgrades
         if construction.name == "laboratory":
             deploy_available_workers(player, "Technologies", start_now=True)
