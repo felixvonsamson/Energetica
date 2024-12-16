@@ -78,7 +78,7 @@ def buy_resource_from_market(player, quantity, sale):
         new_shipment = Shipment(
             resource=sale.resource,
             quantity=quantity,
-            arrival_tick=engine.data["total_t"] + shipment_duration,
+            arrival_tick=engine.data["total_t"] + 1 + shipment_duration,
             duration=shipment_duration,
             player_id=player.id,
         )

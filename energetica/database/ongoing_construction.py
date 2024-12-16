@@ -88,7 +88,7 @@ class OngoingConstruction(db.Model):
         assert not self.was_paused_by_player()
         engine: GameEngine = current_app.config["engine"]
         if self.is_ongoing():
-            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
+            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
         self.status = ConstructionStatus.PAUSED
         db.session.flush()
 
@@ -96,7 +96,7 @@ class OngoingConstruction(db.Model):
         """Make this facility go from ongoing to waiting."""
         assert self.status == ConstructionStatus.ONGOING
         engine: GameEngine = current_app.config["engine"]
-        self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
+        self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
         self.status = ConstructionStatus.WAITING
         db.session.flush()
 
@@ -110,7 +110,7 @@ class OngoingConstruction(db.Model):
         player: Player = Player.query.get(self.player_id)
         assert player.available_workers(self.name) > 0
         engine: GameEngine = current_app.config["engine"]
-        self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
+        self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
         self.status = ConstructionStatus.ONGOING
         db.session.flush()
 
@@ -124,7 +124,7 @@ class OngoingConstruction(db.Model):
         if self.cache.prerequisites or player.available_workers(self.name) < 1:
             self.status = ConstructionStatus.WAITING
         else:
-            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
+            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
             self.status = ConstructionStatus.ONGOING
         db.session.flush()
 

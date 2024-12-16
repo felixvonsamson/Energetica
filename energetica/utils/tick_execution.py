@@ -43,9 +43,9 @@ def _state_update(engine, app):
                 "total_t": engine.data["total_t"],
             }
             engine.action_logger.info(json.dumps(log_entry))
-            production_update.update_electricity(engine=engine)
             check_events_completion(engine)
             check_climate_events(engine)
+            production_update.update_electricity(engine=engine)
             db.session.commit()
 
     # save instance every minute in case of server crash
