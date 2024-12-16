@@ -72,24 +72,26 @@
                 );
               </script>
               {# Discount #}
-              {% if "discount" in technology_data %}
+              <span id="knowledge_spillover_discount_span" 
+                    class="hover_info"
+                    {% if "discount" in technology_data %}style="display:none"{% endif %}>
                 &ensp;
-                <span id="discount" class="hover_info">
-                  <em class="txt-green">(-{{ (100 - 100 * technology_data.discount) | round | int}}%)</em>
-                  {% if "prevalence" in technology_data %}
-                  <span class="popup_info small" style="width: 240px">
-                    <p>
-                      <a href="{{ url_for('wiki.render_template_wiki', 
-                                  template_name='technologies', 
-                                  _anchor='knowledge_spillover') }}">
-                        Knowledge spillover discount
-                      </a>:<br>
-                      Researched by {{ technology_data.prevalence }} other player{% if technology_data.prevalence > 1 %}s{% endif %}.
-                    </p>
-                  </span>
-                  {% endif %}
+                <em class="txt-green" id="knowledge_spillover_discount_em">
+                  (-{{ (100 - 100 * technology_data.discount) | round | int}}%)
+                </em>
+                {% if "prevalence" in technology_data %}
+                <span class="popup_info small" style="width: 240px">
+                  <p>
+                    <a href="{{ url_for('wiki.render_template_wiki', 
+                                template_name='technologies', 
+                                _anchor='knowledge_spillover') }}">
+                      Knowledge spillover discount
+                    </a>:<br>
+                    Researched by {{ technology_data.prevalence }} other player{% if technology_data.prevalence > 1 %}s{% endif %}.
+                  </p>
                 </span>
-              {% endif %}
+                {% endif %}
+              </span>
             </div>
             <div class="infobox">
               {# Description & affected facilities #}
@@ -122,7 +124,7 @@
               </div>
               {# Requirements #}
               <div class="infobox requirements"
-                   {% if technology_data.requirements_status == "satisfied" %}style="display:none"{% endif %}" 
+                   {% if technology_data.requirements_status == "satisfied" %}style="display:none"{% endif %}
                    id="requirements">
                   <div>
                     <strong>Unlock with :</strong>
