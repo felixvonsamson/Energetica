@@ -880,7 +880,7 @@ class Player(db.Model, UserMixin):
             del self.cache.power_facilities_data
         if storage_facilities and "storage_facilities_data" in self.cache.__dict__:
             del self.cache.storage_facilities_data
-        if extraction_facilities and "extraction_facility_data" in self.cache.__dict__:
+        if extraction_facilities and "extraction_facilities_data" in self.cache.__dict__:
             del self.cache.extraction_facilities_data
         if functional_facilities and "functional_facilities_data" in self.cache.__dict__:
             del self.cache.functional_facilities_data
