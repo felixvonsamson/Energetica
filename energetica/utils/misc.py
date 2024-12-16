@@ -11,6 +11,7 @@ from flask import flash
 from noise import pnoise3
 from scipy.stats import norm
 
+from energetica.api.websocket import ws_broadcast
 from energetica.config.assets import river_discharge_seasonal
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
@@ -239,7 +240,9 @@ def confirm_location(engine: GameEngine, player: Player, location: Hex | None) -
     player.data.rolling_history.add_subcategory("op_costs", "steam_engine")
     player.data.rolling_history.add_subcategory("generation", "steam_engine")
     player.data.rolling_history.add_subcategory("emissions", "steam_engine")
-    # websocket.rest_notify_player_location(engine, player)
+
+    ws_broadcast.players()
+
     engine.log(f"{player.username} chose the location {location.id}")
 
 

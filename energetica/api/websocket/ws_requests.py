@@ -8,10 +8,10 @@ from energetica.game_engine import GameEngine
 from energetica.utils import misc
 
 
-def ws_request_handler(func: Callable) -> Callable[..., dict]:
+def ws_request_handler(func: Callable):
     """Decorate server messages by formatting the return value as a dictionary."""
 
-    def wrapper(*args, **kwargs) -> dict:
+    def wrapper(*args, **kwargs):
         key = func.__name__
         function_return = func(*args, **kwargs)
         if function_return is dict:

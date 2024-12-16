@@ -55,10 +55,11 @@ def _state_update(engine, app):
         with tarfile.open("checkpoints/last_checkpoint.tar.gz", "w:gz") as tar:
             tar.add("instance/")
     with app.app_context():
-        # TODO: perhaps only run the below code conditionally on there being active ws connections
-        websocket.rest_notify_scoreboard(engine)
-        websocket.rest_notify_weather(engine)
-        websocket.rest_notify_global_data(engine)
+        # TODO(mglst): perhaps only run the below code conditionally on there being active ws connections
+        # websocket.rest_notify_scoreboard(engine)
+        # websocket.rest_notify_weather(engine)
+        # websocket.rest_notify_global_data(engine)
+        pass
 
 
 def check_events_completion(engine):

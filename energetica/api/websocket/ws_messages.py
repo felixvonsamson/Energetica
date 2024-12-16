@@ -6,10 +6,10 @@ from energetica.database.map import Hex
 from energetica.database.player import Player
 
 
-def server_message(func: Callable) -> Callable[..., dict]:
+def server_message(func: Callable):
     """Decorate server messages by formatting the return value as a dictionary."""
 
-    def wrapper(*args, **kwargs) -> dict:
+    def wrapper(*args, **kwargs):
         key = func.__name__
         function_return = func(*args, **kwargs)
         if function_return is dict:
@@ -20,7 +20,7 @@ def server_message(func: Callable) -> Callable[..., dict]:
         else:
             value = {"_0": function_return}
         dictionary = {key: value}
-        print(dictionary)
+        print(f"Server message: {func.__name__}")
         return dictionary
 
     return wrapper
