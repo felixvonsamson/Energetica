@@ -438,7 +438,7 @@ socket.on("update_page_data", function (pages_data) {
             update_buildings_data(data, div);
             update_power_generating_facilities_data(data, div);
             div.querySelector("#storage_capacity").innerHTML = format_energy(data.storage_capacity);
-            div.querySelector("#efficiency").innerHTML = data.efficiency + "%";
+            div.querySelector("#efficiency").innerHTML = Math.round(data.efficiency) + "%";
         }
     }
     if (path == "extraction_facilities" && "extraction_facilities" in pages_data) {
