@@ -85,7 +85,7 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
     db.session.delete(construction)
     db.session.commit()
 
-    deploy_available_workers(player, family)
+    deploy_available_workers(player, family, start_now=True)
 
     construction_name = engine.const_config["assets"][construction.name]["name"]
     if not skip_notifications:
@@ -134,8 +134,10 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
         player.invalidate_recompute_and_dispatch_data_for_pages(functional_facilities=True, technologies=True)
         # Deploy any new workers from laboratory upgrades
         if construction.name == "laboratory":
-            deploy_available_workers(player, "Technologies")
+            deploy_available_workers(player, "Technologies", start_now=True)
     if family == "Technologies":
+        if construction.name == "construction_technology":
+            deploy_available_workers(player, "Power Facilities", start_now=True)
         player.invalidate_recompute_and_dispatch_data_for_pages(
             power_facilities=True,
             storage_facilities=True,
@@ -148,11 +150,14 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
             other_player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
 
 
-def deploy_available_workers(player: Player, family: str) -> None:
+def deploy_available_workers(player: Player, family: str, *, start_now=False) -> None:
     """Ensure all free workers for `family` are in use, if possible.
 
     Workers are deployed only on projects that are waiting - paused projects are never unpaused, except by the player.
     The list of ongoing projects may be reordered to satisfy the priority list invariants.
+    start_now: If True, this action is considered to take place at the start of this ongoing tick rather than waiting
+    until the start of the next tick. This is used when a construction is finished and the worker starts a new one and
+    when a new worker is available and starts a new construction.
     """
     if family == "Technologies":
         priority_list_name = "research_priorities"
@@ -178,7 +183,7 @@ def deploy_available_workers(player: Player, family: str) -> None:
         construction.recompute_prerequisites_and_level()  # force recompute
         if construction.cache.prerequisites:
             continue
-        construction.set_ongoing()
+        construction.set_ongoing(start_now=start_now)
         available_workers -= 1
         insertion_index = None
         for insertion_index_candidate, possibly_paused_construction_id in enumerate(priority_list[:priority_index]):

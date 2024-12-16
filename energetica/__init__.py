@@ -318,12 +318,5 @@ def create_app(
             with app.app_context():
                 # Temporary automated player creation for testing
                 init_test_players(engine)
-                # Manually trigger the scheduler to run the state_update function as soon as possible
-                scheduler.add_job(
-                    func=state_update,
-                    args=(engine, app),
-                    id="state_update_immediate",
-                    trigger="date",
-                )
 
     return socketio, app
