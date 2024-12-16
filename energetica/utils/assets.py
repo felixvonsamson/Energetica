@@ -128,6 +128,7 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
         player.data.capacities.update(player, construction.name)
     engine.config.update_config_for_user(player)
     player.emit("retrieve_player_data")
+    player.emit("finish_construction", package_projects_data(player))
 
     if family == "Functional facilities":
         player.invalidate_recompute_and_dispatch_data_for_pages(functional_facilities=True, technologies=True)

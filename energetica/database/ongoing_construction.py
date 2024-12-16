@@ -157,7 +157,7 @@ class OngoingConstruction(db.Model):
         """Returns the progress of the construction, as a float between 0 and 1"""
         engine: GameEngine = current_app.config["engine"]
         if self.status == ConstructionStatus.ONGOING:
-            return (self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]) / self.duration
+            return (self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"] + 1) / self.duration
         else:
             return self.end_tick_or_ticks_passed / self.duration
 

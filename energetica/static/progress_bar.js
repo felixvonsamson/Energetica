@@ -179,27 +179,6 @@ function pause_construction(construction_id) {
     });
 }
 
-function pause_shipment(shipment_id) {
-  send_json("/api/request_pause_shipment", {
-    id: shipment_id,
-  })
-    .then((response) => {
-      response.json().then((raw_data) => {
-        let response = raw_data["response"];
-        if (response == "success") {
-          sessionStorage.setItem(
-            "shipments",
-            JSON.stringify(raw_data["shipments"])
-          );
-          refresh_progressBar();
-        }
-      });
-    })
-    .catch((error) => {
-      console.error(`caught error ${error}`);
-    });
-}
-
 function decrease_project_priority(construction_id) {
   send_json("/api/request_decrease_project_priority", {
     id: construction_id,
@@ -239,18 +218,18 @@ load_constructions().then((constructions) => {
       const id = progressBar.id;
       const construction = constructions_data[0][id];
       const now = new Date().getTime() / 1000;
-      const current_time = (now - server_start) / clock_time;
+      const current_tick = (now - first_tick_time) / clock_time + 1;
       let new_width;
-      let time_remaining;
+      let ticks_remaining;
       const last_tick = JSON.parse(sessionStorage.getItem("last_value")).total_t;
-      let time_since_last_tick = current_time - last_tick;
+      let time_since_last_tick = current_tick - last_tick;
       if (construction.status == 2) {
-        time_remaining = construction.end_tick_or_ticks_passed - current_time + time_since_last_tick * (1 - construction.speed);
-        new_width = (1 - time_remaining / construction.duration) * 100;
+        ticks_remaining = construction.end_tick_or_ticks_passed - last_tick - time_since_last_tick * construction.speed;
+        new_width = (1 - ticks_remaining / construction.duration) * 100;
       }
       else {
         new_width = (construction.end_tick_or_ticks_passed / construction.duration) * 100;
-        time_remaining = construction.duration - construction.end_tick_or_ticks_passed;
+        ticks_remaining = construction.duration - construction.end_tick_or_ticks_passed;
       }
       progressBar.style.setProperty("--width", new_width);
       if (new_width > 0.01) {
@@ -264,60 +243,50 @@ load_constructions().then((constructions) => {
           progressBar.classList.add("pine");
         }
       }
-      if (time_remaining < 0) {
-        progressBar.parentElement.parentElement.remove();
-        setTimeout(() => {
-          retrieve_constructions().then((construction_list) => {
-            constructions_data = construction_list;
-            display_progressBars(constructions_data, null);
-          });
-        }, 1000);
+      if (ticks_remaining > construction.duration) {
+        progressBar.innerHTML = '&nbsp; Starting...';
       }
-      const time = format_ticks(time_remaining);
-      const real_time = format_ticks_real_time(time_remaining);
-      progressBar.innerHTML = `&nbsp; <span class="hover_info">${time}<span class="popup_info small">in-game time</span></span> &ensp; <span class="transparency_txt hover_info">(${real_time})<span class="popup_info small">real time</span></span>`;
+      else if (ticks_remaining < 0) {
+        progressBar.innerHTML = '&nbsp; Finishing...';
+      }
+      else {
+        const time = format_ticks(ticks_remaining);
+        const real_time = format_ticks_real_time(ticks_remaining);
+        progressBar.innerHTML = `&nbsp; <span class="hover_info">${time}<span class="popup_info small">in-game time</span></span> &ensp; <span class="transparency_txt hover_info">(${real_time})<span class="popup_info small">real time</span></span>`;
+      }
     }
     for (const shipmentBar of shipmentBars) {
       const id = shipmentBar.id;
       const shipment = shipment_data[id];
       const now = new Date().getTime() / 1000;
-      const current_time = (now - server_start) / clock_time;
+      const current_tick = (now - first_tick_time) / clock_time + 1;
       let new_width;
-      let time_remaining;
-      if (shipment["pause_tick"]) {
-        new_width =
-          ((shipment["pause_tick"] -
-            shipment["departure_time"]) /
-            shipment["duration"]) *
-          100;
-        time_remaining =
-          shipment["duration"] +
-          shipment["departure_time"] -
-          shipment["pause_tick"];
-      } else {
-        new_width =
-          ((current_time - shipment["departure_time"]) /
-            shipment["duration"]) *
-          100;
-        time_remaining =
-          shipment["duration"] + shipment["departure_time"] - current_time;
-      }
+      let ticks_remaining;
+      ticks_remaining = shipment.arrival_tick - current_tick;
+      new_width = (1 - ticks_remaining / shipment.duration) * 100;
       shipmentBar.style.setProperty("--width", new_width);
       if (new_width > 0.01) {
-        shipmentBar.classList.add("pine");
+        if (shipment.speed < 0.01) {
+          shipmentBar.classList.add("red");
+        }
+        else if (shipment.speed < 0.99) {
+          shipmentBar.classList.add("orange");
+        }
+        else {
+          shipmentBar.classList.add("pine");
+        }
       }
-      if (time_remaining < 0) {
-        shipmentBar.parentElement.parentElement.remove();
-        setTimeout(() => {
-          retrieve_shipments().then((shipment_list) => {
-            shipment_data = shipment_list;
-            display_progressBars(null, shipment_data);
-          });
-        }, 1000);
+      if (ticks_remaining > shipment.duration) {
+        shipmentBar.innerHTML = '&nbsp; Starting...';
       }
-      const time = format_ticks(time_remaining);
-      const real_time = format_ticks_real_time(time_remaining);
-      shipmentBar.innerHTML = `&nbsp; <span class="hover_info">${time}<span class="popup_info small">in-game time</span></span> &ensp; <span class="transparency_txt hover_info">(${real_time})<span class="popup_info small">real time</span></span>`;
+      else if (ticks_remaining < 0) {
+        shipmentBar.innerHTML = '&nbsp; Finishing...';
+      }
+      else {
+        const time = format_ticks(ticks_remaining);
+        const real_time = format_ticks_real_time(ticks_remaining);
+        shipmentBar.innerHTML = `&nbsp; <span class="hover_info">${time}<span class="popup_info small">in-game time</span></span> &ensp; <span class="transparency_txt hover_info">(${real_time})<span class="popup_info small">real time</span></span>`;
+      }
     }
   }, 100);
 });
@@ -442,17 +411,21 @@ function html_for_progressBar(c_id, index, project_priority, construction) {
 }
 
 function html_for_shipmentBar(id, shipment) {
-  let playPauseLogo = "fa-pause";
-  if (shipment["pause_tick"]) {
-    playPauseLogo = "fa-play";
+  let snail = "";
+  if (shipment["speed"] < 0.01) {
+    snail = `<div class="progressbar-name medium">
+            <span class="hover_info"><img src="/static/images/icons/snail_house.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
+        </div>`;
+  } else if (shipment["speed"] < 0.99) {
+    snail = `<div class="progressbar-name medium">
+            <span class="hover_info"><img src="/static/images/icons/snail.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
+        </div>`;
   }
   return `<div class="progressbar-container">
         <div class="progressbar-name medium margin-small">${format_mass(shipment["quantity"])} ${resource_names[shipment["resource"]]}</div>
+        ${snail}
         <div class="progressbar-background">
             <div id="${id}" class="shipmentbar-bar"></div>
         </div>
-        <button class="progressbar-icon progressbar-button" onclick="pause_shipment(${id})">
-            <i class="fa ${playPauseLogo}"></i>
-        </button>
     </div>`;
 }

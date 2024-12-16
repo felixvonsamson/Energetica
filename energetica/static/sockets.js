@@ -107,20 +107,47 @@ socket.on("new_values", function (changes) {
             }
         }
 
-        if (typeof fetch_graph_data === "function") {
-            fetch_graph_data();
+        shipment_updates = changes.shipment_updates;
+        if (Object.keys(shipment_updates).length > 0) {
+            shipments_data = JSON.parse(sessionStorage.getItem("shipments"));
+            for (var shipment_id in shipment_updates) {
+                let shipment = shipments_data[0][shipment_id];
+                shipment.speed = shipment_updates[shipment_id].speed;
+                shipment.arrival_tick = shipment_updates[shipment_id].arrival_tick;
+            }
+            sessionStorage.setItem("shipments", JSON.stringify(shipments_data));
+            if (typeof display_progressBars === "function") {
+                display_progressBars(null, shipments_data);
+            }
+
+            if (typeof fetch_graph_data === "function") {
+                fetch_graph_data();
+            }
+            if (typeof fetch_temporal_network_data === "function") {
+                fetch_temporal_network_data();
+            }
+            if (typeof update_weather_conditions === "function") {
+                update_weather_conditions();
+            }
         }
-        if (typeof fetch_temporal_network_data === "function") {
-            fetch_temporal_network_data();
+        if (window.location.href.includes("/profile") && !window.location.href.includes("player_id")) {
+            get_active_facilities();
         }
-        if (typeof update_weather_conditions === "function") {
-            update_weather_conditions();
-        }
-    }
-    if (window.location.href.includes("/profile") && !window.location.href.includes("player_id")) {
-        get_active_facilities();
     }
 });
+
+// get information about finished construction
+socket.on("finish_construction", function (construction_data) {
+    sessionStorage.setItem("constructions", JSON.stringify(construction_data));
+    refresh_progressBar();
+});
+
+// get information about finished shipments
+socket.on("finish_shipment", function (shipment_data) {
+    sessionStorage.setItem("shipments", JSON.stringify(shipment_data));
+    refresh_progressBar();
+});
+
 
 // receive new network values from the server
 socket.on("new_network_values", function (changes) {
@@ -213,27 +240,6 @@ socket.on("new_notification", function (notification) {
                 '<span id="unread_badge" class="unread_badge small pine padding-small">1</span>';
         }
     }
-});
-
-socket.on("pause_construction", function (info) {
-    load_constructions().then((construction_list) => {
-        construction_list[0][info.construction_id].pause_tick =
-            info.pause_tick;
-        sessionStorage.setItem(
-            "constructions",
-            JSON.stringify(construction_list)
-        );
-        display_progressBars(construction_list, null);
-    });
-});
-
-socket.on("pause_shipment", function (info) {
-    load_shipments().then((shipment_list) => {
-        shipment_list[info.shipment_id].pause_tick =
-            info.pause_tick;
-        sessionStorage.setItem("shipments", JSON.stringify(shipment_list));
-        display_progressBars(null, shipment_list);
-    });
 });
 
 socket.on("display_new_message", function (message) {

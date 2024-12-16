@@ -466,24 +466,6 @@ def request_pause_project() -> Response:
     )
 
 
-@http.route("/request_pause_shipment", methods=["POST"])
-@log_action
-def request_pause_shipment() -> Response:
-    """Pause or unpause a shipment."""
-    request_data = request.get_json()
-    shipment_id = request_data["id"]
-    shipment: Shipment = db.session.get(Shipment, int(shipment_id))
-    if shipment is None or shipment.player_id != current_user.id:
-        return jsonify({"response": "ShipmentNotFound"}), 404
-    energetica.utils.resource_market.pause_shipment(shipment=shipment)
-    return jsonify(
-        {
-            "response": "success",
-            "shipments": current_user.package_shipments(),
-        },
-    )
-
-
 @http.route("/request_decrease_project_priority", methods=["POST"])
 @log_action
 def request_decrease_project_priority() -> Response:

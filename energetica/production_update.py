@@ -47,10 +47,13 @@ def update_electricity(engine):
             continue
         new_values[player.id] = player.data.rolling_history.init_new_data()
 
-    # reset progress speeds fot all ongoing constructions
+    # reset progress speeds fot all ongoing constructions and shipments
     ongoing_constructions = OngoingConstruction.query.filter_by(status=2).all()
     for oc in ongoing_constructions:
         oc.reset_speed()
+    ongoing_shipments = Shipment.query.all()
+    for os in ongoing_shipments:
+        os.reset_speed()
 
     for network in networks:
         market = init_market()
@@ -270,8 +273,7 @@ def shipment_demand(engine, player: Player, demand):
     """Calculate the power consumption for shipments."""
     transport = player.config["transport"]
     for shipment in player.shipments:
-        if shipment.is_ongoing():
-            demand["transport"] += transport["power_per_kg"] * shipment.quantity
+        demand["transport"] += transport["power_per_kg"] * shipment.quantity
 
 
 def storage_demand(engine, player: Player, demand):
@@ -925,7 +927,6 @@ def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
         # TODO: This should be updated and use a similar logic as above.
         last_shipment = (
             Shipment.query.filter(
-                Shipment.pause_tick.is_(None),
                 Shipment.player_id == player.id,
             )
             .order_by(Shipment.arrival_tick.desc())
