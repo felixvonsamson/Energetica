@@ -518,6 +518,16 @@ socket.on("update_page_data", function (pages_data) {
             let div = document.getElementById(data.name);
             update_base_data(data, div, on_technologies_page = true);
             update_level_data(data, div);
+            const knowledge_spillover_span = div.querySelector("#knowledge_spillover_discount_span");
+            if ("discount" in data) {
+                // Unhide the discount span if there is a discount
+                knowledge_spillover_span.style = "";
+                const knowledge_spillover_discount_em = div.querySelector("#knowledge_spillover_discount_em");
+                knowledge_spillover_discount_em.innerHTML = `(-${Math.round(100 - 100 * data.discount)}%)`;
+            } else {
+                // Hide the discount span if there is no discount
+                knowledge_spillover_span.style = "display:none";
+            }
             /**
              * Modifies the corresponding technology's effect table for a particular entry determined by `key`
              * 
