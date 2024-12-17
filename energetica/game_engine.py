@@ -17,6 +17,7 @@ from energetica.database.engine_data import EmissionData
 from energetica.database.network import NetworkData
 from energetica.database.ongoing_construction import OngoingConstructionData
 from energetica.database.player import PlayerData
+from energetica.database.shipment import ShipmentData
 
 
 # This is the engine object
@@ -138,6 +139,7 @@ class GameEngine(object):
     )
 
     def __init__(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None):
+        assert clock_time in [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
         self.clock_time = clock_time
         self.in_game_seconds_per_tick: int = in_game_seconds_per_tick
         self.config = config
@@ -156,6 +158,7 @@ class GameEngine(object):
         self.data["by_player"] = defaultdict(PlayerData)
         self.data["by_network"] = defaultdict(NetworkData)
         self.data["by_ongoing_construction"] = defaultdict(OngoingConstructionData)
+        self.data["by_shipment"] = defaultdict(ShipmentData)
         self.buffered = {}  # stores buffered values for mixed_database
         self.buffered["by_player"] = {}
         self.buffered["by_ongoing_construction"] = {}
@@ -163,6 +166,7 @@ class GameEngine(object):
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
         self.data["start_date"] = start_date or datetime.now()  # 0 point of server time
+        self.data["first_tick_time"] = self.data["start_date"]  # will be set to the correct time later on
         self.action_logger.info(
             json.dumps(
                 {

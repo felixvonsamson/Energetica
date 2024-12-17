@@ -88,7 +88,7 @@ class OngoingConstruction(db.Model):
         assert not self.was_paused_by_player()
         engine: GameEngine = current_app.config["engine"]
         if self.is_ongoing():
-            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
+            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
         self.status = ConstructionStatus.PAUSED
         db.session.flush()
 
@@ -96,12 +96,16 @@ class OngoingConstruction(db.Model):
         """Make this facility go from ongoing to waiting."""
         assert self.status == ConstructionStatus.ONGOING
         engine: GameEngine = current_app.config["engine"]
-        self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
+        self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
         self.status = ConstructionStatus.WAITING
         db.session.flush()
 
-    def set_ongoing(self):
-        """Make this facility go from waiting to ongoing."""
+    def set_ongoing(self, *, start_now=False):
+        """
+        Make this facility go from waiting to ongoing.
+        start_now : if true, construction will skip the "Starting..." phase and start immediately (in the case of a
+        worker that just got available)
+        """
         assert self.status == ConstructionStatus.WAITING
         assert not self.cache.prerequisites
         from energetica.database.player import Player
@@ -110,7 +114,10 @@ class OngoingConstruction(db.Model):
         player: Player = Player.query.get(self.player_id)
         assert player.available_workers(self.name) > 0
         engine: GameEngine = current_app.config["engine"]
-        self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
+        if start_now:
+            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
+        else:
+            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
         self.status = ConstructionStatus.ONGOING
         db.session.flush()
 
@@ -124,7 +131,7 @@ class OngoingConstruction(db.Model):
         if self.cache.prerequisites or player.available_workers(self.name) < 1:
             self.status = ConstructionStatus.WAITING
         else:
-            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
+            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
             self.status = ConstructionStatus.ONGOING
         db.session.flush()
 
@@ -157,7 +164,7 @@ class OngoingConstruction(db.Model):
         """Returns the progress of the construction, as a float between 0 and 1"""
         engine: GameEngine = current_app.config["engine"]
         if self.status == ConstructionStatus.ONGOING:
-            return (self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]) / self.duration
+            return (self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"] + 1) / self.duration
         else:
             return self.end_tick_or_ticks_passed / self.duration
 

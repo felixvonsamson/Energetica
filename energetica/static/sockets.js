@@ -107,20 +107,47 @@ socket.on("new_values", function (changes) {
             }
         }
 
-        if (typeof fetch_graph_data === "function") {
-            fetch_graph_data();
+        shipment_updates = changes.shipment_updates;
+        if (Object.keys(shipment_updates).length > 0) {
+            shipments_data = JSON.parse(sessionStorage.getItem("shipments"));
+            for (var shipment_id in shipment_updates) {
+                let shipment = shipments_data[0][shipment_id];
+                shipment.speed = shipment_updates[shipment_id].speed;
+                shipment.arrival_tick = shipment_updates[shipment_id].arrival_tick;
+            }
+            sessionStorage.setItem("shipments", JSON.stringify(shipments_data));
+            if (typeof display_progressBars === "function") {
+                display_progressBars(null, shipments_data);
+            }
+
+            if (typeof fetch_graph_data === "function") {
+                fetch_graph_data();
+            }
+            if (typeof fetch_temporal_network_data === "function") {
+                fetch_temporal_network_data();
+            }
+            if (typeof update_weather_conditions === "function") {
+                update_weather_conditions();
+            }
         }
-        if (typeof fetch_temporal_network_data === "function") {
-            fetch_temporal_network_data();
+        if (window.location.href.includes("/profile") && !window.location.href.includes("player_id")) {
+            get_active_facilities();
         }
-        if (typeof update_weather_conditions === "function") {
-            update_weather_conditions();
-        }
-    }
-    if (window.location.href.includes("/profile") && !window.location.href.includes("player_id")) {
-        get_active_facilities();
     }
 });
+
+// get information about finished construction
+socket.on("finish_construction", function (construction_data) {
+    sessionStorage.setItem("constructions", JSON.stringify(construction_data));
+    refresh_progressBar();
+});
+
+// get information about finished shipments
+socket.on("finish_shipment", function (shipment_data) {
+    sessionStorage.setItem("shipments", JSON.stringify(shipment_data));
+    refresh_progressBar();
+});
+
 
 // receive new network values from the server
 socket.on("new_network_values", function (changes) {
@@ -213,27 +240,6 @@ socket.on("new_notification", function (notification) {
                 '<span id="unread_badge" class="unread_badge small pine padding-small">1</span>';
         }
     }
-});
-
-socket.on("pause_construction", function (info) {
-    load_constructions().then((construction_list) => {
-        construction_list[0][info.construction_id].pause_tick =
-            info.pause_tick;
-        sessionStorage.setItem(
-            "constructions",
-            JSON.stringify(construction_list)
-        );
-        display_progressBars(construction_list, null);
-    });
-});
-
-socket.on("pause_shipment", function (info) {
-    load_shipments().then((shipment_list) => {
-        shipment_list[info.shipment_id].pause_tick =
-            info.pause_tick;
-        sessionStorage.setItem("shipments", JSON.stringify(shipment_list));
-        display_progressBars(null, shipment_list);
-    });
 });
 
 socket.on("display_new_message", function (message) {
@@ -438,7 +444,7 @@ socket.on("update_page_data", function (pages_data) {
             update_buildings_data(data, div);
             update_power_generating_facilities_data(data, div);
             div.querySelector("#storage_capacity").innerHTML = format_energy(data.storage_capacity);
-            div.querySelector("#efficiency").innerHTML = data.efficiency + "%";
+            div.querySelector("#efficiency").innerHTML = Math.round(data.efficiency) + "%";
         }
     }
     if (path == "extraction_facilities" && "extraction_facilities" in pages_data) {
@@ -518,6 +524,16 @@ socket.on("update_page_data", function (pages_data) {
             let div = document.getElementById(data.name);
             update_base_data(data, div, on_technologies_page = true);
             update_level_data(data, div);
+            const knowledge_spillover_span = div.querySelector("#knowledge_spillover_discount_span");
+            if ("discount" in data) {
+                // Unhide the discount span if there is a discount
+                knowledge_spillover_span.style = "";
+                const knowledge_spillover_discount_em = div.querySelector("#knowledge_spillover_discount_em");
+                knowledge_spillover_discount_em.innerHTML = `(-${Math.round(100 - 100 * data.discount)}%)`;
+            } else {
+                // Hide the discount span if there is no discount
+                knowledge_spillover_span.style = "display:none";
+            }
             /**
              * Modifies the corresponding technology's effect table for a particular entry determined by `key`
              * 

@@ -352,7 +352,7 @@
 </div>
 {% endblock base %}
 {% block scripts %}
-  <script>let server_start = {{engine.data['start_date']}};</script>
+  <script>let first_tick_time = {{engine.data['first_tick_time']}};</script>
   <script>
     const navigationEntry = performance.getEntriesByType("navigation")[0];
     if (navigationEntry && navigationEntry.type === "reload")

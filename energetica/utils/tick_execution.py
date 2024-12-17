@@ -31,6 +31,8 @@ def _state_update(engine, app):
     total_t = (time.time() - engine.data["start_date"]) / engine.clock_time
     with app.app_context():
         while engine.data["total_t"] < total_t - 1 or engine.data["total_t"] == 0:
+            if engine.data["total_t"] == 0:
+                engine.data["first_tick_time"] = time.time()
             engine.data["total_t"] += 1
             engine.log(f"t = {engine.data['total_t']}")
             if engine.data["total_t"] % 216 == 0:
@@ -43,9 +45,9 @@ def _state_update(engine, app):
                 "total_t": engine.data["total_t"],
             }
             engine.action_logger.info(json.dumps(log_entry))
-            production_update.update_electricity(engine=engine)
             check_events_completion(engine)
             check_climate_events(engine)
+            production_update.update_electricity(engine=engine)
             db.session.commit()
 
     # save instance every minute in case of server crash
@@ -74,12 +76,14 @@ def check_events_completion(engine):
 
     # check if shipment arrived
     arrived_shipments = Shipment.query.filter(
-        Shipment.pause_tick.is_(None),
         Shipment.arrival_tick <= engine.data["total_t"],
     ).all()
     for a_s in arrived_shipments:
         store_import(a_s.player, a_s.resource, a_s.quantity)
         db.session.delete(a_s)
+        db.session.commit()
+        player: Player = db.session.get(Player, a_s.player_id)
+        player.emit("finish_shipment", player.package_shipments())
 
     # check end of lifespan of facilities
     eolt_facilities: list[ActiveFacility] = ActiveFacility.query.filter(

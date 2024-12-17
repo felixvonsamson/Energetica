@@ -21,6 +21,7 @@ from energetica.database.active_facility import ActiveFacility
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData
 from energetica.database.messages import Chat, Message, Notification, player_chats
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
+from energetica.database.shipment import Shipment
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -419,6 +420,7 @@ class Player(db.Model, UserMixin):
         """Send the new data to the player's clients."""
         engine = current_app.config["engine"]
         construction_updates = self.get_construction_updates()
+        shipment_updates = self.get_shipment_updates()
         self.emit(
             "new_values",
             {
@@ -428,6 +430,7 @@ class Player(db.Model, UserMixin):
                 "cumulative_emissions": self.data.cumul_emissions.get_all(),
                 "money": self.money,
                 "construction_updates": construction_updates,
+                "shipment_updates": shipment_updates,
             },
         )
 
@@ -448,6 +451,22 @@ class Player(db.Model, UserMixin):
                     "end_tick": construction.end_tick_or_ticks_passed,
                 }
         return construction_speeds
+
+    def get_shipment_updates(self):
+        """
+        This method returns a dictionary of the shipments for which the progress speed has changed. For each of
+        these shipments, the dictionary contains the new speed and the new arrival_tick.
+        """
+        player_shipments: list[Shipment] = Shipment.query.filter_by(player_id=self.id).all()
+        shipment_speeds = {}
+        for shipment in player_shipments:
+            new_speed = shipment.updated_speed()
+            if new_speed is not None:
+                shipment_speeds[shipment.id] = {
+                    "speed": new_speed,
+                    "arrival_tick": shipment.arrival_tick,
+                }
+        return shipment_speeds
 
     def notify(self, title: str, message: str) -> None:
         """Create a new notification and sends it to the player's subscribed browsers."""
@@ -683,7 +702,6 @@ class Player(db.Model, UserMixin):
                     "quantity",
                     "arrival_tick",
                     "duration",
-                    "pause_tick",
                 ]
             }
             for shipment in self.shipments
@@ -862,7 +880,7 @@ class Player(db.Model, UserMixin):
             del self.cache.power_facilities_data
         if storage_facilities and "storage_facilities_data" in self.cache.__dict__:
             del self.cache.storage_facilities_data
-        if extraction_facilities and "extraction_facility_data" in self.cache.__dict__:
+        if extraction_facilities and "extraction_facilities_data" in self.cache.__dict__:
             del self.cache.extraction_facilities_data
         if functional_facilities and "functional_facilities_data" in self.cache.__dict__:
             del self.cache.functional_facilities_data

@@ -43,7 +43,7 @@ def buy_resource_from_market(player, quantity, sale):
         # Player is buying their own resource
         sale.quantity -= quantity
         if sale.quantity == 0:
-            sale.delete()
+            db.session.delete(sale)
         setattr(
             player,
             sale.resource + "_on_sale",
@@ -78,7 +78,7 @@ def buy_resource_from_market(player, quantity, sale):
         new_shipment = Shipment(
             resource=sale.resource,
             quantity=quantity,
-            arrival_tick=engine.data["total_t"] + shipment_duration,
+            arrival_tick=engine.data["total_t"] + 1 + shipment_duration,
             duration=shipment_duration,
             player_id=player.id,
         )
@@ -95,7 +95,7 @@ def buy_resource_from_market(player, quantity, sale):
         )
         if sale.quantity == 0:
             # Player is purchasing all available quantity
-            sale.delete()
+            db.session.delete(sale)
         db.session.commit()
 
 
@@ -130,14 +130,3 @@ def store_import(player, resource, quantity):
             f"A shipment of {format_mass(quantity)} {resource} arrived.",
         )
         engine.log(f"{player.username} received a shipment of {format_mass(quantity)} {resource}.")
-
-
-def pause_shipment(shipment: Shipment):
-    """this function is executed when a player pauses or unpauses an ongoing shipment"""
-    engine = current_app.config["engine"]
-    if shipment.pause_tick is None:
-        shipment.pause_tick = engine.data["total_t"]
-    else:
-        shipment.arrival_tick += engine.data["total_t"] - shipment.pause_tick
-        shipment.pause_tick = None
-    db.session.commit()
