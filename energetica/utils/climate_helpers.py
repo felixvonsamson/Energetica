@@ -40,9 +40,10 @@ def climate_event_impact(engine, tile, event):
         climate_events[event]["cost_fraction"] * player.config["industry"]["income_per_day"] / ticks_per_day
     )  # [¤/tick]
     duration_ticks = climate_events[event]["duration"] / engine.in_game_seconds_per_tick
+    end_tick = engine.data["total_t"] + duration_ticks
     new_climate_event = ClimateEventRecovery(
         event=event,
-        progress=0,
+        end_tick=end_tick,
         duration=duration_ticks,
         recovery_cost=recovery_cost,
         player_id=player.id,

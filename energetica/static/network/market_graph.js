@@ -161,6 +161,8 @@ function setup() {
 
         imports: [color(255, 89, 94), "Imports"],
         exports: [color(138, 201, 38), "Exports"],
+
+        dumping: [color(208, 0, 0), "Dumping"],
     };
 
     canvas_width = 0.7 * windowWidth;

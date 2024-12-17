@@ -433,6 +433,22 @@ def market_logic(engine, new_values, market):
     Sell all capacities that are below market price at market price.
     """
 
+    def add_to_market_data(quantity, export=True):
+        """Adds the exported or imported quantity to the market data so that it can be shown in the charts."""
+        import_export = "player_imports"
+        generation_consumption = "consumption"
+        if export:
+            import_export = "player_exports"
+            generation_consumption = "generation"
+        if row.player_id in market[import_export]:
+            market[import_export][row.player_id] += quantity
+        else:
+            market[import_export][row.player_id] = quantity
+        if row.facility in market[generation_consumption]:
+            market[generation_consumption][row.facility] += quantity
+        else:
+            market[generation_consumption][row.facility] = quantity
+
     def sell(row, market_price, quantity=None):
         """Sell and produce offered power capacity."""
         player = db.session.get(Player, row.player_id)
@@ -446,15 +462,7 @@ def market_logic(engine, new_values, market):
         demand["exports"] += quantity
         player.money += quantity * market_price / 3600 * engine.in_game_seconds_per_tick / 1_000_000
         revenue["exports"] += quantity * market_price / 3600 * engine.in_game_seconds_per_tick / 1_000_000
-
-        if row.player_id in market["player_exports"]:
-            market["player_exports"][row.player_id] += quantity
-        else:
-            market["player_exports"][row.player_id] = quantity
-        if row.facility in market["generation"]:
-            market["generation"][row.facility] += quantity
-        else:
-            market["generation"][row.facility] = quantity
+        add_to_market_data(quantity, export=True)
 
     def buy(row, market_price, quantity=None):
         """Buy demanded power capacity."""
@@ -466,15 +474,7 @@ def market_logic(engine, new_values, market):
         generation["imports"] += quantity
         player.money -= quantity * market_price / 3600 * engine.in_game_seconds_per_tick / 1_000_000
         revenue["imports"] -= quantity * market_price / 3600 * engine.in_game_seconds_per_tick / 1_000_000
-
-        if row.player_id in market["player_imports"]:
-            market["player_imports"][row.player_id] += quantity
-        else:
-            market["player_imports"][row.player_id] = quantity
-        if row.facility in market["consumption"]:
-            market["consumption"][row.facility] += quantity
-        else:
-            market["consumption"][row.facility] = quantity
+        add_to_market_data(quantity, export=False)
 
     market["player_exports"] = {}
     market["player_imports"] = {}
@@ -508,6 +508,7 @@ def market_logic(engine, new_values, market):
                 player.money -= dump_cap * 5 / 3600 * engine.in_game_seconds_per_tick / 1_000_000
                 revenue = new_values[row.player_id]["revenues"]
                 revenue["dumping"] -= dump_cap * 5 / 3600 * engine.in_game_seconds_per_tick / 1_000_000
+                add_to_market_data(dump_cap, export=False)
                 continue
             break
         sell(row, market_price)
