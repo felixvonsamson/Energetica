@@ -49,35 +49,49 @@ class PlayerCache:
 
     player_id: int
 
+    @property
+    def player(self) -> Player:
+        """Return the player."""
+        player = db.session.get(Player, self.player_id)
+        if player is None:
+            msg = f"Player with id {self.player_id} not found."
+            raise ValueError(msg)
+        return player
+
+    @property
+    def all_facilities_data(self) -> dict[str, list]:
+        """Return all facilities data of a player."""
+        return {
+            "power_facilities": self.power_facilities_data,
+            "storage_facilities": self.storage_facilities_data,
+            "extraction_facilities": self.extraction_facilities_data,
+            "functional_facilities": self.functional_facilities_data,
+        }
+
     @cached_property
     def power_facilities_data(self) -> list:
         """Cached property that stores the power facilities data of a player."""
-        player = db.session.get(Player, self.player_id)
-        return package_power_facilities(player)
+        return package_power_facilities(self.player)
 
     @cached_property
     def storage_facilities_data(self) -> list:
         """Cached property that stores the storage facilities data of a player."""
-        player = db.session.get(Player, self.player_id)
-        return package_storage_facilities(player)
+        return package_storage_facilities(self.player)
 
     @cached_property
     def extraction_facilities_data(self) -> list:
         """Cached property that stores the extraction facilities data of a player."""
-        player = db.session.get(Player, self.player_id)
-        return package_extraction_facilities(player)
+        return package_extraction_facilities(self.player)
 
     @cached_property
     def functional_facilities_data(self) -> list:
         """Cached property that stores the functional facilities data of a player."""
-        player = db.session.get(Player, self.player_id)
-        return package_functional_facilities(player)
+        return package_functional_facilities(self.player)
 
     @cached_property
     def technologies_data(self) -> list:
         """Cached property that stores the technologies data of a player."""
-        player = db.session.get(Player, self.player_id)
-        return package_available_technologies(player)
+        return package_available_technologies(self.player)
 
 
 class Player(db.Model, UserMixin):

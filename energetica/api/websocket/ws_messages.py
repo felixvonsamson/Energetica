@@ -19,9 +19,7 @@ def server_message(func: Callable):
             value = {f"_{i}": item for i, item in enumerate(function_return)}
         else:
             value = {"_0": function_return}
-        dictionary = {key: value}
-        print(f"Server message: {func.__name__}")
-        return dictionary
+        return {key: value}
 
     return wrapper
 
@@ -52,3 +50,9 @@ def get_map() -> dict:
         "uraniums": [tile.uranium for tile in hex_list],
         "climate_risks": [tile.climate_risk for tile in hex_list],
     }
+
+
+@server_message
+def facilities_data(player: Player) -> dict[str, list]:
+    """Package the player's facilities data and returns it as a JSON string."""
+    return player.cache.all_facilities_data

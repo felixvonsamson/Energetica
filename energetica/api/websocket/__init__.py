@@ -40,10 +40,9 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
             ws.send(json.dumps(message))
 
         def post_location_setup() -> None:
+            send_message(ws_messages.facilities_data(player))
             # send_message(ws_messages.players())
             # ws.send(rest_get_charts()) # TODO
-            # ws.send(rest_get_facilities_data(player))
-            pass
 
         def post_auth_setup() -> None:
             if player is None:
@@ -129,7 +128,7 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
                 try:
                     request_handler(engine, player, **arguments)
                     send_success()
-                    if request_type == "confirmLocation":
+                    if request_type == "confirm_location":
                         post_location_setup()
                 except GameError as e:
                     send_error(e)
@@ -370,11 +369,6 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
 #         },
 #     }
 #     return json.dumps(response)
-
-
-# def rest_get_facilities_data(player: Player):
-#     """Gets player's facilities data and returns it as a JSON string"""
-#     return json.dumps({"type": "getFacilitiesData", "data": package_constructions_page_data(player)})
 
 
 # def rest_get_scoreboard():
