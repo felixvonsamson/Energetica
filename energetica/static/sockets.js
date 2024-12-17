@@ -602,4 +602,4 @@ socket.on("worker_info", function (worker_data) {
     if (lab_worker_cont != null) {
         lab_worker_cont.innerHTML = `${worker_data.lab_workers.available}/${worker_data.lab_workers.total}`;
     }
-};
+});

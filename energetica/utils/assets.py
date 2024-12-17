@@ -433,6 +433,7 @@ def queue_project(
     db.session.commit()
 
     invalidate_data_on_project_update(engine, player, asset)
+    player.send_worker_info()
     return new_construction
 
 
