@@ -119,20 +119,20 @@ socket.on("new_values", function (changes) {
             if (typeof display_progressBars === "function") {
                 display_progressBars(null, shipments_data);
             }
+        }
 
-            if (typeof fetch_graph_data === "function") {
-                fetch_graph_data();
-            }
-            if (typeof fetch_temporal_network_data === "function") {
-                fetch_temporal_network_data();
-            }
-            if (typeof update_weather_conditions === "function") {
-                update_weather_conditions();
-            }
+        if (typeof fetch_graph_data === "function") {
+            fetch_graph_data();
         }
-        if (window.location.href.includes("/profile") && !window.location.href.includes("player_id")) {
-            get_active_facilities();
+        if (typeof fetch_temporal_network_data === "function") {
+            fetch_temporal_network_data();
         }
+        if (typeof update_weather_conditions === "function") {
+            update_weather_conditions();
+        }
+    }
+    if (window.location.href.includes("/profile") && !window.location.href.includes("player_id")) {
+        get_active_facilities();
     }
 });
 
