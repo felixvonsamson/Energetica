@@ -127,6 +127,7 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
     else:
         player.data.capacities.update(player, construction.name)
     engine.config.update_config_for_user(player)
+    db.session.flush()
     player.emit("retrieve_player_data")
     player.emit("finish_construction", package_projects_data(player))
 

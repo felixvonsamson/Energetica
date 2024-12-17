@@ -508,6 +508,22 @@ class Player(db.Model, UserMixin):
             except WebPushException as ex:
                 engine.warn(f"Failed to send notification: {repr(ex)}")
 
+    def send_worker_info(self) -> None:
+        """Send the number of available construction and lab workers to the player's clients."""
+        self.emit(
+            "worker_info",
+            {
+                "construction_workers": {
+                    "available": self.available_construction_workers(),
+                    "total": self.construction_workers,
+                },
+                "lab_workers": {
+                    "available": self.available_lab_workers(),
+                    "total": self.lab_workers,
+                },
+            },
+        )
+
     def calculate_net_emissions(self) -> float:
         """Calculate the net emissions of the player."""
         cumulative_emissions = self.data.cumul_emissions.get_all()

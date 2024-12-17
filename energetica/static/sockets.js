@@ -592,3 +592,14 @@ socket.on("update_page_data", function (pages_data) {
         }
     }
 });
+
+socket.on("worker_info", function (worker_data) {
+    construction_worker_cont = document.getElementById("construction_worker_cont");
+    lab_worker_cont = document.getElementById("lab_worker_cont");
+    if (construction_worker_cont != null) {
+        construction_worker_cont.innerHTML = `${worker_data.construction_workers.available}/${worker_data.construction_workers.total}`;
+    }
+    if (lab_worker_cont != null) {
+        lab_worker_cont.innerHTML = `${worker_data.lab_workers.available}/${worker_data.lab_workers.total}`;
+    }
+};
