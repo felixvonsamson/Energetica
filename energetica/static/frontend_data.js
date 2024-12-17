@@ -180,6 +180,24 @@ function retrieve_player_data() {
         });
 }
 
+function load_player_id() {
+    if (typeof (Storage) !== "undefined") {
+        const player_id = sessionStorage.getItem("player_id");
+        if (player_id) {
+            return Promise.resolve(player_id);
+        }
+    }
+    return fetch("/api/get_player_id")
+        .then((response) => response.json())
+        .then((player_id) => {
+            sessionStorage.setItem("player_id", player_id);
+            return player_id;
+        })
+        .catch((error) => {
+            console.error(`caught error ${error}`);
+        });
+}
+
 function load_const_config() {
     if (typeof (Storage) !== "undefined") {
         const const_config = sessionStorage.getItem("const_config");

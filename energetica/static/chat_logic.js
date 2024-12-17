@@ -10,12 +10,13 @@ refresh_chats();
 
 /* Load all players and sort them by username */
 load_players().then((players_) => {
-    const player_id = sessionStorage.getItem("player_id");
-    const playerArray = Object.entries(players_)
-        .filter(([id, user]) => id != player_id)
-        .map(([id, user]) => ({ id, username: user.username }));
-    playerArray.sort((a, b) => a.username.localeCompare(b.username));
-    sortedNames = playerArray;
+    load_player_id().then((player_id) => {
+        const playerArray = Object.entries(players_)
+            .filter(([id, user]) => id != player_id)
+            .map(([id, user]) => ({ id, username: user.username }));
+        playerArray.sort((a, b) => a.username.localeCompare(b.username));
+        sortedNames = playerArray;
+    });
 });
 
 function refresh_chats() {
@@ -289,29 +290,31 @@ function openChat(chatID) {
             .then((response) => response.json())
             .then((data) => {
                 load_players().then((players) => {
-                    let messages = data.messages;
-                    let chat_title = document.getElementById("chat_title_div");
-                    chat_title.innerHTML = `<b>${chats[chatID].name}</b>`;
-                    document.getElementById("message_input_field").classList.remove("hidden");
-                    for (let i = 0; i < messages.length; i++) {
-                        let alignment = "left";
-                        let username = "";
-                        if (messages[i].player_id == sessionStorage.getItem("player_id")) {
-                            alignment = "right";
-                        } else if (chats[chatID].group_chat) {
-                            username = players[messages[i].player_id].username + "&emsp;";
-                        }
-                        html += `<div class="message ${alignment}">
+                    load_player_id().then((player_id) => {
+                        let messages = data.messages;
+                        let chat_title = document.getElementById("chat_title_div");
+                        chat_title.innerHTML = `<b>${chats[chatID].name}</b>`;
+                        document.getElementById("message_input_field").classList.remove("hidden");
+                        for (let i = 0; i < messages.length; i++) {
+                            let alignment = "left";
+                            let username = "";
+                            if (messages[i].player_id == player_id) {
+                                alignment = "right";
+                            } else if (chats[chatID].group_chat) {
+                                username = players[messages[i].player_id].username + "&emsp;";
+                            }
+                            html += `<div class="message ${alignment}">
                         <div class="message_infos">
                             <span>${username}</span>
                             <span class="txt_pine">${formatDateString(messages[i].time)}</span></div>
                         <div class="message_text bone ${alignment}">${messages[i].text}</div>
                     </div>`;
-                    }
-                    let message_container = document.getElementById("message_container");
-                    message_container.innerHTML = html;
-                    message_container.scrollTop = message_container.scrollHeight;
-                    document.getElementById("new_message").focus();
+                        }
+                        let message_container = document.getElementById("message_container");
+                        message_container.innerHTML = html;
+                        message_container.scrollTop = message_container.scrollHeight;
+                        document.getElementById("new_message").focus();
+                    });
                 });
             })
             .catch((error) => {

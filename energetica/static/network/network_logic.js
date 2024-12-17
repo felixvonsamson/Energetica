@@ -31,11 +31,12 @@ let invitations = [];
 
 
 load_players().then((players_) => {
-    const player_id = sessionStorage.getItem("player_id");
-    const usernames = Object.entries(players_)
-        .filter(([id, user]) => id != player_id)
-        .map(([id, user]) => user.username);
-    sortedNames = usernames.sort();
+    load_player_id().then((player_id) => {
+        const usernames = Object.entries(players_)
+            .filter(([id, user]) => id != player_id)
+            .map(([id, user]) => user.username);
+        sortedNames = usernames.sort();
+    });
 });
 
 let input = document.getElementById("invite_player");
