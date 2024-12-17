@@ -74,7 +74,7 @@
               {# Discount #}
               <span id="knowledge_spillover_discount_span" 
                     class="hover_info"
-                    {% if "discount" in technology_data %}style="display:none"{% endif %}>
+                    {% if "discount" not in technology_data %}style="display:none"{% endif %}>
                 &ensp;
                 <em class="txt-green" id="knowledge_spillover_discount_em">
                   {% if "discount" in technology_data %}
