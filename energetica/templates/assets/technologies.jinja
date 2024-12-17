@@ -77,7 +77,11 @@
                     {% if "discount" in technology_data %}style="display:none"{% endif %}>
                 &ensp;
                 <em class="txt-green" id="knowledge_spillover_discount_em">
-                  (-{{ (100 - 100 * technology_data.discount) | round | int}}%)
+                  {% if "discount" in technology_data %}
+                    (-{{ (100 - 100 * technology_data.discount) | round | int}}%)
+                  {% else %}
+                    -
+                  {% endif %}
                 </em>
                 {% if "prevalence" in technology_data %}
                 <span class="popup_info small" style="width: 240px">
