@@ -31,6 +31,13 @@
     {% else %}mineral extraction{% endif %} technology and 
     <a href="{{ url_for('views.functional_facilities', _anchor='Warehouse') }}">Warehouse</a>.
   </p>
+  <p>
+    For more information about building power facilities, see
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='projects', _anchor='Starting_a_Project') }}">Starting a Projects</a>.
+  </p>
+  <p>
+    Each extraction facility has the following characteristics:
+  </p>
   <ul>
     <li>
       <strong>Power Consumption:</strong> Maximum power consumption of the facility. This consumption is proportional to
