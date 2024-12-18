@@ -128,7 +128,6 @@
     <a href="{{ url_for('wiki.render_template_wiki', template_name='map', _anchor='hydro_potential') }}">
     Hydro Potential</a> for more information.
   </p>
-
   <h2 id="Power_Generation_of_Controllable_Plants">Power Generation of Controllable Facilities</h2>
   <p>
     Controllable facility power generation must adhere to the ramping constraints of each facility from one game tick to the
@@ -162,60 +161,6 @@
     atmosphere among all players, influencing the game's climate. Refer to 
     <a href="{{ url_for('wiki.render_template_wiki', template_name='climate_effects') }}">Climate Change</a> for more details.
   </p>
-  <h2 id="O&M_costs">Operation and Maintenance Cost</h2>
-  <p>
-    Each power facility in the game incurs operational and maintenance costs. For renewable facilities, these costs are
-    fixed, while for controllable facilities, there is both a fixed and a variable component. The fixed costs represent 20%
-    of the total O&M costs, while the variable costs, dependent on the power output of the facility, constitute the 
-    remaining 80%. Nuclear facilities, such as the Nuclear Reactor and Gen4 Nuclear, differ in that they have a fixed 
-    cost fraction of 50%. The O&M costs provided for each facility in the power facilities page are based on 100% power 
-    output.
-  </p>
-  <h2 id="Construction_of_a_Plant">Construction of a Facility</h2>
-  <p>If you choose to build a new facility, it will require various resources:</p>
-  <ul>
-    <li>Price: The cost to initiate construction</li>
-    <li>Duration: The time required for completion</li>
-    <li>Power consumption: Power required during construction</li>
-    <li>Emissions: CO<sub>2</sub> emitted during construction, distributed over the construction period</li>
-  </ul>
-  <p>
-    Construction projects are undertaken by construction workers. Each worker can focus on a single construction at a 
-    time. Construction projects can be paused, cancelled, and reordered. If a construction is immediately cancelled, 80% 
-    of the facility's price will be refunded, with a proportionally decreasing refund as construction progresses. Upon completing a 
-    construction, a worker will automatically move on to the next project in the list, if possible.
-  </p>
-  <p>If the energy demand for constructions isn't met, it is slowed down or stalled in case of no available energy. 
-  The slow or stalled construction and research projects are indicated with a snail icon and a orange or red progress bar.</p>
-  <p>
-    Researching {% if "Unlock Technologies" in user.achievements %}<a href="{{ url_for('views.technology', _anchor='Building Technology') }}">
-    building technology</a>{% else %}building technology{% endif %} will unlock additional construction workers and 
-    increase the speed of construction projects.
-  </p>
-  <p>
-    When a facility is built, a random location inside the player's tile is assigned to it. This is especially important 
-    for wind and solar facilities, as their output is influenced by the weather conditions at their location.
-  </p>
-
-  <h3>Lifespan of a Facility</h3>
-  <p>
-    Each facility has an operational lifespan. At the end of its lifespan, a facility is automatically decommissioned 
-    at a cost equivalent to 20% of its original price.
-  </p>
-  <p>
-    It is also possible to dismantle a facility before the end of its lifespan. This can be done in the 
-    <a href="/profile">Profile page</a> and happens instantly. The dismantling process has the same cost as decommissioning.
-  </p>
-
-  <h3>Upgrades</h3>
-  <p>
-    When a new technology research is completed that affects the characteristics of certain facilities, the effect do 
-    not automatically apply to instances of the facilities that are under construction or already built. Players must 
-    individually upgrade these facilities through the <a href="/profile">Profile page</a>. The upgrade cost is 
-    determined as the maximum value between 5% of the initial facility cost and the price difference associated with 
-    the new upgrade. This upgrade process is instantaneous.
-  </p>
-
 </div>
 
 {% endblock wiki_content %}

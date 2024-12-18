@@ -1737,6 +1737,11 @@ table.tan_green tr:nth-child(even) {
     max-width: 450px;
 }
 
+.graph-container img.large {
+    max-width: 800px;
+    /* TODO(mglst): rethink this value */
+}
+
 .info_icon {
     width: 0.4em;
     height: auto;
