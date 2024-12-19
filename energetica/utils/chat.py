@@ -31,7 +31,7 @@ def check_existing_chats(participants):
     return False
 
 
-def create_chat(player, buddy):
+def create_chat(player, buddy) -> Chat:
     """creates a chat with 2 players"""
     if buddy is None:
         raise GameError("buddyIDDoesNotExist")
@@ -48,6 +48,7 @@ def create_chat(player, buddy):
     engine: GameEngine = current_app.config["engine"]
     engine.log(f"{player.username} created a chat with {buddy.username}")
     # websocket.notify_new_chat(new_chat)
+    return new_chat
 
 
 def create_group_chat(player, chat_name, participants):

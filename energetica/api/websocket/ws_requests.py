@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable
 
+from energetica.database import db
 from energetica.database.map import Hex
 
 if TYPE_CHECKING:
@@ -38,3 +39,13 @@ def confirm_location(engine: GameEngine, player: Player, location_id: int) -> No
 
     location = Hex.query.get(location_id)
     misc.confirm_location(engine, player, location)
+
+
+@ws_request_handler
+def create_chat(engine: GameEngine, player: Player, buddy_id: int) -> None:
+    """Create a chat message."""
+    from energetica.database.player import Player
+    from energetica.utils import chat
+
+    buddy = Player.query.get(buddy_id)
+    chat.create_chat(player, buddy)

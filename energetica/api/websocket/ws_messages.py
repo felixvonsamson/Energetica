@@ -61,8 +61,7 @@ def facilities_data(player: Player) -> dict[str, list]:
 @server_message
 def get_chats(player: Player) -> dict:
     """Gets the player's chats and returns it as JSON string."""
-    # return player.package_chats()
-    return {}
+    return player.package_chats()
 
 
 @server_message
