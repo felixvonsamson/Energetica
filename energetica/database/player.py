@@ -14,7 +14,9 @@ from typing import TYPE_CHECKING
 from flask import current_app
 from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
+from simple_websocket import Server
 
+from energetica.api.websocket import ws_messages
 from energetica.config.achievements import achievements
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
@@ -231,7 +233,12 @@ class Player(db.Model, UserMixin):
     @property
     def socketio_clients(self) -> list[int]:
         """Return the player's socketio clients."""
-        return current_app.config["engine"].clients[self.id]
+        return self.engine.clients[self.id]
+
+    @property
+    def websocket_clients(self) -> list[Server]:
+        """Return the player's websocket clients."""
+        return self.engine.websocket_dict[self.id]
 
     @cached_property
     def data(self) -> PlayerData:
@@ -901,8 +908,7 @@ class Player(db.Model, UserMixin):
         if technologies and "technologies_data" in self.cache.__dict__:
             del self.cache.technologies_data
         if self.socketio_clients:
-            # TODO(mglst): update clients over websocket
-            pages_data = {}
+            pages_data: dict = {}
             if power_facilities:
                 pages_data |= {"power_facilities": self.cache.power_facilities_data}
             if storage_facilities:
@@ -914,6 +920,10 @@ class Player(db.Model, UserMixin):
             if technologies:
                 pages_data |= {"technologies": self.cache.technologies_data}
             self.emit("update_page_data", pages_data)
+            if self.websocket_clients:
+                message = json.dumps(ws_messages.facilities_data(self))
+                for ws_client in self.websocket_clients:
+                    ws_client.send(message)
 
 
 class PlayerUnreadMessages(db.Model):

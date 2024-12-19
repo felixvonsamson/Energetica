@@ -1,11 +1,14 @@
 """All requests for the websocket API."""
 
-from typing import Callable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable
 
 from energetica.database.map import Hex
-from energetica.database.player import Player
-from energetica.game_engine import GameEngine
-from energetica.utils import misc
+
+if TYPE_CHECKING:
+    from energetica.database.player import Player
+    from energetica.game_engine import GameEngine
 
 
 def ws_request_handler(func: Callable):
@@ -31,5 +34,7 @@ def ws_request_handler(func: Callable):
 @ws_request_handler
 def confirm_location(engine: GameEngine, player: Player, location_id: int) -> None:
     """Confirm the player's location."""
+    from energetica.utils import misc
+
     location = Hex.query.get(location_id)
     misc.confirm_location(engine, player, location)

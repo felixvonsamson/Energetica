@@ -1,7 +1,10 @@
 """Code providing API access using WebSockets for iOS Swift Client."""
 
+from __future__ import annotations
+
 import inspect
 import json
+from typing import TYPE_CHECKING
 
 from flask import Blueprint
 from flask_sock import Sock
@@ -9,18 +12,23 @@ from simple_websocket import ConnectionClosed, Server
 from werkzeug.security import check_password_hash
 
 from energetica.api.websocket import ws_broadcast, ws_messages, ws_requests
-from energetica.database.player import Player
-from energetica.game_engine import GameEngine, GameError
-from energetica.utils.auth_logic import signup_player
+
+if TYPE_CHECKING:
+    from energetica.database.player import Player
+    from energetica.game_engine import GameEngine
 
 websocket_blueprint = Blueprint("rest_api", __name__)
 
 
 def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
+    from energetica.game_engine import GameError
+
     """Add flask-sock endpoints and other various setup methods. Called by energetica/__init__.py."""
 
     def verify_password(username: str, password: str) -> Player | None:
         """Verify the given credentials. Return the corresponding player if it exists."""
+        from energetica.database.player import Player
+
         player = Player.query.filter_by(username=username).first()
         if player:
             if check_password_hash(player.pwhash, password):
@@ -101,6 +109,8 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
                 password1 = request_body["password1"]
                 password2 = request_body["password2"]
                 try:
+                    from energetica.utils.auth_logic import signup_player
+
                     player = signup_player(username, password1, password2)
                 except GameError as e:
                     send_error(e)

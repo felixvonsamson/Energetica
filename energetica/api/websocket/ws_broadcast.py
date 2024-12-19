@@ -1,14 +1,17 @@
 """Broadcast messages to all active WebSocket connections."""
 
+from __future__ import annotations
+
 import json
+from typing import TYPE_CHECKING
 
 from flask import current_app
 from simple_websocket import ConnectionClosed, Server
 
 from energetica.api.websocket import ws_messages
-from energetica.database import db
-from energetica.database.player import Player
-from energetica.game_engine import GameEngine
+
+if TYPE_CHECKING:
+    from energetica.game_engine import GameEngine
 
 
 def websocket_broadcast(func):

@@ -1,9 +1,13 @@
 """Server messages for the websocket server."""
 
-from typing import Callable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable
 
 from energetica.database.map import Hex
-from energetica.database.player import Player
+
+if TYPE_CHECKING:
+    from energetica.database.player import Player
 
 
 def server_message(func: Callable):
@@ -27,6 +31,8 @@ def server_message(func: Callable):
 @server_message
 def players() -> dict[int, dict]:
     """Package data for all players."""
+    from energetica.database.player import Player
+
     return Player.package_all()
 
 
