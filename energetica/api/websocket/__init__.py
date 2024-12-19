@@ -48,7 +48,9 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
 
         def post_location_setup() -> None:
             send_message(ws_messages.facilities_data(player))
-            # send_message(ws_messages.players())
+            send_message(ws_messages.get_chats(player))
+            send_message(ws_messages.get_last_opened_chat(player))
+            send_message(ws_messages.get_show_chat_disclaimer(player))
             # ws.send(rest_get_charts()) # TODO
 
         def post_auth_setup() -> None:
@@ -219,24 +221,6 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
 # The following methods generate messages to be sent over websocket connections.
 # These are returned in the form of JSON formatted strings. See the
 # `ServerMessage` enum in the Xcode project.
-
-# def rest_get_chats(player: Player):
-#     """Gets the player's chats and returns it as JSON string."""
-#     response = {"type": "getChats", "data": player.package_chats()}
-#     return json.dumps(response)
-
-
-# def rest_get_last_opened_chat(player: Player):
-#     """Gets the id of the player's last opened chat and returns is as a JSON string."""
-#     response = {"type": "getLastOpenedChat", "data": player.last_opened_chat}
-#     return json.dumps(response)
-
-
-# def rest_get_show_chat_disclaimer(player: Player):
-#     """Gets the flag for if the chat disclaimer should be shown and returns it as a JSON string."""
-#     response = {"type": "showChatDisclaimer", "data": player.show_disclaimer}
-#     return json.dumps(response)
-
 
 # def rest_get_global_data(engine: GameEngine):
 #     """Gets global engine data and returns it as a JSON string"""

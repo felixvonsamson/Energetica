@@ -16,13 +16,7 @@ def server_message(func: Callable):
     def wrapper(*args, **kwargs):
         key = func.__name__
         function_return = func(*args, **kwargs)
-        if function_return is dict:
-            value = function_return
-        elif function_return is list:
-            # {"_0": value_0, "_1": value_1, ...}
-            value = {f"_{i}": item for i, item in enumerate(function_return)}
-        else:
-            value = {"_0": function_return}
+        value = {"_0": function_return}
         return {key: value}
 
     return wrapper
@@ -62,3 +56,22 @@ def get_map() -> dict:
 def facilities_data(player: Player) -> dict[str, list]:
     """Package the player's facilities data and returns it as a JSON string."""
     return player.cache.all_facilities_data
+
+
+@server_message
+def get_chats(player: Player) -> dict:
+    """Gets the player's chats and returns it as JSON string."""
+    # return player.package_chats()
+    return {}
+
+
+@server_message
+def get_last_opened_chat(player: Player) -> int:
+    """Gets the id of the player's last opened chat and returns is as a JSON string."""
+    return player.last_opened_chat
+
+
+@server_message
+def get_show_chat_disclaimer(player: Player) -> dict:
+    """Gets the player's notifications and returns them as a JSON string."""
+    return player.show_disclaimer
