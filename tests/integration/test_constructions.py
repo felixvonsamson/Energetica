@@ -1,5 +1,4 @@
 import os
-import random
 import sys
 
 sys.path.append(os.getcwd())
@@ -11,7 +10,6 @@ from energetica.database import db
 from energetica.database.map import Hex
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
 from energetica.database.player import Player
-from energetica.game_engine import GameError
 from energetica.utils.assets import (
     cancel_project,
     decrease_project_priority,
@@ -398,4 +396,3 @@ def test_math_and_building_tech():
         technology_c = queue_project(engine=engine, player=player, asset="building_technology", force=True)
         validate_rules(engine, player)
         assert technology_c.status == ConstructionStatus.WAITING
-

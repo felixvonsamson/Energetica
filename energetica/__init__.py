@@ -134,6 +134,8 @@ def create_app(
         with simulate_file as file:
             actions = [json.loads(line) for line in file]
         assert actions[0]["action_type"] == "init_engine"
+        clock_time = actions[0]["clock_time"]
+        in_game_seconds_per_tick = actions[0]["in_game_seconds_per_tick"]
         random_seed = actions[0]["random_seed"]
         start_date = datetime.fromisoformat(actions[0]["start_date"])
 

@@ -915,7 +915,7 @@ def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
         for i in range(min(len(research_priorities), player.lab_workers)):
             construction_id = research_priorities[i]
             construction: OngoingConstruction = db.session.get(OngoingConstruction, construction_id)
-            if construction.is_ongoing():
+            if not construction.is_ongoing():
                 continue
             cumul_demand += construction.construction_power
             if cumul_demand > satisfaction:
