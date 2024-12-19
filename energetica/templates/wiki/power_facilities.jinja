@@ -1,11 +1,11 @@
-{% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica wiki{% endblock %} {% block wiki_content %}
+{% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica Wiki{% endblock %} {% block wiki_content %}
 
 <div class="flex-row huge title">Wiki - Power Facilities</div>
 
 <div class="medium margin-large">
 
   <p>
-    Power facilities are integral for electricity generation within the game. Upon starting, you begin with a single
+    Power Facilities are integral for electricity generation within the game. Upon starting, you begin with a single
     steam engine. Initially, only the steam engine, watermill, and windmill are available. However, researching
     <a href="{{ url_for('wiki.render_template_wiki', template_name='technologies') }}">technologies</a> will unlock additional power facilities.
   </p>
@@ -14,7 +14,7 @@
     <a href="{{ url_for('wiki.render_template_wiki', template_name='projects', _anchor='Starting_a_Project') }}">Starting a Project</a>.
   </p>
   <p>
-    Power facilities within Energetica are classified into five categories, each offering different
+    Power Facilities within Energetica are classified into five categories, each offering different
     characteristics and functionalities.
   </p>
   <h3>Fossil Fuel Family</h3>

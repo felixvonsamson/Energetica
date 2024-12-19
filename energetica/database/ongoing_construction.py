@@ -189,7 +189,7 @@ class OngoingConstruction(db.Model):
         player: Player = db.session.get(Player, self.player_id)
         prerequisites = []
         level = None
-        if self.family == "Functional facilities":
+        if self.family == "Functional Facilities":
             # For functional facilities, the only prerequisites are ongoing constructions of the same type
             priority_list = player.read_list("construction_priorities")
             this_priority_index = priority_list.index(self.id)

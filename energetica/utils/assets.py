@@ -26,7 +26,7 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
     engine: GameEngine = current_app.config["engine"]
     player: Player = db.session.get(Player, construction.player_id)
 
-    if construction.family in ["Technologies", "Functional facilities"]:
+    if construction.family in ["Technologies", "Functional Facilities"]:
         if getattr(player, construction.name) == 0:
             if construction.name == "carbon_capture":
                 player.data.rolling_history.add_subcategory("demand", construction.name)
@@ -92,16 +92,16 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
         if construction.family == "Technologies":
             player.notify("Technologies", f"+ 1 lvl <b>{construction_name}</b>.")
             engine.log(f"{player.username} : + 1 lvl {construction_name}")
-        elif construction.family == "Functional facilities":
+        elif construction.family == "Functional Facilities":
             player.notify("Constructions", f"+ 1 lvl <b>{construction_name}</b>")
             engine.log(f"{player.username} : + 1 lvl {construction_name}")
         else:
             player.notify("Constructions", f"+ 1 <b>{construction_name}</b>")
             engine.log(f"{player.username} : + 1 {construction_name}")
     if construction.family in [
-        "Extraction facilities",
-        "Power facilities",
-        "Storage facilities",
+        "Extraction Facilities",
+        "Power Facilities",
+        "Storage Facilities",
     ]:
         eol = engine.data["total_t"] + math.ceil(
             engine.const_config["assets"][construction.name]["lifespan"] / engine.in_game_seconds_per_tick
@@ -131,7 +131,7 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
     player.emit("retrieve_player_data")
     player.emit("finish_construction", package_projects_data(player))
 
-    if family == "Functional facilities":
+    if family == "Functional Facilities":
         player.invalidate_recompute_and_dispatch_data_for_pages(
             functional_facilities=True,
             technologies=construction.name == "laboratory",

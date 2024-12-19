@@ -1,16 +1,16 @@
 {% extends "base.jinja" %}
 {% block title %}
-  Extraction facilities
+  Extraction Facilities
 {% endblock title %}
 {% block content %}
   <div class="flex-row huge title">
-    Extraction facilities
+    Extraction Facilities
     <div class="pine info_icon_container"
          onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
   </div>
   <div id="info_popup" class="popup hidden green">
     <div class="flex-row margin-small align-items-center">
-      <div class="large txt_center flex-grow-1">Help : Extraction facilities</div>
+      <div class="large txt_center flex-grow-1">Help : Extraction Facilities</div>
       <div onclick="document.getElementById('info_popup').classList.add('hidden');"
            class="cross pine margin-small"
            style="width:39px">×</div>
@@ -26,7 +26,7 @@
         need a laboratory.
       </p>
       <p>
-        For more information about Extraction facilities, refer to
+        For more information about Extraction Facilities, refer to
         <a href="{{ url_for('wiki.render_template_wiki', template_name='resources', _anchor='Extraction_Facilities') }}">
         this section in the wiki</a>.
       </p>

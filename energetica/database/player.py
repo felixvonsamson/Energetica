@@ -124,7 +124,7 @@ class Player(db.Model, UserMixin):
     construction_workers = db.Column(db.Integer, default=1)
     lab_workers = db.Column(db.Integer, default=0)
 
-    # Functional facilities :
+    # Functional Facilities :
     industry = db.Column(db.Integer, default=1)
     laboratory = db.Column(db.Integer, default=0)
     warehouse = db.Column(db.Integer, default=0)

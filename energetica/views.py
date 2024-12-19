@@ -59,6 +59,11 @@ def home():
     return g.render_template_ctx("dashboard.jinja")
 
 
+@views.route("/settings")
+def settings():
+    return g.render_template_ctx("settings.jinja")
+
+
 @views.route("/map_view")
 def map_view():
     return g.render_template_ctx("map.jinja")

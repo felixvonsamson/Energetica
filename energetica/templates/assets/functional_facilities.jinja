@@ -1,18 +1,18 @@
 {% extends "base.jinja" %}
 {% block title %}
-  Functional facilities
+  Functional Facilities
 {% endblock title %}
 {% block content
   %}
   {% set facility_values = data %}
   <div class="flex-row huge title">
-    Functional facilities
+    Functional Facilities
     <div class="pine info_icon_container"
          onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
   </div>
   <div id="info_popup" class="popup hidden green">
     <div class="flex-row margin-small align-items-center">
-      <div class="large txt_center flex-grow-1">Help : Functional facilities</div>
+      <div class="large txt_center flex-grow-1">Help : Functional Facilities</div>
       <div onclick="document.getElementById('info_popup').classList.add('hidden');"
            class="cross pine margin-small"
            style="width:39px">×</div>
@@ -20,7 +20,7 @@
     <div class="margin medium">
       <p>On this page you will find facilities with unique abilities and their specific information.</p>
       <p>
-        For more information about Functional facilities, refer to 
+        For more information about Functional Facilities, refer to 
         <a href="{{ url_for('wiki.render_template_wiki', template_name='functional_facilities') }}">this section in the wiki</a>.
       </p>
     </div>
@@ -93,12 +93,12 @@
           <div class="flex-col construction_button_container hidden">
             {% if facility_data.requirements_status == "unsatisfied" %}
               <b id="construction_button" class="padding medium margin txt_center white txt-red"
-                 onclick="start_construction('{{ facility }}', 'Functional facilities');">
+                 onclick="start_construction('{{ facility }}', 'Functional Facilities');">
                 Locked
               </b>
             {% else %}
               <b id="construction_button" class="padding medium button margin txt_center white"
-                 onclick="start_construction('{{ facility }}', 'Functional facilities');">
+                 onclick="start_construction('{{ facility }}', 'Functional Facilities');">
                 Start construction
               </b>
             {% endif %}
@@ -133,12 +133,12 @@
           <div class="flex-col">
             {% if facility_data.requirements_status == "unsatisfied" %}
               <b id="construction_button_mobile" class="padding medium margin txt_center white txt-red"
-                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Functional facilities');">
+                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Functional Facilities');">
                 Locked
               </b>
             {% else %}
               <b id="construction_button_mobile" class="padding medium button margin txt_center white"
-                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Functional facilities');">
+                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Functional Facilities');">
                 Start construction
               </b>
             {% endif %}
