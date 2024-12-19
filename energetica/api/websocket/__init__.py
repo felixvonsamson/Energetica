@@ -21,9 +21,8 @@ websocket_blueprint = Blueprint("rest_api", __name__)
 
 
 def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
-    from energetica.game_engine import GameError
-
     """Add flask-sock endpoints and other various setup methods. Called by energetica/__init__.py."""
+    from energetica.game_engine import GameError
 
     def verify_password(username: str, password: str) -> Player | None:
         """Verify the given credentials. Return the corresponding player if it exists."""

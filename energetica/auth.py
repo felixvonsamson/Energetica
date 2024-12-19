@@ -83,6 +83,5 @@ def sign_up():
                     flash("Password must be at least 7 characters.", category="error")
                 case _:
                     raise
-            return None
 
     return render_template("sign_up.jinja", engine=g.engine, user=current_user)
