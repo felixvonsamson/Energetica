@@ -310,7 +310,7 @@ def calculate_solar_irradiance(x: float, y: float, total_seconds: float, random_
     )
     csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
     clear_sky = DrHI(weather_datetime.timestamp(), (y - 10) * 85 / 21, 0)
-    return min(1000, csi * clear_sky)
+    return min(950, csi * clear_sky)
 
 
 def calculate_wind_speed(x: float, y: float, total_seconds: float, random_seed: int) -> float:
