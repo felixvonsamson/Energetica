@@ -42,6 +42,9 @@ class PlayerData:
     capacities: CapacityData = field(default_factory=CapacityData)
     cumul_emissions: CumulativeEmissionsData = field(default_factory=CumulativeEmissionsData)
 
+    # Browser notifications
+    notification_subscriptions: list = []
+
 
 @dataclass
 class PlayerCache:
@@ -493,7 +496,7 @@ class Player(db.Model, UserMixin):
             "body": new_notification.content,
         }
         engine: GameEngine = current_app.config["engine"]
-        for subscription in engine.data["notification_subscriptions"][self.id]:
+        for subscription in self.data.notification_subscriptions:
             audience = "https://fcm.googleapis.com"
             if "https://updates.push.services.mozilla.com" in subscription["endpoint"]:
                 audience = "https://updates.push.services.mozilla.com"

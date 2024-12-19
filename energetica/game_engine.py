@@ -154,7 +154,6 @@ class GameEngine(object):
 
         self.lock = RLock()
         self.data = {}
-        self.data["notification_subscriptions"] = defaultdict(list)
         self.data["by_player"] = defaultdict(PlayerData)
         self.data["by_network"] = defaultdict(NetworkData)
         self.data["by_ongoing_construction"] = defaultdict(OngoingConstructionData)

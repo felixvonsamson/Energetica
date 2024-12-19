@@ -217,15 +217,15 @@ def create_app(
         subscription = request.json
         if "endpoint" not in subscription:
             return jsonify({"response": "Invalid subscription"})
-        engine.data["notification_subscriptions"][current_user.id].append(subscription)
+        current_user.data.notification_subscriptions.append(subscription)
         return jsonify({"response": "Subscription successful"})
 
     @app.route("/unsubscribe", methods=["POST"])
     def unsubscribe():
         """POST: remove a subscription."""
         subscription = request.json
-        if subscription in engine.data["notification_subscriptions"][current_user.id]:
-            engine.data["notification_subscriptions"][current_user.id].remove(subscription)
+        if subscription in current_user.data.notification_subscriptions:
+            current_user.data.notification_subscriptions.remove(subscription)
         return jsonify({"response": "Unsubscription successful"})
 
     @app.route("/apple-app-site-association")
