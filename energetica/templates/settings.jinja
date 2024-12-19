@@ -23,5 +23,29 @@
       </div>
   </div>
 
-Settings...
+<div class="flex-col margin-large">
+  <div id="web_push_notification_switch" class="bone padding medium flex-col">
+  <div class="padding">
+    <b>Browser notifications</b> &ensp;
+    <label class="switch"><input type="checkbox" id="web_push_notifications-checkbox"><span class="slider round"></span></label>
+  </div>
+  <div id="notification_settings_list" class="notification_settings collapsed flex-col">
+    <div class="padding">
+      Messages &ensp;
+      <label class="switch"><input type="checkbox" id="web_push_notifications-messages"><span class="slider round"></span></label>
+    </div>
+    <div class="padding">
+      Achievements &ensp;
+      <label class="switch"><input type="checkbox" id="web_push_notifications-achievements"><span class="slider round"></span></label>
+    </div>
+    <div class="padding">
+      Finished projects &ensp;
+      <label class="switch"><input type="checkbox" id="web_push_notifications-projects"><span class="slider round"></span></label>
+    </div>
+    <div class="padding">
+      Decommissioning &ensp;
+      <label class="switch"><input type="checkbox" id="web_push_notifications-decommissioning"><span class="slider round"></span></label>
+    </div>
+  </div>
+</div>
 {% endblock content %}

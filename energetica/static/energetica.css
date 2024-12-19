@@ -369,6 +369,18 @@ canvas {
     margin: 10px;
 }
 
+.notification_settings {
+    max-height: 180px;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+}
+
+
+.notification_settings.collapsed {
+    max-height: 0;
+    overflow: hidden;
+}
+
 .cross {
     text-align: center;
     width: 25px;
@@ -1534,7 +1546,6 @@ table.tan_green tr:nth-child(even) {
 }
 
 #web_push_notification_switch {
-    top: 95%;
     border-radius: 8px;
 }
 
