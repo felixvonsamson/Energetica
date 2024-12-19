@@ -1730,11 +1730,18 @@ table.tan_green tr:nth-child(even) {
 }
 
 .graph-container img {
-    max-width: 600px;
+    width: 600px;
+    max-width: 100%;
 }
 
-.graph-container img.small {
-    max-width: 450px;
+img.small.graph-container {
+    width: 300px;
+    max-width: 100%;
+}
+
+.graph-container img.large {
+    width: 1100px;
+    max-width: 100%;
 }
 
 .info_icon {
