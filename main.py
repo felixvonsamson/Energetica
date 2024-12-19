@@ -1,12 +1,11 @@
 #!/usr/bin/env -S python3 -u
+"""Launch the game."""
 
 import argparse
 
-"""This code launches the game"""
+from energetica import create_app
 
 if __name__ == "__main__":
-    from website import create_app
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--clock_time",
@@ -33,14 +32,19 @@ if __name__ == "__main__":
         action="store_true",
     )
     parser.add_argument(
-        "--random_seed", type=int, default=42, help="Set the random seed", choices=range(0, 65536), metavar="{0..65535}"
+        "--random_seed",
+        type=int,
+        default=42,
+        help="Set the random seed",
+        choices=range(65536),
+        metavar="{0..65535}",
     )
     parser.add_argument(
         "--port",
         type=int,
         default=5001,
         help="Port on witch the server should run",
-        choices=range(0, 65536),
+        choices=range(65536),
         metavar="{0..65535}",
     )
     parser.add_argument(
@@ -103,6 +107,6 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    socketio, _, app = create_app(**vars(args))
+    socketio, app = create_app(**vars(args))
     ssl_args = {"keyfile": args.keyfile, "certfile": args.certfile} if args.keyfile and args.certfile else {}
     socketio.run(app, debug=True, log_output=False, host="0.0.0.0", port=args.port, **ssl_args)

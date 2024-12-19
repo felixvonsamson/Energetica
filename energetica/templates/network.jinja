@@ -1,0 +1,512 @@
+{% extends "base.jinja" %}
+{% block title %}
+    Network
+{% endblock title %}
+{% block content %}
+    {% set const_config = engine.const_config["assets"] %}
+    {% set SCP = user.self_consumption_priority.split(',') %}
+    <div class="flex-row huge title">
+        Network{% if user.network %}:&nbsp;<b>{{ user.network.name }}</b>{% endif %}
+        <div class="pine info_icon_container"
+             onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
+    </div>
+    <div id="info_popup" class="popup hidden green">
+        <div class="flex-row margin-small align-items-center">
+            <div class="large txt_center flex-grow-1">Help : Network</div>
+            <div onclick="document.getElementById('info_popup').classList.add('hidden');"
+                 class="cross pine margin-small"
+                 style="width:39px">×</div>
+        </div>
+        <div class="margin medium">
+            {% if user.network is none %}
+                <p>
+                    Here you can join or create a network to trade electricity with other players. If you do, you will 
+                    see the network's information adn activities here.
+                </p>
+                <p>
+                    Since you are currently not in a network you will find a interactive list of facilities on this page 
+                    where you can set the priority of your facilities. This will determine the order in which your facilities 
+                    will be used to satisfy your demand. For more information about the priority list refer to 
+                    <a href="{{ url_for('wiki.render_template_wiki', template_name='power_management') }}">this section of the wiki</a>.
+                </p>
+                <p>
+                    Refer to <a href="{{ url_for('wiki.render_template_wiki', template_name='network') }}">Network</a> in 
+                    the wiki for more information about networks.
+                </p>
+            {% else %}
+                <p>
+                    On this page you will find all the information about your networks activity.
+                </p>
+                <p>
+                    At the top of the page you can choose between 3 views with different levels of detail. In each of 
+                    the views you will find different graphs and tables showing you information about network capacities,
+                    imports and exports, market prices and quantities and offers and demands of the market. Hover over the 
+                    different graphs to get more information about the data. You can also adjust the time scale of the graphs 
+                    with the resolution buttons as well as switch between different views with the toggles below the graphs.
+                    Let me know if you need more documentation about the network graphs.
+                </p>
+                <p>
+                    At the bottom of the page you can adjust the selling prices for your different production 
+                    capacities, the buying prices for different demand types and the selling and buying prices for different 
+                    storage facilities. You can also leave the network here.
+                </p>
+                <p>
+                    Refer to <a href="{{ url_for('wiki.render_template_wiki', template_name='network') }}">Network</a> in 
+                    the wiki for more information about network mechanics.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+    {% if user.network is none %}
+        <div class="flex-col medium" style="justify-content:center;">
+            <div class="txt_center padding">
+            <b>You are currently not connected to a network.</b>
+            </div>
+            <div class="padding small" style="max-width:740px">
+                Joining or establishing a network enables you to trade electricity with its members, providing opportunities 
+                to profit from exporting electricity or ensuring energy supply during energy-intensive construction projects. 
+                You'll have the freedom to set your own buying and selling prices.
+            </div>
+         </div>
+        <div class="flex-row" style="justify-content:center;">
+            <b class="margin button2"
+               onclick="document.getElementById('join_network').classList.remove('hidden');">Join
+            Network</b>
+            <b class="margin button2"
+               onclick="document.getElementById('create_network').classList.remove('hidden');">Create
+            Network</b>
+        </div>
+
+        <h1 class="txt_center">Prioritization of facilities</h1>
+        <div class="txt_center medium txt_pine">Drag and drop facilities in the list</div>
+        <div class="flex-row flex-center align-items-center">
+            <span class="medium priority_list_txt left">Consumption priority</span>
+            <img src="{{ url_for('static', filename='images/others/arrow_red.png') }}" alt="arrow-up" class="priority_arrow_img up">
+            <ul class="priority_list flex-col"></ul>
+            <img src="{{ url_for('static', filename='images/others/arrow_blue.png') }}" alt="arrow-up" class="priority_arrow_img">
+            <span class="medium priority_list_txt right">Generation priority</span>
+        </div>
+        <p class="txt_center medium">To have a better understanding how this priority list works, please refer to the <a href="{{ url_for('wiki.render_template_wiki', template_name='power_management') }}">Power Management</a> section of the wiki.</p>
+        <br><br><br><br>
+    {% else %}
+        {% set caps = user.data.capacities %}
+
+        <div class="flex-center margin">
+            <button id="page_view_button_basic" class="graph_button graph_button_views left {% if user.graph_view == 'basic'%}selected{% endif %}" onclick="change_page_view('basic')">Basic view</button>
+            <button id="page_view_button_normal" class="graph_button graph_button_views {% if user.graph_view == 'normal'%}selected{% endif %}" onclick="change_page_view('normal')">Normal view</button>
+            <button id="page_view_button_expert" class="graph_button graph_button_views right {% if user.graph_view == 'expert'%}selected{% endif %}" onclick="change_page_view('expert')">Expert view</button>
+        </div>
+
+        <div id="import_overview_container">
+            <div class="flex-center bone large padding" style="margin-top:30px">Imports / Exports</div>
+            <div class="bone flex-center large">
+                <div class="flex-col" style="width:100%; margin-left:3em; justify-content:center;">
+                    <img src="{{ url_for('static', filename='images/icons/profile_circle.svg') }}" class="import_overview_circle_icon" alt="Profile icon"/>
+                    <div class="txt_pine">{{ user.username }}</div>
+                </div>
+                <div id="import_overview" style="margin-bottom:1.3em;"></div>
+                <div class="flex-col" style="width:100%; margin-right:3em; justify-content:center;">
+                    <img src="{{ url_for('static', filename='images/icons/network_circle.svg') }}" class="import_overview_circle_icon" alt="Network icon"/>
+                    <div class="txt_pine">{{ user.network.name }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="temporal_imports_container">
+            <div id="temporal_imports" class="bone flex-center"></div>
+            <div class="flex-space-between margin" style="flex-wrap:wrap;">
+                <div class="flex-center">
+                    <button id="smoothed_button_normal" class="graph_button small left selected" onclick="change_smoothed('normal')">normal</button>
+                    <button id="smoothed_button_smoothed" class="graph_button small right" onclick="change_smoothed('smoothed')">smoothed</button>
+                </div>
+            </div>
+            <div class="flex-center margin">
+                <button id="res_button_0" class="graph_button left selected" onclick="change_res(0)">4h</button>
+                <button id="res_button_1" class="graph_button" onclick="change_res(1)">24h</button>
+                <button id="res_button_2" class="graph_button" onclick="change_res(2)">6 days</button>
+                <button id="res_button_3" class="graph_button" onclick="change_res(3)">6 months</button>
+                <button id="res_button_4" class="graph_button" onclick="change_res(4)">3 years</button>
+                <button id="res_button_5" class="graph_button right" onclick="change_res(5)">18 years</button>
+            </div>
+        </div>
+
+        <div class="flex-center bone large padding">Network Capacities</div>
+        <div id="network_capacities" class="bone flex-center" style="padding-bottom:30px"></div>
+
+        <div id="temporal_graph_container">
+            <div id="network_prices_header" class="flex-center bone large padding">Network Prices</div>
+            <div id="temporal_graph" class="bone flex-center"></div>
+            <div class="flex-space-between margin" style="flex-wrap:wrap;">
+                <div class="flex-center">
+                    <button id="price_mode_button_normal" class="graph_button small left selected" onclick="change_smoothed('normal')">normal</button>
+                    <button id="price_mode_button_smoothed" class="graph_button small" onclick="change_smoothed('smoothed')">smoothed</button>
+                    <button id="price_mode_button_off" class="graph_button small right" onclick="change_smoothed('off')">off</button>
+                </div>
+                <div id="percent_buttons_container" class="flex-center">
+                    <button id="percent_button_normal" class="graph_button small left selected" onclick="change_percent('normal')">normal</button>
+                    <button id="percent_button_percent" class="graph_button small right" onclick="change_percent('percent')">percent</button>
+                </div>
+                <div id="categorization_buttons_container" class="flex-center">
+                    <button id="categorization_button_type" class="graph_button small left selected" onclick="change_categorization('type')">type</button>
+                    <button id="categorization_button_player" class="graph_button small right" onclick="change_categorization('player')">player</button>
+                </div>
+                <div id="export_import_buttons_container" class="flex-center">
+                    <button id="export_import_button_exports" class="graph_button small left selected" onclick="change_export_import('exports')">exports</button>
+                    <button id="export_import_button_imports" class="graph_button small right" onclick="change_export_import('imports')">imports</button>
+                </div>
+            </div>
+            <div class="flex-center margin">
+                <button id="res_button_2_0" class="graph_button left selected" onclick="change_res(0)">4h</button>
+                <button id="res_button_2_1" class="graph_button" onclick="change_res(1)">24h</button>
+                <button id="res_button_2_2" class="graph_button" onclick="change_res(2)">6 days</button>
+                <button id="res_button_2_3" class="graph_button" onclick="change_res(3)">6 months</button>
+                <button id="res_button_2_4" class="graph_button" onclick="change_res(4)">3 years</button>
+                <button id="res_button_2_5" class="graph_button right" onclick="change_res(5)">18 years</button>
+            </div>
+        </div>
+
+        <div id="market_chart_container">
+            <div class="flex-center bone large padding">Market:&nbsp; <span id="market_time">now</span></div>
+            <div id="market_chart" class="bone flex-center"></div>
+            <div class="flex-space-between margin" style="flex-wrap:wrap;">
+                <div class="flex-center">
+                    <button id="market_mode_button_normal" class="graph_button small left selected" onclick="change_market_mode('normal')">normal</button>
+                    <button id="market_mode_button_log" class="graph_button small" onclick="change_market_mode('log')">log</button>
+                    <button id="market_mode_button_zoom" class="graph_button small right" onclick="change_market_mode('zoom')">zoom</button>
+                </div>
+                <div class="flex-center">
+                    <button id="categorization_market_button_facility" class="graph_button small selected left" onclick="change_categorization_market('facility')">facility</button>
+                    <button id="categorization_market_button_player" class="graph_button small right" onclick="change_categorization_market('player')">player</button>
+                </div>
+                <div class="flex-center">
+                    <button id="market_view_button_supply" class="graph_button small selected left" onclick="change_market_view('supply')">supply</button>
+                    <button id="market_view_button_demand" class="graph_button small right" onclick="change_market_view('demand')">demand</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="market_offers_tables">
+            <div class="flex-col medium" style="margin-bottom:30px;">
+                <div class="flex-center large padding">Market Offers</div>
+                <table id="offers_table" class="table bone margin txt_center">
+                    <tr>
+                        <th class="username_col" onclick="sortTable('offers_table', 'username_col')">Player</th>
+                        <th class="facility_col" onclick="sortTable('offers_table', 'facility_col')">Facility</th>
+                        <th class="price_col" onclick="sortTable('offers_table', 'price_col')">Price</th>
+                        <th class="quantity_col" onclick="sortTable('offers_table', 'quantity_col')">Capacity</th>
+                        <th class="sold_col" onclick="sortTable('offers_table', 'sold_col')">Sold</th>
+                    </tr>
+                </table>
+                <div class="flex-center large padding">Market Bids</div>
+                <table id="bids_table" class="table bone margin txt_center">
+                    <tr>
+                        <th class="username_col" onclick="sortTable('bids_table', 'username_col')">Player</th>
+                        <th class="facility_col" onclick="sortTable('bids_table', 'facility_col')">Facility</th>
+                        <th class="price_col" onclick="sortTable('bids_table', 'price_col')">Price</th>
+                        <th class="quantity_col" onclick="sortTable('bids_table', 'quantity_col')">Capacity</th>
+                        <th class="sold_col" onclick="sortTable('bids_table', 'sold_col')">Satisfied</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        
+        <form action="/api/leave_network"
+              method="post"
+              class="flex-row"
+              style="justify-content:center">
+            <button type="submit" class="padding medium login-button">Leave Network</button>
+        </form>
+        <div class="flex-col medium">
+            <table class="table bone margin">
+                <tr>
+                    <th>Members</th>
+                </tr>
+                {% for member in user.network.members %}
+                    <tr>
+                        <td>{{ member.username }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="flex-row huge title">Prices</div>
+        <div class="flex-col medium">
+            <b class="margin large" style="margin-top:24px">Demand prices</b>
+            <table class="table bone">
+                <tr>
+                    <th>Demand</th>
+                    <th>Max buying price</th>
+                </tr>
+                <tr>
+                    <td>Industry</td>
+                    <td>
+                        <input type="number"
+                            class="small_input medium txt_center"
+                            value="{{ user.price_buy_industry }}"
+                            id="price_buy_industry"
+                            name="price_buy_industry" />
+                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                        /MWh
+                    </td>
+                </tr>
+                <tr>
+                    <td>Constructions</td>
+                    <td>
+                        <input type="number"
+                            class="small_input medium txt_center"
+                            value="{{ user.price_buy_construction }}"
+                            id="price_buy_construction"
+                            name="price_buy_construction" 
+                            max="50000" />
+                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                        /MWh
+                    </td>
+                </tr>
+                <tr>
+                    <td>Research</td>
+                    <td>
+                        <input type="number"
+                            class="small_input medium txt_center"
+                            value="{{ user.price_buy_research }}"
+                            id="price_buy_research"
+                            name="price_buy_research" 
+                            max="50000" />
+                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                        /MWh
+                    </td>
+                </tr>
+                <tr>
+                    <td>Shipments</td>
+                    <td>
+                        <input type="number"
+                            class="small_input medium txt_center"
+                            value="{{ user.price_buy_transport }}"
+                            id="price_buy_transport"
+                            name="price_buy_transport"
+                            max="50000" />
+                        <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                        /MWh
+                    </td>
+                </tr>
+                {% macro extraction_facility_display_name(extraction_facility) -%}
+                    {{ {"coal_mine": "Coal Mines", "gas_drilling_site": "Gas Extraction", "uranium_mine": "Uranium Mines"}[extraction_facility] }}
+                {%- endmacro %}
+                {% macro extraction_facility_price_buy(extraction_facility) -%}
+                    {{ 'price_buy_'+extraction_facility }}
+                {%- endmacro %}
+                {% macro extraction_facility_price_buy_value(extraction_facility) -%}
+                    {{ user[extraction_facility_price_buy(extraction_facility) ] }}
+                {%- endmacro %}
+                {% for extraction_facility in ["coal_mine", "gas_drilling_site", "uranium_mine"] %}
+                    {% if caps[extraction_facility] %}
+                        <tr>
+                            <td>{{ extraction_facility_display_name(extraction_facility) }}</td>
+                            <td>
+                                <input type="number"
+                                    class="small_input medium txt_center"
+                                    value="{{ extraction_facility_price_buy_value(extraction_facility) }}"
+                                    id="{{ extraction_facility_price_buy(extraction_facility) }}"
+                                    name="{{ extraction_facility_price_buy(extraction_facility) }}"
+                                    max="50000" />
+                                <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                                /MWh
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+                {% if user.carbon_capture > 0 %}
+                    <tr>
+                        <td>Carbon Capture</td>
+                        <td>
+                            <input type="number"
+                                class="small_input medium txt_center"
+                                value="{{ user.price_buy_carbon_capture }}"
+                                id="price_buy_carbon_capture"
+                                name="price_buy_carbon_capture"
+                                max="50000" />
+                            <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                            /MWh
+                        </td>
+                    </tr>
+                {% endif %}
+            </table>
+            <div class="flex-row" style="justify-content:center;">
+                <b class="margin white button padding" onclick="change_prices();">Save changes</b>
+            </div>
+            {% if caps["steam_engine"] or caps["windmill"] or caps["watermill"] or caps["coal_burner"] or caps["gas_burner"] or caps["small_water_dam"] or caps["onshore_wind_turbine"] or caps["combined_cycle"] or caps["nuclear_reactor"] or caps["large_water_dam"] or caps["CSP_solar"] or caps["PV_solar"] or caps["offshore_wind_turbine"] or caps["nuclear_reactor_gen4"] %}
+                <b class="margin large" style="margin-top:24px">Production capacity prices</b>
+                <table class="table bone">
+                    <tr>
+                        <th>Power facility</th>
+                        <th>Installed capacity</th>
+                        <th>Min selling price</th>
+                    </tr>
+                    {% macro power_facility_price(power_facility) -%}
+                        {{ 'price_'+power_facility }}
+                    {%- endmacro %}
+                    {% macro power_facility_price_value(power_facility) -%}
+                        {{ user[power_facility_price(power_facility) ] }}
+                    {%- endmacro %}
+                    {% macro power_facility_SCP(power_facility) -%}
+                        {{ 'SCP_'+power_facility }}
+                    {%- endmacro %}
+                    {% for power_facility in ["steam_engine", "coal_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
+                        {% if caps[power_facility] %}
+                            <tr>
+                                <td>{{ const_config[power_facility].name }}</td>
+                                <td class="txt_center"></td>
+                                <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ caps[power_facility].power }});</script>
+                                <td>
+                                    <input type="number"
+                                        class="small_input medium txt_center"
+                                        value="{{ power_facility_price_value(power_facility) }}"
+                                        id="{{ power_facility_price(power_facility) }}"
+                                        name="{{ power_facility_price(power_facility) }}"
+                                        min="-4.9"/>
+                                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                                    /MWh
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </table>
+                <div class="flex-row" style="justify-content:center;">
+                    <b class="margin white button padding" onclick="change_prices();">Save changes</b>
+                </div>
+            {% endif %}
+            {% if caps["small_pumped_hydro"] or caps["molten_salt"] or caps["large_pumped_hydro"] or caps["hydrogen_storage"] or caps["lithium_ion_batteries"] or caps["solid_state_batteries"] %}
+                <b class="margin large" style="margin-top:24px">Storage capacity prices</b>
+                <table class="table bone">
+                    <tr>
+                        <th>Storage facility</th>
+                        <th>Installed capacity</th>
+                        <th>Min selling price</th>
+                        <th>Max buying price</th>
+                    </tr>
+                    {% macro storage_facility_price(storage_facility) -%}
+                        {{ 'price_'+storage_facility }}
+                    {%- endmacro %}
+                    {% macro storage_facility_price_buy(storage_facility) -%}
+                        {{ 'price_buy_'+storage_facility }}
+                    {%- endmacro %}
+                    {% macro storage_facility_SCP(storage_facility) -%}
+                        {{ 'SCP_'+storage_facility }}
+                    {%- endmacro %}
+                    {% for storage_facility in ["small_pumped_hydro", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
+                        {% if caps[storage_facility] %}
+                            <tr>
+                                <td>{{ const_config[storage_facility].name }}</td>
+                                <td class="txt_center"></td>
+                                <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ caps[storage_facility].capacity }});</script>
+                                <td>
+                                    <input type="number"
+                                        class="small_input medium txt_center"
+                                        value="{{ user[storage_facility_price(storage_facility) ] }}"
+                                        id="{{ storage_facility_price(storage_facility) }}"
+                                        name="{{ storage_facility_price(storage_facility) }}"
+                                        min="-4.9" />
+                                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                                    /MWh
+                                </td>
+                                <td>
+                                    <input type="number"
+                                        class="small_input medium txt_center"
+                                        value="{{ user[storage_facility_price_buy(storage_facility) ] }}"
+                                        id="{{ storage_facility_price_buy(storage_facility) }}"
+                                        name="{{ storage_facility_price_buy(storage_facility) }}"
+                                        max="50000" />
+                                    <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
+                                    /MWh
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </table>
+                <div class="flex-row" style="justify-content:center;">
+                    <b class="margin white button padding" onclick="change_prices();">Save changes</b>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+    <br>
+    <br>
+    <br>
+    <!--JOIN NETWORK-->
+    <div id="join_network" class="popup hidden green">
+        <div class="flex-row margin-small align-items-center">
+            <div class="large txt_center flex-grow-1">Join Network</div>
+            <div onclick="document.getElementById('join_network').classList.add('hidden');"
+                 class="cross pine margin-small"
+                 style="width:39px">×</div>
+        </div>
+        <div id="warning" style="width:260px;" class="margin-large"></div>
+        <form action="/api/join_network"
+              id="join_network_form"
+              method="post"
+              autocomplete="off"
+              class="flex-col margin-large"
+              style="margin-top:5px">
+            <div class="flex-col" style="width:100%;">
+                <label for="choose_network">Network</label>
+                <select id="choose_network"
+                        name="choose_network"
+                        class="create_chat_input medium"
+                        required>
+                    <option value="" disabled selected>select network</option>
+                </select>
+            </div>
+            <button type="submit"
+                    class="bone padding medium login-button"
+                    style="margin-top:20px">Join Network</button>
+        </form>
+    </div>
+    <!--CREATE NETWORK-->
+    <div id="create_network" class="popup hidden green">
+        <div class="flex-row margin-small align-items-center">
+            <div class="large txt_center flex-grow-1">Create Network</div>
+            <div onclick="document.getElementById('create_network').classList.add('hidden');"
+                 class="cross pine margin-small"
+                 style="width:39px">×</div>
+        </div>
+        <form action="/api/create_network"
+              method="post"
+              autocomplete="off"
+              class="flex-col margin-large">
+            <div style="padding-bottom:32px">
+                <label for="network_name">Network name</label>
+                <input type="text"
+                       class="create_chat_input medium"
+                       id="network_name"
+                       name="network_name"
+                       placeholder="Name"
+                       required>
+            </div>
+            {# Invited players : <br>
+        (click to remove) #}
+            {# <div class="invited_players"></div> #}
+            {# <div>
+            <label for="invite_player">Invite players</label>
+            <div class="flex-row">
+                <div>
+                    <input type="text" class="create_chat_input medium" id="invite_player" name="invite_player"
+                        placeholder="Player">
+                    <div class="suggestions"></div>
+                </div>
+                <div onclick="addPlayer()" class="plus bone">+</div>
+            </div>
+        </div> #}
+            <button type="submit"
+                    class="bone padding medium login-button"
+                    style="margin-top:16px">Create Network</button>
+        </form>
+    </div>
+{% endblock content %}
+{% block additional_script %}
+    <script src="{{ url_for('static', filename='network/network_logic.js') }}"></script>
+    <script src="{{ url_for('static', filename='network/price_change.js') }}"></script>
+    <script>expand_menu('community')</script>
+    {% if user.network != None %}
+        <script>server_saved_view = "{{user.graph_view}}";</script>
+        <script src="{{ url_for('static', filename='network/market_graph.js') }}"></script> 
+    {% endif %}
+{% endblock additional_script %}

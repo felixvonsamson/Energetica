@@ -1,0 +1,162 @@
+{% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica wiki{% endblock %} {% block wiki_content %}
+
+{% set const_data = engine.const_config["assets"] %}
+
+<div class="flex-row huge title">Wiki - Natural Resources</div>
+
+<div class="medium margin-large">
+
+  <p>
+    There are three types of natural resources available to players:
+    <ul>
+      <li>Coal</li>
+      <li>Gas</li>
+      <li>Uranium</li>
+    </ul>
+    These resources are distributed on each tile across the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='map') }}">Map</a>, can be extracted by
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='resources', _anchor='Extraction_Facilities') }}">Extraction Facilities</a>,
+    can be traded on the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='market') }}">Resource Market</a>,
+    and are used as fuel for some 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities') }}">Power Facilities</a>.
+  </p>
+
+  <h2 id="Extraction_Facilities">Extraction Facilities</h2>
+  <p>
+    Extraction facilities are what allow players to extract fossil resources from their own tile. Each of the three 
+    natural resources has a dedicated extraction facility. Unlocking these facilities requires different levels of 
+    {% if "Unlock Technologies" in user.achievements %}
+    <a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">mineral extraction</a>
+    {% else %}mineral extraction{% endif %} technology and 
+    <a href="{{ url_for('views.functional_facilities', _anchor='Warehouse') }}">Warehouse</a>.
+  </p>
+  <p>
+    For more information about building power facilities, see
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='projects', _anchor='Starting_a_Project') }}">Starting a Projects</a>.
+  </p>
+  <p>
+    Each extraction facility has the following characteristics:
+  </p>
+  <ul>
+    <li>
+      <strong>Power Consumption:</strong> Maximum power consumption of the facility. This consumption is proportional to
+      the amount of resources extracted. When an extraction facility is inactive, it doesn't consume any power.
+    </li>
+    <li>
+      <strong>Resource Production:</strong> Extraction speed of one facility measured in kg or tons per hour 
+      (<a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game time</a>).
+      The extraction speed is influenced by the extraction rate, available resources in the ground, and the level of 
+      {% if "Unlock Technologies" in user.achievements %}
+      <a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">mineral extraction</a>
+      {% else %}mineral extraction{% endif %}.
+    </li>
+    <li>
+      <strong>Operation cost:</strong> Operational cost of the extraction facility consisting of 20% fixed costs and 80% variable cost.
+    </li>
+    <li>
+      <strong>CO<sub>2</sub> Emissions:</strong> Amount of CO<sub>2</sub> emitted during resource extraction. Emissions are proportional to
+      the resource production and measured in kg of CO<sub>2</sub> per ton of extracted resource.
+    </li>
+    <li>
+      <strong>Lifespan:</strong> Lifespan of the extraction facility.
+    </li>
+  </ul>
+  <p>The formula for extraction speed of natural resource i is:</p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\(es_i = er_i \times q_i \times 1.4^{ME} \times n_{ef,i} \)<br>
+    where \(es_i\) is the extraction speed in tons/h, \(er_i\) is the base extraction rate in h\(^{-1}\), \(q_i\) is the amount of the
+    resource i in the ground on the player's tile in tons, \(ME\) is the level of the technology 
+    {% if "Unlock Technologies" in user.achievements %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
+    mineral extraction</a>{% else %}mineral extraction{% endif %}, and \(n_{ef,i}\) is the number of extraction
+    facilities for the resource i owned by the player.
+  </li></ul>
+  <p>
+    Base extraction rates are fixed and determine the fraction of underground resources extractable per day by one
+    facility. They are given in the following table :
+  </p>
+  <div class="flex-col">
+    <table class="table bone txt_center">
+      <tr>
+        <th class="padding">Resource</th>
+        <th class="padding">Extraction Rate</th>
+      </tr>
+      <tr>
+        <td>Coal</td>
+        <td>{{ (const_data.coal_mine.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
+      </tr>
+      <tr>
+        <td>Gas</td>
+        <td>{{ (const_data.gas_drilling_site.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
+      </tr>
+      <tr>
+        <td>Uranium</td>
+        <td>{{ (const_data.uranium_mine.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
+      </tr>
+    </table>
+    <span>ig = <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game time</a></span>
+  </div>
+  <p>
+    Resources extracted from these facilities are stored in the <a href="{{ url_for('wiki.render_template_wiki', template_name='functional_facilities', _anchor='The_Warehouse') }}">Warehouse</a>. Extraction facilities cease operation when the
+    warehouse reach full capacity.
+  </p>
+  <p>
+    The construction process for an extraction facility aligns with that of power facilities, detailed in the 
+    <a href="{{ url_for('wiki.render_template_wiki', template_name='power_facilities', _anchor='Construction_of_a_Plant') }}">Construction of a Facility</a> section.
+  </p>
+
+  <h2 id="Resource_Market">Resource Market</h2>
+  <p>The resource market serves as a marketplace for natural resources.</p>
+  <p>
+    To add an offer for a specific quantity of a resource at a chosen price, users can click on the "Put on sale"
+    button on the market. This offer will be displayed as a new tile on the page. The amount put up for sale is stored
+    in your warehouse but cannot be consumed until sold (visible as "on sale" in the {% if "Unlock Network" in user.achievements %}<a href="{{ url_for('overviews.resources') }}">resource graph</a>{% else %}resource graph{% endif %}).
+  </p>
+  <p>
+    Once another player buys a portion of your offer, you receive the money, and the sold amount is shipped. To remove
+    offers from the market, users can repurchase their own resources without losing money, thereby regaining access to
+    the resources.
+  </p>
+  <p>
+    If users wish to purchase resources from another player, they can click on the tile of interest, specify the
+    desired amount within the available offer, and click "buy". The purchased resources will be shipped to their
+    location (refer to <a href="#Resource_shipment">resource shipment</a>).
+  </p>
+  <h3 id="Resource_shipment">Resource Shipment</h3>
+  <p>
+    When a certain amount of a natural resource is bought on the market, it is shipped from the seller to the buyer.
+    The shipment duration and electricity consumption are calculated based on the following formulas:
+  </p>
+  <ul style="list-style: none;"><li>
+    <i class="fa fa-angle-double-right padding"></i>\(t_{ship} = t_{base} \times dist \times {{ const_data.transport_technology["time_factor"] }}^{TT} \) &emsp;&emsp;&emsp; \(P_{ship} = \frac{E_{base} \times
+    q_{ship} \times {{ const_data.transport_technology["energy_factor"] }}^{TT} }{ t_{base} \times {{ const_data.transport_technology["time_factor"] }}^{TT} } \)<br>
+    with:
+    <ul style="list-style: none;"><li>
+      \(t_{ship}\) : shipment duration in hours
+    </li><li>
+      \(t_{base}\) : base value of shipment duration : {{ (80 / 15) | round(1) }} h/tile 
+      (<a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game time</a>) or 
+      {{ (80 * engine.clock_time / 60) | int }} min/tile (real-time)
+    </li><li>
+      \(dist\) : distance between buyer and seller in tiles
+    </li><li>
+      \(TT\) : level of <a href="{{ url_for('views.technology', _anchor='Transport technology') }}">transport technology</a>
+    </li><li>
+      \(P_{ship}\) : power consumed for shipping in W
+    </li><li>
+      \(E_{base}\) : base energy need of shipments : 5 Wh/kg/tile
+    </li><li>
+      \(q_{ship}\) : quantity of shipped resources in kg
+    </li></ul>
+  </li></ul>
+  <p>
+    If the energy demand of the shipment isn't met, it is paused. 
+  </p>
+  <p>
+    Upon arrival, if the buyer's warehouse lacks sufficient capacity to store the shipped amount, excess resources will 
+    be lost.
+  </p>
+
+</div>
+
+{% endblock wiki_content %}
