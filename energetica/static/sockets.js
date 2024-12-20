@@ -119,20 +119,20 @@ socket.on("new_values", function (changes) {
             if (typeof display_progressBars === "function") {
                 display_progressBars(null, shipments_data);
             }
+        }
 
-            if (typeof fetch_graph_data === "function") {
-                fetch_graph_data();
-            }
-            if (typeof fetch_temporal_network_data === "function") {
-                fetch_temporal_network_data();
-            }
-            if (typeof update_weather_conditions === "function") {
-                update_weather_conditions();
-            }
+        if (typeof fetch_graph_data === "function") {
+            fetch_graph_data();
         }
-        if (window.location.href.includes("/profile") && !window.location.href.includes("player_id")) {
-            get_active_facilities();
+        if (typeof fetch_temporal_network_data === "function") {
+            fetch_temporal_network_data();
         }
+        if (typeof update_weather_conditions === "function") {
+            update_weather_conditions();
+        }
+    }
+    if (window.location.href.includes("/profile") && !window.location.href.includes("player_id")) {
+        get_active_facilities();
     }
 });
 
@@ -245,38 +245,40 @@ socket.on("new_notification", function (notification) {
 socket.on("display_new_message", function (message) {
     let obj = document.getElementById("message_container");
     load_chats().then((chat_data) => {
-        if (obj != null) {
-            if (current_chat_id == message.chat_id) {
-                load_players().then((players) => {
-                    let alignment = "left";
-                    let username = "";
-                    if (message.player_id == sessionStorage.getItem("player_id")) {
-                        alignment = "right";
-                    } else if (chat_data.chat_list[message.chat_id].group_chat) {
-                        username = players[message.player_id].username + "&emsp;";
-                    }
-                    obj.innerHTML += `<div class="message ${alignment}">
+        load_player_id().then((player_id) => {
+            if (obj != null) {
+                if (current_chat_id == message.chat_id) {
+                    load_players().then((players) => {
+                        let alignment = "left";
+                        let username = "";
+                        if (message.player_id == player_id) {
+                            alignment = "right";
+                        } else if (chat_data.chat_list[message.chat_id].group_chat) {
+                            username = players[message.player_id].username + "&emsp;";
+                        }
+                        obj.innerHTML += `<div class="message ${alignment}">
                         <div class="message_infos">
                             <span>${username}</span>
                             <span class="txt_pine">${formatDateString(message.time)}</span></div>
                         <div class="message_text bone ${alignment}">${message.text}</div>
                     </div>`;
-                    obj.scrollTop = obj.scrollHeight;
-                });
+                        obj.scrollTop = obj.scrollHeight;
+                    });
+                }
             }
-        }
-        if (!chat_data.chat_list[message.chat_id]) {
-            retrieve_chats();
-        } else {
-            if (chat_data.chat_list[message.chat_id].unread_messages == 0) {
-                chat_data.unread_chats += 1;
+            if (!chat_data.chat_list[message.chat_id]) {
+                retrieve_chats();
+            } else {
+                if (chat_data.chat_list[message.chat_id].unread_messages == 0) {
+                    chat_data.unread_chats += 1;
+                }
+                chat_data.chat_list[message.chat_id].unread_messages += 1;
+                sessionStorage.setItem("chats", JSON.stringify(chat_data));
+                if (typeof refresh_chats === 'function') {
+                    refresh_chats();
+                }
             }
-            chat_data.chat_list[message.chat_id].unread_messages += 1;
-            sessionStorage.setItem("chats", JSON.stringify(chat_data));
-            if (typeof refresh_chats === 'function') {
-                refresh_chats();
-            }
-        }
+        });
     });
 });
 
@@ -590,5 +592,16 @@ socket.on("update_page_data", function (pages_data) {
                 }
             }
         }
+    }
+});
+
+socket.on("worker_info", function (worker_data) {
+    construction_worker_cont = document.getElementById("construction_worker_cont");
+    lab_worker_cont = document.getElementById("lab_worker_cont");
+    if (construction_worker_cont != null) {
+        construction_worker_cont.innerHTML = `${worker_data.construction_workers.available}/${worker_data.construction_workers.total}`;
+    }
+    if (lab_worker_cont != null) {
+        lab_worker_cont.innerHTML = `${worker_data.lab_workers.available}/${worker_data.lab_workers.total}`;
     }
 });

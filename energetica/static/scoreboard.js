@@ -55,28 +55,29 @@ function sortTable(columnName) {
         html += `<th id="co2_emissions" onclick="sortTable('co2_emissions')">Emissions</th>`;
     }
     html += `</tr>`;
-    let current_player_id = sessionStorage.getItem("player_id");
-    for (const [id, player] of sortedData) {
-        if (id == current_player_id) {
-            href = "/profile";
-        } else {
-            href = `/profile?player_id=${id}`;
-        }
-        html += `<tr>
+    load_player_id().then((current_player_id) => {
+        for (const [id, player] of sortedData) {
+            if (id == current_player_id) {
+                href = "/profile";
+            } else {
+                href = `/profile?player_id=${id}`;
+            }
+            html += `<tr>
             <td><a href="${href}">${player['username']}</a></td>
             <td>${player['network_name']}</td>
             <td>${format_money(player['average_hourly_revenues'])}/h</td>
             <td>${format_power(player['max_power_consumption'])}</td>
             <td>${player['total_technology_levels']}</td>
             <td>${player['xp']}</td>`;
-        if (include_co2_emissions) {
-            html += `<td>${format_mass(player['co2_emissions'])}</td>`;
+            if (include_co2_emissions) {
+                html += `<td>${format_mass(player['co2_emissions'])}</td>`;
+            }
+            html += `</tr > `;
         }
-        html += `</tr > `;
-    }
-    table.innerHTML = html;
+        table.innerHTML = html;
 
-    // Update the sorting indicator
-    column = document.getElementById(columnName);
-    column.innerHTML += triangle;
+        // Update the sorting indicator
+        column = document.getElementById(columnName);
+        column.innerHTML += triangle;
+    });
 };

@@ -127,6 +127,7 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
     else:
         player.data.capacities.update(player, construction.name)
     engine.config.update_config_for_user(player)
+    db.session.flush()
     player.emit("retrieve_player_data")
     player.emit("finish_construction", package_projects_data(player))
 
@@ -152,6 +153,7 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
         other_players: list[Player] = Player.query.filter(Player.id != player.id).all()
         for other_player in other_players:
             other_player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
+    player.send_worker_info()
 
 
 def deploy_available_workers(player: Player, family: str, *, start_now=False) -> None:
@@ -431,6 +433,7 @@ def queue_project(
     db.session.commit()
 
     invalidate_data_on_project_update(engine, player, asset)
+    player.send_worker_info()
     return new_construction
 
 
@@ -489,6 +492,7 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
 
     db.session.flush()
     deploy_available_workers(player, construction.family)
+    player.send_worker_info()
 
     engine.log(f"{player.username} cancelled the construction {construction.name}")
     db.session.commit()
@@ -600,6 +604,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
         # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
         db.session.flush()
         deploy_available_workers(player, construction.family)
+        player.send_worker_info()
 
         engine.log(f"{player.username} paused the construction {construction.id} {construction.name}")
     else:

@@ -549,8 +549,31 @@ def _capacity_factors(player: Player, facility: str) -> dict:
     if facility in ["PV_solar", "CSP_solar"]:
 
         def capacity_factor_solar(latitude: float) -> float:
-            """Fit of empirical data for solar irradiations."""
-            return 0.1788792882 / ((1 + np.exp(1.136558093 - 0.4216299482 * latitude)) ** (1 / 5.918314566))
+            """Empirical data for solar irradiations."""
+            capacity_factors = {
+                -10: 0.04570392892744975,
+                -9: 0.04953853380224557,
+                -8: 0.0552307507143072,
+                -7: 0.0616075608151737,
+                -6: 0.0691017943274717,
+                -5: 0.07694332287540502,
+                -4: 0.08576754217435902,
+                -3: 0.09568159153558595,
+                -2: 0.10480652239799751,
+                -1: 0.1138650637123792,
+                0: 0.12333395771455334,
+                1: 0.13156905148715073,
+                2: 0.1395413876995135,
+                3: 0.14761487032350845,
+                4: 0.15344212817008468,
+                5: 0.15888008299556167,
+                6: 0.1636592290228465,
+                7: 0.16726951063638576,
+                8: 0.16926758996324479,
+                9: 0.17223583407685103,
+                10: 0.17121678504734636,
+            }
+            return capacity_factors[latitude]
 
         return {
             "capacity_factor": f"{100 * capacity_factor_solar(player.tile.r):.0f}%",

@@ -63,32 +63,34 @@ function preload() {
     fetch("/api/get_map") // retrieves map data from the database using api.py
         .then((response) => response.json())
         .then((raw_data) => {
-            data = raw_data;
-            current_player_id = sessionStorage.getItem("player_id");
-            load_players().then((_players_ids) => {
-                players_ids = _players_ids;
-                console.log(players_ids, current_player_id);
+            load_player_id().then((_current_player_id) => {
+                current_player_id = _current_player_id;
+                data = raw_data;
+                load_players().then((_players_ids) => {
+                    players_ids = _players_ids;
+                    console.log(players_ids, current_player_id);
+                });
+                for (let i = 0; i < data.length; i++) {
+                    let resources = [
+                        data[i].solar,
+                        data[i].wind,
+                        data[i].hydro,
+                        data[i].coal,
+                        data[i].gas,
+                        data[i].uranium,
+                        data[i].climate_risk,
+                    ];
+                    map.push(
+                        new Hex(
+                            data[i].id,
+                            data[i].q,
+                            data[i].r,
+                            resources,
+                            data[i].player_id
+                        )
+                    );
+                }
             });
-            for (let i = 0; i < data.length; i++) {
-                let resources = [
-                    data[i].solar,
-                    data[i].wind,
-                    data[i].hydro,
-                    data[i].coal,
-                    data[i].gas,
-                    data[i].uranium,
-                    data[i].climate_risk,
-                ];
-                map.push(
-                    new Hex(
-                        data[i].id,
-                        data[i].q,
-                        data[i].r,
-                        resources,
-                        data[i].player_id
-                    )
-                );
-            }
         })
         .catch((error) => {
             console.error("Error:", error);
