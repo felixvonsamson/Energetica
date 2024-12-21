@@ -1,14 +1,21 @@
 """Util functions relating to the in game chat"""
 
+from __future__ import annotations
+
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from flask import current_app
 
+from energetica.api.websocket import ws_messages
 from energetica.database import db
 from energetica.database.messages import Chat, Message
 from energetica.database.player import PlayerUnreadMessages
 from energetica.game_engine import GameEngine, GameError
 from energetica.utils.misc import display_new_message
+
+if TYPE_CHECKING:
+    from energetica.database.player import Player
 
 
 def hide_chat_disclaimer(player):
@@ -31,10 +38,10 @@ def check_existing_chats(participants):
     return False
 
 
-def create_chat(player, buddy) -> Chat:
+def create_chat(player: Player, buddy: Player) -> Chat:
     """creates a chat with 2 players"""
     if buddy is None:
-        raise GameError("buddyIDDoesNotExist")
+        raise GameError("buddyDoesNotExist")
     if buddy.id == player.id:
         raise GameError("cannotChatWithYourself")
     if check_existing_chats([player, buddy]):
@@ -47,11 +54,13 @@ def create_chat(player, buddy) -> Chat:
     db.session.commit()
     engine: GameEngine = current_app.config["engine"]
     engine.log(f"{player.username} created a chat with {buddy.username}")
-    # websocket.notify_new_chat(new_chat)
+    websocket_message = ws_messages.new_chat(new_chat)
+    player.send_message_to_websocket_clients(websocket_message)
+    buddy.send_message_to_websocket_clients(websocket_message)
     return new_chat
 
 
-def create_group_chat(player, chat_name, participants):
+def create_group_chat(player: Player, chat_name: str, participants: list[Player]) -> Chat:
     """
     Creates a group chat with specified name and participants
 
@@ -63,11 +72,11 @@ def create_group_chat(player, chat_name, participants):
 
     """
     if len(chat_name) == 0 or len(chat_name) > 25:
-        raise GameException("wrongTitleLength")
+        raise GameError("wrongTitleLength")
     if len(participants) < 3:
-        raise GameException("groupTooSmall")
+        raise GameError("groupTooSmall")
     if check_existing_chats(participants):
-        raise GameException("chatAlreadyExist")
+        raise GameError("chatAlreadyExist")
     new_chat = Chat(
         name=chat_name,
         participants=participants,
@@ -76,11 +85,17 @@ def create_group_chat(player, chat_name, participants):
     db.session.commit()
     engine: GameEngine = current_app.config["engine"]
     engine.log(f"{player.username} created a group chat called {chat_name} with {participants}")
-    # websocket.notify_new_chat(new_chat)
+    websocket_message = ws_messages.new_chat(new_chat)
+    player.send_message_to_websocket_clients(websocket_message)
+    for participant in participants:
+        participant.send_message_to_websocket_clients(websocket_message)
+    return new_chat
 
 
-def add_message(player, message_text, chat):
+def add_message(player: Player, message_text: str, chat: Chat | None):
     """This function is called when a player sends a message in a chat. It returns either success or an error."""
+    if chat is None:
+        raise GameError("chatDoesNotExist")
     engine: GameEngine = current_app.config["engine"]
     if player not in chat.participants:
         raise GameError("notInChat")

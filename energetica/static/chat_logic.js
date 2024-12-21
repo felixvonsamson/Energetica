@@ -212,7 +212,7 @@ async function createChat() {
             document.getElementById('add_chat').classList.add('hidden');
         } else if (responseMessage === "cannotChatWithYourself") {
             addError("Cannot create a chat with yourself");
-        } else if (responseMessage === "buddyIDDoesNotExist") {
+        } else if (responseMessage === "buddyDoesNotExist") {
             addError("This player does not exist");
         } else if (responseMessage === "chatAlreadyExist") {
             addError("This chat already exists");

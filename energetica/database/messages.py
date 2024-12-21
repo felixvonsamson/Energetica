@@ -10,6 +10,18 @@ class Chat(db.Model):
     name = db.Column(db.String(50))
     messages = db.relationship("Message", backref="chat", lazy="dynamic")
 
+    def package(self) -> dict:
+        """Package this chat's data into a dictionary."""
+        return {
+            "id": self.id,
+            "name": self.name,  # can be None
+            "participants": list(map(lambda player: player.id, self.participants)),
+            "older_messages_exist": self.messages.count() > 20,
+            "messages": [
+                message.package() for message in reversed(self.messages.order_by(Message.time.desc()).limit(20).all())
+            ],
+        }
+
 
 class Message(db.Model):
     """Class for storing data about messages for the in-game messaging system."""

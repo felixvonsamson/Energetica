@@ -7,19 +7,30 @@ from typing import TYPE_CHECKING, Callable
 from energetica.database.map import Hex
 
 if TYPE_CHECKING:
+    from energetica.database.messages import Chat, Message
     from energetica.database.player import Player
 
 
-def server_message(func: Callable):
+def decorator_factory(named_return_arguments: bool = False):
     """Decorate server messages by formatting the return value as a dictionary."""
 
-    def wrapper(*args, **kwargs):
-        key = func.__name__
-        function_return = func(*args, **kwargs)
-        value = {"_0": function_return}
-        return {key: value}
+    def decorator(func: Callable):
+        def wrapper(*args, **kwargs):
+            key = func.__name__
+            function_return = func(*args, **kwargs)
+            if named_return_arguments:
+                value = function_return
+            else:
+                value = {"_0": function_return}
+            return {key: value}
 
-    return wrapper
+        return wrapper
+
+    return decorator
+
+
+server_message = decorator_factory()
+server_message_named = decorator_factory(named_return_arguments=True)
 
 
 @server_message
@@ -65,9 +76,15 @@ def get_chats(player: Player) -> dict:
 
 
 @server_message
-def get_last_opened_chat(player: Player) -> int:
-    """Gets the id of the player's last opened chat and returns is as a JSON string."""
-    return player.last_opened_chat
+def new_chat(chat: Chat) -> dict:
+    """Packages a new chat and sends it to the chat."""
+    return chat.package()
+
+
+@server_message_named
+def new_chat_message(chat_id: int, message: Message) -> dict:
+    """Packages a new chat message and sends it to the chat."""
+    return {"chat_id": chat_id, "message": message.package()}
 
 
 @server_message

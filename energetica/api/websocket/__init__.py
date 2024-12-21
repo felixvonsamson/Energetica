@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import time
 from typing import TYPE_CHECKING
 
 from flask import Blueprint
@@ -40,7 +41,7 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
     def rest_ws(ws: Server) -> None:
         """Define the WebSocket endpoint for API used for the iOS client."""
         player: Player | None = None
-        engine.log("Received WebSocket connection")
+        # engine.log("Received WebSocket connection")
         requests = dict(inspect.getmembers(ws_requests, inspect.isfunction))
 
         def send_message(message: dict) -> None:
@@ -49,13 +50,13 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
         def post_location_setup() -> None:
             send_message(ws_messages.facilities_data(player))
             send_message(ws_messages.get_chats(player))
-            send_message(ws_messages.get_last_opened_chat(player))
             send_message(ws_messages.get_show_chat_disclaimer(player))
             # ws.send(rest_get_charts()) # TODO
 
         def post_auth_setup() -> None:
             if player is None:
                 raise ValueError()
+            engine.log(f"Player {player.username} logged in via WebSocket")
             send_message(ws_messages.players())
             send_message(ws_messages.user_player_id(player))
             send_message(ws_messages.get_map())
@@ -136,13 +137,10 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
                     return
                 request_handler = requests[request_type]
                 arguments = request_body
-                try:
-                    request_handler(engine, player, **arguments)
-                    send_success()
-                    if request_type == "confirm_location":
-                        post_location_setup()
-                except GameError as e:
-                    send_error(e)
+                response = request_handler(engine, player, **arguments)
+                send_response(response)
+                if request_type == "confirmLocation":
+                    post_location_setup()
                 return
 
             msg = f"Unknown request type: {request_type}"
@@ -168,6 +166,7 @@ def add_sock_handlers(sock: Sock, engine: GameEngine) -> None:
         while True:
             try:
                 data: str = ws.receive()
+                # time.sleep(0.4) # Used for testing high latency
                 message = json.loads(data)
                 parse_message(message)
             except ConnectionClosed as e:

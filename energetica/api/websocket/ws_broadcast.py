@@ -32,13 +32,13 @@ def websocket_broadcast(func):
 
 def register_websocket_connection(engine: GameEngine, player_id: int, ws: Server) -> None:
     """Add the websocket object to the player's registered connections."""
-    engine.log(f"Websocket connection opened for player {player_id}")
+    # engine.log(f"Websocket connection opened for player {player_id}")
     engine.websocket_dict[player_id].append(ws)
 
 
 def unregister_websocket_connection(engine: GameEngine, player_id: int, ws: Server) -> None:
     """Remove the websocket object from the player's registered connections."""
-    engine.log(f"Websocket connection closed for player {player_id}")
+    # engine.log(f"Websocket connection closed for player {player_id}")
     engine.websocket_dict[player_id].remove(ws)
 
 

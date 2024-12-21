@@ -240,6 +240,14 @@ class Player(db.Model, UserMixin):
         """Return the player's websocket clients."""
         return self.engine.websocket_dict[self.id]
 
+    def send_message_to_websocket_clients(self, message):
+        """Send a message to the player's websocket clients."""
+        dumped_message = json.dumps(message)
+        # print(f"dumped message: {dumped_message}")
+        for client in self.websocket_clients:
+            # print(f"client: {client}")
+            client.send(dumped_message)
+
     @cached_property
     def data(self) -> PlayerData:
         """Returns the data for the player."""
@@ -387,19 +395,7 @@ class Player(db.Model, UserMixin):
     def package_chats(self) -> dict:
         """Package chats for the iOS frontend."""
         # TODO: unify the two package_chat methods
-        return {
-            chat.id: {
-                "id": chat.id,
-                "name": chat.name,  # can be None
-                "participants": list(map(lambda player: player.id, chat.participants)),
-                "older_messages_exist": chat.messages.count() > 20,
-                "messages": [
-                    message.package()
-                    for message in reversed(chat.messages.order_by(Message.time.desc()).limit(20).all())
-                ],
-            }
-            for chat in self.chats
-        }
+        return {chat.id: chat.package() for chat in self.chats}
 
     def delete_notification(self, notification_id: int) -> None:
         """Delete a notification."""

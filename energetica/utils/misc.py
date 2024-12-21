@@ -11,7 +11,7 @@ from flask import flash
 from noise import pnoise3
 from scipy.stats import norm
 
-from energetica.api.websocket import ws_broadcast
+from energetica.api.websocket import ws_broadcast, ws_messages
 from energetica.config.assets import river_discharge_seasonal
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
@@ -183,7 +183,7 @@ def save_past_data_threaded(app, engine: GameEngine):
 
 def display_new_message(engine: GameEngine, message: Message, chat: Chat) -> None:
     """Send a chat message to all relevant sources through socketio and websocket."""
-    # websocket_message = websocket.rest_new_chat_message(chat.id, message)
+    websocket_message = ws_messages.new_chat_message(chat.id, message)
     for player in chat.participants:
         player.emit(
             "display_new_message",
@@ -194,7 +194,7 @@ def display_new_message(engine: GameEngine, message: Message, chat: Chat) -> Non
                 "chat_id": message.chat_id,
             },
         )
-        # websocket.rest_notify_player(engine, player, websocket_message)
+        player.send_message_to_websocket_clients(websocket_message)
 
 
 # Map
