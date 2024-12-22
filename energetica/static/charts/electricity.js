@@ -412,7 +412,7 @@ function sortConsumingFacilitiesTable(columnName, reorder = true) {
     }
     // Reset the table headers
     table.querySelector(".facility_col").innerHTML = "Facility";
-    table.querySelector(".usage_col").innerHTML = `Generated
+    table.querySelector(".usage_col").innerHTML = `Consumed
         <span class="popup_info bottom small">over the last ${ticks_to_time(res, prefix = "")}</span>`;
     sortTable(table, columnName, table_content, reorder);
 }
@@ -455,7 +455,7 @@ function sortTable(table, column_name, table_content, reorder = true) {
         for (const [id, facility] of sortedData) {
             table.insertRow().innerHTML = `<tr>
                     <td>${facility.facility_col}</td>
-                    <td>${format_power(facility.usage_col)}</td>
+                    <td>${format_energy(facility.usage_col)}</td>
                     <td>
                         <label class="switch">
                             <input type="checkbox" 

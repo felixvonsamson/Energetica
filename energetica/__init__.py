@@ -118,15 +118,9 @@ def create_app(
         shutil.rmtree("instance")
         print("instance folder deleted.")
 
-    # creates the app :
-    app = Flask(__name__)
+    # Create instance and checkpoints folder if they don't exist
     Path("checkpoints").mkdir(exist_ok=True)
     Path("instance").mkdir(exist_ok=True)
-    app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
-    app.config["VAPID_PUBLIC_KEY"], app.config["VAPID_PRIVATE_KEY"] = get_or_create_vapid_keys()
-    app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
-    db.init_app(app)
 
     start_date = None
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true" and simulate_file:
@@ -184,7 +178,16 @@ def create_app(
                 engine.data = pickle.load(file)
             engine.log("Loaded engine data from disk.")
 
+    
+    # creates the app :
+    app = Flask(__name__)
+    app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
+    app.config["VAPID_PUBLIC_KEY"], app.config["VAPID_PRIVATE_KEY"] = get_or_create_vapid_keys()
+    app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
     app.config["engine"] = engine
+    db.init_app(app)
+    
 
     # initialize socketio :
     socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True

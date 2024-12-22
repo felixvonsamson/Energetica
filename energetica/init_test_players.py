@@ -130,7 +130,7 @@ def init_test_players(engine):
     add_asset(player1, "coal_mine", 2)
     add_asset(player1, "uranium_mine", 1)
     add_asset(player1, "warehouse", 1)
-    add_asset(player1, "industry", 16)
+    add_asset(player1, "industry", 12)
     add_asset(player1, "laboratory", 4)
     add_asset(player1, "gas_burner", 1)
     add_asset(player1, "mechanical_engineering", 1)
@@ -159,10 +159,10 @@ def init_test_players(engine):
     add_asset(player1, "chemistry", 5)
     add_asset(player1, "nuclear_engineering", 1)
 
-    add_asset(player1, "molten_salt", 1)
-    add_asset(player1, "hydrogen_storage", 1)
-    add_asset(player1, "solid_state_batteries", 1)
-    add_asset(player1, "gas_drilling_site", 1)
+    # add_asset(player1, "molten_salt", 1)
+    # add_asset(player1, "hydrogen_storage", 1)
+    # add_asset(player1, "solid_state_batteries", 1)
+    # add_asset(player1, "gas_drilling_site", 1)
 
     # Player 2
     player2.money = 1_000_000_000
