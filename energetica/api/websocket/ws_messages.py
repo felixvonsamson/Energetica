@@ -63,7 +63,7 @@ def get_map() -> dict:
     }
 
 
-@server_message
+@server_message_named
 def facilities_data(player: Player) -> dict[str, list]:
     """Package the player's facilities data and returns it as a JSON string."""
     return player.cache.all_facilities_data

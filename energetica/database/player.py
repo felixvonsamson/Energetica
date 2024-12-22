@@ -68,6 +68,7 @@ class PlayerCache:
             "storage_facilities": self.storage_facilities_data,
             "extraction_facilities": self.extraction_facilities_data,
             "functional_facilities": self.functional_facilities_data,
+            "research_projects": self.technologies_data,
         }
 
     @cached_property
