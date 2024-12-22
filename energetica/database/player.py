@@ -42,8 +42,18 @@ class PlayerData:
     capacities: CapacityData = field(default_factory=CapacityData)
     cumul_emissions: CumulativeEmissionsData = field(default_factory=CumulativeEmissionsData)
 
-    # Browser notifications
-    notification_subscriptions: list = []
+    # Browser notifications & preferences
+    notification_subscriptions: list[int] = field(default_factory=list)
+    notification_preferences: dict = field(
+        default_factory=lambda: {
+            "messages": True,
+            "achievements": True,
+            "projects": True,
+            "decommissioning": True,
+            "resource_market": True,
+            "climate_events": True,
+        }
+    )
 
 
 @dataclass

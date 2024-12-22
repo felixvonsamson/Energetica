@@ -370,7 +370,7 @@ canvas {
 }
 
 .notification_settings {
-    max-height: 180px;
+    max-height: 250px;
     overflow: hidden;
     transition: max-height 0.4s ease;
 }
