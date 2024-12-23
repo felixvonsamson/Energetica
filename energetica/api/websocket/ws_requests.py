@@ -93,3 +93,14 @@ def send_message(engine: GameEngine, player: Player, chat_id: int, message: str)
 
     chat = db.session.get(Chat, chat_id)
     add_message(player, message, chat)
+
+
+#  projects
+
+
+@ws_request_handler
+def queue_project(engine: GameEngine, player: Player, project_name: str) -> None:
+    """Queue a project."""
+    from energetica.utils import assets
+
+    assets.queue_project(engine, player, project_name)
