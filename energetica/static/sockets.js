@@ -571,7 +571,7 @@ socket.on("update_page_data", function (pages_data) {
             effect_helper("molten_salt_efficiency_bonus", sign = "+", precision = 1, suffix = "pp", round_value = true, hover_info = "percentage point");
             effect_helper("construction_time_reduction_bonus", sign = "-");
             effect_helper("shipment_time_reduction_bonus", sign = "-");
-            effect_helper("power_consumption_reduction_bonus", sign = "+");
+            effect_helper("power_consumption_reduction_bonus", sign = "-");
             effect_helper("power_consumption_penalty", sign = "+");
             effect_helper("co2_emissions_penalty", sign = "+");
             effect_helper("storage_capacity_bonus");
