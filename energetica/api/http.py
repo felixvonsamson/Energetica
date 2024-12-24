@@ -723,3 +723,11 @@ def test_notification() -> Response:
     }
     current_user.send_notification(notification_data)
     return jsonify({"response": "success"})
+
+
+@http.route("set_notification_preferences", methods=["POST"])
+def set_notification_preferences() -> Response:
+    """Sets notification preferences for a player"""
+    preferences = request.get_json()["notification_preferences"]
+    current_user.data.notification_preferences = preferences
+    return jsonify({"response": "success"})

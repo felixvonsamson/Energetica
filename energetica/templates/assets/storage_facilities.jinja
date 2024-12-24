@@ -1,16 +1,16 @@
 {% extends "base.jinja" %}
 {% block title %}
-  Storage facilities
+  Storage Facilities
 {% endblock title %}
 {% block content %}
   <div class="flex-row huge title">
-    Storage facilities
+    Storage Facilities
     <div class="pine info_icon_container"
          onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
   </div>
   <div id="info_popup" class="popup hidden green">
     <div class="flex-row margin-small align-items-center">
-      <div class="large txt_center flex-grow-1">Help : Storage facilities</div>
+      <div class="large txt_center flex-grow-1">Help : Storage Facilities</div>
       <div onclick="document.getElementById('info_popup').classList.add('hidden');"
            class="cross pine margin-small"
            style="width:39px">×</div>
@@ -93,12 +93,12 @@
           <div class="flex-col construction_button_container hidden">
             {% if facility_data.requirements_status == "unsatisfied" %}
               <b id="construction_button" class="padding medium margin txt_center white txt-red"
-                 onclick="start_construction('{{ facility }}', 'Storage facilities');">
+                 onclick="start_construction('{{ facility }}', 'Storage Facilities');">
                 Locked
               </b>
             {% else %}
               <b id="construction_button" class="padding medium button margin txt_center white"
-                 onclick="start_construction('{{ facility }}', 'Storage facilities');">
+                 onclick="start_construction('{{ facility }}', 'Storage Facilities');">
                 Start construction
               </b>
             {% endif %}
@@ -133,12 +133,12 @@
           <div class="flex-col">
             {% if facility_data.requirements_status == "unsatisfied" %}
               <b id="construction_button_mobile" class="padding medium margin txt_center white txt-red"
-                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Storage facilities');">
+                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Storage Facilities');">
                 Locked
               </b>
             {% else %}
               <b id="construction_button_mobile" class="padding medium button margin txt_center white"
-                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Storage facilities');">
+                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Storage Facilities');">
                 Start construction
               </b>
             {% endif %}

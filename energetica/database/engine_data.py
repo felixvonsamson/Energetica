@@ -29,11 +29,11 @@ class CapacityData:
             "fuel_use": {
                 "resource":     [kg/tick]                       # Controllable facilities
             }
-            "capacity":         [Wh]                            # Storage facilities
-            "efficiency": (effective efficiency from 0 to 1),   # Storage facilities
-            "extraction_rate_per_day": [kg/tick]                # Extraction facilities
-            "power_use":        [W]                             # Extraction facilities
-            "pollution":        [kg/tick]                       # Extraction facilities
+            "capacity":         [Wh]                            # Storage Facilities
+            "efficiency": (effective efficiency from 0 to 1),   # Storage Facilities
+            "extraction_rate_per_day": [kg/tick]                # Extraction Facilities
+            "power_use":        [W]                             # Extraction Facilities
+            "pollution":        [kg/tick]                       # Extraction Facilities
         }
     }
     """

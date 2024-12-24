@@ -62,6 +62,8 @@ function requestNotificationPermission() {
     Notification.requestPermission().then(function (permission) {
         if (permission === 'granted') {
             subscribeUserToPush();
+            let notification_settings = document.getElementById('notification_settings_list');
+            notification_settings.classList.remove('collapsed');
         }
     });
 }
@@ -110,6 +112,8 @@ function unsubscribeUserFromPush() {
                         'Content-Type': 'application/json'
                     }
                 });
+                let notification_settings = document.getElementById('notification_settings_list');
+                notification_settings.classList.add('collapsed');
             }).catch(function (error) {
                 console.error('Failed to unsubscribe user:', error);
             });

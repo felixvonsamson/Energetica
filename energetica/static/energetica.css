@@ -358,10 +358,27 @@ canvas {
 }
 
 .notification_button,
+.settings_button,
 .changelog_button {
     border-radius: 6px;
     position: relative;
     text-decoration: none;
+}
+
+.settings_button {
+    margin: 10px;
+}
+
+.notification_settings {
+    max-height: 250px;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+}
+
+
+.notification_settings.collapsed {
+    max-height: 0;
+    overflow: hidden;
 }
 
 .cross {
@@ -760,9 +777,11 @@ input:checked+.slider:before {
 }
 
 .topRight_info {
-    display: block;
+    display: flex;
+    flex-direction: column;
     max-width: 230px;
     width: 15%;
+    height: 100%;
     position: fixed;
     right: 0;
     top: 0;
@@ -1109,10 +1128,6 @@ input:checked+.slider:before {
     font-size: min(25px, 3.5vh)
 }
 
-.notification_container {
-    margin: 20px 0;
-}
-
 .notification_title {
     padding: 20px 16px 0 16px;
     box-sizing: border-box;
@@ -1126,7 +1141,7 @@ input:checked+.slider:before {
 }
 
 .notification_list-small {
-    height: 700px;
+    flex-grow: 1;
     overflow: scroll;
 }
 
@@ -1531,7 +1546,6 @@ table.tan_green tr:nth-child(even) {
 }
 
 #web_push_notification_switch {
-    top: 95%;
     border-radius: 8px;
 }
 
@@ -1745,7 +1759,7 @@ img.small.graph-container {
 }
 
 .info_icon {
-    width: 0.4em;
+    width: 0.54em;
     height: auto;
     filter: invert(100%);
 }
@@ -1995,7 +2009,7 @@ img.small.graph-container {
 }
 
 @media only screen and (min-width: 1199px) {
-    .display_hide {
+    .only_smartphone {
         display: None;
     }
 }
@@ -2021,9 +2035,17 @@ img.small.graph-container {
 
     .notification_button {
         position: absolute;
-        right: 100px;
+        right: 150px;
         transform: translate(0, 33%);
         -ms-transform: translate(0, 33%)
+    }
+
+    .settings_button {
+        position: absolute;
+        right: 80px;
+        transform: translate(0, 33%);
+        -ms-transform: translate(0, 33%);
+        margin: 0
     }
 
     .notification_txt {

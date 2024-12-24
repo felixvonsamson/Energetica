@@ -50,20 +50,27 @@
       </div>
     </div>
   </div>
-  <div class="notification_container txt_center">
-  <button id="notification_button" class="bone button padding medium notification_button" 
-  onclick="show_notification_list();">
-    <i class="fa fa-bell"></i><span class="notification_txt"> Notifications</span>
-    {% if user.unread_notifications()|length > 0 %}<span id="unread_badge" class="unread_badge small pine padding-small">{{ user.unread_notifications()|length }}</span>{% endif %}
-  </button>
-  <div id="notification_list-small" class="notification_list notification_list-small">
-    {% for notification in user.unread_notifications() %}
-      <div id="notification_{{ notification.id }}" class="notification padding-small margin-small">
-        <b>{{ notification.title }}</b><br>
-        {{ notification.content }}
-      </div>
-    {% endfor %}
-  </div>
+  <div class="flex-col flex-grow-1">
+    <div class="flex-col">
+      <a class="bone button padding medium settings_button" href="{{ url_for('views.settings') }}">
+        <i class="fa fa-cog"></i><span class="notification_txt"> Settings</span>
+      </a>
+    </div>
+    <div>
+      <button id="notification_button" class="bone button padding medium notification_button" 
+      onclick="show_notification_list();">
+        <i class="fa fa-bell"></i><span class="notification_txt"> Notifications</span>
+        {% if user.unread_notifications()|length > 0 %}<span id="unread_badge" class="unread_badge small pine padding-small">{{ user.unread_notifications()|length }}</span>{% endif %}
+      </button>
+    </div>
+    <div id="notification_list-small" class="notification_list notification_list-small">
+      {% for notification in user.unread_notifications() %}
+        <div id="notification_{{ notification.id }}" class="notification padding-small margin-small">
+          <b>{{ notification.title }}</b><br>
+          {{ notification.content }}
+        </div>
+      {% endfor %}
+    </div>
   </div>
 </div>
 
@@ -87,10 +94,7 @@
     </div>
   {% endfor %}
   </div>
-</div>
-<div id="web_push_notification_switch" class="popup hidden bone padding-large medium">
-  Browser notifications &ensp;
-  <label class="switch"><input type="checkbox" id="web_push_notifications-checkbox"><span class="slider round"></span></label>
+  <a class="medium" href="{{ url_for('views.settings') }}" style="margin-bottom:10px">Browser notifications</a>
 </div>
 
 
@@ -158,7 +162,7 @@
           <img src="{{ url_for('static', filename='images/icons/dropdown.png') }}"
                 class="navbar_icon margin-small"
                 id="dropdown-overview" />
-          <span style="padding:8px 0">Production overview</span>
+          <span style="padding:8px 0">Production Overview</span>
         </a>
         <div class="dropdown-menu" id="menu-overview">
 
@@ -227,7 +231,7 @@
               href="{{ url_for('views.power_facilities') }}">
             <img src="{{ url_for('static', filename='images/icons/power_facilities.png') }}"
                   class="navbar_icon margin-small" />
-            <span style="padding:8px 0">Power facilities</span>
+            <span style="padding:8px 0">Power Facilities</span>
           </a>
 
           <a class="navbar_item bone flex-row"
@@ -235,7 +239,7 @@
               href="{{ url_for('views.storage_facilities') }}">
             <img src="{{ url_for('static', filename='images/icons/storage_facilities.png') }}"
                   class="navbar_icon margin-small" />
-            <span style="padding:8px 0">Storage facilities</span>
+            <span style="padding:8px 0">Storage Facilities</span>
           </a>
           
           {% if "Unlock Natural Resources" in user.achievements %}
@@ -244,7 +248,7 @@
               href="{{ url_for('views.extraction_facilities') }}">
             <img src="{{ url_for('static', filename='images/icons/extraction_facilities.png') }}"
                   class="navbar_icon margin-small" />
-            <span style="padding:8px 0">Extraction facilities</span>
+            <span style="padding:8px 0">Extraction Facilities</span>
           </a>
           {% endif %}
 
@@ -253,7 +257,7 @@
               href="{{ url_for('views.functional_facilities') }}">
             <img src="{{ url_for('static', filename='images/icons/functional_facilities.png') }}"
                   class="navbar_icon margin-small" />
-            <span style="padding:8px 0">Functional facilities</span>
+            <span style="padding:8px 0">Functional Facilities</span>
           </a>
 
         </div>
@@ -320,16 +324,24 @@
             href="{{ url_for('views.resource_market') }}">
           <img src="{{ url_for('static', filename='images/icons/resource_market.png') }}"
                 class="navbar_icon margin-small" />
-          <span style="padding:8px 0">Resources market</span>
+          <span style="padding:8px 0">Resources Market</span>
         </a>
       </li>
       {% endif %}
 
-      <li class="nav-item">
+      <li class="nav-item only_smartphone">
         <a class="navbar_item tan_green flex-row" id="wiki" href="{{ url_for('wiki.render_template_wiki', template_name='introduction') }}">
           <img src="{{ url_for('static', filename='images/icons/wiki.png') }}"
                 class="navbar_icon margin-small" />
-          <span style="padding:8px 0">Energetica wiki</span>
+          <span style="padding:8px 0">Game Wiki</span>
+        </a>
+      </li>
+
+      <li class="nav-item only_smartphone">
+        <a class="navbar_item tan_green flex-row" id="changelog" href="{{ url_for('changelog.render_changelog') }}">
+          <img src="{{ url_for('static', filename='images/icons/changelog.png') }}"
+                class="navbar_icon margin-small" />
+          <span style="padding:8px 0">Changelog</span>
         </a>
       </li>
 

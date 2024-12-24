@@ -339,7 +339,7 @@ function display_progressBars(construction_data, shipment_data) {
   } else {
     const uc = document.getElementById("under_construction");
     if (uc != null) {
-      if (document.title == "Resource market" && shipment_data != null) {
+      if (document.title == "Resource Market" && shipment_data != null) {
         uc.innerHTML = "";
         for (var id in shipment_data) {
           shipment = shipment_data[id];

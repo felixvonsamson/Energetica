@@ -1,0 +1,59 @@
+{% extends "base.jinja" %}
+{% block title %}
+  Settings
+{% endblock title %}
+{% block content %}
+
+  <div id="profile_header" class="flex-row huge title">
+      Settings
+      <div class="pine info_icon_container"
+            onclick="document.getElementById('info_popup').classList.remove('hidden');">{{ wikiImage() }}</div>
+  </div>
+  <div id="info_popup" class="popup hidden green">
+      <div class="flex-row margin-small align-items-center">
+          <div class="large txt_center flex-grow-1">Help : Settings</div>
+          <div onclick="document.getElementById('info_popup').classList.add('hidden');"
+                class="cross pine margin-small"
+                style="width:39px">×</div>
+      </div>
+      <div class="margin medium">
+          <p>
+              On this page you can change the settings of your account.
+          </p>
+      </div>
+  </div>
+
+<div class="flex-col margin-large">
+  <div id="web_push_notification_switch" class="bone padding medium flex-col">
+  <div class="padding">
+    <b>Browser notifications</b> &ensp;
+    <label class="switch"><input type="checkbox" id="web_push_notifications-checkbox"><span class="slider round"></span></label>
+  </div>
+  <div id="notification_settings_list" class="notification_settings collapsed flex-col">
+    <div class="padding">
+      Messages &ensp;
+      <label class="switch"><input type="checkbox" id="web_push_notifications-messages"><span class="slider round"></span></label>
+    </div>
+    <div class="padding">
+      Achievements &ensp;
+      <label class="switch"><input type="checkbox" id="web_push_notifications-achievements"><span class="slider round"></span></label>
+    </div>
+    <div class="padding">
+      Finished projects &ensp;
+      <label class="switch"><input type="checkbox" id="web_push_notifications-projects"><span class="slider round"></span></label>
+    </div>
+    <div class="padding">
+      Decommissioning &ensp;
+      <label class="switch"><input type="checkbox" id="web_push_notifications-decommissioning"><span class="slider round"></span></label>
+    </div>
+    <div class="padding">
+      Resource market &ensp;
+      <label class="switch"><input type="checkbox" id="web_push_notifications-resource_market"><span class="slider round"></span></label>
+    </div>
+    <div class="padding">
+      Climate events &ensp;
+      <label class="switch"><input type="checkbox" id="web_push_notifications-climate_events"><span class="slider round"></span></label>
+    </div>
+  </div>
+</div>
+{% endblock content %}

@@ -1,4 +1,4 @@
-{% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica wiki{% endblock %} {% block wiki_content %}
+{% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica Wiki{% endblock %} {% block wiki_content %}
 
 {% set const_data = engine.const_config["assets"] %}
 
@@ -24,7 +24,7 @@
 
   <h2 id="Extraction_Facilities">Extraction Facilities</h2>
   <p>
-    Extraction facilities are what allow players to extract fossil resources from their own tile. Each of the three 
+    Extraction Facilities are what allow players to extract fossil resources from their own tile. Each of the three 
     natural resources has a dedicated extraction facility. Unlocking these facilities requires different levels of 
     {% if "Unlock Technologies" in user.achievements %}
     <a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">mineral extraction</a>
@@ -97,7 +97,7 @@
     <span>ig = <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game time</a></span>
   </div>
   <p>
-    Resources extracted from these facilities are stored in the <a href="{{ url_for('wiki.render_template_wiki', template_name='functional_facilities', _anchor='The_Warehouse') }}">Warehouse</a>. Extraction facilities cease operation when the
+    Resources extracted from these facilities are stored in the <a href="{{ url_for('wiki.render_template_wiki', template_name='functional_facilities', _anchor='The_Warehouse') }}">Warehouse</a>. Extraction Facilities cease operation when the
     warehouse reach full capacity.
   </p>
   <p>

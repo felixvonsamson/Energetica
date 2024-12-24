@@ -21,13 +21,13 @@ function launch_extraction_facility_project(facility, poor_resource_production) 
             Your location does not have much ${resource} and this extraction facility will have poor yield.`;
         // @ts-ignore
         document.getElementById('yes_im_sure').onclick = () => {
-            start_construction(facility, 'Extraction facilities');
+            start_construction(facility, 'Extraction Facilities');
             document.getElementById('are_you_sure_popup')?.classList.add('hidden');
         };
         const no_cancel = document.getElementById('no_cancel');
         // @ts-ignore
         no_cancel.innerHTML = '<b>Cancel</b>';
     } else {
-        start_construction(facility, 'Extraction facilities');
+        start_construction(facility, 'Extraction Facilities');
     }
 }

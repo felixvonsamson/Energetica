@@ -1,8 +1,6 @@
 {% macro wikiImage() -%}
   <img class="info_icon padding"
-       src="{{ url_for('static', filename='images/icons/wiki.png') }}"
-       width="91"
-       height="96"
+       src="{{ url_for('static', filename='images/icons/info.png') }}"
        alt="Help page" />
 {%- endmacro %}
 <!DOCTYPE html>
@@ -38,7 +36,7 @@
     </title>
   </head>
   <body class="green">
-    <div class="version medium">
+    <div class="version medium smartphone_hide">
       <div>
         <a class="white button padding-small margin-small medium changelog_button" href="{{ url_for('wiki.render_template_wiki', template_name='introduction') }}" style="bottom:14px">
           <i class="fa fa-book"></i>&nbsp;Game Wiki

@@ -108,10 +108,10 @@ class GameEngine(object):
         asset_type: asset_family
         for dict in [vars()]
         for asset_family in [
-            "Power facilities",
-            "Extraction facilities",
-            "Storage facilities",
-            "Functional facilities",
+            "Power Facilities",
+            "Extraction Facilities",
+            "Storage Facilities",
+            "Functional Facilities",
             "Technologies",
         ]
         for asset_type in dict[asset_family.lower().replace(" ", "_")]
@@ -154,7 +154,6 @@ class GameEngine(object):
 
         self.lock = RLock()
         self.data = {}
-        self.data["notification_subscriptions"] = defaultdict(list)
         self.data["by_player"] = defaultdict(PlayerData)
         self.data["by_network"] = defaultdict(NetworkData)
         self.data["by_ongoing_construction"] = defaultdict(OngoingConstructionData)

@@ -42,6 +42,19 @@ class PlayerData:
     capacities: CapacityData = field(default_factory=CapacityData)
     cumul_emissions: CumulativeEmissionsData = field(default_factory=CumulativeEmissionsData)
 
+    # Browser notifications & preferences
+    notification_subscriptions: list[int] = field(default_factory=list)
+    notification_preferences: dict = field(
+        default_factory=lambda: {
+            "messages": True,
+            "achievements": True,
+            "projects": True,
+            "decommissioning": True,
+            "resource_market": True,
+            "climate_events": True,
+        }
+    )
+
 
 @dataclass
 class PlayerCache:
@@ -124,7 +137,7 @@ class Player(db.Model, UserMixin):
     construction_workers = db.Column(db.Integer, default=1)
     lab_workers = db.Column(db.Integer, default=0)
 
-    # Functional facilities :
+    # Functional Facilities :
     industry = db.Column(db.Integer, default=1)
     laboratory = db.Column(db.Integer, default=0)
     warehouse = db.Column(db.Integer, default=0)
@@ -493,7 +506,7 @@ class Player(db.Model, UserMixin):
             "body": new_notification.content,
         }
         engine: GameEngine = current_app.config["engine"]
-        for subscription in engine.data["notification_subscriptions"][self.id]:
+        for subscription in self.data.notification_subscriptions:
             audience = "https://fcm.googleapis.com"
             if "https://updates.push.services.mozilla.com" in subscription["endpoint"]:
                 audience = "https://updates.push.services.mozilla.com"
