@@ -100,6 +100,14 @@ class GameEngine(object):
         "nuclear_engineering",
     ]
 
+    special_power_demand = [
+        "industry",
+        "construction",
+        "research",
+        "transport",
+        "carbon_capture",
+    ]
+
     facility_types = power_facilities + extraction_facilities + storage_facilities + functional_facilities
 
     all_asset_types = facility_types + technologies
@@ -116,27 +124,6 @@ class GameEngine(object):
         ]
         for asset_type in dict[asset_family.lower().replace(" ", "_")]
     }
-
-    price_keys = (
-        set(controllable_facilities)
-        | set(storage_facilities)
-        | {
-            "buy_small_pumped_hydro",
-            "buy_molten_salt",
-            "buy_large_pumped_hydro",
-            "buy_hydrogen_storage",
-            "buy_lithium_ion_batteries",
-            "buy_solid_state_batteries",
-            "buy_industry",
-            "buy_construction",
-            "buy_research",
-            "buy_transport",
-            "buy_coal_mine",
-            "buy_gas_drilling_site",
-            "buy_uranium_mine",
-            "buy_carbon_capture",
-        }
-    )
 
     def __init__(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None):
         assert clock_time in [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]

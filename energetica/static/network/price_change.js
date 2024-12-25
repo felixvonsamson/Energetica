@@ -178,13 +178,13 @@ function reset_icons() {
 }
 
 function change_prices() {
-    const inputElements = document.querySelectorAll("input");
-    let prices = {};
-    inputElements.forEach((input) => {
-        if ((input.id == "invite_player") || (input.id == "network_name") || (input.id == "web_push_notifications-checkbox")) {
-            return;
-        }
-        prices[input.id] = float(input.value);
+    const priceInputs = Array.from(document.querySelectorAll("input")).filter(input => input.id.includes("price-"));
+
+    let prices = { "supply": {}, "demand": {} };
+    priceInputs.forEach((input) => {
+        let price_type = input.id.split("-")[1];
+        let facility = input.id.split("-")[2];
+        prices[price_type][facility] = parseFloat(input.value);
     });
     send_json("/api/change_network_prices", {
         prices: prices,
@@ -198,7 +198,9 @@ function change_prices() {
                 }
                 if (response == "priceTooLow") {
                     addError("Prices need to be greater than -5");
+                    return;
                 }
+                addError("This is a frustrating message telling you that something went wrong but not what");
             });
         })
         .catch((error) => {

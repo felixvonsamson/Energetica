@@ -18,7 +18,7 @@ from pywebpush import WebPushException, webpush
 from energetica.config.achievements import achievements
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData
+from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, PlayerPrices
 from energetica.database.messages import Chat, Message, Notification, player_chats
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
 from energetica.database.shipment import Shipment
@@ -37,6 +37,8 @@ if TYPE_CHECKING:
 @dataclass
 class PlayerData:
     """Dataclass that stores the player data."""
+
+    network_prices: PlayerPrices = field(default_factory=PlayerPrices)
 
     rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
     capacities: CapacityData = field(default_factory=CapacityData)

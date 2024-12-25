@@ -108,25 +108,31 @@ def reorder_facility_priorities(engine: GameEngine, player: Player):
     db.session.commit()
 
 
-def set_network_prices(engine: GameEngine, player, updated_prices):
+def set_network_prices(engine: GameEngine, player: Player, updated_prices: dict[str, dict[str, float]]):
     """Updates network prices for that player"""
-
-    for key, updated_price in updated_prices.items():
-        if key.startswith("price_") and key[6:] not in engine.price_keys or not isinstance(updated_price, (int, float)):
+    if not all(key in ["supply", "demand"] for key in updated_prices.keys()):
+        raise GameError("malformedRequest")
+    for facility in updated_prices["supply"]:
+        if facility not in engine.controllable_facilities + engine.storage_facilities:
             raise GameError("malformedRequest")
-        if updated_price <= -5:
-            raise GameError("priceTooLow")
-
-    for key, updated_price in updated_prices.items():
-        setattr(player, "price_" + key, updated_price)
+    for facility in updated_prices["demand"]:
+        if facility not in engine.special_power_demand + engine.extraction_facilities + engine.storage_facilities:
+            raise GameError("malformedRequest")
+    for price_type, price_dict in updated_prices.items():
+        for facility, new_price in price_dict.items():
+            if not isinstance(new_price, (int, float)):
+                raise GameError("malformedRequest")
+            if new_price <= -5:
+                raise GameError("priceTooLow")
+            player.network_prices[price_type][facility] = new_price
 
     engine.log(f"{player.username} updated their prices")
     reorder_facility_priorities(engine, player)
 
 
-def change_facility_priority(engine, player, priority):
+def change_facility_priority(engine: GameEngine, player: Player, priority: list[str]):
     """
-    This function is executed when the facilities priority is changed either by changing the order in the interactive
+    This function is executed when the facilities priority is changed by changing the order in the interactive
     table. The function reassigns the selling prices of the facilities according to the new order.
     """
     old_set = set(

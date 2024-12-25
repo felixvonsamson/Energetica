@@ -242,9 +242,9 @@
                     <td>
                         <input type="number"
                             class="small_input medium txt_center"
-                            value="{{ user.price_buy_industry }}"
-                            id="price_buy_industry"
-                            name="price_buy_industry" />
+                            value="{{ user.data.network_prices.demand.industry }}"
+                            id="price-demand-industry"
+                            max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
                     </td>
@@ -254,48 +254,46 @@
                     <td>
                         <input type="number"
                             class="small_input medium txt_center"
-                            value="{{ user.price_buy_construction }}"
-                            id="price_buy_construction"
-                            name="price_buy_construction" 
+                            value="{{ user.data.network_prices.demand.construction }}"
+                            id="price-demand-construction"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
                     </td>
                 </tr>
+                {% if "Unlock Technologies" in user.achievements %}
                 <tr>
                     <td>Research</td>
                     <td>
                         <input type="number"
                             class="small_input medium txt_center"
-                            value="{{ user.price_buy_research }}"
-                            id="price_buy_research"
-                            name="price_buy_research" 
+                            value="{{ user.data.network_prices.demand.research }}"
+                            id="price-demand-research"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
                     </td>
                 </tr>
+                {% endif %}
+                {% if "Unlock Natural Resources" in user.achievements %}
                 <tr>
                     <td>Shipments</td>
                     <td>
                         <input type="number"
                             class="small_input medium txt_center"
-                            value="{{ user.price_buy_transport }}"
-                            id="price_buy_transport"
-                            name="price_buy_transport"
+                            value="{{ user.data.network_prices.demand.transport }}"
+                            id="price-demand-transport"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
                     </td>
                 </tr>
+                {% endif %}
                 {% macro extraction_facility_display_name(extraction_facility) -%}
                     {{ {"coal_mine": "Coal Mines", "gas_drilling_site": "Gas Extraction", "uranium_mine": "Uranium Mines"}[extraction_facility] }}
                 {%- endmacro %}
-                {% macro extraction_facility_price_buy(extraction_facility) -%}
-                    {{ 'price_buy_'+extraction_facility }}
-                {%- endmacro %}
-                {% macro extraction_facility_price_buy_value(extraction_facility) -%}
-                    {{ user[extraction_facility_price_buy(extraction_facility) ] }}
+                {% macro extraction_facility_demand_price_value(extraction_facility) -%}
+                    {{ user.data.network_prices.demand[extraction_facility] }}
                 {%- endmacro %}
                 {% for extraction_facility in ["coal_mine", "gas_drilling_site", "uranium_mine"] %}
                     {% if caps[extraction_facility] %}
@@ -304,9 +302,8 @@
                             <td>
                                 <input type="number"
                                     class="small_input medium txt_center"
-                                    value="{{ extraction_facility_price_buy_value(extraction_facility) }}"
-                                    id="{{ extraction_facility_price_buy(extraction_facility) }}"
-                                    name="{{ extraction_facility_price_buy(extraction_facility) }}"
+                                    value="{{ extraction_facility_demand_price_value(extraction_facility) }}"
+                                    id="price-demand-{{ extraction_facility }}"
                                     max="50000" />
                                 <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                 /MWh
@@ -320,9 +317,8 @@
                         <td>
                             <input type="number"
                                 class="small_input medium txt_center"
-                                value="{{ user.price_buy_carbon_capture }}"
-                                id="price_buy_carbon_capture"
-                                name="price_buy_carbon_capture"
+                                value="{{ user.data.network_prices.demand.carbon_capture }}"
+                                id="price-demand-carbon_capture"
                                 max="50000" />
                             <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                             /MWh
@@ -341,14 +337,8 @@
                         <th>Installed capacity</th>
                         <th>Min selling price</th>
                     </tr>
-                    {% macro power_facility_price(power_facility) -%}
-                        {{ 'price_'+power_facility }}
-                    {%- endmacro %}
-                    {% macro power_facility_price_value(power_facility) -%}
-                        {{ user[power_facility_price(power_facility) ] }}
-                    {%- endmacro %}
-                    {% macro power_facility_SCP(power_facility) -%}
-                        {{ 'SCP_'+power_facility }}
+                    {% macro power_facility_supply_price_value(power_facility) -%}
+                        {{ user.data.network_prices.supply[power_facility] }}
                     {%- endmacro %}
                     {% for power_facility in ["steam_engine", "coal_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
                         {% if caps[power_facility] %}
@@ -359,9 +349,8 @@
                                 <td>
                                     <input type="number"
                                         class="small_input medium txt_center"
-                                        value="{{ power_facility_price_value(power_facility) }}"
-                                        id="{{ power_facility_price(power_facility) }}"
-                                        name="{{ power_facility_price(power_facility) }}"
+                                        value="{{ power_facility_supply_price_value(power_facility) }}"
+                                        id="price-supply-{{ power_facility }}"
                                         min="-4.9"/>
                                     <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                     /MWh
@@ -383,14 +372,11 @@
                         <th>Min selling price</th>
                         <th>Max buying price</th>
                     </tr>
-                    {% macro storage_facility_price(storage_facility) -%}
-                        {{ 'price_'+storage_facility }}
+                    {% macro storage_facility_supply_price_value(storage_facility) -%}
+                        {{ user.data.network_prices.supply[storage_facility] }}
                     {%- endmacro %}
-                    {% macro storage_facility_price_buy(storage_facility) -%}
-                        {{ 'price_buy_'+storage_facility }}
-                    {%- endmacro %}
-                    {% macro storage_facility_SCP(storage_facility) -%}
-                        {{ 'SCP_'+storage_facility }}
+                    {% macro storage_facility_demand_price_value(storage_facility) -%}
+                        {{ user.data.network_prices.demand[storage_facility] }}
                     {%- endmacro %}
                     {% for storage_facility in ["small_pumped_hydro", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
                         {% if caps[storage_facility] %}
@@ -401,9 +387,8 @@
                                 <td>
                                     <input type="number"
                                         class="small_input medium txt_center"
-                                        value="{{ user[storage_facility_price(storage_facility) ] }}"
-                                        id="{{ storage_facility_price(storage_facility) }}"
-                                        name="{{ storage_facility_price(storage_facility) }}"
+                                        value="{{ user[storage_facility_supply_price_value(storage_facility) ] }}"
+                                        id="price-supply-{{ storage_facility }}"
                                         min="-4.9" />
                                     <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                     /MWh
@@ -411,9 +396,8 @@
                                 <td>
                                     <input type="number"
                                         class="small_input medium txt_center"
-                                        value="{{ user[storage_facility_price_buy(storage_facility) ] }}"
-                                        id="{{ storage_facility_price_buy(storage_facility) }}"
-                                        name="{{ storage_facility_price_buy(storage_facility) }}"
+                                        value="{{ user[storage_facility_demand_price_value(storage_facility) ] }}"
+                                        id="price-demand-{{ storage_facility }}"
                                         max="50000" />
                                     <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                     /MWh
