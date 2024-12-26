@@ -1,12 +1,12 @@
 const sortableList = document.querySelector(".priority_list");
 
-const storageCharging = [
-    "buy_small_pumped_hydro",
-    "buy_molten_salt",
-    "buy_large_pumped_hydro",
-    "buy_hydrogen_storage",
-    "buy_lithium_ion_batteries",
-    "buy_solid_state_batteries",
+const storageFacilities = [
+    "small_pumped_hydro",
+    "molten_salt",
+    "large_pumped_hydro",
+    "hydrogen_storage",
+    "lithium_ion_batteries",
+    "solid_state_batteries",
 ];
 
 let renewables;
@@ -101,19 +101,18 @@ if (sortableList) {
                 for (facility of raw_data[1]) {
                     let name;
                     let generation = true;
-                    if (storageCharging.includes(facility)) {
-                        generation = false;
-                        name = const_config.assets[facility.slice(4)].name + " (charge)";
-                    } else if (storageCharging.includes("buy_" + facility)) {
+                    if (storageFacilities.includes(facility)) {
                         name = const_config.assets[facility].name + " (discharge)";
-                    } else if (facility.includes("buy_")) {
+                    } else if (facility.includes("demand-")) {
                         generation = false;
-                        if (facility.slice(4) in const_config.assets) {
-                            name = const_config.assets[facility.slice(4)].name;
+                        if (storageFacilities.includes(facility.slice(7))) {
+                            name = const_config.assets[facility.slice(7)].name + " (charge)";
+                        } else if (facility.slice(7) in const_config.assets) {
+                            name = const_config.assets[facility.slice(7)].name;
                         } else if (facility == "buy_transport") {
                             name = "Shipments";
                         } else {
-                            name = facility.charAt(4).toUpperCase() + facility.slice(5);
+                            name = facility.charAt(7).toUpperCase() + facility.slice(8);
                         }
                     } else {
                         name = const_config.assets[facility].name;

@@ -306,17 +306,20 @@ def get_players() -> Response:
 @http.route("/get_generation_priority", methods=["GET"])
 def get_generation_priority() -> Response:
     """Get generation and demand priority for this player."""
-    list_of_renewables = current_user.data.list_of_renewables
-    controllables_priorities = current_user.data.priorities_of_controllables
-    for demand in current_user.data.priorities_of_demand:
-        for j, f in enumerate(controllables_priorities):
-            if getattr(current_user, "price_buy_" + demand) < getattr(current_user, "price_" + f):
-                controllables_priorities.insert(j, "buy_" + demand)
+    controllables_priorities = current_user.data.priorities_of_controllables.copy()
+    for demand_type in current_user.data.priorities_of_demand:
+        for i, facility in enumerate(controllables_priorities):
+            if "demand-" in facility:
+                price_i = current_user.data.network_prices["demand"][facility[7:]]
+            else:
+                price_i = current_user.data.network_prices["supply"][facility]
+            if current_user.data.network_prices["demand"][demand_type] < price_i:
+                controllables_priorities.insert(i, "demand-" + demand_type)
                 break
-            if j + 1 == len(controllables_priorities):
-                controllables_priorities.append("buy_" + demand)
+            if i + 1 == len(controllables_priorities):
+                controllables_priorities.append("demand-" + demand_type)
                 break
-    return jsonify(list_of_renewables, controllables_priorities)
+    return jsonify(current_user.data.list_of_renewables, controllables_priorities)
 
 
 @http.route("/get_constructions", methods=["GET"])
@@ -541,7 +544,6 @@ def change_network_prices() -> Response:
     if not current_user.is_in_network:
         return jsonify({"response": "notAuthorized"}), 404
     updated_prices = request.get_json()["prices"]
-    print(updated_prices)
     energetica.utils.network_helpers.set_network_prices(g.engine, current_user, updated_prices)
     return jsonify({"response": "success"})
 

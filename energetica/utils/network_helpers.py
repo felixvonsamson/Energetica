@@ -126,12 +126,22 @@ def change_facility_priority(engine: GameEngine, player: Player, priority: list[
     This function is executed when the facilities priority is changed by changing the order in the interactive
     table. The function reassigns the selling prices of the facilities according to the new order.
     """
-    old_set = set(
-        player.data.priorities_of_controllables + player.data.list_of_renewables + player.data.priorities_of_demand
-    )
-    # TODO (Felix): Need to distinguish charging and discharging of storage facilities
+    old_set = {f"demand-{demand_type}" for demand_type in player.data.priorities_of_demand}
+    old_set.update(player.data.priorities_of_controllables)
     if old_set != set(priority):
         raise GameError("malformedRequest")
-    price_list = [getattr(player, "price_" + facility) for facility in priority]
-    prices = dict(zip(priority, sorted(price_list)))
-    set_network_prices(engine, player, prices)
+
+    price_list = [
+        player.data.network_prices["demand"][facility[7:]]
+        if facility.startswith("demand-")
+        else player.data.network_prices["supply"][facility]
+        for facility in priority
+    ]
+    sorted_prices = sorted(price_list)
+    updated_prices = {"supply": {}, "demand": {}}
+    for facility, price in zip(priority, sorted_prices):
+        if facility.startswith("demand-"):
+            updated_prices["demand"][facility[7:]] = price
+        else:
+            updated_prices["supply"][facility] = price
+    set_network_prices(engine, player, updated_prices)
