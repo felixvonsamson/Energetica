@@ -32,7 +32,7 @@
           <td>
             <a href="{{ url_for('views.power_facilities') }}">Power Facilities page</a><br>
             <a href="{{ url_for('views.storage_facilities') }}">Storage Facilities page</a><br>
-            {% if not user or "Unlock Natural Resources" in user.achievements %}
+            {% if not user or "Unlock Natural Resources" in user.data.achievements %}
               <a href="{{ url_for('views.extraction_facilities') }}">Extraction Facilities page</a><br>
             {% else %}
               (locked)<br>
@@ -55,7 +55,7 @@
           <td>Shipments</td>
           <td><a href="{{ url_for('wiki.render_template_wiki', template_name='resources', _anchor='Resource_Market') }}">Resource Market</a></td>
           <td>
-            {% if not user or "Unlock Natural Resources" in user.achievements %}
+            {% if not user or "Unlock Natural Resources" in user.data.achievements %}
               <a href="{{ url_for('views.resource_market') }}">Resource Market page</a> 
             {% else %}
               (locked)
@@ -104,7 +104,7 @@
     one research worker. 
     <br>
     Researching 
-    {% if "Unlock Technologies" in user.achievements %}
+    {% if "Unlock Technologies" in user.data.achievements %}
     <a href="{{ url_for('views.technology', _anchor='Building Technology') }}">Building Technology</a>
     {% else %}Building Technology{% endif %}
     will unlock additional construction workers, and increase the speed of construction projects.

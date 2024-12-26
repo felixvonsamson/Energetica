@@ -42,8 +42,8 @@ def init_test_players(engine):
         """This function creates and initializes a network."""
         # Unlock the network achievement for all members
         for player in members:
-            if "Unlock Network" not in player.achievements:
-                player.add_to_list("achievements", "Unlock Network")
+            if "Unlock Network" not in player.data.achievements:
+                player.data.achievements.append("Unlock Network")
 
         network = Network.query.filter_by(name=name).first()
         if network:
@@ -71,7 +71,7 @@ def init_test_players(engine):
                 player.coal = 300_000
                 player.gas = 100_000
                 player.uranium = 500
-                player.rest_of_priorities = ""
+                player.data.priorities_of_controllables = ""
 
                 add_asset(player, "industry", 18)
                 add_asset(player, "warehouse", 1)
@@ -194,7 +194,7 @@ def init_test_players(engine):
     #     player.coal = 4_500_000
     #     player.gas = 80_000_000
     #     player.uranium = 4_500
-    #     player.rest_of_priorities = ""
+    #     player.data.priorities_of_controllables = ""
 
     #     add_asset(player, "industry", 21)
     #     add_asset(player, "laboratory", 5)
@@ -226,7 +226,7 @@ def init_test_players(engine):
     # player2 = create_player("user2", "password")
     # if player2:
     #     Hex.query.filter_by(id=84).first().player_id = player2.id
-    #     player2.rest_of_priorities = ""
+    #     player2.data.priorities_of_controllables = ""
     #     add_asset(player2, "industry", 19)
     #     add_asset(player2, "warehouse", 1)
     #     add_asset(player2, "steam_engine", 10)
@@ -236,7 +236,7 @@ def init_test_players(engine):
     # player3 = create_player("user3", "password")
     # if player3:
     #     Hex.query.filter_by(id=143).first().player_id = player3.id
-    #     player3.rest_of_priorities = ""
+    #     player3.data.priorities_of_controllables = ""
     #     add_asset(player3, "industry", 8)
     #     add_asset(player3, "onshore_wind_turbine", 5)
     #     db.session.commit()
@@ -244,7 +244,7 @@ def init_test_players(engine):
     # player4 = create_player("user4", "password")
     # if player4:
     #     Hex.query.filter_by(id=28).first().player_id = player4.id
-    #     player4.rest_of_priorities = ""
+    #     player4.data.priorities_of_controllables = ""
     #     add_asset(player4, "warehouse", 1)
     #     add_asset(player4, "watermill", 1)
     #     add_asset(player4, "steam_engine", 1)

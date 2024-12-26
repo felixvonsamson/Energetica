@@ -154,7 +154,7 @@
     maximal production according to the available fuel stocks.
   </p>
   <p>
-    {% if "Unlock Technologies" in user.achievements %}<a href="{{ url_for('views.technology', _anchor='Thermodynamics') }}">
+    {% if "Unlock Technologies" in user.data.achievements %}<a href="{{ url_for('views.technology', _anchor='Thermodynamics') }}">
     Thermodynamics</a>{% else %}Thermodynamics{% endif %} 
     influences facility efficiency, decreasing fuel consumption per unit of energy.
   </p>

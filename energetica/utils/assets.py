@@ -32,16 +32,16 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
                 player.data.rolling_history.add_subcategory("demand", construction.name)
                 player.data.rolling_history.add_subcategory("emissions", construction.name)
                 player.data.cumul_emissions.add_category(construction.name)
-                player.add_to_list("demand_priorities", construction.name)
+                player.data.priorities_of_demand.append(construction.name)
                 reorder_facility_priorities(engine, player)
             if construction.name == "warehouse":
                 for resource in ["coal", "gas", "uranium"]:
                     player.data.rolling_history.add_subcategory("resources", resource)
             if construction.name == "laboratory":
-                player.add_to_list("demand_priorities", "research")
+                player.data.priorities_of_demand.append("research")
                 reorder_facility_priorities(engine, player)
             if construction.name == "warehouse":
-                player.add_to_list("demand_priorities", "transport")
+                player.data.priorities_of_demand.append("transport")
                 reorder_facility_priorities(engine, player)
 
         setattr(player, construction.name, getattr(player, construction.name) + 1)
@@ -68,19 +68,22 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
             player.data.rolling_history.add_subcategory("emissions", construction.name)
             player.data.cumul_emissions.add_category(construction.name)
         if construction.name in engine.extraction_facilities + engine.storage_facilities:
-            player.add_to_list("demand_priorities", construction.name)
+            player.data.priorities_of_demand.append(construction.name)
             reorder_facility_priorities(engine, player)
         if construction.name in engine.renewables:
-            player.add_to_list("self_consumption_priority", construction.name)
+            player.data.list_of_renewables.append(construction.name)
             reorder_facility_priorities(engine, player)
         if construction.name in engine.storage_facilities + engine.controllable_facilities:
-            player.add_to_list("rest_of_priorities", construction.name)
+            player.data.priorities_of_controllables.append(construction.name)
             reorder_facility_priorities(engine, player)
 
     player.check_construction_achievements(construction.name)
 
     priority_list_name = "research_priorities" if construction.family == "Technologies" else "construction_priorities"
-    player.remove_from_list(priority_list_name, construction.id)
+    if priority_list_name == "research_priorities":
+        player.data.research_priorities.remove(construction.id)
+    else:
+        player.data.construction_priorities.remove(construction.id)
     family = construction.family
     db.session.delete(construction)
     db.session.commit()
@@ -177,7 +180,7 @@ def deploy_available_workers(player: Player, family: str, *, start_now=False) ->
 
     if available_workers <= 0:
         return
-    priority_list = player.read_list(priority_list_name)
+    priority_list = getattr(player.data, priority_list_name)
 
     for priority_index, construction_id in enumerate(priority_list):
         construction: OngoingConstruction = db.session.get(OngoingConstruction, construction_id)
@@ -203,7 +206,7 @@ def deploy_available_workers(player: Player, family: str, *, start_now=False) ->
         if insertion_index is not None:
             priority_list.remove(construction_id)
             priority_list.insert(insertion_index, construction_id)
-            player.write_list(priority_list_name, priority_list)
+            setattr(player.data, priority_list_name, priority_list)
         if available_workers <= 0:
             return
 
@@ -281,13 +284,13 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     if ActiveFacility.query.filter_by(facility=facility.facility, player_id=player.id).count() == 0:
         # remove facility from facility priorities if it was the last one
         if facility.facility in engine.extraction_facilities + engine.storage_facilities:
-            player.remove_from_list("demand_priorities", facility.facility)
+            player.data.priorities_of_demand.remove(facility.facility)
             reorder_facility_priorities(engine, player)
         if facility.facility in engine.renewables:
-            player.remove_from_list("self_consumption_priority", facility.facility)
+            player.data.list_of_renewables.remove(facility.facility)
             reorder_facility_priorities(engine, player)
         if facility.facility in engine.storage_facilities + engine.controllable_facilities:
-            player.remove_from_list("rest_of_priorities", facility.facility)
+            player.data.priorities_of_controllables.remove(facility.facility)
             reorder_facility_priorities(engine, player)
     facility_name = engine.const_config["assets"][facility.facility]["name"]
     if decommissioning:
@@ -348,8 +351,8 @@ def package_projects_data(player: Player) -> dict:
     """Package ongoing constructions for a particular player."""
     # TODO(mglst): Rework the return dict structure (involves back + front end)
     projects = player.package_constructions()
-    construction_priorities = player.read_list("construction_priorities")
-    research_priorities = player.read_list("research_priorities")
+    construction_priorities = player.data.construction_priorities
+    research_priorities = player.data.research_priorities
     return {0: projects, 1: construction_priorities, 2: research_priorities}
 
 
@@ -414,11 +417,10 @@ def queue_project(
     )
     db.session.add(new_construction)
     db.session.commit()
-    player.add_to_list(
-        "research_priorities" if asset in engine.technologies else "construction_priorities",
-        new_construction.id,
-    )
-    db.session.commit()
+    if asset in engine.technologies:
+        player.data.research_priorities.append(new_construction.id)
+    else:
+        player.data.construction_priorities.append(new_construction.id)
     try:
         toggle_pause_project(player, new_construction)
     except GameError:
@@ -465,7 +467,7 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
     )
 
     dependents = []
-    priority_list = player.read_list(priority_list_name)
+    priority_list = getattr(player.data, priority_list_name)
     construction_priority_index = priority_list.index(construction.id)
     for candidate_dependent_id in priority_list[construction_priority_index + 1 :]:
         candidate_dependent: OngoingConstruction = db.session.get(OngoingConstruction, candidate_dependent_id)
@@ -487,7 +489,10 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
     if construction.name in ["small_water_dam", "large_water_dam", "watermill"]:
         refund *= construction.multiplier_2
     player.money += refund
-    player.remove_from_list(priority_list_name, construction.id)
+    if priority_list_name == "research_priorities":
+        player.data.research_priorities.remove(construction.id)
+    else:
+        player.data.construction_priorities.remove(construction.id)
     db.session.delete(construction)
 
     db.session.flush()
@@ -515,7 +520,7 @@ def decrease_project_priority(player: Player, construction: OngoingConstruction)
         raise GameError(msg)
     attr = "research_priorities" if construction.name in engine.technologies else "construction_priorities"
 
-    priority_list: list[int] = player.read_list(attr)
+    priority_list: list[int] = getattr(player.data, attr)
     index = priority_list.index(construction.id)
     if index == len(priority_list) - 1:
         return
@@ -567,7 +572,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
 
     if not construction.was_paused_by_player():
         # project is currently not paused by player, and should be paused
-        priority_list: list[int] = player.read_list(priority_list_name)
+        priority_list: list[int] = getattr(player.data, priority_list_name)
         construction_index = priority_list.index(construction.id)
         construction.pause()
         dependency_ids = [construction.id]
@@ -599,7 +604,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
                 *dependency_ids,
                 *priority_list[insertion_index:],
             ]
-        player.write_list(priority_list_name, priority_list)
+        setattr(player.data, priority_list_name, priority_list)
 
         # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
         db.session.flush()
@@ -619,7 +624,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
         construction.unpause()
         # project status is now ONGOING or WAITING.
         # Reorder the priority list
-        priority_list = player.read_list(priority_list_name)
+        priority_list = getattr(player.data, priority_list_name)
         priority_list.remove(construction.id)
         insertion_index = None
         for new_index, other_construction_id in enumerate(priority_list):
@@ -631,7 +636,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
             priority_list.insert(insertion_index, construction.id)
         else:
             priority_list.append(construction.id)
-        player.write_list(priority_list_name, priority_list)
+        setattr(player.data, priority_list_name, priority_list)
         engine.log(f"{player.username} unpaused the construction {construction.id} {construction.name}")
 
     db.session.commit()

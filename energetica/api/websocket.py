@@ -339,7 +339,7 @@ def rest_get_achievements(player: Player):
     response = {
         "type": "getAdvancements",
         "data": {
-            achievement: achievement in player.achievements
+            achievement: achievement in player.data.achievements
             for achievement in [
                 "Unlock Network",
                 "Unlock Technologies",

@@ -13,7 +13,7 @@ from energetica.game_engine import GameEngine, GameError
 
 def join_network(engine, player, network):
     """shared API method to join a network."""
-    if "Unlock Network" not in player.achievements:
+    if "Unlock Network" not in player.data.achievements:
         raise GameError("networkNotUnlocked")
     if network is None:
         raise GameError("noSuchNetwork")
@@ -45,7 +45,7 @@ def create_network(engine, player, name) -> Network:
     """shared API method to create a network. Network name must pass validation,
     namely it must not be too long, nor too short, and must not already be in
     use."""
-    if "Unlock Network" not in player.achievements:
+    if "Unlock Network" not in player.data.achievements:
         raise GameError("networkNotUnlocked")
     if len(name) < 3 or len(name) > 40:
         raise GameError("nameLengthInvalid")
@@ -88,24 +88,15 @@ def leave_network(engine, player):
 
 
 def reorder_facility_priorities(engine: GameEngine, player: Player):
-    """Reorders the player's `rest_of_priorities`, `self_consumption_priority`
-    and `demand_priorities` according to network prices"""
-
-    def sort_priority(priority_list, prefix="price_"):
-        return sorted(priority_list, key=lambda x: getattr(player, prefix + x))
-
-    def sort_scp(scp_list):
-        return sorted(scp_list, key=engine.renewables.index)
-
-    rest_list = sort_priority(player.read_list("rest_of_priorities"))
-    scp_list = sort_scp(player.read_list("self_consumption_priority"))
-    demand_list = sort_priority(player.read_list("demand_priorities"), prefix="price_buy_")
-    demand_list.reverse()
-    comma = ","
-    player.self_consumption_priority = comma.join(scp_list)
-    player.rest_of_priorities = comma.join(rest_list)
-    player.demand_priorities = comma.join(demand_list)
-    db.session.commit()
+    """Reorders the player's `priorities_of_controllables`, `priorities_of_demand` and `list_of_renewables` according
+    to the players network prices :
+    - The controllables are sorted in ascending price order
+    - The demand is sorted in descending price order
+    - The renewables are sorted in the same order for all players
+    """
+    player.data.priorities_of_controllables.sort(key=lambda x: player.data.network_prices["supply"][x])
+    player.data.priorities_of_demand.sort(key=lambda x: player.data.network_prices["demand"][x], reverse=True)
+    player.data.list_of_renewables.sort(key=engine.renewables.index)
 
 
 def set_network_prices(engine: GameEngine, player: Player, updated_prices: dict[str, dict[str, float]]):
@@ -124,7 +115,7 @@ def set_network_prices(engine: GameEngine, player: Player, updated_prices: dict[
                 raise GameError("malformedRequest")
             if new_price <= -5:
                 raise GameError("priceTooLow")
-            player.network_prices[price_type][facility] = new_price
+            player.data.network_prices[price_type][facility] = new_price
 
     engine.log(f"{player.username} updated their prices")
     reorder_facility_priorities(engine, player)
@@ -136,10 +127,9 @@ def change_facility_priority(engine: GameEngine, player: Player, priority: list[
     table. The function reassigns the selling prices of the facilities according to the new order.
     """
     old_set = set(
-        player.read_list("rest_of_priorities")
-        + player.read_list("self_consumption_priority")
-        + player.read_list("demand_priorities")
+        player.data.priorities_of_controllables + player.data.list_of_renewables + player.data.priorities_of_demand
     )
+    # TODO (Felix): Need to distinguish charging and discharging of storage facilities
     if old_set != set(priority):
         raise GameError("malformedRequest")
     price_list = [getattr(player, "price_" + facility) for facility in priority]

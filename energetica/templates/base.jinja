@@ -182,7 +182,7 @@
             <span style="padding:8px 0">Electricity</span>
           </a>
 
-          {% if "First Storage Facility" in user.achievements %}
+          {% if "First Storage Facility" in user.data.achievements %}
           <a class="navbar_item bone flex-row"
               id="production_overview"
               href="{{ url_for('overviews.storage') }}">
@@ -192,7 +192,7 @@
           </a>
           {% endif %}
 
-          {% if "Unlock Natural Resources" in user.achievements %}
+          {% if "Unlock Natural Resources" in user.data.achievements %}
           <a class="navbar_item bone flex-row"
               id="production_overview"
               href="{{ url_for('overviews.resources') }}">
@@ -242,7 +242,7 @@
             <span style="padding:8px 0">Storage Facilities</span>
           </a>
           
-          {% if "Unlock Natural Resources" in user.achievements %}
+          {% if "Unlock Natural Resources" in user.data.achievements %}
           <a class="navbar_item bone flex-row"
               id="extraction_facilities"
               href="{{ url_for('views.extraction_facilities') }}">
@@ -280,7 +280,7 @@
             <span style="padding:8px 0">Messages</span>
           </a>
 
-          {% if "Unlock Network" in user.achievements %}
+          {% if "Unlock Network" in user.data.achievements %}
           <a class="navbar_item bone flex-row" id="network" href="{{ url_for('views.network') }}">
             <img src="{{ url_for('static', filename='images/icons/network.png') }}"
                 class="navbar_icon margin-small" />
@@ -305,7 +305,7 @@
         </div>
       </li>
 
-      {% if "Unlock Technologies" in user.achievements %}
+      {% if "Unlock Technologies" in user.data.achievements %}
       <li class="nav-item">
         <a class="navbar_item tan_green flex-row"
             id="technology"
@@ -317,7 +317,7 @@
       </li>
       {% endif %}
 
-      {% if "Unlock Natural Resources" in user.achievements %}
+      {% if "Unlock Natural Resources" in user.data.achievements %}
       <li class="nav-item">
         <a class="navbar_item tan_green flex-row"
             id="resource_market"

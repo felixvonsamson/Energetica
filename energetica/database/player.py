@@ -39,6 +39,16 @@ class PlayerData:
     """Dataclass that stores the player data."""
 
     network_prices: PlayerPrices = field(default_factory=PlayerPrices)
+    list_of_renewables: list[str] = field(default_factory=list)
+    priorities_of_controllables: list[str] = field(default_factory=lambda: ["steam_engine"])
+    priorities_of_demand: list[str] = field(default_factory=lambda: ["industry", "construction"])
+
+    # NOTE (Felix): do we want to still have list of ids for player constructions and research or do we want to
+    # directly store the objects here?
+    construction_priorities: list[int] = field(default_factory=list)
+    research_priorities: list[int] = field(default_factory=list)
+
+    achievements: list[str] = field(default_factory=list)
 
     rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
     capacities: CapacityData = field(default_factory=CapacityData)
@@ -160,9 +170,6 @@ class Player(db.Model, UserMixin):
     nuclear_engineering = db.Column(db.Integer, default=0)
 
     # Priority lists
-    self_consumption_priority = db.Column(db.Text, default="")
-    rest_of_priorities = db.Column(db.Text, default="steam_engine")
-    demand_priorities = db.Column(db.Text, default="industry,construction")
     construction_priorities = db.Column(db.Text, default="")
     research_priorities = db.Column(db.Text, default="")
 
@@ -210,8 +217,6 @@ class Player(db.Model, UserMixin):
     imported_energy = db.Column(db.Float, default=0)
     exported_energy = db.Column(db.Float, default=0)
     captured_co2 = db.Column(db.Float, default=0)
-
-    achievements = db.Column(db.Text, default="")
 
     under_construction = db.relationship("OngoingConstruction")
     resource_on_sale = db.relationship("ResourceOnSale", backref="player")
@@ -283,34 +288,6 @@ class Player(db.Model, UserMixin):
             .count()
         )
         return self.lab_workers - occupied_workers
-
-    def read_list(self, attr: str) -> list:
-        """Return a list of any player list that is stored as a string."""
-        if getattr(self, attr) == "":
-            return []
-        priority_list = getattr(self, attr).split(",")
-        if attr in ["construction_priorities", "research_priorities"]:
-            return list(map(int, priority_list))
-        return priority_list
-
-    def write_list(self, attr: str, list_data: list) -> None:
-        """Transform a list into a sting and store it in the player database."""
-        setattr(self, attr, ",".join(map(str, list_data)))
-
-    def add_to_list(self, attr: str, value) -> None:
-        """Add an element to a list stored as a string in the player database."""
-        # TODO(mglst): assign the correct type to value, probably str
-        if getattr(self, attr) == "":
-            setattr(self, attr, str(value))
-        else:
-            setattr(self, attr, getattr(self, attr) + f",{value}")
-
-    def remove_from_list(self, attr: str, value) -> None:
-        """Remove an element from a list stored as a string in the player database."""
-        # TODO(mglst): assign the correct type to value, probably str
-        id_list = getattr(self, attr).split(",")
-        id_list.remove(str(value))
-        setattr(self, attr, ",".join(id_list))
 
     def package_chat_messages(self, chat_id: int) -> list[dict]:
         """Package the last 20 messages of a chat."""
@@ -549,7 +526,7 @@ class Player(db.Model, UserMixin):
 
     def discovered_greenhouse_gas_effect(self) -> bool:
         """Return True if the player has discovered the greenhouse gas effect."""
-        return "Discover the Greenhouse Effect" in self.achievements
+        return "Discover the Greenhouse Effect" in self.data.achievements
 
     def check_continuous_achievements(self) -> None:
         """Check for player achievements that are linked to values that are updated every tick."""
@@ -563,9 +540,9 @@ class Player(db.Model, UserMixin):
         ]:
             for i, value in enumerate(achievements[achievement]["milestones"]):
                 achievement_name = achievements[achievement]["name"]
-                if f"{achievement_name} {i+1}" not in self.achievements:
+                if f"{achievement_name} {i+1}" not in self.data.achievements:
                     if getattr(self, achievements[achievement]["metric"]) >= value:
-                        self.add_to_list("achievements", f"{achievement_name} {i+1}")
+                        self.data.achievements.append(f"{achievement_name} {i+1}")
                         self.xp += achievements[achievement]["rewards"][i]
                         message = achievements[achievement]["message"]
                         if achievement == "network":
@@ -586,10 +563,10 @@ class Player(db.Model, UserMixin):
         for achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
             achievement_name = achievements[achievement]["name"]
             if (
-                achievement_name not in self.achievements
+                achievement_name not in self.data.achievements
                 and construction_name in achievements[achievement]["unlocked_with"]
             ):
-                self.add_to_list("achievements", achievement_name)
+                self.data.achievements.append(achievement_name)
                 self.xp += achievements[achievement]["reward"]
                 message = achievements[achievement]["message"].format(reward=achievements[achievement]["reward"])
                 self.notify("Achievement", message)
@@ -599,10 +576,10 @@ class Player(db.Model, UserMixin):
         achievement_name = achievements["technology"]["name"]
         for i, value in enumerate(achievements["technology"]["milestones"]):
             if (
-                f"{achievement_name} {i+1}" not in self.achievements
+                f"{achievement_name} {i+1}" not in self.data.achievements
                 and getattr(self, achievements["technology"]["metric"]) >= value
             ):
-                self.add_to_list("achievements", f"{achievement_name} {i+1}")
+                self.data.achievements.append(f"{achievement_name} {i+1}")
                 self.xp += achievements["technology"]["rewards"][i]
                 message = achievements["technology"]["message"].format(
                     value=value,
@@ -614,12 +591,12 @@ class Player(db.Model, UserMixin):
         """Check for trading achievement."""
         achievement_name = achievements["trading"]["name"]
         for i, value in enumerate(achievements["trading"]["milestones"]):
-            if f"{achievement_name} {i+1}" not in self.achievements and (
+            if f"{achievement_name} {i+1}" not in self.data.achievements and (
                 getattr(self, achievements["trading"]["metric"][0])
                 + getattr(self, achievements["trading"]["metric"][1])
                 >= value
             ):
-                self.add_to_list("achievements", f"{achievement_name} {i+1}")
+                self.data.achievements.append(f"{achievement_name} {i+1}")
                 self.xp += achievements["trading"]["rewards"][i]
                 message = achievements["trading"]["message"].format(
                     value=value,
@@ -631,11 +608,13 @@ class Player(db.Model, UserMixin):
         """Package the progress information for the upcoming achievements."""
         upcoming_achievements = {}
         for achievement, achievement_data in achievements.items():
-            requirements_met = all(requirement in self.achievements for requirement in achievement_data["requirements"])
+            requirements_met = all(
+                requirement in self.data.achievements for requirement in achievement_data["requirements"]
+            )
             if not requirements_met:
                 continue
             if achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
-                if achievement_data["name"] not in self.achievements:
+                if achievement_data["name"] not in self.data.achievements:
                     upcoming_achievements[achievement] = {
                         "name": achievement_data["name"],
                         "reward": achievement_data["reward"],
@@ -644,7 +623,7 @@ class Player(db.Model, UserMixin):
                     }
             else:
                 for i, value in enumerate(achievement_data["milestones"]):
-                    if f"{achievement_data['name']} {i+1}" not in self.achievements:
+                    if f"{achievement_data['name']} {i+1}" not in self.data.achievements:
                         if achievement == "trading":
                             status = getattr(self, achievement_data["metric"][0]) + getattr(
                                 self,
@@ -740,7 +719,7 @@ class Player(db.Model, UserMixin):
 
     def package_construction_queue(self) -> list:
         """Package the player's construction queue (list of construction_ids)."""
-        return self.read_list("construction_priorities")
+        return self.data.construction_priorities
 
     def package_active_facilities(self) -> dict[str, dict[int, dict[str, any]]]:
         """Package the player's active facilities."""

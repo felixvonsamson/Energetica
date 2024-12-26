@@ -4,7 +4,6 @@
 {% endblock title %}
 {% block content %}
     {% set const_config = engine.const_config["assets"] %}
-    {% set SCP = user.self_consumption_priority.split(',') %}
     <div class="flex-row huge title">
         Network{% if user.network %}:&nbsp;<b>{{ user.network.name }}</b>{% endif %}
         <div class="pine info_icon_container"
@@ -261,7 +260,7 @@
                         /MWh
                     </td>
                 </tr>
-                {% if "Unlock Technologies" in user.achievements %}
+                {% if "Unlock Technologies" in user.data.achievements %}
                 <tr>
                     <td>Research</td>
                     <td>
@@ -275,7 +274,7 @@
                     </td>
                 </tr>
                 {% endif %}
-                {% if "Unlock Natural Resources" in user.achievements %}
+                {% if "Unlock Natural Resources" in user.data.achievements %}
                 <tr>
                     <td>Shipments</td>
                     <td>
@@ -387,7 +386,7 @@
                                 <td>
                                     <input type="number"
                                         class="small_input medium txt_center"
-                                        value="{{ user[storage_facility_supply_price_value(storage_facility) ] }}"
+                                        value="{{ storage_facility_supply_price_value(storage_facility) }}"
                                         id="price-supply-{{ storage_facility }}"
                                         min="-4.9" />
                                     <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
@@ -396,7 +395,7 @@
                                 <td>
                                     <input type="number"
                                         class="small_input medium txt_center"
-                                        value="{{ user[storage_facility_demand_price_value(storage_facility) ] }}"
+                                        value="{{ storage_facility_demand_price_value(storage_facility) }}"
                                         id="price-demand-{{ storage_facility }}"
                                         max="50000" />
                                     <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>

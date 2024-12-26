@@ -346,7 +346,7 @@ def calculate_generation_without_market(engine, new_values, player):
             )
 
     # demands are demanded on the internal market
-    for demand_type in player.demand_priorities.split(","):
+    for demand_type in player.data.priorities_of_demand:
         if demand_type in demand:
             price = getattr(player, "price_buy_" + demand_type)
             internal_market = bid(
@@ -388,16 +388,14 @@ def calculate_generation_with_market(engine, new_values, market, player):
         if player.data.capacities[facility] is not None:
             market = offer(market, player.id, generation[facility], -5, facility)
 
-    # bid demand on the market at the set prices
-    demand_priorities = player.demand_priorities.split(",")
-
     # allow a maximum overdraft of the equivalent of the daily income of the industry
     max_overdraft = -player.config["industry"]["income_per_day"]
     if player.money < max_overdraft:
         player.notify(
             "Not Enough Money", "You exceeded your credit limit, you can't buy electricity on the market anymore."
         )
-    for demand_type in demand_priorities:
+    # bid demand on the market at the set prices
+    for demand_type in player.data.priorities_of_demand:
         if player.money >= max_overdraft:
             bid_q = demand[demand_type]
             price = getattr(player, "price_buy_" + demand_type)
@@ -407,7 +405,7 @@ def calculate_generation_with_market(engine, new_values, market, player):
 
     resource_reservations = reset_resource_reservations()
     # Sell capacities of remaining facilities on the market
-    for facility in player.read_list("rest_of_priorities") + player.read_list("self_consumption_priority"):
+    for facility in player.data.priorities_of_controllables + player.data.list_of_renewables:
         if engine.const_config["assets"][facility]["ramping_time"] != 0:
             if player.data.capacities[facility] is not None:
                 max_prod = calculate_prod(
@@ -896,7 +894,7 @@ def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
     ):
         return
     if demand_type == "construction":
-        construction_priorities = player.read_list("construction_priorities")
+        construction_priorities = player.data.construction_priorities
         cumul_demand = 0.0
         for i in range(min(len(construction_priorities), player.construction_workers)):
             construction_id = construction_priorities[i]
@@ -911,7 +909,7 @@ def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
         return
 
     if demand_type == "research":
-        research_priorities = player.read_list("research_priorities")
+        research_priorities = player.data.research_priorities
         cumul_demand = 0.0
         for i in range(min(len(research_priorities), player.lab_workers)):
             construction_id = research_priorities[i]

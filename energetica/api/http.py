@@ -25,7 +25,6 @@ from energetica.database.network import Network
 from energetica.database.ongoing_construction import OngoingConstruction
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.database.shipment import Shipment
 from energetica.game_engine import Confirm, GameError
 from energetica.utils.assets import package_projects_data
 from energetica.utils.misc import flash_error
@@ -307,26 +306,25 @@ def get_players() -> Response:
 @http.route("/get_generation_priority", methods=["GET"])
 def get_generation_priority() -> Response:
     """Get generation and demand priority for this player."""
-    renewable_priorities = current_user.read_list("self_consumption_priority")
-    rest_of_priorities = current_user.read_list("rest_of_priorities")
-    demand_priorities = current_user.read_list("demand_priorities")
-    for demand in demand_priorities:
-        for j, f in enumerate(rest_of_priorities):
+    list_of_renewables = current_user.data.list_of_renewables
+    controllables_priorities = current_user.data.priorities_of_controllables
+    for demand in current_user.data.priorities_of_demand:
+        for j, f in enumerate(controllables_priorities):
             if getattr(current_user, "price_buy_" + demand) < getattr(current_user, "price_" + f):
-                rest_of_priorities.insert(j, "buy_" + demand)
+                controllables_priorities.insert(j, "buy_" + demand)
                 break
-            if j + 1 == len(rest_of_priorities):
-                rest_of_priorities.append("buy_" + demand)
+            if j + 1 == len(controllables_priorities):
+                controllables_priorities.append("buy_" + demand)
                 break
-    return jsonify(renewable_priorities, rest_of_priorities)
+    return jsonify(list_of_renewables, controllables_priorities)
 
 
 @http.route("/get_constructions", methods=["GET"])
 def get_constructions() -> Response:
     """Get list of facilities under construction for this player."""
     projects = current_user.package_constructions()
-    construction_priorities = current_user.read_list("construction_priorities")
-    research_priorities = current_user.read_list("research_priorities")
+    construction_priorities = current_user.data.construction_priorities
+    research_priorities = current_user.data.research_priorities
     return jsonify(projects, construction_priorities, research_priorities)
 
 
@@ -543,6 +541,7 @@ def change_network_prices() -> Response:
     if not current_user.is_in_network:
         return jsonify({"response": "notAuthorized"}), 404
     updated_prices = request.get_json()["prices"]
+    print(updated_prices)
     energetica.utils.network_helpers.set_network_prices(g.engine, current_user, updated_prices)
     return jsonify({"response": "success"})
 
@@ -551,7 +550,7 @@ def change_network_prices() -> Response:
 @log_action
 def request_change_facility_priority() -> Response:
     """Change the generation priority."""
-    if "Unlock Network" not in current_user.achievements:
+    if "Unlock Network" not in current_user.data.achievements:
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
     priority = request_data["priority"]

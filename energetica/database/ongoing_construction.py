@@ -191,7 +191,7 @@ class OngoingConstruction(db.Model):
         level = None
         if self.family == "Functional Facilities":
             # For functional facilities, the only prerequisites are ongoing constructions of the same type
-            priority_list = player.read_list("construction_priorities")
+            priority_list = player.data.construction_priorities
             this_priority_index = priority_list.index(self.id)
             # Go through all ongoing constructions that are higher up in the priority order
             level = getattr(player, self.name) + 1
@@ -206,7 +206,7 @@ class OngoingConstruction(db.Model):
             engine: GameEngine = current_app.config["engine"]
             const_config = engine.const_config["assets"]
             requirements = const_config[self.name]["requirements"]
-            priority_list = player.read_list("research_priorities")
+            priority_list = player.data.research_priorities
             this_priority_index: int = priority_list.index(self.id)
             # Compute this constructions level by looking at constructions higher up in the priority list with same name
             level = getattr(player, self.name) + 1
