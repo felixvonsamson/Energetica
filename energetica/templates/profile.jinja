@@ -132,50 +132,50 @@
         <tr>
           <td>Revenues</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ profile.average_revenues }}) + "/h";</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ profile.data.progression_metrics.average_revenues }}) + "/h";</script>
         </tr>
         <tr>
           <td>Max Power</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ profile.max_power_consumption }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ profile.data.progression_metrics.max_power_consumption }});</script>
         </tr>
         <tr>
           <td>Max Storage</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.max_energy_stored }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.data.progression_metrics.max_energy_stored }});</script>
         </tr>
         <tr>
           <td>Imported Energy</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.imported_energy }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.data.progression_metrics.imported_energy }});</script>
         </tr>
         <tr>
           <td>Exported Energy</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.exported_energy }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.data.progression_metrics.exported_energy }});</script>
         </tr>
         <tr>
           <td>Extracted Resources</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.extracted_resources }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.data.progression_metrics.extracted_resources }});</script>
         </tr>
         <tr>
           <td>Bought Resources</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.bought_resources }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.data.progression_metrics.bought_resources }});</script>
         </tr>
         <tr>
           <td>Sold Resources</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.sold_resources }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.data.progression_metrics.sold_resources }});</script>
         </tr>
         <tr>
           <td>Technology</td>
-          <td class="txt_center">{{ profile.total_technologies }}</td>
+          <td class="txt_center">{{ profile.data.progression_metrics.total_technologies }}</td>
         </tr>
         <tr>
           <td>XP</td>
-          <td class="txt_center">{{ profile.xp }}</td>
+          <td class="txt_center">{{ profile.data.progression_metrics.xp }}</td>
         </tr>
         {% if user.discovered_greenhouse_gas_effect() %}
           <tr>
@@ -186,7 +186,7 @@
           <tr>
             <td>Captured CO<sub>2</sub></td>
             <td class="txt_center"></td>
-            <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.captured_co2 }});</script>
+            <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.data.progression_metrics.captured_co2 }});</script>
           </tr>
         {% endif %}
       </table>

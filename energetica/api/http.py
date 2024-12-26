@@ -207,7 +207,7 @@ def get_chart_data() -> Response:
     if current_user.tile is None:
         return "", 404
     total_t = g.engine.data["total_t"]
-    rolling_history = current_user.data.rolling_history.get_data(t=total_t % 216 + 1)
+    rolling_history = current_user.rolling_history.get_data(t=total_t % 216 + 1)
     filename = f"instance/player_data/player_{current_user.id}.pck"
     with open(filename, "rb") as file:
         data = pickle.load(file)
@@ -231,7 +231,7 @@ def get_chart_data() -> Response:
             "data": data,
             "network_data": network_data,
             "climate_data": climate_data,
-            "cumulative_emissions": current_user.data.cumul_emissions.get_all(),
+            "cumulative_emissions": current_user.cumul_emissions.get_all(),
         }
     )
 
@@ -274,7 +274,7 @@ def get_player_data() -> Response:
     if current_user.tile is None:
         return "", 404
     levels = current_user.get_lvls()
-    capacities = current_user.data.capacities.get_all()
+    capacities = current_user.capacities.get_all()
     return jsonify(
         {
             "levels": levels,
@@ -306,28 +306,28 @@ def get_players() -> Response:
 @http.route("/get_generation_priority", methods=["GET"])
 def get_generation_priority() -> Response:
     """Get generation and demand priority for this player."""
-    controllables_priorities = current_user.data.priorities_of_controllables.copy()
-    for demand_type in current_user.data.priorities_of_demand:
+    controllables_priorities = current_user.priorities_of_controllables.copy()
+    for demand_type in current_user.priorities_of_demand:
         for i, facility in enumerate(controllables_priorities):
             if "demand-" in facility:
-                price_i = current_user.data.network_prices["demand"][facility[7:]]
+                price_i = current_user.network_prices.demand[facility[7:]]
             else:
-                price_i = current_user.data.network_prices["supply"][facility]
-            if current_user.data.network_prices["demand"][demand_type] < price_i:
+                price_i = current_user.network_prices.supply[facility]
+            if current_user.network_prices.demand[demand_type] < price_i:
                 controllables_priorities.insert(i, "demand-" + demand_type)
                 break
             if i + 1 == len(controllables_priorities):
                 controllables_priorities.append("demand-" + demand_type)
                 break
-    return jsonify(current_user.data.list_of_renewables, controllables_priorities)
+    return jsonify(current_user.list_of_renewables, controllables_priorities)
 
 
 @http.route("/get_constructions", methods=["GET"])
 def get_constructions() -> Response:
     """Get list of facilities under construction for this player."""
     projects = current_user.package_constructions()
-    construction_priorities = current_user.data.construction_priorities
-    research_priorities = current_user.data.research_priorities
+    construction_priorities = current_user.construction_priorities
+    research_priorities = current_user.research_priorities
     return jsonify(projects, construction_priorities, research_priorities)
 
 
@@ -544,7 +544,14 @@ def change_network_prices() -> Response:
     if not current_user.is_in_network:
         return jsonify({"response": "notAuthorized"}), 404
     updated_prices = request.get_json()["prices"]
-    energetica.utils.network_helpers.set_network_prices(g.engine, current_user, updated_prices)
+    if not all(key in ["supply", "demand"] for key in updated_prices.keys()):
+        raise GameError("malformedRequest")
+    energetica.utils.network_helpers.set_network_prices(
+        g.engine,
+        current_user,
+        updated_supply_prices=updated_prices["supply"],
+        updated_demand_prices=updated_prices["demand"],
+    )
     return jsonify({"response": "success"})
 
 
@@ -552,7 +559,7 @@ def change_network_prices() -> Response:
 @log_action
 def request_change_facility_priority() -> Response:
     """Change the generation priority."""
-    if "Unlock Network" not in current_user.data.achievements:
+    if "Unlock Network" not in current_user.achievements:
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
     priority = request_data["priority"]
@@ -725,5 +732,5 @@ def test_notification() -> Response:
 def set_notification_preferences() -> Response:
     """Sets notification preferences for a player"""
     preferences = request.get_json()["notification_preferences"]
-    current_user.data.notification_preferences = preferences
+    current_user.notification_preferences = preferences
     return jsonify({"response": "success"})

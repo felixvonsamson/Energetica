@@ -15,8 +15,6 @@ from gevent.lock import RLock
 from energetica.config.assets import config, const_config
 from energetica.database.engine_data import EmissionData
 from energetica.database.network import NetworkData
-from energetica.database.ongoing_construction import OngoingConstructionData
-from energetica.database.player import PlayerData
 from energetica.database.shipment import ShipmentData
 
 
@@ -141,9 +139,8 @@ class GameEngine(object):
 
         self.lock = RLock()
         self.data = {}
-        self.data["by_player"] = defaultdict(PlayerData)
+        self.data["players"] = defaultdict(Player)
         self.data["by_network"] = defaultdict(NetworkData)
-        self.data["by_ongoing_construction"] = defaultdict(OngoingConstructionData)
         self.data["by_shipment"] = defaultdict(ShipmentData)
         self.buffered = {}  # stores buffered values for mixed_database
         self.buffered["by_player"] = {}

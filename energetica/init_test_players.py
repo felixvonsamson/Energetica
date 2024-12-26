@@ -42,8 +42,8 @@ def init_test_players(engine):
         """This function creates and initializes a network."""
         # Unlock the network achievement for all members
         for player in members:
-            if "Unlock Network" not in player.data.achievements:
-                player.data.achievements.append("Unlock Network")
+            if "Unlock Network" not in player.achievements:
+                player.achievements.append("Unlock Network")
 
         network = Network.query.filter_by(name=name).first()
         if network:
@@ -71,7 +71,7 @@ def init_test_players(engine):
                 player.coal = 300_000
                 player.gas = 100_000
                 player.uranium = 500
-                player.data.priorities_of_controllables = ""
+                player.priorities_of_controllables = ""
 
                 add_asset(player, "industry", 18)
                 add_asset(player, "warehouse", 1)
@@ -194,7 +194,7 @@ def init_test_players(engine):
     #     player.coal = 4_500_000
     #     player.gas = 80_000_000
     #     player.uranium = 4_500
-    #     player.data.priorities_of_controllables = ""
+    #     player.priorities_of_controllables = ""
 
     #     add_asset(player, "industry", 21)
     #     add_asset(player, "laboratory", 5)

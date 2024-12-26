@@ -88,7 +88,7 @@
         <p class="txt_center medium">To have a better understanding how this priority list works, please refer to the <a href="{{ url_for('wiki.render_template_wiki', template_name='power_management') }}">Power Management</a> section of the wiki.</p>
         <br><br><br><br>
     {% else %}
-        {% set caps = user.data.capacities %}
+        {% set caps = user.capacities %}
 
         <div class="flex-center margin">
             <button id="page_view_button_basic" class="graph_button graph_button_views left {% if user.graph_view == 'basic'%}selected{% endif %}" onclick="change_page_view('basic')">Basic view</button>
@@ -241,7 +241,7 @@
                     <td>
                         <input type="number"
                             class="small_input medium txt_center"
-                            value="{{ user.data.network_prices.demand.industry }}"
+                            value="{{ user.network_prices.demand.industry }}"
                             id="price-demand-industry"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
@@ -253,20 +253,20 @@
                     <td>
                         <input type="number"
                             class="small_input medium txt_center"
-                            value="{{ user.data.network_prices.demand.construction }}"
+                            value="{{ user.network_prices.demand.construction }}"
                             id="price-demand-construction"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
                     </td>
                 </tr>
-                {% if "Unlock Technologies" in user.data.achievements %}
+                {% if "Unlock Technologies" in user.achievements %}
                 <tr>
                     <td>Research</td>
                     <td>
                         <input type="number"
                             class="small_input medium txt_center"
-                            value="{{ user.data.network_prices.demand.research }}"
+                            value="{{ user.network_prices.demand.research }}"
                             id="price-demand-research"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
@@ -274,13 +274,13 @@
                     </td>
                 </tr>
                 {% endif %}
-                {% if "Unlock Natural Resources" in user.data.achievements %}
+                {% if "Unlock Natural Resources" in user.achievements %}
                 <tr>
                     <td>Shipments</td>
                     <td>
                         <input type="number"
                             class="small_input medium txt_center"
-                            value="{{ user.data.network_prices.demand.transport }}"
+                            value="{{ user.network_prices.demand.transport }}"
                             id="price-demand-transport"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
@@ -292,7 +292,7 @@
                     {{ {"coal_mine": "Coal Mines", "gas_drilling_site": "Gas Extraction", "uranium_mine": "Uranium Mines"}[extraction_facility] }}
                 {%- endmacro %}
                 {% macro extraction_facility_demand_price_value(extraction_facility) -%}
-                    {{ user.data.network_prices.demand[extraction_facility] }}
+                    {{ user.network_prices.demand[extraction_facility] }}
                 {%- endmacro %}
                 {% for extraction_facility in ["coal_mine", "gas_drilling_site", "uranium_mine"] %}
                     {% if caps[extraction_facility] %}
@@ -316,7 +316,7 @@
                         <td>
                             <input type="number"
                                 class="small_input medium txt_center"
-                                value="{{ user.data.network_prices.demand.carbon_capture }}"
+                                value="{{ user.network_prices.demand.carbon_capture }}"
                                 id="price-demand-carbon_capture"
                                 max="50000" />
                             <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
@@ -337,7 +337,7 @@
                         <th>Min selling price</th>
                     </tr>
                     {% macro power_facility_supply_price_value(power_facility) -%}
-                        {{ user.data.network_prices.supply[power_facility] }}
+                        {{ user.network_prices.supply[power_facility] }}
                     {%- endmacro %}
                     {% for power_facility in ["steam_engine", "coal_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
                         {% if caps[power_facility] %}
@@ -372,10 +372,10 @@
                         <th>Max buying price</th>
                     </tr>
                     {% macro storage_facility_supply_price_value(storage_facility) -%}
-                        {{ user.data.network_prices.supply[storage_facility] }}
+                        {{ user.network_prices.supply[storage_facility] }}
                     {%- endmacro %}
                     {% macro storage_facility_demand_price_value(storage_facility) -%}
-                        {{ user.data.network_prices.demand[storage_facility] }}
+                        {{ user.network_prices.demand[storage_facility] }}
                     {%- endmacro %}
                     {% for storage_facility in ["small_pumped_hydro", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
                         {% if caps[storage_facility] %}

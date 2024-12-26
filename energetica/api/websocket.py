@@ -248,7 +248,7 @@ def rest_get_charts():
     def industry_data_for(category, subcategory):
         return combine_file_data_and_engine_data(
             file_data[category][subcategory],
-            g.player.data.rolling_history[category][subcategory],
+            g.player.rolling_history[category][subcategory],
         )
 
     subcategories = {
@@ -339,7 +339,7 @@ def rest_get_achievements(player: Player):
     response = {
         "type": "getAdvancements",
         "data": {
-            achievement: achievement in player.data.achievements
+            achievement: achievement in player.achievements
             for achievement in [
                 "Unlock Network",
                 "Unlock Technologies",

@@ -32,8 +32,8 @@ from energetica.utils.misc import confirm_location
 def validate_rules(engine, player):
     """This function validates all of the above rules."""
     # Rule 1
-    construction_priorities = player.data.construction_priorities
-    research_priorities = player.data.research_priorities
+    construction_priorities = player.construction_priorities
+    research_priorities = player.research_priorities
     assert len(set(construction_priorities)) == len(construction_priorities)
     assert len(set(research_priorities)) == len(research_priorities)
     for construction_id in construction_priorities:
@@ -231,7 +231,7 @@ def test_cancel_construction():
         assert construction.status == ConstructionStatus.ONGOING
         cancel_project(player, construction, force=True)
         validate_rules(engine, player)
-        assert len(player.data.construction_priorities) == 0
+        assert len(player.construction_priorities) == 0
 
 
 def test_pause_construction():
@@ -282,7 +282,7 @@ def test_queue_two_pause_one():
         validate_rules(engine, player)
         toggle_pause_project(player, construction_A)
         validate_rules(engine, player)
-        assert player.data.construction_priorities == [construction_B.id, construction_A.id]
+        assert player.construction_priorities == [construction_B.id, construction_A.id]
 
 
 def test_three_constructions_with_pause():
@@ -311,7 +311,7 @@ def test_three_constructions_with_pause():
         validate_rules(engine, player)
         toggle_pause_project(player, construction_A)
         validate_rules(engine, player)
-        # assert player.data.construction_priorities == [construction_B.id, construction_A.id, construction_C.id]
+        # assert player.construction_priorities == [construction_B.id, construction_A.id, construction_C.id]
 
 
 def test_add_two_and_cancel_one():
@@ -338,7 +338,7 @@ def test_add_two_and_cancel_one():
         validate_rules(engine, player)
         cancel_project(player, construction_1, force=True)
         validate_rules(engine, player)
-        assert player.data.construction_priorities == [construction_2.id]
+        assert player.construction_priorities == [construction_2.id]
 
 
 def test_technologies_pausing_propagates_requirements():

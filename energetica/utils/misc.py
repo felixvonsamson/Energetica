@@ -76,7 +76,7 @@ def init_table(user_id: int) -> None:
 
 def add_player_to_data(player: Player) -> None:
     """Add a new player to the engine data."""
-    player.data.capacities.update(player, None)
+    player.capacities.update(player, None)
 
 
 def save_past_data_threaded(app, engine: GameEngine):
@@ -107,7 +107,7 @@ def save_past_data_threaded(app, engine: GameEngine):
                     "rb",
                 ) as file:
                     past_data = pickle.load(file)
-                new_data = player.data.rolling_history.get_data()
+                new_data = player.rolling_history.get_data()
                 for category in new_data:
                     for element in new_data[category]:
                         new_el_data = new_data[category][element]
@@ -234,9 +234,9 @@ def confirm_location(engine: GameEngine, player: Player, location: Hex) -> None:
     db.session.commit()
     add_player_to_data(player)
     init_table(player.id)
-    player.data.rolling_history.add_subcategory("op_costs", "steam_engine")
-    player.data.rolling_history.add_subcategory("generation", "steam_engine")
-    player.data.rolling_history.add_subcategory("emissions", "steam_engine")
+    player.rolling_history.add_subcategory("op_costs", "steam_engine")
+    player.rolling_history.add_subcategory("generation", "steam_engine")
+    player.rolling_history.add_subcategory("emissions", "steam_engine")
     # websocket.rest_notify_player_location(engine, player)
     engine.log(f"{player.username} chose the location {location.id}")
 
@@ -251,7 +251,7 @@ def submit_quiz_answer(engine: GameEngine, player: Player, answer: str) -> bool:
         raise GameError("quizAlreadyAnswered")
     quiz_data["player_answers"][player.id] = answer
     if answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":
-        player.xp += 1
+        player.progression_metrics.xp += 1
         db.session.commit()
         engine.log(f"{player.username} answered the quiz correctly")
         return True

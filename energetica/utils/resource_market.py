@@ -67,8 +67,8 @@ def buy_resource_from_market(player, quantity, sale):
             sale.resource + "_on_sale",
             getattr(sale.player, sale.resource + "_on_sale") - quantity,
         )
-        sale.player.sold_resources += quantity
-        player.bought_resources += quantity
+        sale.player.progression_metrics.sold_resources += quantity
+        player.progression_metrics.bought_resources += quantity
         player.check_trading_achievement()
         dq = player.tile.q - sale.player.tile.q
         dr = player.tile.r - sale.player.tile.r

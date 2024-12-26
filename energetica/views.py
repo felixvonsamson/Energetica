@@ -93,7 +93,7 @@ def messages():
 @views.route("/network")
 def network():
     player: Player = current_user
-    if "Unlock Network" not in player.data.achievements:
+    if "Unlock Network" not in player.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx("network.jinja")
 
@@ -113,7 +113,7 @@ def storage_facilities():
 @views.route("/technology")
 def technology():
     player: Player = current_user
-    if "Unlock Technologies" not in player.data.achievements:
+    if "Unlock Technologies" not in player.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx("assets/technologies.jinja", available_technologies=player.cache.technologies_data)
 
@@ -129,7 +129,7 @@ def functional_facilities():
 @views.route("/extraction_facilities")
 def extraction_facilities():
     player: Player = current_user
-    if "Unlock Natural Resources" not in player.data.achievements:
+    if "Unlock Natural Resources" not in player.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx(
         "assets/extraction_facilities.jinja", constructions=player.cache.extraction_facilities_data
@@ -139,7 +139,7 @@ def extraction_facilities():
 @views.route("/resource_market")
 def resource_market():
     player: Player = current_user
-    if "Unlock Natural Resources" not in player.data.achievements:
+    if "Unlock Natural Resources" not in player.achievements:
         return redirect("/home", code=302)
     on_sale = ResourceOnSale.query.all()
     return g.render_template_ctx("resource_market.jinja", on_sale=on_sale)
@@ -163,7 +163,7 @@ def electricity():
 @overviews.route("/storage")
 def storage():
     player: Player = current_user
-    if "First Storage Facility" not in player.data.achievements:
+    if "First Storage Facility" not in player.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/storage.jinja")
 
@@ -171,7 +171,7 @@ def storage():
 @overviews.route("/resources")
 def resources():
     player: Player = current_user
-    if "Unlock Natural Resources" not in player.data.achievements:
+    if "Unlock Natural Resources" not in player.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/resources.jinja")
 

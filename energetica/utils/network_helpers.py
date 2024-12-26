@@ -13,7 +13,7 @@ from energetica.game_engine import GameEngine, GameError
 
 def join_network(engine, player, network):
     """shared API method to join a network."""
-    if "Unlock Network" not in player.data.achievements:
+    if "Unlock Network" not in player.achievements:
         raise GameError("networkNotUnlocked")
     if network is None:
         raise GameError("noSuchNetwork")
@@ -45,7 +45,7 @@ def create_network(engine, player, name) -> Network:
     """shared API method to create a network. Network name must pass validation,
     namely it must not be too long, nor too short, and must not already be in
     use."""
-    if "Unlock Network" not in player.data.achievements:
+    if "Unlock Network" not in player.achievements:
         raise GameError("networkNotUnlocked")
     if len(name) < 3 or len(name) > 40:
         raise GameError("nameLengthInvalid")
@@ -94,28 +94,33 @@ def reorder_facility_priorities(engine: GameEngine, player: Player):
     - The demand is sorted in descending price order
     - The renewables are sorted in the same order for all players
     """
-    player.data.priorities_of_controllables.sort(key=lambda x: player.data.network_prices["supply"][x])
-    player.data.priorities_of_demand.sort(key=lambda x: player.data.network_prices["demand"][x], reverse=True)
-    player.data.list_of_renewables.sort(key=engine.renewables.index)
+    player.priorities_of_controllables.sort(key=lambda x: player.network_prices.supply[x])
+    player.priorities_of_demand.sort(key=lambda x: player.network_prices.demand[x], reverse=True)
+    player.list_of_renewables.sort(key=engine.renewables.index)
 
 
-def set_network_prices(engine: GameEngine, player: Player, updated_prices: dict[str, dict[str, float]]):
+def set_network_prices(
+    engine: GameEngine, player: Player, updated_supply_prices: dict[str, float], updated_demand_prices: dict[str, float]
+):
     """Updates network prices for that player"""
-    if not all(key in ["supply", "demand"] for key in updated_prices.keys()):
-        raise GameError("malformedRequest")
-    for facility in updated_prices["supply"]:
+    for facility in updated_supply_prices:
         if facility not in engine.controllable_facilities + engine.storage_facilities:
             raise GameError("malformedRequest")
-    for facility in updated_prices["demand"]:
+    for facility in updated_demand_prices:
         if facility not in engine.special_power_demand + engine.extraction_facilities + engine.storage_facilities:
             raise GameError("malformedRequest")
-    for price_type, price_dict in updated_prices.items():
-        for facility, new_price in price_dict.items():
-            if not isinstance(new_price, (int, float)):
-                raise GameError("malformedRequest")
-            if new_price <= -5:
-                raise GameError("priceTooLow")
-            player.data.network_prices[price_type][facility] = new_price
+    for facility, new_price in updated_supply_prices:
+        if not isinstance(new_price, (int, float)):
+            raise GameError("malformedRequest")
+        if new_price <= -5:
+            raise GameError("priceTooLow")
+        player.network_prices.supply[facility] = new_price
+    for facility, new_price in updated_demand_prices:
+        if not isinstance(new_price, (int, float)):
+            raise GameError("malformedRequest")
+        if new_price <= -5:
+            raise GameError("priceTooLow")
+        player.network_prices.demand[facility] = new_price
 
     engine.log(f"{player.username} updated their prices")
     reorder_facility_priorities(engine, player)
@@ -126,22 +131,23 @@ def change_facility_priority(engine: GameEngine, player: Player, priority: list[
     This function is executed when the facilities priority is changed by changing the order in the interactive
     table. The function reassigns the selling prices of the facilities according to the new order.
     """
-    old_set = {f"demand-{demand_type}" for demand_type in player.data.priorities_of_demand}
-    old_set.update(player.data.priorities_of_controllables)
+    old_set = {f"demand-{demand_type}" for demand_type in player.priorities_of_demand}
+    old_set.update(player.priorities_of_controllables)
     if old_set != set(priority):
         raise GameError("malformedRequest")
 
     price_list = [
-        player.data.network_prices["demand"][facility[7:]]
+        player.network_prices.demand[facility[7:]]
         if facility.startswith("demand-")
-        else player.data.network_prices["supply"][facility]
+        else player.network_prices.supply[facility]
         for facility in priority
     ]
     sorted_prices = sorted(price_list)
-    updated_prices = {"supply": {}, "demand": {}}
+    updated_supply_prices = {}
+    updated_demand_prices = {}
     for facility, price in zip(priority, sorted_prices):
         if facility.startswith("demand-"):
-            updated_prices["demand"][facility[7:]] = price
+            updated_demand_prices[facility[7:]] = price
         else:
-            updated_prices["supply"][facility] = price
-    set_network_prices(engine, player, updated_prices)
+            updated_supply_prices[facility] = price
+    set_network_prices(engine, player, updated_supply_prices, updated_demand_prices)

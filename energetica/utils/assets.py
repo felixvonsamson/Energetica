@@ -29,25 +29,25 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
     if construction.family in ["Technologies", "Functional Facilities"]:
         if getattr(player, construction.name) == 0:
             if construction.name == "carbon_capture":
-                player.data.rolling_history.add_subcategory("demand", construction.name)
-                player.data.rolling_history.add_subcategory("emissions", construction.name)
-                player.data.cumul_emissions.add_category(construction.name)
-                player.data.priorities_of_demand.append(construction.name)
+                player.rolling_history.add_subcategory("demand", construction.name)
+                player.rolling_history.add_subcategory("emissions", construction.name)
+                player.cumul_emissions.add_category(construction.name)
+                player.priorities_of_demand.append(construction.name)
                 reorder_facility_priorities(engine, player)
             if construction.name == "warehouse":
                 for resource in ["coal", "gas", "uranium"]:
-                    player.data.rolling_history.add_subcategory("resources", resource)
+                    player.rolling_history.add_subcategory("resources", resource)
             if construction.name == "laboratory":
-                player.data.priorities_of_demand.append("research")
+                player.priorities_of_demand.append("research")
                 reorder_facility_priorities(engine, player)
             if construction.name == "warehouse":
-                player.data.priorities_of_demand.append("transport")
+                player.priorities_of_demand.append("transport")
                 reorder_facility_priorities(engine, player)
 
         setattr(player, construction.name, getattr(player, construction.name) + 1)
 
         if construction.family == "Technologies":
-            player.total_technologies += 1
+            player.progression_metrics.total_technologies += 1
             server_tech = engine.data["technology_lvls"][construction.name]
             if len(server_tech) <= getattr(player, construction.name):
                 server_tech.append(0)
@@ -57,33 +57,33 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
     elif ActiveFacility.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
         # initialize array for facility if it is the first one built
         if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
-            player.data.rolling_history.add_subcategory("op_costs", construction.name)
+            player.rolling_history.add_subcategory("op_costs", construction.name)
         if construction.name in engine.storage_facilities + engine.power_facilities:
-            player.data.rolling_history.add_subcategory("generation", construction.name)
+            player.rolling_history.add_subcategory("generation", construction.name)
         if construction.name in engine.storage_facilities + engine.extraction_facilities:
-            player.data.rolling_history.add_subcategory("demand", construction.name)
+            player.rolling_history.add_subcategory("demand", construction.name)
         if construction.name in engine.storage_facilities:
-            player.data.rolling_history.add_subcategory("storage", construction.name)
+            player.rolling_history.add_subcategory("storage", construction.name)
         if construction.name in engine.controllable_facilities + engine.extraction_facilities:
-            player.data.rolling_history.add_subcategory("emissions", construction.name)
-            player.data.cumul_emissions.add_category(construction.name)
+            player.rolling_history.add_subcategory("emissions", construction.name)
+            player.cumul_emissions.add_category(construction.name)
         if construction.name in engine.extraction_facilities + engine.storage_facilities:
-            player.data.priorities_of_demand.append(construction.name)
+            player.priorities_of_demand.append(construction.name)
             reorder_facility_priorities(engine, player)
         if construction.name in engine.renewables:
-            player.data.list_of_renewables.append(construction.name)
+            player.list_of_renewables.append(construction.name)
             reorder_facility_priorities(engine, player)
         if construction.name in engine.storage_facilities + engine.controllable_facilities:
-            player.data.priorities_of_controllables.append(construction.name)
+            player.priorities_of_controllables.append(construction.name)
             reorder_facility_priorities(engine, player)
 
     player.check_construction_achievements(construction.name)
 
     priority_list_name = "research_priorities" if construction.family == "Technologies" else "construction_priorities"
     if priority_list_name == "research_priorities":
-        player.data.research_priorities.remove(construction.id)
+        player.research_priorities.remove(construction.id)
     else:
-        player.data.construction_priorities.remove(construction.id)
+        player.construction_priorities.remove(construction.id)
     family = construction.family
     db.session.delete(construction)
     db.session.commit()
@@ -126,9 +126,9 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
         )
         db.session.add(new_facility)
     if construction.family == "Technologies":
-        player.data.capacities.update(player, None)
+        player.capacities.update(player, None)
     else:
-        player.data.capacities.update(player, construction.name)
+        player.capacities.update(player, construction.name)
     engine.config.update_config_for_user(player)
     db.session.flush()
     player.emit("retrieve_player_data")
@@ -247,7 +247,7 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
         if facility.facility in engine.controllable_facilities + engine.storage_facilities:
             facility.multiplier_3 = technology_effects.multiplier_3(facility.player, facility.facility)
     db.session.commit()
-    player.data.capacities.update(player, facility.facility)
+    player.capacities.update(player, facility.facility)
 
 
 def upgrade_all_of_type(player: Player, facility_name: str) -> None:
@@ -273,7 +273,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     if facility.facility in engine.storage_facilities and not decommissioning:
         facility.end_of_life = 0
         db.session.flush()
-        player.data.capacities.update(player, facility.facility)
+        player.capacities.update(player, facility.facility)
         db.session.commit()
         return
     db.session.delete(facility)
@@ -284,13 +284,13 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     if ActiveFacility.query.filter_by(facility=facility.facility, player_id=player.id).count() == 0:
         # remove facility from facility priorities if it was the last one
         if facility.facility in engine.extraction_facilities + engine.storage_facilities:
-            player.data.priorities_of_demand.remove(facility.facility)
+            player.priorities_of_demand.remove(facility.facility)
             reorder_facility_priorities(engine, player)
         if facility.facility in engine.renewables:
-            player.data.list_of_renewables.remove(facility.facility)
+            player.list_of_renewables.remove(facility.facility)
             reorder_facility_priorities(engine, player)
         if facility.facility in engine.storage_facilities + engine.controllable_facilities:
-            player.data.priorities_of_controllables.remove(facility.facility)
+            player.priorities_of_controllables.remove(facility.facility)
             reorder_facility_priorities(engine, player)
     facility_name = engine.const_config["assets"][facility.facility]["name"]
     if decommissioning:
@@ -304,7 +304,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
         )
         engine.log(f"The facility {facility_name} from {player.username} has been decommissioned.")
     db.session.flush()
-    player.data.capacities.update(player, facility.facility)
+    player.capacities.update(player, facility.facility)
     engine.config.update_config_for_user(player)
     db.session.commit()
 
@@ -351,8 +351,8 @@ def package_projects_data(player: Player) -> dict:
     """Package ongoing constructions for a particular player."""
     # TODO(mglst): Rework the return dict structure (involves back + front end)
     projects = player.package_constructions()
-    construction_priorities = player.data.construction_priorities
-    research_priorities = player.data.research_priorities
+    construction_priorities = player.construction_priorities
+    research_priorities = player.research_priorities
     return {0: projects, 1: construction_priorities, 2: research_priorities}
 
 
@@ -391,8 +391,8 @@ def queue_project(
     if not force and not player.is_in_network:
         capacity = 0
         for gen in engine.power_facilities:
-            if player.data.capacities[gen] is not None:
-                capacity += player.data.capacities[gen]["power"]
+            if player.capacities[gen] is not None:
+                capacity += player.capacities[gen]["power"]
         if construction_power > capacity:
             raise Confirm(capacity=capacity, construction_power=construction_power)
 
@@ -418,9 +418,9 @@ def queue_project(
     db.session.add(new_construction)
     db.session.commit()
     if asset in engine.technologies:
-        player.data.research_priorities.append(new_construction.id)
+        player.research_priorities.append(new_construction.id)
     else:
-        player.data.construction_priorities.append(new_construction.id)
+        player.construction_priorities.append(new_construction.id)
     try:
         toggle_pause_project(player, new_construction)
     except GameError:
@@ -490,9 +490,9 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
         refund *= construction.multiplier_2
     player.money += refund
     if priority_list_name == "research_priorities":
-        player.data.research_priorities.remove(construction.id)
+        player.research_priorities.remove(construction.id)
     else:
-        player.data.construction_priorities.remove(construction.id)
+        player.construction_priorities.remove(construction.id)
     db.session.delete(construction)
 
     db.session.flush()

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -9,7 +10,7 @@ from datetime import datetime
 from enum import StrEnum
 from functools import cached_property
 from itertools import chain
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from flask import current_app
 from flask_login import UserMixin
@@ -32,40 +33,6 @@ from energetica.technology_effects import (
 
 if TYPE_CHECKING:
     from energetica.game_engine import GameEngine
-
-
-@dataclass
-class PlayerData:
-    """Dataclass that stores the player data."""
-
-    network_prices: PlayerPrices = field(default_factory=PlayerPrices)
-    list_of_renewables: list[str] = field(default_factory=list)
-    priorities_of_controllables: list[str] = field(default_factory=lambda: ["steam_engine"])
-    priorities_of_demand: list[str] = field(default_factory=lambda: ["industry", "construction"])
-
-    # NOTE (Felix): do we want to still have list of ids for player constructions and research or do we want to
-    # directly store the objects here?
-    construction_priorities: list[int] = field(default_factory=list)
-    research_priorities: list[int] = field(default_factory=list)
-
-    achievements: list[str] = field(default_factory=list)
-
-    rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
-    capacities: CapacityData = field(default_factory=CapacityData)
-    cumul_emissions: CumulativeEmissionsData = field(default_factory=CumulativeEmissionsData)
-
-    # Browser notifications & preferences
-    notification_subscriptions: list[int] = field(default_factory=list)
-    notification_preferences: dict = field(
-        default_factory=lambda: {
-            "messages": True,
-            "achievements": True,
-            "projects": True,
-            "decommissioning": True,
-            "resource_market": True,
-            "climate_events": True,
-        }
-    )
 
 
 @dataclass
@@ -105,29 +72,77 @@ class PlayerCache:
         return package_available_technologies(player)
 
 
-class Player(db.Model, UserMixin):
-    """Class that stores the users."""
+@dataclass
+class Player(UserMixin):
+    """Class that stores the users and their data."""
 
-    id = db.Column(db.Integer, primary_key=True)
+    __next_id: ClassVar[int] = itertools.count()
+    id: int
 
     # Authentication :
-    username = db.Column(db.String(25), unique=True)
-    pwhash = db.Column(db.String(50))
+    username: str
+    pwhash: str
+
+    network_prices: PlayerPrices = field(default_factory=PlayerPrices)
+    list_of_renewables: list[str] = field(default_factory=list)
+    priorities_of_controllables: list[str] = field(default_factory=lambda: ["steam_engine"])
+    priorities_of_demand: list[str] = field(default_factory=lambda: ["industry", "construction"])
+
+    # NOTE (Felix): do we want to still have list of ids for player constructions and research or do we want to
+    # directly store the objects here?
+    construction_priorities: list[int] = field(default_factory=list)
+    research_priorities: list[int] = field(default_factory=list)
+
+    ongoing_projects: list[OngoingProject] = field(default_factory=list)
+    ongoing_shipments: list[OngoingShipment] = field(default_factory=list)
+
+    inactive: bool = False  # True if account is inactive
+
+    achievements: list[str] = field(default_factory=list)
+
+    progression_metrics: dict[str, float] = field(
+        default_factory=lambda: {
+            "xp": 0,
+            "average_revenues": 0,
+            "max_power_consumption": 0,
+            "max_energy_stored": 0,
+            "extracted_resources": 0,
+            "bought_resources": 0,
+            "sold_resources": 0,
+            "total_technologies": 0,
+            "imported_energy": 0,
+            "exported_energy": 0,
+            "captured_co2": 0,
+        }
+    )
+
+    rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
+    capacities: CapacityData = field(default_factory=CapacityData)
+    cumul_emissions: CumulativeEmissionsData = field(default_factory=CumulativeEmissionsData)
+
+    # Browser notifications & preferences
+    notification_subscriptions: list[int] = field(default_factory=list)
+    notification_preferences: dict = field(
+        default_factory=lambda: {
+            "messages": True,
+            "achievements": True,
+            "projects": True,
+            "decommissioning": True,
+            "resource_market": True,
+            "climate_events": True,
+        }
+    )
 
     # Position :
-    tile = db.relationship("Hex", uselist=False, backref="player")
+    tile: Hex | None = None
 
     # Chats :
-    show_disclaimer = db.Column(db.Boolean, default=True)
-    chats = db.relationship("Chat", secondary=player_chats, backref="participants")
-    last_opened_chat = db.Column(db.Integer, default=1)
-    messages = db.relationship("Message", backref="player")
+    show_disclaimer: bool = True
+    chats: list[Chat] = field(default_factory=list)
+    last_opened_chat: int = 0
+    messages: list[Message] = field(default_factory=list)
 
-    notifications = db.relationship("Notification", backref="players", lazy="dynamic")
-
-    # misc :
-    graph_view = db.Column(db.String(10), default="basic")
-    network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
+    notifications: list[Notification] = field(default_factory=list)
 
     class NetworkGraphView(StrEnum):
         """Enum for the network graph view of the player."""
@@ -135,6 +150,10 @@ class Player(db.Model, UserMixin):
         BASIC = "basic"
         NORMAL = "normal"
         EXPERT = "expert"
+
+    # misc :
+    graph_view = db.Column(db.String(10), default="basic")
+    network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
 
     # resources :
     money = db.Column(db.Float, default=25000)  # default is 25000
@@ -173,56 +192,16 @@ class Player(db.Model, UserMixin):
     construction_priorities = db.Column(db.Text, default="")
     research_priorities = db.Column(db.Text, default="")
 
-    # Production capacity prices [¤/MWh]
-    price_steam_engine = db.Column(db.Float, default=125)
-    price_coal_burner = db.Column(db.Float, default=600)
-    price_gas_burner = db.Column(db.Float, default=500)
-    price_combined_cycle = db.Column(db.Float, default=450)
-    price_nuclear_reactor = db.Column(db.Float, default=275)
-    price_nuclear_reactor_gen4 = db.Column(db.Float, default=375)
-
-    # Storage capacity prices [¤/MWh]
-    price_buy_small_pumped_hydro = db.Column(db.Float, default=210)
-    price_small_pumped_hydro = db.Column(db.Float, default=790)
-    price_buy_molten_salt = db.Column(db.Float, default=190)
-    price_molten_salt = db.Column(db.Float, default=830)
-    price_buy_large_pumped_hydro = db.Column(db.Float, default=200)
-    price_large_pumped_hydro = db.Column(db.Float, default=780)
-    price_buy_hydrogen_storage = db.Column(db.Float, default=230)
-    price_hydrogen_storage = db.Column(db.Float, default=880)
-    price_buy_lithium_ion_batteries = db.Column(db.Float, default=425)
-    price_lithium_ion_batteries = db.Column(db.Float, default=940)
-    price_buy_solid_state_batteries = db.Column(db.Float, default=420)
-    price_solid_state_batteries = db.Column(db.Float, default=900)
-
-    # Demand buying prices
-    price_buy_industry = db.Column(db.Float, default=1000)
-    price_buy_construction = db.Column(db.Float, default=1020)
-    price_buy_research = db.Column(db.Float, default=1200)
-    price_buy_transport = db.Column(db.Float, default=1050)
-    price_buy_coal_mine = db.Column(db.Float, default=960)
-    price_buy_gas_drilling_site = db.Column(db.Float, default=980)
-    price_buy_uranium_mine = db.Column(db.Float, default=990)
-    price_buy_carbon_capture = db.Column(db.Float, default=660)
-
-    # player progression data :
-    xp = db.Column(db.Integer, default=0)
-    average_revenues = db.Column(db.Float, default=0)
-    max_power_consumption = db.Column(db.Float, default=0)
-    max_energy_stored = db.Column(db.Float, default=0)
-    extracted_resources = db.Column(db.Float, default=0)
-    bought_resources = db.Column(db.Float, default=0)
-    sold_resources = db.Column(db.Float, default=0)
-    total_technologies = db.Column(db.Integer, default=0)
-    imported_energy = db.Column(db.Float, default=0)
-    exported_energy = db.Column(db.Float, default=0)
-    captured_co2 = db.Column(db.Float, default=0)
-
     under_construction = db.relationship("OngoingConstruction")
     resource_on_sale = db.relationship("ResourceOnSale", backref="player")
     shipments = db.relationship("Shipment", backref="player")
     active_facilities = db.relationship("ActiveFacility", backref="player", lazy="dynamic")
     climate_events = db.relationship("ClimateEventRecovery", backref="player")
+
+    def __post_init__(self):
+        """Post initialization method."""
+        self.id = next(Player.__next_id)
+        current_app.config["engine"].players[self.id] = self
 
     @property
     def engine(self) -> GameEngine:
@@ -238,11 +217,6 @@ class Player(db.Model, UserMixin):
     def socketio_clients(self) -> list[int]:
         """Return the player's socketio clients."""
         return current_app.config["engine"].clients[self.id]
-
-    @cached_property
-    def data(self) -> PlayerData:
-        """Returns the data for the player."""
-        return current_app.config["engine"].data["by_player"][self.id]
 
     @cached_property
     def cache(self) -> PlayerCache:
@@ -543,7 +517,7 @@ class Player(db.Model, UserMixin):
                 if f"{achievement_name} {i+1}" not in self.data.achievements:
                     if getattr(self, achievements[achievement]["metric"]) >= value:
                         self.data.achievements.append(f"{achievement_name} {i+1}")
-                        self.xp += achievements[achievement]["rewards"][i]
+                        self.data.progression_metrics.xp += achievements[achievement]["rewards"][i]
                         message = achievements[achievement]["message"]
                         if achievement == "network":
                             message = message.format(reward=achievements[achievement]["rewards"][i])
@@ -567,7 +541,7 @@ class Player(db.Model, UserMixin):
                 and construction_name in achievements[achievement]["unlocked_with"]
             ):
                 self.data.achievements.append(achievement_name)
-                self.xp += achievements[achievement]["reward"]
+                self.data.progression_metrics.xp += achievements[achievement]["reward"]
                 message = achievements[achievement]["message"].format(reward=achievements[achievement]["reward"])
                 self.notify("Achievement", message)
 
@@ -580,7 +554,7 @@ class Player(db.Model, UserMixin):
                 and getattr(self, achievements["technology"]["metric"]) >= value
             ):
                 self.data.achievements.append(f"{achievement_name} {i+1}")
-                self.xp += achievements["technology"]["rewards"][i]
+                self.data.progression_metrics.xp += achievements["technology"]["rewards"][i]
                 message = achievements["technology"]["message"].format(
                     value=value,
                     reward=achievements["technology"]["rewards"][i],
@@ -597,7 +571,7 @@ class Player(db.Model, UserMixin):
                 >= value
             ):
                 self.data.achievements.append(f"{achievement_name} {i+1}")
-                self.xp += achievements["trading"]["rewards"][i]
+                self.data.progression_metrics.xp += achievements["trading"]["rewards"][i]
                 message = achievements["trading"]["message"].format(
                     value=value,
                     reward=achievements["trading"]["rewards"][i],
@@ -670,10 +644,10 @@ class Player(db.Model, UserMixin):
                 {
                     "username": player.username,
                     "network_name": player.network.name if player.network else "-",
-                    "average_hourly_revenues": player.average_revenues,
-                    "max_power_consumption": player.max_power_consumption,
-                    "total_technology_levels": player.total_technologies,
-                    "xp": player.xp,
+                    "average_hourly_revenues": player.progression_metrics.average_revenues,
+                    "max_power_consumption": player.progression_metrics.max_power_consumption,
+                    "total_technology_levels": player.progression_metrics.total_technologies,
+                    "xp": player.progression_metrics.xp,
                 }
                 | ({"co2_emissions": player.calculate_net_emissions()} if include_co2_emissions else {})
             )

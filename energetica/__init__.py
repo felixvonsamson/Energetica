@@ -178,7 +178,6 @@ def create_app(
                 engine.data = pickle.load(file)
             engine.log("Loaded engine data from disk.")
 
-    
     # creates the app :
     app = Flask(__name__)
     app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
@@ -187,7 +186,6 @@ def create_app(
     app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
     app.config["engine"] = engine
     db.init_app(app)
-    
 
     # initialize socketio :
     socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
@@ -222,15 +220,15 @@ def create_app(
         subscription = request.json
         if "endpoint" not in subscription:
             return jsonify({"response": "Invalid subscription"})
-        current_user.data.notification_subscriptions.append(subscription)
+        current_user.notification_subscriptions.append(subscription)
         return jsonify({"response": "Subscription successful"})
 
     @app.route("/unsubscribe", methods=["POST"])
     def unsubscribe():
         """POST: remove a subscription."""
         subscription = request.json
-        if subscription in current_user.data.notification_subscriptions:
-            current_user.data.notification_subscriptions.remove(subscription)
+        if subscription in current_user.notification_subscriptions:
+            current_user.notification_subscriptions.remove(subscription)
         return jsonify({"response": "Unsubscription successful"})
 
     @app.route("/apple-app-site-association")

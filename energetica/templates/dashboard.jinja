@@ -56,7 +56,7 @@
     <div id="shipments">
       {# Shipments on their way will show here #}
     </div>
-    {% if "Unlock Network" not in user.data.achievements %}
+    {% if "Unlock Network" not in user.achievements %}
     <div class="padding margin medium">
         <h2>Beginners guide</h2>
         <p>
@@ -97,7 +97,7 @@
         <a href="/production_overview/electricity">
             <h2 class="txt_center">Power Production</h2>
         </a>
-        {% if "First Storage Facility" in user.data.achievements %}
+        {% if "First Storage Facility" in user.achievements %}
         <a href="/production_overview/storage">
             <h2 class="txt_center">Stored Energy</h2>
         </a>
@@ -112,7 +112,7 @@
             <h2 class="txt_center">Market Prices</h2>
         </a>
         {% endif %}
-        {% if "Unlock Natural Resources" in user.data.achievements %}
+        {% if "Unlock Natural Resources" in user.achievements %}
         <a href="/resource_market">
             <h2 class="txt_center">Resource Market</h2>
         </a>

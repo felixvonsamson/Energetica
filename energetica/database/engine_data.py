@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict, deque
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import noise
@@ -18,50 +19,46 @@ if TYPE_CHECKING:
     from energetica.game_engine import GameEngine
 
 
+@dataclass
 class PlayerPrices:
     """
     Class that stores the prices of a player for each facility type.
     """
 
-    def __init__(self):
-        self._data: dict[str, dict] = {
-            "supply": {
-                "steam_engine": 125.0,
-                "coal_burner": 600.0,
-                "gas_burner": 500.0,
-                "combined_cycle": 450.0,
-                "nuclear_reactor": 275.0,
-                "nuclear_reactor_gen4": 375.0,
-                "small_pumped_hydro": 790.0,
-                "molten_salt": 830.0,
-                "large_pumped_hydro": 780.0,
-                "hydrogen_storage": 880.0,
-                "lithium_ion_batteries": 940.0,
-                "solid_state_batteries": 900.0,
-            },
-            "demand": {
-                "industry": 1000.0,
-                "construction": 1020.0,
-                "research": 1200.0,
-                "transport": 1050.0,
-                "coal_mine": 960.0,
-                "gas_drilling_site": 980.0,
-                "uranium_mine": 990.0,
-                "carbon_capture": 660.0,
-                "small_pumped_hydro": 210.0,
-                "molten_salt": 190.0,
-                "large_pumped_hydro": 200.0,
-                "hydrogen_storage": 230.0,
-                "lithium_ion_batteries": 425.0,
-                "solid_state_batteries": 420.0,
-            },
+    supply: dict[str, float] = field(
+        default_factory=lambda: {
+            "steam_engine": 125.0,
+            "coal_burner": 600.0,
+            "gas_burner": 500.0,
+            "combined_cycle": 450.0,
+            "nuclear_reactor": 275.0,
+            "nuclear_reactor_gen4": 375.0,
+            "small_pumped_hydro": 790.0,
+            "molten_salt": 830.0,
+            "large_pumped_hydro": 780.0,
+            "hydrogen_storage": 880.0,
+            "lithium_ion_batteries": 940.0,
+            "solid_state_batteries": 900.0,
         }
-
-    def __getitem__(self, price_type: str) -> dict[str, float]:
-        """Return the prices of a type."""
-        if price_type not in self._data:
-            return None
-        return self._data[price_type]
+    )
+    demand: dict[str, float] = field(
+        default_factory=lambda: {
+            "industry": 1000.0,
+            "construction": 1020.0,
+            "research": 1200.0,
+            "transport": 1050.0,
+            "coal_mine": 960.0,
+            "gas_drilling_site": 980.0,
+            "uranium_mine": 990.0,
+            "carbon_capture": 660.0,
+            "small_pumped_hydro": 210.0,
+            "molten_salt": 190.0,
+            "large_pumped_hydro": 200.0,
+            "hydrogen_storage": 230.0,
+            "lithium_ion_batteries": 425.0,
+            "solid_state_batteries": 420.0,
+        }
+    )
 
 
 class CapacityData:
@@ -147,7 +144,7 @@ class CapacityData:
         """Update the capacity data of the network."""
         self._data = {}
         for player in network.members:
-            player_capacities = player.data.capacities.get_all()
+            player_capacities = player.capacities.get_all()
             for facility in player_capacities:
                 if "power" in player_capacities[facility]:
                     if facility not in self._data:
