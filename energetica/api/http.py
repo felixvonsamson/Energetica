@@ -543,7 +543,7 @@ def change_network_prices() -> Response:
     if not current_user.is_in_network:
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
-    updated_prices = {k.lstrip("price_"): v for k, v in request_data["prices"].items()}
+    updated_prices = {k.removeprefix("price_"): v for k, v in request_data["prices"].items()}
     energetica.utils.network_helpers.set_network_prices(
         engine=g.engine,
         player=current_user,
