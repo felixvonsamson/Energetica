@@ -11,6 +11,7 @@ from energetica.database.player import Player
 from energetica.game_engine import GameEngine, GameError
 
 
+# TODO (Felix): Move this to a method in Player
 def join_network(engine, player, network):
     """shared API method to join a network."""
     if "Unlock Network" not in player.achievements:
@@ -69,6 +70,7 @@ def create_network(engine, player, name) -> Network:
     return new_network
 
 
+# TODO (Felix): Move this to a method in Player
 def leave_network(engine, player):
     """Shared API method for a player to leave a network. Always succeeds."""
     network = player.network
@@ -87,6 +89,7 @@ def leave_network(engine, player):
     # websocket.rest_notify_network_change(engine)
 
 
+# TODO (Felix): Move this to a method in Player
 def reorder_facility_priorities(engine: GameEngine, player: Player):
     """Reorders the player's `priorities_of_controllables`, `priorities_of_demand` and `list_of_renewables` according
     to the players network prices :
@@ -99,6 +102,7 @@ def reorder_facility_priorities(engine: GameEngine, player: Player):
     player.list_of_renewables.sort(key=engine.renewables.index)
 
 
+# TODO (Felix): Move this to a method in Player or even in PlayerPrices
 def set_network_prices(
     engine: GameEngine, player: Player, updated_supply_prices: dict[str, float], updated_demand_prices: dict[str, float]
 ):
@@ -126,6 +130,7 @@ def set_network_prices(
     reorder_facility_priorities(engine, player)
 
 
+# TODO (Felix): Move this to a method in Player
 def change_facility_priority(engine: GameEngine, player: Player, priority: list[str]):
     """
     This function is executed when the facilities priority is changed by changing the order in the interactive

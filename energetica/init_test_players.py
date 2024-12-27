@@ -68,9 +68,7 @@ def init_test_players(engine):
                 Hex.query.filter_by(id=i).first().player_id = player.id
 
                 player.money = 1_000_000_000
-                player.coal = 300_000
-                player.gas = 100_000
-                player.uranium = 500
+                player.resources = {"coal": 300_000, "gas": 100_000, "uranium": 500}
                 player.priorities_of_controllables = ""
 
                 add_asset(player, "industry", 18)
@@ -113,7 +111,7 @@ def init_test_players(engine):
 
     # Player 1
     player1.money = 1_000_000_000
-    player1.coal = 300_000
+    player1.resources["coal"] = 300_000
 
     add_asset(player1, "molten_salt", 1)
     add_asset(player1, "hydrogen_storage", 1)
@@ -166,9 +164,7 @@ def init_test_players(engine):
 
     # Player 2
     player2.money = 1_000_000_000
-    player2.coal = 300_000
-    player2.gas = 100_000
-    player2.uranium = 500
+    player2.resources = {"coal": 300_000, "gas": 100_000, "uranium": 500}
 
     add_asset(player2, "warehouse", 20)
     add_asset(player2, "steam_engine", 20)
@@ -191,9 +187,7 @@ def init_test_players(engine):
     #     Hex.query.filter_by(id=35).first().player_id = player.id
 
     #     player.money = 1_000_000
-    #     player.coal = 4_500_000
-    #     player.gas = 80_000_000
-    #     player.uranium = 4_500
+    #     player.resources = {"coal":4_500_000, "gas":80_000_000, "uranium":4_500}
     #     player.priorities_of_controllables = ""
 
     #     add_asset(player, "industry", 21)

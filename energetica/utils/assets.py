@@ -180,7 +180,7 @@ def deploy_available_workers(player: Player, family: str, *, start_now=False) ->
 
     if available_workers <= 0:
         return
-    priority_list = getattr(player.data, priority_list_name)
+    priority_list = getattr(player, priority_list_name)
 
     for priority_index, construction_id in enumerate(priority_list):
         construction: OngoingConstruction = db.session.get(OngoingConstruction, construction_id)
@@ -467,7 +467,7 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
     )
 
     dependents = []
-    priority_list = getattr(player.data, priority_list_name)
+    priority_list = getattr(player, priority_list_name)
     construction_priority_index = priority_list.index(construction.id)
     for candidate_dependent_id in priority_list[construction_priority_index + 1 :]:
         candidate_dependent: OngoingConstruction = db.session.get(OngoingConstruction, candidate_dependent_id)
@@ -520,7 +520,7 @@ def decrease_project_priority(player: Player, construction: OngoingConstruction)
         raise GameError(msg)
     attr = "research_priorities" if construction.name in engine.technologies else "construction_priorities"
 
-    priority_list: list[int] = getattr(player.data, attr)
+    priority_list: list[int] = getattr(player, attr)
     index = priority_list.index(construction.id)
     if index == len(priority_list) - 1:
         return
@@ -572,7 +572,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
 
     if not construction.was_paused_by_player():
         # project is currently not paused by player, and should be paused
-        priority_list: list[int] = getattr(player.data, priority_list_name)
+        priority_list: list[int] = getattr(player, priority_list_name)
         construction_index = priority_list.index(construction.id)
         construction.pause()
         dependency_ids = [construction.id]
@@ -624,7 +624,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
         construction.unpause()
         # project status is now ONGOING or WAITING.
         # Reorder the priority list
-        priority_list = getattr(player.data, priority_list_name)
+        priority_list = getattr(player, priority_list_name)
         priority_list.remove(construction.id)
         insertion_index = None
         for new_index, other_construction_id in enumerate(priority_list):

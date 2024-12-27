@@ -315,7 +315,7 @@ def calculate_demand(engine, new_values, player):
     # consider cost of climate events if any
     climate_event_recovery_cost(player, revenues)
 
-    if player.carbon_capture > 0:
+    if player.functional_facilities["carbon_capture"] > 0:
         demand["carbon_capture"] = player.config["carbon_capture"]["power_consumption"]
 
 
@@ -658,7 +658,7 @@ def wind_generation(engine: GameEngine, player: Player, generation: dict, in_gam
 def calculate_prod(
     engine,
     minmax,
-    player,
+    player: Player,
     facility,
     resource_reservations,
     filling=False,
@@ -687,7 +687,7 @@ def calculate_prod(
     if "fuel_use" in player.capacities[facility]:
         for resource, amount in player.capacities[facility]["fuel_use"].items():
             available_resource = (
-                getattr(player, resource) - getattr(player, resource + "_on_sale") - resource_reservations[resource]
+                player.resources[resource] - player.resources_on_sale[resource] - resource_reservations[resource]
             )
             p_max_resources = available_resource / amount * player.capacities[facility]["power"]
             max_resources = min(p_max_resources, max_resources)
@@ -772,7 +772,7 @@ def bid(market, player_id, demand, price, facility):
     return market
 
 
-def resources_and_pollution(engine, new_values, player):
+def resources_and_pollution(engine, new_values, player: Player):
     """Calculate resource use and production, O&M costs and emissions."""
     generation = new_values["generation"]
     op_costs = new_values["op_costs"]
@@ -782,7 +782,7 @@ def resources_and_pollution(engine, new_values, player):
         if player.capacities[facility] is not None:
             for resource, amount in player.capacities[facility]["fuel_use"].items():
                 quantity = amount * generation[facility] / player.capacities[facility]["power"]
-                setattr(player, resource, getattr(player, resource) - quantity)
+                player.resources[resource] -= quantity
             facility_emissions = (
                 engine.const_config["assets"][facility]["base_pollution"]
                 * generation[facility]
@@ -792,7 +792,7 @@ def resources_and_pollution(engine, new_values, player):
             )
             add_emissions(engine, new_values, player, facility, facility_emissions)
 
-    if player.warehouse > 0:
+    if player.functional_facilities["warehouse"] > 0:
         for extraction_facility in engine.extraction_facilities:
             resource = extraction_to_resource[extraction_facility]
             if player.capacities[extraction_facility] is not None:
@@ -810,11 +810,7 @@ def resources_and_pollution(engine, new_values, player):
                     resource,
                     getattr(player.tile, resource) - extracted_quantity,
                 )
-                setattr(
-                    player,
-                    resource,
-                    getattr(player, resource) + extracted_quantity,
-                )
+                player.resources[resource] += extracted_quantity
                 player.progression_metrics.extracted_resources += extracted_quantity
                 db.session.commit()
                 emissions = extracted_quantity * player.capacities[extraction_facility]["pollution"]
@@ -825,10 +821,10 @@ def resources_and_pollution(engine, new_values, player):
                     extraction_facility,
                     emissions,
                 )
-            new_values["resources"][resource] = getattr(player, resource)
+            new_values["resources"][resource] = player.resources[resource]
 
     # Carbon capture CO2 absorption
-    if player.carbon_capture > 0:
+    if player.functional_facilities["carbon_capture"] > 0:
         satisfaction = demand["carbon_capture"] / player.config["carbon_capture"]["power_consumption"]
         captured_co2 = (
             player.config["carbon_capture"]["absorption"]
@@ -901,7 +897,7 @@ def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
     if demand_type == "construction":
         construction_priorities = player.construction_priorities
         cumul_demand = 0.0
-        for i in range(min(len(construction_priorities), player.construction_workers)):
+        for i in range(min(len(construction_priorities), player.workers[demand_type])):
             construction_id = construction_priorities[i]
             construction: OngoingConstruction = db.session.get(OngoingConstruction, construction_id)
             if not construction.is_ongoing():
@@ -916,7 +912,7 @@ def reduce_demand(engine, new_values, demand_type, player_id, satisfaction):
     if demand_type == "research":
         research_priorities = player.research_priorities
         cumul_demand = 0.0
-        for i in range(min(len(research_priorities), player.lab_workers)):
+        for i in range(min(len(research_priorities), player.workers["laboratory"])):
             construction_id = research_priorities[i]
             construction: OngoingConstruction = db.session.get(OngoingConstruction, construction_id)
             if not construction.is_ongoing():

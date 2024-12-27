@@ -152,45 +152,58 @@ class Player(UserMixin):
         EXPERT = "expert"
 
     # misc :
-    graph_view = db.Column(db.String(10), default="basic")
-    network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
+    graph_view: str = NetworkGraphView.BASIC
+    network: Network | None = None
 
     # resources :
-    money = db.Column(db.Float, default=25000)  # default is 25000
-    coal = db.Column(db.Float, default=0)
-    gas = db.Column(db.Float, default=0)
-    uranium = db.Column(db.Float, default=0)
-    coal_on_sale = db.Column(db.Float, default=0)
-    gas_on_sale = db.Column(db.Float, default=0)
-    uranium_on_sale = db.Column(db.Float, default=0)
+    money: float = 25000
+    resources: dict[str, float] = field(
+        default_factory=lambda: {
+            "coal": 0,
+            "gas": 0,
+            "uranium": 0,
+        }
+    )
+    resources_on_sale: dict[str, float] = field(
+        default_factory=lambda: {
+            "coal": 0,
+            "gas": 0,
+            "uranium": 0,
+        }
+    )
 
-    # Workers :
-    construction_workers = db.Column(db.Integer, default=1)
-    lab_workers = db.Column(db.Integer, default=0)
+    workers: dict[str, int] = field(
+        default_factory=lambda: {
+            "construction": 1,
+            "laboratory": 0,
+        }
+    )
 
-    # Functional Facilities :
-    industry = db.Column(db.Integer, default=1)
-    laboratory = db.Column(db.Integer, default=0)
-    warehouse = db.Column(db.Integer, default=0)
-    carbon_capture = db.Column(db.Integer, default=0)
+    functional_facilities: dict[str, int] = field(
+        default_factory=lambda: {
+            "industry": 1,
+            "laboratory": 0,
+            "warehouse": 0,
+            "carbon_capture": 0,
+        }
+    )
 
-    # Technology :
-    mathematics = db.Column(db.Integer, default=0)
-    mechanical_engineering = db.Column(db.Integer, default=0)
-    thermodynamics = db.Column(db.Integer, default=0)
-    physics = db.Column(db.Integer, default=0)
-    building_technology = db.Column(db.Integer, default=0)
-    mineral_extraction = db.Column(db.Integer, default=0)
-    transport_technology = db.Column(db.Integer, default=0)
-    materials = db.Column(db.Integer, default=0)
-    civil_engineering = db.Column(db.Integer, default=0)
-    aerodynamics = db.Column(db.Integer, default=0)
-    chemistry = db.Column(db.Integer, default=0)
-    nuclear_engineering = db.Column(db.Integer, default=0)
-
-    # Priority lists
-    construction_priorities = db.Column(db.Text, default="")
-    research_priorities = db.Column(db.Text, default="")
+    technologies: dict[str, int] = field(
+        default_factory=lambda: {
+            "mathematics": 0,
+            "mechanical_engineering": 0,
+            "thermodynamics": 0,
+            "physics": 0,
+            "building_technology": 0,
+            "mineral_extraction": 0,
+            "transport_technology": 0,
+            "materials": 0,
+            "civil_engineering": 0,
+            "aerodynamics": 0,
+            "chemistry": 0,
+            "nuclear_engineering": 0,
+        }
+    )
 
     under_construction = db.relationship("OngoingConstruction")
     resource_on_sale = db.relationship("ResourceOnSale", backref="player")
@@ -243,6 +256,7 @@ class Player(UserMixin):
         else:
             return self.available_construction_workers()
 
+    # TODO (Felix): Could that not be a property of a newly created Worker class ?
     def available_construction_workers(self) -> int:
         """Return the number of available construction workers."""
         occupied_workers = (
@@ -251,8 +265,9 @@ class Player(UserMixin):
             .filter(OngoingConstruction.status == ConstructionStatus.ONGOING)
             .count()
         )
-        return self.construction_workers - occupied_workers
+        return self.workers["construction"] - occupied_workers
 
+    # TODO (Felix): Could that not be a property of a newly created Worker class ?
     def available_lab_workers(self) -> int:
         """Return the number of available lab workers."""
         occupied_workers = (
@@ -261,7 +276,7 @@ class Player(UserMixin):
             .filter(OngoingConstruction.status == ConstructionStatus.ONGOING)
             .count()
         )
-        return self.lab_workers - occupied_workers
+        return self.workers["laboratory"] - occupied_workers
 
     def package_chat_messages(self, chat_id: int) -> list[dict]:
         """Package the last 20 messages of a chat."""
@@ -479,13 +494,13 @@ class Player(UserMixin):
         self.emit(
             "worker_info",
             {
-                "construction_workers": {
+                "construction": {
                     "available": self.available_construction_workers(),
-                    "total": self.construction_workers,
+                    "total": self.workers["construction"],
                 },
-                "lab_workers": {
+                "laboratory": {
                     "available": self.available_lab_workers(),
-                    "total": self.lab_workers,
+                    "total": self.workers["laboratory"],
                 },
             },
         )

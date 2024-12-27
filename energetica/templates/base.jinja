@@ -13,37 +13,37 @@
       <span id="money"></span>
       <script>document.currentScript.previousElementSibling.innerHTML = format_money_long({{ user.money }});</script>
     </div>
-    {% if user.warehouse > 0 %}
+    {% if user.functional_facilities.warehouse > 0 %}
     {% set warehouse_cap = engine.const_config.warehouse_capacities %}
-    {% set warehouse_mult = engine.const_config.assets.warehouse["capacity_factor"] ** user.warehouse %}
+    {% set warehouse_mult = engine.const_config.assets.warehouse["capacity_factor"] ** user.functional_facilities.warehouse %}
     <div class="resource_container">
       <div class="resourceGauge-background hover_info">
-        <div class="resourceGauge color_coal" style="--width:{{user.coal / warehouse_cap.coal / warehouse_mult}}"></div>
+        <div class="resourceGauge color_coal" style="--width:{{user.resources.coal / warehouse_cap.coal / warehouse_mult}}"></div>
         <div id="coal" class="resource" style="color:#666"></div>
-        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.coal }});</script>
+        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.resources.coal }});</script>
         <span class="popup_info small">Coal stock</span>
       </div>
       <div class="resourceGauge-background hover_info">
-        <div class="resourceGauge color_gas" style="--width:{{user.gas / warehouse_cap.gas / warehouse_mult}}"></div>
+        <div class="resourceGauge color_gas" style="--width:{{user.resources.gas / warehouse_cap.gas / warehouse_mult}}"></div>
         <div id="gas" class="resource"></div>
-        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.gas }});</script>
+        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.resources.gas }});</script>
         <span class="popup_info small">Gas stock</span>
       </div>
       <div class="resourceGauge-background hover_info">
-        <div class="resourceGauge color_uranium" style="--width:{{user.uranium / warehouse_cap.uranium / warehouse_mult}}"></div>
+        <div class="resourceGauge color_uranium" style="--width:{{user.resources.uranium / warehouse_cap.uranium / warehouse_mult}}"></div>
         <div id="uranium" class="resource"></div>
-        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.uranium }});</script>
+        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.resources.uranium }});</script>
         <span class="popup_info small">Uranium stock</span>
       </div>
     </div>
     {% endif %}
     <div class="workers_container">
-      <div id="construction_worker_cont" class="flex-space-around hover_info">{{ user.available_construction_workers() }}/{{ user.construction_workers }} 
+      <div id="construction_worker_cont" class="flex-space-around hover_info">{{ user.available_construction_workers() }}/{{ user.workers.construction }} 
         <img src="{{ url_for('static', filename='images/icons/construction.png') }}"
           class="navbar_icon padding-small" alt="Construction workers icon"/>
         <span class="popup_info small">Construction workers</span>
       </div>
-      <div id="lab_worker_cont" class="flex-space-around hover_info">{{ user.available_lab_workers() }}/{{ user.lab_workers }} 
+      <div id="lab_worker_cont" class="flex-space-around hover_info">{{ user.available_lab_workers() }}/{{ user.workers.laboratory }} 
         <img src="{{ url_for('static', filename='images/icons/technology.png') }}"
           class="navbar_icon padding-small" alt="Lab workers icon"/>
         <span class="popup_info small">Lab workers</span>

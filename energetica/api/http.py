@@ -168,10 +168,7 @@ def get_chat_list() -> Response:
 @http.route("/get_resource_data", methods=["GET"])
 def get_resource_data() -> Response:
     """Get production rates and quantity on sale for every resource."""
-    on_sale = {}
-    for resource in ["coal", "gas", "uranium"]:
-        on_sale[resource] = getattr(current_user, resource + "_on_sale")
-    return jsonify(on_sale)
+    return jsonify(current_user.resources_on_sale)
 
 
 @http.route("/get_chart_data", methods=["GET"])

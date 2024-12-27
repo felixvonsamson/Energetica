@@ -14,13 +14,9 @@ from energetica.utils.formatting import display_money, format_mass
 
 def put_resource_on_market(player, resource, quantity, price):
     """Put an offer on the resource market"""
-    if getattr(player, resource) - getattr(player, resource + "_on_sale") < quantity:
+    if player.resources[resource] - player.resources_on_sale[resource] < quantity:
         raise GameError("notEnoughResource")
-    setattr(
-        player,
-        resource + "_on_sale",
-        getattr(player, resource + "_on_sale") + quantity,
-    )
+    player.resources_on_sale[resource] += quantity
     new_sale = ResourceOnSale(
         resource=resource,
         quantity=quantity,
@@ -44,11 +40,7 @@ def buy_resource_from_market(player, quantity, sale):
         sale.quantity -= quantity
         if sale.quantity == 0:
             db.session.delete(sale)
-        setattr(
-            player,
-            sale.resource + "_on_sale",
-            getattr(player, sale.resource + "_on_sale") - quantity,
-        )
+        player.resources_on_sale[sale.resource] -= quantity
         db.session.commit()
     else:
         if total_price > player.money:
@@ -57,16 +49,8 @@ def buy_resource_from_market(player, quantity, sale):
         sale.quantity -= quantity
         player.money -= total_price
         sale.player.money += total_price
-        setattr(
-            sale.player,
-            sale.resource,
-            getattr(sale.player, sale.resource) - quantity,
-        )
-        setattr(
-            sale.player,
-            sale.resource + "_on_sale",
-            getattr(sale.player, sale.resource + "_on_sale") - quantity,
-        )
+        player.resources[sale.resource] -= quantity
+        player.resources_on_sale[sale.resource] -= quantity
         sale.player.progression_metrics.sold_resources += quantity
         player.progression_metrics.bought_resources += quantity
         player.check_trading_achievement()
@@ -103,28 +87,28 @@ def store_import(player, resource, quantity):
     """This function is executed when a resource shipment arrives"""
     engine = current_app.config["engine"]
     max_cap = player.config["warehouse_capacities"][resource]
-    if getattr(player, resource) + quantity > max_cap:
-        setattr(player, resource, max_cap)
+    if player.resources[resource] + quantity > max_cap:
+        player.resources[resource] = max_cap
         # excess resources are stored in the ground
         setattr(
             player.tile,
             resource,
-            getattr(player.tile, resource) + getattr(player, resource) + quantity - max_cap,
+            getattr(player.tile, resource) + player.resources[resource] + quantity - max_cap,
         )
         player.notify(
             "Shipments",
             f"A shipment of {format_mass(quantity)} {resource} arrived, but "
-            f"only {format_mass(max_cap - getattr(player, resource))} could be "
+            f"only {format_mass(max_cap - player.resources[resource])} could be "
             "stored in your warehouse.",
         )
         engine.log(
             f"{player.username} received a shipment of {format_mass(quantity)} "
             f"{resource}, but could only store "
-            f"{format_mass(max_cap - getattr(player, resource))} "
+            f"{format_mass(max_cap - player.resources[resource])} "
             "in their warehouse."
         )
     else:
-        setattr(player, resource, getattr(player, resource) + quantity)
+        player.resources[resource] += quantity
         player.notify(
             "Shipments",
             f"A shipment of {format_mass(quantity)} {resource} arrived.",

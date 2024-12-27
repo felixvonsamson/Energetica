@@ -113,19 +113,25 @@ def power_production_multiplier(player: Player, facility: str) -> float:
     mlt = 1
     # Mechanical engineering
     if facility in const_config["mechanical_engineering"]["affected_facilities"]:
-        mlt *= special_multiplier(const_config["mechanical_engineering"]["prod_factor"], player.mechanical_engineering)
+        mlt *= special_multiplier(
+            const_config["mechanical_engineering"]["prod_factor"], player.technologies["mechanical_engineering"]
+        )
     # Physics
     if facility in const_config["physics"]["affected_facilities"]:
-        mlt *= special_multiplier(const_config["physics"]["prod_factor"], player.physics)
+        mlt *= special_multiplier(const_config["physics"]["prod_factor"], player.technologies["physics"])
     # Civil engineering
     if facility in const_config["civil_engineering"]["affected_facilities"]:
-        mlt *= special_multiplier(const_config["civil_engineering"]["prod_factor"], player.civil_engineering)
+        mlt *= special_multiplier(
+            const_config["civil_engineering"]["prod_factor"], player.technologies["civil_engineering"]
+        )
     # Aerodynamics
     if facility in const_config["aerodynamics"]["affected_facilities"]:
-        mlt *= special_multiplier(const_config["aerodynamics"]["prod_factor"], player.aerodynamics)
+        mlt *= special_multiplier(const_config["aerodynamics"]["prod_factor"], player.technologies["aerodynamics"])
     # Nuclear engineering
     if facility in const_config["nuclear_engineering"]["affected_facilities"]:
-        mlt *= special_multiplier(const_config["nuclear_engineering"]["prod_factor"], player.nuclear_engineering)
+        mlt *= special_multiplier(
+            const_config["nuclear_engineering"]["prod_factor"], player.technologies["nuclear_engineering"]
+        )
     return mlt
 
 
@@ -135,7 +141,7 @@ def power_consumption_multiplier(player: Player, facility: str) -> float:
     mlt = 1
     # Mineral extraction (in this case it is the energy consumption)
     if facility in const_config["mineral_extraction"]["affected_facilities"]:
-        mlt += const_config["mineral_extraction"]["energy_factor"] * player.mineral_extraction
+        mlt += const_config["mineral_extraction"]["energy_factor"] * player.technologies["mineral_extraction"]
     return mlt
 
 
@@ -164,7 +170,9 @@ def capacity_multiplier(player: Player, facility: str) -> float:
     mlt = 1
     # Civil engineering
     if facility in ["small_pumped_hydro", "large_pumped_hydro"]:
-        mlt *= special_multiplier(const_config["civil_engineering"]["capacity_factor"], player.civil_engineering)
+        mlt *= special_multiplier(
+            const_config["civil_engineering"]["capacity_factor"], player.technologies["civil_engineering"]
+        )
     return mlt
 
 
@@ -175,7 +183,7 @@ def extraction_rate_multiplier(player: Player, level: int | None = None) -> floa
     If `level` is not provided, the `player`'s current `mineral_extraction` level is used.
     """
     if level is None:
-        level = player.mineral_extraction
+        level = player.technologies["mineral_extraction"]
     const_config = current_app.config["engine"].const_config["assets"]
     return 1 + const_config["mineral_extraction"]["extract_factor"] * level
 
@@ -250,7 +258,7 @@ def efficiency_multiplier_thermodynamics(player: Player, facility: str, level: i
     If `level` is not provided, the `player`'s current `thermodynamics` level is used.
     """
     if level is None:
-        level = player.thermodynamics
+        level = player.technologies["thermodynamics"]
     const_config = current_app.config["engine"].const_config["assets"]
     thermodynamic_factor = const_config["thermodynamics"]["efficiency_factor"] ** level
     if facility == "molten_salt":
@@ -267,7 +275,7 @@ def efficiency_multiplier_chemistry(player: Player, facility: str, level: int | 
     If `level` is not provided, the `player`'s current `chemistry` level is used.
     """
     if level is None:
-        level = player.thermodynamics
+        level = player.technologies["thermodynamics"]
     const_config = current_app.config["engine"].const_config["assets"]
     chemistry_factor = const_config["chemistry"]["inefficiency_factor"] ** level
     if facility == "hydrogen_storage":
@@ -281,7 +289,7 @@ def extraction_emissions_multiplier(player: Player, facility: str) -> float:
     mlt = 1
     # Mineral extraction (in this case the the multiplier is for emissions)
     if facility in const_config["mineral_extraction"]["affected_facilities"]:
-        mlt += const_config["mineral_extraction"]["pollution_factor"] * player.mineral_extraction
+        mlt += const_config["mineral_extraction"]["pollution_factor"] * player.technologies["mineral_extraction"]
     return mlt
 
 
@@ -333,7 +341,7 @@ def construction_time(player: Player, facility: str) -> float:
         # knowledge spillover and laboratory time reduction
         if facility in engine.technologies:
             duration *= 0.92 ** research_prevalence(facility, next_level(player, facility))
-            duration *= const_config["laboratory"]["time_factor"] ** player.laboratory
+            duration *= const_config["laboratory"]["time_factor"] ** player.functional_facilities["laboratory"]
     # building technology time reduction
     if (
         facility
@@ -343,7 +351,7 @@ def construction_time(player: Player, facility: str) -> float:
         + engine.extraction_facilities
         + engine.functional_facilities
     ):
-        duration *= const_config["building_technology"]["time_factor"] ** player.building_technology
+        duration *= const_config["building_technology"]["time_factor"] ** player.technologies["building_technology"]
     return duration
 
 
@@ -351,13 +359,13 @@ def construction_power(player: Player, facility: str) -> float:
     """Return the construction power in W according to the technology level of the player."""
     engine: GameEngine = current_app.config["engine"]
     const_config = engine.const_config["assets"]
-    bt_factor = const_config["building_technology"]["time_factor"] ** player.building_technology
+    bt_factor = const_config["building_technology"]["time_factor"] ** player.technologies["building_technology"]
     # construction power in relation of facilities characteristics
     if facility in engine.power_facilities:
         # Materials (in this case it is the energy consumption for construction)
         mlt = 1
         if facility in const_config["materials"]["affected_facilities"]:
-            mlt *= const_config["materials"]["construction_energy_factor"] ** player.materials
+            mlt *= const_config["materials"]["construction_energy_factor"] ** player.technologies["materials"]
         return (
             const_config[facility]["base_power_generation"]
             * const_config[facility]["construction_power_factor"]
