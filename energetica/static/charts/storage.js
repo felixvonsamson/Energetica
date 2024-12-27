@@ -364,7 +364,7 @@ function sortTable(columnName, reorder = true) {
 
     // Add the sorted data to the table
     for (const [id, facility] of sortedData) {
-        table.insertRow().innerHTML = `<td>${facility.facility_col}</td>
+        table.insertRow().innerHTML = `<td>${facility.name_col}</td>
             <td>${format_energy(facility.cumul_charging_col)}</td>
             <td>${format_energy(facility.cumul_discharging_col)}</td>
             <td>${format_energy(facility.capacity_col)}</td>

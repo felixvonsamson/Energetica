@@ -22,7 +22,7 @@ def join_network(engine, player, network):
         raise GameError("playerAlreadyInNetwork")
     player.network = network
     db.session.commit()
-    network.data.capacities.update_network(network)
+    network.capacities.update_network(network)
     engine.log(f"{player.username} joined the network {network.name}")
     # import energetica.api.websocket as websocket
     # websocket.rest_notify_network_change(engine)
@@ -57,9 +57,9 @@ def create_network(engine, player, name) -> Network:
     db.session.commit()
     network_path = f"instance/network_data/{new_network.id}"
     Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
-    new_network.data.rolling_history = CircularBufferNetwork()
-    new_network.data.capacities = CapacityData()
-    new_network.data.capacities.update_network(new_network)
+    new_network.rolling_history = CircularBufferNetwork()
+    new_network.capacities = CapacityData()
+    new_network.capacities.update_network(new_network)
     past_data = data_init_network()
     Path(f"{network_path}").mkdir(parents=True, exist_ok=True)
     with open(f"{network_path}/time_series.pck", "wb") as file:

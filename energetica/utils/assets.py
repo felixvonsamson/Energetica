@@ -111,8 +111,8 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
         )
         # TODO(mglst): using random is incompatible with the deterministic nature of the game that the action logger
         # relies on. This should be fixed. Either the position should be logged, or the random should be seeded.
-        position_x = player.tile.q + 0.5 * player.tile.r + random.uniform(-0.5, 0.5)
-        position_y = (player.tile.r + random.uniform(-0.5, 0.5)) * 0.5 * 3**0.5
+        position_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1] + random.uniform(-0.5, 0.5)
+        position_y = (player.tile.coordinates[1] + random.uniform(-0.5, 0.5)) * 0.5 * 3**0.5
         new_facility: ActiveFacility = ActiveFacility(
             facility=construction.name,
             pos_x=position_x,
@@ -233,21 +233,21 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
         raise GameError(msg)
     player.money -= upgrade_cost
     engine: GameEngine = current_app.config["engine"]
-    if facility.facility in engine.extraction_facilities:
-        facility.price_multiplier = technology_effects.price_multiplier(facility.player, facility.facility)
-        facility.multiplier_1 = technology_effects.multiplier_1(facility.player, facility.facility)
-        facility.multiplier_2 = technology_effects.multiplier_2(facility.player, facility.facility)
-        facility.multiplier_3 = technology_effects.multiplier_3(facility.player, facility.facility)
+    if facility.name in engine.extraction_facilities:
+        facility.price_multiplier = technology_effects.price_multiplier(facility.player, facility.name)
+        facility.multiplier_1 = technology_effects.multiplier_1(facility.player, facility.name)
+        facility.multiplier_2 = technology_effects.multiplier_2(facility.player, facility.name)
+        facility.multiplier_3 = technology_effects.multiplier_3(facility.player, facility.name)
     else:
-        facility.price_multiplier = technology_effects.price_multiplier(facility.player, facility.facility)
-        if facility.facility in engine.power_facilities + engine.storage_facilities:
-            facility.multiplier_1 = technology_effects.multiplier_1(facility.player, facility.facility)
-        if facility.facility in engine.storage_facilities:
-            facility.multiplier_2 = technology_effects.multiplier_2(facility.player, facility.facility)
-        if facility.facility in engine.controllable_facilities + engine.storage_facilities:
-            facility.multiplier_3 = technology_effects.multiplier_3(facility.player, facility.facility)
+        facility.price_multiplier = technology_effects.price_multiplier(facility.player, facility.name)
+        if facility.name in engine.power_facilities + engine.storage_facilities:
+            facility.multiplier_1 = technology_effects.multiplier_1(facility.player, facility.name)
+        if facility.name in engine.storage_facilities:
+            facility.multiplier_2 = technology_effects.multiplier_2(facility.player, facility.name)
+        if facility.name in engine.controllable_facilities + engine.storage_facilities:
+            facility.multiplier_3 = technology_effects.multiplier_3(facility.player, facility.name)
     db.session.commit()
-    player.capacities.update(player, facility.facility)
+    player.capacities.update(player, facility.name)
 
 
 def upgrade_all_of_type(player: Player, facility_name: str) -> None:
@@ -267,13 +267,13 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     if facility is None or facility.player_id != player.id:
         msg = "Facility not found"
         raise GameError(msg)
-    if facility.facility in engine.technologies + engine.functional_facilities:
+    if facility.name in engine.technologies + engine.functional_facilities:
         msg = "Cannot remove technologies or functional facilities"
         raise GameError(msg)
-    if facility.facility in engine.storage_facilities and not decommissioning:
+    if facility.name in engine.storage_facilities and not decommissioning:
         facility.end_of_life = 0
         db.session.flush()
-        player.capacities.update(player, facility.facility)
+        player.capacities.update(player, facility.name)
         db.session.commit()
         return
     db.session.delete(facility)
@@ -281,18 +281,18 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     # The cost of decommissioning is 20% of the building cost.
     cost = facility.dismantle_cost
     player.money -= cost
-    if ActiveFacility.query.filter_by(facility=facility.facility, player_id=player.id).count() == 0:
+    if ActiveFacility.query.filter_by(facility=facility.name, player_id=player.id).count() == 0:
         # remove facility from facility priorities if it was the last one
-        if facility.facility in engine.extraction_facilities + engine.storage_facilities:
-            player.priorities_of_demand.remove(facility.facility)
+        if facility.name in engine.extraction_facilities + engine.storage_facilities:
+            player.priorities_of_demand.remove(facility.name)
             reorder_facility_priorities(engine, player)
-        if facility.facility in engine.renewables:
-            player.list_of_renewables.remove(facility.facility)
+        if facility.name in engine.renewables:
+            player.list_of_renewables.remove(facility.name)
             reorder_facility_priorities(engine, player)
-        if facility.facility in engine.storage_facilities + engine.controllable_facilities:
-            player.priorities_of_controllables.remove(facility.facility)
+        if facility.name in engine.storage_facilities + engine.controllable_facilities:
+            player.priorities_of_controllables.remove(facility.name)
             reorder_facility_priorities(engine, player)
-    facility_name = engine.const_config["assets"][facility.facility]["name"]
+    facility_name = engine.const_config["assets"][facility.name]["name"]
     if decommissioning:
         player.notify(
             "Decommissioning",
@@ -304,7 +304,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
         )
         engine.log(f"The facility {facility_name} from {player.username} has been decommissioned.")
     db.session.flush()
-    player.capacities.update(player, facility.facility)
+    player.capacities.update(player, facility.name)
     engine.config.update_config_for_user(player)
     db.session.commit()
 
@@ -316,11 +316,11 @@ def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str
     player.notify(
         "Destruction",
         (
-            f"The facility {facility.facility} was destroyed by the {event_name}. The cost of the cleanup was "
+            f"The facility {facility.name} was destroyed by the {event_name}. The cost of the cleanup was "
             f"{round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>."
         ),
     )
-    current_app.config["engine"].log(f"{player.username} : {facility.facility} destroyed by {event_name}.")
+    current_app.config["engine"].log(f"{player.username} : {facility.name} destroyed by {event_name}.")
 
 
 def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
@@ -329,14 +329,14 @@ def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
         msg = "Facility not found"
         raise GameError(msg)
     cost = facility.dismantle_cost
-    if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
+    if facility.name in ["watermill", "small_water_dam", "large_water_dam"]:
         cost *= facility.multiplier_2
     if player.money < cost:
         msg = "Not enough money"
         raise GameError(msg)
     remove_asset(player, facility, decommissioning=False)
     engine: GameEngine = current_app.config["engine"]
-    engine.log(f"{player.username} dismantled the facility {facility.facility}.")
+    engine.log(f"{player.username} dismantled the facility {facility.name}.")
 
 
 def dismantle_all_of_type(player: Player, facility_name: str) -> None:

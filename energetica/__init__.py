@@ -33,8 +33,7 @@ from energetica.api.http import http
 from energetica.api.socketio_handlers import add_handlers
 from energetica.api.websocket import add_sock_handlers, websocket_blueprint
 from energetica.auth import auth
-from energetica.database import db
-from energetica.database.map import Hex
+from energetica.database.map import HexTile
 from energetica.database.messages import Chat
 from energetica.database.player import Player
 from energetica.game_engine import GameEngine
@@ -181,11 +180,9 @@ def create_app(
     # creates the app :
     app = Flask(__name__)
     app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     app.config["VAPID_PUBLIC_KEY"], app.config["VAPID_PRIVATE_KEY"] = get_or_create_vapid_keys()
     app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
     app.config["engine"] = engine
-    db.init_app(app)
 
     # initialize socketio :
     socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
@@ -241,24 +238,21 @@ def create_app(
 
     # initialize database :
     with app.app_context():
-        db.create_all()
         # if map data not already stored in database, read map.csv and store it in database
-        if Hex.query.count() == 0:
+        if HexTile.query.count() == 0:
             with open("energetica/static/data/map.csv", "r") as file:
                 csv_reader = csv.DictReader(file)
                 for row in csv_reader:
-                    hex = Hex(
-                        q=row["q"],
-                        r=row["r"],
-                        solar=float(row["solar"]),
-                        wind=float(row["wind"]),
-                        hydro=float(row["hydro"]),
-                        coal=float(row["coal"]),
-                        gas=float(row["gas"]),
+                    hex = HexTile(
+                        coordinates=(row["q"], row["r"]),
+                        solar_potential=float(row["solar"]),
+                        wind_potential=float(row["wind"]),
+                        hydro_potential=float(row["hydro"]),
+                        coal_reserves=float(row["coal"]),
+                        gas_reserves=float(row["gas"]),
                         uranium=float(row["uranium"]),
-                        climate_risk=float(row["climate_risk"]),
+                        uranium_reserves=float(row["climate_risk"]),
                     )
-                    db.session.add(hex)
 
         # creating general chat
         if Chat.query.count() == 0:
@@ -266,9 +260,6 @@ def create_app(
                 name="General Chat",
                 participants=[],
             )
-            db.session.add(new_chat)
-
-        db.session.commit()
 
     # initialize login manager
     login_manager = LoginManager()

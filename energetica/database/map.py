@@ -1,31 +1,45 @@
-"""Module for the `Hex` class, which contains resource information, and which makes up the map."""
+"""Module for the `HexTile` class, which contains resource information, and which makes up the map."""
 
 from __future__ import annotations
+
+import itertools
+from dataclasses import dataclass
+from typing import ClassVar
+
+from flask import current_app
 
 from energetica.database import db
 
 
-class Hex(db.Model):
+@dataclass
+class HexTile:
     """Class for the tiles that compose the map."""
 
-    id = db.Column(db.Integer, primary_key=True)
-    q = db.Column(db.Integer)
-    r = db.Column(db.Integer)
-    solar = db.Column(db.Float)
-    wind = db.Column(db.Float)
-    hydro = db.Column(db.Float)
-    coal = db.Column(db.Float)
-    gas = db.Column(db.Float)
-    uranium = db.Column(db.Float)
-    climate_risk = db.Column(db.Integer)
-    # ID of the owner of the tile
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), unique=True, nullable=True)
+    __next_id: ClassVar[int] = itertools.count()
+    id: int
+
+    coordinates: tuple[int, int]
+
+    solar_potential: float
+    wind_potential: float
+    hydro_potential: float
+
+    coal_reserves: float
+    gas_reserves: float
+    uranium_reserves: float
+
+    climate_risk: int
+
+    def __post_init__(self):
+        """Post initialization method."""
+        self.id = next(HexTile.__next_id)
+        # TODO !! > current_app.config["engine"]players[self.id] = self
 
     def __repr__(self) -> str:
         """Return a string representation of the tile."""
-        return f"<Tile {self.id} wind {self.wind}>"
+        return f"<Tile {self.id}>"
 
-    def get_neighbors(self, n: int = 1) -> list[Hex]:
+    def get_neighbors(self, n: int = 1) -> list[HexTile]:
         """Return the neighbors of the tile plus the tile itself."""
 
         def get_hex_at_distance(q: int, r: int, distance: int) -> list[tuple[int, int]]:
@@ -41,20 +55,20 @@ class Hex(db.Model):
         neighbors = []
         tiles_at_distance = get_hex_at_distance(self.q, self.r, n)
         for q, r in tiles_at_distance:
-            neighbor = Hex.query.filter_by(q=q, r=r).first()
+            neighbor = HexTile.query.filter_by(q=q, r=r).first()
             if neighbor:
                 neighbors.append(neighbor)
         return neighbors
 
-    def get_downstream_tiles(self, n: int) -> list[Hex]:
+    def get_downstream_tiles(self, n: int) -> list[HexTile]:
         """Return up to `n` many tiles that are downstream (related to hydro) from the current tile."""
         downstream_tiles = []
 
-        def find_downstream(tile: Hex, n: int) -> None:
+        def find_downstream(tile: HexTile, n: int) -> None:
             if n == 0:
                 return
             for neighbor in tile.get_neighbors():
-                if neighbor not in downstream_tiles and neighbor.hydro > tile.hydro:
+                if neighbor not in downstream_tiles and neighbor.hydro_potential > tile.hydro_potential:
                     downstream_tiles.append(neighbor)
                     find_downstream(neighbor, n - 1)
 

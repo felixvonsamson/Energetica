@@ -19,7 +19,7 @@ import energetica.utils.resource_market
 from energetica.config.assets import wind_power_curve
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.map import Hex
+from energetica.database.map import HexTile
 from energetica.database.messages import Chat
 from energetica.database.network import Network
 from energetica.database.ongoing_construction import OngoingConstruction
@@ -122,18 +122,18 @@ def get_wind_power_curve() -> Response:
 @http.route("/get_map", methods=["GET"])
 def get_map() -> Response:
     """Get the map data from the database and returns it as a array of dictionaries."""
-    hex_map = Hex.query.all()
+    hex_map = HexTile.query.all()
     hex_list = [
         {
             "id": tile.id,
             "q": tile.q,
             "r": tile.r,
-            "solar": tile.solar,
-            "wind": tile.wind,
-            "hydro": tile.hydro,
-            "coal": tile.coal,
-            "gas": tile.gas,
-            "uranium": tile.uranium,
+            "solar": tile.solar_potential,
+            "wind": tile.wind_potential,
+            "hydro": tile.hydro_potential,
+            "coal": tile.coal_reserves,
+            "gas": tile.gas_reserves,
+            "uranium": tile.uranium_reserves,
             "climate_risk": tile.climate_risk,
             "player_id": tile.player.id if tile.player else None,
         }
@@ -215,7 +215,7 @@ def get_chart_data() -> Response:
         filename = f"instance/network_data/{current_user.network.id}/time_series.pck"
         with open(filename, "rb") as file:
             network_data = pickle.load(file)
-        concat_slices(network_data, current_user.network.data.rolling_history.get_data(t=total_t % 216 + 1))
+        concat_slices(network_data, current_user.network.rolling_history.get_data(t=total_t % 216 + 1))
 
     current_climate_data = g.engine.data["current_climate_data"].get_data(t=total_t % 216 + 1)
     with open("instance/server_data/climate_data.pck", "rb") as file:
@@ -244,7 +244,7 @@ def get_network_capacities() -> Response:
     """Get the network capacities for the current player."""
     if current_user.network is None:
         return "", 404
-    return jsonify(current_user.network.data.capacities.get_all())
+    return jsonify(current_user.network.capacities.get_all())
 
 
 @http.route("/get_market_data", methods=["GET"])
@@ -379,9 +379,9 @@ def choose_location() -> Response:
     """Set the location for the player."""
     request_data = request.get_json()
     selected_id = request_data["selected_id"]
-    if selected_id < 0 or selected_id >= Hex.query.count():
+    if selected_id < 0 or selected_id >= HexTile.query.count():
         return jsonify({"response": "TileNotExist"})  # TODO
-    location = db.session.get(Hex, selected_id + 1)
+    location = db.session.get(HexTile, selected_id + 1)
     energetica.utils.misc.confirm_location(engine=g.engine, player=current_user, location=location)
     return jsonify({"response": "success"})
 
@@ -518,7 +518,7 @@ def request_dismantle_facility() -> Response:
     return jsonify(
         {
             "response": "success",
-            "facility_name": facility.facility,
+            "facility_name": facility.name,
             "money": current_user.money,
         },
     )

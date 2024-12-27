@@ -3,7 +3,7 @@
 from werkzeug.security import generate_password_hash
 
 from energetica.database import db
-from energetica.database.map import Hex
+from energetica.database.map import HexTile
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.utils.assets import finish_project, queue_project
@@ -30,10 +30,8 @@ def init_test_players(engine):
             engine.log(f"create_player: player {username} already exists")
             return player
         player = Player(username=username, pwhash=generate_password_hash(password))
-        db.session.add(player)
-        db.session.commit()
         # If tile_id is None, find any tile that isn't assigned to a player
-        hex_tile = db.session.get(Hex, tile_id) if tile_id else Hex.query.filter_by(player_id=None).first()
+        hex_tile = db.session.get(HexTile, tile_id) if tile_id else HexTile.query.filter_by(player_id=None).first()
         confirm_location(engine, player, hex_tile)
         engine.log(f"create_player: player {username} created")
         return player
@@ -65,7 +63,7 @@ def init_test_players(engine):
             print("creating player", i)
             player = create_player(f"user{i}", "password")
             if player:
-                Hex.query.filter_by(id=i).first().player_id = player.id
+                HexTile.query.filter_by(id=i).first().player_id = player.id
 
                 player.money = 1_000_000_000
                 player.resources = {"coal": 300_000, "gas": 100_000, "uranium": 500}
@@ -98,7 +96,6 @@ def init_test_players(engine):
                 add_asset(player, "aerodynamics", 5)
             players.append(player)
         setup_network("net", players)
-        db.session.commit()
 
     # climate_events_scenario(engine)
 
@@ -184,7 +181,7 @@ def init_test_players(engine):
     # add_asset(player3, "nuclear_engineering", 1)
 
     # if player:
-    #     Hex.query.filter_by(id=35).first().player_id = player.id
+    #     HexTile.query.filter_by(id=35).first().player_id = player.id
 
     #     player.money = 1_000_000
     #     player.resources = {"coal":4_500_000, "gas":80_000_000, "uranium":4_500}
@@ -215,29 +212,26 @@ def init_test_players(engine):
     #     add_asset(player, "physics", 2)
     #     add_asset(player, "thermodynamics", 2)
     #     add_asset(player, "nuclear_engineering", 3)
-    #     db.session.commit()
 
     # player2 = create_player("user2", "password")
     # if player2:
-    #     Hex.query.filter_by(id=84).first().player_id = player2.id
+    #     HexTile.query.filter_by(id=84).first().player_id = player2.id
     #     player2.data.priorities_of_controllables = ""
     #     add_asset(player2, "industry", 19)
     #     add_asset(player2, "warehouse", 1)
     #     add_asset(player2, "steam_engine", 10)
     #     add_asset(player2, "small_water_dam", 1)
-    #     db.session.commit()
 
     # player3 = create_player("user3", "password")
     # if player3:
-    #     Hex.query.filter_by(id=143).first().player_id = player3.id
+    #     HexTile.query.filter_by(id=143).first().player_id = player3.id
     #     player3.data.priorities_of_controllables = ""
     #     add_asset(player3, "industry", 8)
     #     add_asset(player3, "onshore_wind_turbine", 5)
-    #     db.session.commit()
 
     # player4 = create_player("user4", "password")
     # if player4:
-    #     Hex.query.filter_by(id=28).first().player_id = player4.id
+    #     HexTile.query.filter_by(id=28).first().player_id = player4.id
     #     player4.data.priorities_of_controllables = ""
     #     add_asset(player4, "warehouse", 1)
     #     add_asset(player4, "watermill", 1)
@@ -245,7 +239,5 @@ def init_test_players(engine):
     #     add_asset(player4, "small_pumped_hydro", 1)
     #     add_asset(player4, "coal_burner", 1)
     #     add_asset(player4, "coal_mine", 1)
-    #     db.session.commit()
 
     # create_network("net", [player, player2, player3])
-    db.session.commit()

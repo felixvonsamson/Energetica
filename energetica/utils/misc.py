@@ -14,7 +14,7 @@ from scipy.stats import norm
 from energetica.config.assets import river_discharge_seasonal
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.map import Hex
+from energetica.database.map import HexTile
 from energetica.database.messages import Chat, Message, Notification
 from energetica.database.network import Network
 from energetica.database.player import Player
@@ -140,7 +140,7 @@ def save_past_data_threaded(app, engine: GameEngine):
                 ) as file:
                     past_data = pickle.load(file)
 
-                new_data = network.data.rolling_history.get_data()
+                new_data = network.rolling_history.get_data()
                 for category in new_data:
                     for group, buffer in new_data[category].items():
                         if group not in past_data[category]:
@@ -199,7 +199,7 @@ def display_new_message(engine: GameEngine, message: Message, chat: Chat) -> Non
 # Map
 
 
-def confirm_location(engine: GameEngine, player: Player, location: Hex) -> None:
+def confirm_location(engine: GameEngine, player: Player, location: HexTile) -> None:
     """Confirm a location choice.
 
     Return either success or an explanatory error message in the form of a dictionary.
@@ -219,8 +219,8 @@ def confirm_location(engine: GameEngine, player: Player, location: Hex) -> None:
     )
     steam_engine: ActiveFacility = ActiveFacility(
         facility="steam_engine",
-        pos_x=location.q + 0.5 * location.r,
-        pos_y=location.r,
+        pos_x=location.coordinates[0] + 0.5 * location.coordinates[1],
+        pos_y=location.coordinates[1],
         end_of_life=eol,
         player_id=player.id,
         price_multiplier=1.0,
@@ -271,7 +271,7 @@ def get_quiz_question(engine: GameEngine, player: Player) -> dict:
 # Weather
 
 
-def calculate_solar_irradiance(x: float, y: float, total_seconds: float, random_seed: int) -> float:
+def calculate_solar_irradiance(position: tuple[float], total_seconds: float, random_seed: int) -> float:
     """Calculate the solar irradiance for a given location and time.
 
     The clear sky index is derived from a 3d perlin noise function that moves in time to simulate the cloud cover.
@@ -279,9 +279,9 @@ def calculate_solar_irradiance(x: float, y: float, total_seconds: float, random_
     The irradiance is capped at 1000 W/m^2.
     """
 
-    def transformation(x: float, threshold: float = 0, smoothness: float = 2) -> float:
+    def transformation(noise_value: float, threshold: float = 0, smoothness: float = 2) -> float:
         """Sigmoid transformation."""
-        return 1 / (1 + np.exp(-(x - threshold) * 10 / smoothness))
+        return 1 / (1 + np.exp(-(noise_value - threshold) * 10 / smoothness))
 
     # Calculate the real day and time in a year for a given tick
     start_date = datetime(2023, 7, 1)  # 6 months offset because i'm using the southern hemisphere
@@ -289,8 +289,8 @@ def calculate_solar_irradiance(x: float, y: float, total_seconds: float, random_
     time_of_day = total_seconds % (3600 * 24)
     weather_datetime = start_date + timedelta(days=day_of_year, seconds=time_of_day)
 
-    x_noise = x + total_seconds / 2400
-    y_noise = y + total_seconds / 4000
+    x_noise = position[0] + total_seconds / 2400
+    y_noise = position[1] + total_seconds / 4000
     t = total_seconds / 3600 / 24
     regional_noise = pnoise3(
         x_noise / 50,
@@ -309,16 +309,17 @@ def calculate_solar_irradiance(x: float, y: float, total_seconds: float, random_
         smoothness=max(0.3, 1 - regional_noise),
     )
     csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
-    clear_sky = DrHI(weather_datetime.timestamp(), (y - 10) * 85 / 21, 0)
+    clear_sky = DrHI(weather_datetime.timestamp(), (position[1] - 10) * 85 / 21, 0)
     return min(950, csi * clear_sky)
 
 
-def calculate_wind_speed(x: float, y: float, total_seconds: float, random_seed: int) -> float:
+def calculate_wind_speed(position: tuple[float], total_seconds: float, random_seed: int) -> float:
     """Calculate the wind speed for a given location and time.
 
     The wind speed is derived from a 3d perlin noise function with a superposition of specific frequencies.
     Two sinusoidal functions are multiplied to the noise to simulate the diurnal and seasonal wind patterns.
     """
+    x, y = position
     t = total_seconds / 60
     wind_speed_noise = (
         0.9 * pnoise3(x / 20, y / 20, t / 5760, base=random_seed)
@@ -349,8 +350,8 @@ def calculate_river_discharge(total_seconds: float) -> float:
 
 def package_weather_data(engine: GameEngine, player: Player) -> dict:
     """Package date and weather data for a player."""
-    x = player.tile.q + 0.5 * player.tile.r
-    y = player.tile.r * 0.5 * 3**0.5
+    x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
+    y = player.tile.coordinates[1] * 0.5 * 3**0.5
     total_seconds = (engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick
     random_seed = engine.data["random_seed"]
     solar_irradiance = calculate_solar_irradiance(x, y, total_seconds, random_seed)

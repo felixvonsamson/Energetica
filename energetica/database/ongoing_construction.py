@@ -1,8 +1,9 @@
 """Module for the OngoingConstruction class."""
 
-from dataclasses import dataclass
+import itertools
+from dataclasses import dataclass, field
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from flask import current_app
 
@@ -18,14 +19,6 @@ class ConstructionStatus:
     PAUSED = 0
     WAITING = 1
     ONGOING = 2
-
-
-@dataclass
-class OngoingConstructionData:
-    """Dataclass that stores the data of ongoing constructions."""
-
-    speed: float = 1
-    previous_speed: float = 1
 
 
 @dataclass
@@ -51,29 +44,32 @@ class OngoingConstructionCache:
         return self._prerequisites_and_level[1]
 
 
-class OngoingConstruction(db.Model):
+@dataclass
+class OngoingConstruction:
     """Class that stores projects currently under construction."""
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50))
-    family = db.Column(db.String(50))
-    # to assign the thing to the correct page
-    end_tick_or_ticks_passed = db.Column(
-        db.Float
-    )  # in game ticks when the construction will be finished or ticks passed if it is paused
-    duration = db.Column(db.Float)  # in game ticks
-    # time at witch the construction has been paused if it has else None
-    status = db.Column(db.Integer)  # 0 for paused, 1 for waiting, 2 for ongoing. See ConstructionStatus
-    # Power consumed and emissions produced by the construction
-    construction_power = db.Column(db.Float)
-    construction_pollution = db.Column(db.Float)
+    __next_id: ClassVar[int] = itertools.count()
+    id: int
+    name: str
+    family: str  # TODO (Felix) : is that really needed?
+    end_tick_or_ticks_passed: (
+        float  # in game ticks when the construction will be finished or ticks passed if it is paused
+    )
+    duration: float  # in game ticks
+    status: int  # 0 for paused, 1 for waiting, 2 for ongoing. See ConstructionStatus
+    construction_power: float  # Power consumed by the construction
+    construction_pollution: float  # Emissions produced by the construction
+
     # multipliers to keep track of the technology level at the time of the start of the construction
-    price_multiplier = db.Column(db.Float, default=1)
-    multiplier_1 = db.Column(db.Float, default=1)
-    multiplier_2 = db.Column(db.Float, default=1)
-    multiplier_3 = db.Column(db.Float, default=1)
-    # can access player directly with .player
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
+    multipliers: dict[str, float] = field(default_factory=dict)
+
+    speed: float = 1
+    previous_speed: float = 1
+
+    def __post_init__(self):
+        """Post initialization method."""
+        self.id = next(OngoingConstruction.__next_id)
+        current_app.config["engine"].players[self.id] = self
 
     def was_paused_by_player(self) -> bool:
         """Returns True if this construction is paused by the player"""
@@ -139,7 +135,7 @@ class OngoingConstruction(db.Model):
         """Delays the construction by the given number of ticks"""
         assert self.is_ongoing()
         self.end_tick_or_ticks_passed += ticks
-        self.data.speed = 1 - ticks
+        self.speed = 1 - ticks
 
     @cached_property
     def data(self) -> OngoingConstructionData:
@@ -170,14 +166,14 @@ class OngoingConstruction(db.Model):
 
     def updated_speed(self) -> float | None:
         """Returns the speed of the construction except if it is 1 and unchanged since last tick"""
-        if self.data.speed != self.data.previous_speed or self.data.speed != 1:
-            return self.data.speed
+        if self.speed != self.previous_speed or self.speed != 1:
+            return self.speed
         return None
 
     def reset_speed(self):
         """Resets the speed of the construction to 1 and stores the previous speed"""
-        self.data.previous_speed = self.data.speed
-        self.data.speed = 1
+        self.previous_speed = self.speed
+        self.speed = 1
 
     def _compute_prerequisites_and_level(self) -> tuple[list[int], int]:
         """Compute the prerequisites and level of an ongoing construction."""

@@ -1,24 +1,36 @@
 """Module that contains the classes for the built-in chat."""
 
+from __future__ import annotations
+
+import itertools
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import ClassVar
+
+from flask import current_app
+
 from energetica.database import db
+from energetica.database.player import Player
 
 
-class Chat(db.Model):
-    """Class for chats with 2 or more players."""
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50))
-    messages = db.relationship("Message", backref="chat", lazy="dynamic")
-
-
-class Message(db.Model):
+@dataclass
+class Message:
     """Class for storing data about messages for the in-game messaging system."""
 
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.Text)
-    time = db.Column(db.DateTime)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
-    chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"))
+    __next_id: ClassVar[int] = itertools.count()
+    id: int
+
+    text: str
+    time: datetime = None
+
+    chat: Chat
+    player: Player
+
+    def __post_init__(self):
+        """Post initialization method."""
+        self.id = next(Message.__next_id)
+        self.time = datetime.now()
+        current_app.config["engine"].players[self.id] = self
 
     def package(self) -> dict:
         """Package this message's data into a dictionary."""
@@ -26,24 +38,40 @@ class Message(db.Model):
             "id": self.id,
             "text": self.text,
             "date": self.time.timestamp(),
-            "player_id": self.player_id,
+            "player_id": self.player.id,
         }
 
 
-class Notification(db.Model):
+@dataclass
+class Chat:
+    """Class for chats with 2 or more players."""
+
+    __next_id: ClassVar[int] = itertools.count()
+    id: int
+
+    name: str
+    messages: list[Message] = field(default_factory=list)
+
+    def __post_init__(self):
+        """Post initialization method."""
+        self.id = next(Chat.__next_id)
+        current_app.config["engine"].players[self.id] = self
+
+
+@dataclass
+class Notification:
     """Class for storing data about in-game notifications."""
 
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(50))
-    content = db.Column(db.Text)
-    time = db.Column(db.DateTime)
-    read = db.Column(db.Boolean, default=False)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
+    __next_id: ClassVar[int] = itertools.count()
+    id: int
 
+    title: str
+    content: str
+    time: datetime = None
+    read: bool = False
 
-# table that links chats to players
-player_chats = db.Table(
-    "player_chats",
-    db.Column("player_id", db.Integer, db.ForeignKey("player.id")),
-    db.Column("chat_id", db.Integer, db.ForeignKey("chat.id")),
-)
+    def __post_init__(self):
+        """Post initialization method."""
+        self.id = next(Notification.__next_id)
+        self.time = datetime.now()
+        current_app.config["engine"].players[self.id] = self

@@ -1,10 +1,10 @@
-class Hex{
+class HexTile{
   int id;
   int q, r;
   boolean selected;
   //float solar, wind, hydro, coal, gas, uranium, risk, score;
   float[] resources;
-  Hex(int _id, int _q, int _r, float[] _resources){
+  HexTile(int _id, int _q, int _r, float[] _resources){
     id = _id;
     q = _q;
     r = _r;

@@ -19,9 +19,13 @@ from pywebpush import WebPushException, webpush
 from energetica.config.achievements import achievements
 from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
+from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, PlayerPrices
-from energetica.database.messages import Chat, Message, Notification, player_chats
+from energetica.database.map import HexTile
+from energetica.database.messages import Chat, Message, Notification
+from energetica.database.network import Network
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
+from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.database.shipment import Shipment
 from energetica.technology_effects import (
     package_available_technologies,
@@ -84,6 +88,7 @@ class Player(UserMixin):
     pwhash: str
 
     network_prices: PlayerPrices = field(default_factory=PlayerPrices)
+    # TODO (Felix): This list can be transformed in a property
     list_of_renewables: list[str] = field(default_factory=list)
     priorities_of_controllables: list[str] = field(default_factory=lambda: ["steam_engine"])
     priorities_of_demand: list[str] = field(default_factory=lambda: ["industry", "construction"])
@@ -93,8 +98,12 @@ class Player(UserMixin):
     construction_priorities: list[int] = field(default_factory=list)
     research_priorities: list[int] = field(default_factory=list)
 
-    ongoing_projects: list[OngoingProject] = field(default_factory=list)
-    ongoing_shipments: list[OngoingShipment] = field(default_factory=list)
+    # ongoing_projects: list[OngoingProject] = field(default_factory=list)
+    # ongoing_shipments: list[OngoingShipment] = field(default_factory=list)
+    resource_market_offers: list[ResourceOnSale] = field(default_factory=list)
+    shipments: list[Shipment] = field(default_factory=list)
+    active_facilities: list[ActiveFacility] = field(default_factory=list)
+    climate_events: list[ClimateEventRecovery] = field(default_factory=list)
 
     inactive: bool = False  # True if account is inactive
 
@@ -134,7 +143,7 @@ class Player(UserMixin):
     )
 
     # Position :
-    tile: Hex | None = None
+    tile: HexTile | None = None
 
     # Chats :
     show_disclaimer: bool = True
@@ -204,12 +213,6 @@ class Player(UserMixin):
             "nuclear_engineering": 0,
         }
     )
-
-    under_construction = db.relationship("OngoingConstruction")
-    resource_on_sale = db.relationship("ResourceOnSale", backref="player")
-    shipments = db.relationship("Shipment", backref="player")
-    active_facilities = db.relationship("ActiveFacility", backref="player", lazy="dynamic")
-    climate_events = db.relationship("ClimateEventRecovery", backref="player")
 
     def __post_init__(self):
         """Post initialization method."""
@@ -686,7 +689,7 @@ class Player(UserMixin):
             }
             | {"display_name": current_app.config["engine"].const_config["assets"][construction.name]["name"]}
             | ({"level": construction.cache.level} if construction.cache.level is not None else {})
-            | {"speed": construction.data.speed}
+            | {"speed": construction.speed}
             for construction in constructions
         }
 
@@ -724,11 +727,11 @@ class Player(UserMixin):
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.data.capacities
         power_facilities: list[ActiveFacility] = self.active_facilities.filter(
-            ActiveFacility.facility.in_(engine.power_facilities),
+            Activefacility.name.in_(engine.power_facilities),
         ).all()
         power_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for power_facility in power_facilities:
-            power_facility_groups[power_facility.facility].append(power_facility)
+            power_facility_groups[power_facility.name].append(power_facility)
         return {
             "summary": {
                 group_name: {
@@ -753,7 +756,7 @@ class Player(UserMixin):
             },
             "detail": {
                 power_facility.id: {
-                    "facility": power_facility.facility,
+                    "facility": power_facility.name,
                     "display_name": power_facility.display_name,
                     "installed_cap": power_facility.max_power_generation,
                     "usage": power_facility.usage,
@@ -764,7 +767,7 @@ class Player(UserMixin):
                 }
                 | (
                     {"cut_out_speed_exceeded": power_facility.cut_out_speed_exceeded}
-                    if power_facility.facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
+                    if power_facility.name in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
                     else {}
                 )
                 for power_facility in power_facilities
@@ -777,11 +780,11 @@ class Player(UserMixin):
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.data.capacities
         storage_facilities: list[ActiveFacility] = self.active_facilities.filter(
-            ActiveFacility.facility.in_(engine.storage_facilities),
+            Activefacility.name.in_(engine.storage_facilities),
         ).all()
         storage_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for storage_facility in storage_facilities:
-            storage_facility_groups[storage_facility.facility].append(storage_facility)
+            storage_facility_groups[storage_facility.name].append(storage_facility)
         return {
             "summary": {
                 group_name: {
@@ -807,7 +810,7 @@ class Player(UserMixin):
             },
             "detail": {
                 storage_facility.id: {
-                    "facility": storage_facility.facility,
+                    "facility": storage_facility.name,
                     "display_name": storage_facility.display_name,
                     "storage_capacity": storage_facility.storage_capacity,
                     "state_of_charge": storage_facility.state_of_charge,
@@ -827,11 +830,11 @@ class Player(UserMixin):
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.data.capacities
         extraction_facilities: list[ActiveFacility] = self.active_facilities.filter(
-            ActiveFacility.facility.in_(engine.extraction_facilities),
+            Activefacility.name.in_(engine.extraction_facilities),
         ).all()
         extraction_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for extraction_facility in extraction_facilities:
-            extraction_facility_groups[extraction_facility.facility].append(extraction_facility)
+            extraction_facility_groups[extraction_facility.name].append(extraction_facility)
         return {
             "summary": {
                 group_name: {
@@ -851,7 +854,7 @@ class Player(UserMixin):
             },
             "detail": {
                 extraction_facility.id: {
-                    "facility": extraction_facility.facility,
+                    "facility": extraction_facility.name,
                     "display_name": extraction_facility.display_name,
                     "extraction_rate": extraction_facility.extraction_rate,
                     "usage": extraction_facility.usage,
@@ -904,7 +907,7 @@ class Player(UserMixin):
 class PlayerUnreadMessages(db.Model):
     """Association table to store player's last activity in each chat."""
 
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), primary_key=True)
+    # player_id = db.Column(db.Integer, db.ForeignKey("player.id"), primary_key=True)
     message_id = db.Column(db.Integer, db.ForeignKey("message.id"), primary_key=True)
     player = db.relationship("Player", backref="read_messages")
     message = db.relationship("Message", backref="read_by_players")

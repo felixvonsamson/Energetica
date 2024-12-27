@@ -1,48 +1,44 @@
 """Contains the class that stores the resources shipment on their way."""
 
+import itertools
 from dataclasses import dataclass
-from functools import cached_property
+from typing import ClassVar
 
 from flask import current_app
 
-from energetica.database import db
-
 
 @dataclass
-class ShipmentData:
-    """Dataclass that stores the data of shipments."""
+class Shipment:
+    """Class that stores the resources shipment on their way."""
+
+    __next_id: ClassVar[int] = itertools.count()
+    id: int
+
+    resource: str
+    quantity: float
+    arrival_tick: float  # in game ticks when the shipment will arrive
+    duration: float  # in game ticks
 
     speed: float = 1
     previous_speed: float = 1
 
-
-class Shipment(db.Model):
-    """Class that stores the resources shipment on their way."""
-
-    id = db.Column(db.Integer, primary_key=True)
-    resource = db.Column(db.String(10))
-    quantity = db.Column(db.Float)  # in kg
-    arrival_tick = db.Column(db.Float)  # in game ticks when the shipment will arrive
-    duration = db.Column(db.Float)  # in game ticks
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player
-
-    @cached_property
-    def data(self) -> ShipmentData:
-        """Return the data of the shipment."""
-        return current_app.config["engine"].data["by_shipment"][self.id]
+    def __post_init__(self):
+        """Post initialization method."""
+        self.id = next(Shipment.__next_id)
+        current_app.config["engine"].players[self.id] = self
 
     def delay_by(self, ticks: float):
         """Delays the shipment by the given number of ticks"""
         self.arrival_tick += ticks
-        self.data.speed = 1 - ticks
+        self.speed = 1 - ticks
 
     def updated_speed(self) -> float | None:
         """Returns the speed of the shipment except if it is 1 and unchanged since last tick"""
-        if self.data.speed != self.data.previous_speed or self.data.speed != 1:
-            return self.data.speed
+        if self.speed != self.previous_speed or self.speed != 1:
+            return self.speed
         return None
 
     def reset_speed(self):
         """Resets the speed of the shipment to 1 and stores the previous speed"""
-        self.data.previous_speed = self.data.speed
-        self.data.speed = 1
+        self.previous_speed = self.speed
+        self.speed = 1

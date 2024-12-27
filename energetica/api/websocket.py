@@ -9,7 +9,7 @@ from simple_websocket import ConnectionClosed
 from werkzeug.security import check_password_hash
 
 from energetica.database import db
-from energetica.database.map import Hex
+from energetica.database.map import HexTile
 from energetica.database.messages import Chat, Message
 from energetica.database.network import Network
 from energetica.database.player import Player
@@ -125,17 +125,17 @@ def rest_setup_complete():
 def rest_get_map():
     """Gets the map data from the database and returns it as a JSON string as a
     dictionary of arrays."""
-    hex_list = Hex.query.order_by(Hex.r, Hex.q).all()
+    hex_list = HexTile.query.order_by(HexTile.r, HexTile.q).all()
     response = {
         "type": "getMap",
         "data": {
             "ids": [tile.id for tile in hex_list],
-            "solars": [tile.solar for tile in hex_list],
-            "winds": [tile.wind for tile in hex_list],
-            "hydros": [tile.hydro for tile in hex_list],
-            "coals": [tile.coal for tile in hex_list],
-            "gases": [tile.gas for tile in hex_list],
-            "uraniums": [tile.uranium for tile in hex_list],
+            "solars": [tile.solar_potential for tile in hex_list],
+            "winds": [tile.wind_potential for tile in hex_list],
+            "hydros": [tile.hydro_potential for tile in hex_list],
+            "coals": [tile.coal_reserves for tile in hex_list],
+            "gases": [tile.gas_reserves for tile in hex_list],
+            "uraniums": [tile.uranium_reserves for tile in hex_list],
             "climate_risks": [tile.climate_risk for tile in hex_list],
         },
     }
@@ -406,7 +406,7 @@ def rest_parse_request(engine, player: Player, ws, uuid, data):
 def rest_parse_request_confirm_location(ws, uuid, data):
     """Interpret message sent from a client when they chose a location."""
     cell_id = data
-    response = confirm_location(engine=g.engine, player=g.player, location=db.session.get(Hex, cell_id))
+    response = confirm_location(engine=g.engine, player=g.player, location=db.session.get(HexTile, cell_id))
     print(f"ws is {ws} and we're sending rest_respond_confirmLocation")
     message = rest_request_response(uuid, "confirmLocation", response)
     ws.send(message)

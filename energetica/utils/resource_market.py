@@ -54,8 +54,8 @@ def buy_resource_from_market(player, quantity, sale):
         sale.player.progression_metrics.sold_resources += quantity
         player.progression_metrics.bought_resources += quantity
         player.check_trading_achievement()
-        dq = player.tile.q - sale.player.tile.q
-        dr = player.tile.r - sale.player.tile.r
+        dq = player.tile.coordinates[0] - sale.player.tile.coordinates[0]
+        dr = player.tile.coordinates[1] - sale.player.tile.coordinates[1]
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
         shipment_duration = distance * player.config["transport"]["time_per_tile"] / engine.in_game_seconds_per_tick
         shipment_duration = math.ceil(shipment_duration)

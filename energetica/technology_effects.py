@@ -17,7 +17,7 @@ from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_construction import OngoingConstruction
 
 if TYPE_CHECKING:
-    from energetica.database.map import Hex
+    from energetica.database.map import HexTile
     from energetica.database.player import Player
     from energetica.game_engine import GameEngine
 
@@ -676,24 +676,24 @@ def package_extraction_facilities(player: Player) -> list[dict]:
     }
 
     # TODO(mglst): remove this, let the frontend compute it (since tile resource can change often)
-    def tile_resource_amount(tile: Hex, resource: str) -> float:
+    def tile_resource_amount(tile: HexTile, resource: str) -> float:
         if resource == "coal":
-            return tile.coal
+            return tile.coal_reserves
         if resource == "gas":
-            return tile.gas
+            return tile.gas_reserves
         if resource == "uranium":
-            return tile.uranium
+            return tile.uranium_reserves
         msg = f"unknown resource {resource}"
         raise ValueError(msg)
 
-    def production_will_be_poor(tile: Hex, resource: str) -> bool:
+    def production_will_be_poor(tile: HexTile, resource: str) -> bool:
         """Return whether extracting the resource will be poor."""
         if resource == "coal":
-            return tile.coal < 500_000_000
+            return tile.coal_reserves < 500_000_000
         if resource == "gas":
-            return tile.gas < 180_000_000
+            return tile.gas_reserves < 180_000_000
         if resource == "uranium":
-            return tile.uranium < 2_400_000
+            return tile.uranium_reserves < 2_400_000
         msg = f"unknown resource {resource}"
         raise ValueError(msg)
 

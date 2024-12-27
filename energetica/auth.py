@@ -7,7 +7,6 @@ from flask import Blueprint, current_app, flash, g, redirect, render_template, r
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from energetica.database import db
 from energetica.database.player import Player
 
 auth = Blueprint("auth", __name__)
@@ -82,8 +81,6 @@ def sign_up():
                 username=username,
                 pwhash=generate_password_hash(password1, method="scrypt"),
             )
-            db.session.add(new_player)
-            db.session.commit()
             login_user(new_player, remember=True)
             flash("Account created!", category="message")
             log_entry = {

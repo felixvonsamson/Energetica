@@ -13,9 +13,14 @@ from flask_socketio import SocketIO
 from gevent.lock import RLock
 
 from energetica.config.assets import config, const_config
+from energetica.database.active_facility import ActiveFacility
 from energetica.database.engine_data import EmissionData
-from energetica.database.network import NetworkData
-from energetica.database.shipment import ShipmentData
+from energetica.database.map import HexTile
+from energetica.database.network import Network
+from energetica.database.ongoing_construction import OngoingConstruction
+from energetica.database.player import Player
+from energetica.database.resource_on_sale import ResourceOnSale
+from energetica.database.shipment import Shipment, ShipmentData
 
 
 # This is the engine object
@@ -138,10 +143,15 @@ class GameEngine(object):
         self.log("engine created")
 
         self.lock = RLock()
+        # TODO (Felix): is data really needed ? can't we just use the engine object directly ?
         self.data = {}
         self.data["players"] = defaultdict(Player)
-        self.data["by_network"] = defaultdict(NetworkData)
-        self.data["by_shipment"] = defaultdict(ShipmentData)
+        self.data["active_facilities"] = defaultdict(ActiveFacility)
+        self.data["ongoing_construction"] = defaultdict(OngoingConstruction)
+        self.data["map"] = defaultdict(HexTile)
+        self.data["resources_on_sale"] = defaultdict(ResourceOnSale)
+        self.data["networks"] = defaultdict(Network)
+        self.data["shipments"] = defaultdict(Shipment)
         self.buffered = {}  # stores buffered values for mixed_database
         self.buffered["by_player"] = {}
         self.buffered["by_ongoing_construction"] = {}

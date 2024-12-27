@@ -12,7 +12,7 @@ from flask import current_app
 
 import energetica.production_update as production_update
 from energetica.database import db
-from energetica.database.map import Hex
+from energetica.database.map import HexTile
 from energetica.database.ongoing_construction import OngoingConstruction
 from energetica.utils.climate_helpers import climate_event_impact
 from energetica.utils.tick_execution import check_events_completion
@@ -88,7 +88,7 @@ def _simulate(
                     with tarfile.open(f"checkpoints/simulation/checkpoint_{action['total_t']}.tar.gz", "w:gz") as tar:
                         tar.add("instance/")
             elif action["action_type"] == "climate_event_impact":
-                tile = db.session.get(Hex, action["tile_id"])
+                tile = db.session.get(HexTile, action["tile_id"])
                 climate_event_impact(engine, tile, action["event"])
             elif action["action_type"] == "create_user":
                 player_id = action["player_id"]

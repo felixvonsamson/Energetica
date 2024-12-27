@@ -1,30 +1,29 @@
 """Module that contains the Network class."""
 
+import itertools
 from dataclasses import dataclass, field
-from functools import cached_property
+from typing import ClassVar
 
 from flask import current_app
 
-from energetica.database import db
 from energetica.database.engine_data import CapacityData, CircularBufferNetwork
+from energetica.database.player import Player
 
 
 @dataclass
-class NetworkData:
-    """Dataclass that stores the network data."""
+class Network:
+    """Class that stores the networks of players."""
+
+    __next_id: ClassVar[int] = itertools.count()
+    id: int
+
+    name: str
+    members: list[Player]
 
     rolling_history: CircularBufferNetwork = field(default_factory=CircularBufferNetwork)
     capacities: CapacityData = field(default_factory=CapacityData)
 
-
-class Network(db.Model):
-    """Class that stores the networks of players."""
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True)
-    members = db.relationship("Player", backref="network")
-
-    @cached_property
-    def data(self) -> NetworkData:
-        """Cached property that stores the network data."""
-        return current_app.config["engine"].data["by_network"][self.id]
+    def __post_init__(self):
+        """Post initialization method."""
+        self.id = next(Network.__next_id)
+        current_app.config["engine"].players[self.id] = self

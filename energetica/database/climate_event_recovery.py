@@ -1,12 +1,23 @@
-from energetica.database import db
+import itertools
+from dataclasses import dataclass
+from typing import ClassVar
+
+from flask import current_app
 
 
-class ClimateEventRecovery(db.Model):
+@dataclass
+class ClimateEventRecovery:
     """Class that stores the climate events players are recovering from"""
 
-    id = db.Column(db.Integer, primary_key=True)
-    event = db.Column(db.String(20))
-    end_tick = db.Column(db.Float)
-    duration = db.Column(db.Float)
-    recovery_cost = db.Column(db.Float)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player
+    __next_id: ClassVar[int] = itertools.count()
+    id: int
+
+    name: str
+    end_tick: float
+    duration: float
+    recovery_cost: float
+
+    def __post_init__(self):
+        """Post initialization method."""
+        self.id = next(ClimateEventRecovery.__next_id)
+        current_app.config["engine"].players[self.id] = self

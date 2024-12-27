@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash
 
 from energetica import create_app
 from energetica.database import db
-from energetica.database.map import Hex
+from energetica.database.map import HexTile
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
 from energetica.database.player import Player
 from energetica.utils.assets import (
@@ -196,7 +196,7 @@ def test_swap_paused_and_unpaused_constructions():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         db.session.add(player)
         db.session.commit()
-        hex_tile = db.session.get(Hex, 1)
+        hex_tile = db.session.get(HexTile, 1)
         confirm_location(engine, player, hex_tile)
         db.session.commit()
         validate_rules(engine, player)
@@ -222,7 +222,7 @@ def test_cancel_construction():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         db.session.add(player)
         db.session.commit()
-        hex_tile = db.session.get(Hex, 1)
+        hex_tile = db.session.get(HexTile, 1)
         confirm_location(engine, player, hex_tile)
         db.session.commit()
         validate_rules(engine, player)
@@ -246,7 +246,7 @@ def test_pause_construction():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         db.session.add(player)
         db.session.commit()
-        hex_tile = db.session.get(Hex, 1)
+        hex_tile = db.session.get(HexTile, 1)
         confirm_location(engine, player, hex_tile)
         db.session.commit()
         validate_rules(engine, player)
@@ -272,7 +272,7 @@ def test_queue_two_pause_one():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         db.session.add(player)
         db.session.commit()
-        hex_tile = db.session.get(Hex, 1)
+        hex_tile = db.session.get(HexTile, 1)
         confirm_location(engine, player, hex_tile)
         db.session.commit()
         validate_rules(engine, player)
@@ -297,7 +297,7 @@ def test_three_constructions_with_pause():
         player.money = 1_000_000_000
         db.session.add(player)
         db.session.commit()
-        hex_tile = db.session.get(Hex, 1)
+        hex_tile = db.session.get(HexTile, 1)
         confirm_location(engine, player, hex_tile)
         db.session.commit()
         validate_rules(engine, player)
@@ -328,7 +328,7 @@ def test_add_two_and_cancel_one():
         player.money = 1_000_000_000
         db.session.add(player)
         db.session.commit()
-        hex_tile = db.session.get(Hex, 1)
+        hex_tile = db.session.get(HexTile, 1)
         confirm_location(engine, player, hex_tile)
         db.session.commit()
         validate_rules(engine, player)
@@ -354,7 +354,7 @@ def test_technologies_pausing_propagates_requirements():
         player.money = 1_000_000_000
         db.session.add(player)
         db.session.commit()
-        hex_tile = db.session.get(Hex, 1)
+        hex_tile = db.session.get(HexTile, 1)
         confirm_location(engine, player, hex_tile)
         db.session.commit()
         finish_project(queue_project(engine=engine, player=player, asset="laboratory", force=True))
@@ -384,7 +384,7 @@ def test_math_and_building_tech():
         player.money = 1_000_000_000
         db.session.add(player)
         db.session.commit()
-        hex_tile = db.session.get(Hex, 1)
+        hex_tile = db.session.get(HexTile, 1)
         confirm_location(engine, player, hex_tile)
         db.session.commit()
         finish_project(queue_project(engine=engine, player=player, asset="laboratory", force=True))

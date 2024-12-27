@@ -830,7 +830,7 @@ function sortTable(columnName, reorder = true) {
 
     // Add the sorted data to the table
     for (const [id, facility] of sortedData) {
-        let row = table.insertRow().innerHTML = `<td>${facility.facility_col}</td>
+        let row = table.insertRow().innerHTML = `<td>${facility.name_col}</td>
             <td>${format_mass(facility.usage_col)}</td>
             <td><label class="switch"><input type="checkbox" 
                 onclick="toggle_displayed('${facility.name}')" 

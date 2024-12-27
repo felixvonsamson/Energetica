@@ -89,7 +89,7 @@ class CapacityData:
         engine = current_app.config["engine"]
         if facility_name is None:
             active_facilities: list[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id).all()
-            unique_facilities = {af.facility for af in active_facilities}
+            unique_facilities = {af.name for af in active_facilities}
             for uf in unique_facilities:
                 self.init_facility(engine, uf)
         else:
@@ -102,13 +102,13 @@ class CapacityData:
             self.init_facility(engine, facility_name)
 
         for facility in active_facilities:
-            base_data = engine.const_config["assets"][facility.facility]
-            effective_values = self._data[facility.facility]
+            base_data = engine.const_config["assets"][facility.name]
+            effective_values = self._data[facility.name]
             op_costs = facility.daily_op_cost * engine.in_game_seconds_per_tick / (24 * 3600)
-            if facility.facility in ["watermill", "small_water_dam", "large_water_dam"]:
+            if facility.name in ["watermill", "small_water_dam", "large_water_dam"]:
                 op_costs *= facility.multiplier_2
             effective_values["O&M_cost"] += op_costs
-            if facility.facility in engine.power_facilities:
+            if facility.name in engine.power_facilities:
                 power_gen = facility.max_power_generation
                 effective_values["power"] += power_gen
                 for fuel in effective_values["fuel_use"]:
@@ -120,7 +120,7 @@ class CapacityData:
                         / 3600
                         / 1_000_000
                     )
-            elif facility.facility in engine.storage_facilities:
+            elif facility.name in engine.storage_facilities:
                 power_gen = facility.max_power_generation
                 # mean efficiency
                 effective_values["efficiency"] = (
@@ -130,7 +130,7 @@ class CapacityData:
                 effective_values["power"] += power_gen
                 if facility.end_of_life > 0:
                     effective_values["capacity"] += facility.storage_capacity
-            elif facility.facility in engine.extraction_facilities:
+            elif facility.name in engine.extraction_facilities:
                 effective_values["extraction_rate_per_day"] += (
                     base_data["base_extraction_rate_per_day"] * facility.multiplier_2
                 )
@@ -138,7 +138,7 @@ class CapacityData:
                 effective_values["pollution"] += base_data["base_pollution"] * facility.multiplier_3
 
         if player.network is not None:
-            player.network.data.capacities.update_network(player.network)
+            player.network.capacities.update_network(player.network)
 
     def update_network(self, network: Network) -> None:
         """Update the capacity data of the network."""

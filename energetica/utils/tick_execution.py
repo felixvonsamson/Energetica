@@ -90,11 +90,11 @@ def check_events_completion(engine):
     ).all()
     for facility in eolt_facilities:
         player = db.session.get(Player, facility.player_id)
-        if facility.facility in engine.storage_facilities:
+        if facility.name in engine.storage_facilities:
             if facility.end_of_life == engine.data["total_t"]:
-                player.capacities.update(player, facility.facility)
-            stored_energy = player.rolling_history.get_last_data("storage", facility.facility)
-            available_capacity = player.capacities[facility.facility]["capacity"]
+                player.capacities.update(player, facility.name)
+            stored_energy = player.rolling_history.get_last_data("storage", facility.name)
+            available_capacity = player.capacities[facility.name]["capacity"]
             if stored_energy > available_capacity:
                 continue
         remove_asset(player, facility)

@@ -1,14 +1,27 @@
 """Module that contains the ResourceOnSale class."""
 
-from energetica.database import db
+import itertools
+from dataclasses import dataclass
+from datetime import datetime
+from typing import ClassVar
+
+from flask import current_app
 
 
-class ResourceOnSale(db.Model):
+@dataclass
+class ResourceOnSale:
     """Class that stores resources currently on sale."""
 
-    id = db.Column(db.Integer, primary_key=True)
-    resource = db.Column(db.String(10))
-    quantity = db.Column(db.Float)
-    price = db.Column(db.Float)
-    creation_date = db.Column(db.DateTime)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player
+    __next_id: ClassVar[int] = itertools.count()
+    id: int
+
+    resource: str
+    quantity: float
+    price: float
+    creation_date: datetime = None
+
+    def __post_init__(self):
+        """Post initialization method."""
+        self.id = next(ResourceOnSale.__next_id)
+        self.creation_date = datetime.now()
+        current_app.config["engine"].players[self.id] = self

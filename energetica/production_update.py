@@ -49,7 +49,6 @@ def update_electricity(engine):
 
     # reset progress speeds fot all ongoing constructions and shipments
     ongoing_constructions = OngoingConstruction.query.filter_by(status=2).all()
-    for player_data in 
     for oc in ongoing_constructions:
         oc.reset_speed()
     ongoing_shipments = Shipment.query.all()
@@ -73,7 +72,7 @@ def update_electricity(engine):
             "generation": market["generation"],
             "consumption": market["consumption"],
         }
-        network.data.rolling_history.append_value(new_network_values)
+        network.rolling_history.append_value(new_network_values)
         for player in network.members:
             player.emit(
                 "new_network_values",
@@ -603,7 +602,7 @@ def solar_generation(engine, player, generation, in_game_seconds_passed):
             ).all()
             for facility in solar_facilities:
                 irradiance = calculate_solar_irradiance(
-                    facility.pos_x, facility.pos_y, in_game_seconds_passed, engine.data["random_seed"]
+                    facility.position, in_game_seconds_passed, engine.data["random_seed"]
                 )
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"] * facility.multiplier_1
@@ -637,9 +636,7 @@ def wind_generation(engine: GameEngine, player: Player, generation: dict, in_gam
                 player_id=player.id, facility=facility_type
             ).all()
             for facility in wind_facilities:
-                wind_speed = calculate_wind_speed(
-                    facility.pos_x, facility.pos_y, in_game_seconds_passed, engine.data["random_seed"]
-                )
+                wind_speed = calculate_wind_speed(facility.position, in_game_seconds_passed, engine.data["random_seed"])
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"] * facility.multiplier_1
                 )
@@ -696,8 +693,7 @@ def calculate_prod(
             energy_capacity = (
                 max(
                     0.0,
-                    player.capacities[facility]["capacity"]
-                    - player.rolling_history.get_last_data("storage", facility),
+                    player.capacities[facility]["capacity"] - player.rolling_history.get_last_data("storage", facility),
                 )
                 * 3600
                 / engine.in_game_seconds_per_tick
@@ -812,7 +808,6 @@ def resources_and_pollution(engine, new_values, player: Player):
                 )
                 player.resources[resource] += extracted_quantity
                 player.progression_metrics.extracted_resources += extracted_quantity
-                db.session.commit()
                 emissions = extracted_quantity * player.capacities[extraction_facility]["pollution"]
                 add_emissions(
                     engine,
