@@ -187,6 +187,8 @@ def emissions():
 @landing.route("/")
 @landing.route("/landing")
 def landing_page():
+    if current_user.is_authenticated and request.path == "/":
+        return redirect("/home")
     return g.render_template_ctx("landing.jinja")
 
 

@@ -13,7 +13,6 @@ from flask import current_app
 import energetica.production_update as production_update
 from energetica.database import db
 from energetica.database.map import HexTile
-from energetica.database.ongoing_construction import OngoingConstruction
 from energetica.utils.climate_helpers import climate_event_impact
 from energetica.utils.tick_execution import check_events_completion
 
