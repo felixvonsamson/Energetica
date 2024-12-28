@@ -74,16 +74,6 @@ def log_action(func: callable) -> callable:
     return wrapper
 
 
-@http.before_request
-@login_required
-def check_user() -> None:
-    """Set `engine` to point to the engine object.
-
-    Executed before all `@http` request
-    """
-    engine = engine
-
-
 @http.route("/request_delete_notification", methods=["POST"])
 def request_delete_notification() -> Response:
     """Delete a notification from the player's notification list.

@@ -216,10 +216,10 @@ def confirm_location(player: Player, location: HexTile) -> None:
     eol = engine.data["total_t"] + math.ceil(
         engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick
     )
-    pos_x=location.coordinates[0] + 0.5 * location.coordinates[1]
-    pos_y=location.coordinates[1]
+    pos_x = location.coordinates[0] + 0.5 * location.coordinates[1]
+    pos_y = location.coordinates[1]
     steam_engine: ActiveFacility = ActiveFacility(
-        facility="steam_engine",
+        name="steam_engine",
         position=(pos_x, pos_y),
         end_of_life=eol,
         player=player,

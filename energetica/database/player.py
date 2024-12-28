@@ -16,6 +16,7 @@ from pywebpush import WebPushException, webpush
 
 from energetica import engine
 from energetica.config.achievements import achievements
+from energetica.database import DB
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, PlayerPrices
@@ -82,6 +83,7 @@ class Player(DB, UserMixin):
     username: str
     pwhash: str
 
+    network: Network | None = None
     network_prices: PlayerPrices = field(default_factory=PlayerPrices)
     # TODO (Felix): This list can be transformed in a property
     list_of_renewables: list[str] = field(default_factory=list)
@@ -229,7 +231,7 @@ class Player(DB, UserMixin):
     @property
     def is_in_network(self) -> bool:
         """Return True if the player is in a network."""
-        return self.network_id is not None
+        return self.network is not None
 
     def change_graph_view(self, view: NetworkGraphView) -> None:
         """Set the network graph view of the player (basic/normal/expert)."""
@@ -268,7 +270,7 @@ class Player(DB, UserMixin):
 
     def package_chat_messages(self, chat_id: int) -> list[dict]:
         """Package the last 20 messages of a chat."""
-        chat = Chat.filter_by(id=chat_id).first()
+        chat = Chat.get(chat_id)
         messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
         messages_list = [
             {
