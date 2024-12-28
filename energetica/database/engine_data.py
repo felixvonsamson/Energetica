@@ -6,7 +6,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterator
 
 import noise
 
@@ -86,16 +86,15 @@ class CapacityData:
 
     def update(self, player: Player, facility_name: str) -> None:
         """Update the capacity data of the player."""
+        active_facilities: Iterator[ActiveFacility]
         if facility_name is None:
-            active_facilities: list[ActiveFacility] = ActiveFacility.filter_by(player=player)
+            active_facilities = ActiveFacility.filter_by(player=player)
             unique_facilities = {af.name for af in active_facilities}
             for uf in unique_facilities:
                 self.init_facility(uf)
         else:
-            active_facilities: list[ActiveFacility] = ActiveFacility.filter_by(
-                player_id=player.id, facility=facility_name
-            )
-            if len(active_facilities) == 0 and facility_name in self._data:
+            active_facilities = ActiveFacility.filter_by(player_id=player.id, facility=facility_name)
+            if len(list(active_facilities)) == 0 and facility_name in self._data:
                 del self._data[facility_name]
                 return
             self.init_facility(facility_name)
