@@ -5,12 +5,12 @@ from __future__ import annotations
 import itertools
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flask import current_app
 
-from energetica.database import db
-from energetica.database.player import Player
+if TYPE_CHECKING:
+    from energetica.database.player import Player
 
 
 @dataclass
@@ -21,7 +21,7 @@ class Message:
     id: int
 
     text: str
-    time: datetime = None
+    time: datetime
 
     chat: Chat
     player: Player

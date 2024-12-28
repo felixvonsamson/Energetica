@@ -20,7 +20,7 @@ from energetica.database.network import Network
 from energetica.database.ongoing_construction import OngoingConstruction
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.database.shipment import Shipment, ShipmentData
+from energetica.database.shipment import Shipment
 
 
 # This is the engine object

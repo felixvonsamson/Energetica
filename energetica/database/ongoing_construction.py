@@ -138,11 +138,6 @@ class OngoingConstruction:
         self.speed = 1 - ticks
 
     @cached_property
-    def data(self) -> OngoingConstructionData:
-        """Return the data of the ongoing construction."""
-        return current_app.config["engine"].data["by_ongoing_construction"][self.id]
-
-    @cached_property
     def cache(self) -> OngoingConstructionCache:
         """Return the cache for this ongoing construction."""
         if self.id not in current_app.config["engine"].buffered["by_ongoing_construction"]:

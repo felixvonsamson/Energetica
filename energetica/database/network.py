@@ -1,13 +1,17 @@
 """Module that contains the Network class."""
 
+from __future__ import annotations
+
 import itertools
 from dataclasses import dataclass, field
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flask import current_app
 
 from energetica.database.engine_data import CapacityData, CircularBufferNetwork
-from energetica.database.player import Player
+
+if TYPE_CHECKING:
+    from energetica.database.player import Player
 
 
 @dataclass
