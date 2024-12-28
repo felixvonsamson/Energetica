@@ -4,15 +4,15 @@ import pickle
 import shutil
 from pathlib import Path
 
-from energetica.database import db
+from energetica import engine
 from energetica.database.engine_data import CapacityData, CircularBufferNetwork
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.game_engine import GameEngine, GameError
+from energetica.game_engine import GameError
 
 
 # TODO (Felix): Move this to a method in Player
-def join_network(engine, player, network):
+def join_network(player, network):
     """shared API method to join a network."""
     if "Unlock Network" not in player.achievements:
         raise GameError("networkNotUnlocked")
@@ -21,11 +21,10 @@ def join_network(engine, player, network):
     if player.network is not None:
         raise GameError("playerAlreadyInNetwork")
     player.network = network
-    db.session.commit()
     network.capacities.update_network(network)
     engine.log(f"{player.username} joined the network {network.name}")
     # import energetica.api.websocket as websocket
-    # websocket.rest_notify_network_change(engine)
+    # websocket.rest_notify_network_change()
 
 
 def data_init_network():
@@ -42,7 +41,7 @@ def data_init_network():
     }
 
 
-def create_network(engine, player, name) -> Network:
+def create_network(player, name) -> Network:
     """shared API method to create a network. Network name must pass validation,
     namely it must not be too long, nor too short, and must not already be in
     use."""
@@ -50,11 +49,9 @@ def create_network(engine, player, name) -> Network:
         raise GameError("networkNotUnlocked")
     if len(name) < 3 or len(name) > 40:
         raise GameError("nameLengthInvalid")
-    if Network.query.filter_by(name=name).first() is not None:
+    if len(Network.filter_by(name=name)):
         raise GameError("nameAlreadyUsed")
     new_network = Network(name=name, members=[player])
-    db.session.add(new_network)
-    db.session.commit()
     network_path = f"instance/network_data/{new_network.id}"
     Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
     new_network.rolling_history = CircularBufferNetwork()
@@ -66,31 +63,30 @@ def create_network(engine, player, name) -> Network:
         pickle.dump(past_data, file)
     engine.log(f"{player.username} created the network {name}")
     # import energetica.api.websocket as websocket
-    # websocket.rest_notify_network_change(engine)
+    # websocket.rest_notify_network_change()
     return new_network
 
 
 # TODO (Felix): Move this to a method in Player
-def leave_network(engine, player):
+def leave_network(player):
     """Shared API method for a player to leave a network. Always succeeds."""
     network = player.network
     if network is None:
         raise GameError("notInNetwork")
     player.network_id = None
     engine.log(f"{player.username} left the network {network.name}")
-    remaining_members_count = Player.query.filter_by(network_id=network.id).count()
+    remaining_members_count = Player.filter_by(network_id=network.id).count()
     # delete network if it is empty
     if remaining_members_count == 0:
         engine.log(f"The network {network.name} has been deleted because it was empty")
         shutil.rmtree(f"instance/network_data/{network.id}")
-        db.session.delete(network)
-    db.session.commit()
+        del network
     # import energetica.api.websocket as websocket
-    # websocket.rest_notify_network_change(engine)
+    # websocket.rest_notify_network_change()
 
 
 # TODO (Felix): Move this to a method in Player
-def reorder_facility_priorities(engine: GameEngine, player: Player):
+def reorder_facility_priorities(player: Player):
     """Reorders the player's `priorities_of_controllables`, `priorities_of_demand` and `list_of_renewables` according
     to the players network prices :
     - The controllables are sorted in ascending price order
@@ -104,7 +100,7 @@ def reorder_facility_priorities(engine: GameEngine, player: Player):
 
 # TODO (Felix): Move this to a method in Player or even in PlayerPrices
 def set_network_prices(
-    engine: GameEngine, player: Player, updated_supply_prices: dict[str, float], updated_demand_prices: dict[str, float]
+   player: Player, updated_supply_prices: dict[str, float], updated_demand_prices: dict[str, float]
 ):
     """Updates network prices for that player"""
     for facility in updated_supply_prices:
@@ -127,11 +123,11 @@ def set_network_prices(
         player.network_prices.demand[facility] = new_price
 
     engine.log(f"{player.username} updated their prices")
-    reorder_facility_priorities(engine, player)
+    reorder_facility_priorities(player)
 
 
 # TODO (Felix): Move this to a method in Player
-def change_facility_priority(engine: GameEngine, player: Player, priority: list[str]):
+def change_facility_priority(player: Player, priority: list[str]):
     """
     This function is executed when the facilities priority is changed by changing the order in the interactive
     table. The function reassigns the selling prices of the facilities according to the new order.
@@ -155,4 +151,4 @@ def change_facility_priority(engine: GameEngine, player: Player, priority: list[
             updated_demand_prices[facility[7:]] = price
         else:
             updated_supply_prices[facility] = price
-    set_network_prices(engine, player, updated_supply_prices, updated_demand_prices)
+    set_network_prices(player, updated_supply_prices, updated_demand_prices)

@@ -3,15 +3,14 @@
 import contextlib
 import math
 import random
+from typing import Iterator
 
-from flask import current_app
-
-from energetica import technology_effects
-from energetica.database import db
+from energetica import engine, technology_effects
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
+from energetica.database.ongoing_construction import (ConstructionStatus,
+                                                      OngoingConstruction)
 from energetica.database.player import Player
-from energetica.game_engine import Confirm, GameEngine, GameError
+from energetica.game_engine import Confirm, GameError
 from energetica.utils.network_helpers import reorder_facility_priorities
 
 
@@ -23,8 +22,7 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
     * For technologies and functional facilities, checks for achievements
     * Removes from the relevant construction / research list and priority list
     """
-    engine: GameEngine = current_app.config["engine"]
-    player: Player = db.session.get(Player, construction.player_id)
+    player: Player = Player.get(construction.player_id)
 
     if construction.family in ["Technologies", "Functional Facilities"]:
         if getattr(player, construction.name) == 0:
@@ -33,16 +31,16 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
                 player.rolling_history.add_subcategory("emissions", construction.name)
                 player.cumul_emissions.add_category(construction.name)
                 player.priorities_of_demand.append(construction.name)
-                reorder_facility_priorities(engine, player)
+                reorder_facility_priorities(player)
             if construction.name == "warehouse":
                 for resource in ["coal", "gas", "uranium"]:
                     player.rolling_history.add_subcategory("resources", resource)
             if construction.name == "laboratory":
                 player.priorities_of_demand.append("research")
-                reorder_facility_priorities(engine, player)
+                reorder_facility_priorities(player)
             if construction.name == "warehouse":
                 player.priorities_of_demand.append("transport")
-                reorder_facility_priorities(engine, player)
+                reorder_facility_priorities(player)
 
         setattr(player, construction.name, getattr(player, construction.name) + 1)
 
@@ -54,7 +52,7 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
             server_tech[getattr(player, construction.name) - 1] += 1
             player.check_technology_achievement()
 
-    elif ActiveFacility.query.filter_by(facility=construction.name, player_id=player.id).count() == 0:
+    elif not ActiveFacility.filter_by(facility=construction.name, player_id=player.id):
         # initialize array for facility if it is the first one built
         if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
             player.rolling_history.add_subcategory("op_costs", construction.name)
@@ -69,13 +67,13 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
             player.cumul_emissions.add_category(construction.name)
         if construction.name in engine.extraction_facilities + engine.storage_facilities:
             player.priorities_of_demand.append(construction.name)
-            reorder_facility_priorities(engine, player)
+            reorder_facility_priorities(player)
         if construction.name in engine.renewables:
             player.list_of_renewables.append(construction.name)
-            reorder_facility_priorities(engine, player)
+            reorder_facility_priorities(player)
         if construction.name in engine.storage_facilities + engine.controllable_facilities:
             player.priorities_of_controllables.append(construction.name)
-            reorder_facility_priorities(engine, player)
+            reorder_facility_priorities(player)
 
     player.check_construction_achievements(construction.name)
 
@@ -85,8 +83,7 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
     else:
         player.construction_priorities.remove(construction.id)
     family = construction.family
-    db.session.delete(construction)
-    db.session.commit()
+    del construction
 
     deploy_available_workers(player, family, start_now=True)
 
@@ -114,23 +111,20 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
         position_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1] + random.uniform(-0.5, 0.5)
         position_y = (player.tile.coordinates[1] + random.uniform(-0.5, 0.5)) * 0.5 * 3**0.5
         new_facility: ActiveFacility = ActiveFacility(
-            facility=construction.name,
-            pos_x=position_x,
-            pos_y=position_y,
+            name=construction.name,
+            position=(position_x, position_y),
             end_of_life=eol,
-            player_id=player.id,
+            player=player,
             price_multiplier=construction.price_multiplier,
             multiplier_1=construction.multiplier_1,
             multiplier_2=construction.multiplier_2,
             multiplier_3=construction.multiplier_3,
         )
-        db.session.add(new_facility)
     if construction.family == "Technologies":
         player.capacities.update(player, None)
     else:
         player.capacities.update(player, construction.name)
     engine.config.update_config_for_user(player)
-    db.session.flush()
     player.emit("retrieve_player_data")
     player.emit("finish_construction", package_projects_data(player))
 
@@ -153,7 +147,7 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
             functional_facilities=True,
             technologies=True,
         )
-        other_players: list[Player] = Player.query.filter(Player.id != player.id).all()
+        other_players: list[Player] = Player.filter(Player.id != player.id).all()
         for other_player in other_players:
             other_player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
     player.send_worker_info()
@@ -183,7 +177,7 @@ def deploy_available_workers(player: Player, family: str, *, start_now=False) ->
     priority_list = getattr(player, priority_list_name)
 
     for priority_index, construction_id in enumerate(priority_list):
-        construction: OngoingConstruction = db.session.get(OngoingConstruction, construction_id)
+        construction: OngoingConstruction = OngoingConstruction.get(construction_id)
         if construction.status == ConstructionStatus.PAUSED:
             # Only the player can unpause a paused construction
             return
@@ -196,10 +190,7 @@ def deploy_available_workers(player: Player, family: str, *, start_now=False) ->
         available_workers -= 1
         insertion_index = None
         for insertion_index_candidate, possibly_paused_construction_id in enumerate(priority_list[:priority_index]):
-            possibly_paused_construction: OngoingConstruction = db.session.get(
-                OngoingConstruction,
-                possibly_paused_construction_id,
-            )
+            possibly_paused_construction: OngoingConstruction = OngoingConstruction.get(possibly_paused_construction_id)
             if not possibly_paused_construction.is_ongoing():
                 insertion_index = insertion_index_candidate
                 break
@@ -216,7 +207,6 @@ def deploy_available_workers(player: Player, family: str, *, start_now=False) ->
 
 def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
     """Upgrade a facility."""
-    engine: GameEngine = current_app.config["engine"]
     if facility is None or facility.player_id != player.id:
         msg = "Construction not found"
         raise GameError(msg)
@@ -232,7 +222,6 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
         msg = "FacilityIsDecommissioning"
         raise GameError(msg)
     player.money -= upgrade_cost
-    engine: GameEngine = current_app.config["engine"]
     if facility.name in engine.extraction_facilities:
         facility.price_multiplier = technology_effects.price_multiplier(facility.player, facility.name)
         facility.multiplier_1 = technology_effects.multiplier_1(facility.player, facility.name)
@@ -246,13 +235,12 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
             facility.multiplier_2 = technology_effects.multiplier_2(facility.player, facility.name)
         if facility.name in engine.controllable_facilities + engine.storage_facilities:
             facility.multiplier_3 = technology_effects.multiplier_3(facility.player, facility.name)
-    db.session.commit()
     player.capacities.update(player, facility.name)
 
 
 def upgrade_all_of_type(player: Player, facility_name: str) -> None:
     """Upgrade all facilities of a certain type."""
-    facilities: list[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
+    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player_id=player.id, facility=facility_name)
     for facility in facilities:
         with contextlib.suppress(GameError):
             upgrade_facility(player, facility)
@@ -263,7 +251,6 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
 
     This function is executed when a facility is decommissioned.
     """
-    engine = current_app.config["engine"]
     if facility is None or facility.player_id != player.id:
         msg = "Facility not found"
         raise GameError(msg)
@@ -272,26 +259,23 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
         raise GameError(msg)
     if facility.name in engine.storage_facilities and not decommissioning:
         facility.end_of_life = 0
-        db.session.flush()
         player.capacities.update(player, facility.name)
-        db.session.commit()
         return
-    db.session.delete(facility)
-    db.session.flush()
+    del facility
     # The cost of decommissioning is 20% of the building cost.
     cost = facility.dismantle_cost
     player.money -= cost
-    if ActiveFacility.query.filter_by(facility=facility.name, player_id=player.id).count() == 0:
+    if not ActiveFacility.filter_by(facility=facility.name, player_id=player.id):
         # remove facility from facility priorities if it was the last one
         if facility.name in engine.extraction_facilities + engine.storage_facilities:
             player.priorities_of_demand.remove(facility.name)
-            reorder_facility_priorities(engine, player)
+            reorder_facility_priorities(player)
         if facility.name in engine.renewables:
             player.list_of_renewables.remove(facility.name)
-            reorder_facility_priorities(engine, player)
+            reorder_facility_priorities(player)
         if facility.name in engine.storage_facilities + engine.controllable_facilities:
             player.priorities_of_controllables.remove(facility.name)
-            reorder_facility_priorities(engine, player)
+            reorder_facility_priorities(player)
     facility_name = engine.const_config["assets"][facility.name]["name"]
     if decommissioning:
         player.notify(
@@ -303,10 +287,8 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
             ),
         )
         engine.log(f"The facility {facility_name} from {player.username} has been decommissioned.")
-    db.session.flush()
     player.capacities.update(player, facility.name)
     engine.config.update_config_for_user(player)
-    db.session.commit()
 
 
 def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str) -> None:
@@ -320,7 +302,7 @@ def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str
             f"{round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>."
         ),
     )
-    current_app.config["engine"].log(f"{player.username} : {facility.name} destroyed by {event_name}.")
+    engine.log(f"{player.username} : {facility.name} destroyed by {event_name}.")
 
 
 def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
@@ -335,13 +317,12 @@ def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
         msg = "Not enough money"
         raise GameError(msg)
     remove_asset(player, facility, decommissioning=False)
-    engine: GameEngine = current_app.config["engine"]
     engine.log(f"{player.username} dismantled the facility {facility.name}.")
 
 
 def dismantle_all_of_type(player: Player, facility_name: str) -> None:
     """Dismantle all facilities of a certain type."""
-    facilities: list[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id, facility=facility_name).all()
+    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player_id=player.id, facility=facility_name)
     for facility in facilities:
         with contextlib.suppress(GameError):
             dismantle_facility(player, facility)
@@ -357,7 +338,6 @@ def package_projects_data(player: Player) -> dict:
 
 
 def queue_project(
-    engine: GameEngine,
     player: Player,
     asset: str,
     *,
@@ -413,10 +393,8 @@ def queue_project(
         multiplier_1=technology_effects.multiplier_1(player, asset),
         multiplier_2=technology_effects.multiplier_2(player, asset),
         multiplier_3=technology_effects.multiplier_3(player, asset),
-        player_id=player.id,
+        player=player,
     )
-    db.session.add(new_construction)
-    db.session.commit()
     if asset in engine.technologies:
         player.research_priorities.append(new_construction.id)
     else:
@@ -431,15 +409,14 @@ def queue_project(
         engine.log(f"{player.username} started the construction {asset}")
     # TODO(mglst): This should be re-enabled when the websocket is re-enabled
     # from energetica.api import websocket
-    # websocket.rest_notify_constructions(engine, player)
-    db.session.commit()
+    # websocket.rest_notify_constructions(player)
 
-    invalidate_data_on_project_update(engine, player, asset)
+    invalidate_data_on_project_update(player, asset)
     player.send_worker_info()
     return new_construction
 
 
-def invalidate_data_on_project_update(engine: GameEngine, player: Player, asset_type: str) -> None:
+def invalidate_data_on_project_update(player: Player, asset_type: str) -> None:
     """Check for data page invalidation when project has been queued or cancelled."""
     if asset_type in {
         "watermill",
@@ -458,7 +435,6 @@ def invalidate_data_on_project_update(engine: GameEngine, player: Player, asset_
 
 def cancel_project(player: Player, construction: OngoingConstruction, *, force: bool = False):
     """Cancel an ongoing construction."""
-    engine: GameEngine = current_app.config["engine"]
     if construction is None or construction.player_id != player.id:
         msg = "Construction not found"
         raise GameError(msg)
@@ -470,7 +446,7 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
     priority_list = getattr(player, priority_list_name)
     construction_priority_index = priority_list.index(construction.id)
     for candidate_dependent_id in priority_list[construction_priority_index + 1 :]:
-        candidate_dependent: OngoingConstruction = db.session.get(OngoingConstruction, candidate_dependent_id)
+        candidate_dependent: OngoingConstruction = OngoingConstruction.get(candidate_dependent_id)
         if construction.id in candidate_dependent.cache.prerequisites:
             dependents.append([candidate_dependent.name, candidate_dependent.cache.level])
     if dependents:
@@ -493,19 +469,17 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
         player.research_priorities.remove(construction.id)
     else:
         player.construction_priorities.remove(construction.id)
-    db.session.delete(construction)
+    del construction
 
-    db.session.flush()
     deploy_available_workers(player, construction.family)
     player.send_worker_info()
 
     engine.log(f"{player.username} cancelled the construction {construction.name}")
-    db.session.commit()
     # TODO(mglst): This should be re-enabled when the websocket is re-enabled
     # from energetica.api import websocket
-    # websocket.rest_notify_constructions(engine, player)
+    # websocket.rest_notify_constructions(player)
 
-    invalidate_data_on_project_update(engine, player, construction.name)
+    invalidate_data_on_project_update(player, construction.name)
 
 
 def decrease_project_priority(player: Player, construction: OngoingConstruction):
@@ -514,7 +488,7 @@ def decrease_project_priority(player: Player, construction: OngoingConstruction)
     This function is executed when a player changes the order of ongoing constructions.
     Note : When a project is moved in the priority list, it may be paused or unpaused.
     """
-    engine = current_app.config["engine"]
+    engine = engine
     if construction is None or construction.player_id != player.id:
         msg = "Construction not found"
         raise GameError(msg)
@@ -526,7 +500,7 @@ def decrease_project_priority(player: Player, construction: OngoingConstruction)
         return
 
     construction_1: OngoingConstruction = construction
-    construction_2: OngoingConstruction = db.session.get(OngoingConstruction, priority_list[index + 1])
+    construction_2: OngoingConstruction = OngoingConstruction.get(priority_list[index + 1])
 
     # Here are all the possible cases for the two projects, construction_1 and construction_2:
     # 1. ongoing, ongoing (swap)
@@ -551,10 +525,9 @@ def decrease_project_priority(player: Player, construction: OngoingConstruction)
 
     priority_list[index + 1], priority_list[index] = (priority_list[index], priority_list[index + 1])
     setattr(player, attr, ",".join(map(str, priority_list)))
-    db.session.commit()
     # TODO(mglst): This should be re-enabled when the websocket is re-enabled
     # from energetica.api import websocket
-    # websocket.rest_notify_constructions(engine, player)
+    # websocket.rest_notify_constructions(player)
 
 
 def toggle_pause_project(player: Player, construction: OngoingConstruction) -> None:
@@ -562,7 +535,6 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
     This function is executed when a player pauses or unpauses an ongoing construction.
     Note : When a project is paused or unpaused, it's position in the priority list has to be updated.
     """
-    engine: GameEngine = current_app.config["engine"]
     if construction is None or construction.player_id != player.id:
         msg = "Construction not found"
         raise GameError(msg)
@@ -580,7 +552,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
         insertion_index: int | None = None
         for index, other_construction_id in enumerate(priority_list[construction_index + 1 :]):
             other_construction_index = index + construction_index + 1
-            other_construction: OngoingConstruction = db.session.get(OngoingConstruction, other_construction_id)
+            other_construction: OngoingConstruction = OngoingConstruction.get(other_construction_id)
             if other_construction.was_paused_by_player():
                 insertion_index = other_construction_index
                 break
@@ -607,7 +579,6 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
         setattr(player.data, priority_list_name, priority_list)
 
         # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
-        db.session.flush()
         deploy_available_workers(player, construction.family)
         player.send_worker_info()
 
@@ -617,7 +588,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
         if "_prerequisites_and_level" in construction.cache.__dict__:
             del construction.cache._prerequisites_and_level  # Needed to force recompute, as prerequisites aren't
         for prerequisite_id in construction.cache.prerequisites:
-            prerequisite = OngoingConstruction.query.get(prerequisite_id)
+            prerequisite = OngoingConstruction.get(prerequisite_id)
             if prerequisite.status == ConstructionStatus.PAUSED:
                 raise GameError("PausedPrerequisitePreventUnpause")
 
@@ -628,7 +599,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
         priority_list.remove(construction.id)
         insertion_index = None
         for new_index, other_construction_id in enumerate(priority_list):
-            other_construction: OngoingConstruction = OngoingConstruction.query.get(other_construction_id)
+            other_construction: OngoingConstruction = OngoingConstruction.get(other_construction_id)
             if other_construction.status < construction.status:
                 insertion_index = new_index
                 break
@@ -639,7 +610,6 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
         setattr(player.data, priority_list_name, priority_list)
         engine.log(f"{player.username} unpaused the construction {construction.id} {construction.name}")
 
-    db.session.commit()
     # TODO(mglst): This should be re-enabled when the websocket is re-enabled
     # from energetica.api import websocket
-    # websocket.rest_notify_constructions(engine, player)
+    # websocket.rest_notify_constructions(player)

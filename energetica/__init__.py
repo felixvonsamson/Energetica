@@ -43,6 +43,8 @@ from energetica.utils.climate_helpers import data_init_climate
 from energetica.utils.tick_execution import state_update
 from energetica.views import changelog, landing, location_choice_views, overviews, views, wiki
 
+engine = GameEngine()
+
 
 def get_or_create_flask_secret_key() -> str:
     """Load or create SECRET_KEY for Flask."""
@@ -236,30 +238,28 @@ def create_app(
         """
         return send_file("static/apple-app-site-association", as_attachment=True)
 
-    # initialize database :
-    with app.app_context():
-        # if map data not already stored in database, read map.csv and store it in database
-        if HexTile.query.count() == 0:
-            with open("energetica/static/data/map.csv", "r") as file:
-                csv_reader = csv.DictReader(file)
-                for row in csv_reader:
-                    hex = HexTile(
-                        coordinates=(row["q"], row["r"]),
-                        solar_potential=float(row["solar"]),
-                        wind_potential=float(row["wind"]),
-                        hydro_potential=float(row["hydro"]),
-                        coal_reserves=float(row["coal"]),
-                        gas_reserves=float(row["gas"]),
-                        uranium=float(row["uranium"]),
-                        uranium_reserves=float(row["climate_risk"]),
-                    )
+    # if map data not already stored in database, read map.csv and store it in database
+    if HexTile.count() == 0:
+        with open("energetica/static/data/map.csv", "r", encoding="utf-8") as file:
+            csv_reader = csv.DictReader(file)
+            for row in csv_reader:
+                HexTile(
+                    coordinates=(row["q"], row["r"]),
+                    solar_potential=float(row["solar"]),
+                    wind_potential=float(row["wind"]),
+                    hydro_potential=float(row["hydro"]),
+                    coal_reserves=float(row["coal"]),
+                    gas_reserves=float(row["gas"]),
+                    uranium_reserves=float(row["uranium"]),
+                    climate_risk=float(row["climate_risk"]),
+                )
 
-        # creating general chat
-        if Chat.query.count() == 0:
-            new_chat = Chat(
-                name="General Chat",
-                participants=[],
-            )
+    # creating general chat
+    if Chat.count() == 0:
+        Chat(
+            name="General Chat",
+            participants=[],
+        )
 
     # initialize login manager
     login_manager = LoginManager()
@@ -268,7 +268,7 @@ def create_app(
 
     @login_manager.user_loader
     def load_user(id) -> Player:
-        return db.session.get(Player, int(id))
+        return Player.get(int(id))
 
     # initialize the schedulers and add the recurrent functions :
     # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
@@ -279,7 +279,7 @@ def create_app(
         if not simulate_file:
             scheduler.add_job(
                 func=state_update,
-                args=(engine, app),
+                args=(app),
                 id="state_update",
                 trigger="cron",
                 second=f"*/{clock_time}" if clock_time != 60 else "0",
@@ -311,6 +311,6 @@ def create_app(
             engine.log("running init_test_players")
             with app.app_context():
                 # Temporary automated player creation for testing
-                init_test_players(engine)
+                init_test_players()
 
     return socketio, app

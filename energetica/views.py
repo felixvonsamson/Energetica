@@ -2,10 +2,10 @@
 
 from functools import partial
 
-from flask import Blueprint, current_app, g, redirect, render_template, request, url_for
+from flask import (Blueprint, current_app, g, redirect, render_template,
+                   request, url_for)
 from flask_login import current_user, login_required
 
-from energetica.database import db
 from energetica.database.messages import Chat
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
@@ -29,8 +29,7 @@ def set_ctx():
 
     render_template_ctx = partial(
         render_template,
-        engine=current_app.config["engine"],
-        user=player,
+                user=player,
     )
     g.render_template_ctx = render_template_ctx
 
@@ -41,7 +40,7 @@ def set_ctx():
 def set_ctx_no_login():
     """This function is called before every request"""
     user = current_user if current_user.is_authenticated and current_user.tile is not None else None
-    render_template_ctx = partial(render_template, engine=current_app.config["engine"], user=user)
+    render_template_ctx = partial(render_template, engine=engine, user=user)
     g.render_template_ctx = render_template_ctx
 
 
@@ -51,7 +50,7 @@ def location_choice():
     player: Player = current_user
     if player.tile is not None:
         return redirect(url_for("views.home"))
-    return render_template("location_choice.jinja", engine=current_app.config["engine"])
+    return render_template("location_choice.jinja", engine=engine)
 
 
 @views.route("/home")
@@ -79,14 +78,14 @@ def profile():
     if player_id is None:
         player: Player = current_user
         player_id = player.id
-    player = db.session.get(Player, player_id)
+    player = Player.get(player_id)
     return g.render_template_ctx("profile.jinja", profile=player)
 
 
 @views.route("/messages", methods=["GET", "POST"])
 def messages():
     player: Player = current_user
-    chats = Chat.query.filter(Chat.participants.any(id=player.id)).all()
+    chats = Chat.filter(Chat.participants.any(id=player.id)).all()
     return g.render_template_ctx("messages.jinja", chats=chats)
 
 
@@ -141,7 +140,7 @@ def resource_market():
     player: Player = current_user
     if "Unlock Natural Resources" not in player.achievements:
         return redirect("/home", code=302)
-    on_sale = ResourceOnSale.query.all()
+    on_sale = ResourceOnSale.all()
     return g.render_template_ctx("resource_market.jinja", on_sale=on_sale)
 
 

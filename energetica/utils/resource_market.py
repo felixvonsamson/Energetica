@@ -3,9 +3,6 @@
 import math
 from datetime import datetime
 
-from flask import current_app
-
-from energetica.database import db
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.database.shipment import Shipment
 from energetica.game_engine import GameError
@@ -25,12 +22,11 @@ def put_resource_on_market(player, resource, quantity, price):
         player=player,
     )
     db.session.add(new_sale)
-    db.session.commit()
 
 
 def buy_resource_from_market(player, quantity, sale):
     """Buy an offer from the resource market"""
-    engine = current_app.config["engine"]
+    engine = engine
 
     if quantity is None or quantity <= 0 or quantity > sale.quantity:
         raise GameError("invalidQuantity")
@@ -39,9 +35,8 @@ def buy_resource_from_market(player, quantity, sale):
         # Player is buying their own resource
         sale.quantity -= quantity
         if sale.quantity == 0:
-            db.session.delete(sale)
+            del sale
         player.resources_on_sale[sale.resource] -= quantity
-        db.session.commit()
     else:
         if total_price > player.money:
             raise GameError("notEnoughMoney")
@@ -79,13 +74,12 @@ def buy_resource_from_market(player, quantity, sale):
         )
         if sale.quantity == 0:
             # Player is purchasing all available quantity
-            db.session.delete(sale)
-        db.session.commit()
+            del sale
 
 
 def store_import(player, resource, quantity):
     """This function is executed when a resource shipment arrives"""
-    engine = current_app.config["engine"]
+    engine = engine
     max_cap = player.config["warehouse_capacities"][resource]
     if player.resources[resource] + quantity > max_cap:
         player.resources[resource] = max_cap

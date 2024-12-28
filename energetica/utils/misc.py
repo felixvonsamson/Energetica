@@ -11,8 +11,8 @@ from flask import flash
 from noise import pnoise3
 from scipy.stats import norm
 
+from energetica import engine
 from energetica.config.assets import river_discharge_seasonal
-from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import HexTile
 from energetica.database.messages import Chat, Message, Notification
@@ -79,7 +79,7 @@ def add_player_to_data(player: Player) -> None:
     player.capacities.update(player, None)
 
 
-def save_past_data_threaded(app, engine: GameEngine):
+def save_past_data_threaded(app):
     """Save the past production data to files every 216 ticks AND remove network data older than 24h."""
 
     def save_data():
@@ -97,7 +97,7 @@ def save_past_data_threaded(app, engine: GameEngine):
                 pickle.dump(past_climate_data, file)
 
             # save player data
-            players = Player.query.all()
+            players = Player.all()
             for player in players:
                 if player.tile is None:
                     continue
@@ -124,7 +124,7 @@ def save_past_data_threaded(app, engine: GameEngine):
                     pickle.dump(past_data, file)
 
             # remove old network files AND save past prices
-            networks = Network.query.all()
+            networks = Network.all()
             for network in networks:
                 network_dir = f"instance/network_data/{network.id}/charts/"
                 files = os.listdir(network_dir)
@@ -155,11 +155,10 @@ def save_past_data_threaded(app, engine: GameEngine):
                     pickle.dump(past_data, file)
 
             # remove old notifications
-            Notification.query.filter(
+            Notification.filter(
                 Notification.title != "Tutorial",
                 Notification.time < datetime.now() - timedelta(weeks=2),
             ).delete()
-            db.session.commit()
 
             engine.log("last 216 data points have been saved to files")
 
@@ -180,7 +179,7 @@ def save_past_data_threaded(app, engine: GameEngine):
     thread.start()
 
 
-def display_new_message(engine: GameEngine, message: Message, chat: Chat) -> None:
+def display_new_message(message: Message, chat: Chat) -> None:
     """Send a chat message to all relevant sources through socketio and websocket."""
     # websocket_message = websocket.rest_new_chat_message(chat.id, message)
     for player in chat.participants:
@@ -193,13 +192,13 @@ def display_new_message(engine: GameEngine, message: Message, chat: Chat) -> Non
                 "chat_id": message.chat_id,
             },
         )
-        # websocket.rest_notify_player(engine, player, websocket_message)
+        # websocket.rest_notify_player(player, websocket_message)
 
 
 # Map
 
 
-def confirm_location(engine: GameEngine, player: Player, location: HexTile) -> None:
+def confirm_location(player: Player, location: HexTile) -> None:
     """Confirm a location choice.
 
     Return either success or an explanatory error message in the form of a dictionary.
@@ -217,34 +216,33 @@ def confirm_location(engine: GameEngine, player: Player, location: HexTile) -> N
     eol = engine.data["total_t"] + math.ceil(
         engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick
     )
+    pos_x=location.coordinates[0] + 0.5 * location.coordinates[1]
+    pos_y=location.coordinates[1]
     steam_engine: ActiveFacility = ActiveFacility(
         facility="steam_engine",
-        pos_x=location.coordinates[0] + 0.5 * location.coordinates[1],
-        pos_y=location.coordinates[1],
+        position=(pos_x, pos_y),
         end_of_life=eol,
-        player_id=player.id,
+        player=player,
         price_multiplier=1.0,
         multiplier_1=1.0,
         multiplier_2=1.0,
         multiplier_3=1.0,
     )
-    db.session.add(steam_engine)
-    general_chat = db.session.get(Chat, 1)
+    general_chat = Chat.get(1)
     player.chats.append(general_chat)
-    db.session.commit()
     add_player_to_data(player)
     init_table(player.id)
     player.rolling_history.add_subcategory("op_costs", "steam_engine")
     player.rolling_history.add_subcategory("generation", "steam_engine")
     player.rolling_history.add_subcategory("emissions", "steam_engine")
-    # websocket.rest_notify_player_location(engine, player)
+    # websocket.rest_notify_player_location(player)
     engine.log(f"{player.username} chose the location {location.id}")
 
 
 # Quiz
 
 
-def submit_quiz_answer(engine: GameEngine, player: Player, answer: str) -> bool:
+def submit_quiz_answer(player: Player, answer: str) -> bool:
     """Return True if the answer was correct, False otherwise."""
     quiz_data = engine.data["daily_question"]
     if player.id in quiz_data["player_answers"]:
@@ -252,14 +250,13 @@ def submit_quiz_answer(engine: GameEngine, player: Player, answer: str) -> bool:
     quiz_data["player_answers"][player.id] = answer
     if answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":
         player.progression_metrics.xp += 1
-        db.session.commit()
         engine.log(f"{player.username} answered the quiz correctly")
         return True
     engine.log(f"{player.username} answered the quiz incorrectly")
     return False
 
 
-def get_quiz_question(engine: GameEngine, player: Player) -> dict:
+def get_quiz_question(player: Player) -> dict:
     """Return the data for the quiz question in the form of a dictionary with only the answer of the current player."""
     question_data = engine.data["daily_question"].copy()
     if player.id in question_data["player_answers"]:
@@ -348,7 +345,7 @@ def calculate_river_discharge(total_seconds: float) -> float:
     return discharge_factor * 150  # in m^3/s
 
 
-def package_weather_data(engine: GameEngine, player: Player) -> dict:
+def package_weather_data(player: Player) -> dict:
     """Package date and weather data for a player."""
     x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     y = player.tile.coordinates[1] * 0.5 * 3**0.5

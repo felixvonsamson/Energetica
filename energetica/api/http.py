@@ -16,8 +16,8 @@ import energetica.utils.chat
 import energetica.utils.misc
 import energetica.utils.network_helpers
 import energetica.utils.resource_market
+from energetica import engine
 from energetica.config.assets import wind_power_curve
-from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import HexTile
 from energetica.database.messages import Chat
@@ -44,11 +44,11 @@ def log_action(func: callable) -> callable:
             return func(*args, **kwargs)
 
         try:
-            with g.engine.lock:
+            with engine.lock:
                 response = func(*args, **kwargs)
             response, status_code = response if isinstance(response, tuple) else (response, response.status_code)
         except GameError as game_exception:
-            # TODO g.engine.db.rollback()
+            # TODO engine.db.rollback()
             response, status_code = jsonify({"response": game_exception.exception_type, **game_exception.kwargs}), 403
 
         log_entry = {
@@ -68,7 +68,7 @@ def log_action(func: callable) -> callable:
                 else response,
             },
         }
-        g.engine.action_logger.info(json.dumps(log_entry))
+        engine.action_logger.info(json.dumps(log_entry))
         return response, status_code
 
     return wrapper
@@ -77,11 +77,11 @@ def log_action(func: callable) -> callable:
 @http.before_request
 @login_required
 def check_user() -> None:
-    """Set `g.engine` to point to the engine object.
+    """Set `engine` to point to the engine object.
 
     Executed before all `@http` request
     """
-    g.engine = current_app.config["engine"]
+    engine = engine
 
 
 @http.route("/request_delete_notification", methods=["POST"])
@@ -109,7 +109,7 @@ def request_marked_as_read() -> Response:
 @http.route("/get_const_config", methods=["GET"])
 def get_const_config() -> Response:
     """Get constant config data."""
-    return jsonify(g.engine.const_config)
+    return jsonify(engine.const_config)
 
 
 @http.route("/get_wind_power_curve", methods=["GET"])
@@ -122,7 +122,7 @@ def get_wind_power_curve() -> Response:
 @http.route("/get_map", methods=["GET"])
 def get_map() -> Response:
     """Get the map data from the database and returns it as a array of dictionaries."""
-    hex_map = HexTile.query.all()
+    hex_map = HexTile.all()
     hex_list = [
         {
             "id": tile.id,
@@ -146,7 +146,7 @@ def get_map() -> Response:
 @http.route("/get_networks", methods=["GET"])
 def get_networks() -> Response:
     """Get all the network names and returns it as a list."""
-    network_list = Network.query.with_entities(Network.id, Network.name).all()
+    network_list = Network.with_entities(Network.id, Network.name).all()
     return jsonify(dict(network_list))
 
 
@@ -203,7 +203,7 @@ def get_chart_data() -> Response:
 
     if current_user.tile is None:
         return "", 404
-    total_t = g.engine.data["total_t"]
+    total_t = engine.data["total_t"]
     rolling_history = current_user.rolling_history.get_data(t=total_t % 216 + 1)
     filename = f"instance/player_data/player_{current_user.id}.pck"
     with open(filename, "rb") as file:
@@ -217,7 +217,7 @@ def get_chart_data() -> Response:
             network_data = pickle.load(file)
         concat_slices(network_data, current_user.network.rolling_history.get_data(t=total_t % 216 + 1))
 
-    current_climate_data = g.engine.data["current_climate_data"].get_data(t=total_t % 216 + 1)
+    current_climate_data = engine.data["current_climate_data"].get_data(t=total_t % 216 + 1)
     with open("instance/server_data/climate_data.pck", "rb") as file:
         climate_data = pickle.load(file)
     concat_slices(climate_data, current_climate_data)
@@ -236,7 +236,7 @@ def get_chart_data() -> Response:
 @http.route("/get_current_weather", methods=["GET"])
 def get_current_weather() -> Response:
     """Get the current weather data including date, irradiance, wind speed, and river discharge."""
-    return jsonify(energetica.utils.misc.package_weather_data(g.engine, current_user))
+    return jsonify(energetica.utils.misc.package_weather_data(current_user))
 
 
 @http.route("/get_network_capacities", methods=["GET"])
@@ -254,7 +254,7 @@ def get_market_data() -> Response:
     if current_user.network is None:
         return "", 404
     t = int(request.args.get("t"))
-    filename_state = f"instance/network_data/{current_user.network.id}/charts/market_t{g.engine.data['total_t']-t}.pck"
+    filename_state = f"instance/network_data/{current_user.network.id}/charts/market_t{engine.data['total_t']-t}.pck"
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
             market_data = pickle.load(file)
@@ -350,7 +350,7 @@ def get_scoreboard() -> Response:
 @http.route("/get_quiz_question", methods=["GET"])
 def get_quiz_question() -> Response:
     """Get the daily quiz question."""
-    return jsonify(energetica.utils.misc.get_quiz_question(g.engine, current_user))
+    return jsonify(energetica.utils.misc.get_quiz_question(current_user))
 
 
 @http.route("/submit_quiz_answer", methods=["POST"])
@@ -358,11 +358,11 @@ def submit_quiz_answer() -> Response:
     """Submit the daily quiz answer from a player."""
     request_data = request.get_json()
     answer = request_data["answer"]
-    answer_correct = energetica.utils.misc.submit_quiz_answer(g.engine, current_user, answer)
+    answer_correct = energetica.utils.misc.submit_quiz_answer(current_user, answer)
     return jsonify(
         {
             "response": "correct" if answer_correct else "incorrect",
-            "question_data": energetica.utils.misc.get_quiz_question(g.engine, current_user),
+            "question_data": energetica.utils.misc.get_quiz_question(current_user),
         },
     )
 
@@ -379,10 +379,10 @@ def choose_location() -> Response:
     """Set the location for the player."""
     request_data = request.get_json()
     selected_id = request_data["selected_id"]
-    if selected_id < 0 or selected_id >= HexTile.query.count():
+    if selected_id < 0 or selected_id >= HexTile.count():
         return jsonify({"response": "TileNotExist"})  # TODO
-    location = db.session.get(HexTile, selected_id + 1)
-    energetica.utils.misc.confirm_location(engine=g.engine, player=current_user, location=location)
+    location = HexTile.get(selected_id + 1)
+    energetica.utils.misc.confirm_location(player=current_user, location=location)
     return jsonify({"response": "success"})
 
 
@@ -395,7 +395,6 @@ def request_queue_project() -> Response:
     force = request_data["force"]
     try:
         energetica.utils.assets.queue_project(
-            engine=g.engine,
             player=current_user,
             asset=asset,
             force=force,
@@ -424,7 +423,7 @@ def request_cancel_project() -> Response:
     """Cancel an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = int(request_data["id"])
-    construction: OngoingConstruction = db.session.get(OngoingConstruction, int(construction_id))
+    construction: OngoingConstruction = OngoingConstruction.get(int(construction_id))
     if construction is None or construction.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     force = request_data["force"]
@@ -452,7 +451,7 @@ def request_pause_project() -> Response:
     """Pause or unpause an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = int(request_data["id"])
-    construction: OngoingConstruction = db.session.get(OngoingConstruction, int(construction_id))
+    construction: OngoingConstruction = OngoingConstruction.get(int(construction_id))
     if construction is None or construction.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     energetica.utils.assets.toggle_pause_project(player=current_user, construction=construction)
@@ -470,7 +469,7 @@ def request_decrease_project_priority() -> Response:
     """Change the order of ongoing constructions or upgrades."""
     request_data = request.get_json()
     construction_id = request_data["id"]
-    construction: OngoingConstruction = db.session.get(OngoingConstruction, int(construction_id))
+    construction: OngoingConstruction = OngoingConstruction.get(int(construction_id))
     if construction is None or construction.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     energetica.utils.assets.decrease_project_priority(player=current_user, construction=construction)
@@ -488,7 +487,7 @@ def request_upgrade_facility() -> Response:
     """Upgrade a facility."""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    facility: ActiveFacility = db.session.get(ActiveFacility, int(facility_id))
+    facility: ActiveFacility = ActiveFacility.get(int(facility_id))
     if facility is None or facility.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     energetica.utils.assets.upgrade_facility(player=current_user, facility=facility)
@@ -511,7 +510,7 @@ def request_dismantle_facility() -> Response:
     """Dismantle a facility."""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    facility: ActiveFacility = db.session.get(ActiveFacility, int(facility_id))
+    facility: ActiveFacility = ActiveFacility.get(int(facility_id))
     if facility is None or facility.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     energetica.utils.assets.dismantle_facility(player=current_user, facility=facility)
@@ -544,7 +543,6 @@ def change_network_prices() -> Response:
     if not all(key in ["supply", "demand"] for key in updated_prices.keys()):
         raise GameError("malformedRequest")
     energetica.utils.network_helpers.set_network_prices(
-        g.engine,
         current_user,
         updated_supply_prices=updated_prices["supply"],
         updated_demand_prices=updated_prices["demand"],
@@ -560,7 +558,7 @@ def request_change_facility_priority() -> Response:
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
     priority = request_data["priority"]
-    energetica.utils.network_helpers.change_facility_priority(engine=g.engine, player=current_user, priority=priority)
+    energetica.utils.network_helpers.change_facility_priority(player=current_user, priority=priority)
     return jsonify({"response": "success"})
 
 
@@ -594,7 +592,7 @@ def buy_resource() -> Response:
     request_data = request.get_json()
     sale_id = int(request_data["id"])
     quantity = float(request_data["quantity"]) * 1000
-    sale = db.session.get(ResourceOnSale, int(sale_id))
+    sale = ResourceOnSale.get(int(sale_id))
     if sale is None:
         return jsonify({"response": "saleNotFound"}), 404
     energetica.utils.resource_market.buy_resource_from_market(current_user, quantity, sale)
@@ -626,10 +624,10 @@ def join_network() -> Response:
     """Join a network."""
     request_data = request.form
     network_id = int(request_data["choose_network"])
-    network: Network = db.session.get(Network, network_id)
-    energetica.utils.network_helpers.join_network(g.engine, current_user, network)
+    network: Network = Network.get(network_id)
+    energetica.utils.network_helpers.join_network(current_user, network)
     flash(f"You joined the network {network.name}", category="message")
-    g.engine.log(f"{current_user.username} joined the network {current_user.network.name}")
+    engine.log(f"{current_user.username} joined the network {current_user.network.name}")
     return redirect("/network", code=303)
 
 
@@ -640,7 +638,7 @@ def create_network() -> Response:
     request_data = request.form
     network_name = request_data["network_name"]
     try:
-        energetica.utils.network_helpers.create_network(g.engine, current_user, network_name)
+        energetica.utils.network_helpers.create_network(current_user, network_name)
     except GameError as game_exception:
         match game_exception.exception_type:
             case "nameLengthInvalid":
@@ -660,7 +658,7 @@ def leave_network() -> Response:
     network = current_user.network
     if network is None:
         return jsonify({"response": "notInNetwork"}), 404
-    energetica.utils.network_helpers.leave_network(g.engine, current_user)
+    energetica.utils.network_helpers.leave_network(current_user)
     flash(f"You left network {network.name}", category="message")
     return redirect("/network", code=303)
 
@@ -677,7 +675,7 @@ def create_chat() -> Response:
     """Create a chat with one other player."""
     request_data = request.get_json()
     buddy_id = request_data["buddy_id"]
-    buddy = db.session.get(Player, buddy_id)
+    buddy = Player.get(buddy_id)
     energetica.utils.chat.create_chat(current_user, buddy)
     return jsonify({"response": "success"})
 
@@ -687,7 +685,7 @@ def create_group_chat() -> Response:
     """Create a group chat."""
     request_data = request.get_json()
     chat_title = request_data["chat_title"]
-    group_members = [current_user, *list(map(Player.query.get, request_data["group_members"]))]
+    group_members = [current_user, *list(map(Player.get, request_data["group_members"]))]
     energetica.utils.chat.create_group_chat(current_user, chat_title, group_members)
     return jsonify({"response": "success"})
 
@@ -698,7 +696,7 @@ def new_message() -> Response:
     request_data = request.get_json()
     message = request_data["new_message"]
     chat_id = int(request_data["chat_id"])
-    chat = db.session.get(Chat, chat_id)
+    chat = Chat.get(chat_id)
     if chat_id is None:
         return jsonify({"response": "NoChatID"}), 403
     energetica.utils.chat.add_message(current_user, message, chat)
@@ -719,7 +717,7 @@ def test_notification() -> Response:
     """Send a dummy notification to the player."""
     notification_data = {
         "title": "Test notification",
-        "body": f"{g.engine.data['total_t']} ({datetime.now()})",
+        "body": f"{engine.data['total_t']} ({datetime.now()})",
     }
     current_user.send_notification(notification_data)
     return jsonify({"response": "success"})

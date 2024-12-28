@@ -1,28 +1,22 @@
 """Contains the ActiveFacility class."""
 
-import itertools
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
-from flask import current_app
-
-from energetica import technology_effects
+from energetica import engine, technology_effects
 from energetica.config.assets import const_config
-from energetica.database import db
+from energetica.database import DB
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
-    from energetica.game_engine import GameEngine
 
 
 @dataclass
-class ActiveFacility:
+class ActiveFacility(DB):
     """Class that stores the facilities on the server and their end of life time."""
 
-    __next_id: ClassVar[int] = itertools.count()
-    id: int
-
     name: str
+    player: Player
     position: tuple[float, float]
     end_of_life: int  # TODO (Felix): Why int and not float?
 
@@ -32,15 +26,10 @@ class ActiveFacility:
     # percentage of the facility that is currently used
     usage: float = 0.0
 
-    def __post_init__(self):
-        """Post initialization method."""
-        self.id = next(ActiveFacility.__next_id)
-        current_app.config["engine"].players[self.id] = self
-
     @property
     def decommissioning(self) -> bool:
         """returns True if the facility is being decommissioned."""
-        return self.end_of_life <= current_app.config["engine"].data["total_t"]
+        return self.end_of_life <= engine.data["total_t"]
 
     @property
     def const_config(self) -> dict:
@@ -80,7 +69,6 @@ class ActiveFacility:
     @property
     def extraction_rate(self) -> float:
         """Rate at which the facility extracts resources from the ground. Defined only for extraction facilities."""
-        player: Player = self.player
         extraction_to_resource = {
             "coal_mine": "coal",
             "gas_drilling_site": "gas",
@@ -89,7 +77,7 @@ class ActiveFacility:
         return (
             self.const_config["base_extraction_rate_per_day"]
             * self.multiplier_2
-            * player.get_reserves()[extraction_to_resource[self.name]]
+            * self.player.get_reserves()[extraction_to_resource[self.name]]
             / 24
         )
 
@@ -101,7 +89,6 @@ class ActiveFacility:
     @property
     def cut_out_speed_exceeded(self) -> bool:
         """Whether the wind speed for this wind turbine exceeds the cut-out speed."""
-        engine: GameEngine = current_app.config["engine"]
         return engine.buffered["cut_out_speed_exceeded"][self.id]
 
     @property
@@ -127,7 +114,6 @@ class ActiveFacility:
     @property
     def remaining_lifespan(self) -> int | None:
         """Time left until the facility is decommissioned in ticks."""
-        engine: GameEngine = current_app.config["engine"]
         remaining_ticks = self.end_of_life - engine.data["total_t"]
         if remaining_ticks < 0:
             return None
@@ -140,7 +126,6 @@ class ActiveFacility:
         Returns true if any of the attributes of the facility are outdated compared to current tech levels.
         This method is undefined for technologies and for functional facilities.
         """
-        engine: GameEngine = current_app.config["engine"]
         if self.price_multiplier < technology_effects.price_multiplier(self.player, self.name):
             return True
         if self.name in engine.extraction_facilities:

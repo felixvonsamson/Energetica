@@ -3,19 +3,15 @@
 import json
 from datetime import datetime
 
-from flask import Blueprint, current_app, flash, g, redirect, render_template, request, url_for
+from flask import (Blueprint, current_app, flash, g, redirect, render_template,
+                   request, url_for)
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from energetica import engine
 from energetica.database.player import Player
 
 auth = Blueprint("auth", __name__)
-
-
-@auth.before_request
-def check_user() -> None:
-    """Call this function before every request."""
-    g.engine = current_app.config["engine"]
 
 
 # logic for the login :
@@ -26,12 +22,12 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        player = Player.query.filter_by(username=username).first()
+        player = Player.filter_by(username=username).first()
         if player:
             if check_password_hash(player.pwhash, password):
                 flash("Logged in successfully!", category="message")
                 login_user(player, remember=True)
-                g.engine.log(f"{username} logged in")
+                engine.log(f"{username} logged in")
                 return redirect(url_for("views.home"))
             else:
                 flash("Incorrect password, try again.", category="error")
@@ -44,7 +40,7 @@ def login():
                 category="error",
             )
 
-    return render_template("login.jinja", engine=g.engine, user=current_user)
+    return render_template("login.jinja", engine=engine, user=current_user)
 
 
 # logic for the logout :
@@ -52,7 +48,7 @@ def login():
 @login_required
 def logout():
     """Log out the current user."""
-    g.engine.log(f"{current_user.username} logged out")
+    engine.log(f"{current_user.username} logged out")
     logout_user()
     return redirect(url_for("auth.login"))
 
@@ -67,7 +63,7 @@ def sign_up():
         password1 = request.form.get("password1")
         password2 = request.form.get("password2")
 
-        player = Player.query.filter_by(username=username).first()
+        player = Player.filter_by(username=username).first()
         if player:
             flash("Username already exist", category="error")
         elif len(username) < 3 or len(username) > 18:
@@ -88,10 +84,10 @@ def sign_up():
                 "action_type": "create_user",
                 "player_id": new_player.id,
             }
-            g.engine.action_logger.info(json.dumps(log_entry))
-            g.engine.log(f"{username} created an account")
-            # websocket.rest_notify_scoreboard(g.engine)
-            # websocket.rest_notify_new_player(g.engine)
+            engine.action_logger.info(json.dumps(log_entry))
+            engine.log(f"{username} created an account")
+            # websocket.rest_notify_scoreboard()
+            # websocket.rest_notify_new_player()
             return redirect(url_for("views.home"))
 
-    return render_template("sign_up.jinja", engine=g.engine, user=current_user)
+    return render_template("sign_up.jinja", engine=engine, user=current_user)

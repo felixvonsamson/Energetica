@@ -9,8 +9,8 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import noise
-from flask import current_app
 
+from energetica import engine
 from energetica.database.active_facility import ActiveFacility
 
 if TYPE_CHECKING:
@@ -86,20 +86,19 @@ class CapacityData:
 
     def update(self, player: Player, facility_name: str) -> None:
         """Update the capacity data of the player."""
-        engine = current_app.config["engine"]
         if facility_name is None:
-            active_facilities: list[ActiveFacility] = ActiveFacility.query.filter_by(player_id=player.id).all()
+            active_facilities: list[ActiveFacility] = ActiveFacility.filter_by(player=player)
             unique_facilities = {af.name for af in active_facilities}
             for uf in unique_facilities:
-                self.init_facility(engine, uf)
+                self.init_facility(uf)
         else:
-            active_facilities: list[ActiveFacility] = ActiveFacility.query.filter_by(
+            active_facilities: list[ActiveFacility] = ActiveFacility.filter_by(
                 player_id=player.id, facility=facility_name
-            ).all()
+            )
             if len(active_facilities) == 0 and facility_name in self._data:
                 del self._data[facility_name]
                 return
-            self.init_facility(engine, facility_name)
+            self.init_facility(facility_name)
 
         for facility in active_facilities:
             base_data = engine.const_config["assets"][facility.name]
@@ -151,7 +150,7 @@ class CapacityData:
                         self._data[facility] = {"power": 0.0}
                     self._data[facility]["power"] += player_capacities[facility]["power"]
 
-    def init_facility(self, engine: GameEngine, facility: str) -> None:
+    def init_facility(self, facility: str) -> None:
         """Initialize the capacity data of a facility."""
         const_config = engine.const_config["assets"]
         if facility in engine.power_facilities:
@@ -353,7 +352,7 @@ class EmissionData:
         # Keeping the CO2 levels form one tick to the next
         self._data["emissions"]["CO2"].append(self._data["emissions"]["CO2"][-1])
         # Calculating new temperatures
-        engine = current_app.config["engine"]
+        engine = engine
         t = engine.data["total_t"] + engine.data["delta_t"]
         self._data["temperature"]["reference"].append(calculate_reference_gta(t, engine.in_game_seconds_per_tick))
         self._data["temperature"]["deviation"].append(

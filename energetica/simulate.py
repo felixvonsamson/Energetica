@@ -8,10 +8,9 @@ from time import sleep
 from typing import List
 
 import requests
-from flask import current_app
 
 import energetica.production_update as production_update
-from energetica.database import db
+from energetica import engine
 from energetica.database.map import HexTile
 from energetica.utils.climate_helpers import climate_event_impact
 from energetica.utils.tick_execution import check_events_completion
@@ -33,7 +32,7 @@ def login_user(user_id, port):
     return session
 
 
-def verify(engine):
+def verify():
     assert True
 
 
@@ -71,24 +70,22 @@ def _simulate(
                 continue
             break
         user_sessions = {}
-        engine = current_app.config["engine"]
 
         for action in actions:
             print(action)
             if action["action_type"] == "tick":
                 engine.data["total_t"] += 1
                 engine.log(f"t = {engine.data['total_t']}")
-                production_update.update_electricity(engine=engine)
-                check_events_completion(engine)
-                db.session.commit()
+                production_update.update_electricity()
+                check_events_completion()
                 if action["total_t"] % checkpoint_every_k_ticks == 0 or action["total_t"] in checkpoint_ticks:
                     with open("instance/engine_data.pck", "wb") as file:
                         pickle.dump(engine.data, file)
                     with tarfile.open(f"checkpoints/simulation/checkpoint_{action['total_t']}.tar.gz", "w:gz") as tar:
                         tar.add("instance/")
             elif action["action_type"] == "climate_event_impact":
-                tile = db.session.get(HexTile, action["tile_id"])
-                climate_event_impact(engine, tile, action["event"])
+                tile = HexTile.get(action["tile_id"])
+                climate_event_impact(tile, action["event"])
             elif action["action_type"] == "create_user":
                 player_id = action["player_id"]
                 user_sessions[player_id] = create_user(player_id, port)
@@ -126,7 +123,7 @@ def _simulate(
                         if stop_on_server_error:
                             break
             try:
-                verify(engine)
+                verify()
             except AssertionError:
                 print(print("\033[31m" + "Assertion error.\033[0m"))
                 if stop_on_assertion_error:

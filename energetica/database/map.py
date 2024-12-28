@@ -2,21 +2,14 @@
 
 from __future__ import annotations
 
-import itertools
 from dataclasses import dataclass
-from typing import ClassVar
 
-from flask import current_app
-
-from energetica.database import db
+from energetica.database import DB
 
 
 @dataclass
-class HexTile:
+class HexTile(DB):
     """Class for the tiles that compose the map."""
-
-    __next_id: ClassVar[int] = itertools.count()
-    id: int
 
     coordinates: tuple[int, int]
 
@@ -29,11 +22,6 @@ class HexTile:
     uranium_reserves: float
 
     climate_risk: int
-
-    def __post_init__(self):
-        """Post initialization method."""
-        self.id = next(HexTile.__next_id)
-        # TODO !! > current_app.config["engine"]players[self.id] = self
 
     def __repr__(self) -> str:
         """Return a string representation of the tile."""
@@ -53,9 +41,9 @@ class HexTile:
             return results
 
         neighbors = []
-        tiles_at_distance = get_hex_at_distance(self.q, self.r, n)
+        tiles_at_distance = get_hex_at_distance(*self.coordinates, n)
         for q, r in tiles_at_distance:
-            neighbor = HexTile.query.filter_by(q=q, r=r).first()
+            neighbor = next(HexTile.filter_by(q=q, r=r))
             if neighbor:
                 neighbors.append(neighbor)
         return neighbors

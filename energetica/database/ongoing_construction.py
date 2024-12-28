@@ -1,16 +1,14 @@
 """Module for the OngoingConstruction class."""
 
-import itertools
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
-from flask import current_app
-
-from energetica.database import db
+from energetica import engine
+from energetica.database import DB
 
 if TYPE_CHECKING:
-    from energetica.game_engine import GameEngine
+    from energetica.database.player import Player
 
 
 class ConstructionStatus:
@@ -30,7 +28,7 @@ class OngoingConstructionCache:
     @cached_property
     def _prerequisites_and_level(self) -> tuple[list[int], int]:
         """Compute the prerequisites and level of an ongoing construction."""
-        construction = db.session.get(OngoingConstruction, self.construction_id)
+        construction = OngoingConstruction.get(self.construction_id)
         return construction._compute_prerequisites_and_level()
 
     @property
@@ -45,13 +43,13 @@ class OngoingConstructionCache:
 
 
 @dataclass
-class OngoingConstruction:
+class OngoingConstruction(DB):
     """Class that stores projects currently under construction."""
 
-    __next_id: ClassVar[int] = itertools.count()
-    id: int
     name: str
     family: str  # TODO (Felix) : is that really needed?
+    player: Player
+
     end_tick_or_ticks_passed: (
         float  # in game ticks when the construction will be finished or ticks passed if it is paused
     )
@@ -66,11 +64,6 @@ class OngoingConstruction:
     speed: float = 1
     previous_speed: float = 1
 
-    def __post_init__(self):
-        """Post initialization method."""
-        self.id = next(OngoingConstruction.__next_id)
-        current_app.config["engine"].players[self.id] = self
-
     def was_paused_by_player(self) -> bool:
         """Returns True if this construction is paused by the player"""
         return self.status == ConstructionStatus.PAUSED
@@ -82,19 +75,15 @@ class OngoingConstruction:
     def pause(self):
         """Make this facility go from waiting or ongoing to paused"""
         assert not self.was_paused_by_player()
-        engine: GameEngine = current_app.config["engine"]
         if self.is_ongoing():
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
         self.status = ConstructionStatus.PAUSED
-        db.session.flush()
 
     def set_waiting(self):
         """Make this facility go from ongoing to waiting."""
         assert self.status == ConstructionStatus.ONGOING
-        engine: GameEngine = current_app.config["engine"]
         self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
         self.status = ConstructionStatus.WAITING
-        db.session.flush()
 
     def set_ongoing(self, *, start_now=False):
         """
@@ -104,32 +93,22 @@ class OngoingConstruction:
         """
         assert self.status == ConstructionStatus.WAITING
         assert not self.cache.prerequisites
-        from energetica.database.player import Player
 
-        engine: GameEngine = current_app.config["engine"]
-        player: Player = Player.query.get(self.player_id)
-        assert player.available_workers(self.name) > 0
-        engine: GameEngine = current_app.config["engine"]
+        assert self.player.available_workers(self.name) > 0
         if start_now:
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
         else:
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
         self.status = ConstructionStatus.ONGOING
-        db.session.flush()
 
     def unpause(self):
         """Make this facility go from paused to either waiting or ongoing"""
         assert self.was_paused_by_player()
-        from energetica.database.player import Player
-
-        engine: GameEngine = current_app.config["engine"]
-        player: Player = Player.query.get(self.player_id)
-        if self.cache.prerequisites or player.available_workers(self.name) < 1:
+        if self.cache.prerequisites or self.player.available_workers(self.name) < 1:
             self.status = ConstructionStatus.WAITING
         else:
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
             self.status = ConstructionStatus.ONGOING
-        db.session.flush()
 
     def delay_by(self, ticks: float):
         """Delays the construction by the given number of ticks"""
@@ -140,11 +119,11 @@ class OngoingConstruction:
     @cached_property
     def cache(self) -> OngoingConstructionCache:
         """Return the cache for this ongoing construction."""
-        if self.id not in current_app.config["engine"].buffered["by_ongoing_construction"]:
-            current_app.config["engine"].buffered["by_ongoing_construction"][self.id] = OngoingConstructionCache(
+        if self.id not in engine.buffered["by_ongoing_construction"]:
+            engine.buffered["by_ongoing_construction"][self.id] = OngoingConstructionCache(
                 self.id
             )
-        return current_app.config["engine"].buffered["by_ongoing_construction"][self.id]
+        return engine.buffered["by_ongoing_construction"][self.id]
 
     def recompute_prerequisites_and_level(self) -> None:
         """Recompute the prerequisites and level of an ongoing construction."""
@@ -153,7 +132,6 @@ class OngoingConstruction:
 
     def progress(self) -> float:
         """Returns the progress of the construction, as a float between 0 and 1"""
-        engine: GameEngine = current_app.config["engine"]
         if self.status == ConstructionStatus.ONGOING:
             return (self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"] + 1) / self.duration
         else:
@@ -172,44 +150,39 @@ class OngoingConstruction:
 
     def _compute_prerequisites_and_level(self) -> tuple[list[int], int]:
         """Compute the prerequisites and level of an ongoing construction."""
-        from energetica.database.player import Player
-
         if not TYPE_CHECKING:
-            from energetica.database.ongoing_construction import OngoingConstruction
+            from energetica.database.ongoing_construction import \
+                OngoingConstruction
 
-        player: Player = db.session.get(Player, self.player_id)
         prerequisites = []
         level = None
         if self.family == "Functional Facilities":
             # For functional facilities, the only prerequisites are ongoing constructions of the same type
-            priority_list = player.construction_priorities
+            priority_list = self.player.construction_priorities
             this_priority_index = priority_list.index(self.id)
             # Go through all ongoing constructions that are higher up in the priority order
-            level = getattr(player, self.name) + 1
+            level = getattr(self.player, self.name) + 1
             for candidate_prerequisite_id in priority_list[:this_priority_index]:
                 # Add them as a prerequisite, if they are of the same type
-                candidate_prerequisite = db.session.get(OngoingConstruction, candidate_prerequisite_id)
+                candidate_prerequisite = OngoingConstruction.get(candidate_prerequisite_id)
                 if candidate_prerequisite.name == self.name:
                     prerequisites.append(candidate_prerequisite_id)
                     level += 1
         elif self.family == "Technologies":
             # For technologies, const config needs to be checked
-            engine: GameEngine = current_app.config["engine"]
             const_config = engine.const_config["assets"]
             requirements = const_config[self.name]["requirements"]
-            priority_list = player.research_priorities
+            priority_list = self.player.research_priorities
             this_priority_index: int = priority_list.index(self.id)
             # Compute this constructions level by looking at constructions higher up in the priority list with same name
-            level = getattr(player, self.name) + 1
+            level = getattr(self.player, self.name) + 1
             for other_construction_id in priority_list[:this_priority_index]:
-                other_construction: OngoingConstruction = db.session.get(OngoingConstruction, other_construction_id)
+                other_construction: OngoingConstruction = OngoingConstruction.get(other_construction_id)
                 if other_construction.name == self.name:
                     level += 1
             num_ongoing_researches_of = {}
             for candidate_prerequisite_id in priority_list[:this_priority_index]:
-                candidate_prerequisite: OngoingConstruction = db.session.get(
-                    OngoingConstruction, candidate_prerequisite_id
-                )
+                candidate_prerequisite: OngoingConstruction = OngoingConstruction.get(candidate_prerequisite_id)
                 if candidate_prerequisite.name == self.name:
                     prerequisites.append(candidate_prerequisite_id)
                     continue
@@ -220,7 +193,7 @@ class OngoingConstruction:
                     # Add them as a prerequisite, if they are, according to const_config
                     offset: int = requirements[candidate_prerequisite.name]
                     candidate_prerequisite_level: int = (
-                        getattr(player, candidate_prerequisite.name)
+                        getattr(self.player, candidate_prerequisite.name)
                         + num_ongoing_researches_of[candidate_prerequisite.name]
                     )
                     if level + offset - 1 >= candidate_prerequisite_level:

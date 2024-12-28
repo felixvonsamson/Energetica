@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import itertools
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -10,14 +9,13 @@ from datetime import datetime
 from enum import StrEnum
 from functools import cached_property
 from itertools import chain
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
-from flask import current_app
 from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
+from energetica import engine
 from energetica.config.achievements import achievements
-from energetica.database import db
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, PlayerPrices
@@ -48,40 +46,37 @@ class PlayerCache:
     @cached_property
     def power_facilities_data(self) -> list:
         """Cached property that stores the power facilities data of a player."""
-        player = db.session.get(Player, self.player_id)
+        player = Player.get(self.player_id)
         return package_power_facilities(player)
 
     @cached_property
     def storage_facilities_data(self) -> list:
         """Cached property that stores the storage facilities data of a player."""
-        player = db.session.get(Player, self.player_id)
+        player = Player.get(self.player_id)
         return package_storage_facilities(player)
 
     @cached_property
     def extraction_facilities_data(self) -> list:
         """Cached property that stores the extraction facilities data of a player."""
-        player = db.session.get(Player, self.player_id)
+        player = Player.get(self.player_id)
         return package_extraction_facilities(player)
 
     @cached_property
     def functional_facilities_data(self) -> list:
         """Cached property that stores the functional facilities data of a player."""
-        player = db.session.get(Player, self.player_id)
+        player = Player.get(self.player_id)
         return package_functional_facilities(player)
 
     @cached_property
     def technologies_data(self) -> list:
         """Cached property that stores the technologies data of a player."""
-        player = db.session.get(Player, self.player_id)
+        player = Player.get(self.player_id)
         return package_available_technologies(player)
 
 
 @dataclass
-class Player(UserMixin):
+class Player(DB, UserMixin):
     """Class that stores the users and their data."""
-
-    __next_id: ClassVar[int] = itertools.count()
-    id: int
 
     # Authentication :
     username: str
@@ -214,32 +209,22 @@ class Player(UserMixin):
         }
     )
 
-    def __post_init__(self):
-        """Post initialization method."""
-        self.id = next(Player.__next_id)
-        current_app.config["engine"].players[self.id] = self
-
-    @property
-    def engine(self) -> GameEngine:
-        """Return the game engine."""
-        return current_app.config["engine"]
-
     @property
     def config(self) -> dict:
         """Return the player's configuration."""
-        return current_app.config["engine"].config[self]
+        return engine.config[self]
 
     @property
     def socketio_clients(self) -> list[int]:
         """Return the player's socketio clients."""
-        return current_app.config["engine"].clients[self.id]
+        return engine.clients[self.id]
 
     @cached_property
     def cache(self) -> PlayerCache:
         """Cached property that stores the player cache."""
-        if self.id not in current_app.config["engine"].buffered["by_player"]:
-            current_app.config["engine"].buffered["by_player"][self.id] = PlayerCache(self.id)
-        return current_app.config["engine"].buffered["by_player"][self.id]
+        if self.id not in engine.buffered["by_player"]:
+            engine.buffered["by_player"][self.id] = PlayerCache(self.id)
+        return engine.buffered["by_player"][self.id]
 
     @property
     def is_in_network(self) -> bool:
@@ -249,11 +234,9 @@ class Player(UserMixin):
     def change_graph_view(self, view: NetworkGraphView) -> None:
         """Set the network graph view of the player (basic/normal/expert)."""
         self.graph_view = view
-        db.session.commit()
 
     def available_workers(self, project_name):
         """Returns the number of available workers depending on the project type"""
-        engine: GameEngine = current_app.config["engine"]
         if project_name in engine.technologies:
             return self.available_lab_workers()
         else:
@@ -262,28 +245,30 @@ class Player(UserMixin):
     # TODO (Felix): Could that not be a property of a newly created Worker class ?
     def available_construction_workers(self) -> int:
         """Return the number of available construction workers."""
-        occupied_workers = (
-            OngoingConstruction.query.filter(OngoingConstruction.player_id == self.id)
-            .filter(OngoingConstruction.family != "Technologies")
-            .filter(OngoingConstruction.status == ConstructionStatus.ONGOING)
-            .count()
+        occupied_workers = len(
+            OngoingConstruction.filter(
+                lambda construction: construction.player == self
+                and construction.family != "Technologies"
+                and construction.status == ConstructionStatus.ONGOING
+            )
         )
         return self.workers["construction"] - occupied_workers
 
     # TODO (Felix): Could that not be a property of a newly created Worker class ?
     def available_lab_workers(self) -> int:
         """Return the number of available lab workers."""
-        occupied_workers = (
-            OngoingConstruction.query.filter(OngoingConstruction.player_id == self.id)
-            .filter(OngoingConstruction.family == "Technologies")
-            .filter(OngoingConstruction.status == ConstructionStatus.ONGOING)
-            .count()
+        occupied_workers = len(
+            OngoingConstruction.filter(
+                lambda construction: construction.player == self
+                and construction.family == "Technologies"
+                and construction.status == ConstructionStatus.ONGOING
+            )
         )
         return self.workers["laboratory"] - occupied_workers
 
     def package_chat_messages(self, chat_id: int) -> list[dict]:
         """Package the last 20 messages of a chat."""
-        chat = Chat.query.filter_by(id=chat_id).first()
+        chat = Chat.filter_by(id=chat_id).first()
         messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
         messages_list = [
             {
@@ -294,10 +279,9 @@ class Player(UserMixin):
             for message in reversed(messages)
         ]
         self.last_opened_chat = chat.id
-        PlayerUnreadMessages.query.filter(PlayerUnreadMessages.player_id == self.id).filter(
+        PlayerUnreadMessages.filter(PlayerUnreadMessages.player_id == self.id).filter(
             PlayerUnreadMessages.message_id.in_(db.session.query(Message.id).filter(Message.chat_id == chat_id))
         ).delete(synchronize_session=False)
-        db.session.commit()
         return messages_list
 
     def package_chat_list(self) -> dict:
@@ -327,7 +311,7 @@ class Player(UserMixin):
 
         def unread_message_count(chat: Chat) -> int:
             return (
-                PlayerUnreadMessages.query.join(Message, PlayerUnreadMessages.message_id == Message.id)
+                PlayerUnreadMessages.join(Message, PlayerUnreadMessages.message_id == Message.id)
                 .filter(PlayerUnreadMessages.player_id == self.id)
                 .filter(Message.chat_id == chat.id)
                 .count()
@@ -366,16 +350,14 @@ class Player(UserMixin):
 
     def delete_notification(self, notification_id: int) -> None:
         """Delete a notification."""
-        notification = db.session.get(Notification, notification_id)
-        if notification in self.notifications.all():
-            db.session.delete(notification)
-            db.session.commit()
+        notification = Notification.get(notification_id)
+        if notification.player == self:
+            del notification
 
     def notifications_read(self) -> None:
         """Mark all notifications as read."""
         for notification in self.unread_notifications():
             notification.read = True
-        db.session.commit()
 
     def unread_notifications(self) -> list[Notification]:
         """Return all unread notifications."""
@@ -383,7 +365,7 @@ class Player(UserMixin):
 
     def get_lvls(self) -> dict:
         """Return the levels of functional facilities and technologies of a player."""
-        engine = current_app.config["engine"]
+        engine = engine
         attributes = chain(engine.functional_facilities, engine.technologies)
         return {attr: getattr(self, attr) for attr in attributes}
 
@@ -396,13 +378,12 @@ class Player(UserMixin):
 
     def emit(self, event: str, *args) -> None:
         """Emit a socketio event to the player's clients."""
-        engine: GameEngine = current_app.config["engine"]
         for sid in self.socketio_clients:
             engine.socketio.emit(event, *args, room=sid)
 
     def send_new_data(self, new_values) -> None:
         """Send the new data to the player's clients."""
-        engine = current_app.config["engine"]
+        engine = engine
         construction_updates = self.get_construction_updates()
         shipment_updates = self.get_shipment_updates()
         self.emit(
@@ -423,7 +404,7 @@ class Player(UserMixin):
         This method returns a dictionary of the constructions for which the progress speed has changed. For each of
         these constructions, the dictionary contains the new speed and the new end_tick.
         """
-        player_constructions: list[OngoingConstruction] = OngoingConstruction.query.filter_by(
+        player_constructions: list[OngoingConstruction] = OngoingConstruction.filter_by(
             player_id=self.id, status=ConstructionStatus.ONGOING
         ).all()
         construction_speeds = {}
@@ -441,7 +422,7 @@ class Player(UserMixin):
         This method returns a dictionary of the shipments for which the progress speed has changed. For each of
         these shipments, the dictionary contains the new speed and the new arrival_tick.
         """
-        player_shipments: list[Shipment] = Shipment.query.filter_by(player_id=self.id).all()
+        player_shipments: list[Shipment] = Shipment.filter_by(player_id=self.id).all()
         shipment_speeds = {}
         for shipment in player_shipments:
             new_speed = shipment.updated_speed()
@@ -476,7 +457,6 @@ class Player(UserMixin):
             "title": new_notification.title,
             "body": new_notification.content,
         }
-        engine: GameEngine = current_app.config["engine"]
         for subscription in self.data.notification_subscriptions:
             audience = "https://fcm.googleapis.com"
             if "https://updates.push.services.mozilla.com" in subscription["endpoint"]:
@@ -650,12 +630,12 @@ class Player(UserMixin):
     @staticmethod
     def package_all() -> dict[int, dict]:
         """Package data for all players."""
-        players: list[Player] = Player.query.all()
+        players: list[Player] = Player.all()
         return {player.id: player.package() for player in players}
 
     def package_scoreboard(self) -> dict[int, dict]:
         """Package the scoreboard data for players with a tile."""
-        players = Player.query.filter(Player.tile != None)
+        players = Player.filter(Player.tile != None)
         include_co2_emissions = self.discovered_greenhouse_gas_effect()
         return {
             player.id: (
@@ -687,7 +667,7 @@ class Player(UserMixin):
                     "status",
                 ]
             }
-            | {"display_name": current_app.config["engine"].const_config["assets"][construction.name]["name"]}
+            | {"display_name": engine.const_config["assets"][construction.name]["name"]}
             | ({"level": construction.cache.level} if construction.cache.level is not None else {})
             | {"speed": construction.speed}
             for construction in constructions
@@ -723,7 +703,6 @@ class Player(UserMixin):
 
     def package_active_power_facilities(self) -> dict:
         """Package the player's active power facilities."""
-        engine: GameEngine = current_app.config["engine"]
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.data.capacities
         power_facilities: list[ActiveFacility] = self.active_facilities.filter(
@@ -776,7 +755,6 @@ class Player(UserMixin):
 
     def package_active_storage_facilities(self) -> dict:
         """Package active storage facilities."""
-        engine: GameEngine = current_app.config["engine"]
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.data.capacities
         storage_facilities: list[ActiveFacility] = self.active_facilities.filter(
@@ -826,7 +804,6 @@ class Player(UserMixin):
 
     def package_active_extraction_facilities(self) -> dict:
         """Package active extraction facilities."""
-        engine: GameEngine = current_app.config["engine"]
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.data.capacities
         extraction_facilities: list[ActiveFacility] = self.active_facilities.filter(
@@ -904,10 +881,8 @@ class Player(UserMixin):
             self.emit("update_page_data", pages_data)
 
 
-class PlayerUnreadMessages(db.Model):
+class PlayerUnreadMessages(DB):
     """Association table to store player's last activity in each chat."""
 
-    # player_id = db.Column(db.Integer, db.ForeignKey("player.id"), primary_key=True)
-    message_id = db.Column(db.Integer, db.ForeignKey("message.id"), primary_key=True)
-    player = db.relationship("Player", backref="read_messages")
+    player: Player
     message = db.relationship("Message", backref="read_by_players")

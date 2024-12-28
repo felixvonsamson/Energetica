@@ -6,7 +6,6 @@ import pytest
 from werkzeug.security import generate_password_hash
 
 from energetica import create_app
-from energetica.database import db
 from energetica.database.map import HexTile
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
 from energetica.database.player import Player
@@ -29,7 +28,7 @@ from energetica.utils.misc import confirm_location
 # 7. If there are projects waiting that have all their requirements fulfilled, there should be no available workers of the corresponding type.
 
 
-def validate_rules(engine, player):
+def validate_rules(player):
     """This function validates all of the above rules."""
     # Rule 1
     construction_priorities = player.construction_priorities
@@ -37,26 +36,26 @@ def validate_rules(engine, player):
     assert len(set(construction_priorities)) == len(construction_priorities)
     assert len(set(research_priorities)) == len(research_priorities)
     for construction_id in construction_priorities:
-        construction = OngoingConstruction.query.get(construction_id)
+        construction = OngoingConstruction.get(construction_id)
         assert construction is not None
         assert construction.player_id == player.id
         assert construction.family != "Technologies"
     for research_id in research_priorities:
-        research = OngoingConstruction.query.get(research_id)
+        research = OngoingConstruction.get(research_id)
         assert research is not None
         assert research.player_id == player.id
         assert research.family == "Technologies"
-    assert OngoingConstruction.query.filter(
+    assert OngoingConstruction.filter(
         OngoingConstruction.player_id == player.id,
         OngoingConstruction.family != "Technologies",
     ).count() == len(construction_priorities)
-    assert OngoingConstruction.query.filter_by(
+    assert OngoingConstruction.filter_by(
         player_id=player.id,
         family="Technologies",
     ).count() == len(research_priorities)
 
     # Rule 2
-    ongoing_constructions = OngoingConstruction.query.filter(
+    ongoing_constructions = OngoingConstruction.filter(
         OngoingConstruction.player_id == player.id,
         OngoingConstruction.status == ConstructionStatus.ONGOING,
         OngoingConstruction.family != "Technologies",
@@ -68,7 +67,7 @@ def validate_rules(engine, player):
             f"but only {player.workers["construction"]} construction workers."
         )
 
-    ongoing_research = OngoingConstruction.query.filter_by(
+    ongoing_research = OngoingConstruction.filter_by(
         player_id=player.id,
         status=ConstructionStatus.ONGOING,
         family="Technologies",
@@ -81,14 +80,14 @@ def validate_rules(engine, player):
         )
 
     # Rule 3
-    status_list_constructions = list(map(lambda x: OngoingConstruction.query.get(x).status, construction_priorities))
+    status_list_constructions = list(map(lambda x: OngoingConstruction.get(x).status, construction_priorities))
     assert sorted(status_list_constructions, reverse=True) == status_list_constructions
-    status_list_research = list(map(lambda x: OngoingConstruction.query.get(x).status, research_priorities))
+    status_list_research = list(map(lambda x: OngoingConstruction.get(x).status, research_priorities))
     assert sorted(status_list_research, reverse=True) == status_list_research
 
     # Rule 4
     assert (
-        OngoingConstruction.query.filter(
+        OngoingConstruction.filter(
             OngoingConstruction.player_id == player.id,
             OngoingConstruction.status == ConstructionStatus.ONGOING,
             OngoingConstruction.end_tick_or_ticks_passed <= engine.data["total_t"],
@@ -96,7 +95,7 @@ def validate_rules(engine, player):
         == 0
     )
     assert (
-        OngoingConstruction.query.filter(
+        OngoingConstruction.filter(
             OngoingConstruction.player_id == player.id,
             OngoingConstruction.status != ConstructionStatus.ONGOING,
             OngoingConstruction.end_tick_or_ticks_passed > OngoingConstruction.duration,
@@ -105,7 +104,7 @@ def validate_rules(engine, player):
     )
 
     # Rule 5
-    ongoing_projects: list[OngoingConstruction] = OngoingConstruction.query.filter_by(
+    ongoing_projects: list[OngoingConstruction] = OngoingConstruction.filter_by(
         player_id=player.id,
         status=ConstructionStatus.ONGOING,
     ).all()
@@ -117,7 +116,7 @@ def validate_rules(engine, player):
 
     # Rule 6
     for index, construction_id in enumerate(construction_priorities):
-        construction = OngoingConstruction.query.get(construction_id)
+        construction = OngoingConstruction.get(construction_id)
         for prerequisite in construction.cache.prerequisites:
             if construction_priorities.index(prerequisite) >= index:
                 del construction.cache._prerequisites_and_levels
@@ -125,7 +124,7 @@ def validate_rules(engine, player):
                     assert construction_priorities.index(prerequisite) < index
                 break
     for index, research_id in enumerate(research_priorities):
-        research = OngoingConstruction.query.get(research_id)
+        research = OngoingConstruction.get(research_id)
         for prerequisite in research.cache.prerequisites:
             if research_priorities.index(prerequisite) >= index:
                 del research.cache._prerequisites_and_levels
@@ -137,7 +136,7 @@ def validate_rules(engine, player):
     waiting_constructions: list[OngoingConstruction] = list(
         filter(
             lambda construction: not construction.cache.prerequisites,
-            OngoingConstruction.query.filter(
+            OngoingConstruction.filter(
                 OngoingConstruction.player_id == player.id,
                 OngoingConstruction.status == ConstructionStatus.WAITING,
                 OngoingConstruction.family != "Technologies",
@@ -145,7 +144,7 @@ def validate_rules(engine, player):
         )
     )
     if waiting_constructions:
-        count_on_going_constructions = OngoingConstruction.query.filter(
+        count_on_going_constructions = OngoingConstruction.filter(
             OngoingConstruction.player_id == player.id,
             OngoingConstruction.status == ConstructionStatus.ONGOING,
             OngoingConstruction.family != "Technologies",
@@ -161,7 +160,7 @@ def validate_rules(engine, player):
     waiting_research: list[OngoingConstruction] = list(
         filter(
             lambda research: not research.cache.prerequisites,
-            OngoingConstruction.query.filter(
+            OngoingConstruction.filter(
                 OngoingConstruction.player_id == player.id,
                 OngoingConstruction.status == ConstructionStatus.WAITING,
                 OngoingConstruction.family == "Technologies",
@@ -169,7 +168,7 @@ def validate_rules(engine, player):
         )
     )
     if waiting_research:
-        count_on_going_research = OngoingConstruction.query.filter(
+        count_on_going_research = OngoingConstruction.filter(
             OngoingConstruction.player_id == player.id,
             OngoingConstruction.status == ConstructionStatus.ONGOING,
             OngoingConstruction.family == "Technologies",
@@ -195,19 +194,17 @@ def test_swap_paused_and_unpaused_constructions():
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         db.session.add(player)
-        db.session.commit()
-        hex_tile = db.session.get(HexTile, 1)
-        confirm_location(engine, player, hex_tile)
-        db.session.commit()
-        validate_rules(engine, player)
-        construction_A = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
-        validate_rules(engine, player)
+        hex_tile = HexTile.get(1)
+        confirm_location(player, hex_tile)
+        validate_rules(player)
+        construction_A = queue_project(player=player, asset="steam_engine", force=True)
+        validate_rules(player)
         assert construction_A.status == ConstructionStatus.ONGOING
-        construction_B = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
-        validate_rules(engine, player)
+        construction_B = queue_project(player=player, asset="steam_engine", force=True)
+        validate_rules(player)
         assert construction_B.status == ConstructionStatus.WAITING
         decrease_project_priority(player, construction_A)
-        validate_rules(engine, player)
+        validate_rules(player)
         assert construction_B.status == ConstructionStatus.ONGOING
         assert construction_A.status == ConstructionStatus.WAITING
 
@@ -221,16 +218,14 @@ def test_cancel_construction():
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         db.session.add(player)
-        db.session.commit()
-        hex_tile = db.session.get(HexTile, 1)
-        confirm_location(engine, player, hex_tile)
-        db.session.commit()
-        validate_rules(engine, player)
-        construction = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
-        validate_rules(engine, player)
+        hex_tile = HexTile.get(1)
+        confirm_location(player, hex_tile)
+        validate_rules(player)
+        construction = queue_project(player=player, asset="steam_engine", force=True)
+        validate_rules(player)
         assert construction.status == ConstructionStatus.ONGOING
         cancel_project(player, construction, force=True)
-        validate_rules(engine, player)
+        validate_rules(player)
         assert len(player.construction_priorities) == 0
 
 
@@ -245,19 +240,17 @@ def test_pause_construction():
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         db.session.add(player)
-        db.session.commit()
-        hex_tile = db.session.get(HexTile, 1)
-        confirm_location(engine, player, hex_tile)
-        db.session.commit()
-        validate_rules(engine, player)
-        construction = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
-        validate_rules(engine, player)
+        hex_tile = HexTile.get(1)
+        confirm_location(player, hex_tile)
+        validate_rules(player)
+        construction = queue_project(player=player, asset="steam_engine", force=True)
+        validate_rules(player)
         assert construction.status == ConstructionStatus.ONGOING
         toggle_pause_project(player, construction)
-        validate_rules(engine, player)
+        validate_rules(player)
         assert construction.status == ConstructionStatus.PAUSED
         toggle_pause_project(player, construction)
-        validate_rules(engine, player)
+        validate_rules(player)
         assert construction.status == ConstructionStatus.ONGOING
 
 
@@ -271,17 +264,15 @@ def test_queue_two_pause_one():
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         db.session.add(player)
-        db.session.commit()
-        hex_tile = db.session.get(HexTile, 1)
-        confirm_location(engine, player, hex_tile)
-        db.session.commit()
-        validate_rules(engine, player)
-        construction_A = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
-        validate_rules(engine, player)
-        construction_B = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
-        validate_rules(engine, player)
+        hex_tile = HexTile.get(1)
+        confirm_location(player, hex_tile)
+        validate_rules(player)
+        construction_A = queue_project(player=player, asset="steam_engine", force=True)
+        validate_rules(player)
+        construction_B = queue_project(player=player, asset="steam_engine", force=True)
+        validate_rules(player)
         toggle_pause_project(player, construction_A)
-        validate_rules(engine, player)
+        validate_rules(player)
         assert player.construction_priorities == [construction_B.id, construction_A.id]
 
 
@@ -296,21 +287,19 @@ def test_three_constructions_with_pause():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         player.money = 1_000_000_000
         db.session.add(player)
-        db.session.commit()
-        hex_tile = db.session.get(HexTile, 1)
-        confirm_location(engine, player, hex_tile)
-        db.session.commit()
-        validate_rules(engine, player)
-        construction_A = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
-        validate_rules(engine, player)
-        construction_B = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
-        validate_rules(engine, player)
-        construction_C = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
-        validate_rules(engine, player)
+        hex_tile = HexTile.get(1)
+        confirm_location(player, hex_tile)
+        validate_rules(player)
+        construction_A = queue_project(player=player, asset="steam_engine", force=True)
+        validate_rules(player)
+        construction_B = queue_project(player=player, asset="steam_engine", force=True)
+        validate_rules(player)
+        construction_C = queue_project(player=player, asset="steam_engine", force=True)
+        validate_rules(player)
         toggle_pause_project(player, construction_C)
-        validate_rules(engine, player)
+        validate_rules(player)
         toggle_pause_project(player, construction_A)
-        validate_rules(engine, player)
+        validate_rules(player)
         # assert player.construction_priorities == [construction_B.id, construction_A.id, construction_C.id]
 
 
@@ -327,17 +316,15 @@ def test_add_two_and_cancel_one():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         player.money = 1_000_000_000
         db.session.add(player)
-        db.session.commit()
-        hex_tile = db.session.get(HexTile, 1)
-        confirm_location(engine, player, hex_tile)
-        db.session.commit()
-        validate_rules(engine, player)
-        construction_1 = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
-        validate_rules(engine, player)
-        construction_2 = queue_project(engine=engine, player=player, asset="steam_engine", force=True)
-        validate_rules(engine, player)
+        hex_tile = HexTile.get(1)
+        confirm_location(player, hex_tile)
+        validate_rules(player)
+        construction_1 = queue_project(player=player, asset="steam_engine", force=True)
+        validate_rules(player)
+        construction_2 = queue_project(player=player, asset="steam_engine", force=True)
+        validate_rules(player)
         cancel_project(player, construction_1, force=True)
-        validate_rules(engine, player)
+        validate_rules(player)
         assert player.construction_priorities == [construction_2.id]
 
 
@@ -353,21 +340,19 @@ def test_technologies_pausing_propagates_requirements():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         player.money = 1_000_000_000
         db.session.add(player)
-        db.session.commit()
-        hex_tile = db.session.get(HexTile, 1)
-        confirm_location(engine, player, hex_tile)
-        db.session.commit()
-        finish_project(queue_project(engine=engine, player=player, asset="laboratory", force=True))
+        hex_tile = HexTile.get(1)
+        confirm_location(player, hex_tile)
+        finish_project(queue_project(player=player, asset="laboratory", force=True))
 
-        validate_rules(engine, player)
-        technology_a = queue_project(engine=engine, player=player, asset="mathematics", force=True)
-        validate_rules(engine, player)
+        validate_rules(player)
+        technology_a = queue_project(player=player, asset="mathematics", force=True)
+        validate_rules(player)
         assert technology_a.status == ConstructionStatus.ONGOING
-        technology_b = queue_project(engine=engine, player=player, asset="mechanical_engineering", force=True)
-        validate_rules(engine, player)
+        technology_b = queue_project(player=player, asset="mechanical_engineering", force=True)
+        validate_rules(player)
         assert technology_b.status == ConstructionStatus.WAITING
         toggle_pause_project(player, technology_a)
-        validate_rules(engine, player)
+        validate_rules(player)
         assert technology_a.status == ConstructionStatus.PAUSED
         assert technology_b.status == ConstructionStatus.PAUSED
 
@@ -383,16 +368,14 @@ def test_math_and_building_tech():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         player.money = 1_000_000_000
         db.session.add(player)
-        db.session.commit()
-        hex_tile = db.session.get(HexTile, 1)
-        confirm_location(engine, player, hex_tile)
-        db.session.commit()
-        finish_project(queue_project(engine=engine, player=player, asset="laboratory", force=True))
+        hex_tile = HexTile.get(1)
+        confirm_location(player, hex_tile)
+        finish_project(queue_project(player=player, asset="laboratory", force=True))
 
-        validate_rules(engine, player)
-        technology_a = queue_project(engine=engine, player=player, asset="mathematics", force=True)
-        validate_rules(engine, player)
+        validate_rules(player)
+        technology_a = queue_project(player=player, asset="mathematics", force=True)
+        validate_rules(player)
         assert technology_a.status == ConstructionStatus.ONGOING
-        technology_c = queue_project(engine=engine, player=player, asset="building_technology", force=True)
-        validate_rules(engine, player)
+        technology_c = queue_project(player=player, asset="building_technology", force=True)
+        validate_rules(player)
         assert technology_c.status == ConstructionStatus.WAITING
