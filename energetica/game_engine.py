@@ -154,8 +154,8 @@ class GameEngine(object):
                     "action_type": "init_engine",
                     "random_seed": self.data["random_seed"],
                     "start_date": self.data["start_date"].isoformat(),
-                }
-            )
+                },
+            ),
         )
         last_midnight = self.data["start_date"].replace(hour=0, minute=0, second=0, microsecond=0)
         # time shift in ticks. Defines the number of ticks between
