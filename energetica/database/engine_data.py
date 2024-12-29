@@ -85,7 +85,7 @@ class CapacityData:
     def __init__(self):
         self._data: dict[str, dict] = {}
 
-    def update(self, player: Player, facility_name: str) -> None:
+    def update(self, player: Player, facility_name: str | None) -> None:
         """Update the capacity data of the player."""
         active_facilities: Iterator[ActiveFacility]
         if facility_name is None:

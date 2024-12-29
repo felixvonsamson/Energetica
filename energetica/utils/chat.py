@@ -1,4 +1,4 @@
-"""Util functions relating to the in game chat"""
+"""Utility functions relating to the in game chat."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ def check_existing_chats(participants: set[Player]) -> bool:
     return any(chat.participants == participants for chat in Chat.all())
 
 
-def create_chat(player: Player, chat_name: str | None, participants: set[Player]):
+def create_chat(player: Player, chat_name: str | None, participants: set[Player]) -> Chat:
     """
     Create a group chat with specified name and participants.
 
@@ -36,7 +36,7 @@ def create_chat(player: Player, chat_name: str | None, participants: set[Player]
     if None in participants:
         # TODO (Felix): Catch this error in the frontend
         raise GameError("playerDoesNotExist")
-    if len(chat_name) == 0 or len(chat_name) > 25:
+    if chat_name and (len(chat_name) == 0 or len(chat_name) > 25):
         raise GameError("wrongTitleLength")
     if len(participants) < 2:
         raise GameError("groupTooSmall")
@@ -54,6 +54,7 @@ def create_chat(player: Player, chat_name: str | None, participants: set[Player]
     else:
         engine.log(f"{player.username} created a group chat called {chat_name} with {participant_list}")
     # websocket.notify_new_chat(new_chat)
+    return new_chat
 
 
 def add_message(player: Player, message_text: str, chat: Chat) -> None:

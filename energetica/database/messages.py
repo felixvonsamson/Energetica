@@ -36,7 +36,7 @@ class Message(DBModel):
 class Chat(DBModel):
     """Class for chats with 2 or more players."""
 
-    name: str
+    name: str | None
     participants: set[Player]
     messages: list[Message] = field(default_factory=list)
     last_read_message: dict[Player, int | None] = field(

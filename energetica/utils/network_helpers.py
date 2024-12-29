@@ -1,4 +1,4 @@
-"""Util functions relating to networks"""
+"""Utility functions relating to networks."""
 
 import pickle
 import shutil
@@ -12,7 +12,7 @@ from energetica.globals import engine
 
 
 # TODO (Felix): Move this to a method in Player
-def join_network(player, network):
+def join_network(player: Player, network: Network | None) -> Network:
     """shared API method to join a network."""
     if "Unlock Network" not in player.achievements:
         raise GameError("networkNotUnlocked")
@@ -25,9 +25,10 @@ def join_network(player, network):
     engine.log(f"{player.username} joined the network {network.name}")
     # import energetica.api.websocket as websocket
     # websocket.rest_notify_network_change()
+    return network
 
 
-def data_init_network():
+def data_init_network() -> dict:
     """Initializes the data for a new network."""
     return {
         "network_data": {
@@ -41,7 +42,7 @@ def data_init_network():
     }
 
 
-def create_network(player, name) -> Network:
+def create_network(player: Player, name: str) -> Network:
     """shared API method to create a network. Network name must pass validation,
     namely it must not be too long, nor too short, and must not already be in
     use."""
@@ -49,7 +50,7 @@ def create_network(player, name) -> Network:
         raise GameError("networkNotUnlocked")
     if len(name) < 3 or len(name) > 40:
         raise GameError("nameLengthInvalid")
-    if len(Network.filter_by(name=name)):
+    if len(list(Network.filter_by(name=name))):
         raise GameError("nameAlreadyUsed")
     new_network = Network(name=name, members=[player])
     network_path = f"instance/network_data/{new_network.id}"
@@ -68,14 +69,14 @@ def create_network(player, name) -> Network:
 
 
 # TODO (Felix): Move this to a method in Player
-def leave_network(player):
+def leave_network(player) -> None:
     """Shared API method for a player to leave a network. Always succeeds."""
     network = player.network
     if network is None:
         raise GameError("notInNetwork")
     player.network_id = None
     engine.log(f"{player.username} left the network {network.name}")
-    remaining_members_count = list(Player.filter(lambda p: p.network and p.network == network.id)).count()
+    remaining_members_count = len(list(Player.filter(lambda p: p.network and p.network == network.id)))
     # delete network if it is empty
     if remaining_members_count == 0:
         engine.log(f"The network {network.name} has been deleted because it was empty")
@@ -109,13 +110,13 @@ def set_network_prices(
     for facility in updated_demand_prices:
         if facility not in engine.special_power_demand + engine.extraction_facilities + engine.storage_facilities:
             raise GameError("malformedRequest")
-    for facility, new_price in updated_supply_prices:
+    for facility, new_price in updated_supply_prices.items():
         if not isinstance(new_price, (int, float)):
             raise GameError("malformedRequest")
         if new_price <= -5:
             raise GameError("priceTooLow")
         player.network_prices.supply[facility] = new_price
-    for facility, new_price in updated_demand_prices:
+    for facility, new_price in updated_demand_prices.items():
         if not isinstance(new_price, (int, float)):
             raise GameError("malformedRequest")
         if new_price <= -5:

@@ -416,7 +416,7 @@ def request_cancel_project() -> Response | tuple:
     """Cancel an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = int(request_data["id"])
-    construction: OngoingProject = OngoingProject.get(int(construction_id))
+    construction = OngoingProject.get(int(construction_id))
     if construction is None or construction.player != current_user:
         return jsonify({"response": "constructionNotFound"}), 404
     force = request_data["force"]
@@ -444,7 +444,7 @@ def request_pause_project() -> Response | tuple:
     """Pause or unpause an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = int(request_data["id"])
-    construction: OngoingProject = OngoingProject.get(int(construction_id))
+    construction = OngoingProject.get(int(construction_id))
     if construction is None or construction.player != current_user:
         return jsonify({"response": "constructionNotFound"}), 404
     energetica.utils.assets.toggle_pause_project(player=current_user, construction=construction)
@@ -462,7 +462,7 @@ def request_decrease_project_priority() -> Response | tuple:
     """Change the order of ongoing constructions or upgrades."""
     request_data = request.get_json()
     construction_id = request_data["id"]
-    construction: OngoingProject = OngoingProject.get(int(construction_id))
+    construction = OngoingProject.get(int(construction_id))
     if construction is None or construction.player != current_user:
         return jsonify({"response": "constructionNotFound"}), 404
     energetica.utils.assets.decrease_project_priority(player=current_user, construction=construction)
@@ -480,7 +480,7 @@ def request_upgrade_facility() -> Response | tuple:
     """Upgrade a facility."""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    facility: ActiveFacility = ActiveFacility.get(int(facility_id))
+    facility = ActiveFacility.get(int(facility_id))
     if facility is None or facility.player != current_user:
         return jsonify({"response": "constructionNotFound"}), 404
     energetica.utils.assets.upgrade_facility(player=current_user, facility=facility)
@@ -503,7 +503,7 @@ def request_dismantle_facility() -> Response | tuple:
     """Dismantle a facility."""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
-    facility: ActiveFacility = ActiveFacility.get(int(facility_id))
+    facility = ActiveFacility.get(int(facility_id))
     if facility is None or facility.player != current_user:
         return jsonify({"response": "constructionNotFound"}), 404
     energetica.utils.assets.dismantle_facility(player=current_user, facility=facility)
@@ -580,7 +580,7 @@ def put_resource_on_sale() -> Response:
 
 @http.route("/buy_resource", methods=["POST"])
 @log_action
-def buy_resource() -> Response:
+def buy_resource() -> Response | tuple:
     """Buy a resource from the market."""
     request_data = request.get_json()
     sale_id = int(request_data["id"])
@@ -617,8 +617,7 @@ def join_network() -> Response:
     """Join a network."""
     request_data = request.form
     network_id = int(request_data["choose_network"])
-    network: Network = Network.get(network_id)
-    energetica.utils.network_helpers.join_network(current_user, network)
+    network = energetica.utils.network_helpers.join_network(current_user, Network.get(network_id))
     flash(f"You joined the network {network.name}", category="message")
     engine.log(f"{current_user.username} joined the network {current_user.network.name}")
     return redirect("/network", code=303)
@@ -668,7 +667,10 @@ def create_chat() -> Response:
     """Create a chat with one other player."""
     request_data = request.get_json()
     buddy_id = request_data["buddy_id"]
-    energetica.utils.chat.create_chat(current_user, None, {current_user, Player.get(buddy_id)})
+    buddy = Player.get(buddy_id)
+    if buddy is None:
+        raise GameError("playerNotFound")  # TODO(mglst): ensure the frontend handles this
+    energetica.utils.chat.create_chat(current_user, None, {current_user, buddy})
     return jsonify({"response": "success"})
 
 
@@ -683,13 +685,13 @@ def create_group_chat() -> Response:
 
 
 @http.route("new_message", methods=["POST"])
-def new_message() -> Response:
+def new_message() -> Response | tuple:
     """Send a message."""
     request_data = request.get_json()
     message = request_data["new_message"]
     chat_id = int(request_data["chat_id"])
     chat = Chat.get(chat_id)
-    if chat_id is None:
+    if chat is None:
         return jsonify({"response": "NoChatID"}), 403
     energetica.utils.chat.add_message(current_user, message, chat)
     return jsonify({"response": "success"})

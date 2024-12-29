@@ -188,9 +188,9 @@ def display_new_message(message: Message, chat: Chat) -> None:
             "display_new_message",
             {
                 "time": message.time.isoformat(),
-                "player_id": message.player_id,
+                "player_id": message.player.id,
                 "text": message.text,
-                "chat_id": message.chat_id,
+                "chat_id": message.chat.id,
             },
         )
         # websocket.rest_notify_player(player, websocket_message)
@@ -226,6 +226,8 @@ def initialize_player(player: Player) -> None:
     eol = engine.data["total_t"] + math.ceil(
         engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick
     )
+    if player.tile is None:
+        raise GameError("noLocation")
     pos_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     pos_y = player.tile.coordinates[1]
     steam_engine: ActiveFacility = ActiveFacility(
@@ -243,6 +245,8 @@ def initialize_player(player: Player) -> None:
     player.active_facilities.append(steam_engine)
 
     general_chat = Chat.get(1)
+    if general_chat is None:
+        raise GameError("chatNotFound")
     player.chats.append(general_chat)
 
     add_player_to_data(player)
@@ -261,7 +265,7 @@ def submit_quiz_answer(player: Player, answer: str) -> bool:
         raise GameError("quizAlreadyAnswered")
     quiz_data["player_answers"][player.id] = answer
     if answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":
-        player.progression_metrics.xp += 1
+        player.progression_metrics["xp"] += 1
         engine.log(f"{player.username} answered the quiz correctly")
         return True
     engine.log(f"{player.username} answered the quiz incorrectly")
@@ -280,7 +284,7 @@ def get_quiz_question(player: Player) -> dict:
 # Weather
 
 
-def calculate_solar_irradiance(position: tuple[float], total_seconds: float, random_seed: int) -> float:
+def calculate_solar_irradiance(position: tuple[float, float], total_seconds: float, random_seed: int) -> float:
     """Calculate the solar irradiance for a given location and time.
 
     The clear sky index is derived from a 3d perlin noise function that moves in time to simulate the cloud cover.
@@ -322,7 +326,7 @@ def calculate_solar_irradiance(position: tuple[float], total_seconds: float, ran
     return min(950, csi * clear_sky)
 
 
-def calculate_wind_speed(position: tuple[float], total_seconds: float, random_seed: int) -> float:
+def calculate_wind_speed(position: tuple[float, float], total_seconds: float, random_seed: int) -> float:
     """Calculate the wind speed for a given location and time.
 
     The wind speed is derived from a 3d perlin noise function with a superposition of specific frequencies.
@@ -359,6 +363,8 @@ def calculate_river_discharge(total_seconds: float) -> float:
 
 def package_weather_data(player: Player) -> dict:
     """Package date and weather data for a player."""
+    if player.tile is None:
+        raise GameError("noLocation")
     x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     y = player.tile.coordinates[1] * 0.5 * 3**0.5
     total_seconds = (engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick
