@@ -884,10 +884,10 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction):
     ):
         return
     if demand_type == "construction":
-        construction_priorities = player.construction_priorities
+        constructions_by_priority = player.constructions_by_priority
         cumul_demand = 0.0
-        for i in range(min(len(construction_priorities), player.workers[demand_type])):
-            construction_id = construction_priorities[i]
+        for i in range(min(len(constructions_by_priority), player.workers[demand_type])):
+            construction_id = constructions_by_priority[i]
             construction: OngoingProject = OngoingProject.get(construction_id)
             if not construction.is_ongoing():
                 continue
@@ -898,10 +898,10 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction):
         return
 
     if demand_type == "research":
-        research_priorities = player.research_priorities
+        researches_by_priority = player.researches_by_priority
         cumul_demand = 0.0
-        for i in range(min(len(research_priorities), player.workers["laboratory"])):
-            construction_id = research_priorities[i]
+        for i in range(min(len(researches_by_priority), player.workers["laboratory"])):
+            construction_id = researches_by_priority[i]
             construction: OngoingProject = OngoingProject.get(construction_id)
             if not construction.is_ongoing():
                 continue

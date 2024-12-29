@@ -82,21 +82,22 @@ class CapacityData:
     """
 
     def __init__(self):
+        # TODO (Yassir): Add ref to the player in init
         self._data: dict[str, dict] = {}
 
     def update(self, player: Player, facility_name: str | None) -> None:
         """Update the capacity data of the player."""
         from energetica.database.active_facility import ActiveFacility
 
-        active_facilities: Iterator[ActiveFacility]
+        active_facilities: List[ActiveFacility]
         if facility_name is None:
-            active_facilities = ActiveFacility.filter_by(player=player)
+            active_facilities = list(ActiveFacility.filter_by(player=player))
             unique_facilities = {af.name for af in active_facilities}
             for uf in unique_facilities:
                 self.init_facility(uf)
         else:
-            active_facilities = ActiveFacility.filter_by(player_id=player.id, facility=facility_name)
-            if len(list(active_facilities)) == 0 and facility_name in self._data:
+            active_facilities = list(ActiveFacility.filter_by(player=player, name=facility_name))
+            if len(active_facilities) == 0 and facility_name in self._data:
                 del self._data[facility_name]
                 return
             self.init_facility(facility_name)

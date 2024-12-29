@@ -243,6 +243,7 @@ def initialize_player(player: Player) -> None:
         },
     )
     player.active_facilities.append(steam_engine)
+    player.capacities.update(player, "steam_engine")
 
     general_chat = Chat.get(1)
     if general_chat is None:

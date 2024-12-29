@@ -77,11 +77,13 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
 
     player.check_construction_achievements(construction.name)
 
-    priority_list_name = "research_priorities" if construction.family == "Technologies" else "construction_priorities"
-    if priority_list_name == "research_priorities":
-        player.research_priorities.remove(construction.id)
+    priority_list_name = (
+        "researches_by_priority" if construction.family == "Technologies" else "constructions_by_priority"
+    )
+    if priority_list_name == "researches_by_priority":
+        player.researches_by_priority.remove(construction.id)
     else:
-        player.construction_priorities.remove(construction.id)
+        player.constructions_by_priority.remove(construction.id)
     family = construction.family
 
     deploy_available_workers(player, family, start_now=True)
@@ -160,12 +162,12 @@ def deploy_available_workers(player: Player, family: str, *, start_now=False) ->
     when a new worker is available and starts a new construction.
     """
     if family == "Technologies":
-        priority_list_name = "research_priorities"
+        priority_list_name = "researches_by_priority"
 
         available_workers = player.available_lab_workers()
 
     else:
-        priority_list_name = "construction_priorities"
+        priority_list_name = "constructions_by_priority"
 
         available_workers = player.available_construction_workers()
 
@@ -328,10 +330,7 @@ def dismantle_all_of_type(player: Player, facility_name: str) -> None:
 def package_projects_data(player: Player) -> dict:
     """Package ongoing constructions for a particular player."""
     # TODO(mglst): Rework the return dict structure (involves back + front end)
-    projects = player.package_constructions()
-    construction_priorities = player.construction_priorities
-    research_priorities = player.research_priorities
-    return {0: projects, 1: construction_priorities, 2: research_priorities}
+    return {0: player.package_constructions(), 1: player.constructions_by_priority, 2: player.researches_by_priority}
 
 
 def queue_project(
@@ -395,9 +394,9 @@ def queue_project(
         player=player,
     )
     if asset in engine.technologies:
-        player.research_priorities.append(new_construction.id)
+        player.researches_by_priority.append(new_construction.id)
     else:
-        player.construction_priorities.append(new_construction.id)
+        player.constructions_by_priority.append(new_construction.id)
     try:
         toggle_pause_project(player, new_construction)
     except GameError:
@@ -438,7 +437,7 @@ def cancel_project(player: Player, construction: OngoingProject, *, force: bool 
         msg = "Construction not found"
         raise GameError(msg)
     priority_list_name = (
-        "research_priorities" if construction.name in engine.technologies else "construction_priorities"
+        "researches_by_priority" if construction.name in engine.technologies else "constructions_by_priority"
     )
 
     dependents = []
@@ -464,10 +463,10 @@ def cancel_project(player: Player, construction: OngoingProject, *, force: bool 
     if construction.name in ["small_water_dam", "large_water_dam", "watermill"]:
         refund *= construction.multiplier_2
     player.money += refund
-    if priority_list_name == "research_priorities":
-        player.research_priorities.remove(construction.id)
+    if priority_list_name == "researches_by_priority":
+        player.researches_by_priority.remove(construction.id)
     else:
-        player.construction_priorities.remove(construction.id)
+        player.constructions_by_priority.remove(construction.id)
 
     deploy_available_workers(player, construction.family)
     player.send_worker_info()
@@ -490,7 +489,7 @@ def decrease_project_priority(player: Player, construction: OngoingProject):
     if construction is None or construction.player_id != player.id:
         msg = "Construction not found"
         raise GameError(msg)
-    attr = "research_priorities" if construction.name in engine.technologies else "construction_priorities"
+    attr = "researches_by_priority" if construction.name in engine.technologies else "constructions_by_priority"
 
     priority_list: list[int] = getattr(player, attr)
     index = priority_list.index(construction.id)
@@ -533,11 +532,11 @@ def toggle_pause_project(player: Player, construction: OngoingProject) -> None:
     This function is executed when a player pauses or unpauses an ongoing construction.
     Note : When a project is paused or unpaused, it's position in the priority list has to be updated.
     """
-    if construction is None or construction.player_id != player.id:
+    if construction is None or construction.player != player:
         msg = "Construction not found"
         raise GameError(msg)
     priority_list_name = (
-        "research_priorities" if construction.name in engine.technologies else "construction_priorities"
+        "researches_by_priority" if construction.name in engine.technologies else "constructions_by_priority"
     )
 
     if not construction.was_paused_by_player():
@@ -605,7 +604,7 @@ def toggle_pause_project(player: Player, construction: OngoingProject) -> None:
             priority_list.insert(insertion_index, construction.id)
         else:
             priority_list.append(construction.id)
-        setattr(player.data, priority_list_name, priority_list)
+        setattr(player, priority_list_name, priority_list)
         engine.log(f"{player.username} unpaused the construction {construction.id} {construction.name}")
 
     # TODO(mglst): This should be re-enabled when the websocket is re-enabled
