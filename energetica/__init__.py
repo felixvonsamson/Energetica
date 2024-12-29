@@ -29,6 +29,12 @@ from flask_login import LoginManager, current_user
 from flask_sock import Sock
 from flask_socketio import SocketIO
 
+from energetica import globals
+from energetica.game_engine import GameEngine
+
+engine = GameEngine()
+globals.engine = engine
+
 from energetica.api.http import http
 from energetica.api.socketio_handlers import add_handlers
 from energetica.api.websocket import add_sock_handlers, websocket_blueprint
@@ -36,7 +42,6 @@ from energetica.auth import auth
 from energetica.database.map import HexTile
 from energetica.database.messages import Chat
 from energetica.database.player import Player
-from energetica.game_engine import GameEngine
 from energetica.init_test_players import init_test_players
 from energetica.simulate import simulate
 from energetica.utils.climate_helpers import data_init_climate
@@ -151,7 +156,7 @@ def create_app(
         last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
 
     # creates the engine (and loading the save if it exists)
-    engine = GameEngine(clock_time, in_game_seconds_per_tick, random_seed, start_date)
+    engine.init(clock_time, in_game_seconds_per_tick, random_seed, start_date)
 
     Path("instance/player_data").mkdir(parents=True, exist_ok=True)
     if not os.path.isfile("instance/server_data/climate_data.pck"):
@@ -281,7 +286,7 @@ def create_app(
         if not simulate_file:
             scheduler.add_job(
                 func=state_update,
-                args=(app),
+                args=(app,),
                 id="state_update",
                 trigger="cron",
                 second=f"*/{clock_time}" if clock_time != 60 else "0",

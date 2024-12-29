@@ -170,7 +170,7 @@ def rest_get_show_chat_disclaimer(player: Player):
 
 
 def rest_get_global_data():
-    """Gets global engine data and returns it as a JSON string"""
+    """Gets from energetica.globals import engine data and returns it as a JSON string"""
     response = {"type": "getGlobalData", "data": engine.package_global_data()}
     return json.dumps(response)
 
@@ -514,7 +514,7 @@ def rest_notify_new_player():
 
 
 def rest_notify_global_data():
-    """Notify to all ws sessions the new global engine data"""
+    """Notify to all ws sessions the new from energetica.globals import engine data"""
     message = rest_get_global_data()
     rest_notify_all_players(message)
 

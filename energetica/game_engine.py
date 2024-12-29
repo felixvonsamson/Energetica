@@ -13,7 +13,6 @@ from flask_socketio import SocketIO
 from gevent.lock import RLock
 
 from energetica.config.assets import config, const_config
-from energetica.database.engine_data import EmissionData
 
 
 # This is the engine object
@@ -121,7 +120,9 @@ class GameEngine(object):
         for asset_type in dict[asset_family.lower().replace(" ", "_")]
     }
 
-    def __init__(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None):
+    def init(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None):
+        from energetica.database.engine_data import EmissionData
+
         assert clock_time in [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
         self.clock_time = clock_time
         self.in_game_seconds_per_tick: int = in_game_seconds_per_tick
@@ -220,7 +221,7 @@ class GameEngine(object):
         self.console_logger.warning(message)
 
     def package_global_data(self):
-        """Package mutable global engine data as a dict to be sent and used on the frontend."""
+        """Package mutable from energetica.globals import engine data as a dict to be sent and used on the frontend."""
         return {
             "first_tick_date": self.data["start_date"],
             "tick_length": self.clock_time,

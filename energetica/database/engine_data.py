@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 import noise
 
-from energetica.database.active_facility import ActiveFacility
 from energetica.globals import engine
 
 if TYPE_CHECKING:
@@ -87,6 +86,8 @@ class CapacityData:
 
     def update(self, player: Player, facility_name: str | None) -> None:
         """Update the capacity data of the player."""
+        from energetica.database.active_facility import ActiveFacility
+
         active_facilities: Iterator[ActiveFacility]
         if facility_name is None:
             active_facilities = ActiveFacility.filter_by(player=player)
