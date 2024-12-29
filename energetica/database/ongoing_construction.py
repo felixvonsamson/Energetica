@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import TYPE_CHECKING
 
+from energetica.config.assets import WORKER_TYPE
 from energetica.database import DBModel
 from energetica.globals import engine
 
@@ -97,7 +98,8 @@ class OngoingProject(DBModel):
         assert self.status == ConstructionStatus.WAITING
         assert not self.cache.prerequisites
 
-        assert self.player.available_workers(self.name) > 0
+        worker_type = WORKER_TYPE.RESEARCH if self.family == "Technologies" else WORKER_TYPE.CONSTRUCTION
+        assert self.player.available_workers(worker_type) > 0
         if start_now:
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
         else:
@@ -107,7 +109,8 @@ class OngoingProject(DBModel):
     def unpause(self) -> None:
         """Make this facility go from paused to either waiting or ongoing."""
         assert self.was_paused_by_player()
-        if self.cache.prerequisites or self.player.available_workers(self.name) < 1:
+        worker_type = WORKER_TYPE.RESEARCH if self.family == "Technologies" else WORKER_TYPE.CONSTRUCTION
+        if self.cache.prerequisites or self.player.available_workers(worker_type) < 1:
             self.status = ConstructionStatus.WAITING
         else:
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)

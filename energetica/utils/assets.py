@@ -6,6 +6,7 @@ import random
 from typing import Iterator
 
 from energetica import technology_effects
+from energetica.config.assets import WorkerType
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingProject
 from energetica.database.player import Player
@@ -77,16 +78,15 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
 
     player.check_construction_achievements(construction.name)
 
-    priority_list_name = (
-        "researches_by_priority" if construction.family == "Technologies" else "constructions_by_priority"
-    )
-    if priority_list_name == "researches_by_priority":
-        player.researches_by_priority.remove(construction.id)
+    worker_type: WorkerType
+    if construction.family == "Technologies":
+        worker_type = WorkerType.RESEARCH
     else:
-        player.constructions_by_priority.remove(construction.id)
+        worker_type = WorkerType.CONSTRUCTION
     family = construction.family
+    player.get_project_priority_list(worker_type).remove(construction)
 
-    deploy_available_workers(player, family, start_now=True)
+    deploy_available_workers(player, worker_type, start_now=True)
 
     construction_name = engine.const_config["assets"][construction.name]["name"]
     if not skip_notifications:
@@ -109,6 +109,8 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
         )
         # TODO(mglst): using random is incompatible with the deterministic nature of the game that the action logger
         # relies on. This should be fixed. Either the position should be logged, or the random should be seeded.
+        if player.tile is None:
+            raise GameError("Player has no tile")
         position_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1] + random.uniform(-0.5, 0.5)
         position_y = (player.tile.coordinates[1] + random.uniform(-0.5, 0.5)) * 0.5 * 3**0.5
         ActiveFacility(
@@ -134,10 +136,10 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
         )
         # Deploy any new workers from laboratory upgrades
         if construction.name == "laboratory":
-            deploy_available_workers(player, "Technologies", start_now=True)
+            deploy_available_workers(player, WorkerType.RESEARCH, start_now=True)
     if family == "Technologies":
         if construction.name == "construction_technology":
-            deploy_available_workers(player, "Power Facilities", start_now=True)
+            deploy_available_workers(player, WorkerType.CONSTRUCTION, start_now=True)
         player.invalidate_recompute_and_dispatch_data_for_pages(
             power_facilities=True,
             storage_facilities=True,
@@ -152,7 +154,7 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
     player.send_worker_info()
 
 
-def deploy_available_workers(player: Player, family: str, *, start_now=False) -> None:
+def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_now=False) -> None:
     """Ensure all free workers for `family` are in use, if possible.
 
     Workers are deployed only on projects that are waiting - paused projects are never unpaused, except by the player.
@@ -161,22 +163,14 @@ def deploy_available_workers(player: Player, family: str, *, start_now=False) ->
     until the start of the next tick. This is used when a construction is finished and the worker starts a new one and
     when a new worker is available and starts a new construction.
     """
-    if family == "Technologies":
-        priority_list_name = "researches_by_priority"
 
-        available_workers = player.available_lab_workers()
-
-    else:
-        priority_list_name = "constructions_by_priority"
-
-        available_workers = player.available_construction_workers()
+    available_workers = player.available_workers(worker_type)
+    priority_list = player.get_project_priority_list(worker_type)
 
     if available_workers <= 0:
         return
-    priority_list = getattr(player, priority_list_name)
 
-    for priority_index, construction_id in enumerate(priority_list):
-        construction: OngoingProject = OngoingProject.get(construction_id)
+    for priority_index, construction in enumerate(priority_list):
         if construction.status == ConstructionStatus.PAUSED:
             # Only the player can unpause a paused construction
             return
@@ -188,15 +182,13 @@ def deploy_available_workers(player: Player, family: str, *, start_now=False) ->
         construction.set_ongoing(start_now=start_now)
         available_workers -= 1
         insertion_index = None
-        for insertion_index_candidate, possibly_paused_construction_id in enumerate(priority_list[:priority_index]):
-            possibly_paused_construction: OngoingProject = OngoingProject.get(possibly_paused_construction_id)
+        for insertion_index_candidate, possibly_paused_construction in enumerate(priority_list[:priority_index]):
             if not possibly_paused_construction.is_ongoing():
                 insertion_index = insertion_index_candidate
                 break
         if insertion_index is not None:
-            priority_list.remove(construction_id)
-            priority_list.insert(insertion_index, construction_id)
-            setattr(player.data, priority_list_name, priority_list)
+            priority_list.remove(construction)
+            priority_list.insert(insertion_index, construction)
         if available_workers <= 0:
             return
 
@@ -206,7 +198,7 @@ def deploy_available_workers(player: Player, family: str, *, start_now=False) ->
 
 def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
     """Upgrade a facility."""
-    if facility is None or facility.player_id != player.id:
+    if facility is None or facility.player == player:
         msg = "Construction not found"
         raise GameError(msg)
 
@@ -222,18 +214,18 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
         raise GameError(msg)
     player.money -= upgrade_cost
     if facility.name in engine.extraction_facilities:
-        facility.price_multiplier = technology_effects.price_multiplier(facility.player, facility.name)
-        facility.multiplier_1 = technology_effects.multiplier_1(facility.player, facility.name)
-        facility.multiplier_2 = technology_effects.multiplier_2(facility.player, facility.name)
-        facility.multiplier_3 = technology_effects.multiplier_3(facility.player, facility.name)
+        facility.multipliers["price_multiplier"] = technology_effects.price_multiplier(facility.player, facility.name)
+        facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(facility.player, facility.name)
+        facility.multipliers["multiplier_2"] = technology_effects.multiplier_2(facility.player, facility.name)
+        facility.multipliers["multiplier_3"] = technology_effects.multiplier_3(facility.player, facility.name)
     else:
-        facility.price_multiplier = technology_effects.price_multiplier(facility.player, facility.name)
+        facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(facility.player, facility.name)
         if facility.name in engine.power_facilities + engine.storage_facilities:
-            facility.multiplier_1 = technology_effects.multiplier_1(facility.player, facility.name)
+            facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(facility.player, facility.name)
         if facility.name in engine.storage_facilities:
-            facility.multiplier_2 = technology_effects.multiplier_2(facility.player, facility.name)
+            facility.multipliers["multiplier_2"] = technology_effects.multiplier_2(facility.player, facility.name)
         if facility.name in engine.controllable_facilities + engine.storage_facilities:
-            facility.multiplier_3 = technology_effects.multiplier_3(facility.player, facility.name)
+            facility.multipliers["multiplier_3"] = technology_effects.multiplier_3(facility.player, facility.name)
     player.capacities.update(player, facility.name)
 
 
@@ -246,11 +238,12 @@ def upgrade_all_of_type(player: Player, facility_name: str) -> None:
 
 
 def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: bool = True) -> None:
-    """Remove a facility.
+    """
+    Remove a facility.
 
     This function is executed when a facility is decommissioned.
     """
-    if facility is None or facility.player_id != player.id:
+    if facility is None or facility.player != player:
         msg = "Facility not found"
         raise GameError(msg)
     if facility.name in engine.technologies + engine.functional_facilities:
@@ -306,12 +299,12 @@ def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str
 
 def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
     """Dismantle a facility."""
-    if facility is None or facility.player_id != player.id:
+    if facility is None or facility.player != player:
         msg = "Facility not found"
         raise GameError(msg)
     cost = facility.dismantle_cost
     if facility.name in ["watermill", "small_water_dam", "large_water_dam"]:
-        cost *= facility.multiplier_2
+        cost *= facility.multipliers["multiplier_2"]
     if player.money < cost:
         msg = "Not enough money"
         raise GameError(msg)
@@ -433,7 +426,7 @@ def invalidate_data_on_project_update(player: Player, asset_type: str) -> None:
 
 def cancel_project(player: Player, construction: OngoingProject, *, force: bool = False):
     """Cancel an ongoing construction."""
-    if construction is None or construction.player_id != player.id:
+    if construction is None or construction.player != player:
         msg = "Construction not found"
         raise GameError(msg)
     priority_list_name = (
@@ -443,8 +436,7 @@ def cancel_project(player: Player, construction: OngoingProject, *, force: bool 
     dependents = []
     priority_list = getattr(player, priority_list_name)
     construction_priority_index = priority_list.index(construction.id)
-    for candidate_dependent_id in priority_list[construction_priority_index + 1 :]:
-        candidate_dependent: OngoingProject = OngoingProject.get(candidate_dependent_id)
+    for candidate_dependent in priority_list[construction_priority_index + 1 :]:
         if construction.id in candidate_dependent.cache.prerequisites:
             dependents.append([candidate_dependent.name, candidate_dependent.cache.level])
     if dependents:
@@ -457,18 +449,19 @@ def cancel_project(player: Player, construction: OngoingProject, *, force: bool 
     refund = (
         0.8
         * engine.const_config["assets"][construction.name]["base_price"]
-        * construction.price_multiplier
+        * construction.multipliers["price_multiplier"]
         * (1 - construction.progress())
     )
     if construction.name in ["small_water_dam", "large_water_dam", "watermill"]:
-        refund *= construction.multiplier_2
+        refund *= construction.multipliers["multiplier_2"]
     player.money += refund
     if priority_list_name == "researches_by_priority":
         player.researches_by_priority.remove(construction.id)
     else:
         player.constructions_by_priority.remove(construction.id)
 
-    deploy_available_workers(player, construction.family)
+    worker_type = WorkerType.RESEARCH if construction.name in engine.technologies else WorkerType.CONSTRUCTION
+    deploy_available_workers(player, worker_type)
     player.send_worker_info()
 
     engine.log(f"{player.username} cancelled the construction {construction.name}")
@@ -486,18 +479,19 @@ def decrease_project_priority(player: Player, construction: OngoingProject):
     This function is executed when a player changes the order of ongoing constructions.
     Note : When a project is moved in the priority list, it may be paused or unpaused.
     """
-    if construction is None or construction.player_id != player.id:
+    if construction is None or construction.player != player:
         msg = "Construction not found"
         raise GameError(msg)
     attr = "researches_by_priority" if construction.name in engine.technologies else "constructions_by_priority"
 
-    priority_list: list[int] = getattr(player, attr)
-    index = priority_list.index(construction.id)
+    worker_type = WorkerType.RESEARCH if construction.family == "Technologies" else WorkerType.CONSTRUCTION
+    priority_list = player.get_project_priority_list(worker_type)
+    index = priority_list.index(construction)
     if index == len(priority_list) - 1:
         return
 
     construction_1: OngoingProject = construction
-    construction_2: OngoingProject = OngoingProject.get(priority_list[index + 1])
+    construction_2: OngoingProject = priority_list[index + 1]
 
     # Here are all the possible cases for the two projects, construction_1 and construction_2:
     # 1. ongoing, ongoing (swap)
@@ -510,7 +504,7 @@ def decrease_project_priority(player: Player, construction: OngoingProject):
     if construction_1.id in construction_2.cache.prerequisites:
         raise GameError("requirementsPreventReorder")
     if not construction_1.was_paused_by_player() and construction_2.was_paused_by_player():
-        msg = f"CannotSwapPausedProject"
+        msg = "CannotSwapPausedProject"
         raise GameError(msg, construction_1=construction_1.name, construction_2=construction_2.name)
 
     if construction_1.status == ConstructionStatus.ONGOING and construction_2.status == ConstructionStatus.WAITING:
@@ -535,48 +529,49 @@ def toggle_pause_project(player: Player, construction: OngoingProject) -> None:
     if construction is None or construction.player != player:
         msg = "Construction not found"
         raise GameError(msg)
-    priority_list_name = (
-        "researches_by_priority" if construction.name in engine.technologies else "constructions_by_priority"
-    )
+
+    worker_type = WorkerType.RESEARCH if construction.family == "Technologies" else WorkerType.CONSTRUCTION
 
     if not construction.was_paused_by_player():
         # project is currently not paused by player, and should be paused
-        priority_list: list[int] = getattr(player, priority_list_name)
-        construction_index = priority_list.index(construction.id)
+        priority_list = player.get_project_priority_list(worker_type)
+        construction_index = priority_list.index(construction)
         construction.pause()
-        dependency_ids = [construction.id]
+        dependency = [construction]
         dependency_indices = [construction_index]
         insertion_index: int | None = None
-        for index, other_construction_id in enumerate(priority_list[construction_index + 1 :]):
+        for index, other_construction in enumerate(priority_list[construction_index + 1 :]):
             other_construction_index = index + construction_index + 1
-            other_construction: OngoingProject = OngoingProject.get(other_construction_id)
             if other_construction.was_paused_by_player():
                 insertion_index = other_construction_index
                 break
             for prerequisite_id in other_construction.cache.prerequisites:
-                if prerequisite_id in dependency_ids:
+                if prerequisite_id in dependency:
                     other_construction.pause()
-                    dependency_ids.append(other_construction_id)
+                    dependency.append(other_construction)
                     dependency_indices.append(other_construction_index)
                     break
         # Remove all dependent constructions from the priority list, and reinsert them at the right place
         if insertion_index is None:
             # If insertion_index is None, then there are no preexisting paused constructions
-            priority_list = [
-                *[id for id in priority_list if id not in dependency_ids],
-                *dependency_ids,
-            ]
+            for dependent in dependency:
+                priority_list.remove(dependent)
+            for dependent in dependency:
+                priority_list.append(dependent)
         else:
             # If insertion_index is not None, then there are preexisting paused constructions
             priority_list = [
-                *[id for id in priority_list[:insertion_index] if id not in dependency_ids],
-                *dependency_ids,
+                *[id for id in priority_list[:insertion_index] if id not in dependency],
+                *dependency,
                 *priority_list[insertion_index:],
             ]
-        setattr(player.data, priority_list_name, priority_list)
+            for dependent in dependency:
+                priority_list.insert(insertion_index, dependent)
+                priority_list.remove(dependent)
 
         # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
-        deploy_available_workers(player, construction.family)
+        worker_type = WorkerType.RESEARCH if construction.name in engine.technologies else WorkerType.CONSTRUCTION
+        deploy_available_workers(player, worker_type)
         player.send_worker_info()
 
         engine.log(f"{player.username} paused the construction {construction.id} {construction.name}")
@@ -584,27 +579,24 @@ def toggle_pause_project(player: Player, construction: OngoingProject) -> None:
         # project is currently pause, and should be unpaused
         if "_prerequisites_and_level" in construction.cache.__dict__:
             del construction.cache._prerequisites_and_level  # Needed to force recompute, as prerequisites aren't
-        for prerequisite_id in construction.cache.prerequisites:
-            prerequisite = OngoingProject.get(prerequisite_id)
+        for prerequisite in construction.cache.prerequisites:
             if prerequisite.status == ConstructionStatus.PAUSED:
                 raise GameError("PausedPrerequisitePreventUnpause")
 
         construction.unpause()
         # project status is now ONGOING or WAITING.
         # Reorder the priority list
-        priority_list = getattr(player, priority_list_name)
-        priority_list.remove(construction.id)
+        priority_list = player.get_project_priority_list(worker_type)
+        priority_list.remove(construction)
         insertion_index = None
-        for new_index, other_construction_id in enumerate(priority_list):
-            other_construction: OngoingProject = OngoingProject.get(other_construction_id)
+        for new_index, other_construction in enumerate(priority_list):
             if other_construction.status < construction.status:
                 insertion_index = new_index
                 break
         if insertion_index is not None:
-            priority_list.insert(insertion_index, construction.id)
+            priority_list.insert(insertion_index, construction)
         else:
-            priority_list.append(construction.id)
-        setattr(player, priority_list_name, priority_list)
+            priority_list.append(construction)
         engine.log(f"{player.username} unpaused the construction {construction.id} {construction.name}")
 
     # TODO(mglst): This should be re-enabled when the websocket is re-enabled
