@@ -146,6 +146,7 @@ def get_chat_messages() -> Response:
     """Get the last 20 messages from a chat and returns it as a list."""
     chat_id = request.args.get("chatID")
     packaged_messages = current_user.package_chat_messages(chat_id)
+    current_user.mark_chat_as_read(chat_id)
     return jsonify({"response": "success", "messages": packaged_messages})
 
 
@@ -676,7 +677,7 @@ def create_group_chat() -> Response:
     """Create a group chat."""
     request_data = request.get_json()
     chat_title = request_data["chat_title"]
-    group_members = [current_user, *list(map(Player.get, request_data["group_members"]))]
+    group_members = {current_user, *list(map(Player.get, request_data["group_members"]))}
     energetica.utils.chat.create_group_chat(current_user, chat_title, group_members)
     return jsonify({"response": "success"})
 

@@ -48,6 +48,11 @@ class DBModel:
         """Filter instances of this class by a list of conditions."""
         return cls.filter(lambda item: all(getattr(item, field) == value for field, value in conditions.items()))
 
+    @classmethod
+    def with_entities(cls: type[T], *fields: str) -> Iterator[T]:
+        """Get all instances of this class with only the specified fields."""
+        return map(lambda item: {field: getattr(item, field) for field in fields}, cls.all())
+
     def __del__(self: T) -> None:
         """Get an object by its id."""
         del getattr(engine, self.__class__.__name__)[self.id]

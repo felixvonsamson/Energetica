@@ -1,11 +1,17 @@
 """Util functions relating to the in game chat"""
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from energetica.database.messages import Chat, Message
-from energetica.database.player import PlayerUnreadMessages
 from energetica.game_engine import GameEngine, GameError
+from energetica.globals import engine
 from energetica.utils.misc import display_new_message
+
+if TYPE_CHECKING:
+    from energetica.database.player import Player
+
+from __future__ import annotations
 
 
 def hide_chat_disclaimer(player):
@@ -26,6 +32,7 @@ def check_existing_chats(participants):
     return False
 
 
+# TODO (Felix): We should have only one function to create a chat or group chat
 def create_chat(player, buddy):
     """creates a chat with 2 players"""
     if buddy is None:
@@ -43,7 +50,7 @@ def create_chat(player, buddy):
     # websocket.notify_new_chat(new_chat)
 
 
-def create_group_chat(player, chat_name, participants):
+def create_group_chat(player: Player, chat_name: str | None, participants: set[Player]):
     """
     Creates a group chat with specified name and participants
 
@@ -55,16 +62,17 @@ def create_group_chat(player, chat_name, participants):
 
     """
     if len(chat_name) == 0 or len(chat_name) > 25:
-        raise GameException("wrongTitleLength")
+        raise GameError("wrongTitleLength")
     if len(participants) < 3:
-        raise GameException("groupTooSmall")
+        raise GameError("groupTooSmall")
     if check_existing_chats(participants):
-        raise GameException("chatAlreadyExist")
+        raise GameError("chatAlreadyExist")
     new_chat = Chat(
         name=chat_name,
-        participants=participants,
+        participants=set(participants),
     )
-    db.session.add(new_chat)
+    for participant in participants:
+        participant.chats.append(new_chat)
     engine.log(f"{player.username} created a group chat called {chat_name} with {participants}")
     # websocket.notify_new_chat(new_chat)
 
@@ -79,14 +87,10 @@ def add_message(player, message_text, chat):
         raise GameError("messageTooLong", message=message_text)
     new_message = Message(
         text=message_text,
-        time=datetime.now(),
-        player_id=player.id,
-        chat_id=chat.id,
+        player=player,
+        chat=chat,
     )
-    db.session.add(new_message)
-    for participant in chat.participants:
-        if participant == player:
-            continue
-        player_read_message = PlayerUnreadMessages(player_id=participant.id, message_id=new_message.id)
-        db.session.add(player_read_message)
+    chat.messages.append(new_message)
+    chat.last_read_message[player] = len(chat.messages) - 1
+
     display_new_message(new_message, chat)

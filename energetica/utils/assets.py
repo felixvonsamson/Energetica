@@ -83,7 +83,6 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
     else:
         player.construction_priorities.remove(construction.id)
     family = construction.family
-    del construction
 
     deploy_available_workers(player, family, start_now=True)
 
@@ -110,15 +109,12 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
         # relies on. This should be fixed. Either the position should be logged, or the random should be seeded.
         position_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1] + random.uniform(-0.5, 0.5)
         position_y = (player.tile.coordinates[1] + random.uniform(-0.5, 0.5)) * 0.5 * 3**0.5
-        new_facility: ActiveFacility = ActiveFacility(
+        ActiveFacility(
             name=construction.name,
             position=(position_x, position_y),
             end_of_life=eol,
             player=player,
-            price_multiplier=construction.price_multiplier,
-            multiplier_1=construction.multiplier_1,
-            multiplier_2=construction.multiplier_2,
-            multiplier_3=construction.multiplier_3,
+            multipliers=construction.multipliers,
         )
     if construction.family == "Technologies":
         player.capacities.update(player, None)
@@ -147,9 +143,10 @@ def finish_project(construction: OngoingConstruction, *, skip_notifications: boo
             functional_facilities=True,
             technologies=True,
         )
-        other_players: list[Player] = Player.filter(Player.id != player.id).all()
+        other_players: Iterator[Player] = Player.filter(lambda other_player: other_player != player)
         for other_player in other_players:
             other_player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
+    del construction
     player.send_worker_info()
 
 
@@ -261,7 +258,6 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
         facility.end_of_life = 0
         player.capacities.update(player, facility.name)
         return
-    del facility
     # The cost of decommissioning is 20% of the building cost.
     cost = facility.dismantle_cost
     player.money -= cost
@@ -289,6 +285,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
         engine.log(f"The facility {facility_name} from {player.username} has been decommissioned.")
     player.capacities.update(player, facility.name)
     engine.config.update_config_for_user(player)
+    del facility
 
 
 def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str) -> None:
@@ -389,10 +386,12 @@ def queue_project(
         status=ConstructionStatus.PAUSED,
         construction_power=construction_power,
         construction_pollution=technology_effects.construction_pollution_per_tick(player, asset),
-        price_multiplier=technology_effects.price_multiplier(player, asset),
-        multiplier_1=technology_effects.multiplier_1(player, asset),
-        multiplier_2=technology_effects.multiplier_2(player, asset),
-        multiplier_3=technology_effects.multiplier_3(player, asset),
+        multipliers={
+            "price_multiplier": technology_effects.price_multiplier(player, asset),
+            "multiplier_1": technology_effects.multiplier_1(player, asset),
+            "multiplier_2": technology_effects.multiplier_2(player, asset),
+            "multiplier_3": technology_effects.multiplier_3(player, asset),
+        },
         player=player,
     )
     if asset in engine.technologies:

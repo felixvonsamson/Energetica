@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -17,10 +18,9 @@ class Message(DBModel):
     """Class for storing data about messages for the in-game messaging system."""
 
     text: str
-    time: datetime
-
     chat: Chat
     player: Player
+    time: datetime = field(default_factory=datetime.now)
 
     def package(self) -> dict:
         """Package this message's data into a dictionary."""
@@ -39,6 +39,9 @@ class Chat(DBModel):
     name: str
     participants: set[Player]
     messages: list[Message] = field(default_factory=list)
+    last_read_message: dict[Player, int | None] = field(
+        default_factory=lambda: defaultdict(-1)
+    )  # {player: message index in messages}
 
 
 @dataclass

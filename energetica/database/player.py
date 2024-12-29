@@ -77,6 +77,7 @@ class PlayerCache:
 
 
 @dataclass
+# TODO (Felix): add @dataclass(eq=False) on all classes
 class Player(DBModel, UserMixin):
     """Class that stores the users and their data."""
 
@@ -281,11 +282,13 @@ class Player(DBModel, UserMixin):
             }
             for message in reversed(messages)
         ]
-        self.last_opened_chat = chat.id
-        PlayerUnreadMessages.filter(PlayerUnreadMessages.player_id == self.id).filter(
-            PlayerUnreadMessages.message_id.in_(db.session.query(Message.id).filter(Message.chat_id == chat_id))
-        ).delete(synchronize_session=False)
         return messages_list
+
+    def mark_chat_as_read(self, chat_id: int) -> None:
+        """Mark a chat as read."""
+        chat = Chat.get(chat_id)
+        self.last_opened_chat = chat.id
+        chat.last_read_message[self] = len(chat.messages) - 1
 
     def package_chat_list(self) -> dict:
         """Package the chats of a player."""
@@ -313,12 +316,7 @@ class Player(DBModel, UserMixin):
             return initials
 
         def unread_message_count(chat: Chat) -> int:
-            return (
-                PlayerUnreadMessages.join(Message, PlayerUnreadMessages.message_id == Message.id)
-                .filter(PlayerUnreadMessages.player_id == self.id)
-                .filter(Message.chat_id == chat.id)
-                .count()
-            )
+            return len(chat.messages) - chat.last_read_message[self] - 1
 
         chat_dict = {
             chat.id: {
@@ -876,10 +874,3 @@ class Player(DBModel, UserMixin):
             if technologies:
                 pages_data |= {"technologies": self.cache.technologies_data}
             self.emit("update_page_data", pages_data)
-
-
-class PlayerUnreadMessages(DBModel):
-    """Association table to store player's last activity in each chat."""
-
-    player: Player
-    message = db.relationship("Message", backref="read_by_players")
