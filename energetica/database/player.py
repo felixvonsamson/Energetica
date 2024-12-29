@@ -17,9 +17,10 @@ from pywebpush import WebPushException, webpush
 from energetica.config.achievements import achievements
 from energetica.database import DBModel
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, PlayerPrices
-from energetica.database.messages import Chat, Message, Notification
+from energetica.database.messages import Chat, Notification
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingProject
 from energetica.database.shipment import OngoingShipment
+from energetica.game_engine import GameError
 from energetica.globals import engine
 from energetica.technology_effects import (
     package_available_technologies,
@@ -37,43 +38,6 @@ if TYPE_CHECKING:
     from energetica.database.map import HexTile
     from energetica.database.network import Network
     from energetica.database.resource_on_sale import ResourceOnSale
-
-
-@dataclass
-class PlayerCache:
-    """Dataclass that stores cached player data."""
-
-    player_id: int
-
-    @cached_property
-    def power_facilities_data(self) -> list:
-        """Cached property that stores the power facilities data of a player."""
-        player = Player.get(self.player_id)
-        return package_power_facilities(player)
-
-    @cached_property
-    def storage_facilities_data(self) -> list:
-        """Cached property that stores the storage facilities data of a player."""
-        player = Player.get(self.player_id)
-        return package_storage_facilities(player)
-
-    @cached_property
-    def extraction_facilities_data(self) -> list:
-        """Cached property that stores the extraction facilities data of a player."""
-        player = Player.get(self.player_id)
-        return package_extraction_facilities(player)
-
-    @cached_property
-    def functional_facilities_data(self) -> list:
-        """Cached property that stores the functional facilities data of a player."""
-        player = Player.get(self.player_id)
-        return package_functional_facilities(player)
-
-    @cached_property
-    def technologies_data(self) -> list:
-        """Cached property that stores the technologies data of a player."""
-        player = Player.get(self.player_id)
-        return package_available_technologies(player)
 
 
 @dataclass
@@ -131,6 +95,7 @@ class Player(DBModel, UserMixin):
     )
 
     # Browser notifications & preferences
+    # TODO(mglst): type annotation seems wrong. is it not a dictionary?
     notification_subscriptions: list[int] = field(default_factory=list)
     notification_preferences: dict = field(
         default_factory=lambda: {
@@ -214,11 +179,29 @@ class Player(DBModel, UserMixin):
         return engine.clients[self.id]
 
     @cached_property
-    def cache(self) -> PlayerCache:
-        """Cached property that stores the player cache."""
-        if self.id not in engine.buffered["by_player"]:
-            engine.buffered["by_player"][self.id] = PlayerCache(self.id)
-        return engine.buffered["by_player"][self.id]
+    def power_facilities_data(self) -> list:
+        """Cached property that stores the power facilities data of a player."""
+        return package_power_facilities(self)
+
+    @cached_property
+    def storage_facilities_data(self) -> list:
+        """Cached property that stores the storage facilities data of a player."""
+        return package_storage_facilities(self)
+
+    @cached_property
+    def extraction_facilities_data(self) -> list:
+        """Cached property that stores the extraction facilities data of a player."""
+        return package_extraction_facilities(self)
+
+    @cached_property
+    def functional_facilities_data(self) -> list:
+        """Cached property that stores the functional facilities data of a player."""
+        return package_functional_facilities(self)
+
+    @cached_property
+    def technologies_data(self) -> list:
+        """Cached property that stores the technologies data of a player."""
+        return package_available_technologies(self)
 
     @property
     def is_in_network(self) -> bool:
@@ -263,9 +246,8 @@ class Player(DBModel, UserMixin):
         )
         return self.workers["laboratory"] - occupied_workers
 
-    def package_chat_messages(self, chat_id: int) -> list[dict]:
+    def package_chat_messages(self, chat: Chat) -> list[dict]:
         """Package the last 20 messages of a chat."""
-        chat = Chat.get(chat_id)
         messages_list = [
             {
                 "time": message.time.isoformat(),
@@ -276,9 +258,8 @@ class Player(DBModel, UserMixin):
         ]
         return messages_list
 
-    def mark_chat_as_read(self, chat_id: int) -> None:
+    def mark_chat_as_read(self, chat: Chat) -> None:
         """Mark a chat as read."""
-        chat = Chat.get(chat_id)
         self.last_opened_chat = chat.id
         chat.last_read_message[self] = len(chat.messages) - 1
 
@@ -294,11 +275,11 @@ class Player(DBModel, UserMixin):
             msg = "Chat has no name and no other participant"
             raise ValueError(msg)
 
-        def find_initials(chat: Chat) -> str:
+        def find_initials(chat: Chat) -> list[str]:
             if chat.name is None:
                 for participant in chat.participants:
                     if participant != self:
-                        return participant.username[0]
+                        return [participant.username[0]]
             max_initials_size = 4
             initials = []
             for participant in chat.participants:
@@ -308,6 +289,7 @@ class Player(DBModel, UserMixin):
             return initials
 
         def unread_message_count(chat: Chat) -> int:
+            # TODO(mglst): what if last_read_message is None?
             return len(chat.messages) - chat.last_read_message[self] - 1
 
         chat_dict = {
@@ -338,9 +320,8 @@ class Player(DBModel, UserMixin):
             for chat in self.chats
         }
 
-    def delete_notification(self, notification_id: int) -> None:
+    def delete_notification(self, notification: Notification) -> None:
         """Delete a notification."""
-        notification = Notification.get(notification_id)
         if notification.player == self:
             del notification
 
@@ -351,7 +332,7 @@ class Player(DBModel, UserMixin):
 
     def unread_notifications(self) -> list[Notification]:
         """Return all unread notifications."""
-        return list(filter(lambda notif: not notif.read, self.notifications))
+        return list(filter(lambda notification: not notification.read, self.notifications))
 
     def get_lvls(self) -> dict:
         """Return the levels of functional facilities and technologies of a player."""
@@ -841,27 +822,27 @@ class Player(DBModel, UserMixin):
         technologies: bool = False,
     ) -> None:
         """Invalidate the facility data for the specified pages and dispatch the new data to the clients."""
-        if power_facilities and "power_facilities_data" in self.cache.__dict__:
-            del self.cache.power_facilities_data
-        if storage_facilities and "storage_facilities_data" in self.cache.__dict__:
-            del self.cache.storage_facilities_data
-        if extraction_facilities and "extraction_facilities_data" in self.cache.__dict__:
-            del self.cache.extraction_facilities_data
-        if functional_facilities and "functional_facilities_data" in self.cache.__dict__:
-            del self.cache.functional_facilities_data
-        if technologies and "technologies_data" in self.cache.__dict__:
-            del self.cache.technologies_data
+        if power_facilities and "power_facilities_data" in self.__dict__:
+            del self.power_facilities_data
+        if storage_facilities and "storage_facilities_data" in self.__dict__:
+            del self.storage_facilities_data
+        if extraction_facilities and "extraction_facilities_data" in self.__dict__:
+            del self.extraction_facilities_data
+        if functional_facilities and "functional_facilities_data" in self.__dict__:
+            del self.functional_facilities_data
+        if technologies and "technologies_data" in self.__dict__:
+            del self.technologies_data
         if self.socketio_clients:
             # TODO(mglst): update clients over websocket
             pages_data: dict = {}
             if power_facilities:
-                pages_data |= {"power_facilities": self.cache.power_facilities_data}
+                pages_data |= {"power_facilities": self.power_facilities_data}
             if storage_facilities:
-                pages_data |= {"storage_facilities": self.cache.storage_facilities_data}
+                pages_data |= {"storage_facilities": self.storage_facilities_data}
             if extraction_facilities:
-                pages_data |= {"extraction_facilities": self.cache.extraction_facilities_data}
+                pages_data |= {"extraction_facilities": self.extraction_facilities_data}
             if functional_facilities:
-                pages_data |= {"functional_facilities": self.cache.functional_facilities_data}
+                pages_data |= {"functional_facilities": self.functional_facilities_data}
             if technologies:
-                pages_data |= {"technologies": self.cache.technologies_data}
+                pages_data |= {"technologies": self.technologies_data}
             self.emit("update_page_data", pages_data)
