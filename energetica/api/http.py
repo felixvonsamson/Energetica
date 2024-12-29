@@ -667,8 +667,7 @@ def create_chat() -> Response:
     """Create a chat with one other player."""
     request_data = request.get_json()
     buddy_id = request_data["buddy_id"]
-    buddy = Player.get(buddy_id)
-    energetica.utils.chat.create_chat(current_user, buddy)
+    energetica.utils.chat.create_chat(current_user, None, {current_user, Player.get(buddy_id)})
     return jsonify({"response": "success"})
 
 
@@ -678,7 +677,7 @@ def create_group_chat() -> Response:
     request_data = request.get_json()
     chat_title = request_data["chat_title"]
     group_members = {current_user, *list(map(Player.get, request_data["group_members"]))}
-    energetica.utils.chat.create_group_chat(current_user, chat_title, group_members)
+    energetica.utils.chat.create_chat(current_user, chat_title, group_members)
     return jsonify({"response": "success"})
 
 

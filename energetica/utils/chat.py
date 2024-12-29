@@ -21,36 +21,12 @@ def hide_chat_disclaimer(player):
     # websocket.rest_notify_player(player, message)
 
 
-def check_existing_chats(participants):
+def check_existing_chats(participants: set[Player]):
     """Checks if a chat with exactly these participants already exists"""
-    participant_ids = [participant.id for participant in participants]
-    conditions = [Chat.participants.any(id=participant_id) for participant_id in participant_ids]
-    existing_chats = Chat.filter(*conditions)
-    for chat in existing_chats:
-        if len(chat.participants) == len(participants):
-            return True
-    return False
+    return any(chat.participants == participants for chat in Chat.all())
 
 
-# TODO (Felix): We should have only one function to create a chat or group chat
-def create_chat(player, buddy):
-    """creates a chat with 2 players"""
-    if buddy is None:
-        raise GameError("buddyIDDoesNotExist")
-    if buddy.id == player.id:
-        raise GameError("cannotChatWithYourself")
-    if check_existing_chats([player, buddy]):
-        raise GameError("chatAlreadyExist")
-    new_chat = Chat(
-        name=None,
-        participants=[player, buddy],
-    )
-    db.session.add(new_chat)
-    engine.log(f"{player.username} created a chat with {buddy.username}")
-    # websocket.notify_new_chat(new_chat)
-
-
-def create_group_chat(player: Player, chat_name: str | None, participants: set[Player]):
+def create_chat(player: Player, chat_name: str | None, participants: set[Player]):
     """
     Creates a group chat with specified name and participants
 
@@ -61,9 +37,12 @@ def create_group_chat(player: Player, chat_name: str | None, participants: set[P
     :param participant_ids: a list of numbers corresponding to player ids
 
     """
+    if None in participants:
+        # TODO (Felix): Catch this error in the frontend
+        raise GameError("playerDoesNotExist")
     if len(chat_name) == 0 or len(chat_name) > 25:
         raise GameError("wrongTitleLength")
-    if len(participants) < 3:
+    if len(participants) < 2:
         raise GameError("groupTooSmall")
     if check_existing_chats(participants):
         raise GameError("chatAlreadyExist")
@@ -73,7 +52,11 @@ def create_group_chat(player: Player, chat_name: str | None, participants: set[P
     )
     for participant in participants:
         participant.chats.append(new_chat)
-    engine.log(f"{player.username} created a group chat called {chat_name} with {participants}")
+    participant_list = ", ".join(participant.username for participant in participants if participant != player)
+    if len(participants) == 2:
+        engine.log(f"{player.username} created a chat with {participant_list}")
+    else:
+        engine.log(f"{player.username} created a group chat called {chat_name} with {participant_list}")
     # websocket.notify_new_chat(new_chat)
 
 
