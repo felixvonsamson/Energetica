@@ -6,7 +6,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING
 
 import noise
 
@@ -14,6 +14,8 @@ from energetica.database.active_facility import ActiveFacility
 from energetica.globals import engine
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from energetica.database.network import Network
     from energetica.database.player import Player
 
@@ -168,7 +170,7 @@ class CapacityData:
     def __getitem__(self, facility: str) -> dict:
         """Return the capacity data of a facility."""
         if facility not in self._data:
-            return None
+            return None  # TODO(mglst): either the type should be Optional[dict] or an error should be raised
         return self._data[facility]
 
     def get_all(self) -> dict[str, dict]:

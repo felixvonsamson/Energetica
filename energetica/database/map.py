@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from energetica.database import DBModel
 
 if TYPE_CHECKING:
-    from energetica.database import Player
+    from energetica.database.player import Player
 
 
 @dataclass
@@ -38,7 +38,7 @@ class HexTile(DBModel):
 
         def get_hex_at_distance(q: int, r: int, distance: int) -> list[tuple[int, int]]:
             """Generate all hex coordinates within a given distance."""
-            results = []
+            results: list[tuple[int, int]] = []
             results.extend(
                 (q + dq, r + dr)
                 for dq in range(-distance, distance + 1)
