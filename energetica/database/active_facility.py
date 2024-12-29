@@ -51,23 +51,23 @@ class ActiveFacility(DBModel):
         This is the cost without any upgrades, but including the special_price_multiplier for hydro facilities.
         """
         if self.name in ["watermill", "small_water_dam", "large_water_dam"]:
-            return self.const_config["base_price"] * self.multiplier_2
+            return self.const_config["base_price"] * self.multipliers["multiplier_2"]
         return self.const_config["base_price"]
 
     @property
     def total_cost(self) -> float:
         """Total cost of the facility, including all upgrades."""
-        return self.real_base_cost * self.price_multiplier
+        return self.real_base_cost * self.multipliers["price_multiplier"]
 
     @property
     def max_power_generation(self) -> float:
         """Max power output of the facility in W."""
-        return self.const_config["base_power_generation"] * self.multiplier_1
+        return self.const_config["base_power_generation"] * self.multipliers["multiplier_1"]
 
     @property
     def storage_capacity(self) -> float:
         """Storage capacity of the facility in Wh."""
-        return self.const_config["base_storage_capacity"] * self.multiplier_2
+        return self.const_config["base_storage_capacity"] * self.multipliers["multiplier_2"]
 
     @property
     def extraction_rate(self) -> float:
@@ -79,7 +79,7 @@ class ActiveFacility(DBModel):
         }
         return (
             self.const_config["base_extraction_rate_per_day"]
-            * self.multiplier_2
+            * self.multipliers["multiplier_2"]
             * self.player.get_reserves()[extraction_to_resource[self.name]]
             / 24
         )
@@ -97,7 +97,7 @@ class ActiveFacility(DBModel):
     @property
     def efficiency(self) -> float:
         """Efficiency of the facility as a number from 0 to 1."""
-        return self.const_config["base_efficiency"] * self.multiplier_3
+        return self.const_config["base_efficiency"] * self.multipliers["multiplier_3"]
 
     @property
     def daily_op_cost(self) -> float:
@@ -112,7 +112,7 @@ class ActiveFacility(DBModel):
     @property
     def max_power_use(self) -> float:
         """Maximum power consumption of the facility in W. Defined only for extraction facilities."""
-        return self.const_config["base_power_consumption"] * self.multiplier_1
+        return self.const_config["base_power_consumption"] * self.multipliers["multiplier_1"]
 
     @property
     def remaining_lifespan(self) -> int | None:
@@ -129,36 +129,38 @@ class ActiveFacility(DBModel):
         Returns true if any of the attributes of the facility are outdated compared to current tech levels.
         This method is undefined for technologies and for functional facilities.
         """
-        if self.price_multiplier < technology_effects.price_multiplier(self.player, self.name):
+        if self.multipliers["price_multiplier"] < technology_effects.price_multiplier(self.player, self.name):
             return True
         if self.name in engine.extraction_facilities:
             return (
-                self.multiplier_1 < technology_effects.multiplier_1(self.player, self.name)
-                or self.multiplier_2 < technology_effects.multiplier_2(self.player, self.name)
-                or self.multiplier_3 < technology_effects.multiplier_3(self.player, self.name)
+                self.multipliers["multiplier_1"] < technology_effects.multiplier_1(self.player, self.name)
+                or self.multipliers["multiplier_2"] < technology_effects.multiplier_2(self.player, self.name)
+                or self.multipliers["multiplier_3"] < technology_effects.multiplier_3(self.player, self.name)
             )
         # power & storage facilities
         return (
             (
                 self.name in engine.power_facilities + engine.storage_facilities
-                and self.multiplier_1 < technology_effects.multiplier_1(self.player, self.name)
+                and self.multipliers["multiplier_1"] < technology_effects.multiplier_1(self.player, self.name)
             )
             or (
                 self.name in engine.storage_facilities
-                and self.multiplier_2 < technology_effects.multiplier_2(self.player, self.name)
+                and self.multipliers["multiplier_2"] < technology_effects.multiplier_2(self.player, self.name)
             )
             or (
                 self.name in engine.controllable_facilities + engine.storage_facilities
-                and self.multiplier_3 < technology_effects.multiplier_3(self.player, self.name)
+                and self.multipliers["multiplier_3"] < technology_effects.multiplier_3(self.player, self.name)
             )
         )
 
     @property
-    def upgrade_cost(self) -> int | None:
+    def upgrade_cost(self) -> float | None:
         """Cost to upgrade the facility."""
         if not self.is_upgradable:
             return None
-        price_multiplier_diff = technology_effects.price_multiplier(self.player, self.name) - self.price_multiplier
+        price_multiplier_diff = (
+            technology_effects.price_multiplier(self.player, self.name) - self.multipliers["price_multiplier"]
+        )
         # Some technologies reduce the cost of the facility, but we still want upgrades to cost something
         # TODO: rethink this
         price_multiplier_diff = max(price_multiplier_diff, 0.05)
