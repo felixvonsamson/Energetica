@@ -69,14 +69,14 @@ def create_network(player: Player, name: str) -> Network:
 
 
 # TODO (Felix): Move this to a method in Player
-def leave_network(player) -> None:
+def leave_network(player: Player) -> None:
     """Shared API method for a player to leave a network. Always succeeds."""
     network = player.network
     if network is None:
         raise GameError("notInNetwork")
     player.network_id = None
     engine.log(f"{player.username} left the network {network.name}")
-    remaining_members_count = len(list(Player.filter(lambda p: p.network and p.network == network.id)))
+    remaining_members_count = len(list(Player.filter(lambda p: p.network is not None and p.network == network)))
     # delete network if it is empty
     if remaining_members_count == 0:
         engine.log(f"The network {network.name} has been deleted because it was empty")
@@ -87,9 +87,11 @@ def leave_network(player) -> None:
 
 
 # TODO (Felix): Move this to a method in Player
-def reorder_facility_priorities(player: Player):
-    """Reorders the player's `priorities_of_controllables`, `priorities_of_demand` and `list_of_renewables` according
-    to the players network prices :
+def reorder_facility_priorities(player: Player) -> None:
+    """
+    Reorder the player's `priorities_of_controllables`, `priorities_of_demand` and `list_of_renewables`.
+
+    This is done according to the players network prices :
     - The controllables are sorted in ascending price order
     - The demand is sorted in descending price order
     - The renewables are sorted in the same order for all players
@@ -101,9 +103,11 @@ def reorder_facility_priorities(player: Player):
 
 # TODO (Felix): Move this to a method in Player or even in PlayerPrices
 def set_network_prices(
-    player: Player, updated_supply_prices: dict[str, float], updated_demand_prices: dict[str, float]
-):
-    """Updates network prices for that player"""
+    player: Player,
+    updated_supply_prices: dict[str, float],
+    updated_demand_prices: dict[str, float],
+) -> None:
+    """Update network prices for that player."""
     for facility in updated_supply_prices:
         if facility not in engine.controllable_facilities + engine.storage_facilities:
             raise GameError("malformedRequest")
@@ -128,7 +132,7 @@ def set_network_prices(
 
 
 # TODO (Felix): Move this to a method in Player
-def change_facility_priority(player: Player, priority: list[str]):
+def change_facility_priority(player: Player, priority: list[str]) -> None:
     """
     This function is executed when the facilities priority is changed by changing the order in the interactive
     table. The function reassigns the selling prices of the facilities according to the new order.
