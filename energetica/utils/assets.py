@@ -468,7 +468,6 @@ def cancel_project(player: Player, construction: OngoingProject, *, force: bool 
         player.research_priorities.remove(construction.id)
     else:
         player.construction_priorities.remove(construction.id)
-    del construction
 
     deploy_available_workers(player, construction.family)
     player.send_worker_info()
@@ -479,6 +478,7 @@ def cancel_project(player: Player, construction: OngoingProject, *, force: bool 
     # websocket.rest_notify_constructions(player)
 
     invalidate_data_on_project_update(player, construction.name)
+    del construction
 
 
 def decrease_project_priority(player: Player, construction: OngoingProject):

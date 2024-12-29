@@ -114,6 +114,7 @@ def set_facilities_usage(new_values, player):
                 {ActiveFacility.usage: new_values["generation"][facility] / player.capacities[facility]["power"]},
                 synchronize_session=False,
             )
+
     for facility in engine.storage_facilities:
         if player.capacities.contains(facility):
             if player.capacities[facility]["capacity"] == 0:

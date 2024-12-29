@@ -373,8 +373,8 @@ def choose_location() -> Response:
     selected_id = request_data["selected_id"]
     if selected_id < 0 or selected_id >= HexTile.count():
         return jsonify({"response": "TileNotExist"})  # TODO
-    location = HexTile.get(selected_id + 1)
-    energetica.utils.misc.confirm_location(player=current_user, location=location)
+    tile = HexTile.get(selected_id + 1)
+    energetica.utils.misc.confirm_location(player=current_user, tile=tile)
     return jsonify({"response": "success"})
 
 

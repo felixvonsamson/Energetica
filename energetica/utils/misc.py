@@ -155,10 +155,11 @@ def save_past_data_threaded(app):
                     pickle.dump(past_data, file)
 
             # remove old notifications
-            Notification.filter(
-                Notification.title != "Tutorial",
-                Notification.time < datetime.now() - timedelta(weeks=2),
-            ).delete()
+            for notification in Notification.filter(
+                lambda notification: notification.title != "Tutorial"
+                and notification.time < datetime.now() - timedelta(weeks=2)
+            ):
+                del notification
 
             engine.log("last 216 data points have been saved to files")
 
@@ -198,50 +199,61 @@ def display_new_message(message: Message, chat: Chat) -> None:
 # Map
 
 
-def confirm_location(player: Player, location: HexTile) -> None:
+def confirm_location(player: Player, tile: HexTile) -> None:
     """Confirm a location choice.
 
     Return either success or an explanatory error message in the form of a dictionary.
     Called when a web client uses the choose_location socket.io endpoint, or the REST websocket API.
     """
-    if location.player is not None:
+    if tile.player is not None:
         # Location already taken
-        raise GameError("locationOccupied", by=location.player_id)
+        raise GameError("locationOccupied", by=tile.player.id)
     if player.tile is not None:
         # Player has already chosen a location and cannot chose again
         raise GameError("choiceUnmodifiable")
 
     # Checks have succeeded, proceed
-    location.player = player
+    tile.player = player
+    player.tile = tile
+    initialize_player(player)
+    engine.log(f"{player.username} chose the location {tile.id}")
+
+
+def initialize_player(player: Player) -> None:
+    """This function is called after a player confirms his location. It gives it an initial steam engine and
+    initializes the player's data.
+    """
     eol = engine.data["total_t"] + math.ceil(
         engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick
     )
-    pos_x = location.coordinates[0] + 0.5 * location.coordinates[1]
-    pos_y = location.coordinates[1]
+    pos_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
+    pos_y = player.tile.coordinates[1]
     steam_engine: ActiveFacility = ActiveFacility(
         name="steam_engine",
         position=(pos_x, pos_y),
         end_of_life=eol,
         player=player,
-        price_multiplier=1.0,
-        multiplier_1=1.0,
-        multiplier_2=1.0,
-        multiplier_3=1.0,
+        multipliers={
+            "price_multiplier": 1.0,
+            "multiplier_1": 1.0,
+            "multiplier_2": 1.0,
+            "multiplier_3": 1.0,
+        },
     )
+    player.active_facilities.append(steam_engine)
+
     general_chat = Chat.get(1)
     player.chats.append(general_chat)
+
     add_player_to_data(player)
     init_table(player.id)
     player.rolling_history.add_subcategory("op_costs", "steam_engine")
     player.rolling_history.add_subcategory("generation", "steam_engine")
     player.rolling_history.add_subcategory("emissions", "steam_engine")
     # websocket.rest_notify_player_location(player)
-    engine.log(f"{player.username} chose the location {location.id}")
 
 
 # Quiz
-
-
 def submit_quiz_answer(player: Player, answer: str) -> bool:
     """Return True if the answer was correct, False otherwise."""
     quiz_data = engine.data["daily_question"]
@@ -351,8 +363,8 @@ def package_weather_data(player: Player) -> dict:
     y = player.tile.coordinates[1] * 0.5 * 3**0.5
     total_seconds = (engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick
     random_seed = engine.data["random_seed"]
-    solar_irradiance = calculate_solar_irradiance(x, y, total_seconds, random_seed)
-    wind_speed = calculate_wind_speed(x, y, total_seconds, random_seed)
+    solar_irradiance = calculate_solar_irradiance((x, y), total_seconds, random_seed)
+    wind_speed = calculate_wind_speed((x, y), total_seconds, random_seed)
     river_discharge = calculate_river_discharge(total_seconds)
     months = [
         "January",

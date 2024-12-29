@@ -1,9 +1,12 @@
 """Module that contains the ResourceOnSale class."""
 
 from dataclasses import dataclass
-from datetime import datetime
+from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
+
+if TYPE_CHECKING:
+    from energetica.database.player import Player
 
 
 @dataclass
@@ -13,3 +16,4 @@ class ResourceOnSale(DBModel):
     resource: str
     quantity: float
     price: float
+    player: Player

@@ -19,16 +19,16 @@ if TYPE_CHECKING:
     from energetica.database.player import Player
 
 
-def climate_event_impact(tile, event):
+def climate_event_impact(tile, event_name):
     """Creates a ClimateEventRecovery object for the event and some facilities may be destroyed by the climate event."""
-    engine.log(f"{climate_events[event]['name']} on tile {tile.id}")
+    engine.log(f"{climate_events[event_name]['name']} on tile {tile.id}")
     engine.action_logger.info(
         json.dumps(
             {
                 "timestamp": datetime.now().isoformat(),
                 "action_type": "climate_event_impact",
                 "tile_id": tile.id,
-                "event": event,
+                "event": event_name,
             }
         )
     )
@@ -37,42 +37,39 @@ def climate_event_impact(tile, event):
     player: Player = tile.player
     ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
     recovery_cost = (
-        climate_events[event]["cost_fraction"] * player.config["industry"]["income_per_day"] / ticks_per_day
+        climate_events[event_name]["cost_fraction"] * player.config["industry"]["income_per_day"] / ticks_per_day
     )  # [¤/tick]
-    duration_ticks = climate_events[event]["duration"] / engine.in_game_seconds_per_tick
+    duration_ticks = climate_events[event_name]["duration"] / engine.in_game_seconds_per_tick
     end_tick = engine.data["total_t"] + duration_ticks
     new_climate_event = ClimateEventRecovery(
-        event=event,
+        name=event_name,
         end_tick=end_tick,
         duration=duration_ticks,
         recovery_cost=recovery_cost,
-        player_id=player.id,
     )
-    db.session.add(new_climate_event)
+    player.climate_events.append(new_climate_event)
     player.notify(
-        climate_events[event]["name"],
-        climate_events[event]["description"].format(
-            duration=round(climate_events[event]["duration"] / 3600 / 24),
+        climate_events[event_name]["name"],
+        climate_events[event_name]["description"].format(
+            duration=round(climate_events[event_name]["duration"] / 3600 / 24),
             cost=display_money(recovery_cost * ticks_per_day / 24) + "/h",
         ),
     )
 
     # check destructions
-    if random.random() < climate_events[event]["industry_destruction_chance"]:
+    if random.random() < climate_events[event_name]["industry_destruction_chance"]:
         player.functional_facilities["industry"] -= 1
         engine.config.update_config_for_user(player)
         player.notify(
             "Destruction",
-            f"Your industry hs been levelled down by 1 due to the {climate_events[event]['name']} event.",
+            f"Your industry hs been levelled down by 1 due to the {climate_events[event_name]['name']} event.",
         )
-        engine.log(f"{player.username} : Industry levelled down by {climate_events[event]['name']}.")
-    facilities_list = list(climate_events[event]["destruction_chance"].keys())
-    facilities_at_risk = ActiveFacility.filter(
-        ActiveFacility.player_id == player.id, Activefacility.name.in_(facilities_list)
-    ).all()
+        engine.log(f"{player.username} : Industry levelled down by {climate_events[event_name]['name']}.")
+    facilities_list = list(climate_events[event_name]["destruction_chance"].keys())
+    facilities_at_risk = filter(lambda facility: facility.name in facilities_list, player.active_facilities)
     for facility in facilities_at_risk:
-        if random.random() < climate_events[event]["destruction_chance"][facility.name]:
-            facility_destroyed(player, facility, climate_events[event]["name"])
+        if random.random() < climate_events[event_name]["destruction_chance"][facility.name]:
+            facility_destroyed(player, facility, climate_events[event_name]["name"])
             # if a water dam is destroyed it will flood downstream tiles
             if facility.name == "small_water_dam":
                 affected_tiles = tile.get_downstream_tiles(3)
@@ -104,7 +101,7 @@ def check_climate_events():
     flood_probability = climate_events["flood"]["base_probability"] / ticks_per_day * climate_change**2
     if random.random() < flood_probability:
         # the hydro value for a flood needs to be above 20%
-        hydro_tiles = HexTile.filter(HexTile.hydro_potential > 0.2).all()
+        hydro_tiles = HexTile.filter(lambda tile: tile.hydro_potential > 0.2)
         tile = random.choice(hydro_tiles)
         climate_event_impact(tile, "flood")
 
@@ -121,7 +118,7 @@ def check_climate_events():
     if random.random() < heatwave_probability:
         # the tile for the heatwave is chosen based on a sigmoid distribution around the equator
         random_latitude = round(inv_cdf_sigmoid(random.random()))
-        latitude_tiles = HexTile.filter(HexTile.r == random_latitude).all()
+        latitude_tiles = HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude)
         tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
@@ -144,7 +141,7 @@ def check_climate_events():
             random_latitude = math.ceil(10 + random_normal)
         else:
             random_latitude = math.floor(-10 + random_normal)
-        latitude_tiles = HexTile.filter(HexTile.r == random_latitude).all()
+        latitude_tiles = HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude)
         tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
@@ -168,7 +165,7 @@ def check_climate_events():
         engine.data["current_climate_data"].add("CO2", 10e6)
         # the tile for the wildfire is chosen based on a normal distribution around the equator
         random_latitude = inv_cdf_normal(random.random())
-        latitude_tiles = HexTile.filter(HexTile.r == random_latitude).all()
+        latitude_tiles = HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude)
         tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:

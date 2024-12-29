@@ -1,11 +1,11 @@
 """Util functions relating to the resource market"""
 
 import math
-from datetime import datetime
 
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.database.shipment import OngoingShipment
 from energetica.game_engine import GameError
+from energetica.globals import engine
 from energetica.utils.formatting import display_money, format_mass
 
 
@@ -20,7 +20,7 @@ def put_resource_on_market(player, resource, quantity, price):
         price=price,
         player=player,
     )
-    db.session.add(new_sale)
+    player.resource_market_offers.append(new_sale)
 
 
 def buy_resource_from_market(player, quantity, sale):
@@ -57,9 +57,8 @@ def buy_resource_from_market(player, quantity, sale):
             quantity=quantity,
             arrival_tick=engine.data["total_t"] + 1 + shipment_duration,
             duration=shipment_duration,
-            player_id=player.id,
         )
-        db.session.add(new_shipment)
+        player.shipments.append(new_shipment)
         sale.player.notify(
             "Resource transaction",
             f"{player.username} bought {format_mass(quantity)} of "

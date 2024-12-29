@@ -88,16 +88,16 @@ class Player(DBModel, UserMixin):
     tile: HexTile | None = None
     network: Network | None = None
 
-    chats: list[Chat] = field(default_factory=list)
-    messages: list[Message] = field(default_factory=list)
-    notifications: list[Notification] = field(default_factory=list)
-    resource_market_offers: list[ResourceOnSale] = field(default_factory=list)
-    shipments: list[OngoingShipment] = field(default_factory=list)
-    active_facilities: list[ActiveFacility] = field(default_factory=list)
-    climate_events: list[ClimateEventRecovery] = field(default_factory=list)
-    construction_priorities: list[OngoingProject] = field(default_factory=list)
-    research_priorities: list[OngoingProject] = field(default_factory=list)
-    shipments: list[OngoingShipment] = field(default_factory=list)
+    # TODO (Felix): Modify the post__init__ of DBModel to store the following objects in engine or in the player
+    chats: list[Chat] = field(default_factory=list)  # Engine + Player reference
+    notifications: list[Notification] = field(default_factory=list)  # Player
+    resource_market_offers: list[ResourceOnSale] = field(default_factory=list)  # Player
+    shipments: list[OngoingShipment] = field(default_factory=list)  # Player
+    active_facilities: list[ActiveFacility] = field(default_factory=list)  # Player
+    climate_events: list[ClimateEventRecovery] = field(default_factory=list)  # Player
+    constructions_by_priority: list[OngoingProject] = field(default_factory=list)  # Player
+    researches_by_priority: list[OngoingProject] = field(default_factory=list)  # Player
+    shipments: list[OngoingShipment] = field(default_factory=list)  # Player
 
     network_prices: PlayerPrices = field(default_factory=PlayerPrices)
     rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
@@ -638,7 +638,7 @@ class Player(DBModel, UserMixin):
 
     def package_constructions(self) -> dict[int, dict]:
         """Package the player's ongoing constructions."""
-        constructions: list[OngoingProject] = self.construction_priorities
+        constructions: list[OngoingProject] = self.constructions_by_priority
         return {
             construction.id: {
                 k: getattr(construction, k)
@@ -675,7 +675,7 @@ class Player(DBModel, UserMixin):
 
     def package_construction_queue(self) -> list:
         """Package the player's construction queue (list of construction_ids)."""
-        return self.construction_priorities
+        return self.constructions_by_priority
 
     def package_active_facilities(self) -> dict[str, dict[int, dict[str, any]]]:
         """Package the player's active facilities."""

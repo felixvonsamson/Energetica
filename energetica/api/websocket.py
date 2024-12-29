@@ -3,7 +3,7 @@
 import json
 import pickle
 
-from flask import Blueprint, current_app, g
+from flask import Blueprint, g
 from flask_httpauth import HTTPBasicAuth
 from simple_websocket import ConnectionClosed
 from werkzeug.security import check_password_hash
@@ -12,11 +12,10 @@ from energetica.database.map import HexTile
 from energetica.database.messages import Chat, Message
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.game_engine import GameEngine
 from energetica.globals import engine
 from energetica.technology_effects import package_constructions_page_data
 from energetica.utils.assets import decrease_project_priority, queue_project, toggle_pause_project
-from energetica.utils.chat import add_message, create_chat, create_group_chat, hide_chat_disclaimer
+from energetica.utils.chat import add_message, create_chat, hide_chat_disclaimer
 from energetica.utils.misc import confirm_location, package_weather_data
 from energetica.utils.network_helpers import create_network, join_network, leave_network
 
@@ -33,7 +32,7 @@ def add_sock_handlers(sock, engine):
     @basic_auth.verify_password
     def verify_password(username, password):
         """Called by flask-HTTPAUth to verify credentials."""
-        player = Player.filter_by(username=username).first()
+        player: Player = next(Player.filter_by(username=username))
         if player:
             if check_password_hash(player.pwhash, password):
                 engine.log(f"{username} logged in via WebSocket")
@@ -45,7 +44,7 @@ def add_sock_handlers(sock, engine):
     @basic_auth.login_required
     def check_user():
         """Sets up variables used by endpoints."""
-        g.player = Player.filter_by(username=basic_auth.current_user()).first()
+        g.player = next(Player.filter_by(username=basic_auth.current_user()))
 
     # Main WebSocket endpoint for Swift client
     @sock.route("/rest_ws", bp=websocket_blueprint)
@@ -389,11 +388,12 @@ def rest_parse_request(player: Player, ws, uuid, data):
             hide_chat_disclaimer(player)
         case "createChat":
             buddy_id = data["buddy_id"]
-            create_chat(player, buddy_id)
+            participants = {player, Player.get(buddy_id)}
+            create_chat(player, None, participants)
         case "createGroupChat":
             chat_name = data["chat_name"]
-            participant_ids = data["participant_ids"]
-            create_group_chat(player, chat_name, participant_ids)
+            participants = {player, *[Player.get(participant_id) for participant_id in data["participant_ids"]]}
+            create_chat(player, chat_name, participants)
         case "sendMessage":
             chat_id = data["chat_id"]
             message = data["message"]
@@ -405,7 +405,7 @@ def rest_parse_request(player: Player, ws, uuid, data):
 def rest_parse_request_confirm_location(ws, uuid, data):
     """Interpret message sent from a client when they chose a location."""
     cell_id = data
-    response = confirm_location(player=g.player, location=HexTile.get(cell_id))
+    response = confirm_location(player=g.player, tile=HexTile.get(cell_id))
     print(f"ws is {ws} and we're sending rest_respond_confirmLocation")
     message = rest_request_response(uuid, "confirmLocation", response)
     ws.send(message)
