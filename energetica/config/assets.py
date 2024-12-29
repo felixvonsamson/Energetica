@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from energetica.database.player import Player
 
-const_config = {
+const_config: dict = {
     "assets": {
         "steam_engine": {
             "name": "Steam Engine",

@@ -21,7 +21,7 @@ class ActiveFacility(DBModel):
     name: str
     player: Player
     position: tuple[float, float]
-    end_of_life: int  # TODO (Felix): Why int and not float?
+    end_of_life: float
 
     # multiply the base values by the following values
     multipliers: dict[str, float] = field(default_factory=dict)
@@ -31,7 +31,7 @@ class ActiveFacility(DBModel):
 
     @property
     def decommissioning(self) -> bool:
-        """returns True if the facility is being decommissioned."""
+        """Returns True if the facility is being decommissioned."""
         return self.end_of_life <= engine.data["total_t"]
 
     @property
