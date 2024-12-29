@@ -6,13 +6,14 @@ import tarfile
 import time
 from datetime import datetime
 
-from energetica import engine, production_update
+from energetica import production_update
 from energetica.api import websocket
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.ongoing_construction import OngoingConstruction
 from energetica.database.player import Player
 from energetica.database.shipment import Shipment
+from energetica.globals import engine
 from energetica.utils import assets
 from energetica.utils.assets import remove_asset
 from energetica.utils.climate_helpers import check_climate_events

@@ -4,11 +4,11 @@ import pickle
 import shutil
 from pathlib import Path
 
-from energetica import engine
 from energetica.database.engine_data import CapacityData, CircularBufferNetwork
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.game_engine import GameError
+from energetica.globals import engine
 
 
 # TODO (Felix): Move this to a method in Player
@@ -100,7 +100,7 @@ def reorder_facility_priorities(player: Player):
 
 # TODO (Felix): Move this to a method in Player or even in PlayerPrices
 def set_network_prices(
-   player: Player, updated_supply_prices: dict[str, float], updated_demand_prices: dict[str, float]
+    player: Player, updated_supply_prices: dict[str, float], updated_demand_prices: dict[str, float]
 ):
     """Updates network prices for that player"""
     for facility in updated_supply_prices:

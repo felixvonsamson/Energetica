@@ -11,7 +11,6 @@ from flask import flash
 from noise import pnoise3
 from scipy.stats import norm
 
-from energetica import engine
 from energetica.config.assets import river_discharge_seasonal
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import HexTile
@@ -19,6 +18,7 @@ from energetica.database.messages import Chat, Message, Notification
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.game_engine import GameEngine, GameError
+from energetica.globals import engine
 from energetica.utils.astro import DrHI
 
 # Helper functions and data initialization utilities

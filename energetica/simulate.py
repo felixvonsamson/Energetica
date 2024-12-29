@@ -10,8 +10,8 @@ from typing import List
 import requests
 
 import energetica.production_update as production_update
-from energetica import engine
 from energetica.database.map import HexTile
+from energetica.globals import engine
 from energetica.utils.climate_helpers import climate_event_impact
 from energetica.utils.tick_execution import check_events_completion
 

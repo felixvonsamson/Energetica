@@ -2,11 +2,11 @@
 
 from dataclasses import dataclass
 
-from energetica.database import DB
+from energetica.database import DBModel
 
 
 @dataclass
-class Shipment(DB):
+class Shipment(DBModel):
     """Class that stores the resources shipment on their way."""
 
     resource: str

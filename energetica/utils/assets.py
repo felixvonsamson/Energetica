@@ -5,12 +5,12 @@ import math
 import random
 from typing import Iterator
 
-from energetica import engine, technology_effects
+from energetica import technology_effects
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.ongoing_construction import (ConstructionStatus,
-                                                      OngoingConstruction)
+from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
 from energetica.database.player import Player
 from energetica.game_engine import Confirm, GameError
+from energetica.globals import engine
 from energetica.utils.network_helpers import reorder_facility_priorities
 
 

@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from energetica.database import DB
+from energetica.database import DBModel
 
 
 @dataclass
-class HexTile(DB):
+class HexTile(DBModel):
     """Class for the tiles that compose the map."""
 
     coordinates: tuple[int, int]

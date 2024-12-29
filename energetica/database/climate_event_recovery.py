@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 
-from energetica.database import DB
+from energetica.database import DBModel
 
 
 @dataclass
-class ClimateEventRecovery(DB):
+class ClimateEventRecovery(DBModel):
     """Class that stores the climate events players are recovering from"""
+
     name: str
     end_tick: float
     duration: float

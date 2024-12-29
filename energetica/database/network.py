@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from energetica.database import DB
+from energetica.database import DBModel
 from energetica.database.engine_data import CapacityData, CircularBufferNetwork
 
 if TYPE_CHECKING:
@@ -13,8 +13,9 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class Network(DB):
+class Network(DBModel):
     """Class that stores the networks of players."""
+
     name: str
     members: list[Player]
 

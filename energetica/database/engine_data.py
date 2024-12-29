@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING, Iterator
 
 import noise
 
-from energetica import engine
 from energetica.database.active_facility import ActiveFacility
+from energetica.globals import engine
 
 if TYPE_CHECKING:
     from energetica.database.network import Network

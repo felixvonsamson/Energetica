@@ -8,20 +8,17 @@ from flask_httpauth import HTTPBasicAuth
 from simple_websocket import ConnectionClosed
 from werkzeug.security import check_password_hash
 
-from energetica import engine
 from energetica.database.map import HexTile
 from energetica.database.messages import Chat, Message
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.game_engine import GameEngine
+from energetica.globals import engine
 from energetica.technology_effects import package_constructions_page_data
-from energetica.utils.assets import (decrease_project_priority, queue_project,
-                                     toggle_pause_project)
-from energetica.utils.chat import (add_message, create_chat, create_group_chat,
-                                   hide_chat_disclaimer)
+from energetica.utils.assets import decrease_project_priority, queue_project, toggle_pause_project
+from energetica.utils.chat import add_message, create_chat, create_group_chat, hide_chat_disclaimer
 from energetica.utils.misc import confirm_location, package_weather_data
-from energetica.utils.network_helpers import (create_network, join_network,
-                                              leave_network)
+from energetica.utils.network_helpers import create_network, join_network, leave_network
 
 websocket_blueprint = Blueprint("rest_api", __name__)
 

@@ -43,8 +43,6 @@ from energetica.utils.climate_helpers import data_init_climate
 from energetica.utils.tick_execution import state_update
 from energetica.views import changelog, landing, location_choice_views, overviews, views, wiki
 
-engine = GameEngine()
-
 
 def get_or_create_flask_secret_key() -> str:
     """Load or create SECRET_KEY for Flask."""

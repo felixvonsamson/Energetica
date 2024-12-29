@@ -16,7 +16,6 @@ import energetica.utils.chat
 import energetica.utils.misc
 import energetica.utils.network_helpers
 import energetica.utils.resource_market
-from energetica import engine
 from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import HexTile
@@ -26,6 +25,7 @@ from energetica.database.ongoing_construction import OngoingConstruction
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.game_engine import Confirm, GameError
+from energetica.globals import engine
 from energetica.utils.assets import package_projects_data
 from energetica.utils.misc import flash_error
 

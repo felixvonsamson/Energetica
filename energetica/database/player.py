@@ -14,9 +14,8 @@ from typing import TYPE_CHECKING
 from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
-from energetica import engine
 from energetica.config.achievements import achievements
-from energetica.database import DB
+from energetica.database import DBModel
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, PlayerPrices
@@ -26,6 +25,7 @@ from energetica.database.network import Network
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.database.shipment import Shipment
+from energetica.globals import engine
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -76,7 +76,7 @@ class PlayerCache:
 
 
 @dataclass
-class Player(DB, UserMixin):
+class Player(DBModel, UserMixin):
     """Class that stores the users and their data."""
 
     # Authentication :
@@ -883,7 +883,7 @@ class Player(DB, UserMixin):
             self.emit("update_page_data", pages_data)
 
 
-class PlayerUnreadMessages(DB):
+class PlayerUnreadMessages(DBModel):
     """Association table to store player's last activity in each chat."""
 
     player: Player

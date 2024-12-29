@@ -6,15 +6,15 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from energetica import engine
-from energetica.database import DB
+from energetica.database import DBModel
+from energetica.globals import engine
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
 
 
 @dataclass
-class Message(DB):
+class Message(DBModel):
     """Class for storing data about messages for the in-game messaging system."""
 
     text: str
@@ -22,7 +22,6 @@ class Message(DB):
 
     chat: Chat
     player: Player
-
 
     def package(self) -> dict:
         """Package this message's data into a dictionary."""
@@ -35,7 +34,7 @@ class Message(DB):
 
 
 @dataclass
-class Chat(DB):
+class Chat(DBModel):
     """Class for chats with 2 or more players."""
 
     name: str
@@ -43,12 +42,11 @@ class Chat(DB):
     messages: list[Message] = field(default_factory=list)
 
 
-
 @dataclass
 class Notification:
     """Class for storing data about in-game notifications."""
+
     title: str
     content: str
     time: datetime = None
     read: bool = False
-

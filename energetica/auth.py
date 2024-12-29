@@ -3,13 +3,12 @@
 import json
 from datetime import datetime
 
-from flask import (Blueprint, current_app, flash, g, redirect, render_template,
-                   request, url_for)
+from flask import Blueprint, current_app, flash, g, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from energetica import engine
 from energetica.database.player import Player
+from energetica.globals import engine
 
 auth = Blueprint("auth", __name__)
 

@@ -1,18 +1,21 @@
 """Contains the ActiveFacility class."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from energetica import engine, technology_effects
+from energetica import technology_effects
 from energetica.config.assets import const_config
-from energetica.database import DB
+from energetica.database import DBModel
+from energetica.globals import engine
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
 
 
 @dataclass
-class ActiveFacility(DB):
+class ActiveFacility(DBModel):
     """Class that stores the facilities on the server and their end of life time."""
 
     name: str

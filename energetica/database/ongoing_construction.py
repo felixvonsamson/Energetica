@@ -1,11 +1,13 @@
 """Module for the OngoingConstruction class."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from functools import cached_property
 from typing import TYPE_CHECKING
 
-from energetica import engine
-from energetica.database import DB
+from energetica.database import DBModel
+from energetica.globals import engine
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -43,7 +45,7 @@ class OngoingConstructionCache:
 
 
 @dataclass
-class OngoingConstruction(DB):
+class OngoingConstruction(DBModel):
     """Class that stores projects currently under construction."""
 
     name: str
@@ -120,9 +122,7 @@ class OngoingConstruction(DB):
     def cache(self) -> OngoingConstructionCache:
         """Return the cache for this ongoing construction."""
         if self.id not in engine.buffered["by_ongoing_construction"]:
-            engine.buffered["by_ongoing_construction"][self.id] = OngoingConstructionCache(
-                self.id
-            )
+            engine.buffered["by_ongoing_construction"][self.id] = OngoingConstructionCache(self.id)
         return engine.buffered["by_ongoing_construction"][self.id]
 
     def recompute_prerequisites_and_level(self) -> None:
@@ -151,8 +151,7 @@ class OngoingConstruction(DB):
     def _compute_prerequisites_and_level(self) -> tuple[list[int], int]:
         """Compute the prerequisites and level of an ongoing construction."""
         if not TYPE_CHECKING:
-            from energetica.database.ongoing_construction import \
-                OngoingConstruction
+            from energetica.database.ongoing_construction import OngoingConstruction
 
         prerequisites = []
         level = None

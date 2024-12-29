@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Iterator
 
 import numpy as np
 
-from energetica import engine
 from energetica.config.assets import (
     player_construction_workers_for_level,
     player_lab_workers_for_level,
@@ -15,6 +14,7 @@ from energetica.config.assets import (
 )
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_construction import OngoingConstruction
+from energetica.globals import engine
 
 if TYPE_CHECKING:
     from energetica.database.map import HexTile
