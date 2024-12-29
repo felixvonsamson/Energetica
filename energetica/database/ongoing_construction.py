@@ -28,18 +28,18 @@ class OngoingProjectCache:
     construction_id: int
 
     @cached_property
-    def _prerequisites_and_level(self) -> tuple[list[int], int]:
+    def _prerequisites_and_level(self) -> tuple[list[OngoingProject], int | None]:
         """Compute the prerequisites and level of an ongoing construction."""
         construction = OngoingProject.get(self.construction_id)
         return construction._compute_prerequisites_and_level()
 
     @property
-    def prerequisites(self) -> list[int]:
+    def prerequisites(self) -> list[OngoingProject]:
         """Return the prerequisites of the ongoing construction in form of a list of construction ids."""
         return self._prerequisites_and_level[0]
 
     @property
-    def level(self) -> int:
+    def level(self) -> int | None:
         """Return the level of the ongoing construction."""
         return self._prerequisites_and_level[1]
 
@@ -67,29 +67,30 @@ class OngoingProject(DBModel):
     previous_speed: float = 1
 
     def was_paused_by_player(self) -> bool:
-        """Returns True if this construction is paused by the player"""
+        """Return True if this construction is paused by the player."""
         return self.status == ConstructionStatus.PAUSED
 
     def is_ongoing(self) -> bool:
-        """Returns True if this construction is not paused and has no requirements"""
+        """Return True if this construction is not paused and has no requirements."""
         return self.status == ConstructionStatus.ONGOING
 
-    def pause(self):
-        """Make this facility go from waiting or ongoing to paused"""
+    def pause(self) -> None:
+        """Make this facility go from waiting or ongoing to paused."""
         assert not self.was_paused_by_player()
         if self.is_ongoing():
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
         self.status = ConstructionStatus.PAUSED
 
-    def set_waiting(self):
+    def set_waiting(self) -> None:
         """Make this facility go from ongoing to waiting."""
         assert self.status == ConstructionStatus.ONGOING
         self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
         self.status = ConstructionStatus.WAITING
 
-    def set_ongoing(self, *, start_now=False):
+    def set_ongoing(self, *, start_now: bool = False) -> None:
         """
         Make this facility go from waiting to ongoing.
+
         start_now : if true, construction will skip the "Starting..." phase and start immediately (in the case of a
         worker that just got available)
         """
@@ -103,8 +104,8 @@ class OngoingProject(DBModel):
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
         self.status = ConstructionStatus.ONGOING
 
-    def unpause(self):
-        """Make this facility go from paused to either waiting or ongoing"""
+    def unpause(self) -> None:
+        """Make this facility go from paused to either waiting or ongoing."""
         assert self.was_paused_by_player()
         if self.cache.prerequisites or self.player.available_workers(self.name) < 1:
             self.status = ConstructionStatus.WAITING
@@ -112,8 +113,8 @@ class OngoingProject(DBModel):
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
             self.status = ConstructionStatus.ONGOING
 
-    def delay_by(self, ticks: float):
-        """Delays the construction by the given number of ticks"""
+    def delay_by(self, ticks: float) -> None:
+        """Delay the construction by the given number of ticks."""
         assert self.is_ongoing()
         self.end_tick_or_ticks_passed += ticks
         self.speed = 1 - ticks
@@ -131,56 +132,54 @@ class OngoingProject(DBModel):
             del self.cache.__dict__["_prerequisites_and_level"]
 
     def progress(self) -> float:
-        """Returns the progress of the construction, as a float between 0 and 1"""
+        """Return the progress of the construction, as a float between 0 and 1."""
         if self.status == ConstructionStatus.ONGOING:
             return (self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"] + 1) / self.duration
         else:
             return self.end_tick_or_ticks_passed / self.duration
 
     def updated_speed(self) -> float | None:
-        """Returns the speed of the construction except if it is 1 and unchanged since last tick"""
+        """Return the speed of the construction except if it is 1 and unchanged since last tick."""
         if self.speed != self.previous_speed or self.speed != 1:
             return self.speed
         return None
 
-    def reset_speed(self):
-        """Resets the speed of the construction to 1 and stores the previous speed"""
+    def reset_speed(self) -> None:
+        """Reset the speed of the construction to 1 and stores the previous speed."""
         self.previous_speed = self.speed
         self.speed = 1
 
-    def _compute_prerequisites_and_level(self) -> tuple[list[int], int]:
+    def _compute_prerequisites_and_level(self) -> tuple[list[OngoingProject], int | None]:
         """Compute the prerequisites and level of an ongoing construction."""
-        prerequisites = []
+        prerequisites: list[OngoingProject] = []
         level = None
+        this_priority_index: int
         if self.family == "Functional Facilities":
             # For functional facilities, the only prerequisites are ongoing constructions of the same type
-            priority_list = self.player.construction_priorities
-            this_priority_index = priority_list.index(self.id)
+            priority_list = self.player.constructions_by_priority
+            this_priority_index = priority_list.index(self)
             # Go through all ongoing constructions that are higher up in the priority order
             level = getattr(self.player, self.name) + 1
-            for candidate_prerequisite_id in priority_list[:this_priority_index]:
+            for candidate_prerequisite in priority_list[:this_priority_index]:
                 # Add them as a prerequisite, if they are of the same type
-                candidate_prerequisite = OngoingProject.get(candidate_prerequisite_id)
                 if candidate_prerequisite.name == self.name:
-                    prerequisites.append(candidate_prerequisite_id)
+                    prerequisites.append(candidate_prerequisite)
                     level += 1
         elif self.family == "Technologies":
             # For technologies, const config needs to be checked
             const_config = engine.const_config["assets"]
             requirements = const_config[self.name]["requirements"]
-            priority_list = self.player.research_priorities
-            this_priority_index: int = priority_list.index(self.id)
+            priority_list = self.player.researches_by_priority
+            this_priority_index = priority_list.index(self)
             # Compute this constructions level by looking at constructions higher up in the priority list with same name
             level = getattr(self.player, self.name) + 1
-            for other_construction_id in priority_list[:this_priority_index]:
-                other_construction: OngoingProject = OngoingProject.get(other_construction_id)
+            for other_construction in priority_list[:this_priority_index]:
                 if other_construction.name == self.name:
                     level += 1
-            num_ongoing_researches_of = {}
-            for candidate_prerequisite_id in priority_list[:this_priority_index]:
-                candidate_prerequisite: OngoingProject = OngoingProject.get(candidate_prerequisite_id)
+            num_ongoing_researches_of: dict[str, int] = {}
+            for candidate_prerequisite in priority_list[:this_priority_index]:
                 if candidate_prerequisite.name == self.name:
-                    prerequisites.append(candidate_prerequisite_id)
+                    prerequisites.append(candidate_prerequisite)
                     continue
                 if candidate_prerequisite.name in requirements:
                     num_ongoing_researches_of[candidate_prerequisite.name] = (
@@ -193,5 +192,5 @@ class OngoingProject(DBModel):
                         + num_ongoing_researches_of[candidate_prerequisite.name]
                     )
                     if level + offset - 1 >= candidate_prerequisite_level:
-                        prerequisites.append(candidate_prerequisite_id)
+                        prerequisites.append(candidate_prerequisite)
         return prerequisites, level

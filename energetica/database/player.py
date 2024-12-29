@@ -127,7 +127,7 @@ class Player(DBModel, UserMixin):
             "imported_energy": 0,
             "exported_energy": 0,
             "captured_co2": 0,
-        }
+        },
     )
 
     # Browser notifications & preferences
@@ -140,7 +140,7 @@ class Player(DBModel, UserMixin):
             "decommissioning": True,
             "resource_market": True,
             "climate_events": True,
-        }
+        },
     )
 
     class NetworkGraphView(StrEnum):
@@ -160,21 +160,21 @@ class Player(DBModel, UserMixin):
             "coal": 0,
             "gas": 0,
             "uranium": 0,
-        }
+        },
     )
     resources_on_sale: dict[str, float] = field(
         default_factory=lambda: {
             "coal": 0,
             "gas": 0,
             "uranium": 0,
-        }
+        },
     )
 
     workers: dict[str, int] = field(
         default_factory=lambda: {
             "construction": 1,
             "laboratory": 0,
-        }
+        },
     )
 
     functional_facilities: dict[str, int] = field(
@@ -183,7 +183,7 @@ class Player(DBModel, UserMixin):
             "laboratory": 0,
             "warehouse": 0,
             "carbon_capture": 0,
-        }
+        },
     )
 
     technologies: dict[str, int] = field(
@@ -200,7 +200,7 @@ class Player(DBModel, UserMixin):
             "aerodynamics": 0,
             "chemistry": 0,
             "nuclear_engineering": 0,
-        }
+        },
     )
 
     @property
@@ -266,14 +266,13 @@ class Player(DBModel, UserMixin):
     def package_chat_messages(self, chat_id: int) -> list[dict]:
         """Package the last 20 messages of a chat."""
         chat = Chat.get(chat_id)
-        messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
         messages_list = [
             {
                 "time": message.time.isoformat(),
-                "player_id": message.player_id,
+                "player_id": message.player.id,
                 "text": message.text,
             }
-            for message in reversed(messages)
+            for message in chat.messages[-20:]
         ]
         return messages_list
 
