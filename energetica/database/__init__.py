@@ -17,7 +17,7 @@ class DBModel:
 
     def __init_subclass__(cls) -> None:
         """Initialize the next id counter for each subclass."""
-        cls.__next_id = count()
+        cls.__next_id = count(1)
         engine.__dict__[cls.__name__] = {}
 
     def __post_init__(self) -> None:

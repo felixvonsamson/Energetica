@@ -82,7 +82,7 @@ def price_multiplier(player: Player, asset: str) -> float:
         "nuclear_engineering",
     ]:
         if asset in const_config[research]["affected_facilities"]:
-            mlt *= special_multiplier(const_config[research]["price_factor"], getattr(player, research))
+            mlt *= special_multiplier(const_config[research]["price_factor"], player.technologies[research])
     # level based facilities and technologies
     if asset in engine.functional_facilities + engine.technologies:
         asset_next_level = next_level(player, asset)

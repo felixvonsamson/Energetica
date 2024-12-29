@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from flask import Blueprint, flash, jsonify, redirect, request
-from flask_login import current_user
+from flask_login import current_user, login_required
 from werkzeug.wrappers import Response
 
 import energetica.utils.assets
@@ -74,6 +74,12 @@ def log_action(func: Callable) -> Callable:
         return response, status_code
 
     return wrapper
+
+
+@http.before_request
+@login_required
+def check_if_logged_in():
+    pass
 
 
 @http.route("/request_delete_notification", methods=["POST"])

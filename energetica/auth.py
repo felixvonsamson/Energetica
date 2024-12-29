@@ -62,7 +62,7 @@ def sign_up():
         password1 = request.form.get("password1")
         password2 = request.form.get("password2")
 
-        existing_player = Player.filter_by(username=username)
+        existing_player = next(Player.filter_by(username=username), None)
         if existing_player:
             flash("Username already exist", category="error")
         elif len(username) < 3 or len(username) > 18:
