@@ -21,7 +21,7 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        player = Player.filter_by(username=username).first()
+        player = next(Player.filter_by(username=username), None)
         if player:
             if check_password_hash(player.pwhash, password):
                 flash("Logged in successfully!", category="message")
@@ -62,8 +62,8 @@ def sign_up():
         password1 = request.form.get("password1")
         password2 = request.form.get("password2")
 
-        player = Player.filter_by(username=username).first()
-        if player:
+        existing_player = Player.filter_by(username=username)
+        if existing_player:
             flash("Username already exist", category="error")
         elif len(username) < 3 or len(username) > 18:
             flash("Username must be between 3 and 18 characters.", category="error")

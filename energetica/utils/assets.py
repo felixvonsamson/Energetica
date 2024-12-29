@@ -488,7 +488,6 @@ def decrease_project_priority(player: Player, construction: OngoingConstruction)
     This function is executed when a player changes the order of ongoing constructions.
     Note : When a project is moved in the priority list, it may be paused or unpaused.
     """
-    engine = engine
     if construction is None or construction.player_id != player.id:
         msg = "Construction not found"
         raise GameError(msg)

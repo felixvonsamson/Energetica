@@ -7,7 +7,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
-from energetica.globals import engine
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -38,15 +37,16 @@ class Chat(DBModel):
     """Class for chats with 2 or more players."""
 
     name: str
-    participants: list[Player]
+    participants: set[Player]
     messages: list[Message] = field(default_factory=list)
 
 
 @dataclass
-class Notification:
+class Notification(DBModel):
     """Class for storing data about in-game notifications."""
 
     title: str
     content: str
-    time: datetime = None
+    player: Player
+    time: datetime = field(default_factory=datetime.now)
     read: bool = False

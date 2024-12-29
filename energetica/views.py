@@ -2,13 +2,13 @@
 
 from functools import partial
 
-from flask import (Blueprint, current_app, g, redirect, render_template,
-                   request, url_for)
+from flask import Blueprint, g, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from energetica.database.messages import Chat
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
+from energetica.globals import engine
 
 landing = Blueprint("landing", __name__, static_folder="static")
 location_choice_views = Blueprint("location_choice_views", __name__)
@@ -29,7 +29,7 @@ def set_ctx():
 
     render_template_ctx = partial(
         render_template,
-                user=player,
+        user=player,
     )
     g.render_template_ctx = render_template_ctx
 
@@ -85,7 +85,7 @@ def profile():
 @views.route("/messages", methods=["GET", "POST"])
 def messages():
     player: Player = current_user
-    chats = Chat.filter(Chat.participants.any(id=player.id)).all()
+    chats = list(Chat.filter(lambda chat: player in chat.participants))
     return g.render_template_ctx("messages.jinja", chats=chats)
 
 

@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import Iterable
 
 sys.path.append(os.getcwd())
 import pytest
@@ -9,6 +10,7 @@ from energetica import create_app
 from energetica.database.map import HexTile
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
 from energetica.database.player import Player
+from energetica.globals import engine
 from energetica.utils.assets import (
     cancel_project,
     decrease_project_priority,
@@ -45,24 +47,28 @@ def validate_rules(player):
         assert research is not None
         assert research.player_id == player.id
         assert research.family == "Technologies"
-    assert OngoingConstruction.filter(
-        OngoingConstruction.player_id == player.id,
-        OngoingConstruction.family != "Technologies",
-    ).count() == len(construction_priorities)
-    assert OngoingConstruction.filter_by(
-        player_id=player.id,
-        family="Technologies",
-    ).count() == len(research_priorities)
+    assert len(
+        OngoingConstruction.filter(
+            lambda construction: construction.player == player and construction.family != "Technologies"
+        )
+    ) == len(construction_priorities)
+    assert len(
+        OngoingConstruction.filter(
+            lambda construction: construction.player == player and construction.family == "Technologies"
+        )
+    ) == len(research_priorities)
 
     # Rule 2
-    ongoing_constructions = OngoingConstruction.filter(
-        OngoingConstruction.player_id == player.id,
-        OngoingConstruction.status == ConstructionStatus.ONGOING,
-        OngoingConstruction.family != "Technologies",
+    ongoing_constructions = list(
+        OngoingConstruction.filter(
+            lambda construction: construction.player == player
+            and construction.status == ConstructionStatus.ONGOING
+            and construction.family != "Technologies"
+        )
     )
-    if ongoing_constructions.count() > player.workers["construction"]:
+    if len(ongoing_constructions) > player.workers["construction"]:
         pytest.fail(
-            f"Rule 2 violation: there are {ongoing_constructions.count()} ongoing constructions "
+            f"Rule 2 violation: there are {len(ongoing_constructions)} ongoing constructions "
             f"({','.join(map(lambda c: c.name, ongoing_constructions))}), "
             f"but only {player.workers["construction"]} construction workers."
         )
@@ -72,9 +78,9 @@ def validate_rules(player):
         status=ConstructionStatus.ONGOING,
         family="Technologies",
     )
-    if ongoing_research.count() > player.workers["laboratory"]:
+    if len(ongoing_research) > player.workers["laboratory"]:
         pytest.fail(
-            f"Rule 2 violation: there are {ongoing_research.count()} ongoing research projects "
+            f"Rule 2 violation: there are {len(ongoing_research)} ongoing research projects "
             f"({','.join(map(lambda c: c.name, ongoing_research))}), "
             f"but only {player.workers["laboratory"]} lab workers."
         )
@@ -86,28 +92,22 @@ def validate_rules(player):
     assert sorted(status_list_research, reverse=True) == status_list_research
 
     # Rule 4
-    assert (
-        OngoingConstruction.filter(
-            OngoingConstruction.player_id == player.id,
-            OngoingConstruction.status == ConstructionStatus.ONGOING,
-            OngoingConstruction.end_tick_or_ticks_passed <= engine.data["total_t"],
-        ).count()
-        == 0
+    assert not OngoingConstruction.filter(
+        lambda construction: construction.player == player
+        and construction.status == ConstructionStatus.ONGOING
+        and construction.end_tick_or_ticks_passed <= engine.data["total_t"]
     )
-    assert (
-        OngoingConstruction.filter(
-            OngoingConstruction.player_id == player.id,
-            OngoingConstruction.status != ConstructionStatus.ONGOING,
-            OngoingConstruction.end_tick_or_ticks_passed > OngoingConstruction.duration,
-        ).count()
-        == 0
+    assert not OngoingConstruction.filter(
+        lambda construction: construction.player == player
+        and construction.status != ConstructionStatus.ONGOING
+        and construction.end_tick_or_ticks_passed > engine.data["total_t"]
     )
 
     # Rule 5
-    ongoing_projects: list[OngoingConstruction] = OngoingConstruction.filter_by(
+    ongoing_projects: Iterable[OngoingConstruction] = OngoingConstruction.filter_by(
         player_id=player.id,
         status=ConstructionStatus.ONGOING,
-    ).all()
+    )
     for project in ongoing_projects:
         prerequisites = project.cache.prerequisites
         if prerequisites:
@@ -134,21 +134,21 @@ def validate_rules(player):
 
     # Rule 7
     waiting_constructions: list[OngoingConstruction] = list(
-        filter(
-            lambda construction: not construction.cache.prerequisites,
-            OngoingConstruction.filter(
-                OngoingConstruction.player_id == player.id,
-                OngoingConstruction.status == ConstructionStatus.WAITING,
-                OngoingConstruction.family != "Technologies",
-            ).all(),
+        OngoingConstruction.filter(
+            lambda construction: construction.player == player
+            and construction.status == ConstructionStatus.WAITING
+            and construction.family != "Technologies"
+            and not construction.cache.prerequisites
         )
     )
     if waiting_constructions:
-        count_on_going_constructions = OngoingConstruction.filter(
-            OngoingConstruction.player_id == player.id,
-            OngoingConstruction.status == ConstructionStatus.ONGOING,
-            OngoingConstruction.family != "Technologies",
-        ).count()
+        count_on_going_constructions = len(
+            OngoingConstruction.filter(
+                lambda construction: construction.player == player
+                and construction.status == ConstructionStatus.ONGOING
+                and construction.family != "Technologies"
+            )
+        )
         if player.workers["construction"] != count_on_going_constructions:
             pytest.fail(
                 "Rule 7 failed for constructions. "
@@ -158,21 +158,21 @@ def validate_rules(player):
                 f"and only {count_on_going_constructions} ongoing constructions."
             )
     waiting_research: list[OngoingConstruction] = list(
-        filter(
-            lambda research: not research.cache.prerequisites,
-            OngoingConstruction.filter(
-                OngoingConstruction.player_id == player.id,
-                OngoingConstruction.status == ConstructionStatus.WAITING,
-                OngoingConstruction.family == "Technologies",
-            ).all(),
+        OngoingConstruction.filter(
+            lambda construction: construction.player == player
+            and construction.status == ConstructionStatus.WAITING
+            and construction.family == "Technologies"
+            and not construction.cache.prerequisites
         )
     )
     if waiting_research:
-        count_on_going_research = OngoingConstruction.filter(
-            OngoingConstruction.player_id == player.id,
-            OngoingConstruction.status == ConstructionStatus.ONGOING,
-            OngoingConstruction.family == "Technologies",
-        ).count()
+        count_on_going_research = len(
+            OngoingConstruction.filter(
+                lambda construction: construction.player == player
+                and construction.status == ConstructionStatus.ONGOING
+                and construction.family == "Technologies"
+            )
+        )
         if player.workers["laboratory"] != count_on_going_research:
             pytest.fail(
                 "Rule 7 failed for research. "
@@ -190,10 +190,8 @@ def test_swap_paused_and_unpaused_constructions():
     """
 
     _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    engine = app.config["engine"]
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
-        db.session.add(player)
         hex_tile = HexTile.get(1)
         confirm_location(player, hex_tile)
         validate_rules(player)
@@ -214,10 +212,8 @@ def test_cancel_construction():
     Player starts a construction and then cancels it. There should be no more constructions afterwards.
     """
     _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    engine = app.config["engine"]
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
-        db.session.add(player)
         hex_tile = HexTile.get(1)
         confirm_location(player, hex_tile)
         validate_rules(player)
@@ -236,10 +232,8 @@ def test_pause_construction():
     """
 
     _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    engine = app.config["engine"]
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
-        db.session.add(player)
         hex_tile = HexTile.get(1)
         confirm_location(player, hex_tile)
         validate_rules(player)
@@ -260,10 +254,8 @@ def test_queue_two_pause_one():
     """
 
     _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    engine = app.config["engine"]
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
-        db.session.add(player)
         hex_tile = HexTile.get(1)
         confirm_location(player, hex_tile)
         validate_rules(player)
@@ -282,11 +274,9 @@ def test_three_constructions_with_pause():
     """
 
     _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    engine = app.config["engine"]
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         player.money = 1_000_000_000
-        db.session.add(player)
         hex_tile = HexTile.get(1)
         confirm_location(player, hex_tile)
         validate_rules(player)
@@ -311,11 +301,9 @@ def test_add_two_and_cancel_one():
     """
 
     _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    engine = app.config["engine"]
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         player.money = 1_000_000_000
-        db.session.add(player)
         hex_tile = HexTile.get(1)
         confirm_location(player, hex_tile)
         validate_rules(player)
@@ -335,11 +323,9 @@ def test_technologies_pausing_propagates_requirements():
     """
 
     _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    engine = app.config["engine"]
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         player.money = 1_000_000_000
-        db.session.add(player)
         hex_tile = HexTile.get(1)
         confirm_location(player, hex_tile)
         finish_project(queue_project(player=player, asset="laboratory", force=True))
@@ -363,11 +349,9 @@ def test_math_and_building_tech():
     """
 
     _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    engine = app.config["engine"]
     with app.app_context():
         player = Player(username="username", pwhash=generate_password_hash("password"))
         player.money = 1_000_000_000
-        db.session.add(player)
         hex_tile = HexTile.get(1)
         confirm_location(player, hex_tile)
         finish_project(queue_project(player=player, asset="laboratory", force=True))

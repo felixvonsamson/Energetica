@@ -26,7 +26,6 @@ def put_resource_on_market(player, resource, quantity, price):
 
 def buy_resource_from_market(player, quantity, sale):
     """Buy an offer from the resource market"""
-    engine = engine
 
     if quantity is None or quantity <= 0 or quantity > sale.quantity:
         raise GameError("invalidQuantity")
@@ -79,7 +78,6 @@ def buy_resource_from_market(player, quantity, sale):
 
 def store_import(player, resource, quantity):
     """This function is executed when a resource shipment arrives"""
-    engine = engine
     max_cap = player.config["warehouse_capacities"][resource]
     if player.resources[resource] + quantity > max_cap:
         player.resources[resource] = max_cap

@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash
 from energetica.database.map import HexTile
 from energetica.database.network import Network
 from energetica.database.player import Player
+from energetica.globals import engine
 from energetica.utils.assets import finish_project, queue_project
 from energetica.utils.misc import confirm_location
 from energetica.utils.network_helpers import create_network, join_network
@@ -17,20 +18,20 @@ def init_test_players():
         """This function adds an asset as an instant construction."""
         for _ in range(n):
             ongoing_construction = queue_project(
-                engine, player, asset, force=True, ignore_requirements_and_money=True, skip_notifications=True
+                player, asset, force=True, ignore_requirements_and_money=True, skip_notifications=True
             )
             finish_project(ongoing_construction, skip_notifications=True)
         engine.log(f"Added {n} {asset} for {player.username}")
 
     def create_player(username, password, tile_id=None) -> Player:
         """This function creates and initializes a player."""
-        player = Player.filter_by(username=username).first()
+        player = next(Player.filter_by(username=username), None)
         if player:
             engine.log(f"create_player: player {username} already exists")
             return player
         player = Player(username=username, pwhash=generate_password_hash(password))
         # If tile_id is None, find any tile that isn't assigned to a player
-        hex_tile = HexTile.get(tile_id) if tile_id else HexTile.filter_by(player_id=None).first()
+        hex_tile = HexTile.get(tile_id) if tile_id else next(HexTile.filter_by(player_id=None))
         confirm_location(player, hex_tile)
         engine.log(f"create_player: player {username} created")
         return player
@@ -42,7 +43,7 @@ def init_test_players():
             if "Unlock Network" not in player.achievements:
                 player.achievements.append("Unlock Network")
 
-        network = Network.filter_by(name=name).first()
+        network = next(Network.filter_by(name=name), None)
         if network:
             engine.log(f"create_network: network {name} already exists")
         else:
@@ -62,7 +63,7 @@ def init_test_players():
             print("creating player", i)
             player = create_player(f"user{i}", "password")
             if player:
-                HexTile.filter_by(id=i).first().player_id = player.id
+                HexTile.get(i).player_id = player.id
 
                 player.money = 1_000_000_000
                 player.resources = {"coal": 300_000, "gas": 100_000, "uranium": 500}

@@ -150,9 +150,6 @@ class OngoingConstruction(DBModel):
 
     def _compute_prerequisites_and_level(self) -> tuple[list[int], int]:
         """Compute the prerequisites and level of an ongoing construction."""
-        if not TYPE_CHECKING:
-            from energetica.database.ongoing_construction import OngoingConstruction
-
         prerequisites = []
         level = None
         if self.family == "Functional Facilities":

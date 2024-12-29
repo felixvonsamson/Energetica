@@ -16,7 +16,6 @@ from energetica.globals import engine
 if TYPE_CHECKING:
     from energetica.database.network import Network
     from energetica.database.player import Player
-    from energetica.game_engine import GameEngine
 
 
 @dataclass
@@ -351,7 +350,6 @@ class EmissionData:
         # Keeping the CO2 levels form one tick to the next
         self._data["emissions"]["CO2"].append(self._data["emissions"]["CO2"][-1])
         # Calculating new temperatures
-        engine = engine
         t = engine.data["total_t"] + engine.data["delta_t"]
         self._data["temperature"]["reference"].append(calculate_reference_gta(t, engine.in_game_seconds_per_tick))
         self._data["temperature"]["deviation"].append(

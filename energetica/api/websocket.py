@@ -45,7 +45,6 @@ def add_sock_handlers(sock, engine):
     @basic_auth.login_required
     def check_user():
         """Sets up variables used by endpoints."""
-        engine = engine
         g.player = Player.filter_by(username=basic_auth.current_user()).first()
 
     # Main WebSocket endpoint for Swift client

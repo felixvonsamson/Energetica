@@ -9,8 +9,9 @@ from datetime import datetime
 from enum import StrEnum
 from functools import cached_property
 from itertools import chain
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterator
 
+from flask import current_app
 from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
@@ -363,11 +364,10 @@ class Player(DBModel, UserMixin):
 
     def unread_notifications(self) -> list[Notification]:
         """Return all unread notifications."""
-        return self.notifications.filter_by(read=False).all()
+        return list(filter(lambda notif: not notif.read, self.notifications))
 
     def get_lvls(self) -> dict:
         """Return the levels of functional facilities and technologies of a player."""
-        engine = engine
         attributes = chain(engine.functional_facilities, engine.technologies)
         return {attr: getattr(self, attr) for attr in attributes}
 
@@ -385,7 +385,6 @@ class Player(DBModel, UserMixin):
 
     def send_new_data(self, new_values) -> None:
         """Send the new data to the player's clients."""
-        engine = engine
         construction_updates = self.get_construction_updates()
         shipment_updates = self.get_shipment_updates()
         self.emit(
@@ -394,7 +393,7 @@ class Player(DBModel, UserMixin):
                 "total_t": engine.data["total_t"],
                 "chart_values": new_values,
                 "climate_values": engine.data["current_climate_data"].get_last_data(),
-                "cumulative_emissions": self.data.cumul_emissions.get_all(),
+                "cumulative_emissions": self.cumul_emissions.get_all(),
                 "money": self.money,
                 "construction_updates": construction_updates,
                 "shipment_updates": shipment_updates,
@@ -406,9 +405,9 @@ class Player(DBModel, UserMixin):
         This method returns a dictionary of the constructions for which the progress speed has changed. For each of
         these constructions, the dictionary contains the new speed and the new end_tick.
         """
-        player_constructions: list[OngoingConstruction] = OngoingConstruction.filter_by(
+        player_constructions: Iterator[OngoingConstruction] = OngoingConstruction.filter_by(
             player_id=self.id, status=ConstructionStatus.ONGOING
-        ).all()
+        )
         construction_speeds = {}
         for construction in player_constructions:
             new_speed = construction.updated_speed()
@@ -424,7 +423,7 @@ class Player(DBModel, UserMixin):
         This method returns a dictionary of the shipments for which the progress speed has changed. For each of
         these shipments, the dictionary contains the new speed and the new arrival_tick.
         """
-        player_shipments: list[Shipment] = Shipment.filter_by(player_id=self.id).all()
+        player_shipments: Iterator[Shipment] = Shipment.filter_by(player=self)
         shipment_speeds = {}
         for shipment in player_shipments:
             new_speed = shipment.updated_speed()
@@ -437,8 +436,7 @@ class Player(DBModel, UserMixin):
 
     def notify(self, title: str, message: str) -> None:
         """Create a new notification and sends it to the player's subscribed browsers."""
-        new_notification = Notification(title=title, content=message, time=datetime.now(), player_id=self.id)
-        db.session.add(new_notification)
+        new_notification = Notification(title=title, content=message, player=self)
         self.notifications.append(new_notification)
         self.emit(
             "new_notification",
@@ -459,7 +457,7 @@ class Player(DBModel, UserMixin):
             "title": new_notification.title,
             "body": new_notification.content,
         }
-        for subscription in self.data.notification_subscriptions:
+        for subscription in self.notification_subscriptions:
             audience = "https://fcm.googleapis.com"
             if "https://updates.push.services.mozilla.com" in subscription["endpoint"]:
                 audience = "https://updates.push.services.mozilla.com"
@@ -492,7 +490,7 @@ class Player(DBModel, UserMixin):
 
     def calculate_net_emissions(self) -> float:
         """Calculate the net emissions of the player."""
-        cumulative_emissions = self.data.cumul_emissions.get_all()
+        cumulative_emissions = self.cumul_emissions.get_all()
         net_emissions = 0
         for value in cumulative_emissions.values():
             net_emissions += value
@@ -500,7 +498,7 @@ class Player(DBModel, UserMixin):
 
     def discovered_greenhouse_gas_effect(self) -> bool:
         """Return True if the player has discovered the greenhouse gas effect."""
-        return "Discover the Greenhouse Effect" in self.data.achievements
+        return "Discover the Greenhouse Effect" in self.achievements
 
     def check_continuous_achievements(self) -> None:
         """Check for player achievements that are linked to values that are updated every tick."""
@@ -514,10 +512,10 @@ class Player(DBModel, UserMixin):
         ]:
             for i, value in enumerate(achievements[achievement]["milestones"]):
                 achievement_name = achievements[achievement]["name"]
-                if f"{achievement_name} {i+1}" not in self.data.achievements:
+                if f"{achievement_name} {i+1}" not in self.achievements:
                     if getattr(self, achievements[achievement]["metric"]) >= value:
-                        self.data.achievements.append(f"{achievement_name} {i+1}")
-                        self.data.progression_metrics.xp += achievements[achievement]["rewards"][i]
+                        self.achievements.append(f"{achievement_name} {i+1}")
+                        self.progression_metrics["xp"] += achievements[achievement]["rewards"][i]
                         message = achievements[achievement]["message"]
                         if achievement == "network":
                             message = message.format(reward=achievements[achievement]["rewards"][i])
@@ -537,11 +535,11 @@ class Player(DBModel, UserMixin):
         for achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
             achievement_name = achievements[achievement]["name"]
             if (
-                achievement_name not in self.data.achievements
+                achievement_name not in self.achievements
                 and construction_name in achievements[achievement]["unlocked_with"]
             ):
-                self.data.achievements.append(achievement_name)
-                self.data.progression_metrics.xp += achievements[achievement]["reward"]
+                self.achievements.append(achievement_name)
+                self.progression_metrics["xp"] += achievements[achievement]["reward"]
                 message = achievements[achievement]["message"].format(reward=achievements[achievement]["reward"])
                 self.notify("Achievement", message)
 
@@ -550,11 +548,11 @@ class Player(DBModel, UserMixin):
         achievement_name = achievements["technology"]["name"]
         for i, value in enumerate(achievements["technology"]["milestones"]):
             if (
-                f"{achievement_name} {i+1}" not in self.data.achievements
+                f"{achievement_name} {i+1}" not in self.achievements
                 and getattr(self, achievements["technology"]["metric"]) >= value
             ):
-                self.data.achievements.append(f"{achievement_name} {i+1}")
-                self.data.progression_metrics.xp += achievements["technology"]["rewards"][i]
+                self.achievements.append(f"{achievement_name} {i+1}")
+                self.progression_metrics["xp"] += achievements["technology"]["rewards"][i]
                 message = achievements["technology"]["message"].format(
                     value=value,
                     reward=achievements["technology"]["rewards"][i],
@@ -565,13 +563,13 @@ class Player(DBModel, UserMixin):
         """Check for trading achievement."""
         achievement_name = achievements["trading"]["name"]
         for i, value in enumerate(achievements["trading"]["milestones"]):
-            if f"{achievement_name} {i+1}" not in self.data.achievements and (
+            if f"{achievement_name} {i+1}" not in self.achievements and (
                 getattr(self, achievements["trading"]["metric"][0])
                 + getattr(self, achievements["trading"]["metric"][1])
                 >= value
             ):
-                self.data.achievements.append(f"{achievement_name} {i+1}")
-                self.data.progression_metrics.xp += achievements["trading"]["rewards"][i]
+                self.achievements.append(f"{achievement_name} {i+1}")
+                self.progression_metrics["xp"] += achievements["trading"]["rewards"][i]
                 message = achievements["trading"]["message"].format(
                     value=value,
                     reward=achievements["trading"]["rewards"][i],
@@ -582,13 +580,11 @@ class Player(DBModel, UserMixin):
         """Package the progress information for the upcoming achievements."""
         upcoming_achievements = {}
         for achievement, achievement_data in achievements.items():
-            requirements_met = all(
-                requirement in self.data.achievements for requirement in achievement_data["requirements"]
-            )
+            requirements_met = all(requirement in self.achievements for requirement in achievement_data["requirements"])
             if not requirements_met:
                 continue
             if achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
-                if achievement_data["name"] not in self.data.achievements:
+                if achievement_data["name"] not in self.achievements:
                     upcoming_achievements[achievement] = {
                         "name": achievement_data["name"],
                         "reward": achievement_data["reward"],
@@ -597,7 +593,7 @@ class Player(DBModel, UserMixin):
                     }
             else:
                 for i, value in enumerate(achievement_data["milestones"]):
-                    if f"{achievement_data['name']} {i+1}" not in self.data.achievements:
+                    if f"{achievement_data['name']} {i+1}" not in self.achievements:
                         if achievement == "trading":
                             status = getattr(self, achievement_data["metric"][0]) + getattr(
                                 self,
@@ -693,7 +689,7 @@ class Player(DBModel, UserMixin):
 
     def package_construction_queue(self) -> list:
         """Package the player's construction queue (list of construction_ids)."""
-        return self.data.construction_priorities
+        return self.construction_priorities
 
     def package_active_facilities(self) -> dict[str, dict[int, dict[str, any]]]:
         """Package the player's active facilities."""
@@ -706,10 +702,9 @@ class Player(DBModel, UserMixin):
     def package_active_power_facilities(self) -> dict:
         """Package the player's active power facilities."""
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
-        capacities = self.data.capacities
-        power_facilities: list[ActiveFacility] = self.active_facilities.filter(
-            Activefacility.name.in_(engine.power_facilities),
-        ).all()
+        power_facilities: list[ActiveFacility] = list(
+            filter(lambda facility: facility.name in engine.power_facilities, self.active_facilities)
+        )
         power_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for power_facility in power_facilities:
             power_facility_groups[power_facility.name].append(power_facility)
@@ -718,10 +713,10 @@ class Player(DBModel, UserMixin):
                 group_name: {
                     "display_name": engine.const_config["assets"][group_name]["name"],
                     "count": len(group),
-                    "installed_cap": capacities[group_name]["power"],
+                    "installed_cap": self.capacities[group_name]["power"],
                     "usage": sum(f.usage * f.max_power_generation for f in group)
                     / sum(f.max_power_generation for f in group),
-                    "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
+                    "hourly_op_cost": self.capacities[group_name]["O&M_cost"] * ticks_per_hour,
                     "remaining_lifespan": min(f.remaining_lifespan for f in group),
                     "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
                     if any(f.is_upgradable for f in group)
@@ -758,10 +753,10 @@ class Player(DBModel, UserMixin):
     def package_active_storage_facilities(self) -> dict:
         """Package active storage facilities."""
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
-        capacities = self.data.capacities
-        storage_facilities: list[ActiveFacility] = self.active_facilities.filter(
-            Activefacility.name.in_(engine.storage_facilities),
-        ).all()
+        capacities = self.capacities
+        storage_facilities: list[ActiveFacility] = [
+            facility for facility in self.active_facilities if facility.name in engine.storage_facilities
+        ]
         storage_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for storage_facility in storage_facilities:
             storage_facility_groups[storage_facility.name].append(storage_facility)
@@ -807,10 +802,10 @@ class Player(DBModel, UserMixin):
     def package_active_extraction_facilities(self) -> dict:
         """Package active extraction facilities."""
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
-        capacities = self.data.capacities
-        extraction_facilities: list[ActiveFacility] = self.active_facilities.filter(
-            Activefacility.name.in_(engine.extraction_facilities),
-        ).all()
+        capacities = self.capacities
+        extraction_facilities: list[ActiveFacility] = [
+            facility for facility in self.active_facilities if facility.name in engine.extraction_facilities
+        ]
         extraction_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for extraction_facility in extraction_facilities:
             extraction_facility_groups[extraction_facility.name].append(extraction_facility)
