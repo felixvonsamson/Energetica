@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from itertools import count
-from typing import Any, Callable, Iterator, TypeVar
+from typing import Any, Callable, ClassVar, Iterator, TypeVar
 
 from energetica.globals import engine
 
@@ -10,6 +10,8 @@ T = TypeVar("T", bound="DBModel")
 @dataclass
 class DBModel:
     """Base class for all managed objects in the database."""
+
+    __next_id: ClassVar[Iterator[int]]
 
     id: int = field(init=False)
 
@@ -24,7 +26,7 @@ class DBModel:
         getattr(engine, self.__class__.__name__)[self.id] = self
 
     @classmethod
-    def get(cls: type[T], id: int) -> T:
+    def get(cls: type[T], id: int) -> T | None:  # pylint: disable=redefined-builtin
         """Get an object by its id."""
         class_objects = getattr(engine, cls.__name__)
         return class_objects[id] if id in class_objects else None
