@@ -2,6 +2,7 @@
 
 import json
 import pickle
+from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
@@ -35,7 +36,7 @@ if TYPE_CHECKING:
 http = Blueprint("http", __name__)
 
 
-def log_action(func: callable) -> callable:
+def log_action(func: Callable) -> Callable:
     """Log all endpoint actions of the players."""
 
     @wraps(func)
