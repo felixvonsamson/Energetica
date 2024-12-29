@@ -1,12 +1,12 @@
 """Module that contains the ResourceOnSale class."""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
+# from typing import TYPE_CHECKING
 from energetica.database import DBModel
 
-if TYPE_CHECKING:
-    from energetica.database.player import Player
+# if TYPE_CHECKING:
+from energetica.database.player import Player
 
 
 @dataclass
