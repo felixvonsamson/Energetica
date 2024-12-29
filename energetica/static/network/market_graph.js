@@ -261,6 +261,7 @@ function import_overview_sketch(s) {
         s.graphics.background(229, 217, 182);
         s.graphics.push();
         let exports = energy_flux[resolution_list[0]][59];
+        console.log(energy_flux[resolution_list[0]]);
         let max_exports = max(max(0, ...energy_flux[resolution_list[0]]), -min(0, ...energy_flux[resolution_list[0]]));
         let arrow_w = map(abs(exports), 0, max_exports, 0.2 * margin, 0.6 * margin);
         s.graphics.translate(0.5 * margin, 0.5 * s.graph_h - 0.2 * margin);
@@ -959,7 +960,7 @@ function temporal_graph_sketch(s) {
         };
         s.upper_bounds = {
             price: Math.max(...temporal_data["network_data"]["price"][res], -s.lower_bounds["price"]),
-            quantity: Math.max(...temporal_data["network_data"]["quantity"][res]),
+            quantity: Math.max(...Array.from({ length: data_len }, (_, i) => Object.values(temporal_data[s.current_view]).reduce((sum, group) => sum + group[res][i], 0))),
         };
         s.frac = s.upper_bounds["price"] / (s.upper_bounds["price"] - s.lower_bounds["price"]); // fraction of positive range in the graph
 
