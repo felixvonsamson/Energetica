@@ -103,7 +103,7 @@ class CapacityData:
             effective_values = self._data[facility.name]
             op_costs = facility.daily_op_cost * engine.in_game_seconds_per_tick / (24 * 3600)
             if facility.name in ["watermill", "small_water_dam", "large_water_dam"]:
-                op_costs *= facility.multiplier_2
+                op_costs *= facility.multipliers["multiplier_2"]
             effective_values["O&M_cost"] += op_costs
             if facility.name in engine.power_facilities:
                 power_gen = facility.max_power_generation
@@ -111,7 +111,7 @@ class CapacityData:
                 for fuel in effective_values["fuel_use"]:
                     effective_values["fuel_use"][fuel] += (
                         base_data["consumed_resource"][fuel]
-                        / facility.multiplier_3
+                        / facility.multipliers["multiplier_3"]
                         * power_gen
                         * engine.in_game_seconds_per_tick
                         / 3600
@@ -122,17 +122,19 @@ class CapacityData:
                 # mean efficiency
                 effective_values["efficiency"] = (
                     (effective_values["efficiency"] * effective_values["power"])
-                    + (base_data["base_efficiency"] * facility.multiplier_3 * power_gen)
+                    + (base_data["base_efficiency"] * facility.multipliers["multiplier_3"] * power_gen)
                 ) / (effective_values["power"] + power_gen)
                 effective_values["power"] += power_gen
                 if facility.end_of_life > 0:
                     effective_values["capacity"] += facility.storage_capacity
             elif facility.name in engine.extraction_facilities:
                 effective_values["extraction_rate_per_day"] += (
-                    base_data["base_extraction_rate_per_day"] * facility.multiplier_2
+                    base_data["base_extraction_rate_per_day"] * facility.multipliers["multiplier_2"]
                 )
-                effective_values["power_use"] += base_data["base_power_consumption"] * facility.multiplier_1
-                effective_values["pollution"] += base_data["base_pollution"] * facility.multiplier_3
+                effective_values["power_use"] += (
+                    base_data["base_power_consumption"] * facility.multipliers["multiplier_1"]
+                )
+                effective_values["pollution"] += base_data["base_pollution"] * facility.multipliers["multiplier_3"]
 
         if player.network is not None:
             player.network.capacities.update_network(player.network)
