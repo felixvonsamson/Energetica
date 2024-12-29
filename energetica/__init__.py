@@ -96,7 +96,7 @@ def create_app(
     simulate_profiling: bool = False,
     skip_adding_handlers: bool = False,
     **kwargs,
-):
+) -> tuple[SocketIO, Flask]:
     """Set up the app and the game engine."""
     if simulate_checkpoint_ticks is None:
         simulate_checkpoint_ticks = []
@@ -158,7 +158,9 @@ def create_app(
         Path("instance/server_data").mkdir(parents=True, exist_ok=True)
         with open("instance/server_data/climate_data.pck", "wb") as file:
             climate_data = data_init_climate(
-                in_game_seconds_per_tick, engine.data["random_seed"], engine.data["delta_t"]
+                in_game_seconds_per_tick,
+                engine.data["random_seed"],
+                engine.data["delta_t"],
             )
             pickle.dump(climate_data, file)
 
@@ -244,21 +246,21 @@ def create_app(
             csv_reader = csv.DictReader(file)
             for row in csv_reader:
                 HexTile(
-                    coordinates=(row["q"], row["r"]),
+                    coordinates=(int(row["q"]), int(row["r"])),
                     solar_potential=float(row["solar"]),
                     wind_potential=float(row["wind"]),
                     hydro_potential=float(row["hydro"]),
                     coal_reserves=float(row["coal"]),
                     gas_reserves=float(row["gas"]),
                     uranium_reserves=float(row["uranium"]),
-                    climate_risk=float(row["climate_risk"]),
+                    climate_risk=int(row["climate_risk"]),
                 )
 
     # creating general chat
     if Chat.count() == 0:
         Chat(
             name="General Chat",
-            participants=[],
+            participants=set(),
         )
 
     # initialize login manager
@@ -267,7 +269,7 @@ def create_app(
     login_manager.init_app(app)
 
     @login_manager.user_loader
-    def load_user(id: str) -> Player | None:
+    def load_user(id: str) -> Player | None:  # pylint: disable=redefined-builtin
         return Player.get(int(id))
 
     # initialize the schedulers and add the recurrent functions :
