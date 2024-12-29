@@ -2,12 +2,15 @@ from dataclasses import dataclass, field
 from itertools import count
 from typing import Any, Callable, Iterator, TypeVar
 
-T = TypeVar("T", bound="DB")
-from energetica import engine
+from energetica.globals import engine
+
+T = TypeVar("T", bound="DBModel")
 
 
 @dataclass
-class DB:
+class DBModel:
+    """Base class for all managed objects in the database."""
+
     id: int = field(init=False)
 
     def __init_subclass__(cls) -> None:
@@ -43,7 +46,7 @@ class DB:
     @classmethod
     def filter_by(cls: type[T], **conditions: Any) -> Iterator[T]:
         """Filter instances of this class by a list of conditions."""
-        return cls.filter(lambda item: all(getattr(item, field) == value for field, value in conditions))
+        return cls.filter(lambda item: all(getattr(item, field) == value for field, value in conditions.items()))
 
     def __del__(self: T) -> None:
         """Get an object by its id."""
