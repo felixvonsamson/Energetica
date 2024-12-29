@@ -54,8 +54,10 @@ def _simulate(
     stop_on_server_error,
     stop_on_assertion_error,
     checkpoint_every_k_ticks=10000,
-    checkpoint_ticks: List[int] = None,
+    checkpoint_ticks: List[int] | None = None,
 ):
+    if checkpoint_ticks is None:
+        checkpoint_ticks = []
     with app.app_context():
         trials = 0
         while True:

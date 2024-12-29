@@ -81,23 +81,25 @@ def get_or_create_vapid_keys() -> tuple[str, str]:
 
 
 def create_app(
-    clock_time=30,
-    in_game_seconds_per_tick=240,
-    run_init_test_players=False,
-    rm_instance=False,
-    random_seed=42,
+    clock_time: int = 30,
+    in_game_seconds_per_tick: int = 240,
+    run_init_test_players: bool = False,
+    rm_instance: bool = False,
+    random_seed: int = 42,
     simulate_file=None,
-    simulate_stop_on_mismatch=False,
-    simulate_stop_on_server_error=False,
-    simulate_stop_on_assertion_error=False,
-    simulate_checkpoint_every_k_ticks=10000,
-    simulate_checkpoint_ticks=[],
-    simulate_till=None,
-    simulate_profiling=False,
-    skip_adding_handlers=False,
+    simulate_stop_on_mismatch: bool = False,
+    simulate_stop_on_server_error: bool = False,
+    simulate_stop_on_assertion_error: bool = False,
+    simulate_checkpoint_every_k_ticks: int = 10000,
+    simulate_checkpoint_ticks: list[int] | None = None,
+    simulate_till: int | None = None,
+    simulate_profiling: bool = False,
+    skip_adding_handlers: bool = False,
     **kwargs,
 ):
     """Set up the app and the game engine."""
+    if simulate_checkpoint_ticks is None:
+        simulate_checkpoint_ticks = []
     # gets lock to avoid multiple instances
     if platform.system() == "Linux":
         lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -265,7 +267,7 @@ def create_app(
     login_manager.init_app(app)
 
     @login_manager.user_loader
-    def load_user(id) -> Player:
+    def load_user(id: str) -> Player | None:
         return Player.get(int(id))
 
     # initialize the schedulers and add the recurrent functions :
@@ -284,23 +286,24 @@ def create_app(
                 misfire_grace_time=10,
             )
         else:
-            scheduler.add_job(
-                func=simulate,
-                args=(
-                    app,
-                    kwargs["port"],
-                    actions[start_action_id : last_action_id + 1],
-                    simulate_stop_on_mismatch,
-                    simulate_stop_on_server_error,
-                    simulate_stop_on_assertion_error,
-                    simulate_checkpoint_every_k_ticks,
-                    simulate_checkpoint_ticks,
-                ),
-                kwargs={"profiling": simulate_profiling},
-                id="simulate",
-                trigger="date",
-                run_date=datetime.now(),
-            )
+            if start_action_id and last_action_id:
+                scheduler.add_job(
+                    func=simulate,
+                    args=(
+                        app,
+                        kwargs["port"],
+                        actions[start_action_id : last_action_id + 1],
+                        simulate_stop_on_mismatch,
+                        simulate_stop_on_server_error,
+                        simulate_stop_on_assertion_error,
+                        simulate_checkpoint_every_k_ticks,
+                        simulate_checkpoint_ticks,
+                    ),
+                    kwargs={"profiling": simulate_profiling},
+                    id="simulate",
+                    trigger="date",
+                    run_date=datetime.now(),
+                )
 
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
