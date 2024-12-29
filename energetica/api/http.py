@@ -372,9 +372,9 @@ def choose_location() -> Response:
     """Set the location for the player."""
     request_data = request.get_json()
     selected_id = request_data["selected_id"]
-    if selected_id < 0 or selected_id >= HexTile.count():
-        return jsonify({"response": "TileNotExist"})  # TODO: convert to GameError
     tile = HexTile.get(selected_id + 1)
+    if not tile:
+        raise GameError("TileNotExist")  # TODO(mglst): ensure the frontend handles this
     energetica.utils.misc.confirm_location(player=current_user, tile=tile)
     return jsonify({"response": "success"})
 
