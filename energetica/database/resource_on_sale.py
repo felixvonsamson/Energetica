@@ -13,4 +13,3 @@ class ResourceOnSale(DBModel):
     resource: str
     quantity: float
     price: float
-    creation_date: datetime = None

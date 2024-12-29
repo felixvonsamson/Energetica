@@ -18,7 +18,6 @@ def put_resource_on_market(player, resource, quantity, price):
         resource=resource,
         quantity=quantity,
         price=price,
-        creation_date=datetime.now(),
         player=player,
     )
     db.session.add(new_sale)
