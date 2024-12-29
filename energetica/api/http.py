@@ -22,7 +22,7 @@ from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import HexTile
 from energetica.database.messages import Chat
 from energetica.database.network import Network
-from energetica.database.ongoing_construction import OngoingConstruction
+from energetica.database.ongoing_construction import OngoingProject
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.game_engine import Confirm, GameError
@@ -415,7 +415,7 @@ def request_cancel_project() -> Response:
     """Cancel an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = int(request_data["id"])
-    construction: OngoingConstruction = OngoingConstruction.get(int(construction_id))
+    construction: OngoingProject = OngoingProject.get(int(construction_id))
     if construction is None or construction.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     force = request_data["force"]
@@ -443,7 +443,7 @@ def request_pause_project() -> Response:
     """Pause or unpause an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = int(request_data["id"])
-    construction: OngoingConstruction = OngoingConstruction.get(int(construction_id))
+    construction: OngoingProject = OngoingProject.get(int(construction_id))
     if construction is None or construction.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     energetica.utils.assets.toggle_pause_project(player=current_user, construction=construction)
@@ -461,7 +461,7 @@ def request_decrease_project_priority() -> Response:
     """Change the order of ongoing constructions or upgrades."""
     request_data = request.get_json()
     construction_id = request_data["id"]
-    construction: OngoingConstruction = OngoingConstruction.get(int(construction_id))
+    construction: OngoingProject = OngoingProject.get(int(construction_id))
     if construction is None or construction.player_id != current_user.id:
         return jsonify({"response": "constructionNotFound"}), 404
     energetica.utils.assets.decrease_project_priority(player=current_user, construction=construction)

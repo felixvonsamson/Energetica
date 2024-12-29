@@ -13,7 +13,7 @@ from energetica.config.assets import (
     warehouse_capacity_for_level,
 )
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.ongoing_construction import OngoingConstruction
+from energetica.database.ongoing_construction import OngoingProject
 from energetica.globals import engine
 
 if TYPE_CHECKING:
@@ -296,7 +296,7 @@ def next_available_location(player: Player, facility: str) -> int:
         facility=facility,
         player_id=player.id,
     )
-    under_construction: Iterator[OngoingConstruction] = OngoingConstruction.filter_by(
+    under_construction: Iterator[OngoingProject] = OngoingProject.filter_by(
         name=facility,
         player_id=player.id,
     )
@@ -331,7 +331,7 @@ def construction_time(player: Player, facility: str) -> float:
     duration = const_config[facility]["base_construction_time"] / engine.in_game_seconds_per_tick
     # construction time increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
-        level_with_constructions = len(OngoingConstruction.filter_by(name=facility, player_id=player.id))
+        level_with_constructions = len(OngoingProject.filter_by(name=facility, player_id=player.id))
         duration *= const_config[facility]["price_multiplier"] ** (0.6 * level_with_constructions)
         # knowledge spillover and laboratory time reduction
         if facility in engine.technologies:
@@ -453,7 +453,7 @@ def requirements_status(player: Player, project: str, requirements: list) -> str
     """
     const_config = engine.const_config["assets"]
     if all(requirement["status"] == "satisfied" for requirement in requirements):
-        if project in engine.technologies and OngoingConstruction.filter_by(name=project, player_id=player.id):
+        if project in engine.technologies and OngoingProject.filter_by(name=project, player_id=player.id):
             return "queued"
         return "satisfied"
     if const_config[project]["type"] == "Technology" and all(
@@ -714,7 +714,7 @@ def next_level(player: Player, facility_or_technology: str) -> int:
     return (
         getattr(player, facility_or_technology)
         + len(
-            OngoingConstruction.filter(
+            OngoingProject.filter(
                 lambda construction: construction.player == player and construction.name == facility_or_technology
             )
         )

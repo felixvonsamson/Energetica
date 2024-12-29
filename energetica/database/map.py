@@ -17,8 +17,6 @@ class HexTile(DBModel):
 
     coordinates: tuple[int, int]  # q, r
 
-    player: Player | None
-
     solar_potential: float
     wind_potential: float
     hydro_potential: float
@@ -28,6 +26,8 @@ class HexTile(DBModel):
     uranium_reserves: float
 
     climate_risk: int
+
+    player: Player | None = None
 
     def __repr__(self) -> str:
         """Return a string representation of the tile."""

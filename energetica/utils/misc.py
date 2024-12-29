@@ -204,7 +204,7 @@ def confirm_location(player: Player, location: HexTile) -> None:
     Return either success or an explanatory error message in the form of a dictionary.
     Called when a web client uses the choose_location socket.io endpoint, or the REST websocket API.
     """
-    if location.player_id is not None:
+    if location.player is not None:
         # Location already taken
         raise GameError("locationOccupied", by=location.player_id)
     if player.tile is not None:
@@ -212,7 +212,7 @@ def confirm_location(player: Player, location: HexTile) -> None:
         raise GameError("choiceUnmodifiable")
 
     # Checks have succeeded, proceed
-    location.player_id = player.id
+    location.player = player
     eol = engine.data["total_t"] + math.ceil(
         engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick
     )

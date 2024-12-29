@@ -1,4 +1,4 @@
-"""Module for the OngoingConstruction class."""
+"""Module for the OngoingProject class."""
 
 from __future__ import annotations
 
@@ -22,15 +22,15 @@ class ConstructionStatus:
 
 
 @dataclass
-class OngoingConstructionCache:
-    """Cache for the OngoingConstruction class."""
+class OngoingProjectCache:
+    """Cache for the OngoingProject class."""
 
     construction_id: int
 
     @cached_property
     def _prerequisites_and_level(self) -> tuple[list[int], int]:
         """Compute the prerequisites and level of an ongoing construction."""
-        construction = OngoingConstruction.get(self.construction_id)
+        construction = OngoingProject.get(self.construction_id)
         return construction._compute_prerequisites_and_level()
 
     @property
@@ -45,7 +45,7 @@ class OngoingConstructionCache:
 
 
 @dataclass
-class OngoingConstruction(DBModel):
+class OngoingProject(DBModel):
     """Class that stores projects currently under construction."""
 
     name: str
@@ -119,10 +119,10 @@ class OngoingConstruction(DBModel):
         self.speed = 1 - ticks
 
     @cached_property
-    def cache(self) -> OngoingConstructionCache:
+    def cache(self) -> OngoingProjectCache:
         """Return the cache for this ongoing construction."""
         if self.id not in engine.buffered["by_ongoing_construction"]:
-            engine.buffered["by_ongoing_construction"][self.id] = OngoingConstructionCache(self.id)
+            engine.buffered["by_ongoing_construction"][self.id] = OngoingProjectCache(self.id)
         return engine.buffered["by_ongoing_construction"][self.id]
 
     def recompute_prerequisites_and_level(self) -> None:
@@ -160,7 +160,7 @@ class OngoingConstruction(DBModel):
             level = getattr(self.player, self.name) + 1
             for candidate_prerequisite_id in priority_list[:this_priority_index]:
                 # Add them as a prerequisite, if they are of the same type
-                candidate_prerequisite = OngoingConstruction.get(candidate_prerequisite_id)
+                candidate_prerequisite = OngoingProject.get(candidate_prerequisite_id)
                 if candidate_prerequisite.name == self.name:
                     prerequisites.append(candidate_prerequisite_id)
                     level += 1
@@ -173,12 +173,12 @@ class OngoingConstruction(DBModel):
             # Compute this constructions level by looking at constructions higher up in the priority list with same name
             level = getattr(self.player, self.name) + 1
             for other_construction_id in priority_list[:this_priority_index]:
-                other_construction: OngoingConstruction = OngoingConstruction.get(other_construction_id)
+                other_construction: OngoingProject = OngoingProject.get(other_construction_id)
                 if other_construction.name == self.name:
                     level += 1
             num_ongoing_researches_of = {}
             for candidate_prerequisite_id in priority_list[:this_priority_index]:
-                candidate_prerequisite: OngoingConstruction = OngoingConstruction.get(candidate_prerequisite_id)
+                candidate_prerequisite: OngoingProject = OngoingProject.get(candidate_prerequisite_id)
                 if candidate_prerequisite.name == self.name:
                     prerequisites.append(candidate_prerequisite_id)
                     continue

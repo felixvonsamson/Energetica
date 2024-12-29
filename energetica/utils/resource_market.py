@@ -4,7 +4,7 @@ import math
 from datetime import datetime
 
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.database.shipment import Shipment
+from energetica.database.shipment import OngoingShipment
 from energetica.game_engine import GameError
 from energetica.utils.formatting import display_money, format_mass
 
@@ -52,7 +52,7 @@ def buy_resource_from_market(player, quantity, sale):
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
         shipment_duration = distance * player.config["transport"]["time_per_tile"] / engine.in_game_seconds_per_tick
         shipment_duration = math.ceil(shipment_duration)
-        new_shipment = Shipment(
+        new_shipment = OngoingShipment(
             resource=sale.resource,
             quantity=quantity,
             arrival_tick=engine.data["total_t"] + 1 + shipment_duration,
@@ -87,7 +87,7 @@ def store_import(player, resource, quantity):
             getattr(player.tile, resource) + player.resources[resource] + quantity - max_cap,
         )
         player.notify(
-            "Shipments",
+            "OngoingShipments",
             f"A shipment of {format_mass(quantity)} {resource} arrived, but "
             f"only {format_mass(max_cap - player.resources[resource])} could be "
             "stored in your warehouse.",
@@ -101,7 +101,7 @@ def store_import(player, resource, quantity):
     else:
         player.resources[resource] += quantity
         player.notify(
-            "Shipments",
+            "OngoingShipments",
             f"A shipment of {format_mass(quantity)} {resource} arrived.",
         )
         engine.log(f"{player.username} received a shipment of {format_mass(quantity)} {resource}.")

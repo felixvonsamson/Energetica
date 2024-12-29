@@ -6,7 +6,7 @@ from energetica.database import DBModel
 
 
 @dataclass
-class Shipment(DBModel):
+class OngoingShipment(DBModel):
     """Class that stores the resources shipment on their way."""
 
     resource: str

@@ -12,9 +12,9 @@ import pandas as pd
 from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.network import Network
-from energetica.database.ongoing_construction import OngoingConstruction
+from energetica.database.ongoing_construction import OngoingProject
 from energetica.database.player import Player
-from energetica.database.shipment import Shipment
+from energetica.database.shipment import OngoingShipment
 from energetica.globals import engine
 from energetica.utils.misc import calculate_river_discharge, calculate_solar_irradiance, calculate_wind_speed
 
@@ -48,10 +48,10 @@ def update_electricity():
         new_values[player.id] = player.rolling_history.init_new_data()
 
     # reset progress speeds fot all ongoing constructions and shipments
-    ongoing_constructions = OngoingConstruction.filter_by(status=2)
+    ongoing_constructions = OngoingProject.filter_by(status=2)
     for oc in ongoing_constructions:
         oc.reset_speed()
-    ongoing_shipments = Shipment.all()
+    ongoing_shipments = OngoingShipment.all()
     for os in ongoing_shipments:
         os.reset_speed()
 
@@ -244,7 +244,7 @@ def industry_demand_and_revenues(player, demand, revenues):
     demand["industry"] = intra_day_factor * seasonal_factor * player.config["industry"]["power_consumption"]
     # calculate income of industry per tick
     revenues["industry"] = player.config["industry"]["income_per_day"] / ticks_per_day
-    industry_upgrade = next(OngoingConstruction.filter_by(player_id=player.id, name="industry"))
+    industry_upgrade = next(OngoingProject.filter_by(player_id=player.id, name="industry"))
     if industry_upgrade:
         additional_demand = (
             industry_upgrade.progress()
@@ -891,7 +891,7 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction):
         cumul_demand = 0.0
         for i in range(min(len(construction_priorities), player.workers[demand_type])):
             construction_id = construction_priorities[i]
-            construction: OngoingConstruction = OngoingConstruction.get(construction_id)
+            construction: OngoingProject = OngoingProject.get(construction_id)
             if not construction.is_ongoing():
                 continue
             cumul_demand += construction.construction_power
@@ -905,7 +905,7 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction):
         cumul_demand = 0.0
         for i in range(min(len(research_priorities), player.workers["laboratory"])):
             construction_id = research_priorities[i]
-            construction: OngoingConstruction = OngoingConstruction.get(construction_id)
+            construction: OngoingProject = OngoingProject.get(construction_id)
             if not construction.is_ongoing():
                 continue
             cumul_demand += construction.construction_power
@@ -917,10 +917,10 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction):
     if demand_type == "transport":
         # TODO: This should be updated and use a similar logic as above.
         last_shipment = (
-            Shipment.filter(
-                Shipment.player_id == player.id,
+            OngoingShipment.filter(
+                OngoingShipment.player_id == player.id,
             )
-            .order_by(Shipment.arrival_tick.desc())
+            .order_by(OngoingShipment.arrival_tick.desc())
             .first()
         )
         if last_shipment:

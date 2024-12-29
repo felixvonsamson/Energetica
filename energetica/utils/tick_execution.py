@@ -10,9 +10,9 @@ from energetica import production_update
 from energetica.api import websocket
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
-from energetica.database.ongoing_construction import OngoingConstruction
+from energetica.database.ongoing_construction import OngoingProject
 from energetica.database.player import Player
-from energetica.database.shipment import Shipment
+from energetica.database.shipment import OngoingShipment
 from energetica.globals import engine
 from energetica.utils import assets
 from energetica.utils.assets import remove_asset
@@ -65,7 +65,7 @@ def _state_update(app):
 def check_events_completion():
     """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
     # check if constructions finished
-    finished_constructions = OngoingConstruction.filter(
+    finished_constructions = OngoingProject.filter(
         lambda construction: construction.end_tick_or_ticks_passed <= engine.data["total_t"]
         and construction.status == 2
     )
@@ -73,8 +73,8 @@ def check_events_completion():
         assets.finish_project(fc)
 
     # check if shipment arrived
-    arrived_shipments = Shipment.filter(
-        Shipment.arrival_tick <= engine.data["total_t"],
+    arrived_shipments = OngoingShipment.filter(
+        OngoingShipment.arrival_tick <= engine.data["total_t"],
     )
     for a_s in arrived_shipments:
         store_import(a_s.player, a_s.resource, a_s.quantity)

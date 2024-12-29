@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import StrEnum
 from functools import cached_property
 from itertools import chain
@@ -23,9 +22,9 @@ from energetica.database.engine_data import CapacityData, CircularBufferPlayer, 
 from energetica.database.map import HexTile
 from energetica.database.messages import Chat, Message, Notification
 from energetica.database.network import Network
-from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
+from energetica.database.ongoing_construction import ConstructionStatus, OngoingProject
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.database.shipment import Shipment
+from energetica.database.shipment import OngoingShipment
 from energetica.globals import engine
 from energetica.technology_effects import (
     package_available_technologies,
@@ -34,9 +33,6 @@ from energetica.technology_effects import (
     package_power_facilities,
     package_storage_facilities,
 )
-
-if TYPE_CHECKING:
-    from energetica.game_engine import GameEngine
 
 
 @dataclass
@@ -85,26 +81,33 @@ class Player(DBModel, UserMixin):
     username: str
     pwhash: str
 
+    # inactive: bool = False  # True if account is inactive
+    show_disclaimer: bool = True
+    last_opened_chat: int = 0
+
+    tile: HexTile | None = None
     network: Network | None = None
+
+    chats: list[Chat] = field(default_factory=list)
+    messages: list[Message] = field(default_factory=list)
+    notifications: list[Notification] = field(default_factory=list)
+    resource_market_offers: list[ResourceOnSale] = field(default_factory=list)
+    shipments: list[OngoingShipment] = field(default_factory=list)
+    active_facilities: list[ActiveFacility] = field(default_factory=list)
+    climate_events: list[ClimateEventRecovery] = field(default_factory=list)
+    construction_priorities: list[OngoingProject] = field(default_factory=list)
+    research_priorities: list[OngoingProject] = field(default_factory=list)
+    shipments: list[OngoingShipment] = field(default_factory=list)
+
     network_prices: PlayerPrices = field(default_factory=PlayerPrices)
+    rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
+    capacities: CapacityData = field(default_factory=CapacityData)
+    cumul_emissions: CumulativeEmissionsData = field(default_factory=CumulativeEmissionsData)
+
     # TODO (Felix): This list can be transformed in a property
     list_of_renewables: list[str] = field(default_factory=list)
     priorities_of_controllables: list[str] = field(default_factory=lambda: ["steam_engine"])
     priorities_of_demand: list[str] = field(default_factory=lambda: ["industry", "construction"])
-
-    # NOTE (Felix): do we want to still have list of ids for player constructions and research or do we want to
-    # directly store the objects here?
-    construction_priorities: list[int] = field(default_factory=list)
-    research_priorities: list[int] = field(default_factory=list)
-
-    # ongoing_projects: list[OngoingProject] = field(default_factory=list)
-    # ongoing_shipments: list[OngoingShipment] = field(default_factory=list)
-    resource_market_offers: list[ResourceOnSale] = field(default_factory=list)
-    shipments: list[Shipment] = field(default_factory=list)
-    active_facilities: list[ActiveFacility] = field(default_factory=list)
-    climate_events: list[ClimateEventRecovery] = field(default_factory=list)
-
-    inactive: bool = False  # True if account is inactive
 
     achievements: list[str] = field(default_factory=list)
 
@@ -124,10 +127,6 @@ class Player(DBModel, UserMixin):
         }
     )
 
-    rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
-    capacities: CapacityData = field(default_factory=CapacityData)
-    cumul_emissions: CumulativeEmissionsData = field(default_factory=CumulativeEmissionsData)
-
     # Browser notifications & preferences
     notification_subscriptions: list[int] = field(default_factory=list)
     notification_preferences: dict = field(
@@ -140,17 +139,6 @@ class Player(DBModel, UserMixin):
             "climate_events": True,
         }
     )
-
-    # Position :
-    tile: HexTile | None = None
-
-    # Chats :
-    show_disclaimer: bool = True
-    chats: list[Chat] = field(default_factory=list)
-    last_opened_chat: int = 0
-    messages: list[Message] = field(default_factory=list)
-
-    notifications: list[Notification] = field(default_factory=list)
 
     class NetworkGraphView(StrEnum):
         """Enum for the network graph view of the player."""
@@ -250,7 +238,7 @@ class Player(DBModel, UserMixin):
     def available_construction_workers(self) -> int:
         """Return the number of available construction workers."""
         occupied_workers = len(
-            OngoingConstruction.filter(
+            OngoingProject.filter(
                 lambda construction: construction.player == self
                 and construction.family != "Technologies"
                 and construction.status == ConstructionStatus.ONGOING
@@ -262,7 +250,7 @@ class Player(DBModel, UserMixin):
     def available_lab_workers(self) -> int:
         """Return the number of available lab workers."""
         occupied_workers = len(
-            OngoingConstruction.filter(
+            OngoingProject.filter(
                 lambda construction: construction.player == self
                 and construction.family == "Technologies"
                 and construction.status == ConstructionStatus.ONGOING
@@ -403,7 +391,7 @@ class Player(DBModel, UserMixin):
         This method returns a dictionary of the constructions for which the progress speed has changed. For each of
         these constructions, the dictionary contains the new speed and the new end_tick.
         """
-        player_constructions: Iterator[OngoingConstruction] = OngoingConstruction.filter_by(
+        player_constructions: Iterator[OngoingProject] = OngoingProject.filter_by(
             player_id=self.id, status=ConstructionStatus.ONGOING
         )
         construction_speeds = {}
@@ -421,7 +409,7 @@ class Player(DBModel, UserMixin):
         This method returns a dictionary of the shipments for which the progress speed has changed. For each of
         these shipments, the dictionary contains the new speed and the new arrival_tick.
         """
-        player_shipments: Iterator[Shipment] = Shipment.filter_by(player=self)
+        player_shipments: Iterator[OngoingShipment] = OngoingShipment.filter_by(player=self)
         shipment_speeds = {}
         for shipment in player_shipments:
             new_speed = shipment.updated_speed()
@@ -650,7 +638,7 @@ class Player(DBModel, UserMixin):
 
     def package_constructions(self) -> dict[int, dict]:
         """Package the player's ongoing constructions."""
-        constructions: list[OngoingConstruction] = self.under_construction
+        constructions: list[OngoingProject] = self.construction_priorities
         return {
             construction.id: {
                 k: getattr(construction, k)

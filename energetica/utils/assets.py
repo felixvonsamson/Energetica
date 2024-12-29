@@ -7,14 +7,14 @@ from typing import Iterator
 
 from energetica import technology_effects
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
+from energetica.database.ongoing_construction import ConstructionStatus, OngoingProject
 from energetica.database.player import Player
 from energetica.game_engine import Confirm, GameError
 from energetica.globals import engine
 from energetica.utils.network_helpers import reorder_facility_priorities
 
 
-def finish_project(construction: OngoingConstruction, *, skip_notifications: bool = False):
+def finish_project(construction: OngoingProject, *, skip_notifications: bool = False):
     """Finish a construction or research project.
 
     This function is executed when a construction or research project has finished. The effects include:
@@ -174,7 +174,7 @@ def deploy_available_workers(player: Player, family: str, *, start_now=False) ->
     priority_list = getattr(player, priority_list_name)
 
     for priority_index, construction_id in enumerate(priority_list):
-        construction: OngoingConstruction = OngoingConstruction.get(construction_id)
+        construction: OngoingProject = OngoingProject.get(construction_id)
         if construction.status == ConstructionStatus.PAUSED:
             # Only the player can unpause a paused construction
             return
@@ -187,7 +187,7 @@ def deploy_available_workers(player: Player, family: str, *, start_now=False) ->
         available_workers -= 1
         insertion_index = None
         for insertion_index_candidate, possibly_paused_construction_id in enumerate(priority_list[:priority_index]):
-            possibly_paused_construction: OngoingConstruction = OngoingConstruction.get(possibly_paused_construction_id)
+            possibly_paused_construction: OngoingProject = OngoingProject.get(possibly_paused_construction_id)
             if not possibly_paused_construction.is_ongoing():
                 insertion_index = insertion_index_candidate
                 break
@@ -341,7 +341,7 @@ def queue_project(
     force: bool = False,
     ignore_requirements_and_money: bool = False,
     skip_notifications: bool = False,
-) -> OngoingConstruction:
+) -> OngoingProject:
     """Queue a construction or research project."""
 
     if asset not in engine.all_asset_types:
@@ -378,7 +378,7 @@ def queue_project(
 
     # The construction is added as paused and then immediately unpaused in order to place it in the right place in the
     # priority list.
-    new_construction: OngoingConstruction = OngoingConstruction(
+    new_construction: OngoingProject = OngoingProject(
         name=asset,
         family=engine.asset_family_by_name[asset],
         end_tick_or_ticks_passed=0,
@@ -432,7 +432,7 @@ def invalidate_data_on_project_update(player: Player, asset_type: str) -> None:
         player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
 
 
-def cancel_project(player: Player, construction: OngoingConstruction, *, force: bool = False):
+def cancel_project(player: Player, construction: OngoingProject, *, force: bool = False):
     """Cancel an ongoing construction."""
     if construction is None or construction.player_id != player.id:
         msg = "Construction not found"
@@ -445,7 +445,7 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
     priority_list = getattr(player, priority_list_name)
     construction_priority_index = priority_list.index(construction.id)
     for candidate_dependent_id in priority_list[construction_priority_index + 1 :]:
-        candidate_dependent: OngoingConstruction = OngoingConstruction.get(candidate_dependent_id)
+        candidate_dependent: OngoingProject = OngoingProject.get(candidate_dependent_id)
         if construction.id in candidate_dependent.cache.prerequisites:
             dependents.append([candidate_dependent.name, candidate_dependent.cache.level])
     if dependents:
@@ -481,7 +481,7 @@ def cancel_project(player: Player, construction: OngoingConstruction, *, force: 
     invalidate_data_on_project_update(player, construction.name)
 
 
-def decrease_project_priority(player: Player, construction: OngoingConstruction):
+def decrease_project_priority(player: Player, construction: OngoingProject):
     """
     Decrease the priority of an ongoing construction.
     This function is executed when a player changes the order of ongoing constructions.
@@ -497,8 +497,8 @@ def decrease_project_priority(player: Player, construction: OngoingConstruction)
     if index == len(priority_list) - 1:
         return
 
-    construction_1: OngoingConstruction = construction
-    construction_2: OngoingConstruction = OngoingConstruction.get(priority_list[index + 1])
+    construction_1: OngoingProject = construction
+    construction_2: OngoingProject = OngoingProject.get(priority_list[index + 1])
 
     # Here are all the possible cases for the two projects, construction_1 and construction_2:
     # 1. ongoing, ongoing (swap)
@@ -528,7 +528,7 @@ def decrease_project_priority(player: Player, construction: OngoingConstruction)
     # websocket.rest_notify_constructions(player)
 
 
-def toggle_pause_project(player: Player, construction: OngoingConstruction) -> None:
+def toggle_pause_project(player: Player, construction: OngoingProject) -> None:
     """
     This function is executed when a player pauses or unpauses an ongoing construction.
     Note : When a project is paused or unpaused, it's position in the priority list has to be updated.
@@ -550,7 +550,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
         insertion_index: int | None = None
         for index, other_construction_id in enumerate(priority_list[construction_index + 1 :]):
             other_construction_index = index + construction_index + 1
-            other_construction: OngoingConstruction = OngoingConstruction.get(other_construction_id)
+            other_construction: OngoingProject = OngoingProject.get(other_construction_id)
             if other_construction.was_paused_by_player():
                 insertion_index = other_construction_index
                 break
@@ -586,7 +586,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
         if "_prerequisites_and_level" in construction.cache.__dict__:
             del construction.cache._prerequisites_and_level  # Needed to force recompute, as prerequisites aren't
         for prerequisite_id in construction.cache.prerequisites:
-            prerequisite = OngoingConstruction.get(prerequisite_id)
+            prerequisite = OngoingProject.get(prerequisite_id)
             if prerequisite.status == ConstructionStatus.PAUSED:
                 raise GameError("PausedPrerequisitePreventUnpause")
 
@@ -597,7 +597,7 @@ def toggle_pause_project(player: Player, construction: OngoingConstruction) -> N
         priority_list.remove(construction.id)
         insertion_index = None
         for new_index, other_construction_id in enumerate(priority_list):
-            other_construction: OngoingConstruction = OngoingConstruction.get(other_construction_id)
+            other_construction: OngoingProject = OngoingProject.get(other_construction_id)
             if other_construction.status < construction.status:
                 insertion_index = new_index
                 break

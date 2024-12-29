@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash
 
 from energetica import create_app
 from energetica.database.map import HexTile
-from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
+from energetica.database.ongoing_construction import ConstructionStatus, OngoingProject
 from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.utils.assets import (
@@ -38,29 +38,29 @@ def validate_rules(player):
     assert len(set(construction_priorities)) == len(construction_priorities)
     assert len(set(research_priorities)) == len(research_priorities)
     for construction_id in construction_priorities:
-        construction = OngoingConstruction.get(construction_id)
+        construction = OngoingProject.get(construction_id)
         assert construction is not None
         assert construction.player_id == player.id
         assert construction.family != "Technologies"
     for research_id in research_priorities:
-        research = OngoingConstruction.get(research_id)
+        research = OngoingProject.get(research_id)
         assert research is not None
         assert research.player_id == player.id
         assert research.family == "Technologies"
     assert len(
-        OngoingConstruction.filter(
+        OngoingProject.filter(
             lambda construction: construction.player == player and construction.family != "Technologies"
         )
     ) == len(construction_priorities)
     assert len(
-        OngoingConstruction.filter(
+        OngoingProject.filter(
             lambda construction: construction.player == player and construction.family == "Technologies"
         )
     ) == len(research_priorities)
 
     # Rule 2
     ongoing_constructions = list(
-        OngoingConstruction.filter(
+        OngoingProject.filter(
             lambda construction: construction.player == player
             and construction.status == ConstructionStatus.ONGOING
             and construction.family != "Technologies"
@@ -73,7 +73,7 @@ def validate_rules(player):
             f"but only {player.workers["construction"]} construction workers."
         )
 
-    ongoing_research = OngoingConstruction.filter_by(
+    ongoing_research = OngoingProject.filter_by(
         player_id=player.id,
         status=ConstructionStatus.ONGOING,
         family="Technologies",
@@ -86,25 +86,25 @@ def validate_rules(player):
         )
 
     # Rule 3
-    status_list_constructions = list(map(lambda x: OngoingConstruction.get(x).status, construction_priorities))
+    status_list_constructions = list(map(lambda x: OngoingProject.get(x).status, construction_priorities))
     assert sorted(status_list_constructions, reverse=True) == status_list_constructions
-    status_list_research = list(map(lambda x: OngoingConstruction.get(x).status, research_priorities))
+    status_list_research = list(map(lambda x: OngoingProject.get(x).status, research_priorities))
     assert sorted(status_list_research, reverse=True) == status_list_research
 
     # Rule 4
-    assert not OngoingConstruction.filter(
+    assert not OngoingProject.filter(
         lambda construction: construction.player == player
         and construction.status == ConstructionStatus.ONGOING
         and construction.end_tick_or_ticks_passed <= engine.data["total_t"]
     )
-    assert not OngoingConstruction.filter(
+    assert not OngoingProject.filter(
         lambda construction: construction.player == player
         and construction.status != ConstructionStatus.ONGOING
         and construction.end_tick_or_ticks_passed > engine.data["total_t"]
     )
 
     # Rule 5
-    ongoing_projects: Iterable[OngoingConstruction] = OngoingConstruction.filter_by(
+    ongoing_projects: Iterable[OngoingProject] = OngoingProject.filter_by(
         player_id=player.id,
         status=ConstructionStatus.ONGOING,
     )
@@ -116,7 +116,7 @@ def validate_rules(player):
 
     # Rule 6
     for index, construction_id in enumerate(construction_priorities):
-        construction = OngoingConstruction.get(construction_id)
+        construction = OngoingProject.get(construction_id)
         for prerequisite in construction.cache.prerequisites:
             if construction_priorities.index(prerequisite) >= index:
                 del construction.cache._prerequisites_and_levels
@@ -124,7 +124,7 @@ def validate_rules(player):
                     assert construction_priorities.index(prerequisite) < index
                 break
     for index, research_id in enumerate(research_priorities):
-        research = OngoingConstruction.get(research_id)
+        research = OngoingProject.get(research_id)
         for prerequisite in research.cache.prerequisites:
             if research_priorities.index(prerequisite) >= index:
                 del research.cache._prerequisites_and_levels
@@ -133,8 +133,8 @@ def validate_rules(player):
                 break
 
     # Rule 7
-    waiting_constructions: list[OngoingConstruction] = list(
-        OngoingConstruction.filter(
+    waiting_constructions: list[OngoingProject] = list(
+        OngoingProject.filter(
             lambda construction: construction.player == player
             and construction.status == ConstructionStatus.WAITING
             and construction.family != "Technologies"
@@ -143,7 +143,7 @@ def validate_rules(player):
     )
     if waiting_constructions:
         count_on_going_constructions = len(
-            OngoingConstruction.filter(
+            OngoingProject.filter(
                 lambda construction: construction.player == player
                 and construction.status == ConstructionStatus.ONGOING
                 and construction.family != "Technologies"
@@ -157,8 +157,8 @@ def validate_rules(player):
                 f"but has {player.workers["construction"]} construction workers, "
                 f"and only {count_on_going_constructions} ongoing constructions."
             )
-    waiting_research: list[OngoingConstruction] = list(
-        OngoingConstruction.filter(
+    waiting_research: list[OngoingProject] = list(
+        OngoingProject.filter(
             lambda construction: construction.player == player
             and construction.status == ConstructionStatus.WAITING
             and construction.family == "Technologies"
@@ -167,7 +167,7 @@ def validate_rules(player):
     )
     if waiting_research:
         count_on_going_research = len(
-            OngoingConstruction.filter(
+            OngoingProject.filter(
                 lambda construction: construction.player == player
                 and construction.status == ConstructionStatus.ONGOING
                 and construction.family == "Technologies"
