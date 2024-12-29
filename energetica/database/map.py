@@ -3,15 +3,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
+
+if TYPE_CHECKING:
+    from energetica.database import Player
 
 
 @dataclass
 class HexTile(DBModel):
     """Class for the tiles that compose the map."""
 
-    coordinates: tuple[int, int]
+    coordinates: tuple[int, int]  # q, r
+
+    player: Player | None
 
     solar_potential: float
     wind_potential: float

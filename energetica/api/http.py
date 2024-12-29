@@ -117,8 +117,8 @@ def get_map() -> Response:
     hex_list = [
         {
             "id": tile.id,
-            "q": tile.q,
-            "r": tile.r,
+            "q": tile.coordinates[0],
+            "r": tile.coordinates[1],
             "solar": tile.solar_potential,
             "wind": tile.wind_potential,
             "hydro": tile.hydro_potential,
