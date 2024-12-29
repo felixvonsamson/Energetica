@@ -106,34 +106,31 @@ def update_electricity():
         player.send_new_data(new_values[player.id])
 
 
-def set_facilities_usage(new_values, player):
+def set_facilities_usage(new_values: dict, player: Player) -> None:
     """Set the usage of the facilities to the database."""
-    for facility in engine.controllable_facilities:
-        if player.capacities.contains(facility):
-            ActiveFacility.filter_by(player_id=player.id, facility=facility).update(
-                {ActiveFacility.usage: new_values["generation"][facility] / player.capacities[facility]["power"]},
-                synchronize_session=False,
-            )
+    for controllable_facility in engine.controllable_facilities:
+        if player.capacities.contains(controllable_facility):
+            usage = new_values["generation"][controllable_facility] / player.capacities[controllable_facility]["power"]
+            for af in ActiveFacility.filter_by(player=player, facility=controllable_facility):
+                af.usage = usage
 
-    for facility in engine.storage_facilities:
-        if player.capacities.contains(facility):
-            if player.capacities[facility]["capacity"] == 0:
-                usage = 1.0
+    for storage_facility in engine.storage_facilities:
+        if player.capacities.contains(storage_facility):
+            if player.capacities[storage_facility]["capacity"] == 0:
+                usage = None  # TODO (Felix): update frontend to show "draining..."
             else:
-                usage = new_values["storage"][facility] / player.capacities[facility]["capacity"]
-            ActiveFacility.filter_by(player_id=player.id, facility=facility).update(
-                {ActiveFacility.usage: usage},
-                synchronize_session=False,
-            )
-    for facility in engine.extraction_facilities:
-        if player.capacities.contains(facility):
-            ActiveFacility.filter_by(player_id=player.id, facility=facility).update(
-                {ActiveFacility.usage: new_values["demand"][facility] / player.capacities[facility]["power_use"]},
-                synchronize_session=False,
-            )
+                usage = new_values["storage"][storage_facility] / player.capacities[storage_facility]["capacity"]
+            for af in ActiveFacility.filter_by(player=player, facility=storage_facility):
+                af.usage = usage
+
+    for extraction_facility in engine.extraction_facilities:
+        if player.capacities.contains(extraction_facility):
+            usage = new_values["demand"][extraction_facility] / player.capacities[extraction_facility]["power_use"]
+            for af in ActiveFacility.filter_by(player=player, facility=extraction_facility):
+                af.usage = usage
 
 
-def update_player_progress_values(player, new_values):
+def update_player_progress_values(player: Player, new_values: dict) -> None:
     """Update the player progress values and checks for new unlocks and achievements."""
     # calculate moving average revenue
     player.progression_metrics.average_revenues = (
@@ -165,7 +162,7 @@ def update_player_progress_values(player, new_values):
     player.check_continuous_achievements()
 
 
-def init_market():
+def init_market() -> dict:
     """Initialize an empty market."""
     return {
         "capacities": pd.DataFrame({"player_id": [], "capacity": [], "price": [], "facility": []}),
@@ -173,7 +170,7 @@ def init_market():
     }
 
 
-def update_storage_lvls(new_values, player):
+def update_storage_lvls(new_values: dict, player: Player) -> None:
     """Update storage levels according to the use of storage facilities."""
     generation = new_values["generation"]
     demand = new_values["demand"]
@@ -579,12 +576,11 @@ def renewables_generation(player: Player, generation: dict) -> None:
     solar_generation(player, generation, in_game_seconds_passed)
     # HYDRO
     power_factor = calculate_river_discharge(in_game_seconds_passed) / 150
-    for facility in ["watermill", "small_water_dam", "large_water_dam"]:
-        if player.capacities[facility] is not None:
-            generation[facility] = power_factor * player.capacities[facility]["power"]
-        ActiveFacility.filter_by(player_id=player.id, facility=facility).update(
-            {ActiveFacility.usage: power_factor}, synchronize_session=False
-        )
+    for hydro_facility in ["watermill", "small_water_dam", "large_water_dam"]:
+        if player.capacities[hydro_facility] is not None:
+            generation[hydro_facility] = power_factor * player.capacities[hydro_facility]["power"]
+        for af in ActiveFacility.filter_by(player_id=player.id, facility=hydro_facility):
+            af.usage = power_factor
 
 
 def solar_generation(player, generation, in_game_seconds_passed):
@@ -916,13 +912,9 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction):
         return
 
     if demand_type == "transport":
-        # TODO: This should be updated and use a similar logic as above.
-        last_shipment = (
-            OngoingShipment.filter(
-                OngoingShipment.player_id == player.id,
-            )
-            .order_by(OngoingShipment.arrival_tick.desc())
-            .first()
+        # TODO (Felix): This should be updated and use a similar logic as above.
+        last_shipment = next(
+            sorted(OngoingShipment.filter_by(player=player), key=lambda shipment: shipment.arrival_tick, reverse=True)
         )
         if last_shipment:
             last_shipment.delay_by(1 - satisfaction / last_shipment.power)
