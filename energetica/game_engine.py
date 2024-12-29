@@ -254,7 +254,7 @@ class GameError(Exception):
 class Confirm(Exception):
     """Use this class to ask the player to confirm an action."""
 
-    # TODO(mglst): I think we should remove this class. Instead, we should handle the confirmation in the frontend.
+    # TODO(mglst): Convert this class to an instance of GameError
 
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)

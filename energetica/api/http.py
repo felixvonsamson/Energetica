@@ -9,8 +9,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
-from flask import Blueprint, Response, current_app, flash, g, jsonify, redirect, request
-from flask_login import current_user, login_required
+from flask import Blueprint, flash, jsonify, redirect, request
+from flask_login import current_user
+from werkzeug.wrappers import Response
 
 import energetica.utils.assets
 import energetica.utils.chat
@@ -31,7 +32,7 @@ from energetica.utils.assets import package_projects_data
 from energetica.utils.misc import flash_error
 
 if TYPE_CHECKING:
-    current_user: Player
+    current_user: Player  # type: ignore
 
 http = Blueprint("http", __name__)
 
@@ -49,7 +50,7 @@ def log_action(func: Callable) -> Callable:
                 response = func(*args, **kwargs)
             response, status_code = response if isinstance(response, tuple) else (response, response.status_code)
         except GameError as game_exception:
-            # TODO engine.db.rollback()
+            # TODO: engine.db.rollback()
             response, status_code = jsonify({"response": game_exception.exception_type, **game_exception.kwargs}), 403
 
         log_entry = {
@@ -164,13 +165,13 @@ def get_resource_data() -> Response:
 
 
 @http.route("/get_chart_data", methods=["GET"])
-def get_chart_data() -> Response:
+def get_chart_data() -> Response | tuple:
     """Get the data for the overview charts."""
 
-    def calculate_mean_subarrays(array, x):
+    def calculate_mean_subarrays(array: list, x: int) -> list:
         return [np.mean(array[i : i + x]) for i in range(0, len(array), x)]
 
-    def concat_slices(dict1, dict2):
+    def concat_slices(dict1: dict, dict2: dict):
         for key, value in dict2.items():
             for sub_key, array2 in value.items():
                 if sub_key not in dict1[key]:
@@ -221,7 +222,7 @@ def get_chart_data() -> Response:
             "network_data": network_data,
             "climate_data": climate_data,
             "cumulative_emissions": current_user.cumul_emissions.get_all(),
-        }
+        },
     )
 
 
@@ -232,7 +233,7 @@ def get_current_weather() -> Response:
 
 
 @http.route("/get_network_capacities", methods=["GET"])
-def get_network_capacities() -> Response:
+def get_network_capacities() -> Response | tuple:
     """Get the network capacities for the current player."""
     if current_user.network is None:
         return "", 404
@@ -240,7 +241,7 @@ def get_network_capacities() -> Response:
 
 
 @http.route("/get_market_data", methods=["GET"])
-def get_market_data() -> Response:
+def get_market_data() -> Response | tuple:
     """Get the data for the market graph at a specific tick."""
     market_data = {}
     if current_user.network is None:
@@ -253,12 +254,12 @@ def get_market_data() -> Response:
             market_data["capacities"] = market_data["capacities"].to_dict(orient="list")
             market_data["demands"] = market_data["demands"].to_dict(orient="list")
     else:
-        market_data = None
+        return "", 404
     return jsonify(market_data)
 
 
 @http.route("/get_player_data", methods=["GET"])
-def get_player_data() -> Response:
+def get_player_data() -> Response | tuple:
     """Get count of assets and config for this player."""
     if current_user.tile is None:
         return "", 404
@@ -372,7 +373,7 @@ def choose_location() -> Response:
     request_data = request.get_json()
     selected_id = request_data["selected_id"]
     if selected_id < 0 or selected_id >= HexTile.count():
-        return jsonify({"response": "TileNotExist"})  # TODO
+        return jsonify({"response": "TileNotExist"})  # TODO: convert to GameError
     tile = HexTile.get(selected_id + 1)
     energetica.utils.misc.confirm_location(player=current_user, tile=tile)
     return jsonify({"response": "success"})
@@ -380,7 +381,7 @@ def choose_location() -> Response:
 
 @http.route("/request_queue_project", methods=["POST"])
 @log_action
-def request_queue_project() -> Response:
+def request_queue_project() -> Response | tuple:
     """Start a construction or research project for the player."""
     request_data = request.get_json()
     asset = request_data["facility"]
@@ -411,12 +412,12 @@ def request_queue_project() -> Response:
 
 @http.route("/request_cancel_project", methods=["POST"])
 @log_action
-def request_cancel_project() -> Response:
+def request_cancel_project() -> Response | tuple:
     """Cancel an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = int(request_data["id"])
     construction: OngoingProject = OngoingProject.get(int(construction_id))
-    if construction is None or construction.player_id != current_user.id:
+    if construction is None or construction.player != current_user:
         return jsonify({"response": "constructionNotFound"}), 404
     force = request_data["force"]
     try:
@@ -439,12 +440,12 @@ def request_cancel_project() -> Response:
 
 @http.route("/request_toggle_pause_project", methods=["POST"])
 @log_action
-def request_pause_project() -> Response:
+def request_pause_project() -> Response | tuple:
     """Pause or unpause an ongoing construction or upgrade."""
     request_data = request.get_json()
     construction_id = int(request_data["id"])
     construction: OngoingProject = OngoingProject.get(int(construction_id))
-    if construction is None or construction.player_id != current_user.id:
+    if construction is None or construction.player != current_user:
         return jsonify({"response": "constructionNotFound"}), 404
     energetica.utils.assets.toggle_pause_project(player=current_user, construction=construction)
     return jsonify(
@@ -457,12 +458,12 @@ def request_pause_project() -> Response:
 
 @http.route("/request_decrease_project_priority", methods=["POST"])
 @log_action
-def request_decrease_project_priority() -> Response:
+def request_decrease_project_priority() -> Response | tuple:
     """Change the order of ongoing constructions or upgrades."""
     request_data = request.get_json()
     construction_id = request_data["id"]
     construction: OngoingProject = OngoingProject.get(int(construction_id))
-    if construction is None or construction.player_id != current_user.id:
+    if construction is None or construction.player != current_user:
         return jsonify({"response": "constructionNotFound"}), 404
     energetica.utils.assets.decrease_project_priority(player=current_user, construction=construction)
     return jsonify(
@@ -475,12 +476,12 @@ def request_decrease_project_priority() -> Response:
 
 @http.route("/request_upgrade_facility", methods=["POST"])
 @log_action
-def request_upgrade_facility() -> Response:
+def request_upgrade_facility() -> Response | tuple:
     """Upgrade a facility."""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     facility: ActiveFacility = ActiveFacility.get(int(facility_id))
-    if facility is None or facility.player_id != current_user.id:
+    if facility is None or facility.player != current_user:
         return jsonify({"response": "constructionNotFound"}), 404
     energetica.utils.assets.upgrade_facility(player=current_user, facility=facility)
     return jsonify({"response": "success", "money": current_user.money})
@@ -498,12 +499,12 @@ def request_upgrade_all_of_type() -> Response:
 
 @http.route("/request_dismantle_facility", methods=["POST"])
 @log_action
-def request_dismantle_facility() -> Response:
+def request_dismantle_facility() -> Response | tuple:
     """Dismantle a facility."""
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     facility: ActiveFacility = ActiveFacility.get(int(facility_id))
-    if facility is None or facility.player_id != current_user.id:
+    if facility is None or facility.player != current_user:
         return jsonify({"response": "constructionNotFound"}), 404
     energetica.utils.assets.dismantle_facility(player=current_user, facility=facility)
     return jsonify(
@@ -527,7 +528,7 @@ def request_dismantle_all_of_type() -> Response:
 
 @http.route("/change_network_prices", methods=["POST"])
 @log_action
-def change_network_prices() -> Response:
+def change_network_prices() -> Response | tuple:
     """Change the prices for anything on the network."""
     if not current_user.is_in_network:
         return jsonify({"response": "notAuthorized"}), 404
@@ -544,7 +545,7 @@ def change_network_prices() -> Response:
 
 @http.route("/request_change_facility_priority", methods=["POST"])
 @log_action
-def request_change_facility_priority() -> Response:
+def request_change_facility_priority() -> Response | tuple:
     """Change the generation priority."""
     if "Unlock Network" not in current_user.achievements:
         return jsonify({"response": "notAuthorized"}), 404
@@ -645,7 +646,7 @@ def create_network() -> Response:
 
 @http.route("leave_network", methods=["POST"])
 @log_action
-def leave_network() -> Response:
+def leave_network() -> Response | tuple:
     """Leave the current network."""
     network = current_user.network
     if network is None:
@@ -716,7 +717,7 @@ def test_notification() -> Response:
 
 @http.route("set_notification_preferences", methods=["POST"])
 def set_notification_preferences() -> Response:
-    """Sets notification preferences for a player"""
+    """Set notification preferences for a player."""
     preferences = request.get_json()["notification_preferences"]
     current_user.notification_preferences = preferences
     return jsonify({"response": "success"})
