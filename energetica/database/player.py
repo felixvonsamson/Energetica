@@ -621,7 +621,7 @@ class Player(DBModel, UserMixin):
                 "id": self.id,
                 "username": self.username,
             }
-            | ({"network_id": self.network_id} if self.network_id is not None else {})
+            | ({"network_id": self.network.id} if self.network is not None else {})
             | ({"cell_id": self.tile.id} if self.tile is not None else {})
         )
 

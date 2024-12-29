@@ -1,6 +1,6 @@
 """This config file contains the data for the achievements that can be unlocked by the player."""
 
-achievements = {
+achievements: dict = {
     "power_consumption": {
         "name": "Power Consumption",
         "metric": "max_power_consumption",
