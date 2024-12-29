@@ -1,41 +1,37 @@
 """Util functions relating to the in game chat"""
 
-from datetime import datetime
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from energetica.database.messages import Chat, Message
-from energetica.game_engine import GameEngine, GameError
+from energetica.game_engine import GameError
 from energetica.globals import engine
 from energetica.utils.misc import display_new_message
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
 
-from __future__ import annotations
 
-
-def hide_chat_disclaimer(player):
-    """Stores the player's choice to not show the chat disclaimer anymore"""
+def hide_chat_disclaimer(player: Player) -> None:
+    """Store the player's choice to not show the chat disclaimer anymore."""
     player.show_disclaimer = False
     #    # message = websocket.rest_get_show_chat_disclaimer(player)
     # websocket.rest_notify_player(player, message)
 
 
-def check_existing_chats(participants: set[Player]):
-    """Checks if a chat with exactly these participants already exists"""
+def check_existing_chats(participants: set[Player]) -> bool:
+    """Return true if a chat with exactly these participants already exists."""
     return any(chat.participants == participants for chat in Chat.all())
 
 
 def create_chat(player: Player, chat_name: str | None, participants: set[Player]):
     """
-    Creates a group chat with specified name and participants
+    Create a group chat with specified name and participants.
 
-    :param player: the Player object which requested the group chat creation
-
-    :param chat_name: a string for the name of the chat
-
+    :param Player player: the Player object which requested the group chat creation
+    :param str chat_name: a string for the name of the chat
     :param participant_ids: a list of numbers corresponding to player ids
-
     """
     if None in participants:
         # TODO (Felix): Catch this error in the frontend
@@ -60,8 +56,8 @@ def create_chat(player: Player, chat_name: str | None, participants: set[Player]
     # websocket.notify_new_chat(new_chat)
 
 
-def add_message(player, message_text, chat):
-    """This function is called when a player sends a message in a chat. It returns either success or an error."""
+def add_message(player: Player, message_text: str, chat: Chat) -> None:
+    """Add a player sent message to a chat."""
     if player not in chat.participants:
         raise GameError("notInChat")
     if len(message_text) == 0:

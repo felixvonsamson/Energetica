@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from functools import cached_property
 from itertools import chain
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING, Any
 
 from flask import current_app
 from flask_login import UserMixin
@@ -16,14 +16,9 @@ from pywebpush import WebPushException, webpush
 
 from energetica.config.achievements import achievements
 from energetica.database import DBModel
-from energetica.database.active_facility import ActiveFacility
-from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, PlayerPrices
-from energetica.database.map import HexTile
 from energetica.database.messages import Chat, Message, Notification
-from energetica.database.network import Network
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingProject
-from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.database.shipment import OngoingShipment
 from energetica.globals import engine
 from energetica.technology_effects import (
@@ -33,6 +28,15 @@ from energetica.technology_effects import (
     package_power_facilities,
     package_storage_facilities,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from energetica.database.active_facility import ActiveFacility
+    from energetica.database.climate_event_recovery import ClimateEventRecovery
+    from energetica.database.map import HexTile
+    from energetica.database.network import Network
+    from energetica.database.resource_on_sale import ResourceOnSale
 
 
 @dataclass
@@ -97,7 +101,6 @@ class Player(DBModel, UserMixin):
     climate_events: list[ClimateEventRecovery] = field(default_factory=list)  # Player
     constructions_by_priority: list[OngoingProject] = field(default_factory=list)  # Player
     researches_by_priority: list[OngoingProject] = field(default_factory=list)  # Player
-    shipments: list[OngoingShipment] = field(default_factory=list)  # Player
 
     network_prices: PlayerPrices = field(default_factory=PlayerPrices)
     rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
@@ -149,7 +152,6 @@ class Player(DBModel, UserMixin):
 
     # misc :
     graph_view: str = NetworkGraphView.BASIC
-    network: Network | None = None
 
     # resources :
     money: float = 25000
@@ -227,22 +229,23 @@ class Player(DBModel, UserMixin):
         """Set the network graph view of the player (basic/normal/expert)."""
         self.graph_view = view
 
-    def available_workers(self, project_name):
-        """Returns the number of available workers depending on the project type"""
+    def available_workers(self, project_name: str) -> int:
+        """Return the number of available workers depending on the project type."""
         if project_name in engine.technologies:
             return self.available_lab_workers()
-        else:
-            return self.available_construction_workers()
+        return self.available_construction_workers()
 
     # TODO (Felix): Could that not be a property of a newly created Worker class ?
     def available_construction_workers(self) -> int:
         """Return the number of available construction workers."""
         occupied_workers = len(
-            OngoingProject.filter(
-                lambda construction: construction.player == self
-                and construction.family != "Technologies"
-                and construction.status == ConstructionStatus.ONGOING
-            )
+            list(
+                OngoingProject.filter(
+                    lambda construction: construction.player == self
+                    and construction.family != "Technologies"
+                    and construction.status == ConstructionStatus.ONGOING,
+                ),
+            ),
         )
         return self.workers["construction"] - occupied_workers
 
@@ -250,11 +253,13 @@ class Player(DBModel, UserMixin):
     def available_lab_workers(self) -> int:
         """Return the number of available lab workers."""
         occupied_workers = len(
-            OngoingProject.filter(
-                lambda construction: construction.player == self
-                and construction.family == "Technologies"
-                and construction.status == ConstructionStatus.ONGOING
-            )
+            list(
+                OngoingProject.filter(
+                    lambda construction: construction.player == self
+                    and construction.family == "Technologies"
+                    and construction.status == ConstructionStatus.ONGOING,
+                ),
+            ),
         )
         return self.workers["laboratory"] - occupied_workers
 
@@ -327,12 +332,9 @@ class Player(DBModel, UserMixin):
             chat.id: {
                 "id": chat.id,
                 "name": chat.name,  # can be None
-                "participants": list(map(lambda player: player.id, chat.participants)),
-                "older_messages_exist": chat.messages.count() > 20,
-                "messages": [
-                    message.package()
-                    for message in reversed(chat.messages.order_by(Message.time.desc()).limit(20).all())
-                ],
+                "participants": [player.id for player in chat.participants],
+                "older_messages_exist": len(chat.messages) > 20,
+                "messages": [message.package() for message in chat.messages[-20:]],
             }
             for chat in self.chats
         }
@@ -386,15 +388,17 @@ class Player(DBModel, UserMixin):
             },
         )
 
-    def get_construction_updates(self):
+    def get_construction_updates(self) -> dict:
         """
-        This method returns a dictionary of the constructions for which the progress speed has changed. For each of
-        these constructions, the dictionary contains the new speed and the new end_tick.
+        Return a dictionary of the constructions for which the progress speed has changed.
+
+        For each of these constructions, the dictionary contains the new speed and the new end_tick.
         """
         player_constructions: Iterator[OngoingProject] = OngoingProject.filter_by(
-            player_id=self.id, status=ConstructionStatus.ONGOING
+            player_id=self.id,
+            status=ConstructionStatus.ONGOING,
         )
-        construction_speeds = {}
+        construction_speeds: dict = {}
         for construction in player_constructions:
             new_speed = construction.updated_speed()
             if new_speed is not None:
@@ -404,13 +408,14 @@ class Player(DBModel, UserMixin):
                 }
         return construction_speeds
 
-    def get_shipment_updates(self):
+    def get_shipment_updates(self) -> dict:
         """
-        This method returns a dictionary of the shipments for which the progress speed has changed. For each of
-        these shipments, the dictionary contains the new speed and the new arrival_tick.
+        Return a dictionary of the shipments for which the progress speed has changed.
+
+        For each of these shipments, the dictionary contains the new speed and the new arrival_tick.
         """
         player_shipments: Iterator[OngoingShipment] = OngoingShipment.filter_by(player=self)
-        shipment_speeds = {}
+        shipment_speeds: dict = {}
         for shipment in player_shipments:
             new_speed = shipment.updated_speed()
             if new_speed is not None:
@@ -434,9 +439,9 @@ class Player(DBModel, UserMixin):
             },
         )
         if (
-            self.notifications.count() > 1
-            and new_notification.content == self.notifications[self.notifications.count() - 2].content
-            and new_notification.time == self.notifications[self.notifications.count() - 2].time
+            self.notifications
+            and new_notification.content == self.notifications[len(self.notifications) - 2].content
+            and new_notification.time == self.notifications[len(self.notifications) - 2].time
         ):
             return
         notification_data = {
@@ -477,7 +482,7 @@ class Player(DBModel, UserMixin):
     def calculate_net_emissions(self) -> float:
         """Calculate the net emissions of the player."""
         cumulative_emissions = self.cumul_emissions.get_all()
-        net_emissions = 0
+        net_emissions: float = 0
         for value in cumulative_emissions.values():
             net_emissions += value
         return net_emissions
@@ -614,22 +619,21 @@ class Player(DBModel, UserMixin):
     @staticmethod
     def package_all() -> dict[int, dict]:
         """Package data for all players."""
-        players: list[Player] = Player.all()
-        return {player.id: player.package() for player in players}
+        return {player.id: player.package() for player in Player.all()}
 
     def package_scoreboard(self) -> dict[int, dict]:
         """Package the scoreboard data for players with a tile."""
-        players = Player.filter(Player.tile != None)
+        players = Player.filter(lambda p: p.tile is not None)
         include_co2_emissions = self.discovered_greenhouse_gas_effect()
         return {
             player.id: (
                 {
                     "username": player.username,
                     "network_name": player.network.name if player.network else "-",
-                    "average_hourly_revenues": player.progression_metrics.average_revenues,
-                    "max_power_consumption": player.progression_metrics.max_power_consumption,
-                    "total_technology_levels": player.progression_metrics.total_technologies,
-                    "xp": player.progression_metrics.xp,
+                    "average_hourly_revenues": player.progression_metrics["average_revenues"],
+                    "max_power_consumption": player.progression_metrics["max_power_consumption"],
+                    "total_technology_levels": player.progression_metrics["total_technologies"],
+                    "xp": player.progression_metrics["xp"],
                 }
                 | ({"co2_emissions": player.calculate_net_emissions()} if include_co2_emissions else {})
             )
@@ -677,7 +681,7 @@ class Player(DBModel, UserMixin):
         """Package the player's construction queue (list of construction_ids)."""
         return self.constructions_by_priority
 
-    def package_active_facilities(self) -> dict[str, dict[int, dict[str, any]]]:
+    def package_active_facilities(self) -> dict[str, dict[int, dict[str, Any]]]:
         """Package the player's active facilities."""
         return {
             "power_facilities": self.package_active_power_facilities(),
@@ -850,7 +854,7 @@ class Player(DBModel, UserMixin):
             del self.cache.technologies_data
         if self.socketio_clients:
             # TODO(mglst): update clients over websocket
-            pages_data = {}
+            pages_data: dict = {}
             if power_facilities:
                 pages_data |= {"power_facilities": self.cache.power_facilities_data}
             if storage_facilities:

@@ -14,7 +14,7 @@ from energetica.globals import engine
 from energetica.utils.network_helpers import reorder_facility_priorities
 
 
-def finish_project(construction: OngoingProject, *, skip_notifications: bool = False):
+def finish_project(construction: OngoingProject, *, skip_notifications: bool = False) -> None:
     """Finish a construction or research project.
 
     This function is executed when a construction or research project has finished. The effects include:
@@ -22,7 +22,7 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
     * For technologies and functional facilities, checks for achievements
     * Removes from the relevant construction / research list and priority list
     """
-    player: Player = Player.get(construction.player_id)
+    player: Player = construction.player
 
     if construction.family in ["Technologies", "Functional Facilities"]:
         if getattr(player, construction.name) == 0:
@@ -45,7 +45,7 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
         setattr(player, construction.name, getattr(player, construction.name) + 1)
 
         if construction.family == "Technologies":
-            player.progression_metrics.total_technologies += 1
+            player.progression_metrics["total_technologies"] += 1
             server_tech = engine.data["technology_lvls"][construction.name]
             if len(server_tech) <= getattr(player, construction.name):
                 server_tech.append(0)

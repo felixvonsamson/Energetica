@@ -40,7 +40,7 @@ class Chat(DBModel):
     participants: set[Player]
     messages: list[Message] = field(default_factory=list)
     last_read_message: dict[Player, int | None] = field(
-        default_factory=lambda: defaultdict(-1)
+        default_factory=lambda: defaultdict(lambda: -1),
     )  # {player: message index in messages}
 
 
