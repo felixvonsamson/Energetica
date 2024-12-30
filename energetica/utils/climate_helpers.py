@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from energetica.config.climate_events import climate_events
-from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.engine_data import calculate_reference_gta, calculate_temperature_deviation
 from energetica.database.map import HexTile

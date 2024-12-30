@@ -129,6 +129,7 @@ def create_app(
     Path("instance").mkdir(exist_ok=True)
 
     start_date = None
+    start_action_id, last_action_id = None, None
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true" and simulate_file:
         Path("checkpoints/simulation").mkdir(exist_ok=True)
         with simulate_file as file:
@@ -293,27 +294,26 @@ def create_app(
                 misfire_grace_time=10,
             )
         else:
-            if start_action_id and last_action_id:
-                scheduler.add_job(
-                    func=simulate,
-                    args=(
-                        app,
-                        kwargs["port"],
-                        actions[start_action_id : last_action_id + 1],
-                        simulate_stop_on_mismatch,
-                        simulate_stop_on_server_error,
-                        simulate_stop_on_assertion_error,
-                        simulate_checkpoint_every_k_ticks,
-                        simulate_checkpoint_ticks,
-                    ),
-                    kwargs={"profiling": simulate_profiling},
-                    id="simulate",
-                    trigger="date",
-                    run_date=datetime.now(),
-                )
+            scheduler.add_job(
+                func=simulate,
+                args=(
+                    app,
+                    kwargs["port"],
+                    actions[start_action_id : last_action_id + 1],
+                    simulate_stop_on_mismatch,
+                    simulate_stop_on_server_error,
+                    simulate_stop_on_assertion_error,
+                    simulate_checkpoint_every_k_ticks,
+                    simulate_checkpoint_ticks,
+                ),
+                kwargs={"profiling": simulate_profiling},
+                id="simulate",
+                trigger="date",
+                run_date=datetime.now(),
+            )
 
         scheduler.start()
-        atexit.register(lambda: scheduler.shutdown())
+        atexit.register(scheduler.shutdown)
 
         if run_init_test_players:
             engine.log("running init_test_players")

@@ -123,7 +123,7 @@ def rest_setup_complete():
 def rest_get_map():
     """Gets the map data from the database and returns it as a JSON string as a
     dictionary of arrays."""
-    hex_list = HexTile.order_by(HexTile.r, HexTile.q).all()
+    hex_list = sorted(HexTile.all(), lambda tile: tile.coordinates)
     response = {
         "type": "getMap",
         "data": {

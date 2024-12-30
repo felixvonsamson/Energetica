@@ -15,7 +15,7 @@ from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
 from energetica.config.achievements import achievements
-from energetica.config.assets import WorkerType
+from energetica.config.assets import WORKER_TYPE
 from energetica.database import DBModel
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, PlayerPrices
 from energetica.database.messages import Chat, Notification
@@ -213,21 +213,21 @@ class Player(DBModel, UserMixin):
         """Set the network graph view of the player (basic/normal/expert)."""
         self.graph_view = view
 
-    def get_project_priority_list(self, worker_type: WorkerType) -> list[OngoingProject]:
+    def get_project_priority_list(self, worker_type: WORKER_TYPE) -> list[OngoingProject]:
         """Return the priority list for a given family."""
-        if worker_type == WorkerType.RESEARCH:
+        if worker_type == WORKER_TYPE.RESEARCH:
             return self.researches_by_priority
-        if worker_type == WorkerType.CONSTRUCTION:
+        if worker_type == WORKER_TYPE.CONSTRUCTION:
             return self.constructions_by_priority
-        raise GameError("InvalidWorkerType")
+        raise GameError("InvalidWORKER_TYPE")
 
-    def available_workers(self, worker_type: WorkerType) -> int:
+    def available_workers(self, worker_type: WORKER_TYPE) -> int:
         """Return the number of available workers depending on the project type."""
-        if worker_type == WorkerType.RESEARCH:
+        if worker_type == WORKER_TYPE.RESEARCH:
             return self.available_lab_workers()
-        if worker_type == WorkerType.CONSTRUCTION:
+        if worker_type == WORKER_TYPE.CONSTRUCTION:
             return self.available_construction_workers()
-        raise GameError("InvalidWorkerType")
+        raise GameError("InvalidWORKER_TYPE")
 
     # TODO (Felix): Could that not be a property of a newly created Worker class ?
     def available_construction_workers(self) -> int:

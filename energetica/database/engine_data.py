@@ -6,15 +6,13 @@ from __future__ import annotations
 import math
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 import noise
 
 from energetica.globals import engine
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-
     from energetica.database.network import Network
     from energetica.database.player import Player
 

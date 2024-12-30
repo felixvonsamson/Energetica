@@ -17,7 +17,7 @@ from energetica.database.map import HexTile
 from energetica.database.messages import Chat, Message, Notification
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.game_engine import GameEngine, GameError
+from energetica.game_engine import GameError
 from energetica.globals import engine
 from energetica.utils.astro import DrHI
 

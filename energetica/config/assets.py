@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from energetica.database.player import Player
 
 
-class WorkerType(StrEnum):
+class WORKER_TYPE(StrEnum):
     """Enum for the worker type."""
 
     CONSTRUCTION = "Construction"
