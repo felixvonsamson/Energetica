@@ -387,7 +387,7 @@ class Player(DBModel, UserMixin):
         For each of these constructions, the dictionary contains the new speed and the new end_tick.
         """
         player_constructions: Iterator[OngoingProject] = OngoingProject.filter_by(
-            player_id=self.id,
+            player=self,
             status=ConstructionStatus.ONGOING,
         )
         construction_speeds: dict = {}
@@ -496,7 +496,7 @@ class Player(DBModel, UserMixin):
             for i, value in enumerate(achievements[achievement]["milestones"]):
                 achievement_name = achievements[achievement]["name"]
                 if f"{achievement_name} {i+1}" not in self.achievements:
-                    if getattr(self, achievements[achievement]["metric"]) >= value:
+                    if self.progression_metrics[achievements[achievement]["metric"]] >= value:
                         self.achievements.append(f"{achievement_name} {i+1}")
                         self.progression_metrics["xp"] += achievements[achievement]["rewards"][i]
                         message = achievements[achievement]["message"]

@@ -839,7 +839,7 @@ def resources_and_pollution(new_values, player: Player):
             op_costs[facility] -= operational_cost
 
 
-def construction_emissions(new_values, player):
+def construction_emissions(new_values, player: Player) -> None:
     """Calculate emissions of facilities under construction."""
     # TODO: Max suggestion : Change the satisfaction logic to redirect to 3 cases :
     # 1. Total satisfaction
@@ -848,7 +848,7 @@ def construction_emissions(new_values, player):
     # Call construction_emissions respectively
     # (for now this is wrong)
     emissions_construction = 0.0
-    for ud in player.under_construction:
+    for ud in OngoingProject.filter_by(player=player):
         if ud.is_ongoing() and ud.family != "Technologies":
             emissions_construction += ud.construction_pollution
     add_emissions(new_values, player, "construction", emissions_construction)

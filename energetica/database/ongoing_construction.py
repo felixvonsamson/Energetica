@@ -147,7 +147,7 @@ class OngoingProject(DBModel):
             priority_list = self.player.constructions_by_priority
             this_priority_index = priority_list.index(self)
             # Go through all ongoing constructions that are higher up in the priority order
-            level = getattr(self.player, self.name) + 1
+            level = self.player.functional_facilities[self.name] + 1
             for candidate_prerequisite in priority_list[:this_priority_index]:
                 # Add them as a prerequisite, if they are of the same type
                 if candidate_prerequisite.name == self.name:
@@ -160,7 +160,7 @@ class OngoingProject(DBModel):
             priority_list = self.player.researches_by_priority
             this_priority_index = priority_list.index(self)
             # Compute this constructions level by looking at constructions higher up in the priority list with same name
-            level = getattr(self.player, self.name) + 1
+            level = self.player.technologies[self.name] + 1
             for other_construction in priority_list[:this_priority_index]:
                 if other_construction.name == self.name:
                     level += 1
