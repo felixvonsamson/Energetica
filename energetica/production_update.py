@@ -224,7 +224,7 @@ def extraction_facility_demand(new_values, player, demand):
             demand[facility] = player.capacities[facility]["power_use"] * power_factor
 
 
-def industry_demand_and_revenues(player, demand, revenues):
+def industry_demand_and_revenues(player: Player, demand, revenues) -> None:
     """Calculate power consumption and revenues from industry."""
     # interpolating seasonal factor on the day
     ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
@@ -238,7 +238,7 @@ def industry_demand_and_revenues(player, demand, revenues):
     demand["industry"] = intra_day_factor * seasonal_factor * player.config["industry"]["power_consumption"]
     # calculate income of industry per tick
     revenues["industry"] = player.config["industry"]["income_per_day"] / ticks_per_day
-    industry_upgrade = next(OngoingProject.filter_by(player_id=player.id, name="industry"))
+    industry_upgrade = next(OngoingProject.filter_by(player=player, name="industry"))
     if industry_upgrade:
         additional_demand = (
             industry_upgrade.progress()
@@ -257,14 +257,14 @@ def industry_demand_and_revenues(player, demand, revenues):
         revenues["industry"] += additional_revenue
 
 
-def construction_demand(player: Player, demand):
+def projects_demand(player: Player, demand) -> None:
     """Calculate power consumption for facilities under construction."""
-    for ud in player.under_construction:
-        if ud.is_ongoing():
-            if ud.family == "Technologies":
-                demand["research"] += ud.construction_power
-            else:
-                demand["construction"] += ud.construction_power
+    for research in player.researches_by_priority:
+        if research.is_ongoing():
+            demand["research"] += research.construction_power
+    for construction in player.constructions_by_priority:
+        if construction.is_ongoing():
+            demand["construction"] += construction.construction_power
 
 
 def shipment_demand(player: Player, demand):
@@ -301,7 +301,7 @@ def calculate_demand(new_values, player):
 
     extraction_facility_demand(new_values, player, demand)
     industry_demand_and_revenues(player, demand, revenues)
-    construction_demand(player, demand)
+    projects_demand(player, demand)
     shipment_demand(player, demand)
     storage_demand(player, demand)
 
@@ -575,7 +575,7 @@ def renewables_generation(player: Player, generation: dict) -> None:
     for hydro_facility in ["watermill", "small_water_dam", "large_water_dam"]:
         if player.capacities[hydro_facility] is not None:
             generation[hydro_facility] = power_factor * player.capacities[hydro_facility]["power"]
-        for af in ActiveFacility.filter_by(player_id=player.id, facility=hydro_facility):
+        for af in ActiveFacility.filter_by(player=player, facility=hydro_facility):
             af.usage = power_factor
 
 

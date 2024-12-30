@@ -214,7 +214,7 @@ def rest_get_networks():
     return json.dumps(response)
 
 
-def rest_add_player_location(player):
+def rest_add_player_location(player: Player):
     """Informs the client that a player has chosen a location, packaged as a
     JSON string."""
     response = {

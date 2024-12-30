@@ -32,7 +32,7 @@ def init_test_players():
             return player
         player = Player(username=username, pwhash=generate_password_hash(password))
         # If tile_id is None, find any tile that isn't assigned to a player
-        hex_tile = HexTile.get(tile_id) if tile_id else next(HexTile.filter_by(player_id=None))
+        hex_tile = HexTile.get(tile_id) if tile_id else next(HexTile.filter_by(player=None))
         if not hex_tile:
             raise GameError("TileNotFound")  # TODO(mglst): centralize error handling, create static list of errors
         confirm_location(player, hex_tile)
@@ -66,7 +66,7 @@ def init_test_players():
             print("creating player", i)
             player = create_player(f"user{i}", "password")
             if player:
-                HexTile.get(i).player_id = player.id
+                HexTile.get(i).player = player
 
                 player.money = 1_000_000_000
                 player.resources = {"coal": 300_000, "gas": 100_000, "uranium": 500}
@@ -184,7 +184,7 @@ def init_test_players():
     # add_asset(player3, "nuclear_engineering", 1)
 
     # if player:
-    #     HexTile.filter_by(id=35).first().player_id = player.id
+    #     HexTile.filter_by(id=35).first().player = player
 
     #     player.money = 1_000_000
     #     player.resources = {"coal":4_500_000, "gas":80_000_000, "uranium":4_500}
@@ -218,7 +218,7 @@ def init_test_players():
 
     # player2 = create_player("user2", "password")
     # if player2:
-    #     HexTile.filter_by(id=84).first().player_id = player2.id
+    #     HexTile.filter_by(id=84).first().player = player2
     #     player2.data.priorities_of_controllables = ""
     #     add_asset(player2, "industry", 19)
     #     add_asset(player2, "warehouse", 1)
@@ -227,14 +227,14 @@ def init_test_players():
 
     # player3 = create_player("user3", "password")
     # if player3:
-    #     HexTile.filter_by(id=143).first().player_id = player3.id
+    #     HexTile.filter_by(id=143).first().player = player3
     #     player3.data.priorities_of_controllables = ""
     #     add_asset(player3, "industry", 8)
     #     add_asset(player3, "onshore_wind_turbine", 5)
 
     # player4 = create_player("user4", "password")
     # if player4:
-    #     HexTile.filter_by(id=28).first().player_id = player4.id
+    #     HexTile.filter_by(id=28).first().player = player4
     #     player4.data.priorities_of_controllables = ""
     #     add_asset(player4, "warehouse", 1)
     #     add_asset(player4, "watermill", 1)

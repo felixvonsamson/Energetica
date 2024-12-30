@@ -299,11 +299,11 @@ def next_available_location(player: Player, facility: str) -> int:
     """Return the next available location for a hydro and wind facilities."""
     active_facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(
         facility=facility,
-        player_id=player.id,
+        player=player,
     )
     under_construction: Iterator[OngoingProject] = OngoingProject.filter_by(
         name=facility,
-        player_id=player.id,
+        player=player,
     )
     # Create a set of used efficiency multipliers
     used_locations = {af.multipliers["multiplier_3"] for af in active_facilities}
@@ -336,7 +336,7 @@ def construction_time(player: Player, facility: str) -> float:
     duration = const_config[facility]["base_construction_time"] / engine.in_game_seconds_per_tick
     # construction time increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
-        level_with_constructions = len(list(OngoingProject.filter_by(name=facility, player_id=player.id)))
+        level_with_constructions = len(list(OngoingProject.filter_by(name=facility, player=player)))
         duration *= const_config[facility]["price_multiplier"] ** (0.6 * level_with_constructions)
         # knowledge spillover and laboratory time reduction
         if facility in engine.technologies:
@@ -456,9 +456,10 @@ def requirements_status(player: Player, project: str, requirements: list) -> str
     For technologies, returns "satisfied" if all requirements are "satisfied", otherwise if all requirements are either
     "satisfied" or "queued", returns "queued", otherwise returns "unsatisfied".
     """
+    # TODO(mglst): this method, and the others about requirements should be revised, as they are unclear
     const_config = engine.const_config["assets"]
     if all(requirement["status"] == "satisfied" for requirement in requirements):
-        if project in engine.technologies and OngoingProject.filter_by(name=project, player_id=player.id):
+        if project in engine.technologies and OngoingProject.filter_by(name=project, player=player):
             return "queued"
         return "satisfied"
     if const_config[project]["type"] == "Technology" and all(

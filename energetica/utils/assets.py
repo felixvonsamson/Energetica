@@ -54,7 +54,7 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
             server_tech[getattr(player, construction.name) - 1] += 1
             player.check_technology_achievement()
 
-    elif not ActiveFacility.filter_by(facility=construction.name, player_id=player.id):
+    elif not ActiveFacility.filter_by(facility=construction.name, player=player):
         # initialize array for facility if it is the first one built
         if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
             player.rolling_history.add_subcategory("op_costs", construction.name)
@@ -232,7 +232,7 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
 
 def upgrade_all_of_type(player: Player, facility_name: str) -> None:
     """Upgrade all facilities of a certain type."""
-    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player_id=player.id, facility=facility_name)
+    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player=player, facility=facility_name)
     for facility in facilities:
         with contextlib.suppress(GameError):
             upgrade_facility(player, facility)
