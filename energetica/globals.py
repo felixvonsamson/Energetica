@@ -1,3 +1,5 @@
+"""Global variables used in the game."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

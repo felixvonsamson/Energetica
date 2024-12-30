@@ -177,7 +177,7 @@ def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_n
         if construction.is_ongoing():
             continue
         construction.recompute_prerequisites_and_level()  # force recompute
-        if construction.cache.prerequisites:
+        if construction.prerequisites:
             continue
         construction.set_ongoing(start_now=start_now)
         available_workers -= 1
@@ -387,9 +387,9 @@ def queue_project(
         player=player,
     )
     if asset in engine.technologies:
-        player.researches_by_priority.append(new_construction.id)
+        player.researches_by_priority.append(new_construction)
     else:
-        player.constructions_by_priority.append(new_construction.id)
+        player.constructions_by_priority.append(new_construction)
     try:
         toggle_pause_project(player, new_construction)
     except GameError:
@@ -456,9 +456,9 @@ def cancel_project(player: Player, construction: OngoingProject, *, force: bool 
         refund *= construction.multipliers["multiplier_2"]
     player.money += refund
     if priority_list_name == "researches_by_priority":
-        player.researches_by_priority.remove(construction.id)
+        player.researches_by_priority.remove(construction)
     else:
-        player.constructions_by_priority.remove(construction.id)
+        player.constructions_by_priority.remove(construction)
 
     worker_type = WorkerType.RESEARCH if construction.name in engine.technologies else WorkerType.CONSTRUCTION
     deploy_available_workers(player, worker_type)
@@ -501,7 +501,7 @@ def decrease_project_priority(player: Player, construction: OngoingProject):
     # 5. waiting, paused  DISALLOWED
     # 6. paused , paused  (swap)
 
-    if construction_1.id in construction_2.cache.prerequisites:
+    if construction_1 in construction_2.prerequisites:
         raise GameError("requirementsPreventReorder")
     if not construction_1.was_paused_by_player() and construction_2.was_paused_by_player():
         msg = "CannotSwapPausedProject"
@@ -545,8 +545,8 @@ def toggle_pause_project(player: Player, construction: OngoingProject) -> None:
             if other_construction.was_paused_by_player():
                 insertion_index = other_construction_index
                 break
-            for prerequisite_id in other_construction.cache.prerequisites:
-                if prerequisite_id in dependency:
+            for prerequisite in other_construction.prerequisites:
+                if prerequisite in dependency:
                     other_construction.pause()
                     dependency.append(other_construction)
                     dependency_indices.append(other_construction_index)
@@ -577,9 +577,9 @@ def toggle_pause_project(player: Player, construction: OngoingProject) -> None:
         engine.log(f"{player.username} paused the construction {construction.id} {construction.name}")
     else:
         # project is currently pause, and should be unpaused
-        if "_prerequisites_and_level" in construction.cache.__dict__:
-            del construction.cache._prerequisites_and_level  # Needed to force recompute, as prerequisites aren't
-        for prerequisite in construction.cache.prerequisites:
+        if "_prerequisites_and_level" in construction.__dict__:
+            del construction._prerequisites_and_level  # Needed to force recompute, as prerequisites aren't
+        for prerequisite in construction.prerequisites:
             if prerequisite.status == ConstructionStatus.PAUSED:
                 raise GameError("PausedPrerequisitePreventUnpause")
 

@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import TYPE_CHECKING
 
-from energetica.config.assets import WORKER_TYPE
+from energetica.config.assets import WorkerType
 from energetica.database import DBModel
 from energetica.globals import engine
 
@@ -20,29 +20,6 @@ class ConstructionStatus:
     PAUSED = 0
     WAITING = 1
     ONGOING = 2
-
-
-@dataclass
-class OngoingProjectCache:
-    """Cache for the OngoingProject class."""
-
-    construction_id: int
-
-    @cached_property
-    def _prerequisites_and_level(self) -> tuple[list[OngoingProject], int | None]:
-        """Compute the prerequisites and level of an ongoing construction."""
-        construction = OngoingProject.get(self.construction_id)
-        return construction._compute_prerequisites_and_level()
-
-    @property
-    def prerequisites(self) -> list[OngoingProject]:
-        """Return the prerequisites of the ongoing construction in form of a list of construction ids."""
-        return self._prerequisites_and_level[0]
-
-    @property
-    def level(self) -> int | None:
-        """Return the level of the ongoing construction."""
-        return self._prerequisites_and_level[1]
 
 
 @dataclass
@@ -96,9 +73,9 @@ class OngoingProject(DBModel):
         worker that just got available)
         """
         assert self.status == ConstructionStatus.WAITING
-        assert not self.cache.prerequisites
+        assert not self.prerequisites
 
-        worker_type = WORKER_TYPE.RESEARCH if self.family == "Technologies" else WORKER_TYPE.CONSTRUCTION
+        worker_type = WorkerType.RESEARCH if self.family == "Technologies" else WorkerType.CONSTRUCTION
         assert self.player.available_workers(worker_type) > 0
         if start_now:
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
@@ -109,8 +86,8 @@ class OngoingProject(DBModel):
     def unpause(self) -> None:
         """Make this facility go from paused to either waiting or ongoing."""
         assert self.was_paused_by_player()
-        worker_type = WORKER_TYPE.RESEARCH if self.family == "Technologies" else WORKER_TYPE.CONSTRUCTION
-        if self.cache.prerequisites or self.player.available_workers(worker_type) < 1:
+        worker_type = WorkerType.RESEARCH if self.family == "Technologies" else WorkerType.CONSTRUCTION
+        if self.prerequisites or self.player.available_workers(worker_type) < 1:
             self.status = ConstructionStatus.WAITING
         else:
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
@@ -122,17 +99,10 @@ class OngoingProject(DBModel):
         self.end_tick_or_ticks_passed += ticks
         self.speed = 1 - ticks
 
-    @cached_property
-    def cache(self) -> OngoingProjectCache:
-        """Return the cache for this ongoing construction."""
-        if self.id not in engine.buffered["by_ongoing_construction"]:
-            engine.buffered["by_ongoing_construction"][self.id] = OngoingProjectCache(self.id)
-        return engine.buffered["by_ongoing_construction"][self.id]
-
     def recompute_prerequisites_and_level(self) -> None:
         """Recompute the prerequisites and level of an ongoing construction."""
-        if "_prerequisites_and_level" in self.cache.__dict__:
-            del self.cache.__dict__["_prerequisites_and_level"]
+        if "_prerequisites_and_level" in self.__dict__:
+            del self.__dict__["_prerequisites_and_level"]
 
     def progress(self) -> float:
         """Return the progress of the construction, as a float between 0 and 1."""
@@ -151,6 +121,21 @@ class OngoingProject(DBModel):
         """Reset the speed of the construction to 1 and stores the previous speed."""
         self.previous_speed = self.speed
         self.speed = 1
+
+    @cached_property
+    def _prerequisites_and_level(self) -> tuple[list[OngoingProject], int | None]:
+        """Compute the prerequisites and level of an ongoing construction."""
+        return self._compute_prerequisites_and_level()
+
+    @property
+    def prerequisites(self) -> list[OngoingProject]:
+        """Return the prerequisites of the ongoing construction in form of a list of construction ids."""
+        return self._prerequisites_and_level[0]
+
+    @property
+    def level(self) -> int | None:
+        """Return the level of the ongoing construction."""
+        return self._prerequisites_and_level[1]
 
     def _compute_prerequisites_and_level(self) -> tuple[list[OngoingProject], int | None]:
         """Compute the prerequisites and level of an ongoing construction."""

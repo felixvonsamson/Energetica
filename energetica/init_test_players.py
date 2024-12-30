@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash
 from energetica.database.map import HexTile
 from energetica.database.network import Network
 from energetica.database.player import Player
+from energetica.game_engine import GameError
 from energetica.globals import engine
 from energetica.utils.assets import finish_project, queue_project
 from energetica.utils.misc import confirm_location
@@ -32,6 +33,8 @@ def init_test_players():
         player = Player(username=username, pwhash=generate_password_hash(password))
         # If tile_id is None, find any tile that isn't assigned to a player
         hex_tile = HexTile.get(tile_id) if tile_id else next(HexTile.filter_by(player_id=None))
+        if not hex_tile:
+            raise GameError("TileNotFound")  # TODO(mglst): centralize error handling, create static list of errors
         confirm_location(player, hex_tile)
         engine.log(f"create_player: player {username} created")
         return player

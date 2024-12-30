@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import math
 import pickle
-from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -17,9 +16,6 @@ from energetica.database.player import Player
 from energetica.database.shipment import OngoingShipment
 from energetica.globals import engine
 from energetica.utils.misc import calculate_river_discharge, calculate_solar_irradiance, calculate_wind_speed
-
-if TYPE_CHECKING:
-    from energetica.game_engine import GameEngine
 
 resource_to_extraction = {
     "coal": "coal_mine",
@@ -34,11 +30,11 @@ extraction_to_resource = {
 }
 
 
-def update_electricity():
+def update_electricity() -> None:
     """Update the electricity generation and storage status for all players."""
     # calculate new co2 and temperature values
     engine.data["current_climate_data"].init_new_value()
-    players: list[Player] = Player.all()
+    players: list[Player] = list(Player.all())
     networks = Network.all()
 
     new_values = {}
@@ -133,8 +129,8 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
 def update_player_progress_values(player: Player, new_values: dict) -> None:
     """Update the player progress values and checks for new unlocks and achievements."""
     # calculate moving average revenue
-    player.progression_metrics.average_revenues = (
-        player.progression_metrics.average_revenues
+    player.progression_metrics["average_revenues"] = (
+        player.progression_metrics["average_revenues"]
         + 3600
         / engine.in_game_seconds_per_tick
         * 0.03
@@ -145,17 +141,17 @@ def update_player_progress_values(player: Player, new_values: dict) -> None:
     ) / 1.03
     # update max power consumption
     total_demand = sum([new_values[player.id]["demand"][demand] for demand in new_values[player.id]["demand"]])
-    if total_demand > player.progression_metrics.max_power_consumption:
-        player.progression_metrics.max_power_consumption = total_demand
+    if total_demand > player.progression_metrics["max_power_consumption"]:
+        player.progression_metrics["max_power_consumption"] = total_demand
     # update max stored energy
     total_storage = sum([new_values[player.id]["storage"][storage] for storage in new_values[player.id]["storage"]])
-    if total_storage > player.progression_metrics.max_energy_stored:
-        player.progression_metrics.max_energy_stored = total_storage
+    if total_storage > player.progression_metrics["max_energy_stored"]:
+        player.progression_metrics["max_energy_stored"] = total_storage
     # update imported and exported energy and converting Wt to Wh
-    player.progression_metrics.imported_energy += (
+    player.progression_metrics["imported_energy"] += (
         new_values[player.id]["generation"]["imports"] / 3600 * engine.in_game_seconds_per_tick
     )
-    player.progression_metrics.exported_energy += (
+    player.progression_metrics["exported_energy"] += (
         new_values[player.id]["demand"]["exports"] / 3600 * engine.in_game_seconds_per_tick
     )
 
@@ -628,24 +624,20 @@ def wind_generation(player: Player, generation: dict, in_game_seconds_passed: in
 
     for facility_type in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
         if player.capacities[facility_type] is not None:
-            wind_facilities: list[ActiveFacility] = ActiveFacility.filter_by(
-                player_id=player.id, facility=facility_type
-            )
-            for facility in wind_facilities:
+            for facility in ActiveFacility.filter_by(player_id=player.id, facility=facility_type):
                 wind_speed = calculate_wind_speed(facility.position, in_game_seconds_passed, engine.data["random_seed"])
                 max_power = (
-                    engine.const_config["assets"][facility_type]["base_power_generation"] * facility.multiplier_1
+                    engine.const_config["assets"][facility_type]["base_power_generation"]
+                    * facility.multipliers["multiplier_1"]
                 )
                 # multiplier_2 is the wind speed factor linked to the position of the facility:
-                effective_wind_speed = wind_speed * facility.multiplier_2
+                effective_wind_speed = wind_speed * facility.multipliers["multiplier_2"]
                 facility.usage = interpolate_wind(effective_wind_speed)
                 generation[facility_type] += facility.usage * max_power
                 # The following value is the index of the last value in the wind_power_curve list in config.assets that
                 # is 1 before the cut out taper.
                 max_speed_before_cut_out = 85
-                engine.buffered["cut_out_speed_exceeded"][facility.id] = bool(
-                    effective_wind_speed >= max_speed_before_cut_out,
-                )
+                facility.cut_out_speed_exceeded = bool(effective_wind_speed >= max_speed_before_cut_out)
 
 
 def calculate_prod(
@@ -803,7 +795,7 @@ def resources_and_pollution(new_values, player: Player):
                     getattr(player.tile, resource) - extracted_quantity,
                 )
                 player.resources[resource] += extracted_quantity
-                player.progression_metrics.extracted_resources += extracted_quantity
+                player.progression_metrics["extracted_resources"] += extracted_quantity
                 emissions = extracted_quantity * player.capacities[extraction_facility]["pollution"]
                 add_emissions(
                     new_values,
@@ -823,7 +815,7 @@ def resources_and_pollution(new_values, player: Player):
             / 86400
             * satisfaction
         )
-        player.progression_metrics.captured_co2 += captured_co2
+        player.progression_metrics["captured_co2"] += captured_co2
         add_emissions(new_values, player, "carbon_capture", -captured_co2)
 
     construction_emissions(new_values, player)

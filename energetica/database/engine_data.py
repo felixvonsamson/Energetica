@@ -89,7 +89,7 @@ class CapacityData:
         """Update the capacity data of the player."""
         from energetica.database.active_facility import ActiveFacility
 
-        active_facilities: List[ActiveFacility]
+        active_facilities: list[ActiveFacility]
         if facility_name is None:
             active_facilities = list(ActiveFacility.filter_by(player=player))
             unique_facilities = {af.name for af in active_facilities}

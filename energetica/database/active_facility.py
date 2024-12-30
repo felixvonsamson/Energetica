@@ -29,6 +29,8 @@ class ActiveFacility(DBModel):
     # percentage of the facility that is currently used
     usage: float = 0.0
 
+    cut_out_speed_exceeded: bool = False
+
     @property
     def decommissioning(self) -> bool:
         """Returns True if the facility is being decommissioned."""
@@ -88,11 +90,6 @@ class ActiveFacility(DBModel):
     def state_of_charge(self) -> float:
         """Current charge of the facility as a percentage of maximum."""
         return self.usage
-
-    @property
-    def cut_out_speed_exceeded(self) -> bool:
-        """Whether the wind speed for this wind turbine exceeds the cut-out speed."""
-        return engine.buffered["cut_out_speed_exceeded"][self.id]
 
     @property
     def efficiency(self) -> float:

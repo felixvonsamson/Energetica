@@ -9,6 +9,7 @@ import random
 from collections import defaultdict
 from datetime import datetime
 
+from flask_sock import Sock
 from flask_socketio import SocketIO
 from gevent.lock import RLock
 
@@ -18,6 +19,8 @@ from energetica.config.assets import config, const_config
 # This is the engine object
 class GameEngine(object):
     """Run the game engine. Contains all the data and methods to operate the game."""
+
+    sock: Sock
 
     power_facilities = [
         "steam_engine",
@@ -121,6 +124,7 @@ class GameEngine(object):
     }
 
     def init(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None):
+        # TODO(mglst): why is the name of this init method not __init__ ?
         from energetica.database.engine_data import EmissionData
 
         assert clock_time in [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
@@ -129,8 +133,8 @@ class GameEngine(object):
         self.config = config
         self.const_config = const_config
         self.socketio: SocketIO = None
-        self.clients = defaultdict(list)
-        self.websocket_dict = {}
+        self.clients: dict = defaultdict(list)
+        self.websocket_dict: dict = {}
         self.console_logger = logging.getLogger("console")  # logs events in the terminal
         self.action_logger = logging.getLogger("action_history")  # logs all called functions to a file
         self.init_loggers()
@@ -139,10 +143,6 @@ class GameEngine(object):
         self.lock = RLock()
         # TODO (Felix): is data really needed ? can't we just use the engine object directly ?
         self.data = {}
-        self.buffered = {}  # stores buffered values for mixed_database
-        self.buffered["by_player"] = {}
-        self.buffered["by_ongoing_construction"] = {}
-        self.buffered["cut_out_speed_exceeded"] = defaultdict(bool)
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
         self.data["start_date"] = start_date or datetime.now()  # 0 point of server time
@@ -243,6 +243,7 @@ class GameEngine(object):
             self.data["daily_question"]["player_answers"] = {}
 
 
+# TODO(mglst): move to a separate file
 class GameError(Exception):
     """Define the exception class for the game engine."""
 

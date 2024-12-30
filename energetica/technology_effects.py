@@ -14,6 +14,7 @@ from energetica.config.assets import (
 )
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_construction import OngoingProject
+from energetica.game_engine import GameError
 from energetica.globals import engine
 
 if TYPE_CHECKING:
@@ -70,7 +71,7 @@ def knowledge_spillover_discount(times_researched: int) -> float:
 def price_multiplier(player: Player, asset: str) -> float:
     """Return the price multiplier according to the technology level of the player."""
     const_config = engine.const_config["assets"]
-    mlt = 1
+    mlt = 1.0
     for research in [
         "mechanical_engineering",
         "physics",
@@ -107,7 +108,7 @@ def multiplier_1(player: Player, facility: str) -> float:
 def power_production_multiplier(player: Player, facility: str) -> float:
     """Return by how much the `facility`'s `base_power_generation` should be multiplied."""
     const_config = engine.const_config["assets"]
-    mlt = 1
+    mlt = 1.0
     # Mechanical engineering
     if facility in const_config["mechanical_engineering"]["affected_facilities"]:
         mlt *= special_multiplier(
@@ -164,7 +165,7 @@ def capacity_multiplier(player: Player, facility: str) -> float:
     Defined for storage facilities.
     """
     const_config = engine.const_config["assets"]
-    mlt = 1
+    mlt = 1.0
     # Civil engineering
     if facility in ["small_pumped_hydro", "large_pumped_hydro"]:
         mlt *= special_multiplier(
@@ -190,10 +191,12 @@ def hydro_price_multiplier(player: Player, facility: str) -> float:
 
     Defined for hydro power facilities. Returns 1 for other facilities.
     """
-    mlt = 1
+    mlt = 1.0
     # calculating the hydro price multiplier linked to the number of hydro facilities
+    if not player.tile:
+        raise GameError("TileNotFound")  # TODO(mglst): handle this case
     if facility in ["watermill", "small_water_dam", "large_water_dam"]:
-        mlt *= hydro_price_function(next_available_location(player, facility), player.tile.hydro)
+        mlt *= hydro_price_function(next_available_location(player, facility), player.tile.hydro_potential)
     return mlt
 
 
@@ -203,10 +206,12 @@ def wind_speed_multiplier(player: Player, facility: str) -> float:
     Defined for wind power facilities.
     Depends on the `player`'s current number of wind facilities and wind potential.
     """
-    mlt = 1
+    mlt = 1.0
     # calculating the wind speed multiplier linked to the number of wind turbines
+    if not player.tile:
+        raise GameError("TileNotFound")  # TODO(mglst): handle this case
     if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
-        mlt *= wind_speed_function(next_available_location(player, facility), player.tile.wind)
+        mlt *= wind_speed_function(next_available_location(player, facility), player.tile.wind_potential)
     return mlt
 
 
@@ -301,8 +306,8 @@ def next_available_location(player: Player, facility: str) -> int:
         player_id=player.id,
     )
     # Create a set of used efficiency multipliers
-    used_locations = {af.multiplier_3 for af in active_facilities}
-    used_locations.update(uc.multiplier_3 for uc in under_construction)
+    used_locations = {af.multipliers["multiplier_3"] for af in active_facilities}
+    used_locations.update(uc.multipliers["multiplier_3"] for uc in under_construction)
     i = 0
     while i in used_locations:
         i += 1
@@ -331,7 +336,7 @@ def construction_time(player: Player, facility: str) -> float:
     duration = const_config[facility]["base_construction_time"] / engine.in_game_seconds_per_tick
     # construction time increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
-        level_with_constructions = len(OngoingProject.filter_by(name=facility, player_id=player.id))
+        level_with_constructions = len(list(OngoingProject.filter_by(name=facility, player_id=player.id)))
         duration *= const_config[facility]["price_multiplier"] ** (0.6 * level_with_constructions)
         # knowledge spillover and laboratory time reduction
         if facility in engine.technologies:
@@ -463,7 +468,7 @@ def requirements_status(player: Player, project: str, requirements: list) -> str
     return "unsatisfied"
 
 
-def asset_requirements_and_requirements_status(player: Player, asset: str) -> str:
+def asset_requirements_and_requirements_status(player: Player, asset: str) -> dict:
     """Return a dictionary with the list of requirements and the requirements_status."""
     requirements = asset_requirements(player, asset)
     return {"requirements": requirements, "requirements_status": requirements_status(player, asset, requirements)}
@@ -542,7 +547,7 @@ def _capacity_factors(player: Player, facility: str) -> dict:
         }
     if facility in ["PV_solar", "CSP_solar"]:
 
-        def capacity_factor_solar(latitude: float) -> float:
+        def capacity_factor_solar(latitude: int) -> float:
             """Empirical data for solar irradiations."""
             capacity_factors = {
                 -10: 0.04570392892744975,
@@ -569,8 +574,10 @@ def _capacity_factors(player: Player, facility: str) -> dict:
             }
             return capacity_factors[latitude]
 
+        if not player.tile:
+            raise GameError("TileNotFound")
         return {
-            "capacity_factor": f"{100 * capacity_factor_solar(player.tile.r):.0f}%",
+            "capacity_factor": f"{100 * capacity_factor_solar(player.tile.coordinates[1]):.0f}%",
         }
     return {}
 
@@ -679,6 +686,9 @@ def package_extraction_facilities(player: Player) -> list[dict]:
         msg = f"unknown resource {resource}"
         raise ValueError(msg)
 
+    if not player.tile:
+        raise GameError("TileNotFound")
+
     return [
         _package_asset_base(player, extraction_facility)
         | _package_power_storage_extraction_facility_base(player, extraction_facility)
@@ -714,8 +724,10 @@ def next_level(player: Player, facility_or_technology: str) -> int:
     return (
         getattr(player, facility_or_technology)
         + len(
-            OngoingProject.filter(
-                lambda construction: construction.player == player and construction.name == facility_or_technology
+            list(
+                OngoingProject.filter(
+                    lambda construction: construction.player == player and construction.name == facility_or_technology
+                )
             )
         )
         + 1
@@ -837,7 +849,7 @@ def package_functional_facilities(player: Player) -> list[dict]:
     ]
 
 
-def package_constructions_page_data(player: Player) -> dict[list[dict]]:
+def package_constructions_page_data(player: Player) -> dict[str, list[dict]]:
     """Package data for all facilities.
 
     Gets cost, emissions, max power, etc data for constructions.

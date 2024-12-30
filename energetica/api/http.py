@@ -50,7 +50,7 @@ def log_action(func: Callable) -> Callable:
                 response = func(*args, **kwargs)
             response, status_code = response if isinstance(response, tuple) else (response, response.status_code)
         except GameError as game_exception:
-            # TODO: engine.db.rollback()
+            # TODO: engine.db.rollback() or something similar
             response, status_code = jsonify({"response": game_exception.exception_type, **game_exception.kwargs}), 403
 
         log_entry = {
@@ -79,6 +79,7 @@ def log_action(func: Callable) -> Callable:
 @http.before_request
 @login_required
 def check_if_logged_in():
+    # TODO(mglst): what is the purpose of this function? Please add a docstring
     pass
 
 
@@ -252,7 +253,8 @@ def get_market_data() -> Response | tuple:
     market_data = {}
     if current_user.network is None:
         return "", 404
-    t = int(request.args.get("t"))
+    request_data = request.get_json()
+    t = int(request_data["t"])
     filename_state = f"instance/network_data/{current_user.network.id}/charts/market_t{engine.data['total_t']-t}.pck"
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
