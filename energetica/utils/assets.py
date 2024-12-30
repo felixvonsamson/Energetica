@@ -324,7 +324,11 @@ def dismantle_all_of_type(player: Player, facility_name: str) -> None:
 def package_projects_data(player: Player) -> dict:
     """Package ongoing constructions for a particular player."""
     # TODO(mglst): Rework the return dict structure (involves back + front end)
-    return {0: player.package_constructions(), 1: player.constructions_by_priority, 2: player.researches_by_priority}
+    return {
+        0: player.package_constructions(),
+        1: [c.id for c in player.constructions_by_priority],
+        2: [r.id for r in player.researches_by_priority],
+    }
 
 
 def queue_project(

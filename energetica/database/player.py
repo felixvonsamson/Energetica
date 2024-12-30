@@ -66,6 +66,7 @@ class Player(DBModel, UserMixin):
     climate_events: list[ClimateEventRecovery] = field(default_factory=list)  # Player
     constructions_by_priority: list[OngoingProject] = field(default_factory=list)  # Player
     researches_by_priority: list[OngoingProject] = field(default_factory=list)  # Player
+    # TODO(mglst): I suggest renaming the above to "research_projects(_by_priority)"
 
     network_prices: PlayerPrices = field(default_factory=PlayerPrices)
     rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
@@ -633,7 +634,6 @@ class Player(DBModel, UserMixin):
 
     def package_constructions(self) -> dict[int, dict]:
         """Package the player's ongoing constructions."""
-        constructions: list[OngoingProject] = self.constructions_by_priority
         return {
             construction.id: {
                 k: getattr(construction, k)
@@ -647,9 +647,9 @@ class Player(DBModel, UserMixin):
                 ]
             }
             | {"display_name": engine.const_config["assets"][construction.name]["name"]}
-            | ({"level": construction.cache.level} if construction.cache.level is not None else {})
+            | ({"level": construction.level} if construction.level is not None else {})
             | {"speed": construction.speed}
-            for construction in constructions
+            for construction in (*self.constructions_by_priority, *self.researches_by_priority)
         }
 
     def package_shipments(self) -> dict[int, dict]:
