@@ -238,7 +238,7 @@ def industry_demand_and_revenues(player: Player, demand, revenues) -> None:
     demand["industry"] = intra_day_factor * seasonal_factor * player.config["industry"]["power_consumption"]
     # calculate income of industry per tick
     revenues["industry"] = player.config["industry"]["income_per_day"] / ticks_per_day
-    industry_upgrade = next(OngoingProject.filter_by(player=player, name="industry"))
+    industry_upgrade = next(OngoingProject.filter_by(player=player, name="industry"), None)
     if industry_upgrade:
         additional_demand = (
             industry_upgrade.progress()
@@ -321,7 +321,7 @@ def reset_resource_reservations():
     }
 
 
-def calculate_generation_without_market(new_values, player):
+def calculate_generation_without_market(new_values, player: Player):
     """Calculate the generation of a player that is not part of a network."""
     internal_market = init_market()
     generation = new_values[player.id]["generation"]
@@ -346,7 +346,7 @@ def calculate_generation_without_market(new_values, player):
     # demands are demanded on the internal market
     for demand_type in player.priorities_of_demand:
         if demand_type in demand:
-            price = getattr(player, "price_buy_" + demand_type)
+            price = player.network_prices.demand[demand_type]
             internal_market = bid(
                 internal_market,
                 player.id,
@@ -366,7 +366,7 @@ def calculate_generation_without_market(new_values, player):
                 facility,
                 resource_reservations,
             )
-            price = getattr(player, "price_" + facility)
+            price = player.network_prices.supply[facility]
             capacity = max_prod - generation[facility]
             internal_market = offer(internal_market, player.id, capacity, price, facility)
 

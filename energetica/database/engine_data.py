@@ -23,6 +23,10 @@ class PlayerPrices:
     Class that stores the prices of a player for each facility type.
     """
 
+    # TODO(mglst): suggest renaming:
+    # - "supply" -> "bids"
+    # - "demand" -> "asks" or "offers"
+
     supply: dict[str, float] = field(
         default_factory=lambda: {
             "steam_engine": 125.0,
