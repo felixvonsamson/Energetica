@@ -244,15 +244,6 @@ class GameEngine(object):
 
 
 # TODO(mglst): move to a separate file
-class GameError(Exception):
-    """Define the exception class for the game engine."""
-
-    def __init__(self, exception_type, **kwargs):
-        self.exception_type = exception_type
-        self.kwargs = kwargs
-        Exception.__init__(self, exception_type)
-
-
 class Confirm(Exception):
     """Use this class to ask the player to confirm an action."""
 

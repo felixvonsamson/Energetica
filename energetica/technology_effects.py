@@ -14,7 +14,7 @@ from energetica.config.assets import (
 )
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_construction import OngoingProject
-from energetica.game_engine import GameError
+from energetica.game_error import GameError
 from energetica.globals import engine
 
 if TYPE_CHECKING:

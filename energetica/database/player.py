@@ -15,13 +15,13 @@ from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
 from energetica.config.achievements import achievements
-from energetica.config.assets import WORKER_TYPE
+from energetica.config.assets import WorkerType
 from energetica.database import DBModel
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, PlayerPrices
 from energetica.database.messages import Chat, Notification
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingProject
 from energetica.database.shipment import OngoingShipment
-from energetica.game_engine import GameError
+from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.technology_effects import (
     package_available_technologies,
@@ -213,21 +213,21 @@ class Player(DBModel, UserMixin):
         """Set the network graph view of the player (basic/normal/expert)."""
         self.graph_view = view
 
-    def get_project_priority_list(self, worker_type: WORKER_TYPE) -> list[OngoingProject]:
+    def get_project_priority_list(self, worker_type: WorkerType) -> list[OngoingProject]:
         """Return the priority list for a given family."""
-        if worker_type == WORKER_TYPE.RESEARCH:
+        if worker_type == WorkerType.RESEARCH:
             return self.researches_by_priority
-        if worker_type == WORKER_TYPE.CONSTRUCTION:
+        if worker_type == WorkerType.CONSTRUCTION:
             return self.constructions_by_priority
-        raise GameError("InvalidWORKER_TYPE")
+        raise GameError("InvalidWorkerType")
 
-    def available_workers(self, worker_type: WORKER_TYPE) -> int:
+    def available_workers(self, worker_type: WorkerType) -> int:
         """Return the number of available workers depending on the project type."""
-        if worker_type == WORKER_TYPE.RESEARCH:
+        if worker_type == WorkerType.RESEARCH:
             return self.available_lab_workers()
-        if worker_type == WORKER_TYPE.CONSTRUCTION:
+        if worker_type == WorkerType.CONSTRUCTION:
             return self.available_construction_workers()
-        raise GameError("InvalidWORKER_TYPE")
+        raise GameError("InvalidWorkerType")
 
     # TODO (Felix): Could that not be a property of a newly created Worker class ?
     def available_construction_workers(self) -> int:

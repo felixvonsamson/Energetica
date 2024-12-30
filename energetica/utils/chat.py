@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from energetica.database.messages import Chat, Message
-from energetica.game_engine import GameError
+from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.misc import display_new_message
 

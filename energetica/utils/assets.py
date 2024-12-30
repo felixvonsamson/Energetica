@@ -6,11 +6,12 @@ import random
 from typing import Iterator
 
 from energetica import technology_effects
-from energetica.config.assets import WORKER_TYPE
+from energetica.config.assets import WorkerType
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_construction import ConstructionStatus, OngoingProject
 from energetica.database.player import Player
-from energetica.game_engine import Confirm, GameError
+from energetica.game_engine import Confirm
+from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.network_helpers import reorder_facility_priorities
 
@@ -78,11 +79,11 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
 
     player.check_construction_achievements(construction.name)
 
-    worker_type: WORKER_TYPE
+    worker_type: WorkerType
     if construction.family == "Technologies":
-        worker_type = WORKER_TYPE.RESEARCH
+        worker_type = WorkerType.RESEARCH
     else:
-        worker_type = WORKER_TYPE.CONSTRUCTION
+        worker_type = WorkerType.CONSTRUCTION
     family = construction.family
     player.get_project_priority_list(worker_type).remove(construction)
 
@@ -136,10 +137,10 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
         )
         # Deploy any new workers from laboratory upgrades
         if construction.name == "laboratory":
-            deploy_available_workers(player, WORKER_TYPE.RESEARCH, start_now=True)
+            deploy_available_workers(player, WorkerType.RESEARCH, start_now=True)
     if family == "Technologies":
         if construction.name == "construction_technology":
-            deploy_available_workers(player, WORKER_TYPE.CONSTRUCTION, start_now=True)
+            deploy_available_workers(player, WorkerType.CONSTRUCTION, start_now=True)
         player.invalidate_recompute_and_dispatch_data_for_pages(
             power_facilities=True,
             storage_facilities=True,
@@ -154,7 +155,7 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
     player.send_worker_info()
 
 
-def deploy_available_workers(player: Player, worker_type: WORKER_TYPE, *, start_now=False) -> None:
+def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_now=False) -> None:
     """Ensure all free workers for `family` are in use, if possible.
 
     Workers are deployed only on projects that are waiting - paused projects are never unpaused, except by the player.
@@ -460,7 +461,7 @@ def cancel_project(player: Player, construction: OngoingProject, *, force: bool 
     else:
         player.constructions_by_priority.remove(construction)
 
-    worker_type = WORKER_TYPE.RESEARCH if construction.name in engine.technologies else WORKER_TYPE.CONSTRUCTION
+    worker_type = WorkerType.RESEARCH if construction.name in engine.technologies else WorkerType.CONSTRUCTION
     deploy_available_workers(player, worker_type)
     player.send_worker_info()
 
@@ -484,7 +485,7 @@ def decrease_project_priority(player: Player, construction: OngoingProject):
         raise GameError(msg)
     attr = "researches_by_priority" if construction.name in engine.technologies else "constructions_by_priority"
 
-    worker_type = WORKER_TYPE.RESEARCH if construction.family == "Technologies" else WORKER_TYPE.CONSTRUCTION
+    worker_type = WorkerType.RESEARCH if construction.family == "Technologies" else WorkerType.CONSTRUCTION
     priority_list = player.get_project_priority_list(worker_type)
     index = priority_list.index(construction)
     if index == len(priority_list) - 1:
@@ -530,7 +531,7 @@ def toggle_pause_project(player: Player, construction: OngoingProject) -> None:
         msg = "Construction not found"
         raise GameError(msg)
 
-    worker_type = WORKER_TYPE.RESEARCH if construction.family == "Technologies" else WORKER_TYPE.CONSTRUCTION
+    worker_type = WorkerType.RESEARCH if construction.family == "Technologies" else WorkerType.CONSTRUCTION
 
     if not construction.was_paused_by_player():
         # project is currently not paused by player, and should be paused
@@ -570,7 +571,7 @@ def toggle_pause_project(player: Player, construction: OngoingProject) -> None:
                 priority_list.remove(dependent)
 
         # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
-        worker_type = WORKER_TYPE.RESEARCH if construction.name in engine.technologies else WORKER_TYPE.CONSTRUCTION
+        worker_type = WorkerType.RESEARCH if construction.name in engine.technologies else WorkerType.CONSTRUCTION
         deploy_available_workers(player, worker_type)
         player.send_worker_info()
 

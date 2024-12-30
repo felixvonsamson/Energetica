@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash
 from energetica.database.map import HexTile
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.game_engine import GameError
+from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.assets import finish_project, queue_project
 from energetica.utils.misc import confirm_location

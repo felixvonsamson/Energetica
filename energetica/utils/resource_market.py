@@ -4,7 +4,7 @@ import math
 
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.database.shipment import OngoingShipment
-from energetica.game_engine import GameError
+from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.formatting import display_money, format_mass
 

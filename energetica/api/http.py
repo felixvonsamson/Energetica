@@ -26,7 +26,8 @@ from energetica.database.network import Network
 from energetica.database.ongoing_construction import OngoingProject
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.game_engine import Confirm, GameError
+from energetica.game_engine import Confirm
+from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.assets import package_projects_data
 from energetica.utils.misc import flash_error
