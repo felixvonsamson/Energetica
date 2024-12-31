@@ -20,7 +20,8 @@ if TYPE_CHECKING:
 
 
 def finish_project(construction: OngoingProject, *, skip_notifications: bool = False) -> None:
-    """Finish a construction or research project.
+    """
+    Finish a construction or research project.
 
     This function is executed when a construction or research project has finished. The effects include:
     * For facilities which create demands, e.g. carbon capture, adds demands to the demand priorities
@@ -83,10 +84,7 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
     player.check_construction_achievements(construction.name)
 
     worker_type: WorkerType
-    if construction.family == "Technologies":
-        worker_type = WorkerType.RESEARCH
-    else:
-        worker_type = WorkerType.CONSTRUCTION
+    worker_type = WorkerType.RESEARCH if construction.family == "Technologies" else WorkerType.CONSTRUCTION
     family = construction.family
     player.get_project_priority_list(worker_type).remove(construction)
 
@@ -158,8 +156,9 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
     player.send_worker_info()
 
 
-def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_now=False) -> None:
-    """Ensure all free workers for `family` are in use, if possible.
+def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_now: bool = False) -> None:
+    """
+    Ensure all free workers for `family` are in use, if possible.
 
     Workers are deployed only on projects that are waiting - paused projects are never unpaused, except by the player.
     The list of ongoing projects may be reordered to satisfy the priority list invariants.
@@ -167,7 +166,6 @@ def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_n
     until the start of the next tick. This is used when a construction is finished and the worker starts a new one and
     when a new worker is available and starts a new construction.
     """
-
     available_workers = player.available_workers(worker_type)
     priority_list = player.get_project_priority_list(worker_type)
 
@@ -343,7 +341,6 @@ def queue_project(
     skip_notifications: bool = False,
 ) -> OngoingProject:
     """Queue a construction or research project."""
-
     if asset not in engine.all_asset_types:
         msg = f"Asset '{asset}' not found"
         raise GameError(msg)
@@ -432,7 +429,7 @@ def invalidate_data_on_project_update(player: Player, asset_type: str) -> None:
         player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
 
 
-def cancel_project(player: Player, construction: OngoingProject, *, force: bool = False):
+def cancel_project(player: Player, construction: OngoingProject, *, force: bool = False) -> None:
     """Cancel an ongoing construction."""
     if construction is None or construction.player != player:
         msg = "Construction not found"
@@ -481,9 +478,10 @@ def cancel_project(player: Player, construction: OngoingProject, *, force: bool 
     del construction
 
 
-def decrease_project_priority(player: Player, construction: OngoingProject):
+def decrease_project_priority(player: Player, construction: OngoingProject) -> None:
     """
     Decrease the priority of an ongoing construction.
+
     This function is executed when a player changes the order of ongoing constructions.
     Note : When a project is moved in the priority list, it may be paused or unpaused.
     """
@@ -531,7 +529,8 @@ def decrease_project_priority(player: Player, construction: OngoingProject):
 
 def toggle_pause_project(player: Player, construction: OngoingProject) -> None:
     """
-    This function is executed when a player pauses or unpauses an ongoing construction.
+    Pause or unpauses an ongoing project.
+
     Note : When a project is paused or unpaused, it's position in the priority list has to be updated.
     """
     if construction is None or construction.player != player:
