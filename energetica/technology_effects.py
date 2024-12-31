@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -18,6 +18,8 @@ from energetica.game_error import GameError
 from energetica.globals import engine
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from energetica.database.map import HexTile
     from energetica.database.player import Player
 
@@ -49,7 +51,8 @@ def special_multiplier(pf: float, lvl: int) -> float:
 
 
 def research_prevalence(technology: str, level: int) -> int:
-    """Return the number of players that have researched the technology at the given level.
+    """
+    Return the number of players that have researched the technology at the given level.
 
     :param technology: the technology to check
     :param level: the level of the technology to check
@@ -60,7 +63,8 @@ def research_prevalence(technology: str, level: int) -> int:
 
 
 def knowledge_spillover_discount(times_researched: int) -> float:
-    """Return how a technology should be discounted given the number of players that have researched it.
+    """
+    Return how a technology should be discounted given the number of players that have researched it.
 
     :param times_researched: the number of players that have researched the technology
     :return: the discount factor. 1.0 means no discount, 0.8 means a 20% discount
@@ -95,7 +99,8 @@ def price_multiplier(player: Player, asset: str) -> float:
 
 
 def multiplier_1(player: Player, facility: str) -> float:
-    """Return the first multiplier according to the technology level of the player.
+    """
+    Return the first multiplier according to the technology level of the player.
 
     This multiplier can be either the `power_production_multiplier` or the `power_consumption_multiplier`.
     """
@@ -112,7 +117,8 @@ def power_production_multiplier(player: Player, facility: str) -> float:
     # Mechanical engineering
     if facility in const_config["mechanical_engineering"]["affected_facilities"]:
         mlt *= special_multiplier(
-            const_config["mechanical_engineering"]["prod_factor"], player.technologies["mechanical_engineering"]
+            const_config["mechanical_engineering"]["prod_factor"],
+            player.technologies["mechanical_engineering"],
         )
     # Physics
     if facility in const_config["physics"]["affected_facilities"]:
@@ -120,7 +126,8 @@ def power_production_multiplier(player: Player, facility: str) -> float:
     # Civil engineering
     if facility in const_config["civil_engineering"]["affected_facilities"]:
         mlt *= special_multiplier(
-            const_config["civil_engineering"]["prod_factor"], player.technologies["civil_engineering"]
+            const_config["civil_engineering"]["prod_factor"],
+            player.technologies["civil_engineering"],
         )
     # Aerodynamics
     if facility in const_config["aerodynamics"]["affected_facilities"]:
@@ -128,7 +135,8 @@ def power_production_multiplier(player: Player, facility: str) -> float:
     # Nuclear engineering
     if facility in const_config["nuclear_engineering"]["affected_facilities"]:
         mlt *= special_multiplier(
-            const_config["nuclear_engineering"]["prod_factor"], player.technologies["nuclear_engineering"]
+            const_config["nuclear_engineering"]["prod_factor"],
+            player.technologies["nuclear_engineering"],
         )
     return mlt
 
@@ -144,7 +152,8 @@ def power_consumption_multiplier(player: Player, facility: str) -> float:
 
 
 def multiplier_2(player: Player, facility: str) -> float:
-    """Return the second multiplier according to the technology level of the player.
+    """
+    Return the second multiplier according to the technology level of the player.
 
     This multiplier can be either the
     `extraction_rate_multiplier`, the `hydro_price_multiplier`, the `wind_speed_multiplier` or the `capacity_multiplier`
@@ -160,7 +169,8 @@ def multiplier_2(player: Player, facility: str) -> float:
 
 
 def capacity_multiplier(player: Player, facility: str) -> float:
-    """Return by how much the `facility`'s `base_storage_capacity` should be multiplied.
+    """
+    Return by how much the `facility`'s `base_storage_capacity` should be multiplied.
 
     Defined for storage facilities.
     """
@@ -169,13 +179,15 @@ def capacity_multiplier(player: Player, facility: str) -> float:
     # Civil engineering
     if facility in ["small_pumped_hydro", "large_pumped_hydro"]:
         mlt *= special_multiplier(
-            const_config["civil_engineering"]["capacity_factor"], player.technologies["civil_engineering"]
+            const_config["civil_engineering"]["capacity_factor"],
+            player.technologies["civil_engineering"],
         )
     return mlt
 
 
 def extraction_rate_multiplier(player: Player, level: int | None = None) -> float:
-    """Return by how much the `facility`'s `base_extraction_rate_per_day` should be multiplied.
+    """
+    Return by how much the `facility`'s `base_extraction_rate_per_day` should be multiplied.
 
     Defined for extraction facilities.
     If `level` is not provided, the `player`'s current `mineral_extraction` level is used.
@@ -187,7 +199,8 @@ def extraction_rate_multiplier(player: Player, level: int | None = None) -> floa
 
 
 def hydro_price_multiplier(player: Player, facility: str) -> float:
-    """Return by how much the `facility`'s `base_price` should be multiplied.
+    """
+    Return by how much the `facility`'s `base_price` should be multiplied.
 
     Defined for hydro power facilities. Returns 1 for other facilities.
     """
@@ -201,7 +214,8 @@ def hydro_price_multiplier(player: Player, facility: str) -> float:
 
 
 def wind_speed_multiplier(player: Player, facility: str) -> float:
-    """Return by how much the wind at the `facility`'s location should be multiplied.
+    """
+    Return by how much the wind at the `facility`'s location should be multiplied.
 
     Defined for wind power facilities.
     Depends on the `player`'s current number of wind facilities and wind potential.
@@ -216,7 +230,8 @@ def wind_speed_multiplier(player: Player, facility: str) -> float:
 
 
 def multiplier_3(player: Player, facility: str) -> float:
-    """Return the third multiplier according to the technology level of the player.
+    """
+    Return the third multiplier according to the technology level of the player.
 
     This multiplier can be either the `efficiency_multiplier`, the `extraction_emissions_multiplier`, or the
     `next_available_location`.
@@ -237,7 +252,8 @@ def multiplier_3(player: Player, facility: str) -> float:
 
 
 def efficiency_multiplier(player: Player, facility: str) -> float:
-    """Return by how much the `facility`'s `base_efficiency` should be multiplied.
+    """
+    Return by how much the `facility`'s `base_efficiency` should be multiplied.
 
     Defined for storage facilities.
     For power facilities, returns by how much the `facility`'s `base_pollution` should be multiplied, according to the
@@ -254,7 +270,8 @@ def efficiency_multiplier(player: Player, facility: str) -> float:
 
 
 def efficiency_multiplier_thermodynamics(player: Player, facility: str, level: int | None = None) -> float:
-    """Return by how much the `base_efficiency` should be multiplied.
+    """
+    Return by how much the `base_efficiency` should be multiplied.
 
     Defined for facilities in the `"affected_facilities"` list for `thermodynamics`.
     If `level` is not provided, the `player`'s current `thermodynamics` level is used.
@@ -271,7 +288,8 @@ def efficiency_multiplier_thermodynamics(player: Player, facility: str, level: i
 
 
 def efficiency_multiplier_chemistry(player: Player, facility: str, level: int | None = None) -> float:
-    """Return by how much the `base_efficiency` should be multiplied.
+    """
+    Return by how much the `base_efficiency` should be multiplied.
 
     For facilities in the `"affected_facilities"` list for `chemistry`.
     If `level` is not provided, the `player`'s current `chemistry` level is used.
@@ -315,7 +333,8 @@ def next_available_location(player: Player, facility: str) -> int:
 
 
 def construction_price(player: Player, facility: str) -> float:
-    """Return the construction price of the `facility` for the `player`.
+    """
+    Return the construction price of the `facility` for the `player`.
 
     Returns the (real) cost of the construction of `facility` for `player`; be it power, storage, extraction,
     functional facility, or technology; for functional facilities and technologies: be it for the immediate next level
@@ -451,7 +470,8 @@ def asset_requirements(player: Player, asset: str) -> list[dict[str, str | int]]
 
 
 def requirements_status(player: Player, project: str, requirements: list) -> str:
-    """Return the satisfaction status of the requirements for the specified asset.
+    """
+    Return the satisfaction status of the requirements for the specified asset.
 
     Returns either "satisfied", "queued", or "unsatisfied".
     For facilities, returns "satisfied" if all requirements are "satisfied", otherwise returns "unsatisfied"
@@ -479,7 +499,7 @@ def asset_requirements_and_requirements_status(player: Player, asset: str) -> di
 
 def power_facility_resource_consumption(player: Player, power_facility: str) -> float:
     """Return a dictionary of the resources consumed by the power_facility for this player."""
-    # TODO: perhaps rejig how this information is packaged.
+    # TODO(mglst): perhaps rejig how this information is packaged.
     # Namely, switch from a dictionary with the system resource name as a key and a float for the amount as a value
     # to an array of dictionaries with keys ranging in "name", "display_name", "amount"
     consumed_resources = engine.const_config["assets"][power_facility]["consumed_resource"].copy()
@@ -530,7 +550,8 @@ def _package_power_generating_facility_base(player: Player, facility: str) -> di
 
 
 def _capacity_factors(player: Player, facility: str) -> dict:
-    """Get the capacity factors for renewable power facilities.
+    """
+    Get the capacity factors for renewable power facilities.
 
     !!! The capacity factor function is an approximation of the empirical data and has to be updated whenever a change
     in the wind simulation is made. !!!
@@ -715,7 +736,8 @@ def package_extraction_facilities(player: Player) -> list[dict]:
 
 
 def facility_is_hidden(player: Player, facility: str) -> bool:
-    """Return true if the facility is hidden to the player due to lack of achievements.
+    """
+    Return true if the facility is hidden to the player due to lack of achievements.
 
     Such facilities should not be shown on the frontend.
     """
@@ -730,16 +752,17 @@ def next_level(player: Player, facility_or_technology: str) -> int:
         + len(
             list(
                 OngoingProject.filter(
-                    lambda construction: construction.player == player and construction.name == facility_or_technology
-                )
-            )
+                    lambda construction: construction.player == player and construction.name == facility_or_technology,
+                ),
+            ),
         )
         + 1
     )
 
 
 def package_change(current: float | None, upgraded: float) -> dict | None:
-    """Package a change between two values.
+    """
+    Package a change between two values.
 
     `current` can be `None` to represent a new ability rather than an upgrade.
     If both values are the same, e.g. lab workers, there is no change, so returns None.
@@ -854,7 +877,8 @@ def package_functional_facilities(player: Player) -> list[dict]:
 
 
 def package_constructions_page_data(player: Player) -> dict[str, list[dict]]:
-    """Package data for all facilities.
+    """
+    Package data for all facilities.
 
     Gets cost, emissions, max power, etc data for constructions.
     Takes into account base config prices and multipliers for the specified player.

@@ -22,6 +22,8 @@ class GameEngine(object):
 
     sock: Sock
 
+    # TODO(mglst): move and refactor all these constants
+
     power_facilities = [
         "steam_engine",
         "windmill",
@@ -124,7 +126,7 @@ class GameEngine(object):
     }
 
     def init(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None):
-        # TODO(mglst): why is the name of this init method not __init__ ?
+        # TODO(mglst): Create an explicit __init__ method, maybe make this a dataclass. Bref, rework this class
         from energetica.database.engine_data import EmissionData
 
         assert clock_time in [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
@@ -142,6 +144,7 @@ class GameEngine(object):
 
         self.lock = RLock()
         # TODO (Felix): is data really needed ? can't we just use the engine object directly ?
+        # TODO(mglst): agree with Felix
         self.data = {}
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
@@ -167,7 +170,9 @@ class GameEngine(object):
 
         # All data for the current day will be stored here :
         self.data["current_climate_data"] = EmissionData(
-            self.data["delta_t"], in_game_seconds_per_tick, self.data["random_seed"]
+            self.data["delta_t"],
+            in_game_seconds_per_tick,
+            self.data["random_seed"],
         )
         self.data["daily_question"] = {}
         self.new_daily_question()
@@ -190,15 +195,13 @@ class GameEngine(object):
         }
 
         with open("energetica/static/data/industry_demand.pck", "rb") as file:
-            self.industry_demand = pickle.load(
-                file
-            )  # array of length 1440 of normalized daily industry demand variations
+            # array of length 1440 of normalized daily industry demand variations
+            self.industry_demand = pickle.load(file)
         with open("energetica/static/data/industry_demand_year.pck", "rb") as file:
-            self.industry_seasonal = pickle.load(
-                file
-            )  # array of length 51 of normalized yearly industry demand variations
+            # array of length 51 of normalized yearly industry demand variations
+            self.industry_seasonal = pickle.load(file)
 
-    def init_loggers(self):
+    def init_loggers(self) -> None:
         """Initialize the loggers for the engine."""
         self.console_logger.setLevel(logging.INFO)
         s_handler = logging.StreamHandler()
@@ -212,15 +215,15 @@ class GameEngine(object):
         f_handler.setLevel(logging.INFO)
         self.action_logger.addHandler(f_handler)
 
-    def log(self, message):
+    def log(self, message) -> None:
         """Log a message with the current time in the terminal."""
         self.console_logger.info(message)
 
-    def warn(self, message):
+    def warn(self, message) -> None:
         """Log a warning message in the terminal."""
         self.console_logger.warning(message)
 
-    def package_global_data(self):
+    def package_global_data(self) -> dict:
         """Package mutable from energetica.globals import engine data as a dict to be sent and used on the frontend."""
         return {
             "first_tick_date": self.data["start_date"],
@@ -228,7 +231,7 @@ class GameEngine(object):
             "total_ticks": self.data["total_t"],
         }
 
-    def new_daily_question(self):
+    def new_daily_question(self) -> None:
         """Load a new daily question from the csv file."""
         with open("energetica/static/data/daily_quiz_questions.csv", "r", encoding="utf-8") as file:
             csv_reader = list(csv.DictReader(file))
@@ -243,11 +246,11 @@ class GameEngine(object):
             self.data["daily_question"]["player_answers"] = {}
 
 
-# TODO(mglst): move to a separate file
+# TODO(mglst): Convert this class to an instance of GameError
+
+
 class Confirm(Exception):
     """Use this class to ask the player to confirm an action."""
-
-    # TODO(mglst): Convert this class to an instance of GameError
 
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)

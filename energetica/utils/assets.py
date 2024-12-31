@@ -3,7 +3,7 @@
 import contextlib
 import math
 import random
-from typing import Iterator
+from typing import TYPE_CHECKING
 
 from energetica import technology_effects
 from energetica.config.assets import WorkerType
@@ -14,6 +14,9 @@ from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.network_helpers import reorder_facility_priorities
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 def finish_project(construction: OngoingProject, *, skip_notifications: bool = False) -> None:

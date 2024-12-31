@@ -33,7 +33,7 @@ from energetica.utils.assets import package_projects_data
 from energetica.utils.misc import flash_error
 
 if TYPE_CHECKING:
-    current_user: Player  # type: ignore
+    current_user: Player  # type: ignore[no-redef]
 
 http = Blueprint("http", __name__)
 
@@ -86,7 +86,8 @@ def check_if_logged_in():
 
 @http.route("/request_delete_notification", methods=["POST"])
 def request_delete_notification() -> Response:
-    """Delete a notification from the player's notification list.
+    """
+    Delete a notification from the player's notification list.
 
     Request Payload:
         {
@@ -179,7 +180,7 @@ def get_chart_data() -> Response | tuple:
     def calculate_mean_subarrays(array: list, x: int) -> list:
         return [np.mean(array[i : i + x]) for i in range(0, len(array), x)]
 
-    def concat_slices(dict1: dict, dict2: dict):
+    def concat_slices(dict1: dict, dict2: dict) -> None:
         for key, value in dict2.items():
             for sub_key, array2 in value.items():
                 if sub_key not in dict1[key]:

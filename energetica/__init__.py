@@ -28,6 +28,7 @@ from flask_apscheduler import APScheduler
 from flask_login import LoginManager, current_user
 from flask_sock import Sock
 from flask_socketio import SocketIO
+from werkzeug.wrappers import Response
 
 from energetica import globals
 from energetica.game_engine import GameEngine
@@ -220,7 +221,7 @@ def create_app(
     app.register_blueprint(websocket_blueprint, url_prefix="/api/")
 
     @app.route("/subscribe", methods=["GET", "POST"])
-    def subscribe():
+    def subscribe() -> Response:
         """POST: Create a new subscription. GET: Return VAPID public key."""
         if request.method == "GET":
             return jsonify({"public_key": app.config["VAPID_PUBLIC_KEY"]})
@@ -231,7 +232,7 @@ def create_app(
         return jsonify({"response": "Subscription successful"})
 
     @app.route("/unsubscribe", methods=["POST"])
-    def unsubscribe():
+    def unsubscribe() -> Response:
         """POST: remove a subscription."""
         subscription = request.json
         if subscription in current_user.notification_subscriptions:
@@ -239,10 +240,11 @@ def create_app(
         return jsonify({"response": "Unsubscription successful"})
 
     @app.route("/apple-app-site-association")
-    def apple_app_site_association():
-        """Return the apple-app-site-association JSON data.
+    def apple_app_site_association() -> Response:
+        """
+        Return the apple-app-site-association JSON data.
 
-        Needed for supporting associated domains needed for shared webcredentials
+        Needed for supporting associated domains needed for shared webcredentials.
         """
         return send_file("static/apple-app-site-association", as_attachment=True)
 
