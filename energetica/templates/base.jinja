@@ -13,9 +13,9 @@
       <span id="money"></span>
       <script>document.currentScript.previousElementSibling.innerHTML = format_money_long({{ user.money }});</script>
     </div>
-    {% if user.functional_facilities.warehouse > 0 %}
+    {% if user.functional_facility_lvl.warehouse > 0 %}
     {% set warehouse_cap = engine.const_config.warehouse_capacities %}
-    {% set warehouse_mult = engine.const_config.assets.warehouse["capacity_factor"] ** user.functional_facilities.warehouse %}
+    {% set warehouse_mult = engine.const_config.assets.warehouse["capacity_factor"] ** user.functional_facility_lvl.warehouse %}
     <div class="resource_container">
       <div class="resourceGauge-background hover_info">
         <div class="resourceGauge color_coal" style="--width:{{user.resources.coal / warehouse_cap.coal / warehouse_mult}}"></div>

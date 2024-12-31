@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
-def finish_project(construction: OngoingProject, *, skip_notifications: bool = False) -> None:
+def finish_project(project: OngoingProject, *, skip_notifications: bool = False) -> None:
     """
     Finish a construction or research project.
 
@@ -28,86 +28,88 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
     * For technologies and functional facilities, checks for achievements
     * Removes from the relevant construction / research list and priority list
     """
-    player: Player = construction.player
+    player: Player = project.player
 
-    if construction.family in ["Technologies", "Functional Facilities"]:
-        if getattr(player, construction.name) == 0:
-            if construction.name == "carbon_capture":
-                player.rolling_history.add_subcategory("demand", construction.name)
-                player.rolling_history.add_subcategory("emissions", construction.name)
-                player.cumul_emissions.add_category(construction.name)
-                player.priorities_of_demand.append(construction.name)
+    if project.family == "Technologies":
+        player.technology_lvl[project.name] += 1
+    if project.family == "Functional Facilities":
+        if player.functional_facility_lvl == 0:
+            if project.name == "carbon_capture":
+                player.rolling_history.add_subcategory("demand", project.name)
+                player.rolling_history.add_subcategory("emissions", project.name)
+                player.cumul_emissions.add_category(project.name)
+                player.priorities_of_demand.append(project.name)
                 reorder_facility_priorities(player)
-            if construction.name == "warehouse":
+            if project.name == "warehouse":
                 for resource in ["coal", "gas", "uranium"]:
                     player.rolling_history.add_subcategory("resources", resource)
-            if construction.name == "laboratory":
-                player.priorities_of_demand.append("research")
-                reorder_facility_priorities(player)
-            if construction.name == "warehouse":
                 player.priorities_of_demand.append("transport")
                 reorder_facility_priorities(player)
+            if project.name == "laboratory":
+                player.priorities_of_demand.append("research")
+                reorder_facility_priorities(player)
 
-        setattr(player, construction.name, getattr(player, construction.name) + 1)
+        player.functional_facility_lvl[project.name] += 1
 
-        if construction.family == "Technologies":
+        if project.family == "Technologies":
             player.progression_metrics["total_technologies"] += 1
-            server_tech = engine.data["technology_lvls"][construction.name]
-            if len(server_tech) <= getattr(player, construction.name):
+            server_tech = engine.data["technology_lvls"][project.name]
+            if len(server_tech) <= getattr(player, project.name):
                 server_tech.append(0)
-            server_tech[getattr(player, construction.name) - 1] += 1
+            server_tech[getattr(player, project.name) - 1] += 1
             player.check_technology_achievement()
 
-    elif not ActiveFacility.filter_by(facility=construction.name, player=player):
+    elif not ActiveFacility.filter_by(name=project.name, player=player):
         # initialize array for facility if it is the first one built
-        if construction.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
-            player.rolling_history.add_subcategory("op_costs", construction.name)
-        if construction.name in engine.storage_facilities + engine.power_facilities:
-            player.rolling_history.add_subcategory("generation", construction.name)
-        if construction.name in engine.storage_facilities + engine.extraction_facilities:
-            player.rolling_history.add_subcategory("demand", construction.name)
-        if construction.name in engine.storage_facilities:
-            player.rolling_history.add_subcategory("storage", construction.name)
-        if construction.name in engine.controllable_facilities + engine.extraction_facilities:
-            player.rolling_history.add_subcategory("emissions", construction.name)
-            player.cumul_emissions.add_category(construction.name)
-        if construction.name in engine.extraction_facilities + engine.storage_facilities:
-            player.priorities_of_demand.append(construction.name)
+        if project.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
+            player.rolling_history.add_subcategory("op_costs", project.name)
+        if project.name in engine.storage_facilities + engine.power_facilities:
+            player.rolling_history.add_subcategory("generation", project.name)
+        if project.name in engine.storage_facilities + engine.extraction_facilities:
+            player.rolling_history.add_subcategory("demand", project.name)
+        if project.name in engine.storage_facilities:
+            player.rolling_history.add_subcategory("storage", project.name)
+        if project.name in engine.controllable_facilities + engine.extraction_facilities:
+            player.rolling_history.add_subcategory("emissions", project.name)
+            player.cumul_emissions.add_category(project.name)
+        if project.name in engine.extraction_facilities + engine.storage_facilities:
+            player.priorities_of_demand.append(project.name)
             reorder_facility_priorities(player)
-        if construction.name in engine.renewables:
-            player.list_of_renewables.append(construction.name)
+        if project.name in engine.renewables:
+            player.list_of_renewables.append(project.name)
             reorder_facility_priorities(player)
-        if construction.name in engine.storage_facilities + engine.controllable_facilities:
-            player.priorities_of_controllables.append(construction.name)
+        if project.name in engine.storage_facilities + engine.controllable_facilities:
+            player.priorities_of_controllables.append(project.name)
             reorder_facility_priorities(player)
 
-    player.check_construction_achievements(construction.name)
+    player.check_construction_achievements(project.name)
 
     worker_type: WorkerType
-    worker_type = WorkerType.RESEARCH if construction.family == "Technologies" else WorkerType.CONSTRUCTION
-    family = construction.family
-    player.get_project_priority_list(worker_type).remove(construction)
+    worker_type = WorkerType.RESEARCH if project.family == "Technologies" else WorkerType.CONSTRUCTION
+    if project not in player.get_project_priority_list(worker_type):
+        pass
+    player.get_project_priority_list(worker_type).remove(project)
 
     deploy_available_workers(player, worker_type, start_now=True)
 
-    construction_name = engine.const_config["assets"][construction.name]["name"]
+    project_name = engine.const_config["assets"][project.name]["name"]
     if not skip_notifications:
-        if construction.family == "Technologies":
-            player.notify("Technologies", f"+ 1 lvl <b>{construction_name}</b>.")
-            engine.log(f"{player.username} : + 1 lvl {construction_name}")
-        elif construction.family == "Functional Facilities":
-            player.notify("Constructions", f"+ 1 lvl <b>{construction_name}</b>")
-            engine.log(f"{player.username} : + 1 lvl {construction_name}")
+        if project.family == "Technologies":
+            player.notify("Technologies", f"+ 1 lvl <b>{project_name}</b>.")
+            engine.log(f"{player.username} : + 1 lvl {project_name}")
+        elif project.family == "Functional Facilities":
+            player.notify("Constructions", f"+ 1 lvl <b>{project_name}</b>")
+            engine.log(f"{player.username} : + 1 lvl {project_name}")
         else:
-            player.notify("Constructions", f"+ 1 <b>{construction_name}</b>")
-            engine.log(f"{player.username} : + 1 {construction_name}")
-    if construction.family in [
+            player.notify("Constructions", f"+ 1 <b>{project_name}</b>")
+            engine.log(f"{player.username} : + 1 {project_name}")
+    if project.family in [
         "Extraction Facilities",
         "Power Facilities",
         "Storage Facilities",
     ]:
         eol = engine.data["total_t"] + math.ceil(
-            engine.const_config["assets"][construction.name]["lifespan"] / engine.in_game_seconds_per_tick
+            engine.const_config["assets"][project.name]["lifespan"] / engine.in_game_seconds_per_tick
         )
         # TODO(mglst): using random is incompatible with the deterministic nature of the game that the action logger
         # relies on. This should be fixed. Either the position should be logged, or the random should be seeded.
@@ -116,31 +118,31 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
         position_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1] + random.uniform(-0.5, 0.5)
         position_y = (player.tile.coordinates[1] + random.uniform(-0.5, 0.5)) * 0.5 * 3**0.5
         ActiveFacility(
-            name=construction.name,
+            name=project.name,
             position=(position_x, position_y),
             end_of_life=eol,
             player=player,
-            multipliers=construction.multipliers,
+            multipliers=project.multipliers,
         )
-    if construction.family == "Technologies":
+    if project.family == "Technologies":
         player.capacities.update(player, None)
     else:
-        player.capacities.update(player, construction.name)
+        player.capacities.update(player, project.name)
     engine.config.update_config_for_user(player)
     player.emit("retrieve_player_data")
     player.emit("finish_construction", package_projects_data(player))
 
-    if family == "Functional Facilities":
+    if project.family == "Functional Facilities":
         player.invalidate_recompute_and_dispatch_data_for_pages(
             functional_facilities=True,
-            technologies=construction.name == "laboratory",
-            extraction_facilities=construction.name == "warehouse",
+            technologies=project.name == "laboratory",
+            extraction_facilities=project.name == "warehouse",
         )
         # Deploy any new workers from laboratory upgrades
-        if construction.name == "laboratory":
+        if project.name == "laboratory":
             deploy_available_workers(player, WorkerType.RESEARCH, start_now=True)
-    if family == "Technologies":
-        if construction.name == "construction_technology":
+    if project.family == "Technologies":
+        if project.name == "construction_technology":
             deploy_available_workers(player, WorkerType.CONSTRUCTION, start_now=True)
         player.invalidate_recompute_and_dispatch_data_for_pages(
             power_facilities=True,
@@ -152,7 +154,7 @@ def finish_project(construction: OngoingProject, *, skip_notifications: bool = F
         other_players: Iterator[Player] = Player.filter(lambda other_player: other_player != player)
         for other_player in other_players:
             other_player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
-    del construction
+    project.delete()
     player.send_worker_info()
 
 
@@ -233,7 +235,7 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
 
 def upgrade_all_of_type(player: Player, facility_name: str) -> None:
     """Upgrade all facilities of a certain type."""
-    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player=player, facility=facility_name)
+    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player=player, name=facility_name)
     for facility in facilities:
         with contextlib.suppress(GameError):
             upgrade_facility(player, facility)
@@ -258,7 +260,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     # The cost of decommissioning is 20% of the building cost.
     cost = facility.dismantle_cost
     player.money -= cost
-    if not ActiveFacility.filter_by(facility=facility.name, player_id=player.id):
+    if not ActiveFacility.filter_by(name=facility.name, player_id=player.id):
         # remove facility from facility priorities if it was the last one
         if facility.name in engine.extraction_facilities + engine.storage_facilities:
             player.priorities_of_demand.remove(facility.name)
@@ -282,7 +284,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
         engine.log(f"The facility {facility_name} from {player.username} has been decommissioned.")
     player.capacities.update(player, facility.name)
     engine.config.update_config_for_user(player)
-    del facility
+    facility.delete()
 
 
 def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str) -> None:
@@ -316,7 +318,7 @@ def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
 
 def dismantle_all_of_type(player: Player, facility_name: str) -> None:
     """Dismantle all facilities of a certain type."""
-    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player_id=player.id, facility=facility_name)
+    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player_id=player.id, name=facility_name)
     for facility in facilities:
         with contextlib.suppress(GameError):
             dismantle_facility(player, facility)
@@ -475,7 +477,7 @@ def cancel_project(player: Player, construction: OngoingProject, *, force: bool 
     # websocket.rest_notify_constructions(player)
 
     invalidate_data_on_project_update(player, construction.name)
-    del construction
+    construction.delete()
 
 
 def decrease_project_priority(player: Player, construction: OngoingProject) -> None:

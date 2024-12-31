@@ -57,7 +57,7 @@ def climate_event_impact(tile, event_name):
 
     # check destructions
     if random.random() < climate_events[event_name]["industry_destruction_chance"]:
-        player.functional_facilities["industry"] -= 1
+        player.functional_facility_lvl["industry"] -= 1
         engine.config.update_config_for_user(player)
         player.notify(
             "Destruction",

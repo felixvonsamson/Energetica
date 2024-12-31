@@ -108,7 +108,7 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
     for controllable_facility in engine.controllable_facilities:
         if player.capacities.contains(controllable_facility):
             usage = new_values["generation"][controllable_facility] / player.capacities[controllable_facility]["power"]
-            for af in ActiveFacility.filter_by(player=player, facility=controllable_facility):
+            for af in ActiveFacility.filter_by(player=player, name=controllable_facility):
                 af.usage = usage
 
     for storage_facility in engine.storage_facilities:
@@ -117,13 +117,13 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
                 usage = None  # TODO (Felix): update frontend to show "draining..."
             else:
                 usage = new_values["storage"][storage_facility] / player.capacities[storage_facility]["capacity"]
-            for af in ActiveFacility.filter_by(player=player, facility=storage_facility):
+            for af in ActiveFacility.filter_by(player=player, name=storage_facility):
                 af.usage = usage
 
     for extraction_facility in engine.extraction_facilities:
         if player.capacities.contains(extraction_facility):
             usage = new_values["demand"][extraction_facility] / player.capacities[extraction_facility]["power_use"]
-            for af in ActiveFacility.filter_by(player=player, facility=extraction_facility):
+            for af in ActiveFacility.filter_by(player=player, name=extraction_facility):
                 af.usage = usage
 
 
@@ -310,7 +310,7 @@ def calculate_demand(new_values, player: Player) -> None:
     # consider cost of climate events if any
     climate_event_recovery_cost(player, revenues)
 
-    if player.functional_facilities["carbon_capture"] > 0:
+    if player.functional_facility_lvl["carbon_capture"] > 0:
         demand["carbon_capture"] = player.config["carbon_capture"]["power_consumption"]
 
 
@@ -579,7 +579,7 @@ def renewables_generation(player: Player, generation: dict) -> None:
     for hydro_facility in ["watermill", "small_water_dam", "large_water_dam"]:
         if player.capacities[hydro_facility] is not None:
             generation[hydro_facility] = power_factor * player.capacities[hydro_facility]["power"]
-        for af in ActiveFacility.filter_by(player=player, facility=hydro_facility):
+        for af in ActiveFacility.filter_by(player=player, name=hydro_facility):
             af.usage = power_factor
 
 
@@ -594,7 +594,7 @@ def solar_generation(player: Player, generation, in_game_seconds_passed) -> None
     """
     for facility_type in ["CSP_solar", "PV_solar"]:
         if player.capacities[facility_type] is not None:
-            for facility in ActiveFacility.filter_by(player=player, facility=facility_type):
+            for facility in ActiveFacility.filter_by(player=player, name=facility_type):
                 irradiance = calculate_solar_irradiance(
                     facility.position,
                     in_game_seconds_passed,
@@ -630,7 +630,7 @@ def wind_generation(player: Player, generation: dict, in_game_seconds_passed: in
 
     for facility_type in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
         if player.capacities[facility_type] is not None:
-            for facility in ActiveFacility.filter_by(player_id=player.id, facility=facility_type):
+            for facility in ActiveFacility.filter_by(player_id=player.id, name=facility_type):
                 wind_speed = calculate_wind_speed(facility.position, in_game_seconds_passed, engine.data["random_seed"])
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"]
@@ -785,7 +785,7 @@ def resources_and_pollution(new_values, player: Player) -> None:
             )
             add_emissions(new_values, player, facility, facility_emissions)
 
-    if player.functional_facilities["warehouse"] > 0:
+    if player.functional_facility_lvl["warehouse"] > 0:
         for extraction_facility in engine.extraction_facilities:
             resource = extraction_to_resource[extraction_facility]
             if player.capacities[extraction_facility] is not None:
@@ -815,7 +815,7 @@ def resources_and_pollution(new_values, player: Player) -> None:
             new_values["resources"][resource] = player.resources[resource]
 
     # Carbon capture CO2 absorption
-    if player.functional_facilities["carbon_capture"] > 0:
+    if player.functional_facility_lvl["carbon_capture"] > 0:
         satisfaction = demand["carbon_capture"] / player.config["carbon_capture"]["power_consumption"]
         captured_co2 = (
             player.config["carbon_capture"]["absorption"]
@@ -891,8 +891,7 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction) -> None:
         constructions_by_priority = player.constructions_by_priority
         cumul_demand = 0.0
         for i in range(min(len(constructions_by_priority), player.workers[demand_type])):
-            construction_id = constructions_by_priority[i]
-            construction: OngoingProject = OngoingProject.get(construction_id)
+            construction = constructions_by_priority[i]
             if not construction.is_ongoing():
                 continue
             cumul_demand += construction.construction_power

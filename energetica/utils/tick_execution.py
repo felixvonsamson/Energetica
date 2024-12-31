@@ -65,9 +65,11 @@ def _state_update(app):
 def check_events_completion():
     """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
     # check if constructions finished
-    finished_constructions = OngoingProject.filter(
-        lambda construction: construction.end_tick_or_ticks_passed <= engine.data["total_t"]
-        and construction.status == 2
+    finished_constructions = list(
+        OngoingProject.filter(
+            lambda construction: construction.end_tick_or_ticks_passed <= engine.data["total_t"]
+            and construction.status == 2
+        )
     )
     for fc in finished_constructions:
         assets.finish_project(fc)
@@ -77,7 +79,7 @@ def check_events_completion():
     for a_s in arrived_shipments:
         store_import(a_s.player, a_s.resource, a_s.quantity)
         player: Player = a_s.player
-        del a_s
+        a_s.delete()
         player.emit("finish_shipment", player.package_shipments())
 
     # check end of lifespan of facilities
@@ -100,4 +102,4 @@ def check_events_completion():
         lambda event: event.end_tick <= engine.data["total_t"]
     )
     for fce in finished_climate_events:
-        del fce
+        fce.delete()

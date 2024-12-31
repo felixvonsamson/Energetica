@@ -33,7 +33,7 @@ def buy_resource_from_market(player, quantity, sale):
         # Player is buying their own resource
         sale.quantity -= quantity
         if sale.quantity == 0:
-            del sale
+            sale.delete()
         player.resources_on_sale[sale.resource] -= quantity
     else:
         if total_price > player.money:
@@ -71,7 +71,7 @@ def buy_resource_from_market(player, quantity, sale):
         )
         if sale.quantity == 0:
             # Player is purchasing all available quantity
-            del sale
+            sale.delete()
 
 
 def store_import(player, resource, quantity):

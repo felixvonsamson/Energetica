@@ -103,7 +103,7 @@
                 <span>
                     shipment time: <br>
                     <span></span>
-                    <script>document.currentScript.previousElementSibling.innerHTML = calculate_delivery({{ user.tile.coordinates[0] - sale.player.tile.coordinates[0] }}, {{ user.tile.coordinates[1] - sale.player.tile.coordinates[1] }}, {{ engine.const_config.transport.time_per_tile * engine.const_config.assets.transport_technology["time_factor"] ** user.technologies.transport_technology }});</script>
+                    <script>document.currentScript.previousElementSibling.innerHTML = calculate_delivery({{ user.tile.coordinates[0] - sale.player.tile.coordinates[0] }}, {{ user.tile.coordinates[1] - sale.player.tile.coordinates[1] }}, {{ engine.const_config.transport.time_per_tile * engine.const_config.assets.transport_technology["time_factor"] ** user.technology_lvl.transport_technology }});</script>
                 </span>
             </div>
             <form method="post"

@@ -44,7 +44,7 @@
           <td>Researches</td>
           <td><a href="{{ url_for('wiki.render_template_wiki', template_name='technologies') }}">Technologies</a></td>
           <td>
-            {% if not user or user.functional_facilities["laboratory"] > 0 %}
+            {% if not user or user.functional_facility_lvl.laboratory > 0 %}
               <a href="{{ url_for('views.technology') }}">Technology page</a>
             {% else %}
               (locked)

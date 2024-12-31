@@ -160,7 +160,7 @@ def save_past_data_threaded(app):
                 lambda notification: notification.title != "Tutorial"
                 and notification.time < datetime.now() - timedelta(weeks=2)
             ):
-                del notification
+                notification.delete()
 
             engine.log("last 216 data points have been saved to files")
 

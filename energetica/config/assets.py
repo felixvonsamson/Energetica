@@ -961,11 +961,11 @@ class Config(object):
         # calculating industry energy consumption and income
         assets["industry"]["power_consumption"] = (
             const_config["assets"]["industry"]["base_power_consumption"]
-            * const_config["assets"]["industry"]["power_factor"] ** player.functional_facilities["industry"]
+            * const_config["assets"]["industry"]["power_factor"] ** player.functional_facility_lvl["industry"]
         )
         assets["industry"]["income_per_day"] = (
             const_config["assets"]["industry"]["base_income_per_day"]
-            * const_config["assets"]["industry"]["income_factor"] ** player.functional_facilities["industry"]
+            * const_config["assets"]["industry"]["income_factor"] ** player.functional_facility_lvl["industry"]
         )
         # basic universal income of 540 per in-game day
         assets["industry"]["income_per_day"] += const_config["assets"]["industry"]["universal_income_per_day"]
@@ -973,38 +973,39 @@ class Config(object):
         # calculating carbon capture power consumption and CO2 absorption
         assets["carbon_capture"]["power_consumption"] = (
             const_config["assets"]["carbon_capture"]["base_power_consumption"]
-            * const_config["assets"]["carbon_capture"]["power_factor"] ** player.functional_facilities["carbon_capture"]
+            * const_config["assets"]["carbon_capture"]["power_factor"]
+            ** player.functional_facility_lvl["carbon_capture"]
         )
         assets["carbon_capture"]["absorption"] = (
             const_config["assets"]["carbon_capture"]["base_absorption_per_day"]
             * const_config["assets"]["carbon_capture"]["absorption_factor"]
-            ** player.functional_facilities["carbon_capture"]
+            ** player.functional_facility_lvl["carbon_capture"]
         )
 
         # calculating the maximum storage capacity from the warehouse level
         for resource in const_config["warehouse_capacities"]:
             assets["warehouse_capacities"][resource] = (
-                warehouse_capacity_for_level(player.functional_facilities["warehouse"], resource) or 0.0
+                warehouse_capacity_for_level(player.functional_facility_lvl["warehouse"], resource) or 0.0
             )
 
         # calculating the transport speed and energy consumption from the level of transport technology
         assets["transport"]["time_per_tile"] = (
             const_config["transport"]["time_per_tile"]
             * const_config["assets"]["transport_technology"]["time_factor"]
-            ** player.technologies["transport_technology"]
+            ** player.technology_lvl["transport_technology"]
         )
         assets["transport"]["power_per_kg"] = (
             const_config["transport"]["energy_per_kg_per_tile"]
             * const_config["assets"]["transport_technology"]["energy_factor"]
-            ** player.technologies["transport_technology"]
+            ** player.technology_lvl["transport_technology"]
             * 3600
             / assets["transport"]["time_per_tile"]
         )
 
         # setting the number of workers
         player.workers = {
-            "construction": player_construction_workers_for_level(player.technologies["building_technology"]),
-            "laboratory": player_lab_workers_for_level(player.functional_facilities["laboratory"]),
+            "construction": player_construction_workers_for_level(player.technology_lvl["building_technology"]),
+            "laboratory": player_lab_workers_for_level(player.functional_facility_lvl["laboratory"]),
         }
 
     def __getitem__(self, player: Player):

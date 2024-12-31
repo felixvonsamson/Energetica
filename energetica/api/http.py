@@ -32,9 +32,6 @@ from energetica.globals import engine
 from energetica.utils.assets import package_projects_data
 from energetica.utils.misc import flash_error
 
-if TYPE_CHECKING:
-    current_user: Player  # type: ignore[no-redef]
-
 http = Blueprint("http", __name__)
 
 
@@ -346,7 +343,7 @@ def get_upcoming_achievements() -> Response:
 @http.route("/get_scoreboard", methods=["GET"])
 def get_scoreboard() -> Response:
     """Get the scoreboard data."""
-    player: Player = current_user
+
     return jsonify(player.package_scoreboard())
 
 
@@ -385,7 +382,7 @@ def choose_location() -> Response:
     tile = HexTile.get(selected_id + 1)
     if not tile:
         raise GameError("TileNotExist")  # TODO(mglst): ensure the frontend handles this
-    energetica.utils.misc.confirm_location(player=current_user, tile=tile)
+    energetica.utils.misc.confirm_location(player=Player.get(current_user.id), tile=tile)
     return jsonify({"response": "success"})
 
 
@@ -398,7 +395,7 @@ def request_queue_project() -> Response | tuple:
     force = request_data["force"]
     try:
         energetica.utils.assets.queue_project(
-            player=current_user,
+            player=Player.get(current_user.id),
             asset=asset,
             force=force,
         )
@@ -431,7 +428,9 @@ def request_cancel_project() -> Response | tuple:
         return jsonify({"response": "constructionNotFound"}), 404
     force = request_data["force"]
     try:
-        energetica.utils.assets.cancel_project(player=current_user, construction=construction, force=force)
+        energetica.utils.assets.cancel_project(
+            player=Player.get(current_user.id), construction=construction, force=force
+        )
     except Confirm as confirm:
         return jsonify(
             {
@@ -457,7 +456,7 @@ def request_pause_project() -> Response | tuple:
     construction = OngoingProject.get(int(construction_id))
     if construction is None or construction.player != current_user:
         return jsonify({"response": "constructionNotFound"}), 404
-    energetica.utils.assets.toggle_pause_project(player=current_user, construction=construction)
+    energetica.utils.assets.toggle_pause_project(player=Player.get(current_user.id), construction=construction)
     return jsonify(
         {
             "response": "success",
@@ -475,7 +474,7 @@ def request_decrease_project_priority() -> Response | tuple:
     construction = OngoingProject.get(int(construction_id))
     if construction is None or construction.player != current_user:
         return jsonify({"response": "constructionNotFound"}), 404
-    energetica.utils.assets.decrease_project_priority(player=current_user, construction=construction)
+    energetica.utils.assets.decrease_project_priority(player=Player.get(current_user.id), construction=construction)
     return jsonify(
         {
             "response": "success",
@@ -493,7 +492,7 @@ def request_upgrade_facility() -> Response | tuple:
     facility = ActiveFacility.get(int(facility_id))
     if facility is None or facility.player != current_user:
         return jsonify({"response": "constructionNotFound"}), 404
-    energetica.utils.assets.upgrade_facility(player=current_user, facility=facility)
+    energetica.utils.assets.upgrade_facility(player=Player.get(current_user.id), facility=facility)
     return jsonify({"response": "success", "money": current_user.money})
 
 
@@ -503,7 +502,7 @@ def request_upgrade_all_of_type() -> Response:
     """Upgrade all facilities of a certain type."""
     request_data = request.get_json()
     facility = request_data["facility"]
-    energetica.utils.assets.upgrade_all_of_type(player=current_user, facility_name=facility)
+    energetica.utils.assets.upgrade_all_of_type(player=Player.get(current_user.id), facility_name=facility)
     return jsonify({"response": "success", "money": current_user.money})
 
 
@@ -516,7 +515,7 @@ def request_dismantle_facility() -> Response | tuple:
     facility = ActiveFacility.get(int(facility_id))
     if facility is None or facility.player != current_user:
         return jsonify({"response": "constructionNotFound"}), 404
-    energetica.utils.assets.dismantle_facility(player=current_user, facility=facility)
+    energetica.utils.assets.dismantle_facility(player=Player.get(current_user.id), facility=facility)
     return jsonify(
         {
             "response": "success",
@@ -532,7 +531,7 @@ def request_dismantle_all_of_type() -> Response:
     """Dismantle all facilities of a certain type."""
     request_data = request.get_json()
     facility = request_data["facility"]
-    energetica.utils.assets.dismantle_all_of_type(player=current_user, facility_name=facility)
+    energetica.utils.assets.dismantle_all_of_type(player=Player.get(current_user.id), facility_name=facility)
     return jsonify({"response": "success", "money": current_user.money})
 
 
@@ -561,7 +560,7 @@ def request_change_facility_priority() -> Response | tuple:
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
     priority = request_data["priority"]
-    energetica.utils.network_helpers.change_facility_priority(player=current_user, priority=priority)
+    energetica.utils.network_helpers.change_facility_priority(player=Player.get(current_user.id), priority=priority)
     return jsonify({"response": "success"})
 
 

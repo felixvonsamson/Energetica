@@ -144,7 +144,7 @@ class Player(DBModel, UserMixin):
         },
     )
 
-    functional_facilities: dict[str, int] = field(
+    functional_facility_lvl: dict[str, int] = field(
         default_factory=lambda: {
             "industry": 1,
             "laboratory": 0,
@@ -153,7 +153,7 @@ class Player(DBModel, UserMixin):
         },
     )
 
-    technologies: dict[str, int] = field(
+    technology_lvl: dict[str, int] = field(
         default_factory=lambda: {
             "mathematics": 0,
             "mechanical_engineering": 0,
@@ -335,7 +335,7 @@ class Player(DBModel, UserMixin):
     def delete_notification(self, notification: Notification) -> None:
         """Delete a notification."""
         if notification.player == self:
-            del notification
+            notification.delete()
 
     def notifications_read(self) -> None:
         """Mark all notifications as read."""
