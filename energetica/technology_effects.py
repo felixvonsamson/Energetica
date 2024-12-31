@@ -316,7 +316,7 @@ def extraction_emissions_multiplier(player: Player, facility: str) -> float:
 def next_available_location(player: Player, facility: str) -> int:
     """Return the next available location for a hydro and wind facilities."""
     active_facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(
-        facility=facility,
+        name=facility,
         player=player,
     )
     under_construction: Iterator[OngoingProject] = OngoingProject.filter_by(
