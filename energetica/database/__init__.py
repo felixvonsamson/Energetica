@@ -37,30 +37,14 @@ class DBModel:
         return getattr(engine, cls.__name__).values()
 
     @classmethod
-    def count(cls: type[T]) -> int:
+    def count(cls: type[T], *, condition: Callable[[T], bool] | None = None) -> int:
         """Get all instances of this class."""
-        return len(getattr(engine, cls.__name__))
+        return sum(1 for _ in (cls.filter(condition) if condition else cls.all()))
 
-    # TODO(mglst): there are a number of places where the pattern of filtering, converting to a list, and then getting
-    # the length is used. Notably, this is used for filtering and counting OngoingProjects, to compute levels.
-    # As such I suggest the following two methods: "count" and "count_by". Advantages include:
-    # - More readable code
-    # - Less memory usage / better performance
-    # Disadvantages include:
-    # - More complex DBModel class
-    # - More methods to maintain
-
-    # @classmethod
-    # def count(cls: type[T], condition: Callable[[T], bool] | None = None) -> int:
-    #     """Get all instances of this class."""
-    #     if condition is None:
-    #         return len(getattr(engine, cls.__name__))
-    #     return sum(1 for item in cls.all() if condition(item))
-
-    # @classmethod
-    # def count_by(cls: type[T], **conditions: Any) -> int:
-    #     """Get all instances of this class."""
-    #     return cls.count(lambda item: all(getattr(item, field) == value for field, value in conditions.items()))
+    @classmethod
+    def count_when(cls: type[T], **conditions: Any) -> int:
+        """Get all instances of this class."""
+        return sum(1 for _ in cls.filter_by(**conditions))
 
     @classmethod
     def filter(cls: type[T], condition: Callable[[T], bool]) -> Iterator[T]:

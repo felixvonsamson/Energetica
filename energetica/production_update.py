@@ -281,7 +281,6 @@ def storage_demand(player: Player, demand) -> None:
     for facility in engine.storage_facilities:
         if player.capacities[facility] is not None:
             demand[facility] = calculate_prod(
-                engine,
                 "max",
                 player,
                 facility,
@@ -362,7 +361,6 @@ def calculate_generation_without_market(new_values, player: Player) -> None:
     for facility in engine.storage_facilities + engine.controllable_facilities:
         if player.capacities[facility] is not None:
             max_prod = calculate_prod(
-                engine,
                 "max",
                 player,
                 facility,
@@ -410,7 +408,6 @@ def calculate_generation_with_market(new_values, market, player: Player):
         if engine.const_config["assets"][facility]["ramping_time"] != 0:
             if player.capacities[facility] is not None:
                 max_prod = calculate_prod(
-                    engine,
                     "max",
                     player,
                     facility,
@@ -630,7 +627,7 @@ def wind_generation(player: Player, generation: dict, in_game_seconds_passed: in
 
     for facility_type in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
         if player.capacities[facility_type] is not None:
-            for facility in ActiveFacility.filter_by(player_id=player.id, name=facility_type):
+            for facility in ActiveFacility.filter_by(player=player, name=facility_type):
                 wind_speed = calculate_wind_speed(facility.position, in_game_seconds_passed, engine.data["random_seed"])
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"]
@@ -647,7 +644,6 @@ def wind_generation(player: Player, generation: dict, in_game_seconds_passed: in
 
 
 def calculate_prod(
-    engine,
     minmax,
     player: Player,
     facility,
@@ -727,7 +723,6 @@ def minimal_generation(player: Player, generation, resource_reservations) -> Non
     for facility in engine.controllable_facilities + engine.storage_facilities:
         if player.capacities[facility] is not None:
             generation[facility] = calculate_prod(
-                engine,
                 "min",
                 player,
                 facility,
@@ -888,10 +883,9 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction) -> None:
     ):
         return
     if demand_type == "construction":
-        constructions_by_priority = player.constructions_by_priority
         cumul_demand = 0.0
-        for i in range(min(len(constructions_by_priority), player.workers[demand_type])):
-            construction = constructions_by_priority[i]
+        for i in range(min(len(player.constructions_by_priority), player.workers[demand_type])):
+            construction = player.constructions_by_priority[i]
             if not construction.is_ongoing():
                 continue
             cumul_demand += construction.construction_power

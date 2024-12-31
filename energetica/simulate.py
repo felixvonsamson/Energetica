@@ -98,8 +98,10 @@ def _simulate(
                 content_type = "json" if action["request"]["content_type"] == "application/json" else "data"
                 response = user_sessions[player_id].post(url, **{content_type: action["request"]["content"]})
                 response = response.history[0] if response.history else response
+                # TODO (Yassir): mismatch if content type is not the same
                 if (
-                    response.headers["Content-Type"] == "application/json"
+                    action["response"]["content_type"] == "application/json"
+                    and response.headers["Content-Type"] == "application/json"
                     and response.json()["response"] != action["response"]["content"]["response"]
                 ):
                     print(

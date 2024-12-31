@@ -110,6 +110,13 @@ class Player(DBModel, UserMixin):
         },
     )
 
+    def get_level(self: Player, requirement_name: str) -> int:
+        if requirement_name in self.functional_facility_lvl:
+            return self.functional_facility_lvl[requirement_name]
+        elif requirement_name in self.technology_lvl:
+            return self.technology_lvl[requirement_name]
+        assert False, "Wrong requirement name"
+
     class NetworkGraphView(StrEnum):
         """Enum for the network graph view of the player."""
 

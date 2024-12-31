@@ -31,7 +31,7 @@ def climate_event_impact(tile, event_name):
             }
         )
     )
-    if not tile.player_id:
+    if not tile.player:
         return
     player: Player = tile.player
     ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick

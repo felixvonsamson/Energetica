@@ -323,9 +323,7 @@ def get_generation_priority() -> Response:
 def get_constructions() -> Response:
     """Get list of facilities under construction for this player."""
     projects = current_user.package_constructions()
-    constructions_by_priority = current_user.constructions_by_priority
-    researches_by_priority = current_user.researches_by_priority
-    return jsonify(projects, constructions_by_priority, researches_by_priority)
+    return jsonify(projects, current_user.constructions_by_priority, current_user.researches_by_priority)
 
 
 @http.route("/get_shipments", methods=["GET"])
@@ -646,8 +644,7 @@ def create_network() -> Response:
                 flash("Network name must be between 3 and 40 characters", category="error")
             case "nameAlreadyUsed":
                 flash("A network with this name already exists", category="error")
-            case _:
-                raise
+        raise
     flash(f"You created the network {network_name}", category="message")
     return redirect("/network", code=303)
 

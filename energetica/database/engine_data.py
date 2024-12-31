@@ -190,6 +190,20 @@ class CircularBufferPlayer:
     """Class that stores the active data of a player (last 360 ticks of the graph data)."""
 
     def __init__(self):
+        """
+        TODO (Yassir): Change to defaultdict
+        def create_deque():
+            return deque([0.0] * 360, maxlen=360)
+        self._data = {
+            "revenues": defaultdict(create_deque),
+            "op_costs": defaultdict(create_deque),
+            "generation": defaultdict(create_deque),
+            "demand": defaultdict(create_deque),
+            "storage": defaultdict(create_deque),
+            "resources": defaultdict(create_deque),
+            "emissions": defaultdict(create_deque),
+        }
+        """
         self._data = {
             "revenues": {  # v - added dynamically - v
                 "industry": deque([0.0] * 360, maxlen=360),

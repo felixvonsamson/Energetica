@@ -426,9 +426,7 @@ def construction_pollution_per_tick(player: Player, facility: str) -> float:
     pollution = const_config[facility]["base_construction_pollution"] / construction_time(player, facility)
     # construction pollution increases with higher levels for functional facilities
     if facility in engine.functional_facilities:
-        pollution *= const_config[facility]["price_multiplier"] ** (
-            player.functional_facility_lvl.get(facility, 0) + player.technology_lvl.get(facility, 0)
-        )
+        pollution *= const_config[facility]["price_multiplier"] ** player.get_level(facility)
     return pollution
 
 
@@ -456,7 +454,7 @@ def asset_requirements(player: Player, asset: str) -> list[dict[str, str | int]]
             "level": level + level_offset,
             "status": (
                 "satisfied"
-                if getattr(player, requirement) >= level + level_offset
+                if player.get_level(requirement) >= level + level_offset
                 else "queued"
                 if next_level(player, requirement) - 1 >= level + level_offset
                 and const_config[asset]["type"] == "Technology"
@@ -747,8 +745,7 @@ def facility_is_hidden(player: Player, facility: str) -> bool:
 def next_level(player: Player, facility_or_technology: str) -> int:
     """Return the level of the next `facility_or_technology` upgrade, e.g. current level + # ongoing upgrades + one."""
     return (
-        player.functional_facility_lvl.get(facility_or_technology, 0)
-        + player.technology_lvl.get(facility_or_technology, 0)
+        player.get_level(facility_or_technology)
         + len(
             list(
                 OngoingProject.filter(

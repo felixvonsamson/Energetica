@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import cached_property
 from typing import TYPE_CHECKING
@@ -164,15 +165,13 @@ class OngoingProject(DBModel):
             for other_construction in priority_list[:this_priority_index]:
                 if other_construction.name == self.name:
                     level += 1
-            num_ongoing_researches_of: dict[str, int] = {}
+            num_ongoing_researches_of: dict[str, int] = defaultdict(int)
             for candidate_prerequisite in priority_list[:this_priority_index]:
                 if candidate_prerequisite.name == self.name:
                     prerequisites.append(candidate_prerequisite)
                     continue
                 if candidate_prerequisite.name in requirements:
-                    num_ongoing_researches_of[candidate_prerequisite.name] = (
-                        num_ongoing_researches_of.get(candidate_prerequisite.name, 0) + 1
-                    )
+                    num_ongoing_researches_of[candidate_prerequisite.name] += 1
                     # Add them as a prerequisite, if they are, according to const_config
                     offset: int = requirements[candidate_prerequisite.name]
                     candidate_prerequisite_level: int = (

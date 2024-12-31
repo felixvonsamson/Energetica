@@ -33,17 +33,13 @@ from energetica.utils.misc import confirm_location
 def validate_rules(player):
     """This function validates all of the above rules."""
     # Rule 1
-    constructions_by_priority = player.constructions_by_priority
-    researches_by_priority = player.researches_by_priority
-    assert len(set(constructions_by_priority)) == len(constructions_by_priority)
-    assert len(set(researches_by_priority)) == len(researches_by_priority)
-    for construction_id in constructions_by_priority:
-        construction = OngoingProject.get(construction_id)
+    assert len(set(player.constructions_by_priority)) == len(player.constructions_by_priority)
+    assert len(set(player.researches_by_priority)) == len(player.researches_by_priority)
+    for construction in player.constructions_by_priority:
         assert construction is not None
         assert construction.player_id == player.id
         assert construction.family != "Technologies"
-    for research_id in researches_by_priority:
-        research = OngoingProject.get(research_id)
+    for research in player.researches_by_priority:
         assert research is not None
         assert research.player_id == player.id
         assert research.family == "Technologies"
@@ -51,12 +47,12 @@ def validate_rules(player):
         OngoingProject.filter(
             lambda construction: construction.player == player and construction.family != "Technologies"
         )
-    ) == len(constructions_by_priority)
+    ) == len(player.constructions_by_priority)
     assert len(
         OngoingProject.filter(
             lambda construction: construction.player == player and construction.family == "Technologies"
         )
-    ) == len(researches_by_priority)
+    ) == len(player.researches_by_priority)
 
     # Rule 2
     ongoing_constructions = list(
@@ -86,9 +82,9 @@ def validate_rules(player):
         )
 
     # Rule 3
-    status_list_constructions = list(map(lambda x: OngoingProject.get(x).status, constructions_by_priority))
+    status_list_constructions = list(map(lambda x: x.status, player.constructions_by_priority))
     assert sorted(status_list_constructions, reverse=True) == status_list_constructions
-    status_list_research = list(map(lambda x: OngoingProject.get(x).status, researches_by_priority))
+    status_list_research = list(map(lambda x: x.status, player.researches_by_priority))
     assert sorted(status_list_research, reverse=True) == status_list_research
 
     # Rule 4
@@ -115,21 +111,19 @@ def validate_rules(player):
             assert not project.cache.prerequisites
 
     # Rule 6
-    for index, construction_id in enumerate(constructions_by_priority):
-        construction = OngoingProject.get(construction_id)
+    for index, construction in enumerate(player.constructions_by_priority):
         for prerequisite in construction.cache.prerequisites:
-            if constructions_by_priority.index(prerequisite) >= index:
+            if player.constructions_by_priority.index(prerequisite) >= index:
                 del construction.cache._prerequisites_and_levels
                 for prerequisite in construction.cache.prerequisites:
-                    assert constructions_by_priority.index(prerequisite) < index
+                    assert player.constructions_by_priority.index(prerequisite) < index
                 break
-    for index, research_id in enumerate(researches_by_priority):
-        research = OngoingProject.get(research_id)
+    for index, research in enumerate(player.researches_by_priority):
         for prerequisite in research.cache.prerequisites:
-            if researches_by_priority.index(prerequisite) >= index:
+            if player.researches_by_priority.index(prerequisite) >= index:
                 del research.cache._prerequisites_and_levels
                 for prerequisite in research.cache.prerequisites:
-                    assert researches_by_priority.index(prerequisite) < index
+                    assert player.researches_by_priority.index(prerequisite) < index
                 break
 
     # Rule 7

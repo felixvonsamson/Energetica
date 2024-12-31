@@ -59,7 +59,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             server_tech[getattr(player, project.name) - 1] += 1
             player.check_technology_achievement()
 
-    elif not ActiveFacility.filter_by(name=project.name, player=player):
+    elif not ActiveFacility.count_when(name=project.name, player=player):
         # initialize array for facility if it is the first one built
         if project.name in engine.storage_facilities + engine.power_facilities + engine.extraction_facilities:
             player.rolling_history.add_subcategory("op_costs", project.name)
@@ -523,7 +523,6 @@ def decrease_project_priority(player: Player, construction: OngoingProject) -> N
         construction_2.set_ongoing()
 
     priority_list[index + 1], priority_list[index] = (priority_list[index], priority_list[index + 1])
-    setattr(player, attr, ",".join(map(str, priority_list)))
     # TODO(mglst): This should be re-enabled when the websocket is re-enabled
     # from energetica.api import websocket
     # websocket.rest_notify_constructions(player)
