@@ -1,15 +1,14 @@
-"""This module contains functions for simulating user actions on the server."""
+"""Module for simulating user actions on the server."""
 
 import cProfile
 import pickle
 import pstats
 import tarfile
 from time import sleep
-from typing import List
 
 import requests
 
-import energetica.production_update as production_update
+from energetica import production_update
 from energetica.database.map import HexTile
 from energetica.globals import engine
 from energetica.utils.climate_helpers import climate_event_impact
@@ -54,7 +53,7 @@ def _simulate(
     stop_on_server_error,
     stop_on_assertion_error,
     checkpoint_every_k_ticks=10000,
-    checkpoint_ticks: List[int] | None = None,
+    checkpoint_ticks: list[int] | None = None,
 ):
     if checkpoint_ticks is None:
         checkpoint_ticks = []
@@ -105,14 +104,14 @@ def _simulate(
                 ):
                     print(
                         f"""\033[31mResponse {response.json()["response"]} does not match expected response """
-                        f"""{action["response"]["content"]["response"]}.\033[0m"""
+                        f"""{action["response"]["content"]["response"]}.\033[0m""",
                     )
                     if stop_on_mismatch:
                         break
                 if response.status_code != action["response"]["status_code"]:
                     print(
                         f"""\033[31mStatus code {response.status_code} does not match expected status code """
-                        f"""{action["response"]["status_code"]}.\033[0m"""
+                        f"""{action["response"]["status_code"]}.\033[0m""",
                     )
                     if stop_on_mismatch:
                         break
