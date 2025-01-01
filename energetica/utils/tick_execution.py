@@ -83,7 +83,7 @@ def check_events_completion():
         player.emit("finish_shipment", player.package_shipments())
 
     # check end of lifespan of facilities
-    eolt_facilities: list[ActiveFacility] = ActiveFacility.filter(
+    eolt_facilities = ActiveFacility.filter(
         lambda facility: facility.end_of_life <= engine.data["total_t"]
     )
     for facility in eolt_facilities:
@@ -98,7 +98,7 @@ def check_events_completion():
         remove_asset(player, facility)
 
     # check end of climate events
-    finished_climate_events: list[ClimateEventRecovery] = ClimateEventRecovery.filter(
+    finished_climate_events = ClimateEventRecovery.filter(
         lambda event: event.end_tick <= engine.data["total_t"]
     )
     for fce in finished_climate_events:

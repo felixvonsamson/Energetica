@@ -109,6 +109,7 @@ class Player(DBModel, UserMixin):
             "climate_events": True,
         },
     )
+    socketio_clients: list = field(default_factory=list)
 
     def get_level(self: Player, requirement_name: str) -> int:
         if requirement_name in self.functional_facility_lvl:
@@ -181,11 +182,7 @@ class Player(DBModel, UserMixin):
     def config(self) -> dict:
         """Return the player's configuration."""
         return engine.config[self]
-
-    @property
-    def socketio_clients(self) -> list[int]:
-        """Return the player's socketio clients."""
-        return engine.clients[self.id]
+    
 
     @cached_property
     def power_facilities_data(self) -> list:
@@ -355,8 +352,7 @@ class Player(DBModel, UserMixin):
 
     def get_lvls(self) -> dict:
         """Return the levels of functional facilities and technologies of a player."""
-        attributes = chain(engine.functional_facilities, engine.technologies)
-        return {attr: getattr(self, attr) for attr in attributes}
+        return self.technology_lvl | self.functional_facility_lvl
 
     def get_reserves(self) -> dict:
         """Return natural resources reserves of a player."""

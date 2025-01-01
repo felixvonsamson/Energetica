@@ -29,6 +29,7 @@ def set_ctx():
 
     render_template_ctx = partial(
         render_template,
+        engine=engine,
         user=current_user,
     )
     g.render_template_ctx = render_template_ctx

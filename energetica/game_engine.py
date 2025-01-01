@@ -135,7 +135,6 @@ class GameEngine(object):
         self.config = config
         self.const_config = const_config
         self.socketio: SocketIO = None
-        self.clients: dict = defaultdict(list)
         self.websocket_dict: dict = {}
         self.console_logger = logging.getLogger("console")  # logs events in the terminal
         self.action_logger = logging.getLogger("action_history")  # logs all called functions to a file

@@ -19,7 +19,9 @@ def create_user(user_id, port):
     """Create a user with the given user_id."""
     session = requests.Session()
     data = {"username": f"user{user_id}", "password1": "password", "password2": "password"}
-    session.post(f"http://localhost:{port}/sign-up", data=data)
+    response = session.post(f"http://localhost:{port}/sign-up", data=data)
+    # TODO (Yassir)
+    assert response.status_code == 200
     return session
 
 
@@ -27,7 +29,9 @@ def login_user(user_id, port):
     """Login a user with the given user_id."""
     session = requests.Session()
     data = {"username": f"user{user_id}", "password": "password"}
-    session.post(f"http://localhost:{port}/login", data=data)
+    response = session.post(f"http://localhost:{port}/login", data=data)
+    # TODO (Yassir)
+    assert response.status_code == 200
     return session
 
 
