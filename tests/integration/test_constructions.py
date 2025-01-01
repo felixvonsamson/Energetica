@@ -160,8 +160,7 @@ def validate_rules(player):
         )
     )
     if waiting_research:
-        count_on_going_research = len(
-            OngoingProject.filter(
+        count_on_going_research = OngoingProject.count(
                 lambda construction: construction.player == player
                 and construction.status == ConstructionStatus.ONGOING
                 and construction.family == "Technologies"

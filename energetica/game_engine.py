@@ -6,7 +6,6 @@ import logging
 import math
 import pickle
 import random
-from collections import defaultdict
 from datetime import datetime
 
 from flask_sock import Sock
@@ -124,6 +123,22 @@ class GameEngine(object):
         ]
         for asset_type in dict[asset_family.lower().replace(" ", "_")]
     }
+    def __init__(self):
+        self.config = config
+        self.const_config = const_config
+        self.socketio: SocketIO = None
+        self.websocket_dict: dict = {}
+        self.console_logger = logging.getLogger("console")  # logs events in the terminal
+        self.action_logger = logging.getLogger("action_history")  # logs all called functions to a file
+        self.init_loggers()
+        self.lock = RLock()
+        # TODO (Felix): is data really needed ? can't we just use the engine object directly ?
+        # TODO(mglst): agree with Felix
+        self.data = {}
+        self.clock_time = None
+        self.in_game_seconds_per_tick = None
+        self.log("engine created")
+        
 
     def init(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None):
         # TODO(mglst): Create an explicit __init__ method, maybe make this a dataclass. Bref, rework this class
@@ -132,19 +147,8 @@ class GameEngine(object):
         assert clock_time in [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
         self.clock_time = clock_time
         self.in_game_seconds_per_tick: int = in_game_seconds_per_tick
-        self.config = config
-        self.const_config = const_config
-        self.socketio: SocketIO = None
-        self.websocket_dict: dict = {}
-        self.console_logger = logging.getLogger("console")  # logs events in the terminal
-        self.action_logger = logging.getLogger("action_history")  # logs all called functions to a file
-        self.init_loggers()
-        self.log("engine created")
 
-        self.lock = RLock()
-        # TODO (Felix): is data really needed ? can't we just use the engine object directly ?
-        # TODO(mglst): agree with Felix
-        self.data = {}
+        
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
         self.data["start_date"] = start_date or datetime.now()  # 0 point of server time

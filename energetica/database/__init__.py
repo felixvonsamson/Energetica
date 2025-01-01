@@ -18,23 +18,24 @@ class DBModel:
     def __init_subclass__(cls) -> None:
         """Initialize the next id counter for each subclass."""
         cls.__next_id = count(1)
-        engine.__dict__[cls.__name__] = {}
-
+        cls.instances_dict = {}
+        engine.data[cls.__name__] = cls.instances_dict
+        
+    
     def __post_init__(self) -> None:
         """Assign an id to the object and store it in the engine."""
         self.id = next(self.__next_id)
-        getattr(engine, self.__class__.__name__)[self.id] = self
+        self.instances_dict[self.id] = self
 
     @classmethod
     def get(cls: type[T], id: int) -> T | None:  # pylint: disable=redefined-builtin
         """Get an object by its id."""
-        class_objects = getattr(engine, cls.__name__)
-        return class_objects[id] if id in class_objects else None
+        return cls.instances_dict[id] if id in cls.instances_dict else None
 
     @classmethod
     def all(cls: type[T]) -> Iterator[T]:
         """Get all instances of this class."""
-        return getattr(engine, cls.__name__).values()
+        return cls.instances_dict.values()
 
     @classmethod
     def count(cls: type[T], *, condition: Callable[[T], bool] | None = None) -> int:
@@ -58,4 +59,4 @@ class DBModel:
 
     def delete(self: T) -> None:
         """Delete the object from the engine."""
-        del getattr(engine, self.__class__.__name__)[self.id]
+        del self.instances_dict[self.id]
