@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
+from functools import partial
 from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
@@ -39,8 +40,9 @@ class Chat(DBModel):
     name: str | None
     participants: set[Player]
     messages: list[Message] = field(default_factory=list)
+
     last_read_message: dict[Player, int | None] = field(
-        default_factory=lambda: defaultdict(lambda: -1),
+        default_factory=lambda: defaultdict(partial(int, -1)),
     )  # {player: message index in messages}
 
 

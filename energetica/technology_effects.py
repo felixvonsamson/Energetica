@@ -315,11 +315,11 @@ def extraction_emissions_multiplier(player: Player, facility: str) -> float:
 
 def next_available_location(player: Player, facility: str) -> int:
     """Return the next available location for a hydro and wind facilities."""
-    active_facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(
+    active_facilities = ActiveFacility.filter_by(
         name=facility,
         player=player,
     )
-    under_construction: Iterator[OngoingProject] = OngoingProject.filter_by(
+    under_construction = OngoingProject.filter_by(
         name=facility,
         player=player,
     )
@@ -355,7 +355,7 @@ def construction_time(player: Player, facility: str) -> float:
     duration = const_config[facility]["base_construction_time"] / engine.in_game_seconds_per_tick
     # construction time increases with higher levels
     if facility in engine.functional_facilities + engine.technologies:
-        level_with_constructions = len(list(OngoingProject.filter_by(name=facility, player=player)))
+        level_with_constructions = OngoingProject.count_when(name=facility, player=player)
         duration *= const_config[facility]["price_multiplier"] ** (0.6 * level_with_constructions)
         # knowledge spillover and laboratory time reduction
         if facility in engine.technologies:

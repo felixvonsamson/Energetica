@@ -18,10 +18,13 @@ class DBModel:
     def __init_subclass__(cls) -> None:
         """Initialize the next id counter for each subclass."""
         cls.__next_id = count(1)
-        cls.instances_dict = {}
-        engine.data[cls.__name__] = cls.instances_dict
-        
-    
+        engine.data[cls.__name__] = {}
+
+    @classmethod
+    @property
+    def instances_dict(cls: type[T]) -> dict[int, T]:
+        return engine.data[cls.__name__]
+
     def __post_init__(self) -> None:
         """Assign an id to the object and store it in the engine."""
         self.id = next(self.__next_id)

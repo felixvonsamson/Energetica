@@ -6,7 +6,6 @@ from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import numpy as np
 from flask import Blueprint, flash, jsonify, redirect, request
@@ -342,7 +341,7 @@ def get_upcoming_achievements() -> Response:
 def get_scoreboard() -> Response:
     """Get the scoreboard data."""
 
-    return jsonify(player.package_scoreboard())
+    return jsonify(current_user.package_scoreboard())
 
 
 @http.route("/get_quiz_question", methods=["GET"])
