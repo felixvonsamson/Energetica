@@ -84,6 +84,8 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
 
     player.check_construction_achievements(project.name)
 
+    project.delete()
+    
     worker_type: WorkerType
     worker_type = WorkerType.RESEARCH if project.family == "Technologies" else WorkerType.CONSTRUCTION
     if project not in player.get_project_priority_list(worker_type):
@@ -154,7 +156,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         other_players: Iterator[Player] = Player.filter(lambda other_player: other_player != player)
         for other_player in other_players:
             other_player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
-    project.delete()
+    
     player.send_worker_info()
 
 
