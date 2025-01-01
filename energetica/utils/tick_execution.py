@@ -36,7 +36,7 @@ def _state_update(app):
             engine.data["total_t"] += 1
             engine.log(f"t = {engine.data['total_t']}")
             if engine.data["total_t"] % 216 == 0:
-                save_past_data_threaded(app)
+                save_past_data_threaded()
             if (engine.data["total_t"] + engine.data["delta_t"]) % (24 * 60 * 60 / engine.clock_time) == 0:
                 engine.new_daily_question()
             log_entry = {

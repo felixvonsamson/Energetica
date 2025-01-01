@@ -277,7 +277,7 @@ class Player(DBModel, UserMixin):
     def mark_chat_as_read(self, chat: Chat) -> None:
         """Mark a chat as read."""
         self.last_opened_chat = chat.id
-        chat.last_read_message[self] = len(chat.messages) - 1
+        chat.last_read_message[self.id] = len(chat.messages) - 1
 
     def package_chat_list(self) -> dict:
         """Package the chats of a player."""
@@ -306,7 +306,7 @@ class Player(DBModel, UserMixin):
 
         def unread_message_count(chat: Chat) -> int:
             # TODO(mglst): what if last_read_message is None?
-            return len(chat.messages) - chat.last_read_message[self] - 1
+            return len(chat.messages) - chat.last_read_message[self.id] - 1
 
         chat_dict = {
             chat.id: {
@@ -535,7 +535,7 @@ class Player(DBModel, UserMixin):
         for i, value in enumerate(achievements["technology"]["milestones"]):
             if (
                 f"{achievement_name} {i+1}" not in self.achievements
-                and getattr(self, achievements["technology"]["metric"]) >= value
+                and self.progression_metrics[achievements["technology"]["metric"]] >= value
             ):
                 self.achievements.append(f"{achievement_name} {i+1}")
                 self.progression_metrics["xp"] += achievements["technology"]["rewards"][i]
@@ -550,8 +550,8 @@ class Player(DBModel, UserMixin):
         achievement_name = achievements["trading"]["name"]
         for i, value in enumerate(achievements["trading"]["milestones"]):
             if f"{achievement_name} {i+1}" not in self.achievements and (
-                getattr(self, achievements["trading"]["metric"][0])
-                + getattr(self, achievements["trading"]["metric"][1])
+                self.progression_metrics[achievements["trading"]["metric"][0]]
+                + self.progression_metrics[achievements["trading"]["metric"][1]]
                 >= value
             ):
                 self.achievements.append(f"{achievement_name} {i+1}")
@@ -581,12 +581,9 @@ class Player(DBModel, UserMixin):
                 for i, value in enumerate(achievement_data["milestones"]):
                     if f"{achievement_data['name']} {i+1}" not in self.achievements:
                         if achievement == "trading":
-                            status = getattr(self, achievement_data["metric"][0]) + getattr(
-                                self,
-                                achievement_data["metric"][1],
-                            )
+                            status = self.progression_metrics[achievement_data["metric"][0]] + self.progression_metrics[achievement_data["metric"][1]]
                         else:
-                            status = getattr(self, achievement_data["metric"])
+                            status = self.progression_metrics[achievement_data["metric"]]
                         upcoming_achievements[achievement] = {
                             "name": f"{achievement_data['name']} {i+1}",
                             "reward": achievement_data["rewards"][i],

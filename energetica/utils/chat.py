@@ -71,6 +71,6 @@ def add_message(player: Player, message_text: str, chat: Chat) -> None:
         chat=chat,
     )
     chat.messages.append(new_message)
-    chat.last_read_message[player] = len(chat.messages) - 1
+    chat.last_read_message[player.id] = len(chat.messages) - 1
 
     display_new_message(new_message, chat)

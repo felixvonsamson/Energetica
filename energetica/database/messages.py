@@ -41,7 +41,7 @@ class Chat(DBModel):
     participants: set[Player]
     messages: list[Message] = field(default_factory=list)
 
-    last_read_message: dict[Player, int | None] = field(
+    last_read_message: dict[int, int | None] = field(
         default_factory=lambda: defaultdict(partial(int, -1)),
     )  # {player: message index in messages}
 

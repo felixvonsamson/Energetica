@@ -97,14 +97,14 @@ def network():
 @views.route("/power_facilities")
 def power_facilities():
     return g.render_template_ctx(
-        "assets/power_facilities.jinja", constructions=current_user.cache.power_facilities_data
+        "assets/power_facilities.jinja", constructions=current_user.power_facilities_data
     )
 
 
 @views.route("/storage_facilities")
 def storage_facilities():
     return g.render_template_ctx(
-        "assets/storage_facilities.jinja", constructions=current_user.cache.storage_facilities_data
+        "assets/storage_facilities.jinja", constructions=current_user.storage_facilities_data
     )
 
 
@@ -113,14 +113,14 @@ def technology():
     if "Unlock Technologies" not in current_user.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx(
-        "assets/technologies.jinja", available_technologies=current_user.cache.technologies_data
+        "assets/technologies.jinja", available_technologies=current_user.technologies_data
     )
 
 
 @views.route("/functional_facilities")
 def functional_facilities():
     return g.render_template_ctx(
-        "assets/functional_facilities.jinja", constructions=current_user.cache.functional_facilities_data
+        "assets/functional_facilities.jinja", constructions=current_user.functional_facilities_data
     )
 
 
@@ -129,7 +129,7 @@ def extraction_facilities():
     if "Unlock Natural Resources" not in current_user.achievements:
         return redirect("/home", code=302)
     return g.render_template_ctx(
-        "assets/extraction_facilities.jinja", constructions=current_user.cache.extraction_facilities_data
+        "assets/extraction_facilities.jinja", constructions=current_user.extraction_facilities_data
     )
 
 
