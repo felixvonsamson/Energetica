@@ -123,6 +123,7 @@ class GameEngine(object):
         ]
         for asset_type in dict[asset_family.lower().replace(" ", "_")]
     }
+
     def __init__(self):
         self.config = config
         self.const_config = const_config
@@ -138,7 +139,13 @@ class GameEngine(object):
         self.clock_time = None
         self.in_game_seconds_per_tick = None
         self.log("engine created")
-        
+
+    def clear_db(self):
+        """Clear all the data in the database."""
+        from energetica.database import DBModel
+
+        for db in DBModel.__subclasses__():
+            db.instances_dict.reset()
 
     def init(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None):
         # TODO(mglst): Create an explicit __init__ method, maybe make this a dataclass. Bref, rework this class
@@ -148,7 +155,6 @@ class GameEngine(object):
         self.clock_time = clock_time
         self.in_game_seconds_per_tick: int = in_game_seconds_per_tick
 
-        
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
         self.data["start_date"] = start_date or datetime.now()  # 0 point of server time
@@ -178,6 +184,7 @@ class GameEngine(object):
             self.data["random_seed"],
         )
         self.data["daily_question"] = {}
+        self.data["question_order"] = None
         self.new_daily_question()
 
         # stored the levels of technology of the server
@@ -203,6 +210,8 @@ class GameEngine(object):
         with open("energetica/static/data/industry_demand_year.pck", "rb") as file:
             # array of length 51 of normalized yearly industry demand variations
             self.industry_seasonal = pickle.load(file)
+
+        self.clear_db()
 
     def init_loggers(self) -> None:
         """Initialize the loggers for the engine."""
@@ -238,15 +247,15 @@ class GameEngine(object):
         """Load a new daily question from the csv file."""
         with open("energetica/static/data/daily_quiz_questions.csv", "r", encoding="utf-8") as file:
             csv_reader = list(csv.DictReader(file))
-            if "question_order" not in self.data:
-                self.data["question_order"] = list(range(len(csv_reader)))
-                random.shuffle(self.data["question_order"])
-                question_index = 0
-            else:
-                question_index = (self.data["daily_question"]["index"] + 1) % len(csv_reader)
-            self.data["daily_question"] = csv_reader[self.data["question_order"][question_index]]
-            self.data["daily_question"]["index"] = question_index
-            self.data["daily_question"]["player_answers"] = {}
+        if self.data["question_order"] is None:
+            self.data["question_order"] = list(range(len(csv_reader)))
+            random.shuffle(self.data["question_order"])
+            question_index = 0
+        else:
+            question_index = (self.data["daily_question"]["index"] + 1) % len(csv_reader)
+        self.data["daily_question"] = csv_reader[self.data["question_order"][question_index]]
+        self.data["daily_question"]["index"] = question_index
+        self.data["daily_question"]["player_answers"] = {}
 
 
 # TODO(mglst): Convert this class to an instance of GameError

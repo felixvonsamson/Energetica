@@ -18,8 +18,6 @@ from energetica.game_error import GameError
 from energetica.globals import engine
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-
     from energetica.database.map import HexTile
     from energetica.database.player import Player
 

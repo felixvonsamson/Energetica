@@ -1,24 +1,34 @@
 from dataclasses import dataclass, field
 from itertools import count
-from typing import Any, Callable, ClassVar, Iterator, TypeVar
+from typing import Any, Callable, Iterator, TypeVar
 
 from energetica.globals import engine
 
 T = TypeVar("T", bound="DBModel")
 
 
+class AutoIDDict(dict):
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.clear()
+        self._next_id = count(1)
+
+    def add(self, item):
+        item.id = next(self._next_id)
+        self[item.id] = item
+
+
 @dataclass
 class DBModel:
     """Base class for all managed objects in the database."""
-
-    __next_id: ClassVar[Iterator[int]]
 
     id: int = field(init=False)
 
     def __init_subclass__(cls) -> None:
         """Initialize the next id counter for each subclass."""
-        cls.__next_id = count(1)
-        engine.data[cls.__name__] = {}
+        engine.data[cls.__name__] = AutoIDDict()
 
     @classmethod
     @property
@@ -27,8 +37,7 @@ class DBModel:
 
     def __post_init__(self) -> None:
         """Assign an id to the object and store it in the engine."""
-        self.id = next(self.__next_id)
-        self.instances_dict[self.id] = self
+        self.instances_dict.add(self)
 
     @classmethod
     def get(cls: type[T], id: int) -> T | None:  # pylint: disable=redefined-builtin

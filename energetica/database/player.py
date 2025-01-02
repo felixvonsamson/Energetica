@@ -182,7 +182,6 @@ class Player(DBModel, UserMixin):
     def config(self) -> dict:
         """Return the player's configuration."""
         return engine.config[self]
-    
 
     @cached_property
     def power_facilities_data(self) -> list:
@@ -581,7 +580,10 @@ class Player(DBModel, UserMixin):
                 for i, value in enumerate(achievement_data["milestones"]):
                     if f"{achievement_data['name']} {i+1}" not in self.achievements:
                         if achievement == "trading":
-                            status = self.progression_metrics[achievement_data["metric"][0]] + self.progression_metrics[achievement_data["metric"][1]]
+                            status = (
+                                self.progression_metrics[achievement_data["metric"][0]]
+                                + self.progression_metrics[achievement_data["metric"][1]]
+                            )
                         else:
                             status = self.progression_metrics[achievement_data["metric"]]
                         upcoming_achievements[achievement] = {

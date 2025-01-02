@@ -85,7 +85,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
     player.check_construction_achievements(project.name)
 
     project.delete()
-    
+
     worker_type: WorkerType
     worker_type = WorkerType.RESEARCH if project.family == "Technologies" else WorkerType.CONSTRUCTION
     if project not in player.get_project_priority_list(worker_type):
@@ -156,7 +156,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         other_players: Iterator[Player] = Player.filter(lambda other_player: other_player != player)
         for other_player in other_players:
             other_player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
-    
+
     player.send_worker_info()
 
 
@@ -262,7 +262,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     # The cost of decommissioning is 20% of the building cost.
     cost = facility.dismantle_cost
     player.money -= cost
-    if not ActiveFacility.filter_by(name=facility.name, player_id=player.id):
+    if not ActiveFacility.filter_by(name=facility.name, player=player):
         # remove facility from facility priorities if it was the last one
         if facility.name in engine.extraction_facilities + engine.storage_facilities:
             player.priorities_of_demand.remove(facility.name)
@@ -320,7 +320,7 @@ def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
 
 def dismantle_all_of_type(player: Player, facility_name: str) -> None:
     """Dismantle all facilities of a certain type."""
-    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player_id=player.id, name=facility_name)
+    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player=player, name=facility_name)
     for facility in facilities:
         with contextlib.suppress(GameError):
             dismantle_facility(player, facility)
@@ -444,10 +444,10 @@ def cancel_project(player: Player, construction: OngoingProject, *, force: bool 
 
     dependents = []
     priority_list = getattr(player, priority_list_name)
-    construction_priority_index = priority_list.index(construction.id)
+    construction_priority_index = priority_list.index(construction)
     for candidate_dependent in priority_list[construction_priority_index + 1 :]:
-        if construction.id in candidate_dependent.cache.prerequisites:
-            dependents.append([candidate_dependent.name, candidate_dependent.cache.level])
+        if construction.id in candidate_dependent.prerequisites:
+            dependents.append([candidate_dependent.name, candidate_dependent.level])
     if dependents:
         msg = "HasDependents"
         raise GameError(msg, dependents=dependents)

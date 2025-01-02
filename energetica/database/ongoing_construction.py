@@ -175,7 +175,7 @@ class OngoingProject(DBModel):
                     # Add them as a prerequisite, if they are, according to const_config
                     offset: int = requirements[candidate_prerequisite.name]
                     candidate_prerequisite_level: int = (
-                        getattr(self.player, candidate_prerequisite.name)
+                        self.player.technology_lvl[candidate_prerequisite.name]
                         + num_ongoing_researches_of[candidate_prerequisite.name]
                     )
                     if level + offset - 1 >= candidate_prerequisite_level:

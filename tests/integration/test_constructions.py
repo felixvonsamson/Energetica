@@ -30,28 +30,26 @@ from energetica.utils.misc import confirm_location
 # 7. If there are projects waiting that have all their requirements fulfilled, there should be no available workers of the corresponding type.
 
 
-def validate_rules(player):
+def validate_rules(player: Player):
     """This function validates all of the above rules."""
     # Rule 1
-    assert len(set(player.constructions_by_priority)) == len(player.constructions_by_priority)
-    assert len(set(player.researches_by_priority)) == len(player.researches_by_priority)
+    assert len({construction.id for construction in player.constructions_by_priority}) == len(
+        player.constructions_by_priority
+    )
+    assert len({research.id for research in player.researches_by_priority}) == len(player.researches_by_priority)
     for construction in player.constructions_by_priority:
         assert construction is not None
-        assert construction.player_id == player.id
+        assert construction.player == player
         assert construction.family != "Technologies"
     for research in player.researches_by_priority:
         assert research is not None
-        assert research.player_id == player.id
+        assert research.player == player
         assert research.family == "Technologies"
-    assert len(
-        OngoingProject.filter(
-            lambda construction: construction.player == player and construction.family != "Technologies"
-        )
+    assert OngoingProject.count(
+        condition=lambda construction: construction.player == player and construction.family != "Technologies"
     ) == len(player.constructions_by_priority)
-    assert len(
-        OngoingProject.filter(
-            lambda construction: construction.player == player and construction.family == "Technologies"
-        )
+    assert OngoingProject.count(
+        condition=lambda construction: construction.player == player and construction.family == "Technologies"
     ) == len(player.researches_by_priority)
 
     # Rule 2
@@ -69,10 +67,12 @@ def validate_rules(player):
             f"but only {player.workers["construction"]} construction workers."
         )
 
-    ongoing_research = OngoingProject.filter_by(
-        player_id=player.id,
-        status=ConstructionStatus.ONGOING,
-        family="Technologies",
+    ongoing_research = list(
+        OngoingProject.filter_by(
+            player=player,
+            status=ConstructionStatus.ONGOING,
+            family="Technologies",
+        )
     )
     if len(ongoing_research) > player.workers["laboratory"]:
         pytest.fail(
@@ -88,41 +88,41 @@ def validate_rules(player):
     assert sorted(status_list_research, reverse=True) == status_list_research
 
     # Rule 4
-    assert not OngoingProject.filter(
-        lambda construction: construction.player == player
+    assert not OngoingProject.count(
+        condition=lambda construction: construction.player == player
         and construction.status == ConstructionStatus.ONGOING
         and construction.end_tick_or_ticks_passed <= engine.data["total_t"]
     )
-    assert not OngoingProject.filter(
-        lambda construction: construction.player == player
+    assert not OngoingProject.count(
+        condition=lambda construction: construction.player == player
         and construction.status != ConstructionStatus.ONGOING
         and construction.end_tick_or_ticks_passed > engine.data["total_t"]
     )
 
     # Rule 5
     ongoing_projects: Iterable[OngoingProject] = OngoingProject.filter_by(
-        player_id=player.id,
+        player=player,
         status=ConstructionStatus.ONGOING,
     )
     for project in ongoing_projects:
-        prerequisites = project.cache.prerequisites
+        prerequisites = project.prerequisites
         if prerequisites:
-            del project.cache._prerequisites_and_levels
-            assert not project.cache.prerequisites
+            del project._prerequisites_and_levels
+            assert not project.prerequisites
 
     # Rule 6
     for index, construction in enumerate(player.constructions_by_priority):
-        for prerequisite in construction.cache.prerequisites:
+        for prerequisite in construction.prerequisites:
             if player.constructions_by_priority.index(prerequisite) >= index:
-                del construction.cache._prerequisites_and_levels
-                for prerequisite in construction.cache.prerequisites:
+                del construction._prerequisites_and_levels
+                for prerequisite in construction.prerequisites:
                     assert player.constructions_by_priority.index(prerequisite) < index
                 break
     for index, research in enumerate(player.researches_by_priority):
-        for prerequisite in research.cache.prerequisites:
+        for prerequisite in research.prerequisites:
             if player.researches_by_priority.index(prerequisite) >= index:
-                del research.cache._prerequisites_and_levels
-                for prerequisite in research.cache.prerequisites:
+                del research._prerequisites_and_levels
+                for prerequisite in research.prerequisites:
                     assert player.researches_by_priority.index(prerequisite) < index
                 break
 
@@ -132,16 +132,14 @@ def validate_rules(player):
             lambda construction: construction.player == player
             and construction.status == ConstructionStatus.WAITING
             and construction.family != "Technologies"
-            and not construction.cache.prerequisites
+            and not construction.prerequisites
         )
     )
     if waiting_constructions:
-        count_on_going_constructions = len(
-            OngoingProject.filter(
-                lambda construction: construction.player == player
-                and construction.status == ConstructionStatus.ONGOING
-                and construction.family != "Technologies"
-            )
+        count_on_going_constructions = OngoingProject.count(
+            condition=lambda construction: construction.player == player
+            and construction.status == ConstructionStatus.ONGOING
+            and construction.family != "Technologies"
         )
         if player.workers["construction"] != count_on_going_constructions:
             pytest.fail(
@@ -156,15 +154,14 @@ def validate_rules(player):
             lambda construction: construction.player == player
             and construction.status == ConstructionStatus.WAITING
             and construction.family == "Technologies"
-            and not construction.cache.prerequisites
+            and not construction.prerequisites
         )
     )
     if waiting_research:
         count_on_going_research = OngoingProject.count(
-                lambda construction: construction.player == player
-                and construction.status == ConstructionStatus.ONGOING
-                and construction.family == "Technologies"
-            )
+            condition=lambda construction: construction.player == player
+            and construction.status == ConstructionStatus.ONGOING
+            and construction.family == "Technologies"
         )
         if player.workers["laboratory"] != count_on_going_research:
             pytest.fail(
@@ -182,40 +179,40 @@ def test_swap_paused_and_unpaused_constructions():
     After decreasing the priority of the construction A, construction B should be ongoing, and A waiting.
     """
 
-    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    with app.app_context():
-        player = Player(username="username", pwhash=generate_password_hash("password"))
-        hex_tile = HexTile.get(1)
-        confirm_location(player, hex_tile)
-        validate_rules(player)
-        construction_A = queue_project(player=player, asset="steam_engine", force=True)
-        validate_rules(player)
-        assert construction_A.status == ConstructionStatus.ONGOING
-        construction_B = queue_project(player=player, asset="steam_engine", force=True)
-        validate_rules(player)
-        assert construction_B.status == ConstructionStatus.WAITING
-        decrease_project_priority(player, construction_A)
-        validate_rules(player)
-        assert construction_B.status == ConstructionStatus.ONGOING
-        assert construction_A.status == ConstructionStatus.WAITING
+    create_app(rm_instance=True, skip_adding_handlers=True)
+
+    player = Player(username="username", pwhash=generate_password_hash("password"))
+    hex_tile = HexTile.get(1)
+    confirm_location(player, hex_tile)
+    validate_rules(player)
+    construction_A = queue_project(player=player, asset="steam_engine", force=True)
+    validate_rules(player)
+    assert construction_A.status == ConstructionStatus.ONGOING
+    construction_B = queue_project(player=player, asset="steam_engine", force=True)
+    validate_rules(player)
+    assert construction_B.status == ConstructionStatus.WAITING
+    decrease_project_priority(player, construction_A)
+    validate_rules(player)
+    assert construction_B.status == ConstructionStatus.ONGOING
+    assert construction_A.status == ConstructionStatus.WAITING
 
 
 def test_cancel_construction():
     """Setup:
     Player starts a construction and then cancels it. There should be no more constructions afterwards.
     """
-    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    with app.app_context():
-        player = Player(username="username", pwhash=generate_password_hash("password"))
-        hex_tile = HexTile.get(1)
-        confirm_location(player, hex_tile)
-        validate_rules(player)
-        construction = queue_project(player=player, asset="steam_engine", force=True)
-        validate_rules(player)
-        assert construction.status == ConstructionStatus.ONGOING
-        cancel_project(player, construction, force=True)
-        validate_rules(player)
-        assert len(player.constructions_by_priority) == 0
+    create_app(rm_instance=True, skip_adding_handlers=True)
+
+    player = Player(username="username", pwhash=generate_password_hash("password"))
+    hex_tile = HexTile.get(1)
+    confirm_location(player, hex_tile)
+    validate_rules(player)
+    construction = queue_project(player=player, asset="steam_engine", force=True)
+    validate_rules(player)
+    assert construction.status == ConstructionStatus.ONGOING
+    cancel_project(player, construction, force=True)
+    validate_rules(player)
+    assert len(player.constructions_by_priority) == 0
 
 
 def test_pause_construction():
@@ -224,41 +221,40 @@ def test_pause_construction():
     Then player unpauses the construction. It should be ongoing.
     """
 
-    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    with app.app_context():
-        player = Player(username="username", pwhash=generate_password_hash("password"))
-        hex_tile = HexTile.get(1)
-        confirm_location(player, hex_tile)
-        validate_rules(player)
-        construction = queue_project(player=player, asset="steam_engine", force=True)
-        validate_rules(player)
-        assert construction.status == ConstructionStatus.ONGOING
-        toggle_pause_project(player, construction)
-        validate_rules(player)
-        assert construction.status == ConstructionStatus.PAUSED
-        toggle_pause_project(player, construction)
-        validate_rules(player)
-        assert construction.status == ConstructionStatus.ONGOING
+    create_app(rm_instance=True, skip_adding_handlers=True)
+
+    player = Player(username="username", pwhash=generate_password_hash("password"))
+    hex_tile = HexTile.get(1)
+    confirm_location(player, hex_tile)
+    validate_rules(player)
+    construction = queue_project(player=player, asset="steam_engine", force=True)
+    validate_rules(player)
+    assert construction.status == ConstructionStatus.ONGOING
+    toggle_pause_project(player, construction)
+    validate_rules(player)
+    assert construction.status == ConstructionStatus.PAUSED
+    toggle_pause_project(player, construction)
+    validate_rules(player)
+    assert construction.status == ConstructionStatus.ONGOING
 
 
 def test_queue_two_pause_one():
     """Setup:
     Player starts constructions A and B. Player then pauses A.
     """
+    create_app(rm_instance=True, skip_adding_handlers=True)
 
-    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    with app.app_context():
-        player = Player(username="username", pwhash=generate_password_hash("password"))
-        hex_tile = HexTile.get(1)
-        confirm_location(player, hex_tile)
-        validate_rules(player)
-        construction_A = queue_project(player=player, asset="steam_engine", force=True)
-        validate_rules(player)
-        construction_B = queue_project(player=player, asset="steam_engine", force=True)
-        validate_rules(player)
-        toggle_pause_project(player, construction_A)
-        validate_rules(player)
-        assert player.constructions_by_priority == [construction_B.id, construction_A.id]
+    player = Player(username="username", pwhash=generate_password_hash("password"))
+    hex_tile = HexTile.get(1)
+    confirm_location(player, hex_tile)
+    validate_rules(player)
+    construction_A = queue_project(player=player, asset="steam_engine", force=True)
+    validate_rules(player)
+    construction_B = queue_project(player=player, asset="steam_engine", force=True)
+    validate_rules(player)
+    toggle_pause_project(player, construction_A)
+    validate_rules(player)
+    assert player.constructions_by_priority == [construction_B.id, construction_A.id]
 
 
 def test_three_constructions_with_pause():
@@ -266,24 +262,24 @@ def test_three_constructions_with_pause():
     Player starts constructions A, B and C. Player then pauses C, then A.
     """
 
-    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    with app.app_context():
-        player = Player(username="username", pwhash=generate_password_hash("password"))
-        player.money = 1_000_000_000
-        hex_tile = HexTile.get(1)
-        confirm_location(player, hex_tile)
-        validate_rules(player)
-        construction_A = queue_project(player=player, asset="steam_engine", force=True)
-        validate_rules(player)
-        construction_B = queue_project(player=player, asset="steam_engine", force=True)
-        validate_rules(player)
-        construction_C = queue_project(player=player, asset="steam_engine", force=True)
-        validate_rules(player)
-        toggle_pause_project(player, construction_C)
-        validate_rules(player)
-        toggle_pause_project(player, construction_A)
-        validate_rules(player)
-        # assert player.constructions_by_priority == [construction_B.id, construction_A.id, construction_C.id]
+    create_app(rm_instance=True, skip_adding_handlers=True)
+
+    player = Player(username="username", pwhash=generate_password_hash("password"))
+    player.money = 1_000_000_000
+    hex_tile = HexTile.get(1)
+    confirm_location(player, hex_tile)
+    validate_rules(player)
+    construction_A = queue_project(player=player, asset="steam_engine", force=True)
+    validate_rules(player)
+    construction_B = queue_project(player=player, asset="steam_engine", force=True)
+    validate_rules(player)
+    construction_C = queue_project(player=player, asset="steam_engine", force=True)
+    validate_rules(player)
+    toggle_pause_project(player, construction_C)
+    validate_rules(player)
+    toggle_pause_project(player, construction_A)
+    validate_rules(player)
+    # assert player.constructions_by_priority == [construction_B.id, construction_A.id, construction_C.id]
 
 
 def test_add_two_and_cancel_one():
@@ -293,20 +289,20 @@ def test_add_two_and_cancel_one():
     cancel(1)
     """
 
-    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    with app.app_context():
-        player = Player(username="username", pwhash=generate_password_hash("password"))
-        player.money = 1_000_000_000
-        hex_tile = HexTile.get(1)
-        confirm_location(player, hex_tile)
-        validate_rules(player)
-        construction_1 = queue_project(player=player, asset="steam_engine", force=True)
-        validate_rules(player)
-        construction_2 = queue_project(player=player, asset="steam_engine", force=True)
-        validate_rules(player)
-        cancel_project(player, construction_1, force=True)
-        validate_rules(player)
-        assert player.constructions_by_priority == [construction_2.id]
+    create_app(rm_instance=True, skip_adding_handlers=True)
+
+    player = Player(username="username", pwhash=generate_password_hash("password"))
+    player.money = 1_000_000_000
+    hex_tile = HexTile.get(1)
+    confirm_location(player, hex_tile)
+    validate_rules(player)
+    construction_1 = queue_project(player=player, asset="steam_engine", force=True)
+    validate_rules(player)
+    construction_2 = queue_project(player=player, asset="steam_engine", force=True)
+    validate_rules(player)
+    cancel_project(player, construction_1, force=True)
+    validate_rules(player)
+    assert player.constructions_by_priority == [construction_2.id]
 
 
 def test_technologies_pausing_propagates_requirements():
@@ -315,25 +311,25 @@ def test_technologies_pausing_propagates_requirements():
     Here, A is mathematics, B is mechanical_engineering.
     """
 
-    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    with app.app_context():
-        player = Player(username="username", pwhash=generate_password_hash("password"))
-        player.money = 1_000_000_000
-        hex_tile = HexTile.get(1)
-        confirm_location(player, hex_tile)
-        finish_project(queue_project(player=player, asset="laboratory", force=True))
+    create_app(rm_instance=True, skip_adding_handlers=True)
 
-        validate_rules(player)
-        technology_a = queue_project(player=player, asset="mathematics", force=True)
-        validate_rules(player)
-        assert technology_a.status == ConstructionStatus.ONGOING
-        technology_b = queue_project(player=player, asset="mechanical_engineering", force=True)
-        validate_rules(player)
-        assert technology_b.status == ConstructionStatus.WAITING
-        toggle_pause_project(player, technology_a)
-        validate_rules(player)
-        assert technology_a.status == ConstructionStatus.PAUSED
-        assert technology_b.status == ConstructionStatus.PAUSED
+    player = Player(username="username", pwhash=generate_password_hash("password"))
+    player.money = 1_000_000_000
+    hex_tile = HexTile.get(1)
+    confirm_location(player, hex_tile)
+    finish_project(queue_project(player=player, asset="laboratory", force=True))
+
+    validate_rules(player)
+    technology_a = queue_project(player=player, asset="mathematics", force=True)
+    validate_rules(player)
+    assert technology_a.status == ConstructionStatus.ONGOING
+    technology_b = queue_project(player=player, asset="mechanical_engineering", force=True)
+    validate_rules(player)
+    assert technology_b.status == ConstructionStatus.WAITING
+    toggle_pause_project(player, technology_a)
+    validate_rules(player)
+    assert technology_a.status == ConstructionStatus.PAUSED
+    assert technology_b.status == ConstructionStatus.PAUSED
 
 
 def test_math_and_building_tech():
@@ -341,18 +337,18 @@ def test_math_and_building_tech():
     Player starts mathematics and building_technology in that order.
     """
 
-    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    with app.app_context():
-        player = Player(username="username", pwhash=generate_password_hash("password"))
-        player.money = 1_000_000_000
-        hex_tile = HexTile.get(1)
-        confirm_location(player, hex_tile)
-        finish_project(queue_project(player=player, asset="laboratory", force=True))
+    create_app(rm_instance=True, skip_adding_handlers=True)
 
-        validate_rules(player)
-        technology_a = queue_project(player=player, asset="mathematics", force=True)
-        validate_rules(player)
-        assert technology_a.status == ConstructionStatus.ONGOING
-        technology_c = queue_project(player=player, asset="building_technology", force=True)
-        validate_rules(player)
-        assert technology_c.status == ConstructionStatus.WAITING
+    player = Player(username="username", pwhash=generate_password_hash("password"))
+    player.money = 1_000_000_000
+    hex_tile = HexTile.get(1)
+    confirm_location(player, hex_tile)
+    finish_project(queue_project(player=player, asset="laboratory", force=True))
+
+    validate_rules(player)
+    technology_a = queue_project(player=player, asset="mathematics", force=True)
+    validate_rules(player)
+    assert technology_a.status == ConstructionStatus.ONGOING
+    technology_c = queue_project(player=player, asset="building_technology", force=True)
+    validate_rules(player)
+    assert technology_c.status == ConstructionStatus.WAITING
