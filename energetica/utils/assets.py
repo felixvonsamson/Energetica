@@ -469,6 +469,8 @@ def cancel_project(player: Player, construction: OngoingProject, *, force: bool 
     else:
         player.constructions_by_priority.remove(construction)
 
+    construction.delete()
+
     worker_type = WorkerType.RESEARCH if construction.name in engine.technologies else WorkerType.CONSTRUCTION
     deploy_available_workers(player, worker_type)
     player.send_worker_info()
@@ -479,7 +481,6 @@ def cancel_project(player: Player, construction: OngoingProject, *, force: bool 
     # websocket.rest_notify_constructions(player)
 
     invalidate_data_on_project_update(player, construction.name)
-    construction.delete()
 
 
 def decrease_project_priority(player: Player, construction: OngoingProject) -> None:
@@ -492,7 +493,6 @@ def decrease_project_priority(player: Player, construction: OngoingProject) -> N
     if construction is None or construction.player != player:
         msg = "Construction not found"
         raise GameError(msg)
-    attr = "researches_by_priority" if construction.name in engine.technologies else "constructions_by_priority"
 
     worker_type = WorkerType.RESEARCH if construction.family == "Technologies" else WorkerType.CONSTRUCTION
     priority_list = player.get_project_priority_list(worker_type)
@@ -549,7 +549,7 @@ def toggle_pause_project(player: Player, construction: OngoingProject) -> None:
         construction.pause()
         dependency = [construction]
         dependency_indices = [construction_index]
-        insertion_index: int | None = None
+        insertion_index: int | None = len(priority_list)
         for index, other_construction in enumerate(priority_list[construction_index + 1 :]):
             other_construction_index = index + construction_index + 1
             if other_construction.was_paused_by_player():
@@ -575,9 +575,7 @@ def toggle_pause_project(player: Player, construction: OngoingProject) -> None:
                 *dependency,
                 *priority_list[insertion_index:],
             ]
-            for dependent in dependency:
-                priority_list.insert(insertion_index, dependent)
-                priority_list.remove(dependent)
+            player.set_project_priority_list(worker_type, priority_list)
 
         # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
         worker_type = WorkerType.RESEARCH if construction.name in engine.technologies else WorkerType.CONSTRUCTION

@@ -254,7 +254,7 @@ def test_queue_two_pause_one():
     validate_rules(player)
     toggle_pause_project(player, construction_A)
     validate_rules(player)
-    assert player.constructions_by_priority == [construction_B.id, construction_A.id]
+    assert player.constructions_by_priority == [construction_B, construction_A]
 
 
 def test_three_constructions_with_pause():
@@ -279,7 +279,7 @@ def test_three_constructions_with_pause():
     validate_rules(player)
     toggle_pause_project(player, construction_A)
     validate_rules(player)
-    # assert player.constructions_by_priority == [construction_B.id, construction_A.id, construction_C.id]
+    # assert player.constructions_by_priority == [construction_B, construction_A, construction_C]
 
 
 def test_add_two_and_cancel_one():
@@ -302,7 +302,7 @@ def test_add_two_and_cancel_one():
     validate_rules(player)
     cancel_project(player, construction_1, force=True)
     validate_rules(player)
-    assert player.constructions_by_priority == [construction_2.id]
+    assert player.constructions_by_priority == [construction_2]
 
 
 def test_technologies_pausing_propagates_requirements():

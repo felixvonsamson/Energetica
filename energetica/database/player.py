@@ -218,12 +218,21 @@ class Player(DBModel, UserMixin):
         self.graph_view = view
 
     def get_project_priority_list(self, worker_type: WorkerType) -> list[OngoingProject]:
-        """Return the priority list for a given family."""
+        """Return the priority list for a given project type."""
         if worker_type == WorkerType.RESEARCH:
             return self.researches_by_priority
         if worker_type == WorkerType.CONSTRUCTION:
             return self.constructions_by_priority
         raise GameError("InvalidWorkerType")
+
+    def set_project_priority_list(self, worker_type: WorkerType, priority_list: list[OngoingProject]) -> None:
+        """Set the priority list for a given project type."""
+        if worker_type == WorkerType.RESEARCH:
+            self.researches_by_priority = priority_list
+        elif worker_type == WorkerType.CONSTRUCTION:
+            self.constructions_by_priority = priority_list
+        else:
+            raise GameError("InvalidWorkerType")
 
     def available_workers(self, worker_type: WorkerType) -> int:
         """Return the number of available workers depending on the project type."""
