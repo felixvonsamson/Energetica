@@ -1,12 +1,15 @@
 """Module for simulating user actions on the server."""
 
+from __future__ import annotations
+
 import cProfile
-from datetime import datetime
 import json
 import pickle
 import pstats
 import tarfile
+from datetime import datetime
 from time import sleep
+from typing import TYPE_CHECKING
 
 import requests
 
@@ -16,6 +19,9 @@ from energetica.globals import engine
 from energetica.utils.climate_helpers import climate_event_impact
 from energetica.utils.misc import save_past_data_threaded
 from energetica.utils.tick_execution import check_events_completion
+
+if TYPE_CHECKING:
+    from flask import Flask
 
 
 def create_user(user_id, port):
@@ -53,15 +59,16 @@ def simulate(*simulate_args, profiling=False, **simulate_kwargs):
 
 
 def _simulate(
-    app,
-    port,
-    actions,
-    stop_on_mismatch,
-    stop_on_server_error,
-    stop_on_assertion_error,
-    checkpoint_every_k_ticks=10000,
+    app: Flask,
+    port: int,
+    actions: list[dict],
+    *,
+    stop_on_mismatch: bool,
+    stop_on_server_error: bool,
+    stop_on_assertion_error: bool,
+    checkpoint_every_k_ticks: int = 10000,
     checkpoint_ticks: list[int] | None = None,
-):
+) -> None:
     if checkpoint_ticks is None:
         checkpoint_ticks = []
     with app.app_context():
