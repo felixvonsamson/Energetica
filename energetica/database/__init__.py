@@ -1,21 +1,29 @@
+"""Database module for the Energetica application."""
+
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from itertools import count
-from typing import Any, Callable, Iterator, TypeVar
+from typing import Any, Generic, TypeVar
 
 from energetica.globals import engine
 
 T = TypeVar("T", bound="DBModel")
 
 
-class AutoIDDict(dict):
-    def __init__(self):
+class AutoIDDict(Generic[T], dict[int, T]):
+    """Dictionary that automatically assigns an id to each item added."""
+
+    def __init__(self) -> None:
+        """Initialize the next id counter."""
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
+        """Clear the dictionary and reset the next id counter."""
         self.clear()
         self._next_id = count(1)
 
-    def add(self, item):
+    def add(self, item: T) -> None:
+        """Add an item to the dictionary and assign it an id."""
         item.id = next(self._next_id)
         self[item.id] = item
 
@@ -31,23 +39,23 @@ class DBModel:
         engine.data[cls.__name__] = AutoIDDict()
 
     @classmethod
-    @property
-    def instances_dict(cls: type[T]) -> dict[int, T]:
+    def instances(cls: type[T]) -> AutoIDDict[T]:
+        """Get the dictionary of instances for this class."""
         return engine.data[cls.__name__]
 
     def __post_init__(self) -> None:
         """Assign an id to the object and store it in the engine."""
-        self.instances_dict.add(self)
+        self.instances().add(self)
 
     @classmethod
     def get(cls: type[T], id: int) -> T | None:  # pylint: disable=redefined-builtin
         """Get an object by its id."""
-        return cls.instances_dict[id] if id in cls.instances_dict else None
+        return cls.instances().get(id, None)
 
     @classmethod
     def all(cls: type[T]) -> Iterator[T]:
         """Get all instances of this class."""
-        return cls.instances_dict.values()
+        return (v for v in cls.instances().values())
 
     @classmethod
     def count(cls: type[T], *, condition: Callable[[T], bool] | None = None) -> int:
@@ -71,4 +79,4 @@ class DBModel:
 
     def delete(self: T) -> None:
         """Delete the object from the engine."""
-        del self.instances_dict[self.id]
+        del self.instances()[self.id]

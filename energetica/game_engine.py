@@ -145,7 +145,7 @@ class GameEngine(object):
         from energetica.database import DBModel
 
         for db in DBModel.__subclasses__():
-            db.instances_dict.reset()
+            db.instances().reset()
 
     def init(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None):
         # TODO(mglst): Create an explicit __init__ method, maybe make this a dataclass. Bref, rework this class
