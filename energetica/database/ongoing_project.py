@@ -28,7 +28,7 @@ class OngoingProject(DBModel):
     """Class that stores projects."""
 
     name: str
-    family: str  # TODO (Felix) : is that really needed?
+    family: str  # TODO (Felix): is that really needed?
     player: Player
 
     end_tick_or_ticks_passed: float  # in game ticks when the project will be finished or ticks passed if it is paused

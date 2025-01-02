@@ -1,4 +1,4 @@
-"""This module is responsible for serving the Jinja templates to the user."""
+"""Module responsible for serving the Jinja templates to the user."""
 
 from functools import partial
 
@@ -22,8 +22,7 @@ changelog = Blueprint("changelog", __name__, static_folder="static")
 @overviews.before_request
 @login_required
 def set_ctx():
-    """This function is called before every request"""
-
+    """Set up the context and redirects if the user has no tile."""
     if current_user.tile is None:
         return redirect("/location_choice", code=302)
 
@@ -39,7 +38,7 @@ def set_ctx():
 @wiki.before_request
 @changelog.before_request
 def set_ctx_no_login():
-    """This function is called before every request"""
+    """Set a context for rendering templates without requiring user login, storing it in the global object."""
     user = current_user if current_user.is_authenticated and current_user.tile is not None else None
     render_template_ctx = partial(render_template, engine=engine, user=user)
     g.render_template_ctx = render_template_ctx
@@ -71,8 +70,9 @@ def map_view():
 @views.route("/profile")
 def profile():
     """
-    This is the endpoint for the profile page.
-    When players are on their own profile page, it can see more information about their account
+    Serve the profile page.
+
+    When players are on their own profile page, they can see more information about their account.
     """
     player_id = request.args.get("player_id")
     if player_id is None:
@@ -96,25 +96,19 @@ def network():
 
 @views.route("/power_facilities")
 def power_facilities():
-    return g.render_template_ctx(
-        "assets/power_facilities.jinja", constructions=current_user.power_facilities_data
-    )
+    return g.render_template_ctx("assets/power_facilities.jinja", constructions=current_user.power_facilities_data)
 
 
 @views.route("/storage_facilities")
 def storage_facilities():
-    return g.render_template_ctx(
-        "assets/storage_facilities.jinja", constructions=current_user.storage_facilities_data
-    )
+    return g.render_template_ctx("assets/storage_facilities.jinja", constructions=current_user.storage_facilities_data)
 
 
 @views.route("/technology")
 def technology():
     if "Unlock Technologies" not in current_user.achievements:
         return redirect("/home", code=302)
-    return g.render_template_ctx(
-        "assets/technologies.jinja", available_technologies=current_user.technologies_data
-    )
+    return g.render_template_ctx("assets/technologies.jinja", available_technologies=current_user.technologies_data)
 
 
 @views.route("/functional_facilities")

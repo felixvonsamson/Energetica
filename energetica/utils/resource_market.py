@@ -1,4 +1,4 @@
-"""Util functions relating to the resource market"""
+"""Util functions relating to the resource market."""
 
 import math
 
@@ -10,7 +10,7 @@ from energetica.utils.formatting import display_money, format_mass
 
 
 def put_resource_on_market(player, resource, quantity, price):
-    """Put an offer on the resource market"""
+    """Put an offer on the resource market."""
     if player.resources[resource] - player.resources_on_sale[resource] < quantity:
         raise GameError("notEnoughResource")
     player.resources_on_sale[resource] += quantity
@@ -24,7 +24,7 @@ def put_resource_on_market(player, resource, quantity, price):
 
 
 def buy_resource_from_market(player, quantity, sale):
-    """Buy an offer from the resource market"""
+    """Buy an offer from the resource market."""
 
     if quantity is None or quantity <= 0 or quantity > sale.quantity:
         raise GameError("invalidQuantity")
@@ -75,7 +75,11 @@ def buy_resource_from_market(player, quantity, sale):
 
 
 def store_import(player, resource, quantity):
-    """This function is executed when a resource shipment arrives"""
+    """
+    Add a resource shipment to the player's warehouse.
+
+    This function is executed when a resource shipment arrives.
+    """
     max_cap = player.config["warehouse_capacities"][resource]
     if player.resources[resource] + quantity > max_cap:
         player.resources[resource] = max_cap

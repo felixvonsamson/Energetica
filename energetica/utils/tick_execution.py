@@ -1,4 +1,4 @@
-"""Util functions relating to the GameEngine class"""
+"""Util functions relating to the GameEngine class."""
 
 import json
 import pickle
@@ -27,7 +27,7 @@ def state_update(app):
 
 
 def _state_update(app):
-    """This function is called every tick to update the state of the game"""
+    """Update the game state on every tick."""
     total_t = (time.time() - engine.data["start_date"]) / engine.clock_time
     with app.app_context():
         while engine.data["total_t"] < total_t - 1 or engine.data["total_t"] == 0:
@@ -63,7 +63,7 @@ def _state_update(app):
 
 
 def check_events_completion():
-    """function that checks if projects have finished, shipments have arrived or facilities arrived at end of life"""
+    """Check if projects have finished, shipments have arrived or facilities arrived at end of life."""
     # check if constructions finished
     finished_constructions = list(
         OngoingProject.filter(

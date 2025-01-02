@@ -1,4 +1,4 @@
-"""This module is used to initialize the database with test players and networks."""
+"""Module to initialize the database with test players and networks."""
 
 from werkzeug.security import generate_password_hash
 
@@ -13,10 +13,10 @@ from energetica.utils.network_helpers import create_network, join_network
 
 
 def init_test_players():
-    """This function initializes the database with test players and networks."""
+    """Initialize the database with test players and networks."""
 
     def add_asset(player: Player, project: str, n):
-        """This function creates a project that will instantly finish."""
+        """Create a project that will instantly finish."""
         for _ in range(n):
             ongoing_project = queue_project(
                 player, project, force=True, ignore_requirements_and_money=True, skip_notifications=True
@@ -25,7 +25,7 @@ def init_test_players():
         engine.log(f"Added {n} {project} for {player.username}")
 
     def create_player(username, password, tile_id=None) -> Player:
-        """This function creates and initializes a player."""
+        """Create and initialize a player."""
         player = next(Player.filter_by(username=username), None)
         if player:
             engine.log(f"create_player: player {username} already exists")
@@ -40,7 +40,7 @@ def init_test_players():
         return player
 
     def setup_network(name, members: list[Player]) -> Network:
-        """This function creates and initializes a network."""
+        """Create and initialize a network."""
         # Unlock the network achievement for all members
         for player in members:
             if "Unlock Network" not in player.achievements:
@@ -60,7 +60,7 @@ def init_test_players():
         return network
 
     def climate_events_scenario():
-        """This scenario fills the map with players that use coal to see climate change events."""
+        """Fill the map with players that use coal to see climate change events."""
         players = []
         for i in range(1, 5):
             print("creating player", i)

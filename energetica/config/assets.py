@@ -1,4 +1,4 @@
-"""This file contains all the data needed for the game"""
+"""Contains all the data needed for the game."""
 
 # TODO: it would be better to store the relevant data in a non-code file. Maybe a JSON
 

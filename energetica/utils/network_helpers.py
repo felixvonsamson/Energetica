@@ -13,7 +13,7 @@ from energetica.globals import engine
 
 # TODO (Felix): Move this to a method in Player
 def join_network(player: Player, network: Network | None) -> Network:
-    """shared API method to join a network."""
+    """Shared API method to join a network."""
     if "Unlock Network" not in player.achievements:
         raise GameError("networkNotUnlocked")
     if network is None:
@@ -29,7 +29,7 @@ def join_network(player: Player, network: Network | None) -> Network:
 
 
 def data_init_network() -> dict:
-    """Initializes the data for a new network."""
+    """Initialize the data for a new network."""
     return {
         "network_data": {
             "price": [[0.0] * 360] * 5,
@@ -43,7 +43,7 @@ def data_init_network() -> dict:
 
 
 def create_network(player: Player, name: str) -> Network:
-    """shared API method to create a network. Network name must pass validation,
+    """Shared API method to create a network. Network name must pass validation,
     namely it must not be too long, nor too short, and must not already be in
     use."""
     if "Unlock Network" not in player.achievements:
@@ -134,8 +134,9 @@ def set_network_prices(
 # TODO (Felix): Move this to a method in Player
 def change_facility_priority(player: Player, priority: list[str]) -> None:
     """
-    This function is executed when the facilities priority is changed by changing the order in the interactive
-    table. The function reassigns the selling prices of the facilities according to the new order.
+    Reassign the selling prices of the facilities according to the new order.
+
+    Executed when the facilities priority is changed by changing the order in the interactive table.
     """
     old_set = {f"demand-{demand_type}" for demand_type in player.priorities_of_demand}
     old_set.update(player.priorities_of_controllables)

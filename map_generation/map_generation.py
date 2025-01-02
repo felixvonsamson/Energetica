@@ -1,4 +1,4 @@
-"""This file generates 10 maps for the game Energetica with the resources and climate risks."""
+"""Generate 10 maps for the game Energetica with the resources and climate risks."""
 
 import math
 import os
@@ -37,11 +37,11 @@ class Tile:
         return f"Tile {self.id}"
 
     def is_on_border(self):
-        """Returns True if the tile is on the border of the map."""
+        """Return True if the tile is on the border of the map."""
         return abs(self.q) == size_param or abs(self.r) == size_param or abs(self.q + self.r) == size_param
 
     def get_neighbors(self):
-        """Returns the neighbors of the tile."""
+        """Return the neighbors of the tile."""
         neighbors = []
         for direction in directions:
             neighbor_id = coordinates_to_id(self.q + direction[0], self.r + direction[1])
@@ -50,7 +50,7 @@ class Tile:
         return neighbors
 
     def n_neighbors18(self):
-        """Returns the number of tile in a 2-hexagon radius around the tile."""
+        """Return the number of tile in a 2-hexagon radius around the tile."""
         neighbors18 = []
         for neighbor in self.get_neighbors():
             neighbors18.append(neighbor)
@@ -60,13 +60,11 @@ class Tile:
         return len(neighbors18)
 
     def dist(self, tile):
-        """Returns the distance between the tile and another tile."""
+        """Return the distance between the tile and another tile."""
         return math.sqrt(2 * (self.q - tile.q) ** 2 + (self.r - tile.r) ** 2 + (self.q - tile.q) * (self.r - tile.r))
 
     def sigmoid_probability(self, inverted=False):
-        """
-        This function is used for heat and cold waves and returns the probability of occurrence based on the latitude.
-        """
+        """Return the probability of occurrence of heat and cold waves based on the latitude."""
 
         def cdf(x):
             return (3 * np.log(math.exp(x / 3) + math.exp(-1 / 3)) + 0.88) / 11.44
@@ -79,7 +77,7 @@ class Tile:
         return (cdf_upper - cdf_lower) / n_latitudes
 
     def normal_probability(self):
-        """Returns the probability of occurrence of wildfires based on the latitude."""
+        """Return the probability of occurrence of wildfires based on the latitude."""
 
         def cdf(x):
             return (1 / (1 + np.exp(-(x - 2.5) / 3.5)) - 0.02) / 0.88
@@ -92,7 +90,7 @@ class Tile:
         return (cdf_upper - cdf_lower) / n_latitudes
 
     def get_downstream_tiles(self, n):
-        """returns up to `n` many tiles that are downstream (related to hydro) from the current tile"""
+        """Return up to `n` many tiles that are downstream (related to hydro) from the current tile."""
         downstream_tiles = []
 
         def find_downstream(tile, n):
@@ -108,7 +106,7 @@ class Tile:
 
 
 def id_to_coordinates(tile_id):
-    """Converts the id of a tile to its coordinates. (outwards spiral)"""
+    """Convert the id of a tile to its coordinates (outwards spiral)."""
 
     def sgn(x):
         sgnArray = [0, 1, 1, 0, -1, -1]
@@ -126,7 +124,7 @@ def id_to_coordinates(tile_id):
 
 
 def coordinates_to_id(x, y):
-    """Converts the coordinates of a tile to its id. (outwards spiral)"""
+    """Convert the coordinates of a tile to its id (outwards spiral)."""
     if x == 0 and y == 0:
         return 0
     L = 0.5 * (abs(x) + abs(y) + abs(x + y))
@@ -145,7 +143,7 @@ def coordinates_to_id(x, y):
 
 
 def save_as_csv(map, m):
-    """Saves the map as a csv file."""
+    """Save the map as a csv file."""
     with open(f"map{m}.csv", "w") as f:
         f.write("q,r,solar,wind,hydro,coal,gas,uranium,climate_risk,score\n")
         for tile in map:
@@ -156,7 +154,7 @@ def save_as_csv(map, m):
 
 
 def calculate_solar_potentials():
-    """Calculates the solar potentials for each latitude."""
+    """Calculate the solar potentials for each latitude."""
     start_date = datetime(2023, 1, 1).timestamp()
     end_date = datetime(2024, 1, 1).timestamp()
     timesteps = np.linspace(start_date, end_date, 365 * 24)
@@ -168,13 +166,13 @@ def calculate_solar_potentials():
 
 
 def generate_solar(map, potentials):
-    """Generates solar resources on the map based on the internal clear sky model and depending on the latitude."""
+    """Generate solar resources on the map based on the internal clear sky model and depending on the latitude."""
     for tile in map:
         tile.solar = potentials[tile.r]
 
 
 def generate_hydro(map):
-    """Generates rivers from the border to the center of the map."""
+    """Generate rivers from the border to the center of the map."""
 
     def count_hydro_neighbors(tile):
         count = 0
@@ -227,7 +225,7 @@ def generate_hydro(map):
 
 
 def calculate_risk(map):
-    """Calculates the climate risk of each tile based on the cost of climate events and their probability."""
+    """Calculate the climate risk of each tile based on the cost of climate events and their probability."""
     heatwave_event_probability = (
         1.016  # calculated as the integral of the probability density function spread overt one year
     )
@@ -281,7 +279,7 @@ def calculate_risk(map):
 
 
 def generate_coal(map):
-    """Generates coal resources on the map as big patches."""
+    """Generate coal resources on the map as big patches."""
 
     def extend_patch(patch, coal_value):
         while patch:
@@ -329,7 +327,7 @@ def generate_coal(map):
 
 
 def generate_gas(map):
-    """Generates gas resources on the map as veins."""
+    """Generate gas resources on the map as veins."""
 
     def count_gas_neighbors(tile):
         count = 0
@@ -372,7 +370,7 @@ def generate_gas(map):
 
 
 def generate_uranium(map):
-    """Generates uranium resources on the map as isolated groups of tiles."""
+    """Generate uranium resources on the map as isolated groups of tiles."""
     for tile in map:
         tile.score = tile.solar + tile.hydro + tile.coal + tile.gas - tile.risk
 
@@ -387,7 +385,7 @@ def generate_uranium(map):
 
 
 def generate_wind(map):
-    """Generates wind resources on the map trying to balance all tiles."""
+    """Generate wind resources on the map trying to balance all tiles."""
     for tile in map:
         tile.score = tile.solar + tile.hydro + tile.coal + tile.gas + tile.uranium - tile.risk
 
@@ -396,7 +394,7 @@ def generate_wind(map):
 
 
 def generate_background_resources(map):
-    """Generates low amount of background resources on each tile."""
+    """Generate low amount of background resources on each tile."""
 
     def equilibrator(score):
         return 0.3 * (max_score - score) / (max_score - min_score)

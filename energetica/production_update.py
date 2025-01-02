@@ -867,6 +867,7 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction) -> None:
     @param satisfaction: the amount of power that can be provided (in W)
 
     """
+    # TODO(mglst): Add argument description for new_values
     player = Player.get(player_id)
     demand = new_values[player.id]["demand"]
     if demand_type == "industry":

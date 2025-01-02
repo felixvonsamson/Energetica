@@ -200,7 +200,8 @@ def display_new_message(message: Message, chat: Chat) -> None:
 
 
 def confirm_location(player: Player, tile: HexTile) -> None:
-    """Confirm a location choice.
+    """
+    Confirm a location choice.
 
     Return either success or an explanatory error message in the form of a dictionary.
     Called when a web client uses the choose_location socket.io endpoint, or the REST websocket API.
@@ -220,8 +221,12 @@ def confirm_location(player: Player, tile: HexTile) -> None:
 
 
 def initialize_player(player: Player) -> None:
-    """This function is called after a player confirms his location. It gives it an initial steam engine and
-    initializes the player's data.
+    """
+    Initialize a player's data after they have chosen a location.
+
+    This includes:
+    - Giving the player an initial steam engine
+    - Adding the player to the general chat
     """
     eol = engine.data["total_t"] + math.ceil(
         engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick
@@ -286,7 +291,8 @@ def get_quiz_question(player: Player) -> dict:
 
 
 def calculate_solar_irradiance(position: tuple[float, float], total_seconds: float, random_seed: int) -> float:
-    """Calculate the solar irradiance for a given location and time.
+    """
+    Calculate the solar irradiance for a given location and time.
 
     The clear sky index is derived from a 3d perlin noise function that moves in time to simulate the cloud cover.
     The clear sky index is then multiplied by the clear sky irradiance to get the solar irradiance.
@@ -328,7 +334,8 @@ def calculate_solar_irradiance(position: tuple[float, float], total_seconds: flo
 
 
 def calculate_wind_speed(position: tuple[float, float], total_seconds: float, random_seed: int) -> float:
-    """Calculate the wind speed for a given location and time.
+    """
+    Calculate the wind speed for a given location and time.
 
     The wind speed is derived from a 3d perlin noise function with a superposition of specific frequencies.
     Two sinusoidal functions are multiplied to the noise to simulate the diurnal and seasonal wind patterns.

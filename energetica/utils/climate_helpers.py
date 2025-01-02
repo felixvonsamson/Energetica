@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 def climate_event_impact(tile, event_name):
-    """Creates a ClimateEventRecovery object for the event and some facilities may be destroyed by the climate event."""
+    """Create a ClimateEventRecovery object for the event and some facilities may be destroyed by the climate event."""
     engine.log(f"{climate_events[event_name]['name']} on tile {tile.id}")
     engine.action_logger.info(
         json.dumps(
@@ -81,7 +81,7 @@ def climate_event_impact(tile, event_name):
 
 
 def check_climate_events():
-    """function that checks if a climate event happens on this tick"""
+    """Check if a climate event happens on this tick."""
 
     def inv_cdf_sigmoid(p, inverse=False):
         latitude = 3 * np.log(math.exp((11.44 * p - 0.88) / 3) - math.exp(-1 / 3))
@@ -172,7 +172,7 @@ def check_climate_events():
 
 
 def data_init_climate(seconds_per_tick, random_seed, delta_t):
-    """Initializes the data for the climate."""
+    """Initialize the data for the climate."""
     ref_temp = []
     temp_deviation = []
     for i in range(5):
