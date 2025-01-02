@@ -419,17 +419,15 @@ def request_queue_project() -> Response | tuple:
 @http.route("/request_cancel_project", methods=["POST"])
 @log_action
 def request_cancel_project() -> Response | tuple:
-    """Cancel an ongoing construction or upgrade."""
+    """Cancel an ongoing projects."""
     request_data = request.get_json()
-    construction_id = int(request_data["id"])
-    construction = OngoingProject.get(int(construction_id))
-    if construction is None or construction.player != current_user:
-        return jsonify({"response": "constructionNotFound"}), 404
+    project_id = int(request_data["id"])
+    project = OngoingProject.get(int(project_id))
+    if project is None or project.player != current_user:
+        return jsonify({"response": "projectNotFound"}), 404
     force = request_data["force"]
     try:
-        energetica.utils.assets.cancel_project(
-            player=Player.get(current_user.id), construction=construction, force=force
-        )
+        energetica.utils.assets.cancel_project(player=Player.get(current_user.id), project=project, force=force)
     except Confirm as confirm:
         return jsonify(
             {
@@ -441,7 +439,7 @@ def request_cancel_project() -> Response | tuple:
         {
             "response": "success",
             "money": current_user.money,
-            "constructions": package_projects_data(current_user),
+            "projects": package_projects_data(current_user),
         },
     )
 
@@ -449,17 +447,17 @@ def request_cancel_project() -> Response | tuple:
 @http.route("/request_toggle_pause_project", methods=["POST"])
 @log_action
 def request_pause_project() -> Response | tuple:
-    """Pause or unpause an ongoing construction or upgrade."""
+    """Pause or unpause an ongoing project."""
     request_data = request.get_json()
-    construction_id = int(request_data["id"])
-    construction = OngoingProject.get(int(construction_id))
-    if construction is None or construction.player != current_user:
-        return jsonify({"response": "constructionNotFound"}), 404
-    energetica.utils.assets.toggle_pause_project(player=Player.get(current_user.id), construction=construction)
+    project_id = int(request_data["id"])
+    project = OngoingProject.get(int(project_id))
+    if project is None or project.player != current_user:
+        return jsonify({"response": "projectNotFound"}), 404
+    energetica.utils.assets.toggle_pause_project(player=Player.get(current_user.id), project=project)
     return jsonify(
         {
             "response": "success",
-            "constructions": package_projects_data(current_user),
+            "projects": package_projects_data(current_user),
         },
     )
 
@@ -467,17 +465,17 @@ def request_pause_project() -> Response | tuple:
 @http.route("/request_decrease_project_priority", methods=["POST"])
 @log_action
 def request_decrease_project_priority() -> Response | tuple:
-    """Change the order of ongoing constructions or upgrades."""
+    """Change the order of ongoing projects."""
     request_data = request.get_json()
-    construction_id = request_data["id"]
-    construction = OngoingProject.get(int(construction_id))
-    if construction is None or construction.player != current_user:
-        return jsonify({"response": "constructionNotFound"}), 404
-    energetica.utils.assets.decrease_project_priority(player=Player.get(current_user.id), construction=construction)
+    project_id = request_data["id"]
+    project = OngoingProject.get(int(project_id))
+    if project is None or project.player != current_user:
+        return jsonify({"response": "projectNotFound"}), 404
+    energetica.utils.assets.decrease_project_priority(player=Player.get(current_user.id), project=project)
     return jsonify(
         {
             "response": "success",
-            "constructions": package_projects_data(current_user),
+            "projects": package_projects_data(current_user),
         },
     )
 
@@ -490,7 +488,7 @@ def request_upgrade_facility() -> Response | tuple:
     facility_id = request_data["facility_id"]
     facility = ActiveFacility.get(int(facility_id))
     if facility is None or facility.player != current_user:
-        return jsonify({"response": "constructionNotFound"}), 404
+        return jsonify({"response": "facilityNotFound"}), 404
     energetica.utils.assets.upgrade_facility(player=Player.get(current_user.id), facility=facility)
     return jsonify({"response": "success", "money": current_user.money})
 
@@ -513,7 +511,7 @@ def request_dismantle_facility() -> Response | tuple:
     facility_id = request_data["facility_id"]
     facility = ActiveFacility.get(int(facility_id))
     if facility is None or facility.player != current_user:
-        return jsonify({"response": "constructionNotFound"}), 404
+        return jsonify({"response": "projectNotFound"}), 404
     energetica.utils.assets.dismantle_facility(player=Player.get(current_user.id), facility=facility)
     return jsonify(
         {
