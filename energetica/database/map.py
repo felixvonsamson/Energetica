@@ -50,7 +50,7 @@ class HexTile(DBModel):
         neighbors = []
         tiles_at_distance = get_hex_at_distance(*self.coordinates, n)
         for q, r in tiles_at_distance:
-            neighbor = next(HexTile.filter_by(q=q, r=r))
+            neighbor = next(HexTile.filter_by(coordinates=(q, r)), None)
             if neighbor:
                 neighbors.append(neighbor)
         return neighbors

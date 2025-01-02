@@ -1,11 +1,17 @@
 """Database module for the Energetica application."""
 
-from collections.abc import Callable, Iterator
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from itertools import count
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypedDict, TypeVar, Unpack
 
 from energetica.globals import engine
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+
+    from energetica.database.player import Player
 
 T = TypeVar("T", bound="DBModel")
 
@@ -62,8 +68,26 @@ class DBModel:
         """Get all instances of this class."""
         return sum(1 for _ in (cls.filter(condition) if condition else cls.all()))
 
+    class WhitelistedConditions(TypedDict, total=False):
+        """
+        Whitelisted conditions for filtering instances.
+
+        TypedDict is used by mypy (or other type checkers) to enforce the kwargs names and types in the `filter_by` and
+        `count_when` methods.
+        """
+
+        id: int
+        name: str
+        username: str
+        player: Player | None  # None because of HexTile
+        # HexTile
+        coordinates: tuple[int, int]
+        # OngoingProject
+        status: int
+        family: str  # TODO(mglst): Remove once the family field is removed
+
     @classmethod
-    def count_when(cls: type[T], **conditions: Any) -> int:
+    def count_when(cls: type[T], **conditions: Unpack[WhitelistedConditions]) -> int:
         """Get all instances of this class."""
         return sum(1 for _ in cls.filter_by(**conditions))
 
@@ -73,7 +97,7 @@ class DBModel:
         return filter(condition, cls.all())
 
     @classmethod
-    def filter_by(cls: type[T], **conditions: Any) -> Iterator[T]:
+    def filter_by(cls: type[T], **conditions: Unpack[WhitelistedConditions]) -> Iterator[T]:
         """Filter instances of this class by a list of conditions."""
         return cls.filter(lambda item: all(getattr(item, field) == value for field, value in conditions.items()))
 
