@@ -33,7 +33,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
     if project.family == "Technologies":
         player.technology_lvl[project.name] += 1
     if project.family == "Functional Facilities":
-        if player.functional_facility_lvl == 0:
+        if player.functional_facility_lvl[project.name] == 0:
             if project.name == "carbon_capture":
                 player.rolling_history.add_subcategory("demand", project.name)
                 player.rolling_history.add_subcategory("emissions", project.name)
@@ -365,7 +365,7 @@ def queue_project(
         msg = "notEnoughMoney"
         raise GameError(msg)
 
-    construction_power = technology_effects.project_power(player, asset)
+    construction_power = technology_effects.construction_power(player, asset)
     if not force and not player.is_in_network:
         capacity = 0
         for gen in engine.power_facilities:

@@ -403,7 +403,7 @@ def request_queue_project() -> Response | tuple:
             {
                 "response": "areYouSure",
                 "capacity": confirm.capacity,
-                "construction_power": confirm.project_power,
+                "construction_power": confirm.construction_power,
             },
         ), 300
 

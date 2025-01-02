@@ -307,8 +307,8 @@ socket.on("update_page_data", function (pages_data) {
     function update_base_data(data, div, on_technologies_page) {
         // This data needs updating for all facilities and all technologies
         div.querySelector("#price").innerHTML = format_money_long(data.price);
-        div.querySelectorAll(".project_power").forEach(el => {
-            el.innerHTML = format_power(data.project_power);
+        div.querySelectorAll(".construction_power").forEach(el => {
+            el.innerHTML = format_power(data.construction_power);
         });
         div.querySelectorAll(".construction_time").forEach(el => {
             el.innerHTML = format_duration(data.construction_time);
