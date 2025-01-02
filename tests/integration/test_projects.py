@@ -107,21 +107,21 @@ def validate_rules(player: Player):
     for project in ongoing_projects:
         prerequisites = project.prerequisites
         if prerequisites:
-            del project._prerequisites_and_levels
+            del project._prerequisites_and_level
             assert not project.prerequisites
 
     # Rule 6
     for index, construction in enumerate(player.constructions_by_priority):
         for prerequisite in construction.prerequisites:
             if player.constructions_by_priority.index(prerequisite) >= index:
-                del construction._prerequisites_and_levels
+                del construction._prerequisites_and_level
                 for prerequisite in construction.prerequisites:
                     assert player.constructions_by_priority.index(prerequisite) < index
                 break
     for index, research in enumerate(player.researches_by_priority):
         for prerequisite in research.prerequisites:
             if player.researches_by_priority.index(prerequisite) >= index:
-                del research._prerequisites_and_levels
+                del research._prerequisites_and_level
                 for prerequisite in research.prerequisites:
                     assert player.researches_by_priority.index(prerequisite) < index
                 break
