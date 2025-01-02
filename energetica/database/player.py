@@ -66,7 +66,6 @@ class Player(DBModel, UserMixin):
     climate_events: list[ClimateEventRecovery] = field(default_factory=list)  # Player
     constructions_by_priority: list[OngoingProject] = field(default_factory=list)  # Player
     researches_by_priority: list[OngoingProject] = field(default_factory=list)  # Player
-    # TODO(mglst): I suggest renaming the above to "research_projects(_by_priority)"
 
     network_prices: PlayerPrices = field(default_factory=PlayerPrices)
     rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
