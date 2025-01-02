@@ -19,7 +19,7 @@ from energetica.config.assets import WorkerType
 from energetica.database import DBModel
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, PlayerPrices
 from energetica.database.messages import Chat, Notification
-from energetica.database.ongoing_construction import ConstructionStatus, OngoingProject
+from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.shipment import OngoingShipment
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -250,7 +250,7 @@ class Player(DBModel, UserMixin):
                 OngoingProject.filter(
                     lambda construction: construction.player == self
                     and construction.family != "Technologies"
-                    and construction.status == ConstructionStatus.ONGOING,
+                    and construction.status == ProjectStatus.ONGOING,
                 ),
             ),
         )
@@ -264,7 +264,7 @@ class Player(DBModel, UserMixin):
                 OngoingProject.filter(
                     lambda construction: construction.player == self
                     and construction.family == "Technologies"
-                    and construction.status == ConstructionStatus.ONGOING,
+                    and construction.status == ProjectStatus.ONGOING,
                 ),
             ),
         )
@@ -399,7 +399,7 @@ class Player(DBModel, UserMixin):
         """
         player_constructions: Iterator[OngoingProject] = OngoingProject.filter_by(
             player=self,
-            status=ConstructionStatus.ONGOING,
+            status=ProjectStatus.ONGOING,
         )
         construction_speeds: dict = {}
         for construction in player_constructions:

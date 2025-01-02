@@ -13,7 +13,7 @@ from energetica.config.assets import (
     warehouse_capacity_for_level,
 )
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.ongoing_construction import OngoingProject
+from energetica.database.ongoing_project import OngoingProject
 from energetica.game_error import GameError
 from energetica.globals import engine
 

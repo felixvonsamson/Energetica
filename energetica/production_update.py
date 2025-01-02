@@ -12,7 +12,7 @@ import pandas as pd
 from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.network import Network
-from energetica.database.ongoing_construction import OngoingProject
+from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.shipment import OngoingShipment
 from energetica.globals import engine
@@ -44,10 +44,10 @@ def update_electricity() -> None:
             continue
         new_values[player.id] = player.rolling_history.init_new_data()
 
-    # reset progress speeds fot all ongoing constructions and shipments
-    ongoing_constructions = OngoingProject.filter_by(status=2)
-    for oc in ongoing_constructions:
-        oc.reset_speed()
+    # reset progress speeds fot all ongoing projects and shipments
+    ongoing_projects = OngoingProject.filter_by(status=2)
+    for op in ongoing_projects:
+        op.reset_speed()
     ongoing_shipments = OngoingShipment.all()
     for os in ongoing_shipments:
         os.reset_speed()
@@ -260,13 +260,13 @@ def industry_demand_and_revenues(player: Player, demand, revenues) -> None:
 
 
 def projects_demand(player: Player, demand) -> None:
-    """Calculate power consumption for facilities under construction."""
+    """Calculate power consumption for ongoing projects."""
     for research in player.researches_by_priority:
         if research.is_ongoing():
-            demand["research"] += research.construction_power
+            demand["research"] += research.project_power
     for construction in player.constructions_by_priority:
         if construction.is_ongoing():
-            demand["construction"] += construction.construction_power
+            demand["construction"] += construction.project_power
 
 
 def shipment_demand(player: Player, demand) -> None:
@@ -844,18 +844,18 @@ def resources_and_pollution(new_values, player: Player) -> None:
 
 
 def construction_emissions(new_values, player: Player) -> None:
-    """Calculate emissions of facilities under construction."""
-    # TODO: Max suggestion : Change the satisfaction logic to redirect to 3 cases :
+    """Calculate emissions of ongoing projects."""
+    # TODO (0.12): Max suggestion : Change the satisfaction logic to redirect to 3 cases :
     # 1. Total satisfaction
     # 2. Partial satisfaction
     # 3. No satisfaction
-    # Call construction_emissions respectively
+    # Call project_emissions respectively
     # (for now this is wrong)
-    emissions_construction = 0.0
+    emissions_of_constructions = 0.0
     for ud in OngoingProject.filter_by(player=player):
         if ud.is_ongoing() and ud.family != "Technologies":
-            emissions_construction += ud.construction_pollution
-    add_emissions(new_values, player, "construction", emissions_construction)
+            emissions_of_constructions += ud.project_pollution
+    add_emissions(new_values, player, "construction", emissions_of_constructions)
 
 
 def reduce_demand(new_values, demand_type, player_id, satisfaction) -> None:
@@ -888,9 +888,9 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction) -> None:
             construction = player.constructions_by_priority[i]
             if not construction.is_ongoing():
                 continue
-            cumul_demand += construction.construction_power
+            cumul_demand += construction.project_power
             if cumul_demand > satisfaction:
-                progress_speed_factor = max(0, 1 + (satisfaction - cumul_demand) / construction.construction_power)
+                progress_speed_factor = max(0, 1 + (satisfaction - cumul_demand) / construction.project_power)
                 construction.delay_by(1 - progress_speed_factor)
         return
 
@@ -902,9 +902,9 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction) -> None:
             construction: OngoingProject = OngoingProject.get(construction_id)
             if not construction.is_ongoing():
                 continue
-            cumul_demand += construction.construction_power
+            cumul_demand += construction.project_power
             if cumul_demand > satisfaction:
-                progress_speed_factor = max(0, 1 + (satisfaction - cumul_demand) / construction.construction_power)
+                progress_speed_factor = max(0, 1 + (satisfaction - cumul_demand) / construction.project_power)
                 construction.delay_by(1 - progress_speed_factor)
         return
 
@@ -928,8 +928,8 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction) -> None:
         return
 
 
-def add_emissions(new_values, player: Player, facility, amount) -> None:
+def add_emissions(new_values, player: Player, type, amount) -> None:
     """Add emissions to the data."""
-    new_values["emissions"][facility] += amount
-    player.cumul_emissions.add(facility, amount)
+    new_values["emissions"][type] += amount
+    player.cumul_emissions.add(type, amount)
     engine.data["current_climate_data"].add("CO2", amount)

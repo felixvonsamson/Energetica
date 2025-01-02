@@ -10,7 +10,7 @@ from energetica import production_update
 from energetica.api import websocket
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
-from energetica.database.ongoing_construction import OngoingProject
+from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.shipment import OngoingShipment
 from energetica.globals import engine
@@ -83,9 +83,7 @@ def check_events_completion():
         player.emit("finish_shipment", player.package_shipments())
 
     # check end of lifespan of facilities
-    eolt_facilities = ActiveFacility.filter(
-        lambda facility: facility.end_of_life <= engine.data["total_t"]
-    )
+    eolt_facilities = ActiveFacility.filter(lambda facility: facility.end_of_life <= engine.data["total_t"])
     for facility in eolt_facilities:
         player = Player.get(facility.player_id)
         if facility.name in engine.storage_facilities:
@@ -98,8 +96,6 @@ def check_events_completion():
         remove_asset(player, facility)
 
     # check end of climate events
-    finished_climate_events = ClimateEventRecovery.filter(
-        lambda event: event.end_tick <= engine.data["total_t"]
-    )
+    finished_climate_events = ClimateEventRecovery.filter(lambda event: event.end_tick <= engine.data["total_t"])
     for fce in finished_climate_events:
         fce.delete()

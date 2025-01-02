@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash
 
 from energetica import create_app
 from energetica.database.map import HexTile
-from energetica.database.ongoing_construction import ConstructionStatus, OngoingProject
+from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.utils.assets import (
@@ -20,7 +20,7 @@ from energetica.utils.assets import (
 )
 from energetica.utils.misc import confirm_location
 
-# RULES FOR CONSTRUCTIONS:
+# RULES FOR PROJECTS:
 # 1. All projects (in the database) should appear exactly once in the priority list.
 # 2. The number of ongoing constructions / research projects must be less then or equal to the number of construction / lab workers.
 # 3. In the project priority list, ongoing projects must come before all waiting projects and all waiting projects must come before all paused projects.
@@ -49,14 +49,14 @@ def validate_rules(player: Player):
         condition=lambda construction: construction.player == player and construction.family != "Technologies"
     ) == len(player.constructions_by_priority)
     assert OngoingProject.count(
-        condition=lambda construction: construction.player == player and construction.family == "Technologies"
+        condition=lambda research: research.player == player and research.family == "Technologies"
     ) == len(player.researches_by_priority)
 
     # Rule 2
     ongoing_constructions = list(
         OngoingProject.filter(
             lambda construction: construction.player == player
-            and construction.status == ConstructionStatus.ONGOING
+            and construction.status == ProjectStatus.ONGOING
             and construction.family != "Technologies"
         )
     )
@@ -70,7 +70,7 @@ def validate_rules(player: Player):
     ongoing_research = list(
         OngoingProject.filter_by(
             player=player,
-            status=ConstructionStatus.ONGOING,
+            status=ProjectStatus.ONGOING,
             family="Technologies",
         )
     )
@@ -89,20 +89,20 @@ def validate_rules(player: Player):
 
     # Rule 4
     assert not OngoingProject.count(
-        condition=lambda construction: construction.player == player
-        and construction.status == ConstructionStatus.ONGOING
-        and construction.end_tick_or_ticks_passed <= engine.data["total_t"]
+        condition=lambda project: project.player == player
+        and project.status == ProjectStatus.ONGOING
+        and project.end_tick_or_ticks_passed <= engine.data["total_t"]
     )
     assert not OngoingProject.count(
-        condition=lambda construction: construction.player == player
-        and construction.status != ConstructionStatus.ONGOING
-        and construction.end_tick_or_ticks_passed > engine.data["total_t"]
+        condition=lambda project: project.player == player
+        and project.status != ProjectStatus.ONGOING
+        and project.end_tick_or_ticks_passed > engine.data["total_t"]
     )
 
     # Rule 5
     ongoing_projects: Iterable[OngoingProject] = OngoingProject.filter_by(
         player=player,
-        status=ConstructionStatus.ONGOING,
+        status=ProjectStatus.ONGOING,
     )
     for project in ongoing_projects:
         prerequisites = project.prerequisites
@@ -130,7 +130,7 @@ def validate_rules(player: Player):
     waiting_constructions: list[OngoingProject] = list(
         OngoingProject.filter(
             lambda construction: construction.player == player
-            and construction.status == ConstructionStatus.WAITING
+            and construction.status == ProjectStatus.WAITING
             and construction.family != "Technologies"
             and not construction.prerequisites
         )
@@ -138,7 +138,7 @@ def validate_rules(player: Player):
     if waiting_constructions:
         count_on_going_constructions = OngoingProject.count(
             condition=lambda construction: construction.player == player
-            and construction.status == ConstructionStatus.ONGOING
+            and construction.status == ProjectStatus.ONGOING
             and construction.family != "Technologies"
         )
         if player.workers["construction"] != count_on_going_constructions:
@@ -151,17 +151,17 @@ def validate_rules(player: Player):
             )
     waiting_research: list[OngoingProject] = list(
         OngoingProject.filter(
-            lambda construction: construction.player == player
-            and construction.status == ConstructionStatus.WAITING
-            and construction.family == "Technologies"
-            and not construction.prerequisites
+            lambda research: research.player == player
+            and research.status == ProjectStatus.WAITING
+            and research.family == "Technologies"
+            and not research.prerequisites
         )
     )
     if waiting_research:
         count_on_going_research = OngoingProject.count(
-            condition=lambda construction: construction.player == player
-            and construction.status == ConstructionStatus.ONGOING
-            and construction.family == "Technologies"
+            condition=lambda research: research.player == player
+            and research.status == ProjectStatus.ONGOING
+            and research.family == "Technologies"
         )
         if player.workers["laboratory"] != count_on_going_research:
             pytest.fail(
@@ -187,14 +187,14 @@ def test_swap_paused_and_unpaused_constructions():
     validate_rules(player)
     construction_A = queue_project(player=player, asset="steam_engine", force=True)
     validate_rules(player)
-    assert construction_A.status == ConstructionStatus.ONGOING
+    assert construction_A.status == ProjectStatus.ONGOING
     construction_B = queue_project(player=player, asset="steam_engine", force=True)
     validate_rules(player)
-    assert construction_B.status == ConstructionStatus.WAITING
+    assert construction_B.status == ProjectStatus.WAITING
     decrease_project_priority(player, construction_A)
     validate_rules(player)
-    assert construction_B.status == ConstructionStatus.ONGOING
-    assert construction_A.status == ConstructionStatus.WAITING
+    assert construction_B.status == ProjectStatus.ONGOING
+    assert construction_A.status == ProjectStatus.WAITING
 
 
 def test_cancel_construction():
@@ -209,7 +209,7 @@ def test_cancel_construction():
     validate_rules(player)
     construction = queue_project(player=player, asset="steam_engine", force=True)
     validate_rules(player)
-    assert construction.status == ConstructionStatus.ONGOING
+    assert construction.status == ProjectStatus.ONGOING
     cancel_project(player, construction, force=True)
     validate_rules(player)
     assert len(player.constructions_by_priority) == 0
@@ -229,13 +229,13 @@ def test_pause_construction():
     validate_rules(player)
     construction = queue_project(player=player, asset="steam_engine", force=True)
     validate_rules(player)
-    assert construction.status == ConstructionStatus.ONGOING
+    assert construction.status == ProjectStatus.ONGOING
     toggle_pause_project(player, construction)
     validate_rules(player)
-    assert construction.status == ConstructionStatus.PAUSED
+    assert construction.status == ProjectStatus.PAUSED
     toggle_pause_project(player, construction)
     validate_rules(player)
-    assert construction.status == ConstructionStatus.ONGOING
+    assert construction.status == ProjectStatus.ONGOING
 
 
 def test_queue_two_pause_one():
@@ -322,14 +322,14 @@ def test_technologies_pausing_propagates_requirements():
     validate_rules(player)
     technology_a = queue_project(player=player, asset="mathematics", force=True)
     validate_rules(player)
-    assert technology_a.status == ConstructionStatus.ONGOING
+    assert technology_a.status == ProjectStatus.ONGOING
     technology_b = queue_project(player=player, asset="mechanical_engineering", force=True)
     validate_rules(player)
-    assert technology_b.status == ConstructionStatus.WAITING
+    assert technology_b.status == ProjectStatus.WAITING
     toggle_pause_project(player, technology_a)
     validate_rules(player)
-    assert technology_a.status == ConstructionStatus.PAUSED
-    assert technology_b.status == ConstructionStatus.PAUSED
+    assert technology_a.status == ProjectStatus.PAUSED
+    assert technology_b.status == ProjectStatus.PAUSED
 
 
 def test_math_and_building_tech():
@@ -348,7 +348,7 @@ def test_math_and_building_tech():
     validate_rules(player)
     technology_a = queue_project(player=player, asset="mathematics", force=True)
     validate_rules(player)
-    assert technology_a.status == ConstructionStatus.ONGOING
+    assert technology_a.status == ProjectStatus.ONGOING
     technology_c = queue_project(player=player, asset="building_technology", force=True)
     validate_rules(player)
-    assert technology_c.status == ConstructionStatus.WAITING
+    assert technology_c.status == ProjectStatus.WAITING

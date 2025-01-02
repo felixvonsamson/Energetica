@@ -22,7 +22,7 @@ from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import HexTile
 from energetica.database.messages import Chat
 from energetica.database.network import Network
-from energetica.database.ongoing_construction import OngoingProject
+from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.game_engine import Confirm
@@ -403,7 +403,7 @@ def request_queue_project() -> Response | tuple:
             {
                 "response": "areYouSure",
                 "capacity": confirm.capacity,
-                "construction_power": confirm.construction_power,
+                "construction_power": confirm.project_power,
             },
         ), 300
 
