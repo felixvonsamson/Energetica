@@ -62,7 +62,6 @@ def _simulate(
     app: Flask,
     port: int,
     actions: list[dict],
-    *,
     stop_on_mismatch: bool,
     stop_on_server_error: bool,
     stop_on_assertion_error: bool,

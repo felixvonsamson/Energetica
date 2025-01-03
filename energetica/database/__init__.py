@@ -31,6 +31,7 @@ class AutoIDDict(Generic[T], dict[int, T]):
     def add(self, item: T) -> None:
         """Add an item to the dictionary and assign it an id."""
         item.id = next(self._next_id)
+        item.id = max(self.keys(), default=0) + 1
         self[item.id] = item
 
 

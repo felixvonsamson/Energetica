@@ -77,7 +77,8 @@ def leave_network(player: Player) -> None:
     network = player.network
     if network is None:
         raise GameError("notInNetwork")
-    player.network_id = None
+    player.network = None
+    network.members.remove(player)
     engine.log(f"{player.username} left the network {network.name}")
     remaining_members_count = len(list(Player.filter(lambda p: p.network is not None and p.network == network)))
     # delete network if it is empty
