@@ -123,6 +123,7 @@ def _simulate(
                 response = user_sessions[player_id].post(url, **{content_type: action["request"]["content"]})
                 response = response.history[0] if response.history else response
                 # TODO (Yassir): mismatch if content type is not the same
+                # TODO(mglst): It would be nice to have both the expected and the actual response in the output
                 if (
                     action["response"]["content_type"] == "application/json"
                     and response.headers["Content-Type"] == "application/json"
