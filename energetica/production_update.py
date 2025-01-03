@@ -397,7 +397,7 @@ def calculate_generation_with_market(new_values, market, player: Player):
     for demand_type in player.priorities_of_demand:
         if player.money >= max_overdraft:
             bid_q = demand[demand_type]
-            price = getattr(player, "price_buy_" + demand_type)
+            price = player.network_prices.demand[demand_type]
             market = bid(market, player.id, bid_q, price, demand_type)
         else:
             reduce_demand(new_values, demand_type, player.id, 0.0)
@@ -413,7 +413,7 @@ def calculate_generation_with_market(new_values, market, player: Player):
                     facility,
                     resource_reservations,
                 )
-                price = getattr(player, "price_" + facility)
+                price = player.network_prices.supply[facility]
                 capacity = max_prod - generation[facility]
                 market = offer(market, player.id, capacity, price, facility)
 

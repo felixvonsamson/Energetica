@@ -334,6 +334,7 @@ def rest_get_weather(player):
 def rest_get_achievements(player: Player):
     """Gets the player's achievements and returns it as a JSON string"""
     # TODO : This only treats a subset of achievements, precise the role of the function - Felix
+    # TODO : This is broken
     response = {
         "type": "getAdvancements",
         "data": {

@@ -77,7 +77,23 @@ class Player(DBModel, UserMixin):
     priorities_of_controllables: list[str] = field(default_factory=lambda: ["steam_engine"])
     priorities_of_demand: list[str] = field(default_factory=lambda: ["industry", "construction"])
 
-    achievements: list[str] = field(default_factory=list)
+    achievements: dict[str, int] = field(
+        default_factory=lambda: {
+            "power_consumption": 0,
+            "energy_storage": 0,
+            "mineral_extraction": 0,
+            "network_import": 0,
+            "network_export": 0,
+            "technology": 0,
+            "trading_export": 0,
+            "trading_import": 0,
+            "network": 0,
+            "laboratory": 0,
+            "warehouse": 0,
+            "GHG_effect": 0,
+            "storage_facilities": 0,
+        }
+    )
 
     progression_metrics: dict[str, float] = field(
         default_factory=lambda: {
@@ -491,7 +507,7 @@ class Player(DBModel, UserMixin):
 
     def discovered_greenhouse_gas_effect(self) -> bool:
         """Return True if the player has discovered the greenhouse gas effect."""
-        return "Discover the Greenhouse Effect" in self.achievements
+        return bool(self.achievements["GHG_effect"])
 
     def check_continuous_achievements(self) -> None:
         """Check for player achievements that are linked to values that are updated every tick."""
@@ -503,69 +519,69 @@ class Player(DBModel, UserMixin):
             "network_export",
             "network",
         ]:
-            for i, value in enumerate(achievements[achievement]["milestones"]):
-                achievement_name = achievements[achievement]["name"]
-                if f"{achievement_name} {i+1}" not in self.achievements:
-                    if self.progression_metrics[achievements[achievement]["metric"]] >= value:
-                        self.achievements.append(f"{achievement_name} {i+1}")
-                        self.progression_metrics["xp"] += achievements[achievement]["rewards"][i]
-                        message = achievements[achievement]["message"]
-                        if achievement == "network":
-                            message = message.format(reward=achievements[achievement]["rewards"][i])
-                        elif "comparisons" in achievements[achievement]:
-                            message = message.format(
-                                value=value,
-                                reward=achievements[achievement]["rewards"][i],
-                                comparison=achievements[achievement]["comparisons"][i],
-                            )
-                        else:
-                            message = message.format(value=value, reward=achievements[achievement]["rewards"][i])
-                        self.notify("Achievement", message)
-                    break
+            current_lvl = self.achievements[achievement]
+            achievement_data = achievements[achievement]
+            if (
+                current_lvl < len(achievement_data["milestones"])
+                and self.progression_metrics[achievement_data["metric"]] >= achievement_data["milestones"][current_lvl]
+            ):
+                self.achievements[achievement] += 1
+                self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
+                message = achievement_data["message"]
+                if achievement == "network":
+                    message = message.format(reward=achievement_data["rewards"][current_lvl])
+                elif "comparisons" in achievement_data:
+                    message = message.format(
+                        value=achievement_data["milestones"][current_lvl],
+                        reward=achievement_data["rewards"][current_lvl],
+                        comparison=achievement_data["comparisons"][current_lvl],
+                    )
+                else:
+                    message = message.format(
+                        value=achievement_data["milestones"][current_lvl],
+                        reward=achievement_data["rewards"][current_lvl],
+                    )
+                self.notify("Achievement", message)
 
     def check_construction_achievements(self, construction_name: str) -> None:
         """Check for player achievements that may be unlocked by a construction."""
         for achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
-            achievement_name = achievements[achievement]["name"]
-            if (
-                achievement_name not in self.achievements
-                and construction_name in achievements[achievement]["unlocked_with"]
-            ):
-                self.achievements.append(achievement_name)
+            if not self.achievements[achievement] and construction_name in achievements[achievement]["unlocked_with"]:
+                self.achievements[achievement] = 1
                 self.progression_metrics["xp"] += achievements[achievement]["reward"]
                 message = achievements[achievement]["message"].format(reward=achievements[achievement]["reward"])
                 self.notify("Achievement", message)
 
     def check_technology_achievement(self) -> None:
         """Check for technology achievement."""
-        achievement_name = achievements["technology"]["name"]
-        for i, value in enumerate(achievements["technology"]["milestones"]):
-            if (
-                f"{achievement_name} {i+1}" not in self.achievements
-                and self.progression_metrics[achievements["technology"]["metric"]] >= value
-            ):
-                self.achievements.append(f"{achievement_name} {i+1}")
-                self.progression_metrics["xp"] += achievements["technology"]["rewards"][i]
-                message = achievements["technology"]["message"].format(
-                    value=value,
-                    reward=achievements["technology"]["rewards"][i],
-                )
-                self.notify("Achievement", message)
+        current_lvl = self.achievements["technology"]
+        achievement_data = achievements["technology"]
+        if (
+            current_lvl < len(achievement_data["milestones"])
+            and self.progression_metrics[achievement_data["metric"]] >= achievement_data["milestones"][current_lvl]
+        ):
+            self.achievements["technology"] += 1
+            self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
+            message = achievements["technology"]["message"].format(
+                value=achievement_data["milestones"][current_lvl],
+                reward=achievements["technology"]["rewards"][current_lvl],
+            )
+            self.notify("Achievement", message)
 
     def check_trading_achievement(self) -> None:
         """Check for trading achievement."""
-        achievement_name = achievements["trading"]["name"]
-        for i, value in enumerate(achievements["trading"]["milestones"]):
-            if f"{achievement_name} {i+1}" not in self.achievements and (
-                self.progression_metrics[achievements["trading"]["metric"][0]]
-                + self.progression_metrics[achievements["trading"]["metric"][1]]
-                >= value
+        for achievement in ["trading_export", "trading_import"]:
+            current_lvl = self.achievements[achievement]
+            achievement_data = achievements[achievement]
+            if (
+                current_lvl < len(achievement_data["milestones"])
+                and self.progression_metrics[achievement_data["metric"]] >= achievement_data["milestones"][current_lvl]
             ):
-                self.achievements.append(f"{achievement_name} {i+1}")
-                self.progression_metrics["xp"] += achievements["trading"]["rewards"][i]
-                message = achievements["trading"]["message"].format(
-                    value=value,
-                    reward=achievements["trading"]["rewards"][i],
+                self.achievements[achievement] += 1
+                self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
+                message = achievement_data["message"].format(
+                    value=achievement_data["milestones"][current_lvl],
+                    reward=achievement_data["rewards"][current_lvl],
                 )
                 self.notify("Achievement", message)
 
@@ -573,11 +589,11 @@ class Player(DBModel, UserMixin):
         """Package the progress information for the upcoming achievements."""
         upcoming_achievements = {}
         for achievement, achievement_data in achievements.items():
-            requirements_met = all(requirement in self.achievements for requirement in achievement_data["requirements"])
+            requirements_met = all(self.achievements[requirement] for requirement in achievement_data["requirements"])
             if not requirements_met:
                 continue
             if achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
-                if achievement_data["name"] not in self.achievements:
+                if not self.achievements[achievement]:
                     upcoming_achievements[achievement] = {
                         "name": achievement_data["name"],
                         "reward": achievement_data["reward"],
@@ -585,22 +601,15 @@ class Player(DBModel, UserMixin):
                         "status": 0,
                     }
             else:
-                for i, value in enumerate(achievement_data["milestones"]):
-                    if f"{achievement_data['name']} {i+1}" not in self.achievements:
-                        if achievement == "trading":
-                            status = (
-                                self.progression_metrics[achievement_data["metric"][0]]
-                                + self.progression_metrics[achievement_data["metric"][1]]
-                            )
-                        else:
-                            status = self.progression_metrics[achievement_data["metric"]]
-                        upcoming_achievements[achievement] = {
-                            "name": f"{achievement_data['name']} {i+1}",
-                            "reward": achievement_data["rewards"][i],
-                            "objective": value,
-                            "status": round(status),
-                        }
-                        break
+                current_lvl = self.achievements[achievement]
+                if current_lvl < len(achievement_data["milestones"]):
+                    status = self.progression_metrics[achievement_data["metric"]]
+                    upcoming_achievements[achievement] = {
+                        "name": f"{achievement_data['name']} {current_lvl+1}",
+                        "reward": achievement_data["rewards"][current_lvl],
+                        "objective": achievement_data["milestones"][current_lvl],
+                        "status": round(status),
+                    }
         return upcoming_achievements
 
     def __repr__(self) -> str:

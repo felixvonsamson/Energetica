@@ -260,7 +260,7 @@
                         /MWh
                     </td>
                 </tr>
-                {% if "Unlock Technologies" in user.achievements %}
+                {% if user.achievements.laboratory %}
                 <tr>
                     <td>Research</td>
                     <td>
@@ -274,7 +274,7 @@
                     </td>
                 </tr>
                 {% endif %}
-                {% if "Unlock Natural Resources" in user.achievements %}
+                {% if user.achievements.warehouse %}
                 <tr>
                     <td>Shipments</td>
                     <td>

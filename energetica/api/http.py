@@ -553,7 +553,7 @@ def change_network_prices() -> Response | tuple:
 @log_action
 def request_change_facility_priority() -> Response | tuple:
     """Change the generation priority."""
-    if "Unlock Network" not in current_user.achievements:
+    if not current_user.achievements["network"]:
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
     priority = request_data["priority"]
@@ -635,8 +635,9 @@ def create_network() -> Response:
     """Create a network."""
     request_data = request.form
     network_name = request_data["network_name"]
+    player = Player.get(current_user.id)
     try:
-        energetica.utils.network_helpers.create_network(current_user, network_name)
+        energetica.utils.network_helpers.create_network(player, network_name)
     except GameError as game_exception:
         match game_exception.exception_type:
             case "nameLengthInvalid":

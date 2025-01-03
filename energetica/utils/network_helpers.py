@@ -14,13 +14,14 @@ from energetica.globals import engine
 # TODO (Felix): Move this to a method in Player
 def join_network(player: Player, network: Network | None) -> Network:
     """Shared API method to join a network."""
-    if "Unlock Network" not in player.achievements:
+    if not player.achievements["network"]:
         raise GameError("networkNotUnlocked")
     if network is None:
         raise GameError("noSuchNetwork")
     if player.network is not None:
         raise GameError("playerAlreadyInNetwork")
     player.network = network
+    network.members.append(player)
     network.capacities.update_network(network)
     engine.log(f"{player.username} joined the network {network.name}")
     # import energetica.api.websocket as websocket
@@ -46,15 +47,17 @@ def create_network(player: Player, name: str) -> Network:
     """Shared API method to create a network. Network name must pass validation,
     namely it must not be too long, nor too short, and must not already be in
     use."""
-    if "Unlock Network" not in player.achievements:
+    if not player.achievements["network"]:
         raise GameError("networkNotUnlocked")
     if len(name) < 3 or len(name) > 40:
         raise GameError("nameLengthInvalid")
     if len(list(Network.filter_by(name=name))):
         raise GameError("nameAlreadyUsed")
     new_network = Network(name=name, members=[player])
+    player.network = new_network
     network_path = f"instance/network_data/{new_network.id}"
     Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
+    # TODO (Felix): Move this to Network init
     new_network.rolling_history = CircularBufferNetwork()
     new_network.capacities = CapacityData()
     new_network.capacities.update_network(new_network)

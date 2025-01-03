@@ -41,10 +41,9 @@ def init_test_players():
 
     def setup_network(name, members: list[Player]) -> Network:
         """Create and initialize a network."""
-        # Unlock the network achievement for all members
+        # Unlock the network achievement for all members so that they can see the network page
         for player in members:
-            if "Unlock Network" not in player.achievements:
-                player.achievements.append("Unlock Network")
+            player.achievements["network"] = 1
 
         network = next(Network.filter_by(name=name), None)
         if network:

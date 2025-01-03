@@ -89,7 +89,7 @@ def messages():
 
 @views.route("/network")
 def network():
-    if "Unlock Network" not in current_user.achievements:
+    if not current_user.achievements["network"]:
         return redirect("/home", code=302)
     return g.render_template_ctx("network.jinja")
 
@@ -106,7 +106,7 @@ def storage_facilities():
 
 @views.route("/technology")
 def technology():
-    if "Unlock Technologies" not in current_user.achievements:
+    if not current_user.achievements["laboratory"]:
         return redirect("/home", code=302)
     return g.render_template_ctx("assets/technologies.jinja", available_technologies=current_user.technologies_data)
 
@@ -120,7 +120,7 @@ def functional_facilities():
 
 @views.route("/extraction_facilities")
 def extraction_facilities():
-    if "Unlock Natural Resources" not in current_user.achievements:
+    if not current_user.achievements["warehouse"]:
         return redirect("/home", code=302)
     return g.render_template_ctx(
         "assets/extraction_facilities.jinja", constructions=current_user.extraction_facilities_data
@@ -129,7 +129,7 @@ def extraction_facilities():
 
 @views.route("/resource_market")
 def resource_market():
-    if "Unlock Natural Resources" not in current_user.achievements:
+    if not current_user.achievements["warehouse"]:
         return redirect("/home", code=302)
     on_sale = ResourceOnSale.all()
     return g.render_template_ctx("resource_market.jinja", on_sale=on_sale)
@@ -152,14 +152,14 @@ def electricity():
 
 @overviews.route("/storage")
 def storage():
-    if "First Storage Facility" not in current_user.achievements:
+    if not current_user.achievements["storage_facilities"]:
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/storage.jinja")
 
 
 @overviews.route("/resources")
 def resources():
-    if "Unlock Natural Resources" not in current_user.achievements:
+    if not current_user.achievements["warehouse"]:
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/resources.jinja")
 

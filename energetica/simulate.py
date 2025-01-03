@@ -91,7 +91,6 @@ def _simulate(
             if action["action_type"] == "tick":
                 engine.data["total_t"] += 1
                 engine.log(f"t = {engine.data['total_t']}")
-                production_update.update_electricity()
                 if engine.data["total_t"] % 216 == 0:
                     save_past_data_threaded()
                 if (engine.data["total_t"] + engine.data["delta_t"]) % (24 * 60 * 60 / engine.clock_time) == 0:
@@ -104,6 +103,7 @@ def _simulate(
 
                 engine.action_logger.info(json.dumps(log_entry))
                 check_events_completion()
+                production_update.update_electricity()
                 if action["total_t"] % checkpoint_every_k_ticks == 0 or action["total_t"] in checkpoint_ticks:
                     with open("instance/engine_data.pck", "wb") as file:
                         pickle.dump(engine.data, file)
