@@ -795,8 +795,8 @@ def resources_and_pollution(new_values, player: Player) -> None:
                 )
                 setattr(
                     player.tile,
-                    resource,
-                    getattr(player.tile, resource) - extracted_quantity,
+                    resource + "_reserves",
+                    getattr(player.tile, resource + "_reserves") - extracted_quantity,
                 )
                 player.resources[resource] += extracted_quantity
                 player.progression_metrics["extracted_resources"] += extracted_quantity
