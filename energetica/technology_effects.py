@@ -207,7 +207,7 @@ def hydro_price_multiplier(player: Player, facility: str) -> float:
     if not player.tile:
         raise GameError("TileNotFound")  # TODO(mglst): handle this case
     if facility in ["watermill", "small_water_dam", "large_water_dam"]:
-        mlt *= hydro_price_function(next_available_location(player, facility), player.tile.hydro_potential)
+        mlt *= hydro_price_function(next_available_location(player, facility), player.tile.renewable_potential["hydro"])
     return mlt
 
 
@@ -223,7 +223,7 @@ def wind_speed_multiplier(player: Player, facility: str) -> float:
     if not player.tile:
         raise GameError("TileNotFound")  # TODO(mglst): handle this case
     if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
-        mlt *= wind_speed_function(next_available_location(player, facility), player.tile.wind_potential)
+        mlt *= wind_speed_function(next_available_location(player, facility), player.tile.renewable_potential["wind"])
     return mlt
 
 

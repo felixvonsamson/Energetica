@@ -18,13 +18,10 @@ class HexTile(DBModel):
 
     coordinates: tuple[int, int]  # q, r
 
-    solar_potential: float
-    wind_potential: float
-    hydro_potential: float
-
     climate_risk: int
 
-    reserves: dict[str, float] = field(default_factory=lambda: {"coal": 0, "gas": 0, "uranium": 0})
+    fuel_reserves: dict[str, float] = field(default_factory=lambda: {"coal": 0, "gas": 0, "uranium": 0})
+    renewable_potential: dict[str, float] = field(default_factory=lambda: {"solar": 0, "wind": 0, "hydro": 0})
 
     player: Player | None = None
 
@@ -61,7 +58,10 @@ class HexTile(DBModel):
             if n == 0:
                 return
             for neighbor in tile.get_neighbors():
-                if neighbor not in downstream_tiles and neighbor.hydro_potential > tile.hydro_potential:
+                if (
+                    neighbor not in downstream_tiles
+                    and neighbor.renewable_potential["hydro"] > tile.renewable_potential["hydro"]
+                ):
                     downstream_tiles.append(neighbor)
                     find_downstream(neighbor, n - 1)
 

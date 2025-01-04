@@ -100,7 +100,7 @@ def check_climate_events():
     flood_probability = climate_events["flood"]["base_probability"] / ticks_per_day * climate_change**2
     if random.random() < flood_probability:
         # the hydro value for a flood needs to be above 20%
-        hydro_tiles = HexTile.filter(lambda tile: tile.hydro_potential > 0.2)
+        hydro_tiles = HexTile.filter(lambda tile: tile.renewable_potential["hydro"] > 0.2)
         tile = random.choice(hydro_tiles)
         climate_event_impact(tile, "flood")
 
