@@ -85,7 +85,7 @@ def check_events_completion():
     # check end of lifespan of facilities
     eolt_facilities = ActiveFacility.filter(lambda facility: facility.end_of_life <= engine.data["total_t"])
     for facility in eolt_facilities:
-        player = Player.get(facility.player_id)
+        player = facility.player
         if facility.name in engine.storage_facilities:
             if facility.end_of_life == engine.data["total_t"]:
                 player.capacities.update(player, facility.name)
