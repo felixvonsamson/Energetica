@@ -789,7 +789,7 @@ def resources_and_pollution(new_values, player: Player) -> None:
                 extracted_quantity = (
                     production_factor
                     * player.capacities[extraction_facility]["extraction_rate_per_day"]
-                    * getattr(player.tile, resource)
+                    * getattr(player.tile, resource + "_reserves")
                     * engine.in_game_seconds_per_tick
                     / 86400  # 86400 seconds in a day
                 )
