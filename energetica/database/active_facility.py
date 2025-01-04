@@ -82,7 +82,7 @@ class ActiveFacility(DBModel):
         return (
             self.const_config["base_extraction_rate_per_day"]
             * self.multipliers["multiplier_2"]
-            * self.player.get_reserves()[extraction_to_resource[self.name]]
+            * self.player.tile.reserves[extraction_to_resource[self.name]]
             / 24
         )
 

@@ -54,9 +54,9 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         if project.family == "Technologies":
             player.progression_metrics["total_technologies"] += 1
             server_tech = engine.data["technology_lvls"][project.name]
-            if len(server_tech) <= getattr(player, project.name):
+            if len(server_tech) <= player.technology_lvl[project.name]:
                 server_tech.append(0)
-            server_tech[getattr(player, project.name) - 1] += 1
+            server_tech[player.technology_lvl[project.name] - 1] += 1
             player.check_technology_achievement()
 
     elif not ActiveFacility.count_when(name=project.name, player=player):
@@ -438,12 +438,11 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
     if project is None or project.player != player:
         msg = "Project not found"
         raise GameError(msg)
-    priority_list_name = (
-        "researches_by_priority" if project.name in engine.technologies else "constructions_by_priority"
-    )
 
     dependents = []
-    priority_list = getattr(player, priority_list_name)
+    priority_list = (
+        player.researches_by_priority if project.name in engine.technologies else player.constructions_by_priority
+    )
     project_priority_index = priority_list.index(project)
     for candidate_dependent in priority_list[project_priority_index + 1 :]:
         if project.id in candidate_dependent.prerequisites:
@@ -464,10 +463,7 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
     if project.name in ["small_water_dam", "large_water_dam", "watermill"]:
         refund *= project.multipliers["multiplier_2"]
     player.money += refund
-    if priority_list_name == "researches_by_priority":
-        player.researches_by_priority.remove(project)
-    else:
-        player.constructions_by_priority.remove(project)
+    priority_list.remove(project)
 
     project.delete()
 

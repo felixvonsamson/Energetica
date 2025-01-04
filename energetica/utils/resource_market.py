@@ -84,11 +84,7 @@ def store_import(player, resource, quantity):
     if player.resources[resource] + quantity > max_cap:
         player.resources[resource] = max_cap
         # excess resources are stored in the ground
-        setattr(
-            player.tile,
-            resource,
-            getattr(player.tile, resource) + player.resources[resource] + quantity - max_cap,
-        )
+        player.tile.reservers[resource] += player.resources[resource] + quantity - max_cap
         player.notify(
             "OngoingShipments",
             f"A shipment of {format_mass(quantity)} {resource} arrived, but "

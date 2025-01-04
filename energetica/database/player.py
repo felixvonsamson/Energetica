@@ -377,13 +377,6 @@ class Player(DBModel, UserMixin):
         """Return the levels of functional facilities and technologies of a player."""
         return self.technology_lvl | self.functional_facility_lvl
 
-    def get_reserves(self) -> dict:
-        """Return natural resources reserves of a player."""
-        reserves = {}
-        for resource in ["coal", "gas", "uranium"]:
-            reserves[resource] = getattr(self.tile, resource)
-        return reserves
-
     def emit(self, event: str, *args) -> None:
         """Emit a socketio event to the player's clients."""
         for sid in self.socketio_clients:

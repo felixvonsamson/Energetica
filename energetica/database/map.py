@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
@@ -22,11 +22,9 @@ class HexTile(DBModel):
     wind_potential: float
     hydro_potential: float
 
-    coal_reserves: float
-    gas_reserves: float
-    uranium_reserves: float
-
     climate_risk: int
+
+    reserves: dict[str, float] = field(default_factory=lambda: {"coal": 0, "gas": 0, "uranium": 0})
 
     player: Player | None = None
 

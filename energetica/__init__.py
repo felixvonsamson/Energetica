@@ -253,16 +253,15 @@ def create_app(
         with open("energetica/static/data/map.csv", "r", encoding="utf-8") as file:
             csv_reader = csv.DictReader(file)
             for row in csv_reader:
-                HexTile(
+                tile = HexTile(
                     coordinates=(int(row["q"]), int(row["r"])),
                     solar_potential=float(row["solar"]),
                     wind_potential=float(row["wind"]),
                     hydro_potential=float(row["hydro"]),
-                    coal_reserves=float(row["coal"]),
-                    gas_reserves=float(row["gas"]),
-                    uranium_reserves=float(row["uranium"]),
-                    climate_risk=int(row["climate_risk"]),
+                    climate_risk=int(row["climate_risk"])
                 )
+                for resource in ["coal", "gas", "uranium"]:
+                    tile.reserves[resource] = float(row[resource])
 
     # creating general chat
     if Chat.count() == 0:
