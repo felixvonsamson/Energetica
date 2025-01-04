@@ -7,7 +7,6 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import StrEnum
 from functools import cached_property
-from itertools import chain
 from typing import TYPE_CHECKING, Any
 
 from flask import current_app
