@@ -1,8 +1,5 @@
-import os
-import sys
 from typing import Iterable
 
-sys.path.append(os.getcwd())
 import pytest
 from werkzeug.security import generate_password_hash
 
