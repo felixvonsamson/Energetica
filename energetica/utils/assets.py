@@ -320,7 +320,7 @@ def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
 
 def dismantle_all_of_type(player: Player, facility_name: str) -> None:
     """Dismantle all facilities of a certain type."""
-    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player=player, name=facility_name)
+    facilities = list(ActiveFacility.filter_by(player=player, name=facility_name))
     for facility in facilities:
         with contextlib.suppress(GameError):
             dismantle_facility(player, facility)
