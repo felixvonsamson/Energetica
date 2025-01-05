@@ -14,6 +14,7 @@ from energetica.config.assets import (
 )
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_project import OngoingProject
+from energetica.enums import Fuel, Renewable, fuels_by_extraction_facility
 from energetica.game_error import GameError
 from energetica.globals import engine
 
@@ -207,7 +208,7 @@ def hydro_price_multiplier(player: Player, facility: str) -> float:
     if not player.tile:
         raise GameError("TileNotFound")  # TODO(mglst): handle this case
     if facility in ["watermill", "small_water_dam", "large_water_dam"]:
-        mlt *= hydro_price_function(next_available_location(player, facility), player.tile.renewable_potential["hydro"])
+        mlt *= hydro_price_function(next_available_location(player, facility), player.tile.potentials[Renewable.HYDRO])
     return mlt
 
 
@@ -223,7 +224,7 @@ def wind_speed_multiplier(player: Player, facility: str) -> float:
     if not player.tile:
         raise GameError("TileNotFound")  # TODO(mglst): handle this case
     if facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
-        mlt *= wind_speed_function(next_available_location(player, facility), player.tile.renewable_potential["wind"])
+        mlt *= wind_speed_function(next_available_location(player, facility), player.tile.potentials[Renewable.WIND])
     return mlt
 
 
@@ -678,33 +679,15 @@ def package_storage_facilities(player: Player) -> list[dict]:
 def package_extraction_facilities(player: Player) -> list[dict]:
     """Package data relevant for the extraction_facilities frontend."""
     const_config_assets = engine.const_config["assets"]
-    facility_to_resource = {
-        "coal_mine": "coal",
-        "gas_drilling_site": "gas",
-        "uranium_mine": "uranium",
-    }
 
-    # TODO(mglst): remove this, let the frontend compute it (since tile resource can change often)
-    def tile_resource_amount(tile: HexTile, resource: str) -> float:
-        if resource == "coal":
-            return tile.coal_reserves
-        if resource == "gas":
-            return tile.gas_reserves
-        if resource == "uranium":
-            return tile.uranium_reserves
-        msg = f"unknown resource {resource}"
-        raise ValueError(msg)
-
-    def production_will_be_poor(tile: HexTile, resource: str) -> bool:
+    def production_will_be_poor(tile: HexTile, fuel: Fuel) -> bool:
         """Return whether extracting the resource will be poor."""
-        if resource == "coal":
-            return tile.coal_reserves < 500_000_000
-        if resource == "gas":
-            return tile.gas_reserves < 180_000_000
-        if resource == "uranium":
-            return tile.uranium_reserves < 2_400_000
-        msg = f"unknown resource {resource}"
-        raise ValueError(msg)
+        limits = {
+            Fuel.COAL: 500_000_000,
+            Fuel.GAS: 180_000_000,
+            Fuel.URANIUM: 2_400_000,
+        }
+        return tile.reserves[fuel] < limits[fuel]
 
     if not player.tile:
         raise GameError("TileNotFound")
@@ -718,14 +701,18 @@ def package_extraction_facilities(player: Player) -> list[dict]:
             "pollution": const_config_assets[extraction_facility]["base_pollution"]
             * 1000
             * extraction_emissions_multiplier(player, extraction_facility),
+            # TODO(mglst): remove this, let the frontend compute it (since tile resource can change often)
             "resource_production": {
-                "name": facility_to_resource[extraction_facility],
+                "name": fuels_by_extraction_facility[extraction_facility],
                 "rate": const_config_assets[extraction_facility]["base_extraction_rate_per_day"]
                 * extraction_rate_multiplier(player)
-                * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
+                * player.tile.reserves[fuels_by_extraction_facility[extraction_facility]]
+                # * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
                 / 24,
             },
-            "poor_resource_production": production_will_be_poor(player.tile, facility_to_resource[extraction_facility]),
+            "poor_resource_production": production_will_be_poor(
+                player.tile, fuels_by_extraction_facility[extraction_facility]
+            ),
         }
         for extraction_facility in engine.extraction_facilities
     ]

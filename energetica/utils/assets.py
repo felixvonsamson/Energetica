@@ -6,10 +6,10 @@ import random
 from typing import TYPE_CHECKING
 
 from energetica import technology_effects
-from energetica.config.assets import WorkerType
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.player import Player
+from energetica.enums import WorkerType
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine

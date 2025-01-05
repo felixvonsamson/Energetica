@@ -25,6 +25,7 @@ from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
+from energetica.enums import Fuel, Renewable
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -125,12 +126,12 @@ def get_map() -> Response:
             "id": tile.id,
             "q": tile.coordinates[0],
             "r": tile.coordinates[1],
-            "solar": tile.renewable_potential["solar"],
-            "wind": tile.renewable_potential["wind"],
-            "hydro": tile.renewable_potential["hydro"],
-            "coal": tile.fuel_reserves["coal"],
-            "gas": tile.fuel_reserves["gas"],
-            "uranium": tile.fuel_reserves["uranium"],
+            "solar": tile.potentials[Renewable.SOLAR],
+            "wind": tile.potentials[Renewable.WIND],
+            "hydro": tile.potentials[Renewable.HYDRO],
+            "coal": tile.reserves[Fuel.COAL],
+            "gas": tile.reserves[Fuel.GAS],
+            "uranium": tile.reserves[Fuel.URANIUM],
             "climate_risk": tile.climate_risk,
             "player_id": tile.player.id if tile.player else None,
         }
@@ -283,6 +284,7 @@ def get_player_data() -> Response | tuple:
 @http.route("/get_resource_reserves", methods=["GET"])
 def get_resource_reserves() -> Response:
     """Get the natural resources reserves for this player."""
+    # TODO(mglst): there is no `get_reserves` method in the `Player` class
     reserves = current_user.get_reserves()
     return jsonify(reserves)
 

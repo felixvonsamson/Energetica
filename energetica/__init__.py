@@ -43,6 +43,7 @@ from energetica.auth import auth
 from energetica.database.map import HexTile
 from energetica.database.messages import Chat
 from energetica.database.player import Player
+from energetica.enums import Fuel, Renewable
 from energetica.init_test_players import init_test_players
 from energetica.simulate import simulate
 from energetica.utils.climate_helpers import data_init_climate
@@ -254,10 +255,10 @@ def create_app(
             csv_reader = csv.DictReader(file)
             for row in csv_reader:
                 tile = HexTile(coordinates=(int(row["q"]), int(row["r"])), climate_risk=int(row["climate_risk"]))
-                for renewable in ["solar", "wind", "hydro"]:
-                    tile.renewable_potential[renewable] = float(row[renewable])
-                for resource in ["coal", "gas", "uranium"]:
-                    tile.fuel_reserves[resource] = float(row[resource])
+                for renewable in Renewable:
+                    tile.potentials[renewable] = float(row[renewable])
+                for fuel in Fuel:
+                    tile.reserves[fuel] = float(row[fuel])
 
     # creating general chat
     if Chat.count() == 0:

@@ -5,18 +5,12 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from enum import StrEnum
 from typing import TYPE_CHECKING
+
+from energetica.enums import Fuel
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
-
-
-class WorkerType(StrEnum):
-    """Enum for the worker type."""
-
-    CONSTRUCTION = "Construction"
-    RESEARCH = "Research"
 
 
 const_config: dict = {

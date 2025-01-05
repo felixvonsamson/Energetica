@@ -10,6 +10,7 @@ from energetica.config.climate_events import climate_events
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.engine_data import calculate_reference_gta, calculate_temperature_deviation
 from energetica.database.map import HexTile
+from energetica.enums import Renewable
 from energetica.globals import engine
 from energetica.utils.assets import facility_destroyed
 from energetica.utils.formatting import display_money
@@ -100,7 +101,7 @@ def check_climate_events():
     flood_probability = climate_events["flood"]["base_probability"] / ticks_per_day * climate_change**2
     if random.random() < flood_probability:
         # the hydro value for a flood needs to be above 20%
-        hydro_tiles = HexTile.filter(lambda tile: tile.renewable_potential["hydro"] > 0.2)
+        hydro_tiles = HexTile.filter(lambda tile: tile.potentials[Renewable.HYDRO] > 0.2)
         tile = random.choice(hydro_tiles)
         climate_event_impact(tile, "flood")
 

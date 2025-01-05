@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from energetica import technology_effects
 from energetica.config.assets import const_config
 from energetica.database import DBModel
+from energetica.enums import fuels_by_extraction_facility
 from energetica.globals import engine
 
 if TYPE_CHECKING:
@@ -74,15 +75,11 @@ class ActiveFacility(DBModel):
     @property
     def extraction_rate(self) -> float:
         """Rate at which the facility extracts resources from the ground. Defined only for extraction facilities."""
-        extraction_to_resource = {
-            "coal_mine": "coal",
-            "gas_drilling_site": "gas",
-            "uranium_mine": "uranium",
-        }
+        assert self.player.tile is not None
         return (
             self.const_config["base_extraction_rate_per_day"]
             * self.multipliers["multiplier_2"]
-            * self.player.tile.fuel_reserves[extraction_to_resource[self.name]]
+            * self.player.tile.reserves[fuels_by_extraction_facility[self.name]]
             / 24
         )
 

@@ -14,12 +14,12 @@ from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
 from energetica.config.achievements import achievements
-from energetica.config.assets import WorkerType
 from energetica.database import DBModel
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, PlayerPrices
 from energetica.database.messages import Chat, Notification
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.shipment import OngoingShipment
+from energetica.enums import Fuel, WorkerType
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.technology_effects import (
@@ -144,13 +144,7 @@ class Player(DBModel, UserMixin):
 
     # resources :
     money: float = 25000
-    resources: dict[str, float] = field(
-        default_factory=lambda: {
-            "coal": 0,
-            "gas": 0,
-            "uranium": 0,
-        },
-    )
+    reserves: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
     resources_on_sale: dict[str, float] = field(
         default_factory=lambda: {
             "coal": 0,

@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import TYPE_CHECKING
 
-from energetica.config.assets import WorkerType
 from energetica.database import DBModel
+from energetica.enums import WorkerType
 from energetica.globals import engine
 
 if TYPE_CHECKING:

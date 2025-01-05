@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash
 from energetica.database.map import HexTile
 from energetica.database.network import Network
 from energetica.database.player import Player
+from energetica.enums import Fuel
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.assets import finish_project, queue_project
@@ -68,7 +69,7 @@ def init_test_players():
                 HexTile.get(i).player = player
 
                 player.money = 1_000_000_000
-                player.resources = {"coal": 300_000, "gas": 100_000, "uranium": 500}
+                player.reserves = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}
                 player.priorities_of_controllables = ""
 
                 add_asset(player, "industry", 18)
@@ -110,7 +111,7 @@ def init_test_players():
 
     # Player 1
     player1.money = 1_000_000_000
-    player1.resources["coal"] = 300_000
+    player1.reserves[Fuel.COAL] = 300_000
 
     add_asset(player1, "molten_salt", 1)
     add_asset(player1, "hydrogen_storage", 1)
@@ -163,7 +164,7 @@ def init_test_players():
 
     # Player 2
     player2.money = 1_000_000_000
-    player2.resources = {"coal": 300_000, "gas": 100_000, "uranium": 500}
+    player2.reserves = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}
 
     add_asset(player2, "warehouse", 20)
     add_asset(player2, "steam_engine", 20)

@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
+from energetica.enums import Fuel, Renewable
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -20,8 +21,8 @@ class HexTile(DBModel):
 
     climate_risk: int
 
-    fuel_reserves: dict[str, float] = field(default_factory=lambda: {"coal": 0, "gas": 0, "uranium": 0})
-    renewable_potential: dict[str, float] = field(default_factory=lambda: {"solar": 0, "wind": 0, "hydro": 0})
+    reserves: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
+    potentials: dict[Renewable, float] = field(default_factory=lambda: {renewable: 0 for renewable in Renewable})
 
     player: Player | None = None
 
@@ -42,7 +43,7 @@ class HexTile(DBModel):
             )
             return results
 
-        neighbors = []
+        neighbors: list[HexTile] = []
         tiles_at_distance = get_hex_at_distance(*self.coordinates, n)
         for q, r in tiles_at_distance:
             neighbor = next(HexTile.filter_by(coordinates=(q, r)), None)
@@ -52,7 +53,7 @@ class HexTile(DBModel):
 
     def get_downstream_tiles(self, n: int) -> list[HexTile]:
         """Return up to `n` many tiles that are downstream (related to hydro) from the current tile."""
-        downstream_tiles = []
+        downstream_tiles: list[HexTile] = []
 
         def find_downstream(tile: HexTile, n: int) -> None:
             if n == 0:
@@ -60,7 +61,7 @@ class HexTile(DBModel):
             for neighbor in tile.get_neighbors():
                 if (
                     neighbor not in downstream_tiles
-                    and neighbor.renewable_potential["hydro"] > tile.renewable_potential["hydro"]
+                    and neighbor.potentials[Renewable.HYDRO] > tile.potentials[Renewable.HYDRO]
                 ):
                     downstream_tiles.append(neighbor)
                     find_downstream(neighbor, n - 1)
