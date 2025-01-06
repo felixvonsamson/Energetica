@@ -211,6 +211,7 @@ def calculate_net_import(new_values) -> None:
 
 def extraction_facility_demand(new_values, player: Player, demand) -> None:
     """Calculate power consumption of extraction facilities."""
+    assert player.tile is not None
     player_resources = new_values["resources"]
     warehouse_caps = player.config["warehouse_capacities"]
     for resource, facility in resource_to_extraction.items():
@@ -336,7 +337,7 @@ def calculate_generation_without_market(new_values, player: Player) -> None:
     # Obligatory generation is put on the internal market at a price of -5
     for facility in facilities:
         if player.capacities[facility] is not None:
-            internal_market = offer(
+            internal_market = bid(
                 internal_market,
                 player.id,
                 generation[facility],
@@ -345,15 +346,15 @@ def calculate_generation_without_market(new_values, player: Player) -> None:
             )
 
     # demands are demanded on the internal market
-    for demand_type in player.priorities_of_demand:
-        if demand_type in demand:
-            price = player.network_prices.demand[demand_type]
-            internal_market = bid(
+    for ask_type in player.network_prices.asks:
+        if ask_type in demand:
+            price = player.network_prices.ask_prices[ask_type]
+            internal_market = ask(
                 internal_market,
                 player.id,
-                demand[demand_type],
+                demand[ask_type],
                 price,
-                demand_type,
+                ask_type,
             )
 
     resource_reservations = reset_resource_reservations()
@@ -366,9 +367,9 @@ def calculate_generation_without_market(new_values, player: Player) -> None:
                 facility,
                 resource_reservations,
             )
-            price = player.network_prices.supply[facility]
+            price = player.network_prices.bid_prices[facility]
             capacity = max_prod - generation[facility]
-            internal_market = offer(internal_market, player.id, capacity, price, facility)
+            internal_market = bid(internal_market, player.id, capacity, price, facility)
 
     market_logic(new_values, internal_market)
 
@@ -384,7 +385,7 @@ def calculate_generation_with_market(new_values, market, player: Player):
     facilities = engine.storage_facilities + engine.power_facilities
     for facility in facilities:
         if player.capacities[facility] is not None:
-            market = offer(market, player.id, generation[facility], -5, facility)
+            market = bid(market, player.id, generation[facility], -5, facility)
 
     # allow a maximum overdraft of the equivalent of the daily income of the industry
     max_overdraft = -player.config["industry"]["income_per_day"]
@@ -394,17 +395,17 @@ def calculate_generation_with_market(new_values, market, player: Player):
             "You exceeded your credit limit, you can't buy electricity on the market anymore.",
         )
     # bid demand on the market at the set prices
-    for demand_type in player.priorities_of_demand:
+    for demand_type in player.network_prices.asks:
         if player.money >= max_overdraft:
             bid_q = demand[demand_type]
-            price = player.network_prices.demand[demand_type]
-            market = bid(market, player.id, bid_q, price, demand_type)
+            price = player.network_prices.ask_prices[demand_type]
+            market = ask(market, player.id, bid_q, price, demand_type)
         else:
             reduce_demand(new_values, demand_type, player.id, 0.0)
 
     resource_reservations = reset_resource_reservations()
     # Sell capacities of remaining facilities on the market
-    for facility in player.priorities_of_controllables + player.list_of_renewables:
+    for facility in player.network_prices.controllable_bids + player.network_prices.renewable_bids:
         if engine.const_config["assets"][facility]["ramping_time"] != 0:
             if player.capacities[facility] is not None:
                 max_prod = calculate_prod(
@@ -413,9 +414,9 @@ def calculate_generation_with_market(new_values, market, player: Player):
                     facility,
                     resource_reservations,
                 )
-                price = player.network_prices.supply[facility]
+                price = player.network_prices.bid_prices[facility]
                 capacity = max_prod - generation[facility]
-                market = offer(market, player.id, capacity, price, facility)
+                market = bid(market, player.id, capacity, price, facility)
 
     return market
 
@@ -449,6 +450,7 @@ def market_logic(new_values, market) -> None:
     def sell(row, market_price, quantity=None) -> None:
         """Sell and produce offered power capacity."""
         player = Player.get(row.player_id)
+        assert player is not None
         generation = new_values[player.id]["generation"]
         demand = new_values[player.id]["demand"]
         revenue = new_values[player.id]["revenues"]
@@ -464,6 +466,7 @@ def market_logic(new_values, market) -> None:
     def buy(row, market_price, quantity=None) -> None:
         """Buy demanded power capacity."""
         player = Player.get(row.player_id)
+        assert player is not None
         generation = new_values[player.id]["generation"]
         revenue = new_values[player.id]["revenues"]
         if quantity is None:
@@ -500,6 +503,7 @@ def market_logic(new_values, market) -> None:
             if row.price < 0:
                 dump_cap = max(0.0, min(row.capacity, row.capacity - sold_cap))
                 player = Player.get(row.player_id)
+                assert player is not None
                 demand = new_values[row.player_id]["demand"]
                 demand["dumping"] += dump_cap
                 player.money -= dump_cap * 5 / 3600 * engine.in_game_seconds_per_tick / 1_000_000
@@ -730,8 +734,8 @@ def minimal_generation(player: Player, generation, resource_reservations) -> Non
             )
 
 
-def offer(market, player_id, capacity, price, facility):
-    """Make an offer on the market."""
+def bid(market, player_id, capacity, price, facility):
+    """Make an bid (offer, supply) on the market."""
     if capacity > 0:
         new_row = pd.DataFrame(
             {
@@ -745,8 +749,8 @@ def offer(market, player_id, capacity, price, facility):
     return market
 
 
-def bid(market, player_id, demand, price, facility):
-    """Make a bid on the market."""
+def ask(market, player_id, demand, price, facility):
+    """Make an ask (demand) on the market."""
     if demand > 0:
         new_row = pd.DataFrame(
             {
@@ -762,6 +766,8 @@ def bid(market, player_id, demand, price, facility):
 
 def resources_and_pollution(new_values, player: Player) -> None:
     """Calculate resource use and production, O&M costs and emissions."""
+    assert player is not None
+    assert player.tile is not None
     generation = new_values["generation"]
     op_costs = new_values["op_costs"]
     demand = new_values["demand"]
@@ -793,7 +799,7 @@ def resources_and_pollution(new_values, player: Player) -> None:
                     * engine.in_game_seconds_per_tick
                     / 86400  # 86400 seconds in a day
                 )
-                player.tile.fuel_reserves[resource] -= (extracted_quantity,)
+                player.tile.fuel_reserves[resource] -= extracted_quantity
                 player.resources[resource] += extracted_quantity
                 player.progression_metrics["extracted_resources"] += extracted_quantity
                 emissions = extracted_quantity * player.capacities[extraction_facility]["pollution"]
@@ -865,6 +871,7 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction) -> None:
     """
     # TODO(mglst): Add argument description for new_values
     player = Player.get(player_id)
+    assert player is not None
     demand = new_values[player.id]["demand"]
     if demand_type == "industry":
         # revenues of industry are reduced

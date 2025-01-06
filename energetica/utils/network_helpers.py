@@ -45,6 +45,7 @@ def create_network(player: Player, name: str) -> Network:
 
 
 # TODO (Felix): Move this to a method in Player
+# TODO(mglst): I'm not sure I agree. Why should this not be a method of Network for example?
 def leave_network(player: Player) -> None:
     """Shared API method for a player to leave a network. Always succeeds."""
     network = player.network
@@ -61,77 +62,3 @@ def leave_network(player: Player) -> None:
         network.delete()
     # import energetica.api.websocket as websocket
     # websocket.rest_notify_network_change()
-
-
-# TODO (Felix): Move this to a method in Player
-def reorder_facility_priorities(player: Player) -> None:
-    """
-    Reorder the player's `priorities_of_controllables`, `priorities_of_demand` and `list_of_renewables`.
-
-    This is done according to the players network prices :
-    - The controllables are sorted in ascending price order
-    - The demand is sorted in descending price order
-    - The renewables are sorted in the same order for all players
-    """
-    player.priorities_of_controllables.sort(key=lambda x: player.network_prices.supply[x])
-    player.priorities_of_demand.sort(key=lambda x: player.network_prices.demand[x], reverse=True)
-    player.list_of_renewables.sort(key=engine.renewables.index)
-
-
-# TODO (Felix): Move this to a method in Player or even in PlayerPrices
-def set_network_prices(
-    player: Player,
-    updated_supply_prices: dict[str, float],
-    updated_demand_prices: dict[str, float],
-) -> None:
-    """Update network prices for that player."""
-    for facility in updated_supply_prices:
-        if facility not in engine.controllable_facilities + engine.storage_facilities:
-            raise GameError("malformedRequest")
-    for facility in updated_demand_prices:
-        if facility not in engine.special_power_demand + engine.extraction_facilities + engine.storage_facilities:
-            raise GameError("malformedRequest")
-    for facility, new_price in updated_supply_prices.items():
-        if not isinstance(new_price, (int, float)):
-            raise GameError("malformedRequest")
-        if new_price <= -5:
-            raise GameError("priceTooLow")
-        player.network_prices.supply[facility] = new_price
-    for facility, new_price in updated_demand_prices.items():
-        if not isinstance(new_price, (int, float)):
-            raise GameError("malformedRequest")
-        if new_price <= -5:
-            raise GameError("priceTooLow")
-        player.network_prices.demand[facility] = new_price
-
-    engine.log(f"{player.username} updated their prices")
-    reorder_facility_priorities(player)
-
-
-# TODO (Felix): Move this to a method in Player
-def change_facility_priority(player: Player, priority: list[str]) -> None:
-    """
-    Reassign the selling prices of the facilities according to the new order.
-
-    Executed when the facilities priority is changed by changing the order in the interactive table.
-    """
-    old_set = {f"demand-{demand_type}" for demand_type in player.priorities_of_demand}
-    old_set.update(player.priorities_of_controllables)
-    if old_set != set(priority):
-        raise GameError("malformedRequest")
-
-    price_list = [
-        player.network_prices.demand[facility[7:]]
-        if facility.startswith("demand-")
-        else player.network_prices.supply[facility]
-        for facility in priority
-    ]
-    sorted_prices = sorted(price_list)
-    updated_supply_prices = {}
-    updated_demand_prices = {}
-    for facility, price in zip(priority, sorted_prices):
-        if facility.startswith("demand-"):
-            updated_demand_prices[facility[7:]] = price
-        else:
-            updated_supply_prices[facility] = price
-    set_network_prices(player, updated_supply_prices, updated_demand_prices)

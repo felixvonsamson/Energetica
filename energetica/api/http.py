@@ -302,20 +302,23 @@ def get_players() -> Response:
 @http.route("/get_generation_priority", methods=["GET"])
 def get_generation_priority() -> Response:
     """Get generation and demand priority for this player."""
-    controllables_priorities = current_user.priorities_of_controllables.copy()
-    for demand_type in current_user.priorities_of_demand:
+    player = Player.get(current_user.id)
+    assert player is not None
+    # TODO(mglst): move this to a method in the PricesAndPriorities class
+    controllables_priorities = player.network_prices.controllable_bids.copy()
+    for ask_type in player.network_prices.ask_prices:
         for i, facility in enumerate(controllables_priorities):
             if "demand-" in facility:
-                price_i = current_user.network_prices.demand[facility[7:]]
+                price_i = player.network_prices.ask_prices[facility[7:]]
             else:
-                price_i = current_user.network_prices.supply[facility]
-            if current_user.network_prices.demand[demand_type] < price_i:
-                controllables_priorities.insert(i, "demand-" + demand_type)
+                price_i = player.network_prices.bid_prices[facility]
+            if player.network_prices.ask_prices[ask_type] < price_i:
+                controllables_priorities.insert(i, "demand-" + ask_type)
                 break
             if i + 1 == len(controllables_priorities):
-                controllables_priorities.append("demand-" + demand_type)
+                controllables_priorities.append("demand-" + ask_type)
                 break
-    return jsonify(current_user.list_of_renewables, controllables_priorities)
+    return jsonify(player.network_prices.renewable_bids, controllables_priorities)
 
 
 @http.route("/get_constructions", methods=["GET"])
@@ -541,11 +544,13 @@ def change_network_prices() -> Response | tuple:
     updated_prices = request.get_json()["prices"]
     if not all(key in ["supply", "demand"] for key in updated_prices.keys()):
         raise GameError("malformedRequest")
-    energetica.utils.network_helpers.set_network_prices(
-        current_user,
-        updated_supply_prices=updated_prices["supply"],
-        updated_demand_prices=updated_prices["demand"],
+    player = Player.get(current_user.id)
+    assert player is not None
+    player.network_prices.update(
+        updated_bids=updated_prices["supply"],
+        updated_asks=updated_prices["demand"],
     )
+    engine.log(f"{player.username} updated their prices")
     return jsonify({"response": "success"})
 
 
@@ -557,7 +562,9 @@ def request_change_facility_priority() -> Response | tuple:
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
     priority = request_data["priority"]
-    energetica.utils.network_helpers.change_facility_priority(player=Player.get(current_user.id), priority=priority)
+    player = Player.get(current_user.id)
+    assert player is not None
+    player.network_prices.change_facility_priority(new_priority=priority)
     return jsonify({"response": "success"})
 
 

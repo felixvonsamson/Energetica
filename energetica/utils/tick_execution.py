@@ -55,11 +55,11 @@ def _state_update(app):
             pickle.dump(engine.data, file)
         with tarfile.open("checkpoints/last_checkpoint.tar.gz", "w:gz") as tar:
             tar.add("instance/")
-    with app.app_context():
-        # TODO: perhaps only run the below code conditionally on there being active ws connections
-        websocket.rest_notify_scoreboard()
-        websocket.rest_notify_weather()
-        websocket.rest_notify_global_data()
+    # with app.app_context():
+    #     # TODO: perhaps only run the below code conditionally on there being active ws connections
+    #     websocket.rest_notify_scoreboard()
+    #     websocket.rest_notify_weather()
+    #     websocket.rest_notify_global_data()
 
 
 def check_events_completion():

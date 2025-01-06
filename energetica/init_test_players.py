@@ -69,7 +69,7 @@ def init_test_players():
 
                 player.money = 1_000_000_000
                 player.resources = {"coal": 300_000, "gas": 100_000, "uranium": 500}
-                player.priorities_of_controllables = ""
+                player.network_prices.controllable_bids = []
 
                 add_asset(player, "industry", 18)
                 add_asset(player, "warehouse", 1)
