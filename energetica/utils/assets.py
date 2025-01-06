@@ -42,7 +42,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
                 for resource in ["coal", "gas", "uranium"]:
                     player.rolling_history.add_subcategory("resources", resource)
             if project.name == "laboratory":
-                player.network_prices.add_ask(project.name)
+                player.network_prices.add_ask("research")
 
         player.functional_facility_lvl[project.name] += 1
 

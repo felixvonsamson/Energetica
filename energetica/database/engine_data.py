@@ -97,6 +97,11 @@ class NetworkPrices:
 
     AskBid = Literal["ask", "bid"]  # Helper type
 
+    def get_sorted_renewables(self) -> list[str]:
+        """Return the player's renewable bids sorted by price."""
+        self.renewable_bids.sort(key=engine.renewables.index)
+        return self.renewable_bids
+
     def get_facility_priorities(self) -> list[Tuple[AskBid, str]]:
         """Return the player's priority lists containing asks and bids but not renewables, sorted by price."""
         type_key_price: list[Tuple[Literal["ask", "bid"], str, float]] = [

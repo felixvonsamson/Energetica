@@ -304,8 +304,7 @@ def get_generation_priority() -> Response:
     """Get generation and demand priority for this player."""
     player = Player.get(current_user.id)
     assert player is not None
-    sorted_renewables = sorted(player.network_prices.renewable_bids, key=engine.renewables.index)
-    return jsonify(sorted_renewables, player.network_prices.get_facility_priorities())
+    return jsonify(player.network_prices.get_sorted_renewables(), player.network_prices.get_facility_priorities())
 
 
 @http.route("/get_constructions", methods=["GET"])
