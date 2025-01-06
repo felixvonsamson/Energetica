@@ -22,24 +22,14 @@ if TYPE_CHECKING:
 @dataclass
 class NetworkPrices:
     """
-    Represents the bid and ask prices of a player by facility type.
+    Tracks a player's renewable bids, bid prices, and ask prices by facility type.
 
-    Data structure:
-    #### 1. Renewable Bids:
-    - A name appears in the `renewable_bids` list if:
-        - The player has one or more renewable facilities of the given type.
+    - `renewable_bids`: A list of renewable facilities.
+    - `bid_prices`: A dictionary of controllable and storage facility types with their bid prices.
+    - `ask_prices`: A dictionary of storage, extraction, and special demand facility types with their ask prices.
+      (e.g., research, transport, industry and construction)
 
-    #### 2. Bid Prices
-    - A name/price pair appears in the `bid_prices` dictionary if:
-        - The player has one or more controllable facilities of the given type, or
-        - The player has one or more storage facilities of the given type.
-
-    #### 3. Ask Prices
-    - A name/price pair appears in the `ask_prices` dictionary if:
-        - The player has one or more storage facilities of the given type, or
-        - The player has one or more extraction facilities of the given type, or
-        - The player has one or more special power demands of the given type (e.g., research, transport), or
-        - The name is "industry" or "construction".
+    Entries are added or removed as facilities are built or decommissioned.
     """
 
     renewable_bids: list[str] = field(default_factory=list)
