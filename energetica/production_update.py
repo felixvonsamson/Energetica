@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import math
 import pickle
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -346,7 +347,7 @@ def calculate_generation_without_market(new_values, player: Player) -> None:
             )
 
     # demands are demanded on the internal market
-    for ask_type in player.network_prices.asks:
+    for ask_type in player.network_prices.ask_prices.keys():
         if ask_type in demand:
             price = player.network_prices.ask_prices[ask_type]
             internal_market = ask(
@@ -394,8 +395,8 @@ def calculate_generation_with_market(new_values, market, player: Player):
             "Not Enough Money",
             "You exceeded your credit limit, you can't buy electricity on the market anymore.",
         )
-    # bid demand on the market at the set prices
-    for demand_type in player.network_prices.asks:
+    # ask demand on the market at the set prices
+    for demand_type in player.network_prices.ask_prices.keys():
         if player.money >= max_overdraft:
             bid_q = demand[demand_type]
             price = player.network_prices.ask_prices[demand_type]
@@ -405,7 +406,7 @@ def calculate_generation_with_market(new_values, market, player: Player):
 
     resource_reservations = reset_resource_reservations()
     # Sell capacities of remaining facilities on the market
-    for facility in player.network_prices.controllable_bids + player.network_prices.renewable_bids:
+    for facility in (*player.network_prices.bid_prices.keys(), *player.network_prices.renewable_bids):
         if engine.const_config["assets"][facility]["ramping_time"] != 0:
             if player.capacities[facility] is not None:
                 max_prod = calculate_prod(
@@ -648,12 +649,12 @@ def wind_generation(player: Player, generation: dict, in_game_seconds_passed: in
 
 
 def calculate_prod(
-    minmax,
+    minmax: Literal["min", "max"],
     player: Player,
-    facility,
-    resource_reservations,
+    facility: str,
+    resource_reservations: dict[str, float] | None,
     filling=False,
-):
+) -> float:
     """
     Calculate the min or max power production of controllable facilities for this tick.
 
@@ -678,6 +679,7 @@ def calculate_prod(
         * engine.in_game_seconds_per_tick
     )
     if "fuel_use" in player.capacities[facility]:
+        assert resource_reservations is not None
         for resource, amount in player.capacities[facility]["fuel_use"].items():
             available_resource = (
                 player.resources[resource] - player.resources_on_sale[resource] - resource_reservations[resource]

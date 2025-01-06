@@ -13,7 +13,6 @@ from energetica.database.player import Player
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.utils.network_helpers import reorder_facility_priorities
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -38,16 +37,12 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
                 player.rolling_history.add_subcategory("demand", project.name)
                 player.rolling_history.add_subcategory("emissions", project.name)
                 player.cumul_emissions.add_category(project.name)
-                player.network_prices.asks.append(project.name)
-                player.network_prices.reorder_facility_priorities()
+                player.network_prices.add_ask(project.name)
             if project.name == "warehouse":
                 for resource in ["coal", "gas", "uranium"]:
                     player.rolling_history.add_subcategory("resources", resource)
-                player.network_prices.asks.append("transport")
-                player.network_prices.reorder_facility_priorities()
             if project.name == "laboratory":
-                player.network_prices.asks.append("research")
-                player.network_prices.reorder_facility_priorities()
+                player.network_prices.add_ask(project.name)
 
         player.functional_facility_lvl[project.name] += 1
 
@@ -72,15 +67,13 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         if project.name in engine.controllable_facilities + engine.extraction_facilities:
             player.rolling_history.add_subcategory("emissions", project.name)
             player.cumul_emissions.add_category(project.name)
+        # add facility to player's NetworkPrices
         if project.name in engine.extraction_facilities + engine.storage_facilities:
-            player.network_prices.asks.append(project.name)
-            player.network_prices.reorder_facility_priorities()
+            player.network_prices.add_ask(project.name)
         if project.name in engine.renewables:
             player.network_prices.renewable_bids.append(project.name)
-            player.network_prices.reorder_facility_priorities()
         if project.name in engine.storage_facilities + engine.controllable_facilities:
-            player.network_prices.controllable_bids.append(project.name)
-            player.network_prices.reorder_facility_priorities()
+            player.network_prices.add_bid(project.name)
 
     player.check_construction_achievements(project.name)
 
@@ -265,14 +258,12 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     if not ActiveFacility.filter_by(name=facility.name, player=player):
         # remove facility from facility priorities if it was the last one
         if facility.name in engine.extraction_facilities + engine.storage_facilities:
-            player.network_prices.asks.remove(facility.name)
-            player.network_prices.reorder_facility_priorities()
+            del player.network_prices.ask_prices[facility.name]
         if facility.name in engine.renewables:
             player.network_prices.renewable_bids.remove(facility.name)
-            player.network_prices.reorder_facility_priorities()
+            del player.network_prices.bid_prices[facility.name]
         if facility.name in engine.storage_facilities + engine.controllable_facilities:
-            player.network_prices.controllable_bids.remove(facility.name)
-            player.network_prices.reorder_facility_priorities()
+            del player.network_prices.bid_prices[facility.name]
     facility_name = engine.const_config["assets"][facility.name]["name"]
     if decommissioning:
         player.notify(

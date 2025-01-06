@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import noise
 
@@ -13,6 +13,8 @@ from energetica.game_error import GameError
 from energetica.globals import engine
 
 if TYPE_CHECKING:
+    from typing import Tuple
+
     from energetica.database.network import Network
     from energetica.database.player import Player
 
@@ -20,24 +22,35 @@ if TYPE_CHECKING:
 @dataclass
 class NetworkPrices:
     """
-    Class that stores the bid and ask prices of a player by facility type.
+    Represents the bid and ask prices of a player by facility type.
 
-    For players in a network, these are the prices of the network.
-    For players not in a network, there are no outward facing prices, but the logic is the same - prices are used to
-    determine the priority of power generation and consumption. The lists of controllables and demands are used to
-    bridge the gap between the two types of players. So players outside of a network will see these lists, and when they
-    change the order of the facilities in the interactive table, the prices will be recalculated accordingly. This is
-    done by the change_facility_priority method. Conversely, players in a network will not see these lists, but they are
-    still maintained in the background, using the reorder_facility_priorities method.
-    This whole system allows for players to maintain their prices and priorities when they join or leave a network.
+    Data structure:
+    #### 1. Renewable Bids:
+    - A name appears in the `renewable_bids` list if:
+        - The player has one or more renewable facilities of the given type.
+
+    #### 2. Bid Prices
+    - A name/price pair appears in the `bid_prices` dictionary if:
+        - The player has one or more controllable facilities of the given type, or
+        - The player has one or more storage facilities of the given type.
+
+    #### 3. Ask Prices
+    - A name/price pair appears in the `ask_prices` dictionary if:
+        - The player has one or more storage facilities of the given type, or
+        - The player has one or more extraction facilities of the given type, or
+        - The player has one or more special power demands of the given type (e.g., research, transport), or
+        - The name is "industry" or "construction".
     """
 
     renewable_bids: list[str] = field(default_factory=list)
-    controllable_bids: list[str] = field(default_factory=lambda: ["steam_engine"])
-    asks: list[str] = field(default_factory=lambda: ["industry", "construction"])
 
-    bid_prices: dict[str, int | float] = field(
-        default_factory=lambda: {
+    bid_prices: dict[str, float] = field(default_factory=lambda: {"steam_engine": 125.0})
+    ask_prices: dict[str, float] = field(default_factory=lambda: {"industry": 1000.0, "construction": 1020.0})
+
+    # TODO(mglst, Yassir): Add randomness to the default prices so that each player's prices are slightly different
+    def add_bid(self, bid_name: str) -> None:
+        """Add a facility to the list of bids, using the default price."""
+        self.bid_prices[bid_name] = {
             "steam_engine": 125.0,
             "coal_burner": 600.0,
             "gas_burner": 500.0,
@@ -50,12 +63,11 @@ class NetworkPrices:
             "hydrogen_storage": 880.0,
             "lithium_ion_batteries": 940.0,
             "solid_state_batteries": 900.0,
-        }
-    )
-    ask_prices: dict[str, int | float] = field(
-        default_factory=lambda: {
-            "industry": 1000.0,
-            "construction": 1020.0,
+        }[bid_name]
+
+    def add_ask(self, ask_name: str) -> None:
+        """Add a facility to the list of asks, using the default price."""
+        self.ask_prices[ask_name] = {
             "research": 1200.0,
             "transport": 1050.0,
             "coal_mine": 960.0,
@@ -68,13 +80,12 @@ class NetworkPrices:
             "hydrogen_storage": 230.0,
             "lithium_ion_batteries": 425.0,
             "solid_state_batteries": 420.0,
-        }
-    )
+        }[ask_name]
 
     def update(
         self,
-        updated_bids: dict[str, int | float],
-        updated_asks: dict[str, int | float],
+        updated_bids: dict[str, float],
+        updated_asks: dict[str, float],
     ) -> None:
         """Update the prices of the player for each facility type."""
         for facility, new_price in updated_bids.items():
@@ -93,20 +104,17 @@ class NetworkPrices:
                 raise GameError("priceTooLow")
         self.ask_prices |= updated_asks
         self.bid_prices |= updated_bids
-        self.reorder_facility_priorities()
 
-    def reorder_facility_priorities(self) -> None:
-        """
-        Reorder the player's priority lists according to the new prices.
+    AskBid = Literal["ask", "bid"]  # Helper type
 
-        This is done according to the players network prices :
-        - The controllables are sorted in ascending price order
-        - The demand is sorted in descending price order
-        - The renewables are sorted in a fixed order, defined in engine
-        """
-        self.controllable_bids.sort(key=lambda x: self.bid_prices[x])
-        self.asks.sort(key=lambda x: self.ask_prices[x], reverse=True)
-        self.renewable_bids.sort(key=engine.renewables.index)
+    def get_facility_priorities(self) -> list[Tuple[AskBid, str]]:
+        """Return the player's priority lists containing asks and bids but not renewables, sorted by price."""
+        type_key_price: list[Tuple[Literal["ask", "bid"], str, float]] = [
+            *(("bid", key, price) for key, price in self.bid_prices.items()),
+            *(("ask", key, price) for key, price in self.ask_prices.items()),
+        ]
+        type_key_price.sort(key=lambda x: x[2])
+        return [(x[0], x[1]) for x in type_key_price]
 
     def change_facility_priority(self, new_priority: list[str]) -> None:
         """
@@ -116,23 +124,22 @@ class NetworkPrices:
         that are not in a network.
         """
         # Check if the new priority list is valid, i.e. contains the same elements as the old one
-        old_set = {{f"demand-{demand_type}" for demand_type in self.asks}, *self.controllable_bids}
+        old_set = {
+            *{f"ask-{ask_name}" for ask_name in self.ask_prices},
+            *{f"bid-{bid_name}" for bid_name in self.bid_prices},
+        }
         if old_set != set(new_priority):
             raise GameError("malformedRequest")
 
         # Reorder the prices according to the new priority list
-        price_list = [
-            self.ask_prices[facility[7:]] if facility.startswith("demand-") else self.bid_prices[facility]
-            for facility in new_priority
-        ]
-        sorted_prices = sorted(price_list)
+        sorted_prices = sorted((*self.ask_prices.values(), *self.bid_prices.values()))
         updated_bid_prices = {}
         updated_ask_prices = {}
         for facility, price in zip(new_priority, sorted_prices):
-            if facility.startswith("demand-"):
-                updated_ask_prices[facility[7:]] = price
+            if facility.startswith("ask-"):
+                updated_ask_prices[facility[4:]] = price
             else:
-                updated_bid_prices[facility] = price
+                updated_bid_prices[facility[4:]] = price
         self.update(updated_bid_prices, updated_ask_prices)
 
 

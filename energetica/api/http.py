@@ -304,21 +304,8 @@ def get_generation_priority() -> Response:
     """Get generation and demand priority for this player."""
     player = Player.get(current_user.id)
     assert player is not None
-    # TODO(mglst): move this to a method in the PricesAndPriorities class
-    controllables_priorities = player.network_prices.controllable_bids.copy()
-    for ask_type in player.network_prices.ask_prices:
-        for i, facility in enumerate(controllables_priorities):
-            if "demand-" in facility:
-                price_i = player.network_prices.ask_prices[facility[7:]]
-            else:
-                price_i = player.network_prices.bid_prices[facility]
-            if player.network_prices.ask_prices[ask_type] < price_i:
-                controllables_priorities.insert(i, "demand-" + ask_type)
-                break
-            if i + 1 == len(controllables_priorities):
-                controllables_priorities.append("demand-" + ask_type)
-                break
-    return jsonify(player.network_prices.renewable_bids, controllables_priorities)
+    sorted_renewables = sorted(player.network_prices.renewable_bids, key=engine.renewables.index)
+    return jsonify(sorted_renewables, player.network_prices.get_facility_priorities())
 
 
 @http.route("/get_constructions", methods=["GET"])
@@ -558,12 +545,12 @@ def change_network_prices() -> Response | tuple:
 @log_action
 def request_change_facility_priority() -> Response | tuple:
     """Change the generation priority."""
-    if not current_user.achievements["network"]:
+    player = Player.get(current_user.id)
+    assert player is not None
+    if not player.achievements["network"]:
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
     priority = request_data["priority"]
-    player = Player.get(current_user.id)
-    assert player is not None
     player.network_prices.change_facility_priority(new_priority=priority)
     return jsonify({"response": "success"})
 
