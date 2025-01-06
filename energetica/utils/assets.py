@@ -41,6 +41,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             if project.name == "warehouse":
                 for resource in ["coal", "gas", "uranium"]:
                     player.rolling_history.add_subcategory("resources", resource)
+                player.network_prices.add_ask("transport")
             if project.name == "laboratory":
                 player.network_prices.add_ask("research")
 

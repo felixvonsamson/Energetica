@@ -143,8 +143,8 @@ def get_map() -> Response:
 @http.route("/get_networks", methods=["GET"])
 def get_networks() -> Response:
     """Get all the network names and returns it as a list."""
-    network_list = [{"id": network.id, "name": network.name} for network in Network.all()]
-    return jsonify(network_list)
+    networks = {network.id: network.name for network in Network.all()}
+    return jsonify(networks)
 
 
 @http.route("/get_chat_messages", methods=["GET"])

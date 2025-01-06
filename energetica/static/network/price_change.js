@@ -14,6 +14,9 @@ let renewables;
 const initSortableList = (e) => {
     e.preventDefault();
     const draggingItem = document.querySelector(".dragging");
+    if (!draggingItem) {
+        return;
+    }
     if (!draggingItem.draggable) {
         return;
     }
@@ -89,7 +92,6 @@ if (sortableList) {
             load_const_config().then((const_config) => {
                 renewables = raw_data[0];
                 for (facility of raw_data[0]) {
-                    console.log(facility, const_config.assets[facility]);
                     let name = const_config.assets[facility].name;
                     sortableList.innerHTML += `<li class="item medium gen" style="margin-left:2.1em;" id="${facility}">
                 <div class="details padding">
@@ -102,14 +104,15 @@ if (sortableList) {
                     let facility = tuple_data[1];
                     let generation = tuple_data[0] == "bid";
                     var name = "";
-                    if (facility == "buy_transport") {
+                    if (facility == "transport") {
                         name = "Shipments";
                     } else if (facility == "construction") {
                         name = "Construction";
                     } else if (facility == "research") {
                         name = "Research";
                     } else {
-                        const_config.assets[facility];
+                        console.log(facility);
+                        name = const_config.assets[facility].name;
                         if (storageFacilities.includes(facility)) {
                             if (generation) {
                                 name += " (discharge)";
