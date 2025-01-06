@@ -1,10 +1,7 @@
 """Utility functions relating to networks."""
 
-import pickle
 import shutil
-from pathlib import Path
 
-from energetica.database.engine_data import CapacityData, CircularBufferNetwork
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.game_error import GameError
@@ -29,20 +26,6 @@ def join_network(player: Player, network: Network | None) -> Network:
     return network
 
 
-def data_init_network() -> dict:
-    """Initialize the data for a new network."""
-    return {
-        "network_data": {
-            "price": [[0.0] * 360] * 5,
-            "quantity": [[0.0] * 360] * 5,
-        },
-        "exports": {},
-        "imports": {},
-        "generation": {},
-        "consumption": {},
-    }
-
-
 def create_network(player: Player, name: str) -> Network:
     """Shared API method to create a network. Network name must pass validation,
     namely it must not be too long, nor too short, and must not already be in
@@ -55,16 +38,6 @@ def create_network(player: Player, name: str) -> Network:
         raise GameError("nameAlreadyUsed")
     new_network = Network(name=name, members=[player])
     player.network = new_network
-    network_path = f"instance/network_data/{new_network.id}"
-    Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
-    # TODO (Felix): Move this to Network init
-    new_network.rolling_history = CircularBufferNetwork()
-    new_network.capacities = CapacityData()
-    new_network.capacities.update_network(new_network)
-    past_data = data_init_network()
-    Path(f"{network_path}").mkdir(parents=True, exist_ok=True)
-    with open(f"{network_path}/time_series.pck", "wb") as file:
-        pickle.dump(past_data, file)
     engine.log(f"{player.username} created the network {name}")
     # import energetica.api.websocket as websocket
     # websocket.rest_notify_network_change()
