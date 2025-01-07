@@ -292,6 +292,7 @@ def create_app(
                 misfire_grace_time=10,
             )
         else:
+            assert last_action_id is not None
             scheduler.add_job(
                 func=simulate,
                 args=(
