@@ -38,7 +38,7 @@ globals.engine = engine
 
 from energetica.api.http import http
 from energetica.api.socketio_handlers import add_handlers
-from energetica.api.websocket import add_sock_handlers, websocket_blueprint
+from energetica.api.websocket import add_sock_handlers, websocket_blueprint  # type: ignore
 from energetica.auth import auth
 from energetica.database.map import HexTile
 from energetica.database.messages import Chat

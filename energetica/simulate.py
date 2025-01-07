@@ -110,6 +110,7 @@ def _simulate(
                         tar.add("instance/")
             elif action["action_type"] == "climate_event_impact":
                 tile = HexTile.get(action["tile_id"])
+                assert tile is not None
                 climate_event_impact(tile, action["event"])
             elif action["action_type"] == "create_user":
                 player_id = action["player_id"]

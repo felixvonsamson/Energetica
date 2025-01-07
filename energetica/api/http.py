@@ -151,12 +151,17 @@ def get_networks() -> Response:
 
 
 @http.route("/get_chat_messages", methods=["GET"])
-def get_chat_messages() -> Response:
+def get_chat_messages() -> Response | tuple:
     """Get the last 20 messages from a chat and returns it as a list."""
     player = Player.getitem(current_user.id)
     chat_id = request.args.get("chatID")
-    packaged_messages = player.package_chat_messages(chat_id)
-    player.mark_chat_as_read(chat_id)
+    if chat_id is None:
+        return jsonify({"response": "noChatID"}), 400
+    chat = Chat.get(int(chat_id))
+    if chat is None:
+        return jsonify({"response": "chatNotFound"}), 404
+    packaged_messages = player.package_chat_messages(chat)
+    player.mark_chat_as_read(chat)
     return jsonify({"response": "success", "messages": packaged_messages})
 
 

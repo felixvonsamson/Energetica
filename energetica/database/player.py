@@ -112,7 +112,7 @@ class Player(DBModel, UserMixin):
 
     # Browser notifications & preferences
     # TODO(mglst): type annotation seems wrong. is it not a dictionary?
-    notification_subscriptions: list[int] = field(default_factory=list)
+    notification_subscriptions: list = field(default_factory=list)
     notification_preferences: dict = field(
         default_factory=lambda: {
             "messages": True,
@@ -376,7 +376,7 @@ class Player(DBModel, UserMixin):
     def emit(self, event: str, *args) -> None:
         """Emit a socketio event to the player's clients."""
         for sid in self.socketio_clients:
-            engine.socketio.emit(event, *args, room=sid)
+            engine.socketio.emit(event, *args, to=sid)
 
     def send_new_data(self, new_values) -> None:
         """Send the new data to the player's clients."""
@@ -706,7 +706,7 @@ class Player(DBModel, UserMixin):
                     "usage": sum(f.usage * f.max_power_generation for f in group)
                     / sum(f.max_power_generation for f in group),
                     "hourly_op_cost": self.capacities[group_name]["O&M_cost"] * ticks_per_hour,
-                    "remaining_lifespan": min(f.remaining_lifespan for f in group),
+                    "remaining_lifespan": min(f.remaining_lifespan for f in group if f.remaining_lifespan is not None),
                     "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
                     if any(f.is_upgradable for f in group)
                     else None,
@@ -762,7 +762,7 @@ class Player(DBModel, UserMixin):
                     / sum(f.storage_capacity for f in group),
                     "remaining_lifespan": None
                     if all(f.decommissioning for f in group)
-                    else min(f.remaining_lifespan for f in group if not f.decommissioning),
+                    else min(f.remaining_lifespan for f in group if f.remaining_lifespan is not None),
                     "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
                     if any(f.is_upgradable for f in group)
                     else None,
@@ -807,7 +807,7 @@ class Player(DBModel, UserMixin):
                     "usage": sum(f.usage * f.extraction_rate for f in group) / sum(f.extraction_rate for f in group),
                     "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
                     "max_power_use": sum(f.max_power_use for f in group),
-                    "remaining_lifespan": min(f.remaining_lifespan for f in group),
+                    "remaining_lifespan": min(f.remaining_lifespan for f in group if f.remaining_lifespan is not None),
                     "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
                     if any(f.is_upgradable for f in group)
                     else None,

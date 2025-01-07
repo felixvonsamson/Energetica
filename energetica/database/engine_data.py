@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import noise
 
@@ -249,9 +249,11 @@ class CapacityData:
 
     def __getitem__(self, facility: str) -> dict:
         """Return the capacity data of a facility."""
-        if facility not in self._data:
-            return None  # TODO(mglst): either the type should be Optional[dict] or an error should be raised
         return self._data[facility]
+
+    def get(self, facility: str) -> dict | None:
+        """Return the capacity data of a facility."""
+        return self._data.get(facility)
 
     def get_all(self) -> dict[str, dict]:
         """Return the capacity data."""
@@ -322,7 +324,7 @@ class CircularBufferPlayer:
 
     def get_data(self, t: int = 216):
         """Return the last t ticks of the data."""
-        result = defaultdict(lambda: defaultdict(dict))
+        result: dict[str, Any] = defaultdict(lambda: defaultdict(dict))
         for category, subcategories in self._data.items():
             for subcategory, buffer in subcategories.items():
                 result[category][subcategory] = list(buffer)[-t:]
@@ -339,7 +341,7 @@ class CircularBufferPlayer:
 
         Return a dict with the same structure as the data with 0 and with the last value for the storage and resources.
         """
-        result = {}
+        result: dict[str, Any] = {}
         for category, subcategories in self._data.items():
             result[category] = {}
             for subcategory, buffer in subcategories.items():
@@ -368,7 +370,7 @@ class CumulativeEmissionsData:
         if facility not in self._data:
             self._data[facility] = 0.0
 
-    def __getitem__(self, facility: str) -> float:
+    def __getitem__(self, facility: str) -> float | None:
         """Return the data of a facility."""
         if facility not in self._data:
             return None
