@@ -62,7 +62,7 @@ class DBModel:
         return cls.instances().get(id, None)
 
     @classmethod
-    def getitem(cls: type[T], id: int) -> T:
+    def getitem(cls: type[T], id: int) -> T:  # pylint: disable=redefined-builtin
         """Get an object by its id, or raise a KeyError if not found."""
         return cls.instances()[id]
 

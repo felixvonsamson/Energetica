@@ -2,7 +2,6 @@ import json
 import math
 import random
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -15,11 +14,8 @@ from energetica.globals import engine
 from energetica.utils.assets import facility_destroyed
 from energetica.utils.formatting import display_money
 
-if TYPE_CHECKING:
-    from energetica.database.player import Player
 
-
-def climate_event_impact(tile, event_name):
+def climate_event_impact(tile: HexTile, event_name):
     """Create a ClimateEventRecovery object for the event and some facilities may be destroyed by the climate event."""
     engine.log(f"{climate_events[event_name]['name']} on tile {tile.id}")
     engine.action_logger.info(
@@ -32,9 +28,9 @@ def climate_event_impact(tile, event_name):
             }
         )
     )
-    if not tile.player:
+    player = tile.player
+    if not player:
         return
-    player: Player = tile.player
     ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
     recovery_cost = (
         climate_events[event_name]["cost_fraction"] * player.config["industry"]["income_per_day"] / ticks_per_day

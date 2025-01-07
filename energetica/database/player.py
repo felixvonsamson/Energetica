@@ -125,11 +125,12 @@ class Player(DBModel, UserMixin):
     )
     socketio_clients: list = field(default_factory=list)
 
-    def get_level(self: Player, requirement_name: str) -> int:
-        if requirement_name in self.functional_facility_lvl:
-            return self.functional_facility_lvl[requirement_name]
-        elif requirement_name in self.technology_lvl:
-            return self.technology_lvl[requirement_name]
+    def get_level(self, functional_facility_or_technology: str) -> int:
+        """Return the technology or functional facility level of the player."""
+        if functional_facility_or_technology in self.functional_facility_lvl:
+            return self.functional_facility_lvl[functional_facility_or_technology]
+        elif functional_facility_or_technology in self.technology_lvl:
+            return self.technology_lvl[functional_facility_or_technology]
         assert False, "Wrong requirement name"
 
     class NetworkGraphView(StrEnum):
@@ -321,8 +322,10 @@ class Player(DBModel, UserMixin):
             return initials
 
         def unread_message_count(chat: Chat) -> int:
-            # TODO(mglst): what if last_read_message is None?
-            return len(chat.messages) - chat.last_read_message[self.id] - 1
+            last_read_message = chat.last_read_message.get(self.id, 1)
+            if last_read_message is None:
+                return len(chat.messages)
+            return len(chat.messages) - last_read_message - 1
 
         chat_dict = {
             chat.id: {
