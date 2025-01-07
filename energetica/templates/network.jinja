@@ -241,7 +241,7 @@
                     <td>
                         <input type="number"
                             class="small_input medium txt_center"
-                            value="{{ user.network_prices.demand.industry }}"
+                            value="{{ user.network_prices.ask_prices.industry }}"
                             id="price-demand-industry"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
@@ -253,7 +253,7 @@
                     <td>
                         <input type="number"
                             class="small_input medium txt_center"
-                            value="{{ user.network_prices.demand.construction }}"
+                            value="{{ user.network_prices.ask_prices.construction }}"
                             id="price-demand-construction"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
@@ -266,7 +266,7 @@
                     <td>
                         <input type="number"
                             class="small_input medium txt_center"
-                            value="{{ user.network_prices.demand.research }}"
+                            value="{{ user.network_prices.ask_prices.research }}"
                             id="price-demand-research"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
@@ -280,7 +280,7 @@
                     <td>
                         <input type="number"
                             class="small_input medium txt_center"
-                            value="{{ user.network_prices.demand.transport }}"
+                            value="{{ user.network_prices.ask_prices.transport }}"
                             id="price-demand-transport"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
@@ -292,7 +292,7 @@
                     {{ {"coal_mine": "Coal Mines", "gas_drilling_site": "Gas Extraction", "uranium_mine": "Uranium Mines"}[extraction_facility] }}
                 {%- endmacro %}
                 {% macro extraction_facility_demand_price_value(extraction_facility) -%}
-                    {{ user.network_prices.demand[extraction_facility] }}
+                    {{ user.network_prices.ask_prices[extraction_facility] }}
                 {%- endmacro %}
                 {% for extraction_facility in ["coal_mine", "gas_drilling_site", "uranium_mine"] %}
                     {% if caps[extraction_facility] %}
@@ -316,7 +316,7 @@
                         <td>
                             <input type="number"
                                 class="small_input medium txt_center"
-                                value="{{ user.network_prices.demand.carbon_capture }}"
+                                value="{{ user.network_prices.ask_prices.carbon_capture }}"
                                 id="price-demand-carbon_capture"
                                 max="50000" />
                             <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
@@ -337,7 +337,7 @@
                         <th>Min selling price</th>
                     </tr>
                     {% macro power_facility_supply_price_value(power_facility) -%}
-                        {{ user.network_prices.supply[power_facility] }}
+                        {{ user.network_prices.bid_prices[power_facility] }}
                     {%- endmacro %}
                     {% for power_facility in ["steam_engine", "coal_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
                         {% if caps[power_facility] %}
@@ -372,10 +372,10 @@
                         <th>Max buying price</th>
                     </tr>
                     {% macro storage_facility_supply_price_value(storage_facility) -%}
-                        {{ user.network_prices.supply[storage_facility] }}
+                        {{ user.network_prices.bid_prices[storage_facility] }}
                     {%- endmacro %}
                     {% macro storage_facility_demand_price_value(storage_facility) -%}
-                        {{ user.network_prices.demand[storage_facility] }}
+                        {{ user.network_prices.ask_prices[storage_facility] }}
                     {%- endmacro %}
                     {% for storage_facility in ["small_pumped_hydro", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
                         {% if caps[storage_facility] %}

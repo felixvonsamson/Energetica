@@ -14,6 +14,9 @@ let renewables;
 const initSortableList = (e) => {
     e.preventDefault();
     const draggingItem = document.querySelector(".dragging");
+    if (!draggingItem) {
+        return;
+    }
     if (!draggingItem.draggable) {
         return;
     }
@@ -89,7 +92,6 @@ if (sortableList) {
             load_const_config().then((const_config) => {
                 renewables = raw_data[0];
                 for (facility of raw_data[0]) {
-                    console.log(facility, const_config.assets[facility]);
                     let name = const_config.assets[facility].name;
                     sortableList.innerHTML += `<li class="item medium gen" style="margin-left:2.1em;" id="${facility}">
                 <div class="details padding">
@@ -98,34 +100,37 @@ if (sortableList) {
                 <i id="priority_list_icon" class="fa fa-lock priority_list_icon"></i>
             </li>`;
                 }
-                for (facility of raw_data[1]) {
-                    let name;
-                    let generation = true;
-                    if (storageFacilities.includes(facility)) {
-                        name = const_config.assets[facility].name + " (discharge)";
-                    } else if (facility.includes("demand-")) {
-                        generation = false;
-                        if (storageFacilities.includes(facility.slice(7))) {
-                            name = const_config.assets[facility.slice(7)].name + " (charge)";
-                        } else if (facility.slice(7) in const_config.assets) {
-                            name = const_config.assets[facility.slice(7)].name;
-                        } else if (facility == "buy_transport") {
-                            name = "Shipments";
-                        } else {
-                            name = facility.charAt(7).toUpperCase() + facility.slice(8);
-                        }
+                for (let tuple_data of raw_data[1]) {
+                    let facility = tuple_data[1];
+                    let generation = tuple_data[0] == "bid";
+                    var name = "";
+                    if (facility == "transport") {
+                        name = "Shipments";
+                    } else if (facility == "construction") {
+                        name = "Construction";
+                    } else if (facility == "research") {
+                        name = "Research";
                     } else {
+                        console.log(facility);
                         name = const_config.assets[facility].name;
+                        if (storageFacilities.includes(facility)) {
+                            if (generation) {
+                                name += " (discharge)";
+                            } else {
+                                name += " (charge)";
+                            }
+                        }
                     }
+                    let element_id = tuple_data[0] + "-" + facility;
                     if (generation) {
-                        sortableList.innerHTML += `<li class="item medium draggable gen" draggable="true" id="${facility}">
+                        sortableList.innerHTML += `<li class="item medium draggable gen" draggable="true" id="${element_id}">
                         <div class="details padding">
                         <span>${name}</span>
                         </div>
                         <i id="priority_list_icon" class="fa fa-sort priority_list_icon"></i>
                         </li>`;
                     } else {
-                        sortableList.innerHTML += `<li class="item medium draggable cons" draggable="true" id="${facility}">
+                        sortableList.innerHTML += `<li class="item medium draggable cons" draggable="true" id="${element_id}">
                         <i id="priority_list_icon" class="fa fa-sort priority_list_icon"></i>
                         <div class="details padding">
                         <span>${name}</span>

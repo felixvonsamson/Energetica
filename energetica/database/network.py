@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import pickle
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
@@ -21,3 +23,23 @@ class Network(DBModel):
 
     rolling_history: CircularBufferNetwork = field(default_factory=CircularBufferNetwork)
     capacities: CapacityData = field(default_factory=CapacityData)
+
+    def __post_init__(self):
+        super().__post_init__()
+        network_path = f"instance/network_data/{self.id}"
+        Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
+
+        self.capacities.update_network(self)
+        past_data = {
+            "network_data": {
+                "price": [[0.0] * 360] * 5,
+                "quantity": [[0.0] * 360] * 5,
+            },
+            "exports": {},
+            "imports": {},
+            "generation": {},
+            "consumption": {},
+        }
+        Path(f"{network_path}").mkdir(parents=True, exist_ok=True)
+        with open(f"{network_path}/time_series.pck", "wb") as file:
+            pickle.dump(past_data, file)

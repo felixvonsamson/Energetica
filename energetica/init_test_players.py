@@ -70,7 +70,6 @@ def init_test_players():
 
                 player.money = 1_000_000_000
                 player.resources = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}
-                player.priorities_of_controllables = ""
 
                 add_asset(player, "industry", 18)
                 add_asset(player, "warehouse", 1)

@@ -29,51 +29,6 @@ def flash_error(msg: str) -> None:
     return flash(msg, category="error")
 
 
-def data_init() -> dict:
-    """Initialize the data structure for a new player."""
-
-    def init_array() -> list[list[float]]:
-        return [[0.0] * 360] * 5
-
-    return {
-        "revenues": {
-            "industry": init_array(),
-            "exports": init_array(),
-            "imports": init_array(),
-            "dumping": init_array(),
-            "climate_events": init_array(),
-        },
-        "op_costs": {
-            "steam_engine": init_array(),
-        },
-        "generation": {
-            "steam_engine": init_array(),
-            "imports": init_array(),
-        },
-        "demand": {
-            "industry": init_array(),
-            "construction": init_array(),
-            "research": init_array(),
-            "transport": init_array(),
-            "exports": init_array(),
-            "dumping": init_array(),
-        },
-        "storage": {},
-        "resources": {},
-        "emissions": {
-            "steam_engine": init_array(),
-            "construction": init_array(),
-        },
-    }
-
-
-def init_table(user_id: int) -> None:
-    """Initialize data table for new user and stores it as a .pck in the 'player_data' repo."""
-    past_data = data_init()
-    with open(f"instance/player_data/player_{user_id}.pck", "wb") as file:
-        pickle.dump(past_data, file)
-
-
 def add_player_to_data(player: Player) -> None:
     """Add a new player to the engine data."""
     player.capacities.update(player, None)
@@ -255,7 +210,42 @@ def initialize_player(player: Player) -> None:
     player.chats.append(general_chat)
 
     add_player_to_data(player)
-    init_table(player.id)
+
+    def init_array() -> list[list[float]]:
+        return [[0.0] * 360 for _ in range(5)]
+
+    past_data = {
+        "revenues": {
+            "industry": init_array(),
+            "exports": init_array(),
+            "imports": init_array(),
+            "dumping": init_array(),
+            "climate_events": init_array(),
+        },
+        "op_costs": {
+            "steam_engine": init_array(),
+        },
+        "generation": {
+            "steam_engine": init_array(),
+            "imports": init_array(),
+        },
+        "demand": {
+            "industry": init_array(),
+            "construction": init_array(),
+            "research": init_array(),
+            "transport": init_array(),
+            "exports": init_array(),
+            "dumping": init_array(),
+        },
+        "storage": {},
+        "resources": {},
+        "emissions": {
+            "steam_engine": init_array(),
+            "construction": init_array(),
+        },
+    }
+    with open(f"instance/player_data/player_{player.id}.pck", "wb") as file:
+        pickle.dump(past_data, file)
     player.rolling_history.add_subcategory("op_costs", "steam_engine")
     player.rolling_history.add_subcategory("generation", "steam_engine")
     player.rolling_history.add_subcategory("emissions", "steam_engine")

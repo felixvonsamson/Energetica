@@ -15,7 +15,12 @@ from pywebpush import WebPushException, webpush
 
 from energetica.config.achievements import achievements
 from energetica.database import DBModel
-from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, PlayerPrices
+from energetica.database.engine_data import (
+    CapacityData,
+    CircularBufferPlayer,
+    CumulativeEmissionsData,
+    NetworkPrices,
+)
 from energetica.database.messages import Chat, Notification
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.shipment import OngoingShipment
@@ -66,15 +71,10 @@ class Player(DBModel, UserMixin):
     constructions_by_priority: list[OngoingProject] = field(default_factory=list)  # Player
     researches_by_priority: list[OngoingProject] = field(default_factory=list)  # Player
 
-    network_prices: PlayerPrices = field(default_factory=PlayerPrices)
+    network_prices: NetworkPrices = field(default_factory=NetworkPrices)
     rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
     capacities: CapacityData = field(default_factory=CapacityData)
     cumul_emissions: CumulativeEmissionsData = field(default_factory=CumulativeEmissionsData)
-
-    # TODO (Felix): This list can be transformed in a property
-    list_of_renewables: list[str] = field(default_factory=list)
-    priorities_of_controllables: list[str] = field(default_factory=lambda: ["steam_engine"])
-    priorities_of_demand: list[str] = field(default_factory=lambda: ["industry", "construction"])
 
     achievements: dict[str, int] = field(
         default_factory=lambda: {
