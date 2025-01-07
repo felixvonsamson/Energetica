@@ -49,12 +49,9 @@ def _state_update(app):
             check_climate_events()
             production_update.update_electricity()
 
-    # save instance every minute in case of server crash
-    if engine.data["total_t"] % (60 / engine.clock_time) == 0:
-        with open("instance/engine_data.pck", "wb") as file:
-            pickle.dump(engine.data, file)
-        with tarfile.open("checkpoints/last_checkpoint.tar.gz", "w:gz") as tar:
-            tar.add("instance/")
+    # save instance every 10 minutes in case of server crash
+    if engine.data["total_t"] % (600 / engine.clock_time) == 0:
+        engine.save()
     # with app.app_context():
     #     # TODO: perhaps only run the below code conditionally on there being active ws connections
     #     websocket.rest_notify_scoreboard()

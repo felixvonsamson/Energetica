@@ -75,6 +75,13 @@ def log_action(func: Callable) -> Callable:
 
 
 @http.before_request
+def restrict_access_during_simulation():
+    """Restrict access to the API during the simulation."""
+    if engine.serve_local and request.method == "POST" and request.remote_addr != "127.0.0.1":
+        return "Service temporarily unavailable. Please try again in a few seconds", 503
+
+
+@http.before_request
 @login_required
 def check_if_logged_in():
     # TODO(mglst): what is the purpose of this function? Please add a docstring
@@ -181,7 +188,7 @@ def get_chart_data() -> Response | tuple:
         for key, value in dict2.items():
             for sub_key, array2 in value.items():
                 if sub_key not in dict1[key]:
-                    dict1[key][sub_key] = [[0.0] * 360] * 5
+                    dict1[key][sub_key] = [[0.0] * 360 for _ in range(5)]
                 array = dict1[key][sub_key]
                 concatenated_array = list(array[0]) + array2
                 dict1[key][sub_key][0] = concatenated_array[-360:]

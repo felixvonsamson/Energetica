@@ -183,7 +183,7 @@ def data_init_climate(seconds_per_tick, random_seed, delta_t):
 
     return {
         "emissions": {
-            "CO2": [[4e10] * 360] * 5,
+            "CO2": [[4e10] * 360 for _ in range(5)],
         },
         "temperature": {
             "reference": ref_temp,
