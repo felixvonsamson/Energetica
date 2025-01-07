@@ -42,7 +42,6 @@ from energetica.api.socketio_handlers import add_handlers
 from energetica.api.websocket import add_sock_handlers, websocket_blueprint
 from energetica.auth import auth
 from energetica.database.player import Player
-from energetica.enums import Fuel, Renewable
 from energetica.init_test_players import init_test_players
 from energetica.simulate import simulate
 from energetica.utils.tick_execution import state_update
@@ -147,11 +146,6 @@ def create_app(
             with tarfile.open(checkpoints[loaded_tick], "r:gz") as tar:
                 tar.extractall("./")
             engine.load()
-            assert os.path.isfile("instance/actions_history.log")
-            with open("instance/actions_history.log", "r") as file:
-                init_action = json.loads(next(file))
-            assert init_action["action_type"] == "init_engine"
-            assert init_action["uuid"] == engine.data["uuid"].hex
         else:
             """Init new engine."""
             clock_time = actions[0]["clock_time"]
@@ -170,21 +164,13 @@ def create_app(
                 actions = [json.loads(line) for line in file]
             assert actions[0]["action_type"] == "init_engine"
             assert actions[0]["uuid"] == engine.data["uuid"].hex
-            action_id_by_tick = {
-                action["total_t"]: action_id
-                for action_id, action in enumerate(actions)
-                if action["action_type"] == "tick"
-            }
-            loaded_tick = engine.data["total_t"]
-            start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 1
-            actions_to_simulate = actions[start_action_id:]
         else:
             engine.init(clock_time, in_game_seconds_per_tick, random_seed)
 
-    loaded_tick = engine.data["total_t"]
     action_id_by_tick = {
         action["total_t"]: action_id for action_id, action in enumerate(actions) if action["action_type"] == "tick"
     }
+    loaded_tick = engine.data["total_t"]
     start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 1
     last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
     actions_to_simulate = actions[start_action_id : last_action_id + 1]
