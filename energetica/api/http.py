@@ -302,8 +302,7 @@ def get_players() -> Response:
 @http.route("/get_generation_priority", methods=["GET"])
 def get_generation_priority() -> Response:
     """Get generation and demand priority for this player."""
-    player = Player.get(current_user.id)
-    assert player is not None
+    player = Player.getitem(current_user.id)
     return jsonify(player.network_prices.get_sorted_renewables(), player.network_prices.get_facility_priorities())
 
 
@@ -331,7 +330,6 @@ def get_upcoming_achievements() -> Response:
 @http.route("/get_scoreboard", methods=["GET"])
 def get_scoreboard() -> Response:
     """Get the scoreboard data."""
-
     return jsonify(current_user.package_scoreboard())
 
 
@@ -365,12 +363,11 @@ def get_active_facilities() -> Response:
 @log_action
 def choose_location() -> Response:
     """Set the location for the player."""
+    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     selected_id = request_data["selected_id"]
-    tile = HexTile.get(selected_id + 1)
-    if not tile:
-        raise GameError("TileNotExist")  # TODO(mglst): ensure the frontend handles this
-    energetica.utils.misc.confirm_location(player=Player.get(current_user.id), tile=tile)
+    tile = HexTile.getitem(selected_id + 1)
+    energetica.utils.misc.confirm_location(player=player, tile=tile)
     return jsonify({"response": "success"})
 
 
@@ -378,12 +375,13 @@ def choose_location() -> Response:
 @log_action
 def request_queue_project() -> Response | tuple:
     """Start a construction or research project for the player."""
+    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     asset = request_data["facility"]
     force = request_data["force"]
     try:
         energetica.utils.assets.queue_project(
-            player=Player.get(current_user.id),
+            player=player,
             asset=asset,
             force=force,
         )
@@ -409,6 +407,7 @@ def request_queue_project() -> Response | tuple:
 @log_action
 def request_cancel_project() -> Response | tuple:
     """Cancel an ongoing projects."""
+    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     project_id = int(request_data["id"])
     project = OngoingProject.get(int(project_id))
@@ -416,7 +415,7 @@ def request_cancel_project() -> Response | tuple:
         return jsonify({"response": "projectNotFound"}), 404
     force = request_data["force"]
     try:
-        energetica.utils.assets.cancel_project(player=Player.get(current_user.id), project=project, force=force)
+        energetica.utils.assets.cancel_project(player=player, project=project, force=force)
     except Confirm as confirm:
         return jsonify(
             {
@@ -437,12 +436,13 @@ def request_cancel_project() -> Response | tuple:
 @log_action
 def request_pause_project() -> Response | tuple:
     """Pause or unpause an ongoing project."""
+    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     project_id = int(request_data["id"])
     project = OngoingProject.get(int(project_id))
     if project is None or project.player != current_user:
         return jsonify({"response": "projectNotFound"}), 404
-    energetica.utils.assets.toggle_pause_project(player=Player.get(current_user.id), project=project)
+    energetica.utils.assets.toggle_pause_project(player=player, project=project)
     return jsonify(
         {
             "response": "success",
@@ -455,12 +455,13 @@ def request_pause_project() -> Response | tuple:
 @log_action
 def request_decrease_project_priority() -> Response | tuple:
     """Change the order of ongoing projects."""
+    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     project_id = request_data["id"]
     project = OngoingProject.get(int(project_id))
     if project is None or project.player != current_user:
         return jsonify({"response": "projectNotFound"}), 404
-    energetica.utils.assets.decrease_project_priority(player=Player.get(current_user.id), project=project)
+    energetica.utils.assets.decrease_project_priority(player=player, project=project)
     return jsonify(
         {
             "response": "success",
@@ -473,12 +474,13 @@ def request_decrease_project_priority() -> Response | tuple:
 @log_action
 def request_upgrade_facility() -> Response | tuple:
     """Upgrade a facility."""
+    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     facility = ActiveFacility.get(int(facility_id))
     if facility is None or facility.player != current_user:
         return jsonify({"response": "facilityNotFound"}), 404
-    energetica.utils.assets.upgrade_facility(player=Player.get(current_user.id), facility=facility)
+    energetica.utils.assets.upgrade_facility(player=player, facility=facility)
     return jsonify({"response": "success", "money": current_user.money})
 
 
@@ -486,9 +488,10 @@ def request_upgrade_facility() -> Response | tuple:
 @log_action
 def request_upgrade_all_of_type() -> Response:
     """Upgrade all facilities of a certain type."""
+    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     facility = request_data["facility"]
-    energetica.utils.assets.upgrade_all_of_type(player=Player.get(current_user.id), facility_name=facility)
+    energetica.utils.assets.upgrade_all_of_type(player=player, facility_name=facility)
     return jsonify({"response": "success", "money": current_user.money})
 
 
@@ -496,12 +499,13 @@ def request_upgrade_all_of_type() -> Response:
 @log_action
 def request_dismantle_facility() -> Response | tuple:
     """Dismantle a facility."""
+    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     facility = ActiveFacility.get(int(facility_id))
     if facility is None or facility.player != current_user:
         return jsonify({"response": "projectNotFound"}), 404
-    energetica.utils.assets.dismantle_facility(player=Player.get(current_user.id), facility=facility)
+    energetica.utils.assets.dismantle_facility(player=player, facility=facility)
     return jsonify(
         {
             "response": "success",
@@ -515,9 +519,10 @@ def request_dismantle_facility() -> Response | tuple:
 @log_action
 def request_dismantle_all_of_type() -> Response:
     """Dismantle all facilities of a certain type."""
+    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     facility = request_data["facility"]
-    energetica.utils.assets.dismantle_all_of_type(player=Player.get(current_user.id), facility_name=facility)
+    energetica.utils.assets.dismantle_all_of_type(player=player, facility_name=facility)
     return jsonify({"response": "success", "money": current_user.money})
 
 
@@ -530,8 +535,7 @@ def change_network_prices() -> Response | tuple:
     updated_prices = request.get_json()["prices"]
     if not all(key in ["supply", "demand"] for key in updated_prices.keys()):
         raise GameError("malformedRequest")
-    player = Player.get(current_user.id)
-    assert player is not None
+    player = Player.getitem(current_user.id)
     player.network_prices.update(
         updated_bids=updated_prices["supply"],
         updated_asks=updated_prices["demand"],
@@ -544,8 +548,7 @@ def change_network_prices() -> Response | tuple:
 @log_action
 def request_change_facility_priority() -> Response | tuple:
     """Change the generation priority."""
-    player = Player.get(current_user.id)
-    assert player is not None
+    player = Player.getitem(current_user.id)
     if not player.achievements["network"]:
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
@@ -562,7 +565,7 @@ def put_resource_on_sale() -> Response:
     resource = request_data["resource"]
     quantity = float(request_data["quantity"]) * 1000
     price = float(request_data["price"]) / 1000
-    player = Player.get(current_user.id)
+    player = Player.getitem(current_user.id)
     try:
         energetica.utils.resource_market.put_resource_on_market(player, resource, quantity, price)
     except GameError as game_exception:
@@ -586,7 +589,7 @@ def buy_resource() -> Response | tuple:
     sale_id = int(request_data["id"])
     quantity = float(request_data["quantity"]) * 1000
     sale = ResourceOnSale.get(int(sale_id))
-    player = Player.get(current_user.id)
+    player = Player.getitem(current_user.id)
     if sale is None:
         return jsonify({"response": "saleNotFound"}), 404
     energetica.utils.resource_market.buy_resource_from_market(player, quantity, sale)
@@ -618,7 +621,7 @@ def join_network() -> Response:
     """Join a network."""
     request_data = request.form
     network_id = int(request_data["choose_network"])
-    player = Player.get(current_user.id)
+    player = Player.getitem(current_user.id)
     network = energetica.utils.network_helpers.join_network(player, Network.get(network_id))
     flash(f"You joined the network {network.name}", category="message")
     engine.log(f"{current_user.username} joined the network {current_user.network.name}")
@@ -631,7 +634,7 @@ def create_network() -> Response:
     """Create a network."""
     request_data = request.form
     network_name = request_data["network_name"]
-    player = Player.get(current_user.id)
+    player = Player.getitem(current_user.id)
     try:
         energetica.utils.network_helpers.create_network(player, network_name)
     except GameError as game_exception:
@@ -650,7 +653,7 @@ def create_network() -> Response:
 def leave_network() -> Response | tuple:
     """Leave the current network."""
     network = current_user.network
-    player = Player.get(current_user.id)
+    player = Player.getitem(current_user.id)
     if network is None:
         return jsonify({"response": "notInNetwork"}), 404
     energetica.utils.network_helpers.leave_network(player)
@@ -668,12 +671,10 @@ def hide_chat_disclaimer() -> Response:
 @http.route("create_chat", methods=["POST"])
 def create_chat() -> Response:
     """Create a chat with one other player."""
+    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     buddy_id = request_data["buddy_id"]
-    buddy = Player.get(buddy_id)
-    player = Player.get(current_user.id)
-    if buddy is None:
-        raise GameError("playerNotFound")  # TODO(mglst): ensure the frontend handles this
+    buddy = Player.getitem(buddy_id)
     energetica.utils.chat.create_chat(player, None, {player, buddy})
     return jsonify({"response": "success"})
 
@@ -683,9 +684,9 @@ def create_group_chat() -> Response:
     """Create a group chat."""
     request_data = request.get_json()
     chat_title = request_data["chat_title"]
-    payer = Player.get(current_user.id)
-    group_members = {payer, *list(map(Player.get, request_data["group_members"]))}
-    energetica.utils.chat.create_chat(payer, chat_title, group_members)
+    player = Player.getitem(current_user.id)
+    group_members = {player, *list(map(Player.getitem, request_data["group_members"]))}
+    energetica.utils.chat.create_chat(player, chat_title, group_members)
     return jsonify({"response": "success"})
 
 
@@ -696,7 +697,7 @@ def new_message() -> Response | tuple:
     message = request_data["new_message"]
     chat_id = int(request_data["chat_id"])
     chat = Chat.get(chat_id)
-    player = Player.get(current_user.id)
+    player = Player.getitem(current_user.id)
     if chat is None:
         return jsonify({"response": "NoChatID"}), 403
     energetica.utils.chat.add_message(player, message, chat)
