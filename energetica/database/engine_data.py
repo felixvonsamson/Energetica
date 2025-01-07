@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import random
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal
@@ -34,13 +35,14 @@ class NetworkPrices:
 
     renewable_bids: list[str] = field(default_factory=list)
 
+    # TODO(mglst): Add randomness to the default prices so that each player's prices are slightly different
     bid_prices: dict[str, float] = field(default_factory=lambda: {"steam_engine": 125.0})
     ask_prices: dict[str, float] = field(default_factory=lambda: {"industry": 1000.0, "construction": 1020.0})
 
     # TODO(mglst, Yassir): Add randomness to the default prices so that each player's prices are slightly different
-    def add_bid(self, bid_name: str) -> None:
+    def add_bid(self, bid_name: str, player: Player) -> None:
         """Add a facility to the list of bids, using the default price."""
-        self.bid_prices[bid_name] = {
+        default_bid_price = {
             "steam_engine": 125.0,
             "coal_burner": 600.0,
             "gas_burner": 500.0,
@@ -54,10 +56,22 @@ class NetworkPrices:
             "lithium_ion_batteries": 940.0,
             "solid_state_batteries": 900.0,
         }[bid_name]
+        # seed based off engine seed, ask/bid, bid name, and player username
+        seed_hash = hash(
+            (
+                engine.data["random_seed"],
+                "bid",
+                bid_name,
+                player.username,
+            )
+        )
+        random.seed(seed_hash)
+        added_randomness = random.uniform(-15, 15)
+        self.bid_prices[bid_name] = default_bid_price + added_randomness
 
-    def add_ask(self, ask_name: str) -> None:
+    def add_ask(self, ask_name: str, player: Player) -> None:
         """Add a facility to the list of asks, using the default price."""
-        self.ask_prices[ask_name] = {
+        default_ask_price = {
             "research": 1200.0,
             "transport": 1050.0,
             "coal_mine": 960.0,
@@ -71,6 +85,18 @@ class NetworkPrices:
             "lithium_ion_batteries": 425.0,
             "solid_state_batteries": 420.0,
         }[ask_name]
+        # seed based off engine seed, ask/bid, ask name, and player coordinates
+        seed_hash = hash(
+            (
+                engine.data["random_seed"],
+                "ask",
+                ask_name,
+                player.username,
+            )
+        )
+        random.seed(seed_hash)
+        added_randomness = random.uniform(-15, 15)
+        self.ask_prices[ask_name] = default_ask_price + added_randomness
 
     def update(
         self,
