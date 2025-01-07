@@ -129,9 +129,9 @@ def get_map() -> Response:
             "solar": tile.potentials[Renewable.SOLAR],
             "wind": tile.potentials[Renewable.WIND],
             "hydro": tile.potentials[Renewable.HYDRO],
-            "coal": tile.reserves[Fuel.COAL],
-            "gas": tile.reserves[Fuel.GAS],
-            "uranium": tile.reserves[Fuel.URANIUM],
+            "coal": tile.fuel_reserves[Fuel.COAL],
+            "gas": tile.fuel_reserves[Fuel.GAS],
+            "uranium": tile.fuel_reserves[Fuel.URANIUM],
             "climate_risk": tile.climate_risk,
             "player_id": tile.player.id if tile.player else None,
         }

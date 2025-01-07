@@ -69,7 +69,7 @@ def init_test_players():
                 HexTile.get(i).player = player
 
                 player.money = 1_000_000_000
-                player.reserves = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}
+                player.resources = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}
                 player.priorities_of_controllables = ""
 
                 add_asset(player, "industry", 18)
@@ -111,7 +111,7 @@ def init_test_players():
 
     # Player 1
     player1.money = 1_000_000_000
-    player1.reserves[Fuel.COAL] = 300_000
+    player1.resources[Fuel.COAL] = 300_000
 
     add_asset(player1, "molten_salt", 1)
     add_asset(player1, "hydrogen_storage", 1)
@@ -164,7 +164,7 @@ def init_test_players():
 
     # Player 2
     player2.money = 1_000_000_000
-    player2.reserves = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}
+    player2.resources = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}
 
     add_asset(player2, "warehouse", 20)
     add_asset(player2, "steam_engine", 20)

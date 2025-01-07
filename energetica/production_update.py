@@ -215,7 +215,7 @@ def extraction_facility_demand(new_values, player: Player, demand) -> None:
             max_warehouse = warehouse_caps[fuel] - player_resources[fuel]
             max_prod = (
                 player.capacities[extraction_facility]["extraction_rate_per_day"]
-                * player.tile.reserves[fuel]
+                * player.tile.fuel_reserves[fuel]
                 * engine.in_game_seconds_per_tick
                 / 86400  # 86400 seconds in a day
             )
@@ -673,7 +673,7 @@ def calculate_prod(
     if "fuel_use" in player.capacities[facility]:
         for fuel, amount in player.capacities[facility]["fuel_use"].items():
             fuel = Fuel(fuel)
-            available_resource = player.reserves[fuel] - player.resources_on_sale[fuel] - resource_reservations[fuel]
+            available_resource = player.resources[fuel] - player.resources_on_sale[fuel] - resource_reservations[fuel]
             p_max_resources = available_resource / amount * player.capacities[facility]["power"]
             max_resources = min(p_max_resources, max_resources)
     else:
@@ -768,7 +768,7 @@ def resources_and_pollution(new_values, player: Player) -> None:
             for fuel, amount in player.capacities[facility]["fuel_use"].items():
                 fuel = Fuel(fuel)
                 quantity = amount * generation[facility] / player.capacities[facility]["power"]
-                player.reserves[fuel] -= quantity
+                player.resources[fuel] -= quantity
             facility_emissions = (
                 engine.const_config["assets"][facility]["base_pollution"]
                 * generation[facility]
@@ -787,12 +787,12 @@ def resources_and_pollution(new_values, player: Player) -> None:
                 extracted_quantity = (
                     production_factor
                     * player.capacities[extraction_facility]["extraction_rate_per_day"]
-                    * player.tile.reserves[fuel]
+                    * player.tile.fuel_reserves[fuel]
                     * engine.in_game_seconds_per_tick
                     / 86400  # 86400 seconds in a day
                 )
-                player.tile.reserves[fuel] -= extracted_quantity
-                player.reserves[fuel] += extracted_quantity
+                player.tile.fuel_reserves[fuel] -= extracted_quantity
+                player.resources[fuel] += extracted_quantity
                 player.progression_metrics["extracted_resources"] += extracted_quantity
                 emissions = extracted_quantity * player.capacities[extraction_facility]["pollution"]
                 add_emissions(
@@ -801,7 +801,7 @@ def resources_and_pollution(new_values, player: Player) -> None:
                     extraction_facility,
                     emissions,
                 )
-            new_values["resources"][fuel] = player.reserves[fuel]
+            new_values["resources"][fuel] = player.resources[fuel]
 
     # Carbon capture CO2 absorption
     if player.functional_facility_lvl["carbon_capture"] > 0:

@@ -21,7 +21,7 @@ class HexTile(DBModel):
 
     climate_risk: int
 
-    reserves: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
+    fuel_reserves: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
     potentials: dict[Renewable, float] = field(default_factory=lambda: {renewable: 0 for renewable in Renewable})
 
     player: Player | None = None

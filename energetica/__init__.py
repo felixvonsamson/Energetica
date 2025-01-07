@@ -258,7 +258,7 @@ def create_app(
                 for renewable in Renewable:
                     tile.potentials[renewable] = float(row[renewable])
                 for fuel in Fuel:
-                    tile.reserves[fuel] = float(row[fuel])
+                    tile.fuel_reserves[fuel] = float(row[fuel])
 
     # creating general chat
     if Chat.count() == 0:

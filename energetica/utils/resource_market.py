@@ -13,7 +13,7 @@ from energetica.utils.formatting import display_money, format_mass
 
 def put_resource_on_market(player: Player, fuel: Fuel, quantity: float, price: float) -> None:
     """Put an offer on the resource market."""
-    if player.reserves[fuel] - player.resources_on_sale[fuel] < quantity:
+    if player.resources[fuel] - player.resources_on_sale[fuel] < quantity:
         raise GameError("notEnoughResource")
     player.resources_on_sale[fuel] += quantity
     new_sale = ResourceOnSale(
@@ -45,7 +45,7 @@ def buy_resource_from_market(player: Player, quantity: float, sale: ResourceOnSa
         sale.quantity -= quantity
         player.money -= total_price
         sale.player.money += total_price
-        player.reserves[sale.resource] -= quantity
+        player.resources[sale.resource] -= quantity
         player.resources_on_sale[sale.resource] -= quantity
         sale.player.progression_metrics["sold_resources"] += quantity
         player.progression_metrics["bought_resources"] += quantity
@@ -85,25 +85,25 @@ def store_import(player: Player, fuel: Fuel, quantity: float) -> None:
     """
     assert player.tile is not None
     max_cap: float = player.config["warehouse_capacities"][fuel]
-    if player.reserves[fuel] + quantity > max_cap:
-        player.reserves[fuel] = max_cap
+    if player.resources[fuel] + quantity > max_cap:
+        player.resources[fuel] = max_cap
         # excess resources are stored in the ground
         # TODO(mglst): what if instead it was a political fiasco that the player had to deal with?
-        player.tile.reserves[fuel] += player.reserves[fuel] + quantity - max_cap
+        player.tile.fuel_reserves[fuel] += player.resources[fuel] + quantity - max_cap
         player.notify(
             "OngoingShipments",
             f"A shipment of {format_mass(quantity)} {fuel} arrived, but "
-            f"only {format_mass(max_cap - player.reserves[fuel])} could be "
+            f"only {format_mass(max_cap - player.resources[fuel])} could be "
             "stored in your warehouse.",
         )
         engine.log(
             f"{player.username} received a shipment of {format_mass(quantity)} "
             f"{fuel}, but could only store "
-            f"{format_mass(max_cap - player.reserves[fuel])} "
+            f"{format_mass(max_cap - player.resources[fuel])} "
             "in their warehouse.",
         )
     else:
-        player.reserves[fuel] += quantity
+        player.resources[fuel] += quantity
         player.notify(
             "OngoingShipments",
             f"A shipment of {format_mass(quantity)} {fuel} arrived.",

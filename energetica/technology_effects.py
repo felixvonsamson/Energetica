@@ -687,7 +687,7 @@ def package_extraction_facilities(player: Player) -> list[dict]:
             Fuel.GAS: 180_000_000,
             Fuel.URANIUM: 2_400_000,
         }
-        return tile.reserves[fuel] < limits[fuel]
+        return tile.fuel_reserves[fuel] < limits[fuel]
 
     if not player.tile:
         raise GameError("TileNotFound")
@@ -706,7 +706,7 @@ def package_extraction_facilities(player: Player) -> list[dict]:
                 "name": fuels_by_extraction_facility[extraction_facility],
                 "rate": const_config_assets[extraction_facility]["base_extraction_rate_per_day"]
                 * extraction_rate_multiplier(player)
-                * player.tile.reserves[fuels_by_extraction_facility[extraction_facility]]
+                * player.tile.fuel_reserves[fuels_by_extraction_facility[extraction_facility]]
                 # * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
                 / 24,
             },
