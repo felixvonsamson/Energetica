@@ -35,11 +35,11 @@ class NetworkPrices:
 
     renewable_bids: list[str] = field(default_factory=list)
 
-    # TODO(mglst): Add randomness to the default prices so that each player's prices are slightly different
+    # Prices are randomized so that each player's prices are slightly different. This leads to more interesting
+    # market dynamics, while still having reasonable default prices.
     bid_prices: dict[str, float] = field(default_factory=lambda: {"steam_engine": 125.0})
     ask_prices: dict[str, float] = field(default_factory=lambda: {"industry": 1000.0, "construction": 1020.0})
 
-    # TODO(mglst, Yassir): Add randomness to the default prices so that each player's prices are slightly different
     def add_bid(self, bid_name: str, player: Player) -> None:
         """Add a facility to the list of bids, using the default price."""
         default_bid_price = {
