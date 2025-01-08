@@ -8,4 +8,4 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from energetica.game_engine import GameEngine
 
-engine: GameEngine = None
+engine: GameEngine = None  # type: ignore
