@@ -823,11 +823,11 @@ def package_functional_facilities(player: Player) -> list[dict]:
         "warehouse": {
             "level": next_warehouse_level,
             "warehouse_capacities": {
-                resource: package_change(
-                    current=warehouse_capacity_for_level(next_warehouse_level - 1, resource),
-                    upgraded=warehouse_capacity_for_level(next_warehouse_level, resource),
+                fuel: package_change(
+                    current=warehouse_capacity_for_level(next_warehouse_level - 1, fuel),
+                    upgraded=warehouse_capacity_for_level(next_warehouse_level, fuel),
                 )
-                for resource in engine.extractable_resources
+                for fuel in Fuel
             },
         },
         "carbon_capture": {

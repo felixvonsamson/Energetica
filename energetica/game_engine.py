@@ -46,8 +46,6 @@ class GameEngine(object):
         "uranium_mine",
     ]
 
-    extractable_resources = ["coal", "gas", "uranium"]
-
     storage_facilities = [
         "small_pumped_hydro",
         "molten_salt",
