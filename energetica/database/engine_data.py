@@ -62,7 +62,7 @@ class NetworkPrices:
                 engine.data["random_seed"],
                 "bid",
                 bid_name,
-                player.username,
+                player.username,  # TODO(mglst): replace with player coordinates
             )
         )
         random.seed(seed_hash)
@@ -91,7 +91,7 @@ class NetworkPrices:
                 engine.data["random_seed"],
                 "ask",
                 ask_name,
-                player.username,
+                player.username,  # TODO(mglst): replace with player coordinates
             )
         )
         random.seed(seed_hash)
