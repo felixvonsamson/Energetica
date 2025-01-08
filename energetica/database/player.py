@@ -150,13 +150,7 @@ class Player(DBModel, UserMixin):
     # resources :
     money: float = 25000
     resources: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
-    resources_on_sale: dict[str, float] = field(
-        default_factory=lambda: {
-            "coal": 0,
-            "gas": 0,
-            "uranium": 0,
-        },
-    )
+    resources_on_sale: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
 
     workers: dict[str, int] = field(
         default_factory=lambda: {

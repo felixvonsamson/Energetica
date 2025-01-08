@@ -28,12 +28,6 @@ from energetica.enums import (
 from energetica.globals import engine
 from energetica.utils.misc import calculate_river_discharge, calculate_solar_irradiance, calculate_wind_speed
 
-extraction_to_resource = {
-    "coal_mine": "coal",
-    "gas_drilling_site": "gas",
-    "uranium_mine": "uranium",
-}
-
 
 def update_electricity() -> None:
     """Update the electricity generation and storage status for all players."""
@@ -319,13 +313,9 @@ def calculate_demand(new_values, player: Player) -> None:
         demand["carbon_capture"] = player.config["carbon_capture"]["power_consumption"]
 
 
-def reset_resource_reservations() -> dict:
+def reset_resource_reservations() -> dict[Fuel, float]:
     """Reset resource reservations to 0."""
-    return {
-        "coal": 0,
-        "gas": 0,
-        "uranium": 0,
-    }
+    return {fuel: 0.0 for fuel in Fuel}
 
 
 def calculate_generation_without_market(new_values, player: Player) -> None:
@@ -656,7 +646,7 @@ def calculate_prod(
     minmax: Literal["min", "max"],
     player: Player,
     facility: ProjectName,
-    resource_reservations: dict[str, float] | None,
+    resource_reservations: dict[Fuel, float] | None,
     filling=False,
 ) -> float:
     """
@@ -727,7 +717,7 @@ def calculate_prod(
         return min_generation
 
 
-def minimal_generation(player: Player, generation, resource_reservations) -> None:
+def minimal_generation(player: Player, generation, resource_reservations: dict[Fuel, float]) -> None:
     """Calculate the minimal generation of controllable facilities."""
     for facility in controllable_facilities + storage_facilities:
         if player.capacities.get(facility) is not None:

@@ -10,6 +10,7 @@ from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.player import Player
 from energetica.enums import (
+    Fuel,
     ProjectName,
     WorkerType,
     controllable_facilities,
@@ -49,8 +50,8 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
                 player.cumul_emissions.add_category(project.name)
                 player.network_prices.add_ask(project.name, player)
             if project.name == "warehouse":
-                for resource in ["coal", "gas", "uranium"]:
-                    player.rolling_history.add_subcategory("resources", resource)
+                for fuel in Fuel:
+                    player.rolling_history.add_subcategory("resources", fuel.value)
                 player.network_prices.add_ask(ProjectName.TRANSPORT, player)
             if project.name == "laboratory":
                 player.network_prices.add_ask(ProjectName.RESEARCH, player)

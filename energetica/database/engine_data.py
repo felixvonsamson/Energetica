@@ -60,18 +60,18 @@ class NetworkPrices:
     def add_bid(self, bid_name: ProjectName, player: Player) -> None:
         """Add a facility to the list of bids, using the default price."""
         default_bid_price = {
-            "steam_engine": 125.0,
-            "coal_burner": 600.0,
-            "gas_burner": 500.0,
-            "combined_cycle": 450.0,
-            "nuclear_reactor": 275.0,
-            "nuclear_reactor_gen4": 375.0,
-            "small_pumped_hydro": 790.0,
-            "molten_salt": 830.0,
-            "large_pumped_hydro": 780.0,
-            "hydrogen_storage": 880.0,
-            "lithium_ion_batteries": 940.0,
-            "solid_state_batteries": 900.0,
+            ProjectName.STEAM_ENGINE: 125.0,
+            ProjectName.COAL_BURNER: 600.0,
+            ProjectName.GAS_BURNER: 500.0,
+            ProjectName.COMBINED_CYCLE: 450.0,
+            ProjectName.NUCLEAR_REACTOR: 275.0,
+            ProjectName.NUCLEAR_REACTOR_GEN4: 375.0,
+            ProjectName.SMALL_PUMPED_HYDRO: 790.0,
+            ProjectName.MOLTEN_SALT: 830.0,
+            ProjectName.LARGE_PUMPED_HYDRO: 780.0,
+            ProjectName.HYDROGEN_STORAGE: 880.0,
+            ProjectName.LITHIUM_ION_BATTERIES: 940.0,
+            ProjectName.SOLID_STATE_BATTERIES: 900.0,
         }[bid_name]
         # seed based off engine seed, ask/bid, bid name, and player username
         seed_hash = hash(
@@ -89,18 +89,18 @@ class NetworkPrices:
     def add_ask(self, ask_name: ProjectName, player: Player) -> None:
         """Add a facility to the list of asks, using the default price."""
         default_ask_price = {
-            "research": 1200.0,
-            "transport": 1050.0,
-            "coal_mine": 960.0,
-            "gas_drilling_site": 980.0,
-            "uranium_mine": 990.0,
-            "carbon_capture": 660.0,
-            "small_pumped_hydro": 210.0,
-            "molten_salt": 190.0,
-            "large_pumped_hydro": 200.0,
-            "hydrogen_storage": 230.0,
-            "lithium_ion_batteries": 425.0,
-            "solid_state_batteries": 420.0,
+            ProjectName.RESEARCH: 1200.0,
+            ProjectName.TRANSPORT: 1050.0,
+            ProjectName.COAL_MINE: 960.0,
+            ProjectName.GAS_DRILLING_SITE: 980.0,
+            ProjectName.URANIUM_MINE: 990.0,
+            ProjectName.CARBON_CAPTURE: 660.0,
+            ProjectName.SMALL_PUMPED_HYDRO: 210.0,
+            ProjectName.MOLTEN_SALT: 190.0,
+            ProjectName.LARGE_PUMPED_HYDRO: 200.0,
+            ProjectName.HYDROGEN_STORAGE: 230.0,
+            ProjectName.LITHIUM_ION_BATTERIES: 425.0,
+            ProjectName.SOLID_STATE_BATTERIES: 420.0,
         }[ask_name]
         # seed based off engine seed, ask/bid, ask name, and player coordinates
         seed_hash = hash(
