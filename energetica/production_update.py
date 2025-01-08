@@ -21,7 +21,6 @@ from energetica.enums import (
     ProjectName,
     controllable_facilities,
     extraction_facilities,
-    fuels_by_extraction_facility,
     power_facilities,
     storage_facilities,
     technologies,
@@ -795,7 +794,7 @@ def resources_and_pollution(new_values, player: Player) -> None:
 
     if player.functional_facility_lvl["warehouse"] > 0:
         for extraction_facility in extraction_facilities:
-            fuel = fuels_by_extraction_facility[extraction_facility]
+            fuel = extraction_facility.associated_fuel
             if player.capacities.get(extraction_facility) is not None:
                 max_demand = player.capacities[extraction_facility]["power_use"]
                 production_factor = demand[extraction_facility] / max_demand

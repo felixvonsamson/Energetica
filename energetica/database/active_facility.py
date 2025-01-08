@@ -12,7 +12,6 @@ from energetica.enums import (
     ProjectName,
     controllable_facilities,
     extraction_facilities,
-    fuels_by_extraction_facility,
     power_facilities,
     storage_facilities,
 )
@@ -86,7 +85,7 @@ class ActiveFacility(DBModel):
         return (
             self.const_config["base_extraction_rate_per_day"]
             * self.multipliers["multiplier_2"]
-            * self.player.tile.fuel_reserves[fuels_by_extraction_facility[self.name]]
+            * self.player.tile.fuel_reserves[self.name.associated_fuel]
             / 24
         )
 

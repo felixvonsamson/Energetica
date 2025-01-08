@@ -20,7 +20,6 @@ from energetica.enums import (
     Renewable,
     controllable_facilities,
     extraction_facilities,
-    fuels_by_extraction_facility,
     functional_facilities,
     power_facilities,
     renewables,
@@ -722,16 +721,14 @@ def package_extraction_facilities(player: Player) -> list[dict]:
             * extraction_emissions_multiplier(player, extraction_facility),
             # TODO(mglst): remove this, let the frontend compute it (since tile resource can change often)
             "resource_production": {
-                "name": fuels_by_extraction_facility[extraction_facility],
+                "name": extraction_facility.associated_fuel,
                 "rate": const_config_assets[extraction_facility]["base_extraction_rate_per_day"]
                 * extraction_rate_multiplier(player)
-                * player.tile.fuel_reserves[fuels_by_extraction_facility[extraction_facility]]
+                * player.tile.fuel_reserves[extraction_facility.associated_fuel]
                 # * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
                 / 24,
             },
-            "poor_resource_production": production_will_be_poor(
-                player.tile, fuels_by_extraction_facility[extraction_facility]
-            ),
+            "poor_resource_production": production_will_be_poor(player.tile, extraction_facility.associated_fuel),
         }
         for extraction_facility in extraction_facilities
     ]

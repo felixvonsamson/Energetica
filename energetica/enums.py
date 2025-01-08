@@ -187,11 +187,3 @@ technologies = [
 ]
 
 facilities = power_facilities + extraction_facilities + storage_facilities + functional_facilities
-
-
-# TODO(mglst): make this a method of the (upcoming) ExtractionFacility class
-fuels_by_extraction_facility = {
-    "coal_mine": Fuel.COAL,
-    "gas_drilling_site": Fuel.GAS,
-    "uranium_mine": Fuel.URANIUM,
-}
