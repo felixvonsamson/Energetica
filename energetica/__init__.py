@@ -89,6 +89,7 @@ def create_app(
     in_game_seconds_per_tick: int = 240,
     run_init_test_players: bool = False,
     rm_instance: bool = False,
+    load_checkpoint: bool = False,
     random_seed: int = 42,
     simulate_file=None,
     simulate_stop_on_mismatch: bool = False,
@@ -146,26 +147,38 @@ def create_app(
             with tarfile.open(checkpoints[loaded_tick], "r:gz") as tar:
                 tar.extractall("./")
             engine.load()
-        else:
-            """Init new engine."""
-            clock_time = actions[0]["clock_time"]
-            in_game_seconds_per_tick = actions[0]["in_game_seconds_per_tick"]
-            random_seed = actions[0]["random_seed"]
-            start_date = datetime.fromisoformat(actions[0]["start_date"])
-            instance_uuid = uuid.UUID(actions[0]["uuid"])
-            engine.init(clock_time, in_game_seconds_per_tick, random_seed, start_date, instance_uuid)
     else:
         """Normal game run."""
         assert simulate_till is None
-        if os.path.isfile("instance/engine_data.pck"):
-            engine.load()
-            assert os.path.isfile("instance/actions_history.log")
+        if load_checkpoint:
+            saved_history = False
+            if os.path.exists("instance/"):
+                if os.path.isfile("instance/actions_history.log"):
+                    os.rename("instance/actions_history.log", "actions_history.log.bak")
+                    saved_history = True
+                shutil.rmtree("instance")
+            with tarfile.open("last_checkpoint.tar.gz", "r:gz") as tar:
+                tar.extractall("./")
+            if saved_history:
+                os.rename("actions_history.log.bak", "instance/actions_history.log")
+            engine.log("Loaded last checkpoint")
+        if os.path.isfile("instance/actions_history.log"):
             with open("instance/actions_history.log", "r") as file:
                 actions = [json.loads(line) for line in file]
             assert actions[0]["action_type"] == "init_engine"
+    if os.path.isfile("instance/engine_data.pck"):
+        engine.load()
+        if actions:
             assert actions[0]["uuid"] == engine.data["uuid"].hex
-        else:
-            engine.init(clock_time, in_game_seconds_per_tick, random_seed)
+    if actions:
+        clock_time = actions[0]["clock_time"]
+        in_game_seconds_per_tick = actions[0]["in_game_seconds_per_tick"]
+        random_seed = actions[0]["random_seed"]
+        start_date = datetime.fromisoformat(actions[0]["start_date"])
+        instance_uuid = uuid.UUID(actions[0]["uuid"])
+        engine.init(clock_time, in_game_seconds_per_tick, random_seed, start_date, instance_uuid)
+    else:
+        engine.init(clock_time, in_game_seconds_per_tick, random_seed)
 
     action_id_by_tick = {
         action["total_t"]: action_id for action_id, action in enumerate(actions) if action["action_type"] == "tick"

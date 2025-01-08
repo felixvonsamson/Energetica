@@ -4,8 +4,10 @@ import csv
 import json
 import logging
 import math
+import os
 import pickle
 import random
+import tarfile
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -270,15 +272,20 @@ class GameEngine(object):
         """Log a warning message in the terminal."""
         self.console_logger.warning(message)
 
-    def save(self, filename: str = "instance/engine_data.pck") -> None:
+    def save(self) -> None:
         """Save the game engine data to a file."""
-        with open(filename, "wb") as file:
+        with open("instance/engine_data.pck", "wb") as file:
             pickle.dump(self.data, file)
 
-    def load(self, filename: str = "instance/engine_data.pck") -> None:
+    def load(self) -> None:
         """Load the game engine data from a file."""
-        with open(filename, "rb") as file:
+        with open("instance/engine_data.pck", "rb") as file:
             self.data = pickle.load(file)
+
+    def save_checkpoint(self) -> None:
+        with tarfile.open("checkpoints/new_checkpoint.tar.gz", "w:gz") as tar:
+            tar.add("instance/")
+        os.replace("checkpoints/new_checkpoint.tar.gz", "checkpoints/last_checkpoint.tar.gz")
 
     def package_global_data(self) -> dict:
         """Package mutable from energetica.globals import engine data as a dict to be sent and used on the frontend."""

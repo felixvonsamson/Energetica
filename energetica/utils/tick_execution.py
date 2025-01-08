@@ -1,7 +1,6 @@
 """Util functions relating to the GameEngine class."""
 
 import json
-import tarfile
 import time
 from datetime import datetime
 
@@ -52,8 +51,7 @@ def _state_update(app):
         engine.save()
     # save a checkpoint every 6 hours in case of data corruption
     if engine.data["total_t"] % (6 * 60 * 60 / engine.clock_time) == 0:
-        with tarfile.open("checkpoints/last_checkpoint.tar.gz", "w:gz") as tar:
-            tar.add("instance/")
+        engine.save_checkpoint()
     # with app.app_context():
     #     # TODO: perhaps only run the below code conditionally on there being active ws connections
     #     websocket.rest_notify_scoreboard()
