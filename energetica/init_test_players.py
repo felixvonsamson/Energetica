@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash
 from energetica.database.map import HexTile
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.enums import Fuel
+from energetica.enums import Fuel, ProjectName
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.assets import finish_project, queue_project
@@ -16,14 +16,14 @@ from energetica.utils.network_helpers import create_network, join_network
 def init_test_players():
     """Initialize the database with test players and networks."""
 
-    def add_asset(player: Player, project: str, n):
+    def add_asset(player: Player, project_name: ProjectName, n):
         """Create a project that will instantly finish."""
         for _ in range(n):
             ongoing_project = queue_project(
-                player, project, force=True, ignore_requirements_and_money=True, skip_notifications=True
+                player, project_name, force=True, ignore_requirements_and_money=True, skip_notifications=True
             )
             finish_project(ongoing_project, skip_notifications=True)
-        engine.log(f"Added {n} {project} for {player.username}")
+        engine.log(f"Added {n} {project_name} for {player.username}")
 
     def create_player(username, password, tile_id=None) -> Player:
         """Create and initialize a player."""
@@ -71,31 +71,31 @@ def init_test_players():
                 player.money = 1_000_000_000
                 player.resources = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}
 
-                add_asset(player, "industry", 18)
-                add_asset(player, "warehouse", 1)
-                add_asset(player, "small_water_dam", 2)
-                add_asset(player, "onshore_wind_turbine", 3)
-                add_asset(player, "laboratory", 5)
-                add_asset(player, "mathematics", 1)
-                add_asset(player, "mineral_extraction", 5)
-                add_asset(player, "building_technology", 1)
-                add_asset(player, "civil_engineering", 1)
-                add_asset(player, "coal_mine", 3)
-                add_asset(player, "coal_burner", 3)
-                add_asset(player, "small_pumped_hydro", 1)
-                add_asset(player, "hydrogen_storage", 1)
-                add_asset(player, "offshore_wind_turbine", 1)
-                add_asset(player, "nuclear_reactor_gen4", 1)
-                add_asset(player, "combined_cycle", 1)
-                add_asset(player, "gas_burner", 1)
-                add_asset(player, "steam_engine", 1)
-                add_asset(player, "chemistry", 2)
-                add_asset(player, "carbon_capture", 4)
-                add_asset(player, "mechanical_engineering", 3)
-                add_asset(player, "physics", 2)
-                add_asset(player, "thermodynamics", 2)
-                add_asset(player, "nuclear_engineering", 3)
-                add_asset(player, "aerodynamics", 5)
+                add_asset(player, ProjectName.INDUSTRY, 18)
+                add_asset(player, ProjectName.WAREHOUSE, 1)
+                add_asset(player, ProjectName.SMALL_WATER_DAM, 2)
+                add_asset(player, ProjectName.ONSHORE_WIND_TURBINE, 3)
+                add_asset(player, ProjectName.LABORATORY, 5)
+                add_asset(player, ProjectName.MATHEMATICS, 1)
+                add_asset(player, ProjectName.MINERAL_EXTRACTION, 5)
+                add_asset(player, ProjectName.BUILDING_TECHNOLOGY, 1)
+                add_asset(player, ProjectName.CIVIL_ENGINEERING, 1)
+                add_asset(player, ProjectName.COAL_MINE, 3)
+                add_asset(player, ProjectName.COAL_BURNER, 3)
+                add_asset(player, ProjectName.SMALL_PUMPED_HYDRO, 1)
+                add_asset(player, ProjectName.HYDROGEN_STORAGE, 1)
+                add_asset(player, ProjectName.OFFSHORE_WIND_TURBINE, 1)
+                add_asset(player, ProjectName.NUCLEAR_REACTOR_GEN4, 1)
+                add_asset(player, ProjectName.COMBINED_CYCLE, 1)
+                add_asset(player, ProjectName.GAS_BURNER, 1)
+                add_asset(player, ProjectName.STEAM_ENGINE, 1)
+                add_asset(player, ProjectName.CHEMISTRY, 2)
+                add_asset(player, ProjectName.CARBON_CAPTURE, 4)
+                add_asset(player, ProjectName.MECHANICAL_ENGINEERING, 3)
+                add_asset(player, ProjectName.PHYSICS, 2)
+                add_asset(player, ProjectName.THERMODYNAMICS, 2)
+                add_asset(player, ProjectName.NUCLEAR_ENGINEERING, 3)
+                add_asset(player, ProjectName.AERODYNAMICS, 5)
             players.append(player)
         setup_network("net", players)
 
@@ -112,134 +112,129 @@ def init_test_players():
     player1.money = 1_000_000_000
     player1.resources[Fuel.COAL] = 300_000
 
-    add_asset(player1, "molten_salt", 1)
-    add_asset(player1, "hydrogen_storage", 1)
-    add_asset(player1, "solid_state_batteries", 1)
+    add_asset(player1, ProjectName.MOLTEN_SALT, 1)
+    add_asset(player1, ProjectName.HYDROGEN_STORAGE, 1)
+    add_asset(player1, ProjectName.SOLID_STATE_BATTERIES, 1)
 
-    add_asset(player1, "physics", 6)
-    add_asset(player1, "aerodynamics", 1)
-    add_asset(player1, "materials", 4)
-    add_asset(player1, "thermodynamics", 5)
-    add_asset(player1, "chemistry", 3)
-    add_asset(player1, "civil_engineering", 1)
+    add_asset(player1, ProjectName.PHYSICS, 6)
+    add_asset(player1, ProjectName.AERODYNAMICS, 1)
+    add_asset(player1, ProjectName.MATERIALS, 4)
+    add_asset(player1, ProjectName.THERMODYNAMICS, 5)
+    add_asset(player1, ProjectName.CHEMISTRY, 3)
+    add_asset(player1, ProjectName.CIVIL_ENGINEERING, 1)
 
-    add_asset(player1, "molten_salt", 1)
-    add_asset(player1, "coal_mine", 2)
-    add_asset(player1, "uranium_mine", 1)
-    add_asset(player1, "warehouse", 1)
-    add_asset(player1, "industry", 12)
-    add_asset(player1, "laboratory", 4)
-    add_asset(player1, "gas_burner", 1)
-    add_asset(player1, "mechanical_engineering", 1)
-    add_asset(player1, "coal_burner", 1)
-    add_asset(player1, "mechanical_engineering", 1)
-    add_asset(player1, "gas_burner", 1)
-    add_asset(player1, "small_pumped_hydro", 1)
-    add_asset(player1, "mechanical_engineering", 1)
-    add_asset(player1, "small_pumped_hydro", 1)
-    add_asset(player1, "coal_burner", 1)
-    add_asset(player1, "PV_solar", 2)
-    add_asset(player1, "onshore_wind_turbine", 2)
-    add_asset(player1, "CSP_solar", 1)
+    add_asset(player1, ProjectName.MOLTEN_SALT, 1)
+    add_asset(player1, ProjectName.COAL_MINE, 2)
+    add_asset(player1, ProjectName.URANIUM_MINE, 1)
+    add_asset(player1, ProjectName.WAREHOUSE, 1)
+    add_asset(player1, ProjectName.INDUSTRY, 12)
+    add_asset(player1, ProjectName.LABORATORY, 4)
+    add_asset(player1, ProjectName.GAS_BURNER, 1)
+    add_asset(player1, ProjectName.MECHANICAL_ENGINEERING, 1)
+    add_asset(player1, ProjectName.COAL_BURNER, 1)
+    add_asset(player1, ProjectName.MECHANICAL_ENGINEERING, 1)
+    add_asset(player1, ProjectName.GAS_BURNER, 1)
+    add_asset(player1, ProjectName.SMALL_PUMPED_HYDRO, 1)
+    add_asset(player1, ProjectName.MECHANICAL_ENGINEERING, 1)
+    add_asset(player1, ProjectName.SMALL_PUMPED_HYDRO, 1)
+    add_asset(player1, ProjectName.COAL_BURNER, 1)
+    add_asset(player1, ProjectName.PV_SOLAR, 2)
+    add_asset(player1, ProjectName.ONSHORE_WIND_TURBINE, 2)
+    add_asset(player1, ProjectName.CSP_SOLAR, 1)
 
     # One level of each technology
-    add_asset(player1, "mathematics", 1)
-    add_asset(player1, "mechanical_engineering", 1)
-    add_asset(player1, "thermodynamics", 1)
-    add_asset(player1, "physics", 1)
-    add_asset(player1, "building_technology", 1)
-    add_asset(player1, "mineral_extraction", 1)
-    add_asset(player1, "transport_technology", 1)
-    add_asset(player1, "materials", 1)
-    add_asset(player1, "civil_engineering", 1)
-    add_asset(player1, "aerodynamics", 1)
-    add_asset(player1, "chemistry", 5)
-    add_asset(player1, "nuclear_engineering", 1)
-
-    # add_asset(player1, "molten_salt", 1)
-    # add_asset(player1, "hydrogen_storage", 1)
-    # add_asset(player1, "solid_state_batteries", 1)
-    # add_asset(player1, "gas_drilling_site", 1)
+    add_asset(player1, ProjectName.MATHEMATICS, 1)
+    add_asset(player1, ProjectName.MECHANICAL_ENGINEERING, 1)
+    add_asset(player1, ProjectName.THERMODYNAMICS, 1)
+    add_asset(player1, ProjectName.PHYSICS, 1)
+    add_asset(player1, ProjectName.BUILDING_TECHNOLOGY, 1)
+    add_asset(player1, ProjectName.MINERAL_EXTRACTION, 1)
+    add_asset(player1, ProjectName.TRANSPORT_TECHNOLOGY, 1)
+    add_asset(player1, ProjectName.MATERIALS, 1)
+    add_asset(player1, ProjectName.CIVIL_ENGINEERING, 1)
+    add_asset(player1, ProjectName.AERODYNAMICS, 1)
+    add_asset(player1, ProjectName.CHEMISTRY, 5)
+    add_asset(player1, ProjectName.NUCLEAR_ENGINEERING, 1)
 
     # Player 2
     player2.money = 1_000_000_000
     player2.resources = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}
 
-    add_asset(player2, "warehouse", 20)
-    add_asset(player2, "steam_engine", 20)
-    add_asset(player2, "industry", 10)
+    add_asset(player2, ProjectName.WAREHOUSE, 20)
+    add_asset(player2, ProjectName.STEAM_ENGINE, 20)
+    add_asset(player2, ProjectName.INDUSTRY, 10)
     # Player 3
-    # add_asset(player3, "mathematics", 1)
-    # add_asset(player3, "mechanical_engineering", 1)
-    # add_asset(player3, "thermodynamics", 1)
-    # add_asset(player3, "physics", 1)
-    # add_asset(player3, "building_technology", 1)
-    # add_asset(player3, "mineral_extraction", 1)
-    # add_asset(player3, "transport_technology", 1)
-    # add_asset(player3, "materials", 1)
-    # add_asset(player3, "civil_engineering", 1)
-    # add_asset(player3, "aerodynamics", 1)
-    # add_asset(player3, "chemistry", 5)
-    # add_asset(player3, "nuclear_engineering", 1)
+    # add_asset(player3, ProjectName.MATHEMATICS, 1)
+    # add_asset(player3, ProjectName.MECHANICAL_ENGINEERING, 1)
+    # add_asset(player3, ProjectName.THERMODYNAMICS, 1)
+    # add_asset(player3, ProjectName.PHYSICS, 1)
+    # add_asset(player3, ProjectName.BUILDING_TECHNOLOGY, 1)
+    # add_asset(player3, ProjectName.MINERAL_EXTRACTION, 1)
+    # add_asset(player3, ProjectName.TRANSPORT_TECHNOLOGY, 1)
+    # add_asset(player3, ProjectName.MATERIALS, 1)
+    # add_asset(player3, ProjectName.CIVIL_ENGINEERING, 1)
+    # add_asset(player3, ProjectName.AERODYNAMICS, 1)
+    # add_asset(player3, ProjectName.CHEMISTRY, 5)
+    # add_asset(player3, ProjectName.NUCLEAR_ENGINEERING, 1)
 
     # if player:
     #     HexTile.filter_by(id=35).first().player = player
 
     #     player.money = 1_000_000
-    #     player.resources = {"coal":4_500_000, "gas":80_000_000, "uranium":4_500}
+    #     player.resources = {Fuel.COAL: 4_500_000, Fuel.GAS: 80_000_000, Fuel.URANIUM: 4_500}
     #     player.priorities_of_controllables = ""
 
-    #     add_asset(player, "industry", 21)
-    #     add_asset(player, "laboratory", 5)
-    #     add_asset(player, "mathematics", 1)
-    #     add_asset(player, "mineral_extraction", 5)
-    #     add_asset(player, "building_technology", 1)
-    #     add_asset(player, "civil_engineering", 1)
-    #     add_asset(player, "coal_mine", 10)
-    #     add_asset(player, "coal_burner", 25)
-    #     # add_asset(player, "uranium_mine", 1)
-    #     add_asset(player, "warehouse", 10)
-    #     add_asset(player, "small_pumped_hydro", 1)
-    #     add_asset(player, "hydrogen_storage", 1)
-    #     add_asset(player, "onshore_wind_turbine", 15)
-    #     # add_asset(player, "offshore_wind_turbine", 2)
-    #     # add_asset(player, "nuclear_reactor_gen4", 1)
-    #     # add_asset(player, "nuclear_reactor", 1)
-    #     add_asset(player, "combined_cycle", 8)
-    #     add_asset(player, "gas_burner", 5)
-    #     add_asset(player, "steam_engine", 1)
-    #     add_asset(player, "chemistry", 2)
-    #     # add_asset(player, "carbon_capture", 4)
-    #     add_asset(player, "mechanical_engineering", 3)
-    #     add_asset(player, "physics", 2)
-    #     add_asset(player, "thermodynamics", 2)
-    #     add_asset(player, "nuclear_engineering", 3)
+    #     add_asset(player, ProjectName.INDUSTRY, 21)
+    #     add_asset(player, ProjectName.LABORATORY, 5)
+    #     add_asset(player, ProjectName.MATHEMATICS, 1)
+    #     add_asset(player, ProjectName.MINERAL_EXTRACTION, 5)
+    #     add_asset(player, ProjectName.BUILDING_TECHNOLOGY, 1)
+    #     add_asset(player, ProjectName.CIVIL_ENGINEERING, 1)
+    #     add_asset(player, ProjectName.COAL_MINE, 10)
+    #     add_asset(player, ProjectName.COAL_BURNER, 25)
+    #     # add_asset(player, ProjectName.URANIUM_MINE, 1)
+    #     add_asset(player, ProjectName.WAREHOUSE, 10)
+    #     add_asset(player, ProjectName.SMALL_PUMPED_HYDRO, 1)
+    #     add_asset(player, ProjectName.HYDROGEN_STORAGE, 1)
+    #     add_asset(player, ProjectName.ONSHORE_WIND_TURBINE, 15)
+    #     # add_asset(player, ProjectName.OFFSHORE_WIND_TURBINE, 2)
+    #     # add_asset(player, ProjectName.NUCLEAR_REACTOR_GEN4, 1)
+    #     # add_asset(player, ProjectName.NUCLEAR_REACTOR, 1)
+    #     add_asset(player, ProjectName.COMBINED_CYCLE, 8)
+    #     add_asset(player, ProjectName.GAS_BURNER, 5)
+    #     add_asset(player, ProjectName.STEAM_ENGINE, 1)
+    #     add_asset(player, ProjectName.CHEMISTRY, 2)
+    #     # add_asset(player, ProjectName.CARBON_CAPTURE, 4)
+    #     add_asset(player, ProjectName.MECHANICAL_ENGINEERING, 3)
+    #     add_asset(player, ProjectName.PHYSICS, 2)
+    #     add_asset(player, ProjectName.THERMODYNAMICS, 2)
+    #     add_asset(player, ProjectName.NUCLEAR_ENGINEERING, 3)
 
     # player2 = create_player("user2", "password")
     # if player2:
     #     HexTile.filter_by(id=84).first().player = player2
     #     player2.data.priorities_of_controllables = ""
-    #     add_asset(player2, "industry", 19)
-    #     add_asset(player2, "warehouse", 1)
-    #     add_asset(player2, "steam_engine", 10)
-    #     add_asset(player2, "small_water_dam", 1)
+    #     add_asset(player2, ProjectName.INDUSTRY, 19)
+    #     add_asset(player2, ProjectName.WAREHOUSE, 1)
+    #     add_asset(player2, ProjectName.STEAM_ENGINE, 10)
+    #     add_asset(player2, ProjectName.SMALL_WATER_DAM, 1)
 
     # player3 = create_player("user3", "password")
     # if player3:
     #     HexTile.filter_by(id=143).first().player = player3
     #     player3.data.priorities_of_controllables = ""
-    #     add_asset(player3, "industry", 8)
-    #     add_asset(player3, "onshore_wind_turbine", 5)
+    #     add_asset(player3, ProjectName.INDUSTRY, 8)
+    #     add_asset(player3, ProjectName.ONSHORE_WIND_TURBINE, 5)
 
     # player4 = create_player("user4", "password")
     # if player4:
     #     HexTile.filter_by(id=28).first().player = player4
     #     player4.data.priorities_of_controllables = ""
-    #     add_asset(player4, "warehouse", 1)
-    #     add_asset(player4, "watermill", 1)
-    #     add_asset(player4, "steam_engine", 1)
-    #     add_asset(player4, "small_pumped_hydro", 1)
-    #     add_asset(player4, "coal_burner", 1)
-    #     add_asset(player4, "coal_mine", 1)
+    #     add_asset(player4, ProjectName.WAREHOUSE, 1)
+    #     add_asset(player4, ProjectName.WATERMILL, 1)
+    #     add_asset(player4, ProjectName.STEAM_ENGINE, 1)
+    #     add_asset(player4, ProjectName.SMALL_PUMPED_HYDRO, 1)
+    #     add_asset(player4, ProjectName.COAL_BURNER, 1)
+    #     add_asset(player4, ProjectName.COAL_MINE, 1)
 
     # create_network("net", [player, player2, player3])

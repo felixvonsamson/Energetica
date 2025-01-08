@@ -1,3 +1,5 @@
+"""Tests for the NetworkPrices class."""
+
 from energetica.database.engine_data import NetworkPrices
 from energetica.game_error import GameError
 

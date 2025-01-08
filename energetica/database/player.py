@@ -24,7 +24,7 @@ from energetica.database.engine_data import (
 from energetica.database.messages import Chat, Notification
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.shipment import OngoingShipment
-from energetica.enums import Fuel, WorkerType
+from energetica.enums import Fuel, WorkerType, extraction_facilities, power_facilities, storage_facilities, technologies
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.technology_effects import (
@@ -124,6 +124,10 @@ class Player(DBModel, UserMixin):
         },
     )
     socketio_clients: list = field(default_factory=list)
+
+    def __hash__(self):
+        """Return the hash of the player's id."""
+        return hash(self.id)
 
     def get_level(self, functional_facility_or_technology: str) -> int:
         """Return the technology or functional facility level of the player."""
@@ -258,7 +262,7 @@ class Player(DBModel, UserMixin):
             list(
                 OngoingProject.filter(
                     lambda construction: construction.player == self
-                    and construction.family != "Technologies"
+                    and not construction.name in technologies
                     and construction.status == ProjectStatus.ONGOING,
                 ),
             ),
@@ -272,7 +276,7 @@ class Player(DBModel, UserMixin):
             list(
                 OngoingProject.filter(
                     lambda construction: construction.player == self
-                    and construction.family == "Technologies"
+                    and construction.name in technologies
                     and construction.status == ProjectStatus.ONGOING,
                 ),
             ),
@@ -648,7 +652,6 @@ class Player(DBModel, UserMixin):
                 for k in [
                     "id",
                     "name",
-                    "family",
                     "end_tick_or_ticks_passed",
                     "duration",
                     "status",
@@ -691,11 +694,11 @@ class Player(DBModel, UserMixin):
     def package_active_power_facilities(self) -> dict:
         """Package the player's active power facilities."""
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
-        power_facilities: list[ActiveFacility] = list(
-            filter(lambda facility: facility.name in engine.power_facilities, self.active_facilities)
+        active_power_facilities: list[ActiveFacility] = list(
+            filter(lambda facility: facility.name in power_facilities, self.active_facilities)
         )
         power_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
-        for power_facility in power_facilities:
+        for power_facility in active_power_facilities:
             power_facility_groups[power_facility.name].append(power_facility)
         return {
             "summary": {
@@ -735,7 +738,7 @@ class Player(DBModel, UserMixin):
                     if power_facility.name in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
                     else {}
                 )
-                for power_facility in power_facilities
+                for power_facility in active_power_facilities
             },
         }
 
@@ -743,11 +746,11 @@ class Player(DBModel, UserMixin):
         """Package active storage facilities."""
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.capacities
-        storage_facilities: list[ActiveFacility] = [
-            facility for facility in self.active_facilities if facility.name in engine.storage_facilities
+        active_storage_facilities: list[ActiveFacility] = [
+            facility for facility in self.active_facilities if facility.name in storage_facilities
         ]
         storage_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
-        for storage_facility in storage_facilities:
+        for storage_facility in active_storage_facilities:
             storage_facility_groups[storage_facility.name].append(storage_facility)
         return {
             "summary": {
@@ -784,7 +787,7 @@ class Player(DBModel, UserMixin):
                     "upgrade_cost": None if storage_facility.decommissioning else storage_facility.upgrade_cost,
                     "dismantle_cost": None if storage_facility.decommissioning else storage_facility.dismantle_cost,
                 }
-                for storage_facility in storage_facilities
+                for storage_facility in active_storage_facilities
             },
         }
 
@@ -792,11 +795,11 @@ class Player(DBModel, UserMixin):
         """Package active extraction facilities."""
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.capacities
-        extraction_facilities: list[ActiveFacility] = [
-            facility for facility in self.active_facilities if facility.name in engine.extraction_facilities
+        active_extraction_facilities: list[ActiveFacility] = [
+            facility for facility in self.active_facilities if facility.name in extraction_facilities
         ]
         extraction_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
-        for extraction_facility in extraction_facilities:
+        for extraction_facility in active_extraction_facilities:
             extraction_facility_groups[extraction_facility.name].append(extraction_facility)
         return {
             "summary": {
@@ -827,7 +830,7 @@ class Player(DBModel, UserMixin):
                     "upgrade_cost": extraction_facility.upgrade_cost,
                     "dismantle_cost": extraction_facility.dismantle_cost,
                 }
-                for extraction_facility in extraction_facilities
+                for extraction_facility in active_extraction_facilities
             },
         }
 

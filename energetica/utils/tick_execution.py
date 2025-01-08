@@ -86,7 +86,7 @@ def check_events_completion():
     eolt_facilities = list(ActiveFacility.filter(lambda facility: facility.end_of_life <= engine.data["total_t"]))
     for facility in eolt_facilities:
         player = facility.player
-        if facility.name in engine.storage_facilities:
+        if facility.name in storage_facilities:
             if facility.end_of_life == engine.data["total_t"]:
                 player.capacities.update(player, facility.name)
             stored_energy = player.rolling_history.get_last_data("storage", facility.name)

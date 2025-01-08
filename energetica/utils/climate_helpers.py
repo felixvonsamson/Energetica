@@ -137,7 +137,7 @@ def check_climate_events():
             random_latitude = math.ceil(10 + random_normal)
         else:
             random_latitude = math.floor(-10 + random_normal)
-        latitude_tiles = HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude)
+        latitude_tiles = list(HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude))
         tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:

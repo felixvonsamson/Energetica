@@ -9,6 +9,14 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import noise
 
+from energetica.enums import (
+    ProjectName,
+    controllable_facilities,
+    extraction_facilities,
+    power_facilities,
+    renewables,
+    storage_facilities,
+)
 from energetica.game_error import GameError
 from energetica.globals import engine
 
@@ -32,13 +40,22 @@ class NetworkPrices:
     Entries are added or removed as facilities are built or decommissioned.
     """
 
-    renewable_bids: list[str] = field(default_factory=list)
+    renewable_bids: list[ProjectName] = field(default_factory=list)
 
-    bid_prices: dict[str, float] = field(default_factory=lambda: {"steam_engine": 125.0})
-    ask_prices: dict[str, float] = field(default_factory=lambda: {"industry": 1000.0, "construction": 1020.0})
+    bid_prices: dict[ProjectName, float] = field(
+        default_factory=lambda: {
+            ProjectName.STEAM_ENGINE: 125.0,
+        }
+    )
+    ask_prices: dict[ProjectName, float] = field(
+        default_factory=lambda: {
+            ProjectName.INDUSTRY: 1000.0,
+            ProjectName.CONSTRUCTION: 1020.0,
+        }
+    )
 
     # TODO(mglst, Yassir): Add randomness to the default prices so that each player's prices are slightly different
-    def add_bid(self, bid_name: str) -> None:
+    def add_bid(self, bid_name: ProjectName) -> None:
         """Add a facility to the list of bids, using the default price."""
         self.bid_prices[bid_name] = {
             "steam_engine": 125.0,
@@ -55,7 +72,7 @@ class NetworkPrices:
             "solid_state_batteries": 900.0,
         }[bid_name]
 
-    def add_ask(self, ask_name: str) -> None:
+    def add_ask(self, ask_name: ProjectName) -> None:
         """Add a facility to the list of asks, using the default price."""
         self.ask_prices[ask_name] = {
             "research": 1200.0,
@@ -74,19 +91,26 @@ class NetworkPrices:
 
     def update(
         self,
-        updated_bids: dict[str, float],
-        updated_asks: dict[str, float],
+        updated_bids: dict[ProjectName, float],
+        updated_asks: dict[ProjectName, float],
     ) -> None:
         """Update the prices of the player for each facility type."""
         for facility, new_price in updated_bids.items():
-            if facility not in engine.controllable_facilities + engine.storage_facilities:
+            if facility not in controllable_facilities + storage_facilities:
                 raise GameError("malformedRequest")
             if not isinstance(new_price, (int, float)):
                 raise GameError("malformedRequest")
             if new_price <= -5:
                 raise GameError("priceTooLow")
+        special_power_demand = [
+            ProjectName.INDUSTRY,
+            ProjectName.CONSTRUCTION,
+            ProjectName.RESEARCH,
+            ProjectName.TRANSPORT,
+            ProjectName.CARBON_CAPTURE,
+        ]
         for facility, new_price in updated_asks.items():
-            if facility not in engine.special_power_demand + engine.extraction_facilities + engine.storage_facilities:
+            if facility not in special_power_demand + extraction_facilities + storage_facilities:
                 raise GameError("malformedRequest")
             if not isinstance(new_price, (int, float)):
                 raise GameError("malformedRequest")
@@ -97,21 +121,21 @@ class NetworkPrices:
 
     AskBid = Literal["ask", "bid"]  # Helper type
 
-    def get_sorted_renewables(self) -> list[str]:
+    def get_sorted_renewables(self) -> list[ProjectName]:
         """Return the player's renewable bids sorted by price."""
-        self.renewable_bids.sort(key=engine.renewables.index)
+        self.renewable_bids.sort(key=renewables.index)
         return self.renewable_bids
 
-    def get_facility_priorities(self) -> list[Tuple[AskBid, str]]:
+    def get_facility_priorities(self) -> list[Tuple[AskBid, ProjectName]]:
         """Return the player's priority lists containing asks and bids but not renewables, sorted by price."""
-        type_key_price: list[Tuple[Literal["ask", "bid"], str, float]] = [
+        type_key_price: list[Tuple[Literal["ask", "bid"], ProjectName, float]] = [
             *(("bid", key, price) for key, price in self.bid_prices.items()),
             *(("ask", key, price) for key, price in self.ask_prices.items()),
         ]
         type_key_price.sort(key=lambda x: x[2])
         return [(x[0], x[1]) for x in type_key_price]
 
-    def change_facility_priority(self, new_priority: list[str]) -> None:
+    def change_facility_priority(self, new_priority: list[ProjectName]) -> None:
         """
         Reassign the selling prices of the facilities according to the new priority order.
 
@@ -130,11 +154,11 @@ class NetworkPrices:
         sorted_prices = sorted((*self.ask_prices.values(), *self.bid_prices.values()))
         updated_bid_prices = {}
         updated_ask_prices = {}
-        for facility, price in zip(new_priority, sorted_prices):
-            if facility.startswith("ask-"):
-                updated_ask_prices[facility[4:]] = price
+        for priority_name, price in zip(new_priority, sorted_prices):
+            if priority_name.startswith("ask-"):
+                updated_ask_prices[ProjectName(priority_name[4:])] = price
             else:
-                updated_bid_prices[facility[4:]] = price
+                updated_bid_prices[ProjectName(priority_name[4:])] = price
         self.update(updated_bid_prices, updated_ask_prices)
 
 
@@ -187,7 +211,7 @@ class CapacityData:
             if facility.name in ["watermill", "small_water_dam", "large_water_dam"]:
                 op_costs *= facility.multipliers["multiplier_2"]
             effective_values["O&M_cost"] += op_costs
-            if facility.name in engine.power_facilities:
+            if facility.name in power_facilities:
                 power_gen = facility.max_power_generation
                 effective_values["power"] += power_gen
                 for fuel in effective_values["fuel_use"]:
@@ -199,7 +223,7 @@ class CapacityData:
                         / 3600
                         / 1_000_000
                     )
-            elif facility.name in engine.storage_facilities:
+            elif facility.name in storage_facilities:
                 power_gen = facility.max_power_generation
                 # mean efficiency
                 effective_values["efficiency"] = (
@@ -209,7 +233,7 @@ class CapacityData:
                 effective_values["power"] += power_gen
                 if facility.end_of_life > 0:
                     effective_values["capacity"] += facility.storage_capacity
-            elif facility.name in engine.extraction_facilities:
+            elif facility.name in extraction_facilities:
                 effective_values["extraction_rate_per_day"] += (
                     base_data["base_extraction_rate_per_day"] * facility.multipliers["multiplier_2"]
                 )
@@ -235,16 +259,16 @@ class CapacityData:
     def init_facility(self, facility: str) -> None:
         """Initialize the capacity data of a facility."""
         const_config = engine.const_config["assets"]
-        if facility in engine.power_facilities:
+        if facility in power_facilities:
             self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "fuel_use": {}}
             for resource in const_config[facility]["consumed_resource"]:
                 if const_config[facility]["consumed_resource"][resource] > 0:
                     self._data[facility]["fuel_use"][resource] = 0.0
             return
-        if facility in engine.storage_facilities:
+        if facility in storage_facilities:
             self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "capacity": 0.0, "efficiency": 0.0}
             return
-        if facility in engine.extraction_facilities:
+        if facility in extraction_facilities:
             self._data[facility] = {"O&M_cost": 0.0, "extraction_rate_per_day": 0.0, "power_use": 0.0, "pollution": 0.0}
 
     def __getitem__(self, facility: str) -> dict:

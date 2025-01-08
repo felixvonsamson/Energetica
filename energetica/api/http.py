@@ -25,7 +25,7 @@ from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.enums import Fuel, Renewable
+from energetica.enums import Fuel, ProjectName, Renewable
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -404,11 +404,12 @@ def request_queue_project() -> Response | tuple:
     player = Player.getitem(current_user.id)
     request_data = request.get_json()
     asset = request_data["facility"]
+    project_name = ProjectName(asset)
     force = request_data["force"]
     try:
         energetica.utils.assets.queue_project(
             player=player,
-            asset=asset,
+            project_name=project_name,
             force=force,
         )
     except Confirm as confirm:

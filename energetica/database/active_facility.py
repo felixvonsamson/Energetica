@@ -8,7 +8,14 @@ from typing import TYPE_CHECKING
 from energetica import technology_effects
 from energetica.config.assets import const_config
 from energetica.database import DBModel
-from energetica.enums import fuels_by_extraction_facility
+from energetica.enums import (
+    ProjectName,
+    controllable_facilities,
+    extraction_facilities,
+    fuels_by_extraction_facility,
+    power_facilities,
+    storage_facilities,
+)
 from energetica.globals import engine
 
 if TYPE_CHECKING:
@@ -19,7 +26,7 @@ if TYPE_CHECKING:
 class ActiveFacility(DBModel):
     """Class that stores the facilities on the server and their end of life time."""
 
-    name: str
+    name: ProjectName
     player: Player
     position: tuple[float, float]
     end_of_life: float
@@ -125,7 +132,7 @@ class ActiveFacility(DBModel):
         """
         if self.multipliers["price_multiplier"] < technology_effects.price_multiplier(self.player, self.name):
             return True
-        if self.name in engine.extraction_facilities:
+        if self.name in extraction_facilities:
             return (
                 self.multipliers["multiplier_1"] < technology_effects.multiplier_1(self.player, self.name)
                 or self.multipliers["multiplier_2"] < technology_effects.multiplier_2(self.player, self.name)
@@ -134,15 +141,15 @@ class ActiveFacility(DBModel):
         # power & storage facilities
         return (
             (
-                self.name in engine.power_facilities + engine.storage_facilities
+                self.name in power_facilities + storage_facilities
                 and self.multipliers["multiplier_1"] < technology_effects.multiplier_1(self.player, self.name)
             )
             or (
-                self.name in engine.storage_facilities
+                self.name in storage_facilities
                 and self.multipliers["multiplier_2"] < technology_effects.multiplier_2(self.player, self.name)
             )
             or (
-                self.name in engine.controllable_facilities + engine.storage_facilities
+                self.name in controllable_facilities + storage_facilities
                 and self.multipliers["multiplier_3"] < technology_effects.multiplier_3(self.player, self.name)
             )
         )

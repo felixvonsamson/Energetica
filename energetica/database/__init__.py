@@ -92,7 +92,6 @@ class DBModel:
         coordinates: tuple[int, int]
         # OngoingProject
         status: int
-        family: str  # TODO(mglst): Remove once the family field is removed
 
     @classmethod
     def count_when(cls: type[T], **conditions: Unpack[WhitelistedConditions]) -> int:

@@ -51,11 +51,11 @@ function are_you_sure_cancel_construction(construction_id, refund) {
   document.getElementById('no_cancel').innerHTML = '<b>No</b>';
 }
 
-function are_you_sure_start_construction(facility, family, capacity, construction_power) {
+function are_you_sure_start_construction(facility, capacity, construction_power) {
   document.getElementById('are_you_sure_popup').classList.remove('hidden');
   document.getElementById('are_you_sure_content').innerHTML = `
     This construction will consume ${format_power(construction_power)} but your generation capacity is only ${format_power(capacity)}.<br>
     Are you sure you want to start this construction?`;
-  document.getElementById('yes_im_sure').setAttribute('onclick', `start_construction('${facility}', '${family}', force=true); hide_are_you_sure()`);
+  document.getElementById('yes_im_sure').setAttribute('onclick', `start_construction('${facility}', force=true); hide_are_you_sure()`);
   document.getElementById('no_cancel').innerHTML = '<b>Cancel</b>';
 }
