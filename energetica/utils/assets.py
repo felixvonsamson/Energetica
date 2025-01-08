@@ -47,13 +47,13 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
                 player.rolling_history.add_subcategory("demand", project.name)
                 player.rolling_history.add_subcategory("emissions", project.name)
                 player.cumul_emissions.add_category(project.name)
-                player.network_prices.add_ask(project.name)
+                player.network_prices.add_ask(project.name, player)
             if project.name == "warehouse":
                 for resource in ["coal", "gas", "uranium"]:
                     player.rolling_history.add_subcategory("resources", resource)
-                player.network_prices.add_ask(ProjectName.TRANSPORT)
+                player.network_prices.add_ask(ProjectName.TRANSPORT, player)
             if project.name == "laboratory":
-                player.network_prices.add_ask(ProjectName.RESEARCH)
+                player.network_prices.add_ask(ProjectName.RESEARCH, player)
 
         player.functional_facility_lvl[project.name] += 1
 
@@ -80,11 +80,11 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             player.cumul_emissions.add_category(project.name)
         # add facility to player's NetworkPrices
         if project.name in extraction_facilities + storage_facilities:
-            player.network_prices.add_ask(project.name)
+            player.network_prices.add_ask(project.name, player)
         if project.name in renewables:
             player.network_prices.renewable_bids.append(project.name)
         if project.name in storage_facilities + controllable_facilities:
-            player.network_prices.add_bid(project.name)
+            player.network_prices.add_bid(project.name, player)
 
     player.check_construction_achievements(project.name)
 
@@ -113,10 +113,20 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         eol = engine.data["total_t"] + math.ceil(
             engine.const_config["assets"][project.name]["lifespan"] / engine.in_game_seconds_per_tick
         )
-        # TODO(mglst): using random is incompatible with the deterministic nature of the game that the action logger
-        # relies on. This should be fixed. Either the position should be logged, or the random should be seeded.
+        # Create a RNG, seeded with the server seed, the player's tile coordinates, the project name, and number of
+        # facilities of that type the player has built. This ensures that the facility's random position is generated
+        # deterministically.
         if player.tile is None:
             raise GameError("Player has no tile")
+        seed_hash = hash(
+            (
+                engine.data["random_seed"],
+                player.tile.coordinates,
+                project.name,
+                ActiveFacility.count_when(name=project.name, player=player),
+            ),
+        )
+        random.seed(seed_hash)
         position_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1] + random.uniform(-0.5, 0.5)
         position_y = (player.tile.coordinates[1] + random.uniform(-0.5, 0.5)) * 0.5 * 3**0.5
         ActiveFacility(

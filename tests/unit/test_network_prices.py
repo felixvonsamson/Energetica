@@ -1,6 +1,7 @@
 """Tests for the NetworkPrices class."""
 
 from energetica.database.engine_data import NetworkPrices
+from energetica.database.player import Player
 from energetica.game_error import GameError
 
 
@@ -39,16 +40,17 @@ def test_renewables_order():
 def test_add_bogus_names():
     """Test that adding a bogus ask or bid price raises an error."""
     network_prices = NetworkPrices()
+    player = Player("player1", "pwhash")
 
     try:
-        network_prices.add_ask("bogus")
+        network_prices.add_ask("bogus", player)
     except KeyError:
         assert True
     else:
         assert False
 
     try:
-        network_prices.add_bid("bogus")
+        network_prices.add_bid("bogus", player)
     except KeyError:
         assert True
     else:
@@ -66,3 +68,24 @@ def test_update_bogus_prices():
         assert True
     else:
         assert False
+
+
+def test_add_bid_and_ask_prices():
+    """Test that adding a bid and ask price works."""
+    network_prices = NetworkPrices()
+    player = Player("player1", "pwhash")
+    network_prices.add_ask("coal_mine", player)
+    network_prices.add_bid("gas_burner", player)
+    assert "coal_mine" in network_prices.ask_prices
+    assert "gas_burner" in network_prices.bid_prices
+
+
+def test_price_randomization():
+    """Test that the prices are randomized."""
+    network_prices_a = NetworkPrices()
+    network_prices_b = NetworkPrices()
+    player_a = Player("player1", "pwhash")
+    player_b = Player("player2", "pwhash")
+    network_prices_a.add_bid("coal_burner", player_a)
+    network_prices_b.add_bid("coal_burner", player_b)
+    assert network_prices_a.bid_prices["coal_burner"] != network_prices_b.bid_prices["coal_burner"]
