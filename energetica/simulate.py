@@ -3,22 +3,16 @@
 from __future__ import annotations
 
 import cProfile
-import json
 import pickle
 import pstats
 import tarfile
-from datetime import datetime
 from time import sleep
 from typing import TYPE_CHECKING
 
 import requests
 
-from energetica import production_update
-from energetica.database.map import HexTile
 from energetica.globals import engine
-from energetica.utils.climate_helpers import climate_event_impact
-from energetica.utils.misc import save_past_data_threaded
-from energetica.utils.tick_execution import check_events_completion
+from energetica.utils.tick_execution import state_update
 
 if TYPE_CHECKING:
     from flask import Flask
@@ -68,6 +62,7 @@ def _simulate(
     checkpoint_every_k_ticks: int = 10000,
     checkpoint_ticks: list[int] | None = None,
 ) -> None:
+    """Simulate the list of actions. Returns true if the simulation was successful, false otherwise."""
     if checkpoint_ticks is None:
         checkpoint_ticks = []
     with app.app_context():
@@ -88,29 +83,16 @@ def _simulate(
         for action in actions:
             print(action)
             if action["action_type"] == "tick":
-                engine.data["total_t"] += 1
-                engine.log(f"t = {engine.data['total_t']}")
-                if engine.data["total_t"] % 216 == 0:
-                    save_past_data_threaded()
-                if (engine.data["total_t"] + engine.data["delta_t"]) % (24 * 60 * 60 / engine.clock_time) == 0:
-                    engine.new_daily_question()
-                log_entry = {
-                    "timestamp": datetime.now().isoformat(),
-                    "action_type": "tick",
-                    "total_t": engine.data["total_t"],
-                }
-
-                engine.action_logger.info(json.dumps(log_entry))
-                check_events_completion()
-                production_update.update_electricity()
-                if action["total_t"] % checkpoint_every_k_ticks == 0 or action["total_t"] in checkpoint_ticks:
+                state_update(app)
+                if (
+                    checkpoint_every_k_ticks
+                    and action["total_t"] % checkpoint_every_k_ticks == 0
+                    or action["total_t"] in checkpoint_ticks
+                ):
                     with open("instance/engine_data.pck", "wb") as file:
                         pickle.dump(engine.data, file)
                     with tarfile.open(f"checkpoints/simulation/checkpoint_{action['total_t']}.tar.gz", "w:gz") as tar:
                         tar.add("instance/")
-            elif action["action_type"] == "climate_event_impact":
-                tile = HexTile.get(action["tile_id"])
-                climate_event_impact(tile, action["event"])
             elif action["action_type"] == "create_user":
                 player_id = action["player_id"]
                 user_sessions[player_id] = create_user(player_id, port)
@@ -156,3 +138,6 @@ def _simulate(
                 print(print("\033[31m" + "Assertion error.\033[0m"))
                 if stop_on_assertion_error:
                     break
+        else:
+            return True
+        return False

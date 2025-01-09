@@ -246,19 +246,34 @@ def create_app(
         misfire_grace_time=10,
     )
     if actions_to_simulate:
+        if simulate_file:
+            kwargs = {
+                "simulating": True,
+                "profiling": simulate_profiling,
+                "stop_on_mismatch": simulate_stop_on_mismatch,
+                "stop_on_server_error": simulate_stop_on_server_error,
+                "stop_on_assertion_error": simulate_stop_on_assertion_error,
+                "checkpoint_every_k_ticks": simulate_checkpoint_every_k_ticks,
+                "checkpoint_ticks": simulate_checkpoint_ticks,
+            }
+        else:
+            kwargs = {
+                "simulating": False,
+                "profiling": False,
+                "stop_on_mismatch": simulate_stop_on_mismatch,
+                "stop_on_server_error": True,
+                "stop_on_assertion_error": True,
+                "checkpoint_every_k_ticks": None,
+                "checkpoint_ticks": None,
+            }
         scheduler.add_job(
             func=simulate,
             args=(
                 app,
                 kwargs["port"],
                 actions_to_simulate,
-                simulate_stop_on_mismatch,
-                simulate_stop_on_server_error,
-                simulate_stop_on_assertion_error,
-                simulate_checkpoint_every_k_ticks,
-                simulate_checkpoint_ticks,
             ),
-            kwargs={"profiling": simulate_profiling},
+            kwargs=kwargs,
             id="replay",
             trigger="date",
             run_date=datetime.now(),
@@ -266,9 +281,10 @@ def create_app(
         if not simulate_file:
 
             def job_listener(event):
-                if event.job_id != "replay":
+                if event.job_id != "replay" or not event.retval:
                     return
                 add_ticks_clock()
+                engine.serve_local = False
                 scheduler.remove_listener(job_listener)
 
             scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED)
