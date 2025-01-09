@@ -293,6 +293,7 @@ def create_app(
             scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED)
     elif not simulate_file:
         add_ticks_clock()
+        engine.serve_local = False
 
     scheduler.start()
     atexit.register(scheduler.shutdown)
