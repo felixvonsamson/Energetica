@@ -1,3 +1,5 @@
+# type: ignore
+# pylint: skip-file
 """Code providing API access using WebSockets and HTTP Basic Auth"""
 
 import json
@@ -215,8 +217,8 @@ def rest_get_networks():
 
 
 def rest_add_player_location(player: Player):
-    """Informs the client that a player has chosen a location, packaged as a
-    JSON string."""
+    """Informs the client that a player has chosen a location, packaged as a JSON string."""
+    assert player.tile is not None
     response = {
         "type": "updatePlayerLocation",
         "data": {"player_id": player.id, "cell_id": player.tile.id},

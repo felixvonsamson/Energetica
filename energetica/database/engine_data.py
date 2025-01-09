@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import math
+import random
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import noise
 
@@ -34,13 +35,14 @@ class NetworkPrices:
 
     renewable_bids: list[str] = field(default_factory=list)
 
+    # Prices are randomized so that each player's prices are slightly different. This leads to more interesting
+    # market dynamics, while still having reasonable default prices.
     bid_prices: dict[str, float] = field(default_factory=lambda: {"steam_engine": 125.0})
     ask_prices: dict[str, float] = field(default_factory=lambda: {"industry": 1000.0, "construction": 1020.0})
 
-    # TODO(mglst, Yassir): Add randomness to the default prices so that each player's prices are slightly different
-    def add_bid(self, bid_name: str) -> None:
+    def add_bid(self, bid_name: str, player: Player) -> None:
         """Add a facility to the list of bids, using the default price."""
-        self.bid_prices[bid_name] = {
+        default_bid_price = {
             "steam_engine": 125.0,
             "coal_burner": 600.0,
             "gas_burner": 500.0,
@@ -54,10 +56,22 @@ class NetworkPrices:
             "lithium_ion_batteries": 940.0,
             "solid_state_batteries": 900.0,
         }[bid_name]
+        # seed based off engine seed, ask/bid, bid name, and player username
+        seed_hash = hash(
+            (
+                engine.data["random_seed"],
+                "bid",
+                bid_name,
+                player.username,  # TODO(mglst): replace with player coordinates
+            )
+        )
+        random.seed(seed_hash)
+        added_randomness = random.uniform(-15, 15)
+        self.bid_prices[bid_name] = default_bid_price + added_randomness
 
-    def add_ask(self, ask_name: str) -> None:
+    def add_ask(self, ask_name: str, player: Player) -> None:
         """Add a facility to the list of asks, using the default price."""
-        self.ask_prices[ask_name] = {
+        default_ask_price = {
             "research": 1200.0,
             "transport": 1050.0,
             "coal_mine": 960.0,
@@ -71,6 +85,18 @@ class NetworkPrices:
             "lithium_ion_batteries": 425.0,
             "solid_state_batteries": 420.0,
         }[ask_name]
+        # seed based off engine seed, ask/bid, ask name, and player coordinates
+        seed_hash = hash(
+            (
+                engine.data["random_seed"],
+                "ask",
+                ask_name,
+                player.username,  # TODO(mglst): replace with player coordinates
+            )
+        )
+        random.seed(seed_hash)
+        added_randomness = random.uniform(-15, 15)
+        self.ask_prices[ask_name] = default_ask_price + added_randomness
 
     def update(
         self,
@@ -249,9 +275,11 @@ class CapacityData:
 
     def __getitem__(self, facility: str) -> dict:
         """Return the capacity data of a facility."""
-        if facility not in self._data:
-            return None  # TODO(mglst): either the type should be Optional[dict] or an error should be raised
         return self._data[facility]
+
+    def get(self, facility: str) -> dict | None:
+        """Return the capacity data of a facility."""
+        return self._data.get(facility)
 
     def get_all(self) -> dict[str, dict]:
         """Return the capacity data."""
@@ -322,7 +350,7 @@ class CircularBufferPlayer:
 
     def get_data(self, t: int = 216):
         """Return the last t ticks of the data."""
-        result = defaultdict(lambda: defaultdict(dict))
+        result: dict[str, Any] = defaultdict(lambda: defaultdict(dict))
         for category, subcategories in self._data.items():
             for subcategory, buffer in subcategories.items():
                 result[category][subcategory] = list(buffer)[-t:]
@@ -339,7 +367,7 @@ class CircularBufferPlayer:
 
         Return a dict with the same structure as the data with 0 and with the last value for the storage and resources.
         """
-        result = {}
+        result: dict[str, Any] = {}
         for category, subcategories in self._data.items():
             result[category] = {}
             for subcategory, buffer in subcategories.items():
@@ -368,7 +396,7 @@ class CumulativeEmissionsData:
         if facility not in self._data:
             self._data[facility] = 0.0
 
-    def __getitem__(self, facility: str) -> float:
+    def __getitem__(self, facility: str) -> float | None:
         """Return the data of a facility."""
         if facility not in self._data:
             return None

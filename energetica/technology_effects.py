@@ -742,7 +742,7 @@ def next_level(player: Player, facility_or_technology: str) -> int:
     )
 
 
-def package_change(current: float | None, upgraded: float) -> dict | None:
+def package_change(current: float | None, upgraded: float | None) -> dict | None:
     """
     Package a change between two values.
 

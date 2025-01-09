@@ -163,7 +163,7 @@ class GameEngine(object):
 
         assert clock_time in [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
         self.clock_time = clock_time
-        self.in_game_seconds_per_tick: int = in_game_seconds_per_tick
+        self.in_game_seconds_per_tick = in_game_seconds_per_tick
 
         self.data["uuid"] = instance_uuid or uuid.uuid1()
         self.data["random_seed"] = random_seed
