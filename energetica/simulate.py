@@ -18,22 +18,20 @@ if TYPE_CHECKING:
     from flask import Flask
 
 
-def create_user(user_id, port):
+def create_user(username, pw_hash, port):
     """Create a user with the given user_id."""
     session = requests.Session()
-    data = {"username": f"user{user_id}", "password1": "password", "password2": "password"}
-    response = session.post(f"http://localhost:{port}/sign-up", data=data)
-    # TODO (Yassir)
-    assert response.status_code == 200
+    data = {"username": username, "pw_hash": pw_hash}
+    response = session.post(f"http://localhost:{port}/sign-up", data=data, allow_redirects=False)
+    assert response.status_code == 302
     return session
 
 
 def login_user(user_id, port):
     """Login a user with the given user_id."""
     session = requests.Session()
-    data = {"username": f"user{user_id}", "password": "password"}
-    response = session.post(f"http://localhost:{port}/login", data=data)
-    # TODO (Yassir)
+    data = {"user_id": user_id}
+    response = session.post(f"http://localhost:{port}/root_login", data=data, allow_redirects=False)
     assert response.status_code == 200
     return session
 
@@ -56,6 +54,7 @@ def _simulate(
     app: Flask,
     port: int,
     actions: list[dict],
+    simulating: bool,
     stop_on_mismatch: bool,
     stop_on_server_error: bool,
     stop_on_assertion_error: bool,
@@ -95,15 +94,18 @@ def _simulate(
                         tar.add("instance/")
             elif action["action_type"] == "create_user":
                 player_id = action["player_id"]
-                user_sessions[player_id] = create_user(player_id, port)
+                username = action["username"] if simulating else f"user{player_id}"
+                pw_hash = action["pw_hash"] if simulating else "password"
+                user_sessions[player_id] = create_user(username, pw_hash, port)
             elif action["action_type"] == "request":
                 player_id = action["player_id"]
                 if player_id not in user_sessions:
                     user_sessions[player_id] = login_user(player_id, port)
                 url = f"http://localhost:{port}{action['request']['endpoint']}"
                 content_type = "json" if action["request"]["content_type"] == "application/json" else "data"
-                response = user_sessions[player_id].post(url, **{content_type: action["request"]["content"]})
-                response = response.history[0] if response.history else response
+                response = user_sessions[player_id].post(
+                    url, **{content_type: action["request"]["content"]}, allow_redirects=False
+                )
                 # TODO (Yassir): mismatch if content type is not the same
                 # TODO(mglst): It would be nice to have both the expected and the actual response in the output
                 if (
