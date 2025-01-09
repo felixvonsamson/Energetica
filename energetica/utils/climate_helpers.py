@@ -18,16 +18,6 @@ from energetica.utils.formatting import display_money
 def climate_event_impact(tile: HexTile, event_name):
     """Create a ClimateEventRecovery object for the event and some facilities may be destroyed by the climate event."""
     engine.log(f"{climate_events[event_name]['name']} on tile {tile.id}")
-    engine.log_action(
-        json.dumps(
-            {
-                "timestamp": datetime.now().isoformat(),
-                "action_type": "climate_event_impact",
-                "tile_id": tile.id,
-                "event": event_name,
-            }
-        )
-    )
     player = tile.player
     if not player:
         return

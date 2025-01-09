@@ -41,7 +41,7 @@ def _state_update(app):
                 "action_type": "tick",
                 "total_t": engine.data["total_t"],
             }
-            engine.log_action(json.dumps(log_entry))
+            engine.log_action(log_entry)
             check_events_completion()
             check_climate_events()
             production_update.update_electricity()
