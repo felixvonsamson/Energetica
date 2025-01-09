@@ -1,6 +1,5 @@
 """Functions for authentication and sign-up of users."""
 
-import json
 import re
 from datetime import datetime
 

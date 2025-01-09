@@ -1,6 +1,5 @@
 """Util functions relating to the GameEngine class."""
 
-import json
 import time
 from datetime import datetime
 

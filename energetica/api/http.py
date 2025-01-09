@@ -1,6 +1,5 @@
 """These functions make the link between the website and the database."""
 
-import json
 import pickle
 from collections.abc import Callable
 from datetime import datetime
