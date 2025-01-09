@@ -105,7 +105,7 @@ def sign_up():
                 "username": new_player.username,
                 "pw_hash": new_player.pwhash,
             }
-            engine.action_logger.info(json.dumps(log_entry))
+            engine.log_action(json.dumps(log_entry))
             engine.log(f"{username} created an account")
             # websocket.rest_notify_scoreboard()
             # websocket.rest_notify_new_player()

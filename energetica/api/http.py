@@ -68,7 +68,7 @@ def log_action(func: Callable) -> Callable:
                 else response,
             },
         }
-        engine.action_logger.info(json.dumps(log_entry))
+        engine.log_action(json.dumps(log_entry))
         return response, status_code
 
     return wrapper

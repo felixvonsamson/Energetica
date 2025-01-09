@@ -41,17 +41,17 @@ def _state_update(app):
                 "action_type": "tick",
                 "total_t": engine.data["total_t"],
             }
-            engine.action_logger.info(json.dumps(log_entry))
+            engine.log_action(json.dumps(log_entry))
             check_events_completion()
             check_climate_events()
             production_update.update_electricity()
 
-    # save instance every 10 minutes in case of server crash or reload
-    if engine.data["total_t"] % (10 * 60 / engine.clock_time) == 0:
-        engine.save()
     # save a checkpoint every 6 hours in case of data corruption
     if engine.data["total_t"] % (6 * 60 * 60 / engine.clock_time) == 0:
         engine.save_checkpoint()
+    # save instance every 10 minutes in case of server crash or reload
+    elif engine.data["total_t"] % (10 * 60 / engine.clock_time) == 0:
+        engine.save()
     # with app.app_context():
     #     # TODO: perhaps only run the below code conditionally on there being active ws connections
     #     websocket.rest_notify_scoreboard()

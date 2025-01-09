@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import cProfile
-import pickle
 import pstats
-import tarfile
 from time import sleep
 from typing import TYPE_CHECKING
 
 import requests
 
+from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.utils.tick_execution import state_update
 
@@ -18,12 +17,13 @@ if TYPE_CHECKING:
     from flask import Flask
 
 
-def create_user(username, pw_hash, port):
+def create_user(user_id, username, pw_hash, port):
     """Create a user with the given user_id."""
     session = requests.Session()
     data = {"username": username, "pw_hash": pw_hash}
     response = session.post(f"http://localhost:{port}/sign-up", data=data, allow_redirects=False)
     assert response.status_code == 302
+    assert next(Player.filter(username=username)).id == user_id
     return session
 
 
@@ -88,10 +88,7 @@ def _simulate(
                     and action["total_t"] % checkpoint_every_k_ticks == 0
                     or action["total_t"] in checkpoint_ticks
                 ):
-                    with open("instance/engine_data.pck", "wb") as file:
-                        pickle.dump(engine.data, file)
-                    with tarfile.open(f"checkpoints/simulation/checkpoint_{action['total_t']}.tar.gz", "w:gz") as tar:
-                        tar.add("instance/")
+                    engine.save_checkpoint(f"checkpoints/simulation/checkpoint_{action['total_t']}.tar.gz")
             elif action["action_type"] == "create_user":
                 player_id = action["player_id"]
                 username = action["username"] if simulating else f"user{player_id}"

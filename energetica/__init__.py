@@ -7,6 +7,7 @@ import atexit
 import base64
 import glob
 import json
+import logging
 import os
 import platform
 import secrets
@@ -257,6 +258,7 @@ def create_app(
                 "checkpoint_ticks": simulate_checkpoint_ticks,
             }
         else:
+            engine.action_logger.setLevel(logging.CRITICAL)
             kwargs = {
                 "simulating": False,
                 "profiling": False,
@@ -285,6 +287,7 @@ def create_app(
                     return
                 add_ticks_clock()
                 engine.serve_local = False
+                engine.action_logger.setLevel(logging.INFO)
                 scheduler.remove_listener(job_listener)
 
             scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED)

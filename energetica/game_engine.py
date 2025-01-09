@@ -272,6 +272,10 @@ class GameEngine(object):
         """Log a warning message in the terminal."""
         self.console_logger.warning(message)
 
+    def log_action(self, action: dict) -> None:
+        """Log an action in the action history file."""
+        self.action_logger.info(json.dumps(action))
+
     def save(self) -> None:
         """Save the game engine data to a file."""
         with open("instance/engine_data.pck", "wb") as file:
@@ -282,10 +286,11 @@ class GameEngine(object):
         with open("instance/engine_data.pck", "rb") as file:
             self.data = pickle.load(file)
 
-    def save_checkpoint(self) -> None:
+    def save_checkpoint(self, destination_filename: str = "checkpoints/last_checkpoint.tar.gz") -> None:
+        self.save()
         with tarfile.open("checkpoints/new_checkpoint.tar.gz", "w:gz") as tar:
             tar.add("instance/")
-        os.replace("checkpoints/new_checkpoint.tar.gz", "checkpoints/last_checkpoint.tar.gz")
+        os.replace("checkpoints/new_checkpoint.tar.gz", destination_filename)
 
     def package_global_data(self) -> dict:
         """Package mutable from energetica.globals import engine data as a dict to be sent and used on the frontend."""
