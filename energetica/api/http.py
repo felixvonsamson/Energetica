@@ -47,7 +47,6 @@ def log_action(func: Callable) -> Callable:
                 response = func(*args, **kwargs)
             response, status_code = response if isinstance(response, tuple) else (response, response.status_code)
         except GameError as game_exception:
-            # TODO: engine.db.rollback() or something similar
             response, status_code = jsonify({"response": game_exception.exception_type, **game_exception.kwargs}), 403
 
         log_entry = {
@@ -275,7 +274,7 @@ def get_market_data() -> Response | tuple:
         return "", 404
     request_data = request.get_json()
     t = int(request_data["t"])
-    filename_state = f"instance/network_data/{player.network.id}/charts/market_t{engine.data['total_t']-t}.pck"
+    filename_state = f"instance/network_data/{player.network.id}/charts/market_t{engine.data['total_t'] - t}.pck"
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
             market_data = pickle.load(file)
@@ -606,8 +605,8 @@ def put_resource_on_sale() -> Response:
         flash_error(f"You have not enough {resource} available")
     else:
         flash(
-            f"You put {quantity/1000}t of {resource} on sale for "
-            f"{price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
+            f"You put {quantity / 1000}t of {resource} on sale for "
+            f"{price * 1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
             category="message",
         )
     return redirect("/resource_market", code=303)

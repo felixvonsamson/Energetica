@@ -145,6 +145,14 @@ class GameEngine(object):
         self.data = {}
         self.clock_time = None
         self.in_game_seconds_per_tick = None
+
+        with open("energetica/static/data/industry_demand.pck", "rb") as file:
+            # array of length 1440 of normalized daily industry demand variations
+            self.industry_demand = pickle.load(file)
+        with open("energetica/static/data/industry_demand_year.pck", "rb") as file:
+            # array of length 51 of normalized yearly industry demand variations
+            self.industry_seasonal = pickle.load(file)
+
         self.log("engine created")
 
     def clear_db(self):
@@ -215,13 +223,6 @@ class GameEngine(object):
             "chemistry": [0],
             "nuclear_engineering": [0],
         }
-
-        with open("energetica/static/data/industry_demand.pck", "rb") as file:
-            # array of length 1440 of normalized daily industry demand variations
-            self.industry_demand = pickle.load(file)
-        with open("energetica/static/data/industry_demand_year.pck", "rb") as file:
-            # array of length 51 of normalized yearly industry demand variations
-            self.industry_seasonal = pickle.load(file)
 
         self.clear_db()
 

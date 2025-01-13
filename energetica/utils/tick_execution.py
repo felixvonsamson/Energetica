@@ -27,23 +27,30 @@ def _state_update(app):
     total_t = (time.time() - engine.data["start_date"]) / engine.clock_time
     with app.app_context():
         while engine.data["total_t"] < total_t - 1 or engine.data["total_t"] == 0:
-            if engine.data["total_t"] == 0:
-                engine.data["first_tick_time"] = time.time()
-            engine.data["total_t"] += 1
-            engine.log(f"t = {engine.data['total_t']}")
-            if engine.data["total_t"] % 216 == 0:
-                save_past_data_threaded()
-            if (engine.data["total_t"] + engine.data["delta_t"]) % (24 * 60 * 60 / engine.clock_time) == 0:
-                engine.new_daily_question()
-            log_entry = {
-                "timestamp": datetime.now().isoformat(),
-                "action_type": "tick",
-                "total_t": engine.data["total_t"],
-            }
-            engine.log_action(log_entry)
-            check_events_completion()
-            check_climate_events()
-            production_update.update_electricity()
+            tick()
+
+
+def tick():
+    log_entry = {
+        "timestamp": datetime.now().isoformat(),
+        "timestamp_end": None,
+        "action_type": "tick",
+        "total_t": engine.data["total_t"],
+    }
+    if engine.data["total_t"] == 0:
+        engine.data["first_tick_time"] = time.time()
+    engine.data["total_t"] += 1
+    engine.log(f"t = {engine.data['total_t']}")
+    if engine.data["total_t"] % 216 == 0:
+        save_past_data_threaded()
+    if (engine.data["total_t"] + engine.data["delta_t"]) % (24 * 60 * 60 / engine.clock_time) == 0:
+        engine.new_daily_question()
+    check_events_completion()
+    check_climate_events()
+    production_update.update_electricity()
+
+    log_entry["timestamp_end"] = datetime.now().isoformat()
+    engine.log_action(log_entry)
 
     # save a checkpoint every 6 hours in case of data corruption
     if engine.data["total_t"] % (6 * 60 * 60 / engine.clock_time) == 0:
@@ -51,6 +58,7 @@ def _state_update(app):
     # save instance every 10 minutes in case of server crash or reload
     elif engine.data["total_t"] % (10 * 60 / engine.clock_time) == 0:
         engine.save()
+
     # with app.app_context():
     #     # TODO: perhaps only run the below code conditionally on there being active ws connections
     #     websocket.rest_notify_scoreboard()
