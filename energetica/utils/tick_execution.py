@@ -17,17 +17,16 @@ from energetica.utils.misc import save_past_data_threaded
 from energetica.utils.resource_market import store_import
 
 
-def state_update(app):
+def state_update():
     with engine.lock:
-        _state_update(app)
+        _state_update()
 
 
-def _state_update(app):
+def _state_update():
     """Update the game state on every tick."""
     total_t = (time.time() - engine.data["start_date"]) / engine.clock_time
-    with app.app_context():
-        while engine.data["total_t"] < total_t - 1 or engine.data["total_t"] == 0:
-            tick()
+    while engine.data["total_t"] < total_t - 1 or engine.data["total_t"] == 0:
+        tick()
 
 
 def tick():

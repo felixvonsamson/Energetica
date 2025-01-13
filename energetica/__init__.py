@@ -240,7 +240,6 @@ def create_app(
     add_ticks_clock = partial(
         scheduler.add_job,
         func=state_update,
-        args=(app,),
         id="state_update",
         trigger="cron",
         second=f"*/{clock_time}" if clock_time != 60 else "0",
@@ -271,7 +270,6 @@ def create_app(
         scheduler.add_job(
             func=simulate,
             args=(
-                app,
                 kwargs["port"],
                 actions_to_simulate,
             ),
