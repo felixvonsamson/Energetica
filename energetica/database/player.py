@@ -15,12 +15,7 @@ from pywebpush import WebPushException, webpush
 
 from energetica.config.achievements import achievements
 from energetica.database import DBModel
-from energetica.database.engine_data import (
-    CapacityData,
-    CircularBufferPlayer,
-    CumulativeEmissionsData,
-    NetworkPrices,
-)
+from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, NetworkPrices
 from energetica.database.messages import Chat, Notification
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.shipment import OngoingShipment
@@ -186,6 +181,10 @@ class Player(DBModel, UserMixin):
             "nuclear_engineering": 0,
         },
     )
+
+    @cached_property
+    def self(self) -> Player:
+        return self
 
     @property
     def config(self) -> dict:
@@ -594,7 +593,7 @@ class Player(DBModel, UserMixin):
                 if current_lvl < len(achievement_data["milestones"]):
                     status = self.progression_metrics[achievement_data["metric"]]
                     upcoming_achievements[achievement] = {
-                        "name": f"{achievement_data['name']} {current_lvl+1}",
+                        "name": f"{achievement_data['name']} {current_lvl + 1}",
                         "reward": achievement_data["rewards"][current_lvl],
                         "objective": achievement_data["milestones"][current_lvl],
                         "status": round(status),

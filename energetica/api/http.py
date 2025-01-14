@@ -8,7 +8,7 @@ from functools import wraps
 from pathlib import Path
 
 import numpy as np
-from flask import Blueprint, flash, jsonify, redirect, request
+from flask import Blueprint, flash, g, jsonify, redirect, request
 from flask_login import current_user, login_required
 from werkzeug.wrappers import Response
 
@@ -77,8 +77,7 @@ def log_action(func: Callable) -> Callable:
 @http.before_request
 @login_required
 def check_if_logged_in():
-    # TODO(mglst): what is the purpose of this function? Please add a docstring
-    pass
+    g.player = current_user.self
 
 
 @http.route("/request_delete_notification", methods=["POST"])
@@ -91,18 +90,16 @@ def request_delete_notification() -> Response:
             "id": int  # The ID of the notification to be deleted
         }
     """
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     notification_id = request_data["id"]
-    player.delete_notification(notification_id)
+    g.player.delete_notification(notification_id)
     return jsonify({"response": "success"})
 
 
 @http.route("/request_marked_as_read", methods=["POST"])
 def request_marked_as_read() -> Response:
     """Mark all notification as read."""
-    player = Player.getitem(current_user.id)
-    player.notifications_read()
+    g.player.notifications_read()
     return jsonify({"response": "success"})
 
 
@@ -153,38 +150,33 @@ def get_networks() -> Response:
 @http.route("/get_chat_messages", methods=["GET"])
 def get_chat_messages() -> Response | tuple:
     """Get the last 20 messages from a chat and returns it as a list."""
-    player = Player.getitem(current_user.id)
     chat_id = request.args.get("chatID")
     if chat_id is None:
         return jsonify({"response": "noChatID"}), 400
     chat = Chat.get(int(chat_id))
     if chat is None:
         return jsonify({"response": "chatNotFound"}), 404
-    packaged_messages = player.package_chat_messages(chat)
-    player.mark_chat_as_read(chat)
+    packaged_messages = g.player.package_chat_messages(chat)
+    g.player.mark_chat_as_read(chat)
     return jsonify({"response": "success", "messages": packaged_messages})
 
 
 @http.route("/get_chat_list", methods=["GET"])
 def get_chat_list() -> Response:
     """Get the list of chats for the current player."""
-    player = Player.getitem(current_user.id)
-    response = player.package_chat_list()
+    response = g.player.package_chat_list()
     return jsonify({"response": "success"} | response)
 
 
 @http.route("/get_resource_data", methods=["GET"])
 def get_resource_data() -> Response:
     """Get production rates and quantity on sale for every resource."""
-    player = Player.getitem(current_user.id)
-    return jsonify(player.resources_on_sale)
+    return jsonify(g.player.resources_on_sale)
 
 
 @http.route("/get_chart_data", methods=["GET"])
 def get_chart_data() -> Response | tuple:
     """Get the data for the overview charts."""
-
-    player = Player.getitem(current_user.id)
 
     def calculate_mean_subarrays(array: list, x: int) -> list:
         return [np.mean(array[i : i + x]) for i in range(0, len(array), x)]
@@ -212,21 +204,21 @@ def get_chart_data() -> Response | tuple:
                 dict1[key][sub_key][3] = dict1[key][sub_key][3][len(new_6month) :]
                 dict1[key][sub_key][3].extend(new_6month)
 
-    if player.tile is None:
+    if g.player.tile is None:
         return "", 404
     total_t = engine.data["total_t"]
-    rolling_history = player.rolling_history.get_data(t=total_t % 216 + 1)
-    filename = f"instance/player_data/player_{player.id}.pck"
+    rolling_history = g.player.rolling_history.get_data(t=total_t % 216 + 1)
+    filename = f"instance/player_data/player_{g.player.id}.pck"
     with open(filename, "rb") as file:
         data = pickle.load(file)
     concat_slices(data, rolling_history)
 
     network_data = None
-    if player.network is not None:
-        filename = f"instance/network_data/{player.network.id}/time_series.pck"
+    if g.player.network is not None:
+        filename = f"instance/network_data/{g.player.network.id}/time_series.pck"
         with open(filename, "rb") as file:
             network_data = pickle.load(file)
-        concat_slices(network_data, player.network.rolling_history.get_data(t=total_t % 216 + 1))
+        concat_slices(network_data, g.player.network.rolling_history.get_data(t=total_t % 216 + 1))
 
     current_climate_data = engine.data["current_climate_data"].get_data(t=total_t % 216 + 1)
     with open("instance/server_data/climate_data.pck", "rb") as file:
@@ -239,7 +231,7 @@ def get_chart_data() -> Response | tuple:
             "data": data,
             "network_data": network_data,
             "climate_data": climate_data,
-            "cumulative_emissions": player.cumul_emissions.get_all(),
+            "cumulative_emissions": g.player.cumul_emissions.get_all(),
         },
     )
 
@@ -247,29 +239,26 @@ def get_chart_data() -> Response | tuple:
 @http.route("/get_current_weather", methods=["GET"])
 def get_current_weather() -> Response:
     """Get the current weather data including date, irradiance, wind speed, and river discharge."""
-    player = Player.getitem(current_user.id)
-    return jsonify(energetica.utils.misc.package_weather_data(player))
+    return jsonify(energetica.utils.misc.package_weather_data(g.player))
 
 
 @http.route("/get_network_capacities", methods=["GET"])
 def get_network_capacities() -> Response | tuple:
     """Get the network capacities for the current player."""
-    player = Player.getitem(current_user.id)
-    if player.network is None:
+    if g.player.network is None:
         return "", 404
-    return jsonify(player.network.capacities.get_all())
+    return jsonify(g.player.network.capacities.get_all())
 
 
 @http.route("/get_market_data", methods=["GET"])
 def get_market_data() -> Response | tuple:
     """Get the data for the market graph at a specific tick."""
-    player = Player.getitem(current_user.id)
     market_data = {}
-    if player.network is None:
+    if g.player.network is None:
         return "", 404
     request_data = request.get_json()
     t = int(request_data["t"])
-    filename_state = f"instance/network_data/{player.network.id}/charts/market_t{engine.data['total_t']-t}.pck"
+    filename_state = f"instance/network_data/{g.player.network.id}/charts/market_t{engine.data['total_t'] - t}.pck"
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
             market_data = pickle.load(file)
@@ -283,15 +272,14 @@ def get_market_data() -> Response | tuple:
 @http.route("/get_player_data", methods=["GET"])
 def get_player_data() -> Response | tuple:
     """Get count of assets and config for this player."""
-    player = Player.getitem(current_user.id)
-    if player.tile is None:
+    if g.player.tile is None:
         return "", 404
-    levels = player.get_lvls()
-    capacities = player.capacities.get_all()
+    levels = g.player.get_lvls()
+    capacities = g.player.capacities.get_all()
     return jsonify(
         {
             "levels": levels,
-            "config": player.config,
+            "config": g.player.config,
             "capacities": capacities,
         },
     )
@@ -301,8 +289,7 @@ def get_player_data() -> Response | tuple:
 def get_resource_reserves() -> Response:
     """Get the natural resources reserves for this player."""
     # TODO(mglst): there is no `get_reserves` method in the `Player` class
-    player = Player.getitem(current_user.id)
-    reserves = player.get_reserves()
+    reserves = g.player.get_reserves()
     return jsonify(reserves)
 
 
@@ -321,59 +308,52 @@ def get_players() -> Response:
 @http.route("/get_generation_priority", methods=["GET"])
 def get_generation_priority() -> Response:
     """Get generation and demand priority for this player."""
-    player = Player.getitem(current_user.id)
-    return jsonify(player.network_prices.get_sorted_renewables(), player.network_prices.get_facility_priorities())
+    return jsonify(g.player.network_prices.get_sorted_renewables(), g.player.network_prices.get_facility_priorities())
 
 
 @http.route("/get_constructions", methods=["GET"])
 def get_constructions() -> Response:
     """Get list of facilities under construction for this player."""
-    player = Player.getitem(current_user.id)
-    projects = player.package_constructions()
-    constructions_by_priority = [construction.id for construction in player.constructions_by_priority]
-    researches_by_priority = [research.id for research in player.researches_by_priority]
+    projects = g.player.package_constructions()
+    constructions_by_priority = [construction.id for construction in g.player.constructions_by_priority]
+    researches_by_priority = [research.id for research in g.player.researches_by_priority]
     return jsonify(projects, constructions_by_priority, researches_by_priority)
 
 
 @http.route("/get_shipments", methods=["GET"])
 def get_shipments() -> Response:
     """Get list of shipments under way for this player."""
-    player = Player.getitem(current_user.id)
-    return jsonify(player.package_shipments())
+    return jsonify(g.player.package_shipments())
 
 
 @http.route("/get_upcoming_achievements", methods=["GET"])
 def get_upcoming_achievements() -> Response:
     """Get the upcoming achievements for this player."""
-    player = Player.getitem(current_user.id)
-    return jsonify(player.package_upcoming_achievements())
+    return jsonify(g.player.package_upcoming_achievements())
 
 
 @http.route("/get_scoreboard", methods=["GET"])
 def get_scoreboard() -> Response:
     """Get the scoreboard data."""
-    player = Player.getitem(current_user.id)
-    return jsonify(player.package_scoreboard())
+    return jsonify(g.player.package_scoreboard())
 
 
 @http.route("/get_quiz_question", methods=["GET"])
 def get_quiz_question() -> Response:
     """Get the daily quiz question."""
-    player = Player.getitem(current_user.id)
-    return jsonify(energetica.utils.misc.get_quiz_question(player))
+    return jsonify(energetica.utils.misc.get_quiz_question(g.player))
 
 
 @http.route("/submit_quiz_answer", methods=["POST"])
 def submit_quiz_answer() -> Response:
     """Submit the daily quiz answer from a player."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     answer = request_data["answer"]
-    answer_correct = energetica.utils.misc.submit_quiz_answer(player, answer)
+    answer_correct = energetica.utils.misc.submit_quiz_answer(g.player, answer)
     return jsonify(
         {
             "response": "correct" if answer_correct else "incorrect",
-            "question_data": energetica.utils.misc.get_quiz_question(player),
+            "question_data": energetica.utils.misc.get_quiz_question(g.player),
         },
     )
 
@@ -381,19 +361,17 @@ def submit_quiz_answer() -> Response:
 @http.route("/get_active_facilities", methods=["GET"])
 def get_active_facilities() -> Response:
     """Get the active facilities for this player."""
-    player = Player.getitem(current_user.id)
-    return jsonify(player.package_active_facilities())
+    return jsonify(g.player.package_active_facilities())
 
 
 @http.route("choose_location", methods=["POST"])
 @log_action
 def choose_location() -> Response:
     """Set the location for the player."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     selected_id = request_data["selected_id"]
     tile = HexTile.getitem(selected_id + 1)
-    energetica.utils.misc.confirm_location(player=player, tile=tile)
+    energetica.utils.misc.confirm_location(player=g.player, tile=tile)
     return jsonify({"response": "success"})
 
 
@@ -401,13 +379,12 @@ def choose_location() -> Response:
 @log_action
 def request_queue_project() -> Response | tuple:
     """Start a construction or research project for the player."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     asset = request_data["facility"]
     force = request_data["force"]
     try:
         energetica.utils.assets.queue_project(
-            player=player,
+            player=g.player,
             asset=asset,
             force=force,
         )
@@ -423,8 +400,8 @@ def request_queue_project() -> Response | tuple:
     return jsonify(
         {
             "response": "success",
-            "money": player.money,
-            "constructions": package_projects_data(player),
+            "money": g.player.money,
+            "constructions": package_projects_data(g.player),
         },
     )
 
@@ -433,15 +410,14 @@ def request_queue_project() -> Response | tuple:
 @log_action
 def request_cancel_project() -> Response | tuple:
     """Cancel an ongoing projects."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     project_id = int(request_data["id"])
     project = OngoingProject.get(int(project_id))
-    if project is None or project.player != player:
+    if project is None or project.player != g.player:
         return jsonify({"response": "projectNotFound"}), 404
     force = request_data["force"]
     try:
-        energetica.utils.assets.cancel_project(player=player, project=project, force=force)
+        energetica.utils.assets.cancel_project(player=g.player, project=project, force=force)
     except Confirm as confirm:
         return jsonify(
             {
@@ -452,8 +428,8 @@ def request_cancel_project() -> Response | tuple:
     return jsonify(
         {
             "response": "success",
-            "money": player.money,
-            "projects": package_projects_data(player),
+            "money": g.player.money,
+            "projects": package_projects_data(g.player),
         },
     )
 
@@ -462,17 +438,16 @@ def request_cancel_project() -> Response | tuple:
 @log_action
 def request_pause_project() -> Response | tuple:
     """Pause or unpause an ongoing project."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     project_id = int(request_data["id"])
     project = OngoingProject.get(int(project_id))
-    if project is None or project.player != player:
+    if project is None or project.player != g.player:
         return jsonify({"response": "projectNotFound"}), 404
-    energetica.utils.assets.toggle_pause_project(player=player, project=project)
+    energetica.utils.assets.toggle_pause_project(player=g.player, project=project)
     return jsonify(
         {
             "response": "success",
-            "projects": package_projects_data(player),
+            "projects": package_projects_data(g.player),
         },
     )
 
@@ -481,17 +456,16 @@ def request_pause_project() -> Response | tuple:
 @log_action
 def request_decrease_project_priority() -> Response | tuple:
     """Change the order of ongoing projects."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     project_id = request_data["id"]
     project = OngoingProject.get(int(project_id))
-    if project is None or project.player != player:
+    if project is None or project.player != g.player:
         return jsonify({"response": "projectNotFound"}), 404
-    energetica.utils.assets.decrease_project_priority(player=player, project=project)
+    energetica.utils.assets.decrease_project_priority(player=g.player, project=project)
     return jsonify(
         {
             "response": "success",
-            "projects": package_projects_data(player),
+            "projects": package_projects_data(g.player),
         },
     )
 
@@ -500,43 +474,40 @@ def request_decrease_project_priority() -> Response | tuple:
 @log_action
 def request_upgrade_facility() -> Response | tuple:
     """Upgrade a facility."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     facility = ActiveFacility.get(int(facility_id))
-    if facility is None or facility.player != player:
+    if facility is None or facility.player != g.player:
         return jsonify({"response": "facilityNotFound"}), 404
-    energetica.utils.assets.upgrade_facility(player=player, facility=facility)
-    return jsonify({"response": "success", "money": player.money})
+    energetica.utils.assets.upgrade_facility(player=g.player, facility=facility)
+    return jsonify({"response": "success", "money": g.player.money})
 
 
 @http.route("/request_upgrade_all_of_type", methods=["POST"])
 @log_action
 def request_upgrade_all_of_type() -> Response:
     """Upgrade all facilities of a certain type."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     facility = request_data["facility"]
-    energetica.utils.assets.upgrade_all_of_type(player=player, facility_name=facility)
-    return jsonify({"response": "success", "money": player.money})
+    energetica.utils.assets.upgrade_all_of_type(player=g.player, facility_name=facility)
+    return jsonify({"response": "success", "money": g.player.money})
 
 
 @http.route("/request_dismantle_facility", methods=["POST"])
 @log_action
 def request_dismantle_facility() -> Response | tuple:
     """Dismantle a facility."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     facility_id = request_data["facility_id"]
     facility = ActiveFacility.get(int(facility_id))
-    if facility is None or facility.player != player:
+    if facility is None or facility.player != g.player:
         return jsonify({"response": "projectNotFound"}), 404
-    energetica.utils.assets.dismantle_facility(player=player, facility=facility)
+    energetica.utils.assets.dismantle_facility(player=g.player, facility=facility)
     return jsonify(
         {
             "response": "success",
             "facility_name": facility.name,
-            "money": player.money,
+            "money": g.player.money,
         },
     )
 
@@ -545,28 +516,26 @@ def request_dismantle_facility() -> Response | tuple:
 @log_action
 def request_dismantle_all_of_type() -> Response:
     """Dismantle all facilities of a certain type."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     facility = request_data["facility"]
-    energetica.utils.assets.dismantle_all_of_type(player=player, facility_name=facility)
-    return jsonify({"response": "success", "money": player.money})
+    energetica.utils.assets.dismantle_all_of_type(player=g.player, facility_name=facility)
+    return jsonify({"response": "success", "money": g.player.money})
 
 
 @http.route("/change_network_prices", methods=["POST"])
 @log_action
 def change_network_prices() -> Response | tuple:
     """Change the prices for anything on the network."""
-    player = Player.getitem(current_user.id)
-    if not player.is_in_network:
+    if not g.player.is_in_network:
         return jsonify({"response": "notAuthorized"}), 404
     updated_prices = request.get_json()["prices"]
     if not all(key in ["supply", "demand"] for key in updated_prices.keys()):
         raise GameError("malformedRequest")
-    player.network_prices.update(
+    g.player.network_prices.update(
         updated_bids=updated_prices["supply"],
         updated_asks=updated_prices["demand"],
     )
-    engine.log(f"{player.username} updated their prices")
+    engine.log(f"{g.player.username} updated their prices")
     return jsonify({"response": "success"})
 
 
@@ -574,12 +543,11 @@ def change_network_prices() -> Response | tuple:
 @log_action
 def request_change_facility_priority() -> Response | tuple:
     """Change the generation priority."""
-    player = Player.getitem(current_user.id)
-    if not player.achievements["network"]:
+    if not g.player.achievements["network"]:
         return jsonify({"response": "notAuthorized"}), 404
     request_data = request.get_json()
     priority = request_data["priority"]
-    player.network_prices.change_facility_priority(new_priority=priority)
+    g.player.network_prices.change_facility_priority(new_priority=priority)
     return jsonify({"response": "success"})
 
 
@@ -587,21 +555,20 @@ def request_change_facility_priority() -> Response | tuple:
 @log_action
 def put_resource_on_sale() -> Response:
     """Put a resource on sale."""
-    player = Player.getitem(current_user.id)
     request_data = request.form
     resource = request_data["resource"]
     quantity = float(request_data["quantity"]) * 1000
     price = float(request_data["price"]) / 1000
     try:
-        energetica.utils.resource_market.put_resource_on_market(player, resource, quantity, price)
+        energetica.utils.resource_market.put_resource_on_market(g.player, resource, quantity, price)
     except GameError as game_exception:
         if game_exception.exception_type != "notEnoughResource":
             raise
         flash_error(f"You have not enough {resource} available")
     else:
         flash(
-            f"You put {quantity/1000}t of {resource} on sale for "
-            f"{price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
+            f"You put {quantity / 1000}t of {resource} on sale for "
+            f"{price * 1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
             category="message",
         )
     return redirect("/resource_market", code=303)
@@ -611,15 +578,14 @@ def put_resource_on_sale() -> Response:
 @log_action
 def buy_resource() -> Response | tuple:
     """Buy a resource from the market."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     sale_id = int(request_data["id"])
     quantity = float(request_data["quantity"]) * 1000
     sale = ResourceOnSale.get(int(sale_id))
     if sale is None:
         return jsonify({"response": "saleNotFound"}), 404
-    energetica.utils.resource_market.buy_resource_from_market(player, quantity, sale)
-    if player == sale.player:
+    energetica.utils.resource_market.buy_resource_from_market(g.player, quantity, sale)
+    if g.player == sale.player:
         return jsonify(
             {
                 "response": "removedFromMarket",
@@ -636,7 +602,7 @@ def buy_resource() -> Response | tuple:
             "quantity": quantity,
             "seller": sale.player.username,
             "available_quantity": sale.quantity,
-            "shipments": player.package_shipments(),
+            "shipments": g.player.package_shipments(),
         },
     )
 
@@ -645,12 +611,11 @@ def buy_resource() -> Response | tuple:
 @log_action
 def join_network() -> Response:
     """Join a network."""
-    player = Player.getitem(current_user.id)
     request_data = request.form
     network_id = int(request_data["choose_network"])
-    network = energetica.utils.network_helpers.join_network(player, Network.get(network_id))
+    network = energetica.utils.network_helpers.join_network(g.player, Network.get(network_id))
     flash(f"You joined the network {network.name}", category="message")
-    engine.log(f"{player.username} joined the network {network.name}")
+    engine.log(f"{g.player.username} joined the network {network.name}")
     return redirect("/network", code=303)
 
 
@@ -658,11 +623,10 @@ def join_network() -> Response:
 @log_action
 def create_network() -> Response:
     """Create a network."""
-    player = Player.getitem(current_user.id)
     request_data = request.form
     network_name = request_data["network_name"]
     try:
-        energetica.utils.network_helpers.create_network(player, network_name)
+        energetica.utils.network_helpers.create_network(g.player, network_name)
     except GameError as game_exception:
         match game_exception.exception_type:
             case "nameLengthInvalid":
@@ -678,11 +642,10 @@ def create_network() -> Response:
 @log_action
 def leave_network() -> Response | tuple:
     """Leave the current network."""
-    player = Player.getitem(current_user.id)
-    network = player.network
+    network = g.player.network
     if network is None:
         return jsonify({"response": "notInNetwork"}), 404
-    energetica.utils.network_helpers.leave_network(player)
+    energetica.utils.network_helpers.leave_network(g.player)
     flash(f"You left network {network.name}", category="message")
     return redirect("/network", code=303)
 
@@ -690,73 +653,66 @@ def leave_network() -> Response | tuple:
 @http.route("hide_chat_disclaimer", methods=["GET"])
 def hide_chat_disclaimer() -> Response:
     """Permanently hide the chat disclaimer."""
-    player = Player.getitem(current_user.id)
-    energetica.utils.chat.hide_chat_disclaimer(player)
+    energetica.utils.chat.hide_chat_disclaimer(g.player)
     return jsonify({"response": "success"})
 
 
 @http.route("create_chat", methods=["POST"])
 def create_chat() -> Response:
     """Create a chat with one other player."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     buddy_id = request_data["buddy_id"]
     buddy = Player.getitem(buddy_id)
-    energetica.utils.chat.create_chat(player, None, {player, buddy})
+    energetica.utils.chat.create_chat(g.player, None, {g.player, buddy})
     return jsonify({"response": "success"})
 
 
 @http.route("create_group_chat", methods=["POST"])
 def create_group_chat() -> Response:
     """Create a group chat."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     chat_title = request_data["chat_title"]
-    group_members = {player, *list(map(Player.getitem, request_data["group_members"]))}
-    energetica.utils.chat.create_chat(player, chat_title, group_members)
+    group_members = {g.player, *list(map(Player.getitem, request_data["group_members"]))}
+    energetica.utils.chat.create_chat(g.player, chat_title, group_members)
     return jsonify({"response": "success"})
 
 
 @http.route("new_message", methods=["POST"])
 def new_message() -> Response | tuple:
     """Send a message."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     message = request_data["new_message"]
     chat_id = int(request_data["chat_id"])
     chat = Chat.get(chat_id)
     if chat is None:
         return jsonify({"response": "NoChatID"}), 403
-    energetica.utils.chat.add_message(player, message, chat)
+    energetica.utils.chat.add_message(g.player, message, chat)
     return jsonify({"response": "success"})
 
 
 @http.route("change_graph_view", methods=["POST"])
 def change_graph_view() -> Response:
     """Change the view mode for the graphs (basic, normal, expert)."""
-    player = Player.getitem(current_user.id)
     request_data = request.get_json()
     view = request_data["view"]
-    player.change_graph_view(view)
+    g.player.change_graph_view(view)
     return jsonify({"response": "success"})
 
 
 @http.route("test_notification", methods=["GET"])
 def test_notification() -> Response:
     """Send a dummy notification to the player."""
-    player = Player.getitem(current_user.id)
     notification_data = {
         "title": "Test notification",
         "body": f"{engine.data['total_t']} ({datetime.now()})",
     }
-    player.send_notification(notification_data)
+    g.player.send_notification(notification_data)
     return jsonify({"response": "success"})
 
 
 @http.route("set_notification_preferences", methods=["POST"])
 def set_notification_preferences() -> Response:
     """Set notification preferences for a player."""
-    player = Player.getitem(current_user.id)
     preferences = request.get_json()["notification_preferences"]
-    player.notification_preferences = preferences
+    g.player.notification_preferences = preferences
     return jsonify({"response": "success"})
