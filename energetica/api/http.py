@@ -51,6 +51,7 @@ def log_action(func: Callable) -> Callable:
 
         log_entry = {
             "timestamp": datetime.now().isoformat(),
+            "ip": request.remote_addr,
             "action_type": "request",
             "player_id": current_user.id,
             "request": {
