@@ -293,6 +293,15 @@ class GameEngine(object):
             tar.add("instance/")
         os.replace("checkpoints/new_checkpoint.tar.gz", destination_filename)
 
+    def with_lock(self, func):
+        """Run a function with the engine lock."""
+
+        def wrapped(*args, **kwargs):
+            with self.lock:
+                return func(*args, **kwargs)
+
+        return wrapped
+
     def package_global_data(self) -> dict:
         """Package mutable from energetica.globals import engine data as a dict to be sent and used on the frontend."""
         return {
