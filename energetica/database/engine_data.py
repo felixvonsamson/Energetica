@@ -37,6 +37,7 @@ class NetworkPrices:
 
     # Prices are randomized so that each player's prices are slightly different. This leads to more interesting
     # market dynamics, while still having reasonable default prices.
+    # TODO (mglst): add randomess to theses prices
     bid_prices: dict[str, float] = field(default_factory=lambda: {"steam_engine": 125.0})
     ask_prices: dict[str, float] = field(default_factory=lambda: {"industry": 1000.0, "construction": 1020.0})
 
@@ -91,7 +92,7 @@ class NetworkPrices:
                 engine.data["random_seed"],
                 "ask",
                 ask_name,
-                player.username,  # TODO(mglst): replace with player coordinates
+                player.id,
             )
         )
         random.seed(seed_hash)

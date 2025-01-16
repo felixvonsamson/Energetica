@@ -115,9 +115,11 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         seed_hash = hash(
             (
                 engine.data["random_seed"],
-                player.tile.coordinates,
+                player.id,
                 project.name,
-                ActiveFacility.count_when(name=project.name, player=player),
+                ActiveFacility.count_when(
+                    name=project.name, player=player
+                ),  # TODO (mglst): This is not good, we should use the facility id or the "location"
             ),
         )
         random.seed(seed_hash)
