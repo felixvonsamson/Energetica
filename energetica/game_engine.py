@@ -243,12 +243,12 @@ class GameEngine(object):
 
         Path("instance/player_data").mkdir(parents=True, exist_ok=True)
         Path("instance/server_data").mkdir(parents=True, exist_ok=True)
+        climate_data = data_init_climate(
+            in_game_seconds_per_tick,
+            self.data["random_seed"],
+            self.data["delta_t"],
+        )
         with open("instance/server_data/climate_data.pck", "wb") as file:
-            climate_data = data_init_climate(
-                in_game_seconds_per_tick,
-                self.data["random_seed"],
-                self.data["delta_t"],
-            )
             pickle.dump(climate_data, file)
 
     def init_loggers(self) -> None:
