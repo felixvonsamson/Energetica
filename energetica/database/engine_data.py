@@ -40,8 +40,8 @@ class NetworkPrices:
     bid_prices: dict[str, float] = field(default_factory=lambda: {"steam_engine": 125.0})
     ask_prices: dict[str, float] = field(default_factory=lambda: {"industry": 1000.0, "construction": 1020.0})
 
-    def add_bid(self, bid_name: str, player: Player) -> None:
-        """Add a facility to the list of bids, using the default price."""
+    def create_bid_entry(self, bid_name: str, player: Player) -> None:
+        """Add a new facility to the list of bids, using the default price."""
         default_bid_price = {
             "steam_engine": 125.0,
             "coal_burner": 600.0,
@@ -69,7 +69,7 @@ class NetworkPrices:
         added_randomness = random.uniform(-15, 15)
         self.bid_prices[bid_name] = default_bid_price + added_randomness
 
-    def add_ask(self, ask_name: str, player: Player) -> None:
+    def create_ask_entry(self, ask_name: str, player: Player) -> None:
         """Add a facility to the list of asks, using the default price."""
         default_ask_price = {
             "research": 1200.0,

@@ -37,13 +37,13 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
                 player.rolling_history.add_subcategory("demand", project.name)
                 player.rolling_history.add_subcategory("emissions", project.name)
                 player.cumul_emissions.add_category(project.name)
-                player.network_prices.add_ask(project.name, player)
+                player.network_prices.create_ask_entry(project.name, player)
             if project.name == "warehouse":
                 for resource in ["coal", "gas", "uranium"]:
                     player.rolling_history.add_subcategory("resources", resource)
-                player.network_prices.add_ask("transport", player)
+                player.network_prices.create_ask_entry("transport", player)
             if project.name == "laboratory":
-                player.network_prices.add_ask("research", player)
+                player.network_prices.create_ask_entry("research", player)
 
         player.functional_facility_lvl[project.name] += 1
 
@@ -70,11 +70,11 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             player.cumul_emissions.add_category(project.name)
         # add facility to player's NetworkPrices
         if project.name in engine.extraction_facilities + engine.storage_facilities:
-            player.network_prices.add_ask(project.name, player)
+            player.network_prices.create_ask_entry(project.name, player)
         if project.name in engine.renewables:
             player.network_prices.renewable_bids.append(project.name)
         if project.name in engine.storage_facilities + engine.controllable_facilities:
-            player.network_prices.add_bid(project.name, player)
+            player.network_prices.create_bid_entry(project.name, player)
 
     player.check_construction_achievements(project.name)
 
