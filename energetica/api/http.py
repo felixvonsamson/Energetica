@@ -77,6 +77,7 @@ def log_action(func: Callable) -> Callable:
 @http.before_request
 @login_required
 def check_if_logged_in():
+    """Function that is called before every request and ensures that the player is logged in. (FLASK)"""
     g.player = current_user.self
 
 
