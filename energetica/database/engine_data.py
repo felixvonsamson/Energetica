@@ -37,9 +37,8 @@ class NetworkPrices:
 
     # Prices are randomized so that each player's prices are slightly different. This leads to more interesting
     # market dynamics, while still having reasonable default prices.
-    # TODO (mglst): add randomess to theses prices
-    bid_prices: dict[str, float] = field(default_factory=lambda: {"steam_engine": 125.0})
-    ask_prices: dict[str, float] = field(default_factory=lambda: {"industry": 1000.0, "construction": 1020.0})
+    bid_prices: dict[str, float] = field(default_factory=lambda: {})
+    ask_prices: dict[str, float] = field(default_factory=lambda: {})
 
     def create_bid_entry(self, bid_name: str, player: Player) -> None:
         """Add a new facility to the list of bids, using the default price."""
@@ -73,6 +72,8 @@ class NetworkPrices:
     def create_ask_entry(self, ask_name: str, player: Player) -> None:
         """Add a facility to the list of asks, using the default price."""
         default_ask_price = {
+            "industry": 1000.0,
+            "construction": 1020.0,
             "research": 1200.0,
             "transport": 1050.0,
             "coal_mine": 960.0,

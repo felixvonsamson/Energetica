@@ -120,6 +120,15 @@ class Player(DBModel, UserMixin):
     )
     socketio_clients: list = field(default_factory=list)
 
+    def __post_init__(self) -> None:
+        """Post initialization method for Player."""
+        # The __post_init__ method of the parent class is called automatically, but after the __post_init__ of the child
+        # class. But the id must be assigned before adding bids and asks. So we call the parent __post_init__ first.
+        super().__post_init__()
+        self.network_prices.create_bid_entry("steam_engine", self)
+        self.network_prices.create_ask_entry("industry", self)
+        self.network_prices.create_ask_entry("construction", self)
+
     def get_level(self, functional_facility_or_technology: str) -> int:
         """Return the technology or functional facility level of the player."""
         if functional_facility_or_technology in self.functional_facility_lvl:
