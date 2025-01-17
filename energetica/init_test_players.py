@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash
 from energetica.database.map import HexTile
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.enums import Fuel, ProjectName
+from energetica.enums import Fuel, ProjectType
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.assets import finish_project, queue_project
@@ -16,7 +16,7 @@ from energetica.utils.network_helpers import create_network, join_network
 def init_test_players():
     """Initialize the database with test players and networks."""
 
-    def add_asset(player: Player, project_name: ProjectName, n):
+    def add_asset(player: Player, project_name: ProjectType, n):
         """Create a project that will instantly finish."""
         for _ in range(n):
             ongoing_project = queue_project(

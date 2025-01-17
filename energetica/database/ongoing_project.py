@@ -8,7 +8,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
-from energetica.enums import FunctionalFacility, ProjectName, Technology, WorkerType
+from energetica.enums import FunctionalFacilityType, ProjectType, TechnologyType, WorkerType
 from energetica.globals import engine
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ class ProjectStatus:
 class OngoingProject(DBModel):
     """Class that stores projects."""
 
-    name: ProjectName
+    name: ProjectType
     player: Player
 
     end_tick_or_ticks_passed: float  # in game ticks when the project will be finished or ticks passed if it is paused
@@ -73,7 +73,7 @@ class OngoingProject(DBModel):
         assert self.status == ProjectStatus.WAITING
         assert not self.prerequisites
 
-        worker_type = WorkerType.Research if isinstance(self.name, Technology) else WorkerType.CONSTRUCTION
+        worker_type = WorkerType.Research if isinstance(self.name, TechnologyType) else WorkerType.CONSTRUCTION
         assert self.player.available_workers(worker_type) > 0
         if start_now:
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
@@ -84,7 +84,7 @@ class OngoingProject(DBModel):
     def unpause(self) -> None:
         """Make this facility go from paused to either waiting or ongoing."""
         assert self.was_paused_by_player()
-        worker_type = WorkerType.RESEARCH if isinstance(self.name, Technology) else WorkerType.CONSTRUCTION
+        worker_type = WorkerType.RESEARCH if isinstance(self.name, TechnologyType) else WorkerType.CONSTRUCTION
         if self.prerequisites or self.player.available_workers(worker_type) < 1:
             self.status = ProjectStatus.WAITING
         else:
@@ -140,7 +140,7 @@ class OngoingProject(DBModel):
         prerequisites: list[OngoingProject] = []
         level = None
         this_priority_index: int
-        if isinstance(self.name, FunctionalFacility):
+        if isinstance(self.name, FunctionalFacilityType):
             # For functional facilities, the only prerequisites are ongoing projects of the same type
             priority_list = self.player.constructions_by_priority
             this_priority_index = priority_list.index(self)
@@ -151,7 +151,7 @@ class OngoingProject(DBModel):
                 if candidate_prerequisite.name == self.name:
                     prerequisites.append(candidate_prerequisite)
                     level += 1
-        elif isinstance(self.name, Technology):
+        elif isinstance(self.name, TechnologyType):
             # For technologies, const config needs to be checked
             const_config = engine.const_config["assets"]
             requirements = const_config[self.name]["requirements"]

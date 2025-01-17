@@ -10,19 +10,19 @@ from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.player import Player
 from energetica.enums import (
-    ControllableFacility,
-    ExtractionFacility,
+    ControllableFacilityType,
+    ExtractionFacilityType,
     Fuel,
-    FunctionalFacility,
-    PowerFacility,
-    ProjectName,
-    RenewableFacility,
-    SpecialAsk,
-    StorageFacility,
-    Technology,
+    FunctionalFacilityType,
+    PowerFacilityType,
+    ProjectType,
+    RenewableFacilityType,
+    SpecialAskType,
+    StorageFacilityType,
+    TechnologyType,
     WorkerType,
     power_facility_types,
-    renewables,
+    renewable_facility_types,
 )
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
@@ -43,25 +43,25 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
     """
     player: Player = project.player
 
-    if project.name in Technology:
+    if project.name in TechnologyType:
         player.technology_lvl[project.name] += 1
-    if project.name in FunctionalFacility:
+    if project.name in FunctionalFacilityType:
         if player.functional_facility_lvl[project.name] == 0:
             if project.name == "carbon_capture":
                 player.rolling_history.add_subcategory("demand", project.name)
                 player.rolling_history.add_subcategory("emissions", project.name)
                 player.cumul_emissions.add_category(project.name)
-                player.network_prices.add_ask(FunctionalFacility.CARBON_CAPTURE, player)
+                player.network_prices.add_ask(FunctionalFacilityType.CARBON_CAPTURE, player)
             if project.name == "warehouse":
                 for fuel in Fuel:
                     player.rolling_history.add_subcategory("resources", fuel.value)
-                player.network_prices.add_ask(SpecialAsk.TRANSPORT, player)
+                player.network_prices.add_ask(SpecialAskType.TRANSPORT, player)
             if project.name == "laboratory":
-                player.network_prices.add_ask(SpecialAsk.RESEARCH, player)
+                player.network_prices.add_ask(SpecialAskType.RESEARCH, player)
 
         player.functional_facility_lvl[project.name] += 1
 
-        if isinstance(project.name, Technology):
+        if isinstance(project.name, TechnologyType):
             player.progression_metrics["total_technologies"] += 1
             server_tech = engine.data["technology_lvls"][project.name]
             if len(server_tech) <= player.technology_lvl[project.name]:
@@ -71,23 +71,23 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
 
     elif not ActiveFacility.count_when(name=project.name, player=player):
         # initialize array for facility if it is the first one built
-        if isinstance(project.name, StorageFacility | PowerFacility | ExtractionFacility):
+        if isinstance(project.name, StorageFacilityType | PowerFacilityType | ExtractionFacilityType):
             player.rolling_history.add_subcategory("op_costs", project.name)
-        if isinstance(project.name, StorageFacility | PowerFacility):
+        if isinstance(project.name, StorageFacilityType | PowerFacilityType):
             player.rolling_history.add_subcategory("generation", project.name)
-        if isinstance(project.name, StorageFacility | ExtractionFacility):
+        if isinstance(project.name, StorageFacilityType | ExtractionFacilityType):
             player.rolling_history.add_subcategory("demand", project.name)
-        if isinstance(project.name, StorageFacility):
+        if isinstance(project.name, StorageFacilityType):
             player.rolling_history.add_subcategory("storage", project.name)
-        if isinstance(project.name, ControllableFacility | ExtractionFacility):
+        if isinstance(project.name, ControllableFacilityType | ExtractionFacilityType):
             player.rolling_history.add_subcategory("emissions", project.name)
             player.cumul_emissions.add_category(project.name)
         # add facility to player's NetworkPrices
-        if isinstance(project.name, ExtractionFacility | StorageFacility):
+        if isinstance(project.name, ExtractionFacilityType | StorageFacilityType):
             player.network_prices.add_ask(project.name, player)
-        if project.name in renewables:
+        if project.name in renewable_facility_types:
             player.network_prices.renewable_bids.append(project.name)
-        if isinstance(project.name, StorageFacility | ControllableFacility):
+        if isinstance(project.name, StorageFacilityType | ControllableFacilityType):
             player.network_prices.add_bid(project.name, player)
 
     player.check_construction_achievements(project.name)
@@ -95,7 +95,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
     project.delete()
 
     worker_type: WorkerType
-    worker_type = WorkerType.RESEARCH if isinstance(project.name, Technology) else WorkerType.CONSTRUCTION
+    worker_type = WorkerType.RESEARCH if isinstance(project.name, TechnologyType) else WorkerType.CONSTRUCTION
     if project not in player.get_project_priority_list(worker_type):
         pass
     player.get_project_priority_list(worker_type).remove(project)
@@ -104,16 +104,16 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
 
     project_name = engine.const_config["assets"][project.name]["name"]
     if not skip_notifications:
-        if isinstance(project.name, Technology):
+        if isinstance(project.name, TechnologyType):
             player.notify("Technologies", f"+ 1 lvl <b>{project_name}</b>.")
             engine.log(f"{player.username} : + 1 lvl {project_name}")
-        elif isinstance(project.name, FunctionalFacility):
+        elif isinstance(project.name, FunctionalFacilityType):
             player.notify("Constructions", f"+ 1 lvl <b>{project_name}</b>")
             engine.log(f"{player.username} : + 1 lvl {project_name}")
         else:
             player.notify("Constructions", f"+ 1 <b>{project_name}</b>")
             engine.log(f"{player.username} : + 1 {project_name}")
-    if isinstance(project.name, PowerFacility | StorageFacility | ExtractionFacility):
+    if isinstance(project.name, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):
         eol = engine.data["total_t"] + math.ceil(
             engine.const_config["assets"][project.name]["lifespan"] / engine.in_game_seconds_per_tick
         )
@@ -140,7 +140,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             player=player,
             multipliers=project.multipliers,
         )
-    if isinstance(project.name, Technology):
+    if isinstance(project.name, TechnologyType):
         player.capacities.update(player, None)
     else:
         player.capacities.update(player, project.name)
@@ -148,7 +148,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
     player.emit("retrieve_player_data")
     player.emit("finish_construction", package_projects_data(player))
 
-    if isinstance(project.name, FunctionalFacility):
+    if isinstance(project.name, FunctionalFacilityType):
         player.invalidate_recompute_and_dispatch_data_for_pages(
             functional_facilities=True,
             technologies=project.name == "laboratory",
@@ -157,7 +157,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         # Deploy any new workers from laboratory upgrades
         if project.name == "laboratory":
             deploy_available_workers(player, WorkerType.RESEARCH, start_now=True)
-    if isinstance(project.name, Technology):
+    if isinstance(project.name, TechnologyType):
         if project.name == "construction_technology":
             deploy_available_workers(player, WorkerType.CONSTRUCTION, start_now=True)
         player.invalidate_recompute_and_dispatch_data_for_pages(
@@ -233,18 +233,18 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
         msg = "FacilityIsDecommissioning"
         raise GameError(msg)
     player.money -= upgrade_cost
-    if isinstance(facility.name, ExtractionFacility):
+    if isinstance(facility.name, ExtractionFacilityType):
         facility.multipliers["price_multiplier"] = technology_effects.price_multiplier(facility.player, facility.name)
         facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(facility.player, facility.name)
         facility.multipliers["multiplier_2"] = technology_effects.multiplier_2(facility.player, facility.name)
         facility.multipliers["multiplier_3"] = technology_effects.multiplier_3(facility.player, facility.name)
     else:
         facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(facility.player, facility.name)
-        if isinstance(facility.name, PowerFacility | StorageFacility):
+        if isinstance(facility.name, PowerFacilityType | StorageFacilityType):
             facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(facility.player, facility.name)
-        if isinstance(facility.name, StorageFacility):
+        if isinstance(facility.name, StorageFacilityType):
             facility.multipliers["multiplier_2"] = technology_effects.multiplier_2(facility.player, facility.name)
-        if isinstance(facility.name, ControllableFacility | StorageFacility):
+        if isinstance(facility.name, ControllableFacilityType | StorageFacilityType):
             facility.multipliers["multiplier_3"] = technology_effects.multiplier_3(facility.player, facility.name)
     player.capacities.update(player, facility.name)
 
@@ -266,10 +266,10 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     if facility is None or facility.player != player:
         msg = "Facility not found"
         raise GameError(msg)
-    if isinstance(facility.name, Technology | FunctionalFacility):
+    if isinstance(facility.name, TechnologyType | FunctionalFacilityType):
         msg = "Cannot remove technologies or functional facilities"
         raise GameError(msg)
-    if isinstance(facility.name, StorageFacility) and not decommissioning:
+    if isinstance(facility.name, StorageFacilityType) and not decommissioning:
         facility.end_of_life = 0
         player.capacities.update(player, facility.name)
         return
@@ -278,11 +278,11 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     player.money -= cost
     if not ActiveFacility.filter_by(name=facility.name, player=player):
         # remove facility from facility priorities if it was the last one
-        if isinstance(facility.name, ExtractionFacility | StorageFacility):
+        if isinstance(facility.name, ExtractionFacilityType | StorageFacilityType):
             del player.network_prices.ask_prices[facility.name]
-        if isinstance(facility.name, RenewableFacility):
+        if isinstance(facility.name, RenewableFacilityType):
             player.network_prices.renewable_bids.remove(facility.name)
-        if isinstance(facility.name, StorageFacility | ControllableFacility):
+        if isinstance(facility.name, StorageFacilityType | ControllableFacilityType):
             del player.network_prices.bid_prices[facility.name]
     facility_name = engine.const_config["assets"][facility.name]["name"]
     if decommissioning:
@@ -349,7 +349,7 @@ def package_projects_data(player: Player) -> dict:
 
 def queue_project(
     player: Player,
-    project_name: ProjectName,
+    project_name: ProjectType,
     *,
     force: bool = False,
     ignore_requirements_and_money: bool = False,
@@ -402,7 +402,7 @@ def queue_project(
         },
         player=player,
     )
-    if project_name in Technology:
+    if project_name in TechnologyType:
         player.researches_by_priority.append(new_construction)
     else:
         player.constructions_by_priority.append(new_construction)
@@ -434,9 +434,9 @@ def invalidate_data_on_project_update(player: Player, asset_type: str) -> None:
         "offshore_wind_turbine",
     }:
         player.invalidate_recompute_and_dispatch_data_for_pages(power_facilities=True)
-    elif isinstance(asset_type, FunctionalFacility):
+    elif isinstance(asset_type, FunctionalFacilityType):
         player.invalidate_recompute_and_dispatch_data_for_pages(functional_facilities=True)
-    elif isinstance(asset_type, Technology):
+    elif isinstance(asset_type, TechnologyType):
         player.invalidate_recompute_and_dispatch_data_for_pages(technologies=True)
 
 
@@ -448,7 +448,7 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
 
     dependents = []
     priority_list = player.get_project_priority_list(
-        WorkerType.RESEARCH if isinstance(project.name, Technology) else WorkerType.CONSTRUCTION
+        WorkerType.RESEARCH if isinstance(project.name, TechnologyType) else WorkerType.CONSTRUCTION
     )
     project_priority_index = priority_list.index(project)
     for candidate_dependent in priority_list[project_priority_index + 1 :]:
@@ -474,7 +474,7 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
 
     project.delete()
 
-    worker_type = WorkerType.RESEARCH if isinstance(project.name, Technology) else WorkerType.CONSTRUCTION
+    worker_type = WorkerType.RESEARCH if isinstance(project.name, TechnologyType) else WorkerType.CONSTRUCTION
     deploy_available_workers(player, worker_type)
     player.send_worker_info()
 
@@ -497,7 +497,7 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
         msg = "Project not found"
         raise GameError(msg)
 
-    worker_type = WorkerType.RESEARCH if isinstance(project.name, Technology) else WorkerType.CONSTRUCTION
+    worker_type = WorkerType.RESEARCH if isinstance(project.name, TechnologyType) else WorkerType.CONSTRUCTION
     priority_list = player.get_project_priority_list(worker_type)
     index = priority_list.index(project)
     if index == len(priority_list) - 1:
@@ -543,7 +543,7 @@ def toggle_pause_project(player: Player, project: OngoingProject) -> None:
         msg = "Project not found"
         raise GameError(msg)
 
-    worker_type = WorkerType.RESEARCH if isinstance(project.name, Technology) else WorkerType.CONSTRUCTION
+    worker_type = WorkerType.RESEARCH if isinstance(project.name, TechnologyType) else WorkerType.CONSTRUCTION
 
     if not project.was_paused_by_player():
         # project is currently not paused by player, and should be paused
@@ -581,7 +581,7 @@ def toggle_pause_project(player: Player, project: OngoingProject) -> None:
             player.set_project_priority_list(worker_type, priority_list)
 
         # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
-        worker_type = WorkerType.RESEARCH if isinstance(project.name, Technology) else WorkerType.CONSTRUCTION
+        worker_type = WorkerType.RESEARCH if isinstance(project.name, TechnologyType) else WorkerType.CONSTRUCTION
         deploy_available_workers(player, worker_type)
         player.send_worker_info()
 

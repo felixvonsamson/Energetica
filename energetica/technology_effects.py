@@ -15,18 +15,18 @@ from energetica.config.assets import (
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_project import OngoingProject
 from energetica.enums import (
-    ControllableFacility,
-    ExtractionFacility,
+    ControllableFacilityType,
+    ExtractionFacilityType,
     Fuel,
-    FunctionalFacility,
-    PowerFacility,
-    ProjectName,
+    FunctionalFacilityType,
+    PowerFacilityType,
+    ProjectType,
     Renewable,
-    RenewableFacility,
-    StorageFacility,
-    Technology,
+    RenewableFacilityType,
+    StorageFacilityType,
+    TechnologyType,
     power_facility_types,
-    renewables,
+    renewable_facility_types,
 )
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -62,7 +62,7 @@ def special_multiplier(pf: float, lvl: int) -> float:
     return (0.5 + 0.5 * pf) ** lvl + np.log(pf / (0.5 + 0.5 * pf)) * lvl
 
 
-def research_prevalence(technology_name: ProjectName, level: int) -> int:
+def research_prevalence(technology_name: ProjectType, level: int) -> int:
     """
     Return the number of players that have researched the technology at the given level.
 
@@ -84,7 +84,7 @@ def knowledge_spillover_discount(times_researched: int) -> float:
     return 0.92**times_researched
 
 
-def price_multiplier(player: Player, project_name: ProjectName) -> float:
+def price_multiplier(player: Player, project_name: ProjectType) -> float:
     """Return the price multiplier according to the technology level of the player."""
     const_config = engine.const_config["assets"]
     mlt = 1.0
@@ -102,16 +102,16 @@ def price_multiplier(player: Player, project_name: ProjectName) -> float:
         if project_name in const_config[research]["affected_facilities"]:
             mlt *= special_multiplier(const_config[research]["price_factor"], player.technology_lvl[research])
     # level based facilities and technologies
-    if isinstance(project_name, FunctionalFacility | Technology):
+    if isinstance(project_name, FunctionalFacilityType | TechnologyType):
         asset_next_level = next_level(player, project_name)
         mlt *= const_config[project_name]["price_multiplier"] ** (asset_next_level - 1)
         # knowledge spilling for technologies
-        if isinstance(project_name, Technology):
+        if isinstance(project_name, TechnologyType):
             mlt *= knowledge_spillover_discount(research_prevalence(project_name, asset_next_level))
     return mlt
 
 
-def multiplier_1(player: Player, facility_name: ProjectName) -> float:
+def multiplier_1(player: Player, facility_name: ProjectType) -> float:
     """
     Return the first multiplier according to the technology level of the player.
 
@@ -123,7 +123,7 @@ def multiplier_1(player: Player, facility_name: ProjectName) -> float:
     return power_production_multiplier(player, facility_name)
 
 
-def power_production_multiplier(player: Player, facility_name: ProjectName) -> float:
+def power_production_multiplier(player: Player, facility_name: ProjectType) -> float:
     """Return by how much the `facility`'s `base_power_generation` should be multiplied."""
     const_config = engine.const_config["assets"]
     mlt = 1.0
@@ -154,7 +154,7 @@ def power_production_multiplier(player: Player, facility_name: ProjectName) -> f
     return mlt
 
 
-def power_consumption_multiplier(player: Player, facility_name: ProjectName) -> float:
+def power_consumption_multiplier(player: Player, facility_name: ProjectType) -> float:
     """Return by how much the `facility`'s `base_power_consumption` should be multiplied."""
     const_config = engine.const_config["assets"]
     mlt = 1
@@ -164,7 +164,7 @@ def power_consumption_multiplier(player: Player, facility_name: ProjectName) -> 
     return mlt
 
 
-def multiplier_2(player: Player, facility_name: ProjectName) -> float:
+def multiplier_2(player: Player, facility_name: ProjectType) -> float:
     """
     Return the second multiplier according to the technology level of the player.
 
@@ -181,7 +181,7 @@ def multiplier_2(player: Player, facility_name: ProjectName) -> float:
     return capacity_multiplier(player, facility_name)
 
 
-def capacity_multiplier(player: Player, storage_facility_name: ProjectName) -> float:
+def capacity_multiplier(player: Player, storage_facility_name: ProjectType) -> float:
     """
     Return by how much the `facility`'s `base_storage_capacity` should be multiplied.
 
@@ -211,7 +211,7 @@ def extraction_rate_multiplier(player: Player, level: int | None = None) -> floa
     return 1 + const_config["mineral_extraction"]["extract_factor"] * level
 
 
-def hydro_price_multiplier(player: Player, hydro_facility_name: ProjectName) -> float:
+def hydro_price_multiplier(player: Player, hydro_facility_name: ProjectType) -> float:
     """
     Return by how much the `facility`'s `base_price` should be multiplied.
 
@@ -229,7 +229,7 @@ def hydro_price_multiplier(player: Player, hydro_facility_name: ProjectName) -> 
     return mlt
 
 
-def wind_speed_multiplier(player: Player, wind_facility_name: ProjectName) -> float:
+def wind_speed_multiplier(player: Player, wind_facility_name: ProjectType) -> float:
     """
     Return by how much the wind at the `facility`'s location should be multiplied.
 
@@ -248,7 +248,7 @@ def wind_speed_multiplier(player: Player, wind_facility_name: ProjectName) -> fl
     return mlt
 
 
-def multiplier_3(player: Player, facility_name: ProjectName) -> float:
+def multiplier_3(player: Player, facility_name: ProjectType) -> float:
     """
     Return the third multiplier according to the technology level of the player.
 
@@ -270,7 +270,7 @@ def multiplier_3(player: Player, facility_name: ProjectName) -> float:
     return efficiency_multiplier(player, facility_name)
 
 
-def efficiency_multiplier(player: Player, facility_name: ProjectName) -> float:
+def efficiency_multiplier(player: Player, facility_name: ProjectType) -> float:
     """
     Return by how much the `facility`'s `base_efficiency` should be multiplied.
 
@@ -288,7 +288,7 @@ def efficiency_multiplier(player: Player, facility_name: ProjectName) -> float:
     return 1
 
 
-def efficiency_multiplier_thermodynamics(player: Player, facility_name: ProjectName, level: int | None = None) -> float:
+def efficiency_multiplier_thermodynamics(player: Player, facility_name: ProjectType, level: int | None = None) -> float:
     """
     Return by how much the `base_efficiency` should be multiplied.
 
@@ -307,7 +307,7 @@ def efficiency_multiplier_thermodynamics(player: Player, facility_name: ProjectN
     return thermodynamic_factor
 
 
-def efficiency_multiplier_chemistry(player: Player, facility_name: ProjectName, level: int | None = None) -> float:
+def efficiency_multiplier_chemistry(player: Player, facility_name: ProjectType, level: int | None = None) -> float:
     """
     Return by how much the `base_efficiency` should be multiplied.
 
@@ -323,7 +323,7 @@ def efficiency_multiplier_chemistry(player: Player, facility_name: ProjectName, 
     return 1 / const_config[facility_name]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
 
 
-def extraction_emissions_multiplier(player: Player, extraction_facility_name: ProjectName) -> float:
+def extraction_emissions_multiplier(player: Player, extraction_facility_name: ProjectType) -> float:
     """Return by how much the `facility`'s `base_pollution` should be multiplied."""
     const_config = engine.const_config["assets"]
     mlt = 1
@@ -333,7 +333,7 @@ def extraction_emissions_multiplier(player: Player, extraction_facility_name: Pr
     return mlt
 
 
-def next_available_location(player: Player, facility_name: ProjectName) -> int:
+def next_available_location(player: Player, facility_name: ProjectType) -> int:
     """Return the next available location for a hydro and wind facilities."""
     active_facilities = ActiveFacility.filter_by(
         name=facility_name,
@@ -352,7 +352,7 @@ def next_available_location(player: Player, facility_name: ProjectName) -> int:
     return i
 
 
-def construction_price(player: Player, project_name: ProjectName) -> float:
+def construction_price(player: Player, project_name: ProjectType) -> float:
     """
     Return the construction price of the `facility` for the `player`.
 
@@ -368,34 +368,38 @@ def construction_price(player: Player, project_name: ProjectName) -> float:
     )
 
 
-def construction_time(player: Player, project_name: ProjectName) -> float:
+def construction_time(player: Player, project_name: ProjectType) -> float:
     """Return the construction time in ticks."""
     const_config = engine.const_config["assets"]
     # transforming in game seconds in ticks
     duration = const_config[project_name]["base_construction_time"] / engine.in_game_seconds_per_tick
     # construction time increases with higher levels
-    if isinstance(project_name, FunctionalFacility | Technology):
+    if isinstance(project_name, FunctionalFacilityType | TechnologyType):
         level_with_constructions = OngoingProject.count_when(name=project_name, player=player)
         duration *= const_config[project_name]["price_multiplier"] ** (0.6 * level_with_constructions)
         # knowledge spillover and laboratory time reduction
-        if isinstance(project_name, Technology):
+        if isinstance(project_name, TechnologyType):
             duration *= 0.92 ** research_prevalence(project_name, next_level(player, project_name))
             duration *= const_config["laboratory"]["time_factor"] ** player.functional_facility_lvl["laboratory"]
     # building technology time reduction
     if isinstance(
         project_name,
-        StorageFacility | ControllableFacility | RenewableFacility | ExtractionFacility | FunctionalFacility,
+        StorageFacilityType
+        | ControllableFacilityType
+        | RenewableFacilityType
+        | ExtractionFacilityType
+        | FunctionalFacilityType,
     ):
         duration *= const_config["building_technology"]["time_factor"] ** player.technology_lvl["building_technology"]
     return duration
 
 
-def construction_power(player: Player, project_name: ProjectName) -> float:
+def construction_power(player: Player, project_name: ProjectType) -> float:
     """Return the construction power in W according to the technology level of the player."""
     const_config = engine.const_config["assets"]
     bt_factor = const_config["building_technology"]["time_factor"] ** player.technology_lvl["building_technology"]
     # construction power in relation of facilities characteristics
-    if isinstance(project_name, PowerFacility):
+    if isinstance(project_name, PowerFacilityType):
         # Materials (in this case it is the energy consumption for construction)
         mlt = 1
         if project_name in const_config["materials"]["affected_facilities"]:
@@ -407,14 +411,14 @@ def construction_power(player: Player, project_name: ProjectName) -> float:
             * mlt
             / bt_factor
         )
-    if isinstance(project_name, ExtractionFacility):
+    if isinstance(project_name, ExtractionFacilityType):
         return (
             const_config[project_name]["base_power_consumption"]
             * const_config[project_name]["construction_power_factor"]
             * power_consumption_multiplier(player, project_name)
             / bt_factor
         )
-    if isinstance(project_name, StorageFacility):
+    if isinstance(project_name, StorageFacilityType):
         return (
             const_config[project_name]["base_storage_capacity"]
             * const_config[project_name]["construction_power_factor"]
@@ -428,20 +432,20 @@ def construction_power(player: Player, project_name: ProjectName) -> float:
         * 3600
     )
     # construction power increases with higher levels
-    if isinstance(project_name, FunctionalFacility | Technology):
+    if isinstance(project_name, FunctionalFacilityType | TechnologyType):
         facility_next_level = next_level(player, project_name)
         power *= const_config[project_name]["price_multiplier"] ** (facility_next_level - 1)
     return power
 
 
-def construction_pollution_per_tick(player: Player, project_name: ProjectName) -> float:
+def construction_pollution_per_tick(player: Player, project_name: ProjectType) -> float:
     """Return the construction pollution per tick according to the technology level of the player."""
     const_config = engine.const_config["assets"]
-    if isinstance(project_name, Technology):
+    if isinstance(project_name, TechnologyType):
         return 0
     pollution = const_config[project_name]["base_construction_pollution"] / construction_time(player, project_name)
     # construction pollution increases with higher levels for functional facilities
-    if isinstance(project_name, FunctionalFacility):
+    if isinstance(project_name, FunctionalFacilityType):
         pollution *= const_config[project_name]["price_multiplier"] ** player.get_level(project_name)
     return pollution
 
@@ -456,12 +460,12 @@ def wind_speed_function(count: int, potential: float) -> float:
     return 1.3 / (math.log(math.e + (count * (1 / (9 * potential + 1))) ** 2))
 
 
-def project_requirements(player: Player, project_name: ProjectName) -> list[dict[str, str | int]]:
+def project_requirements(player: Player, project_name: ProjectType) -> list[dict[str, str | int]]:
     """Return the list of requirements (name, level, and satisfaction status) for the specified asset."""
     const_config = engine.const_config["assets"]
     requirements = const_config[project_name]["requirements"]
     level_offset = 0
-    if isinstance(project_name, FunctionalFacility | Technology):
+    if isinstance(project_name, FunctionalFacilityType | TechnologyType):
         level_offset = next_level(player, project_name) - 1
     return [
         {
@@ -483,7 +487,7 @@ def project_requirements(player: Player, project_name: ProjectName) -> list[dict
     ]
 
 
-def requirements_status(player: Player, project_name: ProjectName, requirements: list) -> str:
+def requirements_status(player: Player, project_name: ProjectType, requirements: list) -> str:
     """
     Return the satisfaction status of the requirements for the specified asset.
 
@@ -495,7 +499,7 @@ def requirements_status(player: Player, project_name: ProjectName, requirements:
     # TODO(mglst): this method, and the others about requirements should be revised, as they are unclear
     const_config = engine.const_config["assets"]
     if all(requirement["status"] == "satisfied" for requirement in requirements):
-        if isinstance(project_name, Technology) and OngoingProject.filter_by(name=project_name, player=player):
+        if isinstance(project_name, TechnologyType) and OngoingProject.filter_by(name=project_name, player=player):
             return "queued"
         return "satisfied"
     if const_config[project_name]["type"] == "Technology" and all(
@@ -505,7 +509,7 @@ def requirements_status(player: Player, project_name: ProjectName, requirements:
     return "unsatisfied"
 
 
-def project_requirements_and_requirements_status(player: Player, project_name: ProjectName) -> dict:
+def project_requirements_and_requirements_status(player: Player, project_name: ProjectType) -> dict:
     """Return a dictionary with the list of requirements and the requirements_status."""
     requirements = project_requirements(player, project_name)
     return {
@@ -514,7 +518,7 @@ def project_requirements_and_requirements_status(player: Player, project_name: P
     }
 
 
-def power_facility_resource_consumption(player: Player, power_facility_name: ProjectName) -> float:
+def power_facility_resource_consumption(player: Player, power_facility_name: ProjectType) -> float:
     """Return a dictionary of the resources consumed by the power_facility for this player."""
     # TODO(mglst): perhaps rejig how this information is packaged.
     # Namely, switch from a dictionary with the system resource name as a key and a float for the amount as a value
@@ -528,7 +532,7 @@ def power_facility_resource_consumption(player: Player, power_facility_name: Pro
     return consumed_resources
 
 
-def _package_project_base(player: Player, project_name: ProjectName) -> dict:
+def _package_project_base(player: Player, project_name: ProjectType) -> dict:
     """Package data shared between power, storage, extraction, functional facilities, and technologies."""
     const_config_assets = engine.const_config["assets"]
     return {
@@ -542,7 +546,7 @@ def _package_project_base(player: Player, project_name: ProjectName) -> dict:
     } | project_requirements_and_requirements_status(player, project_name)
 
 
-def _package_power_generating_facility_base(player: Player, power_facility_name: ProjectName) -> dict:
+def _package_power_generating_facility_base(player: Player, power_facility_name: ProjectType) -> dict:
     """Package data shared by power and storage facilities."""
     const_config_assets = engine.const_config["assets"]
     return (
@@ -566,7 +570,7 @@ def _package_power_generating_facility_base(player: Player, power_facility_name:
     )
 
 
-def _capacity_factors(player: Player, renewable_name: ProjectName) -> dict:
+def _capacity_factors(player: Player, renewable_name: ProjectType) -> dict:
     """
     Get the capacity factors for renewable power facilities.
 
@@ -623,7 +627,7 @@ def _capacity_factors(player: Player, renewable_name: ProjectName) -> dict:
     return {}
 
 
-def _package_power_storage_extraction_facility_base(player: Player, facility_name: ProjectName) -> dict:
+def _package_power_storage_extraction_facility_base(player: Player, facility_name: ProjectType) -> dict:
     """Package data shared by power, storage, and extraction facilities."""
     const_config_assets = engine.const_config["assets"]
     return {
@@ -661,7 +665,7 @@ def package_power_facilities(player: Player) -> list[dict]:
                 "pollution": const_config_assets[power_facility]["base_pollution"]
                 / efficiency_multiplier(player, power_facility),
             }
-            if isinstance(power_facility, ControllableFacility | StorageFacility)
+            if isinstance(power_facility, ControllableFacilityType | StorageFacilityType)
             else {}
         )
         | (
@@ -692,7 +696,7 @@ def package_storage_facilities(player: Player) -> list[dict]:
             * efficiency_multiplier(player, storage_facility)
             * 100,
         }
-        for storage_facility in StorageFacility
+        for storage_facility in StorageFacilityType
     ]
 
 
@@ -732,11 +736,11 @@ def package_extraction_facilities(player: Player) -> list[dict]:
             },
             "poor_resource_production": production_will_be_poor(player.tile, extraction_facility.associated_fuel),
         }
-        for extraction_facility in ExtractionFacility
+        for extraction_facility in ExtractionFacilityType
     ]
 
 
-def project_is_hidden(player: Player, project_name: ProjectName) -> bool:
+def project_is_hidden(player: Player, project_name: ProjectType) -> bool:
     """
     Return true if the facility is hidden to the player due to lack of achievements.
 
@@ -745,7 +749,7 @@ def project_is_hidden(player: Player, project_name: ProjectName) -> bool:
     return project_name == "carbon_capture" and not player.discovered_greenhouse_gas_effect()
 
 
-def next_level(player: Player, facility_or_technology: ProjectName) -> int:
+def next_level(player: Player, facility_or_technology: ProjectType) -> int:
     """Return the level of the next `facility_or_technology` upgrade, e.g. current level + # ongoing upgrades + one."""
     return (
         player.get_level(facility_or_technology)
@@ -807,10 +811,10 @@ def package_functional_facilities(player: Player) -> list[dict]:
             / 24
         )
 
-    next_industry_level = next_level(player, FunctionalFacility.INDUSTRY)
-    next_laboratory_level = next_level(player, FunctionalFacility.LABORATORY)
-    next_warehouse_level = next_level(player, FunctionalFacility.WAREHOUSE)
-    next_carbon_capture_level = next_level(player, FunctionalFacility.CARBON_CAPTURE)
+    next_industry_level = next_level(player, FunctionalFacilityType.INDUSTRY)
+    next_laboratory_level = next_level(player, FunctionalFacilityType.LABORATORY)
+    next_warehouse_level = next_level(player, FunctionalFacilityType.WAREHOUSE)
+    next_carbon_capture_level = next_level(player, FunctionalFacilityType.CARBON_CAPTURE)
 
     special_keys = {
         "industry": {
@@ -872,7 +876,7 @@ def package_functional_facilities(player: Player) -> list[dict]:
             else {}
         )
         | special_keys[functional_facility]
-        for functional_facility in FunctionalFacility
+        for functional_facility in FunctionalFacilityType
         if not project_is_hidden(player, functional_facility)  # Hide carbon capture if not discovered
     ]
 
@@ -898,7 +902,7 @@ def package_available_technologies(player: Player) -> list[dict]:
     # TODO(mglst): Check all invoked functions and rename facility to asset if needed
     # Because these methods are common to both facilities and technologies, hence should use the name "asset"
     const_config_assets = engine.const_config["assets"]
-    levels: dict[str, int] = {technology: next_level(player, technology) for technology in Technology}
+    levels: dict[str, int] = {technology: next_level(player, technology) for technology in TechnologyType}
     return [
         _package_project_base(player, technology)
         | {
@@ -939,7 +943,7 @@ def package_available_technologies(player: Player) -> list[dict]:
                         - engine.const_config["assets"]["molten_salt"]["base_efficiency"]
                         * efficiency_multiplier_thermodynamics(
                             player,
-                            StorageFacility.MOLTEN_SALT,
+                            StorageFacilityType.MOLTEN_SALT,
                             level=levels[technology] - 1,
                         )
                     )
@@ -1031,7 +1035,7 @@ def package_available_technologies(player: Player) -> list[dict]:
                     - engine.const_config["assets"]["hydrogen_storage"]["base_efficiency"]
                     * efficiency_multiplier_chemistry(
                         player,
-                        StorageFacility.HYDROGEN_STORAGE,
+                        StorageFacilityType.HYDROGEN_STORAGE,
                         level=levels[technology] - 1,
                     )
                 )
@@ -1042,7 +1046,7 @@ def package_available_technologies(player: Player) -> list[dict]:
                     - engine.const_config["assets"]["lithium_ion_batteries"]["base_efficiency"]
                     * efficiency_multiplier_chemistry(
                         player,
-                        StorageFacility.LITHIUM_ION_BATTERIES,
+                        StorageFacilityType.LITHIUM_ION_BATTERIES,
                         level=levels[technology] - 1,
                     )
                 )
@@ -1053,7 +1057,7 @@ def package_available_technologies(player: Player) -> list[dict]:
                     - engine.const_config["assets"]["solid_state_batteries"]["base_efficiency"]
                     * efficiency_multiplier_chemistry(
                         player,
-                        StorageFacility.SOLID_STATE_BATTERIES,
+                        StorageFacilityType.SOLID_STATE_BATTERIES,
                         level=levels[technology] - 1,
                     )
                 )
@@ -1072,5 +1076,5 @@ def package_available_technologies(player: Player) -> list[dict]:
             else {}
         )
         # price_reduction_bonus
-        for technology in Technology
+        for technology in TechnologyType
     ]

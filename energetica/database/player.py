@@ -24,7 +24,14 @@ from energetica.database.engine_data import (
 from energetica.database.messages import Chat, Notification
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.shipment import OngoingShipment
-from energetica.enums import ExtractionFacility, Fuel, StorageFacility, Technology, WorkerType, power_facility_types
+from energetica.enums import (
+    ExtractionFacilityType,
+    Fuel,
+    StorageFacilityType,
+    TechnologyType,
+    WorkerType,
+    power_facility_types,
+)
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.technology_effects import (
@@ -257,7 +264,7 @@ class Player(DBModel, UserMixin):
             list(
                 OngoingProject.filter(
                     lambda construction: construction.player == self
-                    and not construction.name in Technology
+                    and not construction.name in TechnologyType
                     and construction.status == ProjectStatus.ONGOING,
                 ),
             ),
@@ -271,7 +278,7 @@ class Player(DBModel, UserMixin):
             list(
                 OngoingProject.filter(
                     lambda construction: construction.player == self
-                    and construction.name in Technology
+                    and construction.name in TechnologyType
                     and construction.status == ProjectStatus.ONGOING,
                 ),
             ),
@@ -742,7 +749,7 @@ class Player(DBModel, UserMixin):
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.capacities
         active_storage_facilities: list[ActiveFacility] = [
-            facility for facility in self.active_facilities if facility.name in StorageFacility
+            facility for facility in self.active_facilities if facility.name in StorageFacilityType
         ]
         storage_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for storage_facility in active_storage_facilities:
@@ -791,7 +798,7 @@ class Player(DBModel, UserMixin):
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.capacities
         active_extraction_facilities: list[ActiveFacility] = [
-            facility for facility in self.active_facilities if facility.name in ExtractionFacility
+            facility for facility in self.active_facilities if facility.name in ExtractionFacilityType
         ]
         extraction_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for extraction_facility in active_extraction_facilities:

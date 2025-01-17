@@ -39,7 +39,7 @@ class Renewable(StrEnum):
     HYDRO = "hydro"
 
 
-class WindFacility(StrEnum):
+class WindFacilityType(StrEnum):
     """Enum for wind facilities."""
 
     WINDMILL = "windmill"
@@ -47,7 +47,7 @@ class WindFacility(StrEnum):
     OFFSHORE_WIND_TURBINE = "offshore_wind_turbine"
 
 
-class HydroFacility(StrEnum):
+class HydroFacilityType(StrEnum):
     """Enum for hydro facilities."""
 
     WATERMILL = "watermill"
@@ -55,14 +55,14 @@ class HydroFacility(StrEnum):
     LARGE_WATER_DAM = "large_water_dam"
 
 
-class SolarFacility(StrEnum):
+class SolarFacilityType(StrEnum):
     """Enum for solar facilities."""
 
     CSP_SOLAR = "CSP_solar"
     PV_SOLAR = "PV_solar"
 
 
-class ControllableFacility(StrEnum):
+class ControllableFacilityType(StrEnum):
     """Enum for controllable facilities."""
 
     STEAM_ENGINE = "steam_engine"
@@ -73,7 +73,7 @@ class ControllableFacility(StrEnum):
     NUCLEAR_REACTOR_GEN4 = "nuclear_reactor_gen4"
 
 
-class StorageFacility(StrEnum):
+class StorageFacilityType(StrEnum):
     """Enum for storage facilities."""
 
     SMALL_PUMPED_HYDRO = "small_pumped_hydro"
@@ -84,7 +84,7 @@ class StorageFacility(StrEnum):
     SOLID_STATE_BATTERIES = "solid_state_batteries"
 
 
-class ExtractionFacility(StrEnum):
+class ExtractionFacilityType(StrEnum):
     """Enum for extraction facilities."""
 
     COAL_MINE = "coal_mine"
@@ -95,13 +95,13 @@ class ExtractionFacility(StrEnum):
     def associated_fuel(self) -> Fuel:
         """Return the fuel associated with the project."""
         return {
-            ExtractionFacility.COAL_MINE: Fuel.COAL,
-            ExtractionFacility.GAS_DRILLING_SITE: Fuel.GAS,
-            ExtractionFacility.URANIUM_MINE: Fuel.URANIUM,
+            ExtractionFacilityType.COAL_MINE: Fuel.COAL,
+            ExtractionFacilityType.GAS_DRILLING_SITE: Fuel.GAS,
+            ExtractionFacilityType.URANIUM_MINE: Fuel.URANIUM,
         }[self]
 
 
-class FunctionalFacility(StrEnum):
+class FunctionalFacilityType(StrEnum):
     """Enum for functional facilities."""
 
     INDUSTRY = "industry"
@@ -110,7 +110,7 @@ class FunctionalFacility(StrEnum):
     CARBON_CAPTURE = "carbon_capture"
 
 
-class Technology(StrEnum):
+class TechnologyType(StrEnum):
     """Enum for technologies."""
 
     MATHEMATICS = "mathematics"
@@ -127,7 +127,7 @@ class Technology(StrEnum):
     NUCLEAR_ENGINEERING = "nuclear_engineering"
 
 
-class SpecialAsk(StrEnum):
+class SpecialAskType(StrEnum):
     """Enum for special asks on the market."""
 
     CONSTRUCTION = "construction"
@@ -135,53 +135,47 @@ class SpecialAsk(StrEnum):
     TRANSPORT = "transport"
 
 
-RenewableFacility = WindFacility | HydroFacility | SolarFacility
+RenewableFacilityType = WindFacilityType | HydroFacilityType | SolarFacilityType
 
-renewables = [  # rename to renewable_facilities
-    HydroFacility.SMALL_WATER_DAM,
-    HydroFacility.LARGE_WATER_DAM,
-    HydroFacility.WATERMILL,
-    WindFacility.ONSHORE_WIND_TURBINE,
-    WindFacility.OFFSHORE_WIND_TURBINE,
-    WindFacility.WINDMILL,
-    SolarFacility.CSP_SOLAR,
-    SolarFacility.PV_SOLAR,
+renewable_facility_types = [
+    HydroFacilityType.SMALL_WATER_DAM,
+    HydroFacilityType.LARGE_WATER_DAM,
+    HydroFacilityType.WATERMILL,
+    WindFacilityType.ONSHORE_WIND_TURBINE,
+    WindFacilityType.OFFSHORE_WIND_TURBINE,
+    WindFacilityType.WINDMILL,
+    SolarFacilityType.CSP_SOLAR,
+    SolarFacilityType.PV_SOLAR,
 ]
 
-PowerFacility = RenewableFacility | ControllableFacility
+PowerFacilityType = RenewableFacilityType | ControllableFacilityType
 
-power_facility_types: list[PowerFacility] = [
-    ControllableFacility.STEAM_ENGINE,
-    WindFacility.WINDMILL,
-    HydroFacility.WATERMILL,
-    ControllableFacility.COAL_BURNER,
-    ControllableFacility.GAS_BURNER,
-    HydroFacility.SMALL_WATER_DAM,
-    WindFacility.ONSHORE_WIND_TURBINE,
-    ControllableFacility.COMBINED_CYCLE,
-    ControllableFacility.NUCLEAR_REACTOR,
-    HydroFacility.LARGE_WATER_DAM,
-    SolarFacility.CSP_SOLAR,
-    SolarFacility.PV_SOLAR,
-    WindFacility.OFFSHORE_WIND_TURBINE,
-    ControllableFacility.NUCLEAR_REACTOR_GEN4,
+power_facility_types: list[PowerFacilityType] = [
+    ControllableFacilityType.STEAM_ENGINE,
+    WindFacilityType.WINDMILL,
+    HydroFacilityType.WATERMILL,
+    ControllableFacilityType.COAL_BURNER,
+    ControllableFacilityType.GAS_BURNER,
+    HydroFacilityType.SMALL_WATER_DAM,
+    WindFacilityType.ONSHORE_WIND_TURBINE,
+    ControllableFacilityType.COMBINED_CYCLE,
+    ControllableFacilityType.NUCLEAR_REACTOR,
+    HydroFacilityType.LARGE_WATER_DAM,
+    SolarFacilityType.CSP_SOLAR,
+    SolarFacilityType.PV_SOLAR,
+    WindFacilityType.OFFSHORE_WIND_TURBINE,
+    ControllableFacilityType.NUCLEAR_REACTOR_GEN4,
 ]
 
-# rename to ProjectType, along with all the others (and project_types)
-ProjectName = PowerFacility | StorageFacility | ExtractionFacility | FunctionalFacility | Technology
-project_names: set[ProjectName] = (
+ProjectType = PowerFacilityType | StorageFacilityType | ExtractionFacilityType | FunctionalFacilityType | TechnologyType
+project_types: set[ProjectType] = (
     set(power_facility_types)
-    | set(StorageFacility)
-    | set(ExtractionFacility)
-    | set(FunctionalFacility)
-    | set(Technology)
+    | set(StorageFacilityType)
+    | set(ExtractionFacilityType)
+    | set(FunctionalFacilityType)
+    | set(TechnologyType)
 )
 
-
-print(ControllableFacility.COAL_BURNER.name)  # coal_burner
-
-# str_to_project_name = {f.name: f for sub in ProjectName.__args__ for f in sub}
-
-project_set = {f for sub in ProjectName.__args__ for f in sub}
-
-str_to_project_name: dict[str, ProjectName | SpecialAsk] = {str(f): f for f in (project_names | set(SpecialAsk))}
+str_to_project_type: dict[str, ProjectType | SpecialAskType] = {
+    str(f): f for f in (project_types | set(SpecialAskType))
+}

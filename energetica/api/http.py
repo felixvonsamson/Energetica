@@ -25,7 +25,7 @@ from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.enums import Fuel, Renewable, SpecialAsk, str_to_project_name
+from energetica.enums import Fuel, Renewable, SpecialAskType, str_to_project_type
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -404,8 +404,8 @@ def request_queue_project() -> Response | tuple:
     player = Player.getitem(current_user.id)
     request_data = request.get_json()
     asset = request_data["facility"]
-    project_name = str_to_project_name[asset]
-    if isinstance(project_name, SpecialAsk):
+    project_name = str_to_project_type[asset]
+    if isinstance(project_name, SpecialAskType):
         raise GameError("malformedRequest")
     force = request_data["force"]
     try:
