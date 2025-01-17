@@ -17,7 +17,7 @@ from energetica.database.map import HexTile
 from energetica.database.messages import Chat, Message, Notification
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.enums import ProjectName
+from energetica.enums import ControllableFacility
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.astro import DrHI
@@ -191,7 +191,7 @@ def initialize_player(player: Player) -> None:
     pos_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     pos_y = player.tile.coordinates[1]
     steam_engine: ActiveFacility = ActiveFacility(
-        name=ProjectName.STEAM_ENGINE,
+        name=ControllableFacility.STEAM_ENGINE,
         position=(pos_x, pos_y),
         end_of_life=eol,
         player=player,

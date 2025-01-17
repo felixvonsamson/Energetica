@@ -15,16 +15,18 @@ from energetica.config.assets import (
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_project import OngoingProject
 from energetica.enums import (
+    ControllableFacility,
+    ExtractionFacility,
     Fuel,
+    FunctionalFacility,
+    PowerFacility,
     ProjectName,
     Renewable,
-    controllable_facilities,
-    extraction_facilities,
-    functional_facilities,
-    power_facilities,
+    RenewableFacility,
+    StorageFacility,
+    Technology,
+    power_facility_types,
     renewables,
-    storage_facilities,
-    technologies,
 )
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -100,11 +102,11 @@ def price_multiplier(player: Player, project_name: ProjectName) -> float:
         if project_name in const_config[research]["affected_facilities"]:
             mlt *= special_multiplier(const_config[research]["price_factor"], player.technology_lvl[research])
     # level based facilities and technologies
-    if project_name in functional_facilities + technologies:
+    if isinstance(project_name, FunctionalFacility | Technology):
         asset_next_level = next_level(player, project_name)
         mlt *= const_config[project_name]["price_multiplier"] ** (asset_next_level - 1)
         # knowledge spilling for technologies
-        if project_name in technologies:
+        if isinstance(project_name, Technology):
             mlt *= knowledge_spillover_discount(research_prevalence(project_name, asset_next_level))
     return mlt
 
@@ -372,17 +374,17 @@ def construction_time(player: Player, project_name: ProjectName) -> float:
     # transforming in game seconds in ticks
     duration = const_config[project_name]["base_construction_time"] / engine.in_game_seconds_per_tick
     # construction time increases with higher levels
-    if project_name in functional_facilities + technologies:
+    if isinstance(project_name, FunctionalFacility | Technology):
         level_with_constructions = OngoingProject.count_when(name=project_name, player=player)
         duration *= const_config[project_name]["price_multiplier"] ** (0.6 * level_with_constructions)
         # knowledge spillover and laboratory time reduction
-        if project_name in technologies:
+        if isinstance(project_name, Technology):
             duration *= 0.92 ** research_prevalence(project_name, next_level(player, project_name))
             duration *= const_config["laboratory"]["time_factor"] ** player.functional_facility_lvl["laboratory"]
     # building technology time reduction
-    if (
-        project_name
-        in storage_facilities + controllable_facilities + renewables + extraction_facilities + functional_facilities
+    if isinstance(
+        project_name,
+        StorageFacility | ControllableFacility | RenewableFacility | ExtractionFacility | FunctionalFacility,
     ):
         duration *= const_config["building_technology"]["time_factor"] ** player.technology_lvl["building_technology"]
     return duration
@@ -393,7 +395,7 @@ def construction_power(player: Player, project_name: ProjectName) -> float:
     const_config = engine.const_config["assets"]
     bt_factor = const_config["building_technology"]["time_factor"] ** player.technology_lvl["building_technology"]
     # construction power in relation of facilities characteristics
-    if project_name in power_facilities:
+    if isinstance(project_name, PowerFacility):
         # Materials (in this case it is the energy consumption for construction)
         mlt = 1
         if project_name in const_config["materials"]["affected_facilities"]:
@@ -405,14 +407,14 @@ def construction_power(player: Player, project_name: ProjectName) -> float:
             * mlt
             / bt_factor
         )
-    if project_name in extraction_facilities:
+    if isinstance(project_name, ExtractionFacility):
         return (
             const_config[project_name]["base_power_consumption"]
             * const_config[project_name]["construction_power_factor"]
             * power_consumption_multiplier(player, project_name)
             / bt_factor
         )
-    if project_name in storage_facilities:
+    if isinstance(project_name, StorageFacility):
         return (
             const_config[project_name]["base_storage_capacity"]
             * const_config[project_name]["construction_power_factor"]
@@ -426,7 +428,7 @@ def construction_power(player: Player, project_name: ProjectName) -> float:
         * 3600
     )
     # construction power increases with higher levels
-    if project_name in functional_facilities + technologies:
+    if isinstance(project_name, FunctionalFacility | Technology):
         facility_next_level = next_level(player, project_name)
         power *= const_config[project_name]["price_multiplier"] ** (facility_next_level - 1)
     return power
@@ -435,11 +437,11 @@ def construction_power(player: Player, project_name: ProjectName) -> float:
 def construction_pollution_per_tick(player: Player, project_name: ProjectName) -> float:
     """Return the construction pollution per tick according to the technology level of the player."""
     const_config = engine.const_config["assets"]
-    if project_name in technologies:
+    if isinstance(project_name, Technology):
         return 0
     pollution = const_config[project_name]["base_construction_pollution"] / construction_time(player, project_name)
     # construction pollution increases with higher levels for functional facilities
-    if project_name in functional_facilities:
+    if isinstance(project_name, FunctionalFacility):
         pollution *= const_config[project_name]["price_multiplier"] ** player.get_level(project_name)
     return pollution
 
@@ -459,7 +461,7 @@ def project_requirements(player: Player, project_name: ProjectName) -> list[dict
     const_config = engine.const_config["assets"]
     requirements = const_config[project_name]["requirements"]
     level_offset = 0
-    if project_name in functional_facilities + technologies:
+    if isinstance(project_name, FunctionalFacility | Technology):
         level_offset = next_level(player, project_name) - 1
     return [
         {
@@ -493,7 +495,7 @@ def requirements_status(player: Player, project_name: ProjectName, requirements:
     # TODO(mglst): this method, and the others about requirements should be revised, as they are unclear
     const_config = engine.const_config["assets"]
     if all(requirement["status"] == "satisfied" for requirement in requirements):
-        if project_name in technologies and OngoingProject.filter_by(name=project_name, player=player):
+        if isinstance(project_name, Technology) and OngoingProject.filter_by(name=project_name, player=player):
             return "queued"
         return "satisfied"
     if const_config[project_name]["type"] == "Technology" and all(
@@ -659,7 +661,7 @@ def package_power_facilities(player: Player) -> list[dict]:
                 "pollution": const_config_assets[power_facility]["base_pollution"]
                 / efficiency_multiplier(player, power_facility),
             }
-            if power_facility in controllable_facilities + storage_facilities
+            if isinstance(power_facility, ControllableFacility | StorageFacility)
             else {}
         )
         | (
@@ -672,7 +674,7 @@ def package_power_facilities(player: Player) -> list[dict]:
             if power_facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
             else {}
         )
-        for power_facility in power_facilities
+        for power_facility in power_facility_types
     ]
 
 
@@ -690,7 +692,7 @@ def package_storage_facilities(player: Player) -> list[dict]:
             * efficiency_multiplier(player, storage_facility)
             * 100,
         }
-        for storage_facility in storage_facilities
+        for storage_facility in StorageFacility
     ]
 
 
@@ -730,7 +732,7 @@ def package_extraction_facilities(player: Player) -> list[dict]:
             },
             "poor_resource_production": production_will_be_poor(player.tile, extraction_facility.associated_fuel),
         }
-        for extraction_facility in extraction_facilities
+        for extraction_facility in ExtractionFacility
     ]
 
 
@@ -805,10 +807,10 @@ def package_functional_facilities(player: Player) -> list[dict]:
             / 24
         )
 
-    next_industry_level = next_level(player, ProjectName.INDUSTRY)
-    next_laboratory_level = next_level(player, ProjectName.LABORATORY)
-    next_warehouse_level = next_level(player, ProjectName.WAREHOUSE)
-    next_carbon_capture_level = next_level(player, ProjectName.CARBON_CAPTURE)
+    next_industry_level = next_level(player, FunctionalFacility.INDUSTRY)
+    next_laboratory_level = next_level(player, FunctionalFacility.LABORATORY)
+    next_warehouse_level = next_level(player, FunctionalFacility.WAREHOUSE)
+    next_carbon_capture_level = next_level(player, FunctionalFacility.CARBON_CAPTURE)
 
     special_keys = {
         "industry": {
@@ -870,7 +872,7 @@ def package_functional_facilities(player: Player) -> list[dict]:
             else {}
         )
         | special_keys[functional_facility]
-        for functional_facility in functional_facilities
+        for functional_facility in FunctionalFacility
         if not project_is_hidden(player, functional_facility)  # Hide carbon capture if not discovered
     ]
 
@@ -896,7 +898,7 @@ def package_available_technologies(player: Player) -> list[dict]:
     # TODO(mglst): Check all invoked functions and rename facility to asset if needed
     # Because these methods are common to both facilities and technologies, hence should use the name "asset"
     const_config_assets = engine.const_config["assets"]
-    levels: dict[str, int] = {technology: next_level(player, technology) for technology in technologies}
+    levels: dict[str, int] = {technology: next_level(player, technology) for technology in Technology}
     return [
         _package_project_base(player, technology)
         | {
@@ -937,7 +939,7 @@ def package_available_technologies(player: Player) -> list[dict]:
                         - engine.const_config["assets"]["molten_salt"]["base_efficiency"]
                         * efficiency_multiplier_thermodynamics(
                             player,
-                            ProjectName.MOLTEN_SALT,
+                            StorageFacility.MOLTEN_SALT,
                             level=levels[technology] - 1,
                         )
                     )
@@ -1029,7 +1031,7 @@ def package_available_technologies(player: Player) -> list[dict]:
                     - engine.const_config["assets"]["hydrogen_storage"]["base_efficiency"]
                     * efficiency_multiplier_chemistry(
                         player,
-                        ProjectName.HYDROGEN_STORAGE,
+                        StorageFacility.HYDROGEN_STORAGE,
                         level=levels[technology] - 1,
                     )
                 )
@@ -1040,7 +1042,7 @@ def package_available_technologies(player: Player) -> list[dict]:
                     - engine.const_config["assets"]["lithium_ion_batteries"]["base_efficiency"]
                     * efficiency_multiplier_chemistry(
                         player,
-                        ProjectName.LITHIUM_ION_BATTERIES,
+                        StorageFacility.LITHIUM_ION_BATTERIES,
                         level=levels[technology] - 1,
                     )
                 )
@@ -1051,7 +1053,7 @@ def package_available_technologies(player: Player) -> list[dict]:
                     - engine.const_config["assets"]["solid_state_batteries"]["base_efficiency"]
                     * efficiency_multiplier_chemistry(
                         player,
-                        ProjectName.SOLID_STATE_BATTERIES,
+                        StorageFacility.SOLID_STATE_BATTERIES,
                         level=levels[technology] - 1,
                     )
                 )
@@ -1070,5 +1072,5 @@ def package_available_technologies(player: Player) -> list[dict]:
             else {}
         )
         # price_reduction_bonus
-        for technology in technologies
+        for technology in Technology
     ]

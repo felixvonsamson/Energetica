@@ -11,12 +11,15 @@ from typing import TYPE_CHECKING, Any, Literal
 import noise
 
 from energetica.enums import (
+    ControllableFacility,
+    ExtractionFacility,
+    FunctionalFacility,
     ProjectName,
-    controllable_facilities,
-    extraction_facilities,
-    power_facilities,
+    SpecialAsk,
+    StorageFacility,
+    power_facility_types,
     renewables,
-    storage_facilities,
+    str_to_project_name,
 )
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -26,6 +29,9 @@ if TYPE_CHECKING:
 
     from energetica.database.network import Network
     from energetica.database.player import Player
+
+Bid = ControllableFacility | StorageFacility
+Ask = SpecialAsk | ExtractionFacility | FunctionalFacility | StorageFacility
 
 
 @dataclass
@@ -45,33 +51,33 @@ class NetworkPrices:
 
     # Prices are randomized so that each player's prices are slightly different. This leads to more interesting
     # market dynamics, while still having reasonable default prices.
-    bid_prices: dict[ProjectName, float] = field(
+    bid_prices: dict[Bid, float] = field(
         default_factory=lambda: {
-            ProjectName.STEAM_ENGINE: 125.0,
+            ControllableFacility.STEAM_ENGINE: 125.0,
         }
     )
-    ask_prices: dict[ProjectName, float] = field(
+    ask_prices: dict[Ask, float] = field(
         default_factory=lambda: {
-            ProjectName.INDUSTRY: 1000.0,
-            ProjectName.CONSTRUCTION: 1020.0,
+            FunctionalFacility.INDUSTRY: 1000.0,
+            SpecialAsk.CONSTRUCTION: 1020.0,
         }
     )
 
-    def add_bid(self, bid_name: ProjectName, player: Player) -> None:
+    def add_bid(self, bid_name: Bid, player: Player) -> None:
         """Add a facility to the list of bids, using the default price."""
         default_bid_price = {
-            ProjectName.STEAM_ENGINE: 125.0,
-            ProjectName.COAL_BURNER: 600.0,
-            ProjectName.GAS_BURNER: 500.0,
-            ProjectName.COMBINED_CYCLE: 450.0,
-            ProjectName.NUCLEAR_REACTOR: 275.0,
-            ProjectName.NUCLEAR_REACTOR_GEN4: 375.0,
-            ProjectName.SMALL_PUMPED_HYDRO: 790.0,
-            ProjectName.MOLTEN_SALT: 830.0,
-            ProjectName.LARGE_PUMPED_HYDRO: 780.0,
-            ProjectName.HYDROGEN_STORAGE: 880.0,
-            ProjectName.LITHIUM_ION_BATTERIES: 940.0,
-            ProjectName.SOLID_STATE_BATTERIES: 900.0,
+            ControllableFacility.STEAM_ENGINE: 125.0,
+            ControllableFacility.COAL_BURNER: 600.0,
+            ControllableFacility.GAS_BURNER: 500.0,
+            ControllableFacility.COMBINED_CYCLE: 450.0,
+            ControllableFacility.NUCLEAR_REACTOR: 275.0,
+            ControllableFacility.NUCLEAR_REACTOR_GEN4: 375.0,
+            StorageFacility.SMALL_PUMPED_HYDRO: 790.0,
+            StorageFacility.MOLTEN_SALT: 830.0,
+            StorageFacility.LARGE_PUMPED_HYDRO: 780.0,
+            StorageFacility.HYDROGEN_STORAGE: 880.0,
+            StorageFacility.LITHIUM_ION_BATTERIES: 940.0,
+            StorageFacility.SOLID_STATE_BATTERIES: 900.0,
         }[bid_name]
         # seed based off engine seed, ask/bid, bid name, and player username
         seed_hash = hash(
@@ -86,21 +92,21 @@ class NetworkPrices:
         added_randomness = random.uniform(-15, 15)
         self.bid_prices[bid_name] = default_bid_price + added_randomness
 
-    def add_ask(self, ask_name: ProjectName, player: Player) -> None:
+    def add_ask(self, ask_name: Ask, player: Player) -> None:
         """Add a facility to the list of asks, using the default price."""
         default_ask_price = {
-            ProjectName.RESEARCH: 1200.0,
-            ProjectName.TRANSPORT: 1050.0,
-            ProjectName.COAL_MINE: 960.0,
-            ProjectName.GAS_DRILLING_SITE: 980.0,
-            ProjectName.URANIUM_MINE: 990.0,
-            ProjectName.CARBON_CAPTURE: 660.0,
-            ProjectName.SMALL_PUMPED_HYDRO: 210.0,
-            ProjectName.MOLTEN_SALT: 190.0,
-            ProjectName.LARGE_PUMPED_HYDRO: 200.0,
-            ProjectName.HYDROGEN_STORAGE: 230.0,
-            ProjectName.LITHIUM_ION_BATTERIES: 425.0,
-            ProjectName.SOLID_STATE_BATTERIES: 420.0,
+            SpecialAsk.RESEARCH: 1200.0,
+            SpecialAsk.TRANSPORT: 1050.0,
+            ExtractionFacility.COAL_MINE: 960.0,
+            ExtractionFacility.GAS_DRILLING_SITE: 980.0,
+            ExtractionFacility.URANIUM_MINE: 990.0,
+            FunctionalFacility.CARBON_CAPTURE: 660.0,
+            StorageFacility.SMALL_PUMPED_HYDRO: 210.0,
+            StorageFacility.MOLTEN_SALT: 190.0,
+            StorageFacility.LARGE_PUMPED_HYDRO: 200.0,
+            StorageFacility.HYDROGEN_STORAGE: 230.0,
+            StorageFacility.LITHIUM_ION_BATTERIES: 425.0,
+            StorageFacility.SOLID_STATE_BATTERIES: 420.0,
         }[ask_name]
         # seed based off engine seed, ask/bid, ask name, and player coordinates
         seed_hash = hash(
@@ -117,33 +123,28 @@ class NetworkPrices:
 
     def update(
         self,
-        updated_bids: dict[ProjectName, float],
-        updated_asks: dict[ProjectName, float],
+        updated_bids: dict[ProjectName | SpecialAsk, float],
+        updated_asks: dict[ProjectName | SpecialAsk, float],
     ) -> None:
         """Update the prices of the player for each facility type."""
         for facility, new_price in updated_bids.items():
-            if facility not in controllable_facilities + storage_facilities:
+            if not isinstance(facility, ControllableFacility | StorageFacility):
                 raise GameError("malformedRequest")
             if not isinstance(new_price, (int, float)):
                 raise GameError("malformedRequest")
             if new_price <= -5:
                 raise GameError("priceTooLow")
-        special_power_demand = [
-            ProjectName.INDUSTRY,
-            ProjectName.CONSTRUCTION,
-            ProjectName.RESEARCH,
-            ProjectName.TRANSPORT,
-            ProjectName.CARBON_CAPTURE,
-        ]
         for facility, new_price in updated_asks.items():
-            if facility not in special_power_demand + extraction_facilities + storage_facilities:
+            if not isinstance(facility, SpecialAsk | ExtractionFacility | FunctionalFacility | StorageFacility):
+                raise GameError("malformedRequest")
+            if facility == FunctionalFacility.LABORATORY or facility == FunctionalFacility.WAREHOUSE:
                 raise GameError("malformedRequest")
             if not isinstance(new_price, (int, float)):
                 raise GameError("malformedRequest")
             if new_price <= -5:
                 raise GameError("priceTooLow")
-        self.ask_prices |= updated_asks
-        self.bid_prices |= updated_bids
+        self.ask_prices |= updated_asks  # type: ignore
+        self.bid_prices |= updated_bids  # type: ignore
 
     AskBid = Literal["ask", "bid"]  # Helper type
 
@@ -152,16 +153,16 @@ class NetworkPrices:
         self.renewable_bids.sort(key=renewables.index)
         return self.renewable_bids
 
-    def get_facility_priorities(self) -> list[Tuple[AskBid, ProjectName]]:
+    def get_facility_priorities(self) -> list[Tuple[AskBid, ProjectName | SpecialAsk]]:
         """Return the player's priority lists containing asks and bids but not renewables, sorted by price."""
-        type_key_price: list[Tuple[Literal["ask", "bid"], ProjectName, float]] = [
+        type_key_price: list[Tuple[Literal["ask", "bid"], ProjectName | SpecialAsk, float]] = [
             *(("bid", key, price) for key, price in self.bid_prices.items()),
             *(("ask", key, price) for key, price in self.ask_prices.items()),
         ]
         type_key_price.sort(key=lambda x: x[2])
         return [(x[0], x[1]) for x in type_key_price]
 
-    def change_facility_priority(self, new_priority: list[ProjectName]) -> None:
+    def change_facility_priority(self, new_priority: list[ProjectName | SpecialAsk]) -> None:
         """
         Reassign the selling prices of the facilities according to the new priority order.
 
@@ -181,10 +182,11 @@ class NetworkPrices:
         updated_bid_prices = {}
         updated_ask_prices = {}
         for priority_name, price in zip(new_priority, sorted_prices):
+            project_name = str_to_project_name[priority_name[4:]]
             if priority_name.startswith("ask-"):
-                updated_ask_prices[ProjectName(priority_name[4:])] = price
+                updated_ask_prices[project_name] = price
             else:
-                updated_bid_prices[ProjectName(priority_name[4:])] = price
+                updated_bid_prices[project_name] = price
         self.update(updated_bid_prices, updated_ask_prices)
 
 
@@ -237,7 +239,7 @@ class CapacityData:
             if facility.name in ["watermill", "small_water_dam", "large_water_dam"]:
                 op_costs *= facility.multipliers["multiplier_2"]
             effective_values["O&M_cost"] += op_costs
-            if facility.name in power_facilities:
+            if facility.name in power_facility_types:
                 power_gen = facility.max_power_generation
                 effective_values["power"] += power_gen
                 for fuel in effective_values["fuel_use"]:
@@ -249,7 +251,7 @@ class CapacityData:
                         / 3600
                         / 1_000_000
                     )
-            elif facility.name in storage_facilities:
+            elif facility.name in StorageFacility:
                 power_gen = facility.max_power_generation
                 # mean efficiency
                 effective_values["efficiency"] = (
@@ -259,7 +261,7 @@ class CapacityData:
                 effective_values["power"] += power_gen
                 if facility.end_of_life > 0:
                     effective_values["capacity"] += facility.storage_capacity
-            elif facility.name in extraction_facilities:
+            elif facility.name in ExtractionFacility:
                 effective_values["extraction_rate_per_day"] += (
                     base_data["base_extraction_rate_per_day"] * facility.multipliers["multiplier_2"]
                 )
@@ -285,16 +287,16 @@ class CapacityData:
     def init_facility(self, facility: str) -> None:
         """Initialize the capacity data of a facility."""
         const_config = engine.const_config["assets"]
-        if facility in power_facilities:
+        if facility in power_facility_types:
             self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "fuel_use": {}}
             for resource in const_config[facility]["consumed_resource"]:
                 if const_config[facility]["consumed_resource"][resource] > 0:
                     self._data[facility]["fuel_use"][resource] = 0.0
             return
-        if facility in storage_facilities:
+        if facility in StorageFacility:
             self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "capacity": 0.0, "efficiency": 0.0}
             return
-        if facility in extraction_facilities:
+        if facility in ExtractionFacility:
             self._data[facility] = {"O&M_cost": 0.0, "extraction_rate_per_day": 0.0, "power_use": 0.0, "pollution": 0.0}
 
     def __getitem__(self, facility: str) -> dict:

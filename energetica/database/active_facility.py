@@ -9,11 +9,12 @@ from energetica import technology_effects
 from energetica.config.assets import const_config
 from energetica.database import DBModel
 from energetica.enums import (
+    ControllableFacility,
+    ExtractionFacility,
+    PowerFacility,
     ProjectName,
-    controllable_facilities,
-    extraction_facilities,
-    power_facilities,
-    storage_facilities,
+    StorageFacility,
+    power_facility_types,
 )
 from energetica.globals import engine
 
@@ -82,6 +83,7 @@ class ActiveFacility(DBModel):
     def extraction_rate(self) -> float:
         """Rate at which the facility extracts resources from the ground. Defined only for extraction facilities."""
         assert self.player.tile is not None
+        assert isinstance(self.name, ExtractionFacility)
         return (
             self.const_config["base_extraction_rate_per_day"]
             * self.multipliers["multiplier_2"]
@@ -131,7 +133,7 @@ class ActiveFacility(DBModel):
         """
         if self.multipliers["price_multiplier"] < technology_effects.price_multiplier(self.player, self.name):
             return True
-        if self.name in extraction_facilities:
+        if self.name in ExtractionFacility:
             return (
                 self.multipliers["multiplier_1"] < technology_effects.multiplier_1(self.player, self.name)
                 or self.multipliers["multiplier_2"] < technology_effects.multiplier_2(self.player, self.name)
@@ -140,15 +142,19 @@ class ActiveFacility(DBModel):
         # power & storage facilities
         return (
             (
-                self.name in power_facilities + storage_facilities
+                # self.name in power_facilities + storage_facilities
+                isinstance(self.name, PowerFacility | StorageFacility)
+                # self.name in PowerFacility
+                # self.name in (*power_facility_types, *StorageFacility)
                 and self.multipliers["multiplier_1"] < technology_effects.multiplier_1(self.player, self.name)
             )
             or (
-                self.name in storage_facilities
+                isinstance(self.name, StorageFacility)
                 and self.multipliers["multiplier_2"] < technology_effects.multiplier_2(self.player, self.name)
             )
             or (
-                self.name in controllable_facilities + storage_facilities
+                # self.name in controllable_facilities + storage_facilities
+                isinstance(self.name, ControllableFacility | StorageFacility)
                 and self.multipliers["multiplier_3"] < technology_effects.multiplier_3(self.player, self.name)
             )
         )

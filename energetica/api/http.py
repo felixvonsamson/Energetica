@@ -25,7 +25,7 @@ from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.enums import Fuel, ProjectName, Renewable
+from energetica.enums import Fuel, Renewable, SpecialAsk, str_to_project_name
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -269,7 +269,7 @@ def get_market_data() -> Response | tuple:
         return "", 404
     request_data = request.get_json()
     t = int(request_data["t"])
-    filename_state = f"instance/network_data/{player.network.id}/charts/market_t{engine.data['total_t']-t}.pck"
+    filename_state = f"instance/network_data/{player.network.id}/charts/market_t{engine.data['total_t'] - t}.pck"
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
             market_data = pickle.load(file)
@@ -404,7 +404,9 @@ def request_queue_project() -> Response | tuple:
     player = Player.getitem(current_user.id)
     request_data = request.get_json()
     asset = request_data["facility"]
-    project_name = ProjectName(asset)
+    project_name = str_to_project_name[asset]
+    if isinstance(project_name, SpecialAsk):
+        raise GameError("malformedRequest")
     force = request_data["force"]
     try:
         energetica.utils.assets.queue_project(
@@ -601,8 +603,8 @@ def put_resource_on_sale() -> Response:
         flash_error(f"You have not enough {resource} available")
     else:
         flash(
-            f"You put {quantity/1000}t of {resource} on sale for "
-            f"{price*1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
+            f"You put {quantity / 1000}t of {resource} on sale for "
+            f"{price * 1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
             category="message",
         )
     return redirect("/resource_market", code=303)

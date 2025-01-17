@@ -24,7 +24,7 @@ from energetica.database.engine_data import (
 from energetica.database.messages import Chat, Notification
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.shipment import OngoingShipment
-from energetica.enums import Fuel, WorkerType, extraction_facilities, power_facilities, storage_facilities, technologies
+from energetica.enums import ExtractionFacility, Fuel, StorageFacility, Technology, WorkerType, power_facility_types
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.technology_effects import (
@@ -152,6 +152,7 @@ class Player(DBModel, UserMixin):
     resources: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
     resources_on_sale: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
 
+    # TODO(mglst): make use of the WorkerType enum
     workers: dict[str, int] = field(
         default_factory=lambda: {
             "construction": 1,
@@ -256,7 +257,7 @@ class Player(DBModel, UserMixin):
             list(
                 OngoingProject.filter(
                     lambda construction: construction.player == self
-                    and not construction.name in technologies
+                    and not construction.name in Technology
                     and construction.status == ProjectStatus.ONGOING,
                 ),
             ),
@@ -270,7 +271,7 @@ class Player(DBModel, UserMixin):
             list(
                 OngoingProject.filter(
                     lambda construction: construction.player == self
-                    and construction.name in technologies
+                    and construction.name in Technology
                     and construction.status == ProjectStatus.ONGOING,
                 ),
             ),
@@ -592,7 +593,7 @@ class Player(DBModel, UserMixin):
                 if current_lvl < len(achievement_data["milestones"]):
                     status = self.progression_metrics[achievement_data["metric"]]
                     upcoming_achievements[achievement] = {
-                        "name": f"{achievement_data['name']} {current_lvl+1}",
+                        "name": f"{achievement_data['name']} {current_lvl + 1}",
                         "reward": achievement_data["rewards"][current_lvl],
                         "objective": achievement_data["milestones"][current_lvl],
                         "status": round(status),
@@ -689,7 +690,7 @@ class Player(DBModel, UserMixin):
         """Package the player's active power facilities."""
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         active_power_facilities: list[ActiveFacility] = list(
-            filter(lambda facility: facility.name in power_facilities, self.active_facilities)
+            filter(lambda facility: facility.name in power_facility_types, self.active_facilities)
         )
         power_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for power_facility in active_power_facilities:
@@ -741,7 +742,7 @@ class Player(DBModel, UserMixin):
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.capacities
         active_storage_facilities: list[ActiveFacility] = [
-            facility for facility in self.active_facilities if facility.name in storage_facilities
+            facility for facility in self.active_facilities if facility.name in StorageFacility
         ]
         storage_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for storage_facility in active_storage_facilities:
@@ -790,7 +791,7 @@ class Player(DBModel, UserMixin):
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.capacities
         active_extraction_facilities: list[ActiveFacility] = [
-            facility for facility in self.active_facilities if facility.name in extraction_facilities
+            facility for facility in self.active_facilities if facility.name in ExtractionFacility
         ]
         extraction_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for extraction_facility in active_extraction_facilities:

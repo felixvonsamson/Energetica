@@ -2,6 +2,7 @@
 
 from energetica.database.engine_data import NetworkPrices
 from energetica.database.player import Player
+from energetica.enums import FunctionalFacility
 from energetica.game_error import GameError
 
 
@@ -61,9 +62,9 @@ def test_update_bogus_prices():
     """Test that updating a bogus ask or bid price raises an error."""
     network_prices = NetworkPrices()
 
-    network_prices.update(updated_asks={"industry": -4.999}, updated_bids={})
+    network_prices.update(updated_asks={FunctionalFacility.INDUSTRY: -4.999}, updated_bids={})
     try:
-        network_prices.update(updated_asks={"industry": -5}, updated_bids={})
+        network_prices.update(updated_asks={FunctionalFacility.INDUSTRY: -5}, updated_bids={})
     except GameError:
         assert True
     else:
