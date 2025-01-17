@@ -3,7 +3,6 @@
 import math
 import os
 import pickle
-import threading
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -34,97 +33,94 @@ def add_player_to_data(player: Player) -> None:
     player.capacities.update(player, None)
 
 
-def save_past_data_threaded():
+def reduce_resolution(array, new_values) -> None:
+    """Reduce resolution of current array x6, x36, x216 and x1296."""
+    array[0] = array[0][len(new_values) :]
+    array[0].extend(new_values)
+    new_values_reduced = new_values
+    for r in range(1, 4):
+        new_values_reduced = np.mean(new_values_reduced.reshape(-1, 6), axis=1)
+        array[r] = array[r][len(new_values_reduced) :]
+        array[r].extend(new_values_reduced)
+    if engine.data["total_t"] % 1296 == 0:
+        array[4] = array[4][1:]
+        array[4].append(np.mean(array[3][-6:]))
+
+
+def save_past_data():
     """Save the past production data to files every 216 ticks AND remove network data older than 24h."""
+    # save climate data
+    with open("instance/data/servers/climate_data.pck", "rb") as file:
+        past_climate_data = pickle.load(file)
+    new_climate_data = engine.data["current_climate_data"].get_data()
+    for category in new_climate_data:
+        for element in new_climate_data[category]:
+            new_el_data = new_climate_data[category][element]
+            past_el_data = past_climate_data[category][element]
+            reduce_resolution(past_el_data, np.array(new_el_data))
+    with open("instance/data/servers/climate_data.pck", "wb") as file:
+        pickle.dump(past_climate_data, file)
 
-    def save_data():
-        # save climate data
-        with open("instance/server_data/climate_data.pck", "rb") as file:
-            past_climate_data = pickle.load(file)
-        new_climate_data = engine.data["current_climate_data"].get_data()
-        for category in new_climate_data:
-            for element in new_climate_data[category]:
-                new_el_data = new_climate_data[category][element]
-                past_el_data = past_climate_data[category][element]
+    # save player data
+    for player in Player.all():
+        if player.tile is None:
+            continue
+        past_data = {}
+        with open(
+            f"instance/data/players/player_{player.id}.pck",
+            "rb",
+        ) as file:
+            past_data = pickle.load(file)
+        new_data = player.rolling_history.get_data()
+        for category in new_data:
+            for element in new_data[category]:
+                new_el_data = new_data[category][element]
+                if element not in past_data[category]:
+                    # if facility didn't exist in past data, initialize it
+                    past_data[category][element] = [[0.0] * 360 for _ in range(5)]
+                past_el_data = past_data[category][element]
                 reduce_resolution(past_el_data, np.array(new_el_data))
-        with open("instance/server_data/climate_data.pck", "wb") as file:
-            pickle.dump(past_climate_data, file)
 
-        # save player data
-        for player in Player.all():
-            if player.tile is None:
-                continue
-            past_data = {}
-            with open(
-                f"instance/player_data/player_{player.id}.pck",
-                "rb",
-            ) as file:
-                past_data = pickle.load(file)
-            new_data = player.rolling_history.get_data()
-            for category in new_data:
-                for element in new_data[category]:
-                    new_el_data = new_data[category][element]
-                    if element not in past_data[category]:
-                        # if facility didn't exist in past data, initialize it
-                        past_data[category][element] = [[0.0] * 360 for _ in range(5)]
-                    past_el_data = past_data[category][element]
-                    reduce_resolution(past_el_data, np.array(new_el_data))
+        with open(f"instance/data/players/player_{player.id}.pck", "wb") as file:
+            pickle.dump(past_data, file)
 
-            with open(f"instance/player_data/player_{player.id}.pck", "wb") as file:
-                pickle.dump(past_data, file)
+    # remove old network files AND save past prices
+    networks = Network.all()
+    for network in networks:
+        network_dir = f"instance/data/networks/{network.id}/charts/"
+        files = os.listdir(network_dir)
+        for filename in files:
+            t_value = int(filename.split("market_t")[1].split(".pck")[0])
+            if t_value < engine.data["total_t"] - 1440:
+                os.remove(os.path.join(network_dir, filename))
 
-        # remove old network files AND save past prices
-        networks = Network.all()
-        for network in networks:
-            network_dir = f"instance/network_data/{network.id}/charts/"
-            files = os.listdir(network_dir)
-            for filename in files:
-                t_value = int(filename.split("market_t")[1].split(".pck")[0])
-                if t_value < engine.data["total_t"] - 1440:
-                    os.remove(os.path.join(network_dir, filename))
+        past_data = {}
+        with open(
+            f"instance/data/networks/{network.id}/time_series.pck",
+            "rb",
+        ) as file:
+            past_data = pickle.load(file)
 
-            past_data = {}
-            with open(
-                f"instance/network_data/{network.id}/time_series.pck",
-                "rb",
-            ) as file:
-                past_data = pickle.load(file)
+        new_data = network.rolling_history.get_data()
+        for category in new_data:
+            for group, buffer in new_data[category].items():
+                if group not in past_data[category]:
+                    past_data[category][group] = [[0.0] * 360 for _ in range(5)]
+                past_el_data = past_data[category][group]
+                reduce_resolution(past_el_data, np.array(buffer))
 
-            new_data = network.rolling_history.get_data()
-            for category in new_data:
-                for group, buffer in new_data[category].items():
-                    if group not in past_data[category]:
-                        past_data[category][group] = [[0.0] * 360 for _ in range(5)]
-                    past_el_data = past_data[category][group]
-                    reduce_resolution(past_el_data, np.array(buffer))
+        with open(f"instance/data/networks/{network.id}/time_series.pck", "wb") as file:
+            pickle.dump(past_data, file)
 
-            with open(f"instance/network_data/{network.id}/time_series.pck", "wb") as file:
-                pickle.dump(past_data, file)
+    # remove old notifications
+    for notification in Notification.filter(
+        lambda notification: notification.title != "Tutorial"
+        and notification.time < datetime.now() - timedelta(weeks=2)
+    ):
+        notification.delete()
 
-        # remove old notifications
-        for notification in Notification.filter(
-            lambda notification: notification.title != "Tutorial"
-            and notification.time < datetime.now() - timedelta(weeks=2)
-        ):
-            notification.delete()
-
-        engine.log("last 216 data points have been saved to files")
-
-    def reduce_resolution(array, new_values) -> None:
-        """Reduce resolution of current array x6, x36, x216 and x1296."""
-        array[0] = array[0][len(new_values) :]
-        array[0].extend(new_values)
-        new_values_reduced = new_values
-        for r in range(1, 4):
-            new_values_reduced = np.mean(new_values_reduced.reshape(-1, 6), axis=1)
-            array[r] = array[r][len(new_values_reduced) :]
-            array[r].extend(new_values_reduced)
-        if engine.data["total_t"] % 1296 == 0:
-            array[4] = array[4][1:]
-            array[4].append(np.mean(array[3][-6:]))
-
-    thread = threading.Thread(target=save_data)
-    thread.start()
+    engine.log("last 216 data points have been saved to files")
+    engine.save()
 
 
 def display_new_message(message: Message, chat: Chat) -> None:
@@ -237,7 +233,7 @@ def initialize_player(player: Player) -> None:
             "construction": init_array(),
         },
     }
-    with open(f"instance/player_data/player_{player.id}.pck", "wb") as file:
+    with open(f"instance/data/players/player_{player.id}.pck", "wb") as file:
         pickle.dump(past_data, file)
     player.rolling_history.add_subcategory("op_costs", "steam_engine")
     player.rolling_history.add_subcategory("generation", "steam_engine")

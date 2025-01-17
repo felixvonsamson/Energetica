@@ -241,15 +241,17 @@ class GameEngine(object):
             participants=set(),
         )
 
-        Path("instance/player_data").mkdir(parents=True, exist_ok=True)
-        Path("instance/server_data").mkdir(parents=True, exist_ok=True)
+        Path("instance/data/players").mkdir(parents=True, exist_ok=True)
+        Path("instance/data/servers").mkdir(parents=True, exist_ok=True)
         climate_data = data_init_climate(
             in_game_seconds_per_tick,
             self.data["random_seed"],
             self.data["delta_t"],
         )
-        with open("instance/server_data/climate_data.pck", "wb") as file:
+        with open("instance/data/servers/climate_data.pck", "wb") as file:
             pickle.dump(climate_data, file)
+
+        self.save()
 
     def init_loggers(self) -> None:
         """Initialize the loggers for the engine."""
@@ -284,6 +286,10 @@ class GameEngine(object):
 
     def load(self) -> None:
         """Load the game engine data from a file."""
+        engine_data_last_modified = Path("instance/engine_data.pck").stat().st_mtime
+        instance_data_last_modified = max(f.stat().st_mtime for f in Path("instance/data").glob("**/*") if f.is_file())
+        if instance_data_last_modified > engine_data_last_modified:
+            raise RuntimeError("The data has not been saved correctly, please restart form the last checkpoint.")
         with open("instance/engine_data.pck", "rb") as file:
             self.data = pickle.load(file)
 

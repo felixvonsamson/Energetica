@@ -13,7 +13,7 @@ from energetica.globals import engine
 from energetica.utils import assets
 from energetica.utils.assets import remove_asset
 from energetica.utils.climate_helpers import check_climate_events
-from energetica.utils.misc import save_past_data_threaded
+from energetica.utils.misc import save_past_data
 from energetica.utils.resource_market import store_import
 
 
@@ -37,7 +37,7 @@ def tick():
     engine.data["total_t"] += 1
     engine.log(f"t = {engine.data['total_t']}")
     if engine.data["total_t"] % 216 == 0:
-        save_past_data_threaded()
+        save_past_data()
     if (engine.data["total_t"] + engine.data["delta_t"]) % (24 * 60 * 60 / engine.clock_time) == 0:
         engine.new_daily_question()
     check_events_completion()

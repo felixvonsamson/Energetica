@@ -27,7 +27,7 @@ class Network(DBModel):
 
     def __post_init__(self):
         super().__post_init__()
-        network_path = f"instance/network_data/{self.id}"
+        network_path = f"instance/data/networks/{self.id}"
         Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
 
         self.capacities.update_network(self)
@@ -46,6 +46,6 @@ class Network(DBModel):
             pickle.dump(past_data, file)
 
     def __del__(self):
-        network_path = f"instance/network_data/{self.id}"
+        network_path = f"instance/data/networks/{self.id}"
         shutil.rmtree(network_path)
         super().__del__()
