@@ -51,8 +51,7 @@ def save_past_data_threaded():
             pickle.dump(past_climate_data, file)
 
         # save player data
-        players = Player.all()
-        for player in players:
+        for player in Player.all():
             if player.tile is None:
                 continue
             past_data = {}
@@ -67,14 +66,11 @@ def save_past_data_threaded():
                     new_el_data = new_data[category][element]
                     if element not in past_data[category]:
                         # if facility didn't exist in past data, initialize it
-                        past_data[category][element] = [[0.0] * 360] * 5
+                        past_data[category][element] = [[0.0] * 360 for _ in range(5)]
                     past_el_data = past_data[category][element]
                     reduce_resolution(past_el_data, np.array(new_el_data))
 
-            with open(
-                f"instance/player_data/player_{player.id}.pck",
-                "wb",
-            ) as file:
+            with open(f"instance/player_data/player_{player.id}.pck", "wb") as file:
                 pickle.dump(past_data, file)
 
         # remove old network files AND save past prices
@@ -98,14 +94,11 @@ def save_past_data_threaded():
             for category in new_data:
                 for group, buffer in new_data[category].items():
                     if group not in past_data[category]:
-                        past_data[category][group] = [[0.0] * 360] * 5
+                        past_data[category][group] = [[0.0] * 360 for _ in range(5)]
                     past_el_data = past_data[category][group]
                     reduce_resolution(past_el_data, np.array(buffer))
 
-            with open(
-                f"instance/network_data/{network.id}/time_series.pck",
-                "wb",
-            ) as file:
+            with open(f"instance/network_data/{network.id}/time_series.pck", "wb") as file:
                 pickle.dump(past_data, file)
 
         # remove old notifications

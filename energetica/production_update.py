@@ -74,10 +74,7 @@ def update_electricity() -> None:
                     "network_values": new_network_values,
                 },
             )
-        with open(
-            f"instance/network_data/{network.id}/charts/market_t{engine.data['total_t']}.pck",
-            "wb",
-        ) as file:
+        with open(f"instance/network_data/{network.id}/charts/market_t{engine.data['total_t']}.pck", "wb") as file:
             pickle.dump(market, file)
 
     for player in players:

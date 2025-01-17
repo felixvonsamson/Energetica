@@ -1,9 +1,9 @@
 """Functions for authentication and sign-up of users."""
 
-import json
+import re
 from datetime import datetime
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -42,6 +42,18 @@ def login():
     return render_template("login.jinja", engine=engine, user=current_user)
 
 
+@auth.route("/root_login", methods=["POST"])
+def root_login():
+    if request.remote_addr != "127.0.0.1":
+        abort(404)
+    user_id = request.form.get("user_id")
+    player = Player.get(int(user_id))
+    if player is None:
+        abort(404, description="User not found.")
+    login_user(player, remember=True)
+    engine.log(f"{player.username} logged in")
+
+
 # logic for the logout :
 @auth.route("/logout")
 @login_required
@@ -50,6 +62,12 @@ def logout():
     engine.log(f"{current_user.username} logged out")
     logout_user()
     return redirect(url_for("auth.login"))
+
+
+def is_valid_hash_format(hash_string):
+    # Regex to check if the hash string matches the Werkzeug password hash format
+    pattern = r"^[a-z0-9]+:[a-z0-9]+:\d+\$[a-zA-Z0-9./]+$"
+    return bool(re.match(pattern, hash_string))
 
 
 # logic for the sign-up :
@@ -61,29 +79,32 @@ def sign_up():
         username = username.strip()
         password1 = request.form.get("password1")
         password2 = request.form.get("password2")
+        pwhash = request.form.get("pwhash")
 
         existing_player = next(Player.filter_by(username=username), None)
         if existing_player:
             flash("Username already exist", category="error")
         elif len(username) < 3 or len(username) > 18:
             flash("Username must be between 3 and 18 characters.", category="error")
-        elif password1 != password2:
+        elif pwhash and not is_valid_hash_format(pwhash):
+            flash("Invalid password hash format.", category="error")
+        elif not pwhash and password1 != password2:
             flash("Passwords don't match.", category="error")
-        elif len(password1) < 7:
+        elif not pwhash and len(password1) < 7:
             flash("Password must be at least 7 characters.", category="error")
         else:
-            new_player = Player(
-                username=username,
-                pwhash=generate_password_hash(password1, method="scrypt"),
-            )
+            pwhash = pwhash or generate_password_hash(password1, method="scrypt")
+            new_player = Player(username=username, pwhash=pwhash)
             login_user(new_player, remember=True)
             flash("Account created!", category="message")
             log_entry = {
                 "timestamp": datetime.now().isoformat(),
                 "action_type": "create_user",
                 "player_id": new_player.id,
+                "username": new_player.username,
+                "pw_hash": new_player.pwhash,
             }
-            engine.action_logger.info(json.dumps(log_entry))
+            engine.log_action(log_entry)
             engine.log(f"{username} created an account")
             # websocket.rest_notify_scoreboard()
             # websocket.rest_notify_new_player()

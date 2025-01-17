@@ -1,7 +1,5 @@
-import json
 import math
 import random
-from datetime import datetime
 
 import numpy as np
 
@@ -18,16 +16,6 @@ from energetica.utils.formatting import display_money
 def climate_event_impact(tile: HexTile, event_name):
     """Create a ClimateEventRecovery object for the event and some facilities may be destroyed by the climate event."""
     engine.log(f"{climate_events[event_name]['name']} on tile {tile.id}")
-    engine.action_logger.info(
-        json.dumps(
-            {
-                "timestamp": datetime.now().isoformat(),
-                "action_type": "climate_event_impact",
-                "tile_id": tile.id,
-                "event": event_name,
-            }
-        )
-    )
     player = tile.player
     if not player:
         return
@@ -183,7 +171,7 @@ def data_init_climate(seconds_per_tick, random_seed, delta_t):
 
     return {
         "emissions": {
-            "CO2": [[4e10] * 360] * 5,
+            "CO2": [[4e10] * 360 for _ in range(5)],
         },
         "temperature": {
             "reference": ref_temp,

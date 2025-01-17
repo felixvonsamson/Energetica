@@ -1,6 +1,5 @@
 """These functions make the link between the website and the database."""
 
-import json
 import pickle
 from collections.abc import Callable
 from datetime import datetime
@@ -48,11 +47,11 @@ def log_action(func: Callable) -> Callable:
                 response = func(*args, **kwargs)
             response, status_code = response if isinstance(response, tuple) else (response, response.status_code)
         except GameError as game_exception:
-            # TODO: engine.db.rollback() or something similar
             response, status_code = jsonify({"response": game_exception.exception_type, **game_exception.kwargs}), 403
 
         log_entry = {
             "timestamp": datetime.now().isoformat(),
+            "ip": request.remote_addr,
             "action_type": "request",
             "player_id": current_user.id,
             "request": {
@@ -68,10 +67,17 @@ def log_action(func: Callable) -> Callable:
                 else response,
             },
         }
-        engine.action_logger.info(json.dumps(log_entry))
+        engine.log_action(log_entry)
         return response, status_code
 
     return wrapper
+
+
+@http.before_request
+def restrict_access_during_simulation():
+    """Restrict access to the API during the simulation."""
+    if engine.serve_local and request.method == "POST" and request.remote_addr != "127.0.0.1":
+        return "Service temporarily unavailable. Please try again in a few seconds", 503
 
 
 @http.before_request
@@ -186,7 +192,7 @@ def get_chart_data() -> Response | tuple:
         for key, value in dict2.items():
             for sub_key, array2 in value.items():
                 if sub_key not in dict1[key]:
-                    dict1[key][sub_key] = [[0.0] * 360] * 5
+                    dict1[key][sub_key] = [[0.0] * 360 for _ in range(5)]
                 array = dict1[key][sub_key]
                 concatenated_array = list(array[0]) + array2
                 dict1[key][sub_key][0] = concatenated_array[-360:]
