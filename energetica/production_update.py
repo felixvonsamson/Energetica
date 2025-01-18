@@ -574,7 +574,7 @@ def renewables_generation(player: Player, generation: dict) -> None:
     for hydro_facility in ["watermill", "small_water_dam", "large_water_dam"]:
         if player.capacities.get(hydro_facility) is not None:
             generation[hydro_facility] = power_factor * player.capacities[hydro_facility]["power"]
-        for af in ActiveFacility.filter_by(player=player, name=hydro_facility):
+        for af in ActiveFacility.filter_by(player=player, facility_type=hydro_facility):
             af.usage = power_factor
 
 
@@ -589,7 +589,7 @@ def solar_generation(player: Player, generation, in_game_seconds_passed) -> None
     """
     for facility_type in ["CSP_solar", "PV_solar"]:
         if player.capacities.get(facility_type) is not None:
-            for facility in ActiveFacility.filter_by(player=player, name=facility_type):
+            for facility in ActiveFacility.filter_by(player=player, facility_type=facility_type):
                 irradiance = calculate_solar_irradiance(
                     facility.position,
                     in_game_seconds_passed,
@@ -625,7 +625,7 @@ def wind_generation(player: Player, generation: dict, in_game_seconds_passed: in
 
     for facility_type in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
         if player.capacities.get(facility_type) is not None:
-            for facility in ActiveFacility.filter_by(player=player, name=facility_type):
+            for facility in ActiveFacility.filter_by(player=player, facility_type=facility_type):
                 wind_speed = calculate_wind_speed(facility.position, in_game_seconds_passed, engine.data["random_seed"])
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"]

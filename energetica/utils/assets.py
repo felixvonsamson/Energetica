@@ -260,7 +260,7 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
 
 def upgrade_all_of_type(player: Player, facility_name: str) -> None:
     """Upgrade all facilities of a certain type."""
-    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player=player, name=facility_name)
+    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player=player, facility_type=facility_name)
     for facility in facilities:
         with contextlib.suppress(GameError):
             upgrade_facility(player, facility)
@@ -285,7 +285,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     # The cost of decommissioning is 20% of the building cost.
     cost = facility.dismantle_cost
     player.money -= cost
-    if not ActiveFacility.filter_by(name=facility.facility_type, player=player):
+    if not ActiveFacility.filter_by(facility_type=facility.facility_type, player=player):
         # remove facility from facility priorities if it was the last one
         if isinstance(facility.facility_type, ExtractionFacilityType | StorageFacilityType):
             del player.network_prices.ask_prices[facility.facility_type]
@@ -340,7 +340,7 @@ def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
 
 def dismantle_all_of_type(player: Player, facility_name: str) -> None:
     """Dismantle all facilities of a certain type."""
-    facilities = list(ActiveFacility.filter_by(player=player, name=facility_name))
+    facilities = list(ActiveFacility.filter_by(player=player, facility_type=facility_name))
     for facility in facilities:
         with contextlib.suppress(GameError):
             dismantle_facility(player, facility)

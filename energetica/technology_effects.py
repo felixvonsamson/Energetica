@@ -336,7 +336,7 @@ def extraction_emissions_multiplier(player: Player, extraction_facility_name: Pr
 def next_available_location(player: Player, facility_name: ProjectType) -> int:
     """Return the next available location for a hydro and wind facilities."""
     active_facilities = ActiveFacility.filter_by(
-        name=facility_name,
+        facility_type=facility_name,
         player=player,
     )
     under_construction = OngoingProject.filter_by(

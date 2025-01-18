@@ -88,7 +88,7 @@ class DBModel:
         id: int
         project_type: ProjectType
         facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType
-        # name: str
+        name: str
         username: str
         player: Player | None  # None because of HexTile
         # HexTile
