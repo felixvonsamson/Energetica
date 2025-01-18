@@ -9,6 +9,7 @@ from energetica.enums import (
     TechnologyType,
     WindFacilityType,
     str_to_project_type,
+    str_to_project_type_extended,
 )
 
 
@@ -62,6 +63,8 @@ def test_str_to_project_name():
         "aerodynamics": TechnologyType.AERODYNAMICS,
         "chemistry": TechnologyType.CHEMISTRY,
         "nuclear_engineering": TechnologyType.NUCLEAR_ENGINEERING,
+    }
+    assert str_to_project_type_extended == str_to_project_type | {
         # Special Ask Prices
         "research": SpecialAskType.RESEARCH,
         "construction": SpecialAskType.CONSTRUCTION,

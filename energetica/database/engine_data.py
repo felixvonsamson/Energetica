@@ -14,12 +14,13 @@ from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     FunctionalFacilityType,
+    PowerFacilityType,
     ProjectType,
     SpecialAskType,
     StorageFacilityType,
     power_facility_types,
     renewable_facility_types,
-    str_to_project_type,
+    str_to_project_type_extended,
 )
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -184,7 +185,7 @@ class NetworkPrices:
         updated_bid_prices = {}
         updated_ask_prices = {}
         for priority_name, price in zip(new_priority, sorted_prices):
-            project_name = str_to_project_type[priority_name[4:]]
+            project_name = str_to_project_type_extended[priority_name[4:]]
             if priority_name.startswith("ask-"):
                 updated_ask_prices[project_name] = price
             else:
@@ -217,7 +218,9 @@ class CapacityData:
         # TODO (Yassir): Add ref to the player in init
         self._data: dict[str, dict] = {}
 
-    def update(self, player: Player, facility_name: str | None) -> None:
+    def update(
+        self, player: Player, facility_name: PowerFacilityType | StorageFacilityType | ExtractionFacilityType | None
+    ) -> None:
         """Update the capacity data of the player."""
         from energetica.database.active_facility import ActiveFacility
 

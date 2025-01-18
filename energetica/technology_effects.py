@@ -19,14 +19,15 @@ from energetica.enums import (
     ExtractionFacilityType,
     Fuel,
     FunctionalFacilityType,
+    HydroFacilityType,
     PowerFacilityType,
     ProjectType,
     Renewable,
     RenewableFacilityType,
     StorageFacilityType,
     TechnologyType,
+    WindFacilityType,
     power_facility_types,
-    renewable_facility_types,
 )
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -221,7 +222,7 @@ def hydro_price_multiplier(player: Player, hydro_facility_name: ProjectType) -> 
     # calculating the hydro price multiplier linked to the number of hydro facilities
     if not player.tile:
         raise GameError("TileNotFound")  # TODO(mglst): handle this case
-    if hydro_facility_name in ["watermill", "small_water_dam", "large_water_dam"]:
+    if isinstance(hydro_facility_name, HydroFacilityType):
         mlt *= hydro_price_function(
             next_available_location(player, hydro_facility_name),
             player.tile.potentials[Renewable.HYDRO],
@@ -240,7 +241,7 @@ def wind_speed_multiplier(player: Player, wind_facility_name: ProjectType) -> fl
     # calculating the wind speed multiplier linked to the number of wind turbines
     if not player.tile:
         raise GameError("TileNotFound")  # TODO(mglst): handle this case
-    if wind_facility_name in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
+    if isinstance(wind_facility_name, WindFacilityType):
         mlt *= wind_speed_function(
             next_available_location(player, wind_facility_name),
             player.tile.potentials[Renewable.WIND],
@@ -258,14 +259,7 @@ def multiplier_3(player: Player, facility_name: ProjectType) -> float:
     const_config = engine.const_config["assets"]
     if facility_name in const_config["mineral_extraction"]["affected_facilities"]:
         return extraction_emissions_multiplier(player, facility_name)
-    if facility_name in [
-        "watermill",
-        "small_water_dam",
-        "large_water_dam",
-        "windmill",
-        "onshore_wind_turbine",
-        "offshore_wind_turbine",
-    ]:
+    if isinstance(facility_name, HydroFacilityType | WindFacilityType):
         return next_available_location(player, facility_name)
     return efficiency_multiplier(player, facility_name)
 
@@ -333,14 +327,14 @@ def extraction_emissions_multiplier(player: Player, extraction_facility_name: Pr
     return mlt
 
 
-def next_available_location(player: Player, facility_name: ProjectType) -> int:
+def next_available_location(player: Player, facility_type: HydroFacilityType | WindFacilityType) -> int:
     """Return the next available location for a hydro and wind facilities."""
     active_facilities = ActiveFacility.filter_by(
-        facility_type=facility_name,
+        facility_type=facility_type,
         player=player,
     )
     under_construction = OngoingProject.filter_by(
-        project_type=facility_name,
+        project_type=facility_type,
         player=player,
     )
     # Create a set of used efficiency multipliers

@@ -168,14 +168,15 @@ power_facility_types: list[PowerFacilityType] = [
 ]
 
 ProjectType = PowerFacilityType | StorageFacilityType | ExtractionFacilityType | FunctionalFacilityType | TechnologyType
-project_types: set[ProjectType] = (
-    set(power_facility_types)
-    | set(StorageFacilityType)
-    | set(ExtractionFacilityType)
-    | set(FunctionalFacilityType)
-    | set(TechnologyType)
-)
-
-str_to_project_type: dict[str, ProjectType | SpecialAskType] = {
-    str(f): f for f in (project_types | set(SpecialAskType))
+project_types: set[ProjectType] = {
+    *power_facility_types,
+    *StorageFacilityType,
+    *ExtractionFacilityType,
+    *FunctionalFacilityType,
+    *TechnologyType,
 }
+
+str_to_project_type: dict[str, ProjectType] = {str(f): f for f in (project_types)}
+
+project_types_extended: set[ProjectType | SpecialAskType] = project_types | set(SpecialAskType)
+str_to_project_type_extended: dict[str, ProjectType | SpecialAskType] = {str(f): f for f in project_types_extended}

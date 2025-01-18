@@ -44,6 +44,13 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
     player: Player = project.player
 
     if isinstance(project.project_type, TechnologyType):
+        player.progression_metrics["total_technologies"] += 1
+        server_tech = engine.data["technology_lvls"][project.project_type]
+        if len(server_tech) <= player.technology_lvl[project.project_type]:
+            server_tech.append(0)
+        server_tech[player.technology_lvl[project.project_type] - 1] += 1
+        player.check_technology_achievement()
+
         player.technology_lvl[project.project_type] += 1
 
     elif isinstance(project.project_type, FunctionalFacilityType):
@@ -61,14 +68,6 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
                 player.network_prices.add_ask(SpecialAskType.RESEARCH, player)
 
         player.functional_facility_lvl[project.project_type] += 1
-
-        if isinstance(project.project_type, TechnologyType):
-            player.progression_metrics["total_technologies"] += 1
-            server_tech = engine.data["technology_lvls"][project.project_type]
-            if len(server_tech) <= player.technology_lvl[project.project_type]:
-                server_tech.append(0)
-            server_tech[player.technology_lvl[project.project_type] - 1] += 1
-            player.check_technology_achievement()
 
     elif not ActiveFacility.count_when(facility_type=project.project_type, player=player):
         # initialize array for facility if it is the first one built
@@ -141,9 +140,10 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             player=player,
             multipliers=project.multipliers,
         )
+
     if isinstance(project.project_type, TechnologyType):
         player.capacities.update(player, None)
-    else:
+    elif not isinstance(project.project_type, FunctionalFacilityType):
         player.capacities.update(player, project.project_type)
     engine.config.update_config_for_user(player)
     player.emit("retrieve_player_data")
@@ -258,9 +258,11 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
     player.capacities.update(player, facility.facility_type)
 
 
-def upgrade_all_of_type(player: Player, facility_name: str) -> None:
+def upgrade_all_of_type(
+    player: Player, facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType
+) -> None:
     """Upgrade all facilities of a certain type."""
-    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player=player, facility_type=facility_name)
+    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player=player, facility_type=facility_type)
     for facility in facilities:
         with contextlib.suppress(GameError):
             upgrade_facility(player, facility)
@@ -338,9 +340,11 @@ def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
     engine.log(f"{player.username} dismantled the facility {facility.facility_type}.")
 
 
-def dismantle_all_of_type(player: Player, facility_name: str) -> None:
+def dismantle_all_of_type(
+    player: Player, facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType
+) -> None:
     """Dismantle all facilities of a certain type."""
-    facilities = list(ActiveFacility.filter_by(player=player, facility_type=facility_name))
+    facilities = list(ActiveFacility.filter_by(player=player, facility_type=facility_type))
     for facility in facilities:
         with contextlib.suppress(GameError):
             dismantle_facility(player, facility)

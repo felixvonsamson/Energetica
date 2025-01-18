@@ -25,7 +25,15 @@ from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.enums import Fuel, Renewable, SpecialAskType, str_to_project_type
+from energetica.enums import (
+    ExtractionFacilityType,
+    Fuel,
+    PowerFacilityType,
+    Renewable,
+    SpecialAskType,
+    StorageFacilityType,
+    str_to_project_type,
+)
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -405,8 +413,6 @@ def request_queue_project() -> Response | tuple:
     request_data = request.get_json()
     asset = request_data["facility"]
     project_name = str_to_project_type[asset]
-    if isinstance(project_name, SpecialAskType):
-        raise GameError("malformedRequest")
     force = request_data["force"]
     try:
         energetica.utils.assets.queue_project(
@@ -515,12 +521,14 @@ def request_upgrade_facility() -> Response | tuple:
 
 @http.route("/request_upgrade_all_of_type", methods=["POST"])
 @log_action
-def request_upgrade_all_of_type() -> Response:
+def request_upgrade_all_of_type() -> Response | tuple:
     """Upgrade all facilities of a certain type."""
     player = Player.getitem(current_user.id)
     request_data = request.get_json()
-    facility = request_data["facility"]
-    energetica.utils.assets.upgrade_all_of_type(player=player, facility_name=facility)
+    facility_type = str_to_project_type[request_data["facility"]]
+    if not isinstance(facility_type, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):
+        return jsonify({"response": "malformedRequest"}), 400
+    energetica.utils.assets.upgrade_all_of_type(player=player, facility_type=facility_type)
     return jsonify({"response": "success", "money": player.money})
 
 
@@ -551,7 +559,7 @@ def request_dismantle_all_of_type() -> Response:
     player = Player.getitem(current_user.id)
     request_data = request.get_json()
     facility = request_data["facility"]
-    energetica.utils.assets.dismantle_all_of_type(player=player, facility_name=facility)
+    energetica.utils.assets.dismantle_all_of_type(player=player, facility_type=facility)
     return jsonify({"response": "success", "money": player.money})
 
 

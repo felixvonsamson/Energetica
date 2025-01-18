@@ -21,9 +21,12 @@ from energetica.enums import (
     ExtractionFacilityType,
     Fuel,
     FunctionalFacilityType,
+    HydroFacilityType,
     ProjectType,
+    SolarFacilityType,
     StorageFacilityType,
     TechnologyType,
+    WindFacilityType,
     power_facility_types,
 )
 from energetica.globals import engine
@@ -571,7 +574,7 @@ def renewables_generation(player: Player, generation: dict) -> None:
     solar_generation(player, generation, in_game_seconds_passed)
     # HYDRO
     power_factor = calculate_river_discharge(in_game_seconds_passed) / 150
-    for hydro_facility in ["watermill", "small_water_dam", "large_water_dam"]:
+    for hydro_facility in HydroFacilityType:
         if player.capacities.get(hydro_facility) is not None:
             generation[hydro_facility] = power_factor * player.capacities[hydro_facility]["power"]
         for af in ActiveFacility.filter_by(player=player, facility_type=hydro_facility):
@@ -587,7 +590,7 @@ def solar_generation(player: Player, generation, in_game_seconds_passed) -> None
     The csi is then multiplied by the clear sky value to get the actual irradiance at the location.
     The effective power of the solar facility is then calculated as irradiance / 950 * max_power.
     """
-    for facility_type in ["CSP_solar", "PV_solar"]:
+    for facility_type in SolarFacilityType:
         if player.capacities.get(facility_type) is not None:
             for facility in ActiveFacility.filter_by(player=player, facility_type=facility_type):
                 irradiance = calculate_solar_irradiance(
@@ -623,7 +626,7 @@ def wind_generation(player: Player, generation: dict, in_game_seconds_passed: in
         pc = wind_power_curve
         return pc[i] + (pc[(i + 1) % 90] - pc[i]) * f
 
-    for facility_type in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]:
+    for facility_type in WindFacilityType:
         if player.capacities.get(facility_type) is not None:
             for facility in ActiveFacility.filter_by(player=player, facility_type=facility_type):
                 wind_speed = calculate_wind_speed(facility.position, in_game_seconds_passed, engine.data["random_seed"])
