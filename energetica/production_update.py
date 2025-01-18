@@ -330,7 +330,7 @@ def calculate_generation_without_market(new_values, player: Player) -> None:
     facilities = engine.storage_facilities + engine.power_facilities
     # Obligatory generation is put on the internal market at a price of -5
     for facility in facilities:
-        if player.capacities.get(facility) is not None:
+        if facility in player.capacities:
             internal_market = place_bid(
                 internal_market,
                 player.id,
@@ -354,7 +354,7 @@ def calculate_generation_without_market(new_values, player: Player) -> None:
     resource_reservations = reset_resource_reservations()
     # offer additional capacities of facilities on the internal market
     for facility in engine.storage_facilities + engine.controllable_facilities:
-        if player.capacities.get(facility) is not None:
+        if facility in player.capacities:
             max_prod = calculate_prod(
                 "max",
                 player,
