@@ -340,7 +340,7 @@ def next_available_location(player: Player, facility_name: ProjectType) -> int:
         player=player,
     )
     under_construction = OngoingProject.filter_by(
-        name=facility_name,
+        project_type=facility_name,
         player=player,
     )
     # Create a set of used efficiency multipliers
@@ -375,7 +375,7 @@ def construction_time(player: Player, project_name: ProjectType) -> float:
     duration = const_config[project_name]["base_construction_time"] / engine.in_game_seconds_per_tick
     # construction time increases with higher levels
     if isinstance(project_name, FunctionalFacilityType | TechnologyType):
-        level_with_constructions = OngoingProject.count_when(name=project_name, player=player)
+        level_with_constructions = OngoingProject.count_when(project_type=project_name, player=player)
         duration *= const_config[project_name]["price_multiplier"] ** (0.6 * level_with_constructions)
         # knowledge spillover and laboratory time reduction
         if isinstance(project_name, TechnologyType):
@@ -499,7 +499,9 @@ def requirements_status(player: Player, project_name: ProjectType, requirements:
     # TODO(mglst): this method, and the others about requirements should be revised, as they are unclear
     const_config = engine.const_config["assets"]
     if all(requirement["status"] == "satisfied" for requirement in requirements):
-        if isinstance(project_name, TechnologyType) and OngoingProject.filter_by(name=project_name, player=player):
+        if isinstance(project_name, TechnologyType) and OngoingProject.filter_by(
+            project_type=project_name, player=player
+        ):
             return "queued"
         return "satisfied"
     if const_config[project_name]["type"] == "Technology" and all(
@@ -756,7 +758,8 @@ def next_level(player: Player, facility_or_technology: ProjectType) -> int:
         + len(
             list(
                 OngoingProject.filter(
-                    lambda construction: construction.player == player and construction.name == facility_or_technology,
+                    lambda construction: construction.player == player
+                    and construction.project_type == facility_or_technology,
                 ),
             ),
         )

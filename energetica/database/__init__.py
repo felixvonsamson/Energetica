@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
     from energetica.database.player import Player
+    from energetica.enums import ProjectType
 
 T = TypeVar("T", bound="DBModel")
 
@@ -85,6 +86,7 @@ class DBModel:
         """
 
         id: int
+        project_type: ProjectType
         name: str
         username: str
         player: Player | None  # None because of HexTile

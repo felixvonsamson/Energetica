@@ -27,7 +27,7 @@ class ProjectStatus:
 class OngoingProject(DBModel):
     """Class that stores projects."""
 
-    name: ProjectType
+    project_type: ProjectType
     player: Player
 
     end_tick_or_ticks_passed: float  # in game ticks when the project will be finished or ticks passed if it is paused
@@ -73,7 +73,7 @@ class OngoingProject(DBModel):
         assert self.status == ProjectStatus.WAITING
         assert not self.prerequisites
 
-        worker_type = WorkerType.Research if isinstance(self.name, TechnologyType) else WorkerType.CONSTRUCTION
+        worker_type = WorkerType.RESEARCH if isinstance(self.project_type, TechnologyType) else WorkerType.CONSTRUCTION
         assert self.player.available_workers(worker_type) > 0
         if start_now:
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
@@ -84,7 +84,7 @@ class OngoingProject(DBModel):
     def unpause(self) -> None:
         """Make this facility go from paused to either waiting or ongoing."""
         assert self.was_paused_by_player()
-        worker_type = WorkerType.RESEARCH if isinstance(self.name, TechnologyType) else WorkerType.CONSTRUCTION
+        worker_type = WorkerType.RESEARCH if isinstance(self.project_type, TechnologyType) else WorkerType.CONSTRUCTION
         if self.prerequisites or self.player.available_workers(worker_type) < 1:
             self.status = ProjectStatus.WAITING
         else:
@@ -140,40 +140,40 @@ class OngoingProject(DBModel):
         prerequisites: list[OngoingProject] = []
         level = None
         this_priority_index: int
-        if isinstance(self.name, FunctionalFacilityType):
+        if isinstance(self.project_type, FunctionalFacilityType):
             # For functional facilities, the only prerequisites are ongoing projects of the same type
             priority_list = self.player.constructions_by_priority
             this_priority_index = priority_list.index(self)
             # Go through all ongoing constructions that are higher up in the priority order
-            level = self.player.functional_facility_lvl[self.name] + 1
+            level = self.player.functional_facility_lvl[self.project_type] + 1
             for candidate_prerequisite in priority_list[:this_priority_index]:
                 # Add them as a prerequisite, if they are of the same type
-                if candidate_prerequisite.name == self.name:
+                if candidate_prerequisite.project_type == self.project_type:
                     prerequisites.append(candidate_prerequisite)
                     level += 1
-        elif isinstance(self.name, TechnologyType):
+        elif isinstance(self.project_type, TechnologyType):
             # For technologies, const config needs to be checked
             const_config = engine.const_config["assets"]
-            requirements = const_config[self.name]["requirements"]
+            requirements = const_config[self.project_type]["requirements"]
             priority_list = self.player.researches_by_priority
             this_priority_index = priority_list.index(self)
             # Compute this technologies level by looking at technologies higher up in the priority list with same name
-            level = self.player.technology_lvl[self.name] + 1
+            level = self.player.technology_lvl[self.project_type] + 1
             for other_technology in priority_list[:this_priority_index]:
-                if other_technology.name == self.name:
+                if other_technology.project_type == self.project_type:
                     level += 1
             num_ongoing_researches_of: dict[str, int] = defaultdict(int)
             for candidate_prerequisite in priority_list[:this_priority_index]:
-                if candidate_prerequisite.name == self.name:
+                if candidate_prerequisite.project_type == self.project_type:
                     prerequisites.append(candidate_prerequisite)
                     continue
-                if candidate_prerequisite.name in requirements:
-                    num_ongoing_researches_of[candidate_prerequisite.name] += 1
+                if candidate_prerequisite.project_type in requirements:
+                    num_ongoing_researches_of[candidate_prerequisite.project_type] += 1
                     # Add them as a prerequisite, if they are, according to const_config
-                    offset: int = requirements[candidate_prerequisite.name]
+                    offset: int = requirements[candidate_prerequisite.project_type]
                     candidate_prerequisite_level: int = (
-                        self.player.technology_lvl[candidate_prerequisite.name]
-                        + num_ongoing_researches_of[candidate_prerequisite.name]
+                        self.player.technology_lvl[candidate_prerequisite.project_type]
+                        + num_ongoing_researches_of[candidate_prerequisite.project_type]
                     )
                     if level + offset - 1 >= candidate_prerequisite_level:
                         prerequisites.append(candidate_prerequisite)

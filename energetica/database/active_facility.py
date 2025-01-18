@@ -12,9 +12,7 @@ from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     PowerFacilityType,
-    ProjectType,
     StorageFacilityType,
-    power_facility_types,
 )
 from energetica.globals import engine
 
@@ -26,7 +24,7 @@ if TYPE_CHECKING:
 class ActiveFacility(DBModel):
     """Class that stores the facilities on the server and their end of life time."""
 
-    name: ProjectType
+    name: PowerFacilityType | StorageFacilityType | ExtractionFacilityType
     player: Player
     position: tuple[float, float]
     end_of_life: float

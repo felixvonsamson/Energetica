@@ -20,6 +20,7 @@ from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     Fuel,
+    FunctionalFacilityType,
     ProjectType,
     StorageFacilityType,
     TechnologyType,
@@ -240,7 +241,7 @@ def industry_demand_and_revenues(player: Player, demand, revenues) -> None:
     demand["industry"] = intra_day_factor * seasonal_factor * player.config["industry"]["power_consumption"]
     # calculate income of industry per tick
     revenues["industry"] = player.config["industry"]["income_per_day"] / ticks_per_day
-    industry_upgrade = next(OngoingProject.filter_by(player=player, name="industry"), None)
+    industry_upgrade = next(OngoingProject.filter_by(player=player, project_type=FunctionalFacilityType.INDUSTRY), None)
     if industry_upgrade:
         additional_demand = (
             industry_upgrade.progress()

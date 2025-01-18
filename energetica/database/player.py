@@ -264,7 +264,7 @@ class Player(DBModel, UserMixin):
             list(
                 OngoingProject.filter(
                     lambda construction: construction.player == self
-                    and not construction.name in TechnologyType
+                    and not construction.project_type in TechnologyType
                     and construction.status == ProjectStatus.ONGOING,
                 ),
             ),
@@ -278,7 +278,7 @@ class Player(DBModel, UserMixin):
             list(
                 OngoingProject.filter(
                     lambda construction: construction.player == self
-                    and construction.name in TechnologyType
+                    and construction.project_type in TechnologyType
                     and construction.status == ProjectStatus.ONGOING,
                 ),
             ),
@@ -659,7 +659,7 @@ class Player(DBModel, UserMixin):
                     "status",
                 ]
             }
-            | {"display_name": engine.const_config["assets"][construction.name]["name"]}
+            | {"display_name": engine.const_config["assets"][construction.project_type]["name"]}
             | ({"level": construction.level} if construction.level is not None else {})
             | {"speed": construction.speed}
             for construction in (*self.constructions_by_priority, *self.researches_by_priority)

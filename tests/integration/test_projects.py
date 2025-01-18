@@ -38,17 +38,17 @@ def validate_rules(player: Player):
     for construction in player.constructions_by_priority:
         assert construction is not None
         assert construction.player == player
-        assert not isinstance(construction.name, TechnologyType)
+        assert not isinstance(construction.project_type, TechnologyType)
     for research in player.researches_by_priority:
         assert research is not None
         assert research.player == player
-        assert isinstance(research.name, TechnologyType)
+        assert isinstance(research.project_type, TechnologyType)
     assert OngoingProject.count(
         condition=lambda construction: construction.player == player
-        and not isinstance(construction.name, TechnologyType)
+        and not isinstance(construction.project_type, TechnologyType)
     ) == len(player.constructions_by_priority)
     assert OngoingProject.count(
-        condition=lambda research: research.player == player and isinstance(research.name, TechnologyType)
+        condition=lambda research: research.player == player and isinstance(research.project_type, TechnologyType)
     ) == len(player.researches_by_priority)
 
     # Rule 2
@@ -56,13 +56,13 @@ def validate_rules(player: Player):
         OngoingProject.filter(
             lambda construction: construction.player == player
             and construction.status == ProjectStatus.ONGOING
-            and not isinstance(construction.name, TechnologyType)
+            and not isinstance(construction.project_type, TechnologyType)
         )
     )
     if len(ongoing_constructions) > player.workers["construction"]:
         pytest.fail(
             f"Rule 2 violation: there are {len(ongoing_constructions)} ongoing constructions "
-            f"({','.join(map(lambda c: c.name, ongoing_constructions))}), "
+            f"({','.join(map(lambda c: c.project_type, ongoing_constructions))}), "
             f"but only {player.workers['construction']} construction workers."
         )
 
@@ -70,13 +70,13 @@ def validate_rules(player: Player):
         OngoingProject.filter(
             lambda project: project.player == player
             and project.status == ProjectStatus.ONGOING
-            and isinstance(project.name, TechnologyType)
+            and isinstance(project.project_type, TechnologyType)
         )
     )
     if len(ongoing_research) > player.workers["laboratory"]:
         pytest.fail(
             f"Rule 2 violation: there are {len(ongoing_research)} ongoing research projects "
-            f"({','.join(map(lambda c: c.name, ongoing_research))}), "
+            f"({','.join(map(lambda c: c.project_type, ongoing_research))}), "
             f"but only {player.workers['laboratory']} lab workers."
         )
 
@@ -130,7 +130,7 @@ def validate_rules(player: Player):
         OngoingProject.filter(
             lambda construction: construction.player == player
             and construction.status == ProjectStatus.WAITING
-            and not isinstance(construction.name, TechnologyType)
+            and not isinstance(construction.project_type, TechnologyType)
             and not construction.prerequisites
         )
     )
@@ -138,13 +138,13 @@ def validate_rules(player: Player):
         count_on_going_constructions = OngoingProject.count(
             condition=lambda construction: construction.player == player
             and construction.status == ProjectStatus.ONGOING
-            and not isinstance(construction.name, TechnologyType)
+            and not isinstance(construction.project_type, TechnologyType)
         )
         if player.workers["construction"] != count_on_going_constructions:
             pytest.fail(
                 "Rule 7 failed for constructions. "
                 f"Player has {len(waiting_constructions)} waiting constructions "
-                f"({','.join(map(lambda c: c.name, waiting_constructions))}), "
+                f"({','.join(map(lambda c: c.project_type, waiting_constructions))}), "
                 f"but has {player.workers['construction']} construction workers, "
                 f"and only {count_on_going_constructions} ongoing constructions."
             )
@@ -152,7 +152,7 @@ def validate_rules(player: Player):
         OngoingProject.filter(
             lambda research: research.player == player
             and research.status == ProjectStatus.WAITING
-            and isinstance(research.name, TechnologyType)
+            and isinstance(research.project_type, TechnologyType)
             and not research.prerequisites
         )
     )
@@ -160,13 +160,13 @@ def validate_rules(player: Player):
         count_on_going_research = OngoingProject.count(
             condition=lambda research: research.player == player
             and research.status == ProjectStatus.ONGOING
-            and isinstance(research.name, TechnologyType)
+            and isinstance(research.project_type, TechnologyType)
         )
         if player.workers["laboratory"] != count_on_going_research:
             pytest.fail(
                 "Rule 7 failed for research. "
                 f"Player has {len(waiting_research)} waiting research projects "
-                f"({','.join(map(lambda c: c.name, waiting_research))}), "
+                f"({','.join(map(lambda c: c.project_type, waiting_research))}), "
                 f"but has {player.workers['laboratory']} lab workers, "
                 f"and only {count_on_going_research} ongoing research projects."
             )
