@@ -191,7 +191,7 @@ def initialize_player(player: Player) -> None:
     pos_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     pos_y = player.tile.coordinates[1]
     steam_engine: ActiveFacility = ActiveFacility(
-        name=ControllableFacilityType.STEAM_ENGINE,
+        facility_type=ControllableFacilityType.STEAM_ENGINE,
         position=(pos_x, pos_y),
         end_of_life=eol,
         player=player,

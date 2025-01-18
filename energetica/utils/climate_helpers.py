@@ -62,16 +62,16 @@ def climate_event_impact(tile: HexTile, event_name):
         )
         engine.log(f"{player.username} : Industry levelled down by {climate_events[event_name]['name']}.")
     facilities_list = list(climate_events[event_name]["destruction_chance"].keys())
-    facilities_at_risk = filter(lambda facility: facility.name in facilities_list, player.active_facilities)
+    facilities_at_risk = filter(lambda facility: facility.facility_type in facilities_list, player.active_facilities)
     for facility in facilities_at_risk:
-        if random.random() < climate_events[event_name]["destruction_chance"][facility.name]:
+        if random.random() < climate_events[event_name]["destruction_chance"][facility.facility_type]:
             facility_destroyed(player, facility, climate_events[event_name]["name"])
             # if a water dam is destroyed it will flood downstream tiles
-            if facility.name == "small_water_dam":
+            if facility.facility_type == "small_water_dam":
                 affected_tiles = tile.get_downstream_tiles(3)
                 for affected_tile in affected_tiles:
                     climate_event_impact(affected_tile, "flood")
-            elif facility.name == "large_water_dam":
+            elif facility.facility_type == "large_water_dam":
                 affected_tiles = tile.get_downstream_tiles(15)
                 for affected_tile in affected_tiles:
                     climate_event_impact(affected_tile, "flood")

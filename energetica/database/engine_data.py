@@ -224,24 +224,24 @@ class CapacityData:
         active_facilities: list[ActiveFacility]
         if facility_name is None:
             active_facilities = list(ActiveFacility.filter_by(player=player))
-            unique_facilities = {af.name for af in active_facilities}
+            unique_facilities = {af.facility_type for af in active_facilities}
             for uf in unique_facilities:
                 self.init_facility(uf)
         else:
-            active_facilities = list(ActiveFacility.filter_by(player=player, name=facility_name))
+            active_facilities = list(ActiveFacility.filter_by(player=player, facility_type=facility_name))
             if len(active_facilities) == 0 and facility_name in self._data:
                 del self._data[facility_name]
                 return
             self.init_facility(facility_name)
 
         for facility in active_facilities:
-            base_data = engine.const_config["assets"][facility.name]
-            effective_values = self._data[facility.name]
+            base_data = engine.const_config["assets"][facility.facility_type]
+            effective_values = self._data[facility.facility_type]
             op_costs = facility.daily_op_cost * engine.in_game_seconds_per_tick / (24 * 3600)
-            if facility.name in ["watermill", "small_water_dam", "large_water_dam"]:
+            if facility.facility_type in ["watermill", "small_water_dam", "large_water_dam"]:
                 op_costs *= facility.multipliers["multiplier_2"]
             effective_values["O&M_cost"] += op_costs
-            if facility.name in power_facility_types:
+            if facility.facility_type in power_facility_types:
                 power_gen = facility.max_power_generation
                 effective_values["power"] += power_gen
                 for fuel in effective_values["fuel_use"]:
@@ -253,7 +253,7 @@ class CapacityData:
                         / 3600
                         / 1_000_000
                     )
-            elif facility.name in StorageFacilityType:
+            elif facility.facility_type in StorageFacilityType:
                 power_gen = facility.max_power_generation
                 # mean efficiency
                 effective_values["efficiency"] = (
@@ -263,7 +263,7 @@ class CapacityData:
                 effective_values["power"] += power_gen
                 if facility.end_of_life > 0:
                     effective_values["capacity"] += facility.storage_capacity
-            elif facility.name in ExtractionFacilityType:
+            elif facility.facility_type in ExtractionFacilityType:
                 effective_values["extraction_rate_per_day"] += (
                     base_data["base_extraction_rate_per_day"] * facility.multipliers["multiplier_2"]
                 )

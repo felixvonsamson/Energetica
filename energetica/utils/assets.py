@@ -43,9 +43,10 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
     """
     player: Player = project.player
 
-    if project.project_type in TechnologyType:
+    if isinstance(project.project_type, TechnologyType):
         player.technology_lvl[project.project_type] += 1
-    if project.project_type in FunctionalFacilityType:
+
+    elif isinstance(project.project_type, FunctionalFacilityType):
         if player.functional_facility_lvl[project.project_type] == 0:
             if project.project_type == "carbon_capture":
                 player.rolling_history.add_subcategory("demand", project.project_type)
@@ -69,7 +70,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             server_tech[player.technology_lvl[project.project_type] - 1] += 1
             player.check_technology_achievement()
 
-    elif not ActiveFacility.count_when(name=project.project_type, player=player):
+    elif not ActiveFacility.count_when(facility_type=project.project_type, player=player):
         # initialize array for facility if it is the first one built
         if isinstance(project.project_type, StorageFacilityType | PowerFacilityType | ExtractionFacilityType):
             player.rolling_history.add_subcategory("op_costs", project.project_type)
@@ -127,14 +128,14 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
                 engine.data["random_seed"],
                 player.tile.coordinates,
                 project.project_type,
-                ActiveFacility.count_when(name=project.project_type, player=player),
+                ActiveFacility.count_when(facility_type=project.project_type, player=player),
             ),
         )
         random.seed(seed_hash)
         position_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1] + random.uniform(-0.5, 0.5)
         position_y = (player.tile.coordinates[1] + random.uniform(-0.5, 0.5)) * 0.5 * 3**0.5
         ActiveFacility(
-            name=project.project_type,
+            facility_type=project.project_type,
             position=(position_x, position_y),
             end_of_life=eol,
             player=player,
@@ -233,20 +234,28 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
         msg = "FacilityIsDecommissioning"
         raise GameError(msg)
     player.money -= upgrade_cost
-    if isinstance(facility.name, ExtractionFacilityType):
-        facility.multipliers["price_multiplier"] = technology_effects.price_multiplier(facility.player, facility.name)
-        facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(facility.player, facility.name)
-        facility.multipliers["multiplier_2"] = technology_effects.multiplier_2(facility.player, facility.name)
-        facility.multipliers["multiplier_3"] = technology_effects.multiplier_3(facility.player, facility.name)
+    if isinstance(facility.facility_type, ExtractionFacilityType):
+        facility.multipliers["price_multiplier"] = technology_effects.price_multiplier(
+            facility.player, facility.facility_type
+        )
+        facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(facility.player, facility.facility_type)
+        facility.multipliers["multiplier_2"] = technology_effects.multiplier_2(facility.player, facility.facility_type)
+        facility.multipliers["multiplier_3"] = technology_effects.multiplier_3(facility.player, facility.facility_type)
     else:
-        facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(facility.player, facility.name)
-        if isinstance(facility.name, PowerFacilityType | StorageFacilityType):
-            facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(facility.player, facility.name)
-        if isinstance(facility.name, StorageFacilityType):
-            facility.multipliers["multiplier_2"] = technology_effects.multiplier_2(facility.player, facility.name)
-        if isinstance(facility.name, ControllableFacilityType | StorageFacilityType):
-            facility.multipliers["multiplier_3"] = technology_effects.multiplier_3(facility.player, facility.name)
-    player.capacities.update(player, facility.name)
+        facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(facility.player, facility.facility_type)
+        if isinstance(facility.facility_type, PowerFacilityType | StorageFacilityType):
+            facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(
+                facility.player, facility.facility_type
+            )
+        if isinstance(facility.facility_type, StorageFacilityType):
+            facility.multipliers["multiplier_2"] = technology_effects.multiplier_2(
+                facility.player, facility.facility_type
+            )
+        if isinstance(facility.facility_type, ControllableFacilityType | StorageFacilityType):
+            facility.multipliers["multiplier_3"] = technology_effects.multiplier_3(
+                facility.player, facility.facility_type
+            )
+    player.capacities.update(player, facility.facility_type)
 
 
 def upgrade_all_of_type(player: Player, facility_name: str) -> None:
@@ -266,25 +275,25 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     if facility is None or facility.player != player:
         msg = "Facility not found"
         raise GameError(msg)
-    if isinstance(facility.name, TechnologyType | FunctionalFacilityType):
+    if isinstance(facility.facility_type, TechnologyType | FunctionalFacilityType):
         msg = "Cannot remove technologies or functional facilities"
         raise GameError(msg)
-    if isinstance(facility.name, StorageFacilityType) and not decommissioning:
+    if isinstance(facility.facility_type, StorageFacilityType) and not decommissioning:
         facility.end_of_life = 0
-        player.capacities.update(player, facility.name)
+        player.capacities.update(player, facility.facility_type)
         return
     # The cost of decommissioning is 20% of the building cost.
     cost = facility.dismantle_cost
     player.money -= cost
-    if not ActiveFacility.filter_by(name=facility.name, player=player):
+    if not ActiveFacility.filter_by(name=facility.facility_type, player=player):
         # remove facility from facility priorities if it was the last one
-        if isinstance(facility.name, ExtractionFacilityType | StorageFacilityType):
-            del player.network_prices.ask_prices[facility.name]
-        if isinstance(facility.name, RenewableFacilityType):
-            player.network_prices.renewable_bids.remove(facility.name)
-        if isinstance(facility.name, StorageFacilityType | ControllableFacilityType):
-            del player.network_prices.bid_prices[facility.name]
-    facility_name = engine.const_config["assets"][facility.name]["name"]
+        if isinstance(facility.facility_type, ExtractionFacilityType | StorageFacilityType):
+            del player.network_prices.ask_prices[facility.facility_type]
+        if isinstance(facility.facility_type, RenewableFacilityType):
+            player.network_prices.renewable_bids.remove(facility.facility_type)
+        if isinstance(facility.facility_type, StorageFacilityType | ControllableFacilityType):
+            del player.network_prices.bid_prices[facility.facility_type]
+    facility_name = engine.const_config["assets"][facility.facility_type]["name"]
     if decommissioning:
         player.notify(
             "Decommissioning",
@@ -295,7 +304,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
             ),
         )
         engine.log(f"The facility {facility_name} from {player.username} has been decommissioned.")
-    player.capacities.update(player, facility.name)
+    player.capacities.update(player, facility.facility_type)
     engine.config.update_config_for_user(player)
     facility.delete()
 
@@ -307,11 +316,11 @@ def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str
     player.notify(
         "Destruction",
         (
-            f"The facility {facility.name} was destroyed by the {event_name}. The cost of the cleanup was "
+            f"The facility {facility.facility_type} was destroyed by the {event_name}. The cost of the cleanup was "
             f"{round(cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>."
         ),
     )
-    engine.log(f"{player.username} : {facility.name} destroyed by {event_name}.")
+    engine.log(f"{player.username} : {facility.facility_type} destroyed by {event_name}.")
 
 
 def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
@@ -320,13 +329,13 @@ def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
         msg = "Facility not found"
         raise GameError(msg)
     cost = facility.dismantle_cost
-    if facility.name in ["watermill", "small_water_dam", "large_water_dam"]:
+    if facility.facility_type in ["watermill", "small_water_dam", "large_water_dam"]:
         cost *= facility.multipliers["multiplier_2"]
     if player.money < cost:
         msg = "Not enough money"
         raise GameError(msg)
     remove_asset(player, facility, decommissioning=False)
-    engine.log(f"{player.username} dismantled the facility {facility.name}.")
+    engine.log(f"{player.username} dismantled the facility {facility.facility_type}.")
 
 
 def dismantle_all_of_type(player: Player, facility_name: str) -> None:

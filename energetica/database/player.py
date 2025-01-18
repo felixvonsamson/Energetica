@@ -697,11 +697,11 @@ class Player(DBModel, UserMixin):
         """Package the player's active power facilities."""
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         active_power_facilities: list[ActiveFacility] = list(
-            filter(lambda facility: facility.name in power_facility_types, self.active_facilities)
+            filter(lambda facility: facility.facility_type in power_facility_types, self.active_facilities)
         )
         power_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for power_facility in active_power_facilities:
-            power_facility_groups[power_facility.name].append(power_facility)
+            power_facility_groups[power_facility.facility_type].append(power_facility)
         return {
             "summary": {
                 group_name: {
@@ -726,7 +726,7 @@ class Player(DBModel, UserMixin):
             },
             "detail": {
                 power_facility.id: {
-                    "facility": power_facility.name,
+                    "facility": power_facility.facility_type,
                     "display_name": power_facility.display_name,
                     "installed_cap": power_facility.max_power_generation,
                     "usage": power_facility.usage,
@@ -737,7 +737,7 @@ class Player(DBModel, UserMixin):
                 }
                 | (
                     {"cut_out_speed_exceeded": power_facility.cut_out_speed_exceeded}
-                    if power_facility.name in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
+                    if power_facility.facility_type in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
                     else {}
                 )
                 for power_facility in active_power_facilities
@@ -749,11 +749,11 @@ class Player(DBModel, UserMixin):
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.capacities
         active_storage_facilities: list[ActiveFacility] = [
-            facility for facility in self.active_facilities if facility.name in StorageFacilityType
+            facility for facility in self.active_facilities if facility.facility_type in StorageFacilityType
         ]
         storage_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for storage_facility in active_storage_facilities:
-            storage_facility_groups[storage_facility.name].append(storage_facility)
+            storage_facility_groups[storage_facility.facility_type].append(storage_facility)
         return {
             "summary": {
                 group_name: {
@@ -779,7 +779,7 @@ class Player(DBModel, UserMixin):
             },
             "detail": {
                 storage_facility.id: {
-                    "facility": storage_facility.name,
+                    "facility": storage_facility.facility_type,
                     "display_name": storage_facility.display_name,
                     "storage_capacity": storage_facility.storage_capacity,
                     "state_of_charge": storage_facility.state_of_charge,
@@ -798,11 +798,11 @@ class Player(DBModel, UserMixin):
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.capacities
         active_extraction_facilities: list[ActiveFacility] = [
-            facility for facility in self.active_facilities if facility.name in ExtractionFacilityType
+            facility for facility in self.active_facilities if facility.facility_type in ExtractionFacilityType
         ]
         extraction_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for extraction_facility in active_extraction_facilities:
-            extraction_facility_groups[extraction_facility.name].append(extraction_facility)
+            extraction_facility_groups[extraction_facility.facility_type].append(extraction_facility)
         return {
             "summary": {
                 group_name: {
@@ -822,7 +822,7 @@ class Player(DBModel, UserMixin):
             },
             "detail": {
                 extraction_facility.id: {
-                    "facility": extraction_facility.name,
+                    "facility": extraction_facility.facility_type,
                     "display_name": extraction_facility.display_name,
                     "extraction_rate": extraction_facility.extraction_rate,
                     "usage": extraction_facility.usage,

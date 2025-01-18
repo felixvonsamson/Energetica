@@ -538,7 +538,7 @@ def request_dismantle_facility() -> Response | tuple:
     return jsonify(
         {
             "response": "success",
-            "facility_name": facility.name,
+            "facility_name": facility.facility_type,
             "money": player.money,
         },
     )

@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 class ActiveFacility(DBModel):
     """Class that stores the facilities on the server and their end of life time."""
 
-    name: PowerFacilityType | StorageFacilityType | ExtractionFacilityType
+    facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType
     player: Player
     position: tuple[float, float]
     end_of_life: float
@@ -45,7 +45,7 @@ class ActiveFacility(DBModel):
     @property
     def const_config(self) -> dict:
         """The base configuration of the facility."""
-        return const_config["assets"][self.name]
+        return const_config["assets"][self.facility_type]
 
     @property
     def display_name(self) -> str:
@@ -58,7 +58,7 @@ class ActiveFacility(DBModel):
 
         This is the cost without any upgrades, but including the special_price_multiplier for hydro facilities.
         """
-        if self.name in ["watermill", "small_water_dam", "large_water_dam"]:
+        if self.facility_type in ["watermill", "small_water_dam", "large_water_dam"]:
             return self.const_config["base_price"] * self.multipliers["multiplier_2"]
         return self.const_config["base_price"]
 
@@ -81,11 +81,11 @@ class ActiveFacility(DBModel):
     def extraction_rate(self) -> float:
         """Rate at which the facility extracts resources from the ground. Defined only for extraction facilities."""
         assert self.player.tile is not None
-        assert isinstance(self.name, ExtractionFacilityType)
+        assert isinstance(self.facility_type, ExtractionFacilityType)
         return (
             self.const_config["base_extraction_rate_per_day"]
             * self.multipliers["multiplier_2"]
-            * self.player.tile.fuel_reserves[self.name.associated_fuel]
+            * self.player.tile.fuel_reserves[self.facility_type.associated_fuel]
             / 24
         )
 
@@ -129,31 +129,31 @@ class ActiveFacility(DBModel):
         Returns true if any of the attributes of the facility are outdated compared to current tech levels.
         This method is undefined for technologies and for functional facilities.
         """
-        if self.multipliers["price_multiplier"] < technology_effects.price_multiplier(self.player, self.name):
+        if self.multipliers["price_multiplier"] < technology_effects.price_multiplier(self.player, self.facility_type):
             return True
-        if self.name in ExtractionFacilityType:
+        if self.facility_type in ExtractionFacilityType:
             return (
-                self.multipliers["multiplier_1"] < technology_effects.multiplier_1(self.player, self.name)
-                or self.multipliers["multiplier_2"] < technology_effects.multiplier_2(self.player, self.name)
-                or self.multipliers["multiplier_3"] < technology_effects.multiplier_3(self.player, self.name)
+                self.multipliers["multiplier_1"] < technology_effects.multiplier_1(self.player, self.facility_type)
+                or self.multipliers["multiplier_2"] < technology_effects.multiplier_2(self.player, self.facility_type)
+                or self.multipliers["multiplier_3"] < technology_effects.multiplier_3(self.player, self.facility_type)
             )
         # power & storage facilities
         return (
             (
                 # self.name in power_facilities + storage_facilities
-                isinstance(self.name, PowerFacilityType | StorageFacilityType)
+                isinstance(self.facility_type, PowerFacilityType | StorageFacilityType)
                 # self.name in PowerFacility
                 # self.name in (*power_facility_types, *StorageFacility)
-                and self.multipliers["multiplier_1"] < technology_effects.multiplier_1(self.player, self.name)
+                and self.multipliers["multiplier_1"] < technology_effects.multiplier_1(self.player, self.facility_type)
             )
             or (
-                isinstance(self.name, StorageFacilityType)
-                and self.multipliers["multiplier_2"] < technology_effects.multiplier_2(self.player, self.name)
+                isinstance(self.facility_type, StorageFacilityType)
+                and self.multipliers["multiplier_2"] < technology_effects.multiplier_2(self.player, self.facility_type)
             )
             or (
                 # self.name in controllable_facilities + storage_facilities
-                isinstance(self.name, ControllableFacilityType | StorageFacilityType)
-                and self.multipliers["multiplier_3"] < technology_effects.multiplier_3(self.player, self.name)
+                isinstance(self.facility_type, ControllableFacilityType | StorageFacilityType)
+                and self.multipliers["multiplier_3"] < technology_effects.multiplier_3(self.player, self.facility_type)
             )
         )
 
@@ -163,7 +163,7 @@ class ActiveFacility(DBModel):
         if not self.is_upgradable:
             return None
         price_multiplier_diff = (
-            technology_effects.price_multiplier(self.player, self.name) - self.multipliers["price_multiplier"]
+            technology_effects.price_multiplier(self.player, self.facility_type) - self.multipliers["price_multiplier"]
         )
         # Some technologies reduce the cost of the facility, but we still want upgrades to cost something
         # TODO: rethink this
