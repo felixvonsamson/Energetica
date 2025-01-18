@@ -17,7 +17,6 @@ from energetica.utils.misc import save_past_data
 from energetica.utils.resource_market import store_import
 
 
-@engine.with_lock
 def state_update():
     """Update the game state on every tick."""
     total_t = (time.time() - engine.data["start_date"]) / engine.clock_time
@@ -25,6 +24,7 @@ def state_update():
         tick()
 
 
+@engine.with_lock
 def tick():
     log_entry = {
         "timestamp": datetime.now().isoformat(),

@@ -99,13 +99,13 @@ def update_electricity() -> None:
 def set_facilities_usage(new_values: dict, player: Player) -> None:
     """Set the usage of the facilities to the database."""
     for controllable_facility in engine.controllable_facilities:
-        if player.capacities.contains(controllable_facility):
+        if controllable_facility in player.capacities:
             usage = new_values["generation"][controllable_facility] / player.capacities[controllable_facility]["power"]
             for af in ActiveFacility.filter_by(player=player, name=controllable_facility):
                 af.usage = usage
 
     for storage_facility in engine.storage_facilities:
-        if player.capacities.contains(storage_facility):
+        if storage_facility in player.capacities:
             if player.capacities[storage_facility]["capacity"] == 0:
                 usage = None  # TODO (Felix): update frontend to show "draining..."
             else:
@@ -114,7 +114,7 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
                 af.usage = usage
 
     for extraction_facility in engine.extraction_facilities:
-        if player.capacities.contains(extraction_facility):
+        if extraction_facility in player.capacities:
             usage = new_values["demand"][extraction_facility] / player.capacities[extraction_facility]["power_use"]
             for af in ActiveFacility.filter_by(player=player, name=extraction_facility):
                 af.usage = usage

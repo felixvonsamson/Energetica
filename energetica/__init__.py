@@ -86,6 +86,7 @@ def get_or_create_vapid_keys() -> tuple[str, str]:
 
 
 def create_app(
+    port: int = 5001,
     clock_time: int = 30,
     in_game_seconds_per_tick: int = 240,
     run_init_test_players: bool = False,
@@ -101,7 +102,6 @@ def create_app(
     simulate_till: int | None = None,
     simulate_profiling: bool = False,
     skip_adding_handlers: bool = False,
-    **kwargs,
 ) -> tuple[SocketIO, Flask]:
     """Initializes mock app."""
     if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
@@ -270,7 +270,7 @@ def create_app(
         scheduler.add_job(
             func=simulate,
             args=(
-                kwargs["port"],
+                port,
                 actions_to_simulate,
             ),
             kwargs=kwargs,

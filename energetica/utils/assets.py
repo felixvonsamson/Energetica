@@ -373,7 +373,7 @@ def queue_project(
     if not force and not player.is_in_network:
         capacity = 0
         for gen in engine.power_facilities:
-            if player.capacities[gen] is not None:
+            if gen in player.capacities:
                 capacity += player.capacities[gen]["power"]
         if construction_power > capacity:
             raise Confirm(capacity=capacity, construction_power=construction_power)

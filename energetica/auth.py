@@ -66,7 +66,7 @@ def logout():
 
 def is_valid_hash_format(hash_string):
     # Regex to check if the hash string matches the Werkzeug password hash format
-    pattern = r"^[a-z0-9]+:[a-z0-9]+:\d+\$[a-zA-Z0-9./]+$"
+    pattern = r"^[a-z0-9]+:\d+:\d+:\d+\$[a-zA-Z0-9./]+\$[a-fA-F0-9]+$"
     return bool(re.match(pattern, hash_string))
 
 
@@ -79,21 +79,21 @@ def sign_up():
         username = username.strip()
         password1 = request.form.get("password1")
         password2 = request.form.get("password2")
-        pwhash = request.form.get("pwhash")
+        pw_hash = request.form.get("pw_hash")
 
         existing_player = next(Player.filter_by(username=username), None)
         if existing_player:
             flash("Username already exist", category="error")
         elif len(username) < 3 or len(username) > 18:
             flash("Username must be between 3 and 18 characters.", category="error")
-        elif pwhash and not is_valid_hash_format(pwhash):
+        elif pw_hash and not is_valid_hash_format(pw_hash):
             flash("Invalid password hash format.", category="error")
-        elif not pwhash and password1 != password2:
+        elif not pw_hash and password1 != password2:
             flash("Passwords don't match.", category="error")
-        elif not pwhash and len(password1) < 7:
+        elif not pw_hash and len(password1) < 7:
             flash("Password must be at least 7 characters.", category="error")
         else:
-            pwhash = pwhash or generate_password_hash(password1, method="scrypt")
+            pwhash = pw_hash or generate_password_hash(password1, method="scrypt")
             new_player = Player(username=username, pwhash=pwhash)
             login_user(new_player, remember=True)
             flash("Account created!", category="message")

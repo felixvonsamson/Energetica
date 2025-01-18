@@ -286,7 +286,7 @@ class CapacityData:
         """Return the capacity data."""
         return self._data
 
-    def contains(self, facility: str) -> bool:
+    def __contains__(self, facility: str) -> bool:
         """Return true if the facility is in the capacity data."""
         return facility in self._data
 

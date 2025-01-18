@@ -11,7 +11,7 @@ from werkzeug.security import generate_password_hash
 
 from energetica.database.player import Player
 from energetica.globals import engine
-from energetica.utils.tick_execution import state_update
+from energetica.utils.tick_execution import tick
 
 base_url = None
 
@@ -22,7 +22,7 @@ def create_user(user_id, username, pw_hash):
     data = {"username": username, "pw_hash": pw_hash}
     response = session.post(f"{base_url}/sign-up", data=data, allow_redirects=False)
     assert response.status_code == 302
-    assert next(Player.filter(username=username)).id == user_id
+    assert next(Player.filter_by(username=username)).id == user_id
     return session
 
 
@@ -84,7 +84,7 @@ def _simulate(
     for action in actions:
         print(action)
         if action["action_type"] == "tick":
-            state_update()
+            tick()
             if (
                 checkpoint_every_k_ticks
                 and action["total_t"] % checkpoint_every_k_ticks == 0
@@ -93,9 +93,9 @@ def _simulate(
                 engine.save_checkpoint(f"checkpoints/simulation/checkpoint_{action['total_t']}.tar.gz")
         elif action["action_type"] == "create_user":
             player_id = action["player_id"]
-            username = action["username"] if simulating else f"user{player_id}"
-            pw_hash = action["pw_hash"] if simulating else generate_password_hash("password", method="scrypt")
-            user_sessions[player_id] = create_user(username, pw_hash)
+            username = action["username"] if not simulating else f"user{player_id}"
+            pw_hash = action["pw_hash"] if not simulating else generate_password_hash("password", method="scrypt")
+            user_sessions[player_id] = create_user(player_id, username, pw_hash)
         elif action["action_type"] == "request":
             player_id = action["player_id"]
             if player_id not in user_sessions:
