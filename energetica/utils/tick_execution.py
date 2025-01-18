@@ -26,9 +26,9 @@ def state_update():
 
 @engine.with_lock
 def tick():
+    start = datetime.now()
     log_entry = {
-        "timestamp": datetime.now().isoformat(),
-        "timestamp_end": None,
+        "timestamp": start.isoformat(),
         "action_type": "tick",
         "total_t": engine.data["total_t"],
     }
@@ -44,7 +44,7 @@ def tick():
     check_climate_events()
     production_update.update_electricity()
 
-    log_entry["timestamp_end"] = datetime.now().isoformat()
+    log_entry["ellapsed"] = (datetime.now() - start).total_seconds()
     engine.log_action(log_entry)
 
     # save a checkpoint every 6 hours in case of data corruption

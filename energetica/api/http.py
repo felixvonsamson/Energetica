@@ -42,6 +42,7 @@ def log_action(func: Callable) -> Callable:
         if request.method != "POST":
             return func(*args, **kwargs)
 
+        start = datetime.now()
         try:
             with engine.lock:
                 response = func(*args, **kwargs)
@@ -50,7 +51,8 @@ def log_action(func: Callable) -> Callable:
             response, status_code = jsonify({"response": game_exception.exception_type, **game_exception.kwargs}), 403
 
         log_entry = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": start.isoformat(),
+            "ellapsed": (datetime.now() - start).total_seconds(),
             "ip": request.remote_addr,
             "action_type": "request",
             "player_id": current_user.id,
