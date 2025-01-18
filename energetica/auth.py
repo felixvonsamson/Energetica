@@ -52,6 +52,7 @@ def root_login():
         abort(404, description="User not found.")
     login_user(player, remember=True)
     engine.log(f"{player.username} logged in")
+    return "Authenticated", 200
 
 
 # logic for the logout :
