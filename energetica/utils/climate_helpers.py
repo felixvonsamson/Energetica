@@ -19,11 +19,11 @@ def climate_event_impact(tile: HexTile, event_name):
     player = tile.player
     if not player:
         return
-    ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
+    ticks_per_day = 3600 * 24 / engine.data["in_game_seconds_per_tick"]
     recovery_cost = (
         climate_events[event_name]["cost_fraction"] * player.config["industry"]["income_per_day"] / ticks_per_day
     )  # [¤/tick]
-    duration_ticks = climate_events[event_name]["duration"] / engine.in_game_seconds_per_tick
+    duration_ticks = climate_events[event_name]["duration"] / engine.data["in_game_seconds_per_tick"]
     end_tick = engine.data["total_t"] + duration_ticks
     new_climate_event = ClimateEventRecovery(
         name=event_name,
@@ -79,7 +79,7 @@ def check_climate_events():
     climate_change = engine.data["current_climate_data"].get_last_data()["temperature"]["deviation"]
     ref_temp = engine.data["current_climate_data"].get_last_data()["temperature"]["reference"]
     real_temp = climate_change + ref_temp
-    ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
+    ticks_per_day = 3600 * 24 / engine.data["in_game_seconds_per_tick"]
 
     # floods
     flood_probability = climate_events["flood"]["base_probability"] / ticks_per_day * climate_change**2

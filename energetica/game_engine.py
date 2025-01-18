@@ -142,8 +142,8 @@ class GameEngine(object):
         # TODO (Felix): is data really needed ? can't we just use the engine object directly ?
         # TODO(mglst): agree with Felix
         self.data = {}
-        self.clock_time = None
-        self.in_game_seconds_per_tick = None
+        self.data["clock_time"] = None
+        self.data["in_game_seconds_per_tick"] = None
 
         with open("energetica/static/data/industry_demand.pck", "rb") as file:
             # array of length 1440 of normalized daily industry demand variations
@@ -169,8 +169,8 @@ class GameEngine(object):
         from energetica.utils.climate_helpers import data_init_climate
 
         assert clock_time in [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
-        self.clock_time = clock_time
-        self.in_game_seconds_per_tick = in_game_seconds_per_tick
+        self.data["clock_time"] = clock_time
+        self.data["in_game_seconds_per_tick"] = in_game_seconds_per_tick
 
         self.data["uuid"] = instance_uuid or uuid.uuid1()
         self.data["random_seed"] = random_seed
@@ -181,8 +181,8 @@ class GameEngine(object):
             json.dumps(
                 {
                     "uuid": self.data["uuid"].hex,
-                    "clock_time": self.clock_time,
-                    "in_game_seconds_per_tick": self.in_game_seconds_per_tick,
+                    "clock_time": self.data["clock_time"],
+                    "in_game_seconds_per_tick": self.data["in_game_seconds_per_tick"],
                     "action_type": "init_engine",
                     "random_seed": self.data["random_seed"],
                     "start_date": self.data["start_date"].isoformat(),
@@ -192,7 +192,9 @@ class GameEngine(object):
         last_midnight = self.data["start_date"].replace(hour=0, minute=0, second=0, microsecond=0)
         # time shift in ticks. Defines the number of ticks between
         # the first simulated tick and the beginning of in-game year 0.
-        self.data["delta_t"] = round((self.data["start_date"] - last_midnight).total_seconds() // self.clock_time)
+        self.data["delta_t"] = round(
+            (self.data["start_date"] - last_midnight).total_seconds() // self.data["clock_time"]
+        )
         # transform start_date to a seconds timestamp corresponding to the time of the first tick
         self.data["start_date"] = math.floor(self.data["start_date"].timestamp() / clock_time) * clock_time
 
@@ -311,7 +313,7 @@ class GameEngine(object):
         """Package mutable from energetica.globals import engine data as a dict to be sent and used on the frontend."""
         return {
             "first_tick_date": self.data["start_date"],
-            "tick_length": self.clock_time,
+            "tick_length": self.data["clock_time"],
             "total_ticks": self.data["total_t"],
         }
 

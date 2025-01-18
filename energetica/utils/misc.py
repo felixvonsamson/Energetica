@@ -172,7 +172,7 @@ def initialize_player(player: Player) -> None:
     - Adding the player to the general chat
     """
     eol = engine.data["total_t"] + math.ceil(
-        engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick
+        engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.data["in_game_seconds_per_tick"]
     )
     if player.tile is None:
         raise GameError("noLocation")
@@ -353,7 +353,7 @@ def package_weather_data(player: Player) -> dict:
         raise GameError("noLocation")
     x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     y = player.tile.coordinates[1] * 0.5 * 3**0.5
-    total_seconds = (engine.data["total_t"] + engine.data["delta_t"]) * engine.in_game_seconds_per_tick
+    total_seconds = (engine.data["total_t"] + engine.data["delta_t"]) * engine.data["in_game_seconds_per_tick"]
     random_seed = engine.data["random_seed"]
     solar_irradiance = calculate_solar_irradiance((x, y), total_seconds, random_seed)
     wind_speed = calculate_wind_speed((x, y), total_seconds, random_seed)

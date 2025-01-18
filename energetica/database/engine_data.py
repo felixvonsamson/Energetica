@@ -210,7 +210,7 @@ class CapacityData:
         for facility in active_facilities:
             base_data = engine.const_config["assets"][facility.name]
             effective_values = self._data[facility.name]
-            op_costs = facility.daily_op_cost * engine.in_game_seconds_per_tick / (24 * 3600)
+            op_costs = facility.daily_op_cost * engine.data["in_game_seconds_per_tick"] / (24 * 3600)
             if facility.name in ["watermill", "small_water_dam", "large_water_dam"]:
                 op_costs *= facility.multipliers["multiplier_2"]
             effective_values["O&M_cost"] += op_costs
@@ -222,7 +222,7 @@ class CapacityData:
                         base_data["consumed_resource"][fuel]
                         / facility.multipliers["multiplier_3"]
                         * power_gen
-                        * engine.in_game_seconds_per_tick
+                        * engine.data["in_game_seconds_per_tick"]
                         / 3600
                         / 1_000_000
                     )
@@ -480,11 +480,13 @@ class EmissionData:
         self._data["emissions"]["CO2"].append(self._data["emissions"]["CO2"][-1])
         # Calculating new temperatures
         t = engine.data["total_t"] + engine.data["delta_t"]
-        self._data["temperature"]["reference"].append(calculate_reference_gta(t, engine.in_game_seconds_per_tick))
+        self._data["temperature"]["reference"].append(
+            calculate_reference_gta(t, engine.data["in_game_seconds_per_tick"])
+        )
         self._data["temperature"]["deviation"].append(
             calculate_temperature_deviation(
                 t,
-                engine.in_game_seconds_per_tick,
+                engine.data["in_game_seconds_per_tick"],
                 self._data["emissions"]["CO2"][0],
                 engine.data["random_seed"],
             )

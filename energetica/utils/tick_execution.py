@@ -19,7 +19,7 @@ from energetica.utils.resource_market import store_import
 
 def state_update():
     """Update the game state on every tick."""
-    total_t = (time.time() - engine.data["start_date"]) / engine.clock_time
+    total_t = (time.time() - engine.data["start_date"]) / engine.data["clock_time"]
     while engine.data["total_t"] < total_t - 1 or engine.data["total_t"] == 0:
         tick()
 
@@ -38,7 +38,7 @@ def tick():
     engine.log(f"t = {engine.data['total_t']}")
     if engine.data["total_t"] % 216 == 0:
         save_past_data()
-    if (engine.data["total_t"] + engine.data["delta_t"]) % (24 * 60 * 60 / engine.clock_time) == 0:
+    if (engine.data["total_t"] + engine.data["delta_t"]) % (24 * 60 * 60 / engine.data["clock_time"]) == 0:
         engine.new_daily_question()
     check_events_completion()
     check_climate_events()
@@ -48,10 +48,10 @@ def tick():
     engine.log_action(log_entry)
 
     # save a checkpoint every 6 hours in case of data corruption
-    if engine.data["total_t"] % (6 * 60 * 60 / engine.clock_time) == 0:
+    if engine.data["total_t"] % (6 * 60 * 60 / engine.data["clock_time"]) == 0:
         engine.save_checkpoint()
     # save instance every 10 minutes in case of server crash or reload
-    elif engine.data["total_t"] % (10 * 60 / engine.clock_time) == 0:
+    elif engine.data["total_t"] % (10 * 60 / engine.data["clock_time"]) == 0:
         engine.save()
 
     # with app.app_context():
@@ -95,6 +95,6 @@ def check_events_completion():
         remove_asset(player, facility)
 
     # check end of climate events
-    finished_climate_events = ClimateEventRecovery.filter(lambda event: event.end_tick <= engine.data["total_t"])
+    finished_climate_events = list(ClimateEventRecovery.filter(lambda event: event.end_tick <= engine.data["total_t"]))
     for fce in finished_climate_events:
         fce.delete()

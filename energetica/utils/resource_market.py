@@ -53,7 +53,9 @@ def buy_resource_from_market(player: Player, quantity: float, sale: ResourceOnSa
         dq = player.tile.coordinates[0] - sale.player.tile.coordinates[0]
         dr = player.tile.coordinates[1] - sale.player.tile.coordinates[1]
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
-        shipment_duration = distance * player.config["transport"]["time_per_tile"] / engine.in_game_seconds_per_tick
+        shipment_duration = (
+            distance * player.config["transport"]["time_per_tile"] / engine.data["in_game_seconds_per_tick"]
+        )
         shipment_duration = math.ceil(shipment_duration)
         new_shipment = OngoingShipment(
             resource=sale.resource,

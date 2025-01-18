@@ -105,7 +105,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         "Storage Facilities",
     ]:
         eol = engine.data["total_t"] + math.ceil(
-            engine.const_config["assets"][project.name]["lifespan"] / engine.in_game_seconds_per_tick
+            engine.const_config["assets"][project.name]["lifespan"] / engine.data["in_game_seconds_per_tick"]
         )
         # Create a RNG, seeded with the server seed, the player's tile coordinates, the project name, and number of
         # facilities of that type the player has built. This ensures that the facility's random position is generated

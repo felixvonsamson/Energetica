@@ -150,7 +150,6 @@ def create_app(
             with tarfile.open(checkpoints[loaded_tick], "r:gz") as tar:
                 tar.extractall("./")
             engine.log(f"Loaded checkpoint {loaded_tick}")
-            engine.load()
     else:
         """Normal game run."""
         assert simulate_till is None
@@ -174,13 +173,6 @@ def create_app(
         engine.load()
         if actions:
             assert uuid.UUID(actions[0]["uuid"]) == engine.data["uuid"]
-    if actions:
-        clock_time = actions[0]["clock_time"]
-        in_game_seconds_per_tick = actions[0]["in_game_seconds_per_tick"]
-        random_seed = actions[0]["random_seed"]
-        start_date = datetime.fromisoformat(actions[0]["start_date"])
-        instance_uuid = uuid.UUID(actions[0]["uuid"])
-        engine.init(clock_time, in_game_seconds_per_tick, random_seed, start_date, instance_uuid)
     else:
         engine.init(clock_time, in_game_seconds_per_tick, random_seed)
 
@@ -303,6 +295,16 @@ def create_app(
         # Temporary automated player creation for testing
         engine.log("running init_test_players")
         init_test_players()
+
+    return socketio, app
+
+    return socketio, app
+
+    return socketio, app
+
+    return socketio, app
+
+    return socketio, app
 
     return socketio, app
 
