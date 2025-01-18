@@ -149,6 +149,7 @@ def create_app(
             loaded_tick = max(checkpoints_ids)
             with tarfile.open(checkpoints[loaded_tick], "r:gz") as tar:
                 tar.extractall("./")
+            engine.log(f"Loaded checkpoint {loaded_tick}")
             engine.load()
     else:
         """Normal game run."""
@@ -172,7 +173,7 @@ def create_app(
     if os.path.isfile("instance/engine_data.pck"):
         engine.load()
         if actions:
-            assert actions[0]["uuid"] == engine.data["uuid"].hex
+            assert uuid.UUID(actions[0]["uuid"]) == engine.data["uuid"]
     if actions:
         clock_time = actions[0]["clock_time"]
         in_game_seconds_per_tick = actions[0]["in_game_seconds_per_tick"]
@@ -302,5 +303,23 @@ def create_app(
         # Temporary automated player creation for testing
         engine.log("running init_test_players")
         init_test_players()
+
+    return socketio, app
+
+    return socketio, app
+
+    return socketio, app
+
+    return socketio, app
+
+    return socketio, app
+
+    return socketio, app
+
+    return socketio, app
+
+    return socketio, app
+
+    return socketio, app
 
     return socketio, app

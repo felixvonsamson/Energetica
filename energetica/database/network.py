@@ -45,7 +45,7 @@ class Network(DBModel):
         with open(f"{network_path}/time_series.pck", "wb") as file:
             pickle.dump(past_data, file)
 
-    def __del__(self):
+    def delete(self):
         network_path = f"instance/data/networks/{self.id}"
         shutil.rmtree(network_path)
-        super().__del__()
+        super().delete()
