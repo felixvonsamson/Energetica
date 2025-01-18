@@ -40,7 +40,8 @@ globals.engine = engine
 from energetica.api.app_services import register_app_services
 from energetica.api.http import http
 from energetica.api.socketio_handlers import add_handlers
-from energetica.api.websocket import add_sock_handlers, websocket_blueprint  # type: ignore
+from energetica.api.websocket import add_sock_handlers  # type: ignore
+from energetica.api.websocket import websocket_blueprint
 from energetica.auth import auth
 from energetica.database.player import Player
 from energetica.init_test_players import init_test_players
@@ -126,6 +127,7 @@ def create_app(
     # Create instance and checkpoints folder if they don't exist
     Path("checkpoints").mkdir(exist_ok=True)
     Path("instance").mkdir(exist_ok=True)
+    engine.init_loggers()
 
     actions = []
     if simulate_file:

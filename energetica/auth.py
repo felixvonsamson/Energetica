@@ -99,6 +99,7 @@ def sign_up():
             flash("Account created!", category="message")
             log_entry = {
                 "timestamp": datetime.now().isoformat(),
+                "ip": request.remote_addr,
                 "action_type": "create_user",
                 "player_id": new_player.id,
                 "username": new_player.username,

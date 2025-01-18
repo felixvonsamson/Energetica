@@ -137,7 +137,6 @@ class GameEngine(object):
         self.websocket_dict: dict = {}
         self.console_logger = logging.getLogger("console")  # logs events in the terminal
         self.action_logger = logging.getLogger("action_history")  # logs all called functions to a file
-        self.init_loggers()
         self.serve_local = True
         self.lock = RLock()
         # TODO (Felix): is data really needed ? can't we just use the engine object directly ?
