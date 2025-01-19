@@ -39,8 +39,6 @@ class GameEngine(object):
         # TODO (Felix): is data really needed ? can't we just use the engine object directly ?
         # TODO(mglst): agree with Felix
         self.data = {}
-        self.data["clock_time"] = None
-        self.data["in_game_seconds_per_tick"] = None
 
         with open("energetica/static/data/industry_demand.pck", "rb") as file:
             # array of length 1440 of normalized daily industry demand variations

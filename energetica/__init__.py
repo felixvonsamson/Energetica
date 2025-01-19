@@ -40,8 +40,10 @@ globals.engine = engine
 from energetica.api.app_services import register_app_services
 from energetica.api.http import http
 from energetica.api.socketio_handlers import add_handlers
-from energetica.api.websocket import add_sock_handlers  # type: ignore
-from energetica.api.websocket import websocket_blueprint
+from energetica.api.websocket import (
+    add_sock_handlers,  # type: ignore
+    websocket_blueprint,
+)
 from energetica.auth import auth
 from energetica.database.player import Player
 from energetica.init_test_players import init_test_players
@@ -99,17 +101,11 @@ def create_app(
     simulate_stop_on_server_error: bool = False,
     simulate_stop_on_assertion_error: bool = False,
     simulate_checkpoint_every_k_ticks: int = 10000,
-    simulate_checkpoint_ticks: list[int] = [],
+    simulate_checkpoint_ticks: list[int] | None = None,
     simulate_till: int | None = None,
     simulate_profiling: bool = False,
     skip_adding_handlers: bool = False,
 ) -> tuple[SocketIO, Flask]:
-    """Initializes mock app."""
-    if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
-        app = Flask(__name__)
-        socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
-        return socketio, app
-
     """Set up the app and the game engine."""
     if simulate_checkpoint_ticks is None:
         simulate_checkpoint_ticks = []
@@ -131,7 +127,7 @@ def create_app(
 
     actions = []
     if simulate_file:
-        """Simulate the game run from a file."""
+        # Simulate the game run from a file.
         Path("checkpoints/simulation").mkdir(exist_ok=True)
         with simulate_file as file:
             actions = [json.loads(line) for line in file]
@@ -145,13 +141,13 @@ def create_app(
             save_id for save_id in checkpoints.keys() if simulate_till is None or save_id <= simulate_till
         ]
         if checkpoints_ids:
-            """Load the last checkpoint."""
+            # Load the last checkpoint.
             loaded_tick = max(checkpoints_ids)
             with tarfile.open(checkpoints[loaded_tick], "r:gz") as tar:
                 tar.extractall("./")
             engine.log(f"Loaded checkpoint {loaded_tick}")
     else:
-        """Normal game run."""
+        # Normal game run.
         assert simulate_till is None
         if load_checkpoint:
             saved_history = False
@@ -168,7 +164,8 @@ def create_app(
         if os.path.isfile("instance/actions_history.log"):
             with open("instance/actions_history.log", "r") as file:
                 actions = [json.loads(line) for line in file]
-            assert actions[0]["action_type"] == "init_engine"
+            if actions:
+                assert actions[0]["action_type"] == "init_engine"
     if os.path.isfile("instance/engine_data.pck"):
         engine.load()
         if actions:
@@ -295,33 +292,5 @@ def create_app(
         # Temporary automated player creation for testing
         engine.log("running init_test_players")
         init_test_players()
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
 
     return socketio, app
