@@ -54,11 +54,6 @@ class DBModel:
 
     def __post_init__(self) -> None:
         """Assign an id to the object and store it in the engine."""
-        # (mglst) I'm worried that the Player's __post_init__ method makes this one called twice. So I'm adding this
-        # assertion to make sure it does not happen. In practice it does not seem to be happening, so this assertion
-        # can be removed. But @Yassir, I'd like your opinion on the whole situation anyways - maybe there's a better way
-        # to handle this altogether, and calling __post_init__ from Player's __post_init__ is not needed at all.
-        assert not hasattr(self, "id"), "The id attribute is reserved for the database"
         self.instances().add(self)
 
     @classmethod

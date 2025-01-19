@@ -122,8 +122,6 @@ class Player(DBModel, UserMixin):
 
     def __post_init__(self) -> None:
         """Post initialization method for Player."""
-        # The __post_init__ method of the parent class is called automatically, but after the __post_init__ of the child
-        # class. But the id must be assigned before adding bids and asks. So we call the parent __post_init__ first.
         super().__post_init__()
         self.network_prices.create_bid_entry("steam_engine", self)
         self.network_prices.create_ask_entry("industry", self)
