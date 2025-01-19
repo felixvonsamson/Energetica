@@ -59,13 +59,13 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
                 player.rolling_history.add_subcategory("demand", project.project_type)
                 player.rolling_history.add_subcategory("emissions", project.project_type)
                 player.cumul_emissions.add_category(project.project_type)
-                player.network_prices.add_ask(FunctionalFacilityType.CARBON_CAPTURE, player)
+                player.network_prices.create_ask_entry(FunctionalFacilityType.CARBON_CAPTURE, player)
             if project.project_type == "warehouse":
                 for fuel in Fuel:
                     player.rolling_history.add_subcategory("resources", fuel.value)
-                player.network_prices.add_ask(SpecialAskType.TRANSPORT, player)
+                player.network_prices.create_ask_entry(SpecialAskType.TRANSPORT, player)
             if project.project_type == "laboratory":
-                player.network_prices.add_ask(SpecialAskType.RESEARCH, player)
+                player.network_prices.create_ask_entry(SpecialAskType.RESEARCH, player)
 
         player.functional_facility_lvl[project.project_type] += 1
 
@@ -84,11 +84,11 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             player.cumul_emissions.add_category(project.project_type)
         # add facility to player's NetworkPrices
         if isinstance(project.project_type, ExtractionFacilityType | StorageFacilityType):
-            player.network_prices.add_ask(project.project_type, player)
+            player.network_prices.create_ask_entry(project.project_type, player)
         if project.project_type in renewable_facility_types:
             player.network_prices.renewable_bids.append(project.project_type)
         if isinstance(project.project_type, StorageFacilityType | ControllableFacilityType):
-            player.network_prices.add_bid(project.project_type, player)
+            player.network_prices.create_bid_entry(project.project_type, player)
 
     player.check_construction_achievements(project.project_type)
 
@@ -125,9 +125,11 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         seed_hash = hash(
             (
                 engine.data["random_seed"],
-                player.tile.coordinates,
+                player.id,
                 project.project_type,
-                ActiveFacility.count_when(facility_type=project.project_type, player=player),
+                ActiveFacility.count_when(
+                    facility_type=project.project_type, player=player
+                ),  # TODO (mglst): This is not good, we should use the facility id or the "location"
             ),
         )
         random.seed(seed_hash)

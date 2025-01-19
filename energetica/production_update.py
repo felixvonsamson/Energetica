@@ -335,7 +335,7 @@ def calculate_generation_without_market(new_values, player: Player) -> None:
     # Obligatory generation is put on the internal market at a price of -5
     for facility in (*StorageFacilityType, *power_facility_types):
         if player.capacities.get(facility) is not None:
-            internal_market = bid(
+            internal_market = place_bid(
                 internal_market,
                 player.id,
                 generation[facility],
@@ -347,7 +347,7 @@ def calculate_generation_without_market(new_values, player: Player) -> None:
     for ask_type in player.network_prices.ask_prices.keys():
         if ask_type in demand:
             price = player.network_prices.ask_prices[ask_type]
-            internal_market = ask(
+            internal_market = place_ask(
                 internal_market,
                 player.id,
                 demand[ask_type],
@@ -367,7 +367,7 @@ def calculate_generation_without_market(new_values, player: Player) -> None:
             )
             price = player.network_prices.bid_prices[facility]
             capacity = max_prod - generation[facility]
-            internal_market = bid(internal_market, player.id, capacity, price, facility)
+            internal_market = place_bid(internal_market, player.id, capacity, price, facility)
 
     market_logic(new_values, internal_market)
 
@@ -382,7 +382,7 @@ def calculate_generation_with_market(new_values, market, player: Player):
     minimal_generation(player, generation, resource_reservations)
     for facility in (*StorageFacilityType, *power_facility_types):
         if player.capacities.get(facility) is not None:
-            market = bid(market, player.id, generation[facility], -5, facility)
+            market = place_bid(market, player.id, generation[facility], -5, facility)
 
     # allow a maximum overdraft of the equivalent of the daily income of the industry
     max_overdraft = -player.config["industry"]["income_per_day"]
@@ -396,7 +396,7 @@ def calculate_generation_with_market(new_values, market, player: Player):
         if player.money >= max_overdraft:
             bid_q = demand[demand_type]
             price = player.network_prices.ask_prices[demand_type]
-            market = ask(market, player.id, bid_q, price, demand_type)
+            market = place_ask(market, player.id, bid_q, price, demand_type)
         else:
             reduce_demand(new_values, demand_type, player.id, 0.0)
 
@@ -413,7 +413,7 @@ def calculate_generation_with_market(new_values, market, player: Player):
                 )
                 price = player.network_prices.bid_prices[facility]
                 capacity = max_prod - generation[facility]
-                market = bid(market, player.id, capacity, price, facility)
+                market = place_bid(market, player.id, capacity, price, facility)
 
     return market
 
@@ -731,7 +731,7 @@ def minimal_generation(player: Player, generation, resource_reservations: dict[F
             )
 
 
-def bid(market, player_id, capacity, price, facility):
+def place_bid(market, player_id, capacity, price, facility):
     """Make an bid (offer, supply) on the market."""
     if capacity > 0:
         new_row = pd.DataFrame(
@@ -746,7 +746,7 @@ def bid(market, player_id, capacity, price, facility):
     return market
 
 
-def ask(market, player_id, demand, price, facility):
+def place_ask(market, player_id, demand, price, facility):
     """Make an ask (demand) on the market."""
     if demand > 0:
         new_row = pd.DataFrame(

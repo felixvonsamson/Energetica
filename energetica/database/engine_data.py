@@ -52,6 +52,7 @@ class NetworkPrices:
 
     # Prices are randomized so that each player's prices are slightly different. This leads to more interesting
     # market dynamics, while still having reasonable default prices.
+    # TODO (mglst): add randomess to theses prices
     bid_prices: dict[Bid, float] = field(
         default_factory=lambda: {
             ControllableFacilityType.STEAM_ENGINE: 125.0,
@@ -64,8 +65,8 @@ class NetworkPrices:
         }
     )
 
-    def add_bid(self, bid_name: Bid, player: Player) -> None:
-        """Add a facility to the list of bids, using the default price."""
+    def create_bid_entry(self, bid_name: Bid, player: Player) -> None:
+        """Add a new facility to the list of bids, using the default price."""
         default_bid_price = {
             ControllableFacilityType.STEAM_ENGINE: 125.0,
             ControllableFacilityType.COAL_BURNER: 600.0,
@@ -86,15 +87,15 @@ class NetworkPrices:
                 engine.data["random_seed"],
                 "bid",
                 bid_name,
-                player.username,  # TODO(mglst): replace with player coordinates
+                player.id,
             )
         )
         random.seed(seed_hash)
         added_randomness = random.uniform(-15, 15)
         self.bid_prices[bid_name] = default_bid_price + added_randomness
 
-    def add_ask(self, ask_name: Ask, player: Player) -> None:
-        """Add a facility to the list of asks, using the default price."""
+    def create_ask_entry(self, ask_name: Ask, player: Player) -> None:
+        """Add a new entry to the list of asks, using the default price."""
         default_ask_price = {
             SpecialAskType.RESEARCH: 1200.0,
             SpecialAskType.TRANSPORT: 1050.0,
@@ -115,7 +116,7 @@ class NetworkPrices:
                 engine.data["random_seed"],
                 "ask",
                 ask_name,
-                player.username,  # TODO(mglst): replace with player coordinates
+                player.id,
             )
         )
         random.seed(seed_hash)

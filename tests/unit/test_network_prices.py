@@ -44,14 +44,14 @@ def test_add_bogus_names():
     player = Player("player1", "pwhash")
 
     try:
-        network_prices.add_ask("bogus", player)
+        network_prices.create_ask_entry("bogus", player)
     except KeyError:
         assert True
     else:
         assert False
 
     try:
-        network_prices.add_bid("bogus", player)
+        network_prices.create_bid_entry("bogus", player)
     except KeyError:
         assert True
     else:
@@ -75,8 +75,8 @@ def test_add_bid_and_ask_prices():
     """Test that adding a bid and ask price works."""
     network_prices = NetworkPrices()
     player = Player("player1", "pwhash")
-    network_prices.add_ask("coal_mine", player)
-    network_prices.add_bid("gas_burner", player)
+    network_prices.create_ask_entry("coal_mine", player)
+    network_prices.create_bid_entry("gas_burner", player)
     assert "coal_mine" in network_prices.ask_prices
     assert "gas_burner" in network_prices.bid_prices
 
@@ -87,6 +87,6 @@ def test_price_randomization():
     network_prices_b = NetworkPrices()
     player_a = Player("player1", "pwhash")
     player_b = Player("player2", "pwhash")
-    network_prices_a.add_bid("coal_burner", player_a)
-    network_prices_b.add_bid("coal_burner", player_b)
+    network_prices_a.create_bid_entry("coal_burner", player_a)
+    network_prices_b.create_bid_entry("coal_burner", player_b)
     assert network_prices_a.bid_prices["coal_burner"] != network_prices_b.bid_prices["coal_burner"]
