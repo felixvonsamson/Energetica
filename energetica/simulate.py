@@ -13,7 +13,7 @@ from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.utils.tick_execution import tick
 
-base_url = None
+base_url: str | None = None
 
 
 def create_user(user_id, username, pw_hash):
@@ -58,7 +58,7 @@ def _simulate(
     stop_on_assertion_error: bool,
     checkpoint_every_k_ticks: int = 10000,
     checkpoint_ticks: list[int] | None = None,
-) -> None:
+) -> bool:
     """Simulate the list of actions. Returns true if the simulation was successful, false otherwise."""
     global base_url
 
