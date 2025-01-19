@@ -2,6 +2,10 @@
 """Launch the game."""
 
 import argparse
+import os
+
+from flask import Flask
+from flask_socketio import SocketIO
 
 from energetica import create_app
 
@@ -109,5 +113,12 @@ if __name__ == "__main__":
     kwargs = vars(parser.parse_args())
     ssl_args = {"keyfile": kwargs.pop("keyfile"), "certfile": kwargs.pop("certfile")}
     ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
-    socketio, app = create_app(**kwargs)
+
+    """Initializes mock app."""
+    if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+        app = Flask(__name__)
+        socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
+    else:
+        socketio, app = create_app(**kwargs)
+
     socketio.run(app, debug=True, log_output=False, host="0.0.0.0", port=kwargs["port"], **ssl_args)

@@ -40,8 +40,10 @@ globals.engine = engine
 from energetica.api.app_services import register_app_services
 from energetica.api.http import http
 from energetica.api.socketio_handlers import add_handlers
-from energetica.api.websocket import add_sock_handlers  # type: ignore
-from energetica.api.websocket import websocket_blueprint
+from energetica.api.websocket import (
+    add_sock_handlers,  # type: ignore
+    websocket_blueprint,
+)
 from energetica.auth import auth
 from energetica.database.player import Player
 from energetica.init_test_players import init_test_players
@@ -104,12 +106,6 @@ def create_app(
     simulate_profiling: bool = False,
     skip_adding_handlers: bool = False,
 ) -> tuple[SocketIO, Flask]:
-    """Initializes mock app."""
-    if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
-        app = Flask(__name__)
-        socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
-        return socketio, app
-
     """Set up the app and the game engine."""
     if simulate_checkpoint_ticks is None:
         simulate_checkpoint_ticks = []
@@ -168,7 +164,8 @@ def create_app(
         if os.path.isfile("instance/actions_history.log"):
             with open("instance/actions_history.log", "r") as file:
                 actions = [json.loads(line) for line in file]
-            assert actions[0]["action_type"] == "init_engine"
+            if actions:
+                assert actions[0]["action_type"] == "init_engine"
     if os.path.isfile("instance/engine_data.pck"):
         engine.load()
         if actions:
@@ -295,33 +292,5 @@ def create_app(
         # Temporary automated player creation for testing
         engine.log("running init_test_players")
         init_test_players()
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
-
-    return socketio, app
 
     return socketio, app
