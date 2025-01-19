@@ -47,6 +47,7 @@ def test_renewables_order():
 
 def test_add_bogus_names():
     """Test that adding a bogus ask or bid price raises an error."""
+    engine.data["random_seed"] = 0
     player = Player("player1", "pwhash")
 
     try:

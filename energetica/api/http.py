@@ -1,6 +1,5 @@
 """These functions make the link between the website and the database."""
 
-import json
 import pickle
 from collections.abc import Callable
 from datetime import datetime
@@ -43,16 +42,18 @@ def log_action(func: Callable) -> Callable:
         if request.method != "POST":
             return func(*args, **kwargs)
 
+        start = datetime.now()
         try:
             with engine.lock:
                 response = func(*args, **kwargs)
             response, status_code = response if isinstance(response, tuple) else (response, response.status_code)
         except GameError as game_exception:
-            # TODO: engine.db.rollback() or something similar
             response, status_code = jsonify({"response": game_exception.exception_type, **game_exception.kwargs}), 403
 
         log_entry = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": start.isoformat(),
+            "ellapsed": (datetime.now() - start).total_seconds(),
+            "ip": request.remote_addr,
             "action_type": "request",
             "player_id": current_user.id,
             "request": {
@@ -68,10 +69,17 @@ def log_action(func: Callable) -> Callable:
                 else response,
             },
         }
-        engine.action_logger.info(json.dumps(log_entry))
+        engine.log_action(log_entry)
         return response, status_code
 
     return wrapper
+
+
+@http.before_request
+def restrict_access_during_simulation():
+    """Restrict access to the API during the simulation."""
+    if engine.serve_local and request.method == "POST" and request.remote_addr != "127.0.0.1":
+        return "Service temporarily unavailable. Please try again in a few seconds", 503
 
 
 @http.before_request
@@ -186,7 +194,7 @@ def get_chart_data() -> Response | tuple:
         for key, value in dict2.items():
             for sub_key, array2 in value.items():
                 if sub_key not in dict1[key]:
-                    dict1[key][sub_key] = [[0.0] * 360] * 5
+                    dict1[key][sub_key] = [[0.0] * 360 for _ in range(5)]
                 array = dict1[key][sub_key]
                 concatenated_array = list(array[0]) + array2
                 dict1[key][sub_key][0] = concatenated_array[-360:]
@@ -209,20 +217,20 @@ def get_chart_data() -> Response | tuple:
         return "", 404
     total_t = engine.data["total_t"]
     rolling_history = g.player.rolling_history.get_data(t=total_t % 216 + 1)
-    filename = f"instance/player_data/player_{g.player.id}.pck"
+    filename = f"instance/data/players/player_{g.player.id}.pck"
     with open(filename, "rb") as file:
         data = pickle.load(file)
     concat_slices(data, rolling_history)
 
     network_data = None
     if g.player.network is not None:
-        filename = f"instance/network_data/{g.player.network.id}/time_series.pck"
+        filename = f"instance/data/networks/{g.player.network.id}/time_series.pck"
         with open(filename, "rb") as file:
             network_data = pickle.load(file)
         concat_slices(network_data, g.player.network.rolling_history.get_data(t=total_t % 216 + 1))
 
     current_climate_data = engine.data["current_climate_data"].get_data(t=total_t % 216 + 1)
-    with open("instance/server_data/climate_data.pck", "rb") as file:
+    with open("instance/data/servers/climate_data.pck", "rb") as file:
         climate_data = pickle.load(file)
     concat_slices(climate_data, current_climate_data)
 
@@ -259,7 +267,7 @@ def get_market_data() -> Response | tuple:
         return "", 404
     request_data = request.get_json()
     t = int(request_data["t"])
-    filename_state = f"instance/network_data/{g.player.network.id}/charts/market_t{engine.data['total_t'] - t}.pck"
+    filename_state = f"instance/data/networks/{g.player.network.id}/charts/market_t{engine.data['total_t'] - t}.pck"
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
             market_data = pickle.load(file)

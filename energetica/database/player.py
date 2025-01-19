@@ -698,7 +698,7 @@ class Player(DBModel, UserMixin):
 
     def package_active_power_facilities(self) -> dict:
         """Package the player's active power facilities."""
-        ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
+        ticks_per_hour = 3600 / engine.data["in_game_seconds_per_tick"]
         power_facilities: list[ActiveFacility] = list(
             filter(lambda facility: facility.name in engine.power_facilities, self.active_facilities)
         )
@@ -749,7 +749,7 @@ class Player(DBModel, UserMixin):
 
     def package_active_storage_facilities(self) -> dict:
         """Package active storage facilities."""
-        ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
+        ticks_per_hour = 3600 / engine.data["in_game_seconds_per_tick"]
         capacities = self.capacities
         storage_facilities: list[ActiveFacility] = [
             facility for facility in self.active_facilities if facility.name in engine.storage_facilities
@@ -798,7 +798,7 @@ class Player(DBModel, UserMixin):
 
     def package_active_extraction_facilities(self) -> dict:
         """Package active extraction facilities."""
-        ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
+        ticks_per_hour = 3600 / engine.data["in_game_seconds_per_tick"]
         capacities = self.capacities
         extraction_facilities: list[ActiveFacility] = [
             facility for facility in self.active_facilities if facility.name in engine.extraction_facilities
