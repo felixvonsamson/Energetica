@@ -34,7 +34,7 @@ class GameEngine(object):
         # TODO(mglst): agree with Felix
         self.data = {}
         self.clock_time = None
-        self.in_game_seconds_per_tick = None
+        self.in_game_seconds_per_tick: int = None
         self.log("engine created")
 
     def clear_db(self):

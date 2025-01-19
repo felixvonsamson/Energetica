@@ -98,7 +98,7 @@ def check_climate_events():
     if random.random() < flood_probability:
         # the hydro value for a flood needs to be above 20%
         hydro_tiles = HexTile.filter(lambda tile: tile.potentials[Renewable.HYDRO] > 0.2)
-        tile = random.choice(hydro_tiles)
+        tile = random.choice(list(hydro_tiles))
         climate_event_impact(tile, "flood")
 
     # heatwaves
@@ -115,7 +115,7 @@ def check_climate_events():
         # the tile for the heatwave is chosen based on a sigmoid distribution around the equator
         random_latitude = round(inv_cdf_sigmoid(random.random()))
         latitude_tiles = HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude)
-        tile = random.choice(latitude_tiles)
+        tile = random.choice(list(latitude_tiles))
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
             climate_event_impact(affected_tile, "heat_wave")
@@ -147,7 +147,7 @@ def check_climate_events():
     hurricane_probability = climate_events["hurricane"]["base_probability"] / ticks_per_day * climate_change**2
     if random.random() < hurricane_probability:
         random_tile_id = random.randint(1, HexTile.count() + 1)
-        tile = HexTile.get(random_tile_id)
+        tile = HexTile.getitem(random_tile_id)
         affected_tiles = tile.get_neighbors(n=2)
         for affected_tile in affected_tiles:
             climate_event_impact(affected_tile, "hurricane")
@@ -162,7 +162,7 @@ def check_climate_events():
         # the tile for the wildfire is chosen based on a normal distribution around the equator
         random_latitude = inv_cdf_normal(random.random())
         latitude_tiles = HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude)
-        tile = random.choice(latitude_tiles)
+        tile = random.choice(list(latitude_tiles))
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
             climate_event_impact(affected_tile, "wildfire")

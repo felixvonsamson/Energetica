@@ -292,16 +292,16 @@ class CapacityData:
     def init_facility(self, facility: str) -> None:
         """Initialize the capacity data of a facility."""
         const_config = engine.const_config["assets"]
-        if facility in power_facility_types:
+        if isinstance(facility, PowerFacilityType):
             self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "fuel_use": {}}
             for resource in const_config[facility]["consumed_resource"]:
                 if const_config[facility]["consumed_resource"][resource] > 0:
                     self._data[facility]["fuel_use"][resource] = 0.0
             return
-        if facility in StorageFacilityType:
+        if isinstance(facility, StorageFacilityType):
             self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "capacity": 0.0, "efficiency": 0.0}
             return
-        if facility in ExtractionFacilityType:
+        if isinstance(facility, ExtractionFacilityType):
             self._data[facility] = {"O&M_cost": 0.0, "extraction_rate_per_day": 0.0, "power_use": 0.0, "pollution": 0.0}
 
     def __getitem__(self, facility: str) -> dict:

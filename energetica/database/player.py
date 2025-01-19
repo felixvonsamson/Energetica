@@ -264,7 +264,7 @@ class Player(DBModel, UserMixin):
             list(
                 OngoingProject.filter(
                     lambda construction: construction.player == self
-                    and not construction.project_type in TechnologyType
+                    and not isinstance(construction.project_type, TechnologyType)
                     and construction.status == ProjectStatus.ONGOING,
                 ),
             ),
@@ -278,7 +278,7 @@ class Player(DBModel, UserMixin):
             list(
                 OngoingProject.filter(
                     lambda construction: construction.player == self
-                    and construction.project_type in TechnologyType
+                    and isinstance(construction.project_type, TechnologyType)
                     and construction.status == ProjectStatus.ONGOING,
                 ),
             ),
