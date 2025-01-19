@@ -101,7 +101,7 @@ def create_app(
     simulate_stop_on_server_error: bool = False,
     simulate_stop_on_assertion_error: bool = False,
     simulate_checkpoint_every_k_ticks: int = 10000,
-    simulate_checkpoint_ticks: list[int] = [],
+    simulate_checkpoint_ticks: list[int] | None = None,
     simulate_till: int | None = None,
     simulate_profiling: bool = False,
     skip_adding_handlers: bool = False,
@@ -127,7 +127,7 @@ def create_app(
 
     actions = []
     if simulate_file:
-        """Simulate the game run from a file."""
+        # Simulate the game run from a file.
         Path("checkpoints/simulation").mkdir(exist_ok=True)
         with simulate_file as file:
             actions = [json.loads(line) for line in file]
@@ -141,13 +141,13 @@ def create_app(
             save_id for save_id in checkpoints.keys() if simulate_till is None or save_id <= simulate_till
         ]
         if checkpoints_ids:
-            """Load the last checkpoint."""
+            # Load the last checkpoint.
             loaded_tick = max(checkpoints_ids)
             with tarfile.open(checkpoints[loaded_tick], "r:gz") as tar:
                 tar.extractall("./")
             engine.log(f"Loaded checkpoint {loaded_tick}")
     else:
-        """Normal game run."""
+        # Normal game run.
         assert simulate_till is None
         if load_checkpoint:
             saved_history = False
