@@ -115,7 +115,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             engine.log(f"{player.username} : + 1 {project_name}")
     if isinstance(project.project_type, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):
         eol = engine.data["total_t"] + math.ceil(
-            engine.const_config["assets"][project.project_type]["lifespan"] / engine.in_game_seconds_per_tick
+            engine.const_config["assets"][project.project_type]["lifespan"] / engine.data["in_game_seconds_per_tick"]
         )
         # Create a RNG, seeded with the server seed, the player's tile coordinates, the project name, and number of
         # facilities of that type the player has built. This ensures that the facility's random position is generated
@@ -392,7 +392,7 @@ def queue_project(
     if not force and not player.is_in_network:
         capacity = 0
         for gen in power_facility_types:
-            if player.capacities[gen] is not None:
+            if gen in player.capacities:
                 capacity += player.capacities[gen]["power"]
         if construction_power > capacity:
             raise Confirm(capacity=capacity, construction_power=construction_power)

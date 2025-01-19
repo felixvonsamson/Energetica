@@ -366,7 +366,7 @@ def construction_time(player: Player, project_name: ProjectType) -> float:
     """Return the construction time in ticks."""
     const_config = engine.const_config["assets"]
     # transforming in game seconds in ticks
-    duration = const_config[project_name]["base_construction_time"] / engine.in_game_seconds_per_tick
+    duration = const_config[project_name]["base_construction_time"] / engine.data["in_game_seconds_per_tick"]
     # construction time increases with higher levels
     if isinstance(project_name, FunctionalFacilityType | TechnologyType):
         level_with_constructions = OngoingProject.count_when(project_type=project_name, player=player)
@@ -422,7 +422,7 @@ def construction_power(player: Player, project_name: ProjectType) -> float:
     power = (
         const_config[project_name]["base_construction_energy"]
         / construction_time(player, project_name)
-        / engine.in_game_seconds_per_tick
+        / engine.data["in_game_seconds_per_tick"]
         * 3600
     )
     # construction power increases with higher levels
@@ -559,7 +559,7 @@ def _package_power_generating_facility_base(player: Player, power_facility_name:
                 * 60,
             }
             if const_config_assets[power_facility_name]["ramping_time"] != 0
-            and const_config_assets[power_facility_name]["ramping_time"] > engine.in_game_seconds_per_tick
+            and const_config_assets[power_facility_name]["ramping_time"] > engine.data["in_game_seconds_per_tick"]
             else {}
         )
         | _capacity_factors(player, power_facility_name)
@@ -636,7 +636,7 @@ def _package_power_storage_extraction_facility_base(player: Player, facility_nam
         )
         * const_config_assets[facility_name]["O&M_factor_per_day"]
         / 24,
-        "lifespan": const_config_assets[facility_name]["lifespan"] / engine.in_game_seconds_per_tick,
+        "lifespan": const_config_assets[facility_name]["lifespan"] / engine.data["in_game_seconds_per_tick"],
     } | (
         {"construction_pollution": const_config_assets[facility_name]["base_construction_pollution"]}
         if player.discovered_greenhouse_gas_effect()

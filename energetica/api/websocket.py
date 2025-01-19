@@ -237,7 +237,7 @@ def rest_get_charts():
     """Gets the player's chart data and returns it as a JSON string."""
     current_t = engine.data["current_t"]
     timescale = "day"  # request.args.get('timescale')
-    filename = f"instance/player_data/{g.player.id}/{timescale}.pck"
+    filename = f"instance/data/players/{g.player.id}/{timescale}.pck"
     with open(filename, "rb") as file:
         file_data = pickle.load(file)
 

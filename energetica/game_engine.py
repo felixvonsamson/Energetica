@@ -4,15 +4,20 @@ import csv
 import json
 import logging
 import math
+import os
 import pickle
 import random
+import tarfile
+import uuid
 from datetime import datetime
+from pathlib import Path
 
 from flask_sock import Sock
 from flask_socketio import SocketIO
 from gevent.lock import RLock
 
 from energetica.config.assets import config, const_config
+from energetica.enums import Fuel, Renewable
 
 
 # This is the engine object
@@ -22,19 +27,28 @@ class GameEngine(object):
     sock: Sock
 
     def __init__(self):
+        Path("instance").mkdir(exist_ok=True)
         self.config = config
         self.const_config = const_config
         self.socketio: SocketIO = None
         self.websocket_dict: dict = {}
         self.console_logger = logging.getLogger("console")  # logs events in the terminal
         self.action_logger = logging.getLogger("action_history")  # logs all called functions to a file
-        self.init_loggers()
+        self.serve_local = True
         self.lock = RLock()
         # TODO (Felix): is data really needed ? can't we just use the engine object directly ?
         # TODO(mglst): agree with Felix
         self.data = {}
-        self.clock_time = None
-        self.in_game_seconds_per_tick: int = None
+        self.data["clock_time"] = None
+        self.data["in_game_seconds_per_tick"] = None
+
+        with open("energetica/static/data/industry_demand.pck", "rb") as file:
+            # array of length 1440 of normalized daily industry demand variations
+            self.industry_demand = pickle.load(file)
+        with open("energetica/static/data/industry_demand_year.pck", "rb") as file:
+            # array of length 51 of normalized yearly industry demand variations
+            self.industry_seasonal = pickle.load(file)
+
         self.log("engine created")
 
     def clear_db(self):
@@ -44,14 +58,18 @@ class GameEngine(object):
         for db in DBModel.__subclasses__():
             db.instances().reset()
 
-    def init(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None):
+    def init(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None, instance_uuid=None):
         # TODO(mglst): Create an explicit __init__ method, maybe make this a dataclass. Bref, rework this class
         from energetica.database.engine_data import EmissionData
+        from energetica.database.map import HexTile
+        from energetica.database.messages import Chat
+        from energetica.utils.climate_helpers import data_init_climate
 
         assert clock_time in [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
-        self.clock_time = clock_time
-        self.in_game_seconds_per_tick = in_game_seconds_per_tick
+        self.data["clock_time"] = clock_time
+        self.data["in_game_seconds_per_tick"] = in_game_seconds_per_tick
 
+        self.data["uuid"] = instance_uuid or uuid.uuid1()
         self.data["random_seed"] = random_seed
         self.data["total_t"] = 0  # Number of simulated game ticks since server start
         self.data["start_date"] = start_date or datetime.now()  # 0 point of server time
@@ -59,8 +77,9 @@ class GameEngine(object):
         self.action_logger.info(
             json.dumps(
                 {
-                    "clock_time": self.clock_time,
-                    "in_game_seconds_per_tick": self.in_game_seconds_per_tick,
+                    "uuid": self.data["uuid"].hex,
+                    "clock_time": self.data["clock_time"],
+                    "in_game_seconds_per_tick": self.data["in_game_seconds_per_tick"],
                     "action_type": "init_engine",
                     "random_seed": self.data["random_seed"],
                     "start_date": self.data["start_date"].isoformat(),
@@ -70,7 +89,9 @@ class GameEngine(object):
         last_midnight = self.data["start_date"].replace(hour=0, minute=0, second=0, microsecond=0)
         # time shift in ticks. Defines the number of ticks between
         # the first simulated tick and the beginning of in-game year 0.
-        self.data["delta_t"] = round((self.data["start_date"] - last_midnight).total_seconds() // self.clock_time)
+        self.data["delta_t"] = round(
+            (self.data["start_date"] - last_midnight).total_seconds() // self.data["clock_time"]
+        )
         # transform start_date to a seconds timestamp corresponding to the time of the first tick
         self.data["start_date"] = math.floor(self.data["start_date"].timestamp() / clock_time) * clock_time
 
@@ -101,14 +122,34 @@ class GameEngine(object):
             "nuclear_engineering": [0],
         }
 
-        with open("energetica/static/data/industry_demand.pck", "rb") as file:
-            # array of length 1440 of normalized daily industry demand variations
-            self.industry_demand = pickle.load(file)
-        with open("energetica/static/data/industry_demand_year.pck", "rb") as file:
-            # array of length 51 of normalized yearly industry demand variations
-            self.industry_seasonal = pickle.load(file)
-
         self.clear_db()
+
+        with open("energetica/static/data/map.csv", "r", encoding="utf-8") as file:
+            csv_reader = csv.DictReader(file)
+            for row in csv_reader:
+                tile = HexTile(coordinates=(int(row["q"]), int(row["r"])), climate_risk=int(row["climate_risk"]))
+                for renewable in Renewable:
+                    tile.potentials[renewable] = float(row[renewable])
+                for fuel in Fuel:
+                    tile.fuel_reserves[fuel] = float(row[fuel])
+
+        # creating general chat
+        Chat(
+            name="General Chat",
+            participants=set(),
+        )
+
+        Path("instance/data/players").mkdir(parents=True, exist_ok=True)
+        Path("instance/data/servers").mkdir(parents=True, exist_ok=True)
+        climate_data = data_init_climate(
+            in_game_seconds_per_tick,
+            self.data["random_seed"],
+            self.data["delta_t"],
+        )
+        with open("instance/data/servers/climate_data.pck", "wb") as file:
+            pickle.dump(climate_data, file)
+
+        self.save()
 
     def init_loggers(self) -> None:
         """Initialize the loggers for the engine."""
@@ -132,11 +173,44 @@ class GameEngine(object):
         """Log a warning message in the terminal."""
         self.console_logger.warning(message)
 
+    def log_action(self, action: dict) -> None:
+        """Log an action in the action history file."""
+        self.action_logger.info(json.dumps(action))
+
+    def save(self) -> None:
+        """Save the game engine data to a file."""
+        with open("instance/engine_data.pck", "wb") as file:
+            pickle.dump(self.data, file)
+
+    def load(self) -> None:
+        """Load the game engine data from a file."""
+        engine_data_last_modified = Path("instance/engine_data.pck").stat().st_mtime
+        instance_data_last_modified = max(f.stat().st_mtime for f in Path("instance/data").glob("**/*") if f.is_file())
+        if instance_data_last_modified > engine_data_last_modified:
+            raise RuntimeError("The data has not been saved correctly, please restart form the last checkpoint.")
+        with open("instance/engine_data.pck", "rb") as file:
+            self.data = pickle.load(file)
+
+    def save_checkpoint(self, destination_filename: str = "checkpoints/last_checkpoint.tar.gz") -> None:
+        self.save()
+        with tarfile.open("checkpoints/new_checkpoint.tar.gz", "w:gz") as tar:
+            tar.add("instance/")
+        os.replace("checkpoints/new_checkpoint.tar.gz", destination_filename)
+
+    def with_lock(self, func):
+        """Run a function with the engine lock."""
+
+        def wrapped(*args, **kwargs):
+            with self.lock:
+                return func(*args, **kwargs)
+
+        return wrapped
+
     def package_global_data(self) -> dict:
         """Package mutable from energetica.globals import engine data as a dict to be sent and used on the frontend."""
         return {
             "first_tick_date": self.data["start_date"],
-            "tick_length": self.clock_time,
+            "tick_length": self.data["clock_time"],
             "total_ticks": self.data["total_t"],
         }
 

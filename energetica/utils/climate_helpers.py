@@ -1,7 +1,5 @@
-import json
 import math
 import random
-from datetime import datetime
 
 import numpy as np
 
@@ -18,24 +16,14 @@ from energetica.utils.formatting import display_money
 def climate_event_impact(tile: HexTile, event_name):
     """Create a ClimateEventRecovery object for the event and some facilities may be destroyed by the climate event."""
     engine.log(f"{climate_events[event_name]['name']} on tile {tile.id}")
-    engine.action_logger.info(
-        json.dumps(
-            {
-                "timestamp": datetime.now().isoformat(),
-                "action_type": "climate_event_impact",
-                "tile_id": tile.id,
-                "event": event_name,
-            }
-        )
-    )
     player = tile.player
     if not player:
         return
-    ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
+    ticks_per_day = 3600 * 24 / engine.data["in_game_seconds_per_tick"]
     recovery_cost = (
         climate_events[event_name]["cost_fraction"] * player.config["industry"]["income_per_day"] / ticks_per_day
     )  # [¤/tick]
-    duration_ticks = climate_events[event_name]["duration"] / engine.in_game_seconds_per_tick
+    duration_ticks = climate_events[event_name]["duration"] / engine.data["in_game_seconds_per_tick"]
     end_tick = engine.data["total_t"] + duration_ticks
     new_climate_event = ClimateEventRecovery(
         name=event_name,
@@ -91,14 +79,14 @@ def check_climate_events():
     climate_change = engine.data["current_climate_data"].get_last_data()["temperature"]["deviation"]
     ref_temp = engine.data["current_climate_data"].get_last_data()["temperature"]["reference"]
     real_temp = climate_change + ref_temp
-    ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
+    ticks_per_day = 3600 * 24 / engine.data["in_game_seconds_per_tick"]
 
     # floods
     flood_probability = climate_events["flood"]["base_probability"] / ticks_per_day * climate_change**2
     if random.random() < flood_probability:
         # the hydro value for a flood needs to be above 20%
-        hydro_tiles = HexTile.filter(lambda tile: tile.potentials[Renewable.HYDRO] > 0.2)
-        tile = random.choice(list(hydro_tiles))
+        hydro_tiles = list(HexTile.filter(lambda tile: tile.potentials[Renewable.HYDRO] > 0.2))
+        tile = random.choice(hydro_tiles)
         climate_event_impact(tile, "flood")
 
     # heatwaves
@@ -114,8 +102,8 @@ def check_climate_events():
     if random.random() < heatwave_probability:
         # the tile for the heatwave is chosen based on a sigmoid distribution around the equator
         random_latitude = round(inv_cdf_sigmoid(random.random()))
-        latitude_tiles = HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude)
-        tile = random.choice(list(latitude_tiles))
+        latitude_tiles = list(HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude))
+        tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
             climate_event_impact(affected_tile, "heat_wave")
@@ -161,8 +149,8 @@ def check_climate_events():
         engine.data["current_climate_data"].add("CO2", 10e6)
         # the tile for the wildfire is chosen based on a normal distribution around the equator
         random_latitude = inv_cdf_normal(random.random())
-        latitude_tiles = HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude)
-        tile = random.choice(list(latitude_tiles))
+        latitude_tiles = list(HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude))
+        tile = random.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
             climate_event_impact(affected_tile, "wildfire")
@@ -183,7 +171,7 @@ def data_init_climate(seconds_per_tick, random_seed, delta_t):
 
     return {
         "emissions": {
-            "CO2": [[4e10] * 360] * 5,
+            "CO2": [[4e10] * 360 for _ in range(5)],
         },
         "temperature": {
             "reference": ref_temp,

@@ -1,7 +1,5 @@
 """Utility functions relating to networks."""
 
-import shutil
-
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.game_error import GameError
@@ -54,11 +52,9 @@ def leave_network(player: Player) -> None:
     player.network = None
     network.members.remove(player)
     engine.log(f"{player.username} left the network {network.name}")
-    remaining_members_count = len(list(Player.filter(lambda p: p.network is not None and p.network == network)))
     # delete network if it is empty
-    if remaining_members_count == 0:
+    if not network.members:
         engine.log(f"The network {network.name} has been deleted because it was empty")
-        shutil.rmtree(f"instance/network_data/{network.id}")
         network.delete()
     # import energetica.api.websocket as websocket
     # websocket.rest_notify_network_change()

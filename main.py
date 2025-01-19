@@ -106,7 +106,8 @@ if __name__ == "__main__":
         help="Path to the SSL certificate file",
     )
 
-    args = parser.parse_args()
-    socketio, app = create_app(**vars(args))
-    ssl_args = {"keyfile": args.keyfile, "certfile": args.certfile} if args.keyfile and args.certfile else {}
-    socketio.run(app, debug=True, log_output=False, host="0.0.0.0", port=args.port, **ssl_args)
+    kwargs = vars(parser.parse_args())
+    ssl_args = {"keyfile": kwargs.pop("keyfile"), "certfile": kwargs.pop("certfile")}
+    ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
+    socketio, app = create_app(**kwargs)
+    socketio.run(app, debug=True, log_output=False, host="0.0.0.0", port=kwargs["port"], **ssl_args)
