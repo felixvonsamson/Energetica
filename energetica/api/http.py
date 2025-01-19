@@ -29,7 +29,6 @@ from energetica.enums import (
     Fuel,
     PowerFacilityType,
     Renewable,
-    SpecialAskType,
     StorageFacilityType,
     str_to_project_type,
 )
