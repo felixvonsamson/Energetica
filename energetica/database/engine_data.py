@@ -186,11 +186,11 @@ class NetworkPrices:
         updated_bid_prices = {}
         updated_ask_prices = {}
         for priority_name, price in zip(new_priority, sorted_prices):
-            project_name = str_to_project_type_extended[priority_name[4:]]
+            project_type = str_to_project_type_extended[priority_name[4:]]
             if priority_name.startswith("ask-"):
-                updated_ask_prices[project_name] = price
+                updated_ask_prices[project_type] = price
             else:
-                updated_bid_prices[project_name] = price
+                updated_bid_prices[project_type] = price
         self.update(updated_bid_prices, updated_ask_prices)
 
 
@@ -220,23 +220,23 @@ class CapacityData:
         self._data: dict[str, dict] = {}
 
     def update(
-        self, player: Player, facility_name: PowerFacilityType | StorageFacilityType | ExtractionFacilityType | None
+        self, player: Player, facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType | None
     ) -> None:
         """Update the capacity data of the player."""
         from energetica.database.active_facility import ActiveFacility
 
         active_facilities: list[ActiveFacility]
-        if facility_name is None:
+        if facility_type is None:
             active_facilities = list(ActiveFacility.filter_by(player=player))
             unique_facilities = {af.facility_type for af in active_facilities}
             for uf in unique_facilities:
                 self.init_facility(uf)
         else:
-            active_facilities = list(ActiveFacility.filter_by(player=player, facility_type=facility_name))
-            if len(active_facilities) == 0 and facility_name in self._data:
-                del self._data[facility_name]
+            active_facilities = list(ActiveFacility.filter_by(player=player, facility_type=facility_type))
+            if len(active_facilities) == 0 and facility_type in self._data:
+                del self._data[facility_type]
                 return
-            self.init_facility(facility_name)
+            self.init_facility(facility_type)
 
         for facility in active_facilities:
             base_data = engine.const_config["assets"][facility.facility_type]

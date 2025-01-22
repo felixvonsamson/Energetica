@@ -364,7 +364,7 @@ def package_projects_data(player: Player) -> dict:
 
 def queue_project(
     player: Player,
-    project_name: ProjectType,
+    project_type: ProjectType,
     *,
     force: bool = False,
     ignore_requirements_and_money: bool = False,
@@ -374,21 +374,21 @@ def queue_project(
 
     asset_requirement_status = technology_effects.requirements_status(
         player,
-        project_name,
-        technology_effects.project_requirements(player, project_name),
+        project_type,
+        technology_effects.project_requirements(player, project_type),
     )
     if asset_requirement_status == "unsatisfied" and not ignore_requirements_and_money:
         msg = "Requirements not satisfied"
         raise GameError(msg)
 
-    real_price = technology_effects.construction_price(player, project_name)
-    duration = technology_effects.construction_time(player, project_name)
+    real_price = technology_effects.construction_price(player, project_type)
+    duration = technology_effects.construction_time(player, project_type)
 
     if player.money < real_price and not ignore_requirements_and_money:
         msg = "notEnoughMoney"
         raise GameError(msg)
 
-    construction_power = technology_effects.construction_power(player, project_name)
+    construction_power = technology_effects.construction_power(player, project_type)
     if not force and not player.is_in_network:
         capacity = 0
         for gen in power_facility_types:
@@ -403,21 +403,21 @@ def queue_project(
     # The construction is added as paused and then immediately unpaused in order to place it in the right place in the
     # priority list.
     new_construction: OngoingProject = OngoingProject(
-        project_type=project_name,
+        project_type=project_type,
         end_tick_or_ticks_passed=0,
         duration=duration,
         status=ProjectStatus.PAUSED,
         project_power=construction_power,
-        project_pollution=technology_effects.construction_pollution_per_tick(player, project_name),
+        project_pollution=technology_effects.construction_pollution_per_tick(player, project_type),
         multipliers={
-            "price_multiplier": technology_effects.price_multiplier(player, project_name),
-            "multiplier_1": technology_effects.multiplier_1(player, project_name),
-            "multiplier_2": technology_effects.multiplier_2(player, project_name),
-            "multiplier_3": technology_effects.multiplier_3(player, project_name),
+            "price_multiplier": technology_effects.price_multiplier(player, project_type),
+            "multiplier_1": technology_effects.multiplier_1(player, project_type),
+            "multiplier_2": technology_effects.multiplier_2(player, project_type),
+            "multiplier_3": technology_effects.multiplier_3(player, project_type),
         },
         player=player,
     )
-    if project_name in TechnologyType:
+    if project_type in TechnologyType:
         player.researches_by_priority.append(new_construction)
     else:
         player.constructions_by_priority.append(new_construction)
@@ -428,12 +428,12 @@ def queue_project(
         pass
 
     if not skip_notifications:
-        engine.log(f"{player.username} started the construction {project_name}")
+        engine.log(f"{player.username} started the construction {project_type}")
     # TODO(mglst): This should be re-enabled when the websocket is re-enabled
     # from energetica.api import websocket
     # websocket.rest_notify_constructions(player)
 
-    invalidate_data_on_project_update(player, project_name)
+    invalidate_data_on_project_update(player, project_type)
     player.send_worker_info()
     return new_construction
 

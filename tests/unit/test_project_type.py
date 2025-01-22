@@ -13,8 +13,8 @@ from energetica.enums import (
 )
 
 
-def test_str_to_project_name():
-    """Test the str_to_project_name dictionary."""
+def test_str_to_project_type():
+    """Test the str_to_project_type dictionary."""
     assert str_to_project_type == {
         # Wind Facilities
         "windmill": WindFacilityType.WINDMILL,

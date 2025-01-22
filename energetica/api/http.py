@@ -397,12 +397,12 @@ def request_queue_project() -> Response | tuple:
     """Start a construction or research project for the player."""
     request_data = request.get_json()
     asset = request_data["facility"]
-    project_name = str_to_project_type[asset]
+    project_type = str_to_project_type[asset]
     force = request_data["force"]
     try:
         energetica.utils.assets.queue_project(
             player=g.player,
-            project_name=project_name,
+            project_type=project_type,
             force=force,
         )
     except Confirm as confirm:

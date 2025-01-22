@@ -27,14 +27,14 @@ from energetica.utils.network_helpers import create_network, join_network
 def init_test_players():
     """Initialize the database with test players and networks."""
 
-    def add_asset(player: Player, project_name: ProjectType, n):
+    def add_asset(player: Player, project_type: ProjectType, n):
         """Create a project that will instantly finish."""
         for _ in range(n):
             ongoing_project = queue_project(
-                player, project_name, force=True, ignore_requirements_and_money=True, skip_notifications=True
+                player, project_type, force=True, ignore_requirements_and_money=True, skip_notifications=True
             )
             finish_project(ongoing_project, skip_notifications=True)
-        engine.log(f"Added {n} {project_name} for {player.username}")
+        engine.log(f"Added {n} {project_type} for {player.username}")
 
     def create_player(username, password, tile_id=None) -> Player:
         """Create and initialize a player."""
