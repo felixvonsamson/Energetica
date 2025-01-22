@@ -1,6 +1,6 @@
 float h, w;
 float s = 20; //displayed size of the hexagon tiles
-Hex[] map;
+HexTile[] map;
 Button[] buttons = new Button[8];
 int[] button_colors = {42, 132, 169, 0, 195, 77, 227, 20};
 int active_vew = -1;
@@ -54,7 +54,7 @@ int sgn(int i){
 void loadMap(int m){
   Table table = loadTable("map"+m+".csv", "header");
     
-  map = new Hex[table.getRowCount()];
+  map = new HexTile[table.getRowCount()];
   
   for (int i = 0; i < table.getRowCount(); i++) {
     TableRow row = table.getRow(i);
@@ -71,10 +71,10 @@ void loadMap(int m){
     float score = row.getFloat("score");
     
     int id = coords_to_id(q, r);
-    // Create new Hex object with these values
-    Hex h = new Hex(id, q, r, new float[] { solar, wind, hydro, coal, gas, uranium,risk,score });
+    // Create new HexTile object with these values
+    HexTile h = new HexTile(id, q, r, new float[] { solar, wind, hydro, coal, gas, uranium,risk,score });
     
-    // Store Hex object in map array
+    // Store HexTile object in map array
     map[i] = h;
   }
 }
@@ -107,7 +107,7 @@ void redraw(){
   pushMatrix();
   translate(0.5*width, 0.5*(height-2*s));
   for(int i = 0; i<map.length; i++){
-    Hex h = map[i];
+    HexTile h = map[i];
     if(active_vew >= 0){
       if(active_vew == buttons.length-1){
         bars[min(9,floor(h.resources[active_vew]*10))] ++;
@@ -123,7 +123,7 @@ void redraw(){
     //text(str(i)+"-"+j,0,-10);
     popMatrix();
   }
-  Hex h = map[selected_id];
+  HexTile h = map[selected_id];
   pushMatrix();
   pushStyle();
   float tx = w * h.q + 0.5 * w * h.r;
@@ -148,7 +148,7 @@ void redraw(){
     }
   }
   if(selected_id != 0){
-    Hex selected_h = map[selected_id];
+    HexTile selected_h = map[selected_id];
     for(int i = 0; i<buttons.length-1; i++){
       push();
       translate(0, 20*i);
@@ -186,7 +186,7 @@ void mousePressed() {
     int q = floor((mouseX - width/2 + 0.5 * w - 0.5 * w * r) / w);
     int id = coords_to_id(q, r);
     if (id < map.length) {
-      Hex h = map[id];
+      HexTile h = map[id];
       if (selected_id != 0) {
         map[selected_id].selected = false;
       }

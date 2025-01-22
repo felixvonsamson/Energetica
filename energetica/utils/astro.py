@@ -13,7 +13,8 @@ T1 = 33400  # Earth's spin initial phase
 
 
 def DrHI(unix_time, latitude, longitude):
-    """Calculate Direct Horizontal Irradiance (DrHI) at a given time and location.
+    """
+    Calculate Direct Horizontal Irradiance (DrHI) at a given time and location.
 
     Parameters
     ----------

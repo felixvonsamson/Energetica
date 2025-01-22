@@ -1,4 +1,4 @@
-"""This config file contains the data for the climate events that can occur in the game."""
+"""Config file containing the data for the climate events that can occur in the game."""
 
 from datetime import timedelta
 

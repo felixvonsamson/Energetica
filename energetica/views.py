@@ -1,14 +1,14 @@
-"""This module is responsible for serving the Jinja templates to the user."""
+"""Module responsible for serving the Jinja templates to the user."""
 
 from functools import partial
 
-from flask import Blueprint, current_app, g, redirect, render_template, request, url_for
+from flask import Blueprint, g, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
-from energetica.database import db
 from energetica.database.messages import Chat
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
+from energetica.globals import engine
 
 landing = Blueprint("landing", __name__, static_folder="static")
 location_choice_views = Blueprint("location_choice_views", __name__)
@@ -22,15 +22,14 @@ changelog = Blueprint("changelog", __name__, static_folder="static")
 @overviews.before_request
 @login_required
 def set_ctx():
-    """This function is called before every request"""
-    player: Player = current_user
-    if player.tile is None:
+    """Set up the context and redirects if the user has no tile."""
+    if current_user.tile is None:
         return redirect("/location_choice", code=302)
 
     render_template_ctx = partial(
         render_template,
-        engine=current_app.config["engine"],
-        user=player,
+        engine=engine,
+        user=current_user,
     )
     g.render_template_ctx = render_template_ctx
 
@@ -39,19 +38,18 @@ def set_ctx():
 @wiki.before_request
 @changelog.before_request
 def set_ctx_no_login():
-    """This function is called before every request"""
+    """Set a context for rendering templates without requiring user login, storing it in the global object."""
     user = current_user if current_user.is_authenticated and current_user.tile is not None else None
-    render_template_ctx = partial(render_template, engine=current_app.config["engine"], user=user)
+    render_template_ctx = partial(render_template, engine=engine, user=user)
     g.render_template_ctx = render_template_ctx
 
 
 @location_choice_views.route("/location_choice", methods=["GET"])
 @login_required
 def location_choice():
-    player: Player = current_user
-    if player.tile is not None:
+    if current_user.tile is not None:
         return redirect(url_for("views.home"))
-    return render_template("location_choice.jinja", engine=current_app.config["engine"])
+    return render_template("location_choice.jinja", engine=engine)
 
 
 @views.route("/home")
@@ -72,76 +70,68 @@ def map_view():
 @views.route("/profile")
 def profile():
     """
-    This is the endpoint for the profile page.
-    When players are on their own profile page, it can see more information about their account
+    Serve the profile page.
+
+    When players are on their own profile page, they can see more information about their account.
     """
     player_id = request.args.get("player_id")
     if player_id is None:
-        player: Player = current_user
-        player_id = player.id
-    player = db.session.get(Player, player_id)
+        player_id = current_user.id
+    player = Player.get(player_id)
     return g.render_template_ctx("profile.jinja", profile=player)
 
 
 @views.route("/messages", methods=["GET", "POST"])
 def messages():
-    player: Player = current_user
-    chats = Chat.query.filter(Chat.participants.any(id=player.id)).all()
+    chats = list(Chat.filter(lambda chat: current_user in chat.participants))
     return g.render_template_ctx("messages.jinja", chats=chats)
 
 
 @views.route("/network")
 def network():
-    player: Player = current_user
-    if "Unlock Network" not in player.achievements:
+    if not current_user.achievements["network"]:
         return redirect("/home", code=302)
     return g.render_template_ctx("network.jinja")
 
 
 @views.route("/power_facilities")
 def power_facilities():
-    player: Player = current_user
-    return g.render_template_ctx("assets/power_facilities.jinja", constructions=player.cache.power_facilities_data)
+    return g.render_template_ctx("assets/power_facilities.jinja", constructions=current_user.power_facilities_data)
 
 
 @views.route("/storage_facilities")
 def storage_facilities():
-    player: Player = current_user
-    return g.render_template_ctx("assets/storage_facilities.jinja", constructions=player.cache.storage_facilities_data)
+    return g.render_template_ctx("assets/storage_facilities.jinja", constructions=current_user.storage_facilities_data)
 
 
 @views.route("/technology")
 def technology():
-    player: Player = current_user
-    if "Unlock Technologies" not in player.achievements:
+    if not current_user.achievements["laboratory"]:
         return redirect("/home", code=302)
-    return g.render_template_ctx("assets/technologies.jinja", available_technologies=player.cache.technologies_data)
+    return g.render_template_ctx("assets/technologies.jinja", available_technologies=current_user.technologies_data)
 
 
 @views.route("/functional_facilities")
 def functional_facilities():
-    player: Player = current_user
     return g.render_template_ctx(
-        "assets/functional_facilities.jinja", constructions=player.cache.functional_facilities_data
+        "assets/functional_facilities.jinja", constructions=current_user.functional_facilities_data
     )
 
 
 @views.route("/extraction_facilities")
 def extraction_facilities():
-    player: Player = current_user
-    if "Unlock Natural Resources" not in player.achievements:
+    if not current_user.achievements["warehouse"]:
         return redirect("/home", code=302)
     return g.render_template_ctx(
-        "assets/extraction_facilities.jinja", constructions=player.cache.extraction_facilities_data
+        "assets/extraction_facilities.jinja", constructions=current_user.extraction_facilities_data
     )
 
 
 @views.route("/resource_market")
 def resource_market():
-    player: Player = current_user
-    if "Unlock Natural Resources" not in player.achievements:
+    if not current_user.achievements["warehouse"]:
         return redirect("/home", code=302)
-    on_sale = ResourceOnSale.query.all()
+    on_sale = ResourceOnSale.all()
     return g.render_template_ctx("resource_market.jinja", on_sale=on_sale)
 
 
@@ -162,24 +152,21 @@ def electricity():
 
 @overviews.route("/storage")
 def storage():
-    player: Player = current_user
-    if "First Storage Facility" not in player.achievements:
+    if not current_user.achievements["storage_facilities"]:
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/storage.jinja")
 
 
 @overviews.route("/resources")
 def resources():
-    player: Player = current_user
-    if "Unlock Natural Resources" not in player.achievements:
+    if not current_user.achievements["warehouse"]:
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/resources.jinja")
 
 
 @overviews.route("/emissions")
 def emissions():
-    player: Player = current_user
-    if not player.discovered_greenhouse_gas_effect():
+    if not current_user.discovered_greenhouse_gas_effect():
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/emissions.jinja")
 

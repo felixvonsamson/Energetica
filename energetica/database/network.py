@@ -1,30 +1,51 @@
 """Module that contains the Network class."""
 
+from __future__ import annotations
+
+import pickle
+import shutil
 from dataclasses import dataclass, field
-from functools import cached_property
+from pathlib import Path
+from typing import TYPE_CHECKING
 
-from flask import current_app
-
-from energetica.database import db
+from energetica.database import DBModel
 from energetica.database.engine_data import CapacityData, CircularBufferNetwork
+
+if TYPE_CHECKING:
+    from energetica.database.player import Player
 
 
 @dataclass
-class NetworkData:
-    """Dataclass that stores the network data."""
+class Network(DBModel):
+    """Class that stores the networks of players."""
+
+    name: str
+    members: list[Player]
 
     rolling_history: CircularBufferNetwork = field(default_factory=CircularBufferNetwork)
     capacities: CapacityData = field(default_factory=CapacityData)
 
+    def __post_init__(self):
+        super().__post_init__()
+        network_path = f"instance/data/networks/{self.id}"
+        Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
 
-class Network(db.Model):
-    """Class that stores the networks of players."""
+        self.capacities.update_network(self)
+        past_data = {
+            "network_data": {
+                "price": [[0.0] * 360 for _ in range(5)],
+                "quantity": [[0.0] * 360 for _ in range(5)],
+            },
+            "exports": {},
+            "imports": {},
+            "generation": {},
+            "consumption": {},
+        }
+        Path(f"{network_path}").mkdir(parents=True, exist_ok=True)
+        with open(f"{network_path}/time_series.pck", "wb") as file:
+            pickle.dump(past_data, file)
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True)
-    members = db.relationship("Player", backref="network")
-
-    @cached_property
-    def data(self) -> NetworkData:
-        """Cached property that stores the network data."""
-        return current_app.config["engine"].data["by_network"][self.id]
+    def delete(self):
+        network_path = f"instance/data/networks/{self.id}"
+        shutil.rmtree(network_path)
+        super().delete()

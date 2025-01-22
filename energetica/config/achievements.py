@@ -1,6 +1,6 @@
-"""This config file contains the data for the achievements that can be unlocked by the player."""
+"""Config file containing the data for the achievements that can be unlocked by the player."""
 
-achievements = {
+achievements: dict = {
     "power_consumption": {
         "name": "Power Consumption",
         "metric": "max_power_consumption",
@@ -26,7 +26,7 @@ achievements = {
         "rewards": [5, 10, 20],
         "message": "You have stored <span></span><script>document.currentScript.previousElementSibling.innerHTML = "
         "format_energy({value});</script> of energy, enough to power {comparison}. (+{reward} XP)",
-        "requirements": ["First Storage Facility"],
+        "requirements": ["storage_facilities"],
     },
     "mineral_extraction": {
         "name": "Mineral Extraction",
@@ -35,7 +35,7 @@ achievements = {
         "rewards": [5, 10, 15],
         "message": "You have extracted <span></span><script>document.currentScript.previousElementSibling.innerHTML = "
         "format_mass({value});</script> of resources. (+{reward} XP)",
-        "requirements": ["Unlock Natural Resources", "Unlock Technologies"],
+        "requirements": ["warehouse", "laboratory"],
     },
     "network_import": {
         "name": "Network Import",
@@ -44,7 +44,7 @@ achievements = {
         "rewards": [5, 10, 15],
         "message": "You have imported more than <span></span><script>document.currentScript.previousElementSibling"
         ".innerHTML = format_energy({value});</script> on the market. (+{reward} XP)",
-        "requirements": ["Unlock Network"],
+        "requirements": ["network"],
     },
     "network_export": {
         "name": "Network Export",
@@ -53,7 +53,7 @@ achievements = {
         "rewards": [5, 10, 15],
         "message": "You have exported more than <span></span><script>document.currentScript.previousElementSibling"
         ".innerHTML = format_energy({value});</script> on the market. (+{reward} XP)",
-        "requirements": ["Unlock Network"],
+        "requirements": ["network"],
     },
     "technology": {
         "name": "Technology",
@@ -61,16 +61,25 @@ achievements = {
         "milestones": [10, 25, 50, 100],
         "rewards": [5, 10, 15, 20],
         "message": "You have researched a total of {value} levels technologies. (+{reward} XP)",
-        "requirements": ["Unlock Technologies"],
+        "requirements": ["laboratory"],
     },
-    "trading": {
-        "name": "Resource Trading",
-        "metric": ["bought_resources", "sold_resources"],
+    "trading_export": {
+        "name": "Resource Export",
+        "metric": "sold_resources",
         "milestones": [200_000, 5_000_000, 100_000_000],
         "rewards": [5, 10, 15],
-        "message": "You have traded more than <span></span><script>document.currentScript.previousElementSibling"
+        "message": "You have exported more than <span></span><script>document.currentScript.previousElementSibling"
         ".innerHTML = format_mass({value});</script> of resources. (+{reward} XP)",
-        "requirements": ["Unlock Natural Resources"],
+        "requirements": ["warehouse"],
+    },
+    "trading_import": {
+        "name": "Resource Import",
+        "metric": "bought_resources",
+        "milestones": [200_000, 5_000_000, 100_000_000],
+        "rewards": [5, 10, 15],
+        "message": "You have imported more than <span></span><script>document.currentScript.previousElementSibling"
+        ".innerHTML = format_mass({value});</script> of resources. (+{reward} XP)",
+        "requirements": ["warehouse"],
     },
     "network": {
         "name": "Unlock Network",
@@ -106,7 +115,7 @@ achievements = {
         "is caused by human activities and increases the risk of extreme weather events. You can now monitor "
         "your CO<sub>2</sub> emissions and the climate anomalies in the <a href='/production_overview/emissions'>"
         "emissions overview</a>. (+{reward} XP)",
-        "requirements": ["Unlock Technologies"],
+        "requirements": ["laboratory"],
     },
     "storage_facilities": {
         "name": "First Storage Facility",

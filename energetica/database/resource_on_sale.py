@@ -1,14 +1,22 @@
 """Module that contains the ResourceOnSale class."""
 
-from energetica.database import db
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from energetica.database import DBModel
+
+if TYPE_CHECKING:
+    from energetica.database.player import Player
+    from energetica.enums import Fuel
 
 
-class ResourceOnSale(db.Model):
+@dataclass
+class ResourceOnSale(DBModel):
     """Class that stores resources currently on sale."""
 
-    id = db.Column(db.Integer, primary_key=True)
-    resource = db.Column(db.String(10))
-    quantity = db.Column(db.Float)
-    price = db.Column(db.Float)
-    creation_date = db.Column(db.DateTime)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))  # can access player directly with .player
+    resource: Fuel
+    quantity: float
+    price: float
+    player: Player

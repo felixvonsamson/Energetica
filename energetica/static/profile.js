@@ -401,7 +401,7 @@ function dismantle_all_of_type(facility) {
 function cost_of_action_all_of_type(table_data, facility_name, key) {
     let cost = 0;
     for (const [id, facility] of Object.entries(table_data)) {
-        if (facility.facility == facility_name) {
+        if (facility.name == facility_name) {
             cost += facility[key];
         }
     }

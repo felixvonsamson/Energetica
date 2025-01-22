@@ -1,46 +1,46 @@
 """Contains the ActiveFacility class."""
 
-from typing import TYPE_CHECKING
+from __future__ import annotations
 
-from flask import current_app
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from energetica import technology_effects
 from energetica.config.assets import const_config
-from energetica.database import db
+from energetica.database import DBModel
+from energetica.enums import fuels_by_extraction_facility
+from energetica.globals import engine
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
-    from energetica.game_engine import GameEngine
 
 
-class ActiveFacility(db.Model):
+@dataclass
+class ActiveFacility(DBModel):
     """Class that stores the facilities on the server and their end of life time."""
 
-    id = db.Column(db.Integer, primary_key=True)
-    facility = db.Column(db.String(50))
-    pos_x = db.Column(db.Float)
-    pos_y = db.Column(db.Float)
-    # tick at witch the facility will be decommissioned
-    end_of_life = db.Column(db.Integer)
-    # multiply the base values by the following values
-    price_multiplier = db.Column(db.Float)
-    multiplier_1 = db.Column(db.Float)
-    multiplier_2 = db.Column(db.Float)
-    multiplier_3 = db.Column(db.Float)
-    # percentage of the facility that is currently used
-    usage = db.Column(db.Float, default=0)
+    name: str
+    player: Player
+    position: tuple[float, float]
+    end_of_life: float
 
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
+    # multiply the base values by the following values
+    multipliers: dict[str, float] = field(default_factory=dict)
+
+    # percentage of the facility that is currently used
+    usage: float = 0.0
+
+    cut_out_speed_exceeded: bool = False
 
     @property
     def decommissioning(self) -> bool:
-        """returns True if the facility is being decommissioned."""
-        return self.end_of_life <= current_app.config["engine"].data["total_t"]
+        """Returns True if the facility is being decommissioned."""
+        return self.end_of_life <= engine.data["total_t"]
 
     @property
     def const_config(self) -> dict:
         """The base configuration of the facility."""
-        return const_config["assets"][self.facility]
+        return const_config["assets"][self.name]
 
     @property
     def display_name(self) -> str:
@@ -53,38 +53,33 @@ class ActiveFacility(db.Model):
 
         This is the cost without any upgrades, but including the special_price_multiplier for hydro facilities.
         """
-        if self.facility in ["watermill", "small_water_dam", "large_water_dam"]:
-            return self.const_config["base_price"] * self.multiplier_2
+        if self.name in ["watermill", "small_water_dam", "large_water_dam"]:
+            return self.const_config["base_price"] * self.multipliers["multiplier_2"]
         return self.const_config["base_price"]
 
     @property
     def total_cost(self) -> float:
         """Total cost of the facility, including all upgrades."""
-        return self.real_base_cost * self.price_multiplier
+        return self.real_base_cost * self.multipliers["price_multiplier"]
 
     @property
     def max_power_generation(self) -> float:
         """Max power output of the facility in W."""
-        return self.const_config["base_power_generation"] * self.multiplier_1
+        return self.const_config["base_power_generation"] * self.multipliers["multiplier_1"]
 
     @property
     def storage_capacity(self) -> float:
         """Storage capacity of the facility in Wh."""
-        return self.const_config["base_storage_capacity"] * self.multiplier_2
+        return self.const_config["base_storage_capacity"] * self.multipliers["multiplier_2"]
 
     @property
     def extraction_rate(self) -> float:
         """Rate at which the facility extracts resources from the ground. Defined only for extraction facilities."""
-        player: Player = self.player
-        extraction_to_resource = {
-            "coal_mine": "coal",
-            "gas_drilling_site": "gas",
-            "uranium_mine": "uranium",
-        }
+        assert self.player.tile is not None
         return (
             self.const_config["base_extraction_rate_per_day"]
-            * self.multiplier_2
-            * player.get_reserves()[extraction_to_resource[self.facility]]
+            * self.multipliers["multiplier_2"]
+            * self.player.tile.fuel_reserves[fuels_by_extraction_facility[self.name]]
             / 24
         )
 
@@ -94,15 +89,9 @@ class ActiveFacility(db.Model):
         return self.usage
 
     @property
-    def cut_out_speed_exceeded(self) -> bool:
-        """Whether the wind speed for this wind turbine exceeds the cut-out speed."""
-        engine: GameEngine = current_app.config["engine"]
-        return engine.buffered["cut_out_speed_exceeded"][self.id]
-
-    @property
     def efficiency(self) -> float:
         """Efficiency of the facility as a number from 0 to 1."""
-        return self.const_config["base_efficiency"] * self.multiplier_3
+        return self.const_config["base_efficiency"] * self.multipliers["multiplier_3"]
 
     @property
     def daily_op_cost(self) -> float:
@@ -117,12 +106,11 @@ class ActiveFacility(db.Model):
     @property
     def max_power_use(self) -> float:
         """Maximum power consumption of the facility in W. Defined only for extraction facilities."""
-        return self.const_config["base_power_consumption"] * self.multiplier_1
+        return self.const_config["base_power_consumption"] * self.multipliers["multiplier_1"]
 
     @property
     def remaining_lifespan(self) -> int | None:
         """Time left until the facility is decommissioned in ticks."""
-        engine: GameEngine = current_app.config["engine"]
         remaining_ticks = self.end_of_life - engine.data["total_t"]
         if remaining_ticks < 0:
             return None
@@ -135,37 +123,38 @@ class ActiveFacility(db.Model):
         Returns true if any of the attributes of the facility are outdated compared to current tech levels.
         This method is undefined for technologies and for functional facilities.
         """
-        engine: GameEngine = current_app.config["engine"]
-        if self.price_multiplier < technology_effects.price_multiplier(self.player, self.facility):
+        if self.multipliers["price_multiplier"] < technology_effects.price_multiplier(self.player, self.name):
             return True
-        if self.facility in engine.extraction_facilities:
+        if self.name in engine.extraction_facilities:
             return (
-                self.multiplier_1 < technology_effects.multiplier_1(self.player, self.facility)
-                or self.multiplier_2 < technology_effects.multiplier_2(self.player, self.facility)
-                or self.multiplier_3 < technology_effects.multiplier_3(self.player, self.facility)
+                self.multipliers["multiplier_1"] < technology_effects.multiplier_1(self.player, self.name)
+                or self.multipliers["multiplier_2"] < technology_effects.multiplier_2(self.player, self.name)
+                or self.multipliers["multiplier_3"] < technology_effects.multiplier_3(self.player, self.name)
             )
         # power & storage facilities
         return (
             (
-                self.facility in engine.power_facilities + engine.storage_facilities
-                and self.multiplier_1 < technology_effects.multiplier_1(self.player, self.facility)
+                self.name in engine.power_facilities + engine.storage_facilities
+                and self.multipliers["multiplier_1"] < technology_effects.multiplier_1(self.player, self.name)
             )
             or (
-                self.facility in engine.storage_facilities
-                and self.multiplier_2 < technology_effects.multiplier_2(self.player, self.facility)
+                self.name in engine.storage_facilities
+                and self.multipliers["multiplier_2"] < technology_effects.multiplier_2(self.player, self.name)
             )
             or (
-                self.facility in engine.controllable_facilities + engine.storage_facilities
-                and self.multiplier_3 < technology_effects.multiplier_3(self.player, self.facility)
+                self.name in engine.controllable_facilities + engine.storage_facilities
+                and self.multipliers["multiplier_3"] < technology_effects.multiplier_3(self.player, self.name)
             )
         )
 
     @property
-    def upgrade_cost(self) -> int | None:
+    def upgrade_cost(self) -> float | None:
         """Cost to upgrade the facility."""
         if not self.is_upgradable:
             return None
-        price_multiplier_diff = technology_effects.price_multiplier(self.player, self.facility) - self.price_multiplier
+        price_multiplier_diff = (
+            technology_effects.price_multiplier(self.player, self.name) - self.multipliers["price_multiplier"]
+        )
         # Some technologies reduce the cost of the facility, but we still want upgrades to cost something
         # TODO: rethink this
         price_multiplier_diff = max(price_multiplier_diff, 0.05)

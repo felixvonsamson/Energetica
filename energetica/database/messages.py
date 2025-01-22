@@ -1,24 +1,27 @@
 """Module that contains the classes for the built-in chat."""
 
-from energetica.database import db
+from __future__ import annotations
+
+from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import datetime
+from functools import partial
+from typing import TYPE_CHECKING
+
+from energetica.database import DBModel
+
+if TYPE_CHECKING:
+    from energetica.database.player import Player
 
 
-class Chat(db.Model):
-    """Class for chats with 2 or more players."""
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50))
-    messages = db.relationship("Message", backref="chat", lazy="dynamic")
-
-
-class Message(db.Model):
+@dataclass
+class Message(DBModel):
     """Class for storing data about messages for the in-game messaging system."""
 
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.Text)
-    time = db.Column(db.DateTime)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
-    chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"))
+    text: str
+    chat: Chat
+    player: Player
+    time: datetime = field(default_factory=datetime.now)
 
     def package(self) -> dict:
         """Package this message's data into a dictionary."""
@@ -26,24 +29,29 @@ class Message(db.Model):
             "id": self.id,
             "text": self.text,
             "date": self.time.timestamp(),
-            "player_id": self.player_id,
+            "player_id": self.player.id,
         }
 
 
-class Notification(db.Model):
+@dataclass
+class Chat(DBModel):
+    """Class for chats with 2 or more players."""
+
+    name: str | None
+    participants: set[Player]
+    messages: list[Message] = field(default_factory=list)
+
+    last_read_message: dict[int, int | None] = field(
+        default_factory=lambda: defaultdict(partial(int, -1)),
+    )  # {player: message index in messages}
+
+
+@dataclass
+class Notification(DBModel):
     """Class for storing data about in-game notifications."""
 
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(50))
-    content = db.Column(db.Text)
-    time = db.Column(db.DateTime)
-    read = db.Column(db.Boolean, default=False)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
-
-
-# table that links chats to players
-player_chats = db.Table(
-    "player_chats",
-    db.Column("player_id", db.Integer, db.ForeignKey("player.id")),
-    db.Column("chat_id", db.Integer, db.ForeignKey("chat.id")),
-)
+    title: str
+    content: str
+    player: Player
+    time: datetime = field(default_factory=datetime.now)
+    read: bool = False

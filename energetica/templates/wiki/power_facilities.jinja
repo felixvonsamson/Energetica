@@ -123,7 +123,7 @@
     <i class="fa fa-angle-double-right padding"></i>\(P_h(t) = \sum_{n} sv(t) \times P_{max,n} \)<br>
     where \(sv\) is the seasonal variation shown in the graph, \(t\) is the in-game date 
     (<a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">
-    1 in-game year = {{(engine.clock_time / engine.in_game_seconds_per_tick * 72) | round() | int }} real-time days</a>) 
+    1 in-game year = {{(engine.data["clock_time"] / engine.data["in_game_seconds_per_tick"] * 72) | round() | int }} real-time days</a>) 
     and \(P_{max,n}\) is the max power generation of the facility instance n.
   </li></ul>
   <p>
@@ -154,7 +154,7 @@
     maximal production according to the available fuel stocks.
   </p>
   <p>
-    {% if "Unlock Technologies" in user.achievements %}<a href="{{ url_for('views.technology', _anchor='Thermodynamics') }}">
+    {% if user.achievements.laboratory %}<a href="{{ url_for('views.technology', _anchor='Thermodynamics') }}">
     Thermodynamics</a>{% else %}Thermodynamics{% endif %} 
     influences facility efficiency, decreasing fuel consumption per unit of energy.
   </p>

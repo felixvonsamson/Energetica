@@ -4,7 +4,7 @@ This code is the p5.js script that shows the map in the home screen
 
 max_q = [1, 1, 1, 2_000_000_000, 600_000_000, 8_000_000, 10];
 // Tile item :
-class Hex {
+class HexTile {
     constructor(_id, _q, _r, _resources, player_id) {
         this.id = _id; // Tile id
         this.q = _q; // q coordinate
@@ -81,7 +81,7 @@ function preload() {
                         data[i].climate_risk,
                     ];
                     map.push(
-                        new Hex(
+                        new HexTile(
                             data[i].id,
                             data[i].q,
                             data[i].r,

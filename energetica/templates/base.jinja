@@ -13,37 +13,37 @@
       <span id="money"></span>
       <script>document.currentScript.previousElementSibling.innerHTML = format_money_long({{ user.money }});</script>
     </div>
-    {% if user.warehouse > 0 %}
+    {% if user.functional_facility_lvl.warehouse > 0 %}
     {% set warehouse_cap = engine.const_config.warehouse_capacities %}
-    {% set warehouse_mult = engine.const_config.assets.warehouse["capacity_factor"] ** user.warehouse %}
+    {% set warehouse_mult = engine.const_config.assets.warehouse["capacity_factor"] ** user.functional_facility_lvl.warehouse %}
     <div class="resource_container">
       <div class="resourceGauge-background hover_info">
-        <div class="resourceGauge color_coal" style="--width:{{user.coal / warehouse_cap.coal / warehouse_mult}}"></div>
+        <div class="resourceGauge color_coal" style="--width:{{user.resources.coal / warehouse_cap.coal / warehouse_mult}}"></div>
         <div id="coal" class="resource" style="color:#666"></div>
-        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.coal }});</script>
+        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.resources.coal }});</script>
         <span class="popup_info small">Coal stock</span>
       </div>
       <div class="resourceGauge-background hover_info">
-        <div class="resourceGauge color_gas" style="--width:{{user.gas / warehouse_cap.gas / warehouse_mult}}"></div>
+        <div class="resourceGauge color_gas" style="--width:{{user.resources.gas / warehouse_cap.gas / warehouse_mult}}"></div>
         <div id="gas" class="resource"></div>
-        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.gas }});</script>
+        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.resources.gas }});</script>
         <span class="popup_info small">Gas stock</span>
       </div>
       <div class="resourceGauge-background hover_info">
-        <div class="resourceGauge color_uranium" style="--width:{{user.uranium / warehouse_cap.uranium / warehouse_mult}}"></div>
+        <div class="resourceGauge color_uranium" style="--width:{{user.resources.uranium / warehouse_cap.uranium / warehouse_mult}}"></div>
         <div id="uranium" class="resource"></div>
-        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.uranium }});</script>
+        <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ user.resources.uranium }});</script>
         <span class="popup_info small">Uranium stock</span>
       </div>
     </div>
     {% endif %}
     <div class="workers_container">
-      <div id="construction_worker_cont" class="flex-space-around hover_info">{{ user.available_construction_workers() }}/{{ user.construction_workers }} 
+      <div id="construction_worker_cont" class="flex-space-around hover_info">{{ user.available_construction_workers() }}/{{ user.workers.construction }} 
         <img src="{{ url_for('static', filename='images/icons/construction.png') }}"
           class="navbar_icon padding-small" alt="Construction workers icon"/>
         <span class="popup_info small">Construction workers</span>
       </div>
-      <div id="lab_worker_cont" class="flex-space-around hover_info">{{ user.available_lab_workers() }}/{{ user.lab_workers }} 
+      <div id="lab_worker_cont" class="flex-space-around hover_info">{{ user.available_lab_workers() }}/{{ user.workers.laboratory }} 
         <img src="{{ url_for('static', filename='images/icons/technology.png') }}"
           class="navbar_icon padding-small" alt="Lab workers icon"/>
         <span class="popup_info small">Lab workers</span>
@@ -182,7 +182,7 @@
             <span style="padding:8px 0">Electricity</span>
           </a>
 
-          {% if "First Storage Facility" in user.achievements %}
+          {% if user.achievements.storage_facilities %}
           <a class="navbar_item bone flex-row"
               id="production_overview"
               href="{{ url_for('overviews.storage') }}">
@@ -192,7 +192,7 @@
           </a>
           {% endif %}
 
-          {% if "Unlock Natural Resources" in user.achievements %}
+          {% if user.achievements.warehouse %}
           <a class="navbar_item bone flex-row"
               id="production_overview"
               href="{{ url_for('overviews.resources') }}">
@@ -242,7 +242,7 @@
             <span style="padding:8px 0">Storage Facilities</span>
           </a>
           
-          {% if "Unlock Natural Resources" in user.achievements %}
+          {% if user.achievements.warehouse %}
           <a class="navbar_item bone flex-row"
               id="extraction_facilities"
               href="{{ url_for('views.extraction_facilities') }}">
@@ -280,7 +280,7 @@
             <span style="padding:8px 0">Messages</span>
           </a>
 
-          {% if "Unlock Network" in user.achievements %}
+          {% if user.achievements.network %}
           <a class="navbar_item bone flex-row" id="network" href="{{ url_for('views.network') }}">
             <img src="{{ url_for('static', filename='images/icons/network.png') }}"
                 class="navbar_icon margin-small" />
@@ -305,7 +305,7 @@
         </div>
       </li>
 
-      {% if "Unlock Technologies" in user.achievements %}
+      {% if user.achievements.laboratory %}
       <li class="nav-item">
         <a class="navbar_item tan_green flex-row"
             id="technology"
@@ -317,7 +317,7 @@
       </li>
       {% endif %}
 
-      {% if "Unlock Natural Resources" in user.achievements %}
+      {% if user.achievements.warehouse %}
       <li class="nav-item">
         <a class="navbar_item tan_green flex-row"
             id="resource_market"

@@ -1,12 +1,12 @@
 const sortableList = document.querySelector(".priority_list");
 
-const storageCharging = [
-    "buy_small_pumped_hydro",
-    "buy_molten_salt",
-    "buy_large_pumped_hydro",
-    "buy_hydrogen_storage",
-    "buy_lithium_ion_batteries",
-    "buy_solid_state_batteries",
+const storageFacilities = [
+    "small_pumped_hydro",
+    "molten_salt",
+    "large_pumped_hydro",
+    "hydrogen_storage",
+    "lithium_ion_batteries",
+    "solid_state_batteries",
 ];
 
 let renewables;
@@ -14,6 +14,9 @@ let renewables;
 const initSortableList = (e) => {
     e.preventDefault();
     const draggingItem = document.querySelector(".dragging");
+    if (!draggingItem) {
+        return;
+    }
     if (!draggingItem.draggable) {
         return;
     }
@@ -89,7 +92,6 @@ if (sortableList) {
             load_const_config().then((const_config) => {
                 renewables = raw_data[0];
                 for (facility of raw_data[0]) {
-                    console.log(facility, const_config.assets[facility]);
                     let name = const_config.assets[facility].name;
                     sortableList.innerHTML += `<li class="item medium gen" style="margin-left:2.1em;" id="${facility}">
                 <div class="details padding">
@@ -98,35 +100,37 @@ if (sortableList) {
                 <i id="priority_list_icon" class="fa fa-lock priority_list_icon"></i>
             </li>`;
                 }
-                for (facility of raw_data[1]) {
-                    let name;
-                    let generation = true;
-                    if (storageCharging.includes(facility)) {
-                        generation = false;
-                        name = const_config.assets[facility.slice(4)].name + " (charge)";
-                    } else if (storageCharging.includes("buy_" + facility)) {
-                        name = const_config.assets[facility].name + " (discharge)";
-                    } else if (facility.includes("buy_")) {
-                        generation = false;
-                        if (facility.slice(4) in const_config.assets) {
-                            name = const_config.assets[facility.slice(4)].name;
-                        } else if (facility == "buy_transport") {
-                            name = "Shipments";
-                        } else {
-                            name = facility.charAt(4).toUpperCase() + facility.slice(5);
-                        }
+                for (let tuple_data of raw_data[1]) {
+                    let facility = tuple_data[1];
+                    let generation = tuple_data[0] == "bid";
+                    var name = "";
+                    if (facility == "transport") {
+                        name = "Shipments";
+                    } else if (facility == "construction") {
+                        name = "Construction";
+                    } else if (facility == "research") {
+                        name = "Research";
                     } else {
+                        console.log(facility);
                         name = const_config.assets[facility].name;
+                        if (storageFacilities.includes(facility)) {
+                            if (generation) {
+                                name += " (discharge)";
+                            } else {
+                                name += " (charge)";
+                            }
+                        }
                     }
+                    let element_id = tuple_data[0] + "-" + facility;
                     if (generation) {
-                        sortableList.innerHTML += `<li class="item medium draggable gen" draggable="true" id="${facility}">
+                        sortableList.innerHTML += `<li class="item medium draggable gen" draggable="true" id="${element_id}">
                         <div class="details padding">
                         <span>${name}</span>
                         </div>
                         <i id="priority_list_icon" class="fa fa-sort priority_list_icon"></i>
                         </li>`;
                     } else {
-                        sortableList.innerHTML += `<li class="item medium draggable cons" draggable="true" id="${facility}">
+                        sortableList.innerHTML += `<li class="item medium draggable cons" draggable="true" id="${element_id}">
                         <i id="priority_list_icon" class="fa fa-sort priority_list_icon"></i>
                         <div class="details padding">
                         <span>${name}</span>
@@ -178,13 +182,13 @@ function reset_icons() {
 }
 
 function change_prices() {
-    const inputElements = document.querySelectorAll("input");
-    let prices = {};
-    inputElements.forEach((input) => {
-        if ((input.id == "invite_player") || (input.id == "network_name") || (input.id == "web_push_notifications-checkbox")) {
-            return;
-        }
-        prices[input.id] = float(input.value);
+    const priceInputs = Array.from(document.querySelectorAll("input")).filter(input => input.id.includes("price-"));
+
+    let prices = { "supply": {}, "demand": {} };
+    priceInputs.forEach((input) => {
+        let price_type = input.id.split("-")[1];
+        let facility = input.id.split("-")[2];
+        prices[price_type][facility] = parseFloat(input.value);
     });
     send_json("/api/change_network_prices", {
         prices: prices,
@@ -198,7 +202,9 @@ function change_prices() {
                 }
                 if (response == "priceTooLow") {
                     addError("Prices need to be greater than -5");
+                    return;
                 }
+                addError("This is a frustrating message telling you that something went wrong but not what");
             });
         })
         .catch((error) => {

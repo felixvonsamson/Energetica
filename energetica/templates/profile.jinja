@@ -53,19 +53,19 @@
       <table class="table bone margin-small">
         <tr>
           <td>Industry</td>
-          <td>lvl <b>{{ profile.industry }}</b></td>
+          <td>lvl <b>{{ profile.functional_facility_lvl.industry }}</b></td>
         </tr>
         <tr>
           <td>Laboratory</td>
-          <td>lvl <b>{{ profile.laboratory }}</b></td>
+          <td>lvl <b>{{ profile.functional_facility_lvl.laboratory }}</b></td>
         </tr>
         <tr>
           <td>Warehouse</td>
-          <td>lvl <b>{{ profile.warehouse }}</b></td>
+          <td>lvl <b>{{ profile.functional_facility_lvl.warehouse }}</b></td>
         </tr>
         <tr>
           <td>Carbon Capture</td>
-          <td>lvl <b>{{ profile.carbon_capture }}</b></td>
+          <td>lvl <b>{{ profile.functional_facility_lvl.carbon_capture }}</b></td>
         </tr>
       </table>
     </div>
@@ -74,51 +74,51 @@
       <table class="table bone margin-small">
         <tr>
           <td>Mathematics</td>
-          <td>lvl <b>{{ profile.mathematics }}</b></td>
+          <td>lvl <b>{{ profile.technology_lvl.mathematics }}</b></td>
         </tr>
         <tr>
           <td>Mechanical Engineering</td>
-          <td>lvl <b>{{ profile.mechanical_engineering }}</b></td>
+          <td>lvl <b>{{ profile.technology_lvl.mechanical_engineering }}</b></td>
         </tr>
         <tr>
           <td>Thermodynamics</td>
-          <td>lvl <b>{{ profile.thermodynamics }}</b></td>
+          <td>lvl <b>{{ profile.technology_lvl.thermodynamics }}</b></td>
         </tr>
         <tr>
           <td>Physics</td>
-          <td>lvl <b>{{ profile.physics }}</b></td>
+          <td>lvl <b>{{ profile.technology_lvl.physics }}</b></td>
         </tr>
         <tr>
           <td>Building Technology</td>
-          <td>lvl <b>{{ profile.building_technology }}</b></td>
+          <td>lvl <b>{{ profile.technology_lvl.building_technology }}</b></td>
         </tr>
         <tr>
           <td>Mineral Extraction</td>
-          <td>lvl <b>{{ profile.mineral_extraction }}</b></td>
+          <td>lvl <b>{{ profile.technology_lvl.mineral_extraction }}</b></td>
         </tr>
         <tr>
           <td>Transport Technology</td>
-          <td>lvl <b>{{ profile.transport_technology }}</b></td>
+          <td>lvl <b>{{ profile.technology_lvl.transport_technology }}</b></td>
         </tr>
         <tr>
           <td>Materials</td>
-          <td>lvl <b>{{ profile.materials }}</b></td>
+          <td>lvl <b>{{ profile.technology_lvl.materials }}</b></td>
         </tr>
         <tr>
           <td>Civil Engineering</td>
-          <td>lvl <b>{{ profile.civil_engineering }}</b></td>
+          <td>lvl <b>{{ profile.technology_lvl.civil_engineering }}</b></td>
         </tr>
         <tr>
           <td>Aerodynamics</td>
-          <td>lvl <b>{{ profile.aerodynamics }}</b></td>
+          <td>lvl <b>{{ profile.technology_lvl.aerodynamics }}</b></td>
         </tr>
         <tr>
           <td>Chemistry</td>
-          <td>lvl <b>{{ profile.chemistry }}</b></td>
+          <td>lvl <b>{{ profile.technology_lvl.chemistry }}</b></td>
         </tr>
         <tr>
           <td>Nuclear Engineering</td>
-          <td>lvl <b>{{ profile.nuclear_engineering }}</b></td>
+          <td>lvl <b>{{ profile.technology_lvl.nuclear_engineering }}</b></td>
         </tr>
       </table>
     </div>
@@ -132,50 +132,50 @@
         <tr>
           <td>Revenues</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ profile.average_revenues }}) + "/h";</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ profile.progression_metrics.average_revenues }}) + "/h";</script>
         </tr>
         <tr>
           <td>Max Power</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ profile.max_power_consumption }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ profile.progression_metrics.max_power_consumption }});</script>
         </tr>
         <tr>
           <td>Max Storage</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.max_energy_stored }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.progression_metrics.max_energy_stored }});</script>
         </tr>
         <tr>
           <td>Imported Energy</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.imported_energy }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.progression_metrics.imported_energy }});</script>
         </tr>
         <tr>
           <td>Exported Energy</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.exported_energy }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ profile.progression_metrics.exported_energy }});</script>
         </tr>
         <tr>
           <td>Extracted Resources</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.extracted_resources }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.progression_metrics.extracted_resources }});</script>
         </tr>
         <tr>
           <td>Bought Resources</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.bought_resources }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.progression_metrics.bought_resources }});</script>
         </tr>
         <tr>
           <td>Sold Resources</td>
           <td class="txt_center"></td>
-          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.sold_resources }});</script>
+          <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.progression_metrics.sold_resources }});</script>
         </tr>
         <tr>
           <td>Technology</td>
-          <td class="txt_center">{{ profile.total_technologies }}</td>
+          <td class="txt_center">{{ profile.progression_metrics.total_technologies }}</td>
         </tr>
         <tr>
           <td>XP</td>
-          <td class="txt_center">{{ profile.xp }}</td>
+          <td class="txt_center">{{ profile.progression_metrics.xp }}</td>
         </tr>
         {% if user.discovered_greenhouse_gas_effect() %}
           <tr>
@@ -186,7 +186,7 @@
           <tr>
             <td>Captured CO<sub>2</sub></td>
             <td class="txt_center"></td>
-            <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.captured_co2 }});</script>
+            <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ profile.progression_metrics.captured_co2 }});</script>
           </tr>
         {% endif %}
       </table>

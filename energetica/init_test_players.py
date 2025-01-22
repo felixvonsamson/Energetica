@@ -1,51 +1,52 @@
-"""This module is used to initialize the database with test players and networks."""
+"""Module to initialize the database with test players and networks."""
 
 from werkzeug.security import generate_password_hash
 
-from energetica.database import db
-from energetica.database.map import Hex
+from energetica.database.map import HexTile
 from energetica.database.network import Network
 from energetica.database.player import Player
+from energetica.enums import Fuel
+from energetica.game_error import GameError
+from energetica.globals import engine
 from energetica.utils.assets import finish_project, queue_project
 from energetica.utils.misc import confirm_location
 from energetica.utils.network_helpers import create_network, join_network
 
 
-def init_test_players(engine):
-    """This function initializes the database with test players and networks."""
+def init_test_players():
+    """Initialize the database with test players and networks."""
 
-    def add_asset(player: Player, asset: str, n):
-        """This function adds an asset as an instant construction."""
+    def add_asset(player: Player, project: str, n):
+        """Create a project that will instantly finish."""
         for _ in range(n):
-            ongoing_construction = queue_project(
-                engine, player, asset, force=True, ignore_requirements_and_money=True, skip_notifications=True
+            ongoing_project = queue_project(
+                player, project, force=True, ignore_requirements_and_money=True, skip_notifications=True
             )
-            finish_project(ongoing_construction, skip_notifications=True)
-        engine.log(f"Added {n} {asset} for {player.username}")
+            finish_project(ongoing_project, skip_notifications=True)
+        engine.log(f"Added {n} {project} for {player.username}")
 
     def create_player(username, password, tile_id=None) -> Player:
-        """This function creates and initializes a player."""
-        player = Player.query.filter_by(username=username).first()
+        """Create and initialize a player."""
+        player = next(Player.filter_by(username=username), None)
         if player:
             engine.log(f"create_player: player {username} already exists")
             return player
         player = Player(username=username, pwhash=generate_password_hash(password))
-        db.session.add(player)
-        db.session.commit()
         # If tile_id is None, find any tile that isn't assigned to a player
-        hex_tile = db.session.get(Hex, tile_id) if tile_id else Hex.query.filter_by(player_id=None).first()
-        confirm_location(engine, player, hex_tile)
+        hex_tile = HexTile.get(tile_id) if tile_id else next(HexTile.filter_by(player=None))
+        if not hex_tile:
+            raise GameError("TileNotFound")  # TODO(mglst): centralize error handling, create static list of errors
+        confirm_location(player, hex_tile)
         engine.log(f"create_player: player {username} created")
         return player
 
     def setup_network(name, members: list[Player]) -> Network:
-        """This function creates and initializes a network."""
-        # Unlock the network achievement for all members
+        """Create and initialize a network."""
+        # Unlock the network achievement for all members so that they can see the network page
         for player in members:
-            if "Unlock Network" not in player.achievements:
-                player.add_to_list("achievements", "Unlock Network")
+            player.achievements["network"] = 1
 
-        network = Network.query.filter_by(name=name).first()
+        network = next(Network.filter_by(name=name), None)
         if network:
             engine.log(f"create_network: network {name} already exists")
         else:
@@ -53,25 +54,22 @@ def init_test_players(engine):
                 engine.log(f"create_network: network {name} has no members")
                 # raise an exception
                 raise ValueError("create_network: network has no members")
-            network = create_network(engine, members[0], name)
+            network = create_network(members[0], name)
             for player in members[1:]:
-                join_network(engine, player, network)
+                join_network(player, network)
         return network
 
-    def climate_events_scenario(engine):
-        """This scenario fills the map with players that use coal to see climate change events."""
+    def climate_events_scenario():
+        """Fill the map with players that use coal to see climate change events."""
         players = []
         for i in range(1, 5):
             print("creating player", i)
             player = create_player(f"user{i}", "password")
             if player:
-                Hex.query.filter_by(id=i).first().player_id = player.id
+                HexTile.get(i).player = player
 
                 player.money = 1_000_000_000
-                player.coal = 300_000
-                player.gas = 100_000
-                player.uranium = 500
-                player.rest_of_priorities = ""
+                player.resources = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}
 
                 add_asset(player, "industry", 18)
                 add_asset(player, "warehouse", 1)
@@ -100,9 +98,8 @@ def init_test_players(engine):
                 add_asset(player, "aerodynamics", 5)
             players.append(player)
         setup_network("net", players)
-        db.session.commit()
 
-    # climate_events_scenario(engine)
+    # climate_events_scenario()
 
     player1 = create_player("user1", "password")
     player2 = create_player("user2", "password")
@@ -113,7 +110,7 @@ def init_test_players(engine):
 
     # Player 1
     player1.money = 1_000_000_000
-    player1.coal = 300_000
+    player1.resources[Fuel.COAL] = 300_000
 
     add_asset(player1, "molten_salt", 1)
     add_asset(player1, "hydrogen_storage", 1)
@@ -166,9 +163,7 @@ def init_test_players(engine):
 
     # Player 2
     player2.money = 1_000_000_000
-    player2.coal = 300_000
-    player2.gas = 100_000
-    player2.uranium = 500
+    player2.resources = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}
 
     add_asset(player2, "warehouse", 20)
     add_asset(player2, "steam_engine", 20)
@@ -188,13 +183,11 @@ def init_test_players(engine):
     # add_asset(player3, "nuclear_engineering", 1)
 
     # if player:
-    #     Hex.query.filter_by(id=35).first().player_id = player.id
+    #     HexTile.filter_by(id=35).first().player = player
 
     #     player.money = 1_000_000
-    #     player.coal = 4_500_000
-    #     player.gas = 80_000_000
-    #     player.uranium = 4_500
-    #     player.rest_of_priorities = ""
+    #     player.resources = {"coal":4_500_000, "gas":80_000_000, "uranium":4_500}
+    #     player.priorities_of_controllables = ""
 
     #     add_asset(player, "industry", 21)
     #     add_asset(player, "laboratory", 5)
@@ -221,37 +214,32 @@ def init_test_players(engine):
     #     add_asset(player, "physics", 2)
     #     add_asset(player, "thermodynamics", 2)
     #     add_asset(player, "nuclear_engineering", 3)
-    #     db.session.commit()
 
     # player2 = create_player("user2", "password")
     # if player2:
-    #     Hex.query.filter_by(id=84).first().player_id = player2.id
-    #     player2.rest_of_priorities = ""
+    #     HexTile.filter_by(id=84).first().player = player2
+    #     player2.data.priorities_of_controllables = ""
     #     add_asset(player2, "industry", 19)
     #     add_asset(player2, "warehouse", 1)
     #     add_asset(player2, "steam_engine", 10)
     #     add_asset(player2, "small_water_dam", 1)
-    #     db.session.commit()
 
     # player3 = create_player("user3", "password")
     # if player3:
-    #     Hex.query.filter_by(id=143).first().player_id = player3.id
-    #     player3.rest_of_priorities = ""
+    #     HexTile.filter_by(id=143).first().player = player3
+    #     player3.data.priorities_of_controllables = ""
     #     add_asset(player3, "industry", 8)
     #     add_asset(player3, "onshore_wind_turbine", 5)
-    #     db.session.commit()
 
     # player4 = create_player("user4", "password")
     # if player4:
-    #     Hex.query.filter_by(id=28).first().player_id = player4.id
-    #     player4.rest_of_priorities = ""
+    #     HexTile.filter_by(id=28).first().player = player4
+    #     player4.data.priorities_of_controllables = ""
     #     add_asset(player4, "warehouse", 1)
     #     add_asset(player4, "watermill", 1)
     #     add_asset(player4, "steam_engine", 1)
     #     add_asset(player4, "small_pumped_hydro", 1)
     #     add_asset(player4, "coal_burner", 1)
     #     add_asset(player4, "coal_mine", 1)
-    #     db.session.commit()
 
     # create_network("net", [player, player2, player3])
-    db.session.commit()

@@ -1,22 +1,23 @@
+# type: ignore
+# pylint: skip-file
 """Code providing API access using WebSockets and HTTP Basic Auth"""
 
 import json
 import pickle
 
-from flask import Blueprint, current_app, g
+from flask import Blueprint, g
 from flask_httpauth import HTTPBasicAuth
 from simple_websocket import ConnectionClosed
 from werkzeug.security import check_password_hash
 
-from energetica.database import db
-from energetica.database.map import Hex
+from energetica.database.map import HexTile
 from energetica.database.messages import Chat, Message
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.game_engine import GameEngine
+from energetica.globals import engine
 from energetica.technology_effects import package_constructions_page_data
 from energetica.utils.assets import decrease_project_priority, queue_project, toggle_pause_project
-from energetica.utils.chat import add_message, create_chat, create_group_chat, hide_chat_disclaimer
+from energetica.utils.chat import add_message, create_chat, hide_chat_disclaimer
 from energetica.utils.misc import confirm_location, package_weather_data
 from energetica.utils.network_helpers import create_network, join_network, leave_network
 
@@ -33,7 +34,7 @@ def add_sock_handlers(sock, engine):
     @basic_auth.verify_password
     def verify_password(username, password):
         """Called by flask-HTTPAUth to verify credentials."""
-        player = Player.query.filter_by(username=username).first()
+        player: Player = next(Player.filter_by(username=username), None)
         if player:
             if check_password_hash(player.pwhash, password):
                 engine.log(f"{username} logged in via WebSocket")
@@ -45,8 +46,7 @@ def add_sock_handlers(sock, engine):
     @basic_auth.login_required
     def check_user():
         """Sets up variables used by endpoints."""
-        g.engine = current_app.config["engine"]
-        g.player = Player.query.filter_by(username=basic_auth.current_user()).first()
+        g.player = next(Player.filter_by(username=basic_auth.current_user()))
 
     # Main WebSocket endpoint for Swift client
     @sock.route("/rest_ws", bp=websocket_blueprint)
@@ -55,7 +55,7 @@ def add_sock_handlers(sock, engine):
         player = g.player
         engine.log(f"Received WebSocket connection for player {player}")
         ws.send(rest_setup_complete())
-        ws.send(rest_get_global_data(engine))
+        ws.send(rest_get_global_data())
         # TODO: Review what data is sent before a tile is selected
         ws.send(rest_get_map())
         ws.send(rest_get_players())
@@ -67,7 +67,7 @@ def add_sock_handlers(sock, engine):
         # ws.send(rest_get_scoreboard())
         ws.send(rest_get_constructions(player))
         ws.send(rest_get_construction_queue(player))
-        ws.send(rest_get_weather(engine, player))
+        ws.send(rest_get_weather(player))
         ws.send(rest_get_achievements(player))
         if player.tile is not None:
             rest_init_ws_post_location(player, ws)
@@ -84,10 +84,10 @@ def add_sock_handlers(sock, engine):
             message_data = message["data"]
             match message["type"]:
                 # case "confirmLocation":
-                #     rest_confirm_location(engine, ws, message_data)
+                #     rest_confirm_location(ws, message_data)
                 case "request":
                     uuid = message["uuid"]
-                    rest_parse_request(engine, player, ws, uuid, message_data)
+                    rest_parse_request(player, ws, uuid, message_data)
                 case message_type:
                     engine.log(
                         f"Websocket connection from player {player} sent an unknown message of type {message_type}"
@@ -96,9 +96,9 @@ def add_sock_handlers(sock, engine):
 
 def unregister_websocket_connection(player_id, ws):
     """Removes the ws object from the player's registered ws connections"""
-    player = db.session.get(Player, player_id)
-    g.engine.log(f"Websocket connection closed for player {player}")
-    g.engine.websocket_dict[player_id].remove(ws)
+    player = Player.get(player_id)
+    engine.log(f"Websocket connection closed for player {player}")
+    engine.websocket_dict[player_id].remove(ws)
 
 
 def rest_init_ws_post_location(player, ws):
@@ -125,17 +125,17 @@ def rest_setup_complete():
 def rest_get_map():
     """Gets the map data from the database and returns it as a JSON string as a
     dictionary of arrays."""
-    hex_list = Hex.query.order_by(Hex.r, Hex.q).all()
+    hex_list = sorted(HexTile.all(), lambda tile: tile.coordinates)
     response = {
         "type": "getMap",
         "data": {
             "ids": [tile.id for tile in hex_list],
-            "solars": [tile.solar for tile in hex_list],
-            "winds": [tile.wind for tile in hex_list],
-            "hydros": [tile.hydro for tile in hex_list],
-            "coals": [tile.coal for tile in hex_list],
-            "gases": [tile.gas for tile in hex_list],
-            "uraniums": [tile.uranium for tile in hex_list],
+            "solars": [tile.solar_potential for tile in hex_list],
+            "winds": [tile.wind_potential for tile in hex_list],
+            "hydros": [tile.hydro_potential for tile in hex_list],
+            "coals": [tile.coal_reserves for tile in hex_list],
+            "gases": [tile.gas_reserves for tile in hex_list],
+            "uraniums": [tile.uranium_reserves for tile in hex_list],
             "climate_risks": [tile.climate_risk for tile in hex_list],
         },
     }
@@ -171,8 +171,8 @@ def rest_get_show_chat_disclaimer(player: Player):
     return json.dumps(response)
 
 
-def rest_get_global_data(engine: GameEngine):
-    """Gets global engine data and returns it as a JSON string"""
+def rest_get_global_data():
+    """Gets from energetica.globals import engine data and returns it as a JSON string"""
     response = {"type": "getGlobalData", "data": engine.package_global_data()}
     return json.dumps(response)
 
@@ -201,7 +201,7 @@ def rest_get_networks():
     """Gets all player data and returns it as a JSON string.
     A client receiving a message of type `getNetworks` should disregard any
     previous network data."""
-    network_list = Network.query.all()
+    network_list = Network.all()
     response = {
         "type": "getNetworks",
         "data": {
@@ -216,9 +216,9 @@ def rest_get_networks():
     return json.dumps(response)
 
 
-def rest_add_player_location(player):
-    """Informs the client that a player has chosen a location, packaged as a
-    JSON string."""
+def rest_add_player_location(player: Player):
+    """Informs the client that a player has chosen a location, packaged as a JSON string."""
+    assert player.tile is not None
     response = {
         "type": "updatePlayerLocation",
         "data": {"player_id": player.id, "cell_id": player.tile.id},
@@ -235,9 +235,9 @@ def rest_new_chat_message(chat_id: int, message: Message):
 def rest_get_charts():
     # !!! current_t HAS BEEN REMOVED !!!
     """Gets the player's chart data and returns it as a JSON string."""
-    current_t = g.engine.data["current_t"]
+    current_t = engine.data["current_t"]
     timescale = "day"  # request.args.get('timescale')
-    filename = f"instance/player_data/{g.player.id}/{timescale}.pck"
+    filename = f"instance/data/players/{g.player.id}/{timescale}.pck"
     with open(filename, "rb") as file:
         file_data = pickle.load(file)
 
@@ -248,7 +248,7 @@ def rest_get_charts():
     def industry_data_for(category, subcategory):
         return combine_file_data_and_engine_data(
             file_data[category][subcategory],
-            g.player.data.rolling_history[category][subcategory],
+            g.player.rolling_history[category][subcategory],
         )
 
     subcategories = {
@@ -324,11 +324,11 @@ def rest_get_scoreboard():
     return json.dumps({})
 
 
-def rest_get_weather(engine, player):
+def rest_get_weather(player):
     """Gets the weather and returns it as a JSON string"""
     response = {
         "type": "getWeather",
-        "data": package_weather_data(engine, player),
+        "data": package_weather_data(player),
     }
     return json.dumps(response)
 
@@ -336,6 +336,7 @@ def rest_get_weather(engine, player):
 def rest_get_achievements(player: Player):
     """Gets the player's achievements and returns it as a JSON string"""
     # TODO : This only treats a subset of achievements, precise the role of the function - Felix
+    # TODO : This is broken
     response = {
         "type": "getAdvancements",
         "data": {
@@ -366,7 +367,7 @@ def rest_request_response(uuid, endpoint, data):
 ## Client Messages
 
 
-def rest_parse_request(engine, player: Player, ws, uuid, data):
+def rest_parse_request(player: Player, ws, uuid, data):
     """Interpret a request sent from a REST client"""
     endpoint = data["endpoint"]
     body = data["body"] if "body" in data else None
@@ -375,13 +376,13 @@ def rest_parse_request(engine, player: Player, ws, uuid, data):
         case "confirmLocation":
             rest_parse_request_confirm_location(ws, uuid, body)
         case "joinNetwork":
-            rest_parse_request_join_network(engine, ws, uuid, body)
+            rest_parse_request_join_network(ws, uuid, body)
         case "leaveNetwork":
-            rest_parse_request_leave_network(engine, ws, uuid)
+            rest_parse_request_leave_network(ws, uuid)
         case "createNetwork":
-            rest_parse_request_create_network(engine, ws, uuid, body)
+            rest_parse_request_create_network(ws, uuid, body)
         case "startProject":
-            rest_parse_request_queue_project(engine, ws, uuid, body)
+            rest_parse_request_queue_project(ws, uuid, body)
         case "pauseUnpauseProject":
             rest_parse_request_pause_unpause_project(ws, uuid, body)
         case "decreaseProjectPriority":
@@ -390,11 +391,12 @@ def rest_parse_request(engine, player: Player, ws, uuid, data):
             hide_chat_disclaimer(player)
         case "createChat":
             buddy_id = data["buddy_id"]
-            create_chat(player, buddy_id)
+            participants = {player, Player.get(buddy_id)}
+            create_chat(player, None, participants)
         case "createGroupChat":
             chat_name = data["chat_name"]
-            participant_ids = data["participant_ids"]
-            create_group_chat(player, chat_name, participant_ids)
+            participants = {player, *[Player.get(participant_id) for participant_id in data["participant_ids"]]}
+            create_chat(player, chat_name, participants)
         case "sendMessage":
             chat_id = data["chat_id"]
             message = data["message"]
@@ -406,7 +408,7 @@ def rest_parse_request(engine, player: Player, ws, uuid, data):
 def rest_parse_request_confirm_location(ws, uuid, data):
     """Interpret message sent from a client when they chose a location."""
     cell_id = data
-    response = confirm_location(engine=g.engine, player=g.player, location=db.session.get(Hex, cell_id))
+    response = confirm_location(player=g.player, tile=HexTile.get(cell_id))
     print(f"ws is {ws} and we're sending rest_respond_confirmLocation")
     message = rest_request_response(uuid, "confirmLocation", response)
     ws.send(message)
@@ -414,35 +416,35 @@ def rest_parse_request_confirm_location(ws, uuid, data):
         rest_init_ws_post_location(g.player, ws)
 
 
-def rest_parse_request_join_network(engine, ws, uuid, data):
+def rest_parse_request_join_network(ws, uuid, data):
     """Interpret message sent from a client when they join a network."""
     network_id = data
-    network = db.session.get(Network, network_id)
-    response = join_network(engine, g.player, network)
+    network = Network.get(network_id)
+    response = join_network(g.player, network)
     message = rest_request_response(uuid, "joinNetwork", response)
     ws.send(message)
 
 
-def rest_parse_request_leave_network(engine, ws, uuid):
+def rest_parse_request_leave_network(ws, uuid):
     """Interpret message sent from a client when they leave a network"""
-    response = leave_network(engine, g.player)
+    response = leave_network(g.player)
     message = rest_request_response(uuid, "leaveNetwork", response)
     ws.send(message)
 
 
-def rest_parse_request_create_network(engine, ws, uuid, data):
+def rest_parse_request_create_network(ws, uuid, data):
     """Interpret message sent from a client when they create a network"""
     network_name = data
-    response = create_network(engine, g.player, network_name)
+    response = create_network(g.player, network_name)
     message = rest_request_response(uuid, "createNetwork", response)
     ws.send(message)
 
 
-def rest_parse_request_queue_project(engine, ws, uuid, data):
+def rest_parse_request_queue_project(ws, uuid, data):
     """Interpret message sent from a client when they start a project"""
     facility = data["facility"]
     print(f"rest_parse_request_startProject got: facility = {facility}")
-    response = queue_project(engine, g.player, facility)
+    response = queue_project(g.player, facility)
     message = rest_request_response(uuid, "startProject", response)
     ws.send(message)
 
@@ -468,7 +470,7 @@ def rest_parse_request_decrease_project_priority(ws, uuid, data):
 # WebSocket methods, hooked into engine states & events
 
 
-def rest_notify_all_players(engine, message):
+def rest_notify_all_players(message):
     """Relays the `message` argument to all currently connected REST clients."""
     for player_id, wss in engine.websocket_dict.items():
         for ws in wss:
@@ -478,7 +480,7 @@ def rest_notify_all_players(engine, message):
                 unregister_websocket_connection(player_id, ws)
 
 
-def rest_notify_player(engine, player, message):
+def rest_notify_player(player, message):
     """send `message` to all of `player`'s active websocket sessions"""
     if player.id not in engine.websocket_dict:
         return
@@ -489,65 +491,65 @@ def rest_notify_player(engine, player, message):
             unregister_websocket_connection(player.id, ws)
 
 
-def rest_notify_player_location(engine, player):
+def rest_notify_player_location(player):
     """This method is called when player (argument) has chosen a location. This
     information needs to be relayed to clients, and this methods returns a JSON
     string with this information."""
     message = rest_add_player_location(player)
-    rest_notify_all_players(engine, message)
-    rest_notify_scoreboard(engine)
+    rest_notify_all_players(message)
+    rest_notify_scoreboard()
     engine.socketio.emit("get_players", Player.package_all())
 
 
-def rest_notify_network_change(engine):
+def rest_notify_network_change():
     """This method is called any change to the state of any network is made.
     This includes when a network is created, when a player joins a network, and
     when a player leaves a network. These changes are relayed to all connected
     REST clients."""
     message = rest_get_networks()
-    rest_notify_all_players(engine, message)
+    rest_notify_all_players(message)
 
 
-def rest_notify_new_player(engine):
+def rest_notify_new_player():
     """Notify to all active sessions the new list of players"""
-    rest_notify_all_players(engine, rest_get_players())
+    rest_notify_all_players(rest_get_players())
     engine.socketio.emit("get_players", Player.package_all())
 
 
-def rest_notify_global_data(engine: GameEngine):
-    """Notify to all ws sessions the new global engine data"""
-    message = rest_get_global_data(engine)
-    rest_notify_all_players(engine, message)
+def rest_notify_global_data():
+    """Notify to all ws sessions the new from energetica.globals import engine data"""
+    message = rest_get_global_data()
+    rest_notify_all_players(message)
 
 
-def rest_notify_scoreboard(engine):
+def rest_notify_scoreboard():
     """Notify to all ws sessions the new scoreboard"""
     message = rest_get_scoreboard()
-    rest_notify_all_players(engine, message)
+    rest_notify_all_players(message)
 
 
-def rest_notify_constructions(engine, player):
+def rest_notify_constructions(player):
     """Notify all `player`'s ws sessions the new constructions data"""
-    rest_notify_player(engine, player, rest_get_constructions(player))
-    rest_notify_construction_queue(engine, player)
+    rest_notify_player(player, rest_get_constructions(player))
+    rest_notify_construction_queue(player)
 
 
-def rest_notify_construction_queue(engine, player):
+def rest_notify_construction_queue(player):
     """Notify all `player`'s ws sessions the new constructions queue"""
-    rest_notify_player(engine, player, rest_get_construction_queue(player))
+    rest_notify_player(player, rest_get_construction_queue(player))
 
 
 # TODO: The rest_get_weather() is now dependent on the player !
-def rest_notify_weather(engine):
+def rest_notify_weather():
     """Notify to all ws sessions the new weather data"""
-    #     message = rest_get_weather(engine)
-    #     rest_notify_all_players(engine, message)
+    #     message = rest_get_weather()
+    #     rest_notify_all_players(message)
     pass
 
 
-def rest_notify_achievements(engine, player: Player):
+def rest_notify_achievements(player: Player):
     """Notify all `player`'s ws sessions the new achievements"""
-    rest_notify_player(engine, player, rest_get_achievements(player))
+    rest_notify_player(player, rest_get_achievements(player))
 
 
 def notify_new_chat(chat: Chat):
@@ -555,5 +557,5 @@ def notify_new_chat(chat: Chat):
     for player in chat.participants:
         player: Player
         player.last_opened_chat = chat.id
-        rest_notify_player(g.engine, player, rest_get_chats(player))
-        rest_notify_player(g.engine, player, rest_get_last_opened_chat(player))
+        rest_notify_player(player, rest_get_chats(player))
+        rest_notify_player(player, rest_get_last_opened_chat(player))

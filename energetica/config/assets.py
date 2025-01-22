@@ -1,4 +1,4 @@
-"""This file contains all the data needed for the game"""
+"""Contains all the data needed for the game."""
 
 # TODO: it would be better to store the relevant data in a non-code file. Maybe a JSON
 
@@ -7,10 +7,13 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
+from energetica.enums import Fuel
+
 if TYPE_CHECKING:
     from energetica.database.player import Player
 
-const_config = {
+
+const_config: dict = {
     "assets": {
         "steam_engine": {
             "name": "Steam Engine",
@@ -908,11 +911,13 @@ river_discharge_seasonal = [
 ]  # all days of the year
 
 
+# TODO (Felix): I think this could be a method of player or of a newly created class Workers
 def player_lab_workers_for_level(lab_level: int) -> int:
     """Returns how many lab workers are available for the specified lab level"""
     return (lab_level + 2) // 3
 
 
+# TODO (Felix): I think this could be a method of player or of a newly created class Workers
 def player_construction_workers_for_level(building_technology_level: int) -> int:
     """Returns how many construction workers are available for the specified building technology level"""
     return building_technology_level + 1
@@ -950,11 +955,11 @@ class Config(object):
         # calculating industry energy consumption and income
         assets["industry"]["power_consumption"] = (
             const_config["assets"]["industry"]["base_power_consumption"]
-            * const_config["assets"]["industry"]["power_factor"] ** player.industry
+            * const_config["assets"]["industry"]["power_factor"] ** player.functional_facility_lvl["industry"]
         )
         assets["industry"]["income_per_day"] = (
             const_config["assets"]["industry"]["base_income_per_day"]
-            * const_config["assets"]["industry"]["income_factor"] ** player.industry
+            * const_config["assets"]["industry"]["income_factor"] ** player.functional_facility_lvl["industry"]
         )
         # basic universal income of 540 per in-game day
         assets["industry"]["income_per_day"] += const_config["assets"]["industry"]["universal_income_per_day"]
@@ -962,32 +967,40 @@ class Config(object):
         # calculating carbon capture power consumption and CO2 absorption
         assets["carbon_capture"]["power_consumption"] = (
             const_config["assets"]["carbon_capture"]["base_power_consumption"]
-            * const_config["assets"]["carbon_capture"]["power_factor"] ** player.carbon_capture
+            * const_config["assets"]["carbon_capture"]["power_factor"]
+            ** player.functional_facility_lvl["carbon_capture"]
         )
         assets["carbon_capture"]["absorption"] = (
             const_config["assets"]["carbon_capture"]["base_absorption_per_day"]
-            * const_config["assets"]["carbon_capture"]["absorption_factor"] ** player.carbon_capture
+            * const_config["assets"]["carbon_capture"]["absorption_factor"]
+            ** player.functional_facility_lvl["carbon_capture"]
         )
 
         # calculating the maximum storage capacity from the warehouse level
         for resource in const_config["warehouse_capacities"]:
-            assets["warehouse_capacities"][resource] = warehouse_capacity_for_level(player.warehouse, resource) or 0.0
+            assets["warehouse_capacities"][resource] = (
+                warehouse_capacity_for_level(player.functional_facility_lvl["warehouse"], resource) or 0.0
+            )
 
         # calculating the transport speed and energy consumption from the level of transport technology
         assets["transport"]["time_per_tile"] = (
             const_config["transport"]["time_per_tile"]
-            * const_config["assets"]["transport_technology"]["time_factor"] ** player.transport_technology
+            * const_config["assets"]["transport_technology"]["time_factor"]
+            ** player.technology_lvl["transport_technology"]
         )
         assets["transport"]["power_per_kg"] = (
             const_config["transport"]["energy_per_kg_per_tile"]
-            * const_config["assets"]["transport_technology"]["energy_factor"] ** player.transport_technology
+            * const_config["assets"]["transport_technology"]["energy_factor"]
+            ** player.technology_lvl["transport_technology"]
             * 3600
             / assets["transport"]["time_per_tile"]
         )
 
         # setting the number of workers
-        player.construction_workers = player_construction_workers_for_level(player.building_technology)
-        player.lab_workers = player_lab_workers_for_level(player.laboratory)
+        player.workers = {
+            "construction": player_construction_workers_for_level(player.technology_lvl["building_technology"]),
+            "laboratory": player_lab_workers_for_level(player.functional_facility_lvl["laboratory"]),
+        }
 
     def __getitem__(self, player: Player):
         if player.id not in self.for_player:
