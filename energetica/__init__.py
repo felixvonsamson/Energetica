@@ -36,8 +36,6 @@ from energetica.game_engine import GameEngine
 
 engine = GameEngine()
 globals.engine = engine
-print("engine created")
-print(engine)
 
 from energetica.api.app_services import register_app_services
 from energetica.api.http import http

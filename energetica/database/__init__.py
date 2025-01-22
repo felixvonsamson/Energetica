@@ -8,8 +8,6 @@ from typing import TYPE_CHECKING, Generic, TypedDict, TypeVar, Unpack
 
 from energetica.globals import engine
 
-print(engine)
-
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
