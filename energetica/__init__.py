@@ -171,7 +171,7 @@ def create_app(
         if actions:
             assert uuid.UUID(actions[0]["uuid"]) == engine.uuid
     else:
-        engine.init(clock_time, in_game_seconds_per_tick, random_seed)
+        engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed)
 
     action_id_by_tick = {
         action["total_t"]: action_id for action_id, action in enumerate(actions) if action["action_type"] == "tick"

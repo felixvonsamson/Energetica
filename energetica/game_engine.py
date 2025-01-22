@@ -133,6 +133,7 @@ class GameEngine(object):
     }
 
     def __init__(self):
+        """Initialize the game engine object."""
         if TYPE_CHECKING:
             from energetica.database.engine_data import EmissionData
         Path("instance").mkdir(exist_ok=True)
@@ -177,8 +178,15 @@ class GameEngine(object):
         for db in DBModel.__subclasses__():
             db.instances().reset()
 
-    def init(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None, instance_uuid=None):
-        # TODO(mglst): Create an explicit __init__ method, maybe make this a dataclass. Bref, rework this class
+    def init_instance(
+        self,
+        clock_time: int,
+        in_game_seconds_per_tick: int,
+        random_seed,
+        start_date: datetime | None = None,
+        instance_uuid=None,
+    ):
+        """Initialize the instance data / the GameEngine members."""
         from energetica.database.engine_data import EmissionData
         from energetica.database.map import HexTile
         from energetica.database.messages import Chat
