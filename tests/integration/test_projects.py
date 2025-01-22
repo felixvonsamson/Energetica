@@ -61,7 +61,7 @@ def validate_rules(player: Player):
         pytest.fail(
             f"Rule 2 violation: there are {len(ongoing_constructions)} ongoing constructions "
             f"({','.join(map(lambda c: c.name, ongoing_constructions))}), "
-            f"but only {player.workers["construction"]} construction workers."
+            f"but only {player.workers['construction']} construction workers."
         )
 
     ongoing_research = list(
@@ -75,7 +75,7 @@ def validate_rules(player: Player):
         pytest.fail(
             f"Rule 2 violation: there are {len(ongoing_research)} ongoing research projects "
             f"({','.join(map(lambda c: c.name, ongoing_research))}), "
-            f"but only {player.workers["laboratory"]} lab workers."
+            f"but only {player.workers['laboratory']} lab workers."
         )
 
     # Rule 3
@@ -88,12 +88,12 @@ def validate_rules(player: Player):
     assert not OngoingProject.count(
         condition=lambda project: project.player == player
         and project.status == ProjectStatus.ONGOING
-        and project.end_tick_or_ticks_passed <= engine.data["total_t"]
+        and project.end_tick_or_ticks_passed <= engine.total_t
     )
     assert not OngoingProject.count(
         condition=lambda project: project.player == player
         and project.status != ProjectStatus.ONGOING
-        and project.end_tick_or_ticks_passed > engine.data["total_t"]
+        and project.end_tick_or_ticks_passed > engine.total_t
     )
 
     # Rule 5
@@ -143,7 +143,7 @@ def validate_rules(player: Player):
                 "Rule 7 failed for constructions. "
                 f"Player has {len(waiting_constructions)} waiting constructions "
                 f"({','.join(map(lambda c: c.name, waiting_constructions))}), "
-                f"but has {player.workers["construction"]} construction workers, "
+                f"but has {player.workers['construction']} construction workers, "
                 f"and only {count_on_going_constructions} ongoing constructions."
             )
     waiting_research: list[OngoingProject] = list(
@@ -165,7 +165,7 @@ def validate_rules(player: Player):
                 "Rule 7 failed for research. "
                 f"Player has {len(waiting_research)} waiting research projects "
                 f"({','.join(map(lambda c: c.name, waiting_research))}), "
-                f"but has {player.workers["laboratory"]} lab workers, "
+                f"but has {player.workers['laboratory']} lab workers, "
                 f"and only {count_on_going_research} ongoing research projects."
             )
 

@@ -49,7 +49,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
 
         if project.family == "Technologies":
             player.progression_metrics["total_technologies"] += 1
-            server_tech = engine.data["technology_lvls"][project.name]
+            server_tech = engine.technology_lvls[project.name]
             if len(server_tech) <= player.technology_lvl[project.name]:
                 server_tech.append(0)
             server_tech[player.technology_lvl[project.name] - 1] += 1
@@ -104,8 +104,8 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         "Power Facilities",
         "Storage Facilities",
     ]:
-        eol = engine.data["total_t"] + math.ceil(
-            engine.const_config["assets"][project.name]["lifespan"] / engine.data["in_game_seconds_per_tick"]
+        eol = engine.total_t + math.ceil(
+            engine.const_config["assets"][project.name]["lifespan"] / engine.in_game_seconds_per_tick
         )
         # Create a RNG, seeded with the server seed, the player's tile coordinates, the project name, and number of
         # facilities of that type the player has built. This ensures that the facility's random position is generated
@@ -114,7 +114,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             raise GameError("Player has no tile")
         seed_hash = hash(
             (
-                engine.data["random_seed"],
+                engine.random_seed,
                 player.id,
                 project.name,
                 ActiveFacility.count_when(

@@ -36,6 +36,8 @@ from energetica.game_engine import GameEngine
 
 engine = GameEngine()
 globals.engine = engine
+print("engine created")
+print(engine)
 
 from energetica.api.app_services import register_app_services
 from energetica.api.http import http
@@ -169,14 +171,14 @@ def create_app(
     if os.path.isfile("instance/engine_data.pck"):
         engine.load()
         if actions:
-            assert uuid.UUID(actions[0]["uuid"]) == engine.data["uuid"]
+            assert uuid.UUID(actions[0]["uuid"]) == engine.uuid
     else:
         engine.init(clock_time, in_game_seconds_per_tick, random_seed)
 
     action_id_by_tick = {
         action["total_t"]: action_id for action_id, action in enumerate(actions) if action["action_type"] == "tick"
     }
-    loaded_tick = engine.data["total_t"]
+    loaded_tick = engine.total_t
     start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 1
     last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
     actions_to_simulate = actions[start_action_id : last_action_id + 1]
