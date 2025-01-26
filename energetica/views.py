@@ -83,7 +83,8 @@ def profile():
 
 @views.route("/messages", methods=["GET", "POST"])
 def messages():
-    chats = list(Chat.filter(lambda chat: current_user in chat.participants))
+    player = Player.getitem(current_user.id)
+    chats = list(Chat.filter(lambda chat: player in chat.participants))
     return g.render_template_ctx("messages.jinja", chats=chats)
 
 

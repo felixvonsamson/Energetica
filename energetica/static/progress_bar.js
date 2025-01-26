@@ -84,10 +84,9 @@ function format_seconds(totalSeconds, show_seconds = true) {
 }
 
 // information sent to the server when a new facility is created
-function start_construction(facility, family, force = false) {
+function start_construction(facility, force = false) {
   send_json("/api/request_queue_project", {
     facility: facility,
-    family: family,
     force: force,
   })
     .then((response) => {
@@ -106,15 +105,17 @@ function start_construction(facility, family, force = false) {
         } else if (response == "areYouSure") {
           capacity = raw_data["capacity"];
           construction_power = raw_data["construction_power"];
-          are_you_sure_start_construction(facility, family, capacity, construction_power);
+          are_you_sure_start_construction(facility, capacity, construction_power);
         } else if (response == "notEnoughMoney") {
           addError("Not enough money");
         } else if (response == "locked") {
-          if (family == "Technologies") {
-            addError("Requirements not fulfilled");
-          } else {
-            addError("Facility is locked");
-          }
+          // With the removal of the family, the error message is not longer as straightforward to customize.
+          // So for now, I will just use the technology error message, which works well enough even.
+          // if (family == "Technologies") {
+          addError("Requirements not fulfilled");
+          // } else {
+          //   addError("Facility is locked");
+          // }
         }
       });
     })
@@ -356,9 +357,13 @@ function display_progressBars(construction_data, shipment_data) {
         }
         for (const [index, c_id] of project_priority.entries()) {
           construction = construction_data[0][c_id];
-          if (construction["family"] == document.title) {
-            uc.innerHTML += html_for_progressBar(c_id, index, project_priority, construction);
-          }
+          // TODO(mglst): with the removal of the family, this "feature" of only showing the constructions of the 
+          // current family is not longer as straightforward as it was before. But there was also discussion of
+          // removing this feature or rethinking it. So for now, I will just comment it out, which means that all
+          // constructions will be shown on all pages for queueing constructions.
+          // if (construction["family"] == document.title) {
+          uc.innerHTML += html_for_progressBar(c_id, index, project_priority, construction);
+          // }
         }
       }
     }

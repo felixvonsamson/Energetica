@@ -19,7 +19,14 @@ from energetica.database.engine_data import CapacityData, CircularBufferPlayer, 
 from energetica.database.messages import Chat, Notification
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.shipment import OngoingShipment
-from energetica.enums import Fuel, WorkerType
+from energetica.enums import (
+    ExtractionFacilityType,
+    Fuel,
+    StorageFacilityType,
+    TechnologyType,
+    WorkerType,
+    power_facility_types,
+)
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.technology_effects import (
@@ -120,6 +127,10 @@ class Player(DBModel, UserMixin):
     )
     socketio_clients: list = field(default_factory=list)
 
+    def __hash__(self):
+        """Return the hash of the player's id."""
+        return hash(self.id)
+
     def get_level(self, functional_facility_or_technology: str) -> int:
         """Return the technology or functional facility level of the player."""
         if functional_facility_or_technology in self.functional_facility_lvl:
@@ -141,14 +152,9 @@ class Player(DBModel, UserMixin):
     # resources :
     money: float = 25000
     resources: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
-    resources_on_sale: dict[str, float] = field(
-        default_factory=lambda: {
-            "coal": 0,
-            "gas": 0,
-            "uranium": 0,
-        },
-    )
+    resources_on_sale: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
 
+    # TODO(mglst): make use of the WorkerType enum
     workers: dict[str, int] = field(
         default_factory=lambda: {
             "construction": 1,
@@ -257,7 +263,7 @@ class Player(DBModel, UserMixin):
             list(
                 OngoingProject.filter(
                     lambda construction: construction.player == self
-                    and construction.family != "Technologies"
+                    and not isinstance(construction.project_type, TechnologyType)
                     and construction.status == ProjectStatus.ONGOING,
                 ),
             ),
@@ -271,7 +277,7 @@ class Player(DBModel, UserMixin):
             list(
                 OngoingProject.filter(
                     lambda construction: construction.player == self
-                    and construction.family == "Technologies"
+                    and isinstance(construction.project_type, TechnologyType)
                     and construction.status == ProjectStatus.ONGOING,
                 ),
             ),
@@ -647,13 +653,12 @@ class Player(DBModel, UserMixin):
                 for k in [
                     "id",
                     "name",
-                    "family",
                     "end_tick_or_ticks_passed",
                     "duration",
                     "status",
                 ]
             }
-            | {"display_name": engine.const_config["assets"][construction.name]["name"]}
+            | {"display_name": engine.const_config["assets"][construction.project_type]["name"]}
             | ({"level": construction.level} if construction.level is not None else {})
             | {"speed": construction.speed}
             for construction in (*self.constructions_by_priority, *self.researches_by_priority)
@@ -690,12 +695,12 @@ class Player(DBModel, UserMixin):
     def package_active_power_facilities(self) -> dict:
         """Package the player's active power facilities."""
         ticks_per_hour = 3600 / engine.data["in_game_seconds_per_tick"]
-        power_facilities: list[ActiveFacility] = list(
-            filter(lambda facility: facility.name in engine.power_facilities, self.active_facilities)
+        active_power_facilities: list[ActiveFacility] = list(
+            filter(lambda facility: facility.facility_type in power_facility_types, self.active_facilities)
         )
         power_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
-        for power_facility in power_facilities:
-            power_facility_groups[power_facility.name].append(power_facility)
+        for power_facility in active_power_facilities:
+            power_facility_groups[power_facility.facility_type].append(power_facility)
         return {
             "summary": {
                 group_name: {
@@ -720,7 +725,7 @@ class Player(DBModel, UserMixin):
             },
             "detail": {
                 power_facility.id: {
-                    "facility": power_facility.name,
+                    "facility": power_facility.facility_type,
                     "display_name": power_facility.display_name,
                     "installed_cap": power_facility.max_power_generation,
                     "usage": power_facility.usage,
@@ -731,10 +736,10 @@ class Player(DBModel, UserMixin):
                 }
                 | (
                     {"cut_out_speed_exceeded": power_facility.cut_out_speed_exceeded}
-                    if power_facility.name in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
+                    if power_facility.facility_type in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
                     else {}
                 )
-                for power_facility in power_facilities
+                for power_facility in active_power_facilities
             },
         }
 
@@ -742,12 +747,12 @@ class Player(DBModel, UserMixin):
         """Package active storage facilities."""
         ticks_per_hour = 3600 / engine.data["in_game_seconds_per_tick"]
         capacities = self.capacities
-        storage_facilities: list[ActiveFacility] = [
-            facility for facility in self.active_facilities if facility.name in engine.storage_facilities
+        active_storage_facilities: list[ActiveFacility] = [
+            facility for facility in self.active_facilities if facility.facility_type in StorageFacilityType
         ]
         storage_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
-        for storage_facility in storage_facilities:
-            storage_facility_groups[storage_facility.name].append(storage_facility)
+        for storage_facility in active_storage_facilities:
+            storage_facility_groups[storage_facility.facility_type].append(storage_facility)
         return {
             "summary": {
                 group_name: {
@@ -773,7 +778,7 @@ class Player(DBModel, UserMixin):
             },
             "detail": {
                 storage_facility.id: {
-                    "facility": storage_facility.name,
+                    "facility": storage_facility.facility_type,
                     "display_name": storage_facility.display_name,
                     "storage_capacity": storage_facility.storage_capacity,
                     "state_of_charge": storage_facility.state_of_charge,
@@ -783,7 +788,7 @@ class Player(DBModel, UserMixin):
                     "upgrade_cost": None if storage_facility.decommissioning else storage_facility.upgrade_cost,
                     "dismantle_cost": None if storage_facility.decommissioning else storage_facility.dismantle_cost,
                 }
-                for storage_facility in storage_facilities
+                for storage_facility in active_storage_facilities
             },
         }
 
@@ -791,12 +796,12 @@ class Player(DBModel, UserMixin):
         """Package active extraction facilities."""
         ticks_per_hour = 3600 / engine.data["in_game_seconds_per_tick"]
         capacities = self.capacities
-        extraction_facilities: list[ActiveFacility] = [
-            facility for facility in self.active_facilities if facility.name in engine.extraction_facilities
+        active_extraction_facilities: list[ActiveFacility] = [
+            facility for facility in self.active_facilities if facility.facility_type in ExtractionFacilityType
         ]
         extraction_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
-        for extraction_facility in extraction_facilities:
-            extraction_facility_groups[extraction_facility.name].append(extraction_facility)
+        for extraction_facility in active_extraction_facilities:
+            extraction_facility_groups[extraction_facility.facility_type].append(extraction_facility)
         return {
             "summary": {
                 group_name: {
@@ -816,7 +821,7 @@ class Player(DBModel, UserMixin):
             },
             "detail": {
                 extraction_facility.id: {
-                    "facility": extraction_facility.name,
+                    "facility": extraction_facility.facility_type,
                     "display_name": extraction_facility.display_name,
                     "extraction_rate": extraction_facility.extraction_rate,
                     "usage": extraction_facility.usage,
@@ -826,7 +831,7 @@ class Player(DBModel, UserMixin):
                     "upgrade_cost": extraction_facility.upgrade_cost,
                     "dismantle_cost": extraction_facility.dismantle_cost,
                 }
-                for extraction_facility in extraction_facilities
+                for extraction_facility in active_extraction_facilities
             },
         }
 

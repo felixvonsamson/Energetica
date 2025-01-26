@@ -24,7 +24,14 @@ from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.enums import Fuel, Renewable
+from energetica.enums import (
+    ExtractionFacilityType,
+    Fuel,
+    PowerFacilityType,
+    Renewable,
+    StorageFacilityType,
+    str_to_project_type,
+)
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -390,11 +397,12 @@ def request_queue_project() -> Response | tuple:
     """Start a construction or research project for the player."""
     request_data = request.get_json()
     asset = request_data["facility"]
+    project_type = str_to_project_type[asset]
     force = request_data["force"]
     try:
         energetica.utils.assets.queue_project(
             player=g.player,
-            asset=asset,
+            project_type=project_type,
             force=force,
         )
     except Confirm as confirm:
@@ -494,11 +502,13 @@ def request_upgrade_facility() -> Response | tuple:
 
 @http.route("/request_upgrade_all_of_type", methods=["POST"])
 @log_action
-def request_upgrade_all_of_type() -> Response:
+def request_upgrade_all_of_type() -> Response | tuple:
     """Upgrade all facilities of a certain type."""
     request_data = request.get_json()
-    facility = request_data["facility"]
-    energetica.utils.assets.upgrade_all_of_type(player=g.player, facility_name=facility)
+    facility_type = str_to_project_type[request_data["facility"]]
+    if not isinstance(facility_type, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):
+        return jsonify({"response": "malformedRequest"}), 400
+    energetica.utils.assets.upgrade_all_of_type(player=g.player, facility_type=facility_type)
     return jsonify({"response": "success", "money": g.player.money})
 
 
@@ -515,7 +525,7 @@ def request_dismantle_facility() -> Response | tuple:
     return jsonify(
         {
             "response": "success",
-            "facility_name": facility.name,
+            "facility_name": facility.facility_type,
             "money": g.player.money,
         },
     )
@@ -527,7 +537,7 @@ def request_dismantle_all_of_type() -> Response:
     """Dismantle all facilities of a certain type."""
     request_data = request.get_json()
     facility = request_data["facility"]
-    energetica.utils.assets.dismantle_all_of_type(player=g.player, facility_name=facility)
+    energetica.utils.assets.dismantle_all_of_type(player=g.player, facility_type=facility)
     return jsonify({"response": "success", "money": g.player.money})
 
 

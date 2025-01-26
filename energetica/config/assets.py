@@ -923,14 +923,14 @@ def player_construction_workers_for_level(building_technology_level: int) -> int
     return building_technology_level + 1
 
 
-def warehouse_capacity_for_level(warehouse_level, resource):
+def warehouse_capacity_for_level(warehouse_level, fuel: Fuel):
     """Returns how much capacity in kg a player with a warehouse with
     `warehouse_level` has for the specified `resource`"""
     if warehouse_level == 0:
         return None
     else:
         return (
-            const_config["warehouse_capacities"][resource]
+            const_config["warehouse_capacities"][fuel]
             * const_config["assets"]["warehouse"]["capacity_factor"] ** warehouse_level
         )
 
