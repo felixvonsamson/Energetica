@@ -94,8 +94,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
 
     project.delete()
 
-    worker_type: WorkerType
-    worker_type = WorkerType.RESEARCH if isinstance(project.project_type, TechnologyType) else WorkerType.CONSTRUCTION
+    worker_type = project.project_type.worker_type
     if project not in player.get_project_priority_list(worker_type):
         pass
     player.get_project_priority_list(worker_type).remove(project)
@@ -158,10 +157,10 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             extraction_facilities=project.project_type == "warehouse",
         )
         # Deploy any new workers from laboratory upgrades
-        if project.project_type == "laboratory":
+        if project.project_type == FunctionalFacilityType.LABORATORY:
             deploy_available_workers(player, WorkerType.RESEARCH, start_now=True)
     if isinstance(project.project_type, TechnologyType):
-        if project.project_type == "construction_technology":
+        if project.project_type == TechnologyType.BUILDING_TECHNOLOGY:
             deploy_available_workers(player, WorkerType.CONSTRUCTION, start_now=True)
         player.invalidate_recompute_and_dispatch_data_for_pages(
             power_facilities=True,
@@ -462,9 +461,7 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
         raise GameError(msg)
 
     dependents = []
-    priority_list = player.get_project_priority_list(
-        WorkerType.RESEARCH if isinstance(project.project_type, TechnologyType) else WorkerType.CONSTRUCTION
-    )
+    priority_list = player.get_project_priority_list(project.project_type.worker_type)
     project_priority_index = priority_list.index(project)
     for candidate_dependent in priority_list[project_priority_index + 1 :]:
         if project.id in candidate_dependent.prerequisites:
@@ -489,8 +486,7 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
 
     project.delete()
 
-    worker_type = WorkerType.RESEARCH if isinstance(project.project_type, TechnologyType) else WorkerType.CONSTRUCTION
-    deploy_available_workers(player, worker_type)
+    deploy_available_workers(player, project.project_type.worker_type)
     player.send_worker_info()
 
     engine.log(f"{player.username} cancelled the project {project.project_type}")
@@ -512,8 +508,7 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
         msg = "Project not found"
         raise GameError(msg)
 
-    worker_type = WorkerType.RESEARCH if isinstance(project.project_type, TechnologyType) else WorkerType.CONSTRUCTION
-    priority_list = player.get_project_priority_list(worker_type)
+    priority_list = player.get_project_priority_list(project.project_type.worker_type)
     index = priority_list.index(project)
     if index == len(priority_list) - 1:
         return
@@ -558,7 +553,7 @@ def toggle_pause_project(player: Player, project: OngoingProject) -> None:
         msg = "Project not found"
         raise GameError(msg)
 
-    worker_type = WorkerType.RESEARCH if isinstance(project.project_type, TechnologyType) else WorkerType.CONSTRUCTION
+    worker_type = project.project_type.worker_type
 
     if not project.was_paused_by_player():
         # project is currently not paused by player, and should be paused
@@ -596,9 +591,6 @@ def toggle_pause_project(player: Player, project: OngoingProject) -> None:
             player.set_project_priority_list(worker_type, priority_list)
 
         # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
-        worker_type = (
-            WorkerType.RESEARCH if isinstance(project.project_type, TechnologyType) else WorkerType.CONSTRUCTION
-        )
         deploy_available_workers(player, worker_type)
         player.send_worker_info()
 

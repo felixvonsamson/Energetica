@@ -73,8 +73,7 @@ class OngoingProject(DBModel):
         assert self.status == ProjectStatus.WAITING
         assert not self.prerequisites
 
-        worker_type = WorkerType.RESEARCH if isinstance(self.project_type, TechnologyType) else WorkerType.CONSTRUCTION
-        assert self.player.available_workers(worker_type) > 0
+        assert self.player.available_workers(self.project_type.worker_type) > 0
         if start_now:
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
         else:
@@ -84,8 +83,7 @@ class OngoingProject(DBModel):
     def unpause(self) -> None:
         """Make this facility go from paused to either waiting or ongoing."""
         assert self.was_paused_by_player()
-        worker_type = WorkerType.RESEARCH if isinstance(self.project_type, TechnologyType) else WorkerType.CONSTRUCTION
-        if self.prerequisites or self.player.available_workers(worker_type) < 1:
+        if self.prerequisites or self.player.available_workers(self.project_type.worker_type) < 1:
             self.status = ProjectStatus.WAITING
         else:
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
