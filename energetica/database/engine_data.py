@@ -14,9 +14,9 @@ from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     FunctionalFacilityType,
+    NonFacilityAskType,
     PowerFacilityType,
     ProjectType,
-    SpecialAskType,
     StorageFacilityType,
     power_facility_types,
     renewable_facility_types,
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from energetica.database.player import Player
 
 Bid = ControllableFacilityType | StorageFacilityType
-Ask = SpecialAskType | ExtractionFacilityType | FunctionalFacilityType | StorageFacilityType
+Ask = NonFacilityAskType | ExtractionFacilityType | FunctionalFacilityType | StorageFacilityType
 
 
 @dataclass
@@ -61,7 +61,7 @@ class NetworkPrices:
     ask_prices: dict[Ask, float] = field(
         default_factory=lambda: {
             FunctionalFacilityType.INDUSTRY: 1000.0,
-            SpecialAskType.CONSTRUCTION: 1020.0,
+            NonFacilityAskType.CONSTRUCTION: 1020.0,
         }
     )
 
@@ -97,8 +97,8 @@ class NetworkPrices:
     def create_ask_entry(self, ask_name: Ask, player: Player) -> None:
         """Add a new entry to the list of asks, using the default price."""
         default_ask_price = {
-            SpecialAskType.RESEARCH: 1200.0,
-            SpecialAskType.TRANSPORT: 1050.0,
+            NonFacilityAskType.RESEARCH: 1200.0,
+            NonFacilityAskType.TRANSPORT: 1050.0,
             ExtractionFacilityType.COAL_MINE: 960.0,
             ExtractionFacilityType.GAS_DRILLING_SITE: 980.0,
             ExtractionFacilityType.URANIUM_MINE: 990.0,
@@ -125,8 +125,8 @@ class NetworkPrices:
 
     def update(
         self,
-        updated_bids: dict[ProjectType | SpecialAskType, float],
-        updated_asks: dict[ProjectType | SpecialAskType, float],
+        updated_bids: dict[ProjectType | NonFacilityAskType, float],
+        updated_asks: dict[ProjectType | NonFacilityAskType, float],
     ) -> None:
         """Update the prices of the player for each facility type."""
         for facility, new_price in updated_bids.items():
@@ -138,7 +138,7 @@ class NetworkPrices:
                 raise GameError("priceTooLow")
         for facility, new_price in updated_asks.items():
             if not isinstance(
-                facility, SpecialAskType | ExtractionFacilityType | FunctionalFacilityType | StorageFacilityType
+                facility, NonFacilityAskType | ExtractionFacilityType | FunctionalFacilityType | StorageFacilityType
             ):
                 raise GameError("malformedRequest")
             if facility == FunctionalFacilityType.LABORATORY or facility == FunctionalFacilityType.WAREHOUSE:
@@ -157,16 +157,16 @@ class NetworkPrices:
         self.renewable_bids.sort(key=renewable_facility_types.index)
         return self.renewable_bids
 
-    def get_facility_priorities(self) -> list[Tuple[AskBid, ProjectType | SpecialAskType]]:
+    def get_facility_priorities(self) -> list[Tuple[AskBid, ProjectType | NonFacilityAskType]]:
         """Return the player's priority lists containing asks and bids but not renewables, sorted by price."""
-        type_key_price: list[Tuple[Literal["ask", "bid"], ProjectType | SpecialAskType, float]] = [
+        type_key_price: list[Tuple[Literal["ask", "bid"], ProjectType | NonFacilityAskType, float]] = [
             *(("bid", key, price) for key, price in self.bid_prices.items()),
             *(("ask", key, price) for key, price in self.ask_prices.items()),
         ]
         type_key_price.sort(key=lambda x: x[2])
         return [(x[0], x[1]) for x in type_key_price]
 
-    def change_facility_priority(self, new_priority: list[ProjectType | SpecialAskType]) -> None:
+    def change_facility_priority(self, new_priority: list[ProjectType | NonFacilityAskType]) -> None:
         """
         Reassign the selling prices of the facilities according to the new priority order.
 

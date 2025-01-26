@@ -14,10 +14,10 @@ from energetica.enums import (
     ExtractionFacilityType,
     Fuel,
     FunctionalFacilityType,
+    NonFacilityAskType,
     PowerFacilityType,
     ProjectType,
     RenewableFacilityType,
-    SpecialAskType,
     StorageFacilityType,
     TechnologyType,
     WorkerType,
@@ -63,9 +63,9 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             if project.project_type == "warehouse":
                 for fuel in Fuel:
                     player.rolling_history.add_subcategory("resources", fuel.value)
-                player.network_prices.create_ask_entry(SpecialAskType.TRANSPORT, player)
+                player.network_prices.create_ask_entry(NonFacilityAskType.TRANSPORT, player)
             if project.project_type == "laboratory":
-                player.network_prices.create_ask_entry(SpecialAskType.RESEARCH, player)
+                player.network_prices.create_ask_entry(NonFacilityAskType.RESEARCH, player)
 
         player.functional_facility_lvl[project.project_type] += 1
 
