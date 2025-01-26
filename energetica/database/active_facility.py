@@ -40,7 +40,7 @@ class ActiveFacility(DBModel):
     @property
     def decommissioning(self) -> bool:
         """Returns True if the facility is being decommissioned."""
-        return self.end_of_life <= engine.data["total_t"]
+        return self.end_of_life <= engine.total_t
 
     @property
     def const_config(self) -> dict:
@@ -117,7 +117,7 @@ class ActiveFacility(DBModel):
     @property
     def remaining_lifespan(self) -> int | None:
         """Time left until the facility is decommissioned in ticks."""
-        remaining_ticks = self.end_of_life - engine.data["total_t"]
+        remaining_ticks = self.end_of_life - engine.total_t
         if remaining_ticks < 0:
             return None
         return remaining_ticks

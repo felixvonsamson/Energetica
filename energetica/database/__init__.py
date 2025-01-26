@@ -46,12 +46,12 @@ class DBModel:
 
     def __init_subclass__(cls) -> None:
         """Initialize the next id counter for each subclass."""
-        engine.data[cls.__name__] = AutoIDDict()
+        engine.db_model_instances[cls.__name__] = AutoIDDict()
 
     @classmethod
     def instances(cls: type[T]) -> AutoIDDict[T]:
         """Get the dictionary of instances for this class."""
-        return engine.data[cls.__name__]
+        return engine.db_model_instances[cls.__name__]
 
     def __post_init__(self) -> None:
         """Assign an id to the object and store it in the engine."""

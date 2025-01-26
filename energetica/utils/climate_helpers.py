@@ -19,12 +19,12 @@ def climate_event_impact(tile: HexTile, event_name):
     player = tile.player
     if not player:
         return
-    ticks_per_day = 3600 * 24 / engine.data["in_game_seconds_per_tick"]
+    ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
     recovery_cost = (
         climate_events[event_name]["cost_fraction"] * player.config["industry"]["income_per_day"] / ticks_per_day
     )  # [¤/tick]
-    duration_ticks = climate_events[event_name]["duration"] / engine.data["in_game_seconds_per_tick"]
-    end_tick = engine.data["total_t"] + duration_ticks
+    duration_ticks = climate_events[event_name]["duration"] / engine.in_game_seconds_per_tick
+    end_tick = engine.total_t + duration_ticks
     new_climate_event = ClimateEventRecovery(
         name=event_name,
         end_tick=end_tick,
@@ -76,10 +76,10 @@ def check_climate_events():
     def inv_cdf_normal(p):
         return round(2.5 - 3.5 * np.log(1 / (0.88 * (p + 0.02 / 0.88)) - 1))
 
-    climate_change = engine.data["current_climate_data"].get_last_data()["temperature"]["deviation"]
-    ref_temp = engine.data["current_climate_data"].get_last_data()["temperature"]["reference"]
+    climate_change = engine.current_climate_data.get_last_data()["temperature"]["deviation"]
+    ref_temp = engine.current_climate_data.get_last_data()["temperature"]["reference"]
     real_temp = climate_change + ref_temp
-    ticks_per_day = 3600 * 24 / engine.data["in_game_seconds_per_tick"]
+    ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
 
     # floods
     flood_probability = climate_events["flood"]["base_probability"] / ticks_per_day * climate_change**2
@@ -146,7 +146,7 @@ def check_climate_events():
         wildfire_probability += climate_events["wildfire"]["base_probability"] / ticks_per_day * (real_temp - 14) ** 2
     if random.random() < wildfire_probability:
         # releasing 10 kt of CO2 in the atmosphere
-        engine.data["current_climate_data"].add("CO2", 10e6)
+        engine.current_climate_data.add("CO2", 10e6)
         # the tile for the wildfire is chosen based on a normal distribution around the equator
         random_latitude = inv_cdf_normal(random.random())
         latitude_tiles = list(HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude))

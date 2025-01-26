@@ -90,13 +90,13 @@ class NetworkPrices:
     def init_prices_with_randomness(self, player: Player) -> None:
         """Initialize the prices of the player with added random values."""
         for bid_name in self.bid_prices:
-            seed_hash = hash((engine.data["random_seed"], "bid", bid_name, player.id))
+            seed_hash = hash((engine.random_seed, "bid", bid_name, player.id))
             random.seed(seed_hash)
             added_randomness = random.uniform(-15, 15)
             self.bid_prices[bid_name] += added_randomness
 
         for ask_name in self.ask_prices:
-            seed_hash = hash((engine.data["random_seed"], "ask", ask_name, player.id))
+            seed_hash = hash((engine.random_seed, "ask", ask_name, player.id))
             random.seed(seed_hash)
             added_randomness = random.uniform(-15, 15)
             self.ask_prices[ask_name] += added_randomness
@@ -219,7 +219,7 @@ class CapacityData:
         for facility in active_facilities:
             base_data = engine.const_config["assets"][facility.facility_type]
             effective_values = self._data[facility.facility_type]
-            op_costs = facility.daily_op_cost * engine.data["in_game_seconds_per_tick"] / (24 * 3600)
+            op_costs = facility.daily_op_cost * engine.in_game_seconds_per_tick / (24 * 3600)
             # TODO(mglst): use WaterFacilityType
             if facility.facility_type in ["watermill", "small_water_dam", "large_water_dam"]:
                 op_costs *= facility.multipliers["multiplier_2"]
@@ -232,7 +232,7 @@ class CapacityData:
                         base_data["consumed_resource"][fuel]
                         / facility.multipliers["multiplier_3"]
                         * power_gen
-                        * engine.data["in_game_seconds_per_tick"]
+                        * engine.in_game_seconds_per_tick
                         / 3600
                         / 1_000_000
                     )
@@ -489,16 +489,14 @@ class EmissionData:
         # Keeping the CO2 levels form one tick to the next
         self._data["emissions"]["CO2"].append(self._data["emissions"]["CO2"][-1])
         # Calculating new temperatures
-        t = engine.data["total_t"] + engine.data["delta_t"]
-        self._data["temperature"]["reference"].append(
-            calculate_reference_gta(t, engine.data["in_game_seconds_per_tick"])
-        )
+        t = engine.total_t + engine.delta_t
+        self._data["temperature"]["reference"].append(calculate_reference_gta(t, engine.in_game_seconds_per_tick))
         self._data["temperature"]["deviation"].append(
             calculate_temperature_deviation(
                 t,
-                engine.data["in_game_seconds_per_tick"],
+                engine.in_game_seconds_per_tick,
                 self._data["emissions"]["CO2"][0],
-                engine.data["random_seed"],
+                engine.random_seed,
             )
         )
 

@@ -46,7 +46,7 @@ def test_update_bogus_prices():
 
 def test_price_randomization():
     """Test that the prices are randomized."""
-    engine.data["random_seed"] = 0
+    engine.random_seed = 0
     player_a = Player("player1", "pwhash")
     player_b = Player("player2", "pwhash")
     assert player_a.network_prices.bid_prices["coal_burner"] != player_b.network_prices.bid_prices["coal_burner"]

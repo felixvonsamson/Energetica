@@ -234,7 +234,7 @@ def get_chart_data() -> Response | tuple:
 
     if g.player.tile is None:
         return "", 404
-    total_t = engine.data["total_t"]
+    total_t = engine.total_t
     rolling_history = g.player.rolling_history.get_data(t=total_t % 216 + 1)
     filename = f"instance/data/players/player_{g.player.id}.pck"
     with open(filename, "rb") as file:
@@ -248,7 +248,7 @@ def get_chart_data() -> Response | tuple:
             network_data = pickle.load(file)
         concat_slices(network_data, g.player.network.rolling_history.get_data(t=total_t % 216 + 1))
 
-    current_climate_data = engine.data["current_climate_data"].get_data(t=total_t % 216 + 1)
+    current_climate_data = engine.current_climate_data.get_data(t=total_t % 216 + 1)
     with open("instance/data/servers/climate_data.pck", "rb") as file:
         climate_data = pickle.load(file)
     concat_slices(climate_data, current_climate_data)
@@ -286,7 +286,7 @@ def get_market_data() -> Response | tuple:
         return "", 404
     request_data = request.get_json()
     t = int(request_data["t"])
-    filename_state = f"instance/data/networks/{g.player.network.id}/charts/market_t{engine.data['total_t'] - t}.pck"
+    filename_state = f"instance/data/networks/{g.player.network.id}/charts/market_t{engine.total_t - t}.pck"
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
             market_data = pickle.load(file)
@@ -736,7 +736,7 @@ def test_notification() -> Response:
     """Send a dummy notification to the player."""
     notification_data = {
         "title": "Test notification",
-        "body": f"{engine.data['total_t']} ({datetime.now()})",
+        "body": f"{engine.total_t} ({datetime.now()})",
     }
     g.player.send_notification(notification_data)
     return jsonify({"response": "success"})

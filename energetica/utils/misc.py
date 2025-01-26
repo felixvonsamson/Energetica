@@ -43,7 +43,7 @@ def reduce_resolution(array, new_values) -> None:
         new_values_reduced = np.mean(new_values_reduced.reshape(-1, 6), axis=1)
         array[r] = array[r][len(new_values_reduced) :]
         array[r].extend(new_values_reduced)
-    if engine.data["total_t"] % 1296 == 0:
+    if engine.total_t % 1296 == 0:
         array[4] = array[4][1:]
         array[4].append(np.mean(array[3][-6:]))
 
@@ -53,7 +53,7 @@ def save_past_data():
     # save climate data
     with open("instance/data/servers/climate_data.pck", "rb") as file:
         past_climate_data = pickle.load(file)
-    new_climate_data = engine.data["current_climate_data"].get_data()
+    new_climate_data = engine.current_climate_data.get_data()
     for category in new_climate_data:
         for element in new_climate_data[category]:
             new_el_data = new_climate_data[category][element]
@@ -92,7 +92,7 @@ def save_past_data():
         files = os.listdir(network_dir)
         for filename in files:
             t_value = int(filename.split("market_t")[1].split(".pck")[0])
-            if t_value < engine.data["total_t"] - 1440:
+            if t_value < engine.total_t - 1440:
                 os.remove(os.path.join(network_dir, filename))
 
         past_data = {}
@@ -172,8 +172,8 @@ def initialize_player(player: Player) -> None:
     - Giving the player an initial steam engine
     - Adding the player to the general chat
     """
-    eol = engine.data["total_t"] + math.ceil(
-        engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.data["in_game_seconds_per_tick"]
+    eol = engine.total_t + math.ceil(
+        engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick
     )
     if player.tile is None:
         raise GameError("noLocation")
@@ -245,7 +245,7 @@ def initialize_player(player: Player) -> None:
 # Quiz
 def submit_quiz_answer(player: Player, answer: str) -> bool:
     """Return True if the answer was correct, False otherwise."""
-    quiz_data = engine.data["daily_question"]
+    quiz_data = engine.daily_question
     if player.id in quiz_data["player_answers"]:
         raise GameError("quizAlreadyAnswered")
     quiz_data["player_answers"][player.id] = answer
@@ -259,7 +259,7 @@ def submit_quiz_answer(player: Player, answer: str) -> bool:
 
 def get_quiz_question(player: Player) -> dict:
     """Return the data for the quiz question in the form of a dictionary with only the answer of the current player."""
-    question_data = engine.data["daily_question"].copy()
+    question_data = engine.daily_question.copy()
     if player.id in question_data["player_answers"]:
         question_data["player_answer"] = question_data["player_answers"][player.id]
     del question_data["player_answers"]
@@ -354,8 +354,8 @@ def package_weather_data(player: Player) -> dict:
         raise GameError("noLocation")
     x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     y = player.tile.coordinates[1] * 0.5 * 3**0.5
-    total_seconds = (engine.data["total_t"] + engine.data["delta_t"]) * engine.data["in_game_seconds_per_tick"]
-    random_seed = engine.data["random_seed"]
+    total_seconds = (engine.total_t + engine.delta_t) * engine.in_game_seconds_per_tick
+    random_seed = engine.random_seed
     solar_irradiance = calculate_solar_irradiance((x, y), total_seconds, random_seed)
     wind_speed = calculate_wind_speed((x, y), total_seconds, random_seed)
     river_discharge = calculate_river_discharge(total_seconds)
