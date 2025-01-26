@@ -1,3 +1,5 @@
+"""This module contains tests for all methods that manage construction and research projects."""
+
 from typing import Iterable
 
 import pytest
@@ -7,7 +9,7 @@ from energetica import create_app
 from energetica.database.map import HexTile
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.player import Player
-from energetica.enums import ControllableFacilityType, FunctionalFacilityType, ProjectType, TechnologyType
+from energetica.enums import ControllableFacilityType, FunctionalFacilityType, TechnologyType
 from energetica.globals import engine
 from energetica.utils.assets import (
     cancel_project,
@@ -20,12 +22,15 @@ from energetica.utils.misc import confirm_location
 
 # RULES FOR PROJECTS:
 # 1. All projects (in the database) should appear exactly once in the priority list.
-# 2. The number of ongoing constructions / research projects must be less then or equal to the number of construction / lab workers.
-# 3. In the project priority list, ongoing projects must come before all waiting projects and all waiting projects must come before all paused projects.
+# 2. The number of ongoing constructions / research projects must be less then or equal to the number of construction /
+# lab workers.
+# 3. In the project priority list, ongoing projects must come before all waiting projects and all waiting projects must
+# come before all paused projects.
 # 4. All projects have a finish time in the future.
 # 5. A project can not be ongoing if it has unfulfilled requirements.
 # 6. All requirements of a project must appear before the project in the priority list.
-# 7. If there are projects waiting that have all their requirements fulfilled, there should be no available workers of the corresponding type.
+# 7. If there are projects waiting that have all their requirements fulfilled, there should be no available workers of
+# the corresponding type.
 
 
 def validate_rules(player: Player):

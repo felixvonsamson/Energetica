@@ -13,8 +13,8 @@ from enum import StrEnum
 class WorkerType(StrEnum):
     """Enum for the worker type."""
 
-    CONSTRUCTION = "Construction"
-    RESEARCH = "Research"
+    CONSTRUCTION = "construction"
+    RESEARCH = "research"
 
 
 class Fuel(StrEnum):
