@@ -146,7 +146,6 @@ class GameEngine(object):
         self.serve_local = True
         self.lock = RLock()
 
-        self.data = {}
         self.db_model_instances: dict = {}
         self.clock_time: int = None
         self.in_game_seconds_per_tick: int = None
