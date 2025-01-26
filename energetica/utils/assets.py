@@ -95,9 +95,9 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
     project.delete()
 
     worker_type = project.project_type.worker_type
-    if project not in player.get_project_priority_list(worker_type):
+    if project not in player.projects_by_priority[worker_type]
         pass
-    player.get_project_priority_list(worker_type).remove(project)
+    player.projects_by_priority[worker_type].remove(project)
 
     deploy_available_workers(player, worker_type, start_now=True)
 
@@ -187,7 +187,7 @@ def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_n
     when a new worker is available and starts a new construction.
     """
     available_workers = player.available_workers(worker_type)
-    priority_list = player.get_project_priority_list(worker_type)
+    priority_list = player.projects_by_priority[worker_type]
 
     if available_workers <= 0:
         return
@@ -461,7 +461,7 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
         raise GameError(msg)
 
     dependents = []
-    priority_list = player.get_project_priority_list(project.project_type.worker_type)
+    priority_list = player.projects_by_priority[project.project_type.worker_type]
     project_priority_index = priority_list.index(project)
     for candidate_dependent in priority_list[project_priority_index + 1 :]:
         if project.id in candidate_dependent.prerequisites:
@@ -508,7 +508,7 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
         msg = "Project not found"
         raise GameError(msg)
 
-    priority_list = player.get_project_priority_list(project.project_type.worker_type)
+    priority_list = player.projects_by_priority[project.project_type.worker_type]
     index = priority_list.index(project)
     if index == len(priority_list) - 1:
         return
@@ -557,7 +557,7 @@ def toggle_pause_project(player: Player, project: OngoingProject) -> None:
 
     if not project.was_paused_by_player():
         # project is currently not paused by player, and should be paused
-        priority_list = player.get_project_priority_list(worker_type)
+        priority_list = player.projects_by_priority[worker_type]
         project_index = priority_list.index(project)
         project.pause()
         dependency = [project]
@@ -588,7 +588,7 @@ def toggle_pause_project(player: Player, project: OngoingProject) -> None:
                 *dependency,
                 *priority_list[insertion_index:],
             ]
-            player.set_project_priority_list(worker_type, priority_list)
+            player.projects_by_priority[worker_type] = priority_list
 
         # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
         deploy_available_workers(player, worker_type)
@@ -606,7 +606,7 @@ def toggle_pause_project(player: Player, project: OngoingProject) -> None:
         project.unpause()
         # project status is now ONGOING or WAITING.
         # Reorder the priority list
-        priority_list = player.get_project_priority_list(worker_type)
+        priority_list = player.projects_by_priority[worker_type]
         priority_list.remove(project)
         insertion_index = None
         for new_index, other_project in enumerate(priority_list):
