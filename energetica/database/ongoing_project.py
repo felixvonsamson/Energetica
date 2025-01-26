@@ -42,6 +42,11 @@ class OngoingProject(DBModel):
     speed: float = 1
     previous_speed: float = 1
 
+    @property
+    def worker_type(self) -> WorkerType:
+        """Return the worker type of the project."""
+        return self.project_type.worker_type
+
     def was_paused_by_player(self) -> bool:
         """Return True if this project is paused by the player."""
         return self.status == ProjectStatus.PAUSED

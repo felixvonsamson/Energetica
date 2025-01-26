@@ -238,39 +238,8 @@ class Player(DBModel, UserMixin):
 
     def available_workers(self, worker_type: WorkerType) -> int:
         """Return the number of available workers depending on the project type."""
-        if worker_type == WorkerType.RESEARCH:
-            return self.available_lab_workers()
-        if worker_type == WorkerType.CONSTRUCTION:
-            return self.available_construction_workers()
-        raise GameError("InvalidWorkerType")
-
-    # TODO (Felix): Could that not be a property of a newly created Worker class ?
-    def available_construction_workers(self) -> int:
-        """Return the number of available construction workers."""
-        occupied_workers = len(
-            list(
-                OngoingProject.filter(
-                    lambda construction: construction.player == self
-                    and not isinstance(construction.project_type, TechnologyType)
-                    and construction.status == ProjectStatus.ONGOING,
-                ),
-            ),
-        )
-        return self.workers[WorkerType.CONSTRUCTION] - occupied_workers
-
-    # TODO (Felix): Could that not be a property of a newly created Worker class ?
-    def available_lab_workers(self) -> int:
-        """Return the number of available lab workers."""
-        occupied_workers = len(
-            list(
-                OngoingProject.filter(
-                    lambda construction: construction.player == self
-                    and isinstance(construction.project_type, TechnologyType)
-                    and construction.status == ProjectStatus.ONGOING,
-                ),
-            ),
-        )
-        return self.workers[WorkerType.RESEARCH] - occupied_workers
+        occupied_workers = OngoingProject.count_when(player=self, worker_type=worker_type, status=ProjectStatus.ONGOING)
+        return self.workers[worker_type] - occupied_workers
 
     def package_chat_messages(self, chat: Chat) -> list[dict]:
         """Package the last 20 messages of a chat."""
@@ -469,11 +438,11 @@ class Player(DBModel, UserMixin):
             "worker_info",
             {
                 "construction": {
-                    "available": self.available_construction_workers(),
+                    "available": self.available_workers(WorkerType.CONSTRUCTION),
                     "total": self.workers[WorkerType.CONSTRUCTION],
                 },
                 "laboratory": {
-                    "available": self.available_lab_workers(),
+                    "available": self.available_workers(WorkerType.RESEARCH),
                     "total": self.workers[WorkerType.RESEARCH],
                 },
             },
