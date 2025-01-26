@@ -20,8 +20,11 @@ from energetica.database.messages import Chat, Notification
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.shipment import OngoingShipment
 from energetica.enums import (
+    ControllableFacilityType,
     ExtractionFacilityType,
     Fuel,
+    FunctionalFacilityType,
+    NonFacilityAskType,
     StorageFacilityType,
     TechnologyType,
     WorkerType,
@@ -130,9 +133,9 @@ class Player(DBModel, UserMixin):
     def __post_init__(self) -> None:
         """Post initialization method for Player."""
         super().__post_init__()
-        self.network_prices.create_bid_entry("steam_engine", self)
-        self.network_prices.create_ask_entry("industry", self)
-        self.network_prices.create_ask_entry("construction", self)
+        self.network_prices.create_bid_entry(ControllableFacilityType.STEAM_ENGINE, self)
+        self.network_prices.create_ask_entry(FunctionalFacilityType.INDUSTRY, self)
+        self.network_prices.create_ask_entry(NonFacilityAskType.CONSTRUCTION, self)
 
     def __hash__(self):
         """Return the hash of the player's id."""
