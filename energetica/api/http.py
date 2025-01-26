@@ -5,6 +5,7 @@ from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 from flask import Blueprint, flash, g, jsonify, redirect, request
@@ -39,12 +40,14 @@ from energetica.globals import engine
 from energetica.utils.assets import package_projects_data
 from energetica.utils.misc import flash_error
 
+if TYPE_CHECKING:
+    # The only purpose of this is to make the type checker happy. It tells the type checker that the `g` object
+    # has an attribute `player` of type `Player`. It does nothing at runtime
 
-class _AppCtxGlobals(_AppCtxGlobals):  # type: ignore[no-redef]
-    player: Player
+    class _AppCtxGlobals(_AppCtxGlobals):  # type: ignore[no-redef]
+        player: Player
 
-
-g: _AppCtxGlobals  # type: ignore[no-redef]
+    g: _AppCtxGlobals  # type: ignore[no-redef]
 
 
 http = Blueprint("http", __name__)
