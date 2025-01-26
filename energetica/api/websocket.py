@@ -34,7 +34,7 @@ def add_sock_handlers(sock, engine):
     @basic_auth.verify_password
     def verify_password(username, password):
         """Called by flask-HTTPAUth to verify credentials."""
-        player: Player = next(Player.filter_by(username=username))
+        player: Player = next(Player.filter_by(username=username), None)
         if player:
             if check_password_hash(player.pwhash, password):
                 engine.log(f"{username} logged in via WebSocket")

@@ -8,11 +8,8 @@ When you use our mobile application, Energetica (the "App"), we appreciate that 
 
 1. Information We Collect
 
-We only collect the information necessary to provide and improve our App. Specifically, we collect:
+We only collect the information necessary to provide and improve our App.
 
-Username: When you create an account to use the App, we collect the username you provide.
-Password: We collect the password you provide and store an encrypted copy.
-Game Data: We collect data on the actions you take within the App to ensure the game runs correctly. This includes, but is not limited to, game progress, scores, messages with other players, and in-game activities.
 2. How We Use Your Information
 
 We use the information we collect or receive:

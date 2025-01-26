@@ -15,9 +15,6 @@ fetch("/api/get_networks") // retrieves list of all networks using api.py
         }
         var selectElement = document.getElementById("choose_network");
         for (const [network_id, network_name] of Object.entries(networks)) {
-            console.log("network_id", network_id);
-            console.log("network_name", network_name);
-            console.log("-end of option");
             var option = document.createElement("option");
             option.value = network_id;
             option.text = network_name;

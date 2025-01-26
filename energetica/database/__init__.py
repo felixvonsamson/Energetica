@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
     from energetica.database.player import Player
+    from energetica.enums import ExtractionFacilityType, PowerFacilityType, ProjectType, StorageFacilityType
 
 T = TypeVar("T", bound="DBModel")
 
@@ -85,6 +86,8 @@ class DBModel:
         """
 
         id: int
+        project_type: ProjectType
+        facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType
         name: str
         username: str
         player: Player | None  # None because of HexTile
@@ -92,7 +95,6 @@ class DBModel:
         coordinates: tuple[int, int]
         # OngoingProject
         status: int
-        family: str  # TODO(mglst): Remove once the family field is removed
 
     @classmethod
     def count_when(cls: type[T], **conditions: Unpack[WhitelistedConditions]) -> int:
