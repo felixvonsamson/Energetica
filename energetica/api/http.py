@@ -5,9 +5,11 @@ from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 from flask import Blueprint, flash, g, jsonify, redirect, request
+from flask.ctx import _AppCtxGlobals
 from flask_login import current_user, login_required
 from werkzeug.wrappers import Response
 
@@ -37,6 +39,16 @@ from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.assets import package_projects_data
 from energetica.utils.misc import flash_error
+
+if TYPE_CHECKING:
+    # The only purpose of this is to make the type checker happy. It tells the type checker that the `g` object
+    # has an attribute `player` of type `Player`. It does nothing at runtime
+
+    class _AppCtxGlobals(_AppCtxGlobals):  # type: ignore[no-redef]
+        player: Player
+
+    g: _AppCtxGlobals  # type: ignore[no-redef]
+
 
 http = Blueprint("http", __name__)
 
@@ -93,7 +105,7 @@ def restrict_access_during_simulation():
 @login_required
 def check_if_logged_in():
     """Function that is called before every request and ensures that the player is logged in. (FLASK)"""
-    g.player = current_user.self
+    g.player = current_user._get_current_object()  # pylint: disable=protected-access
 
 
 @http.route("/request_delete_notification", methods=["POST"])
@@ -304,8 +316,9 @@ def get_player_data() -> Response | tuple:
 @http.route("/get_resource_reserves", methods=["GET"])
 def get_resource_reserves() -> Response:
     """Get the natural resources reserves for this player."""
-    # TODO(mglst): there is no `get_reserves` method in the `Player` class
-    reserves = g.player.get_reserves()
+    if g.player.tile is None:
+        raise GameError("noTile")
+    reserves = g.player.tile.fuel_reserves
     return jsonify(reserves)
 
 

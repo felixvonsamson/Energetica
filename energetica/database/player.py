@@ -198,10 +198,6 @@ class Player(DBModel, UserMixin):
         },
     )
 
-    @cached_property
-    def self(self) -> Player:
-        return self
-
     @property
     def config(self) -> dict:
         """Return the player's configuration."""
