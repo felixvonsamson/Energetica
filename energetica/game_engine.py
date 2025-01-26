@@ -328,24 +328,10 @@ class GameEngine(object):
         instance_data_last_modified = max(f.stat().st_mtime for f in Path("instance/data").glob("**/*") if f.is_file())
         if instance_data_last_modified > engine_data_last_modified:
             raise RuntimeError("The data has not been saved correctly, please restart form the last checkpoint.")
-        members_to_load = [
-            "clock_time",
-            "in_game_seconds_per_tick",
-            "uuid",
-            "random_seed",
-            "total_t",
-            "start_date",
-            "first_tick_time",
-            "delta_t",
-            "current_climate_data",
-            "daily_question",
-            "question_order",
-            "technology_lvls",
-        ]
         with open("instance/engine_data.pck", "rb") as file:
             data = pickle.load(file)
-            for member in members_to_load:
-                setattr(self, member, data[member])
+            for member, member_data in data.items():
+                setattr(self, member, member_data)
 
     def save_checkpoint(self, destination_filename: str = "checkpoints/last_checkpoint.tar.gz") -> None:
         self.save()
