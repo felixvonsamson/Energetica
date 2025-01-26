@@ -49,6 +49,11 @@ class WindFacilityType(StrEnum):
     ONSHORE_WIND_TURBINE = "onshore_wind_turbine"
     OFFSHORE_WIND_TURBINE = "offshore_wind_turbine"
 
+    @property
+    def worker_type(self) -> WorkerType:
+        """Return the worker type associated with the project."""
+        return WorkerType.CONSTRUCTION
+
 
 class HydroFacilityType(StrEnum):
     """Enum for hydro facilities."""
@@ -57,12 +62,22 @@ class HydroFacilityType(StrEnum):
     SMALL_WATER_DAM = "small_water_dam"
     LARGE_WATER_DAM = "large_water_dam"
 
+    @property
+    def worker_type(self) -> WorkerType:
+        """Return the worker type associated with the project."""
+        return WorkerType.CONSTRUCTION
+
 
 class SolarFacilityType(StrEnum):
     """Enum for solar facilities."""
 
     CSP_SOLAR = "CSP_solar"
     PV_SOLAR = "PV_solar"
+
+    @property
+    def worker_type(self) -> WorkerType:
+        """Return the worker type associated with the project."""
+        return WorkerType.CONSTRUCTION
 
 
 class ControllableFacilityType(StrEnum):
@@ -75,6 +90,11 @@ class ControllableFacilityType(StrEnum):
     NUCLEAR_REACTOR = "nuclear_reactor"
     NUCLEAR_REACTOR_GEN4 = "nuclear_reactor_gen4"
 
+    @property
+    def worker_type(self) -> WorkerType:
+        """Return the worker type associated with the project."""
+        return WorkerType.CONSTRUCTION
+
 
 class StorageFacilityType(StrEnum):
     """Enum for storage facilities."""
@@ -86,6 +106,11 @@ class StorageFacilityType(StrEnum):
     LITHIUM_ION_BATTERIES = "lithium_ion_batteries"
     SOLID_STATE_BATTERIES = "solid_state_batteries"
 
+    @property
+    def worker_type(self) -> WorkerType:
+        """Return the worker type associated with the project."""
+        return WorkerType.CONSTRUCTION
+
 
 class ExtractionFacilityType(StrEnum):
     """Enum for extraction facilities."""
@@ -93,6 +118,11 @@ class ExtractionFacilityType(StrEnum):
     COAL_MINE = "coal_mine"
     GAS_DRILLING_SITE = "gas_drilling_site"
     URANIUM_MINE = "uranium_mine"
+
+    @property
+    def worker_type(self) -> WorkerType:
+        """Return the worker type associated with the project."""
+        return WorkerType.CONSTRUCTION
 
     @property
     def associated_fuel(self) -> Fuel:
@@ -112,6 +142,11 @@ class FunctionalFacilityType(StrEnum):
     WAREHOUSE = "warehouse"
     CARBON_CAPTURE = "carbon_capture"
 
+    @property
+    def worker_type(self) -> WorkerType:
+        """Return the worker type associated with the project."""
+        return WorkerType.CONSTRUCTION
+
 
 class TechnologyType(StrEnum):
     """Enum for technologies."""
@@ -128,6 +163,11 @@ class TechnologyType(StrEnum):
     AERODYNAMICS = "aerodynamics"
     CHEMISTRY = "chemistry"
     NUCLEAR_ENGINEERING = "nuclear_engineering"
+
+    @property
+    def worker_type(self) -> WorkerType:
+        """Return the worker type associated with the project."""
+        return WorkerType.RESEARCH
 
 
 class SpecialAskType(StrEnum):
