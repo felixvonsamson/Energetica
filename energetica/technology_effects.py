@@ -73,8 +73,8 @@ def research_prevalence(technology_name: ProjectType, level: int) -> int:
     :param technology: the technology to check
     :param level: the level of the technology to check
     """
-    if len(engine.data["technology_lvls"][technology_name]) > level - 1:
-        return engine.data["technology_lvls"][technology_name][level - 1]
+    if len(engine.technology_lvls[technology_name]) > level - 1:
+        return engine.technology_lvls[technology_name][level - 1]
     return 0
 
 
@@ -377,7 +377,7 @@ def construction_time(player: Player, project_type: ProjectType) -> float:
     """Return the construction time in ticks."""
     const_config = engine.const_config["assets"]
     # transforming in game seconds in ticks
-    duration = const_config[project_type]["base_construction_time"] / engine.data["in_game_seconds_per_tick"]
+    duration = const_config[project_type]["base_construction_time"] / engine.in_game_seconds_per_tick
     # construction time increases with higher levels
     if isinstance(project_type, FunctionalFacilityType | TechnologyType):
         level_with_constructions = OngoingProject.count_when(project_type=project_type, player=player)
@@ -444,7 +444,7 @@ def construction_power(player: Player, project_type: ProjectType) -> float:
     power = (
         const_config[project_type]["base_construction_energy"]
         / construction_time(player, project_type)
-        / engine.data["in_game_seconds_per_tick"]
+        / engine.in_game_seconds_per_tick
         * 3600
     )
     # construction power increases with higher levels
@@ -581,7 +581,7 @@ def _package_power_generating_facility_base(player: Player, power_facility_type:
                 * 60,
             }
             if const_config_assets[power_facility_type]["ramping_time"] != 0
-            and const_config_assets[power_facility_type]["ramping_time"] > engine.data["in_game_seconds_per_tick"]
+            and const_config_assets[power_facility_type]["ramping_time"] > engine.in_game_seconds_per_tick
             else {}
         )
         | _capacity_factors(player, power_facility_type)
@@ -654,7 +654,7 @@ def _package_power_storage_extraction_facility_base(player: Player, facility_typ
         * (hydro_price_multiplier(player, facility_type) if facility_type in HydroFacilityType else 1.0)
         * const_config_assets[facility_type]["O&M_factor_per_day"]
         / 24,
-        "lifespan": const_config_assets[facility_type]["lifespan"] / engine.data["in_game_seconds_per_tick"],
+        "lifespan": const_config_assets[facility_type]["lifespan"] / engine.in_game_seconds_per_tick,
     } | (
         {"construction_pollution": const_config_assets[facility_type]["base_construction_pollution"]}
         if player.discovered_greenhouse_gas_effect()
@@ -822,7 +822,7 @@ def package_functional_facilities(player: Player) -> list[dict]:
         return (
             const_config_assets["carbon_capture"]["base_absorption_per_day"]
             * const_config_assets["carbon_capture"]["absorption_factor"] ** level
-            * engine.data["current_climate_data"].get_co2()  # TODO(mglst): make this part be a client side computation
+            * engine.current_climate_data.get_co2()  # TODO(mglst): make this part be a client side computation
             / 24
         )
 

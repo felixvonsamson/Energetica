@@ -176,10 +176,6 @@ class Player(DBModel, UserMixin):
         default_factory=lambda: {tech: 0 for tech in TechnologyType},
     )
 
-    @cached_property
-    def self(self) -> Player:
-        return self
-
     @property
     def config(self) -> dict:
         """Return the player's configuration."""
@@ -347,9 +343,9 @@ class Player(DBModel, UserMixin):
         self.emit(
             "new_values",
             {
-                "total_t": engine.data["total_t"],
+                "total_t": engine.total_t,
                 "chart_values": new_values,
-                "climate_values": engine.data["current_climate_data"].get_last_data(),
+                "climate_values": engine.current_climate_data.get_last_data(),
                 "cumulative_emissions": self.cumul_emissions.get_all(),
                 "money": self.money,
                 "construction_updates": construction_updates,
@@ -651,7 +647,7 @@ class Player(DBModel, UserMixin):
 
     def package_active_power_facilities(self) -> dict:
         """Package the player's active power facilities."""
-        ticks_per_hour = 3600 / engine.data["in_game_seconds_per_tick"]
+        ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         active_power_facilities: list[ActiveFacility] = list(
             filter(lambda facility: facility.facility_type in power_facility_types, self.active_facilities)
         )
@@ -702,7 +698,7 @@ class Player(DBModel, UserMixin):
 
     def package_active_storage_facilities(self) -> dict:
         """Package active storage facilities."""
-        ticks_per_hour = 3600 / engine.data["in_game_seconds_per_tick"]
+        ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.capacities
         active_storage_facilities: list[ActiveFacility] = [
             facility for facility in self.active_facilities if facility.facility_type in StorageFacilityType
@@ -751,7 +747,7 @@ class Player(DBModel, UserMixin):
 
     def package_active_extraction_facilities(self) -> dict:
         """Package active extraction facilities."""
-        ticks_per_hour = 3600 / engine.data["in_game_seconds_per_tick"]
+        ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.capacities
         active_extraction_facilities: list[ActiveFacility] = [
             facility for facility in self.active_facilities if facility.facility_type in ExtractionFacilityType

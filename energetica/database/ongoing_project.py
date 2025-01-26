@@ -59,13 +59,13 @@ class OngoingProject(DBModel):
         """Make this facility go from waiting or ongoing to paused."""
         assert not self.was_paused_by_player()
         if self.is_ongoing():
-            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
+            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.total_t + 1)
         self.status = ProjectStatus.PAUSED
 
     def set_waiting(self) -> None:
         """Make this facility go from ongoing to waiting."""
         assert self.status == ProjectStatus.ONGOING
-        self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
+        self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.total_t + 1)
         self.status = ProjectStatus.WAITING
 
     def set_ongoing(self, *, start_now: bool = False) -> None:
@@ -80,9 +80,9 @@ class OngoingProject(DBModel):
 
         assert self.player.available_workers(self.project_type.worker_type) > 0
         if start_now:
-            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"]
+            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + engine.total_t
         else:
-            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
+            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.total_t + 1)
         self.status = ProjectStatus.ONGOING
 
     def unpause(self) -> None:
@@ -91,7 +91,7 @@ class OngoingProject(DBModel):
         if self.prerequisites or self.player.available_workers(self.project_type.worker_type) < 1:
             self.status = ProjectStatus.WAITING
         else:
-            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.data["total_t"] + 1)
+            self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.total_t + 1)
             self.status = ProjectStatus.ONGOING
 
     def delay_by(self, ticks: float) -> None:
@@ -108,7 +108,7 @@ class OngoingProject(DBModel):
     def progress(self) -> float:
         """Return the progress of the project, as a float between 0 and 1."""
         if self.status == ProjectStatus.ONGOING:
-            return (self.duration - self.end_tick_or_ticks_passed + engine.data["total_t"] + 1) / self.duration
+            return (self.duration - self.end_tick_or_ticks_passed + engine.total_t + 1) / self.duration
         else:
             return self.end_tick_or_ticks_passed / self.duration
 

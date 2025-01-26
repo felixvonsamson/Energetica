@@ -7,12 +7,12 @@
   <h2 id="game_time">Game Time</h2>
 
   <p>
-    The game operates on a clock that updates every {{ engine.data["clock_time"] }} seconds, referred to as a "tick". This means 
-    the game values are updated every {{ engine.data["clock_time"] }} seconds.
+    The game operates on a clock that updates every {{ engine.clock_time }} seconds, referred to as a "tick". This means 
+    the game values are updated every {{ engine.clock_time }} seconds.
   </p>
   <p>
     To enhance the gaming experience, game time is significantly faster than real-time. There are 
-    {{ (engine.data["in_game_seconds_per_tick"] / engine.data["clock_time"]) | round() | int }} in-game days in a real-time day and an 
+    {{ (engine.in_game_seconds_per_tick / engine.clock_time) | round() | int }} in-game days in a real-time day and an 
     in-game year has only 72 in-game days. The following table shows the conversion between ticks, in-game time, and 
     real-time:
   </p>
@@ -24,34 +24,34 @@
           <th>Game Ticks</th>
         </tr>
         <tr>
-          <td>{{(240 * engine.data["clock_time"] / engine.data["in_game_seconds_per_tick"]) | round() | int }} sec</td>
+          <td>{{(240 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} sec</td>
           <td>4 min</td>
-          <td>{{ (240 / engine.data["in_game_seconds_per_tick"]) | round() | int }}</td>
+          <td>{{ (240 / engine.in_game_seconds_per_tick) | round() | int }}</td>
         </tr>
         <tr>
-          <td>{{(60 * engine.data["clock_time"] / engine.data["in_game_seconds_per_tick"]) | round() | int }} min</td>
+          <td>{{(60 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} min</td>
           <td>1 hour</td>
-          <td>{{ (3600 / engine.data["in_game_seconds_per_tick"]) | round() | int }}</td>
+          <td>{{ (3600 / engine.in_game_seconds_per_tick) | round() | int }}</td>
         </tr>
         <tr>
-          <td>{{(24 * engine.data["clock_time"] / engine.data["in_game_seconds_per_tick"]) | round() | int }} hours</td>
+          <td>{{(24 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} hours</td>
           <td>1 day / 24h</td>
-          <td>{{ (3600 * 24 / engine.data["in_game_seconds_per_tick"]) | round() | int }}</td>
+          <td>{{ (3600 * 24 / engine.in_game_seconds_per_tick) | round() | int }}</td>
         </tr>
         <tr>
-          <td>{{(144 * engine.data["clock_time"] / engine.data["in_game_seconds_per_tick"]) | round() | int }} hours</td>
+          <td>{{(144 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} hours</td>
           <td>1 month / 6d</td>
-          <td>{{ (3600 * 24 * 6 / engine.data["in_game_seconds_per_tick"]) | round() | int }}</td>
+          <td>{{ (3600 * 24 * 6 / engine.in_game_seconds_per_tick) | round() | int }}</td>
         </tr>
         <tr>
-          <td>{{(72 * engine.data["clock_time"] / engine.data["in_game_seconds_per_tick"]) | round() | int }} days</td>
+          <td>{{(72 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} days</td>
           <td>1 year / 12m</td>
-          <td>{{ (3600 * 24 * 72 / engine.data["in_game_seconds_per_tick"]) | round() | int }}</td>
+          <td>{{ (3600 * 24 * 72 / engine.in_game_seconds_per_tick) | round() | int }}</td>
         </tr>
         <tr>
-          <td>{{(24 * engine.data["clock_time"] / engine.data["in_game_seconds_per_tick"]) | round() | int }} months</td>
+          <td>{{(24 * engine.clock_time / engine.in_game_seconds_per_tick) | round() | int }} months</td>
           <td>10 years</td>
-          <td>{{ (3600 * 24 * 720 / engine.data["in_game_seconds_per_tick"]) | round() | int }}</td>
+          <td>{{ (3600 * 24 * 720 / engine.in_game_seconds_per_tick) | round() | int }}</td>
         </tr>
     </table>
   </div>
