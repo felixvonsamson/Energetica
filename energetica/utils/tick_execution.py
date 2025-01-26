@@ -9,7 +9,7 @@ from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.shipment import OngoingShipment
-from energetica.enums import storage_facilities
+from energetica.enums import StorageFacilityType
 from energetica.globals import engine
 from energetica.utils import assets
 from energetica.utils.assets import remove_asset
@@ -85,7 +85,7 @@ def check_events_completion():
     eolt_facilities = list(ActiveFacility.filter(lambda facility: facility.end_of_life <= engine.total_t))
     for facility in eolt_facilities:
         player = facility.player
-        if facility.facility_type in storage_facilities:
+        if facility.facility_type in StorageFacilityType:
             if facility.end_of_life == engine.total_t:
                 player.capacities.update(player, facility.facility_type)
             stored_energy = player.rolling_history.get_last_data("storage", facility.facility_type)
