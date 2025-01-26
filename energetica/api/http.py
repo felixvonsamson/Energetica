@@ -316,8 +316,9 @@ def get_player_data() -> Response | tuple:
 @http.route("/get_resource_reserves", methods=["GET"])
 def get_resource_reserves() -> Response:
     """Get the natural resources reserves for this player."""
-    # TODO(mglst): there is no `get_reserves` method in the `Player` class
-    reserves = g.player.get_reserves()
+    if g.player.tile is None:
+        raise GameError("noTile")
+    reserves = g.player.tile.fuel_reserves
     return jsonify(reserves)
 
 
