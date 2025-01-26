@@ -156,11 +156,10 @@ class Player(DBModel, UserMixin):
     resources: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
     resources_on_sale: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
 
-    # TODO(mglst): make use of the WorkerType enum
-    workers: dict[str, int] = field(
+    workers: dict[WorkerType, int] = field(
         default_factory=lambda: {
-            "construction": 1,
-            "laboratory": 0,
+            WorkerType.CONSTRUCTION: 1,
+            WorkerType.RESEARCH: 0,
         },
     )
 
@@ -257,7 +256,7 @@ class Player(DBModel, UserMixin):
                 ),
             ),
         )
-        return self.workers["construction"] - occupied_workers
+        return self.workers[WorkerType.CONSTRUCTION] - occupied_workers
 
     # TODO (Felix): Could that not be a property of a newly created Worker class ?
     def available_lab_workers(self) -> int:
@@ -271,7 +270,7 @@ class Player(DBModel, UserMixin):
                 ),
             ),
         )
-        return self.workers["laboratory"] - occupied_workers
+        return self.workers[WorkerType.RESEARCH] - occupied_workers
 
     def package_chat_messages(self, chat: Chat) -> list[dict]:
         """Package the last 20 messages of a chat."""
@@ -471,11 +470,11 @@ class Player(DBModel, UserMixin):
             {
                 "construction": {
                     "available": self.available_construction_workers(),
-                    "total": self.workers["construction"],
+                    "total": self.workers[WorkerType.CONSTRUCTION],
                 },
                 "laboratory": {
                     "available": self.available_lab_workers(),
-                    "total": self.workers["laboratory"],
+                    "total": self.workers[WorkerType.RESEARCH],
                 },
             },
         )

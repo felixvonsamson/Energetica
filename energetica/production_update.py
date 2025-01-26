@@ -27,6 +27,7 @@ from energetica.enums import (
     StorageFacilityType,
     TechnologyType,
     WindFacilityType,
+    WorkerType,
     power_facility_types,
 )
 from energetica.globals import engine
@@ -885,7 +886,7 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction) -> None:
         return
     if demand_type == "construction":
         cumul_demand = 0.0
-        for i in range(min(len(player.constructions_by_priority), player.workers[demand_type])):
+        for i in range(min(len(player.constructions_by_priority), player.workers[WorkerType.CONSTRUCTION])):
             construction = player.constructions_by_priority[i]
             if not construction.is_ongoing():
                 continue
@@ -898,7 +899,7 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction) -> None:
     if demand_type == "research":
         researches_by_priority = player.researches_by_priority
         cumul_demand = 0.0
-        for i in range(min(len(researches_by_priority), player.workers["laboratory"])):
+        for i in range(min(len(researches_by_priority), player.workers[WorkerType.RESEARCH])):
             construction = researches_by_priority[i]
             if not construction.is_ongoing():
                 continue

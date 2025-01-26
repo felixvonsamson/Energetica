@@ -9,7 +9,7 @@ from energetica import create_app
 from energetica.database.map import HexTile
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.player import Player
-from energetica.enums import ControllableFacilityType, FunctionalFacilityType, TechnologyType
+from energetica.enums import ControllableFacilityType, FunctionalFacilityType, TechnologyType, WorkerType
 from energetica.globals import engine
 from energetica.utils.assets import (
     cancel_project,
@@ -64,11 +64,11 @@ def validate_rules(player: Player):
             and not isinstance(construction.project_type, TechnologyType)
         )
     )
-    if len(ongoing_constructions) > player.workers["construction"]:
+    if len(ongoing_constructions) > player.workers[WorkerType.CONSTRUCTION]:
         pytest.fail(
             f"Rule 2 violation: there are {len(ongoing_constructions)} ongoing constructions "
             f"({','.join(map(lambda c: c.project_type, ongoing_constructions))}), "
-            f"but only {player.workers['construction']} construction workers."
+            f"but only {player.workers[WorkerType.CONSTRUCTION]} construction workers."
         )
 
     ongoing_research = list(
@@ -78,11 +78,11 @@ def validate_rules(player: Player):
             and isinstance(project.project_type, TechnologyType)
         )
     )
-    if len(ongoing_research) > player.workers["laboratory"]:
+    if len(ongoing_research) > player.workers[WorkerType.RESEARCH]:
         pytest.fail(
             f"Rule 2 violation: there are {len(ongoing_research)} ongoing research projects "
             f"({','.join(map(lambda c: c.project_type, ongoing_research))}), "
-            f"but only {player.workers['laboratory']} lab workers."
+            f"but only {player.workers[WorkerType.RESEARCH]} lab workers."
         )
 
     # Rule 3
@@ -145,12 +145,12 @@ def validate_rules(player: Player):
             and construction.status == ProjectStatus.ONGOING
             and not isinstance(construction.project_type, TechnologyType)
         )
-        if player.workers["construction"] != count_on_going_constructions:
+        if player.workers[WorkerType.CONSTRUCTION] != count_on_going_constructions:
             pytest.fail(
                 "Rule 7 failed for constructions. "
                 f"Player has {len(waiting_constructions)} waiting constructions "
                 f"({','.join(map(lambda c: c.project_type, waiting_constructions))}), "
-                f"but has {player.workers['construction']} construction workers, "
+                f"but has {player.workers[WorkerType.CONSTRUCTION]} construction workers, "
                 f"and only {count_on_going_constructions} ongoing constructions."
             )
     waiting_research: list[OngoingProject] = list(
@@ -167,12 +167,12 @@ def validate_rules(player: Player):
             and research.status == ProjectStatus.ONGOING
             and isinstance(research.project_type, TechnologyType)
         )
-        if player.workers["laboratory"] != count_on_going_research:
+        if player.workers[WorkerType.RESEARCH] != count_on_going_research:
             pytest.fail(
                 "Rule 7 failed for research. "
                 f"Player has {len(waiting_research)} waiting research projects "
                 f"({','.join(map(lambda c: c.project_type, waiting_research))}), "
-                f"but has {player.workers['laboratory']} lab workers, "
+                f"but has {player.workers[WorkerType.RESEARCH]} lab workers, "
                 f"and only {count_on_going_research} ongoing research projects."
             )
 

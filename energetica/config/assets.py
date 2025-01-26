@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
-from energetica.enums import Fuel, FunctionalFacilityType, TechnologyType
+from energetica.enums import Fuel, FunctionalFacilityType, TechnologyType, WorkerType
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -1001,10 +1001,10 @@ class Config(object):
 
         # setting the number of workers
         player.workers = {
-            "construction": player_construction_workers_for_level(
+            WorkerType.CONSTRUCTION: player_construction_workers_for_level(
                 player.technology_lvl[TechnologyType.BUILDING_TECHNOLOGY]
             ),
-            "laboratory": player_lab_workers_for_level(
+            WorkerType.RESEARCH: player_lab_workers_for_level(
                 player.functional_facility_lvl[FunctionalFacilityType.LABORATORY]
             ),
         }
