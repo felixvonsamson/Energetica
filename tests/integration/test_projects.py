@@ -95,12 +95,12 @@ def validate_rules(player: Player):
     assert not OngoingProject.count(
         condition=lambda project: project.player == player
         and project.status == ProjectStatus.ONGOING
-        and project.end_tick_or_ticks_passed <= engine.data["total_t"]
+        and project.end_tick_or_ticks_passed <= engine.total_t
     )
     assert not OngoingProject.count(
         condition=lambda project: project.player == player
         and project.status != ProjectStatus.ONGOING
-        and project.end_tick_or_ticks_passed > engine.data["total_t"]
+        and project.end_tick_or_ticks_passed > engine.total_t
     )
 
     # Rule 5

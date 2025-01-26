@@ -235,7 +235,7 @@ def rest_new_chat_message(chat_id: int, message: Message):
 def rest_get_charts():
     # !!! current_t HAS BEEN REMOVED !!!
     """Gets the player's chart data and returns it as a JSON string."""
-    current_t = engine.data["current_t"]
+    current_t = engine.current_t
     timescale = "day"  # request.args.get('timescale')
     filename = f"instance/data/players/{g.player.id}/{timescale}.pck"
     with open(filename, "rb") as file:

@@ -41,7 +41,7 @@ def test_renewables_order():
 
 def test_add_bogus_names():
     """Test that adding a bogus ask or bid price raises an error."""
-    engine.data["random_seed"] = 0
+    engine.random_seed = 0
     network_prices = NetworkPrices()
     player = Player("player1", "pwhash")
 
@@ -75,7 +75,7 @@ def test_update_bogus_prices():
 
 def test_add_bid_and_ask_prices():
     """Test that adding a bid and ask price works."""
-    engine.data["random_seed"] = 0
+    engine.random_seed = 0
     network_prices = NetworkPrices()
     player = Player("player1", "pwhash")
     network_prices.create_ask_entry("coal_mine", player)
@@ -86,7 +86,7 @@ def test_add_bid_and_ask_prices():
 
 def test_price_randomization():
     """Test that the prices are randomized."""
-    engine.data["random_seed"] = 0
+    engine.random_seed = 0
     network_prices_a = NetworkPrices()
     network_prices_b = NetworkPrices()
     player_a = Player("player1", "pwhash")

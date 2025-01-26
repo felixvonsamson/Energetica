@@ -1,5 +1,7 @@
 """Logic for the engine of the game."""
 
+from __future__ import annotations
+
 import csv
 import json
 import logging
@@ -11,6 +13,7 @@ import tarfile
 import uuid
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flask_sock import Sock
 from flask_socketio import SocketIO
@@ -27,6 +30,9 @@ class GameEngine(object):
     sock: Sock
 
     def __init__(self):
+        """Initialize the game engine object."""
+        if TYPE_CHECKING:
+            from energetica.database.engine_data import EmissionData
         Path("instance").mkdir(exist_ok=True)
         self.config = config
         self.const_config = const_config
@@ -36,9 +42,21 @@ class GameEngine(object):
         self.action_logger = logging.getLogger("action_history")  # logs all called functions to a file
         self.serve_local = True
         self.lock = RLock()
-        # TODO (Felix): is data really needed ? can't we just use the engine object directly ?
-        # TODO(mglst): agree with Felix
-        self.data = {}
+
+        self.db_model_instances: dict = {}
+        self.clock_time: int = None
+        self.in_game_seconds_per_tick: int = None
+
+        self.uuid = None
+        self.random_seed = None
+        self.total_t: int = None
+        self.start_date: datetime = None
+        self.first_tick_time: datetime = None
+        self.delta_t: int = None
+        self.current_climate_data: EmissionData = None
+        self.daily_question = None
+        self.question_order: list[int] = None
+        self.technology_lvls: dict = None
 
         with open("energetica/static/data/industry_demand.pck", "rb") as file:
             # array of length 1440 of normalized daily industry demand variations
@@ -56,56 +74,61 @@ class GameEngine(object):
         for db in DBModel.__subclasses__():
             db.instances().reset()
 
-    def init(self, clock_time, in_game_seconds_per_tick: int, random_seed, start_date=None, instance_uuid=None):
-        # TODO(mglst): Create an explicit __init__ method, maybe make this a dataclass. Bref, rework this class
+    def init_instance(
+        self,
+        clock_time: int,
+        in_game_seconds_per_tick: int,
+        random_seed,
+        start_date: datetime | None = None,
+        instance_uuid=None,
+    ):
+        """Initialize the instance data / the GameEngine members."""
         from energetica.database.engine_data import EmissionData
         from energetica.database.map import HexTile
         from energetica.database.messages import Chat
         from energetica.utils.climate_helpers import data_init_climate
 
         assert clock_time in [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
-        self.data["clock_time"] = clock_time
-        self.data["in_game_seconds_per_tick"] = in_game_seconds_per_tick
+        self.clock_time = clock_time
+        self.in_game_seconds_per_tick = in_game_seconds_per_tick
 
-        self.data["uuid"] = instance_uuid or uuid.uuid1()
-        self.data["random_seed"] = random_seed
-        self.data["total_t"] = 0  # Number of simulated game ticks since server start
-        self.data["start_date"] = start_date or datetime.now()  # 0 point of server time
-        self.data["first_tick_time"] = self.data["start_date"]  # will be set to the correct time later on
+        self.uuid = instance_uuid or uuid.uuid1()
+        self.random_seed = random_seed
+        self.total_t = 0  # Number of simulated game ticks since server start
+        self.start_date = start_date or datetime.now()  # 0 point of server time
+        self.first_tick_time = self.start_date  # will be set to the correct time later on
         self.action_logger.info(
             json.dumps(
                 {
-                    "uuid": self.data["uuid"].hex,
-                    "clock_time": self.data["clock_time"],
-                    "in_game_seconds_per_tick": self.data["in_game_seconds_per_tick"],
+                    "uuid": self.uuid.hex,
+                    "clock_time": self.clock_time,
+                    "in_game_seconds_per_tick": self.in_game_seconds_per_tick,
                     "action_type": "init_engine",
-                    "random_seed": self.data["random_seed"],
-                    "start_date": self.data["start_date"].isoformat(),
+                    "random_seed": self.random_seed,
+                    "start_date": self.start_date.isoformat(),
                 },
             ),
         )
-        last_midnight = self.data["start_date"].replace(hour=0, minute=0, second=0, microsecond=0)
+        last_midnight = self.start_date.replace(hour=0, minute=0, second=0, microsecond=0)
         # time shift in ticks. Defines the number of ticks between
         # the first simulated tick and the beginning of in-game year 0.
-        self.data["delta_t"] = round(
-            (self.data["start_date"] - last_midnight).total_seconds() // self.data["clock_time"]
-        )
+        self.delta_t = round((self.start_date - last_midnight).total_seconds() // self.clock_time)
         # transform start_date to a seconds timestamp corresponding to the time of the first tick
-        self.data["start_date"] = math.floor(self.data["start_date"].timestamp() / clock_time) * clock_time
+        self.start_date = math.floor(self.start_date.timestamp() / clock_time) * clock_time
 
         # All data for the current day will be stored here :
-        self.data["current_climate_data"] = EmissionData(
-            self.data["delta_t"],
+        self.current_climate_data = EmissionData(
+            self.delta_t,
             in_game_seconds_per_tick,
-            self.data["random_seed"],
+            self.random_seed,
         )
-        self.data["daily_question"] = {}
-        self.data["question_order"] = None
+        self.daily_question = {}
+        self.question_order = None
         self.new_daily_question()
 
         # stored the levels of technology of the server
         # for each tech an array stores [# players with lvl 1, # players with lvl 2, ...]
-        self.data["technology_lvls"] = {
+        self.technology_lvls = {
             "mathematics": [0],
             "mechanical_engineering": [0],
             "thermodynamics": [0],
@@ -141,8 +164,8 @@ class GameEngine(object):
         Path("instance/data/servers").mkdir(parents=True, exist_ok=True)
         climate_data = data_init_climate(
             in_game_seconds_per_tick,
-            self.data["random_seed"],
-            self.data["delta_t"],
+            self.random_seed,
+            self.delta_t,
         )
         with open("instance/data/servers/climate_data.pck", "wb") as file:
             pickle.dump(climate_data, file)
@@ -177,8 +200,23 @@ class GameEngine(object):
 
     def save(self) -> None:
         """Save the game engine data to a file."""
+        members_to_save = [
+            "clock_time",
+            "in_game_seconds_per_tick",
+            "uuid",
+            "random_seed",
+            "total_t",
+            "start_date",
+            "first_tick_time",
+            "delta_t",
+            "current_climate_data",
+            "daily_question",
+            "question_order",
+            "technology_lvls",
+        ]
+        data = {member: getattr(self, member) for member in members_to_save}
         with open("instance/engine_data.pck", "wb") as file:
-            pickle.dump(self.data, file)
+            pickle.dump(data, file)
 
     def load(self) -> None:
         """Load the game engine data from a file."""
@@ -187,7 +225,9 @@ class GameEngine(object):
         if instance_data_last_modified > engine_data_last_modified:
             raise RuntimeError("The data has not been saved correctly, please restart form the last checkpoint.")
         with open("instance/engine_data.pck", "rb") as file:
-            self.data = pickle.load(file)
+            data = pickle.load(file)
+            for member, member_data in data.items():
+                setattr(self, member, member_data)
 
     def save_checkpoint(self, destination_filename: str = "checkpoints/last_checkpoint.tar.gz") -> None:
         self.save()
@@ -207,24 +247,24 @@ class GameEngine(object):
     def package_global_data(self) -> dict:
         """Package mutable from energetica.globals import engine data as a dict to be sent and used on the frontend."""
         return {
-            "first_tick_date": self.data["start_date"],
-            "tick_length": self.data["clock_time"],
-            "total_ticks": self.data["total_t"],
+            "first_tick_date": self.start_date,
+            "tick_length": self.clock_time,
+            "total_ticks": self.total_t,
         }
 
     def new_daily_question(self) -> None:
         """Load a new daily question from the csv file."""
         with open("energetica/static/data/daily_quiz_questions.csv", "r", encoding="utf-8") as file:
             csv_reader = list(csv.DictReader(file))
-        if self.data["question_order"] is None:
-            self.data["question_order"] = list(range(len(csv_reader)))
-            random.shuffle(self.data["question_order"])
+        if self.question_order is None:
+            self.question_order = list(range(len(csv_reader)))
+            random.shuffle(self.question_order)
             question_index = 0
         else:
-            question_index = (self.data["daily_question"]["index"] + 1) % len(csv_reader)
-        self.data["daily_question"] = csv_reader[self.data["question_order"][question_index]]
-        self.data["daily_question"]["index"] = question_index
-        self.data["daily_question"]["player_answers"] = {}
+            question_index = (self.daily_question["index"] + 1) % len(csv_reader)
+        self.daily_question = csv_reader[self.question_order[question_index]]
+        self.daily_question["index"] = question_index
+        self.daily_question["player_answers"] = {}
 
 
 # TODO(mglst): Convert this class to an instance of GameError
