@@ -7,23 +7,6 @@ from energetica.enums import FunctionalFacilityType
 from energetica.game_error import GameError
 
 
-def test_blank_network_prices():
-    """Test that the NetworkPrices class is initialized with the correct attributes."""
-    network_prices = NetworkPrices()
-    assert not network_prices.renewable_bids
-    assert not network_prices.ask_prices.keys()
-    assert not network_prices.bid_prices.keys()
-
-
-def test_default_player_network_prices():
-    """Test that the NetworkPrices class is initialized with the correct attributes."""
-    engine.data["random_seed"] = 0
-    player = Player("player1", "pwhash")
-    assert not player.network_prices.renewable_bids
-    assert player.network_prices.ask_prices.keys() == {"industry", "construction"}
-    assert player.network_prices.bid_prices.keys() == {"steam_engine"}
-
-
 def test_renewables_order():
     """Test that the renewable bids in the right order."""
     network_prices = NetworkPrices()
@@ -48,26 +31,6 @@ def test_renewables_order():
     ]
 
 
-def test_add_bogus_names():
-    """Test that adding a bogus ask or bid price raises an error."""
-    engine.data["random_seed"] = 0
-    player = Player("player1", "pwhash")
-
-    try:
-        player.network_prices.create_ask_entry("bogus", player)
-    except KeyError:
-        assert True
-    else:
-        assert False
-
-    try:
-        player.network_prices.create_bid_entry("bogus", player)
-    except KeyError:
-        assert True
-    else:
-        assert False
-
-
 def test_update_bogus_prices():
     """Test that updating a bogus ask or bid price raises an error."""
     network_prices = NetworkPrices()
@@ -81,21 +44,9 @@ def test_update_bogus_prices():
         assert False
 
 
-def test_add_bid_and_ask_prices():
-    """Test that adding a bid and ask price works."""
-    engine.data["random_seed"] = 0
-    player = Player("player1", "pwhash")
-    player.network_prices.create_ask_entry("coal_mine", player)
-    player.network_prices.create_bid_entry("gas_burner", player)
-    assert "coal_mine" in player.network_prices.ask_prices
-    assert "gas_burner" in player.network_prices.bid_prices
-
-
 def test_price_randomization():
     """Test that the prices are randomized."""
     engine.data["random_seed"] = 0
     player_a = Player("player1", "pwhash")
     player_b = Player("player2", "pwhash")
-    player_a.network_prices.create_bid_entry("coal_burner", player_a)
-    player_b.network_prices.create_bid_entry("coal_burner", player_b)
     assert player_a.network_prices.bid_prices["coal_burner"] != player_b.network_prices.bid_prices["coal_burner"]

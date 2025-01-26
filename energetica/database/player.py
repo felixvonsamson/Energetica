@@ -133,9 +133,7 @@ class Player(DBModel, UserMixin):
     def __post_init__(self) -> None:
         """Post initialization method for Player."""
         super().__post_init__()
-        self.network_prices.create_bid_entry(ControllableFacilityType.STEAM_ENGINE, self)
-        self.network_prices.create_ask_entry(FunctionalFacilityType.INDUSTRY, self)
-        self.network_prices.create_ask_entry(NonFacilityAskType.CONSTRUCTION, self)
+        self.network_prices.init_prices_with_randomness(self)
 
     def __hash__(self):
         """Return the hash of the player's id."""
