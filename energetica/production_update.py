@@ -214,7 +214,7 @@ def extraction_facility_demand(new_values, player: Player, demand) -> None:
     player_resources = new_values["resources"]
     warehouse_caps = player.config["warehouse_capacities"]
     for fuel in Fuel:
-        extraction_facility = fuel.associated_mine()
+        extraction_facility = fuel.associated_mine
         if player.capacities.get(extraction_facility) is not None:
             max_warehouse = warehouse_caps[fuel] - player_resources[fuel]
             max_prod = (

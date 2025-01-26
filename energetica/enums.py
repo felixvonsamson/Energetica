@@ -5,6 +5,8 @@ Includes enums for worker types, fuel types, and renewable energy sources.
 Planned future enums include facility names
 """
 
+from __future__ import annotations
+
 from enum import StrEnum
 
 
@@ -22,12 +24,13 @@ class Fuel(StrEnum):
     GAS = "gas"
     URANIUM = "uranium"
 
-    def associated_mine(self) -> str:
+    @property
+    def associated_mine(self) -> ExtractionFacilityType:
         """Return the name of the mine associated with the fuel."""
         return {
-            Fuel.COAL: "coal_mine",
-            Fuel.GAS: "gas_drilling_site",
-            Fuel.URANIUM: "uranium_mine",
+            Fuel.COAL: ExtractionFacilityType.COAL_MINE,
+            Fuel.GAS: ExtractionFacilityType.GAS_DRILLING_SITE,
+            Fuel.URANIUM: ExtractionFacilityType.URANIUM_MINE,
         }[self]
 
 

@@ -1,6 +1,7 @@
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
+    Fuel,
     FunctionalFacilityType,
     HydroFacilityType,
     SolarFacilityType,
@@ -75,3 +76,11 @@ def test_str_to_project_type():
 # def test_subclassing():
 #     for wind_facility in WindFacility:
 #         assert isinstance(wind_facility, Renewable
+
+
+def test_associated_fuel_and_mine():
+    """Test the associated_fuel and associated_mine properties."""
+    for fuel in Fuel:
+        assert fuel.associated_mine.associated_fuel == fuel
+    for mine in ExtractionFacilityType:
+        assert mine.associated_fuel.associated_mine == mine
