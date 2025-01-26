@@ -5,9 +5,11 @@ from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 from flask import Blueprint, flash, g, jsonify, redirect, request
+from flask.ctx import _AppCtxGlobals
 from flask_login import current_user, login_required
 from werkzeug.wrappers import Response
 
@@ -24,12 +26,29 @@ from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.enums import Fuel, Renewable
+from energetica.enums import (
+    ExtractionFacilityType,
+    Fuel,
+    PowerFacilityType,
+    Renewable,
+    StorageFacilityType,
+    str_to_project_type,
+)
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.assets import package_projects_data
 from energetica.utils.misc import flash_error
+
+if TYPE_CHECKING:
+    # The only purpose of this is to make the type checker happy. It tells the type checker that the `g` object
+    # has an attribute `player` of type `Player`. It does nothing at runtime
+
+    class _AppCtxGlobals(_AppCtxGlobals):  # type: ignore[no-redef]
+        player: Player
+
+    g: _AppCtxGlobals  # type: ignore[no-redef]
+
 
 http = Blueprint("http", __name__)
 
@@ -86,7 +105,7 @@ def restrict_access_during_simulation():
 @login_required
 def check_if_logged_in():
     """Function that is called before every request and ensures that the player is logged in. (FLASK)"""
-    g.player = current_user.self
+    g.player = current_user._get_current_object()  # pylint: disable=protected-access
 
 
 @http.route("/request_delete_notification", methods=["POST"])
@@ -297,8 +316,9 @@ def get_player_data() -> Response | tuple:
 @http.route("/get_resource_reserves", methods=["GET"])
 def get_resource_reserves() -> Response:
     """Get the natural resources reserves for this player."""
-    # TODO(mglst): there is no `get_reserves` method in the `Player` class
-    reserves = g.player.get_reserves()
+    if g.player.tile is None:
+        raise GameError("noTile")
+    reserves = g.player.tile.fuel_reserves
     return jsonify(reserves)
 
 
@@ -390,11 +410,12 @@ def request_queue_project() -> Response | tuple:
     """Start a construction or research project for the player."""
     request_data = request.get_json()
     asset = request_data["facility"]
+    project_type = str_to_project_type[asset]
     force = request_data["force"]
     try:
         energetica.utils.assets.queue_project(
             player=g.player,
-            asset=asset,
+            project_type=project_type,
             force=force,
         )
     except Confirm as confirm:
@@ -494,11 +515,13 @@ def request_upgrade_facility() -> Response | tuple:
 
 @http.route("/request_upgrade_all_of_type", methods=["POST"])
 @log_action
-def request_upgrade_all_of_type() -> Response:
+def request_upgrade_all_of_type() -> Response | tuple:
     """Upgrade all facilities of a certain type."""
     request_data = request.get_json()
-    facility = request_data["facility"]
-    energetica.utils.assets.upgrade_all_of_type(player=g.player, facility_name=facility)
+    facility_type = str_to_project_type[request_data["facility"]]
+    if not isinstance(facility_type, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):
+        return jsonify({"response": "malformedRequest"}), 400
+    energetica.utils.assets.upgrade_all_of_type(player=g.player, facility_type=facility_type)
     return jsonify({"response": "success", "money": g.player.money})
 
 
@@ -515,7 +538,7 @@ def request_dismantle_facility() -> Response | tuple:
     return jsonify(
         {
             "response": "success",
-            "facility_name": facility.name,
+            "facility_name": facility.facility_type,
             "money": g.player.money,
         },
     )
@@ -527,7 +550,7 @@ def request_dismantle_all_of_type() -> Response:
     """Dismantle all facilities of a certain type."""
     request_data = request.get_json()
     facility = request_data["facility"]
-    energetica.utils.assets.dismantle_all_of_type(player=g.player, facility_name=facility)
+    energetica.utils.assets.dismantle_all_of_type(player=g.player, facility_type=facility)
     return jsonify({"response": "success", "money": g.player.money})
 
 

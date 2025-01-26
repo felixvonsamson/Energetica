@@ -7,3 +7,4 @@ ignore = ["D212"]
 [tool.pytest.ini_options]
 testpaths = [ "tests" ]
 filterwarnings = ["ignore::DeprecationWarning"]
+python_files = "tests/**/*.py"
