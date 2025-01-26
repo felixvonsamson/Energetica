@@ -30,6 +30,7 @@ from energetica.enums import (
     WindFacilityType,
     WorkerType,
     power_facility_types,
+    str_to_project_type,
 )
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -489,9 +490,9 @@ def project_requirements(player: Player, project_type: ProjectType) -> list[dict
             "level": level + level_offset,
             "status": (
                 "satisfied"
-                if player.get_level(requirement) >= level + level_offset
+                if player.get_level(str_to_project_type[requirement]) >= level + level_offset
                 else "queued"
-                if next_level(player, requirement) - 1 >= level + level_offset
+                if next_level(player, str_to_project_type[requirement]) - 1 >= level + level_offset
                 and const_config[project_type]["type"] == "Technology"
                 and const_config[requirement]["type"] == "Technology"
                 else "unsatisfied"
@@ -884,7 +885,7 @@ def package_functional_facilities(player: Player) -> list[dict]:
             {
                 "construction_pollution": const_config_assets[functional_facility]["base_construction_pollution"]
                 * const_config_assets[functional_facility]["price_multiplier"]
-                ** player.functional_facility_lvl["industry"],
+                ** player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY],
             }
             if player.discovered_greenhouse_gas_effect()
             else {}

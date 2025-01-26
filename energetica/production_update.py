@@ -310,7 +310,7 @@ def calculate_demand(new_values, player: Player) -> None:
     # consider cost of climate events if any
     climate_event_recovery_cost(player, revenues)
 
-    if player.functional_facility_lvl["carbon_capture"] > 0:
+    if player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE] > 0:
         demand["carbon_capture"] = player.config["carbon_capture"]["power_consumption"]
 
 
@@ -783,7 +783,7 @@ def resources_and_pollution(new_values, player: Player) -> None:
             )
             add_emissions(new_values, player, facility, facility_emissions)
 
-    if player.functional_facility_lvl["warehouse"] > 0:
+    if player.functional_facility_lvl[FunctionalFacilityType.WAREHOUSE] > 0:
         for extraction_facility in ExtractionFacilityType:
             fuel = extraction_facility.associated_fuel
             if player.capacities.get(extraction_facility) is not None:
@@ -809,7 +809,7 @@ def resources_and_pollution(new_values, player: Player) -> None:
             new_values["resources"][fuel] = player.resources[fuel]
 
     # Carbon capture CO2 absorption
-    if player.functional_facility_lvl["carbon_capture"] > 0:
+    if player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE] > 0:
         satisfaction = demand["carbon_capture"] / player.config["carbon_capture"]["power_consumption"]
         captured_co2 = (
             player.config["carbon_capture"]["absorption"]

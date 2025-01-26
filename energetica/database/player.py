@@ -22,6 +22,8 @@ from energetica.database.shipment import OngoingShipment
 from energetica.enums import (
     ExtractionFacilityType,
     Fuel,
+    FunctionalFacilityType,
+    ProjectType,
     StorageFacilityType,
     TechnologyType,
     WorkerType,
@@ -131,11 +133,11 @@ class Player(DBModel, UserMixin):
         """Return the hash of the player's id."""
         return hash(self.id)
 
-    def get_level(self, functional_facility_or_technology: str) -> int:
+    def get_level(self, functional_facility_or_technology: ProjectType) -> int:
         """Return the technology or functional facility level of the player."""
-        if functional_facility_or_technology in self.functional_facility_lvl:
+        if isinstance(functional_facility_or_technology, FunctionalFacilityType):
             return self.functional_facility_lvl[functional_facility_or_technology]
-        elif functional_facility_or_technology in self.technology_lvl:
+        if isinstance(functional_facility_or_technology, TechnologyType):
             return self.technology_lvl[functional_facility_or_technology]
         assert False, "Wrong requirement name"
 
@@ -162,12 +164,12 @@ class Player(DBModel, UserMixin):
         },
     )
 
-    functional_facility_lvl: dict[str, int] = field(
+    functional_facility_lvl: dict[FunctionalFacilityType, int] = field(
         default_factory=lambda: {
-            "industry": 1,
-            "laboratory": 0,
-            "warehouse": 0,
-            "carbon_capture": 0,
+            FunctionalFacilityType.INDUSTRY: 1,
+            FunctionalFacilityType.LABORATORY: 0,
+            FunctionalFacilityType.WAREHOUSE: 0,
+            FunctionalFacilityType.CARBON_CAPTURE: 0,
         },
     )
 

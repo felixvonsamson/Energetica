@@ -7,7 +7,7 @@ from energetica.config.climate_events import climate_events
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.engine_data import calculate_reference_gta, calculate_temperature_deviation
 from energetica.database.map import HexTile
-from energetica.enums import Renewable
+from energetica.enums import FunctionalFacilityType, Renewable
 from energetica.globals import engine
 from energetica.utils.assets import facility_destroyed
 from energetica.utils.formatting import display_money
@@ -42,7 +42,7 @@ def climate_event_impact(tile: HexTile, event_name):
 
     # check destructions
     if random.random() < climate_events[event_name]["industry_destruction_chance"]:
-        player.functional_facility_lvl["industry"] -= 1
+        player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY] -= 1
         engine.config.update_config_for_user(player)
         player.notify(
             "Destruction",
