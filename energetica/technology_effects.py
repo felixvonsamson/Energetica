@@ -139,7 +139,7 @@ def power_production_multiplier(player: Player, facility_type: ProjectType) -> f
         )
     # Physics
     if facility_type in const_config["physics"]["affected_facilities"]:
-        mlt *= special_multiplier(const_config["physics"]["prod_factor"], player.technology_lvl["physics"])
+        mlt *= special_multiplier(const_config["physics"]["prod_factor"], player.technology_lvl[TechnologyType.PHYSICS])
     # Civil engineering
     if facility_type in const_config["civil_engineering"]["affected_facilities"]:
         mlt *= special_multiplier(
@@ -317,7 +317,7 @@ def efficiency_multiplier_chemistry(player: Player, facility_type: ProjectType, 
     If `level` is not provided, the `player`'s current `chemistry` level is used.
     """
     if level is None:
-        level = player.technology_lvl["thermodynamics"]
+        level = player.technology_lvl[TechnologyType.THERMODYNAMICS]
     const_config = engine.const_config["assets"]
     chemistry_factor = const_config["chemistry"]["inefficiency_factor"] ** level
     if facility_type == StorageFacilityType.HYDROGEN_STORAGE:

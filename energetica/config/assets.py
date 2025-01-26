@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
-from energetica.enums import Fuel, FunctionalFacilityType
+from energetica.enums import Fuel, FunctionalFacilityType, TechnologyType
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -989,19 +989,21 @@ class Config(object):
         assets["transport"]["time_per_tile"] = (
             const_config["transport"]["time_per_tile"]
             * const_config["assets"]["transport_technology"]["time_factor"]
-            ** player.technology_lvl["transport_technology"]
+            ** player.technology_lvl[TechnologyType.TRANSPORT_TECHNOLOGY]
         )
         assets["transport"]["power_per_kg"] = (
             const_config["transport"]["energy_per_kg_per_tile"]
             * const_config["assets"]["transport_technology"]["energy_factor"]
-            ** player.technology_lvl["transport_technology"]
+            ** player.technology_lvl[TechnologyType.TRANSPORT_TECHNOLOGY]
             * 3600
             / assets["transport"]["time_per_tile"]
         )
 
         # setting the number of workers
         player.workers = {
-            "construction": player_construction_workers_for_level(player.technology_lvl["building_technology"]),
+            "construction": player_construction_workers_for_level(
+                player.technology_lvl[TechnologyType.BUILDING_TECHNOLOGY]
+            ),
             "laboratory": player_lab_workers_for_level(
                 player.functional_facility_lvl[FunctionalFacilityType.LABORATORY]
             ),

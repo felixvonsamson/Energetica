@@ -169,6 +169,7 @@ class OngoingProject(DBModel):
                     num_ongoing_researches_of[candidate_prerequisite.project_type] += 1
                     # Add them as a prerequisite, if they are, according to const_config
                     offset: int = requirements[candidate_prerequisite.project_type]
+                    assert isinstance(candidate_prerequisite.project_type, TechnologyType)
                     candidate_prerequisite_level: int = (
                         self.player.technology_lvl[candidate_prerequisite.project_type]
                         + num_ongoing_researches_of[candidate_prerequisite.project_type]

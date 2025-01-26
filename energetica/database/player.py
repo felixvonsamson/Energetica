@@ -173,21 +173,8 @@ class Player(DBModel, UserMixin):
         },
     )
 
-    technology_lvl: dict[str, int] = field(
-        default_factory=lambda: {
-            "mathematics": 0,
-            "mechanical_engineering": 0,
-            "thermodynamics": 0,
-            "physics": 0,
-            "building_technology": 0,
-            "mineral_extraction": 0,
-            "transport_technology": 0,
-            "materials": 0,
-            "civil_engineering": 0,
-            "aerodynamics": 0,
-            "chemistry": 0,
-            "nuclear_engineering": 0,
-        },
+    technology_lvl: dict[TechnologyType, int] = field(
+        default_factory=lambda: {tech: 0 for tech in TechnologyType},
     )
 
     @cached_property
@@ -376,7 +363,7 @@ class Player(DBModel, UserMixin):
         """Return all unread notifications."""
         return list(filter(lambda notification: not notification.read, self.notifications))
 
-    def get_lvls(self) -> dict:
+    def get_lvls(self) -> dict[FunctionalFacilityType | TechnologyType, int]:
         """Return the levels of functional facilities and technologies of a player."""
         return self.technology_lvl | self.functional_facility_lvl
 
