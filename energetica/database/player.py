@@ -598,7 +598,7 @@ class Player(DBModel, UserMixin):
                 k: getattr(construction, k)
                 for k in [
                     "id",
-                    "name",
+                    "project_type",
                     "end_tick_or_ticks_passed",
                     "duration",
                     "status",
