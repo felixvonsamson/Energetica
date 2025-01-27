@@ -1,8 +1,8 @@
-"""This module ..."""
+"""Define the Policy classes that are used to mimic the behavior of players in the game."""
 
 from __future__ import annotations
 
-from energetica.database import Player
+from energetica.database.player import Player
 from energetica.enums import ControllableFacilityType, ProjectType
 from energetica.game_engine import Confirm, GameEngine
 from energetica.game_error import GameError
@@ -18,7 +18,7 @@ class Policy:
 
     def __init__(self, name: str):
         self.name = name
-        self.is_done = True
+        self.is_done = False
 
     def take_action(self, _player: Player, _game_engine: GameEngine) -> None:
         """Every tick the policy will take an action based on the state"""
@@ -117,7 +117,7 @@ class QueueProjectPolicy(Policy):
     """
 
     def __init__(self, project_type: ProjectType, wait_for_funds: bool = True, wait_for_available_workers: bool = True):
-        super().__init__(f"queue project {project_type.name}")
+        super().__init__(f"queue project {str(project_type)}")
         self.project_type = project_type
         self.wait_for_funds = wait_for_funds
         self.wait_for_available_workers = wait_for_available_workers
@@ -130,9 +130,3 @@ class QueueProjectPolicy(Policy):
             self.is_done = True
         except (GameError, Confirm):
             pass
-
-
-example_policy = WaitPolicy(5) + QueueProjectPolicy(ControllableFacilityType.STEAM_ENGINE)
-
-player_a_policy = WaitPolicy(5) + QueueProjectPolicy(ControllableFacilityType.STEAM_ENGINE)
-player_b_policy = QueueProjectPolicy(ControllableFacilityType.STEAM_ENGINE)
