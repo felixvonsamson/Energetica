@@ -29,7 +29,6 @@ from energetica.enums import (
     WorkerType,
     power_facility_types,
 )
-from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.technology_effects import (
     package_available_technologies,
