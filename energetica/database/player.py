@@ -76,12 +76,12 @@ class Player(DBModel, UserMixin):
         default_factory=lambda: {worker_type: [] for worker_type in WorkerType},
     )
 
-    @cached_property
+    @property
     def constructions_by_priority(self) -> list[OngoingProject]:
         """Return the constructions by priority."""
         return self.projects_by_priority[WorkerType.CONSTRUCTION]
 
-    @cached_property
+    @property
     def researches_by_priority(self) -> list[OngoingProject]:
         """Return the researches by priority."""
         return self.projects_by_priority[WorkerType.RESEARCH]

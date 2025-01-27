@@ -95,7 +95,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
     project.delete()
 
     worker_type = project.project_type.worker_type
-    if project not in player.projects_by_priority[worker_type]
+    if project not in player.projects_by_priority[worker_type]:
         pass
     player.projects_by_priority[worker_type].remove(project)
 
@@ -416,10 +416,7 @@ def queue_project(
         },
         player=player,
     )
-    if project_type in TechnologyType:
-        player.researches_by_priority.append(new_construction)
-    else:
-        player.constructions_by_priority.append(new_construction)
+    player.projects_by_priority[project_type.worker_type].append(new_construction)
     try:
         toggle_pause_project(player, new_construction)
     except GameError:
