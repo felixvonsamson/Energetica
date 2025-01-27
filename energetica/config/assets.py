@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
-from energetica.enums import Fuel
+from energetica.enums import Fuel, FunctionalFacilityType, TechnologyType, WorkerType
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -955,11 +955,13 @@ class Config(object):
         # calculating industry energy consumption and income
         assets["industry"]["power_consumption"] = (
             const_config["assets"]["industry"]["base_power_consumption"]
-            * const_config["assets"]["industry"]["power_factor"] ** player.functional_facility_lvl["industry"]
+            * const_config["assets"]["industry"]["power_factor"]
+            ** player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY]
         )
         assets["industry"]["income_per_day"] = (
             const_config["assets"]["industry"]["base_income_per_day"]
-            * const_config["assets"]["industry"]["income_factor"] ** player.functional_facility_lvl["industry"]
+            * const_config["assets"]["industry"]["income_factor"]
+            ** player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY]
         )
         # basic universal income of 540 per in-game day
         assets["industry"]["income_per_day"] += const_config["assets"]["industry"]["universal_income_per_day"]
@@ -968,38 +970,43 @@ class Config(object):
         assets["carbon_capture"]["power_consumption"] = (
             const_config["assets"]["carbon_capture"]["base_power_consumption"]
             * const_config["assets"]["carbon_capture"]["power_factor"]
-            ** player.functional_facility_lvl["carbon_capture"]
+            ** player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE]
         )
         assets["carbon_capture"]["absorption"] = (
             const_config["assets"]["carbon_capture"]["base_absorption_per_day"]
             * const_config["assets"]["carbon_capture"]["absorption_factor"]
-            ** player.functional_facility_lvl["carbon_capture"]
+            ** player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE]
         )
 
         # calculating the maximum storage capacity from the warehouse level
         for resource in const_config["warehouse_capacities"]:
             assets["warehouse_capacities"][resource] = (
-                warehouse_capacity_for_level(player.functional_facility_lvl["warehouse"], resource) or 0.0
+                warehouse_capacity_for_level(player.functional_facility_lvl[FunctionalFacilityType.WAREHOUSE], resource)
+                or 0.0
             )
 
         # calculating the transport speed and energy consumption from the level of transport technology
         assets["transport"]["time_per_tile"] = (
             const_config["transport"]["time_per_tile"]
             * const_config["assets"]["transport_technology"]["time_factor"]
-            ** player.technology_lvl["transport_technology"]
+            ** player.technology_lvl[TechnologyType.TRANSPORT_TECHNOLOGY]
         )
         assets["transport"]["power_per_kg"] = (
             const_config["transport"]["energy_per_kg_per_tile"]
             * const_config["assets"]["transport_technology"]["energy_factor"]
-            ** player.technology_lvl["transport_technology"]
+            ** player.technology_lvl[TechnologyType.TRANSPORT_TECHNOLOGY]
             * 3600
             / assets["transport"]["time_per_tile"]
         )
 
         # setting the number of workers
         player.workers = {
-            "construction": player_construction_workers_for_level(player.technology_lvl["building_technology"]),
-            "laboratory": player_lab_workers_for_level(player.functional_facility_lvl["laboratory"]),
+            WorkerType.CONSTRUCTION: player_construction_workers_for_level(
+                player.technology_lvl[TechnologyType.BUILDING_TECHNOLOGY]
+            ),
+            WorkerType.RESEARCH: player_lab_workers_for_level(
+                player.functional_facility_lvl[FunctionalFacilityType.LABORATORY]
+            ),
         }
 
     def __getitem__(self, player: Player):

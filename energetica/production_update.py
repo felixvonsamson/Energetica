@@ -27,6 +27,7 @@ from energetica.enums import (
     StorageFacilityType,
     TechnologyType,
     WindFacilityType,
+    WorkerType,
     power_facility_types,
 )
 from energetica.globals import engine
@@ -310,7 +311,7 @@ def calculate_demand(new_values, player: Player) -> None:
     # consider cost of climate events if any
     climate_event_recovery_cost(player, revenues)
 
-    if player.functional_facility_lvl["carbon_capture"] > 0:
+    if player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE] > 0:
         demand["carbon_capture"] = player.config["carbon_capture"]["power_consumption"]
 
 
@@ -781,7 +782,7 @@ def resources_and_pollution(new_values, player: Player) -> None:
             )
             add_emissions(new_values, player, facility, facility_emissions)
 
-    if player.functional_facility_lvl["warehouse"] > 0:
+    if player.functional_facility_lvl[FunctionalFacilityType.WAREHOUSE] > 0:
         for extraction_facility in ExtractionFacilityType:
             fuel = extraction_facility.associated_fuel
             if player.capacities.get(extraction_facility) is not None:
@@ -807,7 +808,7 @@ def resources_and_pollution(new_values, player: Player) -> None:
             new_values["resources"][fuel] = player.resources[fuel]
 
     # Carbon capture CO2 absorption
-    if player.functional_facility_lvl["carbon_capture"] > 0:
+    if player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE] > 0:
         satisfaction = demand["carbon_capture"] / player.config["carbon_capture"]["power_consumption"]
         captured_co2 = (
             player.config["carbon_capture"]["absorption"]
@@ -883,7 +884,7 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction) -> None:
         return
     if demand_type == "construction":
         cumul_demand = 0.0
-        for i in range(min(len(player.constructions_by_priority), player.workers[demand_type])):
+        for i in range(min(len(player.constructions_by_priority), player.workers[WorkerType.CONSTRUCTION])):
             construction = player.constructions_by_priority[i]
             if not construction.is_ongoing():
                 continue
@@ -896,7 +897,7 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction) -> None:
     if demand_type == "research":
         researches_by_priority = player.researches_by_priority
         cumul_demand = 0.0
-        for i in range(min(len(researches_by_priority), player.workers["laboratory"])):
+        for i in range(min(len(researches_by_priority), player.workers[WorkerType.RESEARCH])):
             construction = researches_by_priority[i]
             if not construction.is_ongoing():
                 continue
