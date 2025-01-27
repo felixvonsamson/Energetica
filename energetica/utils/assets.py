@@ -403,17 +403,9 @@ def queue_project(
     # priority list.
     new_construction: OngoingProject = OngoingProject(
         project_type=project_type,
-        end_tick_or_ticks_passed=0,
         duration=duration,
-        status=ProjectStatus.PAUSED,
         project_power=construction_power,
         project_pollution=technology_effects.construction_pollution_per_tick(player, project_type),
-        multipliers={
-            "price_multiplier": technology_effects.price_multiplier(player, project_type),
-            "multiplier_1": technology_effects.multiplier_1(player, project_type),
-            "multiplier_2": technology_effects.multiplier_2(player, project_type),
-            "multiplier_3": technology_effects.multiplier_3(player, project_type),
-        },
         player=player,
     )
     if project_type in TechnologyType:

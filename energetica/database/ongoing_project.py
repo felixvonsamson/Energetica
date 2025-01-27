@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import TYPE_CHECKING
 
+from energetica import technology_effects
 from energetica.database import DBModel
 from energetica.enums import FunctionalFacilityType, ProjectType, TechnologyType, WorkerType
 from energetica.globals import engine
@@ -30,17 +31,27 @@ class OngoingProject(DBModel):
     project_type: ProjectType
     player: Player
 
-    end_tick_or_ticks_passed: float  # in game ticks when the project will be finished or ticks passed if it is paused
     duration: float  # in game ticks
-    status: int  # 0 for paused, 1 for waiting, 2 for ongoing. See ProjectStatus
     project_power: float  # Power consumed by the project
     project_pollution: float  # Emissions produced by the project
+    status: int = ProjectStatus.PAUSED  # 0 for paused, 1 for waiting, 2 for ongoing. See ProjectStatus
+    end_tick_or_ticks_passed: float = 0  # in game ticks when the project will be finished or ticks passed if paused
 
     # multipliers to keep track of the technology level at the time of the start of the project
-    multipliers: dict[str, float] = field(default_factory=dict)
+    multipliers: dict[str, float] = field(init=False)
 
     speed: float = 1
     previous_speed: float = 1
+
+    def __post_init__(self) -> None:
+        """Post initialization function."""
+        super().__post_init__()  # Needed for DBModel to add this new object to the database
+        self.multipliers = {
+            "price_multiplier": technology_effects.price_multiplier(self.player, self.project_type),
+            "multiplier_1": technology_effects.multiplier_1(self.player, self.project_type),
+            "multiplier_2": technology_effects.multiplier_2(self.player, self.project_type),
+            "multiplier_3": technology_effects.multiplier_3(self.player, self.project_type),
+        }
 
     @property
     def worker_type(self) -> WorkerType:

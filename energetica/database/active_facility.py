@@ -30,7 +30,7 @@ class ActiveFacility(DBModel):
     end_of_life: float
 
     # multiply the base values by the following values
-    multipliers: dict[str, float] = field(default_factory=dict)
+    multipliers: dict[str, float]
 
     # percentage of the facility that is currently used
     usage: float = 0.0
