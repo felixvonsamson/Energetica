@@ -20,11 +20,10 @@ from energetica.database.messages import Chat, Notification
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.shipment import OngoingShipment
 from energetica.enums import (
-    ControllableFacilityType,
     ExtractionFacilityType,
     Fuel,
     FunctionalFacilityType,
-    NonFacilityAskType,
+    ProjectType,
     StorageFacilityType,
     TechnologyType,
     WorkerType,
@@ -139,11 +138,11 @@ class Player(DBModel, UserMixin):
         """Return the hash of the player's id."""
         return hash(self.id)
 
-    def get_level(self, functional_facility_or_technology: str) -> int:
+    def get_level(self, functional_facility_or_technology: ProjectType) -> int:
         """Return the technology or functional facility level of the player."""
-        if functional_facility_or_technology in self.functional_facility_lvl:
+        if isinstance(functional_facility_or_technology, FunctionalFacilityType):
             return self.functional_facility_lvl[functional_facility_or_technology]
-        elif functional_facility_or_technology in self.technology_lvl:
+        if isinstance(functional_facility_or_technology, TechnologyType):
             return self.technology_lvl[functional_facility_or_technology]
         assert False, "Wrong requirement name"
 
@@ -162,38 +161,24 @@ class Player(DBModel, UserMixin):
     resources: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
     resources_on_sale: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
 
-    # TODO(mglst): make use of the WorkerType enum
-    workers: dict[str, int] = field(
+    workers: dict[WorkerType, int] = field(
         default_factory=lambda: {
-            "construction": 1,
-            "laboratory": 0,
+            WorkerType.CONSTRUCTION: 1,
+            WorkerType.RESEARCH: 0,
         },
     )
 
-    functional_facility_lvl: dict[str, int] = field(
+    functional_facility_lvl: dict[FunctionalFacilityType, int] = field(
         default_factory=lambda: {
-            "industry": 1,
-            "laboratory": 0,
-            "warehouse": 0,
-            "carbon_capture": 0,
+            FunctionalFacilityType.INDUSTRY: 1,
+            FunctionalFacilityType.LABORATORY: 0,
+            FunctionalFacilityType.WAREHOUSE: 0,
+            FunctionalFacilityType.CARBON_CAPTURE: 0,
         },
     )
 
-    technology_lvl: dict[str, int] = field(
-        default_factory=lambda: {
-            "mathematics": 0,
-            "mechanical_engineering": 0,
-            "thermodynamics": 0,
-            "physics": 0,
-            "building_technology": 0,
-            "mineral_extraction": 0,
-            "transport_technology": 0,
-            "materials": 0,
-            "civil_engineering": 0,
-            "aerodynamics": 0,
-            "chemistry": 0,
-            "nuclear_engineering": 0,
-        },
+    technology_lvl: dict[TechnologyType, int] = field(
+        default_factory=lambda: {tech: 0 for tech in TechnologyType},
     )
 
     @property
@@ -254,39 +239,8 @@ class Player(DBModel, UserMixin):
 
     def available_workers(self, worker_type: WorkerType) -> int:
         """Return the number of available workers depending on the project type."""
-        if worker_type == WorkerType.RESEARCH:
-            return self.available_lab_workers()
-        if worker_type == WorkerType.CONSTRUCTION:
-            return self.available_construction_workers()
-        raise GameError("InvalidWorkerType")
-
-    # TODO (Felix): Could that not be a property of a newly created Worker class ?
-    def available_construction_workers(self) -> int:
-        """Return the number of available construction workers."""
-        occupied_workers = len(
-            list(
-                OngoingProject.filter(
-                    lambda construction: construction.player == self
-                    and not isinstance(construction.project_type, TechnologyType)
-                    and construction.status == ProjectStatus.ONGOING,
-                ),
-            ),
-        )
-        return self.workers["construction"] - occupied_workers
-
-    # TODO (Felix): Could that not be a property of a newly created Worker class ?
-    def available_lab_workers(self) -> int:
-        """Return the number of available lab workers."""
-        occupied_workers = len(
-            list(
-                OngoingProject.filter(
-                    lambda construction: construction.player == self
-                    and isinstance(construction.project_type, TechnologyType)
-                    and construction.status == ProjectStatus.ONGOING,
-                ),
-            ),
-        )
-        return self.workers["laboratory"] - occupied_workers
+        occupied_workers = OngoingProject.count_when(player=self, worker_type=worker_type, status=ProjectStatus.ONGOING)
+        return self.workers[worker_type] - occupied_workers
 
     def package_chat_messages(self, chat: Chat) -> list[dict]:
         """Package the last 20 messages of a chat."""
@@ -378,7 +332,7 @@ class Player(DBModel, UserMixin):
         """Return all unread notifications."""
         return list(filter(lambda notification: not notification.read, self.notifications))
 
-    def get_lvls(self) -> dict:
+    def get_lvls(self) -> dict[FunctionalFacilityType | TechnologyType, int]:
         """Return the levels of functional facilities and technologies of a player."""
         return self.technology_lvl | self.functional_facility_lvl
 
@@ -485,12 +439,12 @@ class Player(DBModel, UserMixin):
             "worker_info",
             {
                 "construction": {
-                    "available": self.available_construction_workers(),
-                    "total": self.workers["construction"],
+                    "available": self.available_workers(WorkerType.CONSTRUCTION),
+                    "total": self.workers[WorkerType.CONSTRUCTION],
                 },
                 "laboratory": {
-                    "available": self.available_lab_workers(),
-                    "total": self.workers["laboratory"],
+                    "available": self.available_workers(WorkerType.RESEARCH),
+                    "total": self.workers[WorkerType.RESEARCH],
                 },
             },
         )
