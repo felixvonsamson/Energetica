@@ -132,8 +132,8 @@ class ActiveFacility(DBModel):
         for multiplier_name, multiplier in self.multipliers.items():
             if multiplier_name == "next_available_location":
                 continue
-            # TODO(mglst): This relies on multipliers only ever increasing, which is likely but should be checked
             new_multiplier = technology_effects.current_multiplier(self.player, multiplier_name, self.facility_type)
+            # Note: The following check relies on multipliers only ever increasing
             if multiplier < new_multiplier:
                 return True
         return False
