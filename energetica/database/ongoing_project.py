@@ -46,12 +46,7 @@ class OngoingProject(DBModel):
     def __post_init__(self) -> None:
         """Post initialization function."""
         super().__post_init__()  # Needed for DBModel to add this new object to the database
-        self.multipliers = {
-            "price_multiplier": technology_effects.price_multiplier(self.player, self.project_type),
-            "multiplier_1": technology_effects.multiplier_1(self.player, self.project_type),
-            "multiplier_2": technology_effects.multiplier_2(self.player, self.project_type),
-            "multiplier_3": technology_effects.multiplier_3(self.player, self.project_type),
-        }
+        self.multipliers = technology_effects.current_multipliers(self.player, self.project_type)
 
     @property
     def worker_type(self) -> WorkerType:

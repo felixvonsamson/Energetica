@@ -10,6 +10,7 @@ from flask import flash
 from noise import pnoise3
 from scipy.stats import norm
 
+from energetica import technology_effects
 from energetica.config.assets import river_discharge_seasonal
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import HexTile
@@ -184,12 +185,7 @@ def initialize_player(player: Player) -> None:
         position=(pos_x, pos_y),
         end_of_life=eol,
         player=player,
-        multipliers={
-            "price_multiplier": 1.0,
-            "multiplier_1": 1.0,
-            "multiplier_2": 1.0,
-            "multiplier_3": 1.0,
-        },
+        multipliers=technology_effects.current_multipliers(player, ControllableFacilityType.STEAM_ENGINE),
     )
     player.active_facilities.append(steam_engine)
     player.capacities.update(player, ControllableFacilityType.STEAM_ENGINE)

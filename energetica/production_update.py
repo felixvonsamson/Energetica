@@ -598,7 +598,7 @@ def solar_generation(player: Player, generation, in_game_seconds_passed) -> None
                 )
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"]
-                    * facility.multipliers["multiplier_1"]
+                    * facility.multipliers["power_production_multiplier"]
                 )
                 facility.usage = irradiance / 950.0
                 generation[facility_type] += facility.usage * max_power
@@ -630,10 +630,9 @@ def wind_generation(player: Player, generation: dict, in_game_seconds_passed: in
                 wind_speed = calculate_wind_speed(facility.position, in_game_seconds_passed, engine.random_seed)
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"]
-                    * facility.multipliers["multiplier_1"]
+                    * facility.multipliers["power_production_multiplier"]
                 )
-                # multiplier_2 is the wind speed factor linked to the position of the facility:
-                effective_wind_speed = wind_speed * facility.multipliers["multiplier_2"]
+                effective_wind_speed = wind_speed * facility.multipliers["wind_speed_multiplier"]
                 facility.usage = interpolate_wind(effective_wind_speed)
                 generation[facility_type] += facility.usage * max_power
                 # The following value is the index of the last value in the wind_power_curve list in config.assets that

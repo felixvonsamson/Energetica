@@ -39,27 +39,6 @@ if TYPE_CHECKING:
     from energetica.database.map import HexTile
     from energetica.database.player import Player
 
-# This section describes the mapping of various multipliers to their corresponding categories.
-# Each multiplier is associated with a specific group of facilities, allowing easy identification
-# of where they are stored and how they are applied:
-#
-# - **multiplier_1**:
-#   - `power_production_multiplier` (used for all power and storage facilities)
-#   - `power_consumption_multiplier` (specific to extraction facilities)
-#
-# - **multiplier_2**:
-#   - `wind_speed_multiplier` (specific to wind power facilities)
-#   - `hydro_price_multiplier` (specific to hydro power facilities)
-#   - `capacity_multiplier` (applicable to storage facilities)
-#   - `extraction_rate_multiplier` (used in extraction facilities)
-#
-# - **multiplier_3**:
-#   - `efficiency_multiplier` (used in storage and other power facilities)
-#   - `next_available_location` (relevant for wind and hydro power facilities)
-#   - `extraction_emissions_multiplier` (specific to extraction facilities)
-#
-# For more detailed explanations, refer to the docstrings of individual multiplier functions.
-
 
 def special_multiplier(pf: float, lvl: int) -> float:
     """Return special values to reduce exponential growth of the power production."""
@@ -146,27 +125,32 @@ def current_multiplier(player: Player, multiplier: str, facility_type: ProjectTy
     if multiplier == "extraction_emissions_multiplier":
         assert isinstance(facility_type, ExtractionFacilityType)
         return extraction_emissions_multiplier(player, facility_type)
-    # TODO(mglst): These should be removed once the code is fully refactored
-    if multiplier == "multiplier_1":
-        return multiplier_1(player, facility_type)
-    if multiplier == "multiplier_2":
-        return multiplier_2(player, facility_type)
-    if multiplier == "multiplier_3":
-        return multiplier_3(player, facility_type)
     raise GameError("InvalidMultiplier")
 
 
-def multiplier_1(player: Player, facility_type: ProjectType) -> float:
-    """
-    Return the first multiplier according to the technology level of the player.
-
-    This multiplier can be either the `power_production_multiplier` or the `power_consumption_multiplier`.
-    """
-    if isinstance(facility_type, ExtractionFacilityType):
-        return power_consumption_multiplier(player, facility_type)
+def current_multipliers(player: Player, facility_type: ProjectType) -> dict[str, float]:
+    """Return a dictionary of the current multipliers for the player associated with the facility."""
+    multipliers = {}
+    multipliers["price_multiplier"] = price_multiplier(player, facility_type)
     if isinstance(facility_type, PowerFacilityType | StorageFacilityType):
-        return power_production_multiplier(player, facility_type)
-    return 1
+        multipliers["power_production_multiplier"] = power_production_multiplier(player, facility_type)
+    if isinstance(facility_type, ExtractionFacilityType):
+        multipliers["power_consumption_multiplier"] = power_consumption_multiplier(player, facility_type)
+    if isinstance(facility_type, WindFacilityType):
+        multipliers["wind_speed_multiplier"] = wind_speed_multiplier(player, facility_type)
+    if isinstance(facility_type, HydroFacilityType):
+        multipliers["hydro_price_multiplier"] = hydro_price_multiplier(player, facility_type)
+    if isinstance(facility_type, StorageFacilityType):
+        multipliers["capacity_multiplier"] = capacity_multiplier(player, facility_type)
+    if isinstance(facility_type, ExtractionFacilityType):
+        multipliers["extraction_rate_multiplier"] = extraction_rate_multiplier(player)
+    if isinstance(facility_type, WindFacilityType | HydroFacilityType):
+        multipliers["next_available_location"] = next_available_location(player, facility_type)
+    if isinstance(facility_type, ControllableFacilityType | StorageFacilityType):
+        multipliers["efficiency_multiplier"] = efficiency_multiplier(player, facility_type)
+    if isinstance(facility_type, ExtractionFacilityType):
+        multipliers["extraction_emissions_multiplier"] = extraction_emissions_multiplier(player, facility_type)
+    return multipliers
 
 
 def power_production_multiplier(player: Player, facility_type: PowerFacilityType | StorageFacilityType) -> float:
@@ -213,24 +197,6 @@ def power_consumption_multiplier(player: Player, facility_type: ExtractionFacili
             * player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
         )
     return mlt
-
-
-def multiplier_2(player: Player, facility_type: ProjectType) -> float:
-    """
-    Return the second multiplier according to the technology level of the player.
-
-    This multiplier can be either the
-    `extraction_rate_multiplier`, the `hydro_price_multiplier`, the `wind_speed_multiplier` or the `capacity_multiplier`
-    """
-    if isinstance(facility_type, ExtractionFacilityType):
-        return extraction_rate_multiplier(player)
-    if isinstance(facility_type, HydroFacilityType):
-        return hydro_price_multiplier(player, facility_type)
-    if isinstance(facility_type, WindFacilityType):
-        return wind_speed_multiplier(player, facility_type)
-    if isinstance(facility_type, StorageFacilityType):
-        return capacity_multiplier(player, facility_type)
-    return 1
 
 
 def capacity_multiplier(player: Player, storage_facility_type: StorageFacilityType) -> float:
@@ -286,20 +252,6 @@ def wind_speed_multiplier(player: Player, wind_facility_type: WindFacilityType) 
         next_available_location(player, wind_facility_type),
         player.tile.potentials[Renewable.WIND],
     )
-
-
-def multiplier_3(player: Player, facility_type: ProjectType) -> float:
-    """
-    Return the third multiplier according to the technology level of the player.
-
-    This multiplier can be either the `efficiency_multiplier`, the `extraction_emissions_multiplier`, or the
-    `next_available_location`.
-    """
-    if isinstance(facility_type, ExtractionFacilityType):
-        return extraction_emissions_multiplier(player, facility_type)
-    if isinstance(facility_type, HydroFacilityType | WindFacilityType):
-        return next_available_location(player, facility_type)
-    return efficiency_multiplier(player, facility_type)
 
 
 def efficiency_multiplier(player: Player, facility_type: ProjectType) -> float:
@@ -386,9 +338,9 @@ def next_available_location(player: Player, facility_type: HydroFacilityType | W
         project_type=facility_type,
         player=player,
     )
-    # Create a set of used efficiency multipliers
-    used_locations = {af.multipliers["multiplier_3"] for af in active_facilities}
-    used_locations.update(uc.multipliers["multiplier_3"] for uc in under_construction)
+    # Create a set of used locations
+    used_locations = {af.multipliers["next_available_location"] for af in active_facilities}
+    used_locations.update(uc.multipliers["next_available_location"] for uc in under_construction)
     i = 0
     while i in used_locations:
         i += 1
