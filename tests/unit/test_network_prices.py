@@ -35,8 +35,10 @@ def test_update_bogus_prices():
     """Test that updating a bogus ask or bid price raises an error."""
     network_prices = NetworkPrices()
 
+    # This should work, as the price is valid
     network_prices.update(updated_asks={FunctionalFacilityType.INDUSTRY: -4.999}, updated_bids={})
     try:
+        # This should raise an error, as the price is too low
         network_prices.update(updated_asks={FunctionalFacilityType.INDUSTRY: -5}, updated_bids={})
     except GameError:
         assert True
