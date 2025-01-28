@@ -123,10 +123,12 @@ def multiplier_1(player: Player, facility_type: ProjectType) -> float:
     """
     if isinstance(facility_type, ExtractionFacilityType):
         return power_consumption_multiplier(player, facility_type)
-    return power_production_multiplier(player, facility_type)
+    if isinstance(facility_type, PowerFacilityType | StorageFacilityType):
+        return power_production_multiplier(player, facility_type)
+    return 1
 
 
-def power_production_multiplier(player: Player, facility_type: ProjectType) -> float:
+def power_production_multiplier(player: Player, facility_type: PowerFacilityType | StorageFacilityType) -> float:
     """Return by how much the `facility`'s `base_power_generation` should be multiplied."""
     const_config = engine.const_config["assets"]
     mlt = 1.0
@@ -512,7 +514,6 @@ def requirements_status(player: Player, project_type: ProjectType, requirements:
     "satisfied" or "queued", returns "queued", otherwise returns "unsatisfied".
     """
     # TODO(mglst): this method, and the others about requirements should be revised, as they are unclear
-    const_config = engine.const_config["assets"]
     if all(requirement["status"] == "satisfied" for requirement in requirements):
         if isinstance(project_type, TechnologyType) and OngoingProject.filter_by(
             project_type=project_type, player=player
@@ -563,7 +564,10 @@ def _package_project_base(player: Player, project_type: ProjectType) -> dict:
     } | project_requirements_and_requirements_status(player, project_type)
 
 
-def _package_power_generating_facility_base(player: Player, power_facility_type: ProjectType) -> dict:
+def _package_power_generating_facility_base(
+    player: Player,
+    power_facility_type: PowerFacilityType | StorageFacilityType,
+) -> dict:
     """Package data shared by power and storage facilities."""
     const_config_assets = engine.const_config["assets"]
     return (
