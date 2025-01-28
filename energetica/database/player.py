@@ -29,7 +29,6 @@ from energetica.enums import (
     WorkerType,
     power_facility_types,
 )
-from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.technology_effects import (
     package_available_technologies,
@@ -72,8 +71,19 @@ class Player(DBModel, UserMixin):
     shipments: list[OngoingShipment] = field(default_factory=list)  # Player
     active_facilities: list[ActiveFacility] = field(default_factory=list)  # Player
     climate_events: list[ClimateEventRecovery] = field(default_factory=list)  # Player
-    constructions_by_priority: list[OngoingProject] = field(default_factory=list)  # Player
-    researches_by_priority: list[OngoingProject] = field(default_factory=list)  # Player
+    projects_by_priority: dict[WorkerType, list[OngoingProject]] = field(
+        default_factory=lambda: {worker_type: [] for worker_type in WorkerType},
+    )
+
+    @property
+    def constructions_by_priority(self) -> list[OngoingProject]:
+        """Return the constructions by priority."""
+        return self.projects_by_priority[WorkerType.CONSTRUCTION]
+
+    @property
+    def researches_by_priority(self) -> list[OngoingProject]:
+        """Return the researches by priority."""
+        return self.projects_by_priority[WorkerType.RESEARCH]
 
     network_prices: NetworkPrices = field(default_factory=NetworkPrices)
     rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
@@ -214,23 +224,6 @@ class Player(DBModel, UserMixin):
     def change_graph_view(self, view: NetworkGraphView) -> None:
         """Set the network graph view of the player (basic/normal/expert)."""
         self.graph_view = view
-
-    def get_project_priority_list(self, worker_type: WorkerType) -> list[OngoingProject]:
-        """Return the priority list for a given project type."""
-        if worker_type == WorkerType.RESEARCH:
-            return self.researches_by_priority
-        if worker_type == WorkerType.CONSTRUCTION:
-            return self.constructions_by_priority
-        raise GameError("InvalidWorkerType")
-
-    def set_project_priority_list(self, worker_type: WorkerType, priority_list: list[OngoingProject]) -> None:
-        """Set the priority list for a given project type."""
-        if worker_type == WorkerType.RESEARCH:
-            self.researches_by_priority = priority_list
-        elif worker_type == WorkerType.CONSTRUCTION:
-            self.constructions_by_priority = priority_list
-        else:
-            raise GameError("InvalidWorkerType")
 
     def available_workers(self, worker_type: WorkerType) -> int:
         """Return the number of available workers depending on the project type."""
@@ -605,7 +598,7 @@ class Player(DBModel, UserMixin):
                 k: getattr(construction, k)
                 for k in [
                     "id",
-                    "name",
+                    "project_type",
                     "end_tick_or_ticks_passed",
                     "duration",
                     "status",

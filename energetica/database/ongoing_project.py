@@ -156,6 +156,7 @@ class OngoingProject(DBModel):
         this_priority_index: int
         if isinstance(self.project_type, FunctionalFacilityType):
             # For functional facilities, the only prerequisites are ongoing projects of the same type
+            # TODO(mglst): This is not correct, carbon capture has technology prerequisites
             priority_list = self.player.constructions_by_priority
             this_priority_index = priority_list.index(self)
             # Go through all ongoing constructions that are higher up in the priority order

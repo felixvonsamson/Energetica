@@ -20,161 +20,113 @@ from energetica.utils.assets import (
 )
 from energetica.utils.misc import confirm_location
 
-# RULES FOR PROJECTS:
-# 1. All projects (in the database) should appear exactly once in the priority list.
-# 2. The number of ongoing constructions / research projects must be less then or equal to the number of construction /
-# lab workers.
-# 3. In the project priority list, ongoing projects must come before all waiting projects and all waiting projects must
-# come before all paused projects.
-# 4. All projects have a finish time in the future.
-# 5. A project can not be ongoing if it has unfulfilled requirements.
-# 6. All requirements of a project must appear before the project in the priority list.
-# 7. If there are projects waiting that have all their requirements fulfilled, there should be no available workers of
-# the corresponding type.
-
 
 def validate_rules(player: Player):
     """This function validates all of the above rules."""
-    # Rule 1
-    assert len({construction.id for construction in player.constructions_by_priority}) == len(
-        player.constructions_by_priority
-    )
-    assert len({research.id for research in player.researches_by_priority}) == len(player.researches_by_priority)
-    for construction in player.constructions_by_priority:
-        assert construction is not None
-        assert construction.player == player
-        assert not isinstance(construction.project_type, TechnologyType)
-    for research in player.researches_by_priority:
-        assert research is not None
-        assert research.player == player
-        assert isinstance(research.project_type, TechnologyType)
-    assert OngoingProject.count(
-        condition=lambda construction: construction.player == player
-        and not isinstance(construction.project_type, TechnologyType)
-    ) == len(player.constructions_by_priority)
-    assert OngoingProject.count(
-        condition=lambda research: research.player == player and isinstance(research.project_type, TechnologyType)
-    ) == len(player.researches_by_priority)
+    validate_rule_1(player)
+    validate_rule_2(player)
+    validate_rule_3(player)
+    validate_rule_4(player)
+    validate_rule_5(player)
+    validate_rule_6(player)
+    validate_rule_7(player)
 
-    # Rule 2
-    ongoing_constructions = list(
-        OngoingProject.filter(
-            lambda construction: construction.player == player
-            and construction.status == ProjectStatus.ONGOING
-            and not isinstance(construction.project_type, TechnologyType)
-        )
-    )
-    if len(ongoing_constructions) > player.workers[WorkerType.CONSTRUCTION]:
-        pytest.fail(
-            f"Rule 2 violation: there are {len(ongoing_constructions)} ongoing constructions "
-            f"({','.join(map(lambda c: c.project_type, ongoing_constructions))}), "
-            f"but only {player.workers[WorkerType.CONSTRUCTION]} construction workers."
-        )
 
-    ongoing_research = list(
-        OngoingProject.filter(
-            lambda project: project.player == player
-            and project.status == ProjectStatus.ONGOING
-            and isinstance(project.project_type, TechnologyType)
-        )
-    )
-    if len(ongoing_research) > player.workers[WorkerType.RESEARCH]:
-        pytest.fail(
-            f"Rule 2 violation: there are {len(ongoing_research)} ongoing research projects "
-            f"({','.join(map(lambda c: c.project_type, ongoing_research))}), "
-            f"but only {player.workers[WorkerType.RESEARCH]} lab workers."
-        )
+def validate_rule_1(player: Player):
+    """All projects (in the database) should appear exactly once in the priority list."""
+    for worker_type in WorkerType:
+        projects_by_priority = player.projects_by_priority[worker_type]
+        assert len({project.id for project in projects_by_priority}) == len(projects_by_priority)
+        for project in projects_by_priority:
+            assert project is not None
+            assert project.player == player
+            if worker_type == WorkerType.CONSTRUCTION:
+                assert not isinstance(project.project_type, TechnologyType)
+            else:
+                assert isinstance(project.project_type, TechnologyType)
+        assert OngoingProject.count_when(player=player, worker_type=worker_type) == len(projects_by_priority)
 
-    # Rule 3
-    status_list_constructions = list(map(lambda x: x.status, player.constructions_by_priority))
-    assert sorted(status_list_constructions, reverse=True) == status_list_constructions
-    status_list_research = list(map(lambda x: x.status, player.researches_by_priority))
-    assert sorted(status_list_research, reverse=True) == status_list_research
 
-    # Rule 4
+def validate_rule_2(player: Player):
+    """The number of ongoing projects must be less then or equal to the number of workers."""
+    for worker_type in WorkerType:
+        ongoing_projects = list(
+            OngoingProject.filter_by(player=player, status=ProjectStatus.ONGOING, worker_type=worker_type),
+        )
+        if len(ongoing_projects) > player.workers[worker_type]:
+            pytest.fail(
+                f"Rule 2 violation: there are {len(ongoing_projects)} ongoing projects of type {worker_type} "
+                f"({','.join(map(lambda c: c.project_type, ongoing_projects))}), "
+                f"but only {player.workers[worker_type]} {worker_type} workers."
+            )
+
+
+def validate_rule_3(player: Player):
+    """In the project priority list, ongoing projects must come before all waiting projects and all waiting projects
+    must come before all paused projects."""
+    for worker_type in WorkerType:
+        status_list = list(map(lambda x: x.status, player.projects_by_priority[worker_type]))
+        assert sorted(status_list, reverse=True) == status_list
+
+
+def validate_rule_4(player: Player):
+    """All projects have a finish time in the future."""
     assert not OngoingProject.count(
         condition=lambda project: project.player == player
         and project.status == ProjectStatus.ONGOING
         and project.end_tick_or_ticks_passed <= engine.total_t
     )
-    assert not OngoingProject.count(
-        condition=lambda project: project.player == player
-        and project.status != ProjectStatus.ONGOING
-        and project.end_tick_or_ticks_passed > engine.total_t
-    )
 
-    # Rule 5
-    ongoing_projects: Iterable[OngoingProject] = OngoingProject.filter_by(
+
+def validate_rule_5(player: Player):
+    """A project can not be ongoing if it has unfulfilled requirements."""
+    ongoing_projects: Iterable[OngoingProject] = OngoingProject.filter_by(  # type: ignore[no-redef]
         player=player,
         status=ProjectStatus.ONGOING,
     )
     for project in ongoing_projects:
-        prerequisites = project.prerequisites
-        if prerequisites:
+        if project.prerequisites:
             del project._prerequisites_and_level
             assert not project.prerequisites
 
-    # Rule 6
-    for index, construction in enumerate(player.constructions_by_priority):
-        for prerequisite in construction.prerequisites:
-            if player.constructions_by_priority.index(prerequisite) >= index:
-                del construction._prerequisites_and_level
-                for prerequisite in construction.prerequisites:
-                    assert player.constructions_by_priority.index(prerequisite) < index
-                break
-    for index, research in enumerate(player.researches_by_priority):
-        for prerequisite in research.prerequisites:
-            if player.researches_by_priority.index(prerequisite) >= index:
-                del research._prerequisites_and_level
-                for prerequisite in research.prerequisites:
-                    assert player.researches_by_priority.index(prerequisite) < index
-                break
 
-    # Rule 7
-    waiting_constructions: list[OngoingProject] = list(
-        OngoingProject.filter(
-            lambda construction: construction.player == player
-            and construction.status == ProjectStatus.WAITING
-            and not isinstance(construction.project_type, TechnologyType)
-            and not construction.prerequisites
-        )
-    )
-    if waiting_constructions:
-        count_on_going_constructions = OngoingProject.count(
-            condition=lambda construction: construction.player == player
-            and construction.status == ProjectStatus.ONGOING
-            and not isinstance(construction.project_type, TechnologyType)
-        )
-        if player.workers[WorkerType.CONSTRUCTION] != count_on_going_constructions:
-            pytest.fail(
-                "Rule 7 failed for constructions. "
-                f"Player has {len(waiting_constructions)} waiting constructions "
-                f"({','.join(map(lambda c: c.project_type, waiting_constructions))}), "
-                f"but has {player.workers[WorkerType.CONSTRUCTION]} construction workers, "
-                f"and only {count_on_going_constructions} ongoing constructions."
+def validate_rule_6(player: Player):
+    """All requirements of a project must appear before the project in the priority list."""
+    for worker_type in WorkerType:
+        for index, project in enumerate(player.projects_by_priority[worker_type]):
+            for prerequisite in project.prerequisites:
+                if player.projects_by_priority[worker_type].index(prerequisite) >= index:
+                    del project._prerequisites_and_level
+                    for prerequisite in project.prerequisites:
+                        assert player.projects_by_priority[worker_type].index(prerequisite) < index
+                    break
+
+
+def validate_rule_7(player: Player):
+    """If there are projects waiting with all their requirements fulfilled, there should be no available workers."""
+    for worker_type in WorkerType:
+        waiting_projects = list(
+            OngoingProject.filter(
+                lambda project: project.player == player
+                and project.status == ProjectStatus.WAITING
+                and project.worker_type == worker_type
+                and not project.prerequisites
             )
-    waiting_research: list[OngoingProject] = list(
-        OngoingProject.filter(
-            lambda research: research.player == player
-            and research.status == ProjectStatus.WAITING
-            and isinstance(research.project_type, TechnologyType)
-            and not research.prerequisites
         )
-    )
-    if waiting_research:
-        count_on_going_research = OngoingProject.count(
-            condition=lambda research: research.player == player
-            and research.status == ProjectStatus.ONGOING
-            and isinstance(research.project_type, TechnologyType)
-        )
-        if player.workers[WorkerType.RESEARCH] != count_on_going_research:
-            pytest.fail(
-                "Rule 7 failed for research. "
-                f"Player has {len(waiting_research)} waiting research projects "
-                f"({','.join(map(lambda c: c.project_type, waiting_research))}), "
-                f"but has {player.workers[WorkerType.RESEARCH]} lab workers, "
-                f"and only {count_on_going_research} ongoing research projects."
+        if waiting_projects:
+            count_on_going_projects = OngoingProject.count(
+                condition=lambda project: project.player == player
+                and project.status == ProjectStatus.ONGOING
+                and project.worker_type == worker_type
             )
+            if player.workers[worker_type] != count_on_going_projects:
+                pytest.fail(
+                    f"Rule 7 failed for {worker_type}. "
+                    f"Player has {len(waiting_projects)} waiting projects "
+                    f"({','.join(map(lambda c: c.project_type, waiting_projects))}), "
+                    f"but has {player.workers[worker_type]} {worker_type} workers, "
+                    f"and only {count_on_going_projects} ongoing projects."
+                )
 
 
 def test_swap_paused_and_unpaused_constructions():
