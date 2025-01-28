@@ -121,8 +121,7 @@ def multiplier_1(player: Player, facility_type: ProjectType) -> float:
 
     This multiplier can be either the `power_production_multiplier` or the `power_consumption_multiplier`.
     """
-    const_config = engine.const_config["assets"]
-    if facility_type in const_config["mineral_extraction"]["affected_facilities"]:
+    if isinstance(facility_type, ExtractionFacilityType):
         return power_consumption_multiplier(player, facility_type)
     return power_production_multiplier(player, facility_type)
 
@@ -160,8 +159,8 @@ def power_production_multiplier(player: Player, facility_type: ProjectType) -> f
     return mlt
 
 
-def power_consumption_multiplier(player: Player, facility_type: ProjectType) -> float:
-    """Return by how much the `facility`'s `base_power_consumption` should be multiplied."""
+def power_consumption_multiplier(player: Player, facility_type: ExtractionFacilityType) -> float:
+    """Return by how much an extraction facility's `base_power_consumption` should be multiplied."""
     const_config = engine.const_config["assets"]
     mlt = 1
     # Mineral extraction (in this case it is the energy consumption)
