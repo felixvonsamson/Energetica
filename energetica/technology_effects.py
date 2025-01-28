@@ -255,8 +255,7 @@ def multiplier_3(player: Player, facility_type: ProjectType) -> float:
     This multiplier can be either the `efficiency_multiplier`, the `extraction_emissions_multiplier`, or the
     `next_available_location`.
     """
-    const_config = engine.const_config["assets"]
-    if facility_type in const_config["mineral_extraction"]["affected_facilities"]:
+    if isinstance(facility_type, ExtractionFacilityType):
         return extraction_emissions_multiplier(player, facility_type)
     if isinstance(facility_type, HydroFacilityType | WindFacilityType):
         return next_available_location(player, facility_type)
@@ -326,17 +325,15 @@ def efficiency_multiplier_for_storage_facilities(
     return 1
 
 
-def extraction_emissions_multiplier(player: Player, extraction_facility_type: ProjectType) -> float:
+def extraction_emissions_multiplier(player: Player, extraction_facility_type: ExtractionFacilityType) -> float:
     """Return by how much the `facility`'s `base_pollution` should be multiplied."""
     const_config = engine.const_config["assets"]
-    mlt = 1
-    # Mineral extraction (in this case the the multiplier is for emissions)
     if extraction_facility_type in const_config["mineral_extraction"]["affected_facilities"]:
-        mlt += (
+        return 1 + (
             const_config["mineral_extraction"]["pollution_factor"]
             * player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
         )
-    return mlt
+    return 1
 
 
 def next_available_location(player: Player, facility_type: HydroFacilityType | WindFacilityType) -> int:
