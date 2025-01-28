@@ -271,49 +271,59 @@ def efficiency_multiplier(player: Player, facility_type: ProjectType) -> float:
     For power facilities, returns by how much the `facility`'s `base_pollution` should be multiplied, according to the
     technology level of the `player`.
     """
-    const_config = engine.const_config["assets"]
-    # Thermodynamics
-    if facility_type in const_config["thermodynamics"]["affected_facilities"]:
-        return efficiency_multiplier_thermodynamics(player, facility_type)
-    # Chemistry
-    if facility_type in const_config["chemistry"]["affected_facilities"]:
-        return efficiency_multiplier_chemistry(player, facility_type)
+    if isinstance(facility_type, ControllableFacilityType):
+        return efficiency_multiplier_for_controllable_facilities(player, facility_type)
+    if isinstance(facility_type, StorageFacilityType):
+        return efficiency_multiplier_for_storage_facilities(player, facility_type)
     return 1
 
 
-def efficiency_multiplier_thermodynamics(player: Player, facility_type: ProjectType, level: int | None = None) -> float:
+def efficiency_multiplier_for_controllable_facilities(
+    player: Player,
+    controllable_facility_type: ControllableFacilityType,
+    thermodynamics_level: int | None = None,
+) -> float:
     """
-    Return by how much the `base_efficiency` should be multiplied.
+    Return by how much the controllable power facility's `base_efficiency` should be multiplied.
 
-    Defined for facilities in the `"affected_facilities"` list for `thermodynamics`.
-    If `level` is not provided, the `player`'s current `thermodynamics` level is used.
+    If `thermodynamics_level` is not provided, the `player`'s current `thermodynamics` level is used.
     """
-    if level is None:
-        level = player.technology_lvl[TechnologyType.THERMODYNAMICS]
     const_config = engine.const_config["assets"]
-    thermodynamic_factor = const_config["thermodynamics"]["efficiency_factor"] ** level
-    if facility_type == StorageFacilityType.MOLTEN_SALT:
+    if controllable_facility_type not in const_config["thermodynamics"]["affected_facilities"]:
+        return 1
+    if thermodynamics_level is None:
+        thermodynamics_level = player.technology_lvl[TechnologyType.THERMODYNAMICS]
+    return const_config["thermodynamics"]["efficiency_factor"] ** thermodynamics_level
+
+
+def efficiency_multiplier_for_storage_facilities(
+    player: Player,
+    storage_facility_type: StorageFacilityType,
+    *,
+    chemistry_level: int | None = None,
+    thermodynamics_level: int | None = None,
+) -> float:
+    """Return by how much the storage facility's `base_efficiency` should be multiplied."""
+    const_config = engine.const_config["assets"]
+    if storage_facility_type in engine.const_config["assets"]["chemistry"]["affected_facilities"]:
+        if chemistry_level is None:
+            chemistry_level = player.technology_lvl[TechnologyType.THERMODYNAMICS]
+        chemistry_factor = const_config["chemistry"]["inefficiency_factor"] ** chemistry_level
+        if storage_facility_type == StorageFacilityType.HYDROGEN_STORAGE:
+            return (
+                0.65 / const_config[storage_facility_type]["initial_efficiency"] * (1 - chemistry_factor)
+                + chemistry_factor
+            )
+        return 1 / const_config[storage_facility_type]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
+    if storage_facility_type == StorageFacilityType.MOLTEN_SALT:
+        if thermodynamics_level is None:
+            thermodynamics_level = player.technology_lvl[TechnologyType.THERMODYNAMICS]
+        thermodynamic_factor = const_config["thermodynamics"]["efficiency_factor"] ** thermodynamics_level
         return (
-            1 / const_config[facility_type]["initial_efficiency"] * (1 - 1 / thermodynamic_factor)
+            1 / const_config[storage_facility_type]["initial_efficiency"] * (1 - 1 / thermodynamic_factor)
             + 1 / thermodynamic_factor
         )
-    return thermodynamic_factor
-
-
-def efficiency_multiplier_chemistry(player: Player, facility_type: ProjectType, level: int | None = None) -> float:
-    """
-    Return by how much the `base_efficiency` should be multiplied.
-
-    For facilities in the `"affected_facilities"` list for `chemistry`.
-    If `level` is not provided, the `player`'s current `chemistry` level is used.
-    """
-    if level is None:
-        level = player.technology_lvl[TechnologyType.THERMODYNAMICS]
-    const_config = engine.const_config["assets"]
-    chemistry_factor = const_config["chemistry"]["inefficiency_factor"] ** level
-    if facility_type == StorageFacilityType.HYDROGEN_STORAGE:
-        return 0.65 / const_config[facility_type]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
-    return 1 / const_config[facility_type]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
+    return 1
 
 
 def extraction_emissions_multiplier(player: Player, extraction_facility_type: ProjectType) -> float:
@@ -950,10 +960,10 @@ def package_available_technologies(player: Player) -> list[dict]:
                     * (
                         1
                         - engine.const_config["assets"]["molten_salt"]["base_efficiency"]
-                        * efficiency_multiplier_thermodynamics(
+                        * efficiency_multiplier_for_storage_facilities(
                             player,
                             StorageFacilityType.MOLTEN_SALT,
-                            level=levels[technology] - 1,
+                            thermodynamics_level=levels[technology] - 1,
                         )
                     )
                     * 100
@@ -1042,10 +1052,10 @@ def package_available_technologies(player: Player) -> list[dict]:
                 * (
                     0.65
                     - engine.const_config["assets"]["hydrogen_storage"]["base_efficiency"]
-                    * efficiency_multiplier_chemistry(
+                    * efficiency_multiplier_for_storage_facilities(
                         player,
                         StorageFacilityType.HYDROGEN_STORAGE,
-                        level=levels[technology] - 1,
+                        chemistry_level=levels[technology] - 1,
                     )
                 )
                 * 100,
@@ -1053,10 +1063,10 @@ def package_available_technologies(player: Player) -> list[dict]:
                 * (
                     1
                     - engine.const_config["assets"]["lithium_ion_batteries"]["base_efficiency"]
-                    * efficiency_multiplier_chemistry(
+                    * efficiency_multiplier_for_storage_facilities(
                         player,
                         StorageFacilityType.LITHIUM_ION_BATTERIES,
-                        level=levels[technology] - 1,
+                        chemistry_level=levels[technology] - 1,
                     )
                 )
                 * 100,
@@ -1064,10 +1074,10 @@ def package_available_technologies(player: Player) -> list[dict]:
                 * (
                     1
                     - engine.const_config["assets"]["solid_state_batteries"]["base_efficiency"]
-                    * efficiency_multiplier_chemistry(
+                    * efficiency_multiplier_for_storage_facilities(
                         player,
                         StorageFacilityType.SOLID_STATE_BATTERIES,
-                        level=levels[technology] - 1,
+                        chemistry_level=levels[technology] - 1,
                     )
                 )
                 * 100,
