@@ -188,24 +188,21 @@ def multiplier_2(player: Player, facility_type: ProjectType) -> float:
         return hydro_price_multiplier(player, facility_type)
     if isinstance(facility_type, WindFacilityType):
         return wind_speed_multiplier(player, facility_type)
-    return capacity_multiplier(player, facility_type)
+    if isinstance(facility_type, StorageFacilityType):
+        return capacity_multiplier(player, facility_type)
+    return 1
 
 
-def capacity_multiplier(player: Player, storage_facility_type: ProjectType) -> float:
-    """
-    Return by how much the `facility`'s `base_storage_capacity` should be multiplied.
-
-    Defined for storage facilities.
-    """
-    const_config = engine.const_config["assets"]
-    mlt = 1.0
-    # Civil engineering
+def capacity_multiplier(player: Player, storage_facility_type: StorageFacilityType) -> float:
+    """Return by how much the storage facility's `base_storage_capacity` should be multiplied."""
     if storage_facility_type in [StorageFacilityType.SMALL_PUMPED_HYDRO, StorageFacilityType.LARGE_PUMPED_HYDRO]:
-        mlt *= special_multiplier(
+        # Civil engineering
+        const_config = engine.const_config["assets"]
+        return special_multiplier(
             const_config["civil_engineering"]["capacity_factor"],
             player.technology_lvl[TechnologyType.CIVIL_ENGINEERING],
         )
-    return mlt
+    return 1
 
 
 def extraction_rate_multiplier(player: Player, level: int | None = None) -> float:
