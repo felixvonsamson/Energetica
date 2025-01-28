@@ -115,7 +115,7 @@ class ActiveFacility(DBModel):
         return self.const_config["base_power_consumption"] * self.multipliers["multiplier_1"]
 
     @property
-    def remaining_lifespan(self) -> int | None:
+    def remaining_lifespan(self) -> float | None:
         """Time left until the facility is decommissioned in ticks."""
         remaining_ticks = self.end_of_life - engine.total_t
         if remaining_ticks < 0:
