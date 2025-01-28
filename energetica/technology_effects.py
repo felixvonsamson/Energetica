@@ -235,23 +235,20 @@ def hydro_price_multiplier(player: Player, hydro_facility_type: HydroFacilityTyp
     )
 
 
-def wind_speed_multiplier(player: Player, wind_facility_type: ProjectType) -> float:
+def wind_speed_multiplier(player: Player, wind_facility_type: WindFacilityType) -> float:
     """
     Return by how much the wind at the `facility`'s location should be multiplied.
 
     Defined for wind power facilities.
     Depends on the `player`'s current number of wind facilities and wind potential.
     """
-    mlt = 1.0
     # calculating the wind speed multiplier linked to the number of wind turbines
     if not player.tile:
         raise GameError("TileNotFound")  # TODO(mglst): handle this case
-    if isinstance(wind_facility_type, WindFacilityType):
-        mlt *= wind_speed_function(
-            next_available_location(player, wind_facility_type),
-            player.tile.potentials[Renewable.WIND],
-        )
-    return mlt
+    return wind_speed_function(
+        next_available_location(player, wind_facility_type),
+        player.tile.potentials[Renewable.WIND],
+    )
 
 
 def multiplier_3(player: Player, facility_type: ProjectType) -> float:
@@ -587,27 +584,28 @@ def _package_power_generating_facility_base(
     )
 
 
-def _capacity_factors(player: Player, renewable_name: ProjectType) -> dict:
+def _capacity_factors(player: Player, renewable_power_facility_type: ProjectType) -> dict:
     """
     Get the capacity factors for renewable power facilities.
 
     !!! The capacity factor function is an approximation of the empirical data and has to be updated whenever a change
     in the wind simulation is made. !!!
     """
-    if renewable_name in WindFacilityType:
+    if isinstance(renewable_power_facility_type, WindFacilityType):
 
         def capacity_factor_wind(wind_speed: float) -> float:
             """Fit of empirical data for wind speeds."""
             return 0.5280542813 - 0.5374832237 * np.exp(-2.226120465 * wind_speed**2.38728403)
 
+        capacity_factor = capacity_factor_wind(wind_speed_multiplier(player, renewable_power_facility_type))
         return {
-            "capacity_factor": f"{100 * capacity_factor_wind(wind_speed_multiplier(player, renewable_name)):.0f}%",
+            "capacity_factor": f"{100 * capacity_factor:.0f}%",
         }
-    if renewable_name in HydroFacilityType:
+    if isinstance(renewable_power_facility_type, HydroFacilityType):
         return {
             "capacity_factor": "55%",
         }
-    if renewable_name in SolarFacilityType:
+    if isinstance(renewable_power_facility_type, SolarFacilityType):
 
         def capacity_factor_solar(latitude: int) -> float:
             """Empirical data for solar irradiations."""
@@ -688,7 +686,7 @@ def package_power_facilities(player: Player) -> list[dict]:
         )
         | (
             {"low_wind_speed": wind_speed_multiplier(player, power_facility) <= 0.55}
-            if power_facility in WindFacilityType
+            if isinstance(power_facility, WindFacilityType)
             else {}
         )
         for power_facility in power_facility_types
