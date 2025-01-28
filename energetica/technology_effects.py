@@ -48,9 +48,9 @@ if TYPE_CHECKING:
 #   - `power_consumption_multiplier` (specific to extraction facilities)
 #
 # - **multiplier_2**:
-#   - `capacity_multiplier` (applicable to storage facilities)
 #   - `wind_speed_multiplier` (specific to wind power facilities)
 #   - `hydro_price_multiplier` (specific to hydro power facilities)
+#   - `capacity_multiplier` (applicable to storage facilities)
 #   - `extraction_rate_multiplier` (used in extraction facilities)
 #
 # - **multiplier_3**:
@@ -221,22 +221,18 @@ def extraction_rate_multiplier(player: Player, level: int | None = None) -> floa
     return 1 + const_config["mineral_extraction"]["extract_factor"] * level
 
 
-def hydro_price_multiplier(player: Player, hydro_facility_type: ProjectType) -> float:
+def hydro_price_multiplier(player: Player, hydro_facility_type: HydroFacilityType) -> float:
     """
-    Return by how much the `facility`'s `base_price` should be multiplied.
+    Return by how much the hydro facility's `base_price` should be multiplied.
 
-    Defined for hydro power facilities. Returns 1 for other facilities.
+    This is determined by the tile's hydro potential, and the number of hydro facilities / the next available location.
     """
-    mlt = 1.0
-    # calculating the hydro price multiplier linked to the number of hydro facilities
     if not player.tile:
         raise GameError("TileNotFound")  # TODO(mglst): handle this case
-    if isinstance(hydro_facility_type, HydroFacilityType):
-        mlt *= hydro_price_function(
-            next_available_location(player, hydro_facility_type),
-            player.tile.potentials[Renewable.HYDRO],
-        )
-    return mlt
+    return hydro_price_function(
+        next_available_location(player, hydro_facility_type),
+        player.tile.potentials[Renewable.HYDRO],
+    )
 
 
 def wind_speed_multiplier(player: Player, wind_facility_type: ProjectType) -> float:
@@ -370,7 +366,7 @@ def construction_price(player: Player, project_type: ProjectType) -> float:
     return (
         const_config_assets[project_type]["base_price"]
         * price_multiplier(player, project_type)
-        * hydro_price_multiplier(player, project_type)
+        * (hydro_price_multiplier(player, project_type) if isinstance(project_type, HydroFacilityType) else 1)
     )
 
 
@@ -654,7 +650,7 @@ def _package_power_storage_extraction_facility_base(player: Player, facility_typ
     return {
         "operating_costs": const_config_assets[facility_type]["base_price"]
         * price_multiplier(player, facility_type)
-        * (hydro_price_multiplier(player, facility_type) if facility_type in HydroFacilityType else 1.0)
+        * (hydro_price_multiplier(player, facility_type) if isinstance(facility_type, HydroFacilityType) else 1.0)
         * const_config_assets[facility_type]["O&M_factor_per_day"]
         / 24,
         "lifespan": const_config_assets[facility_type]["lifespan"] / engine.in_game_seconds_per_tick,
