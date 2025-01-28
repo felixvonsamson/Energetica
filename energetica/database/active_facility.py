@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from energetica import technology_effects
 from energetica.config.assets import const_config
 from energetica.database import DBModel
 from energetica.enums import (
-    ControllableFacilityType,
     ExtractionFacilityType,
     PowerFacilityType,
     StorageFacilityType,
@@ -129,33 +128,14 @@ class ActiveFacility(DBModel):
         Returns true if any of the attributes of the facility are outdated compared to current tech levels.
         This method is undefined for technologies and for functional facilities.
         """
-        if self.multipliers["price_multiplier"] < technology_effects.price_multiplier(self.player, self.facility_type):
-            return True
-        if self.facility_type in ExtractionFacilityType:
-            return (
-                self.multipliers["multiplier_1"] < technology_effects.multiplier_1(self.player, self.facility_type)
-                or self.multipliers["multiplier_2"] < technology_effects.multiplier_2(self.player, self.facility_type)
-                or self.multipliers["multiplier_3"] < technology_effects.multiplier_3(self.player, self.facility_type)
-            )
-        # power & storage facilities
-        return (
-            (
-                # self.name in power_facilities + storage_facilities
-                isinstance(self.facility_type, PowerFacilityType | StorageFacilityType)
-                # self.name in PowerFacility
-                # self.name in (*power_facility_types, *StorageFacility)
-                and self.multipliers["multiplier_1"] < technology_effects.multiplier_1(self.player, self.facility_type)
-            )
-            or (
-                isinstance(self.facility_type, StorageFacilityType)
-                and self.multipliers["multiplier_2"] < technology_effects.multiplier_2(self.player, self.facility_type)
-            )
-            or (
-                # self.name in controllable_facilities + storage_facilities
-                isinstance(self.facility_type, ControllableFacilityType | StorageFacilityType)
-                and self.multipliers["multiplier_3"] < technology_effects.multiplier_3(self.player, self.facility_type)
-            )
-        )
+        for multiplier_name, multiplier in self.multipliers.items():
+            if multiplier_name == "next_available_location":
+                continue
+            # TODO(mglst): This relies on multipliers only ever increasing, which is likely but should be checked
+            new_multiplier = technology_effects.current_multiplier(self.player, multiplier_name, self.facility_type)
+            if multiplier < new_multiplier:
+                return True
+        return False
 
     @property
     def upgrade_cost(self) -> float | None:

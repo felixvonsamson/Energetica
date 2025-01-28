@@ -115,6 +115,47 @@ def price_multiplier(player: Player, project_type: ProjectType) -> float:
     return mlt
 
 
+def current_multiplier(player: Player, multiplier: str, facility_type: ProjectType) -> float:
+    """Get the current multiplier for the player associated with the facility."""
+    if multiplier == "price_multiplier":
+        return price_multiplier(player, facility_type)
+    if multiplier == "power_production_multiplier":
+        assert isinstance(facility_type, PowerFacilityType | StorageFacilityType)
+        return power_production_multiplier(player, facility_type)
+    if multiplier == "power_consumption_multiplier":
+        assert isinstance(facility_type, ExtractionFacilityType)
+        return power_consumption_multiplier(player, facility_type)
+    if multiplier == "wind_speed_multiplier":
+        assert isinstance(facility_type, WindFacilityType)
+        return wind_speed_multiplier(player, facility_type)
+    if multiplier == "hydro_price_multiplier":
+        assert isinstance(facility_type, HydroFacilityType)
+        return hydro_price_multiplier(player, facility_type)
+    if multiplier == "capacity_multiplier":
+        assert isinstance(facility_type, StorageFacilityType)
+        return capacity_multiplier(player, facility_type)
+    if multiplier == "extraction_rate_multiplier":
+        assert isinstance(facility_type, ExtractionFacilityType)
+        return extraction_rate_multiplier(player)
+    if multiplier == "next_available_location":
+        assert isinstance(facility_type, WindFacilityType | HydroFacilityType)
+        return next_available_location(player, facility_type)
+    if multiplier == "efficiency_multiplier":
+        assert isinstance(facility_type, ControllableFacilityType | StorageFacilityType)
+        return efficiency_multiplier(player, facility_type)
+    if multiplier == "extraction_emissions_multiplier":
+        assert isinstance(facility_type, ExtractionFacilityType)
+        return extraction_emissions_multiplier(player, facility_type)
+    # TODO(mglst): These should be removed once the code is fully refactored
+    if multiplier == "multiplier_1":
+        return multiplier_1(player, facility_type)
+    if multiplier == "multiplier_2":
+        return multiplier_2(player, facility_type)
+    if multiplier == "multiplier_3":
+        return multiplier_3(player, facility_type)
+    raise GameError("InvalidMultiplier")
+
+
 def multiplier_1(player: Player, facility_type: ProjectType) -> float:
     """
     Return the first multiplier according to the technology level of the player.
