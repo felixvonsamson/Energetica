@@ -181,8 +181,7 @@ def multiplier_2(player: Player, facility_type: ProjectType) -> float:
     This multiplier can be either the
     `extraction_rate_multiplier`, the `hydro_price_multiplier`, the `wind_speed_multiplier` or the `capacity_multiplier`
     """
-    const_config = engine.const_config["assets"]
-    if facility_type in const_config["mineral_extraction"]["affected_facilities"]:
+    if isinstance(facility_type, ExtractionFacilityType):
         return extraction_rate_multiplier(player)
     if isinstance(facility_type, HydroFacilityType):
         return hydro_price_multiplier(player, facility_type)
@@ -205,17 +204,17 @@ def capacity_multiplier(player: Player, storage_facility_type: StorageFacilityTy
     return 1
 
 
-def extraction_rate_multiplier(player: Player, level: int | None = None) -> float:
+def extraction_rate_multiplier(player: Player, *, mineral_extraction_level: int | None = None) -> float:
     """
     Return by how much the `facility`'s `base_extraction_rate_per_day` should be multiplied.
 
     Defined for extraction facilities.
     If `level` is not provided, the `player`'s current `mineral_extraction` level is used.
     """
-    if level is None:
-        level = player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
+    if mineral_extraction_level is None:
+        mineral_extraction_level = player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
     const_config = engine.const_config["assets"]
-    return 1 + const_config["mineral_extraction"]["extract_factor"] * level
+    return 1 + const_config["mineral_extraction"]["extract_factor"] * mineral_extraction_level
 
 
 def hydro_price_multiplier(player: Player, hydro_facility_type: HydroFacilityType) -> float:
@@ -991,8 +990,8 @@ def package_available_technologies(player: Player) -> list[dict]:
         | (
             {
                 "extraction_speed_bonus": 100
-                * extraction_rate_multiplier(player, levels[technology])
-                / extraction_rate_multiplier(player, levels[technology] - 1)
+                * extraction_rate_multiplier(player, mineral_extraction_level=levels[technology])
+                / extraction_rate_multiplier(player, mineral_extraction_level=levels[technology] - 1)
                 - 100,
                 "power_consumption_penalty": 100
                 * const_config_assets[technology]["energy_factor"]
