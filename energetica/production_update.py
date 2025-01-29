@@ -658,7 +658,6 @@ def calculate_prod(
     - max power constraints
     - storage filling constraints
     """
-    # TODO(mglst): remove 'engine' argument
 
     def reserve_resources(power):
         """Reserve resources for the production of power so that they are not used somewhere else."""
