@@ -1,4 +1,5 @@
 """Define the Policy classes that are used to mimic the behavior of players in the game."""
+# TODO(mglst): just import engine rather than passing it as an argument to take_action
 
 from __future__ import annotations
 
@@ -14,8 +15,9 @@ from energetica.enums import (
     WindFacilityType,
     WorkerType,
 )
-from energetica.game_engine import Confirm, GameEngine
+from energetica.game_engine import Confirm
 from energetica.game_error import GameError
+from energetica.globals import engine
 from energetica.utils import assets
 
 
@@ -30,7 +32,7 @@ class Policy:
         self.name = name
         self.is_done = False
 
-    def take_action(self, _player: Player, _engine: GameEngine) -> None:
+    def take_action(self, _player: Player) -> None:
         """Every tick the policy will take an action based on the state"""
         self.is_done = True
 
@@ -61,13 +63,13 @@ class SequencedPolicy(Policy):
         super().__init__(", then ".join([policy.name for policy in policies]))
         self.policies = policies
 
-    def take_action(self, player: Player, engine: GameEngine) -> None:
+    def take_action(self, player: Player) -> None:
         if self.is_done:
             return
         if not self.policies:
             self.is_done = True
             return
-        self.policies[0].take_action(player, engine)
+        self.policies[0].take_action(player)
         if self.policies[0].is_done:
             self.policies.pop(0)
 
@@ -90,9 +92,9 @@ class ParallelPolicy(Policy):
         super().__init__(", then ".join([policy.name for policy in policies]))
         self.policies = policies
 
-    def take_action(self, player: Player, engine: GameEngine) -> None:
+    def take_action(self, player: Player) -> None:
         for index in range(len(self.policies) - 1, -1, -1):
-            self.policies[index].take_action(player, engine)
+            self.policies[index].take_action(player)
             if self.policies[index].is_done:
                 self.policies.pop(index)
         if not self.policies:
@@ -113,7 +115,7 @@ class WaitPolicy(Policy):
         super().__init__(f"wait {duration} ticks")
         self.duration = duration
 
-    def take_action(self, _player: Player, _engine: GameEngine) -> None:
+    def take_action(self, _player: Player) -> None:
         self.duration -= 1
         if self.duration <= 0:
             self.is_done = True
@@ -132,7 +134,7 @@ class QueueProjectPolicy(Policy):
         self.wait_for_funds = wait_for_funds
         self.wait_for_available_workers = wait_for_available_workers
 
-    def take_action(self, player: Player, _engine: GameEngine) -> None:
+    def take_action(self, player: Player) -> None:
         if self.is_done:
             return
         try:
@@ -153,7 +155,7 @@ class StarterPolicy(Policy):
     def __init__(self):
         super().__init__("starter policy")
 
-    def take_action(self, player: Player, engine: GameEngine) -> None:
+    def take_action(self, player: Player) -> None:
         if self.is_done:
             return
 
