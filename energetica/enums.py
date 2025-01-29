@@ -16,6 +16,16 @@ class WorkerType(StrEnum):
     CONSTRUCTION = "construction"
     RESEARCH = "research"
 
+    @staticmethod
+    def lab_workers_for_level(laboratory_level: int) -> int:
+        """Returns how many lab workers are available for the specified lab level"""
+        return (laboratory_level + 2) // 3
+
+    @staticmethod
+    def construction_workers_for_level(building_technology_level: int) -> int:
+        """Returns how many construction workers are available for the specified building technology level"""
+        return building_technology_level + 1
+
 
 class Fuel(StrEnum):
     """Enum for fuel names."""
