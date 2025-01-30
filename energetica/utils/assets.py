@@ -124,7 +124,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
                 ),  # TODO (mglst): This is not good, we should use the facility id or the "location"
             ),
         )
-        rng = np.random.default_rng(seed_hash)
+        rng = np.random.default_rng(abs(seed_hash))
         position_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1] + rng.uniform(-0.5, 0.5)
         position_y = (player.tile.coordinates[1] + rng.uniform(-0.5, 0.5)) * 0.5 * 3**0.5
         ActiveFacility(

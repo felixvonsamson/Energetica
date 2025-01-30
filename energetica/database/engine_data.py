@@ -91,13 +91,13 @@ class NetworkPrices:
         """Initialize the prices of the player with added random values."""
         for bid_name in self.bid_prices:
             seed_hash = hash((engine.random_seed, "bid", bid_name, player.id))
-            rng = np.random.default_rng(seed_hash)
+            rng = np.random.default_rng(abs(seed_hash))
             added_randomness = rng.uniform(-15, 15)
             self.bid_prices[bid_name] += added_randomness
 
         for ask_name in self.ask_prices:
             seed_hash = hash((engine.random_seed, "ask", ask_name, player.id))
-            rng = np.random.default_rng(seed_hash)
+            rng = np.random.default_rng(abs(seed_hash))
             added_randomness = rng.uniform(-15, 15)
             self.ask_prices[ask_name] += added_randomness
 
