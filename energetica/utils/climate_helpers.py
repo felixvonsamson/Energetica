@@ -68,6 +68,9 @@ def climate_event_impact(tile: HexTile, event_name):
 def check_climate_events():
     """Check if a climate event happens on this tick."""
 
+    seed_hash = hash((engine.random_seed, "check_climate_events", engine.total_t))
+    random.seed(seed_hash)
+
     def inv_cdf_sigmoid(p, inverse=False):
         latitude = 3 * np.log(math.exp((11.44 * p - 0.88) / 3) - math.exp(-1 / 3))
         latitude = max(-10.5, min(10.5, latitude))
