@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import math
-import random
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal
 
 import noise
+import numpy as np
 
 from energetica.enums import (
     ControllableFacilityType,
@@ -91,14 +91,14 @@ class NetworkPrices:
         """Initialize the prices of the player with added random values."""
         for bid_name in self.bid_prices:
             seed_hash = hash((engine.random_seed, "bid", bid_name, player.id))
-            random.seed(seed_hash)
-            added_randomness = random.uniform(-15, 15)
+            rng = np.random.default_rng(seed_hash)
+            added_randomness = rng.uniform(-15, 15)
             self.bid_prices[bid_name] += added_randomness
 
         for ask_name in self.ask_prices:
             seed_hash = hash((engine.random_seed, "ask", ask_name, player.id))
-            random.seed(seed_hash)
-            added_randomness = random.uniform(-15, 15)
+            rng = np.random.default_rng(seed_hash)
+            added_randomness = rng.uniform(-15, 15)
             self.ask_prices[ask_name] += added_randomness
 
     def update(
