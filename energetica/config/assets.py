@@ -7,7 +7,12 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
-from energetica.enums import Fuel, FunctionalFacilityType, TechnologyType, WorkerType
+from energetica.enums import (
+    Fuel,
+    FunctionalFacilityType,
+    TechnologyType,
+    WorkerType,
+)
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -911,18 +916,6 @@ river_discharge_seasonal = [
 ]  # all days of the year
 
 
-# TODO (Felix): I think this could be a method of player or of a newly created class Workers
-def player_lab_workers_for_level(lab_level: int) -> int:
-    """Returns how many lab workers are available for the specified lab level"""
-    return (lab_level + 2) // 3
-
-
-# TODO (Felix): I think this could be a method of player or of a newly created class Workers
-def player_construction_workers_for_level(building_technology_level: int) -> int:
-    """Returns how many construction workers are available for the specified building technology level"""
-    return building_technology_level + 1
-
-
 def warehouse_capacity_for_level(warehouse_level, fuel: Fuel):
     """Returns how much capacity in kg a player with a warehouse with
     `warehouse_level` has for the specified `resource`"""
@@ -1001,10 +994,10 @@ class Config(object):
 
         # setting the number of workers
         player.workers = {
-            WorkerType.CONSTRUCTION: player_construction_workers_for_level(
+            WorkerType.CONSTRUCTION: WorkerType.construction_workers_for_level(
                 player.technology_lvl[TechnologyType.BUILDING_TECHNOLOGY]
             ),
-            WorkerType.RESEARCH: player_lab_workers_for_level(
+            WorkerType.RESEARCH: WorkerType.lab_workers_for_level(
                 player.functional_facility_lvl[FunctionalFacilityType.LABORATORY]
             ),
         }

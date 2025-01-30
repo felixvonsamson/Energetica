@@ -8,8 +8,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from energetica.config.assets import (
-    player_construction_workers_for_level,
-    player_lab_workers_for_level,
     warehouse_capacity_for_level,
 )
 from energetica.database.active_facility import ActiveFacility
@@ -842,8 +840,8 @@ def package_functional_facilities(player: Player) -> list[dict]:
         "laboratory": {
             "level": next_laboratory_level,
             "lab_workers": package_change(
-                current=player_lab_workers_for_level(next_laboratory_level - 1),
-                upgraded=player_lab_workers_for_level(next_laboratory_level),
+                current=WorkerType.lab_workers_for_level(next_laboratory_level - 1),
+                upgraded=WorkerType.lab_workers_for_level(next_laboratory_level),
             ),
         }
         | (
@@ -976,8 +974,8 @@ def package_available_technologies(player: Player) -> list[dict]:
             {
                 "construction_time_reduction_bonus": (100 - const_config_assets[technology]["time_factor"] * 100),
                 "construction_workers": package_change(
-                    player_construction_workers_for_level(levels[technology] - 1),
-                    player_construction_workers_for_level(levels[technology]),
+                    WorkerType.construction_workers_for_level(levels[technology] - 1),
+                    WorkerType.construction_workers_for_level(levels[technology]),
                 ),
             }
             if technology == TechnologyType.BUILDING_TECHNOLOGY
