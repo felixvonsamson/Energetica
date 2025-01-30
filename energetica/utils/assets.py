@@ -2,8 +2,9 @@
 
 import contextlib
 import math
-import random
 from typing import TYPE_CHECKING
+
+import numpy as np
 
 from energetica import technology_effects
 from energetica.database.active_facility import ActiveFacility
@@ -123,9 +124,9 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
                 ),  # TODO (mglst): This is not good, we should use the facility id or the "location"
             ),
         )
-        random.seed(seed_hash)
-        position_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1] + random.uniform(-0.5, 0.5)
-        position_y = (player.tile.coordinates[1] + random.uniform(-0.5, 0.5)) * 0.5 * 3**0.5
+        rng = np.random.default_rng(seed_hash)
+        position_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1] + rng.uniform(-0.5, 0.5)
+        position_y = (player.tile.coordinates[1] + rng.uniform(-0.5, 0.5)) * 0.5 * 3**0.5
         ActiveFacility(
             facility_type=project.project_type,
             position=(position_x, position_y),
