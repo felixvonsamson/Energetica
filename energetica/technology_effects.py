@@ -380,7 +380,10 @@ def construction_time(player: Player, project_type: ProjectType) -> float:
     duration = const_config[project_type]["base_construction_time"] / engine.in_game_seconds_per_tick
     # construction time increases with higher levels
     if isinstance(project_type, FunctionalFacilityType | TechnologyType):
-        level_with_constructions = OngoingProject.count_when(project_type=project_type, player=player)
+        level_with_constructions = OngoingProject.count_when(
+            player=player,
+            project_type=project_type,
+        ) + player.get_level(project_type)
         duration *= const_config[project_type]["price_multiplier"] ** (0.6 * level_with_constructions)
         # knowledge spillover and laboratory time reduction
         if isinstance(project_type, TechnologyType):
