@@ -606,7 +606,7 @@ const_config: dict = {
             "extract_factor": 0.30,
             "energy_factor": 0.25,
             "pollution_factor": 0.05,
-            "affected_facilities": [
+            "affected_facilities": [  # Note: this list is ignored in the extraction_rate_multiplier function
                 "coal_mine",
                 "gas_drilling_site",
                 "uranium_mine",

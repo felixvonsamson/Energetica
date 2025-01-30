@@ -14,6 +14,7 @@ from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     FunctionalFacilityType,
+    HydroFacilityType,
     NonFacilityAskType,
     PowerFacilityType,
     ProjectType,
@@ -220,40 +221,42 @@ class CapacityData:
             base_data = engine.const_config["assets"][facility.facility_type]
             effective_values = self._data[facility.facility_type]
             op_costs = facility.daily_op_cost * engine.in_game_seconds_per_tick / (24 * 3600)
-            # TODO(mglst): use WaterFacilityType
-            if facility.facility_type in ["watermill", "small_water_dam", "large_water_dam"]:
-                op_costs *= facility.multipliers["multiplier_2"]
+            if isinstance(facility.facility_type, HydroFacilityType):
+                op_costs *= facility.multipliers["hydro_price_multiplier"]
             effective_values["O&M_cost"] += op_costs
-            if facility.facility_type in power_facility_types:
+            if isinstance(facility.facility_type, PowerFacilityType):
                 power_gen = facility.max_power_generation
                 effective_values["power"] += power_gen
                 for fuel in effective_values["fuel_use"]:
+                    # if effective_values["fuel_use"] is not None, then it is a controllable facility
                     effective_values["fuel_use"][fuel] += (
                         base_data["consumed_resource"][fuel]
-                        / facility.multipliers["multiplier_3"]
+                        / facility.multipliers["efficiency_multiplier"]
                         * power_gen
                         * engine.in_game_seconds_per_tick
                         / 3600
                         / 1_000_000
                     )
-            elif facility.facility_type in StorageFacilityType:
+            elif isinstance(facility.facility_type, StorageFacilityType):
                 power_gen = facility.max_power_generation
                 # mean efficiency
                 effective_values["efficiency"] = (
                     (effective_values["efficiency"] * effective_values["power"])
-                    + (base_data["base_efficiency"] * facility.multipliers["multiplier_3"] * power_gen)
+                    + (base_data["base_efficiency"] * facility.multipliers["efficiency_multiplier"] * power_gen)
                 ) / (effective_values["power"] + power_gen)
                 effective_values["power"] += power_gen
                 if facility.end_of_life > 0:
                     effective_values["capacity"] += facility.storage_capacity
-            elif facility.facility_type in ExtractionFacilityType:
+            elif isinstance(facility.facility_type, ExtractionFacilityType):
                 effective_values["extraction_rate_per_day"] += (
-                    base_data["base_extraction_rate_per_day"] * facility.multipliers["multiplier_2"]
+                    base_data["base_extraction_rate_per_day"] * facility.multipliers["extraction_rate_multiplier"]
                 )
                 effective_values["power_use"] += (
-                    base_data["base_power_consumption"] * facility.multipliers["multiplier_1"]
+                    base_data["base_power_consumption"] * facility.multipliers["power_consumption_multiplier"]
                 )
-                effective_values["pollution"] += base_data["base_pollution"] * facility.multipliers["multiplier_3"]
+                effective_values["pollution"] += (
+                    base_data["base_pollution"] * facility.multipliers["extraction_emissions_multiplier"]
+                )
 
         if player.network is not None:
             player.network.capacities.update_network(player.network)

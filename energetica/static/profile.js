@@ -249,18 +249,6 @@ const extraction_facilities_table_manager = new Table(
     true,
 );
 
-let multiplier_table = {
-    "price_multiplier": "price_multiplier",
-    "power_multiplier": "multiplier_1",
-    "power_consumption_multiplier": "multiplier_1",
-    "capacity_multiplier": "multiplier_2",
-    "extraction_rate_multiplier": "multiplier_2",
-    "hydro_price_multiplier": "multiplier_2",
-    "wind_speed_multiplier": "multiplier_2",
-    "efficiency_multiplier": "multiplier_3",
-    "extraction_emissions_multiplier": "multiplier_3",
-};
-
 if (window.location.href.includes("player_id")) {
     let profile_header = document.getElementById("profile_header");
     let facilities_list = document.getElementById("facilities_list");

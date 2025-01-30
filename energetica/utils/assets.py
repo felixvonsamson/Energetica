@@ -14,6 +14,7 @@ from energetica.enums import (
     ExtractionFacilityType,
     Fuel,
     FunctionalFacilityType,
+    HydroFacilityType,
     NonFacilityAskType,
     PowerFacilityType,
     ProjectType,
@@ -227,27 +228,7 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
         msg = "FacilityIsDecommissioning"
         raise GameError(msg)
     player.money -= upgrade_cost
-    if isinstance(facility.facility_type, ExtractionFacilityType):
-        facility.multipliers["price_multiplier"] = technology_effects.price_multiplier(
-            facility.player, facility.facility_type
-        )
-        facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(facility.player, facility.facility_type)
-        facility.multipliers["multiplier_2"] = technology_effects.multiplier_2(facility.player, facility.facility_type)
-        facility.multipliers["multiplier_3"] = technology_effects.multiplier_3(facility.player, facility.facility_type)
-    else:
-        facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(facility.player, facility.facility_type)
-        if isinstance(facility.facility_type, PowerFacilityType | StorageFacilityType):
-            facility.multipliers["multiplier_1"] = technology_effects.multiplier_1(
-                facility.player, facility.facility_type
-            )
-        if isinstance(facility.facility_type, StorageFacilityType):
-            facility.multipliers["multiplier_2"] = technology_effects.multiplier_2(
-                facility.player, facility.facility_type
-            )
-        if isinstance(facility.facility_type, ControllableFacilityType | StorageFacilityType):
-            facility.multipliers["multiplier_3"] = technology_effects.multiplier_3(
-                facility.player, facility.facility_type
-            )
+    facility.multipliers = technology_effects.current_multipliers(player, facility.facility_type)
     player.capacities.update(player, facility.facility_type)
 
 
@@ -320,8 +301,8 @@ def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
         msg = "Facility not found"
         raise GameError(msg)
     cost = facility.dismantle_cost
-    if facility.facility_type in ["watermill", "small_water_dam", "large_water_dam"]:
-        cost *= facility.multipliers["multiplier_2"]
+    if isinstance(facility.facility_type, HydroFacilityType):
+        cost *= facility.multipliers["hydro_price_multiplier"]
     if player.money < cost:
         msg = "Not enough money"
         raise GameError(msg)
@@ -391,17 +372,9 @@ def queue_project(
     # priority list.
     new_construction: OngoingProject = OngoingProject(
         project_type=project_type,
-        end_tick_or_ticks_passed=0,
         duration=duration,
-        status=ProjectStatus.PAUSED,
         project_power=construction_power,
         project_pollution=technology_effects.construction_pollution_per_tick(player, project_type),
-        multipliers={
-            "price_multiplier": technology_effects.price_multiplier(player, project_type),
-            "multiplier_1": technology_effects.multiplier_1(player, project_type),
-            "multiplier_2": technology_effects.multiplier_2(player, project_type),
-            "multiplier_3": technology_effects.multiplier_3(player, project_type),
-        },
         player=player,
     )
     player.projects_by_priority[project_type.worker_type].append(new_construction)
@@ -464,8 +437,8 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
         * project.multipliers["price_multiplier"]
         * (1 - project.progress())
     )
-    if project.project_type in ["small_water_dam", "large_water_dam", "watermill"]:
-        refund *= project.multipliers["multiplier_2"]
+    if isinstance(project.project_type, HydroFacilityType):
+        refund *= project.multipliers["hydro_price_multiplier"]
     player.money += refund
     priority_list.remove(project)
 
