@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import math
-import random
 
 import numpy as np
 
@@ -13,7 +14,7 @@ from energetica.utils.assets import facility_destroyed
 from energetica.utils.formatting import display_money
 
 
-def climate_event_impact(tile: HexTile, event_name):
+def climate_event_impact(tile: HexTile, event_name, rng: np.Generator):
     """Create a ClimateEventRecovery object for the event and some facilities may be destroyed by the climate event."""
     engine.log(f"{climate_events[event_name]['name']} on tile {tile.id}")
     player = tile.player
@@ -41,7 +42,7 @@ def climate_event_impact(tile: HexTile, event_name):
     )
 
     # check destructions
-    if random.random() < climate_events[event_name]["industry_destruction_chance"]:
+    if rng.random() < climate_events[event_name]["industry_destruction_chance"]:
         player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY] -= 1
         engine.config.update_config_for_user(player)
         player.notify(
@@ -52,21 +53,24 @@ def climate_event_impact(tile: HexTile, event_name):
     facilities_list = list(climate_events[event_name]["destruction_chance"].keys())
     facilities_at_risk = filter(lambda facility: facility.facility_type in facilities_list, player.active_facilities)
     for facility in facilities_at_risk:
-        if random.random() < climate_events[event_name]["destruction_chance"][facility.facility_type]:
+        if rng.random() < climate_events[event_name]["destruction_chance"][facility.facility_type]:
             facility_destroyed(player, facility, climate_events[event_name]["name"])
             # if a water dam is destroyed it will flood downstream tiles
             if facility.facility_type == "small_water_dam":
                 affected_tiles = tile.get_downstream_tiles(3)
                 for affected_tile in affected_tiles:
-                    climate_event_impact(affected_tile, "flood")
+                    climate_event_impact(affected_tile, "flood", rng)
             elif facility.facility_type == "large_water_dam":
                 affected_tiles = tile.get_downstream_tiles(15)
                 for affected_tile in affected_tiles:
-                    climate_event_impact(affected_tile, "flood")
+                    climate_event_impact(affected_tile, "flood", rng)
 
 
 def check_climate_events():
     """Check if a climate event happens on this tick."""
+
+    seed = hash((engine.random_seed, "check_climate_events", engine.total_t))
+    rng = np.random.default_rng(seed)
 
     def inv_cdf_sigmoid(p, inverse=False):
         latitude = 3 * np.log(math.exp((11.44 * p - 0.88) / 3) - math.exp(-1 / 3))
@@ -83,11 +87,11 @@ def check_climate_events():
 
     # floods
     flood_probability = climate_events["flood"]["base_probability"] / ticks_per_day * climate_change**2
-    if random.random() < flood_probability:
+    if rng.random() < flood_probability:
         # the hydro value for a flood needs to be above 20%
         hydro_tiles = list(HexTile.filter(lambda tile: tile.potentials[Renewable.HYDRO] > 0.2))
-        tile = random.choice(hydro_tiles)
-        climate_event_impact(tile, "flood")
+        tile = rng.choice(hydro_tiles)
+        climate_event_impact(tile, "flood", rng)
 
     # heatwaves
     heatwave_probability = 0
@@ -99,14 +103,14 @@ def check_climate_events():
         heatwave_probability += (
             climate_events["heat_wave"]["base_probability"] / ticks_per_day * (real_temp - 14.8) ** 2
         )
-    if random.random() < heatwave_probability:
+    if rng.random() < heatwave_probability:
         # the tile for the heatwave is chosen based on a sigmoid distribution around the equator
-        random_latitude = round(inv_cdf_sigmoid(random.random()))
+        random_latitude = round(inv_cdf_sigmoid(rng.random()))
         latitude_tiles = list(HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude))
-        tile = random.choice(latitude_tiles)
+        tile = rng.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
-            climate_event_impact(affected_tile, "heat_wave")
+            climate_event_impact(affected_tile, "heat_wave", rng)
 
     # coldwaves
     coldwave_probability = 0
@@ -118,42 +122,42 @@ def check_climate_events():
         coldwave_probability += (
             climate_events["cold_wave"]["base_probability"] / ticks_per_day * (12.5 - real_temp) ** 2
         )
-    if random.random() < coldwave_probability:
+    if rng.random() < coldwave_probability:
         # the tile for the coldwave is chosen based on a sigmoid distribution around the north pole
-        random_normal = inv_cdf_sigmoid(random.random(), inverse=True)
+        random_normal = inv_cdf_sigmoid(rng.random(), inverse=True)
         if random_normal < 0:
             random_latitude = math.ceil(10 + random_normal)
         else:
             random_latitude = math.floor(-10 + random_normal)
         latitude_tiles = list(HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude))
-        tile = random.choice(latitude_tiles)
+        tile = rng.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
-            climate_event_impact(affected_tile, "cold_wave")
+            climate_event_impact(affected_tile, "cold_wave", rng)
 
     # hurricanes
     hurricane_probability = climate_events["hurricane"]["base_probability"] / ticks_per_day * climate_change**2
-    if random.random() < hurricane_probability:
-        random_tile_id = random.randint(1, HexTile.count() + 1)
+    if rng.random() < hurricane_probability:
+        random_tile_id = rng.integers(1, HexTile.count() + 1)
         tile = HexTile.getitem(random_tile_id)
         affected_tiles = tile.get_neighbors(n=2)
         for affected_tile in affected_tiles:
-            climate_event_impact(affected_tile, "hurricane")
+            climate_event_impact(affected_tile, "hurricane", rng)
 
     # wildfires
     wildfire_probability = 0
     if real_temp > 14:
         wildfire_probability += climate_events["wildfire"]["base_probability"] / ticks_per_day * (real_temp - 14) ** 2
-    if random.random() < wildfire_probability:
+    if rng.random() < wildfire_probability:
         # releasing 10 kt of CO2 in the atmosphere
         engine.current_climate_data.add("CO2", 10e6)
         # the tile for the wildfire is chosen based on a normal distribution around the equator
-        random_latitude = inv_cdf_normal(random.random())
+        random_latitude = inv_cdf_normal(rng.random())
         latitude_tiles = list(HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude))
-        tile = random.choice(latitude_tiles)
+        tile = rng.choice(latitude_tiles)
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
-            climate_event_impact(affected_tile, "wildfire")
+            climate_event_impact(affected_tile, "wildfire", rng)
 
 
 def data_init_climate(seconds_per_tick, random_seed, delta_t):
