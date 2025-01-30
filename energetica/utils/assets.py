@@ -59,13 +59,9 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
                 player.rolling_history.add_subcategory("demand", project.project_type)
                 player.rolling_history.add_subcategory("emissions", project.project_type)
                 player.cumul_emissions.add_category(project.project_type)
-                player.network_prices.create_ask_entry(FunctionalFacilityType.CARBON_CAPTURE, player)
             if project.project_type == "warehouse":
                 for fuel in Fuel:
                     player.rolling_history.add_subcategory("resources", fuel.value)
-                player.network_prices.create_ask_entry(NonFacilityAskType.TRANSPORT, player)
-            if project.project_type == "laboratory":
-                player.network_prices.create_ask_entry(NonFacilityAskType.RESEARCH, player)
 
         player.functional_facility_lvl[project.project_type] += 1
 
@@ -83,12 +79,8 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             player.rolling_history.add_subcategory("emissions", project.project_type)
             player.cumul_emissions.add_category(project.project_type)
         # add facility to player's NetworkPrices
-        if isinstance(project.project_type, ExtractionFacilityType | StorageFacilityType):
-            player.network_prices.create_ask_entry(project.project_type, player)
         if project.project_type in renewable_facility_types:
             player.network_prices.renewable_bids.append(project.project_type)
-        if isinstance(project.project_type, StorageFacilityType | ControllableFacilityType):
-            player.network_prices.create_bid_entry(project.project_type, player)
 
     player.check_construction_achievements(project.project_type)
 
@@ -290,12 +282,8 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     player.money -= cost
     if not ActiveFacility.filter_by(facility_type=facility.facility_type, player=player):
         # remove facility from facility priorities if it was the last one
-        if isinstance(facility.facility_type, ExtractionFacilityType | StorageFacilityType):
-            del player.network_prices.ask_prices[facility.facility_type]
         if isinstance(facility.facility_type, RenewableFacilityType):
             player.network_prices.renewable_bids.remove(facility.facility_type)
-        if isinstance(facility.facility_type, StorageFacilityType | ControllableFacilityType):
-            del player.network_prices.bid_prices[facility.facility_type]
     facility_name = engine.const_config["assets"][facility.facility_type]["name"]
     if decommissioning:
         player.notify(

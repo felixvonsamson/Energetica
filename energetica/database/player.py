@@ -139,6 +139,11 @@ class Player(DBModel, UserMixin):
     )
     socketio_clients: list = field(default_factory=list)
 
+    def __post_init__(self) -> None:
+        """Post initialization method for Player."""
+        super().__post_init__()
+        self.network_prices.init_prices_with_randomness(self)
+
     def __hash__(self):
         """Return the hash of the player's id."""
         return hash(self.id)

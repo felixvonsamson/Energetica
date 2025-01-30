@@ -46,28 +46,14 @@ class NetworkPrices:
       (e.g., research, transport, industry and construction)
 
     Entries are added or removed as facilities are built or decommissioned.
+
+    Prices are randomized so that each player's prices are slightly different. This leads to more interesting market
+    dynamics, while still having reasonable default prices.
     """
 
     renewable_bids: list[ProjectType] = field(default_factory=list)
-
-    # Prices are randomized so that each player's prices are slightly different. This leads to more interesting
-    # market dynamics, while still having reasonable default prices.
-    # TODO (mglst): add randomess to theses prices
     bid_prices: dict[Bid, float] = field(
         default_factory=lambda: {
-            ControllableFacilityType.STEAM_ENGINE: 125.0,
-        }
-    )
-    ask_prices: dict[Ask, float] = field(
-        default_factory=lambda: {
-            FunctionalFacilityType.INDUSTRY: 1000.0,
-            NonFacilityAskType.CONSTRUCTION: 1020.0,
-        }
-    )
-
-    def create_bid_entry(self, bid_name: Bid, player: Player) -> None:
-        """Add a new facility to the list of bids, using the default price."""
-        default_bid_price = {
             ControllableFacilityType.STEAM_ENGINE: 125.0,
             ControllableFacilityType.COAL_BURNER: 600.0,
             ControllableFacilityType.GAS_BURNER: 500.0,
@@ -80,23 +66,12 @@ class NetworkPrices:
             StorageFacilityType.HYDROGEN_STORAGE: 880.0,
             StorageFacilityType.LITHIUM_ION_BATTERIES: 940.0,
             StorageFacilityType.SOLID_STATE_BATTERIES: 900.0,
-        }[bid_name]
-        # seed based off engine seed, ask/bid, bid name, and player username
-        seed_hash = hash(
-            (
-                engine.random_seed,
-                "bid",
-                bid_name,
-                player.id,
-            )
-        )
-        random.seed(seed_hash)
-        added_randomness = random.uniform(-15, 15)
-        self.bid_prices[bid_name] = default_bid_price + added_randomness
-
-    def create_ask_entry(self, ask_name: Ask, player: Player) -> None:
-        """Add a new entry to the list of asks, using the default price."""
-        default_ask_price = {
+        }
+    )
+    ask_prices: dict[Ask, float] = field(
+        default_factory=lambda: {
+            FunctionalFacilityType.INDUSTRY: 1000.0,
+            NonFacilityAskType.CONSTRUCTION: 1020.0,
             NonFacilityAskType.RESEARCH: 1200.0,
             NonFacilityAskType.TRANSPORT: 1050.0,
             ExtractionFacilityType.COAL_MINE: 960.0,
@@ -109,19 +84,22 @@ class NetworkPrices:
             StorageFacilityType.HYDROGEN_STORAGE: 230.0,
             StorageFacilityType.LITHIUM_ION_BATTERIES: 425.0,
             StorageFacilityType.SOLID_STATE_BATTERIES: 420.0,
-        }[ask_name]
-        # seed based off engine seed, ask/bid, ask name, and player coordinates
-        seed_hash = hash(
-            (
-                engine.random_seed,
-                "ask",
-                ask_name,
-                player.id,
-            )
-        )
-        random.seed(seed_hash)
-        added_randomness = random.uniform(-15, 15)
-        self.ask_prices[ask_name] = default_ask_price + added_randomness
+        }
+    )
+
+    def init_prices_with_randomness(self, player: Player) -> None:
+        """Initialize the prices of the player with added random values."""
+        for bid_name in self.bid_prices:
+            seed_hash = hash((engine.random_seed, "bid", bid_name, player.id))
+            random.seed(seed_hash)
+            added_randomness = random.uniform(-15, 15)
+            self.bid_prices[bid_name] += added_randomness
+
+        for ask_name in self.ask_prices:
+            seed_hash = hash((engine.random_seed, "ask", ask_name, player.id))
+            random.seed(seed_hash)
+            added_randomness = random.uniform(-15, 15)
+            self.ask_prices[ask_name] += added_randomness
 
     def update(
         self,
