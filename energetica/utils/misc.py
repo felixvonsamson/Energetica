@@ -232,9 +232,9 @@ def initialize_player(player: Player) -> None:
     }
     with open(f"instance/data/players/player_{player.id}.pck", "wb") as file:
         pickle.dump(past_data, file)
-    player.rolling_history.add_subcategory("op_costs", "steam_engine")
-    player.rolling_history.add_subcategory("generation", "steam_engine")
-    player.rolling_history.add_subcategory("emissions", "steam_engine")
+    player.rolling_history.add_subcategory("op_costs", ControllableFacilityType.STEAM_ENGINE)
+    player.rolling_history.add_subcategory("generation", ControllableFacilityType.STEAM_ENGINE)
+    player.rolling_history.add_subcategory("emissions", ControllableFacilityType.STEAM_ENGINE)
     # websocket.rest_notify_player_location(player)
 
 
