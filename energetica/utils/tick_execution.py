@@ -74,7 +74,7 @@ def check_events_completion():
         assets.finish_project(fc)
 
     # check if shipment arrived
-    arrived_shipments = OngoingShipment.filter(lambda shipment: shipment.arrival_tick <= engine.total_t)
+    arrived_shipments = list(OngoingShipment.filter(lambda shipment: shipment.arrival_tick <= engine.total_t))
     for a_s in arrived_shipments:
         store_import(a_s.player, a_s.resource, a_s.quantity)
         player: Player = a_s.player

@@ -1,9 +1,15 @@
 """Contains the class that stores the resources shipment on their way."""
+
 # TODO(mglst): rename to ongoing_shipment.py
+from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
+
+if TYPE_CHECKING:
+    from energetica.database.player import Player
 
 
 @dataclass
@@ -14,6 +20,7 @@ class OngoingShipment(DBModel):
     quantity: float
     arrival_tick: float  # in game ticks when the shipment will arrive
     duration: float  # in game ticks
+    player: Player
 
     speed: float = 1
     previous_speed: float = 1

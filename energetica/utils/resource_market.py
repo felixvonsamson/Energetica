@@ -60,6 +60,7 @@ def buy_resource_from_market(player: Player, quantity: float, sale: ResourceOnSa
             quantity=quantity,
             arrival_tick=engine.total_t + 1 + shipment_duration,
             duration=shipment_duration,
+            player=player,
         )
         player.shipments.append(new_shipment)
         sale.player.notify(

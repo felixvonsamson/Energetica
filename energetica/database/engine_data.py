@@ -179,7 +179,7 @@ class CapacityData:
 
     The data structure is as follows:
     {
-        "facility_type": {
+        [facility_type]: {
             "O&M_cost":         [¤/tick]                        # All facilities
             "power":            [W]                             # Power and storage facilities
             "fuel_use": {

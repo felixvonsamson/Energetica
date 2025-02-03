@@ -213,6 +213,7 @@ class GameEngine(object):
             "daily_question",
             "question_order",
             "technology_lvls",
+            "db_model_instances",
         ]
         data = {member: getattr(self, member) for member in members_to_save}
         with open("instance/engine_data.pck", "wb") as file:

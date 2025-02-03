@@ -78,7 +78,7 @@ def check_climate_events():
         return round(-latitude) if inverse else round(latitude)
 
     def inv_cdf_normal(p):
-        return round(2.5 - 3.5 * np.log(1 / (0.88 * (p + 0.02 / 0.88)) - 1))
+        return max(-10, round(2.5 - 3.5 * np.log(1 / (0.88 * (p + 0.02 / 0.88)) - 1)))
 
     climate_change = engine.current_climate_data.get_last_data()["temperature"]["deviation"]
     ref_temp = engine.current_climate_data.get_last_data()["temperature"]["reference"]

@@ -378,6 +378,7 @@ def calculate_generation_with_market(new_values, market, player: Player):
 
     renewables_generation(player, generation)
     minimal_generation(player, generation, resource_reservations)
+    # offer minimal generation capacities of facilities on the market at a negative price
     for facility in (*StorageFacilityType, *power_facility_types):
         if player.capacities.get(facility) is not None:
             market = place_bid(market, player.id, generation[facility], -5, facility)
@@ -390,28 +391,33 @@ def calculate_generation_with_market(new_values, market, player: Player):
             "You exceeded your credit limit, you can't buy electricity on the market anymore.",
         )
     # ask demand on the market at the set prices
+    # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
+    # are used and replace it with a cashed property or something similar that generates a list of all demands and offer types
     for demand_type in player.network_prices.ask_prices.keys():
-        if player.money >= max_overdraft:
-            bid_q = demand[demand_type]
-            price = player.network_prices.ask_prices[demand_type]
-            market = place_ask(market, player.id, bid_q, price, demand_type)
-        else:
-            reduce_demand(new_values, demand_type, player.id, 0.0)
+        if demand_type in demand:
+            if player.money >= max_overdraft:
+                bid_q = demand[demand_type]
+                price = player.network_prices.ask_prices[demand_type]
+                market = place_ask(market, player.id, bid_q, price, demand_type)
+            else:
+                reduce_demand(new_values, demand_type, player.id, 0.0)
 
     resource_reservations = reset_resource_reservations()
-    # Sell capacities of remaining facilities on the market
-    for facility in (*player.network_prices.bid_prices.keys(), *player.network_prices.renewable_bids):
-        if engine.const_config["assets"][facility]["ramping_time"] != 0:
-            if player.capacities.get(facility) is not None:
-                max_prod = calculate_prod(
-                    "max",
-                    player,
-                    facility,
-                    resource_reservations,
-                )
-                price = player.network_prices.bid_prices[facility]
-                capacity = max_prod - generation[facility]
-                market = place_bid(market, player.id, capacity, price, facility)
+    # offer capacities of remaining facilities on the market
+    for facility in player.capacities.get_all():
+        if (
+            facility in player.network_prices.bid_prices.keys()
+            and engine.const_config["assets"][facility]["ramping_time"] != 0
+        ):
+            max_prod = calculate_prod(
+                "max",
+                player,
+                facility,
+                resource_reservations,
+            )
+            price = player.network_prices.bid_prices[facility]
+            capacity = max_prod - generation[facility]
+            market = place_bid(market, player.id, capacity, price, facility)
 
     return market
 
