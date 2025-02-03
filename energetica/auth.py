@@ -7,6 +7,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
+import energetica
 from energetica.database.player import Player
 from energetica.globals import engine
 
@@ -32,10 +33,9 @@ def login():
                 flash("Incorrect password, try again.", category="error")
         else:
             flash(
-                "Username does not exist.<br><b>All accounts created before "
-                "the 20.12.2024 have been<br>deleted due to a server reset for "
-                "the 0.11 update.<br>If your account has been deleted, please "
-                "create a new one.</b>",
+                f"Username does not exist.<br><b>All accounts created before the {energetica.__release_date__} "
+                f"have been<br>deleted due to a server reset for the {energetica.__version__} update.<br>"
+                "If your account has been deleted, please create a new one.</b>",
                 category="error",
             )
 

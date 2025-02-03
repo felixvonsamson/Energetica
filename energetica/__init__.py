@@ -3,6 +3,9 @@
 # pylint: disable=wrong-import-order,wrong-import-position
 # ruff: noqa: E402
 
+__version__ = "0.11.1-b"
+__release_date__ = "03/02/2025"
+
 import atexit
 import base64
 import glob
@@ -192,6 +195,10 @@ def create_app(
     app.config["VAPID_PUBLIC_KEY"], app.config["VAPID_PRIVATE_KEY"] = get_or_create_vapid_keys()
     app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
     app.config["engine"] = engine
+
+    @app.context_processor
+    def inject_global_context():
+        return {"app_version": __version__, "app_release_date": __release_date__}
 
     # initialize socketio :
     socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True

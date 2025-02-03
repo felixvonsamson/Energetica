@@ -4,9 +4,6 @@
 import argparse
 import os
 
-from flask import Flask
-from flask_socketio import SocketIO
-
 from energetica import create_app
 
 if __name__ == "__main__":
@@ -116,6 +113,9 @@ if __name__ == "__main__":
 
     """Initializes mock app."""
     if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+        from flask import Flask
+        from flask_socketio import SocketIO
+
         app = Flask(__name__)
         socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
     else:
