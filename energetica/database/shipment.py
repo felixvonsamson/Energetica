@@ -20,6 +20,7 @@ class OngoingShipment(DBModel):
     quantity: float
     arrival_tick: float  # in game ticks when the shipment will arrive
     duration: float  # in game ticks
+    power_demand: float
     player: Player
 
     speed: float = 1

@@ -273,9 +273,8 @@ def projects_demand(player: Player, demand) -> None:
 
 def shipment_demand(player: Player, demand) -> None:
     """Calculate the power consumption for shipments."""
-    transport = player.config["transport"]
     for shipment in player.shipments:
-        demand["transport"] += transport["power_per_kg"] * shipment.quantity
+        demand["transport"] += shipment.power_demand
 
 
 def storage_demand(player: Player, demand) -> None:
@@ -927,7 +926,7 @@ def reduce_demand(new_values, demand_type, player_id, satisfaction) -> None:
         )
         if last_shipment:
             # TODO(mglst): OngoingShipment has no member called power!
-            last_shipment.delay_by(1 - satisfaction / last_shipment.power)
+            last_shipment.delay_by(1 - satisfaction / last_shipment.power_demand)
         return
 
 
