@@ -139,13 +139,17 @@ socket.on("new_values", function (changes) {
 // get information about finished construction
 socket.on("finish_construction", function (construction_data) {
     sessionStorage.setItem("constructions", JSON.stringify(construction_data));
-    refresh_progressBar();
+    if (typeof refresh_progressBar === "function") {
+        refresh_progressBar();
+    }
 });
 
 // get information about finished shipments
 socket.on("finish_shipment", function (shipment_data) {
     sessionStorage.setItem("shipments", JSON.stringify(shipment_data));
-    refresh_progressBar();
+    if (typeof refresh_progressBar === "function") {
+        refresh_progressBar();
+    }
 });
 
 

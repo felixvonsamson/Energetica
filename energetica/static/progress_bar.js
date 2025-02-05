@@ -401,7 +401,7 @@ function html_for_progressBar(c_id, index, project_priority, construction) {
                     <i class="fa fa-caret-down"></i>
                 </button>` : ''}
         </div>
-        <div class="progressbar-name medium margin-small">${asset_names[construction["name"]]}${"level" in construction ? " " + construction["level"] : ""}</div>
+        <div class="progressbar-name medium margin-small">${asset_names[construction["project_type"]]}${"level" in construction ? " " + construction["level"] : ""}</div>
         ${snail}
         <div class="progressbar-background">
             <div id="${c_id}" class="progressbar-bar"></div>
