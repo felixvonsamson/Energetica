@@ -42,6 +42,11 @@ class ActiveFacility(DBModel):
         super().__post_init__()
         self.player.active_facilities.append(self)
 
+    def delete(self):
+        """Delete the facility and remove it from the player's active facilities."""
+        super().delete()
+        self.player.active_facilities.remove(self)
+
     @property
     def decommissioning(self) -> bool:
         """Returns True if the facility is being decommissioned."""
