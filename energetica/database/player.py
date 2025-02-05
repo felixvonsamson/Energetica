@@ -66,12 +66,6 @@ class Player(DBModel, UserMixin):
     network: Network | None = None
 
     # TODO (Felix): Modify the post__init__ of DBModel to store the following objects in engine or in the player
-    chats: list[Chat] = field(default_factory=list)  # Engine + Player reference
-    notifications: list[Notification] = field(default_factory=list)  # Player
-    resource_market_offers: list[ResourceOnSale] = field(default_factory=list)  # Player
-    shipments: list[OngoingShipment] = field(default_factory=list)  # Player
-    active_facilities: list[ActiveFacility] = field(default_factory=list)  # Player
-    climate_events: list[ClimateEventRecovery] = field(default_factory=list)  # Player
     projects_by_priority: dict[WorkerType, list[OngoingProject]] = field(
         default_factory=lambda: {worker_type: [] for worker_type in WorkerType},
     )
@@ -85,6 +79,11 @@ class Player(DBModel, UserMixin):
     def researches_by_priority(self) -> list[OngoingProject]:
         """Return the researches by priority."""
         return self.projects_by_priority[WorkerType.RESEARCH]
+
+    @property
+    def notifications(self) -> list[Notification]:
+        """Return the notifications of the player."""
+        return list(Notification.filter_by(player=self))
 
     network_prices: NetworkPrices = field(default_factory=NetworkPrices)
     rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
@@ -291,7 +290,7 @@ class Player(DBModel, UserMixin):
                 "group_chat": chat.name is not None,
                 "unread_messages": unread_message_count(chat),
             }
-            for chat in self.chats
+            for chat in Chat.filter(lambda chat: self in chat.participants)
         }
         return {
             "chat_list": chat_dict,
@@ -309,7 +308,7 @@ class Player(DBModel, UserMixin):
                 "older_messages_exist": len(chat.messages) > 20,
                 "messages": [message.package() for message in chat.messages[-20:]],
             }
-            for chat in self.chats
+            for chat in Chat.filter(lambda chat: self in chat.participants)
         }
 
     def delete_notification(self, notification: Notification) -> None:
@@ -392,7 +391,6 @@ class Player(DBModel, UserMixin):
     def notify(self, title: str, message: str) -> None:
         """Create a new notification and sends it to the player's subscribed browsers."""
         new_notification = Notification(title=title, content=message, player=self)
-        self.notifications.append(new_notification)
         self.emit(
             "new_notification",
             {
@@ -402,7 +400,7 @@ class Player(DBModel, UserMixin):
                 "content": new_notification.content,
             },
         )
-        if (
+        if (  # This probably doesn't work anymore
             self.notifications
             and new_notification.content == self.notifications[len(self.notifications) - 2].content
             and new_notification.time == self.notifications[len(self.notifications) - 2].time
@@ -629,7 +627,7 @@ class Player(DBModel, UserMixin):
                     "duration",
                 ]
             }
-            for shipment in self.shipments
+            for shipment in OngoingShipment.filter_by(player=self)
         }
 
     def package_construction_queue(self) -> list:
@@ -649,7 +647,7 @@ class Player(DBModel, UserMixin):
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         active_power_facilities = [
             active_facility
-            for active_facility in self.active_facilities
+            for active_facility in ActiveFacility.filter_by(player=self)
             if isinstance(active_facility.facility_type, PowerFacilityType)
         ]
         power_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
@@ -703,7 +701,7 @@ class Player(DBModel, UserMixin):
         capacities = self.capacities
         active_storage_facilities = [
             active_facility
-            for active_facility in self.active_facilities
+            for active_facility in ActiveFacility.filter_by(player=self)
             if isinstance(active_facility.facility_type, StorageFacilityType)
         ]
         storage_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
@@ -754,7 +752,7 @@ class Player(DBModel, UserMixin):
         capacities = self.capacities
         active_extraction_facilities: list[ActiveFacility] = [
             active_facility
-            for active_facility in self.active_facilities
+            for active_facility in ActiveFacility.filter_by(player=self)
             if isinstance(active_facility.facility_type, ExtractionFacilityType)
         ]
         extraction_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)

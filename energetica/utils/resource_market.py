@@ -16,13 +16,12 @@ def put_resource_on_market(player: Player, fuel: Fuel, quantity: float, price: f
     if player.resources[fuel] - player.resources_on_sale[fuel] < quantity:
         raise GameError("notEnoughResource")
     player.resources_on_sale[fuel] += quantity
-    new_sale = ResourceOnSale(
+    ResourceOnSale(
         resource=fuel,
         quantity=quantity,
         price=price,
         player=player,
     )
-    player.resource_market_offers.append(new_sale)
 
 
 def buy_resource_from_market(player: Player, quantity: float, sale: ResourceOnSale) -> None:
@@ -55,7 +54,7 @@ def buy_resource_from_market(player: Player, quantity: float, sale: ResourceOnSa
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
         shipment_duration = distance * player.config["transport"]["time_per_tile"] / engine.in_game_seconds_per_tick
         shipment_duration = math.ceil(shipment_duration)
-        new_shipment = OngoingShipment(
+        OngoingShipment(
             resource=sale.resource,
             quantity=quantity,
             arrival_tick=engine.total_t + 1 + shipment_duration,
@@ -63,7 +62,6 @@ def buy_resource_from_market(player: Player, quantity: float, sale: ResourceOnSa
             power_demand=quantity * player.config["transport"]["power_per_kg"],
             player=player,
         )
-        player.shipments.append(new_shipment)
         sale.player.notify(
             "Resource transaction",
             f"{player.username} bought {format_mass(quantity)} of "

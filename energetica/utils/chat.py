@@ -46,8 +46,6 @@ def create_chat(player: Player, chat_name: str | None, participants: set[Player]
         name=chat_name,
         participants=set(participants),
     )
-    for participant in participants:
-        participant.chats.append(new_chat)
     participant_list = ", ".join(participant.username for participant in participants if participant != player)
     if len(participants) == 2:
         engine.log(f"{player.username} created a chat with {participant_list}")

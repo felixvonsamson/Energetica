@@ -12,6 +12,7 @@ import pandas as pd
 
 from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
+from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
@@ -273,7 +274,7 @@ def projects_demand(player: Player, demand) -> None:
 
 def shipment_demand(player: Player, demand) -> None:
     """Calculate the power consumption for shipments."""
-    for shipment in player.shipments:
+    for shipment in OngoingShipment.filter_by(player=player):
         demand["transport"] += shipment.power_demand
 
 
@@ -292,7 +293,7 @@ def storage_demand(player: Player, demand) -> None:
 
 def climate_event_recovery_cost(player: Player, revenues) -> None:
     """Calculate the cost of climate events."""
-    for cer in player.climate_events:
+    for cer in ClimateEventRecovery.filter_by(player=player):
         revenues["climate_events"] -= cer.recovery_cost
 
 

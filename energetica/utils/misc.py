@@ -180,20 +180,19 @@ def initialize_player(player: Player) -> None:
         raise GameError("noLocation")
     pos_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     pos_y = player.tile.coordinates[1]
-    steam_engine: ActiveFacility = ActiveFacility(
+    ActiveFacility(
         facility_type=ControllableFacilityType.STEAM_ENGINE,
         position=(pos_x, pos_y),
         end_of_life=eol,
         player=player,
         multipliers=technology_effects.current_multipliers(player, ControllableFacilityType.STEAM_ENGINE),
     )
-    player.active_facilities.append(steam_engine)
     player.capacities.update(player, ControllableFacilityType.STEAM_ENGINE)
 
     general_chat = Chat.get(1)
     if general_chat is None:
         raise GameError("chatNotFound")
-    player.chats.append(general_chat)
+    general_chat.participants.add(player)
 
     add_player_to_data(player)
 

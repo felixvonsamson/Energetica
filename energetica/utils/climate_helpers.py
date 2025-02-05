@@ -5,6 +5,7 @@ import math
 import numpy as np
 
 from energetica.config.climate_events import climate_events
+from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.engine_data import calculate_reference_gta, calculate_temperature_deviation
 from energetica.database.map import HexTile
@@ -26,13 +27,12 @@ def climate_event_impact(tile: HexTile, event_name, rng: np.Generator):
     )  # [¤/tick]
     duration_ticks = climate_events[event_name]["duration"] / engine.in_game_seconds_per_tick
     end_tick = engine.total_t + duration_ticks
-    new_climate_event = ClimateEventRecovery(
+    ClimateEventRecovery(
         name=event_name,
         end_tick=end_tick,
         duration=duration_ticks,
         recovery_cost=recovery_cost,
     )
-    player.climate_events.append(new_climate_event)
     player.notify(
         climate_events[event_name]["name"],
         climate_events[event_name]["description"].format(
@@ -51,7 +51,9 @@ def climate_event_impact(tile: HexTile, event_name, rng: np.Generator):
         )
         engine.log(f"{player.username} : Industry levelled down by {climate_events[event_name]['name']}.")
     facilities_list = list(climate_events[event_name]["destruction_chance"].keys())
-    facilities_at_risk = filter(lambda facility: facility.facility_type in facilities_list, player.active_facilities)
+    facilities_at_risk = list(
+        ActiveFacility.filter(lambda facility: facility.facility_type in facilities_list and facility.player == player)
+    )
     for facility in facilities_at_risk:
         if rng.random() < climate_events[event_name]["destruction_chance"][facility.facility_type]:
             facility_destroyed(player, facility, climate_events[event_name]["name"])

@@ -8,12 +8,7 @@ from typing import TYPE_CHECKING
 from energetica import technology_effects
 from energetica.config.assets import const_config
 from energetica.database import DBModel
-from energetica.enums import (
-    ExtractionFacilityType,
-    HydroFacilityType,
-    PowerFacilityType,
-    StorageFacilityType,
-)
+from energetica.enums import ExtractionFacilityType, HydroFacilityType, PowerFacilityType, StorageFacilityType
 from energetica.globals import engine
 
 if TYPE_CHECKING:
@@ -36,16 +31,6 @@ class ActiveFacility(DBModel):
     usage: float = 0.0
 
     cut_out_speed_exceeded: bool = False
-
-    def __post_init__(self) -> None:
-        """Assign an id to the object and store it in the engine."""
-        super().__post_init__()
-        self.player.active_facilities.append(self)
-
-    def delete(self):
-        """Delete the facility and remove it from the player's active facilities."""
-        super().delete()
-        self.player.active_facilities.remove(self)
 
     @property
     def decommissioning(self) -> bool:
