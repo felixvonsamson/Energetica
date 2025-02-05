@@ -15,6 +15,7 @@ from pywebpush import WebPushException, webpush
 
 from energetica.config.achievements import achievements
 from energetica.database import DBModel
+from energetica.database.active_facility import ActiveFacility
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, NetworkPrices
 from energetica.database.messages import Chat, Notification
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
@@ -23,11 +24,12 @@ from energetica.enums import (
     ExtractionFacilityType,
     Fuel,
     FunctionalFacilityType,
+    PowerFacilityType,
     ProjectType,
     StorageFacilityType,
     TechnologyType,
+    WindFacilityType,
     WorkerType,
-    power_facility_types,
 )
 from energetica.globals import engine
 from energetica.technology_effects import (
@@ -41,7 +43,6 @@ from energetica.technology_effects import (
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from energetica.database.active_facility import ActiveFacility
     from energetica.database.climate_event_recovery import ClimateEventRecovery
     from energetica.database.map import HexTile
     from energetica.database.network import Network
@@ -646,9 +647,11 @@ class Player(DBModel, UserMixin):
     def package_active_power_facilities(self) -> dict:
         """Package the player's active power facilities."""
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
-        active_power_facilities: list[ActiveFacility] = list(
-            filter(lambda facility: facility.facility_type in power_facility_types, self.active_facilities)
-        )
+        active_power_facilities = [
+            active_facility
+            for active_facility in self.active_facilities
+            if isinstance(active_facility.facility_type, PowerFacilityType)
+        ]
         power_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for power_facility in active_power_facilities:
             power_facility_groups[power_facility.facility_type].append(power_facility)
@@ -669,7 +672,7 @@ class Player(DBModel, UserMixin):
                 }
                 | (
                     {"cut_out_speed_exceeded": any(f.cut_out_speed_exceeded for f in group)}
-                    if group_name in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
+                    if isinstance(group_name, WindFacilityType)
                     else {}
                 )
                 for group_name, group in power_facility_groups.items()
@@ -687,7 +690,7 @@ class Player(DBModel, UserMixin):
                 }
                 | (
                     {"cut_out_speed_exceeded": power_facility.cut_out_speed_exceeded}
-                    if power_facility.facility_type in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
+                    if isinstance(power_facility.facility_type, WindFacilityType)
                     else {}
                 )
                 for power_facility in active_power_facilities
@@ -698,8 +701,10 @@ class Player(DBModel, UserMixin):
         """Package active storage facilities."""
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.capacities
-        active_storage_facilities: list[ActiveFacility] = [
-            facility for facility in self.active_facilities if facility.facility_type in StorageFacilityType
+        active_storage_facilities = [
+            active_facility
+            for active_facility in self.active_facilities
+            if isinstance(active_facility.facility_type, StorageFacilityType)
         ]
         storage_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for storage_facility in active_storage_facilities:
@@ -748,7 +753,9 @@ class Player(DBModel, UserMixin):
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.capacities
         active_extraction_facilities: list[ActiveFacility] = [
-            facility for facility in self.active_facilities if facility.facility_type in ExtractionFacilityType
+            active_facility
+            for active_facility in self.active_facilities
+            if isinstance(active_facility.facility_type, ExtractionFacilityType)
         ]
         extraction_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
         for extraction_facility in active_extraction_facilities:

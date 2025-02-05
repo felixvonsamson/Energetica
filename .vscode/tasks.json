@@ -14,6 +14,18 @@
 			}
 		},
 		{
+			"label": "run server (fast clock)",
+			"type": "shell",
+			"command": "python main.py --clock_time 1 --in_game_seconds_per_tick 3600",
+			"presentation": {
+				"clear": true
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
 			"label": "run with init_test_players",
 			"type": "shell",
 			"command": "python main.py --rm_instance --run_init_test_players",

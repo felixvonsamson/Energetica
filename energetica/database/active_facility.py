@@ -37,6 +37,11 @@ class ActiveFacility(DBModel):
 
     cut_out_speed_exceeded: bool = False
 
+    def __post_init__(self) -> None:
+        """Assign an id to the object and store it in the engine."""
+        super().__post_init__()
+        self.player.active_facilities.append(self)
+
     @property
     def decommissioning(self) -> bool:
         """Returns True if the facility is being decommissioned."""
