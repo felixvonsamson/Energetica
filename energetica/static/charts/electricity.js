@@ -454,7 +454,7 @@ function sortTable(table, column_name, table_content, reorder = true) {
     if (table.id == "consuming_facilities_table") {
         for (const [id, facility] of sortedData) {
             table.insertRow().innerHTML = `<tr>
-                    <td>${facility.name_col}</td>
+                    <td>${facility.facility_col}</td>
                     <td>${format_energy(facility.usage_col)}</td>
                     <td>
                         <label class="switch">
@@ -469,7 +469,7 @@ function sortTable(table, column_name, table_content, reorder = true) {
     } else {
         for (const [id, facility] of sortedData) {
             table.insertRow().innerHTML = `<tr>
-                    <td>${facility.name_col}</td>
+                    <td>${facility.facility_col}</td>
                     <td>${format_energy(facility.usage_col)}</td>
                     <td>${facility.capacity_col === null ? '-' : format_power(facility.capacity_col)}</td>
                     <td>

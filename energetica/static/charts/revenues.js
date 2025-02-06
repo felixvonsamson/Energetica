@@ -393,7 +393,7 @@ function sortTable(columnName, reorder = true) {
     // Add the sorted data to the table
     for (const [id, facility] of sortedData) {
         table.insertRow().innerHTML = `<tr>
-            <td>${facility.name_col}</td>
+            <td>${facility.facility_col}</td>
             <td>${format_money(facility.usage_col)}</td>
             <td><label class="switch"><input type="checkbox" onclick="toggle_displayed('${facility.name}')" 
                 ${keys_revenues[facility.name] ? 'checked' : ''}><span class="slider round"></span></label></td>
