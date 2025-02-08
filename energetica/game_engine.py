@@ -114,7 +114,7 @@ class GameEngine(object):
         # the first simulated tick and the beginning of in-game year 0.
         self.delta_t = round((self.start_date - last_midnight).total_seconds() // self.clock_time)
         # transform start_date to a seconds timestamp corresponding to the time of the first tick
-        self.start_date = math.floor(self.start_date.timestamp() / clock_time) * clock_time
+        self.start_date = datetime.fromtimestamp(math.floor(self.start_date.timestamp() / clock_time) * clock_time)
 
         # All data for the current day will be stored here :
         self.current_climate_data = EmissionData(
@@ -123,7 +123,7 @@ class GameEngine(object):
             self.random_seed,
         )
         self.daily_question = {}
-        self.question_order = None
+        self.question_order = None  # type: ignore
         self.new_daily_question()
 
         # stored the levels of technology of the server
