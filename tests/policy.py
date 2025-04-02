@@ -1,5 +1,4 @@
 """Define the Policy classes that are used to mimic the behavior of players in the game."""
-# TODO(mglst): just import engine rather than passing it as an argument to take_action
 
 from __future__ import annotations
 
