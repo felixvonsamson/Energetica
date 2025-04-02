@@ -20,7 +20,7 @@ from energetica.utils.resource_market import store_import
 
 def state_update():
     """Update the game state on every tick."""
-    total_t = (time.time() - engine.start_date) / engine.clock_time
+    total_t = (time.time() - engine.start_date.timestamp()) / engine.clock_time
     while engine.total_t < total_t - 1 or engine.total_t == 0:
         tick()
 

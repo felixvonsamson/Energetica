@@ -7,12 +7,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
-from energetica.enums import (
-    Fuel,
-    FunctionalFacilityType,
-    TechnologyType,
-    WorkerType,
-)
+from energetica.enums import Fuel, FunctionalFacilityType, TechnologyType, WorkerType
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -711,7 +706,7 @@ const_config: dict = {
                 "lithium_ion_batteries",
                 "solid_state_batteries",
             ],
-            "description": "Nuclear Engineering is the branch of engineering for nuclear power plants.",
+            "description": "Chemistry is the study of matter and the changes it undergoes.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=174071&",  # cspell:disable-line
             "requirements": {"laboratory": 3, "physics": -1},
@@ -729,7 +724,7 @@ const_config: dict = {
                 "nuclear_reactor",
                 "nuclear_reactor_gen4",
             ],
-            "description": "",
+            "description": "Nuclear Engineering is the branch of engineering for nuclear power plants.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172874&",  # cspell:disable-line
             "requirements": {"laboratory": 4, "physics": 3, "mechanical_engineering": 3},
