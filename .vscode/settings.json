@@ -89,6 +89,7 @@
         "itertuples",
         "jsonify",
         "lacunarity",
+        "LCOE",
         "linalg",
         "lvls",
         "mapsize",
