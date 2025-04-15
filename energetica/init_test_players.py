@@ -167,6 +167,8 @@ def init_test_players():
     add_asset(player1, TechnologyType.CHEMISTRY, 5)
     add_asset(player1, TechnologyType.NUCLEAR_ENGINEERING, 1)
 
+    player1.money = 100_000  # For testing purposes, see #240
+
     # Player 2
     player2.money = 1_000_000_000
     player2.resources = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}
