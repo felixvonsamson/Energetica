@@ -146,7 +146,8 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
 
     if isinstance(project.project_type, FunctionalFacilityType):
         player.invalidate_recompute_and_dispatch_data_for_pages(
-            # Update power page if project is a warehouse, for the Combined Cycle facility
+            # Update power page if project is a warehouse, since all fuel-consuming power facilities require some level
+            # of warehouse to be built
             power_facilities=project.project_type == FunctionalFacilityType.WAREHOUSE,
             # Always update functional facilities page, for the next level of this newly built facility
             functional_facilities=True,
