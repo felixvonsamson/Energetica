@@ -308,7 +308,7 @@ function upgrade(id) {
                 retrieve_player_data().then(() => {
                     get_active_facilities();
                 });
-            } else if (response == "notEnoughMoney") {
+            } else if (response == "Not enough money") {
                 addError("Not enough money");
             }
         });
@@ -331,7 +331,7 @@ function upgrade_all_of_type(facility) {
                 retrieve_player_data().then(() => {
                     get_active_facilities();
                 });
-            } else if (response == "notEnoughMoney") {
+            } else if (response == "Not enough money") {
                 addError("Not enough money");
             }
         });
