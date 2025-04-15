@@ -387,7 +387,14 @@ class Player(DBModel, UserMixin):
         return shipment_speeds
 
     def notify(self, title: str, message: str) -> None:
-        """Create a new notification and sends it to the player's subscribed browsers."""
+        """
+        Create a notification.
+
+        This has three effects:
+        1. It creates a new notification object in the database.
+        2. It emits the notification over socketio to the player's active web clients.
+        3. It sends the notification using webpush to the player's subscribed browser(s).
+        """
         new_notification = Notification(title=title, content=message, player=self)
         self.emit(
             "new_notification",
