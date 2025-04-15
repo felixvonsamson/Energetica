@@ -72,7 +72,7 @@ def log_action(func: Callable) -> Callable:
         log_entry = {
             "timestamp": start.isoformat(),
             "ellapsed": (datetime.now() - start).total_seconds(),
-            "ip": request.headers.get('X-Forwarded-For', request.remote_addr),
+            "ip": request.headers.get("X-Forwarded-For", request.remote_addr),
             "action_type": "request",
             "player_id": current_user.id,
             "request": {
@@ -97,7 +97,11 @@ def log_action(func: Callable) -> Callable:
 @http.before_request
 def restrict_access_during_simulation():
     """Restrict access to the API during the simulation."""
-    if engine.serve_local and request.method == "POST" and request.headers.get('X-Forwarded-For', request.remote_addr) != "127.0.0.1":
+    if (
+        engine.serve_local
+        and request.method == "POST"
+        and request.headers.get("X-Forwarded-For", request.remote_addr) != "127.0.0.1"
+    ):
         return "Service temporarily unavailable. Please try again in a few seconds", 503
 
 
@@ -733,12 +737,8 @@ def change_graph_view() -> Response:
 
 @http.route("test_notification", methods=["GET"])
 def test_notification() -> Response:
-    """Send a dummy notification to the player."""
-    notification_data = {
-        "title": "Test notification",
-        "body": f"{engine.total_t} ({datetime.now()})",
-    }
-    g.player.send_notification(notification_data)
+    """Send a dummy browser notification to the player."""
+    g.player.notify("Test notification", f"{engine.total_t} ({datetime.now()})")
     return jsonify({"response": "success"})
 
 
