@@ -146,9 +146,15 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
 
     if isinstance(project.project_type, FunctionalFacilityType):
         player.invalidate_recompute_and_dispatch_data_for_pages(
+            # Update power page if project is a warehouse, since all fuel-consuming power facilities require some level
+            # of warehouse to be built
+            power_facilities=project.project_type == FunctionalFacilityType.WAREHOUSE,
+            # Always update functional facilities page, for the next level of this newly built facility
             functional_facilities=True,
-            technologies=project.project_type == "laboratory",
-            extraction_facilities=project.project_type == "warehouse",
+            # Update the technologies page if the project is a laboratory
+            technologies=project.project_type == FunctionalFacilityType.LABORATORY,
+            # Update the extraction facilities page if project is a warehouse
+            extraction_facilities=project.project_type == FunctionalFacilityType.WAREHOUSE,
         )
         # Deploy any new workers from laboratory upgrades
         if project.project_type == FunctionalFacilityType.LABORATORY:
