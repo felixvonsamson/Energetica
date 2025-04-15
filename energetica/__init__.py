@@ -172,8 +172,10 @@ def create_app(
             assert uuid.UUID(actions[0]["uuid"]) == engine.uuid
     else:
         if actions:
-            kwargs = actions[0].copy()
+            kwargs: dict = actions[0].copy()
             kwargs.pop("action_type")
+            # datetime.fromisoformat
+            kwargs["start_date"] = datetime.fromisoformat(kwargs["start_date"])
             engine.init_instance(**kwargs)
         else:
             engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed)
