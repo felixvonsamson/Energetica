@@ -244,8 +244,7 @@ def upgrade_all_of_type(
     """Upgrade all facilities of a certain type."""
     facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player=player, facility_type=facility_type)
     for facility in facilities:
-        with contextlib.suppress(GameError):
-            upgrade_facility(player, facility)
+        upgrade_facility(player, facility)
 
 
 def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: bool = True) -> None:
