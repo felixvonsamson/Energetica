@@ -219,7 +219,7 @@ def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_n
 
 def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
     """Upgrade a facility."""
-    if facility is None or facility.player == player:
+    if facility is None or facility.player != player:
         msg = "Construction not found"
         raise GameError(msg)
 
