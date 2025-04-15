@@ -16,7 +16,6 @@ from energetica.enums import (
     Fuel,
     FunctionalFacilityType,
     HydroFacilityType,
-    NonFacilityAskType,
     PowerFacilityType,
     ProjectType,
     RenewableFacilityType,
