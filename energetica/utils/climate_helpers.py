@@ -33,6 +33,7 @@ def climate_event_impact(tile: HexTile, event_name, rng: np.random.Generator):
         end_tick=end_tick,
         duration=duration_ticks,
         recovery_cost=recovery_cost,
+        player=player,
     )
     player.notify(
         cast(str, climate_events[event_name]["name"]),

@@ -43,10 +43,7 @@ globals.engine = engine
 from energetica.api.app_services import register_app_services
 from energetica.api.http import http
 from energetica.api.socketio_handlers import add_handlers
-from energetica.api.websocket import (  # type: ignore
-    add_sock_handlers,
-    websocket_blueprint,
-)
+from energetica.api.websocket import add_sock_handlers, websocket_blueprint  # type: ignore
 from energetica.auth import auth
 from energetica.database.player import Player
 from energetica.init_test_players import init_test_players

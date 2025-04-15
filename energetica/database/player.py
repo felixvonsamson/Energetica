@@ -43,10 +43,8 @@ from energetica.technology_effects import (
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from energetica.database.climate_event_recovery import ClimateEventRecovery
     from energetica.database.map import HexTile
     from energetica.database.network import Network
-    from energetica.database.resource_on_sale import ResourceOnSale
 
 
 @dataclass
