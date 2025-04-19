@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
+from energetica.enums import Fuel
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
 class OngoingShipment(DBModel):
     """Class that stores the resources shipment on their way."""
 
-    resource: str
+    resource: Fuel
     quantity: float
     arrival_tick: float  # in game ticks when the shipment will arrive
     duration: float  # in game ticks
