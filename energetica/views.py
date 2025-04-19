@@ -74,9 +74,11 @@ def profile():
 
     When players are on their own profile page, they can see more information about their account.
     """
-    player_id = request.args.get("player_id")
-    if player_id is None:
+    player_id_str = request.args.get("player_id")
+    if player_id_str is None:
         player_id = current_user.id
+    else:
+        player_id = int(player_id_str)
     player = Player.get(player_id)
     return g.render_template_ctx("profile.jinja", profile=player)
 
