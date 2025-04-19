@@ -428,7 +428,7 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
     priority_list = player.projects_by_priority[project.project_type.worker_type]
     project_priority_index = priority_list.index(project)
     for candidate_dependent in priority_list[project_priority_index + 1 :]:
-        if project.id in candidate_dependent.prerequisites:
+        if project in candidate_dependent.prerequisites:
             dependents.append([candidate_dependent.project_type, candidate_dependent.level])
     if dependents:
         msg = "HasDependents"
