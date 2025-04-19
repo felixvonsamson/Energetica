@@ -3,31 +3,41 @@
 from energetica import engine
 from energetica.database.engine_data import NetworkPrices
 from energetica.database.player import Player
-from energetica.enums import FunctionalFacilityType
+from energetica.enums import (
+    ControllableFacilityType,
+    FunctionalFacilityType,
+    HydroFacilityType,
+    SolarFacilityType,
+    WindFacilityType,
+)
 from energetica.game_error import GameError
 
 
 def test_renewables_order():
-    """Test that the renewable bids in the right order."""
+    """
+    Test that the renewable bids in the right order.
+
+    This order was determined by Felix, according to what looks best for the frontend.
+    """
     network_prices = NetworkPrices()
-    network_prices.renewable_bids.append("offshore_wind_turbine")
-    network_prices.renewable_bids.append("PV_solar")
-    network_prices.renewable_bids.append("small_water_dam")
-    network_prices.renewable_bids.append("windmill")
-    network_prices.renewable_bids.append("onshore_wind_turbine")
-    network_prices.renewable_bids.append("watermill")
-    network_prices.renewable_bids.append("large_water_dam")
-    network_prices.renewable_bids.append("CSP_solar")
+    network_prices.renewable_bids.append(WindFacilityType.OFFSHORE_WIND_TURBINE)
+    network_prices.renewable_bids.append(SolarFacilityType.PV_SOLAR)
+    network_prices.renewable_bids.append(HydroFacilityType.SMALL_WATER_DAM)
+    network_prices.renewable_bids.append(WindFacilityType.WINDMILL)
+    network_prices.renewable_bids.append(WindFacilityType.ONSHORE_WIND_TURBINE)
+    network_prices.renewable_bids.append(HydroFacilityType.WATERMILL)
+    network_prices.renewable_bids.append(HydroFacilityType.LARGE_WATER_DAM)
+    network_prices.renewable_bids.append(SolarFacilityType.CSP_SOLAR)
 
     assert network_prices.get_sorted_renewables() == [
-        "small_water_dam",
-        "large_water_dam",
-        "watermill",
-        "onshore_wind_turbine",
-        "offshore_wind_turbine",
-        "windmill",
-        "CSP_solar",
-        "PV_solar",
+        HydroFacilityType.SMALL_WATER_DAM,
+        HydroFacilityType.LARGE_WATER_DAM,
+        HydroFacilityType.WATERMILL,
+        WindFacilityType.ONSHORE_WIND_TURBINE,
+        WindFacilityType.OFFSHORE_WIND_TURBINE,
+        WindFacilityType.WINDMILL,
+        SolarFacilityType.CSP_SOLAR,
+        SolarFacilityType.PV_SOLAR,
     ]
 
 
@@ -51,4 +61,7 @@ def test_price_randomization():
     engine.random_seed = 0
     player_a = Player("player1", "pwhash")
     player_b = Player("player2", "pwhash")
-    assert player_a.network_prices.bid_prices["coal_burner"] != player_b.network_prices.bid_prices["coal_burner"]
+    assert (
+        player_a.network_prices.bid_prices[ControllableFacilityType.COAL_BURNER]
+        != player_b.network_prices.bid_prices[ControllableFacilityType.COAL_BURNER]
+    )
