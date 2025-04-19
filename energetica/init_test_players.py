@@ -77,7 +77,7 @@ def init_test_players():
             print("creating player", i)
             player = create_player(f"user{i}", "password")
             if player:
-                HexTile.get(i).player = player
+                HexTile.getitem(i).player = player
 
                 player.money = 1_000_000_000
                 player.resources = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}

@@ -10,7 +10,7 @@ def test_player_creation_and_location_confirmation():
     """Test the creation of a player and the confirmation of a location."""
     create_app(rm_instance=True, skip_adding_handlers=True)
     player = Player(username="username", pwhash=generate_password_hash("password"))
-    hex_tile = HexTile.get(1)
+    hex_tile = HexTile.getitem(1)
     confirm_location(player, hex_tile)
 
 

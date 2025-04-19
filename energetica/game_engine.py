@@ -48,7 +48,7 @@ class GameEngine(object):
         self.in_game_seconds_per_tick: int = None
 
         self.uuid = None
-        self.random_seed = None
+        self.random_seed: int = None
         self.total_t: int = None
         self.start_date: datetime = None
         self.first_tick_time: datetime = None
