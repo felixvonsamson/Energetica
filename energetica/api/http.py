@@ -71,7 +71,7 @@ def log_action(func: Callable) -> Callable:
 
         log_entry = {
             "timestamp": start.isoformat(),
-            "ellapsed": (datetime.now() - start).total_seconds(),
+            "elapsed": (datetime.now() - start).total_seconds(),
             "ip": request.headers.get("X-Forwarded-For", request.remote_addr),
             "action_type": "request",
             "player_id": current_user.id,

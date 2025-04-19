@@ -45,7 +45,7 @@ def tick():
     check_climate_events()
     production_update.update_electricity()
 
-    log_entry["ellapsed"] = (datetime.now() - start).total_seconds()
+    log_entry["elapsed"] = (datetime.now() - start).total_seconds()
     engine.log_action(log_entry)
 
     # save a checkpoint every 6 hours in case of data corruption

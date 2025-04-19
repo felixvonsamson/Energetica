@@ -71,6 +71,7 @@
         "Energetica",
         "engineio",
         "ensp",
+        "eolt", // End of Life Time
         "eventlet",
         "filterwarnings",
         "Fukushima",
