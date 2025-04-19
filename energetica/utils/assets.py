@@ -306,8 +306,6 @@ def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
         msg = "Facility not found"
         raise GameError(msg)
     cost = facility.dismantle_cost
-    if isinstance(facility.facility_type, HydroFacilityType):
-        cost *= facility.multipliers["hydro_price_multiplier"]
     if player.money < cost:
         msg = "Not enough money"
         raise GameError(msg)

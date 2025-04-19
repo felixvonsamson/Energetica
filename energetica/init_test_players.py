@@ -167,6 +167,8 @@ def init_test_players() -> None:
     add_asset(player1, TechnologyType.CHEMISTRY, 5)
     add_asset(player1, TechnologyType.NUCLEAR_ENGINEERING, 1)
 
+    add_asset(player1, HydroFacilityType.SMALL_WATER_DAM, 4)
+
     player1.money = 100_000  # For testing purposes, see #240
 
     # Player 2
