@@ -44,19 +44,19 @@ class GameEngine(object):
         self.lock = RLock()
 
         self.db_model_instances: dict = {}
-        self.clock_time: int = None
-        self.in_game_seconds_per_tick: int = None
+        self.clock_time: int = None  # type: ignore[assignment]
+        self.in_game_seconds_per_tick: int = None  # type: ignore[assignment]
 
-        self.uuid: uuid.UUID = None
-        self.random_seed: int = None
-        self.total_t: int = None
-        self.start_date: datetime = None
-        self.first_tick_time: datetime = None
-        self.delta_t: int = None
-        self.current_climate_data: EmissionData = None
-        self.daily_question: dict = None
-        self.question_order: list[int] = None
-        self.technology_lvls: dict = None
+        self.uuid: uuid.UUID = None  # type: ignore[assignment]
+        self.random_seed: int = None  # type: ignore[assignment]
+        self.total_t: int = None  # type: ignore[assignment]
+        self.start_date: datetime = None  # type: ignore[assignment]
+        self.first_tick_time: datetime = None  # type: ignore[assignment]
+        self.delta_t: int = None  # type: ignore[assignment]
+        self.current_climate_data: EmissionData = None  # type: ignore[assignment]
+        self.daily_question: dict = None  # type: ignore[assignment]
+        self.question_order: list[int] = None  # type: ignore[assignment]
+        self.technology_lvls: dict = None  # type: ignore[assignment]
 
         with open("energetica/static/data/industry_demand.pck", "rb") as file:
             # array of length 1440 of normalized daily industry demand variations
