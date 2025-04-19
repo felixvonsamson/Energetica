@@ -219,7 +219,7 @@ def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_n
 
 def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
     """Upgrade a facility."""
-    if facility is None or facility.player == player:
+    if facility is None or facility.player != player:
         msg = "Construction not found"
         raise GameError(msg)
 
@@ -244,8 +244,7 @@ def upgrade_all_of_type(
     """Upgrade all facilities of a certain type."""
     facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player=player, facility_type=facility_type)
     for facility in facilities:
-        with contextlib.suppress(GameError):
-            upgrade_facility(player, facility)
+        upgrade_facility(player, facility)
 
 
 def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: bool = True) -> None:

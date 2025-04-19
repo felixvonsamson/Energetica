@@ -721,7 +721,7 @@ def new_message() -> Response | tuple:
     chat_id = int(request_data["chat_id"])
     chat = Chat.get(chat_id)
     if chat is None:
-        return jsonify({"response": "NoChatID"}), 403
+        return jsonify({"response": "NoChatID"}), 403  # TODO(mglst) here we should throw a GameError
     energetica.utils.chat.add_message(g.player, message, chat)
     return jsonify({"response": "success"})
 
