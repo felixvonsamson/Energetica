@@ -592,7 +592,7 @@ def request_change_facility_priority() -> Response | tuple:
 def put_resource_on_sale() -> Response:
     """Put a resource on sale."""
     request_data = request.form
-    resource = request_data["resource"]
+    resource = Fuel(request_data["resource"])
     quantity = float(request_data["quantity"]) * 1000
     price = float(request_data["price"]) / 1000
     try:
