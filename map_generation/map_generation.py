@@ -31,7 +31,7 @@ class Tile:
         self.gas = 0
         self.uranium = 0
         self.risk = 0
-        self.score = 0
+        self.score = 0.0
 
     def __str__(self):
         return f"Tile {self.id}"
@@ -148,7 +148,7 @@ def save_as_csv(map, m):
         f.write("q,r,solar,wind,hydro,coal,gas,uranium,climate_risk,score\n")
         for tile in map:
             f.write(
-                f"{tile.q},{tile.r},{tile.solar},{tile.wind},{tile.hydro},{tile.coal * 2_000_000_000},{tile.gas * 600_000_000},{tile.uranium * 8_000_000},{math.floor(tile.risk*10.9)},{tile.score}\n"
+                f"{tile.q},{tile.r},{tile.solar},{tile.wind},{tile.hydro},{tile.coal * 2_000_000_000},{tile.gas * 600_000_000},{tile.uranium * 8_000_000},{math.floor(tile.risk * 10.9)},{tile.score}\n"
             )
     print(f"Map {m} saved.")
 
@@ -199,7 +199,7 @@ def generate_hydro(map):
             random_border_id = (random_border_id + random.randint(0, size_param)) % (6 * size_param)
             source_tile = map[mapsize - random_border_id - 1]
         sources = [source_tile]
-        hydro_value = 1
+        hydro_value = 1.0
         while sources:
             start_tile = sources.pop(0)
             start_tile.hydro = hydro_value
@@ -351,7 +351,7 @@ def generate_gas(map):
             random_tile = random.choice(map)
 
         vein = [random_tile]
-        gas_value = 1
+        gas_value = 1.0
         while vein:
             tile = vein.pop(0)
             tile.gas = min(1, gas_value)
@@ -375,7 +375,7 @@ def generate_uranium(map):
         tile.score = tile.solar + tile.hydro + tile.coal + tile.gas - tile.risk
 
     count_uranium = 0
-    threshold = 0
+    threshold = 0.0
     while count_uranium < 0.15 * mapsize:
         for tile in map:
             if tile.score < threshold and tile.uranium == 0:
@@ -435,7 +435,7 @@ def generate_background_resources(map):
 
 solar_potentials = calculate_solar_potentials()
 for m in range(10):
-    map = []
+    map: list[Tile] = []
     for i in range(mapsize):
         map.append(Tile(i))
     generate_solar(map, solar_potentials)
@@ -448,8 +448,8 @@ for m in range(10):
     generate_background_resources(map)
     for tile in map:
         tile.risk = round(tile.risk, 1)
-    max_score = 0
-    min_score = 0
+    max_score = 0.0
+    min_score = 0.0
     for tile in map:
         tile.score = tile.solar + tile.wind + tile.hydro + tile.coal + tile.gas + tile.uranium - tile.risk
         if tile.score > max_score:
