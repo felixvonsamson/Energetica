@@ -192,7 +192,7 @@ class StarterPolicy(Policy):
                 * technology_effects.price_multiplier(player, facility_type)
                 * (
                     technology_effects.hydro_price_multiplier(player, facility_type)
-                    if facility_type in HydroFacilityType
+                    if isinstance(facility_type, HydroFacilityType)
                     else 1.0
                 )
                 * const_config_assets[facility_type]["O&M_factor_per_day"]
