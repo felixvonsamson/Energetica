@@ -224,7 +224,7 @@ class StarterPolicy(Policy):
         # print(", ".join(f"{facility}: {1000000 * cost:.2f}" for facility, cost in costs.items()))
         # find the cheapest facility from the dictionary costs
         while costs:
-            cheapest_facility = min(costs, key=costs.get)
+            cheapest_facility = min(costs, key=lambda key: costs[key])
             try:
                 assets.queue_project(player, cheapest_facility)
                 print(f"player {player.id} queued project {cheapest_facility}")
