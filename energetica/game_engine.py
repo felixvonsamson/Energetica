@@ -13,7 +13,7 @@ import tarfile
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
 from flask_sock import Sock
 from flask_socketio import SocketIO
@@ -29,7 +29,7 @@ class GameEngine(object):
 
     sock: Sock
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the game engine object."""
         if TYPE_CHECKING:
             from energetica.database.engine_data import EmissionData
@@ -67,7 +67,7 @@ class GameEngine(object):
 
         self.log("engine created")
 
-    def clear_db(self):
+    def clear_db(self) -> None:
         """Clear all the data in the database."""
         from energetica.database import DBModel
 
@@ -78,10 +78,10 @@ class GameEngine(object):
         self,
         clock_time: int,
         in_game_seconds_per_tick: int,
-        random_seed,
+        random_seed: int,
         start_date: datetime | None = None,
         instance_uuid=None,
-    ):
+    ) -> None:
         """Initialize the instance data / the GameEngine members."""
         from energetica.database.engine_data import EmissionData
         from energetica.database.map import HexTile
@@ -186,11 +186,11 @@ class GameEngine(object):
         f_handler.setLevel(logging.INFO)
         self.action_logger.addHandler(f_handler)
 
-    def log(self, message) -> None:
+    def log(self, message: str) -> None:
         """Log a message with the current time in the terminal."""
         self.console_logger.info(message)
 
-    def warn(self, message) -> None:
+    def warn(self, message: str) -> None:
         """Log a warning message in the terminal."""
         self.console_logger.warning(message)
 
@@ -236,10 +236,10 @@ class GameEngine(object):
             tar.add("instance/")
         os.replace("checkpoints/new_checkpoint.tar.gz", destination_filename)
 
-    def with_lock(self, func):
+    def with_lock(self, func: Callable):
         """Run a function with the engine lock."""
 
-        def wrapped(*args, **kwargs):
+        def wrapped(*args: Any, **kwargs: Any) -> Any:
             with self.lock:
                 return func(*args, **kwargs)
 
@@ -274,6 +274,6 @@ class GameEngine(object):
 class Confirm(Exception):
     """Use this class to ask the player to confirm an action."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         self.__dict__.update(kwargs)
         Exception.__init__(self, "Please confirm this action.")

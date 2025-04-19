@@ -18,7 +18,7 @@ from energetica.utils.misc import save_past_data
 from energetica.utils.resource_market import store_import
 
 
-def state_update():
+def state_update() -> None:
     """Update the game state on every tick."""
     total_t = (time.time() - engine.start_date.timestamp()) / engine.clock_time
     while engine.total_t < total_t - 1 or engine.total_t == 0:
@@ -26,7 +26,7 @@ def state_update():
 
 
 @engine.with_lock
-def tick():
+def tick() -> None:
     start = datetime.now()
     log_entry = {
         "timestamp": start.isoformat(),
@@ -62,7 +62,7 @@ def tick():
     #     websocket.rest_notify_global_data()
 
 
-def check_events_completion():
+def check_events_completion() -> None:
     """Check if projects have finished, shipments have arrived or facilities arrived at end of life."""
     # check if constructions finished
     finished_constructions = list(

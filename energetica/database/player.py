@@ -142,7 +142,7 @@ class Player(DBModel, UserMixin):
         super().__post_init__()
         self.network_prices.init_prices_with_randomness(self)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Return the hash of the player's id."""
         return hash(self.id)
 
@@ -327,12 +327,12 @@ class Player(DBModel, UserMixin):
         """Return the levels of functional facilities and technologies of a player."""
         return self.technology_lvl | self.functional_facility_lvl
 
-    def emit(self, event: str, *args) -> None:
+    def emit(self, event: str, *args: Any) -> None:
         """Emit a socketio event to the player's clients."""
         for sid in self.socketio_clients:
             engine.socketio.emit(event, *args, to=sid)
 
-    def send_new_data(self, new_values) -> None:
+    def send_new_data(self, new_values: Any) -> None:
         """Send the new data to the player's clients."""
         construction_updates = self.get_construction_updates()
         shipment_updates = self.get_shipment_updates()

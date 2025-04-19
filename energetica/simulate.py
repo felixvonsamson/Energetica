@@ -5,6 +5,7 @@ from __future__ import annotations
 import cProfile
 import pstats
 from time import sleep
+from typing import Any
 
 import requests
 from werkzeug.security import generate_password_hash
@@ -16,7 +17,7 @@ from energetica.utils.tick_execution import tick
 base_url: str | None = None
 
 
-def create_user(user_id, username, pw_hash):
+def create_user(user_id: int, username: str, pw_hash: Any) -> requests.Session:
     """Create a user with the given user_id."""
     session = requests.Session()
     data = {"username": username, "pw_hash": pw_hash}
@@ -26,7 +27,7 @@ def create_user(user_id, username, pw_hash):
     return session
 
 
-def login_user(user_id):
+def login_user(user_id: int) -> requests.Session:
     """Login a user with the given user_id."""
     session = requests.Session()
     data = {"user_id": user_id}
@@ -35,11 +36,11 @@ def login_user(user_id):
     return session
 
 
-def verify():
+def verify() -> None:
     assert True
 
 
-def simulate(*simulate_args, profiling=False, **simulate_kwargs):
+def simulate(*simulate_args: Any, profiling: bool = False, **simulate_kwargs: Any) -> None:
     if not profiling:
         _simulate(*simulate_args, **simulate_kwargs)
     else:

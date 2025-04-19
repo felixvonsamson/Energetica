@@ -25,7 +25,7 @@ class Network(DBModel):
     rolling_history: CircularBufferNetwork = field(default_factory=CircularBufferNetwork)
     capacities: CapacityData = field(default_factory=CapacityData)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         network_path = f"instance/data/networks/{self.id}"
         Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
@@ -45,7 +45,7 @@ class Network(DBModel):
         with open(f"{network_path}/time_series.pck", "wb") as file:
             pickle.dump(past_data, file)
 
-    def delete(self):
+    def delete(self) -> None:
         network_path = f"instance/data/networks/{self.id}"
         shutil.rmtree(network_path)
         super().delete()

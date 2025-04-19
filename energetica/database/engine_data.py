@@ -193,7 +193,7 @@ class CapacityData:
     }
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # TODO (Yassir): Add ref to the player in init
         self._data: dict[str, dict] = {}
 
@@ -306,7 +306,7 @@ class CapacityData:
 class CircularBufferPlayer:
     """Class that stores the active data of a player (last 360 ticks of the graph data)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize the engine data structure with default values.
 
@@ -350,7 +350,7 @@ class CircularBufferPlayer:
             },
         }
 
-    def append_value(self, new_value) -> None:
+    def append_value(self, new_value: dict) -> None:
         """Add one new tick of data to the buffer."""
         for category, subcategories in new_value.items():
             for subcategory, value in subcategories.items():
@@ -361,7 +361,7 @@ class CircularBufferPlayer:
         if subcategory not in self._data[category]:
             self._data[category][subcategory] = deque([0.0] * 360, maxlen=360)
 
-    def get_data(self, t: int = 216):
+    def get_data(self, t: int = 216) -> dict[str, Any]:
         """Return the last t ticks of the data."""
         result: dict[str, Any] = defaultdict(lambda: defaultdict(dict))
         for category, subcategories in self._data.items():
@@ -369,7 +369,7 @@ class CircularBufferPlayer:
                 result[category][subcategory] = list(buffer)[-t:]
         return result
 
-    def get_last_data(self, category, subcategory):
+    def get_last_data(self, category: str, subcategory: ProjectType) -> float:
         """Return the last value of a subcategory."""
         if category in self._data and subcategory in self._data[category]:
             return self._data[category][subcategory][-1]
@@ -394,7 +394,7 @@ class CircularBufferPlayer:
 class CumulativeEmissionsData:
     """Class storing the cumulative emissions of all facilities of a player."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._data: dict[str, float] = {
             "steam_engine": 0.0,
             "construction": 0.0,
@@ -423,7 +423,7 @@ class CumulativeEmissionsData:
 class CircularBufferNetwork:
     """Class that stores the active data of a Network."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._data = {
             "network_data": {
                 "price": deque([0.0] * 360, maxlen=360),
@@ -435,7 +435,7 @@ class CircularBufferNetwork:
             "consumption": {},  # consumption for each type (ex: "industry")
         }
 
-    def append_value(self, new_value):
+    def append_value(self, new_value: dict) -> None:
         """Add one new tick of data to the buffer."""
         for category, category_value in self._data.items():
             for group, value in new_value[category].items():
@@ -446,7 +446,7 @@ class CircularBufferNetwork:
                 if group not in new_value[category]:
                     value.append(0.0)
 
-    def get_data(self, t=216):
+    def get_data(self, t: int = 216) -> dict[str, dict]:
         """Return the last t ticks of the data."""
         result: dict[str, dict] = defaultdict(lambda: defaultdict(dict))
         for category, value in self._data.items():
@@ -458,7 +458,7 @@ class CircularBufferNetwork:
 class EmissionData:
     """Class that stores the emission and climate data of the server."""
 
-    def __init__(self, delta_t, spt, random_seed):
+    def __init__(self, delta_t: int, spt: int, random_seed: int) -> None:
         ref_temp = []
         temp_deviation = []
         for t in range(delta_t - 360, delta_t):
@@ -474,7 +474,7 @@ class EmissionData:
             },
         }
 
-    def get_data(self, t=216):
+    def get_data(self, t: int = 216) -> dict[str, dict]:
         """Return the last t ticks of the data."""
         result: dict[str, dict] = defaultdict(lambda: defaultdict(dict))
         for category, subcategories in self._data.items():
@@ -482,11 +482,11 @@ class EmissionData:
                 result[category][subcategory] = list(buffer)[-t:]
         return result
 
-    def add(self, key, value):
+    def add(self, key: str, value: float) -> None:
         """Add a value to the data. Increasing the CO2 levels."""
         self._data["emissions"][key][-1] += value
 
-    def init_new_value(self):
+    def init_new_value(self) -> None:
         """Generate the new values for CO2, reference temperature and temperature deviation."""
         # Keeping the CO2 levels form one tick to the next
         self._data["emissions"]["CO2"].append(self._data["emissions"]["CO2"][-1])
@@ -502,7 +502,7 @@ class EmissionData:
             )
         )
 
-    def get_last_data(self):
+    def get_last_data(self) -> dict[str, dict]:
         """Return the last value for each subcategory."""
         last_values: dict[str, dict] = {}
         for category, subcategories in self._data.items():
@@ -511,18 +511,18 @@ class EmissionData:
                 last_values[category][subcategory] = values[-1]
         return last_values
 
-    def get_co2(self):
+    def get_co2(self) -> float:
         """Return the last value of the CO2 levels."""
         return self._data["emissions"]["CO2"][-1]
 
 
-def calculate_reference_gta(tick, seconds_per_tick):
+def calculate_reference_gta(tick: int, seconds_per_tick: int) -> float:
     """Calculate the server's reference global average temperature."""
     month = tick * seconds_per_tick / 518_400
     return 13.65 - math.sin((month + 2) * math.pi / 6) * 1.9
 
 
-def calculate_temperature_deviation(tick, seconds_per_tick, co2_levels, random_seed):
+def calculate_temperature_deviation(tick: int, seconds_per_tick: int, co2_levels: float, random_seed: int) -> float:
     """Calculate the GAT deviation from the CO2 levels."""
     ticks_per_year = 60 * 60 * 24 * 72 / seconds_per_tick
     temperature_deviation = (co2_levels - 4e10) / 1.33e10

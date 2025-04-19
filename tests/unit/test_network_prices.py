@@ -13,7 +13,7 @@ from energetica.enums import (
 from energetica.game_error import GameError
 
 
-def test_renewables_order():
+def test_renewables_order() -> None:
     """
     Test that the renewable bids in the right order.
 
@@ -41,7 +41,7 @@ def test_renewables_order():
     ]
 
 
-def test_update_bogus_prices():
+def test_update_bogus_prices() -> None:
     """Test that updating a bogus ask or bid price raises an error."""
     network_prices = NetworkPrices()
 
@@ -56,7 +56,7 @@ def test_update_bogus_prices():
         assert False
 
 
-def test_price_randomization():
+def test_price_randomization() -> None:
     """Test that the prices are randomized."""
     engine.random_seed = 0
     player_a = Player("player1", "pwhash")

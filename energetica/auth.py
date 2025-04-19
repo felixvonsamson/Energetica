@@ -70,8 +70,8 @@ def logout():
     return redirect(url_for("auth.login"))
 
 
-def is_valid_hash_format(hash_string):
-    # Regex to check if the hash string matches the Werkzeug password hash format
+def is_valid_hash_format(hash_string: str) -> bool:
+    """Checks if the hash string matches the Werkzeug password hash format via regex"""
     pattern = r"^[a-z0-9]+:\d+:\d+:\d+\$[a-zA-Z0-9./]+\$[a-fA-F0-9]+$"
     return bool(re.match(pattern, hash_string))
 

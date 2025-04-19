@@ -160,7 +160,7 @@ def update_player_progress_values(player: Player, new_values: dict) -> None:
     player.check_continuous_achievements()
 
 
-def init_market() -> dict:
+def init_market() -> dict[str, pd.DataFrame]:
     """Initialize an empty market."""
     return {
         "capacities": pd.DataFrame({"player_id": [], "capacity": [], "price": [], "facility": []}),
@@ -189,7 +189,7 @@ def update_storage_lvls(new_values: dict, player: Player) -> None:
             )
 
 
-def calculate_net_import(new_values) -> None:
+def calculate_net_import(new_values: dict) -> None:
     """
     Calculate the net import of a player.
 
@@ -210,7 +210,7 @@ def calculate_net_import(new_values) -> None:
         new_values["revenues"]["imports"] = min(0.0, exp_rev + imp_rev)
 
 
-def extraction_facility_demand(new_values, player: Player, demand) -> None:
+def extraction_facility_demand(new_values: dict, player: Player, demand: dict) -> None:
     """Calculate power consumption of extraction facilities."""
     assert player.tile is not None
     player_resources = new_values["resources"]
@@ -229,7 +229,7 @@ def extraction_facility_demand(new_values, player: Player, demand) -> None:
             demand[extraction_facility] = player.capacities[extraction_facility]["power_use"] * power_factor
 
 
-def industry_demand_and_revenues(player: Player, demand, revenues) -> None:
+def industry_demand_and_revenues(player: Player, demand: dict, revenues: dict) -> None:
     """Calculate power consumption and revenues from industry."""
     # interpolating seasonal factor on the day
     ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
@@ -262,7 +262,7 @@ def industry_demand_and_revenues(player: Player, demand, revenues) -> None:
         revenues["industry"] += additional_revenue
 
 
-def projects_demand(player: Player, demand) -> None:
+def projects_demand(player: Player, demand: dict) -> None:
     """Calculate power consumption for ongoing projects."""
     for research in player.researches_by_priority:
         if research.is_ongoing():
@@ -272,13 +272,13 @@ def projects_demand(player: Player, demand) -> None:
             demand["construction"] += construction.project_power
 
 
-def shipment_demand(player: Player, demand) -> None:
+def shipment_demand(player: Player, demand: dict) -> None:
     """Calculate the power consumption for shipments."""
     for shipment in OngoingShipment.filter_by(player=player):
         demand["transport"] += shipment.power_demand
 
 
-def storage_demand(player: Player, demand) -> None:
+def storage_demand(player: Player, demand: dict) -> None:
     """Calculate the maximal demand of storage plants."""
     for facility in StorageFacilityType:
         if player.capacities.get(facility) is not None:
@@ -291,13 +291,13 @@ def storage_demand(player: Player, demand) -> None:
             )
 
 
-def climate_event_recovery_cost(player: Player, revenues) -> None:
+def climate_event_recovery_cost(player: Player, revenues: dict) -> None:
     """Calculate the cost of climate events."""
     for cer in ClimateEventRecovery.filter_by(player=player):
         revenues["climate_events"] -= cer.recovery_cost
 
 
-def calculate_demand(new_values, player: Player) -> None:
+def calculate_demand(new_values: dict, player: Player) -> None:
     """Calculate the electricity demand of one player."""
     demand = new_values["demand"]
     revenues = new_values["revenues"]
@@ -320,7 +320,7 @@ def reset_resource_reservations() -> dict[Fuel, float]:
     return {fuel: 0.0 for fuel in Fuel}
 
 
-def calculate_generation_without_market(new_values, player: Player) -> None:
+def calculate_generation_without_market(new_values: dict, player: Player) -> None:
     """Calculate the generation of a player that is not part of a network."""
     internal_market = init_market()
     generation = new_values[player.id]["generation"]
@@ -370,7 +370,7 @@ def calculate_generation_without_market(new_values, player: Player) -> None:
     market_logic(new_values, internal_market)
 
 
-def calculate_generation_with_market(new_values, market, player: Player):
+def calculate_generation_with_market(new_values: dict, market: dict, player: Player) -> dict:
     """Calculate the generation of a player that is part of a network (before market logic)."""
     generation = new_values[player.id]["generation"]
     demand = new_values[player.id]["demand"]
@@ -422,7 +422,7 @@ def calculate_generation_with_market(new_values, market, player: Player):
     return market
 
 
-def market_logic(new_values, market) -> None:
+def market_logic(new_values: dict, market: dict) -> None:
     """
     Perform the market logic for a network.
 
@@ -733,7 +733,7 @@ def minimal_generation(player: Player, generation, resource_reservations: dict[F
             )
 
 
-def place_bid(market, player_id, capacity, price, facility):
+def place_bid(market: dict, player_id, capacity, price, facility):
     """Make an bid (offer, supply) on the market."""
     if capacity > 0:
         new_row = pd.DataFrame(

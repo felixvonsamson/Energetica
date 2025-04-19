@@ -21,7 +21,7 @@ from energetica.utils.assets import (
 from energetica.utils.misc import confirm_location
 
 
-def validate_rules(player: Player):
+def validate_rules(player: Player) -> None:
     """This function validates all of the above rules."""
     validate_rule_1(player)
     validate_rule_2(player)
@@ -32,7 +32,7 @@ def validate_rules(player: Player):
     validate_rule_7(player)
 
 
-def validate_rule_1(player: Player):
+def validate_rule_1(player: Player) -> None:
     """All projects (in the database) should appear exactly once in the priority list."""
     for worker_type in WorkerType:
         projects_by_priority = player.projects_by_priority[worker_type]
@@ -47,7 +47,7 @@ def validate_rule_1(player: Player):
         assert OngoingProject.count_when(player=player, worker_type=worker_type) == len(projects_by_priority)
 
 
-def validate_rule_2(player: Player):
+def validate_rule_2(player: Player) -> None:
     """The number of ongoing projects must be less then or equal to the number of workers."""
     for worker_type in WorkerType:
         ongoing_projects = list(
@@ -61,7 +61,7 @@ def validate_rule_2(player: Player):
             )
 
 
-def validate_rule_3(player: Player):
+def validate_rule_3(player: Player) -> None:
     """In the project priority list, ongoing projects must come before all waiting projects and all waiting projects
     must come before all paused projects."""
     for worker_type in WorkerType:
@@ -69,7 +69,7 @@ def validate_rule_3(player: Player):
         assert sorted(status_list, reverse=True) == status_list
 
 
-def validate_rule_4(player: Player):
+def validate_rule_4(player: Player) -> None:
     """All projects have a finish time in the future."""
     assert not OngoingProject.count(
         condition=lambda project: project.player == player
@@ -78,7 +78,7 @@ def validate_rule_4(player: Player):
     )
 
 
-def validate_rule_5(player: Player):
+def validate_rule_5(player: Player) -> None:
     """A project can not be ongoing if it has unfulfilled requirements."""
     ongoing_projects: Iterable[OngoingProject] = OngoingProject.filter_by(  # type: ignore[no-redef]
         player=player,
@@ -90,7 +90,7 @@ def validate_rule_5(player: Player):
             assert not project.prerequisites
 
 
-def validate_rule_6(player: Player):
+def validate_rule_6(player: Player) -> None:
     """All requirements of a project must appear before the project in the priority list."""
     for worker_type in WorkerType:
         for index, project in enumerate(player.projects_by_priority[worker_type]):
@@ -102,7 +102,7 @@ def validate_rule_6(player: Player):
                     break
 
 
-def validate_rule_7(player: Player):
+def validate_rule_7(player: Player) -> None:
     """If there are projects waiting with all their requirements fulfilled, there should be no available workers."""
     for worker_type in WorkerType:
         waiting_projects = list(
@@ -129,7 +129,7 @@ def validate_rule_7(player: Player):
                 )
 
 
-def test_swap_paused_and_unpaused_constructions():
+def test_swap_paused_and_unpaused_constructions() -> None:
     """Setup:
     Player has one construction worker, constructions A and B are launched, A is ongoing, B is waiting.
     After decreasing the priority of the construction A, construction B should be ongoing, and A waiting.
@@ -153,7 +153,7 @@ def test_swap_paused_and_unpaused_constructions():
     assert construction_a.status == ProjectStatus.WAITING
 
 
-def test_cancel_construction():
+def test_cancel_construction() -> None:
     """Setup:
     Player starts a construction and then cancels it. There should be no more constructions afterwards.
     """
@@ -171,7 +171,7 @@ def test_cancel_construction():
     assert len(player.constructions_by_priority) == 0
 
 
-def test_pause_construction():
+def test_pause_construction() -> None:
     """Setup:
     Player starts a construction and then pauses it. It should be paused.
     Then player unpauses the construction. It should be ongoing.
@@ -194,7 +194,7 @@ def test_pause_construction():
     assert construction.status == ProjectStatus.ONGOING
 
 
-def test_queue_two_pause_one():
+def test_queue_two_pause_one() -> None:
     """Setup:
     Player starts constructions A and B. Player then pauses A.
     """
@@ -213,7 +213,7 @@ def test_queue_two_pause_one():
     assert player.constructions_by_priority == [construction_b, construction_a]
 
 
-def test_three_constructions_with_pause():
+def test_three_constructions_with_pause() -> None:
     """Setup:
     Player starts constructions A, B and C. Player then pauses C, then A.
     """
@@ -238,7 +238,7 @@ def test_three_constructions_with_pause():
     # assert player.constructions_by_priority == [construction_B, construction_A, construction_C]
 
 
-def test_add_two_and_cancel_one():
+def test_add_two_and_cancel_one() -> None:
     """Setup:
     queue(1)
     queue(2)
@@ -261,7 +261,7 @@ def test_add_two_and_cancel_one():
     assert player.constructions_by_priority == [construction_2]
 
 
-def test_technologies_pausing_propagates_requirements():
+def test_technologies_pausing_propagates_requirements() -> None:
     """Setup:
     Player starts technology A, and then technology B, which has A as a prerequisite. Pausing A should pause B.
     Here, A is mathematics, B is mechanical_engineering.
@@ -288,7 +288,7 @@ def test_technologies_pausing_propagates_requirements():
     assert technology_b.status == ProjectStatus.PAUSED
 
 
-def test_math_and_building_tech():
+def test_math_and_building_tech() -> None:
     """Setup:
     Player starts mathematics and building_technology in that order.
     """

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from energetica import technology_effects
@@ -35,14 +37,14 @@ class Policy:
         """Every tick the policy will take an action based on the state"""
         self.is_done = True
 
-    def __add__(self, other) -> SequencedPolicy:
+    def __add__(self, other: Policy) -> SequencedPolicy:
         if isinstance(other, SequencedPolicy):
             return SequencedPolicy([self, *other.policies])
         if isinstance(other, Policy):
             return SequencedPolicy([self, other])
         raise ValueError("Can only add policies together")
 
-    def __or__(self, other) -> ParallelPolicy:
+    def __or__(self, other: Policy) -> ParallelPolicy:
         if isinstance(other, ParallelPolicy):
             return ParallelPolicy([self, *other.policies])
         if isinstance(other, Policy):
@@ -72,7 +74,7 @@ class SequencedPolicy(Policy):
         if self.policies[0].is_done:
             self.policies.pop(0)
 
-    def __add__(self, other) -> SequencedPolicy:
+    def __add__(self, other: Any) -> SequencedPolicy:
         if isinstance(other, SequencedPolicy):
             return SequencedPolicy([*self.policies, *other.policies])
         if isinstance(other, Policy):
@@ -99,7 +101,7 @@ class ParallelPolicy(Policy):
         if not self.policies:
             self.is_done = True
 
-    def __or__(self, other) -> ParallelPolicy:
+    def __or__(self, other: Any) -> ParallelPolicy:
         if isinstance(other, ParallelPolicy):
             return ParallelPolicy([*self.policies, *other.policies])
         if isinstance(other, Policy):
@@ -151,7 +153,7 @@ class StarterPolicy(Policy):
     This should be the fastest / best strategy.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("starter policy")
 
     def take_action(self, player: Player) -> None:

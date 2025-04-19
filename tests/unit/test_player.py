@@ -6,7 +6,7 @@ from energetica.database.player import Player
 from energetica.utils.misc import confirm_location
 
 
-def test_player_creation_and_location_confirmation():
+def test_player_creation_and_location_confirmation() -> None:
     """Test the creation of a player and the confirmation of a location."""
     create_app(rm_instance=True, skip_adding_handlers=True)
     player = Player(username="username", pwhash=generate_password_hash("password"))
@@ -14,7 +14,7 @@ def test_player_creation_and_location_confirmation():
     confirm_location(player, hex_tile)
 
 
-def test_player_hashable():
+def test_player_hashable() -> None:
     """
     Test the hashability of the Player class.
 

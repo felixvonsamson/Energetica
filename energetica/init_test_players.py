@@ -24,10 +24,10 @@ from energetica.utils.misc import confirm_location
 from energetica.utils.network_helpers import create_network, join_network
 
 
-def init_test_players():
+def init_test_players() -> None:
     """Initialize the database with test players and networks."""
 
-    def add_asset(player: Player, project_type: ProjectType, n):
+    def add_asset(player: Player, project_type: ProjectType, n: int) -> None:
         """Create a project that will instantly finish."""
         for _ in range(n):
             ongoing_project = queue_project(
@@ -36,7 +36,7 @@ def init_test_players():
             finish_project(ongoing_project, skip_notifications=True)
         engine.log(f"Added {n} {project_type} for {player.username}")
 
-    def create_player(username, password, tile_id=None) -> Player:
+    def create_player(username: str, password: str, tile_id: int | None = None) -> Player:
         """Create and initialize a player."""
         player = next(Player.filter_by(username=username), None)
         if player:
@@ -51,7 +51,7 @@ def init_test_players():
         engine.log(f"create_player: player {username} created")
         return player
 
-    def setup_network(name, members: list[Player]) -> Network:
+    def setup_network(name: str, members: list[Player]) -> Network:
         """Create and initialize a network."""
         # Unlock the network achievement for all members so that they can see the network page
         for player in members:
@@ -70,7 +70,7 @@ def init_test_players():
                 join_network(player, network)
         return network
 
-    def climate_events_scenario():
+    def climate_events_scenario() -> None:
         """Fill the map with players that use coal to see climate change events."""
         players = []
         for i in range(1, 5):

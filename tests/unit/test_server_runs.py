@@ -6,7 +6,7 @@ from time import sleep
 import requests
 
 
-def test_server_runs():
+def test_server_runs() -> None:
     process = subprocess.Popen(["python", "main.py", "--port", "5011", "--rm_instance"])
 
     trials = 0

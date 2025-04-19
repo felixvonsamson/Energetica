@@ -911,7 +911,7 @@ river_discharge_seasonal = [
 ]  # all days of the year
 
 
-def warehouse_capacity_for_level(warehouse_level, fuel: Fuel):
+def warehouse_capacity_for_level(warehouse_level: int, fuel: Fuel) -> float | None:
     """Returns how much capacity in kg a player with a warehouse with
     `warehouse_level` has for the specified `resource`"""
     if warehouse_level == 0:
@@ -926,11 +926,12 @@ def warehouse_capacity_for_level(warehouse_level, fuel: Fuel):
 class Config(object):
     """Config object that contains the modified data for a specific player considering the technologies he owns"""
 
-    def __init__(self):
-        self.for_player = {}
+    def __init__(self) -> None:
+        """Constructor of the Config object"""
+        self.for_player: dict = {}
 
-    def update_config_for_user(self, player: Player):
-        """This function updates the config values according to the players technology level"""
+    def update_config_for_user(self, player: Player) -> None:
+        """Updates the config values according to the players technology level"""
         # TODO: deprecate this method eventually
         self.for_player[player.id] = {
             "industry": {},
