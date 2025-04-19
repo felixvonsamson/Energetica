@@ -2,6 +2,8 @@
 This code creates a list of suggestions when typing names in a field
 */
 
+// @type { typeof import('./frontend_data.js').load_players; }
+
 let sortedNames;
 let group = [];
 let current_chat_id;
@@ -272,6 +274,13 @@ function newMessage() {
         });
 }
 
+function escapeHTML(str) {
+    return str.replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
 function openChat(chatID) {
     /* Open a chat and display its messages */
     current_chat_id = chatID;
@@ -307,7 +316,7 @@ function openChat(chatID) {
                         <div class="message_infos">
                             <span>${username}</span>
                             <span class="txt_pine">${formatDateString(messages[i].time)}</span></div>
-                        <div class="message_text bone ${alignment}">${messages[i].text}</div>
+                        <div class="message_text bone ${alignment}">${escapeHTML(messages[i].text)}</div>
                     </div>`;
                         }
                         let message_container = document.getElementById("message_container");
