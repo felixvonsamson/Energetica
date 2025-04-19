@@ -21,6 +21,9 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+        if not username or not password:
+            flash("Please enter a username and password.", category="error")
+            return
 
         player = next(Player.filter_by(username=username), None)
         if player:
@@ -44,9 +47,11 @@ def login():
 
 @auth.route("/root_login", methods=["POST"])
 def root_login():
-    if request.headers.get('X-Forwarded-For', request.remote_addr) != "127.0.0.1":
+    if request.headers.get("X-Forwarded-For", request.remote_addr) != "127.0.0.1":
         abort(404)
     user_id = request.form.get("user_id")
+    if not user_id:
+        abort(400, description="User ID is required.")
     player = Player.get(int(user_id))
     if player is None:
         abort(404, description="User not found.")
@@ -77,6 +82,9 @@ def sign_up():
     """Create a new account."""
     if request.method == "POST":
         username = request.form.get("username")
+        if not username:
+            flash("Please enter a username.", category="error")
+            return
         username = username.strip()
         password1 = request.form.get("password1")
         password2 = request.form.get("password2")
@@ -87,6 +95,8 @@ def sign_up():
             flash("Username already exist", category="error")
         elif len(username) < 3 or len(username) > 18:
             flash("Username must be between 3 and 18 characters.", category="error")
+        elif not password1 or not password2:
+            flash("Please enter a password.", category="error")
         elif pw_hash and not is_valid_hash_format(pw_hash):
             flash("Invalid password hash format.", category="error")
         elif not pw_hash and password1 != password2:
@@ -100,7 +110,7 @@ def sign_up():
             flash("Account created!", category="message")
             log_entry = {
                 "timestamp": datetime.now().isoformat(),
-                "ip": request.headers.get('X-Forwarded-For', request.remote_addr),
+                "ip": request.headers.get("X-Forwarded-For", request.remote_addr),
                 "action_type": "create_user",
                 "player_id": new_player.id,
                 "username": new_player.username,
