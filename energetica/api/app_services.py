@@ -9,6 +9,8 @@ def register_app_services(app):
         if request.method == "GET":
             return jsonify({"public_key": app.config["VAPID_PUBLIC_KEY"]})
         subscription = request.json
+        if not subscription:
+            return jsonify({"response": "Invalid subscription"})
         if "endpoint" not in subscription:
             return jsonify({"response": "Invalid subscription"})
         current_user.notification_subscriptions.append(subscription)
