@@ -227,7 +227,7 @@ def test_three_constructions_with_pause():
     validate_rules(player)
     construction_a = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
     validate_rules(player)
-    construction_b = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
+    queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
     validate_rules(player)
     construction_c = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
     validate_rules(player)

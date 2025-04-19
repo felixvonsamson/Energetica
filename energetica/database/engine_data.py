@@ -19,7 +19,6 @@ from energetica.enums import (
     PowerFacilityType,
     ProjectType,
     StorageFacilityType,
-    power_facility_types,
     renewable_facility_types,
     str_to_project_type_extended,
 )
