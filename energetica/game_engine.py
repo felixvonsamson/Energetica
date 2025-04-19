@@ -54,7 +54,7 @@ class GameEngine(object):
         self.first_tick_time: datetime = None
         self.delta_t: int = None
         self.current_climate_data: EmissionData = None
-        self.daily_question = None
+        self.daily_question: dict = None
         self.question_order: list[int] = None
         self.technology_lvls: dict = None
 

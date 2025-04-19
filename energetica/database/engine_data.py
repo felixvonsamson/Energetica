@@ -448,7 +448,7 @@ class CircularBufferNetwork:
 
     def get_data(self, t=216):
         """Return the last t ticks of the data."""
-        result = defaultdict(lambda: defaultdict(dict))
+        result: dict[str, dict] = defaultdict(lambda: defaultdict(dict))
         for category, value in self._data.items():
             for group, buffer in value.items():
                 result[category][group] = list(buffer)[-t:]
@@ -476,7 +476,7 @@ class EmissionData:
 
     def get_data(self, t=216):
         """Return the last t ticks of the data."""
-        result = defaultdict(lambda: defaultdict(dict))
+        result: dict[str, dict] = defaultdict(lambda: defaultdict(dict))
         for category, subcategories in self._data.items():
             for subcategory, buffer in subcategories.items():
                 result[category][subcategory] = list(buffer)[-t:]
@@ -504,7 +504,7 @@ class EmissionData:
 
     def get_last_data(self):
         """Return the last value for each subcategory."""
-        last_values = {}
+        last_values: dict[str, dict] = {}
         for category, subcategories in self._data.items():
             last_values[category] = {}
             for subcategory, values in subcategories.items():

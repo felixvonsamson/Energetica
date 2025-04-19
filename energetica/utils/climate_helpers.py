@@ -169,8 +169,8 @@ def check_climate_events():
 
 def data_init_climate(seconds_per_tick, random_seed, delta_t):
     """Initialize the data for the climate."""
-    ref_temp = []
-    temp_deviation = []
+    ref_temp: list[list] = []
+    temp_deviation: list[list] = []
     for i in range(5):
         ref_temp.append([])
         temp_deviation.append([])
