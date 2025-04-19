@@ -34,7 +34,7 @@ def tick():
         "total_t": engine.total_t,
     }
     if engine.total_t == 0:
-        engine.first_tick_time = time.time()
+        engine.first_tick_time = datetime.now()
     engine.total_t += 1
     engine.log(f"t = {engine.total_t}")
     if engine.total_t % 216 == 0:
