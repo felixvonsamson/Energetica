@@ -855,7 +855,7 @@ def construction_emissions(new_values, player: Player) -> None:
     # (for now this is wrong)
     emissions_of_constructions = 0.0
     for ud in OngoingProject.filter_by(player=player):
-        if ud.is_ongoing() and isinstance(ud, TechnologyType):
+        if ud.is_ongoing():
             emissions_of_constructions += ud.project_pollution
     add_emissions(new_values, player, "construction", emissions_of_constructions)
 
