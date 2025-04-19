@@ -138,7 +138,7 @@ def test_swap_paused_and_unpaused_constructions():
     create_app(rm_instance=True, skip_adding_handlers=True)
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
-    hex_tile = HexTile.get(1)
+    hex_tile = HexTile.getitem(1)
     confirm_location(player, hex_tile)
     validate_rules(player)
     construction_a = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
@@ -160,7 +160,7 @@ def test_cancel_construction():
     create_app(rm_instance=True, skip_adding_handlers=True)
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
-    hex_tile = HexTile.get(1)
+    hex_tile = HexTile.getitem(1)
     confirm_location(player, hex_tile)
     validate_rules(player)
     construction = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
@@ -180,7 +180,7 @@ def test_pause_construction():
     create_app(rm_instance=True, skip_adding_handlers=True)
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
-    hex_tile = HexTile.get(1)
+    hex_tile = HexTile.getitem(1)
     confirm_location(player, hex_tile)
     validate_rules(player)
     construction = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
@@ -201,7 +201,7 @@ def test_queue_two_pause_one():
     create_app(rm_instance=True, skip_adding_handlers=True)
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
-    hex_tile = HexTile.get(1)
+    hex_tile = HexTile.getitem(1)
     confirm_location(player, hex_tile)
     validate_rules(player)
     construction_a = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
@@ -222,7 +222,7 @@ def test_three_constructions_with_pause():
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
     player.money = 1_000_000_000
-    hex_tile = HexTile.get(1)
+    hex_tile = HexTile.getitem(1)
     confirm_location(player, hex_tile)
     validate_rules(player)
     construction_a = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
@@ -249,7 +249,7 @@ def test_add_two_and_cancel_one():
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
     player.money = 1_000_000_000
-    hex_tile = HexTile.get(1)
+    hex_tile = HexTile.getitem(1)
     confirm_location(player, hex_tile)
     validate_rules(player)
     construction_1 = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
@@ -271,7 +271,7 @@ def test_technologies_pausing_propagates_requirements():
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
     player.money = 1_000_000_000
-    hex_tile = HexTile.get(1)
+    hex_tile = HexTile.getitem(1)
     confirm_location(player, hex_tile)
     finish_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
 
@@ -297,7 +297,7 @@ def test_math_and_building_tech():
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
     player.money = 1_000_000_000
-    hex_tile = HexTile.get(1)
+    hex_tile = HexTile.getitem(1)
     confirm_location(player, hex_tile)
     finish_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
 
