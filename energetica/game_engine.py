@@ -47,7 +47,7 @@ class GameEngine(object):
         self.clock_time: int = None
         self.in_game_seconds_per_tick: int = None
 
-        self.uuid = None
+        self.uuid: uuid.UUID = None
         self.random_seed: int = None
         self.total_t: int = None
         self.start_date: datetime = None
@@ -80,7 +80,7 @@ class GameEngine(object):
         in_game_seconds_per_tick: int,
         random_seed: int,
         start_date: datetime | None = None,
-        instance_uuid=None,
+        instance_uuid: uuid.UUID | None = None,
     ) -> None:
         """Initialize the instance data / the GameEngine members."""
         from energetica.database.engine_data import EmissionData
