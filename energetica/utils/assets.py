@@ -358,7 +358,7 @@ def queue_project(
     duration = technology_effects.construction_time(player, project_type)
 
     if player.money < real_price and not ignore_requirements_and_money:
-        msg = "notEnoughMoney"
+        msg = "Not enough money"
         raise GameError(msg)
 
     construction_power = technology_effects.construction_power(player, project_type)

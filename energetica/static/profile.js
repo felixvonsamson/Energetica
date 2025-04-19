@@ -352,7 +352,7 @@ function dismantle(id) {
                 var obj = document.getElementById("money");
                 obj.innerHTML = format_money_long(money);
                 get_active_facilities();
-            } else if (response == "notEnoughMoney") {
+            } else if (response == "Not enough money") {
                 addError("Not enough money");
             } else if (response == "notUpgradable") {
                 addError("Facility is not upgradable");
@@ -375,7 +375,7 @@ function dismantle_all_of_type(facility) {
                 var obj = document.getElementById("money");
                 obj.innerHTML = format_money_long(money);
                 get_active_facilities();
-            } else if (response == "notEnoughMoney") {
+            } else if (response == "Not enough money") {
                 addError("Not enough money");
             }
         });

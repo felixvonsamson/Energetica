@@ -54,7 +54,7 @@ function buy_resource(saleId) {
                         JSON.stringify(raw_data["shipments"])
                     );
                     refresh_progressBar();
-                } else if (response == "notEnoughMoney") {
+                } else if (response == "Not enough money") {
                     addError("Not enough money");
                 } else if (response == "invalidQuantity") {
                     addError("The quantity needs to be grater than 0 and cannot exceed the available quantity");

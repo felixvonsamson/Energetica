@@ -106,7 +106,7 @@ function start_construction(facility, force = false) {
           capacity = raw_data["capacity"];
           construction_power = raw_data["construction_power"];
           are_you_sure_start_construction(facility, capacity, construction_power);
-        } else if (response == "notEnoughMoney") {
+        } else if (response == "Not enough money") {
           addError("Not enough money");
         } else if (response == "locked") {
           // With the removal of the family, the error message is not longer as straightforward to customize.

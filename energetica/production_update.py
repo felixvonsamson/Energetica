@@ -387,7 +387,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
     max_overdraft = -player.config["industry"]["income_per_day"]
     if player.money < max_overdraft:
         player.notify(
-            "Not Enough Money",
+            "Not enough money",
             "You exceeded your credit limit, you can't buy electricity on the market anymore.",
         )
     # ask demand on the market at the set prices

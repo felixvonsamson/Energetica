@@ -39,7 +39,7 @@ def buy_resource_from_market(player: Player, quantity: float, sale: ResourceOnSa
         player.resources_on_sale[sale.resource] -= quantity
     else:
         if total_price > player.money:
-            raise GameError("notEnoughMoney")
+            raise GameError("Not enough money")
         # Player buys form another player
         sale.quantity -= quantity
         player.money -= total_price
