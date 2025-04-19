@@ -697,7 +697,7 @@ def hide_chat_disclaimer() -> Response:
 def create_chat() -> Response:
     """Create a chat with one other player."""
     request_data = request.get_json()
-    buddy_id = request_data["buddy_id"]
+    buddy_id = int(request_data["buddy_id"])
     buddy = Player.getitem(buddy_id)
     energetica.utils.chat.create_chat(g.player, None, {g.player, buddy})
     return jsonify({"response": "success"})
@@ -708,7 +708,7 @@ def create_group_chat() -> Response:
     """Create a group chat."""
     request_data = request.get_json()
     chat_title = request_data["chat_title"]
-    group_members = {g.player, *list(map(Player.getitem, request_data["group_members"]))}
+    group_members = {g.player, *(map(Player.getitem, map(int, request_data["group_members"])))}
     energetica.utils.chat.create_chat(g.player, chat_title, group_members)
     return jsonify({"response": "success"})
 
