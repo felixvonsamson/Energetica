@@ -50,7 +50,7 @@ def climate_event_impact(tile: HexTile, event_name, rng: np.random.Generator):
         engine.config.update_config_for_user(player)
         player.notify(
             "Destruction",
-            f"Your industry hs been levelled down by 1 due to the {climate_events[event_name].name} event.",
+            f"Your industry has been levelled down by 1 due to the {climate_events[event_name].name} event.",
         )
         engine.log(f"{player.username} : Industry levelled down by {climate_events[event_name].name}.")
     facilities_list = climate_events[event_name].destruction_chance.keys()
