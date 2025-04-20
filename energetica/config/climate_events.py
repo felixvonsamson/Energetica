@@ -43,7 +43,7 @@ class ClimateEvent:
             else "and destroyed some parts of the infrastructure."
         )
         return (
-            f"A {self.name.lower} has occurred and {second_part} "
+            f"A {self.name.lower()} has occurred and {second_part} "
             f"The recovery from this event will take {self.duration / 3600 / 24} days and "
             f"cost {self.cost_fraction * 100:.2f}% of the player's industry revenue."
         )
