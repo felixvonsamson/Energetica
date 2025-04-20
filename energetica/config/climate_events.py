@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from energetica.enums import (
     ControllableFacilityType,
+    ExtractionFacilityType,
     HydroFacilityType,
     PowerFacilityType,
     SolarFacilityType,
@@ -22,7 +23,7 @@ class ClimateEvent:
         cost_fraction: float,
         duration: float,
         affected_tiles_radius: int,
-        destruction_chance: dict[PowerFacilityType | StorageFacilityType, float],
+        destruction_chance: dict[PowerFacilityType | StorageFacilityType | ExtractionFacilityType, float],
         industry_destruction_chance: float,
     ):
         self.name = name

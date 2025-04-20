@@ -51,7 +51,7 @@ def climate_event_impact(tile: HexTile, event_name, rng: np.random.Generator):
             f"Your industry hs been levelled down by 1 due to the {climate_events[event_name].name} event.",
         )
         engine.log(f"{player.username} : Industry levelled down by {climate_events[event_name].name}.")
-    facilities_list = list(climate_events[event_name].destruction_chance).keys()
+    facilities_list = climate_events[event_name].destruction_chance.keys()
     facilities_at_risk = list(
         ActiveFacility.filter(lambda facility: facility.facility_type in facilities_list and facility.player == player)
     )
