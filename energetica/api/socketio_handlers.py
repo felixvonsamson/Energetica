@@ -13,7 +13,7 @@ def add_handlers(socketio):
         if current_user.is_anonymous:
             return
         # Store client's sid when connected
-        current_user.socketio_clients.append(request.sid)
+        current_user.socketio_clients.append(request.sid)  # type: ignore[attr-defined]
 
     @socketio.on("disconnect")
     def handle_disconnect():
@@ -21,5 +21,5 @@ def add_handlers(socketio):
         if current_user.is_anonymous:
             return
         # Remove client's sid when disconnected
-        if request.sid in current_user.socketio_clients:
-            current_user.socketio_clients.remove(request.sid)
+        if request.sid in current_user.socketio_clients:  # type: ignore[attr-defined]
+            current_user.socketio_clients.remove(request.sid)  # type: ignore[attr-defined]

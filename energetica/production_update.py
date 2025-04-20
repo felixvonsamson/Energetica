@@ -26,7 +26,6 @@ from energetica.enums import (
     ProjectType,
     SolarFacilityType,
     StorageFacilityType,
-    TechnologyType,
     WindFacilityType,
     WorkerType,
     power_facility_types,
@@ -667,6 +666,7 @@ def calculate_prod(
     def reserve_resources(power):
         """Reserve resources for the production of power so that they are not used somewhere else."""
         if "fuel_use" in player.capacities[facility]:
+            assert resource_reservations is not None
             for resource, amount in player.capacities[facility]["fuel_use"].items():
                 resource_reservations[resource] += amount * power / player.capacities[facility]["power"]
 
