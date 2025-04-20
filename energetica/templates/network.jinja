@@ -185,7 +185,7 @@
         </div>
 
         <div id="market_offers_tables">
-            <div class="flex-col medium" style="margin-bottom:30px;">
+            <div class="flex-col medium" style="margin-bottom:30px; overflow-x: auto;">
                 <div class="flex-center large padding">Market Offers</div>
                 <table id="offers_table" class="table bone margin txt_center">
                     <tr>
@@ -216,7 +216,7 @@
               style="justify-content:center">
             <button type="submit" class="padding medium login-button">Leave Network</button>
         </form>
-        <div class="flex-col medium">
+        <div class="flex-col medium" style="overflow-x: auto;">
             <table class="table bone margin">
                 <tr>
                     <th>Members</th>
@@ -231,6 +231,7 @@
         <div class="flex-row huge title">Prices</div>
         <div class="flex-col medium">
             <b class="margin large" style="margin-top:24px">Demand prices</b>
+            <div class="table_container" style="overflow-x: auto;">
             <table class="table bone">
                 <tr>
                     <th>Demand</th>
@@ -325,11 +326,13 @@
                     </tr>
                 {% endif %}
             </table>
+            </div>
             <div class="flex-row" style="justify-content:center;">
                 <b class="margin white button padding" onclick="change_prices();">Save changes</b>
             </div>
             {% if caps["steam_engine"] or caps["windmill"] or caps["watermill"] or caps["coal_burner"] or caps["gas_burner"] or caps["small_water_dam"] or caps["onshore_wind_turbine"] or caps["combined_cycle"] or caps["nuclear_reactor"] or caps["large_water_dam"] or caps["CSP_solar"] or caps["PV_solar"] or caps["offshore_wind_turbine"] or caps["nuclear_reactor_gen4"] %}
-                <b class="margin large" style="margin-top:24px">Production capacity prices</b>
+                <b class="margin large" style="margin-top:24px; overflow-x: auto;">Production capacity prices</b>
+                <div class="table_container" style="overflow-x: auto;">
                 <table class="table bone">
                     <tr>
                         <th>Power facility</th>
@@ -358,12 +361,14 @@
                         {% endif %}
                     {% endfor %}
                 </table>
+                </div>
                 <div class="flex-row" style="justify-content:center;">
                     <b class="margin white button padding" onclick="change_prices();">Save changes</b>
                 </div>
             {% endif %}
             {% if caps["small_pumped_hydro"] or caps["molten_salt"] or caps["large_pumped_hydro"] or caps["hydrogen_storage"] or caps["lithium_ion_batteries"] or caps["solid_state_batteries"] %}
-                <b class="margin large" style="margin-top:24px">Storage capacity prices</b>
+                <b class="margin large" style="margin-top:24px; overflow-x: auto;">Storage capacity prices</b>
+                <div class="table_container" style="overflow-x: auto;">
                 <table class="table bone">
                     <tr>
                         <th>Storage facility</th>
@@ -405,6 +410,7 @@
                         {% endif %}
                     {% endfor %}
                 </table>
+                </div>
                 <div class="flex-row" style="justify-content:center;">
                     <b class="margin white button padding" onclick="change_prices();">Save changes</b>
                 </div>
