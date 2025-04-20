@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import math
+from typing import cast
 
 import numpy as np
+from numpy.typing import ArrayLike
 
 from energetica.config.climate_events import climate_events
 from energetica.database.active_facility import ActiveFacility
@@ -93,7 +95,7 @@ def check_climate_events():
     if rng.random() < flood_probability:
         # the hydro value for a flood needs to be above 20%
         hydro_tiles = list(HexTile.filter(lambda tile: tile.potentials[Renewable.HYDRO] > 0.2))
-        tile = rng.choice(hydro_tiles)
+        tile = cast(HexTile, rng.choice(cast(ArrayLike, hydro_tiles)))
         climate_event_impact(tile, "flood", rng)
 
     # heatwaves
@@ -108,7 +110,7 @@ def check_climate_events():
         # the tile for the heatwave is chosen based on a sigmoid distribution around the equator
         random_latitude = round(inv_cdf_sigmoid(rng.random()))
         latitude_tiles = list(HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude))
-        tile = rng.choice(latitude_tiles)
+        tile = cast(HexTile, rng.choice(cast(ArrayLike, latitude_tiles)))
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
             climate_event_impact(affected_tile, "heat_wave", rng)
@@ -129,7 +131,7 @@ def check_climate_events():
         else:
             random_latitude = math.floor(-10 + random_normal)
         latitude_tiles = list(HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude))
-        tile = rng.choice(latitude_tiles)
+        tile = cast(HexTile, rng.choice(cast(ArrayLike, latitude_tiles)))
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
             climate_event_impact(affected_tile, "cold_wave", rng)
@@ -153,7 +155,7 @@ def check_climate_events():
         # the tile for the wildfire is chosen based on a normal distribution around the equator
         random_latitude = inv_cdf_normal(rng.random())
         latitude_tiles = list(HexTile.filter(lambda tile: tile.coordinates[1] == random_latitude))
-        tile = rng.choice(latitude_tiles)
+        tile = cast(HexTile, rng.choice(cast(ArrayLike, latitude_tiles)))
         affected_tiles = tile.get_neighbors()
         for affected_tile in affected_tiles:
             climate_event_impact(affected_tile, "wildfire", rng)
