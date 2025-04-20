@@ -81,4 +81,3 @@ def DrHI(unix_time: Any, latitude: Any, longitude: Any) -> Any:
     DrHI = DrNI * sin_elevation
 
     return DrHI
-    return DrHI

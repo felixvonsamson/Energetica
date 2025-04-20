@@ -1,11 +1,12 @@
 """Contains the main functions that communicate with the server (server side)."""
 
+from typing import Any
+
 from flask import request
 from flask_login import current_user
-from socketio import SocketIO
 
 
-def add_handlers(socketio: SocketIO) -> None:
+def add_handlers(socketio: Any) -> None:
     """Handle connection and disconnection of clients."""
 
     @socketio.on("connect")

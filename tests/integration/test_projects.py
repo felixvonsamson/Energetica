@@ -80,7 +80,7 @@ def validate_rule_4(player: Player) -> None:
 
 def validate_rule_5(player: Player) -> None:
     """A project can not be ongoing if it has unfulfilled requirements."""
-    ongoing_projects: Iterable[OngoingProject] = OngoingProject.filter_by(  # type: ignore[no-redef]
+    ongoing_projects: Iterable[OngoingProject] = OngoingProject.filter_by(
         player=player,
         status=ProjectStatus.ONGOING,
     )

@@ -308,4 +308,3 @@ def create_app(
         init_test_players()
 
     return socketio, app
-    return socketio, app
